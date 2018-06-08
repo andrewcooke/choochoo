@@ -7,48 +7,63 @@ from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, BigText, Padding
 MONTHS = month_name[1:]
 
 
-class StatefulFocusedText(Text):
+class ImmutableFocusedText(Text):
 
-    def __init__(self):
-        super().__init__('')
-        self._state = None
+    def __init__(self, state):
+        self._state = state
         self._focus = False
         self._selectable = True
-        self.changed = False
+        super().__init__(self.state_as_text())
 
     @property
     def state(self):
         return self._state
 
     def state_as_text(self):
-        raise NotImplemented()
+        return str(self.state)
 
-    def _update_state(self, state, focus=None):
-        if state != self._state or (focus is not None and focus != self._focus):
-            self._state = state
+    def _update_text(self):
+        text = self.state_as_text()
+        if self._focus:
+            self.set_text(('focus', text))
+        else:
+            self.set_text(text)
+        self._invalidate()
+
+    def _update_focus(self, focus):
+        if focus != self.focus:
             self._focus = focus
-            text = self.state_as_text()
-            if self._focus:
-                self.set_text(('focus', text))
-            else:
-                self.set_text(text)
-            self.changed = True
-            self._invalidate()
+            self._update_text()
 
     def pack(self, size=None, focus=False):
-        self._update_state(self._state, focus)
+        self._update_focus(focus)
         return super().pack(size, focus)
 
     def render(self, size, focus=False):
-        self._update_state(self._state, focus)
+        self._update_focus(focus)
         return super().render(size, focus)
 
+    def keypress(self, size, key):
+        return key
 
-class Month(StatefulFocusedText):
+
+class MutableFocusedText(ImmutableFocusedText):
+
+    def __init__(self, state):
+        super().__init__(state)
+        self.changed = False
+
+    def _update_state(self, state):
+        if state != self._state:
+            self._state = state
+            self._update_text()
+            self.changed = True
+
+
+class Month(MutableFocusedText):
 
     def __init__(self, month):
-        super().__init__()
-        self._update_state(month)
+        super().__init__(month)
 
     def keypress(self, size, key):
         if 'a' <= key <= 'z':
@@ -68,11 +83,10 @@ class Month(StatefulFocusedText):
         return MONTHS[self.state]
 
 
-class Year(StatefulFocusedText):
+class Year(MutableFocusedText):
 
     def __init__(self, year):
-        super().__init__()
-        self._update_state(year)
+        super().__init__(year)
 
     def keypress(self, size, key):
         if '0' <= key <= '9':
@@ -82,9 +96,6 @@ class Year(StatefulFocusedText):
             self._update_state(self.state + (1 if key == '+' else -1))
             return
         return key
-
-    def state_as_text(self):
-        return str(self.state)
 
 
 class Fixed(WidgetWrap):
@@ -108,6 +119,6 @@ class Calendar(WidgetWrap):
         if not date: date = dt.date.today()
         title = Columns([Padding(Month(date.month - 1), align='center', width='pack'),
                          Padding(Year(date.year), align='center', width='pack')])
-        days = GridFlow([Text(str(i)) for i in range(1, 30)], 2, 1, 0, 'right')
+        days = GridFlow([ImmutableFocusedText(i) for i in range(1, 30)], 2, 1, 0, 'right')
         super().__init__(Fixed(Pile([title, days]), 20))
 
