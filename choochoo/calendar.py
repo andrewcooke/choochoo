@@ -129,15 +129,17 @@ class Calendar(WidgetWrap):
                                  align='center', width='pack'),
                          Padding(Year(date.year, lambda y: self._date_changed(year=y)),
                                  align='center', width='pack')])
-        # spearate title from days to avoid focus problems
+        # separate title from days to avoid focus problems
         return Fixed(Pile([title, Days(date, self._date_changed)]), 20)
 
     def _date_changed(self, day=None, month=None, year=None):
         if day is None: day = self._date.day
         if month is None: month = self._date.month
         if year is None: year = self._date.year
-        self._date = dt.date(year, month, day)
-        focus = Focus(self._w)
-        self._w = self._make(self._date)
-        focus.apply(self._w)
-        if self._callback: self._callback(self._date)
+        date = dt.date(year, month, day)
+        if date != self._date:
+            self._date = date
+            focus = Focus(self._w)
+            self._w = self._make(self._date)
+            focus.apply(self._w)
+            if self._callback: self._callback(self._date)
