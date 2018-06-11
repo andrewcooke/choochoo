@@ -2,7 +2,7 @@
 import datetime as dt
 from calendar import month_name, day_abbr, Calendar, monthrange
 
-from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding
+from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding, emit_signal, connect_signal
 
 from .urwid import Focus, ImmutableFocusedText, MutableFocusedText, Fixed
 from .utils import sign
@@ -14,8 +14,8 @@ DAYS = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
 
 class Month(MutableFocusedText):
 
-    def __init__(self, month_year, callback, plain=None, focus=None):
-        super().__init__(month_year, callback, plain=plain, focus=focus)
+    def __init__(self, month_year, plain=None, focus=None):
+        super().__init__(month_year, plain=plain, focus=focus)
 
     def keypress(self, size, key):
         month, year = self.state
@@ -49,8 +49,8 @@ class Month(MutableFocusedText):
 
 class Year(MutableFocusedText):
 
-    def __init__(self, year, callback, plain=None, focus=None):
-        super().__init__(year, callback, plain=plain, focus=focus)
+    def __init__(self, year, plain=None, focus=None):
+        super().__init__(year, plain=plain, focus=focus)
 
     def keypress(self, size, key):
         if '0' <= key <= '9':
@@ -67,27 +67,28 @@ class Year(MutableFocusedText):
 
 class Day(ImmutableFocusedText):
 
-    def __init__(self, date, callback, plain=None, focus=None):
+    signals = ['click']
+
+    def __init__(self, date, plain=None, focus=None):
         super().__init__(date, plain=plain, focus=focus)
-        self._callback = callback
 
     def state_as_text(self):
         return '%2s' % self.state.day
 
     def keypress(self, size, key):
         if key == ' ':
-            self._callback(self.state)
+            emit_signal(self, 'click', self.state)
         else:
             return key
 
 
 class Days(WidgetWrap):
 
-    def __init__(self, date, callback):
-        super().__init__(self._make(date, callback))
+    def __init__(self, date, calendar):
+        super().__init__(self._make(date, calendar))
         self._date = date
 
-    def _make(self, date, callback):
+    def _make(self, date, calendar):
         # if we do this as single gridflow then focus doesn't move down into dates
         names = GridFlow(list(map(lambda d: Text(('plain', d)), DAYS)), 2, 1, 0, 'left')
         prev = dt.date(date.year if date.month > 1 else date.year - 1,
@@ -103,34 +104,39 @@ class Days(WidgetWrap):
             extra_days = 0
         else:
             total_days += extra_days
-        dates = [Day(dt.date(prev.year, prev.month, i), callback, 'unimportant')
+        dates = [Day(dt.date(prev.year, prev.month, i), 'unimportant')
                  for i in range(prev_days - first_day + 1, prev_days + 1)]
-        dates.extend([Day(dt.date(date.year, date.month, i), callback)
+        dates.extend([Day(dt.date(date.year, date.month, i))
                       for i in range(1, curr_days + 1)])
-        dates.extend([Day(dt.date(next.year, next.month, i), callback, 'unimportant')
+        dates.extend([Day(dt.date(next.year, next.month, i), 'unimportant')
                       for i in range(1, extra_days + 1)])
+        for day in dates:
+            connect_signal(day, 'click', calendar._date_changed)
         dates = GridFlow(dates, 2, 1, 0, 'left')
         return Pile([names, dates])
 
 
 class Calendar(WidgetWrap):
     """
-    Displays a text calendar with callback when date changed.
+    Displays a text calendar with signal when date changed.
     """
 
-    def __init__(self, date=None, callback=None):
+    signals = ['change']
+
+    def __init__(self, date=None):
         if not date: date = dt.date.today()
         self._date = date
-        self._callback = callback
         super().__init__(self._make(date))
 
     def _make(self, date):
-        title = Columns([Padding(Month((date.month, date.year), self._month_year_changed),
-                                 align='center', width='pack'),
-                         Padding(Year(date.year, self._year_changed),
-                                 align='center', width='pack')])
+        month = Month((date.month, date.year))
+        connect_signal(month, 'change', self._month_year_changed)
+        year = Year(date.year)
+        connect_signal(year, 'change', self._year_changed)
+        title = Columns([Padding(month, align='center', width='pack'),
+                         Padding(year, align='center', width='pack')])
         # separate title from days to avoid focus problems
-        return Fixed(Pile([title, Days(date, self._date_changed)]), 20)
+        return Fixed(Pile([title, Days(date, self)]), 20)
 
     def _year_changed(self, year):
         self._changed(year=year)
@@ -151,4 +157,4 @@ class Calendar(WidgetWrap):
             focus = Focus(self._w)
             self._w = self._make(self._date)
             focus.apply(self._w)
-            if self._callback: self._callback(self._date)
+            emit_signal(self, 'change', self._date)

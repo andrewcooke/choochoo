@@ -1,5 +1,5 @@
 
-from urwid import LineBox, AttrMap, WidgetWrap, Text
+from urwid import LineBox, AttrMap, WidgetWrap, Text, emit_signal
 
 
 class Border(LineBox):
@@ -88,9 +88,10 @@ class MutableFocusedText(ImmutableFocusedText):
     - the state may be changed
     """
 
-    def __init__(self, state, callback, plain=None, focus=None):
+    signals = ['change']
+
+    def __init__(self, state, plain=None, focus=None):
         super().__init__(state, plain=plain, focus=focus)
-        self._callback = callback
 
     def _get_state(self):
         return self._state
@@ -99,7 +100,7 @@ class MutableFocusedText(ImmutableFocusedText):
         if state != self._state:
             self._state = state
             self._update_text()
-            if self._callback: self._callback(state)
+            emit_signal(self, 'change', state)
 
     state = property(_get_state, _set_state)
 
