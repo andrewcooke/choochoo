@@ -31,7 +31,15 @@ class Focus:
     def apply(self, w):
         for f in self._focus:
             w = self._container(w)
-            w.focus_position = f
+            # the container may have changed size and if we're "off the end" then
+            # we'll get an error.  so progressively retract until it works.
+            while True:
+                try:
+                    w.focus_position = f
+                    break
+                except IndexError:
+                    f -= 1
+                    if f < 0: return  # give up
             w = w.contents[f][0]
 
     def _container(self, w):

@@ -113,7 +113,9 @@ class Days(WidgetWrap):
             total_days += extra_days
         dates = [Day(dt.date(prev.year, prev.month, i), 'unimportant')
                  for i in range(prev_days - first_day + 1, prev_days + 1)]
-        dates.extend([Day(dt.date(date.year, date.month, i))
+        dates.extend([Day(dt.date(date.year, date.month, i),
+                          plain='selected' if i == date.day else 'plain',
+                          focus='selected-focus' if i == date.day else 'plain-focus')
                       for i in range(1, curr_days + 1)])
         dates.extend([Day(dt.date(next.year, next.month, i), 'unimportant')
                       for i in range(1, extra_days + 1)])
@@ -157,6 +159,8 @@ class Calendar(WidgetWrap):
         if day is None: day = self._date.day
         if month is None: month = self._date.month
         if year is None: year = self._date.year
+        # if the month is shorter we may need to change days
+        day = min(day, monthrange(year, month)[1])
         date = dt.date(year, month, day)
         if date != self._date:
             self._date = date
