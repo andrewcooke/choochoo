@@ -75,6 +75,7 @@ class Day(ImmutableFocusedText):
     def state_as_text(self):
         return '%2s' % self.state.day
 
+    # todo - mouse and ocmmand map?
     def keypress(self, size, key):
         if key == ' ':
             emit_signal(self, 'click', self.state)
@@ -135,7 +136,6 @@ class Calendar(WidgetWrap):
         connect_signal(year, 'change', self._year_changed)
         title = Columns([Padding(month, align='center', width='pack'),
                          Padding(year, align='center', width='pack')])
-        # separate title from days to avoid focus problems
         return Fixed(Pile([title, Days(date, self)]), 20)
 
     def _year_changed(self, year):
