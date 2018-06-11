@@ -76,7 +76,7 @@ class Day(ImmutableFocusedText):
 
     def keypress(self, size, key):
         if key == ' ':
-            self._callback(day=self.state.day, month=self.state.month, year=self.state.year)
+            self._callback(self.state)
         else:
             return key
 
@@ -125,14 +125,23 @@ class Calendar(WidgetWrap):
         super().__init__(self._make(date))
 
     def _make(self, date):
-        title = Columns([Padding(Month((date.month, date.year), lambda my: self._date_changed(month=my[0], year=my[1])),
+        title = Columns([Padding(Month((date.month, date.year), self._month_year_changed),
                                  align='center', width='pack'),
-                         Padding(Year(date.year, lambda y: self._date_changed(year=y)),
+                         Padding(Year(date.year, self._year_changed),
                                  align='center', width='pack')])
         # separate title from days to avoid focus problems
         return Fixed(Pile([title, Days(date, self._date_changed)]), 20)
 
-    def _date_changed(self, day=None, month=None, year=None):
+    def _year_changed(self, year):
+        self._changed(year=year)
+
+    def _month_year_changed(self, month_year):
+        self._changed(month=month_year[0], year=month_year[1])
+
+    def _date_changed(self, date):
+        self._changed(day=date.day, month=date.month, year=date.year)
+
+    def _changed(self, day=None, month=None, year=None):
         if day is None: day = self._date.day
         if month is None: month = self._date.month
         if year is None: year = self._date.year
