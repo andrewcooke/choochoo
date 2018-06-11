@@ -75,12 +75,18 @@ class Day(ImmutableFocusedText):
     def state_as_text(self):
         return '%2s' % self.state.day
 
-    # todo - mouse and ocmmand map?
     def keypress(self, size, key):
-        if key == ' ':
+        if self._command_map[key] == 'activate':
             emit_signal(self, 'click', self.state)
         else:
             return key
+
+    def mouse_event(self, size, event, button, col, row, focus):
+        if event == 'mouse release' and focus:
+            emit_signal(self, 'click', self.state)
+            return True
+        else:
+            return False
 
 
 class Days(WidgetWrap):

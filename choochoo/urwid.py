@@ -88,7 +88,7 @@ class MutableFocusedText(ImmutableFocusedText):
     - the state may be changed
     """
 
-    signals = ['change']
+    signals = ['change', 'postchange']
 
     def __init__(self, state, plain=None, focus=None):
         super().__init__(state, plain=plain, focus=focus)
@@ -99,8 +99,9 @@ class MutableFocusedText(ImmutableFocusedText):
     def _set_state(self, state):
         if state != self._state:
             self._state = state
-            self._update_text()
             emit_signal(self, 'change', state)
+            self._update_text()
+            emit_signal(self, 'postchange', state)
 
     state = property(_get_state, _set_state)
 
