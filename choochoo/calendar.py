@@ -4,7 +4,9 @@ from calendar import month_name, day_abbr, Calendar, monthrange
 
 from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding, emit_signal, connect_signal
 
-from .urwid import Focus, ImmutableFocusedText, MutableFocusedText, Fixed
+from .urweird.focus import Focus
+from .urweird.state import ImmutableFocusedText, MutableFocusedText
+from .urweird.fixed import Fixed
 from .utils import sign
 
 
@@ -130,7 +132,7 @@ class Calendar(WidgetWrap):
     Displays a text calendar with signal when date changed.
     """
 
-    signals = ['change']
+    signals = ['change', 'postchange']
 
     def __init__(self, date=None):
         if not date: date = dt.date.today()
@@ -163,8 +165,10 @@ class Calendar(WidgetWrap):
         day = min(day, monthrange(year, month)[1])
         date = dt.date(year, month, day)
         if date != self._date:
+            emit_signal(self, 'change', date)
+            old_date = date
             self._date = date
             focus = Focus(self._w)
             self._w = self._make(self._date)
             focus.apply(self._w)
-            emit_signal(self, 'change', self._date)
+            emit_signal(self, 'postchange', old_date)
