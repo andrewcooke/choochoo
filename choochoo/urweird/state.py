@@ -4,17 +4,13 @@ from urwid import WidgetWrap, AttrMap, Text, emit_signal
 
 class ImmutableFocusedText(WidgetWrap):
     """
-    A text class where:
-    - the text depends on some state
-    - the appearance can change depending on focus
+    A text class where the text depends on some state
     """
 
-    def __init__(self, state, plain=None, focus=None):
+    def __init__(self, state):
         self._text = Text('')
         self._text._selectable = True
-        if plain is None: plain = 'plain'
-        if focus is None: focus = plain + '-focus'
-        super().__init__(AttrMap(self._text, plain, focus))
+        super().__init__(self._text)
         self._state = state
         self._selectable = True
         self._update_text()
@@ -36,16 +32,11 @@ class ImmutableFocusedText(WidgetWrap):
 
 class MutableFocusedText(ImmutableFocusedText):
     """
-    A text class where:
-    - the text depends on some state
-    - the appearance can change depending on focus
-    - the state may be changed
+    A text class where the text depends on some state and
+    the state may be changed
     """
 
     signals = ['change', 'postchange']
-
-    def __init__(self, state, plain=None, focus=None):
-        super().__init__(state, plain=plain, focus=focus)
 
     def _get_state(self):
         return self._state

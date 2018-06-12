@@ -4,7 +4,7 @@ from calendar import month_name, day_abbr, Calendar, monthrange
 
 from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding, emit_signal, connect_signal
 
-from .urweird.focus import Focus
+from .urweird.focus import Focus, FocusAttr
 from .urweird.state import ImmutableFocusedText, MutableFocusedText
 from .urweird.fixed import Fixed
 from .utils import sign
@@ -15,9 +15,6 @@ DAYS = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
 
 
 class Month(MutableFocusedText):
-
-    def __init__(self, month_year, plain=None, focus=None):
-        super().__init__(month_year, plain=plain, focus=focus)
 
     def keypress(self, size, key):
         month, year = self.state
@@ -51,9 +48,6 @@ class Month(MutableFocusedText):
 
 class Year(MutableFocusedText):
 
-    def __init__(self, year, plain=None, focus=None):
-        super().__init__(year, plain=plain, focus=focus)
-
     def keypress(self, size, key):
         if '0' <= key <= '9':
             delta = int(key) - self.state % 10
@@ -70,9 +64,6 @@ class Year(MutableFocusedText):
 class Day(ImmutableFocusedText):
 
     signals = ['click']
-
-    def __init__(self, date, plain=None, focus=None):
-        super().__init__(date, plain=plain, focus=focus)
 
     def state_as_text(self):
         return '%2s' % self.state.day
@@ -113,16 +104,16 @@ class Days(WidgetWrap):
             extra_days = 0
         else:
             total_days += extra_days
-        dates = [Day(dt.date(prev.year, prev.month, i), 'unimportant')
+        dates = [FocusAttr(Day(dt.date(prev.year, prev.month, i)), 'unimportant')
                  for i in range(prev_days - first_day + 1, prev_days + 1)]
-        dates.extend([Day(dt.date(date.year, date.month, i),
-                          plain='selected' if i == date.day else 'plain',
-                          focus='selected-focus' if i == date.day else 'plain-focus')
+        dates.extend([FocusAttr(Day(dt.date(date.year, date.month, i)),
+                                plain='selected' if i == date.day else 'plain',
+                                focus='selected-focus' if i == date.day else 'plain-focus')
                       for i in range(1, curr_days + 1)])
-        dates.extend([Day(dt.date(next.year, next.month, i), 'unimportant')
+        dates.extend([FocusAttr(Day(dt.date(next.year, next.month, i)), 'unimportant')
                       for i in range(1, extra_days + 1)])
         for day in dates:
-            connect_signal(day, 'click', calendar._date_changed)
+            connect_signal(day._original_widget, 'click', calendar._date_changed)
         dates = GridFlow(dates, 2, 1, 0, 'left')
         return Pile([names, dates])
 
@@ -144,8 +135,8 @@ class Calendar(WidgetWrap):
         connect_signal(month, 'change', self._month_year_changed)
         year = Year(date.year)
         connect_signal(year, 'change', self._year_changed)
-        title = Columns([Padding(month, align='center', width='pack'),
-                         Padding(year, align='center', width='pack')])
+        title = Columns([Padding(FocusAttr(month), align='center', width='pack'),
+                         Padding(FocusAttr(year), align='center', width='pack')])
         return Fixed(Pile([title, Days(date, self)]), 20)
 
     def _year_changed(self, year):

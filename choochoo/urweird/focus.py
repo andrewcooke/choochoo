@@ -1,3 +1,4 @@
+from urwid import AttrMap
 
 
 class Focus:
@@ -42,3 +43,11 @@ class Focus:
                     w = w._wrapped_widget
                 else:
                     raise e
+
+
+class FocusAttr(AttrMap):
+
+    def __init__(self, w, plain=None, focus=None):
+        if plain is None: plain = 'plain'
+        if focus is None: focus = plain + '-focus'
+        super().__init__(w, plain, focus)
