@@ -2,10 +2,10 @@
 from urwid import Text, MainLoop, Frame, Padding, Filler, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
 
 from .database import Database
-from .urweird.calendar import Calendar
-from .urweird.decorators import Border
-from .urweird.focus import FocusAttr
-from .urweird.tabs import TabManager
+from .uweird.calendar import Calendar
+from .uweird.decorators import Border
+from .uweird.focus import FocusAttr
+from .uweird.tabs import TabManager
 
 
 class Diary(WidgetWrap):
