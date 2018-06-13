@@ -4,7 +4,7 @@ from calendar import month_name, day_abbr, Calendar, monthrange
 
 from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding, emit_signal, connect_signal
 
-from .urweird.focus import Focus, FocusAttr
+from .urweird.focus import FocusFor, FocusAttr
 from .urweird.state import ImmutableFocusedText, MutableFocusedText
 from .urweird.fixed import Fixed
 from .utils import sign
@@ -159,7 +159,7 @@ class Calendar(WidgetWrap):
             emit_signal(self, 'change', date)
             old_date = date
             self._date = date
-            focus = Focus(self._w)
+            focus = FocusFor(self._w)
             self._w = self._make(self._date)
             focus.apply(self._w)
             emit_signal(self, 'postchange', old_date)

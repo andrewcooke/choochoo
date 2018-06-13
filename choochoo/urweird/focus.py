@@ -1,35 +1,37 @@
-from urwid import AttrMap
+
+from urwid import AttrMap, Widget
 
 
 class Focus:
     """
-    Record focus from a complex container and then re-apply (eg when the widget
-    has been rebuilt).
+    Store and apply a focus path.
     """
 
-    def __init__(self, w):
-        self._focus = []
-        try:
-            while True:
-                w = self._container(w)
-                self._focus.append(w.focus_position)
-                w = w.contents[w.focus_position][0]
-        except IndexError:
-            pass
+    def __init__(self, focus):
+        self._focus = focus
 
-    def apply(self, w):
-        for f in self._focus:
-            w = self._container(w)
-            # the container may have changed size and if we're "off the end" then
-            # we'll get an error.  so progressively retract until it works.
-            while True:
+    def apply(self, widget):
+        for focus in self._focus:
+            widget = self._container(widget)
+            try:
+                widget.focus_position = focus
+            except Exception:
+                # the container may have changed
+                # a common case is contents as list, so let's try setting to end of list
                 try:
-                    w.focus_position = f
+                    widget.focus_position = len(widget.contents) - 1
+                except Exception:
+                    return
+            widgets = widget.contents[widget.focus_position]
+            try:
+                iter(widgets)
+            except TypeError:
+                widgets = [widgets]
+            for widget in widgets:
+                if isinstance(widget, Widget):
                     break
-                except IndexError:
-                    f -= 1
-                    if f < 0: return  # give up
-            w = w.contents[f][0]
+            else:
+                return
 
     def _container(self, w):
         while True:
@@ -43,6 +45,24 @@ class Focus:
                     w = w._wrapped_widget
                 else:
                     raise e
+
+
+class FocusFor(Focus):
+    """
+    Record focus from a complex container and then re-apply (eg when the widget
+    has been rebuilt).
+    """
+
+    def __init__(self, w):
+        focus = []
+        try:
+            while True:
+                w = self._container(w)
+                focus.append(w.focus_position)
+                w = w.contents[w.focus_position][0]
+        except IndexError:
+            pass
+        super().__init__(focus)
 
 
 class FocusAttr(AttrMap):
