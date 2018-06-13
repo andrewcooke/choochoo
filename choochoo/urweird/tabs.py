@@ -18,6 +18,20 @@ class TabTarget(WidgetWrap):
 
 
 class TabManager:
+    """
+    Stand-alone, high-level (you get to choose which major widgets are
+    included) tab-selection.  Call add() with the widgets in the tab
+    order, and build with the returned (wrapped) widget.  Then register
+    the root widget with discover().
+
+    This works by introspection, so all widgets must follow the standards
+    of the urwid library/.  Containers must be list or dict-like.  Other
+    widgets that wrap must use _original_widget or _wrapped_widget
+    attributes.
+
+    Currently does not handle changes to the Widget tree (although
+    changes internal to the targets are unimportant).
+    """
 
     def __init__(self):
         self._widgets_indices = {}
@@ -26,6 +40,11 @@ class TabManager:
         self._discovered = False
 
     def add(self, widget):
+        """
+        Add widgets in order here.
+
+        The returned (wrapped) value should be used in TUI construction.
+        """
         widget = TabTarget(widget)
         assert widget not in self._widgets_indices
         n = len(self._focus)
@@ -37,10 +56,16 @@ class TabManager:
         return widget
 
     def forwards(self, widget):
+        """
+        Signal target for tabbing forwards.
+        """
         n = self._widgets_indices[widget]
         self._set_focus(self._widgets_indices[(n + 1) % len(self._focus)])
 
     def backwards(self, widget):
+        """
+        Signal target for tabbing backwards.
+        """
         n = self._widgets_indices[widget]
         self._set_focus(self._widgets_indices[(n - 1) % len(self._focus)])
 
@@ -49,9 +74,14 @@ class TabManager:
         self._focus[widget].apply(self._root)
 
     def discover(self, root):
+        """
+        Register the root widget here before use.
+
+        Does a search of teh entire widget tree, recording paths to added widgets
+        so that they can be given focus quickly.
+        """
         self._root = root
-        assert self._root
-        stack = [(self._root, [])]
+        stack = [(root, [])]
         while stack:
             node, path = stack.pop()
             try:

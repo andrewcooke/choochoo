@@ -22,16 +22,7 @@ class Focus:
                     widget.focus_position = len(widget.contents) - 1
                 except Exception:
                     return
-            widgets = widget.contents[widget.focus_position]
-            try:
-                iter(widgets)
-            except TypeError:
-                widgets = [widgets]
-            for widget in widgets:
-                if isinstance(widget, Widget):
-                    break
-            else:
-                return
+            widget = self._find_widget(widget.contents[widget.focus_position])
 
     def _container(self, w):
         while True:
@@ -46,6 +37,15 @@ class Focus:
                 else:
                     raise e
 
+    def _find_widget(self, widgets):
+        if not isinstance(widgets, tuple):
+            widgets = [widgets]
+        for widget in widgets:
+            if isinstance(widget, Widget):
+                return widget
+        raise Exception('No widget in %s' % str(widgets))
+
+
 
 class FocusFor(Focus):
     """
@@ -53,14 +53,14 @@ class FocusFor(Focus):
     has been rebuilt).
     """
 
-    def __init__(self, w):
+    def __init__(self, widget):
         focus = []
         try:
             while True:
-                w = self._container(w)
-                focus.append(w.focus_position)
-                w = w.contents[w.focus_position][0]
-        except IndexError:
+                widget = self._container(widget)
+                focus.append(widget.focus_position)
+                widget = self._find_widget(widget.contents[widget.focus_position][0])
+        except IndexError:  # as far down as we can go
             pass
         super().__init__(focus)
 
