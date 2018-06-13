@@ -46,7 +46,6 @@ class Focus:
         raise Exception('No widget in %s' % str(widgets))
 
 
-
 class FocusFor(Focus):
     """
     Record focus from a complex container and then re-apply (eg when the widget

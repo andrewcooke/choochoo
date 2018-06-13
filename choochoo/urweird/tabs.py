@@ -37,7 +37,6 @@ class TabManager:
         self._widgets_indices = {}
         self._focus = {}
         self._root = None
-        self._discovered = False
 
     def add(self, widget):
         """
@@ -70,7 +69,6 @@ class TabManager:
         self._set_focus(self._widgets_indices[(n - 1) % len(self._focus)])
 
     def _set_focus(self, widget):
-        assert self._discovered
         self._focus[widget].apply(self._root)
 
     def discover(self, root):
@@ -118,4 +116,3 @@ class TabManager:
         for widget in self._focus:
             if not self._focus[widget]:
                 raise Exception('Could not find %s' % widget)
-        self._discovered = True

@@ -5,7 +5,7 @@ from calendar import month_name, day_abbr, Calendar, monthrange
 from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding, emit_signal, connect_signal
 
 from .urweird.focus import FocusFor, FocusAttr
-from .urweird.state import ImmutableFocusedText, MutableFocusedText
+from .urweird.state import ImmutableStatefulText, MutableStatefulText
 from .urweird.fixed import Fixed
 from .utils import sign
 
@@ -14,7 +14,21 @@ MONTHS = month_name
 DAYS = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
 
 
-class Month(MutableFocusedText):
+def add_month(month, year, sign):
+    if sign > 0:
+        if month == 12:
+            month, year = 1, year + 1
+        else:
+            month, year = month + 1, year
+    else:
+        if month == 1:
+            month, year = 12, year - 1
+        else:
+            month, year = month - 1, year
+    return month, year
+
+
+class Month(MutableStatefulText):
 
     def keypress(self, size, key):
         month, year = self.state
@@ -26,18 +40,8 @@ class Month(MutableFocusedText):
                 if MONTHS[month].lower().startswith(key):
                     self.state = month, year
                     return
-        elif key == '+':
-            if month == 12:
-                month, year = 1, year + 1
-            else:
-                month, year = month + 1, year
-            self.state = month, year
-            return
-        elif key == '-':
-            if month == 1:
-                month, year = 12, year - 1
-            else:
-                month, year = month - 1, year
+        elif key in '+-':
+            month, year = add_month(month, year, 1 if key == '+' else -1)
             self.state = month, year
             return
         return key
@@ -46,7 +50,7 @@ class Month(MutableFocusedText):
         return MONTHS[self.state[0]]
 
 
-class Year(MutableFocusedText):
+class Year(MutableStatefulText):
 
     def keypress(self, size, key):
         if '0' <= key <= '9':
@@ -61,7 +65,7 @@ class Year(MutableFocusedText):
         return key
 
 
-class Day(ImmutableFocusedText):
+class Day(ImmutableStatefulText):
 
     signals = ['click']
 
@@ -118,6 +122,34 @@ class Days(WidgetWrap):
         return Pile([names, dates])
 
 
+class QuickChange(MutableStatefulText):
+
+    def __init__(self, date, symbol, sign):
+        self._date = date
+        self._symbol = symbol
+        self._sign = sign
+        super().__init__(date)
+
+    def state_as_text(self):
+        return self._symbol
+
+    def keypress(self, size, key):
+        if key in ' +-':
+            self.state = self.state + self._sign * dt.timedelta(days=1) * (-1 if key == '-' else 1)
+        elif '0' <= key <= '9':
+            self.state = self.state + self._sign * dt.timedelta(days=1) * (10 if key == '0' else int(key))
+        elif key == 'm':
+            month, year = add_month(self.state.month, self.state.year, self._sign)
+            day = min(self.state.day, monthrange(year, month)[1])
+            self.state = dt.date(year, month, day)
+        elif key == 'y':
+            year = self.state.year + 1
+            day = min(self.state.day, monthrange(year, self.state.month)[1])
+            self.state = dt.date(year, self.state.month, day)
+        else:
+            return key
+
+
 class Calendar(WidgetWrap):
     """
     Displays a text calendar with signal when date changed.
@@ -131,12 +163,18 @@ class Calendar(WidgetWrap):
         super().__init__(self._make(date))
 
     def _make(self, date):
+        down = QuickChange(date, '<', -1)
+        connect_signal(down, 'change', self._date_changed)
+        up = QuickChange(date, '>', 1)
+        connect_signal(up, 'change', self._date_changed)
         month = Month((date.month, date.year))
         connect_signal(month, 'change', self._month_year_changed)
         year = Year(date.year)
         connect_signal(year, 'change', self._year_changed)
-        title = Columns([Padding(FocusAttr(month), align='center', width='pack'),
-                         Padding(FocusAttr(year), align='center', width='pack')])
+        title = Columns([(1, FocusAttr(down)),
+                         (1, FocusAttr(up)),
+                         ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
+                         (4, FocusAttr(year))])
         return Fixed(Pile([title, Days(date, self)]), 20)
 
     def _year_changed(self, year):

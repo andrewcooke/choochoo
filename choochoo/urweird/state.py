@@ -2,7 +2,7 @@
 from urwid import WidgetWrap, AttrMap, Text, emit_signal
 
 
-class ImmutableFocusedText(WidgetWrap):
+class ImmutableStatefulText(WidgetWrap):
     """
     A text class where the text depends on some state
     """
@@ -30,7 +30,7 @@ class ImmutableFocusedText(WidgetWrap):
         return key
 
 
-class MutableFocusedText(ImmutableFocusedText):
+class MutableStatefulText(ImmutableStatefulText):
     """
     A text class where the text depends on some state and
     the state may be changed
