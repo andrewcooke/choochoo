@@ -123,6 +123,10 @@ class Days(WidgetWrap):
 
 
 class QuickChange(MutableStatefulText):
+    """
+    < or > at the top left of the calendar - change by a day, or number of days, or
+    a week, month, or year.
+    """
 
     def __init__(self, date, symbol, sign):
         self._date = date
@@ -138,6 +142,8 @@ class QuickChange(MutableStatefulText):
             self.state = self.state + self._sign * dt.timedelta(days=1) * (-1 if key == '-' else 1)
         elif '0' <= key <= '9':
             self.state = self.state + self._sign * dt.timedelta(days=1) * (10 if key == '0' else int(key))
+        elif key == 'w':
+            self.state = self.state + self._sign * dt.timedelta(days=1) * 7
         elif key == 'm':
             month, year = add_month(self.state.month, self.state.year, self._sign)
             day = min(self.state.day, monthrange(year, month)[1])
