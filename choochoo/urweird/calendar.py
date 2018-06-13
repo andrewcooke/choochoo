@@ -4,10 +4,10 @@ from calendar import month_name, day_abbr, Calendar, monthrange
 
 from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding, emit_signal, connect_signal
 
-from .urweird.focus import FocusFor, FocusAttr
-from .urweird.state import ImmutableStatefulText, MutableStatefulText
-from .urweird.fixed import Fixed
-from .utils import sign
+from .focus import FocusFor, FocusAttr
+from .state import ImmutableStatefulText, MutableStatefulText
+from .fixed import Fixed
+from ..utils import sign
 
 
 MONTHS = month_name
@@ -26,6 +26,10 @@ def add_month(month, year, sign):
         else:
             month, year = month - 1, year
     return month, year
+
+
+def clip_day(day, month, year):
+    return min(day, monthrange(year, month)[1])
 
 
 class Month(MutableStatefulText):
@@ -117,7 +121,7 @@ class Days(WidgetWrap):
         dates.extend([FocusAttr(Day(dt.date(next.year, next.month, i)), 'unimportant')
                       for i in range(1, extra_days + 1)])
         for day in dates:
-            connect_signal(day._original_widget, 'click', calendar._date_changed)
+            connect_signal(day._original_widget, 'click', calendar._date_change)
         dates = GridFlow(dates, 2, 1, 0, 'left')
         return Pile([names, dates])
 
@@ -146,11 +150,11 @@ class QuickChange(MutableStatefulText):
             self.state = self.state + self._sign * dt.timedelta(days=1) * 7
         elif key == 'm':
             month, year = add_month(self.state.month, self.state.year, self._sign)
-            day = min(self.state.day, monthrange(year, month)[1])
+            day = clip_day(self.state.day, month, year)
             self.state = dt.date(year, month, day)
         elif key == 'y':
             year = self.state.year + 1
-            day = min(self.state.day, monthrange(year, self.state.month)[1])
+            day = clip_day(self.state.day, self.state.month, year)
             self.state = dt.date(year, self.state.month, day)
         else:
             return key
@@ -168,36 +172,40 @@ class Calendar(WidgetWrap):
         self._date = date
         super().__init__(self._make(date))
 
+    @property
+    def date(self):
+        return self._date
+
     def _make(self, date):
         down = QuickChange(date, '<', -1)
-        connect_signal(down, 'change', self._date_changed)
+        connect_signal(down, 'change', self._date_change)
         up = QuickChange(date, '>', 1)
-        connect_signal(up, 'change', self._date_changed)
+        connect_signal(up, 'change', self._date_change)
         month = Month((date.month, date.year))
-        connect_signal(month, 'change', self._month_year_changed)
+        connect_signal(month, 'change', self._month_year_change)
         year = Year(date.year)
-        connect_signal(year, 'change', self._year_changed)
+        connect_signal(year, 'change', self._year_change)
         title = Columns([(1, FocusAttr(down)),
                          (1, FocusAttr(up)),
                          ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
                          (4, FocusAttr(year))])
         return Fixed(Pile([title, Days(date, self)]), 20)
 
-    def _year_changed(self, year):
-        self._changed(year=year)
+    def _year_change(self, year):
+        self._change(year=year)
 
-    def _month_year_changed(self, month_year):
-        self._changed(month=month_year[0], year=month_year[1])
+    def _month_year_change(self, month_year):
+        self._change(month=month_year[0], year=month_year[1])
 
-    def _date_changed(self, date):
-        self._changed(day=date.day, month=date.month, year=date.year)
+    def _date_change(self, date):
+        self._change(day=date.day, month=date.month, year=date.year)
 
-    def _changed(self, day=None, month=None, year=None):
+    def _change(self, day=None, month=None, year=None):
         if day is None: day = self._date.day
         if month is None: month = self._date.month
         if year is None: year = self._date.year
         # if the month is shorter we may need to change days
-        day = min(day, monthrange(year, month)[1])
+        day = clip_day(day, month, year)
         date = dt.date(year, month, day)
         if date != self._date:
             emit_signal(self, 'change', date)
