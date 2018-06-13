@@ -2,7 +2,7 @@
 from argparse import ArgumentParser
 from genericpath import exists
 from os import makedirs
-from os.path import dirname, expanduser, realpath, normpath
+from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
@@ -14,6 +14,7 @@ DIARY = 'diary'
 
 ROOT = 'root'
 DATABASE = 'database'
+LOGS = 'logs'
 
 
 def mm(name): return '--' + name
@@ -36,7 +37,10 @@ class NamespaceWithVariables(Mapping):
         return sub(r'\$\$', '$', value)
 
     def path(self, name):
-        return realpath(normpath(expanduser(self[name])))
+        path = expanduser(self[name])
+        if relpath(path):
+            path = join(self[ROOT], path)
+        return realpath(normpath(path))
 
     def file(self, name):
         file = self.path(name)
@@ -62,6 +66,8 @@ def parser():
     p = ArgumentParser()
     p.add_argument(mm(ROOT), action='store', default='~/choochoo', metavar='DIR',
                    help='The root directory for the default configuration')
+    p.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
+                   help='The directory for logs')
     p.add_argument(mm(DATABASE), action='store', default='${root}/database.sql', metavar='FILE',
                    help='The database file')
     subparsers = p.add_subparsers()

@@ -5,6 +5,11 @@ from .focus import Focus
 
 
 class TabTarget(WidgetWrap):
+    """
+    Add keypress logic to widgets that are targets of tabbing.
+
+    Do not use directly - use TabManager.add().
+    """
 
     signals = ['tabforwards', 'tabbackwards']
 
@@ -24,12 +29,12 @@ class TabManager:
     order, and build with the returned (wrapped) widget.  Then register
     the root widget with discover().
 
-    This works by introspection, so all widgets must follow the standards
-    of the urwid library/.  Containers must be list or dict-like.  Other
-    widgets that wrap must use _original_widget or _wrapped_widget
+    This works by introspection, so all widgets must follow the
+    conventions of the urwid library.  Containers must be list or dict-like.
+    Other widgets that wrap must use _original_widget or _wrapped_widget
     attributes.
 
-    Currently does not handle changes to the Widget tree (although
+    Currently does not handle changes to the widget tree (although
     changes internal to the targets are unimportant).
     """
 
@@ -75,7 +80,7 @@ class TabManager:
         """
         Register the root widget here before use.
 
-        Does a search of teh entire widget tree, recording paths to added widgets
+        Does a search of the entire widget tree, recording paths to added widgets
         so that they can be given focus quickly.
         """
         self._root = root
