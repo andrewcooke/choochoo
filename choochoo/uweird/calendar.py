@@ -78,13 +78,13 @@ class Day(ImmutableStatefulText):
 
     def keypress(self, size, key):
         if self._command_map[key] == 'activate':
-            emit_signal(self, 'click', self.state)
+            emit_signal(self, 'click', self, self.state)
         else:
             return key
 
     def mouse_event(self, size, event, button, col, row, focus):
         if event == 'mouse release' and focus:
-            emit_signal(self, 'click', self.state)
+            emit_signal(self, 'click', self, self.state)
             return True
         else:
             return False
@@ -126,20 +126,26 @@ class Days(WidgetWrap):
         return Pile([names, dates])
 
 
-class QuickChange(MutableStatefulText):
+class StatefulSymbol(MutableStatefulText):
+
+    def __init__(self, state, symbol):
+        self._symbol = symbol
+        # call super after saving symbol so we can display it
+        super().__init__(state)
+
+    def state_as_text(self):
+        return self._symbol
+
+
+class QuickChange(StatefulSymbol):
     """
     < or > at the top left of the calendar - change by a day, or number of days, or
     a week, month, or year.
     """
 
     def __init__(self, date, symbol, sign):
-        self._date = date
-        self._symbol = symbol
+        super().__init__(date, symbol)
         self._sign = sign
-        super().__init__(date)
-
-    def state_as_text(self):
-        return self._symbol
 
     def keypress(self, size, key):
         if key in ' +-':
@@ -156,8 +162,35 @@ class QuickChange(MutableStatefulText):
             year = self.state.year + 1
             day = clip_day(self.state.day, self.state.month, year)
             self.state = dt.date(year, self.state.month, day)
+        elif key == '=':
+            self.state = dt.date.today()
         else:
             return key
+
+
+class Today(StatefulSymbol):
+    """
+    Shortcut for today's date,
+    """
+
+    signals = ['click']
+
+    def __init__(self, symbol):
+        # actually a hack because we have no state
+        super().__init__(None, symbol)
+
+    def keypress(self, size, key):
+        if self._command_map[key] == 'activate':
+            emit_signal(self, 'click', self, dt.date.today())
+        else:
+            return key
+
+    def mouse_event(self, size, event, button, col, row, focus):
+        if event == 'mouse release' and focus:
+            emit_signal(self, 'click', self, dt.date.today())
+            return True
+        else:
+            return False
 
 
 class Calendar(WidgetWrap):
@@ -179,6 +212,8 @@ class Calendar(WidgetWrap):
     def _make(self, date):
         down = QuickChange(date, '<', -1)
         connect_signal(down, 'change', self._date_change)
+        today = Today('=')
+        connect_signal(today, 'click', self._date_change)
         up = QuickChange(date, '>', 1)
         connect_signal(up, 'change', self._date_change)
         month = Month((date.month, date.year))
@@ -186,18 +221,19 @@ class Calendar(WidgetWrap):
         year = Year(date.year)
         connect_signal(year, 'change', self._year_change)
         title = Columns([(1, FocusAttr(down)),
+                         (1, FocusAttr(today)),
                          (1, FocusAttr(up)),
                          ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
                          (4, FocusAttr(year))])
         return Fixed(Pile([title, Days(date, self)]), 20)
 
-    def _year_change(self, year):
+    def _year_change(self, unused_widget, year):
         self._change(year=year)
 
-    def _month_year_change(self, month_year):
+    def _month_year_change(self, unused_widget, month_year):
         self._change(month=month_year[0], year=month_year[1])
 
-    def _date_change(self, date):
+    def _date_change(self, unused_widget, date):
         self._change(day=date.day, month=date.month, year=date.year)
 
     def _change(self, day=None, month=None, year=None):
@@ -208,10 +244,11 @@ class Calendar(WidgetWrap):
         day = clip_day(day, month, year)
         date = dt.date(year, month, day)
         if date != self._date:
-            emit_signal(self, 'change', date)
+            # again, arg convention matches Edit
+            emit_signal(self, 'change', self, date)
             old_date = date
             self._date = date
             focus = FocusFor(self._w)
             self._w = self._make(self._date)
             focus.apply(self._w)
-            emit_signal(self, 'postchange', old_date)
+            emit_signal(self, 'postchange', self, old_date)

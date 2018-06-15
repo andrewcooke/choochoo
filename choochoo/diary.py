@@ -1,10 +1,10 @@
 
-from urwid import Text, MainLoop, Frame, Padding, Filler, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
+from urwid import Text, MainLoop, Frame, Padding, Filler, Pile, Columns, Divider, connect_signal
 
-from .log import make_log
 from .database import Database
+from .log import make_log
 from .uweird.calendar import Calendar
-from .uweird.database import SingleTableBinder
+from .uweird.database import SingleTableBinder, NoneProofEdit
 from .uweird.decorators import Border
 from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
@@ -13,7 +13,7 @@ from .uweird.tabs import TabManager
 def make(binder, tab_manager):
     calendar = Calendar()
     connect_signal(calendar, 'change', binder.update_key)
-    notes = Edit(caption="Notes: ")
+    notes = NoneProofEdit(caption="Notes: ")
     binder.bind(notes, 'notes')
     body = Filler(
         Pile([Divider(),
@@ -21,7 +21,7 @@ def make(binder, tab_manager):
                        ('weight', 1, tab_manager.add(FocusAttr(notes)))],
                       dividechars=2)]),
         valign='top')
-    binder.update_key(calendar.date)
+    binder.update_key(None, calendar.date)
     return Border(Frame(body, header=Text('Diary')))
 
 

@@ -27,6 +27,7 @@ class ImmutableStatefulText(WidgetWrap):
         self._invalidate()
 
     def keypress(self, size, key):
+        # need this because selectable
         return key
 
 
@@ -45,9 +46,10 @@ class MutableStatefulText(ImmutableStatefulText):
         if state != self._state:
             old_state = self._state
             self._state = state
-            emit_signal(self, 'change', state)
+            # argument list to match Edit behaviour
+            emit_signal(self, 'change', self, state)
             self._update_text()
             # this is similar behaviour to the edit widget
-            emit_signal(self, 'postchange', old_state)
+            emit_signal(self, 'postchange', self, old_state)
 
     state = property(_get_state, _set_state)

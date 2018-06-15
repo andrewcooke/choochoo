@@ -1,5 +1,5 @@
 
-from urwid import connect_signal
+from urwid import connect_signal, Edit
 
 
 class KeyedBinder:
@@ -29,7 +29,7 @@ class KeyedBinder:
     def _save_widget_value(self, name, unused_widget, value):
         self._data[name] = value
 
-    def update_key(self, key):
+    def update_key(self, unused_widget, key):
         """
         Connect to change signal for key.  Can also be called initially to load
         first data.
@@ -102,3 +102,11 @@ class SingleTableBinder(KeyedBinder):
             except TypeError as e:
                 self._log.error(e)
                 self._data[name] = None
+
+
+class NoneProofEdit(Edit):
+
+    def set_edit_text(self, text):
+        if text is None:
+            text = ''
+        super().set_edit_text(text)
