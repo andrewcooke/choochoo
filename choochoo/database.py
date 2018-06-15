@@ -6,8 +6,10 @@ from .args import DATABASE
 
 class Database:
 
-    def __init__(self, args):
-        self.db = connect(args.file(DATABASE))
+    def __init__(self, args, log):
+        path = args.file(DATABASE)
+        log.info('Using database at %s' % path)
+        self.db = connect(path, isolation_level=None)
         self._create_tables()
 
     @staticmethod

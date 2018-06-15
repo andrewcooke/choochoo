@@ -38,8 +38,8 @@ class NamespaceWithVariables(Mapping):
 
     def path(self, name):
         path = expanduser(self[name])
-        if relpath(path):
-            path = join(self[ROOT], path)
+        if relpath(path) and name != ROOT:
+            path = join(self.path(ROOT), path)
         return realpath(normpath(path))
 
     def file(self, name):
