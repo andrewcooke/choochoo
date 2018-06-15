@@ -1,5 +1,5 @@
 
-from sqlite3 import connect
+from sqlite3 import connect, Row
 
 from .args import DATABASE
 
@@ -10,6 +10,7 @@ class Database:
         path = args.file(DATABASE)
         log.info('Using database at %s' % path)
         self.db = connect(path, isolation_level=None)
+        self.db.row_factory = Row
         self._create_tables()
 
     @staticmethod

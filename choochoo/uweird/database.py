@@ -4,7 +4,10 @@ from urwid import connect_signal
 
 class KeyedBinder:
     """
-    Associated a set of fields with the database via a single key.
+    Associate a set of fields with the database via a single key.
+
+    Idea stolen from https://martinfowler.com/eaaDev/uiArchs.html
+    but I may have misunderstood.
     """
 
     def __init__(self, db, log, key_transform=None):
@@ -52,9 +55,15 @@ class KeyedBinder:
                 self._log.error('Cannot set value on %s (%s)' % (widget, dir(widget)))
 
     def write_values_to_db(self):
+        """
+        Subclasses must write data to database using the key.
+        """
         raise NotImplemented()
 
     def read_values_from_db(self):
+        """
+        Subclasses must read data from the database using the key.
+        """
         raise NotImplemented()
 
 
@@ -86,9 +95,9 @@ class SingleTableBinder(KeyedBinder):
         self._log.debug('%s / %s' % (cmd, self._key))
         row = self._db.db.execute(cmd, (self._key, )).fetchone()
         self._data = {}
-        for i, name in enumerate(self._widget_names.values()):
+        for name in self._widget_names.values():
             try:
-                self._data[name] = row[i]
+                self._data[name] = row[name]
                 self._log.debug('Read %s=%s' % (name, self._data[name]))
             except TypeError as e:
                 self._log.error(e)
