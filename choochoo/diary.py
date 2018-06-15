@@ -10,7 +10,7 @@ from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
 
 
-def make(binder, tab_manager):
+def make_widget(binder, tab_manager):
     calendar = Calendar()
     connect_signal(calendar, 'change', binder.update_key)
     notes = NoneProofEdit(caption="Notes: ")
@@ -30,7 +30,7 @@ def main(args):
     db = Database(args, log)
     tab_manager = TabManager()
     binder = SingleTableBinder(db, log, 'diary', 'ordinal', key_transform=lambda x: x.toordinal())
-    diary = make(binder, tab_manager)
+    diary = make_widget(binder, tab_manager)
     tab_manager.discover(diary)
     MainLoop(diary,
              palette=[('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),

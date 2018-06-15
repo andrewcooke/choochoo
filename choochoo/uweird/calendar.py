@@ -48,7 +48,8 @@ class Month(MutableStatefulText):
             month, year = add_month(month, year, 1 if key == '+' else -1)
             self.state = month, year
             return
-        return key
+        else:
+            return key
 
     def state_as_text(self):
         return MONTHS[self.state[0]]
@@ -63,10 +64,11 @@ class Year(MutableStatefulText):
                 delta -= sign(delta) * 10
             self.state = self.state + delta
             return
-        if key in '-+':
+        elif key in '-+':
             self.state = self.state + (1 if key == '+' else -1)
             return
-        return key
+        else:
+            return key
 
 
 class Day(ImmutableStatefulText):
@@ -159,7 +161,7 @@ class QuickChange(StatefulSymbol):
             day = clip_day(self.state.day, month, year)
             self.state = dt.date(year, month, day)
         elif key == 'y':
-            year = self.state.year + 1
+            year = self.state.year + self._sign
             day = clip_day(self.state.day, self.state.month, year)
             self.state = dt.date(year, self.state.month, day)
         elif key == '=':
