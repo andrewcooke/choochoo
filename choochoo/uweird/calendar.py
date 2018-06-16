@@ -7,12 +7,64 @@ from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding, emit_signa
 from .focus import FocusFor, FocusAttr
 from .state import ImmutableStatefulText, MutableStatefulText
 from .fixed import Fixed
-from ..utils import sign
 
 
 MONTHS = month_name
 DAYS2 = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
 DAYS3 = list(map(lambda d: day_abbr[d][:3], Calendar(0).iterweekdays()))
+
+
+class DateKeyPressMixin:
+    """
+    Assumes self.state is a date.
+
+    default should be 'd', 'w', 'm' or 'y'
+    delta should be +1 or -1
+    """
+
+    def __init__(self, default, delta=1):
+        self.__default = default
+        self.__delta = delta
+
+    def keypress(self, size, key):
+        if self._command_map[key] == 'activate':
+            key = self.__default
+        if len(key) == 1:
+            if key == '=':
+                self.state = dt.date.today()
+                return
+            delta = self.__delta
+            if key in '+- ':
+                key = 'd' if self.__default == '=' else self.__default
+                if key == '-': delta *= -1
+            if '0' <= key <= '9':
+                delta *= 10 if key == '0' else int(key)
+                key = 'd' if self.__default == '=' else self.__default
+            if key in 'DWMY':
+                key = key.lower()
+                delta *= -1
+            if key == 'w':
+                key = 'd'
+                delta *= 7
+            if key == 'y':
+                key = 'm'
+                delta *= 12
+            if key == 'd':
+                self.state = self.state + dt.timedelta(days=delta)
+                return
+            elif key == 'm':
+                year, month, day = self.state.year, self.state.month, self.state.day
+                month += delta
+                while month < 1:
+                    year -= 1
+                    month += 12
+                while month > 12:
+                    year += 1
+                    month -= 12
+                day = min(day, monthrange(year, month)[1])
+                self.state = dt.date(year, month, day)
+                return
+        return key
 
 
 def add_month(month, year, sign):
@@ -33,43 +85,24 @@ def clip_day(day, month, year):
     return min(day, monthrange(year, month)[1])
 
 
-class Month(MutableStatefulText):
+class Month(DateKeyPressMixin, MutableStatefulText):
+
+    def __init__(self, date):
+        MutableStatefulText.__init__(self, date)
+        DateKeyPressMixin.__init__(self, 'm')
 
     def state_as_text(self):
-        return MONTHS[self.state[0]]
-
-    def keypress(self, size, key):
-        month, year = self.state
-        if 'a' <= key <= 'z' and len(key) == 1:
-            tries = 0
-            while tries < 12:
-                tries += 1
-                month = month % 12 + 1
-                if MONTHS[month].lower().startswith(key):
-                    self.state = month, year
-                    return
-        elif key in '+-':
-            month, year = add_month(month, year, 1 if key == '+' else -1)
-            self.state = month, year
-            return
-        else:
-            return key
+        return MONTHS[self.state.month]
 
 
-class Year(MutableStatefulText):
+class Year(DateKeyPressMixin, MutableStatefulText):
 
-    def keypress(self, size, key):
-        if '0' <= key <= '9' and len(key) == 1:
-            delta = int(key) - self.state % 10
-            if abs(delta) > 5:
-                delta -= sign(delta) * 10
-            self.state = self.state + delta
-            return
-        elif key in '-+':
-            self.state = self.state + (1 if key == '+' else -1)
-            return
-        else:
-            return key
+    def __init__(self, date):
+        MutableStatefulText.__init__(self, date)
+        DateKeyPressMixin.__init__(self, 'y')
+
+    def state_as_text(self):
+        return str(self.state.year)
 
 
 class Day(ImmutableStatefulText):
@@ -125,12 +158,14 @@ class Days(WidgetWrap):
         dates.extend([FocusAttr(Day(dt.date(next.year, next.month, i)), 'unimportant')
                       for i in range(1, extra_days + 1)])
         for day in dates:
-            connect_signal(day._original_widget, 'click', calendar._date_change)
+            connect_signal(day._original_widget, 'click', calendar.date_change)
         dates = GridFlow(dates, 2, 1, 0, 'left')
         return Pile([names, dates])
 
 
 class StatefulSymbol(MutableStatefulText):
+
+    signals = ['click']
 
     def __init__(self, state, symbol):
         self._symbol = symbol
@@ -140,61 +175,26 @@ class StatefulSymbol(MutableStatefulText):
     def state_as_text(self):
         return self._symbol
 
-
-class QuickChange(StatefulSymbol):
-    """
-    < or > at the top left of the calendar - change by a day, or number of days, or
-    a week, month, or year.
-    """
-
-    def __init__(self, date, symbol, sign):
-        super().__init__(date, symbol)
-        self._sign = sign
-
-    def keypress(self, size, key):
-        if key in ' +-':
-            self.state = self.state + self._sign * dt.timedelta(days=1) * (-1 if key == '-' else 1)
-        elif '0' <= key <= '9' and len(key) == 1:
-            self.state = self.state + self._sign * dt.timedelta(days=1) * (10 if key == '0' else int(key))
-        elif key == 'w':
-            self.state = self.state + self._sign * dt.timedelta(days=1) * 7
-        elif key == 'm':
-            month, year = add_month(self.state.month, self.state.year, self._sign)
-            day = clip_day(self.state.day, month, year)
-            self.state = dt.date(year, month, day)
-        elif key == 'y':
-            year = self.state.year + self._sign
-            day = clip_day(self.state.day, self.state.month, year)
-            self.state = dt.date(year, self.state.month, day)
-        elif key == '=':
-            self.state = dt.date.today()
-        else:
-            return key
-
-
-class Today(StatefulSymbol):
-    """
-    Shortcut for today's date,
-    """
-
-    signals = ['click']
-
-    def __init__(self, symbol):
-        # actually a hack because we have no state
-        super().__init__(None, symbol)
-
-    def keypress(self, size, key):
-        if self._command_map[key] == 'activate':
-            emit_signal(self, 'click', self, dt.date.today())
-        else:
-            return key
-
     def mouse_event(self, size, event, button, col, row, focus):
         if event == 'mouse release' and focus:
-            emit_signal(self, 'click', self, dt.date.today())
+            self.keypress(size, ' ')
             return True
         else:
             return False
+
+
+class QuickChange(DateKeyPressMixin, StatefulSymbol):
+
+    def __init__(self, date, symbol, sign):
+        StatefulSymbol.__init__(self, date, symbol)
+        DateKeyPressMixin.__init__(self, 'd', sign)
+
+
+class Today(DateKeyPressMixin, StatefulSymbol):
+
+    def __init__(self, date, symbol):
+        StatefulSymbol.__init__(self, date, symbol)
+        DateKeyPressMixin.__init__(self, '=')
 
 
 class BaseDate(WidgetWrap):
@@ -213,22 +213,7 @@ class BaseDate(WidgetWrap):
     def _make(self, date):
         raise NotImplemented()
 
-    def _year_change(self, unused_widget, year):
-        self._change(year=year)
-
-    def _month_year_change(self, unused_widget, month_year):
-        self._change(month=month_year[0], year=month_year[1])
-
-    def _date_change(self, unused_widget, date):
-        self._change(day=date.day, month=date.month, year=date.year)
-
-    def _change(self, day=None, month=None, year=None):
-        if day is None: day = self._date.day
-        if month is None: month = self._date.month
-        if year is None: year = self._date.year
-        # if the month is shorter we may need to change days
-        day = clip_day(day, month, year)
-        date = dt.date(year, month, day)
+    def date_change(self, unused_widget, date):
         if date != self._date:
             # again, arg convention matches Edit
             emit_signal(self, 'change', self, date)
@@ -247,15 +232,15 @@ class Calendar(BaseDate):
 
     def _make(self, date):
         down = QuickChange(date, '<', -1)
-        connect_signal(down, 'change', self._date_change)
-        today = Today('=')
-        connect_signal(today, 'click', self._date_change)
+        connect_signal(down, 'change', self.date_change)
+        today = Today(date, '=')
+        connect_signal(today, 'change', self.date_change)
         up = QuickChange(date, '>', 1)
-        connect_signal(up, 'change', self._date_change)
-        month = Month((date.month, date.year))
-        connect_signal(month, 'change', self._month_year_change)
-        year = Year(date.year)
-        connect_signal(year, 'change', self._year_change)
+        connect_signal(up, 'change', self.date_change)
+        month = Month(date)
+        connect_signal(month, 'change', self.date_change)
+        year = Year(date)
+        connect_signal(year, 'change', self.date_change)
         title = Columns([(1, FocusAttr(down)),
                          (1, FocusAttr(today)),
                          (1, FocusAttr(up)),
@@ -264,64 +249,43 @@ class Calendar(BaseDate):
         return Fixed(Pile([title, Days(date, self)]), 20)
 
 
-class DayOfMonth(MutableStatefulText):
+class DayOfMonth(DateKeyPressMixin, MutableStatefulText):
+
+    def __init__(self, state):
+        MutableStatefulText.__init__(self, state)
+        DateKeyPressMixin.__init__(self, 'd')
 
     def state_as_text(self):
         return str(self.state.day)
 
-    def keypress(self, size, key):
-        if '0' <= key <= '9' and len(key) == 1:
-            delta = int(key) - self.state.day % 10
-            if abs(delta) > 5:
-                delta -= sign(delta) * 10
-            self.state = self.state + dt.timedelta(days=delta)
-            return
-        elif key in '-+':
-            self.state = self.state + dt.timedelta(days=1 if key == '+' else -1)
-            return
-        else:
-            return key
 
+class DayOfWeek(DateKeyPressMixin, MutableStatefulText):
 
-class DayOfWeek(MutableStatefulText):
+    def __init__(self, state):
+        MutableStatefulText.__init__(self, state)
+        DateKeyPressMixin.__init__(self, 'd')
 
     def state_as_text(self):
         return DAYS3[self.state.weekday()]
-
-    def keypress(self, size, key):
-        dow = self.state.weekday()
-        if 'a' <= key <= 'z' and len(key) == 1:
-            tries = 0
-            while tries < 7:
-                tries += 1
-                dow = (dow + 1) % 7
-                if DAYS2[dow].lower().startswith(key):
-                    self.state = self.state + dt.timedelta(days=tries)
-                    return
-        elif key in '+-':
-            self.state = self.state + dt.timedelta(days=1 if key == '+' else -1)
-            return
-        else:
-            return key
 
 
 class TextDate(BaseDate):
 
     def _make(self, date):
         down = QuickChange(date, '<', -1)
-        connect_signal(down, 'change', self._date_change)
-        today = Today('=')
-        connect_signal(today, 'click', self._date_change)
+        connect_signal(down, 'change', self.date_change)
+        today = Today(date, '=')
+        connect_signal(today, 'click', self.date_change)
         up = QuickChange(date, '>', 1)
-        connect_signal(up, 'change', self._date_change)
-        year = Year(date.year)
-        connect_signal(year, 'change', self._year_change)
-        month = Month((date.month, date.year))
-        connect_signal(month, 'change', self._month_year_change)
+        connect_signal(up, 'change', self.date_change)
+        year = Year(date)
+        connect_signal(year, 'change', self.date_change)
+        month = Month(date)
+        connect_signal(month, 'change', self.date_change)
         day_of_month = DayOfMonth(date)
-        connect_signal(day_of_month, 'change', self._date_change)
+        connect_signal(day_of_month, 'change', self.date_change)
         day_of_week = DayOfWeek(date)
-        connect_signal(day_of_week, 'change', self._date_change)
+        connect_signal(day_of_week, 'change', self.date_change)
         return Columns([(1, FocusAttr(down)),
                         (1, FocusAttr(today)),
                         (1, FocusAttr(up)),

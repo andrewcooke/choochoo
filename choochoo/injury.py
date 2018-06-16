@@ -12,7 +12,7 @@ from .uweird.tabs import TabManager
 class Injury(WidgetWrap):
 
     def __init__(self):
-        super().__init__()
+        super().__init__(TextDate())
 
 
 def make_widget(db, log, tab_manager):
