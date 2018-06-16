@@ -35,8 +35,8 @@ class DateKeyPressMixin:
                 return
             delta = self.__delta
             if key in '+- ':
-                key = 'd' if self.__default == '=' else self.__default
                 if key == '-': delta *= -1
+                key = 'd' if self.__default == '=' else self.__default
             if '0' <= key <= '9':
                 delta *= 10 if key == '0' else int(key)
                 key = 'd' if self.__default == '=' else self.__default
@@ -87,12 +87,16 @@ def clip_day(day, month, year):
 
 class Month(DateKeyPressMixin, MutableStatefulText):
 
-    def __init__(self, date):
+    def __init__(self, date, as_text=True):
+        self._as_text = as_text
         MutableStatefulText.__init__(self, date)
         DateKeyPressMixin.__init__(self, 'm')
 
     def state_as_text(self):
-        return MONTHS[self.state.month]
+        if self._as_text:
+            return MONTHS[self.state.month]
+        else:
+            return '%02d' % self.state.month
 
 
 class Year(DateKeyPressMixin, MutableStatefulText):
@@ -256,7 +260,7 @@ class DayOfMonth(DateKeyPressMixin, MutableStatefulText):
         DateKeyPressMixin.__init__(self, 'd')
 
     def state_as_text(self):
-        return str(self.state.day)
+        return '%02d' % self.state.day
 
 
 class DayOfWeek(DateKeyPressMixin, MutableStatefulText):
@@ -274,22 +278,25 @@ class TextDate(BaseDate):
     def _make(self, date):
         down = QuickChange(date, '<', -1)
         connect_signal(down, 'change', self.date_change)
-        today = Today(date, '=')
-        connect_signal(today, 'click', self.date_change)
         up = QuickChange(date, '>', 1)
         connect_signal(up, 'change', self.date_change)
         year = Year(date)
         connect_signal(year, 'change', self.date_change)
-        month = Month(date)
+        month = Month(date, as_text=False)
         connect_signal(month, 'change', self.date_change)
         day_of_month = DayOfMonth(date)
         connect_signal(day_of_month, 'change', self.date_change)
         day_of_week = DayOfWeek(date)
         connect_signal(day_of_week, 'change', self.date_change)
         return Columns([(1, FocusAttr(down)),
-                        (1, FocusAttr(today)),
+                        (1, Text(" ")),
+                        (4, Padding(FocusAttr(year), align='center', width='pack')),
+                        (1, Text("-")),
+                        (2, Padding(FocusAttr(month), align='center', width='pack')),
+                        (1, Text("-")),
+                        (2, Padding(FocusAttr(day_of_month), align='center', width='pack')),
+                        (1, Text(" ")),
+                        (3, Padding(FocusAttr(day_of_week), align='center', width='pack')),
+                        (1, Text(" ")),
                         (1, FocusAttr(up)),
-                        ('weight', 1, Padding(FocusAttr(year), align='center', width='pack')),
-                        ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
-                        ('weight', 1, Padding(FocusAttr(day_of_month), align='center', width='pack')),
-                        ('weight', 1, Padding(FocusAttr(day_of_week), align='center', width='pack'))])
+                        ])

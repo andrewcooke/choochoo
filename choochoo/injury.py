@@ -1,5 +1,5 @@
 
-from urwid import Text, MainLoop, Frame, WidgetWrap, ListBox, SimpleFocusListWalker
+from urwid import Text, MainLoop, Frame, WidgetWrap, ListBox, SimpleFocusListWalker, Columns, Padding
 
 from .uweird.calendar import TextDate
 from .utils import PALETTE
@@ -12,7 +12,10 @@ from .uweird.tabs import TabManager
 class Injury(WidgetWrap):
 
     def __init__(self):
-        super().__init__(TextDate())
+        super().__init__(Columns([(18, TextDate()),
+                                  (6, Text("  to  ")),
+                                  (18, TextDate()),
+                                  ('weight', 1, Padding(Text('')))]))
 
 
 def make_widget(db, log, tab_manager):
