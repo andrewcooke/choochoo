@@ -13,12 +13,26 @@ class Database:
         self.db.row_factory = Row
         self._create_tables()
 
-    @staticmethod
-    def null_to_text(text):
-        return text if text else ''
-
     def _create_tables(self):
-        self.db.execute('''create table if not exists diary (
-                             ordinal integer primary key,
-                             notes text not null
-)''')
+        self.db.executescript('''
+
+create table if not exists diary (
+  ordinal integer primary key,
+  notes text not null
+);
+
+create table if not exists injury (
+  id integer primary key,
+  start integer,
+  finish integer,
+  title text
+);
+
+create table if not exists injury_diary (
+  ordinal integer not null,
+  injury integer not null references injury(id),
+  notes text not null,
+  primary key (ordinal, injury)
+) without rowid;
+
+''')

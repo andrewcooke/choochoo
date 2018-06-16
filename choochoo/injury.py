@@ -1,25 +1,53 @@
 
-from urwid import Text, MainLoop, Frame, WidgetWrap, ListBox, SimpleFocusListWalker, Columns, Padding
+from urwid import Text, MainLoop, Frame, WidgetWrap, Columns, Padding, Pile, Divider, \
+    Filler
 
-from .uweird.calendar import TextDate
-from .utils import PALETTE
 from .database import Database
 from .log import make_log
+from .utils import PALETTE
+from .uweird.calendar import TextDate
+from .uweird.database import Nullable, NoneProofEdit
 from .uweird.decorators import Border
+from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
+from .uweird.widgets import SquareButton
 
 
-class Injury(WidgetWrap):
+class InjuryDefn(WidgetWrap):
 
-    def __init__(self):
-        super().__init__(Columns([(18, TextDate()),
-                                  (6, Text("  to  ")),
-                                  (18, TextDate()),
-                                  ('weight', 1, Padding(Text('')))]))
+    def __init__(self, title=None, start=None, finish=None):
+        self.title = NoneProofEdit(caption='Title: ', edit_text=title)
+        self.start = Nullable('Open', TextDate, start)
+        self.finish = Nullable('Open', TextDate, finish)
+        self.reset = SquareButton('Reset')
+        self.save = SquareButton('Save')
+        super().__init__(
+            Pile([FocusAttr(self.title),
+                  Columns([(18, self.start),
+                           (6, Text("  to  ")),
+                           (18, self.finish),
+                           ('weight', 1, Padding(Text(''))),
+                           (9, FocusAttr(self.reset)),
+                           (8, FocusAttr(self.save)),
+                           ]),
+                  ]))
+
+
+class InjuryDefnBinder:
+    pass
 
 
 def make_widget(db, log, tab_manager):
-    body = ListBox(SimpleFocusListWalker([Injury(), Injury(), Injury()]))
+    for row in db.db.execute('''select id, start, finish, title from injury'''):
+        pass
+    body = Filler(Pile(
+        [Divider(),
+         InjuryDefn(),
+         Divider(),
+         InjuryDefn(),
+         Divider(),
+         InjuryDefn(),
+         ]), valign='top')
     return Border(Frame(body, header=Text('Injury')))
 
 

@@ -133,20 +133,20 @@ class Day(ImmutableStatefulText):
 class Days(WidgetWrap):
 
     def __init__(self, date, calendar):
-        super().__init__(self._make(date, calendar))
         self._date = date
+        super().__init__(self._make(calendar))
 
-    def _make(self, date, calendar):
+    def _make(self, calendar):
         # if we do this as single gridflow then focus doesn't move down into dates
         # so instead put names in pile
         names = GridFlow(list(map(lambda d: Text(('plain', d)), DAYS2)), 2, 1, 0, 'left')
-        prev = dt.date(date.year if date.month > 1 else date.year - 1,
-                       date.month - 1 if date.month > 1 else 12, 1)
-        next = dt.date(date.year if date.month < 12 else date.year + 1,
-                       date.month + 1 if date.month < 12 else 1, 1)
+        prev = dt.date(self._date.year if self._date.month > 1 else self._date.year - 1,
+                       self._date.month - 1 if self._date.month > 1 else 12, 1)
+        next = dt.date(self._date.year if self._date.month < 12 else self._date.year + 1,
+                       self._date.month + 1 if self._date.month < 12 else 1, 1)
         prev_days = monthrange(prev.year, prev.month)[1]
-        curr_days = monthrange(date.year, date.month)[1]
-        first_day = dt.date(date.year, date.month, 1).weekday()  # mon 0
+        curr_days = monthrange(self._date.year, self._date.month)[1]
+        first_day = dt.date(self._date.year, self._date.month, 1).weekday()  # mon 0
         total_days = first_day + curr_days
         extra_days = 7 - total_days % 7
         if extra_days == 7:
@@ -155,9 +155,9 @@ class Days(WidgetWrap):
             total_days += extra_days
         dates = [FocusAttr(Day(dt.date(prev.year, prev.month, i)), 'unimportant')
                  for i in range(prev_days - first_day + 1, prev_days + 1)]
-        dates.extend([FocusAttr(Day(dt.date(date.year, date.month, i)),
-                                plain='selected' if i == date.day else 'plain',
-                                focus='selected-focus' if i == date.day else 'plain-focus')
+        dates.extend([FocusAttr(Day(dt.date(self._date.year, self._date.month, i)),
+                                plain='selected' if i == self._date.day else 'plain',
+                                focus='selected-focus' if i == self._date.day else 'plain-focus')
                       for i in range(1, curr_days + 1)])
         dates.extend([FocusAttr(Day(dt.date(next.year, next.month, i)), 'unimportant')
                       for i in range(1, extra_days + 1)])
@@ -208,13 +208,17 @@ class BaseDate(WidgetWrap):
     def __init__(self, date=None):
         if not date: date = dt.date.today()
         self._date = date
-        super().__init__(self._make(date))
+        super().__init__(self._make())
 
-    @property
-    def date(self):
+    def __get_state(self):
         return self._date
 
-    def _make(self, date):
+    def __set_state(self, date):
+        self.date_change(None, date)
+
+    state = property(__get_state, __set_state)
+
+    def _make(self):
         raise NotImplemented()
 
     def date_change(self, unused_widget, date):
@@ -224,7 +228,7 @@ class BaseDate(WidgetWrap):
             old_date = date
             self._date = date
             focus = FocusFor(self._w)
-            self._w = self._make(self._date)
+            self._w = self._make()
             focus.apply(self._w)
             emit_signal(self, 'postchange', self, old_date)
 
@@ -234,23 +238,24 @@ class Calendar(BaseDate):
     Displays a text calendar with signal when date changed.
     """
 
-    def _make(self, date):
-        down = QuickChange(date, '<', -1)
+    def _make(self):
+        down = QuickChange(self._date, '<', -1)
         connect_signal(down, 'change', self.date_change)
-        today = Today(date, '=')
+        today = Today(self._date, '=')
         connect_signal(today, 'change', self.date_change)
-        up = QuickChange(date, '>', 1)
+        up = QuickChange(self._date, '>', 1)
         connect_signal(up, 'change', self.date_change)
-        month = Month(date)
+        month = Month(self._date)
         connect_signal(month, 'change', self.date_change)
-        year = Year(date)
+        year = Year(self._date)
         connect_signal(year, 'change', self.date_change)
         title = Columns([(1, FocusAttr(down)),
                          (1, FocusAttr(today)),
                          (1, FocusAttr(up)),
                          ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
-                         (4, FocusAttr(year))])
-        return Fixed(Pile([title, Days(date, self)]), 20)
+                         (4, FocusAttr(year)),
+                         ])
+        return Fixed(Pile([title, Days(self._date, self)]), 20)
 
 
 class DayOfMonth(DateKeyPressMixin, MutableStatefulText):
@@ -275,18 +280,18 @@ class DayOfWeek(DateKeyPressMixin, MutableStatefulText):
 
 class TextDate(BaseDate):
 
-    def _make(self, date):
-        down = QuickChange(date, '<', -1)
+    def _make(self):
+        down = QuickChange(self._date, '<', -1)
         connect_signal(down, 'change', self.date_change)
-        up = QuickChange(date, '>', 1)
+        up = QuickChange(self._date, '>', 1)
         connect_signal(up, 'change', self.date_change)
-        year = Year(date)
+        year = Year(self._date)
         connect_signal(year, 'change', self.date_change)
-        month = Month(date, as_text=False)
+        month = Month(self._date, as_text=False)
         connect_signal(month, 'change', self.date_change)
-        day_of_month = DayOfMonth(date)
+        day_of_month = DayOfMonth(self._date)
         connect_signal(day_of_month, 'change', self.date_change)
-        day_of_week = DayOfWeek(date)
+        day_of_week = DayOfWeek(self._date)
         connect_signal(day_of_week, 'change', self.date_change)
         return Columns([(1, FocusAttr(down)),
                         (1, Text(" ")),

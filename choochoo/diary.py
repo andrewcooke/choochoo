@@ -1,4 +1,6 @@
 
+import datetime as dt
+
 from urwid import Text, MainLoop, Frame, Padding, Filler, Pile, Columns, Divider, connect_signal
 
 from .utils import PALETTE
@@ -12,9 +14,9 @@ from .uweird.tabs import TabManager
 
 
 def make_widget(db, log, tab_manager):
-    binder = SingleTableBinder(db, log, 'diary', 'ordinal', key_transform=lambda x: x.toordinal())
+    binder = SingleTableBinder(db, log, 'diary', transforms={'ordinal': (dt.date.fromordinal, lambda x: x.toordinal())})
     calendar = Calendar()
-    connect_signal(calendar, 'change', binder.update_key)
+    binder.bind_key(calendar, 'ordinal')
     notes = NoneProofEdit(caption="Notes: ")
     binder.bind(notes, 'notes')
     body = Filler(
@@ -23,7 +25,7 @@ def make_widget(db, log, tab_manager):
                        ('weight', 1, tab_manager.add(FocusAttr(notes)))],
                       dividechars=2)]),
         valign='top')
-    binder.update_key(None, calendar.date)
+    binder._save_widget_value(calendar, calendar.state)
     return Border(Frame(body, header=Text('Diary')))
 
 
