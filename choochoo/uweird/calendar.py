@@ -11,7 +11,8 @@ from ..utils import sign
 
 
 MONTHS = month_name
-DAYS = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
+DAYS2 = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
+DAYS3 = list(map(lambda d: day_abbr[d][:3], Calendar(0).iterweekdays()))
 
 
 def add_month(month, year, sign):
@@ -34,9 +35,12 @@ def clip_day(day, month, year):
 
 class Month(MutableStatefulText):
 
+    def state_as_text(self):
+        return MONTHS[self.state[0]]
+
     def keypress(self, size, key):
         month, year = self.state
-        if 'a' <= key <= 'z':
+        if 'a' <= key <= 'z' and len(key) == 1:
             tries = 0
             while tries < 12:
                 tries += 1
@@ -51,14 +55,11 @@ class Month(MutableStatefulText):
         else:
             return key
 
-    def state_as_text(self):
-        return MONTHS[self.state[0]]
-
 
 class Year(MutableStatefulText):
 
     def keypress(self, size, key):
-        if '0' <= key <= '9':
+        if '0' <= key <= '9' and len(key) == 1:
             delta = int(key) - self.state % 10
             if abs(delta) > 5:
                 delta -= sign(delta) * 10
@@ -100,7 +101,8 @@ class Days(WidgetWrap):
 
     def _make(self, date, calendar):
         # if we do this as single gridflow then focus doesn't move down into dates
-        names = GridFlow(list(map(lambda d: Text(('plain', d)), DAYS)), 2, 1, 0, 'left')
+        # so instead put names in pile
+        names = GridFlow(list(map(lambda d: Text(('plain', d)), DAYS2)), 2, 1, 0, 'left')
         prev = dt.date(date.year if date.month > 1 else date.year - 1,
                        date.month - 1 if date.month > 1 else 12, 1)
         next = dt.date(date.year if date.month < 12 else date.year + 1,
@@ -152,7 +154,7 @@ class QuickChange(StatefulSymbol):
     def keypress(self, size, key):
         if key in ' +-':
             self.state = self.state + self._sign * dt.timedelta(days=1) * (-1 if key == '-' else 1)
-        elif '0' <= key <= '9':
+        elif '0' <= key <= '9' and len(key) == 1:
             self.state = self.state + self._sign * dt.timedelta(days=1) * (10 if key == '0' else int(key))
         elif key == 'w':
             self.state = self.state + self._sign * dt.timedelta(days=1) * 7
@@ -195,10 +197,7 @@ class Today(StatefulSymbol):
             return False
 
 
-class Calendar(WidgetWrap):
-    """
-    Displays a text calendar with signal when date changed.
-    """
+class BaseDate(WidgetWrap):
 
     signals = ['change', 'postchange']
 
@@ -212,22 +211,7 @@ class Calendar(WidgetWrap):
         return self._date
 
     def _make(self, date):
-        down = QuickChange(date, '<', -1)
-        connect_signal(down, 'change', self._date_change)
-        today = Today('=')
-        connect_signal(today, 'click', self._date_change)
-        up = QuickChange(date, '>', 1)
-        connect_signal(up, 'change', self._date_change)
-        month = Month((date.month, date.year))
-        connect_signal(month, 'change', self._month_year_change)
-        year = Year(date.year)
-        connect_signal(year, 'change', self._year_change)
-        title = Columns([(1, FocusAttr(down)),
-                         (1, FocusAttr(today)),
-                         (1, FocusAttr(up)),
-                         ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
-                         (4, FocusAttr(year))])
-        return Fixed(Pile([title, Days(date, self)]), 20)
+        raise NotImplemented()
 
     def _year_change(self, unused_widget, year):
         self._change(year=year)
@@ -254,3 +238,94 @@ class Calendar(WidgetWrap):
             self._w = self._make(self._date)
             focus.apply(self._w)
             emit_signal(self, 'postchange', self, old_date)
+
+
+class Calendar(BaseDate):
+    """
+    Displays a text calendar with signal when date changed.
+    """
+
+    def _make(self, date):
+        down = QuickChange(date, '<', -1)
+        connect_signal(down, 'change', self._date_change)
+        today = Today('=')
+        connect_signal(today, 'click', self._date_change)
+        up = QuickChange(date, '>', 1)
+        connect_signal(up, 'change', self._date_change)
+        month = Month((date.month, date.year))
+        connect_signal(month, 'change', self._month_year_change)
+        year = Year(date.year)
+        connect_signal(year, 'change', self._year_change)
+        title = Columns([(1, FocusAttr(down)),
+                         (1, FocusAttr(today)),
+                         (1, FocusAttr(up)),
+                         ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
+                         (4, FocusAttr(year))])
+        return Fixed(Pile([title, Days(date, self)]), 20)
+
+
+class DayOfMonth(MutableStatefulText):
+
+    def state_as_text(self):
+        return str(self.state.day)
+
+    def keypress(self, size, key):
+        if '0' <= key <= '9' and len(key) == 1:
+            delta = int(key) - self.state.day % 10
+            if abs(delta) > 5:
+                delta -= sign(delta) * 10
+            self.state = self.state + dt.timedelta(days=delta)
+            return
+        elif key in '-+':
+            self.state = self.state + dt.timedelta(days=1 if key == '+' else -1)
+            return
+        else:
+            return key
+
+
+class DayOfWeek(MutableStatefulText):
+
+    def state_as_text(self):
+        return DAYS3[self.state.weekday()]
+
+    def keypress(self, size, key):
+        dow = self.state.weekday()
+        if 'a' <= key <= 'z' and len(key) == 1:
+            tries = 0
+            while tries < 7:
+                tries += 1
+                dow = (dow + 1) % 7
+                if DAYS2[dow].lower().startswith(key):
+                    self.state = self.state + dt.timedelta(days=tries)
+                    return
+        elif key in '+-':
+            self.state = self.state + dt.timedelta(days=1 if key == '+' else -1)
+            return
+        else:
+            return key
+
+
+class TextDate(BaseDate):
+
+    def _make(self, date):
+        down = QuickChange(date, '<', -1)
+        connect_signal(down, 'change', self._date_change)
+        today = Today('=')
+        connect_signal(today, 'click', self._date_change)
+        up = QuickChange(date, '>', 1)
+        connect_signal(up, 'change', self._date_change)
+        year = Year(date.year)
+        connect_signal(year, 'change', self._year_change)
+        month = Month((date.month, date.year))
+        connect_signal(month, 'change', self._month_year_change)
+        day_of_month = DayOfMonth(date)
+        connect_signal(day_of_month, 'change', self._date_change)
+        day_of_week = DayOfWeek(date)
+        connect_signal(day_of_week, 'change', self._date_change)
+        return Columns([(1, FocusAttr(down)),
+                        (1, FocusAttr(today)),
+                        (1, FocusAttr(up)),
+                        ('weight', 1, Padding(FocusAttr(year), align='center', width='pack')),
+                        ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
+                        ('weight', 1, Padding(FocusAttr(day_of_month), align='center', width='pack')),
+                        ('weight', 1, Padding(FocusAttr(day_of_week), align='center', width='pack'))])

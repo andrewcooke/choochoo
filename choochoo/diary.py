@@ -1,6 +1,7 @@
 
 from urwid import Text, MainLoop, Frame, Padding, Filler, Pile, Columns, Divider, connect_signal
 
+from .utils import PALETTE
 from .database import Database
 from .log import make_log
 from .uweird.calendar import Calendar
@@ -10,7 +11,8 @@ from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
 
 
-def make_widget(binder, tab_manager):
+def make_widget(db, log, tab_manager):
+    binder = SingleTableBinder(db, log, 'diary', 'ordinal', key_transform=lambda x: x.toordinal())
     calendar = Calendar()
     connect_signal(calendar, 'change', binder.update_key)
     notes = NoneProofEdit(caption="Notes: ")
@@ -29,11 +31,6 @@ def main(args):
     log = make_log(args)
     db = Database(args, log)
     tab_manager = TabManager()
-    binder = SingleTableBinder(db, log, 'diary', 'ordinal', key_transform=lambda x: x.toordinal())
-    diary = make_widget(binder, tab_manager)
+    diary = make_widget(db, log, tab_manager)
     tab_manager.discover(diary)
-    MainLoop(diary,
-             palette=[('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
-                      ('selected', 'black', 'light gray'), ('selected-focus', 'black', 'white'),
-                      ('unimportant', 'dark blue', 'black'), ('unimportant-focus', 'light blue', 'black')
-                      ]).run()
+    MainLoop(diary, palette=PALETTE).run()

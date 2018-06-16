@@ -92,7 +92,12 @@ class TabManager:
                 try:
                     iterator = node.contents.items()
                 except AttributeError:
-                    iterator = enumerate(node.contents)
+                    try:
+                        # possibly a dict
+                        iterator = enumerate(node.contents)
+                    except TypeError:
+                        # possibly a ListBox
+                        iterator = node.contents.body.items()
                 for (key, data) in iterator:
                     # data can be widget or tuple containing widget
                     try:

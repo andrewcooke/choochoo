@@ -7,3 +7,9 @@ def sign(x):
         return 1
     else:
         return -1
+
+
+PALETTE = [('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
+           ('selected', 'black', 'light gray'), ('selected-focus', 'black', 'white'),
+           ('unimportant', 'dark blue', 'black'), ('unimportant-focus', 'light blue', 'black')
+           ]

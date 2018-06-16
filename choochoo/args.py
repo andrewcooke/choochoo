@@ -11,6 +11,7 @@ PROGNAME = 'ch'
 COMMAND = 'command'
 
 DIARY = 'diary'
+INJURY = 'injury'
 
 ROOT = 'root'
 DATABASE = 'database'
@@ -64,7 +65,7 @@ class NamespaceWithVariables(Mapping):
 
 def parser():
     p = ArgumentParser()
-    p.add_argument(mm(ROOT), action='store', default='~/choochoo', metavar='DIR',
+    p.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
                    help='The root directory for the default configuration')
     p.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
                    help='The directory for logs')
@@ -74,4 +75,8 @@ def parser():
     p_diary = subparsers.add_parser(DIARY,
                                     help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
     p_diary.set_defaults(command=DIARY)
+    p_injury = subparsers.add_parser(INJURY,
+                                     help='manage injury entries - see `%s %s -h` for more details' %
+                                          (PROGNAME, INJURY))
+    p_injury.set_defaults(command=INJURY)
     return p
