@@ -1,7 +1,13 @@
 
+import datetime as dt
 from collections.abc import MutableMapping
 
 from urwid import connect_signal
+
+
+# transforms
+DATE_ORDINAL = (lambda x: x if x is None else dt.date.fromordinal(x),
+                lambda x: x if x is None else x.toordinal())
 
 
 class TransformedView(MutableMapping):
@@ -52,6 +58,7 @@ class Binder:
         Call with each widget in turn.  The name should be the column name in
         the database.
         """
+        self._log.debug('Binding %s as %s' % (widget, name))
         connect_signal(widget, 'change', self._save_widget_value)
         self._widget_names[widget] = name
 
@@ -63,6 +70,7 @@ class Binder:
                 self._data[name] = None
 
     def _save_widget_value(self, widget, value):
+        self._log.debug('Saving %s=%s' % (self._widget_names[widget], value))
         self._data[self._widget_names[widget]] = value
 
     def _broadcast_values_to_widgets(self):
@@ -166,10 +174,10 @@ class StaticBinder(Binder):
     def __init__(self, db, log, transforms=None, defaults=None):
         super().__init__(db, log, transforms=transforms, defaults=defaults)
 
-    def save(self):
+    def save(self, unsued_widget):
         self.write_values_to_db()
 
-    def read(self):
+    def reset(self, unused_Widget):
         self.read_values_from_db()
 
     def write_values_to_db(self):
@@ -187,10 +195,11 @@ class StaticBinder(Binder):
 
 class SingleTableStatic(StaticBinder):
 
-    def __init__(self, db, log, table, key_name='id', transforms=None, defaults=None):
+    def __init__(self, db, log, table, key_name='id', transforms=None, defaults=None, insert_callback=None):
         super().__init__(db, log, transforms=transforms, defaults=defaults)
         self._table = table
         self._key_name = key_name
+        self._insert_callback = insert_callback
 
     def read_row(self, row):
         if row is None:
@@ -199,22 +208,21 @@ class SingleTableStatic(StaticBinder):
             for name in row.keys():
                 self._log.debug('Read %s=%s' % (name, row[name]))
                 self._dbdata[name] = row[name]
+        self._broadcast_values_to_widgets()
 
     def write_values_to_db(self):
-        cmd = ', '.join(self._dbdata.keys())
+        replace = self._key_name in self._dbdata
+        cmd = '%s into %s (' % ('replace' if replace else 'insert', self._table)
+        cmd += ', '.join(self._dbdata.keys())
         cmd += ') values ('
         cmd += ', '.join(['?'] * (len(self._dbdata)))
         cmd += ')'
         values = list(self._dbdata.values())
-        if self._key_name in self._dbdata:
-            cmd = ('replace into %s (' % self._table) + cmd
-            self._log.debug('%s / %s' % (cmd, values))
-            self._db.db.execute(cmd, values)
-        else:
-            cmd = ('insert into %s (' % self._table) + cmd
-            self._log.debug('%s / %s' % (cmd, values))
-            self._db.db.execute(cmd, values)
-            self._dbview[self._key] = self._db.db.execute('select last_insert_rowid()').fetchone()[0]
+        self._log.debug('%s / %s' % (cmd, values))
+        self._db.db.execute(cmd, values)
+        if not replace:
+            self._dbdata[self._key_name] = self._db.db.execute('select last_insert_rowid()').fetchone()[0]
+            if self._insert_callback: self._insert_callback()
 
     def read_values_from_db(self):
         if self._key_name in self._dbdata:
@@ -225,6 +233,7 @@ class SingleTableStatic(StaticBinder):
             cmd += ' from %s where %s = ?' % (self._table, self._key_name)
             values = [self._dbdata[self._key_name]]
             self._log.debug('%s / %s' % (cmd, values))
-            self.read_row(self._db.db.execute(cmd, values).fetchone())
+            row = self._db.db.execute(cmd, values).fetchone()
         else:
-            self._set_defaults()
+            row = None
+        self.read_row(row)

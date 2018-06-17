@@ -63,15 +63,21 @@ class TabManager:
         """
         Signal target for tabbing forwards.
         """
-        n = self._widgets_indices[widget]
-        self._set_focus(self._widgets_indices[(n + 1) % len(self._focus)])
+        self._wards(widget, 1)
 
     def backwards(self, widget):
         """
         Signal target for tabbing backwards.
         """
+        self._wards(widget, -1)
+
+    def _wards(self, widget, delta):
         n = self._widgets_indices[widget]
-        self._set_focus(self._widgets_indices[(n - 1) % len(self._focus)])
+        try:
+            self._set_focus(self._widgets_indices[(n + delta) % len(self._focus)])
+        except AttributeError:
+            self.discover(self._root)
+            self._set_focus(self._widgets_indices[(n + delta) % len(self._focus)])
 
     def _set_focus(self, widget):
         self._focus[widget].apply(self._root)
