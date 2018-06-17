@@ -37,11 +37,13 @@ class TransformedView(MutableMapping):
 
 class Binder:
 
-    def __init__(self, db, log, transforms=None):
+    def __init__(self, db, log, transforms=None, defaults=None):
         self._db = db
         self._log = log
         self._data = {}
         self._widget_names = {}
+        self._defaults = defaults if defaults else {}
+        self._set_defaults()
         self._dbdata = TransformedView(self._data, transforms)
 
     def bind(self, widget, name):
@@ -51,6 +53,13 @@ class Binder:
         """
         connect_signal(widget, 'change', self._save_widget_value)
         self._widget_names[widget] = name
+
+    def _set_defaults(self):
+        for name in self._widget_names.values():
+            if name in self._defaults:
+                self._data[name] = self._defaults[name]
+            else:
+                self._data[name] = None
 
     def _save_widget_value(self, widget, value):
         self._data[self._widget_names[widget]] = value
@@ -88,8 +97,8 @@ class KeyedBinder(Binder):
     but I may have misunderstood.
     """
 
-    def __init__(self, db, log, transforms=None):
-        super().__init__(db, log, transforms)
+    def __init__(self, db, log, transforms=None, defaults=None):
+        super().__init__(db, log, transforms=transforms, defaults=defaults)
         self._key = None
 
     def bind_key(self, widget, name):
@@ -126,18 +135,17 @@ class SingleTableBinder(KeyedBinder):
     Read/write all values from a single table in the database.
     """
 
-    def __init__(self, db, log, table, transforms=None):
-        super().__init__(db, log, transforms=transforms)
+    def __init__(self, db, log, table, transforms=None, defaults=None):
+        super().__init__(db, log, transforms=transforms, defaults=defaults)
         self._table = table
 
     def write_values_to_db(self):
-        cmd = 'replace into %s (%s, ' % (self._table, self._key)
+        cmd = 'replace into %s (' % self._table
         cmd += ', '.join(self._dbdata.keys())
         cmd += ') values ('
-        cmd += ', '.join(['?'] * (len(self._dbdata) + 1))
+        cmd += ', '.join(['?'] * (len(self._dbdata)))
         cmd += ')'
-        values = [self._dbdata[self._key]]
-        values.extend(self._dbdata.values())
+        values = list(self._dbdata.values())
         self._log.debug('%s / %s' % (cmd, values))
         self._db.db.execute(cmd, values)
 
@@ -148,24 +156,14 @@ class SingleTableBinder(KeyedBinder):
         values = [self._dbdata[self._key]]
         self._log.debug('%s / %s' % (cmd, values))
         row = self._db.db.execute(cmd, values).fetchone()
-        for name in self._widget_names.values():
-            try:
+        if row is None:
+            self._set_defaults()
+        else:
+            for name in self._widget_names.values():
                 self._log.debug('Read %s=%s' % (name, row[name]))
                 self._dbdata[name] = row[name]
-            except TypeError as e:
-                self._log.error(e)
-                self._dbdata[name] = None
-
-
-class NoneProofEdit(Edit):
-
-    def __init__(self, caption='', edit_text='', **kargs):
-        super().__init__(caption=caption, edit_text='' if edit_text is None else edit_text, **kargs)
-
-    def set_edit_text(self, text):
-        if text is None:
-            text = ''
-        super().set_edit_text(text)
+        # in case not include in read, or defaults used
+        self._dbdata[self._key] = values[0]
 
 
 class Nullable(WidgetWrap):

@@ -1,12 +1,12 @@
 
 from urwid import Text, MainLoop, Frame, WidgetWrap, Columns, Padding, Pile, Divider, \
-    Filler
+    Filler, Edit
 
 from .database import Database
 from .log import make_log
 from .utils import PALETTE
 from .uweird.calendar import TextDate
-from .uweird.database import Nullable, NoneProofEdit
+from .uweird.database import Nullable
 from .uweird.decorators import Border
 from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
@@ -15,8 +15,8 @@ from .uweird.widgets import SquareButton
 
 class InjuryDefn(WidgetWrap):
 
-    def __init__(self, title=None, start=None, finish=None):
-        self.title = NoneProofEdit(caption='Title: ', edit_text=title)
+    def __init__(self, title='', start=None, finish=None):
+        self.title = Edit(caption='Title: ', edit_text=title)
         self.start = Nullable('Open', TextDate, start)
         self.finish = Nullable('Open', TextDate, finish)
         self.reset = SquareButton('Reset')
