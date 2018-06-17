@@ -7,17 +7,17 @@ from .database import Database
 from .log import make_log
 from .utils import PALETTE
 from .uweird.calendar import Calendar
-from .uweird.database import SingleTableBinder
+from .uweird.database import SingleTableDynamic
 from .uweird.decorators import Border
 from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
 
 
 def make_widget(db, log, tab_manager):
-    binder = SingleTableBinder(db, log, 'diary',
-                               transforms={'ordinal': (dt.date.fromordinal, lambda x: x.toordinal())},
-                               defaults={'notes': ''}
-                               )
+    binder = SingleTableDynamic(db, log, 'diary',
+                                transforms={'ordinal': (dt.date.fromordinal, lambda x: x.toordinal())},
+                                defaults={'notes': ''}
+                                )
     calendar = Calendar()
     binder.bind_key(calendar, 'ordinal')
     # notes = NoneProofEdit(caption="Notes: ")

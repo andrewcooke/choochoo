@@ -2,11 +2,12 @@
 from urwid import Text, MainLoop, Frame, WidgetWrap, Columns, Padding, Pile, Divider, \
     Filler, Edit
 
+from .uweird.database import SingleTableStatic
 from .database import Database
 from .log import make_log
 from .utils import PALETTE
 from .uweird.calendar import TextDate
-from .uweird.database import Nullable
+from .uweird.widgets import Nullable
 from .uweird.decorators import Border
 from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
@@ -33,21 +34,24 @@ class InjuryDefn(WidgetWrap):
                   ]))
 
 
-class InjuryDefnBinder:
-    pass
+def make_bound_injury(db, log):
+    binder = SingleTableStatic(db, log, 'injury')
+    injury = InjuryDefn()
+    binder.bind(injury.title, 'title')
+    binder.bind(injury.start, 'start')
+    binder.bind(injury.finish, 'finish')
+    return injury, binder
 
 
 def make_widget(db, log, tab_manager):
+    body = []
     for row in db.db.execute('''select id, start, finish, title from injury'''):
-        pass
-    body = Filler(Pile(
-        [Divider(),
-         InjuryDefn(),
-         Divider(),
-         InjuryDefn(),
-         Divider(),
-         InjuryDefn(),
-         ]), valign='top')
+        injury, binder = make_bound_injury(db, log)
+        binder.read_row(row)
+        body.append(injury)
+    injury, _ = make_bound_injury(db, log)
+    body.append(injury)
+    body = Filler(Pile(body), valign='top')
     return Border(Frame(body, header=Text('Injury')))
 
 
