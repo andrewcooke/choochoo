@@ -14,35 +14,58 @@ DAYS2 = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
 DAYS3 = list(map(lambda d: day_abbr[d][:3], Calendar(0).iterweekdays()))
 
 
+def clip_day(day, month, year): return min(day, monthrange(year, month)[1])
+
+
 class DateKeyPressMixin:
     """
     Assumes self.state is a date.
 
-    default should be 'd', 'w', 'm' or 'y'
+    default should be 'd', 'w', 'm', 'y', 'D' or 'M' (capitals support alpha selection)
     delta should be +1 or -1
     """
 
     def __init__(self, default, delta=1):
-        self.__default = default
+        self.__is_alpha = default.isupper()
+        self.__default = default.lower()
         self.__delta = delta
 
     def keypress(self, size, key):
+        original_key = key
+        if key == '=':
+            self.state = dt.date.today()
+            return
+        delta = self.__delta
+        if len(key) == 1 and key.isupper():
+            key = key.lower()
+            delta *= -1
+        if self.__is_alpha and 'a' <= key <= 'z':
+            is_month = self.__default == 'm'
+            n = 12 if is_month else 7
+            tries, date = 0, self.state
+            while tries <= n:
+                tries += 1
+                if is_month:
+                    date = self.__add_month(date, delta)
+                    name = MONTHS[date.month]
+                else:
+                    date += dt.timedelta(days=delta)
+                    name = DAYS2[date.weekday()]
+                if name.lower().startswith(key):
+                    if is_month:
+                        date = dt.date(date.year, date.month, clip_day(self.state.day, date.month, date.year))
+                    self.state = date
+                    return
+            return original_key
         if self._command_map[key] == 'activate':
             key = self.__default
         if len(key) == 1:
-            if key == '=':
-                self.state = dt.date.today()
-                return
-            delta = self.__delta
             if key in '+- ':
                 if key == '-': delta *= -1
                 key = 'd' if self.__default == '=' else self.__default
             if '0' <= key <= '9':
                 delta *= 10 if key == '0' else int(key)
                 key = 'd' if self.__default == '=' else self.__default
-            if key in 'DWMY':
-                key = key.lower()
-                delta *= -1
             if key == 'w':
                 key = 'd'
                 delta *= 7
@@ -64,25 +87,18 @@ class DateKeyPressMixin:
                 day = min(day, monthrange(year, month)[1])
                 self.state = dt.date(year, month, day)
                 return
-        return key
+        return original_key
 
-
-def add_month(month, year, sign):
-    if sign > 0:
-        if month == 12:
-            month, year = 1, year + 1
-        else:
-            month, year = month + 1, year
-    else:
-        if month == 1:
-            month, year = 12, year - 1
-        else:
-            month, year = month - 1, year
-    return month, year
-
-
-def clip_day(day, month, year):
-    return min(day, monthrange(year, month)[1])
+    def __add_month(self, date, delta):
+        year, month, day = date.year, date.month + delta, date.day
+        while month < 1:
+            year -= 1
+            month += 12
+        while month > 12:
+            year += 1
+            month -= 12
+        day = clip_day(day, month, year)
+        return dt.date(year, month, day)
 
 
 class Month(DateKeyPressMixin, MutableStatefulText):
@@ -90,7 +106,7 @@ class Month(DateKeyPressMixin, MutableStatefulText):
     def __init__(self, date, as_text=True):
         self._as_text = as_text
         MutableStatefulText.__init__(self, date)
-        DateKeyPressMixin.__init__(self, 'm')
+        DateKeyPressMixin.__init__(self, 'M')
 
     def state_as_text(self):
         if self._as_text:
@@ -272,7 +288,7 @@ class DayOfWeek(DateKeyPressMixin, MutableStatefulText):
 
     def __init__(self, state):
         MutableStatefulText.__init__(self, state)
-        DateKeyPressMixin.__init__(self, 'd')
+        DateKeyPressMixin.__init__(self, 'D')
 
     def state_as_text(self):
         return DAYS3[self.state.weekday()]

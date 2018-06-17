@@ -5,9 +5,11 @@ from collections.abc import MutableMapping
 from urwid import connect_signal
 
 
+def or_none(f): return lambda x: x if x is None else f(x)
+
+
 # transforms
-DATE_ORDINAL = (lambda x: x if x is None else dt.date.fromordinal(x),
-                lambda x: x if x is None else x.toordinal())
+DATE_ORDINAL = (or_none(dt.date.fromordinal), or_none(lambda x: x.toordinal()))
 
 
 class TransformedView(MutableMapping):
@@ -174,7 +176,7 @@ class StaticBinder(Binder):
     def __init__(self, db, log, transforms=None, defaults=None):
         super().__init__(db, log, transforms=transforms, defaults=defaults)
 
-    def save(self, unsued_widget):
+    def save(self, unused_widget):
         self.write_values_to_db()
 
     def reset(self, unused_Widget):
