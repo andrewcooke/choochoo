@@ -13,6 +13,11 @@ from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
 
 
+def injuries(db, log, tab_manager):
+
+    return []
+
+
 def make_widget(db, log, tab_manager):
     binder = SingleTableDynamic(db, log, 'diary',
                                 transforms={'ordinal': DATE_ORDINAL},
@@ -23,12 +28,11 @@ def make_widget(db, log, tab_manager):
     # notes = NoneProofEdit(caption="Notes: ")
     notes = Edit(caption="Notes: ")
     binder.bind(notes, 'notes')
-    body = Filler(
-        Pile([Divider(),
-              Columns([(20, Padding(tab_manager.add(calendar), width='clip')),
-                       ('weight', 1, tab_manager.add(FocusAttr(notes)))],
-                      dividechars=2)]),
-        valign='top')
+    body = [Columns([(20, Padding(tab_manager.add(calendar), width='clip')),
+                     ('weight', 1, tab_manager.add(FocusAttr(notes)))],
+                    dividechars=2)]
+    body.extend(injuries())
+    body = Filler(Pile([Divider(), Pile(body)]), valign='top')
     # trigger database read
     binder._save_widget_value(calendar, calendar.state)
     return Border(Frame(body, header=Text('Diary')))

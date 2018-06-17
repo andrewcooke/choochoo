@@ -40,52 +40,59 @@ class DateKeyPressMixin:
             key = key.lower()
             delta *= -1
         if self.__is_alpha and 'a' <= key <= 'z':
-            is_month = self.__default == 'm'
-            n = 12 if is_month else 7
-            tries, date = 0, self.state
-            while tries <= n:
-                tries += 1
-                if is_month:
-                    date = self.__add_month(date, delta)
-                    name = MONTHS[date.month]
-                else:
-                    date += dt.timedelta(days=delta)
-                    name = DAYS2[date.weekday()]
-                if name.lower().startswith(key):
-                    if is_month:
-                        date = dt.date(date.year, date.month, clip_day(self.state.day, date.month, date.year))
-                    self.state = date
-                    return
-            return original_key
+            return self.__alpha_keypress(key, original_key)
         if self._command_map[key] == 'activate':
             key = self.__default
         if len(key) == 1:
-            if key in '+- ':
-                if key == '-': delta *= -1
-                key = 'd' if self.__default == '=' else self.__default
-            if '0' <= key <= '9':
-                delta *= 10 if key == '0' else int(key)
-                key = 'd' if self.__default == '=' else self.__default
-            if key == 'w':
-                key = 'd'
-                delta *= 7
-            if key == 'y':
-                key = 'm'
-                delta *= 12
-            if key == 'd':
-                self.state = self.state + dt.timedelta(days=delta)
-                return
-            elif key == 'm':
-                year, month, day = self.state.year, self.state.month, self.state.day
-                month += delta
-                while month < 1:
-                    year -= 1
-                    month += 12
-                while month > 12:
-                    year += 1
-                    month -= 12
-                day = min(day, monthrange(year, month)[1])
-                self.state = dt.date(year, month, day)
+            return self.__delta_keypress(key, original_key)
+        return original_key
+
+    def __delta_keypress(self, key, original_key):
+        if key in '+- ':
+            if key == '-': delta *= -1
+            key = 'd' if self.__default == '=' else self.__default
+        if '0' <= key <= '9':
+            delta *= 10 if key == '0' else int(key)
+            key = 'd' if self.__default == '=' else self.__default
+        if key == 'w':
+            key = 'd'
+            delta *= 7
+        if key == 'y':
+            key = 'm'
+            delta *= 12
+        if key == 'd':
+            self.state = self.state + dt.timedelta(days=delta)
+            return
+        elif key == 'm':
+            year, month, day = self.state.year, self.state.month, self.state.day
+            month += delta
+            while month < 1:
+                year -= 1
+                month += 12
+            while month > 12:
+                year += 1
+                month -= 12
+            day = min(day, monthrange(year, month)[1])
+            self.state = dt.date(year, month, day)
+            return
+        return original_key
+
+    def __alpha_keypress(self, key, original_key):
+        is_month = self.__default == 'm'
+        n = 12 if is_month else 7
+        tries, date = 0, self.state
+        while tries <= n:
+            tries += 1
+            if is_month:
+                date = self.__add_month(date, delta)
+                name = MONTHS[date.month]
+            else:
+                date += dt.timedelta(days=delta)
+                name = DAYS2[date.weekday()]
+            if name.lower().startswith(key):
+                if is_month:
+                    date = dt.date(date.year, date.month, clip_day(self.state.day, date.month, date.year))
+                self.state = date
                 return
         return original_key
 
