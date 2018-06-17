@@ -31,7 +31,9 @@ create table if not exists injury (
 create table if not exists injury_diary (
   ordinal integer not null,
   injury integer not null references injury(id),
-  notes text not null,
+  pain_avg integer not null default 0,
+  pain_peak integer not null default 0,
+  notes text not null default '',
   primary key (ordinal, injury)
 ) without rowid;
 

@@ -1,5 +1,5 @@
 
-from urwid import WidgetWrap, AttrMap, Text, emit_signal
+from urwid import WidgetWrap, Text, emit_signal
 
 
 class ImmutableStatefulText(WidgetWrap):

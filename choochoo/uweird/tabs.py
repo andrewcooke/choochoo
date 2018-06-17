@@ -59,6 +59,13 @@ class TabManager:
         connect_signal(widget, 'tabbackwards', self.backwards)
         return widget
 
+    def remove(self, widget):
+        assert widget in self._widgets_indices
+        n = self._widgets_indices[widget]
+        del self._widgets_indices[widget]
+        del self._widgets_indices[n]
+        del self._focus[widget]
+
     def forwards(self, widget):
         """
         Signal target for tabbing forwards.

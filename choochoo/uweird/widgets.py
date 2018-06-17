@@ -1,6 +1,7 @@
 
 from urwid import Button, Text, WidgetWrap, emit_signal, connect_signal
 
+from .state import MutableStatefulText
 from .focus import FocusAttr
 
 
@@ -61,3 +62,30 @@ class Nullable(WidgetWrap):
 
     def _bounce_change(self, signal_name, unused_widget, value):
         emit_signal(self, 'change', self, value)
+
+
+def ColText(text):
+    """
+    Shorthand for fixed width, literal column.
+    """
+    return len(text), Text(text)
+
+
+class Rating(MutableStatefulText):
+
+    def __init__(self, caption='', state=0):
+        self._caption = caption
+        super().__init__(state)
+
+    def state_as_text(self):
+        return '%s%d' % (self._caption, self.state)
+
+    def keypress(self, size, key):
+        if self._command_map[key] == 'activate':
+            key = '+'
+        if len(key) == 1 and '0' <= key <= '9':
+            self.state = int(key)
+        elif key in '+-':
+            self.state = min(9, max(0, self.state + (1 if key == '+' else -1)))
+        else:
+            return key
