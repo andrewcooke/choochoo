@@ -54,22 +54,18 @@ def make_widget(db, log, tab_manager):
         injury, binder = make_bound_injury(db, log, tab_manager)
         binder.read_row(row)
         body.append(injury)
-    body.append(Divider())
 
-    pile_reference = []
+    pile = Pile(body)
 
-    def insert_callback():
-        pile = pile_reference[0]
+    def insert_callback(pile=pile):
         contents = pile.contents
         injury, _ = make_bound_injury(db, log, tab_manager, insert_callback=insert_callback)
-        contents.append((Divider(), (WEIGHT, 1)))
+        if contents: contents.append((Divider(), (WEIGHT, 1)))
         contents.append((injury, (WEIGHT, 1)))
         pile.contents = contents
 
-    injury, _ = make_bound_injury(db, log, tab_manager, insert_callback=insert_callback)
-    body.append(injury)
-    pile_reference.append(Pile(body))
-    return Border(Frame(Filler(Pile([Divider(), pile_reference[0]]), valign='top'),
+    insert_callback()  # initial empty
+    return Border(Frame(Filler(Pile([Divider(), pile]), valign='top'),
                         header=Text('Injury')))
 
 
