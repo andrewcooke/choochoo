@@ -7,11 +7,12 @@ from re import compile, sub
 from typing import Mapping
 
 
-PROGNAME = 'ch'
+PROGNAME = 'ch2'
 COMMAND = 'command'
 
 DIARY = 'diary'
-INJURY = 'injury'
+INJURIES = 'injuries'
+AIMS = 'aims'
 
 ROOT = 'root'
 DATABASE = 'database'
@@ -75,8 +76,11 @@ def parser():
     p_diary = subparsers.add_parser(DIARY,
                                     help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
     p_diary.set_defaults(command=DIARY)
-    p_injury = subparsers.add_parser(INJURY,
-                                     help='manage injury entries - see `%s %s -h` for more details' %
-                                          (PROGNAME, INJURY))
-    p_injury.set_defaults(command=INJURY)
+    p_injuries = subparsers.add_parser(INJURIES,
+                                       help='manage injury entries - see `%s %s -h` for more details' %
+                                            (PROGNAME, INJURIES))
+    p_injuries.set_defaults(command=INJURIES)
+    p_aims = subparsers.add_parser(AIMS,
+                                   help='manage aim entries - see `%s %s -h` for more details' % (PROGNAME, AIMS))
+    p_aims.set_defaults(command=AIMS)
     return p

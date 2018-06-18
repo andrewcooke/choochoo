@@ -12,7 +12,7 @@ from .uweird.tabs import TabManager
 
 
 def make_bound_injury(db, log, tab_manager, insert_callback=None):
-    binder = SingleTableStatic(db, log, 'injury',
+    binder = SingleTableStatic(db, log, 'aim',
                                transforms={'start': DATE_ORDINAL, 'finish': DATE_ORDINAL},
                                insert_callback=insert_callback)
     injury = Definition(tab_manager, binder)
@@ -21,7 +21,7 @@ def make_bound_injury(db, log, tab_manager, insert_callback=None):
 
 def make_widget(db, log, tab_manager):
     body = []
-    for row in db.db.execute('select id, start, finish, title from injury'):
+    for row in db.db.execute('select id, start, finish, title from aim'):
         if body: body.append(Divider())
         injury, binder = make_bound_injury(db, log, tab_manager)
         binder.read_row(row)
@@ -31,14 +31,14 @@ def make_widget(db, log, tab_manager):
 
     def insert_callback(pile=pile):
         contents = pile.contents
-        injury, _ = make_bound_injury(db, log, tab_manager, insert_callback=insert_callback)
+        aim, _ = make_bound_injury(db, log, tab_manager, insert_callback=insert_callback)
         if contents: contents.append((Divider(), (WEIGHT, 1)))
-        contents.append((injury, (WEIGHT, 1)))
+        contents.append((aim, (WEIGHT, 1)))
         pile.contents = contents
 
     insert_callback()  # initial empty
     return Border(Frame(Filler(Pile([Divider(), pile]), valign='top'),
-                        header=Text('Injuries')))
+                        header=Text('Aims')))
 
 
 def main(args):
