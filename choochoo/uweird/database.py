@@ -1,6 +1,8 @@
 
 import datetime as dt
 from collections.abc import MutableMapping
+from functools import reduce
+from operator import and_
 
 from urwid import connect_signal
 
@@ -63,6 +65,7 @@ class Binder:
         self._log.debug('Binding %s as %s' % (widget, name))
         connect_signal(widget, 'change', self._save_widget_value)
         self._widget_names[widget] = name
+        return widget
 
     def _set_defaults(self):
         for name in self._widget_names.values():
@@ -202,11 +205,21 @@ class StaticBinder(Binder):
 
 class SingleTableStatic(StaticBinder):
 
-    def __init__(self, db, log, table, key_name='id', transforms=None, defaults=None, insert_callback=None):
+    def __init__(self, db, log, table, key_names='id', transforms=None, defaults=None,
+                 insert_callback=None, autosave=False):
         super().__init__(db, log, transforms=transforms, defaults=defaults)
         self._table = table
-        self._key_name = key_name
+        self._key_names = (key_names,) if isinstance(key_names, str) else key_names
         self._insert_callback = insert_callback
+        self._autosave = autosave
+
+    def _have_all_keys(self):
+        return reduce(and_, (name in self._dbdata for name in self._key_names))
+
+    def _save_widget_value(self, widget, value):
+        super()._save_widget_value(widget, value)
+        if self._autosave and self._have_all_keys():
+            self.write_values_to_db()
 
     def read_row(self, row):
         if row is None:
@@ -218,7 +231,7 @@ class SingleTableStatic(StaticBinder):
         self._broadcast_values_to_widgets()
 
     def write_values_to_db(self):
-        replace = self._key_name in self._dbdata
+        replace = self._have_all_keys()
         cmd = '%s into %s (' % ('replace' if replace else 'insert', self._table)
         cmd += ', '.join(self._dbdata.keys())
         cmd += ') values ('
@@ -227,18 +240,18 @@ class SingleTableStatic(StaticBinder):
         values = list(self._dbdata.values())
         self._log.debug('%s / %s' % (cmd, values))
         self._db.db.execute(cmd, values)
-        if not replace:
-            self._dbdata[self._key_name] = self._db.db.execute('select last_insert_rowid()').fetchone()[0]
+        if not replace and len(self._key_names) == 1:
+            self._dbdata[self._key_names[0]] = self._db.db.execute('select last_insert_rowid()').fetchone()[0]
             if self._insert_callback: self._insert_callback()
 
     def read_values_from_db(self):
-        if self._key_name in self._dbdata:
+        if self._have_all_keys():
             cmd = 'select '
-            names = [self._key_name]
+            names = list(self._key_names)
             names.extend(self._widget_names.values())
             cmd += ', '.join(names)
-            cmd += ' from %s where %s = ?' % (self._table, self._key_name)
-            values = [self._dbdata[self._key_name]]
+            cmd += ' from %s where %s = ?' % (self._table, self._key_names)
+            values = [self._dbdata[name] for name in self._key_names]
             self._log.debug('%s / %s' % (cmd, values))
             row = self._db.db.execute(cmd, values).fetchone()
         else:

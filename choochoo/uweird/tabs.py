@@ -1,3 +1,4 @@
+from random import randint, random
 
 from urwid import WidgetWrap, emit_signal, connect_signal, Widget
 
@@ -38,19 +39,25 @@ class TabManager:
     changes internal to the targets are unimportant).
     """
 
-    def __init__(self):
+    def __init__(self, log):
+        self._log = log
         self._widgets_indices = {}
         self._focus = {}
         self._root = None
+        self._groups = {}
 
-    def add(self, widget):
+    def add(self, widget, group=None):
         """
         Add widgets in order here.
 
         The returned (wrapped) value should be used in TUI construction.
         """
         widget = TabTarget(widget)
+        if group:
+            if group not in self._groups: self._groups[group] = []
+            self._groups[group].append(widget)
         assert widget not in self._widgets_indices
+        self._log.debug('Adding %s in group %s' % (widget, group))
         n = len(self._focus)
         self._widgets_indices[widget] = n
         self._widgets_indices[n] = widget
@@ -60,12 +67,17 @@ class TabManager:
         assert widget in self._widgets_indices
         return widget
 
-    def remove(self, widget):
-        assert widget in self._widgets_indices, (widget, self._widgets_indices.keys())
-        n = self._widgets_indices[widget]
-        del self._widgets_indices[widget]
-        del self._widgets_indices[n]
-        del self._focus[widget]
+    def remove(self, group):
+        self._log.debug('Removing group %s' % group)
+        if group in self._groups:
+            for widget in self._groups[group]:
+                n = self._widgets_indices[widget]
+                del self._widgets_indices[widget]
+                del self._widgets_indices[n]
+                del self._focus[widget]
+            del self._groups[group]
+        else:
+            self._log.warn('Duplicate removal for group %s?' % group)
 
     def forwards(self, widget):
         """
