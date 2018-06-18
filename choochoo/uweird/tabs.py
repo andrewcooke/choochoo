@@ -98,6 +98,12 @@ class TabManager:
         except AttributeError:
             self.discover(self._root)
             self._set_focus(self._widgets_indices[(n + delta) % len(self._focus)])
+        except KeyError:
+            self._log.error('all: ' + str(self._widgets_indices))
+            self._log.error('keys: ' + str(list(sorted(filter(lambda x: isinstance(x, int), self._widgets_indices.keys())))))
+            self._log.error('values: ' + str(list(sorted(filter(lambda x: isinstance(x, int), self._widgets_indices.values())))))
+            self._log.error('focus: ' + str(self._focus))
+            raise
 
     def _set_focus(self, widget):
         self._focus[widget].apply(self._root)

@@ -42,6 +42,9 @@ class TransformedView(MutableMapping):
         return self.__data.__iter__()
 
 
+UNSET = object()
+
+
 class Binder:
     """
     Idea stolen from https://martinfowler.com/eaaDev/uiArchs.html
@@ -57,14 +60,14 @@ class Binder:
         self._set_defaults()
         self._dbdata = TransformedView(self._data, transforms)
 
-    def bind(self, widget, name, transform=None, default=None):
+    def bind(self, widget, name, transform=None, default=UNSET):
         """
         Call with each widget in turn.  The name should be the column name in
         the database.
         """
         if transform is not None:
             self._dbdata._transforms[name] = transform
-        if default is not None:
+        if default is not UNSET:
             self._defaults[name] = default
         self._log.debug('Binding %s as %s' % (widget, name))
         connect_signal(widget, 'change', self._save_widget_value)

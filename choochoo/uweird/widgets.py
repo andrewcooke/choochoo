@@ -78,14 +78,21 @@ def ColSpace():
     return 'weight', 1, Padding(Text(''))
 
 
-class Rating(MutableStatefulText):
+class NonableInt(MutableStatefulText):
 
-    def __init__(self, caption='', state=0):
+    def __init__(self, caption='', state=None):
         self._caption = caption
         super().__init__(state)
 
     def state_as_text(self):
-        return '%s%d' % (self._caption, self.state)
+        if self.state is None:
+            text = '-'
+        else:
+            text = str(self.state)
+        return self._caption + text
+
+
+class Rating(NonableInt):
 
     def keypress(self, size, key):
         if self._command_map[key] == 'activate':
@@ -93,35 +100,50 @@ class Rating(MutableStatefulText):
         if len(key) == 1 and '0' <= key <= '9':
             self.state = int(key)
         elif key in '+-':
-            self.state = min(9, max(0, self.state + (1 if key == '+' else -1)))
+            if self.state is None:
+                self.state = 5
+            else:
+                self.state = min(9, max(0, self.state + (1 if key == '+' else -1)))
+        elif key in ('delete', 'backspace'):
+            self.state = None
         else:
             return key
 
 
-class Number(MutableStatefulText):
+class Number(NonableInt):
 
-    def __init__(self, caption='', state=0, min=0, max=100):
-        self._caption = caption
+    def __init__(self, caption='', state=None, min=0, max=100):
         self._min = min
         self._max = max
-        super().__init__(state)
-
-    def state_as_text(self):
-        return '%s%d' % (self._caption, self.state)
+        super().__init__(caption=caption, state=state)
 
     def keypress(self, size, key):
         if self._command_map[key] == 'activate':
             key = '+'
         if key == '+':
-            self.state = min(self._max, self.state + 1)
-        elif key == '-' and self._min < 0:
-            self.state = min(self._max, max(self._min, -1 * self.state))
+            if self.state is None:
+                self.state = min(self._max, max(self._min, 0))
+            else:
+                self.state = min(self._max, self.state + 1)
+        elif key == '-':
+            if self.state is None:
+                self.state = min(self._max, max(self._min, 0))
+            elif self._min < 0:
+                self.state = min(self._max, max(self._min, -1 * self.state))
+            else:
+                self.state = min(self._max, self.state - 1)
         elif key in ('backspace', 'delete'):
-            self.state = self.state // 10
+            if self.state == 0:
+                self.state = None
+            else:
+                self.state = self.state // 10
         elif len(key) == 1 and '0' <= key <= '9':
-            delta = int(key)
-            if self.state < 0: delta = -delta
-            self.state = min(self._max, max(self._min, self.state * 10 + delta))
+            if self.state is None:
+                self.state = min(self._max, max(self._min, int(key)))
+            else:
+                delta = int(key)
+                if self.state < 0: delta = -delta
+                self.state = min(self._max, max(self._min, self.state * 10 + delta))
         else:
             return key
 

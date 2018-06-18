@@ -24,33 +24,21 @@ class Maker(WidgetWrap):
     def _make(self, date):
         raise NotImplemented()
 
-
-class Rebuildable(Maker):
-
-    def __init__(self, db, log, tab_manager, date=None):
-        self._old_state = []
-        super().__init__(db, log, tab_manager, date=date)
-
-    def rebuild(self, unused_widget, date):
-        for injury in self._old_state:
-            injury.untab()
+    def rebuild(self, date):
         self._w = self._make(date)
 
 
-class Untabbable(WidgetWrap):
-
-    def untab(self):
-        self._tab_manager.remove(self)
+TAB_GROUP = 'diary'
 
 
-class Injury(Untabbable):
+class Injury(WidgetWrap):
 
     def __init__(self, tab_manager, binder, title):
         self._tab_manager = tab_manager
-        pain_avg = tab_manager.add(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=0), group=self)
-        pain_peak = tab_manager.add(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=0), group=self)
-        pain_freq = tab_manager.add(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=0), group=self)
-        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''), group=self)
+        pain_avg = tab_manager.add(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=None), group=TAB_GROUP)
+        pain_peak = tab_manager.add(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=None), group=TAB_GROUP)
+        pain_freq = tab_manager.add(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None), group=TAB_GROUP)
+        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''), group=TAB_GROUP)
         super().__init__(
             Pile([Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
@@ -64,7 +52,7 @@ class Injury(Untabbable):
                   ]))
 
 
-class Injuries(Rebuildable):
+class Injuries(Maker):
 
     def _make(self, date):
         ordinal = date.toordinal()
@@ -79,7 +67,6 @@ class Injuries(Rebuildable):
                                        defaults={'ordinal': ordinal, 'injury': id},
                                        autosave=True)
             injury = Injury(self._tab_manager, binder, title)
-            self._old_state.append(injury)
             body.append(injury)
             binder.read_row(
                 self._db.execute('''select * from injury_diary where injury = ? and ordinal = ?''',
@@ -87,18 +74,18 @@ class Injuries(Rebuildable):
         return Pile([Text('Injuries'), Padding(Pile(body), left=2)])
 
 
-class Aim(Untabbable):
+class Aim(WidgetWrap):
 
     def __init__(self, tab_manager, binder, title):
         self._tab_manager = tab_manager
-        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''), group=self)
+        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''), group=TAB_GROUP)
         super().__init__(
             Pile([Text(title),
                   notes,
                   ]))
 
 
-class Aims(Rebuildable):
+class Aims(Maker):
 
     def _make(self, date):
         ordinal = date.toordinal()
@@ -114,7 +101,6 @@ class Aims(Rebuildable):
                                        defaults={'ordinal': ordinal, 'aim': id},
                                        autosave=True)
             aim = Aim(self._tab_manager, binder, title)
-            self._old_state.append(aim)
             body.append(aim)
             binder.read_row(
                 self._db.execute('''select * from aim_diary where aim = ? and ordinal = ?''',
@@ -131,14 +117,12 @@ class Diary(Maker):
         raw_calendar = Calendar(date)
         calendar = self._tab_manager.add(binder.bind_key(raw_calendar, 'ordinal'))
         notes = self._tab_manager.add(binder.bind(Edit(caption='Notes: '), 'notes', default=''))
-        rest_hr = self._tab_manager.add(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr', default=40))
-        sleep = self._tab_manager.add(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep', default=8))
-        mood = self._tab_manager.add(binder.bind(Rating(caption='Mood: '), 'mood', default=5))
+        rest_hr = self._tab_manager.add(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr', default=None))
+        sleep = self._tab_manager.add(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep', default=None))
+        mood = self._tab_manager.add(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
         weather = self._tab_manager.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
-        injuries = Injuries(self._db, self._log, self._tab_manager, date)
-        aims = Aims(self._db, self._log, self._tab_manager, date)
-        connect_signal(raw_calendar, 'change', injuries.rebuild)
-        connect_signal(raw_calendar, 'change', aims.rebuild)
+        self.injuries = Injuries(self._db, self._log, self._tab_manager, date)
+        self.aims = Aims(self._db, self._log, self._tab_manager, date)
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
@@ -147,12 +131,18 @@ class Diary(Maker):
                                              ]))],
                         dividechars=2),
                 Divider(),
-                injuries,
+                self.injuries,
                 Divider(),
-                aims]
+                self.aims]
         binder.bootstrap(date)
         body = Filler(Pile([Divider(), Pile(body)]), valign='top')
+        connect_signal(raw_calendar, 'change', self.rebuild)
         return Border(Frame(body, header=Text('Diary')))
+
+    def rebuild(self, unused_widget, date):
+        self._tab_manager.remove(TAB_GROUP)
+        self.injuries.rebuild(date)
+        self.aims.rebuild(date)
 
 
 def main(args):
