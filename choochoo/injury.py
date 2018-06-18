@@ -72,7 +72,7 @@ def make_widget(db, log, tab_manager):
 def main(args):
     log = make_log(args)
     db = Database(args, log)
-    tab_manager = TabManager()
+    tab_manager = TabManager(log)
     injury = make_widget(db, log, tab_manager)
     tab_manager.discover(injury)
     MainLoop(injury, palette=PALETTE).run()

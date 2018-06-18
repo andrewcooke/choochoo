@@ -74,7 +74,9 @@ class Injuries(BaseWrap):
             injury = Injury(self._tab_manager, binder, id, title)
             self._old_state.append(injury)
             body.append(Columns([ColText('  '), injury]))
-            binder.read_values_from_db()
+            binder.read_row(
+                self._db.db.execute('''select * from injury_diary where injury = ? and ordinal = ?''',
+                                    (id, ordinal)).fetchone())
         return Pile([Text('Injuries'), Pile(body)])
 
     def rebuild(self, unused_widget, date):
@@ -87,7 +89,9 @@ class Diary(BaseWrap):
 
     def _make(self, date):
         if not date: date = dt.date.today()
-        binder = SingleTableDynamic(self._db, self._log, 'diary', transforms={'ordinal': DATE_ORDINAL})
+        binder = SingleTableDynamic(self._db, self._log, 'diary',
+                                    transforms={'ordinal': DATE_ORDINAL},
+                                    defaults={'notes': ''})
         self.calendar = Calendar(date)
         binder.bind_key(self.calendar, 'ordinal')
         self.notes = Edit(caption="Notes: ")

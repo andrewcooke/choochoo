@@ -68,11 +68,9 @@ class Binder:
         return widget
 
     def _set_defaults(self):
-        for name in self._widget_names.values():
-            if name in self._defaults:
+        for name in self._defaults:
+            if name not in self._data:
                 self._data[name] = self._defaults[name]
-            else:
-                self._data[name] = None
 
     def _save_widget_value(self, widget, value):
         self._log.debug('Saving %s=%s' % (self._widget_names[widget], value))
@@ -169,9 +167,8 @@ class SingleTableDynamic(DynamicBinder):
         values = [self._dbdata[self._key_name]]
         self._log.debug('%s / %s' % (cmd, values))
         row = self._db.db.execute(cmd, values).fetchone()
-        if row is None:
-            self._set_defaults()
-        else:
+        self._set_defaults()
+        if row:
             for name in self._widget_names.values():
                 self._log.debug('Read %s=%s' % (name, row[name]))
                 self._dbdata[name] = row[name]
@@ -218,13 +215,15 @@ class SingleTableStatic(StaticBinder):
 
     def _save_widget_value(self, widget, value):
         super()._save_widget_value(widget, value)
-        if self._autosave and self._have_all_keys():
-            self.write_values_to_db()
+        if self._autosave:
+            if self._have_all_keys():
+                self.write_values_to_db()
+            else:
+                self._log.warn('Not saving because missing key values (%s)' % list(self._dbdata.keys()))
 
     def read_row(self, row):
-        if row is None:
-            self._set_defaults()
-        else:
+        self._set_defaults()
+        if row:
             for name in row.keys():
                 self._log.debug('Read %s=%s' % (name, row[name]))
                 self._dbdata[name] = row[name]
