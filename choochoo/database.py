@@ -18,7 +18,11 @@ class Database:
 
 create table if not exists diary (
   ordinal integer primary key,
-  notes text not null
+  notes text not null,
+  rest_hr integer not null,
+  sleep integer not null,
+  mood integer not null,
+  weather text not null
 );
 
 create table if not exists injury (
@@ -31,9 +35,9 @@ create table if not exists injury (
 create table if not exists injury_diary (
   ordinal integer not null,
   injury integer not null references injury(id),
-  pain_avg integer not null default 0,
-  pain_peak integer not null default 0,
-  notes text not null default '',
+  pain_avg integer not null,
+  pain_peak integer not null,
+  notes text not null,
   primary key (ordinal, injury)
 ) without rowid;
 

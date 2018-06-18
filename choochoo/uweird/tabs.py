@@ -57,7 +57,6 @@ class TabManager:
             if group not in self._groups: self._groups[group] = []
             self._groups[group].append(widget)
         assert widget not in self._widgets_indices
-        self._log.debug('Adding %s in group %s' % (widget, group))
         n = len(self._focus)
         self._widgets_indices[widget] = n
         self._widgets_indices[n] = widget

@@ -89,3 +89,32 @@ class Rating(MutableStatefulText):
             self.state = min(9, max(0, self.state + (1 if key == '+' else -1)))
         else:
             return key
+
+
+class Number(MutableStatefulText):
+
+    def __init__(self, caption='', state=0, min=0, max=100):
+        self._caption = caption
+        self._min = min
+        self._max = max
+        super().__init__(state)
+
+    def state_as_text(self):
+        return '%s%d' % (self._caption, self.state)
+
+    def keypress(self, size, key):
+        if self._command_map[key] == 'activate':
+            key = '+'
+        if key == '+':
+            self.state = min(self._max, self.state + 1)
+        elif key == '-' and self._min < 0:
+            self.state = min(self._max, max(self._min, -1 * self.state))
+        elif key in ('backspace', 'delete'):
+            self.state = self.state // 10
+        elif len(key) == 1 and '0' <= key <= '9':
+            delta = int(key)
+            if self.state < 0: delta = -delta
+            self.state = min(self._max, max(self._min, self.state * 10 + delta))
+        else:
+            return key
+

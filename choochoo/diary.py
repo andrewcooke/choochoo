@@ -4,7 +4,7 @@ import datetime as dt
 from urwid import Text, MainLoop, Frame, Padding, Filler, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
 
 from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
-from .uweird.widgets import ColText, Rating
+from .uweird.widgets import ColText, Rating, Number
 from .database import Database
 from .log import make_log
 from .utils import PALETTE
@@ -21,23 +21,22 @@ class Injury(WidgetWrap):
 
     def __init__(self, tab_manager, binder, id, title):
         self._tab_manager = tab_manager
-        self._id = id
-        self.pain_avg = tab_manager.add(FocusAttr(binder.bind(Rating(caption='average: ', state=0), 'pain_avg')), group=id)
-        self.pain_peak = tab_manager.add(FocusAttr(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak')), group=id)
-        self.notes = tab_manager.add(FocusAttr(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes')), group=id)
+        pain_avg = tab_manager.add(FocusAttr(binder.bind(Rating(caption='average: ', state=0), 'pain_avg')), group=self)
+        pain_peak = tab_manager.add(FocusAttr(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak')), group=self)
+        notes = tab_manager.add(FocusAttr(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes')), group=self)
         super().__init__(
             Pile([Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
-                                                  (11, self.pain_avg),
-                                                  (8, self.pain_peak),
+                                                  (11, pain_avg),
+                                                  (8, pain_peak),
                                                   ('weight', 1, Padding(Text(''))),
                                                   ])),
                             ]),
-                  self.notes,
+                  notes,
                   ]))
 
     def untab(self):
-        self._tab_manager.remove(self._id)
+        self._tab_manager.remove(self)
 
 
 class BaseWrap(WidgetWrap):
@@ -91,18 +90,26 @@ class Diary(BaseWrap):
         if not date: date = dt.date.today()
         binder = SingleTableDynamic(self._db, self._log, 'diary',
                                     transforms={'ordinal': DATE_ORDINAL},
-                                    defaults={'notes': ''})
-        self.calendar = Calendar(date)
-        binder.bind_key(self.calendar, 'ordinal')
-        self.notes = Edit(caption="Notes: ")
-        binder.bind(self.notes, 'notes')
-        self.injuries = Injuries(self._db, self._log, self._tab_manager, date)
-        connect_signal(self.calendar, 'change', self.injuries.rebuild)
-        body = [Columns([(20, Padding(self._tab_manager.add(self.calendar), width='clip')),
-                         ('weight', 1, self._tab_manager.add(FocusAttr(self.notes)))],
+                                    defaults={'notes': '', 'rest_hr': 40, 'sleep': 8,
+                                              'mood': 5, 'weather': ''})
+        raw_calendar = Calendar(date)
+        calendar = self._tab_manager.add(FocusAttr(binder.bind_key(raw_calendar, 'ordinal')))
+        notes = self._tab_manager.add(FocusAttr(binder.bind(Edit(caption='Notes: '), 'notes')))
+        rest_hr = self._tab_manager.add(FocusAttr(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr')))
+        sleep = self._tab_manager.add(FocusAttr(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep')))
+        mood = self._tab_manager.add(FocusAttr(binder.bind(Rating(caption='Mood: '), 'mood')))
+        weather = self._tab_manager.add(FocusAttr(binder.bind(Edit(caption='Weather: '), 'weather')))
+        injuries = Injuries(self._db, self._log, self._tab_manager, date)
+        connect_signal(raw_calendar, 'change', injuries.rebuild)
+        body = [Columns([(20, Padding(calendar, width='clip')),
+                         ('weight', 1, Pile([notes,
+                                             Divider(),
+                                             Columns([rest_hr, sleep, mood]),
+                                             weather
+                                             ]))],
                         dividechars=2),
                 Divider(),
-                self.injuries]
+                injuries]
         binder.bootstrap(date)
         body = Filler(Pile([Divider(), Pile(body)]), valign='top')
         return Border(Frame(body, header=Text('Diary')))
