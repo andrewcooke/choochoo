@@ -121,13 +121,15 @@ class Diary(Maker):
         sleep = self._tab_manager.add(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep', default=None))
         mood = self._tab_manager.add(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
         weather = self._tab_manager.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
+        meds = self._tab_manager.add(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
         self.injuries = Injuries(self._db, self._log, self._tab_manager, date)
         self.aims = Aims(self._db, self._log, self._tab_manager, date)
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
                                              Columns([rest_hr, sleep, mood]),
-                                             weather
+                                             weather,
+                                             meds,
                                              ]))],
                         dividechars=2),
                 Divider(),

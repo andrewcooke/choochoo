@@ -13,7 +13,7 @@ class Definition(WidgetWrap):
         finish = tab_manager.add(binder.bind(Nullable('Open', TextDate, finish), 'finish'))
         reset = tab_manager.add(binder.connect(SquareButton('Reset'), 'click', binder.reset))
         save = tab_manager.add(binder.connect(SquareButton('Save'), 'click', binder.save))
-        description = tab_manager.add(binder.bind(Edit(caption='Description: ', edit_text=description), 'description'))
+        description = tab_manager.add(binder.bind(Edit(caption='Description: ', edit_text=description), 'description', default=''))
         super().__init__(
             Pile([title,
                   Columns([(18, start),

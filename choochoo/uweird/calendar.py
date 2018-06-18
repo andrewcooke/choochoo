@@ -32,9 +32,6 @@ class DateKeyPressMixin:
 
     def keypress(self, size, key):
         original_key = key
-        if key == '=':
-            self.state = dt.date.today()
-            return
         delta = self.__delta
         if len(key) == 1 and key.isupper():
             key = key.lower()
@@ -43,6 +40,9 @@ class DateKeyPressMixin:
             return self.__alpha_keypress(delta, key, original_key)
         if self._command_map[key] == 'activate':
             key = self.__default
+        if key == '=':
+            self.state = dt.date.today()
+            return
         if len(key) == 1:
             return self.__delta_keypress(delta, key, original_key)
         return original_key
