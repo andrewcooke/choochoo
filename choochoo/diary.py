@@ -59,6 +59,7 @@ class Injuries(Maker):
         injuries = [(row['id'], row['title']) for row in self._db.execute('''
             select id, title from injury 
             where (start is null or start <= ?) and (finish is null or finish >=?)
+            order by sort
         ''', (ordinal, ordinal))]
         body = []
         for (id, title) in injuries:
@@ -92,6 +93,7 @@ class Aims(Maker):
         aims = [(row['id'], row['title']) for row in self._db.execute('''
             select id, title from aim 
             where (start is null or start <= ?) and (finish is null or finish >=?)
+            order by sort
         ''', (ordinal, ordinal))]
         self._log.debug('Aims: %s (%d)' % (aims, len(aims)))
         body = []

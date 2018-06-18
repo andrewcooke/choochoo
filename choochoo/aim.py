@@ -21,7 +21,7 @@ def make_bound_injury(db, log, tab_manager, insert_callback=None):
 
 def make_widget(db, log, tab_manager):
     body = []
-    for row in db.db.execute('select id, start, finish, title from aim'):
+    for row in db.db.execute('select id, start, finish, title, sort from aim'):
         if body: body.append(Divider())
         injury, binder = make_bound_injury(db, log, tab_manager)
         binder.read_row(row)
