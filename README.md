@@ -6,4 +6,4 @@ cyclist.
 
 Currently it focusses on tracking and managing injuries.
 
-Code (c) 2018 Andrew Cooke andrew@acooke.org, GPL v2 licence (see LICENCE).
+Copyright (c) 2018 Andrew Cooke andrew@acooke.org, GPL v2 licence (see LICENCE).
