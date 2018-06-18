@@ -51,6 +51,9 @@ class TabManager:
         Add widgets in order here.
 
         The returned (wrapped) value should be used in TUI construction.
+
+        WARNING: removal only works correctly (currently) if all tabs
+        "to tail" from some point are removed and re-added.
         """
         if add_focus: widget = FocusAttr(widget)
         widget = TabTarget(widget)
