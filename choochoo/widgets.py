@@ -14,7 +14,8 @@ class Definition(WidgetWrap):
         sort = tab_manager.add(binder.bind(Edit(caption='Sort: ', edit_text=sort), 'sort'))
         reset = tab_manager.add(binder.connect(SquareButton('Reset'), 'click', binder.reset))
         save = tab_manager.add(binder.connect(SquareButton('Save'), 'click', binder.save))
-        description = tab_manager.add(binder.bind(Edit(caption='Description: ', edit_text=description), 'description', default=''))
+        description = tab_manager.add(binder.bind(Edit(caption='Description: ', edit_text=description, multiline=True),
+                                                  'description', default=''))
         super().__init__(
             Pile([title,
                   Columns([(18, start),

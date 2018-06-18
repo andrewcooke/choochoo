@@ -38,7 +38,8 @@ class Injury(WidgetWrap):
         pain_avg = tab_manager.add(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=None), group=TAB_GROUP)
         pain_peak = tab_manager.add(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=None), group=TAB_GROUP)
         pain_freq = tab_manager.add(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None), group=TAB_GROUP)
-        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''), group=TAB_GROUP)
+        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text='', multiline=True),
+                                            'notes', default=''), group=TAB_GROUP)
         super().__init__(
             Pile([Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
@@ -118,7 +119,7 @@ class Diary(Maker):
                                     transforms={'ordinal': DATE_ORDINAL})
         raw_calendar = Calendar(date)
         calendar = self._tab_manager.add(binder.bind_key(raw_calendar, 'ordinal'))
-        notes = self._tab_manager.add(binder.bind(Edit(caption='Notes: '), 'notes', default=''))
+        notes = self._tab_manager.add(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
         rest_hr = self._tab_manager.add(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr', default=None))
         sleep = self._tab_manager.add(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep', default=None))
         mood = self._tab_manager.add(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
