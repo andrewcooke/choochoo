@@ -105,10 +105,15 @@ class DynamicBinder(Binder):
     def __init__(self, db, log, transforms=None, defaults=None):
         super().__init__(db, log, transforms=transforms, defaults=defaults)
         self._key_name = None
+        self._key_widget = None
 
     def bind_key(self, widget, name):
+        self._key_widget = widget
         self._key_name = name
         self.bind(widget, name)
+
+    def bootstrap(self, state):
+        self._save_widget_value(self._key_widget, state)
 
     def _save_widget_value(self, widget, value):
         # only trigger database access if the key is changing

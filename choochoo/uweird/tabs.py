@@ -57,10 +57,11 @@ class TabManager:
         self._focus[widget] = None
         connect_signal(widget, 'tabforwards', self.forwards)
         connect_signal(widget, 'tabbackwards', self.backwards)
+        assert widget in self._widgets_indices
         return widget
 
     def remove(self, widget):
-        assert widget in self._widgets_indices
+        assert widget in self._widgets_indices, (widget, self._widgets_indices.keys())
         n = self._widgets_indices[widget]
         del self._widgets_indices[widget]
         del self._widgets_indices[n]

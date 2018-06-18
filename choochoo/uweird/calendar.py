@@ -40,14 +40,14 @@ class DateKeyPressMixin:
             key = key.lower()
             delta *= -1
         if self.__is_alpha and 'a' <= key <= 'z':
-            return self.__alpha_keypress(key, original_key)
+            return self.__alpha_keypress(delta, key, original_key)
         if self._command_map[key] == 'activate':
             key = self.__default
         if len(key) == 1:
-            return self.__delta_keypress(key, original_key)
+            return self.__delta_keypress(delta, key, original_key)
         return original_key
 
-    def __delta_keypress(self, key, original_key):
+    def __delta_keypress(self, delta, key, original_key):
         if key in '+- ':
             if key == '-': delta *= -1
             key = 'd' if self.__default == '=' else self.__default
@@ -77,7 +77,7 @@ class DateKeyPressMixin:
             return
         return original_key
 
-    def __alpha_keypress(self, key, original_key):
+    def __alpha_keypress(self, delta, key, original_key):
         is_month = self.__default == 'm'
         n = 12 if is_month else 7
         tries, date = 0, self.state
