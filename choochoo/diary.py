@@ -3,33 +3,29 @@ import datetime as dt
 
 from urwid import Text, MainLoop, Frame, Padding, Filler, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
 
-from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
-from .uweird.widgets import ColText, Rating, Number
 from .database import Database
 from .log import make_log
 from .utils import PALETTE
 from .uweird.calendar import Calendar
+from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
 from .uweird.decorators import Border
-from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
+from .uweird.widgets import ColText, Rating, Number, ColSpace
 
-
-# we can't avoid mixing TUI and database here.  most of the display has to update when
-# the date changes on the calendar
 
 class Injury(WidgetWrap):
 
-    def __init__(self, tab_manager, binder, id, title):
+    def __init__(self, tab_manager, binder, title):
         self._tab_manager = tab_manager
-        pain_avg = tab_manager.add(FocusAttr(binder.bind(Rating(caption='average: ', state=0), 'pain_avg')), group=self)
-        pain_peak = tab_manager.add(FocusAttr(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak')), group=self)
-        notes = tab_manager.add(FocusAttr(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes')), group=self)
+        pain_avg = tab_manager.add(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=0), group=self)
+        pain_peak = tab_manager.add(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=0), group=self)
+        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''), group=self)
         super().__init__(
             Pile([Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
                                                   (11, pain_avg),
                                                   (8, pain_peak),
-                                                  ('weight', 1, Padding(Text(''))),
+                                                  ColSpace(),
                                                   ])),
                             ]),
                   notes,
@@ -67,16 +63,15 @@ class Injuries(BaseWrap):
         for (id, title) in injuries:
             binder = SingleTableStatic(self._db, self._log, 'injury_diary',
                                        key_names=('ordinal', 'injury'),
-                                       defaults={'ordinal': date.toordinal(), 'injury': id,
-                                                 'notes': '', 'pain_avg': 0, 'pain_peak': 0},
+                                       defaults={'ordinal': date.toordinal(), 'injury': id},
                                        autosave=True)
-            injury = Injury(self._tab_manager, binder, id, title)
+            injury = Injury(self._tab_manager, binder, title)
             self._old_state.append(injury)
-            body.append(Columns([ColText('  '), injury]))
+            body.append(injury)
             binder.read_row(
                 self._db.db.execute('''select * from injury_diary where injury = ? and ordinal = ?''',
                                     (id, ordinal)).fetchone())
-        return Pile([Text('Injuries'), Pile(body)])
+        return Pile([Text('Injuries'), Padding(Pile(body), left=2)])
 
     def rebuild(self, unused_widget, date):
         for injury in self._old_state:
@@ -89,16 +84,14 @@ class Diary(BaseWrap):
     def _make(self, date):
         if not date: date = dt.date.today()
         binder = SingleTableDynamic(self._db, self._log, 'diary',
-                                    transforms={'ordinal': DATE_ORDINAL},
-                                    defaults={'notes': '', 'rest_hr': 40, 'sleep': 8,
-                                              'mood': 5, 'weather': ''})
+                                    transforms={'ordinal': DATE_ORDINAL})
         raw_calendar = Calendar(date)
-        calendar = self._tab_manager.add(FocusAttr(binder.bind_key(raw_calendar, 'ordinal')))
-        notes = self._tab_manager.add(FocusAttr(binder.bind(Edit(caption='Notes: '), 'notes')))
-        rest_hr = self._tab_manager.add(FocusAttr(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr')))
-        sleep = self._tab_manager.add(FocusAttr(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep')))
-        mood = self._tab_manager.add(FocusAttr(binder.bind(Rating(caption='Mood: '), 'mood')))
-        weather = self._tab_manager.add(FocusAttr(binder.bind(Edit(caption='Weather: '), 'weather')))
+        calendar = self._tab_manager.add(binder.bind_key(raw_calendar, 'ordinal'))
+        notes = self._tab_manager.add(binder.bind(Edit(caption='Notes: '), 'notes', default=''))
+        rest_hr = self._tab_manager.add(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr', default=40))
+        sleep = self._tab_manager.add(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep', default=8))
+        mood = self._tab_manager.add(binder.bind(Rating(caption='Mood: '), 'mood', default=5))
+        weather = self._tab_manager.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
         injuries = Injuries(self._db, self._log, self._tab_manager, date)
         connect_signal(raw_calendar, 'change', injuries.rebuild)
         body = [Columns([(20, Padding(calendar, width='clip')),

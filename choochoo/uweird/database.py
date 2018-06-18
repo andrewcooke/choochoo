@@ -19,17 +19,17 @@ class TransformedView(MutableMapping):
     def __init__(self, data, transforms=None):
         self.__data = data
         if transforms is None: transforms = {}
-        self.__transforms = transforms
+        self._transforms = transforms
 
     def __getitem__(self, name):
         value = self.__data[name]
-        if name in self.__transforms:
-            value = self.__transforms[name][1](value)
+        if name in self._transforms:
+            value = self._transforms[name][1](value)
         return value
 
     def __setitem__(self, name, value):
-        if name in self.__transforms:
-            value = self.__transforms[name][0](value)
+        if name in self._transforms:
+            value = self._transforms[name][0](value)
         self.__data[name] = value
 
     def __delitem__(self, name):
@@ -57,14 +57,22 @@ class Binder:
         self._set_defaults()
         self._dbdata = TransformedView(self._data, transforms)
 
-    def bind(self, widget, name):
+    def bind(self, widget, name, transform=None, default=None):
         """
         Call with each widget in turn.  The name should be the column name in
         the database.
         """
+        if transform is not None:
+            self._dbdata._transforms[name] = transform
+        if default is not None:
+            self._defaults[name] = default
         self._log.debug('Binding %s as %s' % (widget, name))
         connect_signal(widget, 'change', self._save_widget_value)
         self._widget_names[widget] = name
+        return widget
+
+    def connect(self, widget, name, callback):
+        connect_signal(widget, name, callback)
         return widget
 
     def _set_defaults(self):

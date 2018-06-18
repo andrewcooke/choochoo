@@ -2,7 +2,7 @@ from random import randint, random
 
 from urwid import WidgetWrap, emit_signal, connect_signal, Widget
 
-from .focus import Focus
+from .focus import Focus, FocusAttr
 
 
 class TabTarget(WidgetWrap):
@@ -46,12 +46,13 @@ class TabManager:
         self._root = None
         self._groups = {}
 
-    def add(self, widget, group=None):
+    def add(self, widget, group=None, add_focus=True):
         """
         Add widgets in order here.
 
         The returned (wrapped) value should be used in TUI construction.
         """
+        if add_focus: widget = FocusAttr(widget)
         widget = TabTarget(widget)
         if group:
             if group not in self._groups: self._groups[group] = []

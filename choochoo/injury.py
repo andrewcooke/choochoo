@@ -1,35 +1,34 @@
 
-from urwid import Text, MainLoop, Frame, WidgetWrap, Columns, Padding, Pile, Divider, \
+from urwid import Text, MainLoop, Frame, WidgetWrap, Columns, Pile, Divider, \
     Filler, Edit, connect_signal, WEIGHT
 
-from .uweird.database import SingleTableStatic, DATE_ORDINAL
 from .database import Database
 from .log import make_log
 from .utils import PALETTE
 from .uweird.calendar import TextDate
-from .uweird.widgets import Nullable
+from .uweird.database import SingleTableStatic, DATE_ORDINAL
 from .uweird.decorators import Border
-from .uweird.focus import FocusAttr
 from .uweird.tabs import TabManager
+from .uweird.widgets import Nullable, ColText, ColSpace
 from .uweird.widgets import SquareButton
 
 
 class InjuryDefn(WidgetWrap):
 
-    def __init__(self, tab_manager, title='', start=None, finish=None):
-        self.title = Edit(caption='Title: ', edit_text=title)
-        self.start = Nullable('Open', TextDate, start)
-        self.finish = Nullable('Open', TextDate, finish)
-        self.reset = SquareButton('Reset')
-        self.save = SquareButton('Save')
+    def __init__(self, tab_manager, binder, title='', start=None, finish=None):
+        title = tab_manager.add(binder.bind(Edit(caption='Title: ', edit_text=title), 'title'))
+        start = tab_manager.add(binder.bind(Nullable('Open', TextDate, start), 'start'))
+        finish = tab_manager.add(binder.bind(Nullable('Open', TextDate, finish), 'finish'))
+        reset = tab_manager.add(binder.connect(SquareButton('Reset'), 'click', binder.reset))
+        save = tab_manager.add(binder.connect(SquareButton('Save'), 'click', binder.save))
         super().__init__(
-            Pile([tab_manager.add(FocusAttr(self.title)),
-                  Columns([(18, tab_manager.add(self.start)),
-                           (6, Text("  to  ")),
-                           (18, tab_manager.add(self.finish)),
-                           ('weight', 1, Padding(Text(''))),
-                           (9, tab_manager.add(FocusAttr(self.reset))),
-                           (8, tab_manager.add(FocusAttr(self.save))),
+            Pile([title,
+                  Columns([(18, start),
+                           ColText(' to '),
+                           (18, finish),
+                           ColSpace(),
+                           (9, reset),
+                           (8, save),
                            ]),
                   ]))
 
@@ -38,12 +37,7 @@ def make_bound_injury(db, log, tab_manager, insert_callback=None):
     binder = SingleTableStatic(db, log, 'injury',
                                transforms={'start': DATE_ORDINAL, 'finish': DATE_ORDINAL},
                                insert_callback=insert_callback)
-    injury = InjuryDefn(tab_manager)
-    binder.bind(injury.title, 'title')
-    binder.bind(injury.start, 'start')
-    binder.bind(injury.finish, 'finish')
-    connect_signal(injury.save, 'click', binder.save)
-    connect_signal(injury.reset, 'click', binder.reset)
+    injury = InjuryDefn(tab_manager, binder)
     return injury, binder
 
 

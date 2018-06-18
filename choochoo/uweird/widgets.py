@@ -1,5 +1,5 @@
 
-from urwid import Button, Text, WidgetWrap, emit_signal, connect_signal
+from urwid import Button, Text, WidgetWrap, emit_signal, connect_signal, Padding
 
 from .state import MutableStatefulText
 from .focus import FocusAttr
@@ -69,6 +69,13 @@ def ColText(text):
     Shorthand for fixed width, literal column.
     """
     return len(text), Text(text)
+
+
+def ColSpace():
+    """
+    Shorthand for an empty, expanding column.
+    """
+    return 'weight', 1, Padding(Text(''))
 
 
 class Rating(MutableStatefulText):
