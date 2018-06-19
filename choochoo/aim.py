@@ -1,6 +1,5 @@
 
-from urwid import Text, MainLoop, Frame, Pile, Divider, \
-    Filler, WEIGHT
+from urwid import Text, MainLoop, Frame, Pile, Divider, Filler, WEIGHT
 
 from .widgets import Definition
 from .database import Database
@@ -8,22 +7,22 @@ from .log import make_log
 from .utils import PALETTE
 from .uweird.database import SingleTableStatic, DATE_ORDINAL
 from .uweird.decorators import Border
-from .uweird.tabs import TabManager
+from .uweird.tabs import TabList, TabNode
 
 
-def make_bound_injury(db, log, tab_manager, insert_callback=None):
+def make_bound_injury(db, log, tabs, insert_callback=None):
     binder = SingleTableStatic(db, log, 'aim',
                                transforms={'start': DATE_ORDINAL, 'finish': DATE_ORDINAL},
                                insert_callback=insert_callback)
-    injury = Definition(tab_manager, binder)
+    injury = Definition(tabs, binder)
     return injury, binder
 
 
-def make_widget(db, log, tab_manager):
+def make_widget(db, log, tabs):
     body = []
     for row in db.db.execute('select id, start, finish, title, sort from aim'):
         if body: body.append(Divider())
-        injury, binder = make_bound_injury(db, log, tab_manager)
+        injury, binder = make_bound_injury(db, log, tabs)
         binder.read_row(row)
         body.append(injury)
 
@@ -31,7 +30,7 @@ def make_widget(db, log, tab_manager):
 
     def insert_callback(pile=pile):
         contents = pile.contents
-        aim, _ = make_bound_injury(db, log, tab_manager, insert_callback=insert_callback)
+        aim, _ = make_bound_injury(db, log, tabs, insert_callback=insert_callback)
         if contents: contents.append((Divider(), (WEIGHT, 1)))
         contents.append((aim, (WEIGHT, 1)))
         pile.contents = contents
@@ -44,7 +43,7 @@ def make_widget(db, log, tab_manager):
 def main(args):
     log = make_log(args)
     db = Database(args, log)
-    tab_manager = TabManager(log)
-    injury = make_widget(db, log, tab_manager)
-    tab_manager.discover(injury)
-    MainLoop(injury, palette=PALETTE).run()
+    tabs = TabList()
+    aim = TabNode(make_widget(db, log, tabs), tabs)
+    aim.discover()
+    MainLoop(aim, palette=PALETTE).run()

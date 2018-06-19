@@ -10,7 +10,7 @@ class Focus:
     def __init__(self, focus):
         self._focus = focus
 
-    def apply(self, widget):
+    def to(self, widget, key=None):
         for focus in self._focus:
             widget = self._container(widget)
             try:

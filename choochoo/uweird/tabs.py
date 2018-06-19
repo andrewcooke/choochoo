@@ -1,124 +1,124 @@
-from random import randint, random
+
+from collections.abc import Sequence
 
 from urwid import WidgetWrap, emit_signal, connect_signal, Widget
 
 from .focus import Focus, FocusAttr
 
 
-class TabTarget(WidgetWrap):
-    """
-    Add keypress logic to widgets that are targets of tabbing.
+# new tab manager design
 
-    Do not use directly - use TabManager.add().
-    """
+# tabs can be arranged in groups.  group contents can be wiped and re-added.
+# this allows tabs in the "middle" of a travers to be rebuilt.
+# tabs are assembled in a TabList and then passed to a TabNode which
+# contains the group.  the TabNode has to be a widget itself since it
+# needs to re-raise signals for tabbing.  because it is a WidgetWrap we need
+# the intermediate TabList to assemble the group contents (since the
+# TabNode will often be created later).  groups can be nested (a TabNode
+# can appear in a TabList) and will behave correctly.  the top-most TabNode
+# must have discover() called to set signals for tab looping and to discover
+# focuses.
 
-    signals = ['tabforwards', 'tabbackwards']
+# the functionality depends on Focus.apply taking a keypress argument which
+# is duplicated by TabNodes.  on TabNodes this triggers internal logic.
+
+
+class Tab(WidgetWrap):
+
+    signals = ['tab']
 
     def keypress(self, size, key):
-        if key == 'tab':
-            emit_signal(self, 'tabforwards', self)
-        elif key == 'shift tab':
-            emit_signal(self, 'tabbackwards', self)
+        if key in ('tab', 'shift tab'):
+            emit_signal(self, 'tab', self, key)
         else:
             return super().keypress(size, key)
 
 
-class TabManager:
-    """
-    Stand-alone, high-level (you get to choose which major widgets are
-    included) tab-selection.  Call add() with the widgets in the tab
-    order, and build with the returned (wrapped) widget.  Then register
-    the root widget with discover().
+class TabList(Sequence):
 
-    This works by introspection, so all widgets must follow the
-    conventions of the urwid library.  Containers must be list or dict-like.
-    Other widgets that wrap must use _original_widget or _wrapped_widget
-    attributes.
+    def __init__(self):
+        self.__tabs = []
 
-    Currently does not handle changes to the widget tree (although
-    changes internal to the targets are unimportant).
-    """
+    def add(self, widget_or_node):
+        is_node = isinstance(widget_or_node, TabNode)
+        widget_or_node = widget_or_node if is_node else Tab(FocusAttr(widget_or_node))
+        self.__tabs.append(widget_or_node)
+        return widget_or_node
 
-    def __init__(self, log):
-        self._log = log
-        self._widgets_indices = {}
-        self._focus = {}
-        self._root = None
-        self._groups = {}
+    def __getitem__(self, item):
+        return self.__tabs[item]
 
-    def add(self, widget, group=None, add_focus=True):
-        """
-        Add widgets in order here.
+    def __len__(self):
+        return len(self.__tabs)
 
-        The returned (wrapped) value should be used in TUI construction.
 
-        WARNING: removal only works correctly (currently) if all tabs
-        "to tail" from some point are removed and re-added.
-        """
-        if add_focus: widget = FocusAttr(widget)
-        widget = TabTarget(widget)
-        if group:
-            if group not in self._groups: self._groups[group] = []
-            self._groups[group].append(widget)
-        assert widget not in self._widgets_indices
-        n = len(self._focus)
-        self._widgets_indices[widget] = n
-        self._widgets_indices[n] = widget
-        self._focus[widget] = None
-        connect_signal(widget, 'tabforwards', self.forwards)
-        connect_signal(widget, 'tabbackwards', self.backwards)
-        assert widget in self._widgets_indices
-        return widget
+class TabNode(WidgetWrap):
 
-    def remove(self, group):
-        self._log.debug('Removing group %s' % group)
-        if group in self._groups:
-            for widget in self._groups[group]:
-                n = self._widgets_indices[widget]
-                del self._widgets_indices[widget]
-                del self._widgets_indices[n]
-                del self._focus[widget]
-            del self._groups[group]
+    # because this raise signals themselves, they must be widgets.
+
+    signals = ['tab']
+
+    def __init__(self, widget, tab_list):
+        super().__init__(widget)
+        self.__tabs_and_indices = {}
+        self.__focus = {}
+        self.__root = None
+        self.__top = False
+        self.__build_data(tab_list)
+
+    def __build_data(self, tab_list):
+        for tab in tab_list:
+            n = len(self.__focus)
+            self.__tabs_and_indices[tab] = n
+            self.__tabs_and_indices[n] = tab
+            self.__focus[tab] = None
+            connect_signal(tab, 'tab', self.tab)
+
+    def replace_all(self, tab_list):
+        self.__tabs_and_indices = {}
+        self.__focus = {}
+        self.__build_data(tab_list)
+
+    def tab(self, tab, key):
+        delta = 1 if key == 'tab' else -1
+        n = self.__tabs_and_indices[tab] + delta
+        if 0 <= n < len(self.__focus):
+            self.__try_set_focus(n, key)
+        elif self.__top:
+            self.to(None, key)
         else:
-            self._log.warn('Duplicate removal for group %s?' % group)
+            emit_signal(self, 'tab', self, key)
 
-    def forwards(self, widget):
-        """
-        Signal target for tabbing forwards.
-        """
-        self._wards(widget, 1)
-
-    def backwards(self, widget):
-        """
-        Signal target for tabbing backwards.
-        """
-        self._wards(widget, -1)
-
-    def _wards(self, widget, delta):
-        n = self._widgets_indices[widget]
+    def __try_set_focus(self, n, key):
         try:
-            self._set_focus(self._widgets_indices[(n + delta) % len(self._focus)])
+            self.__set_focus(self.__tabs_and_indices[n], key)
         except AttributeError:
-            self.discover(self._root)
-            self._set_focus(self._widgets_indices[(n + delta) % len(self._focus)])
-        except KeyError:
-            self._log.error('all: ' + str(self._widgets_indices))
-            self._log.error('keys: ' + str(list(sorted(filter(lambda x: isinstance(x, int), self._widgets_indices.keys())))))
-            self._log.error('values: ' + str(list(sorted(filter(lambda x: isinstance(x, int), self._widgets_indices.values())))))
-            self._log.error('focus: ' + str(self._focus))
-            raise
+            self.discover(self.__root)
+            self.__set_focus(self.__tabs_and_indices[n], key)
 
-    def _set_focus(self, widget):
-        self._focus[widget].apply(self._root)
+    def __set_focus(self, tab, key):
+        self.__focus[tab].to(self.__root, key)
 
-    def discover(self, root):
+    def to(self, root, key):
+        if self.__focus:
+            n = 0 if key == 'tab' else len(self.__focus) - 1
+            self.__try_set_focus(n, key)
+        else:
+            emit_signal(self, 'tab', self, key)
+
+    def discover(self, root=None, top=True):
         """
-        Register the root widget here before use.
+        Register the root widget here before use (in many cases the root node is
+        also a TabNode, so no root argument is needed).
 
         Does a search of the entire widget tree, recording paths to added widgets
         so that they can be given focus quickly.
         """
-        self._root = root
+        if top:
+            self.__top = True
+        if root is None:
+            root = self
+        self.__root = root
         stack = [(root, [])]
         while stack:
             node, path = stack.pop()
@@ -142,8 +142,12 @@ class TabManager:
                     new_path = list(path) + [key]
                     for widget in data:
                         if isinstance(widget, Widget):
-                            if widget in self._focus:
-                                self._focus[widget] = Focus(new_path)
+                            if widget in self.__focus:
+                                if isinstance(widget, TabNode):
+                                    self.__focus[widget] = widget
+                                    widget.discover(root, top=False)
+                                else:
+                                    self.__focus[widget] = Focus(new_path)
                             else:
                                 stack.append((widget, new_path))
             except AttributeError:
@@ -154,10 +158,15 @@ class TabManager:
                 else:
                     widget = None
                 if widget:
-                    if widget in self._focus:
-                        self._focus[widget] = Focus(path)
+                    if widget in self.__focus:
+                        if isinstance(widget, TabNode):
+                            self.__focus[widget] = widget
+                            widget.discover(root, top=False)
+                        else:
+                            self.__focus[widget] = Focus(path)
                     else:
                         stack.append((widget, path))
-        for widget in self._focus:
-            if not self._focus[widget]:
+        for widget in self.__focus:
+            if not self.__focus[widget]:
                 raise Exception('Could not find %s' % widget)
+

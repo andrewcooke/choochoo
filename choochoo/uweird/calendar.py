@@ -252,7 +252,7 @@ class BaseDate(WidgetWrap):
             self._date = date
             focus = FocusFor(self._w)
             self._w = self._make()
-            focus.apply(self._w)
+            focus.to(self._w)
             emit_signal(self, 'postchange', self, old_date)
 
 

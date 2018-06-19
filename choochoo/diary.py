@@ -9,23 +9,25 @@ from .utils import PALETTE
 from .uweird.calendar import Calendar
 from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
 from .uweird.decorators import Border
-from .uweird.tabs import TabManager
+from .uweird.tabs import TabList, TabNode
 from .uweird.widgets import ColText, Rating, Number, ColSpace
 
 
-class Maker(WidgetWrap):
+class Maker(TabNode):
 
-    def __init__(self, db, log, tab_manager, date=None):
+    def __init__(self, db, log, date=None):
         self._db = db
         self._log = log
-        self._tab_manager = tab_manager
-        super().__init__(self._make(date))
+        super().__init__(*self._make(date))
 
     def _make(self, date):
+        # should return (node, tab_list)
         raise NotImplemented()
 
     def rebuild(self, date):
-        self._w = self._make(date)
+        node, tabs = self._make(date)
+        self._w = node
+        self.replace_all(tabs)
 
 
 TAB_GROUP = 'diary'
@@ -33,13 +35,11 @@ TAB_GROUP = 'diary'
 
 class Injury(WidgetWrap):
 
-    def __init__(self, tab_manager, binder, title):
-        self._tab_manager = tab_manager
-        pain_avg = tab_manager.add(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=None), group=TAB_GROUP)
-        pain_peak = tab_manager.add(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=None), group=TAB_GROUP)
-        pain_freq = tab_manager.add(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None), group=TAB_GROUP)
-        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text='', multiline=True),
-                                            'notes', default=''), group=TAB_GROUP)
+    def __init__(self, tabs, binder, title):
+        pain_avg = tabs.add(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=None))
+        pain_peak = tabs.add(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=None))
+        pain_freq = tabs.add(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None))
+        notes = tabs.add(binder.bind(Edit(caption='Notes: ', edit_text='', multiline=True), 'notes', default=''))
         super().__init__(
             Pile([Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
@@ -56,6 +56,7 @@ class Injury(WidgetWrap):
 class Injuries(Maker):
 
     def _make(self, date):
+        tabs = TabList()
         ordinal = date.toordinal()
         injuries = [(row['id'], row['title']) for row in self._db.execute('''
             select id, title from injury 
@@ -68,19 +69,18 @@ class Injuries(Maker):
                                        key_names=('ordinal', 'injury'),
                                        defaults={'ordinal': ordinal, 'injury': id},
                                        autosave=True)
-            injury = Injury(self._tab_manager, binder, title)
+            injury = Injury(tabs, binder, title)
             body.append(injury)
             binder.read_row(
                 self._db.execute('''select * from injury_diary where injury = ? and ordinal = ?''',
                                     (id, ordinal)).fetchone())
-        return Pile([Text('Injuries'), Padding(Pile(body), left=2)])
+        return Pile([Text('Injuries'), Padding(Pile(body), left=2)]), tabs
 
 
 class Aim(WidgetWrap):
 
-    def __init__(self, tab_manager, binder, title):
-        self._tab_manager = tab_manager
-        notes = tab_manager.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''), group=TAB_GROUP)
+    def __init__(self, tabs, binder, title):
+        notes = tabs.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''))
         super().__init__(
             Pile([Text(title),
                   notes,
@@ -90,6 +90,7 @@ class Aim(WidgetWrap):
 class Aims(Maker):
 
     def _make(self, date):
+        tabs = TabList()
         ordinal = date.toordinal()
         aims = [(row['id'], row['title']) for row in self._db.execute('''
             select id, title from aim 
@@ -103,30 +104,31 @@ class Aims(Maker):
                                        key_names=('ordinal', 'aim'),
                                        defaults={'ordinal': ordinal, 'aim': id},
                                        autosave=True)
-            aim = Aim(self._tab_manager, binder, title)
+            aim = Aim(tabs, binder, title)
             body.append(aim)
             binder.read_row(
                 self._db.execute('''select * from aim_diary where aim = ? and ordinal = ?''',
                                     (id, ordinal)).fetchone())
-        return Pile([Text('Aims'), Padding(Pile(body), left=2)])
+        return Pile([Text('Aims'), Padding(Pile(body), left=2)]), tabs
 
 
 class Diary(Maker):
 
     def _make(self, date):
+        tabs = TabList()
         if not date: date = dt.date.today()
         binder = SingleTableDynamic(self._db, self._log, 'diary',
                                     transforms={'ordinal': DATE_ORDINAL})
         raw_calendar = Calendar(date)
-        calendar = self._tab_manager.add(binder.bind_key(raw_calendar, 'ordinal'))
-        notes = self._tab_manager.add(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
-        rest_hr = self._tab_manager.add(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr', default=None))
-        sleep = self._tab_manager.add(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep', default=None))
-        mood = self._tab_manager.add(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
-        weather = self._tab_manager.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
-        meds = self._tab_manager.add(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
-        self.injuries = Injuries(self._db, self._log, self._tab_manager, date)
-        self.aims = Aims(self._db, self._log, self._tab_manager, date)
+        calendar = tabs.add(binder.bind_key(raw_calendar, 'ordinal'))
+        notes = tabs.add(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
+        rest_hr = tabs.add(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr', default=None))
+        sleep = tabs.add(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep', default=None))
+        mood = tabs.add(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
+        weather = tabs.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
+        meds = tabs.add(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
+        self.injuries = tabs.add(Injuries(self._db, self._log, date))
+        self.aims = tabs.add(Aims(self._db, self._log, date))
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
@@ -142,18 +144,17 @@ class Diary(Maker):
         binder.bootstrap(date)
         body = Filler(Pile([Divider(), Pile(body)]), valign='top')
         connect_signal(raw_calendar, 'change', self.rebuild)
-        return Border(Frame(body, header=Text('Diary')))
+        return Border(Frame(body, header=Text('Diary'))), tabs
 
     def rebuild(self, unused_widget, date):
-        self._tab_manager.remove(TAB_GROUP)
         self.injuries.rebuild(date)
         self.aims.rebuild(date)
+        self.discover()
 
 
 def main(args):
     log = make_log(args)
     db = Database(args, log)
-    tab_manager = TabManager(log)
-    diary = Diary(db, log, tab_manager)
-    tab_manager.discover(diary)
+    diary = Diary(db, log)
+    diary.discover()
     MainLoop(diary, palette=PALETTE).run()
