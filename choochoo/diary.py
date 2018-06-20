@@ -10,10 +10,10 @@ from .uweird.calendar import Calendar
 from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
 from .uweird.decorators import Border
 from .uweird.tabs import TabList, TabNode
-from .uweird.widgets import ColText, Rating, Number, ColSpace
+from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float
 
 
-class Maker(TabNode):
+class DynamicContent(TabNode):
 
     def __init__(self, db, log, date=None):
         self._db = db
@@ -53,7 +53,7 @@ class Injury(WidgetWrap):
                   ]))
 
 
-class Injuries(Maker):
+class Injuries(DynamicContent):
 
     def _make(self, date):
         tabs = TabList()
@@ -87,7 +87,7 @@ class Aim(WidgetWrap):
                   ]))
 
 
-class Aims(Maker):
+class Aims(DynamicContent):
 
     def _make(self, date):
         tabs = TabList()
@@ -112,29 +112,30 @@ class Aims(Maker):
         return Pile([Text('Aims'), Padding(Pile(body), left=2)]), tabs
 
 
-class Diary(Maker):
+class Diary(TabNode):
 
-    def _make(self, date):
-        tabs = TabList()
+    def __init__(self, db, log, date=None):
         if not date: date = dt.date.today()
-        binder = SingleTableDynamic(self._db, self._log, 'diary',
+        tabs = TabList()
+        binder = SingleTableDynamic(db, log, 'diary',
                                     transforms={'ordinal': DATE_ORDINAL})
         raw_calendar = Calendar(date)
         calendar = tabs.add(binder.bind_key(raw_calendar, 'ordinal'))
         notes = tabs.add(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
-        rest_hr = tabs.add(binder.bind(Number(caption='Rest HR: ', max=100), 'rest_hr', default=None))
-        sleep = tabs.add(binder.bind(Number(caption='Sleep hrs: ', max=24), 'sleep', default=None))
+        rest_hr = tabs.add(binder.bind(Integer(caption='Rest HR: ', maximum=100), 'rest_hr', default=None))
+        sleep = tabs.add(binder.bind(Integer(caption='Sleep hrs: ', maximum=24), 'sleep', default=None))
         mood = tabs.add(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
         weather = tabs.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
         meds = tabs.add(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
-        self.injuries = tabs.add(Injuries(self._db, self._log, date))
-        self.aims = tabs.add(Aims(self._db, self._log, date))
+        weight = tabs.add(binder.bind(Float(caption='Weight: ', maximum=100, dp=2, units='kg'), 'weight', default=None))
+        self.injuries = tabs.add(Injuries(db, log, date))
+        self.aims = tabs.add(Aims(db, log, date))
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
                                              Columns([rest_hr, sleep, mood]),
                                              weather,
-                                             meds,
+                                             Columns([('weight', 2, meds), ('weight', 1, weight)])
                                              ]))],
                         dividechars=2),
                 Divider(),
@@ -143,10 +144,10 @@ class Diary(Maker):
                 self.aims]
         binder.bootstrap(date)
         body = Filler(Pile([Divider(), Pile(body)]), valign='top')
-        connect_signal(raw_calendar, 'change', self.rebuild)
-        return Border(Frame(body, header=Text('Diary'))), tabs
+        connect_signal(raw_calendar, 'change', self.date_change)
+        super().__init__(Border(Frame(body, header=Text('Diary'))), tabs)
 
-    def rebuild(self, unused_widget, date):
+    def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)
         self.aims.rebuild(date)
         self.discover()

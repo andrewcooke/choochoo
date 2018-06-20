@@ -28,7 +28,8 @@ create table if not exists diary (
   sleep integer,
   mood integer,
   weather text not null,
-  meds text not null
+  meds text not null,
+  weight float
 );
 
 create table if not exists injury (

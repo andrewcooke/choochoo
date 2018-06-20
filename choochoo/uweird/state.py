@@ -43,6 +43,12 @@ class MutableStatefulText(ImmutableStatefulText):
         return self._state
 
     def _set_state(self, state):
+        self._set_state_external(state)
+
+    def _set_state_external(self, state):
+        self._set_state_internal(state)
+
+    def _set_state_internal(self, state):
         if state != self._state:
             old_state = self._state
             self._state = state

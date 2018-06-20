@@ -2,7 +2,7 @@
 from urwid import Button, Text, WidgetWrap, emit_signal, connect_signal, Padding
 
 from .state import MutableStatefulText
-from .focus import FocusAttr
+from .focus import FocusAttr, AttrChange
 
 
 class SquareButton(Button):
@@ -86,13 +86,24 @@ class NonableInt(MutableStatefulText):
 
     def state_as_text(self):
         if self.state is None:
-            text = '-'
+            text = '_'
         else:
             text = str(self.state)
         return self._caption + text
 
 
-class Rating(NonableInt):
+class Rating(MutableStatefulText):
+
+    def __init__(self, caption='', state=None):
+        self._caption = caption
+        super().__init__(state)
+
+    def state_as_text(self):
+        if self.state is None:
+            text = '_'
+        else:
+            text = str(self.state)
+        return self._caption + text
 
     def keypress(self, size, key):
         if self._command_map[key] == 'activate':
@@ -110,40 +121,100 @@ class Rating(NonableInt):
             return key
 
 
-class Number(NonableInt):
+class Number(MutableStatefulText):
 
-    def __init__(self, caption='', state=None, min=0, max=100):
-        self._min = min
-        self._max = max
-        super().__init__(caption=caption, state=state)
+    def __init__(self, caption='', state=None, minimum=0, maximum=100, type=int, decimal=False, dp=2, units=''):
+        self._caption = caption
+        self._min = minimum
+        self._max = maximum
+        self._type = type
+        self._decimal = decimal
+        self._dp = dp
+        self._units = units
+        # always start in non-error (partly because we cannot set error attr here)
+        if state is None:
+            self._error = False
+            self._string = ''
+        else:
+            state = min(maximum, max(minimum, state))
+            self._error = False
+            self._string = str(state)
+        super().__init__(state)
+
+    def _set_state_external(self, state):
+        if state is None:
+            self._string = ''
+        else:
+            state = min(self._max, max(self._min, state))
+            self._string = str(state)
+        self._set_state_internal(state)
+
+    def state_as_text(self):
+        if self.state is None:
+            return self._caption + '_'
+        else:
+            return self._caption + self._string + self._units
 
     def keypress(self, size, key):
-        if self._command_map[key] == 'activate':
-            key = '+'
-        if key == '+':
-            if self.state is None:
-                self.state = min(self._max, max(self._min, 0))
+        used = False
+        if self._command_map[key] == 'activate' and self._error:
+            if self.state is not None:
+                self._string = str(self.state)
             else:
-                self.state = min(self._max, self.state + 1)
-        elif key == '-':
-            if self.state is None:
-                self.state = min(self._max, max(self._min, 0))
-            elif self._min < 0:
-                self.state = min(self._max, max(self._min, -1 * self.state))
+                self._string = ''
+            used = True
+        elif key == '-' and self._string:
+            if self._string.startswith('-'):
+                self._string = self._string[1:]
             else:
-                self.state = min(self._max, self.state - 1)
-        elif key in ('backspace', 'delete'):
-            if self.state == 0:
-                self.state = None
-            else:
-                self.state = self.state // 10
+                self._string = '-' + self._string
+            used = True
         elif len(key) == 1 and '0' <= key <= '9':
-            if self.state is None:
-                self.state = min(self._max, max(self._min, int(key)))
+            self._string += key
+            used = True
+        elif self._decimal and key == '.' and not '.' in self._string:
+            self._string += key
+            used = True
+        elif key in ('backspace', 'delete'):
+            if self._string:
+                self._string = self._string[:-1]
+                used = True
+        if used:
+            error = False
+            if self._string:
+                try:
+                    if self._decimal and '.' in self._string:
+                        (pre, post) = self._string.split('.')
+                        if len(post) > self._dp:
+                            raise Exception('Too many decimal places')
+                    state = self._type(self._string)
+                    if self._min <= state <= self._max:
+                        self._set_state_internal(state)
+                    else:
+                        raise Exception('Out of range')
+                except:
+                    error = True
             else:
-                delta = int(key)
-                if self.state < 0: delta = -delta
-                self.state = min(self._max, max(self._min, self.state * 10 + delta))
+                self._set_state_internal(None)
+            self._update_text()
+            if error != self._error:
+                self._error = error
+                raise AttrChange(error)
+                pass
+            return
         else:
             return key
 
+
+class Integer(Number):
+
+    def __init__(self, caption='', state=None, minimum=0, maximum=100, units=''):
+        super().__init__(caption=caption, state=state, minimum=minimum, maximum=maximum
+                         , units=units)
+
+
+class Float(Number):
+
+    def __init__(self, caption='', state=None, minimum=0, maximum=100, dp=2, units=''):
+        super().__init__(caption=caption, state=state, minimum=minimum, maximum=maximum,
+                         type=float, decimal=True, dp=dp, units=units)

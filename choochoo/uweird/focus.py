@@ -64,9 +64,29 @@ class FocusFor(Focus):
         super().__init__(focus)
 
 
+class AttrChange(Exception):
+
+    def __init__(self, error):
+        self.error = error
+        super().__init__()
+
+
 class FocusAttr(AttrMap):
 
     def __init__(self, w, plain=None, focus=None):
         if plain is None: plain = 'plain'
         if focus is None: focus = plain + '-focus'
+        self._plain = plain
+        self._focus = focus
         super().__init__(w, plain, focus)
+
+    def keypress(self, size, key):
+        try:
+            return self._original_widget.keypress(size, key)
+        except AttrChange as e:
+            if e.error:
+                self.set_attr_map({None: 'error'})
+                self.set_focus_map({None: 'error-focus'})
+            else:
+                self.set_attr_map({None: self._plain})
+                self.set_focus_map({None: self._focus})
