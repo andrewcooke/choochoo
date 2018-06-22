@@ -25,7 +25,7 @@ create table if not exists diary (
   ordinal integer primary key,
   notes text not null,
   rest_hr integer,
-  sleep integer,
+  sleep float,
   mood integer,
   weather text not null,
   meds text not null,

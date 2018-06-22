@@ -79,6 +79,7 @@ class Binder:
         return widget
 
     def _set_defaults(self):
+        self._data.clear()
         for name in self._defaults:
             if name not in self._data:
                 self._data[name] = self._defaults[name]
@@ -123,7 +124,6 @@ class DynamicBinder(Binder):
         self._key_widget = widget
         self._key_name = name
         return self.bind(widget, name)
-
 
     def bootstrap(self, state):
         self._save_widget_value(self._key_widget, state)
@@ -186,6 +186,7 @@ class SingleTableDynamic(DynamicBinder):
                 self._dbdata[name] = row[name]
         # in case not include in read, or defaults used
         self._dbdata[self._key_name] = values[0]
+        self._log.info('Data now: %s' % self._data)
 
 
 class StaticBinder(Binder):

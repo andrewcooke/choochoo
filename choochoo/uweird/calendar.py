@@ -228,7 +228,8 @@ class BaseDate(WidgetWrap):
 
     signals = ['change', 'postchange']
 
-    def __init__(self, date=None):
+    def __init__(self, log, date=None):
+        self._log = log
         if not date: date = dt.date.today()
         self._date = date
         super().__init__(self._make())
@@ -246,13 +247,16 @@ class BaseDate(WidgetWrap):
 
     def date_change(self, unused_widget, date):
         if date != self._date:
+            self._log.info('Date has changed: %s - %s' % (self._date.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d')))
             # again, arg convention matches Edit
+            self._log.debug('Sending change signal for date change')
             emit_signal(self, 'change', self, date)
             old_date = date
             self._date = date
             focus = FocusFor(self._w)
             self._w = self._make()
             focus.to(self._w)
+            self._log.debug('Sending change signal for date postchange')
             emit_signal(self, 'postchange', self, old_date)
 
 

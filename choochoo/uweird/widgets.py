@@ -155,7 +155,7 @@ class Number(MutableStatefulText):
         else:
             return self._caption + self._string + self._units
 
-    def keypress(self, size, key):
+    def _update_string(self, key):
         used = False
         if self._command_map[key] == 'activate' and self._error:
             if self.state is not None:
@@ -179,29 +179,35 @@ class Number(MutableStatefulText):
             if self._string:
                 self._string = self._string[:-1]
                 used = True
-        if used:
-            error = False
-            if self._string:
-                try:
-                    if self._decimal and '.' in self._string:
-                        (pre, post) = self._string.split('.')
-                        if len(post) > self._dp:
-                            raise Exception('Too many decimal places')
-                    state = self._type(self._string)
-                    if self._min <= state <= self._max:
-                        self._set_state_internal(state)
-                    else:
-                        raise Exception('Out of range')
-                except:
-                    error = True
-            else:
-                self._set_state_internal(None)
-            self._update_text()
-            if error != self._error:
-                self._error = error
-                raise AttrChange(error)
-                pass
-            return
+        return used
+
+    def _check_string(self):
+        error = False
+        if self._string:
+            try:
+                if self._decimal and '.' in self._string:
+                    (pre, post) = self._string.split('.')
+                    if len(post) > self._dp:
+                        raise Exception('Too many decimal places')
+                state = self._type(self._string)
+                if self._min <= state <= self._max:
+                    self._set_state_internal(state)
+                else:
+                    raise Exception('Out of range')
+            except:
+                error = True
+        else:
+            self._set_state_internal(None)
+        self._update_text()
+        if error != self._error:
+            self._error = error
+            raise AttrChange(error)
+            pass
+        return
+
+    def keypress(self, size, key):
+        if self._update_string(key):
+            self._check_string()
         else:
             return key
 
@@ -209,8 +215,8 @@ class Number(MutableStatefulText):
 class Integer(Number):
 
     def __init__(self, caption='', state=None, minimum=0, maximum=100, units=''):
-        super().__init__(caption=caption, state=state, minimum=minimum, maximum=maximum
-                         , units=units)
+        super().__init__(caption=caption, state=state, minimum=minimum, maximum=maximum,
+                         units=units)
 
 
 class Float(Number):

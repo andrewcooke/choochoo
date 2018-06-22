@@ -7,10 +7,10 @@ from .uweird.widgets import Nullable, SquareButton, ColText, ColSpace
 
 class Definition(WidgetWrap):
 
-    def __init__(self, tabs, binder, title='', description='', start=None, finish=None, sort=''):
+    def __init__(self, log, tabs, binder, title='', description='', start=None, finish=None, sort=''):
         title = tabs.add(binder.bind(Edit(caption='Title: ', edit_text=title), 'title'))
-        start = tabs.add(binder.bind(Nullable('Open', TextDate, start), 'start'))
-        finish = tabs.add(binder.bind(Nullable('Open', TextDate, finish), 'finish'))
+        start = tabs.add(binder.bind(Nullable('Open', lambda: TextDate(log), start), 'start'))
+        finish = tabs.add(binder.bind(Nullable('Open', lambda: TextDate(log), finish), 'finish'))
         sort = tabs.add(binder.bind(Edit(caption='Sort: ', edit_text=sort), 'sort'))
         reset = tabs.add(binder.connect(SquareButton('Reset'), 'click', binder.reset))
         save = tabs.add(binder.connect(SquareButton('Save'), 'click', binder.save))

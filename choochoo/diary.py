@@ -119,11 +119,11 @@ class Diary(TabNode):
         tabs = TabList()
         binder = SingleTableDynamic(db, log, 'diary',
                                     transforms={'ordinal': DATE_ORDINAL})
-        raw_calendar = Calendar(date)
+        raw_calendar = Calendar(log, date)
         calendar = tabs.add(binder.bind_key(raw_calendar, 'ordinal'))
         notes = tabs.add(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
         rest_hr = tabs.add(binder.bind(Integer(caption='Rest HR: ', maximum=100), 'rest_hr', default=None))
-        sleep = tabs.add(binder.bind(Integer(caption='Sleep hrs: ', maximum=24), 'sleep', default=None))
+        sleep = tabs.add(binder.bind(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), 'sleep', default=None))
         mood = tabs.add(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
         weather = tabs.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
         meds = tabs.add(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
@@ -134,8 +134,8 @@ class Diary(TabNode):
                          ('weight', 1, Pile([notes,
                                              Divider(),
                                              Columns([rest_hr, sleep, mood]),
-                                             weather,
-                                             Columns([('weight', 2, meds), ('weight', 1, weight)])
+                                             Columns([('weight', 2, weather), ('weight', 1, weight)]),
+                                             meds,
                                              ]))],
                         dividechars=2),
                 Divider(),
