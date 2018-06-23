@@ -9,15 +9,16 @@ from .utils import PALETTE
 from .uweird.calendar import Calendar
 from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
 from .uweird.decorators import Border
-from .uweird.tabs import TabList, TabNode
+from .uweird.tabs import TabList, TabNode, Root
 from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float
 
 
 class DynamicContent(TabNode):
 
-    def __init__(self, db, log, date=None):
+    def __init__(self, db, log, saves, date=None):
         self._db = db
         self._log = log
+        self._saves = saves
         super().__init__(*self._make(date))
 
     def _make(self, date):
@@ -69,6 +70,7 @@ class Injuries(DynamicContent):
                                        key_names=('ordinal', 'injury'),
                                        defaults={'ordinal': ordinal, 'injury': id},
                                        autosave=True)
+            self._saves.append(binder.save)
             injury = Injury(tabs, binder, title)
             body.append(injury)
             binder.read_row(
@@ -104,6 +106,7 @@ class Aims(DynamicContent):
                                        key_names=('ordinal', 'aim'),
                                        defaults={'ordinal': ordinal, 'aim': id},
                                        autosave=True)
+            self._saves.append(binder.save)
             aim = Aim(tabs, binder, title)
             body.append(aim)
             binder.read_row(
@@ -112,13 +115,15 @@ class Aims(DynamicContent):
         return Pile([Text('Aims'), Padding(Pile(body), left=2)]), tabs
 
 
-class Diary(TabNode):
+class Diary(Root):
 
     def __init__(self, db, log, date=None):
         if not date: date = dt.date.today()
         tabs = TabList()
+        saves = []
         binder = SingleTableDynamic(db, log, 'diary',
                                     transforms={'ordinal': DATE_ORDINAL})
+        saves.append(binder.save)
         raw_calendar = Calendar(log, date)
         calendar = tabs.add(binder.bind_key(raw_calendar, 'ordinal'))
         notes = tabs.add(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
@@ -128,8 +133,8 @@ class Diary(TabNode):
         weather = tabs.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
         meds = tabs.add(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
         weight = tabs.add(binder.bind(Float(caption='Weight: ', maximum=100, dp=2, units='kg'), 'weight', default=None))
-        self.injuries = tabs.add(Injuries(db, log, date))
-        self.aims = tabs.add(Aims(db, log, date))
+        self.injuries = tabs.add(Injuries(db, log, saves, date))
+        self.aims = tabs.add(Aims(db, log, saves, date))
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
@@ -145,7 +150,7 @@ class Diary(TabNode):
         binder.bootstrap(date)
         body = Filler(Pile([Divider(), Pile(body)]), valign='top')
         connect_signal(raw_calendar, 'change', self.date_change)
-        super().__init__(Border(Frame(body, header=Text('Diary'))), tabs)
+        super().__init__(Border(Frame(body, header=Text('Diary'))), tabs, saves=saves)
 
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)

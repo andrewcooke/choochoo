@@ -1,7 +1,7 @@
 
 from collections.abc import Sequence
 
-from urwid import WidgetWrap, emit_signal, connect_signal, Widget
+from urwid import WidgetWrap, emit_signal, connect_signal, Widget, ExitMainLoop
 
 from .focus import Focus, FocusAttr
 
@@ -232,3 +232,28 @@ class TabNode(WidgetWrap):
             if not self.__focus[widget]:
                 raise Exception('Could not find %s' % widget)
 
+
+class Root(TabNode):
+
+    def __init__(self, widget, tab_list, quit='meta q', save='meta s', saves=None):
+        super().__init__(widget, tab_list)
+        self.__quit = quit
+        self.__save = save
+        self.__save_callbacks = []
+        if saves: self.add_saves(saves)
+
+    def add_saves(self, callbacks):
+        self.__save_callbacks.extend(callbacks)
+
+    def keypress(self, size, key):
+        if key == self.__quit:
+            self.save()
+            raise ExitMainLoop()
+        elif key == self.__save:
+            self.save()
+        else:
+            return super().keypress(size, key)
+
+    def save(self):
+        for callback in self.__save_callbacks:
+            callback(None)
