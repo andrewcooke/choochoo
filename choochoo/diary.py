@@ -68,8 +68,7 @@ class Injuries(DynamicContent):
         for (id, title) in injuries:
             binder = SingleTableStatic(self._db, self._log, 'injury_diary',
                                        key_names=('ordinal', 'injury'),
-                                       defaults={'ordinal': ordinal, 'injury': id},
-                                       autosave=True)
+                                       defaults={'ordinal': ordinal, 'injury': id})
             self._saves.append(binder.save)
             injury = Injury(tabs, binder, title)
             body.append(injury)
@@ -104,8 +103,7 @@ class Aims(DynamicContent):
         for (id, title) in aims:
             binder = SingleTableStatic(self._db, self._log, 'aim_diary',
                                        key_names=('ordinal', 'aim'),
-                                       defaults={'ordinal': ordinal, 'aim': id},
-                                       autosave=True)
+                                       defaults={'ordinal': ordinal, 'aim': id})
             self._saves.append(binder.save)
             aim = Aim(tabs, binder, title)
             body.append(aim)
