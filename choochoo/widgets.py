@@ -8,13 +8,13 @@ from .uweird.widgets import Nullable, SquareButton, ColText, ColSpace
 class Definition(WidgetWrap):
 
     def __init__(self, log, tabs, binder, title='', description='', start=None, finish=None, sort=''):
-        title = tabs.add(binder.bind(Edit(caption='Title: ', edit_text=title), 'title'))
-        start = tabs.add(binder.bind(Nullable('Open', lambda: TextDate(log), start), 'start'))
-        finish = tabs.add(binder.bind(Nullable('Open', lambda: TextDate(log), finish), 'finish'))
-        sort = tabs.add(binder.bind(Edit(caption='Sort: ', edit_text=sort), 'sort'))
-        reset = tabs.add(binder.connect(SquareButton('Reset'), 'click', binder.reset))
-        save = tabs.add(binder.connect(SquareButton('Save'), 'click', binder.save))
-        description = tabs.add(binder.bind(Edit(caption='Description: ', edit_text=description, multiline=True),
+        title = tabs.append(binder.bind(Edit(caption='Title: ', edit_text=title), 'title'))
+        start = tabs.append(binder.bind(Nullable('Open', lambda: TextDate(log), start), 'start'))
+        finish = tabs.append(binder.bind(Nullable('Open', lambda: TextDate(log), finish), 'finish'))
+        sort = tabs.append(binder.bind(Edit(caption='Sort: ', edit_text=sort), 'sort'))
+        reset = tabs.append(binder.connect(SquareButton('Reset'), 'click', binder.reset))
+        save = tabs.append(binder.connect(SquareButton('Save'), 'click', binder.save))
+        description = tabs.append(binder.bind(Edit(caption='Description: ', edit_text=description, multiline=True),
                                                   'description', default=''))
         super().__init__(
             Pile([title,

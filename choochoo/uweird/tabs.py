@@ -60,7 +60,7 @@ class TabList(Sequence):
         """
         self.__tabs = []
 
-    def add(self, widget_or_node):
+    def append(self, widget_or_node):
         """
         Add a widget to the list of managed widgets.  The return valuie should be
         used in the constructed tree of widgets (it contains both a Tab target and
@@ -99,12 +99,13 @@ class TabNode(WidgetWrap):
 
     signals = ['tab']
 
-    def __init__(self, widget, tab_list):
+    def __init__(self, log, widget, tab_list):
         """
         Create a (local) root to the widget tree that manages tabs to the widgets
         below (possibly via nested TabNode instances).
         """
         super().__init__(widget)
+        self._log = log
         self.__tabs_and_indices = {}
         self.__focus = {}
         self.__root = None
@@ -235,19 +236,18 @@ class TabNode(WidgetWrap):
 
 class Root(TabNode):
 
-    def __init__(self, widget, tab_list, quit='meta q', save='meta s', saves=None):
-        super().__init__(widget, tab_list)
+    def __init__(self, log, widget, tab_list, quit='meta q', save='meta s', abort='meta x', saves=None):
+        super().__init__(log, widget, tab_list)
         self.__quit = quit
         self.__save = save
-        self.__save_callbacks = []
-        if saves: self.add_saves(saves)
-
-    def add_saves(self, callbacks):
-        self.__save_callbacks.extend(callbacks)
+        self.__abort = abort
+        self.__save_callbacks = saves if saves else []
 
     def keypress(self, size, key):
         if key == self.__quit:
             self.save()
+            raise ExitMainLoop()
+        elif key == self.__abort:
             raise ExitMainLoop()
         elif key == self.__save:
             self.save()
@@ -255,5 +255,6 @@ class Root(TabNode):
             return super().keypress(size, key)
 
     def save(self):
+        self._log.debug('Saving %s' % self.__save_callbacks)
         for callback in self.__save_callbacks:
             callback(None)

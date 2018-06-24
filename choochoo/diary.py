@@ -19,7 +19,7 @@ class DynamicContent(TabNode):
         self._db = db
         self._log = log
         self._saves = saves
-        super().__init__(*self._make(date))
+        super().__init__(log, *self._make(date))
 
     def _make(self, date):
         # should return (node, tab_list)
@@ -37,10 +37,10 @@ TAB_GROUP = 'diary'
 class Injury(WidgetWrap):
 
     def __init__(self, tabs, binder, title):
-        pain_avg = tabs.add(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=None))
-        pain_peak = tabs.add(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=None))
-        pain_freq = tabs.add(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None))
-        notes = tabs.add(binder.bind(Edit(caption='Notes: ', edit_text='', multiline=True), 'notes', default=''))
+        pain_avg = tabs.append(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=None))
+        pain_peak = tabs.append(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=None))
+        pain_freq = tabs.append(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None))
+        notes = tabs.append(binder.bind(Edit(caption='Notes: ', edit_text='', multiline=True), 'notes', default=''))
         super().__init__(
             Pile([Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
@@ -81,7 +81,7 @@ class Injuries(DynamicContent):
 class Aim(WidgetWrap):
 
     def __init__(self, tabs, binder, title):
-        notes = tabs.add(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''))
+        notes = tabs.append(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''))
         super().__init__(
             Pile([Text(title),
                   notes,
@@ -123,16 +123,16 @@ class Diary(Root):
                                     transforms={'ordinal': DATE_ORDINAL})
         saves.append(binder.save)
         raw_calendar = Calendar(log, date)
-        calendar = tabs.add(binder.bind_key(raw_calendar, 'ordinal'))
-        notes = tabs.add(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
-        rest_hr = tabs.add(binder.bind(Integer(caption='Rest HR: ', maximum=100), 'rest_hr', default=None))
-        sleep = tabs.add(binder.bind(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), 'sleep', default=None))
-        mood = tabs.add(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
-        weather = tabs.add(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
-        meds = tabs.add(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
-        weight = tabs.add(binder.bind(Float(caption='Weight: ', maximum=100, dp=2, units='kg'), 'weight', default=None))
-        self.injuries = tabs.add(Injuries(db, log, saves, date))
-        self.aims = tabs.add(Aims(db, log, saves, date))
+        calendar = tabs.append(binder.bind_key(raw_calendar, 'ordinal'))
+        notes = tabs.append(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
+        rest_hr = tabs.append(binder.bind(Integer(caption='Rest HR: ', maximum=100), 'rest_hr', default=None))
+        sleep = tabs.append(binder.bind(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), 'sleep', default=None))
+        mood = tabs.append(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
+        weather = tabs.append(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
+        weight = tabs.append(binder.bind(Float(caption='Weight: ', maximum=100, dp=2, units='kg'), 'weight', default=None))
+        meds = tabs.append(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
+        self.injuries = tabs.append(Injuries(db, log, saves, date))
+        self.aims = tabs.append(Aims(db, log, saves, date))
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
@@ -148,7 +148,7 @@ class Diary(Root):
         binder.bootstrap(date)
         body = Filler(Pile([Divider(), Pile(body)]), valign='top')
         connect_signal(raw_calendar, 'change', self.date_change)
-        super().__init__(Border(Frame(body, header=Text('Diary'))), tabs, saves=saves)
+        super().__init__(log, Border(Frame(body, header=Text('Diary'))), tabs, saves=saves)
 
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)

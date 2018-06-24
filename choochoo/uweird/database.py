@@ -203,7 +203,7 @@ class SingleTableDynamic(DynamicBinder):
         cmd += ')'
         values = list(self._dbview.values())
         self._log.debug('%s / %s' % (cmd, values))
-        self._db.db.execute(cmd, values)
+        self._db.execute(cmd, values)
 
     def _read_values_from_db(self):
         cmd = 'select '
@@ -211,7 +211,7 @@ class SingleTableDynamic(DynamicBinder):
         cmd += ' from %s where %s = ?' % (self._table, self._key_name)
         values = [self._dbview[self._key_name]]
         self._log.debug('%s / %s' % (cmd, values))
-        row = self._db.db.execute(cmd, values).fetchone()
+        row = self._db.execute(cmd, values).fetchone()
         self._clear_and_set_defaults()
         if row:
             for name in self._widget_names.values():
@@ -256,18 +256,19 @@ class SingleTableStatic(Binder):
         self._broadcast_values_to_widgets()
 
     def _write_values_to_db(self):
-        replace = self._have_all_keys()
-        cmd = '%s into %s (' % ('replace' if replace else 'insert', self._table)
-        cmd += ', '.join(self._dbview.keys())
-        cmd += ') values ('
-        cmd += ', '.join(['?'] * (len(self._dbview)))
-        cmd += ')'
-        values = list(self._dbview.values())
-        self._log.debug('%s / %s' % (cmd, values))
-        self._db.db.execute(cmd, values)
-        if not replace and len(self._key_names) == 1:
-            self._dbview[self._key_names[0]] = self._db.db.execute('select last_insert_rowid()').fetchone()[0]
-            if self._insert_callback: self._insert_callback()
+        if self._dbview:
+            replace = self._have_all_keys()
+            cmd = '%s into %s (' % ('replace' if replace else 'insert', self._table)
+            cmd += ', '.join(self._dbview.keys())
+            cmd += ') values ('
+            cmd += ', '.join(['?'] * (len(self._dbview)))
+            cmd += ')'
+            values = list(self._dbview.values())
+            self._log.debug('%s / %s' % (cmd, values))
+            self._db.execute(cmd, values)
+            if not replace and len(self._key_names) == 1:
+                self._dbview[self._key_names[0]] = self._db.execute('select last_insert_rowid()').fetchone()[0]
+                if self._insert_callback: self._insert_callback()
 
     def _read_values_from_db(self):
         if self._have_all_keys():
@@ -278,7 +279,7 @@ class SingleTableStatic(Binder):
             cmd += ' from %s where %s = ?' % (self._table, self._key_names)
             values = [self._dbview[name] for name in self._key_names]
             self._log.debug('%s / %s' % (cmd, values))
-            row = self._db.db.execute(cmd, values).fetchone()
+            row = self._db.execute(cmd, values).fetchone()
         else:
             row = None
         self.read_row(row)
