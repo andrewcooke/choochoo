@@ -1,6 +1,9 @@
 
-from urwid import WidgetWrap, Edit, Columns, Pile
+from urwid import WidgetWrap, Edit, Columns, Pile, MainLoop, Filler, Divider, Frame, Text
 
+from .utils import PALETTE
+from .uweird.tabs import Root
+from .uweird.decorators import Border
 from .uweird.calendar import TextDate
 from .uweird.widgets import Nullable, SquareButton, ColText, ColSpace
 
@@ -29,3 +32,12 @@ class Definition(WidgetWrap):
                            ]),
                   description,
                   ]))
+
+
+class App(MainLoop):
+
+    def __init__(self, log, title, body, tab_list, saves):
+        self.root = Root(log, Border(Frame(Filler(Pile([Divider(), body]), valign='top'),
+                                           header=Text(title))), tab_list, saves=saves)
+        self.root.discover()
+        super().__init__(self.root, palette=PALETTE)

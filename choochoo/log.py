@@ -1,8 +1,7 @@
 
-from logging import getLogger, DEBUG, Formatter, StreamHandler, INFO
+from logging import getLogger, DEBUG, Formatter
 from logging.handlers import RotatingFileHandler
 from os.path import join
-from sys import stderr
 
 from .args import COMMAND, LOGS
 

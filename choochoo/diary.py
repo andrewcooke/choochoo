@@ -1,15 +1,14 @@
 
 import datetime as dt
 
-from urwid import Text, MainLoop, Frame, Padding, Filler, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
+from urwid import Text, Padding, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
 
+from .widgets import App
 from .database import Database
 from .log import make_log
-from .utils import PALETTE
 from .uweird.calendar import Calendar
 from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
-from .uweird.decorators import Border
-from .uweird.tabs import TabList, TabNode, Root
+from .uweird.tabs import TabList, TabNode
 from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float
 
 
@@ -29,9 +28,6 @@ class DynamicContent(TabNode):
         node, tabs = self._make(date)
         self._w = node
         self.replace_all(tabs)
-
-
-TAB_GROUP = 'diary'
 
 
 class Injury(WidgetWrap):
@@ -113,7 +109,7 @@ class Aims(DynamicContent):
         return Pile([Text('Aims'), Padding(Pile(body), left=2)]), tabs
 
 
-class Diary(Root):
+class Diary(App):
 
     def __init__(self, db, log, date=None):
         if not date: date = dt.date.today()
@@ -146,19 +142,17 @@ class Diary(Root):
                 Divider(),
                 self.aims]
         binder.bootstrap(date)
-        body = Filler(Pile([Divider(), Pile(body)]), valign='top')
         connect_signal(raw_calendar, 'change', self.date_change)
-        super().__init__(log, Border(Frame(body, header=Text('Diary'))), tabs, saves=saves)
+        super().__init__(log, 'Diary', Pile(body), tabs, saves)
 
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)
         self.aims.rebuild(date)
-        self.discover()
+        self.root.discover()
 
 
 def main(args):
     log = make_log(args)
     db = Database(args, log)
     diary = Diary(db, log)
-    diary.discover()
-    MainLoop(diary, palette=PALETTE).run()
+    diary.run()

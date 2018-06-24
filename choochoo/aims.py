@@ -1,18 +1,15 @@
 
-from urwid import Text, MainLoop, Frame, Pile, Divider, \
-    Filler, WEIGHT
+from urwid import Pile, Divider, WEIGHT
 
-from .widgets import Definition
 from .database import Database
 from .log import make_log
-from .utils import PALETTE
 from .uweird.database import SingleTableStatic, DATE_ORDINAL
-from .uweird.decorators import Border
-from .uweird.tabs import TabList, TabNode, Root
+from .uweird.tabs import TabList
+from .widgets import Definition, App
 
 
-def make_bound_injury(db, log, tabs, insert_callback=None):
-    binder = SingleTableStatic(db, log, 'injury',
+def make_bound_aim(db, log, tabs, insert_callback=None):
+    binder = SingleTableStatic(db, log, 'aim',
                                transforms={'start': DATE_ORDINAL, 'finish': DATE_ORDINAL},
                                insert_callback=insert_callback)
     injury = Definition(log, tabs, binder)
@@ -21,9 +18,9 @@ def make_bound_injury(db, log, tabs, insert_callback=None):
 
 def make_widget(db, log, tabs, saves):
     body = []
-    for row in db.db.execute('select id, start, finish, title, sort, description from injury'):
+    for row in db.db.execute('select id, start, finish, title, sort from aim'):
         if body: body.append(Divider())
-        injury, binder = make_bound_injury(db, log, tabs)
+        injury, binder = make_bound_aim(db, log, tabs)
         saves.append(binder.save)
         binder.read_row(row)
         body.append(injury)
@@ -32,15 +29,15 @@ def make_widget(db, log, tabs, saves):
 
     def insert_callback(saves=saves, pile=pile):
         contents = pile.contents
-        injury, binder = make_bound_injury(db, log, tabs, insert_callback=insert_callback)
+        aim, binder = make_bound_aim(db, log, tabs, insert_callback=insert_callback)
         saves.append(binder.save)
         if contents: contents.append((Divider(), (WEIGHT, 1)))
-        contents.append((injury, (WEIGHT, 1)))
+        contents.append((aim, (WEIGHT, 1)))
         pile.contents = contents
 
     insert_callback()  # initial empty
-    return Border(Frame(Filler(Pile([Divider(), pile]), valign='top'),
-                        header=Text('Injuries')))
+
+    return pile
 
 
 def main(args):
@@ -48,6 +45,5 @@ def main(args):
     db = Database(args, log)
     tabs = TabList()
     saves = []
-    injury = Root(log, make_widget(db, log, tabs, saves), tabs, saves=saves)
-    injury.discover()
-    MainLoop(injury, palette=PALETTE).run()
+    aims = App(log, 'Aims', make_widget(db, log, tabs, saves), tabs, saves)
+    aims.run()

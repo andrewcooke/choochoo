@@ -1,8 +1,8 @@
 
 from .args import COMMAND, DIARY, INJURIES, parser, NamespaceWithVariables, AIMS
 from .diary import main as diary
-from .injury import main as injuries
-from .aim import main as aims
+from .injuries import main as injuries
+from .aims import main as aims
 
 
 COMMANDS = {DIARY: diary,
