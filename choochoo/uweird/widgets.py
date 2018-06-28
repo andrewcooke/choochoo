@@ -1,8 +1,8 @@
 
-from urwid import Button, Text, WidgetWrap, emit_signal, connect_signal, Padding
+from urwid import Button, Text, emit_signal, connect_signal, Padding
 
 from .state import MutableStatefulText
-from .focus import FocusAttr, AttrChange
+from .focus import FocusAttr, AttrChange, FocusWrap
 
 
 class SquareButton(Button):
@@ -11,7 +11,7 @@ class SquareButton(Button):
     button_right = Text(']')
 
 
-class Nullable(WidgetWrap):
+class Nullable(FocusWrap):
     """
     make_widget must be able to generate a default state when called with no args.
     """
@@ -170,9 +170,10 @@ class Number(MutableStatefulText):
                 self._string = '-' + self._string
             used = True
         elif len(key) == 1 and '0' <= key <= '9':
-            self._string += key
+            if not self._decimal or '.' not in self._string or self._current_dp() < self._dp:
+                self._string += key
             used = True
-        elif self._decimal and key == '.' and not '.' in self._string:
+        elif self._decimal and key == '.' and '.' not in self._string:
             self._string += key
             used = True
         elif key in ('backspace', 'delete'):
@@ -181,20 +182,25 @@ class Number(MutableStatefulText):
                 used = True
         return used
 
+    def _current_dp(self):
+        try:
+            (pre, post) = self._string.split('.')
+            return len(post)
+        except ValueError:
+            return 0
+
     def _check_string(self):
         error = False
         if self._string:
             try:
-                if self._decimal and '.' in self._string:
-                    (pre, post) = self._string.split('.')
-                    if len(post) > self._dp:
-                        raise Exception('Too many decimal places')
+                if self._decimal and self._current_dp() > self._dp:
+                    raise Exception('Too many decimal places')
                 state = self._type(self._string)
                 if self._min <= state <= self._max:
                     self._set_state_internal(state)
                 else:
                     raise Exception('Out of range')
-            except:
+            except Exception as e:
                 error = True
         else:
             self._set_state_internal(None)

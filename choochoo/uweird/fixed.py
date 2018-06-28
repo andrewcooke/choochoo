@@ -1,8 +1,10 @@
 
-from urwid import WidgetWrap, FIXED
+from urwid import FIXED
+
+from .focus import FocusWrap
 
 
-class Fixed(WidgetWrap):
+class Fixed(FocusWrap):
     """
     Convert a widget to fixed size.  The height is whatever the widget
     flows to for the given width.

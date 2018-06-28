@@ -1,8 +1,10 @@
 
-from urwid import WidgetWrap, Text, emit_signal
+from urwid import Text, emit_signal
+
+from .focus import FocusWrap
 
 
-class ImmutableStatefulText(WidgetWrap):
+class ImmutableStatefulText(FocusWrap):
     """
     A text class where the text depends on some state
     """

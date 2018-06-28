@@ -1,9 +1,9 @@
 
 from collections.abc import Sequence
 
-from urwid import WidgetWrap, emit_signal, connect_signal, Widget, ExitMainLoop
+from urwid import emit_signal, connect_signal, Widget, ExitMainLoop
 
-from .focus import Focus, FocusAttr
+from .focus import Focus, FocusAttr, FocusWrap
 
 
 # new tab manager design
@@ -23,7 +23,7 @@ from .focus import Focus, FocusAttr
 # is duplicated by TabNodes.  on TabNodes this triggers internal logic.
 
 
-class Tab(WidgetWrap):
+class Tab(FocusWrap):
     """
     A widget wrapper that is added automatically by TagList.add().  Must
     be added to any node that is both target and source of tabbing.
@@ -35,6 +35,9 @@ class Tab(WidgetWrap):
         ...
         widget = tabs.add(Widget(...))
     """
+
+    def __init__(self, w):
+        super().__init__(w)
 
     signals = ['tab']
 
@@ -62,7 +65,7 @@ class TabList(Sequence):
 
     def append(self, widget_or_node):
         """
-        Add a widget to the list of managed widgets.  The return valuie should be
+        Add a widget to the list of managed widgets.  The return value should be
         used in the constructed tree of widgets (it contains both a Tab target and
         a FocusAttr).
         """
@@ -79,7 +82,7 @@ class TabList(Sequence):
         return len(self.__tabs)
 
 
-class TabNode(WidgetWrap):
+class TabNode(FocusWrap):
     """
     A widget wrapper that encapsulates a (local) root node in the widget tree and
     manages all the tabs below that node.
@@ -149,12 +152,14 @@ class TabNode(WidgetWrap):
 
     def __try_set_focus(self, n, key):
         try:
+            self._log.debug('Trying to set focus on %s' % self.__tabs_and_indices[n])
             self.__set_focus(self.__tabs_and_indices[n], key)
         except AttributeError:
             self.discover(self.__root)
             self.__set_focus(self.__tabs_and_indices[n], key)
 
     def __set_focus(self, tab, key):
+        self._log.debug('Using %s' % self.__focus[tab])
         self.__focus[tab].to(self.__root, key)
 
     def to(self, root, key):
@@ -164,9 +169,11 @@ class TabNode(WidgetWrap):
         """
         if self.__focus:
             n = 0 if key == 'tab' else len(self.__focus) - 1
+            self._log.debug('Re-targetting at %d' % n)
             self.__try_set_focus(n, key)
         else:
             # we have nothing to focus, so re-raise signal for remote neighbours
+            self._log.debug('Empty so raise signal')
             emit_signal(self, 'tab', self, key)
 
     def discover(self, root=None, top=True):
@@ -177,8 +184,7 @@ class TabNode(WidgetWrap):
         Does a search of the entire widget tree, recording paths to added widgets
         so that they can be given focus quickly.
         """
-        if top:
-            self.__top = True
+        self.__top = top
         if root is None:
             root = self
         self.__root = root
@@ -210,28 +216,33 @@ class TabNode(WidgetWrap):
                                     self.__focus[widget] = widget
                                     widget.discover(root, top=False)
                                 else:
-                                    self.__focus[widget] = Focus(new_path)
+                                    self.__focus[widget] = Focus(new_path, self._log)
                             else:
                                 stack.append((widget, new_path))
-            except AttributeError:
-                if hasattr(node, '_original_widget'):
-                    widget = node._original_widget
-                elif hasattr(node, '_wrapped_widget'):
-                    widget = node._wrapped_widget
-                else:
-                    widget = None
+            except AttributeError as e:
+                widget = None
+                if hasattr(node, '_wrapped_widget'):
+                    self._log.warn('Widget %s (type %s) doesn\'t expose contents' % (node, type(node)))
+                elif hasattr(node, 'base_widget'):
+                    if node == node.base_widget:
+                        self._log.warn('Widget with no focus: %s (type %s)' % (node, type(node)))
+                    else:
+                        widget = node.base_widget
                 if widget:
                     if widget in self.__focus:
                         if isinstance(widget, TabNode):
                             self.__focus[widget] = widget
                             widget.discover(root, top=False)
                         else:
-                            self.__focus[widget] = Focus(path)
+                            self.__focus[widget] = Focus(path, self._log)
                     else:
                         stack.append((widget, path))
+        unfound = []
         for widget in self.__focus:
             if not self.__focus[widget]:
-                raise Exception('Could not find %s' % widget)
+                unfound.append('%s (%s)' % (widget, type(widget._w.base_widget)))
+        if unfound:
+            raise Exception('Could not find %s' % ', '.join(unfound))
 
 
 class Root(TabNode):

@@ -2,12 +2,11 @@
 import datetime as dt
 from calendar import month_name, day_abbr, Calendar, monthrange
 
-from urwid import Columns, GridFlow, Pile, WidgetWrap, Text, Padding, emit_signal, connect_signal
+from urwid import Columns, GridFlow, Pile, Text, Padding, emit_signal, connect_signal
 
-from .focus import FocusFor, FocusAttr
-from .state import ImmutableStatefulText, MutableStatefulText
 from .fixed import Fixed
-
+from .focus import FocusFor, FocusAttr, FocusWrap
+from .state import ImmutableStatefulText, MutableStatefulText
 
 MONTHS = month_name
 DAYS2 = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
@@ -153,7 +152,7 @@ class Day(ImmutableStatefulText):
             return False
 
 
-class Days(WidgetWrap):
+class Days(FocusWrap):
 
     def __init__(self, date, calendar):
         self._date = date
@@ -224,7 +223,7 @@ class Today(DateKeyPressMixin, StatefulSymbol):
         DateKeyPressMixin.__init__(self, '=')
 
 
-class BaseDate(WidgetWrap):
+class BaseDate(FocusWrap):
 
     signals = ['change', 'postchange']
 
@@ -253,7 +252,7 @@ class BaseDate(WidgetWrap):
             emit_signal(self, 'change', self, date)
             old_date = date
             self._date = date
-            focus = FocusFor(self._w)
+            focus = FocusFor(self._w, self._log)
             self._w = self._make()
             focus.to(self._w)
             self._log.debug('Sending change signal for date postchange')

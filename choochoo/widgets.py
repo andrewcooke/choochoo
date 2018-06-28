@@ -34,10 +34,17 @@ class Definition(WidgetWrap):
                   ]))
 
 
+class MessageBar(Text):
+
+    def __init__(self):
+        super().__init__('', wrap='clip')
+
+
 class App(MainLoop):
 
-    def __init__(self, log, title, body, tab_list, saves):
+    def __init__(self, log, title, msgbar, body, tab_list, saves):
         self.root = Root(log, Border(Frame(Filler(Pile([Divider(), body]), valign='top'),
-                                           header=Text(title))), tab_list, saves=saves)
+                                           header=Pile([msgbar, Divider(), Text(title)]))),
+                         tab_list, saves=saves)
         self.root.discover()
         super().__init__(self.root, palette=PALETTE)

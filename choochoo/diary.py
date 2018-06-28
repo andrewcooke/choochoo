@@ -3,7 +3,8 @@ import datetime as dt
 
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
 
-from .widgets import App
+from .uweird.focus import FocusWrap
+from .widgets import App, MessageBar
 from .database import Database
 from .log import make_log
 from .uweird.calendar import Calendar
@@ -30,15 +31,27 @@ class DynamicContent(TabNode):
         self.replace_all(tabs)
 
 
-class Injury(WidgetWrap):
+class DbgPile(Pile):
 
-    def __init__(self, tabs, binder, title):
+    def __init__(self, log, contents):
+        super().__init__(contents)
+        self._log = log
+
+    def keypress(self, size, key):
+        self._log.debug('Pile focus: %s' % self.focus_position)
+        return super().keypress(size, key)
+
+
+
+class Injury(FocusWrap):
+
+    def __init__(self, log, tabs, binder, title):
         pain_avg = tabs.append(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=None))
         pain_peak = tabs.append(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=None))
         pain_freq = tabs.append(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None))
         notes = tabs.append(binder.bind(Edit(caption='Notes: ', edit_text='', multiline=True), 'notes', default=''))
         super().__init__(
-            Pile([Columns([('weight', 1, Text(title)),
+            DbgPile(log, [Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
                                                   (11, pain_avg),
                                                   (8, pain_peak),
@@ -48,6 +61,9 @@ class Injury(WidgetWrap):
                            ]),
                   notes,
                   ]))
+        log.debug('xxx')
+        log.debug('%s' % dir(self))
+        log.debug('%s', self.focus_position)
 
 
 class Injuries(DynamicContent):
@@ -66,7 +82,7 @@ class Injuries(DynamicContent):
                                        key_names=('ordinal', 'injury'),
                                        defaults={'ordinal': ordinal, 'injury': id})
             self._saves.append(binder.save)
-            injury = Injury(tabs, binder, title)
+            injury = Injury(self._log, tabs, binder, title)
             body.append(injury)
             binder.read_row(
                 self._db.execute('''select * from injury_diary where injury = ? and ordinal = ?''',
@@ -74,7 +90,7 @@ class Injuries(DynamicContent):
         return Pile([Text('Injuries'), Padding(Pile(body), left=2)]), tabs
 
 
-class Aim(WidgetWrap):
+class Aim(FocusWrap):
 
     def __init__(self, tabs, binder, title):
         notes = tabs.append(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''))
@@ -111,7 +127,7 @@ class Aims(DynamicContent):
 
 class Diary(App):
 
-    def __init__(self, db, log, date=None):
+    def __init__(self, db, log, msg, date=None):
         if not date: date = dt.date.today()
         tabs = TabList()
         saves = []
@@ -125,7 +141,7 @@ class Diary(App):
         sleep = tabs.append(binder.bind(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), 'sleep', default=None))
         mood = tabs.append(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
         weather = tabs.append(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
-        weight = tabs.append(binder.bind(Float(caption='Weight: ', maximum=100, dp=2, units='kg'), 'weight', default=None))
+        weight = tabs.append(binder.bind(Float(caption='Weight: ', maximum=100, dp=1, units='kg'), 'weight', default=None))
         meds = tabs.append(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
         self.injuries = tabs.append(Injuries(db, log, saves, date))
         self.aims = tabs.append(Aims(db, log, saves, date))
@@ -143,7 +159,7 @@ class Diary(App):
                 self.aims]
         binder.bootstrap(date)
         connect_signal(raw_calendar, 'change', self.date_change)
-        super().__init__(log, 'Diary', Pile(body), tabs, saves)
+        super().__init__(log, 'Diary', msg, Pile(body), tabs, saves)
 
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)
@@ -154,5 +170,6 @@ class Diary(App):
 def main(args):
     log = make_log(args)
     db = Database(args, log)
-    diary = Diary(db, log)
+    msg = MessageBar()
+    diary = Diary(db, log, msg)
     diary.run()
