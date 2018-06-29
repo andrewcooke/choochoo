@@ -14,3 +14,11 @@ PALETTE = [('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
            ('unimportant', 'dark blue', 'black'), ('unimportant-focus', 'light blue', 'black'),
            ('error', 'dark red', 'black'), ('error-focus', 'light red', 'black')
            ]
+
+
+def force_iterable(data):
+    try:
+        iter(data)
+        return data
+    except TypeError:
+        return [data]

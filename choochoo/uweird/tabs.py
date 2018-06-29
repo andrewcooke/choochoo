@@ -3,6 +3,7 @@ from collections.abc import Sequence
 
 from urwid import emit_signal, connect_signal, Widget, ExitMainLoop
 
+from ..utils import force_iterable
 from .focus import Focus, FocusAttr, FocusWrap
 
 
@@ -21,6 +22,15 @@ from .focus import Focus, FocusAttr, FocusWrap
 
 # the functionality depends on Focus.apply taking a keypress argument which
 # is duplicated by TabNodes.  on TabNodes this triggers internal logic.
+
+# the widget tree traversal depends on code following conventions that
+# i am inferring from the urwid code, but which aren't explicit anywhere.
+# in particular, ever widget subclass should either:
+# - be a decorator, in which case base_widget is used
+# - or be a collection, exposing contents and focus_position
+# the only exceptions are "leaf" widgets - tabs wil not move inside these.
+
+# to get this functionality with wrapped widgets, use FocusWrap.
 
 
 class Tab(FocusWrap):
@@ -113,7 +123,6 @@ class TabNode(FocusWrap):
         self.__focus = {}
         self.__root = None
         self.__path = None
-        self.__top = False
         self.__build_data(tab_list)
 
     def __build_data(self, tab_list):
@@ -146,8 +155,8 @@ class TabNode(FocusWrap):
         n = self.__tabs_and_indices[tab] + delta
         if 0 <= n < len(self.__focus):
             self.__try_set_focus(n, key)
-        elif self.__top:
-            self.to(None, key)
+        elif not self.__path:
+            self.to(None, key)  # loop around
         else:
             emit_signal(self, 'tab', self, key)
 
@@ -185,20 +194,9 @@ class TabNode(FocusWrap):
         Does a search of the entire widget tree, recording paths to added widgets
         so that they can be given focus quickly.
         """
-        self.__top = path is None
         self.__root = root if root else self
         self.__path = path if path else []
-        stack = [(self, self.__path)]
-
-        def handle_new_widget(widget, path):
-            if widget in self.__focus:
-                if isinstance(widget, TabNode):
-                    self.__focus[widget] = widget
-                    widget.discover(self.__root, path=path)
-                else:
-                    self.__focus[widget] = Focus(path, self._log)
-            else:
-                stack.append((widget, path))
+        stack = [(self, self.__path)]  # only search sub-tree, not from root
 
         def unpack_container(widget, path):
             # contents can be dict, list or ListBox
@@ -211,12 +209,7 @@ class TabNode(FocusWrap):
                     iterator = widget.contents.body.items()
             for (key, data) in iterator:
                 # data can be widget or tuple containing widget
-                try:
-                    iter(data)
-                except TypeError:
-                    data = [data]
-                new_path = list(path) + [key]
-                yield data, new_path
+                yield force_iterable(data), list(path) + [key]
 
         def unpack_decorator(widget):
             if hasattr(widget, '_wrapped_widget'):
@@ -227,23 +220,33 @@ class TabNode(FocusWrap):
                 else:
                     yield widget.base_widget
 
+        def handle_new_widget(widget, path):
+            if widget in self.__focus:
+                if isinstance(widget, TabNode):
+                    self.__focus[widget] = widget
+                    widget.discover(self.__root, path=path)
+                else:
+                    self.__focus[widget] = Focus(path, self._log)
+            else:
+                stack.append((widget, path))
+
         while stack:
             widget, path = stack.pop()
             try:
                 for data, new_path in unpack_container(widget, path):
-                    for widget in data:
-                        if isinstance(widget, Widget):
-                            handle_new_widget(widget, new_path)
+                    for datum in data:
+                        if isinstance(datum, Widget):  # filter junk in data
+                            handle_new_widget(datum, new_path)
             except AttributeError:
                 for widget in unpack_decorator(widget):
                     handle_new_widget(widget, path)
 
-        unfound = []
+        missing = []
         for widget in self.__focus:
             if not self.__focus[widget]:
-                unfound.append('%s (%s)' % (widget, type(widget._w.base_widget)))
-        if unfound:
-            raise Exception('Could not find %s' % ', '.join(unfound))
+                missing.append('%s (base type %s)' % (widget, type(widget._w.base_widget)))
+        if missing:
+            raise Exception('Could not find %s' % ', '.join(missing))
 
 
 class Root(TabNode):

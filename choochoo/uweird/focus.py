@@ -4,18 +4,23 @@ from urwid import AttrMap, Widget, WidgetWrap
 
 class FocusWrap(WidgetWrap):
     """
-    If we are wrapping a container, allow introspection of contents
+    If we are wrapping a container, allow introspection of contents.
     """
+
+    # we have to be careful here not not actually copy data, because
+    # contents may be rebuilt.  so things are more dynamic than you
+    # may expect - everything is looked up when needed,
 
     def _focus_target(self):
         try:
-            self._w.focus_position
+            self._w.focus_position  # test for access
             return self._w
         except:
             try:
-                self._w.base_widget.focus_position
+                self._w.base_widget.focus_position  # test for access
                 return self._w.base_widget
             except:
+                # this ends up being thrown by the attributes
                 raise AttributeError('Widget %s (type %s) has no focus' % (self._w, type(self._w)))
 
     def _get_contents(self):

@@ -31,18 +31,6 @@ class DynamicContent(TabNode):
         self.replace_all(tabs)
 
 
-class DbgPile(Pile):
-
-    def __init__(self, log, contents):
-        super().__init__(contents)
-        self._log = log
-
-    def keypress(self, size, key):
-        self._log.debug('Pile focus: %s' % self.focus_position)
-        return super().keypress(size, key)
-
-
-
 class Injury(FocusWrap):
 
     def __init__(self, log, tabs, binder, title):
@@ -51,7 +39,7 @@ class Injury(FocusWrap):
         pain_freq = tabs.append(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None))
         notes = tabs.append(binder.bind(Edit(caption='Notes: ', edit_text='', multiline=True), 'notes', default=''))
         super().__init__(
-            DbgPile(log, [Columns([('weight', 1, Text(title)),
+            Pile([Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
                                                   (11, pain_avg),
                                                   (8, pain_peak),
