@@ -176,7 +176,7 @@ class TabNode(FocusWrap):
             self._log.debug('Empty so raise signal')
             emit_signal(self, 'tab', self, key)
 
-    def discover(self, root=None, top=True):
+    def discover(self, root=None, top=True, path=None):
         """
         Register the root widget here before use (in many cases the root node is
         also this TabNode, so no root argument is needed).
@@ -188,7 +188,7 @@ class TabNode(FocusWrap):
         if root is None:
             root = self
         self.__root = root
-        stack = [(root, [])]
+        stack = [(self, path if path else [])]
         while stack:
             node, path = stack.pop()
             try:
@@ -214,7 +214,7 @@ class TabNode(FocusWrap):
                             if widget in self.__focus:
                                 if isinstance(widget, TabNode):
                                     self.__focus[widget] = widget
-                                    widget.discover(root, top=False)
+                                    widget.discover(root, top=False, path=new_path)
                                 else:
                                     self.__focus[widget] = Focus(new_path, self._log)
                             else:
@@ -232,7 +232,7 @@ class TabNode(FocusWrap):
                     if widget in self.__focus:
                         if isinstance(widget, TabNode):
                             self.__focus[widget] = widget
-                            widget.discover(root, top=False)
+                            widget.discover(root, top=False, path=path)
                         else:
                             self.__focus[widget] = Focus(path, self._log)
                     else:
