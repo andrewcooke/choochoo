@@ -200,25 +200,29 @@ class TabNode(FocusWrap):
             else:
                 stack.append((widget, path))
 
+        def unpack_contents(widget, path):
+            # contents can be list or dict
+            try:
+                iterator = widget.contents.items()
+            except AttributeError:
+                try:
+                    iterator = enumerate(widget.contents)
+                except TypeError:
+                    # possibly a ListBox
+                    iterator = widget.contents.body.items()
+            for (key, data) in iterator:
+                # data can be widget or tuple containing widget
+                try:
+                    iter(data)
+                except TypeError:
+                    data = [data]
+                new_path = list(path) + [key]
+                yield data, new_path
+
         while stack:
             node, path = stack.pop()
             try:
-                # contents can be list or dict
-                try:
-                    iterator = node.contents.items()
-                except AttributeError:
-                    try:
-                        iterator = enumerate(node.contents)
-                    except TypeError:
-                        # possibly a ListBox
-                        iterator = node.contents.body.items()
-                for (key, data) in iterator:
-                    # data can be widget or tuple containing widget
-                    try:
-                        iter(data)
-                    except TypeError:
-                        data = [data]
-                    new_path = list(path) + [key]
+                for data, new_path in unpack_contents(node, path):
                     for widget in data:
                         if isinstance(widget, Widget):
                             handle_new_widget(widget, new_path)
