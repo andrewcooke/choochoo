@@ -200,15 +200,14 @@ class TabNode(FocusWrap):
             else:
                 stack.append((widget, path))
 
-        def unpack_contents(widget, path):
-            # contents can be list or dict
+        def unpack_container(widget, path):
+            # contents can be dict, list or ListBox
             try:
                 iterator = widget.contents.items()
             except AttributeError:
                 try:
                     iterator = enumerate(widget.contents)
                 except TypeError:
-                    # possibly a ListBox
                     iterator = widget.contents.body.items()
             for (key, data) in iterator:
                 # data can be widget or tuple containing widget
@@ -219,24 +218,26 @@ class TabNode(FocusWrap):
                 new_path = list(path) + [key]
                 yield data, new_path
 
+        def unpack_decorator(widget):
+            if hasattr(widget, '_wrapped_widget'):
+                self._log.warn('Widget %s (type %s) doesn\'t expose contents' % (widget, type(widget)))
+            elif hasattr(widget, 'base_widget'):
+                if widget == widget.base_widget:
+                    self._log.warn('Widget with no focus: %s (type %s)' % (widget, type(widget)))
+                else:
+                    yield widget.base_widget
+
         while stack:
-            node, path = stack.pop()
+            widget, path = stack.pop()
             try:
-                for data, new_path in unpack_contents(node, path):
+                for data, new_path in unpack_container(widget, path):
                     for widget in data:
                         if isinstance(widget, Widget):
                             handle_new_widget(widget, new_path)
-            except AttributeError as e:
-                widget = None
-                if hasattr(node, '_wrapped_widget'):
-                    self._log.warn('Widget %s (type %s) doesn\'t expose contents' % (node, type(node)))
-                elif hasattr(node, 'base_widget'):
-                    if node == node.base_widget:
-                        self._log.warn('Widget with no focus: %s (type %s)' % (node, type(node)))
-                    else:
-                        widget = node.base_widget
-                if widget:
+            except AttributeError:
+                for widget in unpack_decorator(widget):
                     handle_new_widget(widget, path)
+
         unfound = []
         for widget in self.__focus:
             if not self.__focus[widget]:
