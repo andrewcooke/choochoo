@@ -112,6 +112,7 @@ class TabNode(FocusWrap):
         self.__tabs_and_indices = {}
         self.__focus = {}
         self.__root = None
+        self.__path = None
         self.__top = False
         self.__build_data(tab_list)
 
@@ -155,14 +156,14 @@ class TabNode(FocusWrap):
             self._log.debug('Trying to set focus on %s' % self.__tabs_and_indices[n])
             self.__set_focus(self.__tabs_and_indices[n], key)
         except AttributeError:
-            self.discover(self.__root)
+            self.discover(root=self.__root, path=self.__path)
             self.__set_focus(self.__tabs_and_indices[n], key)
 
     def __set_focus(self, tab, key):
         self._log.debug('Using %s' % self.__focus[tab])
         self.__focus[tab].to(self.__root, key)
 
-    def to(self, root, key):
+    def to(self, unused, key):
         """
         Replicate the Focus() interface.  This is used internally for sub-nodes.
         Instead of assigning focus using Focus.to(),
@@ -176,7 +177,7 @@ class TabNode(FocusWrap):
             self._log.debug('Empty so raise signal')
             emit_signal(self, 'tab', self, key)
 
-    def discover(self, root=None, top=True, path=None):
+    def discover(self, root=None, path=None):
         """
         Register the root widget here before use (in many cases the root node is
         also this TabNode, so no root argument is needed).
@@ -184,11 +185,10 @@ class TabNode(FocusWrap):
         Does a search of the entire widget tree, recording paths to added widgets
         so that they can be given focus quickly.
         """
-        self.__top = top
-        if root is None:
-            root = self
-        self.__root = root
-        stack = [(self, path if path else [])]
+        self.__top = path is None
+        self.__root = root if root else self
+        self.__path = path if path else []
+        stack = [(self, self.__path)]
         while stack:
             node, path = stack.pop()
             try:
@@ -197,7 +197,6 @@ class TabNode(FocusWrap):
                     iterator = node.contents.items()
                 except AttributeError:
                     try:
-                        # possibly a dict
                         iterator = enumerate(node.contents)
                     except TypeError:
                         # possibly a ListBox
@@ -214,7 +213,7 @@ class TabNode(FocusWrap):
                             if widget in self.__focus:
                                 if isinstance(widget, TabNode):
                                     self.__focus[widget] = widget
-                                    widget.discover(root, top=False, path=new_path)
+                                    widget.discover(self.__root, path=new_path)
                                 else:
                                     self.__focus[widget] = Focus(new_path, self._log)
                             else:
@@ -232,7 +231,7 @@ class TabNode(FocusWrap):
                     if widget in self.__focus:
                         if isinstance(widget, TabNode):
                             self.__focus[widget] = widget
-                            widget.discover(root, top=False, path=path)
+                            widget.discover(self.__root, path=path)
                         else:
                             self.__focus[widget] = Focus(path, self._log)
                     else:
