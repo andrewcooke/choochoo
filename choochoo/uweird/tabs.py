@@ -189,6 +189,17 @@ class TabNode(FocusWrap):
         self.__root = root if root else self
         self.__path = path if path else []
         stack = [(self, self.__path)]
+
+        def handle_new_widget(widget, path):
+            if widget in self.__focus:
+                if isinstance(widget, TabNode):
+                    self.__focus[widget] = widget
+                    widget.discover(self.__root, path=path)
+                else:
+                    self.__focus[widget] = Focus(path, self._log)
+            else:
+                stack.append((widget, path))
+
         while stack:
             node, path = stack.pop()
             try:
@@ -210,14 +221,7 @@ class TabNode(FocusWrap):
                     new_path = list(path) + [key]
                     for widget in data:
                         if isinstance(widget, Widget):
-                            if widget in self.__focus:
-                                if isinstance(widget, TabNode):
-                                    self.__focus[widget] = widget
-                                    widget.discover(self.__root, path=new_path)
-                                else:
-                                    self.__focus[widget] = Focus(new_path, self._log)
-                            else:
-                                stack.append((widget, new_path))
+                            handle_new_widget(widget, new_path)
             except AttributeError as e:
                 widget = None
                 if hasattr(node, '_wrapped_widget'):
@@ -228,14 +232,7 @@ class TabNode(FocusWrap):
                     else:
                         widget = node.base_widget
                 if widget:
-                    if widget in self.__focus:
-                        if isinstance(widget, TabNode):
-                            self.__focus[widget] = widget
-                            widget.discover(self.__root, path=path)
-                        else:
-                            self.__focus[widget] = Focus(path, self._log)
-                    else:
-                        stack.append((widget, path))
+                    handle_new_widget(widget, path)
         unfound = []
         for widget in self.__focus:
             if not self.__focus[widget]:
