@@ -123,19 +123,16 @@ class Diary(App):
         saves = []
         saves.append(factory.binder.save)
         raw_calendar = Calendar(log, bar, date)
-        # calendar = factory(raw_calendar, 'Poop', 'ordinal', key=True)
-        tabs = factory.tabs
-        binder = factory.binder
-        calendar = tabs.append(binder.bind_key(raw_calendar, 'ordinal'))
-        notes = tabs.append(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
-        rest_hr = tabs.append(binder.bind(Integer(caption='Rest HR: ', maximum=100), 'rest_hr', default=None))
-        sleep = tabs.append(binder.bind(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), 'sleep', default=None))
-        mood = tabs.append(binder.bind(Rating(caption='Mood: '), 'mood', default=None))
-        weather = tabs.append(binder.bind(Edit(caption='Weather: '), 'weather', default=''))
-        weight = tabs.append(binder.bind(Float(caption='Weight: ', maximum=100, dp=1, units='kg'), 'weight', default=None))
-        meds = tabs.append(binder.bind(Edit(caption='Meds: '), 'meds', default=''))
-        self.injuries = tabs.append(Injuries(db, log, saves, date))
-        self.aims = tabs.append(Aims(db, log, saves, date))
+        calendar = factory(raw_calendar, bindto='ordinal', key=True)
+        notes = factory(Edit(caption='Notes: ', multiline=True), bindto='notes', default='')
+        rest_hr = factory(Integer(caption='Rest HR: ', maximum=100), bindto='rest_hr', default=None)
+        sleep = factory(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), bindto='sleep', default=None)
+        mood = factory(Rating(caption='Mood: '), message='2: sad; 4: normal; 6 happy', bindto='mood', default=None)
+        weather = factory(Edit(caption='Weather: '), bindto='weather', default='')
+        weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'), bindto='weight', default=None)
+        meds = factory(Edit(caption='Meds: '), bindto='meds', default='')
+        self.injuries = factory.tabs.append(Injuries(db, log, saves, date))
+        self.aims = factory.tabs.append(Aims(db, log, saves, date))
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
@@ -148,9 +145,9 @@ class Diary(App):
                 self.injuries,
                 Divider(),
                 self.aims]
-        binder.bootstrap(date)
+        factory.binder.bootstrap(date)
         connect_signal(raw_calendar, 'change', self.date_change)
-        super().__init__(log, 'Diary', bar, Pile(body), tabs, saves)
+        super().__init__(log, 'Diary', bar, Pile(body), factory.tabs, saves)
 
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)
