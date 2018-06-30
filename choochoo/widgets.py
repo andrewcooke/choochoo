@@ -34,12 +34,6 @@ class Definition(WidgetWrap):
                   ]))
 
 
-class MessageBar(Text):
-
-    def __init__(self):
-        super().__init__('', wrap='clip')
-
-
 class App(MainLoop):
 
     def __init__(self, log, title, msgbar, body, tab_list, saves):

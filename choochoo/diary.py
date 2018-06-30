@@ -3,8 +3,9 @@ import datetime as dt
 
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
 
-from .uweird.focus import FocusWrap
-from .widgets import App, MessageBar
+from .uweird.factory import Factory
+from .uweird.focus import FocusWrap, MessageBar
+from .widgets import App
 from .database import Database
 from .log import make_log
 from .uweird.calendar import Calendar
@@ -115,15 +116,17 @@ class Aims(DynamicContent):
 
 class Diary(App):
 
-    def __init__(self, db, log, msg, date=None):
+    def __init__(self, db, log, bar, date=None):
         if not date: date = dt.date.today()
-        tabs = TabList()
+        factory = Factory(TabList(), bar,
+                          SingleTableDynamic(db, log, 'diary', transforms={'ordinal': DATE_ORDINAL}))
         saves = []
-        binder = SingleTableDynamic(db, log, 'diary',
-                                    transforms={'ordinal': DATE_ORDINAL})
-        saves.append(binder.save)
+        saves.append(factory.binder.save)
         raw_calendar = Calendar(log, date)
-        calendar = tabs.append(binder.bind_key(raw_calendar, 'ordinal'))
+        calendar = factory(raw_calendar, 'Poop', 'ordinal', key=True)
+        tabs = factory.tabs
+        binder = factory.binder
+        # calendar = tabs.append(binder.bind_key(raw_calendar, 'ordinal'))
         notes = tabs.append(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
         rest_hr = tabs.append(binder.bind(Integer(caption='Rest HR: ', maximum=100), 'rest_hr', default=None))
         sleep = tabs.append(binder.bind(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), 'sleep', default=None))
@@ -147,7 +150,7 @@ class Diary(App):
                 self.aims]
         binder.bootstrap(date)
         connect_signal(raw_calendar, 'change', self.date_change)
-        super().__init__(log, 'Diary', msg, Pile(body), tabs, saves)
+        super().__init__(log, 'Diary', bar, Pile(body), tabs, saves)
 
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)
@@ -158,6 +161,6 @@ class Diary(App):
 def main(args):
     log = make_log(args)
     db = Database(args, log)
-    msg = MessageBar()
-    diary = Diary(db, log, msg)
+    bar = MessageBar('alt-q to quit; alt-s to save; alt-x to quit without saving', attribute='bar')
+    diary = Diary(db, log, bar)
     diary.run()

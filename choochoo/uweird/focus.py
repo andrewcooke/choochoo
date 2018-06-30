@@ -1,5 +1,5 @@
 
-from urwid import AttrMap, Widget, WidgetWrap
+from urwid import AttrMap, Widget, WidgetWrap, Text
 
 
 class FocusWrap(WidgetWrap):
@@ -136,4 +136,38 @@ class FocusAttr(AttrMap):
                 self.set_attr_map({None: self._plain})
                 self.set_focus_map({None: self._focus})
 
+
+class MessageBar(WidgetWrap):
+
+    def __init__(self, default='', attribute='unimportant'):
+        self.__default = default
+        self.__latest = None
+        self.__text = Text(default, wrap='clip')
+        super().__init__(FocusAttr(self.__text, plain=attribute))
+
+    def set_text(self, markup, key=None):
+        self.__text.set_text(markup)
+        self.__latest = key
+
+    def clear(self, key):
+        if self.__latest == key:
+            self.__text.set_text(self.__default)
+
+
+class OnFocus(FocusWrap):
+
+    def __init__(self, widget, message, bar):
+        self.__message = message
+        self.__bar = bar
+        self.__focus = False
+        super().__init__(widget)
+
+    def render(self, size, focus=False):
+        if focus != self.__focus:
+            self.__focus = focus
+            if focus:
+                self.__bar.set_text(self.__message, key=self)
+            else:
+                self.__bar.clear(self)
+        return self._w.render(size, focus=focus)
 
