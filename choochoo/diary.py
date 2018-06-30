@@ -122,11 +122,11 @@ class Diary(App):
                           SingleTableDynamic(db, log, 'diary', transforms={'ordinal': DATE_ORDINAL}))
         saves = []
         saves.append(factory.binder.save)
-        raw_calendar = Calendar(log, date)
-        calendar = factory(raw_calendar, 'Poop', 'ordinal', key=True)
+        raw_calendar = Calendar(log, bar, date)
+        # calendar = factory(raw_calendar, 'Poop', 'ordinal', key=True)
         tabs = factory.tabs
         binder = factory.binder
-        # calendar = tabs.append(binder.bind_key(raw_calendar, 'ordinal'))
+        calendar = tabs.append(binder.bind_key(raw_calendar, 'ordinal'))
         notes = tabs.append(binder.bind(Edit(caption='Notes: ', multiline=True), 'notes', default=''))
         rest_hr = tabs.append(binder.bind(Integer(caption='Rest HR: ', maximum=100), 'rest_hr', default=None))
         sleep = tabs.append(binder.bind(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), 'sleep', default=None))

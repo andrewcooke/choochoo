@@ -156,18 +156,29 @@ class MessageBar(WidgetWrap):
 
 class OnFocus(FocusWrap):
 
-    def __init__(self, widget, message, bar):
+    def __init__(self, widget, message, bar=None):
         self.__message = message
         self.__bar = bar
         self.__focus = False
         super().__init__(widget)
 
+    def __update_focus(self, focus):
+        if self.__bar:
+            if focus != self.__focus:
+                self.__focus = focus
+                if focus:
+                    self.__bar.set_text(self.__message, key=self)
+                else:
+                    self.__bar.clear(self)
+
     def render(self, size, focus=False):
-        if focus != self.__focus:
-            self.__focus = focus
-            if focus:
-                self.__bar.set_text(self.__message, key=self)
-            else:
-                self.__bar.clear(self)
+        self.__update_focus(focus)
         return self._w.render(size, focus=focus)
 
+    def rows(self, size, focus=False):
+        self.__update_focus(focus)
+        return self._w.rows(size, focus=focus)
+
+    def pack(self, size, focus=False):
+        self.__update_focus(focus)
+        return self._w.pack(size, focus=focus)

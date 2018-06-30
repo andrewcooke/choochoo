@@ -5,7 +5,7 @@ from calendar import month_name, day_abbr, Calendar, monthrange
 from urwid import Columns, GridFlow, Pile, Text, Padding, emit_signal, connect_signal
 
 from .fixed import Fixed
-from .focus import FocusFor, FocusAttr, FocusWrap
+from .focus import FocusFor, FocusAttr, FocusWrap, OnFocus
 from .state import ImmutableStatefulText, MutableStatefulText
 
 MONTHS = month_name
@@ -121,6 +121,14 @@ class Month(DateKeyPressMixin, MutableStatefulText):
             return '%02d' % self.state.month
 
 
+class MonthBar(OnFocus):
+
+    def __init__(self, date, as_text=True, bar=None):
+        super().__init__(Month(date, as_text=as_text),
+                         '+/- to inc/dec; first letter to advance; d/m/y/D/M/Y/= as elsewhere', bar)
+        self.widget = self._w
+
+
 class Year(DateKeyPressMixin, MutableStatefulText):
 
     def __init__(self, date):
@@ -129,6 +137,13 @@ class Year(DateKeyPressMixin, MutableStatefulText):
 
     def state_as_text(self):
         return str(self.state.year)
+
+
+class YearBar(OnFocus):
+
+    def __init__(self, date, bar=None):
+        super().__init__(Year(date), '+/- to inc/dec; digit to jump to nearest; d/m/y/D/M/Y/= as elsewhere', bar)
+        self.widget = self._w
 
 
 class Day(ImmutableStatefulText):
@@ -216,6 +231,21 @@ class QuickChange(DateKeyPressMixin, StatefulSymbol):
         DateKeyPressMixin.__init__(self, 'd', sign)
 
 
+DKMSG = {(-1, 'd'): '+/spc/enter/d to dec day; -/D to inc; m/y to dec month/year; M/Y to inc; = now',
+         ( 1, 'd'): '+/spc/enter/d to inc day; -/D to dec; m/y to inc month/year; M/Y to dec; = now',
+         (-1, 'm'): '+/spc/enter/m to dec month; -/M to inc; d/y to dec day/year; D/Y to inc; = now',
+         ( 1, 'm'): '+/spc/enter/m to inc month; -/M to dec; d/y to inc day/year; D/Y to dec; = now',
+         (-1, 'y'): '+/spc/enter/y to dec year; -/Y to inc; d/m to dec day/month; D/M to inc; = now',
+         ( 1, 'y'): '+/spc/enter/y to inc year; -/Y to dec; d/m to inc day/month; D/M to dec; = now'}
+
+
+class QuickChangeBar(OnFocus):
+
+    def __init__(self, date, symbol, sign, bar=None):
+        super().__init__(QuickChange(date, symbol, sign), DKMSG[(sign, 'd')], bar)
+        self.widget = self._w
+
+
 class Today(DateKeyPressMixin, StatefulSymbol):
 
     def __init__(self, date, symbol):
@@ -223,14 +253,23 @@ class Today(DateKeyPressMixin, StatefulSymbol):
         DateKeyPressMixin.__init__(self, '=')
 
 
+class TodayBar(OnFocus):
+
+    def __init__(self, date, symbol, bar=None):
+        super().__init__(Today(date, symbol),
+                         '%s/spc/enter now; +/d/m/y to inc day/month/year; -/D/M/Y to dec' % symbol, bar)
+        self.widget = self._w
+
+
 class BaseDate(FocusWrap):
 
     signals = ['change', 'postchange']
 
-    def __init__(self, log, date=None):
+    def __init__(self, log, bar=None, date=None):
         self._log = log
         if not date: date = dt.date.today()
         self._date = date
+        self._bar = bar
         super().__init__(self._make())
 
     def __get_state(self):
@@ -265,16 +304,16 @@ class Calendar(BaseDate):
     """
 
     def _make(self):
-        down = QuickChange(self._date, '<', -1)
-        connect_signal(down, 'change', self.date_change)
-        today = Today(self._date, '=')
-        connect_signal(today, 'change', self.date_change)
-        up = QuickChange(self._date, '>', 1)
-        connect_signal(up, 'change', self.date_change)
-        month = Month(self._date)
-        connect_signal(month, 'change', self.date_change)
-        year = Year(self._date)
-        connect_signal(year, 'change', self.date_change)
+        down = QuickChangeBar(self._date, '<', -1, bar=self._bar)
+        connect_signal(down.widget, 'change', self.date_change)
+        today = TodayBar(self._date, '=', bar=self._bar)
+        connect_signal(today.widget, 'change', self.date_change)
+        up = QuickChangeBar(self._date, '>', 1, bar=self._bar)
+        connect_signal(up.widget, 'change', self.date_change)
+        month = MonthBar(self._date, bar=self._bar)
+        connect_signal(month.widget, 'change', self.date_change)
+        year = YearBar(self._date, bar=self._bar)
+        connect_signal(year.widget, 'change', self.date_change)
         title = Columns([(1, FocusAttr(down)),
                          (1, FocusAttr(today)),
                          (1, FocusAttr(up)),
@@ -307,7 +346,7 @@ class DayOfWeek(DateKeyPressMixin, MutableStatefulText):
 class TextDate(BaseDate):
 
     def _make(self):
-        down = QuickChange(self._date, '<', -1)
+        down = QuickChange(self._date, '<', -1, bar=self._bar)
         connect_signal(down, 'change', self.date_change)
         up = QuickChange(self._date, '>', 1)
         connect_signal(up, 'change', self.date_change)

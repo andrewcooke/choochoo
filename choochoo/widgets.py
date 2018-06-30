@@ -37,8 +37,9 @@ class Definition(WidgetWrap):
 class App(MainLoop):
 
     def __init__(self, log, title, msgbar, body, tab_list, saves):
-        self.root = Root(log, Border(Frame(Filler(Pile([Divider(), body]), valign='top'),
-                                           header=Pile([msgbar, Divider(), Text(title)]))),
+        self.root = Root(log, Border(Frame(Filler(body, valign='top'),
+                                           header=Pile([Text(title), Divider()]),
+                                           footer=Pile([Divider(), msgbar]))),
                          tab_list, saves=saves)
         self.root.discover()
         super().__init__(self.root, palette=PALETTE)
