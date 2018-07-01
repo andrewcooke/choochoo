@@ -276,7 +276,10 @@ class SingleTableStatic(Binder):
             names = list(self._key_names)
             names.extend(self._widget_names.values())
             cmd += ', '.join(names)
-            cmd += ' from %s where %s = ?' % (self._table, self._key_names)
+            cmd += ' from %s where ' % self._table
+            for i, name in enumerate(self._key_names):
+                cmd += 'and ' if i else ''
+                cmd += '%s = ? ' % name
             values = [self._dbview[name] for name in self._key_names]
             self._log.debug('%s / %s' % (cmd, values))
             row = self._db.execute(cmd, values).fetchone()

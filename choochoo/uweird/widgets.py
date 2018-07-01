@@ -2,7 +2,7 @@
 from urwid import Button, Text, emit_signal, connect_signal, Padding
 
 from .state import MutableStatefulText
-from .focus import FocusAttr, AttrChange, FocusWrap
+from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
 
 
 class SquareButton(Button):
@@ -18,8 +18,11 @@ class Nullable(FocusWrap):
 
     signals = ['change']
 
-    def __init__(self, replacement, make_widget, state=None):
+    def __init__(self, replacement, make_widget, state=None, bar=None,
+                 message='enter/spc to activate; del to reset'):
         self.__replacement = FocusAttr(SquareButton(replacement))
+        if bar:
+            self.__replacement = OnFocus(self.__replacement, message=message, bar=bar)
         self.__make_widget = make_widget
         super().__init__(self.__replacement)
         self.__set_state(state)
@@ -32,7 +35,13 @@ class Nullable(FocusWrap):
             connect_signal(self._w, 'change', self._bounce_change)  # todo weak ref here?
         else:
             self._w.state = state
-        self._invalidate()
+
+    def _invalidate(self):
+        try:
+            self._w.update_bar()  # message bar
+        except AttributeError:
+            pass
+        super()._invalidate()
 
     def __get_state(self):
         if self._w == self.__replacement:
@@ -45,7 +54,7 @@ class Nullable(FocusWrap):
     def keypress(self, size, key):
         if self._w == self.__replacement:
             if self._command_map[key] == 'activate':
-                self._w = self.__make_widget()
+                self._w = self.__make_widget(None)
                 self._bounce_change('change', self._w, self._w.state)
                 self._invalidate()
                 return

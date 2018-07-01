@@ -289,7 +289,7 @@ class BaseDate(FocusWrap):
             self._log.info('Date has changed: %s - %s' % (self._date.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d')))
             # again, arg convention matches Edit
             self._log.debug('Sending change signal for date change')
-            emit_signal(self, 'change', self, date)
+            emit_signal(self, 'change', self, self, date)
             old_date = date
             self._date = date
             focus = FocusFor(self._w, self._log)
@@ -334,6 +334,14 @@ class DayOfMonth(DateKeyPressMixin, MutableStatefulText):
         return '%02d' % self.state.day
 
 
+class DayOfMonthBar(OnFocus):
+
+    def __init__(self, state, bar=None):
+        super().__init__(DayOfMonth(state),
+                         '+/spc/enter/d to inc day; -/D to dec; m/y to inc month/year; M/Y to dec; = now', bar)
+        self.widget = self._w
+
+
 class DayOfWeek(DateKeyPressMixin, MutableStatefulText):
 
     def __init__(self, state):
@@ -344,21 +352,29 @@ class DayOfWeek(DateKeyPressMixin, MutableStatefulText):
         return DAYS3[self.state.weekday()]
 
 
+class DayOfWeekBar(OnFocus):
+
+    def __init__(self, state, bar=None):
+        super().__init__(DayOfWeek(state),
+                         '+/spc/enter/d to inc day; first letter to advance; = now', bar)
+        self.widget = self._w
+
+
 class TextDate(BaseDate):
 
     def _make(self):
-        down = QuickChange(self._date, '<', -1, bar=self._bar)
-        connect_signal(down, 'change', self.date_change)
-        up = QuickChange(self._date, '>', 1)
-        connect_signal(up, 'change', self.date_change)
-        year = Year(self._date)
-        connect_signal(year, 'change', self.date_change)
-        month = Month(self._date, as_text=False)
-        connect_signal(month, 'change', self.date_change)
-        day_of_month = DayOfMonth(self._date)
-        connect_signal(day_of_month, 'change', self.date_change)
-        day_of_week = DayOfWeek(self._date)
-        connect_signal(day_of_week, 'change', self.date_change)
+        down = QuickChangeBar(self._date, '<', -1, bar=self._bar)
+        connect_signal(down.widget, 'change', self.date_change)
+        up = QuickChangeBar(self._date, '>', 1, bar=self._bar)
+        connect_signal(up.widget, 'change', self.date_change)
+        year = YearBar(self._date, bar=self._bar)
+        connect_signal(year.widget, 'change', self.date_change)
+        month = MonthBar(self._date, as_text=False, bar=self._bar)
+        connect_signal(month.widget, 'change', self.date_change)
+        day_of_month = DayOfMonthBar(self._date, bar=self._bar)
+        connect_signal(day_of_month.widget, 'change', self.date_change)
+        day_of_week = DayOfWeekBar(self._date, bar=self._bar)
+        connect_signal(day_of_week.widget, 'change', self.date_change)
         return Columns([(1, FocusAttr(down)),
                         (1, Text(" ")),
                         (4, Padding(FocusAttr(year), align='center', width='pack')),

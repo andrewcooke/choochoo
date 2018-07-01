@@ -147,7 +147,7 @@ class MessageBar(WidgetWrap):
     Supports safe delete via keys (you can only delete your own message).
     """
 
-    def __init__(self, default='', attribute='unimportant'):
+    def __init__(self, default='alt-q to quit; alt-s to save; alt-x to quit without saving', attribute='bar'):
         self.__default = default
         self.__latest = None
         self.__text = Text(default, wrap='clip')
@@ -180,10 +180,13 @@ class OnFocus(FocusWrap):
         if self.__bar:
             if focus != self.__focus:
                 self.__focus = focus
-                if focus:
-                    self.__bar.set_text(self.__message, key=self)
-                else:
-                    self.__bar.clear(self)
+                self.update_bar()
+
+    def update_bar(self):
+        if self.__focus:
+            self.__bar.set_text(self.__message, key=self)
+        else:
+            self.__bar.clear(self)
 
     def render(self, size, focus=False):
         self.__update_focus(focus)

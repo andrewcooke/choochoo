@@ -1,24 +1,30 @@
 
-from urwid import WidgetWrap, Edit, Columns, Pile, MainLoop, Filler, Divider, Frame, Text
+from urwid import Edit, Columns, Pile, MainLoop, Filler, Divider, Frame, Text
 
 from .utils import PALETTE
-from .uweird.tabs import Root
-from .uweird.decorators import Border
 from .uweird.calendar import TextDate
+from .uweird.decorators import Border
+from .uweird.factory import Factory
+from .uweird.focus import FocusWrap
+from .uweird.tabs import Root
 from .uweird.widgets import Nullable, SquareButton, ColText, ColSpace
 
 
-class Definition(WidgetWrap):
+class Definition(FocusWrap):
 
-    def __init__(self, log, tabs, binder, title='', description='', start=None, finish=None, sort=''):
-        title = tabs.append(binder.bind(Edit(caption='Title: ', edit_text=title), 'title'))
-        start = tabs.append(binder.bind(Nullable('Open', lambda: TextDate(log), start), 'start'))
-        finish = tabs.append(binder.bind(Nullable('Open', lambda: TextDate(log), finish), 'finish'))
-        sort = tabs.append(binder.bind(Edit(caption='Sort: ', edit_text=sort), 'sort'))
-        reset = tabs.append(binder.connect(SquareButton('Reset'), 'click', binder.reset))
-        save = tabs.append(binder.connect(SquareButton('Save'), 'click', binder.save))
-        description = tabs.append(binder.bind(Edit(caption='Description: ', edit_text=description, multiline=True),
-                                                  'description', default=''))
+    def __init__(self, log, tabs, bar, binder, title='', description='', start=None, finish=None, sort=''):
+
+        factory = Factory(tabs=tabs, bar=bar, binder=binder)
+        title = factory(Edit(caption='Title: ', edit_text=title), bindto='title')
+        start = factory(Nullable('Open', lambda date: TextDate(log, bar=bar, date=date), start, bar=bar),
+                        bindto='start')
+        finish = factory(Nullable('Open', lambda date: TextDate(log, bar=bar, date=date), finish, bar=bar),
+                         bindto='finish')
+        sort = factory(Edit(caption='Sort: ', edit_text=sort), bindto='sort')
+        reset = factory(SquareButton('Reset'), message='reset from database', signal='click', target=binder.reset)
+        save = factory(SquareButton('Save'), message='save to database', signal='click', target= binder.save)
+        description = factory(Edit(caption='Description: ', edit_text=description, multiline=True),
+                              bindto='description', default='')
         super().__init__(
             Pile([title,
                   Columns([(18, start),

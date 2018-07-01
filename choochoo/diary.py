@@ -158,6 +158,6 @@ class Diary(App):
 def main(args):
     log = make_log(args)
     db = Database(args, log)
-    bar = MessageBar('alt-q to quit; alt-s to save; alt-x to quit without saving', attribute='bar')
+    bar = MessageBar()
     diary = Diary(db, log, bar)
     diary.run()
