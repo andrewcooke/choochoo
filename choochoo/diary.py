@@ -37,9 +37,9 @@ class Injury(FocusWrap):
 
     def __init__(self, tabs, bar, binder, title):
         factory = Factory(tabs, bar, binder)
-        pain_avg = factory(Rating(caption='average: ', state=0), bindto='pain_avg', default=None)
-        pain_peak = factory(Rating(caption='peak: ', state=0), bindto='pain_peak', default=None)
-        pain_freq = factory(Rating(caption='freq: ', state=0), bindto='pain_freq', default=None)
+        pain_avg = factory(Rating(caption='average: '), bindto='pain_avg', default=None)
+        pain_peak = factory(Rating(caption='peak: '), bindto='pain_peak', default=None)
+        pain_freq = factory(Rating(caption='freq: '), bindto='pain_freq', default=None)
         notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True), bindto='notes', default='')
         super().__init__(
             Pile([Columns([('weight', 1, Text(title)),
