@@ -1,24 +1,25 @@
 
 import datetime as dt
 
-from urwid import Text, Padding, Pile, Columns, Divider, Edit, WidgetWrap, connect_signal
+from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
-from .uweird.factory import Factory
-from .uweird.focus import FocusWrap, MessageBar
-from .widgets import App
 from .database import Database
 from .log import make_log
 from .uweird.calendar import Calendar
 from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
+from .uweird.factory import Factory
+from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList, TabNode
 from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float
+from .widgets import App
 
 
 class DynamicContent(TabNode):
 
-    def __init__(self, db, log, saves, date=None):
+    def __init__(self, db, log, bar, saves, date=None):
         self._db = db
         self._log = log
+        self._bar = bar
         self._saves = saves
         super().__init__(log, *self._make(date))
 
@@ -34,11 +35,12 @@ class DynamicContent(TabNode):
 
 class Injury(FocusWrap):
 
-    def __init__(self, log, tabs, binder, title):
-        pain_avg = tabs.append(binder.bind(Rating(caption='average: ', state=0), 'pain_avg', default=None))
-        pain_peak = tabs.append(binder.bind(Rating(caption='peak: ', state=0), 'pain_peak', default=None))
-        pain_freq = tabs.append(binder.bind(Rating(caption='freq: ', state=0), 'pain_freq', default=None))
-        notes = tabs.append(binder.bind(Edit(caption='Notes: ', edit_text='', multiline=True), 'notes', default=''))
+    def __init__(self, tabs, bar, binder, title):
+        factory = Factory(tabs, bar, binder)
+        pain_avg = factory(Rating(caption='average: ', state=0), bindto='pain_avg', default=None)
+        pain_peak = factory(Rating(caption='peak: ', state=0), bindto='pain_peak', default=None)
+        pain_freq = factory(Rating(caption='freq: ', state=0), bindto='pain_freq', default=None)
+        notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True), bindto='notes', default='')
         super().__init__(
             Pile([Columns([('weight', 1, Text(title)),
                            ('weight', 1, Columns([ColText('Pain - '),
@@ -50,9 +52,6 @@ class Injury(FocusWrap):
                            ]),
                   notes,
                   ]))
-        log.debug('xxx')
-        log.debug('%s' % dir(self))
-        log.debug('%s', self.focus_position)
 
 
 class Injuries(DynamicContent):
@@ -71,7 +70,7 @@ class Injuries(DynamicContent):
                                        key_names=('ordinal', 'injury'),
                                        defaults={'ordinal': ordinal, 'injury': id})
             self._saves.append(binder.save)
-            injury = Injury(self._log, tabs, binder, title)
+            injury = Injury(tabs, self._bar, binder, title)
             body.append(injury)
             binder.read_row(
                 self._db.execute('''select * from injury_diary where injury = ? and ordinal = ?''',
@@ -81,8 +80,9 @@ class Injuries(DynamicContent):
 
 class Aim(FocusWrap):
 
-    def __init__(self, tabs, binder, title):
-        notes = tabs.append(binder.bind(Edit(caption='Notes: ', edit_text=''), 'notes', default=''))
+    def __init__(self, tabs, bar, binder, title):
+        factory = Factory(tabs, bar, binder)
+        notes = factory(Edit(caption='Notes: ', edit_text=''), bindto='notes', default='')
         super().__init__(
             Pile([Text(title),
                   notes,
@@ -106,7 +106,7 @@ class Aims(DynamicContent):
                                        key_names=('ordinal', 'aim'),
                                        defaults={'ordinal': ordinal, 'aim': id})
             self._saves.append(binder.save)
-            aim = Aim(tabs, binder, title)
+            aim = Aim(tabs, self._bar, binder, title)
             body.append(aim)
             binder.read_row(
                 self._db.execute('''select * from aim_diary where aim = ? and ordinal = ?''',
@@ -131,8 +131,8 @@ class Diary(App):
         weather = factory(Edit(caption='Weather: '), bindto='weather', default='')
         weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'), bindto='weight', default=None)
         meds = factory(Edit(caption='Meds: '), bindto='meds', default='')
-        self.injuries = factory.tabs.append(Injuries(db, log, saves, date))
-        self.aims = factory.tabs.append(Aims(db, log, saves, date))
+        self.injuries = factory.tabs.append(Injuries(db, log, bar, saves, date))
+        self.aims = factory.tabs.append(Aims(db, log, bar, saves, date))
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),

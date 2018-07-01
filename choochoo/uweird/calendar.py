@@ -8,6 +8,7 @@ from .fixed import Fixed
 from .focus import FocusFor, FocusAttr, FocusWrap, OnFocus
 from .state import ImmutableStatefulText, MutableStatefulText
 
+
 MONTHS = month_name
 DAYS2 = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
 DAYS3 = list(map(lambda d: day_abbr[d][:3], Calendar(0).iterweekdays()))

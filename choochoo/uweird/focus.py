@@ -106,6 +106,10 @@ class FocusFor(Focus):
 
 
 class AttrChange(Exception):
+    """
+    Exception allowing widgets to telegraph a change in attributes to
+    a surrounding FocusAttr.
+    """
 
     def __init__(self, error):
         self.error = error
@@ -138,6 +142,10 @@ class FocusAttr(AttrMap):
 
 
 class MessageBar(WidgetWrap):
+    """
+    Central display for messages (eg help with keypress).
+    Supports safe delete via keys (you can only delete your own message).
+    """
 
     def __init__(self, default='', attribute='unimportant'):
         self.__default = default
@@ -155,6 +163,12 @@ class MessageBar(WidgetWrap):
 
 
 class OnFocus(FocusWrap):
+    """
+    Set a message on the messag ebar when focus is enabled.
+    This triggers changes during rendering, which will only be
+    reflected in the output of items rendered after this target,
+    This is why the message bar must be on the bottom of the app.
+    """
 
     def __init__(self, widget, message, bar=None):
         self.__message = message
