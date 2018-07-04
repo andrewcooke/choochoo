@@ -1,11 +1,12 @@
 
-from urwid import Pile, Divider, WEIGHT
+from urwid import Divider, WEIGHT
 
 from .database import Database
 from .log import make_log
 from .uweird.database import SingleTableStatic, DATE_ORDINAL
 from .uweird.focus import MessageBar
 from .uweird.tabs import TabList
+from .uweird.widgets import DividedPile
 from .widgets import Definition, App
 
 
@@ -20,13 +21,12 @@ def make_bound_aim(db, log, tabs, bar, insert_callback=None):
 def make_widget(db, log, tabs, bar, saves):
     body = []
     for row in db.db.execute('select id, start, finish, title, sort from aim'):
-        if body: body.append(Divider())
         injury, binder = make_bound_aim(db, log, tabs, bar)
         saves.append(binder.save)
         binder.read_row(row)
         body.append(injury)
 
-    pile = Pile(body)
+    pile = DividedPile(body)
 
     def insert_callback(saves=saves, pile=pile):
         contents = pile.contents

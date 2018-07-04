@@ -183,6 +183,8 @@ class OnFocus(FocusWrap):
                 self.update_bar()
 
     def update_bar(self):
+        # called from Nullable, when underlying widget changes without
+        # any change in focus.
         if self.__focus:
             self.__bar.set_text(self.__message, key=self)
         else:

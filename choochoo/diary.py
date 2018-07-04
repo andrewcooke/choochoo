@@ -10,7 +10,7 @@ from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList, TabNode
-from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float
+from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile
 from .widgets import App
 
 
@@ -75,7 +75,7 @@ class Injuries(DynamicContent):
             binder.read_row(
                 self._db.execute('''select * from injury_diary where injury = ? and ordinal = ?''',
                                     (id, ordinal)).fetchone())
-        return Pile([Text('Injuries'), Padding(Pile(body), left=2)]), tabs
+        return DividedPile([Text('Injuries'), Padding(DividedPile(body), left=2)]), tabs
 
 
 class Aim(FocusWrap):
@@ -111,7 +111,7 @@ class Aims(DynamicContent):
             binder.read_row(
                 self._db.execute('''select * from aim_diary where aim = ? and ordinal = ?''',
                                     (id, ordinal)).fetchone())
-        return Pile([Text('Aims'), Padding(Pile(body), left=2)]), tabs
+        return DividedPile([Text('Aims'), Padding(DividedPile(body), left=2)]), tabs
 
 
 class Diary(App):
@@ -141,13 +141,11 @@ class Diary(App):
                                              meds,
                                              ]))],
                         dividechars=2),
-                Divider(),
                 self.injuries,
-                Divider(),
                 self.aims]
         factory.binder.bootstrap(date)
         connect_signal(raw_calendar, 'change', self.date_change)
-        super().__init__(log, 'Diary', bar, Pile(body), factory.tabs, saves)
+        super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, saves)
 
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)

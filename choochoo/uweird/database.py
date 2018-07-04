@@ -267,7 +267,7 @@ class SingleTableStatic(Binder):
             self._log.debug('%s / %s' % (cmd, values))
             self._db.execute(cmd, values)
             if not replace and len(self._key_names) == 1:
-                self._dbview[self._key_names[0]] = self._db.execute('select last_insert_rowid()').fetchone()[0]
+                self._dbview[self._key_names[0]] = self._db.execute('select last_insert_rowid()', tuple()).fetchone()[0]
                 if self._insert_callback: self._insert_callback()
 
     def _read_values_from_db(self):

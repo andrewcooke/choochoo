@@ -1,5 +1,5 @@
 
-from urwid import Button, Text, emit_signal, connect_signal, Padding
+from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider
 
 from .state import MutableStatefulText
 from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
@@ -239,3 +239,13 @@ class Float(Number):
     def __init__(self, caption='', state=None, minimum=0, maximum=100, dp=2, units=''):
         super().__init__(caption=caption, state=state, minimum=minimum, maximum=maximum,
                          type=float, decimal=True, dp=dp, units=units)
+
+
+class DividedPile(Pile):
+
+    def __init__(self, widget_list, focus_item=None):
+        divided = []
+        for i, widget in enumerate(widget_list):
+            if i: divided.append(Divider())
+            divided.append(widget)
+        super().__init__(divided, focus_item=focus_item)
