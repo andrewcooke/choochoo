@@ -12,6 +12,7 @@ from re import sub, compile
 # current weeks / months and it would be equivalent, but i'd need to tweak the
 # week offset by hand (here it's because 1970-01-01 is a thursday).
 
+
 WEEK_OFFSET = 3
 EPOCH_OFFSET = dt.date(1970, 1, 1).toordinal()
 

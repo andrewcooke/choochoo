@@ -37,7 +37,8 @@ create table if not exists injury (
   start integer,
   finish integer,
   title text,
-  description text
+  description text,
+  sort text not null default ''
 );
 
 create table if not exists injury_diary (
@@ -55,7 +56,8 @@ create table if not exists aim (
   start integer,
   finish integer,
   title text,
-  description text
+  description text,
+  sort text not null default ''
 );
 
 create table if not exists aim_diary (
@@ -64,5 +66,14 @@ create table if not exists aim_diary (
   notes text not null,
   primary key (ordinal, aim)
 ) without rowid;
+
+create table if not exists reminder (
+  id integer primary key,
+  specification text not null,
+  start integer,
+  finish integer,
+  title text not null,
+  sort text not null default ''
+)
 
 ''')

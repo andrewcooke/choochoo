@@ -1,5 +1,5 @@
 
-from choochoo.reminder import Specification, DateOrdinals
+from choochoo.repeating import Specification, DateOrdinals
 
 
 def assert_str(x, s):
@@ -27,8 +27,8 @@ def test_specification():
     assert_str(Specification('1/2w[1]2018-01-01-'), '1/2w[1]2018-01-01-')
     assert_str(Specification('1/2w[Mo,2,3]-1970-01-01'), '1/2w[1mo,2,3]-1970-01-01')
     # some errors
-    assert_bad(Specification, '1/2[]2018-01-01-')
-    assert_bad(Specification, '1/2w[1d]2018-01-01-')
+    assert_bad(Specification, '1/2[]2018-01-01-')   # must specify type
+    assert_bad(Specification, '1/2w[1d]2018-01-01-')  # no longer support type in location
 
 
 def assert_at(spec, date, at_frame, at_location):

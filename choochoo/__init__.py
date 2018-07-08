@@ -1,13 +1,15 @@
 
-from .args import COMMAND, DIARY, INJURIES, parser, NamespaceWithVariables, AIMS
+from .args import COMMAND, DIARY, INJURIES, parser, NamespaceWithVariables, AIMS, REMINDERS
 from .diary import main as diary
 from .injuries import main as injuries
 from .aims import main as aims
+from .reminders import main as reminders
 
 
 COMMANDS = {DIARY: diary,
             INJURIES: injuries,
-            AIMS: aims}
+            AIMS: aims,
+            REMINDERS: reminders}
 
 
 def main():
@@ -16,4 +18,4 @@ def main():
     if COMMAND in ns:
         COMMANDS[ns[COMMAND]](ns)
     else:
-        raise Exception('')
+        raise Exception()
