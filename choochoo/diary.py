@@ -132,7 +132,10 @@ class Reminders(DynamicContent):
             self._log.info('%s %s %s' % (specification, specification.frame().at_location(ordinals), date))
             if specification.frame().at_location(ordinals):
                 reminders.append(Text(row['title']))
-        return DividedPile([Text('Reminders'), Padding(Pile(reminders), left=2)]), TabList()
+        if reminders:
+            return DividedPile([Text('Reminders'), Padding(Pile(reminders), left=2)]), TabList()
+        else:
+            return Pile([]), TabList()
 
 
 class Diary(App):
@@ -163,9 +166,10 @@ class Diary(App):
                                              meds,
                                              ]))],
                         dividechars=2),
+                self.reminders,
                 self.injuries,
                 self.aims,
-                self.reminders]
+                ]
         factory.binder.bootstrap(date)
         connect_signal(raw_calendar, 'change', self.date_change)
         super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, saves)
