@@ -1,4 +1,6 @@
 
+import datetime as dt
+
 from choochoo.repeating import Specification, DateOrdinals
 
 
@@ -59,3 +61,11 @@ def test_week():
 def test_month():
     assert_at('2018-07-07/m[Sa]', '2018-07-07', True, True)
     assert_at('2018-07-07/m[2]', '2018-07-02', True, True)
+
+
+def test_start_finish():
+    p = Specification('2018-07-08/2d2018-07-08-2018-07-09')
+    assert p.start == dt.date(2018, 7, 8)
+    p.start = None
+    assert p.start is None
+    assert p.finish == dt.date(2018, 7, 9)

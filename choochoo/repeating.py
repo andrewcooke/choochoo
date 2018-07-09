@@ -85,13 +85,13 @@ class Specification:
         if range:
             m = compile(r'^(\d+-\d+-\d+)?-(\d+-\d+-\d+)?$').match(range)
             if m:
-                self.start = parse_date(m.group(1)) if m.group(1) else None
-                self.finish = parse_date(m.group(2)) if m.group(2) else None
+                self.__start = parse_date(m.group(1)) if m.group(1) else None
+                self.__finish = parse_date(m.group(2)) if m.group(2) else None
             else:
-                self.start = parse_date(range)
-                self.finish = self.start
+                self.__start = parse_date(range)
+                self.__finish = self.__start
         else:
-            self.start, self.finish = None, None
+            self.__start, self.__finish = None, None
 
     def __str__(self):
         return '%d/%d%s[%s]%s' % (self.offset, self.repeat, self.frame_type,
@@ -107,12 +107,12 @@ class Specification:
             return str(location)
 
     def __str_ranges(self):
-        if self.start is None and self.finish is None:
+        if self.__start is None and self.__finish is None:
             return ''
-        elif self.start == self.finish:
-            return self.__str_range(self.start)
+        elif self.__start == self.__finish:
+            return self.__str_range(self.__start)
         else:
-            return '%s-%s' % (self.__str_range(self.start), self.__str_range(self.finish))
+            return '%s-%s' % (self.__str_range(self.__start), self.__str_range(self.finish))
 
     def __str_range(self, range):
         if range is None:
@@ -122,6 +122,29 @@ class Specification:
 
     def frame(self):
         return {'d': Day, 'w':Week, 'm':Month}[self.frame_type](self)
+
+    # allow range to be set separately (allows separate column in database, so
+    # we can select for valid reminders).
+
+    def __parse_null_date(self, date):
+        if date is None:
+            return date
+        try:
+            return parse_date(date)
+        except TypeError:
+            try:
+                dt.date.fromordinal(int(date))
+            except TypeError:
+                return date
+
+    def __set_start(self, date):
+        self.__start = self.__parse_null_date(date)
+
+    def __set_finish(self, date):
+        self.__start = self.__parse_null_date(date)
+
+    start = property(lambda self: self.__start, __set_start)
+    finish = property(lambda self: self.__finish, __set_finish)
 
 
 class DateOrdinals:

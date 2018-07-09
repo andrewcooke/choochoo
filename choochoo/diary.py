@@ -5,6 +5,7 @@ from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
 from .database import Database
 from .log import make_log
+from .repeating import Specification, DateOrdinals
 from .uweird.calendar import Calendar
 from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
 from .uweird.factory import Factory
@@ -114,6 +115,26 @@ class Aims(DynamicContent):
         return DividedPile([Text('Aims'), Padding(DividedPile(body), left=2)]), tabs
 
 
+class Reminders(DynamicContent):
+
+    def _make(self, date):
+        ordinal = date.toordinal()
+        ordinals = DateOrdinals(date)
+        reminders = []
+        for row in self._db.execute('''
+                select specification, start, finish, title from reminder
+                where (start is null or start <= ?) and (finish is null or finish >=?)
+                order by sort
+                ''', (ordinal, ordinal)):
+            specification = Specification(row['specification'])
+            specification.start = row['start']
+            specification.finish = row['finish']
+            self._log.info('%s %s %s' % (specification, specification.frame().at_location(ordinals), date))
+            if specification.frame().at_location(ordinals):
+                reminders.append(Text(row['title']))
+        return DividedPile([Text('Reminders'), Padding(Pile(reminders), left=2)]), TabList()
+
+
 class Diary(App):
 
     def __init__(self, db, log, bar, date=None):
@@ -133,6 +154,7 @@ class Diary(App):
         meds = factory(Edit(caption='Meds: '), bindto='meds', default='')
         self.injuries = factory.tabs.append(Injuries(db, log, bar, saves, date))
         self.aims = factory.tabs.append(Aims(db, log, bar, saves, date))
+        self.reminders = Reminders(db, log, bar, saves, date)
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
@@ -142,7 +164,8 @@ class Diary(App):
                                              ]))],
                         dividechars=2),
                 self.injuries,
-                self.aims]
+                self.aims,
+                self.reminders]
         factory.binder.bootstrap(date)
         connect_signal(raw_calendar, 'change', self.date_change)
         super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, saves)
@@ -150,6 +173,7 @@ class Diary(App):
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)
         self.aims.rebuild(date)
+        self.reminders.rebuild(date)
         self.root.discover()
 
 
