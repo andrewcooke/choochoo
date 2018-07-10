@@ -18,7 +18,7 @@ would need to do something like:
 
 * Clone this repo
 
-* Run the dev/make-env.sh script to set the Python environment
+* Run the `dev/make-env.sh` script to set the Python environment
 
 * Enable the environment with `source env/bin/activate`
 
