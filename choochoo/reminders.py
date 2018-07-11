@@ -1,7 +1,7 @@
 
 from urwid import Divider, WEIGHT, Edit, Pile, Columns
 
-from .database import Database
+from .sqla.database import Database
 from .log import make_log
 from .uweird.calendar import TextDate
 from .uweird.database import SingleTableStatic, DATE_ORDINAL

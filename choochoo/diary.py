@@ -1,11 +1,14 @@
 
 import datetime as dt
 
+from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
-from .database import Database
+from sqla.binders import SqlaStaticBinder
 from .log import make_log
 from .repeating import Specification, DateOrdinals
+from .sqla.database import Database
+from .sqla.injury import Injury, InjuryDiary
 from .uweird.calendar import Calendar
 from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
 from .uweird.factory import Factory
@@ -34,16 +37,16 @@ class DynamicContent(TabNode):
         self.replace_all(tabs)
 
 
-class Injury(FocusWrap):
+class InjuryWidget(FocusWrap):
 
-    def __init__(self, tabs, bar, binder, title):
+    def __init__(self, tabs, bar, binder, injury):
         factory = Factory(tabs, bar, binder)
         pain_avg = factory(Rating(caption='average: '), bindto='pain_avg', default=None)
         pain_peak = factory(Rating(caption='peak: '), bindto='pain_peak', default=None)
         pain_freq = factory(Rating(caption='freq: '), bindto='pain_freq', default=None)
         notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True), bindto='notes', default='')
         super().__init__(
-            Pile([Columns([('weight', 1, Text(title)),
+            Pile([Columns([('weight', 1, Text(injury.title)),
                            ('weight', 1, Columns([ColText('Pain - '),
                                                   (11, pain_avg),
                                                   (8, pain_peak),
@@ -60,82 +63,76 @@ class Injuries(DynamicContent):
     def _make(self, date):
         tabs = TabList()
         ordinal = date.toordinal()
-        injuries = [(row['id'], row['title']) for row in self._db.execute('''
-            select id, title from injury 
-            where (start is null or start <= ?) and (finish is null or finish >=?)
-            order by sort
-        ''', (ordinal, ordinal))]
+        injuries = self._db.session.query(Injury).filter(
+            and_(or_(Injury.start == None, Injury.start <= ordinal),
+                 or_(Injury.finish == None, Injury.finish >= ordinal))).all()
         body = []
-        for (id, title) in injuries:
-            binder = SingleTableStatic(self._db, self._log, 'injury_diary',
-                                       key_names=('ordinal', 'injury'),
-                                       defaults={'ordinal': ordinal, 'injury': id})
+        for injury in injuries:
+            binder = SqlaStaticBinder(self._db, self._log, Diary,
+                                      defaults={'injury_id': injury.id, 'ordinal': ordinal})
             self._saves.append(binder.save)
-            injury = Injury(tabs, self._bar, binder, title)
+            injury = InjuryWidget(tabs, self._bar, binder, injury)
             body.append(injury)
-            binder.read_row(
-                self._db.execute('''select * from injury_diary where injury = ? and ordinal = ?''',
-                                    (id, ordinal)).fetchone())
         return DividedPile([Text('Injuries'), Padding(DividedPile(body), left=2)]), tabs
 
 
-class Aim(FocusWrap):
+# class Aim(FocusWrap):
+#
+#     def __init__(self, tabs, bar, binder, title):
+#         factory = Factory(tabs, bar, binder)
+#         notes = factory(Edit(caption='Notes: ', edit_text=''), bindto='notes', default='')
+#         super().__init__(
+#             Pile([Text(title),
+#                   notes,
+#                   ]))
+#
+#
+# class Aims(DynamicContent):
+#
+#     def _make(self, date):
+#         tabs = TabList()
+#         ordinal = date.toordinal()
+#         aims = [(row['id'], row['title']) for row in self._db.execute('''
+#             select id, title from aim
+#             where (start is null or start <= ?) and (finish is null or finish >=?)
+#             order by sort
+#         ''', (ordinal, ordinal))]
+#         self._log.debug('Aims: %s (%d)' % (aims, len(aims)))
+#         body = []
+#         for (id, title) in aims:
+#             binder = SingleTableStatic(self._db, self._log, 'aim_diary',
+#                                        key_names=('ordinal', 'aim'),
+#                                        defaults={'ordinal': ordinal, 'aim': id})
+#             self._saves.append(binder.save)
+#             aim = Aim(tabs, self._bar, binder, title)
+#             body.append(aim)
+#             binder.read_row(
+#                 self._db.execute('''select * from aim_diary where aim = ? and ordinal = ?''',
+#                                     (id, ordinal)).fetchone())
+#         return DividedPile([Text('Aims'), Padding(DividedPile(body), left=2)]), tabs
 
-    def __init__(self, tabs, bar, binder, title):
-        factory = Factory(tabs, bar, binder)
-        notes = factory(Edit(caption='Notes: ', edit_text=''), bindto='notes', default='')
-        super().__init__(
-            Pile([Text(title),
-                  notes,
-                  ]))
 
-
-class Aims(DynamicContent):
-
-    def _make(self, date):
-        tabs = TabList()
-        ordinal = date.toordinal()
-        aims = [(row['id'], row['title']) for row in self._db.execute('''
-            select id, title from aim 
-            where (start is null or start <= ?) and (finish is null or finish >=?)
-            order by sort
-        ''', (ordinal, ordinal))]
-        self._log.debug('Aims: %s (%d)' % (aims, len(aims)))
-        body = []
-        for (id, title) in aims:
-            binder = SingleTableStatic(self._db, self._log, 'aim_diary',
-                                       key_names=('ordinal', 'aim'),
-                                       defaults={'ordinal': ordinal, 'aim': id})
-            self._saves.append(binder.save)
-            aim = Aim(tabs, self._bar, binder, title)
-            body.append(aim)
-            binder.read_row(
-                self._db.execute('''select * from aim_diary where aim = ? and ordinal = ?''',
-                                    (id, ordinal)).fetchone())
-        return DividedPile([Text('Aims'), Padding(DividedPile(body), left=2)]), tabs
-
-
-class Reminders(DynamicContent):
-
-    def _make(self, date):
-        ordinal = date.toordinal()
-        ordinals = DateOrdinals(date)
-        reminders = []
-        for row in self._db.execute('''
-                select specification, start, finish, title from reminder
-                where (start is null or start <= ?) and (finish is null or finish >=?)
-                order by sort
-                ''', (ordinal, ordinal)):
-            specification = Specification(row['specification'])
-            specification.start = row['start']
-            specification.finish = row['finish']
-            self._log.info('%s %s %s' % (specification, specification.frame().at_location(ordinals), date))
-            if specification.frame().at_location(ordinals):
-                reminders.append(Text(row['title']))
-        if reminders:
-            return DividedPile([Text('Reminders'), Padding(Pile(reminders), left=2)]), TabList()
-        else:
-            return Pile([]), TabList()
+# class Reminders(DynamicContent):
+#
+#     def _make(self, date):
+#         ordinal = date.toordinal()
+#         ordinals = DateOrdinals(date)
+#         reminders = []
+#         for row in self._db.execute('''
+#                 select specification, start, finish, title from reminder
+#                 where (start is null or start <= ?) and (finish is null or finish >=?)
+#                 order by sort
+#                 ''', (ordinal, ordinal)):
+#             specification = Specification(row['specification'])
+#             specification.start = row['start']
+#             specification.finish = row['finish']
+#             self._log.info('%s %s %s' % (specification, specification.frame().at_location(ordinals), date))
+#             if specification.frame().at_location(ordinals):
+#                 reminders.append(Text(row['title']))
+#         if reminders:
+#             return DividedPile([Text('Reminders'), Padding(Pile(reminders), left=2)]), TabList()
+#         else:
+#             return Pile([]), TabList()
 
 
 class Diary(App):
@@ -156,8 +153,8 @@ class Diary(App):
         weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'), bindto='weight', default=None)
         meds = factory(Edit(caption='Meds: '), bindto='meds', default='')
         self.injuries = factory.tabs.append(Injuries(db, log, bar, saves, date))
-        self.aims = factory.tabs.append(Aims(db, log, bar, saves, date))
-        self.reminders = Reminders(db, log, bar, saves, date)
+        # self.aims = factory.tabs.append(Aims(db, log, bar, saves, date))
+        # self.reminders = Reminders(db, log, bar, saves, date)
         body = [Columns([(20, Padding(calendar, width='clip')),
                          ('weight', 1, Pile([notes,
                                              Divider(),
@@ -166,9 +163,9 @@ class Diary(App):
                                              meds,
                                              ]))],
                         dividechars=2),
-                self.reminders,
+                # self.reminders,
                 self.injuries,
-                self.aims,
+                # self.aims,
                 ]
         factory.binder.bootstrap(date)
         connect_signal(raw_calendar, 'change', self.date_change)
@@ -176,8 +173,8 @@ class Diary(App):
 
     def date_change(self, unused_widget, date):
         self.injuries.rebuild(date)
-        self.aims.rebuild(date)
-        self.reminders.rebuild(date)
+        # self.aims.rebuild(date)
+        # self.reminders.rebuild(date)
         self.root.discover()
 
 

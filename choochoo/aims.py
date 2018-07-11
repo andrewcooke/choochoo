@@ -1,7 +1,7 @@
 
 from urwid import Divider, WEIGHT
 
-from .database import Database
+from .sqla.database import Database
 from .log import make_log
 from .uweird.database import SingleTableStatic, DATE_ORDINAL
 from .uweird.focus import MessageBar
