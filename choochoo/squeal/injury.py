@@ -1,10 +1,10 @@
 
 from sqlalchemy import Column, Integer, Text, ForeignKey
 
-from .support import Base, SortMixin
+from .support import Base
 
 
-class Injury(SortMixin, Base):
+class Injury(Base):
 
     __tablename__ = 'injury'
 
@@ -13,6 +13,7 @@ class Injury(SortMixin, Base):
     finish = Column(Integer)
     title = Column(Text, nullable=False, default='')
     description = Column(Text, nullable=False, default='')
+    sort = Column(Text, nullable=False, default='')
 
 
 class InjuryDiary(Base):

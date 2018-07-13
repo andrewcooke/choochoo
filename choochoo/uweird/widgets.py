@@ -210,6 +210,7 @@ class Number(MutableStatefulText):
                 else:
                     raise Exception('Out of range')
             except Exception as e:
+                # todo - add log and log this
                 error = True
         else:
             self._set_state_internal(None)
@@ -217,7 +218,6 @@ class Number(MutableStatefulText):
         if error != self._error:
             self._error = error
             raise AttrChange(error)
-            pass
         return
 
     def keypress(self, size, key):

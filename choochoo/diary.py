@@ -4,13 +4,11 @@ import datetime as dt
 from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
-from sqla.binders import SqlaStaticBinder
 from .log import make_log
-from .repeating import Specification, DateOrdinals
-from .sqla.database import Database
-from .sqla.injury import Injury, InjuryDiary
+from .squeal.database import Database
+from .squeal.diary import Diary
+from .squeal.injury import Injury
 from .uweird.calendar import Calendar
-from .uweird.database import SingleTableDynamic, DATE_ORDINAL, SingleTableStatic
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList, TabNode
@@ -135,12 +133,13 @@ class Injuries(DynamicContent):
 #             return Pile([]), TabList()
 
 
-class Diary(App):
+class DiaryApp(App):
 
     def __init__(self, db, log, bar, date=None):
         if not date: date = dt.date.today()
         factory = Factory(TabList(), bar,
-                          SingleTableDynamic(db, log, 'diary', transforms={'ordinal': DATE_ORDINAL}))
+                          SqlaStaticBinder(db, log, Diary))
+                          # SingleTableDynamic(db, log, 'diary', transforms={'ordinal': DATE_ORDINAL}))
         saves = []
         saves.append(factory.binder.save)
         raw_calendar = Calendar(log, bar, date)
@@ -182,5 +181,5 @@ def main(args):
     log = make_log(args)
     db = Database(args, log)
     bar = MessageBar()
-    diary = Diary(db, log, bar)
+    diary = DiaryApp(db, log, bar)
     diary.run()

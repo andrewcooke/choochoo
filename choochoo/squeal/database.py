@@ -21,11 +21,7 @@ class Database:
         self._log.info('Using database at %s' % path)
         self.engine = create_engine('sqlite:///%s' % path, echo=True)
         self.__create_tables()
-        self.session = sessionmaker(bind=self.engine)()
-
-    def execute(self, cmd, args):
-        self._log.debug('%s / %s' % (cmd, args))
-        # return self.db.execute(cmd, args)
+        self.session = sessionmaker(bind=self.engine)
 
     def __create_tables(self):
         self._log.info('Creating tables')
