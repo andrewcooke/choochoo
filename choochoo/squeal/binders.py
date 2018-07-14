@@ -35,12 +35,18 @@ class Binder:
                 try:
                     w = getattr(self.__widget, k)
                     self.__log.debug('Setting %s=%s on %s' % (k, v, w))
-                    if hasattr(w, 'state'):
-                        self.__bind_state(k, v, w)
-                    elif hasattr(w, 'set_edit_text'):
-                        self.__bind_edit(k, v, w)
-                    else:
-                        self.__log.error('Cannot set value on %s (%s)' % (w, dir(w)))
+                    while w:
+                        if hasattr(w, 'state'):
+                            self.__bind_state(k, v, w)
+                            break
+                        elif hasattr(w, 'set_edit_text'):
+                            self.__bind_edit(k, v, w)
+                            break
+                        elif hasattr(w, 'base_widget') and w != w.base_widget:
+                            w = w.base_widget
+                        else:
+                            self.__log.error('Cannot set %s on %s (%s)' % (k, w, dir(w)))
+                            break
                 except AttributeError:
                     self.__log.warn('Cannot find %s member of %s' % (k, self.__widget))
 

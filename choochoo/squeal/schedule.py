@@ -1,6 +1,7 @@
 
 from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
 
+from .types import Ordinal
 from .support import Base
 
 
@@ -20,8 +21,8 @@ class Schedule(Base):
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('schedule.id'), nullable=True)
     type_id = Column(Integer, ForeignKey('schedule_type.id'))
-    start = Column(Integer)
-    finish = Column(Integer)
+    start = Column(Ordinal)
+    finish = Column(Ordinal)
     title = Column(Text, nullable=False, default='')
     description = Column(Text, nullable=False, default='')
     repeat = Column(Text, nullable=False, default='')
@@ -33,6 +34,6 @@ class ScheduleDiary(Base):
 
     __tablename__ = 'schedule_diary'
 
-    ordinal = Column(Integer, primary_key=True)
+    ordinal = Column(Ordinal, primary_key=True)
     schedule_id = Column(Integer, ForeignKey('schedule.id'), primary_key=True)
     notes = Column(Text, nullable=False, default='')

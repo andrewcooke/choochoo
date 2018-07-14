@@ -42,10 +42,10 @@ class Definition(FocusWrap):
 
 class App(MainLoop):
 
-    def __init__(self, log, title, msgbar, body, tab_list, saves):
+    def __init__(self, log, title, msgbar, body, tab_list, session):
         self.root = Root(log, Border(Frame(Filler(body, valign='top'),
                                            header=Pile([Text(title), Divider()]),
                                            footer=Pile([Divider(), msgbar]))),
-                         tab_list, saves=saves)
+                         tab_list, session=session)
         self.root.discover()
         super().__init__(self.root, palette=PALETTE)

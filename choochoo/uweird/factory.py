@@ -4,22 +4,11 @@ from .focus import OnFocus
 
 class Factory:
 
-    def __init__(self, tabs=None, bar=None, binder=None):
+    def __init__(self, tabs=None, bar=None):
         self.tabs = tabs
-        self.binder = binder
         self.bar = bar
 
-    def __call__(self, widget, message=None, bindto=None, key=False, signal=None, target=None, **binder_kargs):
-        if self.binder:
-            if bindto:
-                if key:
-                    widget = self.binder.bind_key(widget, bindto, **binder_kargs)
-                else:
-                    widget = self.binder.bind(widget, bindto, **binder_kargs)
-            elif signal and target:
-                widget = self.binder.connect(widget, signal, target)
-        elif bindto:
-            raise Exception('Binding but no binder for %s (type %s)' % (widget, type(widget)))
+    def __call__(self, widget, message=None):
         if self.bar:
             if message:
                 widget = OnFocus(widget, message, self.bar)
@@ -28,4 +17,3 @@ class Factory:
         if self.tabs is not None:
             widget = self.tabs.append(widget)
         return widget
-

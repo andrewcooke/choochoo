@@ -19,7 +19,7 @@ class Database:
         self._log = log
         path = args.file(DATABASE)
         self._log.info('Using database at %s' % path)
-        self.engine = create_engine('sqlite:///%s' % path, echo=True)
+        self.engine = create_engine('sqlite:///%s' % path, echo=False)
         self.__create_tables()
         self.session = sessionmaker(bind=self.engine)
 

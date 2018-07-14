@@ -5,6 +5,7 @@ from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
 from .log import make_log
+from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.diary import Diary
 from .squeal.injury import Injury
@@ -18,11 +19,10 @@ from .widgets import App
 
 class DynamicContent(TabNode):
 
-    def __init__(self, db, log, bar, saves, date=None):
-        self._db = db
+    def __init__(self, log, session, bar, date=None):
         self._log = log
+        self._session = session
         self._bar = bar
-        self._saves = saves
         super().__init__(log, *self._make(date))
 
     def _make(self, date):
@@ -37,22 +37,22 @@ class DynamicContent(TabNode):
 
 class InjuryWidget(FocusWrap):
 
-    def __init__(self, tabs, bar, binder, injury):
-        factory = Factory(tabs, bar, binder)
-        pain_avg = factory(Rating(caption='average: '), bindto='pain_avg', default=None)
-        pain_peak = factory(Rating(caption='peak: '), bindto='pain_peak', default=None)
-        pain_freq = factory(Rating(caption='freq: '), bindto='pain_freq', default=None)
-        notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True), bindto='notes', default='')
+    def __init__(self, tabs, bar, injury):
+        factory = Factory(tabs, bar)
+        self.pain_avg = factory(Rating(caption='average: '))
+        self.pain_peak = factory(Rating(caption='peak: '))
+        self.pain_freq = factory(Rating(caption='freq: '))
+        self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
         super().__init__(
             Pile([Columns([('weight', 1, Text(injury.title)),
                            ('weight', 1, Columns([ColText('Pain - '),
-                                                  (11, pain_avg),
-                                                  (8, pain_peak),
-                                                  (9, pain_freq),
+                                                  (11, self.pain_avg),
+                                                  (8, self.pain_peak),
+                                                  (9, self.pain_freq),
                                                   ColSpace(),
                                                   ])),
                            ]),
-                  notes,
+                  self.notes,
                   ]))
 
 
@@ -60,17 +60,15 @@ class Injuries(DynamicContent):
 
     def _make(self, date):
         tabs = TabList()
-        ordinal = date.toordinal()
-        injuries = self._db.session.query(Injury).filter(
-            and_(or_(Injury.start == None, Injury.start <= ordinal),
-                 or_(Injury.finish == None, Injury.finish >= ordinal))).all()
+        injuries = self._session.query(Injury).filter(
+            and_(or_(Injury.start == None, Injury.start <= date),
+                 or_(Injury.finish == None, Injury.finish >= date))).all()
         body = []
         for injury in injuries:
-            binder = SqlaStaticBinder(self._db, self._log, Diary,
-                                      defaults={'injury_id': injury.id, 'ordinal': ordinal})
-            self._saves.append(binder.save)
-            injury = InjuryWidget(tabs, self._bar, binder, injury)
-            body.append(injury)
+            widget = InjuryWidget(tabs, self._bar, injury)
+            Binder(self._log, self._session, widget, Injury,
+                   defaults={'injury_id': injury.id, 'ordinal': date})
+            body.append(widget)
         return DividedPile([Text('Injuries'), Padding(DividedPile(body), left=2)]), tabs
 
 
@@ -135,42 +133,40 @@ class Injuries(DynamicContent):
 
 class DiaryApp(App):
 
-    def __init__(self, db, log, bar, date=None):
+    def __init__(self, log, session, bar, date=None):
+        self._session = session
         if not date: date = dt.date.today()
-        factory = Factory(TabList(), bar,
-                          SqlaStaticBinder(db, log, Diary))
-                          # SingleTableDynamic(db, log, 'diary', transforms={'ordinal': DATE_ORDINAL}))
-        saves = []
-        saves.append(factory.binder.save)
-        raw_calendar = Calendar(log, bar, date)
-        calendar = factory(raw_calendar, bindto='ordinal', key=True)
-        notes = factory(Edit(caption='Notes: ', multiline=True), bindto='notes', default='')
-        rest_hr = factory(Integer(caption='Rest HR: ', maximum=100), bindto='rest_hr', default=None)
-        sleep = factory(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"), bindto='sleep', default=None)
-        mood = factory(Rating(caption='Mood: '), message='2: sad; 4: normal; 6 happy', bindto='mood', default=None)
-        weather = factory(Edit(caption='Weather: '), bindto='weather', default='')
-        weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'), bindto='weight', default=None)
-        meds = factory(Edit(caption='Meds: '), bindto='meds', default='')
-        self.injuries = factory.tabs.append(Injuries(db, log, bar, saves, date))
+        factory = Factory(TabList(), bar)
+        calendar = Calendar(log, bar, date)
+        self.ordinal = factory(calendar)
+        self.notes = factory(Edit(caption='Notes: ', multiline=True))
+        self.rest_hr = factory(Integer(caption='Rest HR: ', maximum=100))
+        self.sleep = factory(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"))
+        self.mood = factory(Rating(caption='Mood: '), message='2: sad; 4: normal; 6 happy')
+        self.weather = factory(Edit(caption='Weather: '))
+        self.weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'))
+        self.medication = factory(Edit(caption='Meds: '))
+        self.injuries = factory.tabs.append(Injuries(log, session, bar, date))
         # self.aims = factory.tabs.append(Aims(db, log, bar, saves, date))
         # self.reminders = Reminders(db, log, bar, saves, date)
-        body = [Columns([(20, Padding(calendar, width='clip')),
-                         ('weight', 1, Pile([notes,
+        body = [Columns([(20, Padding(self.ordinal, width='clip')),
+                         ('weight', 1, Pile([self.notes,
                                              Divider(),
-                                             Columns([rest_hr, sleep, mood]),
-                                             Columns([('weight', 2, weather), ('weight', 1, weight)]),
-                                             meds,
+                                             Columns([self.rest_hr, self.sleep, self.mood]),
+                                             Columns([('weight', 2, self.weather), ('weight', 1, self.weight)]),
+                                             self.medication,
                                              ]))],
                         dividechars=2),
                 # self.reminders,
                 self.injuries,
                 # self.aims,
                 ]
-        factory.binder.bootstrap(date)
-        connect_signal(raw_calendar, 'change', self.date_change)
-        super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, saves)
+        Binder(log, session, self, Diary, defaults={'ordinal': dt.date.today()})
+        connect_signal(calendar, 'change', self.date_change)
+        super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, session)
 
     def date_change(self, unused_widget, date):
+        self._session.commit()
         self.injuries.rebuild(date)
         # self.aims.rebuild(date)
         # self.reminders.rebuild(date)
@@ -181,5 +177,5 @@ def main(args):
     log = make_log(args)
     db = Database(args, log)
     bar = MessageBar()
-    diary = DiaryApp(db, log, bar)
+    diary = DiaryApp(log, db.session(), bar)
     diary.run()

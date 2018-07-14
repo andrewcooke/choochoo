@@ -1,5 +1,5 @@
 
-from logging import getLogger, DEBUG, Formatter
+from logging import getLogger, DEBUG, Formatter, INFO
 from logging.handlers import RotatingFileHandler
 from os.path import join
 
@@ -17,6 +17,10 @@ def make_log(args):
     file_handler.setLevel(DEBUG)
     file_handler.setFormatter(file_formatter)
     log.addHandler(file_handler)
+
+    slog = getLogger('sqlalchemy')
+    slog.setLevel(INFO)
+    slog.addHandler(file_handler)
 
     return log
 

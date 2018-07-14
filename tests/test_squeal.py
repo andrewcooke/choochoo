@@ -1,13 +1,15 @@
 
+import datetime as dt
 from logging import getLogger
 
 import sqlalchemy as s
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from urwid import WidgetWrap, Text, Pile, MainLoop, Edit, Filler
+from urwid import WidgetWrap, Pile, Edit, Filler
 
-from choochoo.uweird.widgets import Integer
 from choochoo.squeal.binders import Binder
+from choochoo.squeal.types import Ordinal
+from choochoo.uweird.widgets import Integer
 
 log = getLogger()
 Base = declarative_base()
@@ -19,6 +21,7 @@ class Data(Base):
 
     integer = s.Column(s.Integer, primary_key=True)
     text = s.Column(s.Text, nullable=False, default='')
+    ordinal = s.Column(Ordinal)
 
 
 class Database:
@@ -105,3 +108,9 @@ def test_bind():
     widget.integer.keypress(size, '2')
     assert binder.instance.integer == 42, binder.instance.integer
     assert binder.instance.text == 'ab', binder.instance.text
+
+    # try setting date
+    binder.instance.ordinal = dt.date(2018, 7, 1)
+    session.commit()
+    data = session.query(Data).filter(Data.integer == 42).one()
+    assert data.ordinal == dt.date(2018, 7, 1)

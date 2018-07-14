@@ -251,12 +251,12 @@ class TabNode(FocusWrap):
 
 class Root(TabNode):
 
-    def __init__(self, log, widget, tab_list, quit='meta q', save='meta s', abort='meta x', saves=None):
+    def __init__(self, log, widget, tab_list, quit='meta q', save='meta s', abort='meta x', session=None):
         super().__init__(log, widget, tab_list)
         self.__quit = quit
         self.__save = save
         self.__abort = abort
-        self.__save_callbacks = saves if saves else []
+        self.__session = session
 
     def keypress(self, size, key):
         if key == self.__quit:
@@ -270,6 +270,5 @@ class Root(TabNode):
             return super().keypress(size, key)
 
     def save(self):
-        self._log.debug('Saving %s' % self.__save_callbacks)
-        for callback in self.__save_callbacks:
-            callback(None)
+        if self.__session:
+            self.__session.commit()
