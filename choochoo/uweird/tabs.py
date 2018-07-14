@@ -216,7 +216,7 @@ class TabNode(FocusWrap):
                 self._log.warn('Widget %s (type %s) doesn\'t expose contents' % (widget, type(widget)))
             elif hasattr(widget, 'base_widget'):
                 if widget == widget.base_widget:
-                    self._log.warn('Widget with no focus: %s (type %s)' % (widget, type(widget)))
+                    self._log.debug('Widget with no focus: %s (type %s)' % (widget, type(widget)))
                 else:
                     yield widget.base_widget
 

@@ -9,7 +9,7 @@ class Diary(Base):
 
     __tablename__ = 'diary'
 
-    ordinal = Column(Ordinal, primary_key=True)
+    date = Column(Ordinal, primary_key=True)
     notes = Column(Text, nullable=False, default='')
     rest_hr = Column(Integer)
     sleep = Column(Float)

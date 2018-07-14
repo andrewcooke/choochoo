@@ -21,7 +21,7 @@ class InjuryDiary(Base):
 
     __tablename__ = 'injury_diary'
 
-    ordinal = Column(Ordinal, primary_key=True)
+    date = Column(Ordinal, primary_key=True)
     injury_id = Column(Integer, ForeignKey('injury.id'), primary_key=True)
     pain_average = Column(Integer)
     pain_peak = Column(Integer)

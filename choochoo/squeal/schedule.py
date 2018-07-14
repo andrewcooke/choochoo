@@ -21,11 +21,11 @@ class Schedule(Base):
     id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('schedule.id'), nullable=True)
     type_id = Column(Integer, ForeignKey('schedule_type.id'))
+    repeat = Column(Text, nullable=False, default='')
     start = Column(Ordinal)
     finish = Column(Ordinal)
     title = Column(Text, nullable=False, default='')
     description = Column(Text, nullable=False, default='')
-    repeat = Column(Text, nullable=False, default='')
     has_notes = Column(Boolean, nullable=False, default=False)
     sort = Column(Text, nullable=False, default='')
 
@@ -34,6 +34,6 @@ class ScheduleDiary(Base):
 
     __tablename__ = 'schedule_diary'
 
-    ordinal = Column(Ordinal, primary_key=True)
+    date = Column(Ordinal, primary_key=True)
     schedule_id = Column(Integer, ForeignKey('schedule.id'), primary_key=True)
     notes = Column(Text, nullable=False, default='')

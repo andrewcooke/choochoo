@@ -1,6 +1,7 @@
 
 import datetime as dt
-from logging import getLogger
+from logging import getLogger, basicConfig, DEBUG, StreamHandler, Formatter
+from sys import stdout
 
 import sqlalchemy as s
 from sqlalchemy.ext.declarative import declarative_base
@@ -11,7 +12,16 @@ from choochoo.squeal.binders import Binder
 from choochoo.squeal.types import Ordinal
 from choochoo.uweird.widgets import Integer
 
+
+basicConfig()
 log = getLogger()
+log.setLevel(DEBUG)
+handler = StreamHandler(stdout)
+handler.setLevel(DEBUG)
+formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+handler.setFormatter(formatter)
+log.addHandler(handler)
+
 Base = declarative_base()
 
 
@@ -21,7 +31,7 @@ class Data(Base):
 
     integer = s.Column(s.Integer, primary_key=True)
     text = s.Column(s.Text, nullable=False, default='')
-    ordinal = s.Column(Ordinal)
+    date = s.Column(Ordinal)
 
 
 class Database:
@@ -90,6 +100,7 @@ def test_bind():
     # edit the text
     size = (10,)
     for key in ('home', 'right', 'right', 'delete'):
+        log.info('Keypress %s' % key)
         widget.text.keypress(size, key)
     assert widget.text.edit_text == 'ab', widget.text.edit_text
     assert binder.instance.text == 'ab', binder.instance.text
@@ -101,8 +112,7 @@ def test_bind():
         widget.integer.keypress(size, key)
 
     assert binder.instance.integer == 4, binder.instance.integer
-    # note this is None, not ''
-    assert binder.instance.text is None, binder.instance.text
+    assert binder.instance.text == '', binder.instance.text
 
     # and back again
     widget.integer.keypress(size, '2')
@@ -110,7 +120,7 @@ def test_bind():
     assert binder.instance.text == 'ab', binder.instance.text
 
     # try setting date
-    binder.instance.ordinal = dt.date(2018, 7, 1)
+    binder.instance.date = dt.date(2018, 7, 1)
     session.commit()
     data = session.query(Data).filter(Data.integer == 42).one()
-    assert data.ordinal == dt.date(2018, 7, 1)
+    assert data.date == dt.date(2018, 7, 1)

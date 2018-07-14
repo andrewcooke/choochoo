@@ -287,11 +287,11 @@ class BaseDate(FocusWrap):
     def date_change(self, unused_widget, date):
         if date != self._date:
             self._log.info('Date has changed: %s - %s' % (self._date.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d')))
-            # again, arg convention matches Edit
-            self._log.debug('Sending change signal for date change')
-            emit_signal(self, 'change', self, date)
             old_date = date
             self._date = date
+            self._log.debug('Sending change signal for date change')
+            # again, arg convention matches Edit
+            emit_signal(self, 'change', self, self._date)
             focus = FocusFor(self._w, self._log)
             self._w = self._make()
             focus.to(self._w)
