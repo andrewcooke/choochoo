@@ -2,7 +2,7 @@
 import datetime as dt
 from calendar import month_name, day_abbr, Calendar, monthrange
 
-from urwid import Columns, GridFlow, Pile, Text, Padding, emit_signal, connect_signal
+from urwid import Columns, GridFlow, Pile, Text, Padding, emit_signal, connect_signal, WEIGHT
 
 from .fixed import Fixed
 from .focus import FocusFor, FocusAttr, FocusWrap, OnFocus
@@ -318,7 +318,7 @@ class Calendar(BaseDate):
         title = Columns([(1, FocusAttr(down)),
                          (1, FocusAttr(today)),
                          (1, FocusAttr(up)),
-                         ('weight', 1, Padding(FocusAttr(month), align='center', width='pack')),
+                         (WEIGHT, 1, Padding(FocusAttr(month), align='center', width='pack')),
                          (4, FocusAttr(year)),
                          ])
         return Fixed(Pile([title, Days(self._date, self)]), 20)

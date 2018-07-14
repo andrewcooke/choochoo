@@ -2,7 +2,7 @@
 import datetime as dt
 
 from sqlalchemy import and_, or_
-from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
+from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal, WEIGHT
 
 from .log import make_log
 from .repeating import DateOrdinals, Specification
@@ -46,8 +46,8 @@ class InjuryWidget(FocusWrap):
         self.pain_freq = factory(Rating(caption='freq: '))
         self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
         super().__init__(
-            Pile([Columns([('weight', 1, Text(injury.title)),
-                           ('weight', 1, Columns([ColText('Pain - '),
+            Pile([Columns([(WEIGHT, 1, Text(injury.title)),
+                           (WEIGHT, 1, Columns([ColText('Pain - '),
                                                   (11, self.pain_avg),
                                                   (8, self.pain_peak),
                                                   (9, self.pain_freq),
@@ -120,9 +120,11 @@ class Schedules(DynamicContent):
 class DiaryApp(App):
 
     def __init__(self, log, session, bar, date=None):
-        self._session = session
+
+        self.__session = session
         if not date: date = dt.date.today()
         factory = Factory(TabList(), bar)
+
         calendar = Calendar(log, bar, date)  # raw value needed below for signal
         self.date = factory(calendar)
         self.notes = factory(Edit(caption='Notes: ', multiline=True))
@@ -132,30 +134,29 @@ class DiaryApp(App):
         self.weather = factory(Edit(caption='Weather: '))
         self.weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'))
         self.medication = factory(Edit(caption='Meds: '))
+        Binder(log, session, self, Diary, multirow=True, defaults={'date': date})
+        connect_signal(calendar, 'change', self.date_change)
+
         self.injuries = factory.tabs.append(Injuries(log, session, bar, date))
-        # self.aims = factory.tabs.append(Aims(db, log, bar, saves, date))
-        # self.reminders = Reminders(db, log, bar, saves, date)
+        self.schedules = Schedules(log, session, bar, date=date)
+
         body = [Columns([(20, Padding(self.date, width='clip')),
-                         ('weight', 1, Pile([self.notes,
+                         (WEIGHT, 1, Pile([self.notes,
                                              Divider(),
                                              Columns([self.rest_hr, self.sleep, self.mood]),
-                                             Columns([('weight', 2, self.weather), ('weight', 1, self.weight)]),
+                                             Columns([(WEIGHT, 2, self.weather), (WEIGHT, 1, self.weight)]),
                                              self.medication,
                                              ]))],
                         dividechars=2),
-                # self.reminders,
                 self.injuries,
-                # self.aims,
+                self.schedules,
                 ]
-        Binder(log, session, self, Diary, multirow=True, defaults={'date': dt.date.today()})
-        connect_signal(calendar, 'change', self.date_change)
         super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, session)
 
     def date_change(self, unused_widget, date):
-        self._session.commit()
+        self.__session.commit()
         self.injuries.rebuild(date)
-        # self.aims.rebuild(date)
-        # self.reminders.rebuild(date)
+        self.schedules.rebuild(date)
         self.root.discover()
 
 

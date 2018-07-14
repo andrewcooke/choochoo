@@ -1,5 +1,5 @@
 
-from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider
+from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT
 
 from .state import MutableStatefulText
 from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
@@ -84,7 +84,7 @@ def ColSpace():
     """
     Shorthand for an empty, expanding column.
     """
-    return 'weight', 1, Padding(Text(''))
+    return WEIGHT, 1, Padding(Text(''))
 
 
 class NonableInt(MutableStatefulText):

@@ -34,7 +34,7 @@ class Reminder(FocusWrap):
                            ColText(' to '),
                            (18, finish),
                            ColSpace(),
-                           ('weight', 3, sort),
+                           (WEIGHT, 3, sort),
                            ColSpace(),
                            (9, reset),
                            (8, save),
