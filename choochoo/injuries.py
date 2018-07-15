@@ -1,51 +1,78 @@
 
-from urwid import Divider, WEIGHT
+from urwid import WEIGHT, Edit, Pile, Columns, connect_signal
 
-from .squeal.database import Database
 from .log import make_log
-from .uweird.database import SingleTableStatic, DATE_ORDINAL
-from .uweird.focus import MessageBar
+from .squeal.binders import Binder
+from .squeal.database import Database
+from .squeal.injury import Injury
+from .uweird.calendar import TextDate
+from .uweird.factory import Factory
+from .uweird.focus import MessageBar, FocusWrap
 from .uweird.tabs import TabList
-from .uweird.widgets import DividedPile
-from .widgets import Definition, App
+from .uweird.widgets import DividedPile, Nullable, SquareButton, ColSpace, ColText, DynamicContent
+from .widgets import App
 
 
-def make_bound_injury(db, log, tabs, bar, insert_callback=None):
-    binder = SingleTableStatic(db, log, 'injury',
-                               transforms={'start': DATE_ORDINAL, 'finish': DATE_ORDINAL},
-                               insert_callback=insert_callback)
-    injury = Definition(log, tabs, bar, binder)
-    return injury, binder
+class InjuryWidget(FocusWrap):
+
+    def __init__(self, log, tabs, bar):
+
+        factory = Factory(tabs=tabs, bar=bar)
+        self.title = factory(Edit(caption='Title: '))
+        self.start = factory(Nullable('Open', lambda date: TextDate(log, bar=bar), bar=bar))
+        self.finish = factory(Nullable('Open', lambda date: TextDate(log, bar=bar), bar=bar))
+        self.sort = factory(Edit(caption='Sort: '))
+        self.raw_reset = SquareButton('Reset')
+        self.reset = factory(self.raw_reset, message='reset from database')
+        self.description = factory(Edit(caption='Description: ', multiline=True))
+        super().__init__(
+            Pile([self.title,
+                  Columns([(18, self.start),
+                           ColText(' to '),
+                           (18, self.finish),
+                           ColSpace(),
+                           (WEIGHT, 3, self.sort),
+                           ColSpace(),
+                           (9, self.reset),
+                           ]),
+                  self.description,
+                  ]))
+
+    def connect(self, binder):
+        connect_signal(self.raw_reset, 'click', lambda widget: binder.refresh())
 
 
-def make_widget(db, log, tabs, bar, saves):
-    body = []
-    for row in db.db.execute('select id, start, finish, title, sort, description from injury'):
-        injury, binder = make_bound_injury(db, log, tabs, bar)
-        saves.append(binder.save)
-        binder.read_row(row)
-        body.append(injury)
+class Injuries(DynamicContent):
 
-    pile = DividedPile(body)
+    def _make(self):
+        tabs = TabList()
+        body = []
+        for injury in self._session.query(Injury).order_by(Injury.sort).all():
+            widget = InjuryWidget(self._log, tabs, self._bar)
+            widget.connect(Binder(self._log, self._session, widget, Injury, defaults={'id': injury.id}))
+            body.append(widget)
+        # and a blank entry to be added if necessary
+        widget = InjuryWidget(self._log, tabs, self._bar)
+        widget.connect(Binder(self._log, self._session, widget, Injury))
+        body.append(widget)
+        return DividedPile(body), tabs
 
-    def insert_callback(saves=saves, pile=pile):
-        contents = pile.contents
-        injury, binder = make_bound_injury(db, log, tabs, bar, insert_callback=insert_callback)
-        saves.append(binder.save)
-        if contents: contents.append((Divider(), (WEIGHT, 1)))
-        contents.append((injury, (WEIGHT, 1)))
-        pile.contents = contents
 
-    insert_callback()  # initial empty
+class InjuryApp(App):
 
-    return pile
+    def __init__(self, log, session, bar):
+        self.__session = session
+        tabs = TabList()
+        self.injuries = tabs.append(Injuries(log, session, bar))
+        super().__init__(log, 'Diary', bar, self.injuries, tabs, session)
+
+    def rebuild(self, unused_widget, unused_value):
+        self.__session.commit()
+        self.injuries.rebuild()
+        self.root.discover()
 
 
 def main(args):
     log = make_log(args)
-    db = Database(args, log)
-    tabs = TabList()
-    saves = []
-    bar = MessageBar()
-    injuries = App(log, 'Injuries', bar, make_widget(db, log, tabs, bar, saves), tabs, saves)
-    injuries.run()
+    session = Database(args, log).session()
+    InjuryApp(log, session, MessageBar()).run()

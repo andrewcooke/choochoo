@@ -1,8 +1,9 @@
 
 from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT
 
-from .state import MutableStatefulText
 from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
+from .state import MutableStatefulText
+from .tabs import TabNode
 
 
 class SquareButton(Button):
@@ -249,3 +250,24 @@ class DividedPile(Pile):
             if i: divided.append(Divider())
             divided.append(widget)
         super().__init__(divided, focus_item=focus_item)
+
+
+class DynamicContent(TabNode):
+
+    def __init__(self, log, session, bar):
+        self._log = log
+        self._session = session
+        self._bar = bar
+        self.__attrs = []
+        super().__init__(log, *self._make())
+
+    def _make(self):
+        # should return (node, tab_list)
+        raise NotImplemented()
+
+    def rebuild(self):
+        node, tabs = self._make()
+        self._w = node
+        self.replace_all(tabs)
+
+

@@ -164,7 +164,7 @@ class MessageBar(WidgetWrap):
 
 class OnFocus(FocusWrap):
     """
-    Set a message on the messag ebar when focus is enabled.
+    Set a message on the message bar when focus is enabled.
     This triggers changes during rendering, which will only be
     reflected in the output of items rendered after this target,
     This is why the message bar must be on the bottom of the app.

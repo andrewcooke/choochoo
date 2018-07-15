@@ -30,38 +30,52 @@ class Binder:
         for column in inspect(self.__table).columns:
             name = column.name
             value = getattr(self.instance, name)
-            if not column.nullable and value is None:
-                value = column.default.arg
-                setattr(self.instance, name, value)
             if not name.startswith('_'):
                 try:
                     widget = getattr(self.__widget, name)
                     self.__log.debug('Setting %s=%s on %s' % (name, value, widget))
                     while widget:
-                        if hasattr(widget, 'state'):
-                            self.__bind_state(name, value, widget)
+                        if self._try_bind(column, value, widget):
                             break
-                        elif hasattr(widget, 'set_edit_text'):
-                            self.__bind_edit(name, value, widget)
-                            break
-                        elif hasattr(widget, 'base_widget') and widget != widget.base_widget:
-                            widget = widget.base_widget
-                        elif hasattr(widget, '_wrapped_widget') and widget != widget._wrapped_widget:
-                            widget = widget._wrapped_widget
-                        else:
-                            self.__log.error('Cannot set %s on %s (%s)' % (name, widget, dir(widget)))
-                            break
+                        widget = self._try_descend(column, value, widget)
                 except AttributeError as e:
                     self.__log.warn('Cannot find %s member of %s (%s): %s' %
                                     (name, self.__widget, dir(self.__widget), e))
 
-    def __bind_state(self, name, value, widget):
-        widget.state = value
-        self.__connect(widget, name)
+    def _try_descend(self, column, value, widget):
+        if hasattr(widget, 'base_widget') and widget != widget.base_widget:
+            return widget.base_widget
+        elif hasattr(widget, '_wrapped_widget') and widget != widget._wrapped_widget:
+            return widget._wrapped_widget
+        else:
+            self.__log.error('Cannot set %s on %s (%s)' % (column.name, widget, dir(widget)))
+            return None
 
-    def __bind_edit(self, name, value, widget):
-        widget.set_edit_text(value)
-        self.__connect(widget, name)
+    def _try_bind(self, column, value, widget):
+        if hasattr(widget, 'state'):
+            self.__bind_state(column, value, widget)
+            return True
+        elif hasattr(widget, 'set_edit_text'):
+            self.__bind_edit(column, value, widget)
+            return True
+        return False
+
+    def __with_default(self, column, value):
+        if not column.nullable and value is None:
+            if column.default:
+                value = column.default.arg
+                setattr(self.instance, column.name, value)
+            else:
+                raise Exception('Column %s is not nullable, but has no default' % column)
+        return value
+
+    def __bind_state(self, column, value, widget):
+        widget.state = self.__with_default(column, value)
+        self.__connect(widget, column.name)
+
+    def __bind_edit(self, column, value, widget):
+        widget.set_edit_text(self.__with_default(column, value))
+        self.__connect(widget, column.name)
 
     def __connect(self, widget, name):
         # we don't use weak args because we want the bineder to be around as long as the widget
@@ -86,12 +100,19 @@ class Binder:
             setattr(self.instance, name, value)
 
     def __read(self):
-        self.__log.debug('Reading new %s' % self.__table)
-        query = self.__session.query(self.__table)
-        for (k, v) in self.__defaults.items():
-            query = query.filter(getattr(self.__table, k) == v)
-        self.instance = query.one_or_none()
+        self.instance = None
+        if self.__defaults:
+            self.__log.debug('Reading new %s' % self.__table)
+            query = self.__session.query(self.__table)
+            for (k, v) in self.__defaults.items():
+                query = query.filter(getattr(self.__table, k) == v)
+            self.instance = query.one_or_none()
         if not self.instance:
-            self.__log.debug("No data read, so creating default from %s" % self.__defaults)
+            self.__log.debug("No database entry, so creating default from %s" % self.__defaults)
             self.instance = self.__table(**self.__defaults)
             self.__session.add(self.instance)
+
+    def refresh(self):
+        if self.instance:
+            self.__session.refresh(self.instance)
+            self.__bind()

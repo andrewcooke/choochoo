@@ -1,6 +1,7 @@
 
 from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
 
+from ..repeating import Specification
 from .types import Ordinal
 from .support import Base
 
@@ -28,6 +29,15 @@ class Schedule(Base):
     description = Column(Text, nullable=False, default='')
     has_notes = Column(Boolean, nullable=False, default=False)
     sort = Column(Text, nullable=False, default='')
+
+    def at_location(self, ordinals):
+        if self.repeat:
+            spec = Specification(self.repeat)
+            spec.start = self.start
+            spec.finish = self.finish
+            return spec.frame().at_location(ordinals)
+        else:
+            return True
 
 
 class ScheduleDiary(Base):

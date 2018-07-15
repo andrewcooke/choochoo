@@ -5,36 +5,19 @@ from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal, WEIGHT
 
 from .log import make_log
-from .repeating import DateOrdinals, Specification
+from .repeating import DateOrdinals
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.diary import Diary
-from .squeal.injury import Injury
-from .squeal.schedule import ScheduleType, Schedule
+from .squeal.injury import Injury, InjuryDiary
+from .squeal.schedule import ScheduleType, Schedule, ScheduleDiary
 from .uweird.calendar import Calendar
+from .uweird.decorators import Indent
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
-from .uweird.tabs import TabList, TabNode
-from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile
+from .uweird.tabs import TabList
+from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile, DynamicContent
 from .widgets import App
-
-
-class DynamicContent(TabNode):
-
-    def __init__(self, log, session, bar, date=None):
-        self._log = log
-        self._session = session
-        self._bar = bar
-        super().__init__(log, *self._make(date))
-
-    def _make(self, date):
-        # should return (node, tab_list)
-        raise NotImplemented()
-
-    def rebuild(self, date):
-        node, tabs = self._make(date)
-        self._w = node
-        self.replace_all(tabs)
 
 
 class InjuryWidget(FocusWrap):
@@ -58,18 +41,25 @@ class InjuryWidget(FocusWrap):
                   ]))
 
 
-class Injuries(DynamicContent):
+class DynamicDate(DynamicContent):
 
-    def _make(self, date):
+    def __init__(self, log, session, bar, date):
+        self.date = date
+        super().__init__(log, session, bar)
+
+
+class Injuries(DynamicDate):
+
+    def _make(self):
         tabs = TabList()
         body = []
         for injury in self._session.query(Injury).filter(
-                and_(or_(Injury.start == None, Injury.start <= date),
-                     or_(Injury.finish == None, Injury.finish >= date))).\
+                and_(or_(Injury.start == None, Injury.start <= self.date),
+                     or_(Injury.finish == None, Injury.finish >= self.date))).\
                 order_by(Injury.sort).all():
             widget = InjuryWidget(tabs, self._bar, injury)
-            Binder(self._log, self._session, widget, Injury,
-                   defaults={'id': injury.id, 'date': date})
+            Binder(self._log, self._session, widget, InjuryDiary,
+                   defaults={'injury_id': injury.id, 'date': self.date})
             body.append(widget)
         if body:
             return DividedPile([Text('Injuries'), Padding(DividedPile(body), left=2)]), tabs
@@ -88,29 +78,46 @@ class ScheduleWidget(FocusWrap):
         super().__init__(Pile(body))
 
 
-class Schedules(DynamicContent):
+class Schedules(DynamicDate):
 
-    def _make(self, date):
-        ordinals = DateOrdinals(date)
+    def _make(self):
+        ordinals = DateOrdinals(self.date)
+
+        def get_schedules(type_id, parent_id):
+            candidates = list(self._session.query(Schedule).filter(Schedule.type_id == type_id).
+                              filter(or_(Schedule.start == None, Schedule.start <= self.date),
+                                     or_(Schedule.finish == None, Schedule.finish >= self.date)).
+                              filter(Schedule.parent_id == parent_id).
+                              order_by(Schedule.sort).all())
+            candidates = filter(lambda s: s.at_location(ordinals), candidates)
+            return candidates
+
         tabs = TabList()
         body = []
+
         for schedule_type in self._session.query(ScheduleType).order_by(ScheduleType.sort).all():
-            # todo nested schedules (parent_id)
-            # todo indent
-            for schedule in self._session.query(Schedule).filter(Schedule.type_id == schedule_type.id).\
-                    filter(or_(Schedule.start == None, Schedule.start <= date),
-                           or_(Schedule.finish == None, Schedule.finish >= date)).\
-                    order_by(Schedule.sort).all():
-                if schedule.repeat:
-                    spec = Specification(schedule.repeat)
-                    spec.start = schedule.start
-                    spec.finish = schedule.finish
-                    if not spec.frame().at_location(ordinals):
-                        continue
-                widget = ScheduleWidget(tabs, self._bar, schedule_type, schedule)
-                Binder(self._log, self._session, widget, Schedule,
-                       defaults={'id': schedule.id, 'date': date})
-                body.append(widget)
+            root_schedules = get_schedules(schedule_type.id, None)
+            if root_schedules:
+                stack = [root_schedules]
+                body = [[]]
+
+                while stack:  # stack entries are never empty
+
+                    schedule = stack[-1].pop()
+                    widget = ScheduleWidget(tabs, self._bar, schedule_type, schedule)
+                    Binder(self._log, self._session, widget, ScheduleDiary,
+                           defaults={'schedule_id': schedule.id, 'date': self.date})
+                    body[-1].append(widget)
+
+                    if not stack[-1]:
+                        stack = stack[:-1]
+                        body.append(Indent(body.pop()))
+
+                    children = get_schedules(schedule_type.id, schedule.id)
+                    if children:
+                        stack.append(children)
+                        body.append([])
+
         if body:
             return DividedPile([Text('Schedule'), Padding(DividedPile(body), left=2)]), tabs
         else:
@@ -137,16 +144,16 @@ class DiaryApp(App):
         Binder(log, session, self, Diary, multirow=True, defaults={'date': date})
         connect_signal(calendar, 'change', self.date_change)
 
-        self.injuries = factory.tabs.append(Injuries(log, session, bar, date))
-        self.schedules = Schedules(log, session, bar, date=date)
+        self.injuries = factory.tabs.append(Injuries(log, session, bar, date=date))
+        self.schedules = factory.tabs.append(Schedules(log, session, bar, date=date))
 
         body = [Columns([(20, Padding(self.date, width='clip')),
                          (WEIGHT, 1, Pile([self.notes,
-                                             Divider(),
-                                             Columns([self.rest_hr, self.sleep, self.mood]),
-                                             Columns([(WEIGHT, 2, self.weather), (WEIGHT, 1, self.weight)]),
-                                             self.medication,
-                                             ]))],
+                                           Divider(),
+                                           Columns([self.rest_hr, self.sleep, self.mood]),
+                                           Columns([(WEIGHT, 2, self.weather), (WEIGHT, 1, self.weight)]),
+                                           self.medication,
+                                           ]))],
                         dividechars=2),
                 self.injuries,
                 self.schedules,
