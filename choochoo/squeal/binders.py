@@ -1,4 +1,5 @@
-from sqlalchemy import inspect, Text, TEXT, ColumnDefault
+
+from sqlalchemy import inspect
 from urwid import connect_signal, disconnect_signal
 
 
@@ -126,7 +127,10 @@ class Binder:
             self.__log.debug("No database entry, so creating default from %s" % self.__defaults)
             self.instance = self.__default_instance()
 
-    def refresh(self):
+    def reset(self):
+        """
+        Revert the widget to the values in the databas e(or defaults, if it is not from there).
+        """
         if self.instance:
             self.__log.debug('Refreshing %s' % self.instance)
             if self.__from_database:
@@ -139,6 +143,9 @@ class Binder:
                 self.__bind()
 
     def delete(self):
+        """
+        Remove from the database.
+        """
         if self.instance:
             self.__log.debug('Deleting %s' % self.instance)
             self.__session.delete(self.instance)

@@ -169,7 +169,5 @@ class DiaryApp(App):
 
 def main(args):
     log = make_log(args)
-    db = Database(args, log)
-    bar = MessageBar()
-    diary = DiaryApp(log, db.session(), bar)
-    diary.run()
+    session = Database(args, log).session()
+    DiaryApp(log, session, MessageBar()).run()

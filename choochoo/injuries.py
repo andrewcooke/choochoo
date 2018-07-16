@@ -43,7 +43,7 @@ class InjuryWidget(FocusWrap):
                   ]))
 
     def connect(self, binder):
-        connect_signal(self.reset, 'click', lambda widget: binder.refresh())
+        connect_signal(self.reset, 'click', lambda widget: binder.reset())
         connect_signal(self.delete, 'click', lambda widget: self.__on_delete(widget, binder))
 
     def __on_delete(self, _unused_widget, binder):
@@ -53,8 +53,7 @@ class InjuryWidget(FocusWrap):
 
 class Injuries(DynamicContent):
 
-    # we have to be careful to work well with qlalchemy's session semantics.
-    # to do this:
+    # we have to be careful to work well with sqlalchemy's session semantics:
     # - general editing is done within a single session
     # - this includes reset, delete and adding empty new values
     #   (all can be done without session commit)
