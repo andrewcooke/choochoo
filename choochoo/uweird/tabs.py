@@ -1,7 +1,7 @@
 
 from collections.abc import Sequence
 
-from urwid import emit_signal, connect_signal, Widget, ExitMainLoop
+from urwid import emit_signal, connect_signal, Widget, ExitMainLoop, disconnect_signal
 
 from ..utils import force_iterable
 from .focus import Focus, FocusAttr, FocusWrap
@@ -73,6 +73,10 @@ class TabList(Sequence):
         """
         self.__tabs = []
 
+    def __wrap(self, widget_or_node):
+        ignore = isinstance(widget_or_node, TabNode) or isinstance(widget_or_node, Tab)
+        return widget_or_node if ignore else Tab(FocusAttr(widget_or_node))
+
     def append(self, widget_or_node):
         """
         Add a widget to the list of managed widgets.  The return value should be
@@ -80,10 +84,19 @@ class TabList(Sequence):
         a FocusAttr).
         """
         # todo - how do we modify FocusAttr?
-        is_node = isinstance(widget_or_node, TabNode)
-        widget_or_node = widget_or_node if is_node else Tab(FocusAttr(widget_or_node))
+        widget_or_node = self.__wrap(widget_or_node)
         self.__tabs.append(widget_or_node)
         return widget_or_node
+
+    def insert(self, index, widget_or_node):
+        widget_or_node = self.__wrap(widget_or_node)
+        self.__tabs.insert(index, widget_or_node)
+        return widget_or_node
+
+    def insert_all(self, index, tab_list):
+        for tab in reversed(tab_list):
+            self.__tabs.insert(index, self.__wrap(tab))
+        return tab_list
 
     def __getitem__(self, item):
         return self.__tabs[item]
@@ -127,10 +140,11 @@ class TabNode(FocusWrap):
 
     def __build_data(self, tab_list):
         for tab in tab_list:
-            n = len(self.__focus)
+            n = len(self)
             self.__tabs_and_indices[tab] = n
             self.__tabs_and_indices[n] = tab
             self.__focus[tab] = None
+            disconnect_signal(tab, 'tab', self.tab)
             connect_signal(tab, 'tab', self.tab)
 
     def replace_all(self, tab_list):
@@ -141,6 +155,29 @@ class TabNode(FocusWrap):
         self.__tabs_and_indices = {}
         self.__focus = {}
         self.__build_data(tab_list)
+        self.discover(root=self.__root, path=self.__path)
+
+    def __to_tab_list(self):
+        tab_list = TabList()
+        for i in range(len(self)):
+            tab_list.append(self.__tabs_and_indices[i])
+        return tab_list
+
+    def insert(self, index, tab):
+        """
+        Add a tab at the index give (so insert(0, tab) is at start)
+        """
+        tab_list = self.__to_tab_list()
+        tab_list.insert(index, tab)
+        self.replace_all(tab_list)
+
+    def insert_all(self, index, tabs):
+        tab_list = self.__to_tab_list()
+        tab_list.insert_all(index, tabs)
+        self.replace_all(tab_list)
+
+    def __len__(self):
+        return len(self.__focus)
 
     def tab(self, tab, key):
         """
@@ -153,7 +190,7 @@ class TabNode(FocusWrap):
         """
         delta = 1 if key == 'tab' else -1
         n = self.__tabs_and_indices[tab] + delta
-        if 0 <= n < len(self.__focus):
+        if 0 <= n < len(self):
             self.__try_set_focus(n, key)
         elif not self.__path:
             self.to(None, key)  # loop around
@@ -178,7 +215,7 @@ class TabNode(FocusWrap):
         Instead of assigning focus using Focus.to(),
         """
         if self.__focus:
-            n = 0 if key == 'tab' else len(self.__focus) - 1
+            n = 0 if key == 'tab' else len(self) - 1
             self._log.debug('Re-targetting at %d' % n)
             self.__try_set_focus(n, key)
         else:
