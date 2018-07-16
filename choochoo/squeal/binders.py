@@ -22,6 +22,7 @@ class Binder:
         if self.__multirow and len(self.__primary_keys) > 1:
             raise Exception('Composite key not compatible with multirow')
         self.instance = None
+        self.__from_database = False
         self.__read()
         self.__bind()
 
@@ -96,8 +97,13 @@ class Binder:
             elif value != getattr(self.instance, name):
                 raise Exception('Primary key (%s) modified, but not multirow')
         else:
+            if self.__from_database and not self.instance in self.__session:
+                self.__session.add(self.instance)
             self.__log.debug('Setting %s=%s on %s' % (name, value, self.instance))
             setattr(self.instance, name, value)
+
+    def __default_instance(self):
+        return self.__table(**self.__defaults)
 
     def __read(self):
         self.instance = None
@@ -107,12 +113,27 @@ class Binder:
             for (k, v) in self.__defaults.items():
                 query = query.filter(getattr(self.__table, k) == v)
             self.instance = query.one_or_none()
-        if not self.instance:
+        if self.instance:
+            self.__from_database = True
+        else:
+            self.__from_database = False
             self.__log.debug("No database entry, so creating default from %s" % self.__defaults)
-            self.instance = self.__table(**self.__defaults)
-            self.__session.add(self.instance)
+            self.instance = self.__default_instance()
 
     def refresh(self):
         if self.instance:
-            self.__session.refresh(self.instance)
-            self.__bind()
+            self.__log.debug('Refreshing %s' % self.instance)
+            if self.__from_database:
+                self.__session.refresh(self.instance)
+                self.__bind()
+            else:
+                if self.instance in self.__session:
+                    self.__session.expunge(self.instance)
+                self.instance = self.__default_instance()
+                self.__bind()
+
+    def delete(self):
+        if self.instance and self.instance in self.__session:
+            self.__log.debug('Deleting %s' % self.instance)
+            self.__session.delete(self.instance)
+            self.instance = None

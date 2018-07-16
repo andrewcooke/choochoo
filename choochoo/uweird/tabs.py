@@ -1,4 +1,4 @@
-
+from collections import OrderedDict
 from collections.abc import Sequence
 
 from urwid import emit_signal, connect_signal, Widget, ExitMainLoop, disconnect_signal
@@ -88,12 +88,15 @@ class TabList(Sequence):
         self.__tabs.append(widget_or_node)
         return widget_or_node
 
+    def remove(self, tab):
+        self.__tabs.remove(tab)
+
     def insert(self, index, widget_or_node):
         widget_or_node = self.__wrap(widget_or_node)
         self.__tabs.insert(index, widget_or_node)
         return widget_or_node
 
-    def insert_all(self, index, tab_list):
+    def insert_many(self, index, tab_list):
         for tab in reversed(tab_list):
             self.__tabs.insert(index, self.__wrap(tab))
         return tab_list
@@ -133,7 +136,7 @@ class TabNode(FocusWrap):
         super().__init__(widget)
         self._log = log
         self.__tabs_and_indices = {}
-        self.__focus = {}
+        self.__focus = OrderedDict()
         self.__root = None
         self.__path = None
         self.__build_data(tab_list)
@@ -147,21 +150,27 @@ class TabNode(FocusWrap):
             disconnect_signal(tab, 'tab', self.tab)
             connect_signal(tab, 'tab', self.tab)
 
-    def replace_all(self, tab_list):
-        """
-        Replace all the managed tabs.  Typically used at the local root of a dynamic
-        section of the widget tree.
-        """
-        self.__tabs_and_indices = {}
-        self.__focus = {}
-        self.__build_data(tab_list)
-        self.discover(root=self.__root, path=self.__path)
-
     def __to_tab_list(self):
         tab_list = TabList()
         for i in range(len(self)):
             tab_list.append(self.__tabs_and_indices[i])
         return tab_list
+
+    def replace_all(self, tabs):
+        """
+        Replace all the managed tabs.  Typically used at the local root of a dynamic
+        section of the widget tree.
+        """
+        self.__tabs_and_indices = {}
+        self.__focus = OrderedDict()
+        self.__build_data(tabs)
+        self.discover(root=self.__root, path=self.__path)
+
+    def replace_many(self, tabs):
+        tab_list = self.__to_tab_list()
+        for tab in tabs:
+            tab_list.remove(tab)
+        self.replace_all(tab_list)
 
     def insert(self, index, tab):
         """
@@ -171,9 +180,9 @@ class TabNode(FocusWrap):
         tab_list.insert(index, tab)
         self.replace_all(tab_list)
 
-    def insert_all(self, index, tabs):
+    def insert_many(self, index, tabs):
         tab_list = self.__to_tab_list()
-        tab_list.insert_all(index, tabs)
+        tab_list.insert_many(index, tabs)
         self.replace_all(tab_list)
 
     def __len__(self):
@@ -223,7 +232,7 @@ class TabNode(FocusWrap):
             self._log.debug('Empty so raise signal')
             emit_signal(self, 'tab', self, key)
 
-    def discover(self, root=None, path=None):
+    def discover(self, root=None, path=None, discard=False):
         """
         Register the root widget here before use (in many cases the root node is
         also this TabNode, so no root argument is needed).
@@ -278,12 +287,14 @@ class TabNode(FocusWrap):
                 for widget in unpack_decorator(widget):
                     handle_new_widget(widget, path)
 
-        missing = []
-        for widget in self.__focus:
-            if not self.__focus[widget]:
-                missing.append('%s (base type %s)' % (widget, type(widget._w.base_widget)))
+        missing = list(filter(lambda x: self.__focus[x] is None, self.__focus))
         if missing:
-            raise Exception('Could not find %s' % ', '.join(missing))
+            if discard:
+                self.__log.info('Removing %s tabs' % len(missing))
+                self.remove_many(missing)
+            else:
+                msg = map(lambda w: '%s (base type %s)' % (w, type(w._w.base_widget)), missing)
+                raise Exception('Could not find %s' % ', '.join(msg))
 
 
 class Root(TabNode):

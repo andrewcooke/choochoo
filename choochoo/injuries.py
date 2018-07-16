@@ -16,15 +16,17 @@ from .widgets import App
 
 class InjuryWidget(FocusWrap):
 
-    def __init__(self, log, tabs, bar):
-
+    def __init__(self, log, tabs, bar, outer):
+        self.__outer = outer
         factory = Factory(tabs=tabs, bar=bar)
         self.title = factory(Edit(caption='Title: '))
         self.start = factory(Nullable('Open', lambda date: TextDate(log, bar=bar), bar=bar))
         self.finish = factory(Nullable('Open', lambda date: TextDate(log, bar=bar), bar=bar))
         self.sort = factory(Edit(caption='Sort: '))
-        self.__raw_reset = SquareButton('Reset')
-        reset = factory(self.__raw_reset, message='reset from database')
+        self.delete = SquareButton('Delete')
+        delete = factory(self.delete, message='delete from database')
+        self.reset = SquareButton('Reset')
+        reset = factory(self.reset, message='reset from database')
         self.description = factory(Edit(caption='Description: ', multiline=True))
         super().__init__(
             Pile([self.title,
@@ -34,13 +36,19 @@ class InjuryWidget(FocusWrap):
                            ColSpace(),
                            (WEIGHT, 3, self.sort),
                            ColSpace(),
+                           (10, delete),
                            (9, reset)
                            ]),
                   self.description,
                   ]))
 
     def connect(self, binder):
-        connect_signal(self.__raw_reset, 'click', lambda widget: binder.refresh())
+        connect_signal(self.reset, 'click', lambda widget: binder.refresh())
+        connect_signal(self.delete, 'click', lambda widget: self.__on_delete(widget, binder))
+
+    def __on_delete(self, _unused_widget, binder):
+        binder.delete()
+        self.__outer.remove(self)
 
 
 class Injuries(DynamicContent):
@@ -58,7 +66,7 @@ class Injuries(DynamicContent):
         tabs = TabList()
         body = []
         for injury in self._session.query(Injury).order_by(Injury.sort).all():
-            widget = InjuryWidget(self._log, tabs, self._bar)
+            widget = InjuryWidget(self._log, tabs, self._bar, self)
             widget.connect(Binder(self._log, self._session, widget, Injury, defaults={'id': injury.id}))
             body.append(widget)
         # and a button to add blanks
@@ -69,7 +77,7 @@ class Injuries(DynamicContent):
 
     def __add_blank(self, _unused_widget):
         tabs = TabList()
-        widget = InjuryWidget(self._log, tabs, self._bar)
+        widget = InjuryWidget(self._log, tabs, self._bar, self)
         widget.connect(Binder(self._log, self._session, widget, Injury))
         body = self._w.contents
         n = len(body)
@@ -77,7 +85,15 @@ class Injuries(DynamicContent):
         body.insert(n-1, (widget, (WEIGHT, 1)))
         self._w.contents = body
         n = len(self)
-        self.insert_all(n-1, tabs)
+        self.insert_many(n - 1, tabs)
+
+    def remove(self, widget):
+        body = self._w.contents
+        index = list(map(lambda x: x[0], body)).index(widget)
+        del body[index-1]
+        del body[index-1]
+        self._w.contents = body
+        self.discover(discard=True)
 
 
 class InjuryApp(App):
