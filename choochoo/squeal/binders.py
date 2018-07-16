@@ -19,6 +19,7 @@ class Binder:
         self.__multirow = multirow
         self.__defaults = defaults
         self.__primary_keys = tuple(map(lambda column: column.name, inspect(table).primary_key))
+        self.__ignore_changes = False
         if self.__multirow and len(self.__primary_keys) > 1:
             raise Exception('Composite key not compatible with multirow')
         self.instance = None
@@ -26,22 +27,26 @@ class Binder:
         self.__read()
         self.__bind()
 
-    def __bind(self):
+    def __bind(self,):
         self.__log.debug('Binding %s to %s' % (self.instance, self.__widget))
-        for column in inspect(self.__table).columns:
-            name = column.name
-            value = getattr(self.instance, name)
-            if not name.startswith('_'):
-                try:
-                    widget = getattr(self.__widget, name)
-                    self.__log.debug('Setting %s=%s on %s' % (name, value, widget))
-                    while widget:
-                        if self._try_bind(column, value, widget):
-                            break
-                        widget = self._try_descend(column, value, widget)
-                except AttributeError as e:
-                    self.__log.warn('Cannot find %s member of %s (%s): %s' %
-                                    (name, self.__widget, dir(self.__widget), e))
+        save_ignore, self.__ignore_changes = self.__ignore_changes, True
+        try:
+            for column in inspect(self.__table).columns:
+                name = column.name
+                value = getattr(self.instance, name)
+                if not name.startswith('_'):
+                    try:
+                        widget = getattr(self.__widget, name)
+                        self.__log.debug('Setting %s=%s on %s' % (name, value, widget))
+                        while widget:
+                            if self._try_bind(column, value, widget):
+                                break
+                            widget = self._try_descend(column, value, widget)
+                    except AttributeError as e:
+                        self.__log.warn('Cannot find %s member of %s (%s): %s' %
+                                        (name, self.__widget, dir(self.__widget), e))
+        finally:
+            self.__ignore_changes = save_ignore
 
     def _try_descend(self, column, value, widget):
         if hasattr(widget, 'base_widget') and widget != widget.base_widget:
@@ -97,7 +102,8 @@ class Binder:
             elif value != getattr(self.instance, name):
                 raise Exception('Primary key (%s) modified, but not multirow')
         else:
-            if self.__from_database and not self.instance in self.__session:
+            if not self.__from_database and not self.__ignore_changes:
+                self.__log.debug('Adding %s to session' % self.instance)
                 self.__session.add(self.instance)
             self.__log.debug('Setting %s=%s on %s' % (name, value, self.instance))
             setattr(self.instance, name, value)
@@ -127,13 +133,13 @@ class Binder:
                 self.__session.refresh(self.instance)
                 self.__bind()
             else:
-                if self.instance in self.__session:
-                    self.__session.expunge(self.instance)
+                self.__log.debug('Expunging %s' % self.instance)
+                self.__session.expunge(self.instance)
                 self.instance = self.__default_instance()
                 self.__bind()
 
     def delete(self):
-        if self.instance and self.instance in self.__session:
+        if self.instance:
             self.__log.debug('Deleting %s' % self.instance)
             self.__session.delete(self.instance)
             self.instance = None

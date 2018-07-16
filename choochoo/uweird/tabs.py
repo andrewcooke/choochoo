@@ -319,4 +319,5 @@ class Root(TabNode):
 
     def save(self):
         if self.__session:
+            self.__session.flush()
             self.__session.commit()

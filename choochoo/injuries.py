@@ -90,8 +90,9 @@ class Injuries(DynamicContent):
     def remove(self, widget):
         body = self._w.contents
         index = list(map(lambda x: x[0], body)).index(widget)
-        del body[index-1]
-        del body[index-1]
+        self._log.debug('Index %d: %s' % (index, body[index]))
+        del body[index]
+        del body[index]
         self._w.contents = body
         self.discover(discard=True)
 
