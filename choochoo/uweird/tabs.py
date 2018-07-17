@@ -134,7 +134,7 @@ class TabNode(FocusWrap):
         below (possibly via nested TabNode instances).
         """
         super().__init__(widget)
-        self._log = log
+        self.__log = log
         self.__tabs_and_indices = {}
         self.__focus = OrderedDict()
         self.__root = None
@@ -208,14 +208,14 @@ class TabNode(FocusWrap):
 
     def __try_set_focus(self, n, key):
         try:
-            self._log.debug('Trying to set focus on %s' % self.__tabs_and_indices[n])
+            self.__log.debug('Trying to set focus on %s' % self.__tabs_and_indices[n])
             self.__set_focus(self.__tabs_and_indices[n], key)
         except AttributeError:
             self.discover(root=self.__root, path=self.__path)
             self.__set_focus(self.__tabs_and_indices[n], key)
 
     def __set_focus(self, tab, key):
-        self._log.debug('Using %s' % self.__focus[tab])
+        self.__log.debug('Using %s' % self.__focus[tab])
         self.__focus[tab].to(self.__root, key)
 
     def to(self, unused, key):
@@ -225,11 +225,11 @@ class TabNode(FocusWrap):
         """
         if self.__focus:
             n = 0 if key == 'tab' else len(self) - 1
-            self._log.debug('Re-targetting at %d' % n)
+            self.__log.debug('Re-targetting at %d' % n)
             self.__try_set_focus(n, key)
         else:
             # we have nothing to focus, so re-raise signal for remote neighbours
-            self._log.debug('Empty so raise signal')
+            self.__log.debug('Empty so raise signal')
             emit_signal(self, 'tab', self, key)
 
     def discover(self, root=None, path=None, discard=False):
@@ -259,10 +259,10 @@ class TabNode(FocusWrap):
 
         def unpack_decorator(widget):
             if hasattr(widget, '_wrapped_widget'):
-                self._log.warn('Widget %s (type %s) doesn\'t expose contents' % (widget, type(widget)))
+                self.__log.warn('Widget %s (type %s) doesn\'t expose contents' % (widget, type(widget)))
             elif hasattr(widget, 'base_widget'):
                 if widget == widget.base_widget:
-                    self._log.debug('Widget with no focus: %s (type %s)' % (widget, type(widget)))
+                    self.__log.debug('Widget with no focus: %s (type %s)' % (widget, type(widget)))
                 else:
                     yield widget.base_widget
 
@@ -272,7 +272,7 @@ class TabNode(FocusWrap):
                     self.__focus[widget] = widget
                     widget.discover(self.__root, path=path)
                 else:
-                    self.__focus[widget] = Focus(path, self._log)
+                    self.__focus[widget] = Focus(path, self.__log)
             else:
                 stack.append((widget, path))
 

@@ -9,7 +9,7 @@ from .uweird.calendar import TextDate
 from .uweird.factory import Factory
 from .uweird.fixed import Fixed
 from .uweird.focus import MessageBar, FocusWrap
-from .uweird.tabs import TabList
+from .uweird.tabs import TabList, TabNode
 from .uweird.widgets import DividedPile, Nullable, SquareButton, ColSpace, ColText, DynamicContent
 from .widgets import App
 
@@ -51,7 +51,7 @@ class InjuryWidget(FocusWrap):
         self.__outer.remove(self)
 
 
-class Injuries(DynamicContent):
+class Injuries(TabNode):
 
     # we have to be careful to work well with sqlalchemy's session semantics:
     # - general editing is done within a single session
@@ -61,23 +61,26 @@ class Injuries(DynamicContent):
     #   so that we don't need to query (after initial loading)
     # - data are saved / discarded on final exit (only)
 
-    def _make(self):
+    def __init__(self, log, session, bar):
+        self.__log = log
+        self.__session = session
+        self.__bar = bar
         tabs = TabList()
         body = []
-        for injury in self._session.query(Injury).order_by(Injury.sort).all():
-            widget = InjuryWidget(self._log, tabs, self._bar, self)
-            widget.connect(Binder(self._log, self._session, widget, Injury, defaults={'id': injury.id}))
+        for injury in self.__session.query(Injury).order_by(Injury.sort).all():
+            widget = InjuryWidget(self.__log, tabs, self.__bar, self)
+            widget.connect(Binder(self.__log, self.__session, widget, Injury, defaults={'id': injury.id}))
             body.append(widget)
         # and a button to add blanks
         more = SquareButton('More')
         body.append(tabs.append(Padding(Fixed(more, 8), width='clip')))
         connect_signal(more, 'click', self.__add_blank)
-        return DividedPile(body), tabs
+        super().__init__(log, DividedPile(body), tabs)
 
     def __add_blank(self, _unused_widget):
         tabs = TabList()
-        widget = InjuryWidget(self._log, tabs, self._bar, self)
-        widget.connect(Binder(self._log, self._session, widget, Injury))
+        widget = InjuryWidget(self.__log, tabs, self.__bar, self)
+        widget.connect(Binder(self.__log, self.__session, widget, Injury))
         body = self._w.contents
         n = len(body)
         body.insert(n-1, (Divider(), (WEIGHT, 1)))
@@ -89,7 +92,7 @@ class Injuries(DynamicContent):
     def remove(self, widget):
         body = self._w.contents
         index = list(map(lambda x: x[0], body)).index(widget)
-        self._log.debug('Index %d: %s' % (index, body[index]))
+        self.__log.debug('Index %d: %s' % (index, body[index]))
         del body[index]
         del body[index]
         self._w.contents = body
@@ -103,11 +106,6 @@ class InjuryApp(App):
         tabs = TabList()
         self.injuries = tabs.append(Injuries(log, session, bar))
         super().__init__(log, 'Diary', bar, self.injuries, tabs, session)
-
-    def rebuild(self, _unused_widget, _unused_value):
-        self.__session.commit()
-        self.injuries.rebuild()
-        self.root.discover()
 
 
 def main(args):

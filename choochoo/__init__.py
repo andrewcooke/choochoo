@@ -2,14 +2,10 @@
 from .args import COMMAND, DIARY, INJURIES, parser, NamespaceWithVariables, AIMS, REMINDERS
 from .diary import main as diary
 from .injuries import main as injuries
-from .aims import main as aims
-from .reminders import main as reminders
 
 
 COMMANDS = {DIARY: diary,
-            INJURIES: injuries,
-            AIMS: aims,
-            REMINDERS: reminders}
+            INJURIES: injuries}
 
 
 def main():
