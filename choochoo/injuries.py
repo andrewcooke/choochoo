@@ -69,7 +69,7 @@ class Injuries(TabNode):
         body = []
         for injury in self.__session.query(Injury).order_by(Injury.sort).all():
             widget = InjuryWidget(self.__log, tabs, self.__bar, self)
-            widget.connect(Binder(self.__log, self.__session, widget, Injury, defaults={'id': injury.id}))
+            widget.connect(Binder(self.__log, self.__session, widget, instance=injury))
             body.append(widget)
         # and a button to add blanks
         more = SquareButton('More')

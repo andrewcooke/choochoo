@@ -11,21 +11,26 @@ class Binder:
     # 2 - rows can be navigated.  a single primary key only.  when changed, the session
     #     is committed and a new value read from the database.
 
-    def __init__(self, log, session, widget, table, multirow=False, defaults=None):
+    def __init__(self, log, session, widget, table=None, multirow=False, defaults=None, instance=None):
         if defaults is None: defaults = {}
         self.__log = log
         self.__session = session
         self.__widget = widget
-        self.__table = table
         self.__multirow = multirow
         self.__defaults = defaults
         self.__primary_keys = tuple(map(lambda column: column.name, inspect(table).primary_key))
         self.__ignore_changes = False
         if self.__multirow and len(self.__primary_keys) > 1:
             raise Exception('Composite key not compatible with multirow')
-        self.instance = None
-        self.__from_database = False
-        self.__read()
+        if instance:
+            self.instance = instance
+            self.__table = type(instance)
+            self.__from_database = True
+        else:
+            self.instance = None
+            self.__table = table
+            self.__from_database = False
+            self.__read()
         self.__bind()
 
     def __bind(self,):

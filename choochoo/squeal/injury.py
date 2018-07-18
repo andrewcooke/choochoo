@@ -12,9 +12,9 @@ class Injury(Base):
     id = Column(Integer, primary_key=True)
     start = Column(Ordinal)
     finish = Column(Ordinal)
-    title = Column(Text, nullable=False, default='')
-    description = Column(Text, nullable=False, default='')
-    sort = Column(Text, nullable=False, default='')
+    title = Column(Text, nullable=False, server_default='')
+    description = Column(Text, nullable=False, server_default='')
+    sort = Column(Text, nullable=False, server_default='')
 
 
 class InjuryDiary(Base):
@@ -26,4 +26,4 @@ class InjuryDiary(Base):
     pain_average = Column(Integer)
     pain_peak = Column(Integer)
     pain_frequency = Column(Integer)
-    notes = Column(Text, nullable=False, default='')
+    notes = Column(Text, nullable=False, server_default='')

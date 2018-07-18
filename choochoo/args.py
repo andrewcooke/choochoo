@@ -12,8 +12,7 @@ COMMAND = 'command'
 
 DIARY = 'diary'
 INJURIES = 'injuries'
-AIMS = 'aims'
-REMINDERS = 'reminders'
+SCHEDULES = 'schedules'
 
 ROOT = 'root'
 DATABASE = 'database'
@@ -81,10 +80,7 @@ def parser():
                                        help='manage injury entries - see `%s %s -h` for more details' %
                                             (PROGNAME, INJURIES))
     p_injuries.set_defaults(command=INJURIES)
-    p_aims = subparsers.add_parser(AIMS,
-                                   help='manage aim entries - see `%s %s -h` for more details' % (PROGNAME, AIMS))
-    p_aims.set_defaults(command=AIMS)
-    p_reminders = subparsers.add_parser(REMINDERS,
-                                        help='manage reminders - see `%s %s -h` for more details' % (PROGNAME, REMINDERS))
-    p_reminders.set_defaults(command=REMINDERS)
+    p_reminders = subparsers.add_parser(SCHEDULES,
+                                        help='manage schedules - see `%s %s -h` for more details' % (PROGNAME, SCHEDULES))
+    p_reminders.set_defaults(command=SCHEDULES)
     return p
