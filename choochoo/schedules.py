@@ -1,13 +1,17 @@
+
 from urwid import Edit, Columns
 
-from .widgets import App
 from .log import make_log
+from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.schedule import Schedule
+from .squeal.schedule import Schedule, ScheduleType
+from .uweird.calendar import TextDate
+from .uweird.decorators import Indent
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList
-from .uweird.widgets import DynamicContent
+from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace
+from .widgets import App
 
 
 class ScheduleWidget(FocusWrap):
@@ -21,8 +25,24 @@ class ScheduleWidget(FocusWrap):
 class SchedulesEditor(FocusWrap):
 
     def __init__(self, log, session, bar, schedules):
+        self.__log = log
+        self.__session = session
+        self.__bar = bar
+        tabs = TabList()
+        body = []
+        for schedule in sorted(schedules):
+            body.append(self.__nested(schedule, tabs))
+        super().__init__(DividedPile(body))
 
-        super().__init__()
+    def __nested(self, schedule, tabs):
+        widget = ScheduleWidget(self.__log, tabs, self.__bar)
+        Binder(self.__log, self.__session, widget, instance=schedule)
+        children = []
+        for child in sorted(schedule.children):
+            children.append(self.__nested(child, tabs))
+        if children:
+            widget = DividedPile([widget, Indent(DividedPile(children))])
+        return widget
 
 
 class SchedulesFilter(DynamicContent):
@@ -34,21 +54,25 @@ class SchedulesFilter(DynamicContent):
     def __init__(self, log, session, bar):
         self.__tabs = TabList()
         factory = Factory(self.__tabs, bar)
-        # self.type = factory(TypeFilter())
-        # self.date = factory(DateFilter())
-        self.__tabs.append(TabList())  # for editor
+        types = dict((type.id, type.name) for type in session.query(ScheduleType).all())
+        self.type = factory(Menu('', types))
+        self.date = factory(TextDate(log))
         super().__init__(log, session, bar)
 
-    def __read(self):
-        pass
-
     def _make(self):
-        # todo - type filter
         root_schedules = list(self._session.query(Schedule).filter(Schedule.parent_id == None).all())
         # todo - ordinals from date filter
+        # todo - tabs
+        # todo - apply (filter) button
         editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules)
-        body = [Columns(self.type, self.date), editor, ]
-        return editor, self.__tabs
+        body = [Columns([ColText('Filter: '),
+                         (18, self.date),
+                         ColText(' '),
+                         self.type,
+                         ColText(' [ Apply ]')
+                         ]),
+                editor]
+        return DividedPile(body), self.__tabs
 
 
 class ScheduleApp(App):
@@ -57,7 +81,7 @@ class ScheduleApp(App):
         self.__session = session
         tabs = TabList()
         self.injuries = tabs.append(SchedulesFilter(log, session, bar))
-        super().__init__(log, 'Diary', bar, self.injuries, tabs, session)
+        super().__init__(log, 'Schedules', bar, self.injuries, tabs, session)
 
 
 def main(args):

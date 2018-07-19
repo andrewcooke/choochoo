@@ -115,7 +115,7 @@ class Month(DateKeyPressMixin, MutableStatefulText):
         MutableStatefulText.__init__(self, date)
         DateKeyPressMixin.__init__(self, 'M')
 
-    def state_as_text(self):
+    def _state_as_text(self):
         if self._as_text:
             return MONTHS[self.state.month]
         else:
@@ -136,7 +136,7 @@ class Year(DateKeyPressMixin, MutableStatefulText):
         MutableStatefulText.__init__(self, date)
         DateKeyPressMixin.__init__(self, 'y')
 
-    def state_as_text(self):
+    def _state_as_text(self):
         return str(self.state.year)
 
 
@@ -151,7 +151,7 @@ class Day(ImmutableStatefulText):
 
     signals = ['click']
 
-    def state_as_text(self):
+    def _state_as_text(self):
         return '%2s' % self.state.day
 
     def keypress(self, size, key):
@@ -214,7 +214,7 @@ class StatefulSymbol(MutableStatefulText):
         # call super after saving symbol so we can display it
         super().__init__(state)
 
-    def state_as_text(self):
+    def _state_as_text(self):
         return self._symbol
 
     def mouse_event(self, size, event, button, col, row, focus):
@@ -330,7 +330,7 @@ class DayOfMonth(DateKeyPressMixin, MutableStatefulText):
         MutableStatefulText.__init__(self, state)
         DateKeyPressMixin.__init__(self, 'd')
 
-    def state_as_text(self):
+    def _state_as_text(self):
         return '%02d' % self.state.day
 
 
@@ -348,7 +348,7 @@ class DayOfWeek(DateKeyPressMixin, MutableStatefulText):
         MutableStatefulText.__init__(self, state)
         DateKeyPressMixin.__init__(self, 'D')
 
-    def state_as_text(self):
+    def _state_as_text(self):
         return DAYS3[self.state.weekday()]
 
 

@@ -1,3 +1,4 @@
+from functools import total_ordering
 
 from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, backref
@@ -16,6 +17,7 @@ class ScheduleType(Base):
     sort = Column(Text, nullable=False, server_default='')
 
 
+@total_ordering
 class Schedule(Base):
 
     __tablename__ = 'schedule'
@@ -46,6 +48,19 @@ class Schedule(Base):
     def __repr__(self):
         return '%d: %s (parent %s; children %s)' % \
                (self.id, self.title, self.parent.id if self.parent else None, [c.id for c in self.children])
+
+    @property
+    def comparison(self):
+        return self.type.sort, self.type.name, self.sort, self.title
+
+    def __lt__(self, other):
+        if isinstance(other, Schedule):
+            return other.comparison < self.comparison
+        else:
+            raise NotImplemented
+
+    def __eq__(self, other):
+        return isinstance(other, Schedule) and other.id == self.id
 
 
 class ScheduleDiary(Base):

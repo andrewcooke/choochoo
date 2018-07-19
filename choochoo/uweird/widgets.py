@@ -28,6 +28,13 @@ class Nullable(FocusWrap):
         super().__init__(self.__replacement)
         self.__set_state(state)
 
+    def _invalidate(self):
+        try:
+            self._w.update_bar()  # message bar
+        except AttributeError:
+            pass
+        super()._invalidate()
+
     def __set_state(self, state):
         if state is None:
             self._w = self.__replacement
@@ -36,13 +43,6 @@ class Nullable(FocusWrap):
             connect_signal(self._w, 'change', self._bounce_change)  # todo weak ref here?
         else:
             self._w.state = state
-
-    def _invalidate(self):
-        try:
-            self._w.update_bar()  # message bar
-        except AttributeError:
-            pass
-        super()._invalidate()
 
     def __get_state(self):
         if self._w == self.__replacement:
@@ -88,27 +88,13 @@ def ColSpace():
     return WEIGHT, 1, Padding(Text(''))
 
 
-class NonableInt(MutableStatefulText):
-
-    def __init__(self, caption='', state=None):
-        self._caption = caption
-        super().__init__(state)
-
-    def state_as_text(self):
-        if self.state is None:
-            text = '_'
-        else:
-            text = str(self.state)
-        return self._caption + text
-
-
 class Rating(MutableStatefulText):
 
     def __init__(self, caption='', state=None):
         self._caption = caption
         super().__init__(state)
 
-    def state_as_text(self):
+    def _state_as_text(self):
         if self.state is None:
             text = '_'
         else:
@@ -159,7 +145,7 @@ class Number(MutableStatefulText):
             self._string = str(state)
         self._set_state_internal(state)
 
-    def state_as_text(self):
+    def _state_as_text(self):
         if self.state is None:
             return self._caption + '_'
         else:
@@ -271,3 +257,42 @@ class DynamicContent(TabNode):
         self.replace_all(tabs)
 
 
+class Menu(MutableStatefulText):
+
+    def __init__(self, caption, options, state=None):
+        self.__caption = caption
+        # options are map from state to text
+        self.__options = options
+        ordered_pairs = list(sorted((text[0].lower(), key) for (key, text) in options.items()))
+        self.__keys = [key for (prefix, key) in ordered_pairs]
+        self.__prefixes = {}
+        for (prefix, key) in ordered_pairs:
+            if prefix not in self.__prefixes: self.__prefixes[prefix] = []
+            self.__prefixes[prefix].append(key)
+        if state is None:
+            state = next(iter(self.__options.keys()))
+        if state not in options:
+            raise Exception('Illegal state')
+        super().__init__(state)
+
+    def _state_as_text(self):
+        return self.__caption + self.__options[self.state]
+
+    def __rotate(self, list, delta):
+        if delta < 0:
+            return list[-1:] + list[:-1]
+        else:
+            return list[1:] + list[:1]
+
+    def keypress(self, size, key):
+        current = self.__options[self.state][0].lower()
+        lower = key.lower()
+        delta = 1 if key == lower else -1
+        if lower in self.__prefixes:
+            if lower == current:
+                self.__prefixes[lower] = self.__rotate(self.__prefixes[lower], delta)
+            self.state = self.__prefixes[lower][0]
+        elif self._command_map[key] == 'activate':
+            self.state = self.__keys[(self.__keys.index(self.state) + 1) % len(self.__keys)]
+        else:
+            return key

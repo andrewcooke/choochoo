@@ -21,11 +21,11 @@ class ImmutableStatefulText(FocusWrap):
     def state(self):
         return self._state
 
-    def state_as_text(self):
+    def _state_as_text(self):
         return str(self.state)
 
     def _update_text(self):
-        self._text.set_text(self.state_as_text())
+        self._text.set_text(self._state_as_text())
         self._invalidate()
 
     def keypress(self, size, key):
