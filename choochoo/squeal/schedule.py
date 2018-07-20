@@ -37,7 +37,7 @@ class Schedule(Base):
     sort = Column(Text, nullable=False, server_default='')
 
     def at_location(self, ordinals):
-        if self.repeat:
+        if self.repeat and ordinals:
             spec = Specification(self.repeat)
             spec.start = self.start
             spec.finish = self.finish

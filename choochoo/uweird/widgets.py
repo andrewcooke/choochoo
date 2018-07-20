@@ -22,6 +22,7 @@ class Nullable(FocusWrap):
     def __init__(self, replacement, make_widget, state=None, bar=None,
                  message='enter/spc to activate; del to reset'):
         self.__replacement = FocusAttr(SquareButton(replacement))
+        self.__save_state = None
         if bar:
             self.__replacement = OnFocus(self.__replacement, message=message, bar=bar)
         self.__make_widget = make_widget
@@ -36,12 +37,15 @@ class Nullable(FocusWrap):
         super()._invalidate()
 
     def __set_state(self, state):
+        nulled = self._w == self.__replacement
         if state is None:
+            if not nulled:
+                self.__save_state = self._w.state
             self._w = self.__replacement
-        elif self._w == self.__replacement:
-            self._w = self.__make_widget(state)
-            connect_signal(self._w, 'change', self._bounce_change)  # todo weak ref here?
         else:
+            if nulled:
+                self._w = self.__make_widget(self.__save_state)
+                connect_signal(self._w, 'change', self._bounce_change)  # todo weak ref here?
             self._w.state = state
 
     def __get_state(self):
@@ -55,12 +59,13 @@ class Nullable(FocusWrap):
     def keypress(self, size, key):
         if self._w == self.__replacement:
             if self._command_map[key] == 'activate':
-                self._w = self.__make_widget(None)
+                self._w = self.__make_widget(self.__save_state)
                 self._bounce_change('change', self._w, self._w.state)
                 self._invalidate()
                 return
         else:
             if key in ('delete', 'backspace'):
+                self.__save_state = self._w.state
                 self._w = self.__replacement
                 self._bounce_change('change', self._w, None)
                 self._invalidate()
@@ -81,11 +86,11 @@ def ColText(text):
     return len(text), Text(text)
 
 
-def ColSpace():
+def ColSpace(weight=1):
     """
     Shorthand for an empty, expanding column.
     """
-    return WEIGHT, 1, Padding(Text(''))
+    return WEIGHT, weight, Padding(Text(''))
 
 
 class Rating(MutableStatefulText):
