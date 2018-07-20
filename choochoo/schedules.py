@@ -1,5 +1,5 @@
 
-from urwid import Edit, Columns, Pile
+from urwid import Edit, Columns, Pile, CheckBox
 
 from .log import make_log
 from .repeating import DateOrdinals
@@ -11,7 +11,7 @@ from .uweird.decorators import Indent
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList
-from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace, Nullable
+from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace, Nullable, SquareButton
 from .widgets import App
 
 
@@ -24,10 +24,16 @@ class ScheduleWidget(FocusWrap):
         self.repeat = factory(Edit('Repeat: '))
         self.start = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
         self.finish = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
-        self.description = factory(Edit('Description: '))
+        self.description = factory(Edit('Description: ', multiline=True))
+        self.sort = factory(Edit('Sort: '))
+        self.has_notes = factory(CheckBox("Notes? "))
+        delete = SquareButton('Delete')
+        reset = SquareButton('Reset')
+        add_child = SquareButton('Add')
         body = [Columns([('weight', 1, self.type_id), ColText('  '), ('weight', 3, self.title)]),
                 Columns([self.repeat, ColText('  '), self.start, ColText('  '), self.finish]),
-                self.description]
+                self.description,
+                Columns([self.sort, ColText('  '), self.has_notes, ColSpace(), (7, add_child), (10, delete), (9, reset)])]
         super().__init__(Pile(body))
 
 
@@ -43,6 +49,8 @@ class SchedulesEditor(FocusWrap):
         body = []
         for schedule in sorted(schedules):
             body.append(self.__nested(schedule, tabs))
+        add = SquareButton('Add')
+        body.append(Columns([(7, add), ColSpace()]))
         super().__init__(DividedPile(body))
 
     def __nested(self, schedule, tabs):
@@ -82,14 +90,16 @@ class SchedulesFilter(DynamicContent):
             date = DateOrdinals(date)
             root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]
         # todo - tabs
-        # todo - apply (filter) button
+        apply = SquareButton('Apply')
+        discard = SquareButton('Discard')
         editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules, date, self.__types)
         body = [Columns([ColText('Filter: '),
                          (18, self.date),
                          ColText(' '),
                          self.type,
                          ColSpace(),
-                         ColText(' [ Apply ]')
+                         (9, apply),
+                         (11, discard),
                          ]),
                 editor]
         return DividedPile(body), self.__tabs

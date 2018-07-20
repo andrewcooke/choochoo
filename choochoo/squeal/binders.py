@@ -73,8 +73,8 @@ class Binder:
 
     def __with_default(self, column, value):
         if not column.nullable and value is None:
-            if column.default:
-                value = column.default.arg
+            if column.server_default:
+                value = column.server_default.arg
                 setattr(self.instance, column.name, value)
             else:
                 raise Exception('Column %s is not nullable, but has no default' % column)

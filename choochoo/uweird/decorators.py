@@ -1,5 +1,8 @@
 
-from urwid import LineBox
+from urwid import LineBox, Columns
+
+from .focus import FocusWrap
+from .widgets import ColText
 
 
 class Border(LineBox):
@@ -16,14 +19,13 @@ class Border(LineBox):
             pass
 
 
-class Indent(LineBox):
+class Indent(FocusWrap):
     """
     An indent on the left..
     """
 
     def __init__(self, contents, width=1):
-        super().__init__(contents, tlcorner='' , tline='', lline=' ' * width, trcorner='',
-                         blcorner='', rline='', bline='', brcorner='')
+        super().__init__(Columns([ColText(' ' * width), contents]))
         try:
             self.contents = self._w.contents
         except AttributeError:

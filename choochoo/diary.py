@@ -69,9 +69,9 @@ class Injuries(DynamicDate):
 
 class ScheduleWidget(FocusWrap):
 
-    def __init__(self, tabs, bar, schedule_type, schedule):
+    def __init__(self, log, tabs, bar, schedule):
         factory = Factory(tabs, bar)
-        body = [Text('%s: %s' % (schedule_type.name, schedule.title))]
+        body = [Text('%s: %s' % (schedule.type.name, schedule.title))]
         if schedule.has_notes:
             self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
             body.append(self.notes)
@@ -82,46 +82,28 @@ class Schedules(DynamicDate):
 
     def _make(self):
         ordinals = DateOrdinals(self.date)
-
-        def get_schedules(type_id, parent_id):
-            candidates = list(self._session.query(Schedule).filter(Schedule.type_id == type_id).
-                              filter(or_(Schedule.start == None, Schedule.start <= self.date),
-                                     or_(Schedule.finish == None, Schedule.finish >= self.date)).
-                              filter(Schedule.parent_id == parent_id).
-                              order_by(Schedule.sort).all())
-            candidates = filter(lambda s: s.at_location(ordinals), candidates)
-            return candidates
-
+        root_schedules = [schedule for schedule in
+                          self._session.query(Schedule).filter(Schedule.parent_id == None).all()
+                          if schedule.at_location(ordinals)]
         tabs = TabList()
         body = []
-
-        for schedule_type in self._session.query(ScheduleType).order_by(ScheduleType.sort).all():
-            root_schedules = get_schedules(schedule_type.id, None)
-            if root_schedules:
-                stack = [root_schedules]
-                body = [[]]
-
-                while stack:  # stack entries are never empty
-
-                    schedule = stack[-1].pop()
-                    widget = ScheduleWidget(tabs, self._bar, schedule_type, schedule)
-                    Binder(self._log, self._session, widget, ScheduleDiary,
-                           defaults={'schedule_id': schedule.id, 'date': self.date})
-                    body[-1].append(widget)
-
-                    if not stack[-1]:
-                        stack = stack[:-1]
-                        body.append(Indent(body.pop()))
-
-                    children = get_schedules(schedule_type.id, schedule.id)
-                    if children:
-                        stack.append(children)
-                        body.append([])
-
+        for schedule in sorted(root_schedules):
+            body.append(self.__make_schedule(tabs, ordinals, schedule))
         if body:
             return DividedPile([Text('Schedule'), Padding(DividedPile(body), left=2)]), tabs
         else:
             return Pile([]), tabs
+
+    def __make_schedule(self, tabs, ordinals, schedule):
+        widget = ScheduleWidget(self._log, tabs, self._bar, schedule)
+        Binder(self._log, self._session, widget, table=ScheduleDiary)
+        children = []
+        for child in sorted(schedule.children):
+            if child.at_location(ordinals):
+                children.append(self.__make_schedule(tabs, ordinals, child))
+        if children:
+            widget = DividedPile([widget, Indent(DividedPile(children), width=2)])
+        return widget
 
 
 class DiaryApp(App):
