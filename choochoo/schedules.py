@@ -17,7 +17,7 @@ from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace
 
 class ScheduleWidget(FocusWrap):
 
-    def __init__(self, log, tabs, bar, types):
+    def __init__(self, log, session, tabs, bar, types, schedule):
         factory = Factory(tabs, bar)
         self.type_id = factory(Menu('Type: ', types))
         self.title = factory(Edit('Title: '))
@@ -30,11 +30,26 @@ class ScheduleWidget(FocusWrap):
         delete = SquareButton('Delete')
         reset = SquareButton('Reset')
         add_child = SquareButton('Add')
-        body = [Columns([('weight', 1, self.type_id), ColText('  '), ('weight', 3, self.title)]),
-                Columns([self.repeat, ColText('  '), self.start, ColText('  '), self.finish]),
+        body = [Columns([('weight', 1, self.type_id),
+                         ColText('  '),
+                         ('weight', 3, self.title)]),
+                Columns([self.repeat,
+                         ColText('  '),
+                         self.start,
+                         ColText('  '),
+                         self.finish]),
                 self.description,
-                Columns([self.sort, ColText('  '), self.has_notes, ColSpace(), (7, add_child), (10, delete), (9, reset)])]
+                Columns([self.sort,
+                         ColText('  '),
+                         self.has_notes,
+                         ColSpace(),
+                         (7, add_child),
+                         (10, delete),
+                         (9, reset)])]
         super().__init__(Pile(body))
+        binder = Binder(log, session, self, instance=schedule)
+        connect_signal(delete, 'click', lambda widget: binder.delete())
+        connect_signal(delete, 'click', lambda widget: binder.reset())
 
 
 class SchedulesEditor(TabNode):
@@ -56,8 +71,7 @@ class SchedulesEditor(TabNode):
         super().__init__(log, DividedPile(body), tabs)
 
     def __nested(self, schedule, tabs):
-        widget = ScheduleWidget(self.__log, tabs, self.__bar, self.__types)
-        Binder(self.__log, self.__session, widget, instance=schedule)
+        widget = ScheduleWidget(self.__log, self.__session, tabs, self.__bar, self.__types, schedule)
         children = []
         for child in sorted(schedule.children):
             if child.at_location(self.__ordinals):
@@ -115,6 +129,7 @@ class SchedulesFilter(DynamicContent):
 
     def __filter(self, save):
         if save:
+            self._session.flush()
             self._session.commit()
         else:
             self._session.expunge_all()
