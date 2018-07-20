@@ -2,12 +2,32 @@
 # Choo-Choo
 
 This is a training diary built around my own needs as an (injured)
-cyclist.
-
-Currently it focusses on tracking and managing injuries.
+cyclist and programmer.
 
 Copyright (c) 2018 Andrew Cooke andrew@acooke.org, GPL v2 licence (see
 LICENCE).
+
+## Features
+
+* Simple, quick diary through TUI (Test User Interface) with
+  
+  * Basic daily stats (resting HR, sleep time, etc)
+
+  * Injury tracking
+
+* Efficient command line interface for basic actions (to come)
+
+* Sophisticated schedule engine:
+
+  * Flexible, compact specification of repeating events
+  
+  * Programmatic generation of training schedules (to come)
+  
+* All data exposed:
+
+  * Simple, normalised SQLite3 schema
+  
+  * SQLAlchemy object model
 
 ## Getting Started
 
@@ -22,8 +42,7 @@ would need to do something like:
 
 * Enable the environment with `source env/bin/activate`
 
-* Start the program with `dev/ch2 diary` (also `aims`, `injuries` and
-  `reminders`).
+* Start the program with `dev/ch2 diary`
 
 It's developed on Linux but with a little care should be
 cross-platform.
