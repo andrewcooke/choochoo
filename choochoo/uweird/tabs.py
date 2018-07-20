@@ -104,6 +104,9 @@ class TabList(Sequence):
     def __getitem__(self, item):
         return self.__tabs[item]
 
+    def __setitem__(self, index, item):
+        self.__tabs[index] = item
+
     def __len__(self):
         return len(self.__tabs)
 
@@ -156,7 +159,7 @@ class TabNode(FocusWrap):
             tab_list.append(self.__tabs_and_indices[i])
         return tab_list
 
-    def replace_all(self, tabs):
+    def replace(self, tabs):
         """
         Replace all the managed tabs.  Typically used at the local root of a dynamic
         section of the widget tree.
@@ -166,24 +169,18 @@ class TabNode(FocusWrap):
         self.__build_data(tabs)
         self.discover(root=self.__root, path=self.__path)
 
-    def replace_many(self, tabs):
-        tab_list = self.__to_tab_list()
-        for tab in tabs:
-            tab_list.remove(tab)
-        self.replace_all(tab_list)
-
     def insert(self, index, tab):
         """
         Add a tab at the index give (so insert(0, tab) is at start)
         """
         tab_list = self.__to_tab_list()
         tab_list.insert(index, tab)
-        self.replace_all(tab_list)
+        self.replace(tab_list)
 
     def insert_many(self, index, tabs):
         tab_list = self.__to_tab_list()
         tab_list.insert_many(index, tabs)
-        self.replace_all(tab_list)
+        self.replace(tab_list)
 
     def __len__(self):
         return len(self.__focus)

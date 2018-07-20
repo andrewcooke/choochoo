@@ -11,7 +11,7 @@ from .uweird.calendar import TextDate
 from .uweird.decorators import Indent
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
-from .uweird.tabs import TabList
+from .uweird.tabs import TabList, TabNode
 from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace, Nullable, SquareButton
 
 
@@ -37,7 +37,7 @@ class ScheduleWidget(FocusWrap):
         super().__init__(Pile(body))
 
 
-class SchedulesEditor(FocusWrap):
+class SchedulesEditor(TabNode):
 
     def __init__(self, log, session, bar, schedules, ordinals, types):
         self.__log = log
@@ -51,8 +51,9 @@ class SchedulesEditor(FocusWrap):
             body.append(self.__nested(schedule, tabs))
         add_type = Menu('Type: ', types)
         add_top_level = SquareButton('Add')
-        body.append(Columns([(7, add_top_level), ColText('  '), add_type, ColSpace()]))
-        super().__init__(DividedPile(body))
+        factory = Factory(tabs, bar)
+        body.append(Columns([(7, factory(add_top_level)), ColText('  '), factory(add_type), ColSpace()]))
+        super().__init__(log, DividedPile(body), tabs)
 
     def __nested(self, schedule, tabs):
         widget = ScheduleWidget(self.__log, tabs, self.__bar, self.__types)
@@ -104,10 +105,13 @@ class SchedulesFilter(DynamicContent):
             date = DateOrdinals(date)
             root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]
             self._log.debug('Root schedules at %s: %d' % (date, len(root_schedules)))
-        # todo - tabs
-        body = [self.filter,
-                SchedulesEditor(self._log, self._session, self._bar, root_schedules, date, self.__types)]
-        return DividedPile(body), self.__tabs
+        editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules, date, self.__types)
+        # on initial call, add tabs; later calls replace them (keeping filter tabs)
+        if len(self.__tabs) > 4:
+            self.__tabs[4] = editor
+        else:
+            self.__tabs.append(editor)
+        return DividedPile([self.filter, editor]), self.__tabs
 
     def __filter(self, save):
         if save:
