@@ -96,7 +96,8 @@ class Schedules(DynamicDate):
 
     def __make_schedule(self, tabs, ordinals, schedule):
         widget = ScheduleWidget(self._log, tabs, self._bar, schedule)
-        Binder(self._log, self._session, widget, table=ScheduleDiary)
+        Binder(self._log, self._session, widget, table=ScheduleDiary,
+               defaults={'date': ordinals.date, 'schedule_id': schedule.id})
         children = []
         for child in sorted(schedule.children):
             if child.at_location(ordinals):
