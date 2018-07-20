@@ -1,6 +1,7 @@
 
-from urwid import WEIGHT, Edit, Pile, Columns, connect_signal, Padding, Text, Divider
+from urwid import WEIGHT, Edit, Pile, Columns, connect_signal, Padding, Divider
 
+from .lib.widgets import App
 from .log import make_log
 from .squeal.binders import Binder
 from .squeal.database import Database
@@ -10,8 +11,7 @@ from .uweird.factory import Factory
 from .uweird.fixed import Fixed
 from .uweird.focus import MessageBar, FocusWrap
 from .uweird.tabs import TabList, TabNode
-from .uweird.widgets import DividedPile, Nullable, SquareButton, ColSpace, ColText, DynamicContent
-from .widgets import App
+from .uweird.widgets import DividedPile, Nullable, SquareButton, ColSpace, ColText
 
 
 class InjuryWidget(FocusWrap):

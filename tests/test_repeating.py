@@ -1,7 +1,7 @@
 
 import datetime as dt
 
-from choochoo.repeating import Specification, DateOrdinals
+from choochoo.lib.repeating import Specification, DateOrdinals
 
 
 def assert_str(x, s):
@@ -51,6 +51,11 @@ def test_day():
     assert_at('2d[1Fr]', '2018-07-06', True, True)
     assert_at('2d[2Fr]', '2018-07-06', True, False)
     assert_at('2d[Mo]', '2018-07-06', True, False)
+    assert_at('2d[Fr]2018-07-06', '2018-07-06', True, True)
+    assert_at('2d[Fr]2018-07-07', '2018-07-06', False, False)
+    assert_at('2d[Fr]2018-07-06-2018-07-06', '2018-07-06', True, True)
+    assert_at('2d[Fr]2018-07-07-2018-07-07', '2018-07-06', False, False)
+    assert_at('2d[Fr]2018-07-05-2018-07-05', '2018-07-06', False, False)
 
 
 def test_week():

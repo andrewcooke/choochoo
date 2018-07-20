@@ -141,7 +141,7 @@ class Specification:
         self.__start = self.__parse_null_date(date)
 
     def __set_finish(self, date):
-        self.__start = self.__parse_null_date(date)
+        self.__finish = self.__parse_null_date(date)
 
     start = property(lambda self: self.__start, __set_start)
     finish = property(lambda self: self.__finish, __set_finish)
@@ -159,6 +159,9 @@ class DateOrdinals:
         self.w = (self.d + WEEK_OFFSET) // 7  # 1970-01-01 is Th
         self.ordinals = vars(self)
         self.date = date
+
+    def __str__(self):
+        return self.date.strftime('%Y-%m-%d')
 
 
 class Frame(ABC):

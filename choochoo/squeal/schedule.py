@@ -3,7 +3,7 @@ from functools import total_ordering
 from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, backref
 
-from ..repeating import Specification
+from ..lib.repeating import Specification
 from .types import Ordinal
 from .support import Base
 
@@ -37,8 +37,9 @@ class Schedule(Base):
     sort = Column(Text, nullable=False, server_default='')
 
     def at_location(self, ordinals):
-        if self.repeat and ordinals:
-            spec = Specification(self.repeat)
+        if ordinals:
+            # allow for empty repeat, but still support start / finish
+            spec = Specification(self.repeat if self.repeat else 'd')
             spec.start = self.start
             spec.finish = self.finish
             return spec.frame().at_location(ordinals)

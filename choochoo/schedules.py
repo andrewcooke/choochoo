@@ -1,8 +1,9 @@
 
-from urwid import Edit, Columns, Pile, CheckBox
+from urwid import Edit, Columns, Pile, CheckBox, connect_signal
 
+from .lib.repeating import DateOrdinals
+from .lib.widgets import App
 from .log import make_log
-from .repeating import DateOrdinals
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.schedule import Schedule, ScheduleType
@@ -12,7 +13,6 @@ from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList
 from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace, Nullable, SquareButton
-from .widgets import App
 
 
 class ScheduleWidget(FocusWrap):
@@ -49,8 +49,9 @@ class SchedulesEditor(FocusWrap):
         body = []
         for schedule in sorted(schedules):
             body.append(self.__nested(schedule, tabs))
-        add = SquareButton('Add')
-        body.append(Columns([(7, add), ColSpace()]))
+        add_type = Menu('Type: ', types)
+        add_top_level = SquareButton('Add')
+        body.append(Columns([(7, add_top_level), ColText('  '), add_type, ColSpace()]))
         super().__init__(DividedPile(body))
 
     def __nested(self, schedule, tabs):
@@ -73,10 +74,22 @@ class SchedulesFilter(DynamicContent):
 
     def __init__(self, log, session, bar):
         self.__tabs = TabList()
-        # factory = Factory(self.__tabs, bar)
+        factory = Factory(self.__tabs, bar)
         self.__types = dict((type.id, type.name) for type in session.query(ScheduleType).all())
         self.type = Nullable('Any type', lambda state: Menu('', self.__types, state=state))
         self.date = Nullable('Any date', lambda state: TextDate(log, date=state))
+        apply = SquareButton('Apply')
+        discard = SquareButton('Discard')
+        self.filter = Columns([ColText('Filter: '),
+                               (18, factory(self.date)),
+                               ColText(' '),
+                               factory(self.type),
+                               ColSpace(),
+                               (9, factory(apply)),
+                               (11, factory(discard)),
+                               ])
+        connect_signal(apply, 'click', lambda widget: self.__filter(True))
+        connect_signal(discard, 'click', lambda widget: self.__filter(False))
         super().__init__(log, session, bar)
 
     def _make(self):
@@ -85,24 +98,23 @@ class SchedulesFilter(DynamicContent):
         if type_id is not None:
             query = query.filter(Schedule.type_id == type_id)
         root_schedules = list(query.all())
+        self._log.debug('Found %d root schedules' % len(root_schedules))
         date = self.date.state
         if date is not None:
             date = DateOrdinals(date)
             root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]
+            self._log.debug('Root schedules at %s: %d' % (date, len(root_schedules)))
         # todo - tabs
-        apply = SquareButton('Apply')
-        discard = SquareButton('Discard')
-        editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules, date, self.__types)
-        body = [Columns([ColText('Filter: '),
-                         (18, self.date),
-                         ColText(' '),
-                         self.type,
-                         ColSpace(),
-                         (9, apply),
-                         (11, discard),
-                         ]),
-                editor]
+        body = [self.filter,
+                SchedulesEditor(self._log, self._session, self._bar, root_schedules, date, self.__types)]
         return DividedPile(body), self.__tabs
+
+    def __filter(self, save):
+        if save:
+            self._session.commit()
+        else:
+            self._session.expunge_all()
+        self.rebuild()
 
 
 class ScheduleApp(App):

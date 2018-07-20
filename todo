@@ -1,0 +1,20 @@
+
+* Get sqa branch to feature parity with master (there now?)
+
+* Get sql branch complete (finish schedules)
+
+* Database migration
+
+* Read FITS files
+
+* Command line addition of reminders
+
+* Command line dumps of, eg, injury data
+
+* Plotting
+
+* Command line definition of traning plans
+
+  * Examples from British Cycling
+
+* Heart rate zone analysis

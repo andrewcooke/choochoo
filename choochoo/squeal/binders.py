@@ -133,7 +133,7 @@ class Binder:
 
     def reset(self):
         """
-        Revert the widget to the values in the databas e(or defaults, if it is not from there).
+        Revert the widget to the values in the database (or defaults, if it is not from there).
         """
         if self.instance:
             self.__log.debug('Refreshing %s' % self.instance)

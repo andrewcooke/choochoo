@@ -60,14 +60,14 @@ class Nullable(FocusWrap):
         if self._w == self.__replacement:
             if self._command_map[key] == 'activate':
                 self._w = self.__make_widget(self.__save_state)
-                self._bounce_change('change', self._w, self._w.state)
+                self._bounce_change(self._w, self._w.state)
                 self._invalidate()
                 return
         else:
             if key in ('delete', 'backspace'):
                 self.__save_state = self._w.state
                 self._w = self.__replacement
-                self._bounce_change('change', self._w, None)
+                self._bounce_change(self._w, None)
                 self._invalidate()
                 return
         try:
@@ -75,7 +75,7 @@ class Nullable(FocusWrap):
         except AttributeError:
                 return key
 
-    def _bounce_change(self, signal_name, unused_widget, value):
+    def _bounce_change(self, unused_widget, value):
         emit_signal(self, 'change', self, value)
 
 

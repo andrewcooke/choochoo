@@ -4,20 +4,20 @@ import datetime as dt
 from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal, WEIGHT
 
+from .lib.repeating import DateOrdinals
+from .lib.widgets import App
 from .log import make_log
-from .repeating import DateOrdinals
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.diary import Diary
 from .squeal.injury import Injury, InjuryDiary
-from .squeal.schedule import ScheduleType, Schedule, ScheduleDiary
+from .squeal.schedule import Schedule, ScheduleDiary
 from .uweird.calendar import Calendar
 from .uweird.decorators import Indent
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList
 from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile, DynamicContent
-from .widgets import App
 
 
 class InjuryWidget(FocusWrap):

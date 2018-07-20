@@ -1,13 +1,9 @@
 
-from urwid import Edit, Columns, Pile, MainLoop, Filler, Divider, Frame, Text, WEIGHT
+from urwid import Pile, MainLoop, Filler, Divider, Frame, Text
 
-from .utils import PALETTE
-from .uweird.calendar import TextDate
-from .uweird.decorators import Border
-from .uweird.factory import Factory
-from .uweird.focus import FocusWrap
-from .uweird.tabs import Root
-from .uweird.widgets import Nullable, SquareButton, ColText, ColSpace
+from ..utils import PALETTE
+from ..uweird.decorators import Border
+from ..uweird.tabs import Root
 
 
 class App(MainLoop):
