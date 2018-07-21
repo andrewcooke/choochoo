@@ -1,5 +1,6 @@
 
-from .focus import OnFocus
+from .tabs import Tab
+from .focus import OnFocus, FocusAttr
 
 
 class Factory:
@@ -8,7 +9,7 @@ class Factory:
         self.tabs = tabs
         self.bar = bar
 
-    def __call__(self, widget, message=None):
+    def __call__(self, widget, message=None, tab=True):  # todo
         if self.bar:
             if message:
                 widget = OnFocus(widget, message, self.bar)

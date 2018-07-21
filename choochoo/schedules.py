@@ -1,5 +1,5 @@
 
-from urwid import Edit, Columns, Pile, CheckBox, connect_signal
+from urwid import Edit, Columns, Pile, CheckBox, connect_signal, Divider
 
 from .lib.repeating import DateOrdinals
 from .lib.widgets import App
@@ -15,50 +15,66 @@ from .uweird.tabs import TabList, TabNode
 from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace, Nullable, SquareButton
 
 
+TYPE_WIDTH = 18
+DATE_WIDTH = 18
+
+
 class ScheduleWidget(FocusWrap):
 
-    def __init__(self, log, session, tabs, bar, type_names, schedule):
+    def __init__(self, log, session, tabs, bar, types, type_names, default_type, editor, schedule):
         factory = Factory(tabs, bar)
-        self.type_id = factory(Menu('Type: ', type_names))
+        self.__instance = schedule
+        self.__types = types
+        self.__default_type = default_type
+        self.__editor = editor
+        self.type_id = factory(Menu('Type: ', type_names), tab=False)
         self.title = factory(Edit('Title: '))
-        self.repeat = factory(Edit('Repeat: '))
-        self.start = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
-        self.finish = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
+        self.repeat = factory(Edit('Repeat: '), tab=False)
+        self.start = factory(Nullable('Open', lambda state: TextDate(log, date=state)), tab=False)
+        self.finish = factory(Nullable('Open', lambda state: TextDate(log, date=state)), tab=False)
         self.description = factory(Edit('Description: ', multiline=True))
-        self.sort = factory(Edit('Sort: '))
-        self.has_notes = factory(CheckBox("Notes? "))
+        self.sort = factory(Edit('Sort: '), tab=False)
+        self.has_notes = factory(CheckBox("Notes? "), tab=False)
+        add_child = SquareButton('Add Child')
         delete = SquareButton('Delete')
         reset = SquareButton('Reset')
-        add_child = SquareButton('Add')
-        body = [Columns([('weight', 1, self.type_id),
+        body = [Columns([(TYPE_WIDTH, self.type_id),
                          ColText('  '),
                          ('weight', 3, self.title)]),
                 Columns([self.repeat,
                          ColText('  '),
-                         self.start,
+                         (DATE_WIDTH, self.start),
                          ColText('  '),
-                         self.finish]),
+                         (DATE_WIDTH, self.finish)]),
                 self.description,
                 Columns([self.sort,
                          ColText('  '),
                          self.has_notes,
                          ColSpace(),
-                         (7, add_child),
-                         (10, delete),
-                         (9, reset)])]
+                         (11, factory(add_child, tab=False)),
+                         (8, factory(delete, tab=False)),
+                         (7, factory(reset, tab=False))])]
         super().__init__(Pile(body))
         binder = Binder(log, session, self, instance=schedule)
+        connect_signal(add_child, 'click', lambda widget: self.__add_child())
         connect_signal(delete, 'click', lambda widget: binder.delete())
-        connect_signal(delete, 'click', lambda widget: binder.reset())
+        connect_signal(reset, 'click', lambda widget: binder.reset())  # todo - children?
+
+    def __add_child(self):
+        type_id = self.__default_type.state
+        self.__instance.children.append(Schedule(type_id=type_id, type=self.__types[type_id],
+                                 has_notes=0, sort='', title=''))
+        self.__editor.rebuild()
 
 
 class SchedulesEditor(DynamicContent):
 
-    def __init__(self, log, session, bar, schedules, ordinals, types, type_names):
+    def __init__(self, log, session, bar, schedules, ordinals, types, type_names, default_type):
         self.__schedules = schedules
         self.__ordinals = ordinals
         self.__types = types
         self.__type_names = type_names
+        self.__default_type = default_type
         super().__init__(log, session, bar)
 
     def _make(self):
@@ -66,15 +82,15 @@ class SchedulesEditor(DynamicContent):
         body = []
         for schedule in sorted(self.__schedules):
             body.append(self.__nested(schedule, tabs))
-        add_type = Menu('Type: ', self.__type_names)
-        add_top_level = SquareButton('Add')
+        add_top_level = SquareButton('Add Parent')
         factory = Factory(tabs, self._bar)
-        body.append(Columns([(7, factory(add_top_level)), ColText('  '), factory(add_type), ColSpace()]))
-        connect_signal(add_top_level, 'click', lambda widget: self.__add_top_level(add_type.state))
+        body.append(Columns([(12, factory(add_top_level, tab=False)), ColText('  '), ColSpace()]))
+        connect_signal(add_top_level, 'click', lambda widget: self.__add_top_level())
         return DividedPile(body), tabs
 
     def __nested(self, schedule, tabs):
-        widget = ScheduleWidget(self._log, self._session, tabs, self._bar, self.__type_names, schedule)
+        widget = ScheduleWidget(self._log, self._session, tabs, self._bar, self.__types, self.__type_names,
+                                self.__default_type, self, schedule)
         children = []
         for child in sorted(schedule.children):
             if child.at_location(self.__ordinals):
@@ -83,14 +99,17 @@ class SchedulesEditor(DynamicContent):
             widget = DividedPile([widget, Indent(DividedPile(children), width=2)])
         return widget
 
-    def __add_top_level(self, type_id):
+    def __add_top_level(self):
+        type_id = self.__default_type.state
         self.__schedules.append(Schedule(type_id=type_id, type=self.__types[type_id],
                                          has_notes=0, sort='', title=''))
         self.rebuild()
 
     def __add_child(self, parent):
-        parent.children.append(Schedule(type_id=parent.type_id, type=parent.type,
+        type_id = self.__default_type.state
+        parent.children.append(Schedule(type_id=type_id, type=self.__types[type_id],
                                      has_notes=0, sort='', title=''))
+        self.rebuild()
 
 
 class SchedulesFilter(DynamicContent):
@@ -104,39 +123,56 @@ class SchedulesFilter(DynamicContent):
         factory = Factory(self.__tabs, bar)
         self.__types = dict((type.id, type) for type in session.query(ScheduleType).all())
         self.__type_names = dict((id, type.name) for id, type in self.__types.items())
-        self.type = Nullable('Any type', lambda state: Menu('', self.__types, state=state))
-        self.date = Nullable('Any date', lambda state: TextDate(log, date=state))
+        self.filter_type = Nullable('Any type', lambda state: Menu('', self.__type_names, state=state))
+        self.filter_date = Nullable('Open', lambda state: TextDate(log, date=state))
         apply = SquareButton('Apply')
         discard = SquareButton('Discard')
-        self.filter = Columns([ColText('Filter: '),
-                               (18, factory(self.date)),
-                               ColText(' '),
-                               factory(self.type),
-                               ColSpace(),
-                               (9, factory(apply)),
-                               (11, factory(discard)),
-                               ])
+        self.default_type = Menu('', self.__type_names)
+        delete = SquareButton('Delete')
+        self.new_type = Edit('New: ')
+        add = SquareButton('Add')
+        self.filter = Pile([
+            Columns([ColText('Filter   '),
+                     (DATE_WIDTH, factory(self.filter_date)),
+                     ColText(' '),
+                     (TYPE_WIDTH, factory(self.filter_type)),
+                     ColSpace(),
+                     (7, factory(apply)),
+                     (9, factory(discard, tab=False)),
+                     ]),
+            Columns([ColText('Types    Default: '),
+                     (TYPE_WIDTH, factory(self.default_type)),
+                     ColText(' '),
+                     (8, factory(delete, tab=False)),  # todo - only enable if no instances?
+                     ColSpace(),
+                     (TYPE_WIDTH, factory(self.new_type, tab=False)),
+                     (5, factory(add, tab=False))]),
+            Divider(div_char='-', top=1),
+        ])
         connect_signal(apply, 'click', lambda widget: self.__filter(True))
         connect_signal(discard, 'click', lambda widget: self.__filter(False))
+        connect_signal(delete, 'click', lambda widget: self.__delete_type())
+        connect_signal(add, 'click', lambda widget: self.__add_type())
+        self.__filter_tabs = len(self.__tabs)
         super().__init__(log, session, bar)
 
     def _make(self):
         query = self._session.query(Schedule).filter(Schedule.parent_id == None)
-        type_id = self.type.state
+        type_id = self.filter_type.state
         if type_id is not None:
             query = query.filter(Schedule.type_id == type_id)
         root_schedules = list(query.all())
         self._log.debug('Found %d root schedules' % len(root_schedules))
-        date = self.date.state
+        date = self.filter_date.state
         if date is not None:
             date = DateOrdinals(date)
             root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]
             self._log.debug('Root schedules at %s: %d' % (date, len(root_schedules)))
         editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules, date,
-                                 self.__types, self.__type_names)
+                                 self.__types, self.__type_names, self.default_type)
         # on initial call, add tabs; later calls replace them (keeping filter tabs)
-        if len(self.__tabs) > 4:
-            self.__tabs[4] = editor
+        if len(self.__tabs) > self.__filter_tabs:
+            self.__tabs[self.__filter_tabs] = editor
         else:
             self.__tabs.append(editor)
         return DividedPile([self.filter, editor]), self.__tabs
@@ -148,6 +184,12 @@ class SchedulesFilter(DynamicContent):
         else:
             self._session.expunge_all()
         self.rebuild()
+
+    def __add_type(self):
+        pass  # todo
+
+    def __delete_type(self):
+        pass  # todo
 
 
 class ScheduleApp(App):
