@@ -17,9 +17,9 @@ from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace
 
 class ScheduleWidget(FocusWrap):
 
-    def __init__(self, log, session, tabs, bar, types, schedule):
+    def __init__(self, log, session, tabs, bar, type_names, schedule):
         factory = Factory(tabs, bar)
-        self.type_id = factory(Menu('Type: ', types))
+        self.type_id = factory(Menu('Type: ', type_names))
         self.title = factory(Edit('Title: '))
         self.repeat = factory(Edit('Repeat: '))
         self.start = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
@@ -52,26 +52,29 @@ class ScheduleWidget(FocusWrap):
         connect_signal(delete, 'click', lambda widget: binder.reset())
 
 
-class SchedulesEditor(TabNode):
+class SchedulesEditor(DynamicContent):
 
-    def __init__(self, log, session, bar, schedules, ordinals, types):
-        self.__log = log
-        self.__session = session
-        self.__bar = bar
+    def __init__(self, log, session, bar, schedules, ordinals, types, type_names):
+        self.__schedules = schedules
         self.__ordinals = ordinals
         self.__types = types
+        self.__type_names = type_names
+        super().__init__(log, session, bar)
+
+    def _make(self):
         tabs = TabList()
         body = []
-        for schedule in sorted(schedules):
+        for schedule in sorted(self.__schedules):
             body.append(self.__nested(schedule, tabs))
-        add_type = Menu('Type: ', types)
+        add_type = Menu('Type: ', self.__type_names)
         add_top_level = SquareButton('Add')
-        factory = Factory(tabs, bar)
+        factory = Factory(tabs, self._bar)
         body.append(Columns([(7, factory(add_top_level)), ColText('  '), factory(add_type), ColSpace()]))
-        super().__init__(log, DividedPile(body), tabs)
+        connect_signal(add_top_level, 'click', lambda widget: self.__add_top_level(add_type.state))
+        return DividedPile(body), tabs
 
     def __nested(self, schedule, tabs):
-        widget = ScheduleWidget(self.__log, self.__session, tabs, self.__bar, self.__types, schedule)
+        widget = ScheduleWidget(self._log, self._session, tabs, self._bar, self.__type_names, schedule)
         children = []
         for child in sorted(schedule.children):
             if child.at_location(self.__ordinals):
@@ -79,6 +82,15 @@ class SchedulesEditor(TabNode):
         if children:
             widget = DividedPile([widget, Indent(DividedPile(children), width=2)])
         return widget
+
+    def __add_top_level(self, type_id):
+        self.__schedules.append(Schedule(type_id=type_id, type=self.__types[type_id],
+                                         has_notes=0, sort='', title=''))
+        self.rebuild()
+
+    def __add_child(self, parent):
+        parent.children.append(Schedule(type_id=parent.type_id, type=parent.type,
+                                     has_notes=0, sort='', title=''))
 
 
 class SchedulesFilter(DynamicContent):
@@ -90,7 +102,8 @@ class SchedulesFilter(DynamicContent):
     def __init__(self, log, session, bar):
         self.__tabs = TabList()
         factory = Factory(self.__tabs, bar)
-        self.__types = dict((type.id, type.name) for type in session.query(ScheduleType).all())
+        self.__types = dict((type.id, type) for type in session.query(ScheduleType).all())
+        self.__type_names = dict((id, type.name) for id, type in self.__types.items())
         self.type = Nullable('Any type', lambda state: Menu('', self.__types, state=state))
         self.date = Nullable('Any date', lambda state: TextDate(log, date=state))
         apply = SquareButton('Apply')
@@ -119,7 +132,8 @@ class SchedulesFilter(DynamicContent):
             date = DateOrdinals(date)
             root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]
             self._log.debug('Root schedules at %s: %d' % (date, len(root_schedules)))
-        editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules, date, self.__types)
+        editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules, date,
+                                 self.__types, self.__type_names)
         # on initial call, add tabs; later calls replace them (keeping filter tabs)
         if len(self.__tabs) > 4:
             self.__tabs[4] = editor

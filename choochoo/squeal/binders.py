@@ -25,7 +25,7 @@ class Binder:
             raise Exception('Composite key not compatible with multirow')
         if instance:
             self.instance = instance
-            self.__from_database = True
+            self.__from_database = all(getattr(instance, key) is not None for key in self.__primary_keys)
         else:
             self.instance = None
             self.__from_database = False

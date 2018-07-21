@@ -47,7 +47,7 @@ class Schedule(Base):
             return True
 
     def __repr__(self):
-        return '%d: %s (parent %s; children %s)' % \
+        return '%s: %s (parent %s; children %s)' % \
                (self.id, self.title, self.parent.id if self.parent else None, [c.id for c in self.children])
 
     @property
