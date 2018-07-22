@@ -2,7 +2,7 @@
 import datetime as dt
 
 from sqlalchemy import and_, or_
-from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal, WEIGHT
+from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
 from .lib.repeating import DateOrdinals
 from .lib.widgets import App
@@ -29,13 +29,13 @@ class InjuryWidget(FocusWrap):
         self.pain_freq = factory(Rating(caption='freq: '))
         self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
         super().__init__(
-            Pile([Columns([(WEIGHT, 1, Text(injury.title)),
-                           (WEIGHT, 1, Columns([ColText('Pain - '),
-                                                (11, self.pain_avg),
-                                                (8, self.pain_peak),
-                                                (9, self.pain_freq),
-                                                ColSpace(),
-                                                ])),
+            Pile([Columns([('weight', 1, Text(injury.title)),
+                           ('weight', 1, Columns([ColText('Pain - '),
+                                                  (11, self.pain_avg),
+                                                  (8, self.pain_peak),
+                                                  (9, self.pain_freq),
+                                                  ColSpace(),
+                                                  ])),
                            ]),
                   self.notes,
                   ]))
@@ -59,7 +59,7 @@ class Injuries(DynamicDate):
         body = []
         for injury in self._session.query(Injury).filter(
                 and_(or_(Injury.start == None, Injury.start <= self._date),
-                     or_(Injury.finish == None, Injury.finish >= self._date))).\
+                     or_(Injury.finish == None, Injury.finish >= self._date))). \
                 order_by(Injury.sort).all():
             widget = InjuryWidget(tabs, self._bar, injury)
             Binder(self._log, self._session, widget, InjuryDiary,
@@ -126,7 +126,7 @@ class DiaryApp(App):
         self.sleep = factory(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"))
         self.mood = factory(Rating(caption='Mood: '), message='2: sad; 4: normal; 6 happy')
         self.weather = factory(Edit(caption='Weather: '))
-        self.weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'))
+        self.'weight' = factory(Float(caption=''weight': ', maximum=100, dp=1, units='kg'))
         self.medication = factory(Edit(caption='Meds: '))
         Binder(log, session, self, Diary, multirow=True, defaults={'date': date})
         connect_signal(calendar, 'change', self.date_change)
@@ -135,19 +135,19 @@ class DiaryApp(App):
         self.schedules = factory.tabs.append(Schedules(log, session, bar, date=date))
 
         body = [Columns([(20, Padding(self.date, width='clip')),
-                         (WEIGHT, 1, Pile([self.notes,
-                                           Divider(),
-                                           Columns([self.rest_hr, self.sleep, self.mood]),
-                                           Columns([(WEIGHT, 2, self.weather), (WEIGHT, 1, self.weight)]),
-                                           self.medication,
-                                           ]))],
+                         ('weight', 1, Pile([self.notes,
+                                             Divider(),
+                                             Columns([self.rest_hr, self.sleep, self.mood]),
+                                             Columns([('weight', 2, self.weather), ('weight', 1, self.'weight')]),
+                                             self.medication,
+                                             ]))],
                         dividechars=2),
                 self.injuries,
                 self.schedules,
                 ]
         super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, session)
 
-    def date_change(self, unused_widget, date):
+    def date_change(self, _widget, date):
         self.__session.commit()
         self.injuries.rebuild(date)
         self.schedules.rebuild(date)
