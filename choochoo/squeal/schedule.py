@@ -26,6 +26,7 @@ class Schedule(Base):
     parent_id = Column(Integer, ForeignKey('schedule.id'), nullable=True)
     # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
     children = relationship('Schedule', backref=backref('parent', remote_side=[id]))
+    # type is used only for top-level parents (where parent_id is NULL)
     type_id = Column(Integer, ForeignKey('schedule_type.id'))
     type = relationship('ScheduleType')
     repeat = Column(Text, nullable=False, server_default='')

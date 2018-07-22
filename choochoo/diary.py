@@ -73,9 +73,12 @@ class Injuries(DynamicDate):
 
 class ScheduleWidget(FocusWrap):
 
-    def __init__(self, log, tabs, bar, schedule):
+    def __init__(self, log, tabs, bar, schedule, has_type):
         factory = Factory(tabs, bar)
-        body = [Text('%s: %s' % (schedule.type.name, schedule.title))]
+        if has_type:
+            body = [Text('%s: %s' % (schedule.type.name, schedule.title))]
+        else:
+            body = [Text(schedule.title)]
         if schedule.has_notes:
             self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
             body.append(self.notes)
@@ -98,14 +101,14 @@ class Schedules(DynamicDate):
         else:
             return Pile([]), tabs
 
-    def __make_schedule(self, tabs, ordinals, schedule):
-        widget = ScheduleWidget(self._log, tabs, self._bar, schedule)
+    def __make_schedule(self, tabs, ordinals, schedule, has_type=True):
+        widget = ScheduleWidget(self._log, tabs, self._bar, schedule, has_type)
         Binder(self._log, self._session, widget, table=ScheduleDiary,
                defaults={'date': ordinals.date, 'schedule_id': schedule.id})
         children = []
         for child in sorted(schedule.children):
             if child.at_location(ordinals):
-                children.append(self.__make_schedule(tabs, ordinals, child))
+                children.append(self.__make_schedule(tabs, ordinals, child, has_type=False))
         if children:
             widget = DividedPile([widget, Indent(DividedPile(children), width=2)])
         return widget
