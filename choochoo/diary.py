@@ -31,11 +31,11 @@ class InjuryWidget(FocusWrap):
         super().__init__(
             Pile([Columns([(WEIGHT, 1, Text(injury.title)),
                            (WEIGHT, 1, Columns([ColText('Pain - '),
-                                                  (11, self.pain_avg),
-                                                  (8, self.pain_peak),
-                                                  (9, self.pain_freq),
-                                                  ColSpace(),
-                                                  ])),
+                                                (11, self.pain_avg),
+                                                (8, self.pain_peak),
+                                                (9, self.pain_freq),
+                                                ColSpace(),
+                                                ])),
                            ]),
                   self.notes,
                   ]))
@@ -44,8 +44,12 @@ class InjuryWidget(FocusWrap):
 class DynamicDate(DynamicContent):
 
     def __init__(self, log, session, bar, date):
-        self.date = date
+        self._date = date
         super().__init__(log, session, bar)
+
+    def rebuild(self, date):
+        self._date = date
+        super().rebuild()
 
 
 class Injuries(DynamicDate):
@@ -54,12 +58,12 @@ class Injuries(DynamicDate):
         tabs = TabList()
         body = []
         for injury in self._session.query(Injury).filter(
-                and_(or_(Injury.start == None, Injury.start <= self.date),
-                     or_(Injury.finish == None, Injury.finish >= self.date))).\
+                and_(or_(Injury.start == None, Injury.start <= self._date),
+                     or_(Injury.finish == None, Injury.finish >= self._date))).\
                 order_by(Injury.sort).all():
             widget = InjuryWidget(tabs, self._bar, injury)
             Binder(self._log, self._session, widget, InjuryDiary,
-                   defaults={'injury_id': injury.id, 'date': self.date})
+                   defaults={'injury_id': injury.id, 'date': self._date})
             body.append(widget)
         if body:
             return DividedPile([Text('Injuries'), Padding(DividedPile(body), left=2)]), tabs
@@ -81,7 +85,7 @@ class ScheduleWidget(FocusWrap):
 class Schedules(DynamicDate):
 
     def _make(self):
-        ordinals = DateOrdinals(self.date)
+        ordinals = DateOrdinals(self._date)
         root_schedules = [schedule for schedule in
                           self._session.query(Schedule).filter(Schedule.parent_id == None).all()
                           if schedule.at_location(ordinals)]
