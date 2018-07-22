@@ -138,7 +138,7 @@ class DiaryApp(App):
                          ('weight', 1, Pile([self.notes,
                                              Divider(),
                                              Columns([self.rest_hr, self.sleep, self.mood]),
-                                             Columns([('weight', 2, self.weather), ('weight', 1, self.'weight')]),
+                                             Columns([('weight', 2, self.weather), ('weight', 1, self.weight)]),
                                              self.medication,
                                              ]))],
                         dividechars=2),
