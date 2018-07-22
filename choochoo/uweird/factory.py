@@ -1,5 +1,4 @@
 
-from .tabs import Tab
 from .focus import OnFocus, FocusAttr
 
 
@@ -17,4 +16,6 @@ class Factory:
             raise Exception('Message but no bar for %s (type %s)' % (widget, type(widget)))
         if self.tabs is not None:
             widget = self.tabs.append(widget)
+        else:
+            widget = FocusAttr(widget)
         return widget

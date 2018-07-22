@@ -21,12 +21,12 @@ DATE_WIDTH = 18
 
 class ScheduleWidget(FocusWrap):
 
-    def __init__(self, log, session, tabs, bar, types, type_names, default_type, editor, schedule):
-        factory = Factory(tabs, bar)
+    def __init__(self, log, session, types, type_names, default_type, editor, schedule):
         self.__instance = schedule
         self.__types = types
         self.__default_type = default_type
         self.__editor = editor
+        factory = Factory()
         self.type_id = factory(Menu('Type: ', type_names))
         self.title = factory(Edit('Title: '))
         self.repeat = factory(Edit('Repeat: '))
@@ -79,22 +79,22 @@ class SchedulesEditor(DynamicContent):
 
     def _make(self):
         tabs = TabList()
+        factory = Factory(tabs, self._bar)
         body = []
         for schedule in sorted(self.__schedules):
-            body.append(self.__nested(schedule, tabs))
+            body.append(self.__nested(schedule, factory))
         add_top_level = SquareButton('Add Parent')
-        factory = Factory(tabs, self._bar)
         body.append(Columns([(12, factory(add_top_level)), ColText('  '), ColSpace()]))
         connect_signal(add_top_level, 'click', lambda widget: self.__add_top_level())
         return DividedPile(body), tabs
 
-    def __nested(self, schedule, tabs):
-        widget = ScheduleWidget(self._log, self._session, tabs, self._bar, self.__types, self.__type_names,
-                                self.__default_type, self, schedule)
+    def __nested(self, schedule, factory):
+        widget = factory(ScheduleWidget(self._log, self._session, self.__types, self.__type_names,
+                                        self.__default_type, self, schedule))
         children = []
         for child in sorted(schedule.children):
             if child.at_location(self.__ordinals):
-                children.append(self.__nested(child, tabs))
+                children.append(self.__nested(child, factory))
         if children:
             widget = DividedPile([widget, Indent(DividedPile(children), width=2)])
         return widget
