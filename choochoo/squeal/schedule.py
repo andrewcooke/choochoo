@@ -70,4 +70,5 @@ class ScheduleDiary(Base):
 
     date = Column(Ordinal, primary_key=True)
     schedule_id = Column(Integer, ForeignKey('schedule.id'), primary_key=True)
+    schedule = relationship('Schedule')
     notes = Column(Text, nullable=False, server_default='')

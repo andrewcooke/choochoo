@@ -1,5 +1,6 @@
 
 from sqlalchemy import Column, Integer, Text, ForeignKey
+from sqlalchemy.orm import relationship
 
 from .types import Ordinal
 from .support import Base
@@ -23,6 +24,7 @@ class InjuryDiary(Base):
 
     date = Column(Ordinal, primary_key=True)
     injury_id = Column(Integer, ForeignKey('injury.id'), primary_key=True)
+    injury = relationship('Injury')
     pain_average = Column(Integer)
     pain_peak = Column(Integer)
     pain_frequency = Column(Integer)
