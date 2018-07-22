@@ -126,7 +126,7 @@ class DiaryApp(App):
         self.sleep = factory(Float(caption='Sleep hrs: ', maximum=24, dp=1, units="hr"))
         self.mood = factory(Rating(caption='Mood: '), message='2: sad; 4: normal; 6 happy')
         self.weather = factory(Edit(caption='Weather: '))
-        self.'weight' = factory(Float(caption=''weight': ', maximum=100, dp=1, units='kg'))
+        self.weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'))
         self.medication = factory(Edit(caption='Meds: '))
         Binder(log, session, self, Diary, multirow=True, defaults={'date': date})
         connect_signal(calendar, 'change', self.date_change)
