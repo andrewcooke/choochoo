@@ -9,14 +9,12 @@ class Factory:
         self.tabs = tabs
         self.bar = bar
 
-    def __call__(self, widget, message=None, tab=True):  # todo
+    def __call__(self, widget, message=None):  # todo
         if self.bar:
             if message:
                 widget = OnFocus(widget, message, self.bar)
         elif message:
             raise Exception('Message but no bar for %s (type %s)' % (widget, type(widget)))
-        if tab and self.tabs is not None:
+        if self.tabs is not None:
             widget = self.tabs.append(widget)
-        else:
-            widget = FocusAttr(widget)
         return widget

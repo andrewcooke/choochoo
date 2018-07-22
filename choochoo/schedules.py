@@ -27,14 +27,14 @@ class ScheduleWidget(FocusWrap):
         self.__types = types
         self.__default_type = default_type
         self.__editor = editor
-        self.type_id = factory(Menu('Type: ', type_names), tab=False)
+        self.type_id = factory(Menu('Type: ', type_names))
         self.title = factory(Edit('Title: '))
-        self.repeat = factory(Edit('Repeat: '), tab=False)
-        self.start = factory(Nullable('Open', lambda state: TextDate(log, date=state)), tab=False)
-        self.finish = factory(Nullable('Open', lambda state: TextDate(log, date=state)), tab=False)
+        self.repeat = factory(Edit('Repeat: '))
+        self.start = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
+        self.finish = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
         self.description = factory(Edit('Description: ', multiline=True))
-        self.sort = factory(Edit('Sort: '), tab=False)
-        self.has_notes = factory(CheckBox("Notes? "), tab=False)
+        self.sort = factory(Edit('Sort: '))
+        self.has_notes = factory(CheckBox("Notes? "))
         add_child = SquareButton('Add Child')
         delete = SquareButton('Delete')
         reset = SquareButton('Reset')
@@ -51,9 +51,9 @@ class ScheduleWidget(FocusWrap):
                          ColText('  '),
                          self.has_notes,
                          ColSpace(),
-                         (11, factory(add_child, tab=False)),
-                         (8, factory(delete, tab=False)),
-                         (7, factory(reset, tab=False))])]
+                         (11, factory(add_child)),
+                         (8, factory(delete)),
+                         (7, factory(reset))])]
         super().__init__(Pile(body))
         binder = Binder(log, session, self, instance=schedule)
         connect_signal(add_child, 'click', lambda widget: self.__add_child())
@@ -84,7 +84,7 @@ class SchedulesEditor(DynamicContent):
             body.append(self.__nested(schedule, tabs))
         add_top_level = SquareButton('Add Parent')
         factory = Factory(tabs, self._bar)
-        body.append(Columns([(12, factory(add_top_level, tab=False)), ColText('  '), ColSpace()]))
+        body.append(Columns([(12, factory(add_top_level)), ColText('  '), ColSpace()]))
         connect_signal(add_top_level, 'click', lambda widget: self.__add_top_level())
         return DividedPile(body), tabs
 
@@ -138,15 +138,15 @@ class SchedulesFilter(DynamicContent):
                      (TYPE_WIDTH, factory(self.filter_type)),
                      ColSpace(),
                      (7, factory(apply)),
-                     (9, factory(discard, tab=False)),
+                     (9, factory(discard)),
                      ]),
             Columns([ColText('Types    Default: '),
                      (TYPE_WIDTH, factory(self.default_type)),
                      ColText(' '),
-                     (8, factory(delete, tab=False)),  # todo - only enable if no instances?
+                     (8, factory(delete)),  # todo - only enable if no instances?
                      ColSpace(),
-                     (TYPE_WIDTH, factory(self.new_type, tab=False)),
-                     (5, factory(add, tab=False))]),
+                     (TYPE_WIDTH, factory(self.new_type)),
+                     (5, factory(add))]),
             Divider(div_char='-', top=1),
         ])
         connect_signal(apply, 'click', lambda widget: self.__filter(True))

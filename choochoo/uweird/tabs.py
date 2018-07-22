@@ -144,7 +144,6 @@ class TabNode(FocusWrap):
         self.__root = None
         self.__path = None
         self.__build_data(tab_list)
-        self.__last_index = None
 
     def __build_data(self, tab_list):
         for tab in tab_list:
@@ -199,12 +198,10 @@ class TabNode(FocusWrap):
         delta = 1 if key == 'tab' else -1
         n = self.__tabs_and_indices[tab] + delta
         if 0 <= n < len(self):
-            self.__last_index = n
             self.__try_set_focus(n, key)
         elif not self.__path:
             self.to(None, key)  # loop around
         else:
-            self.__last_index = None
             emit_signal(self, 'tab', self, key)
 
     def __try_set_focus(self, n, key):
@@ -296,23 +293,6 @@ class TabNode(FocusWrap):
             else:
                 msg = map(lambda w: '%s (base type %s)' % (w, type(w._w.base_widget)), missing)
                 raise Exception('Could not find %s' % ', '.join(msg))
-
-    def keypress(self, size, key):
-        key = self._w.keypress(size, key)
-        if key in ('tab', 'shift tab'):
-            if self.__last_index:
-                n = self.__last_index + 1 if key == 'tab' else -1
-                if 0 <= n < len(self):
-                    self.__try_set_focus(n, key)
-                    return
-                elif not self.__path:
-                    self.to(None, key)  # loop around
-                    return
-                else:
-                    self.__last_index = None
-            emit_signal(self, 'tab', self, key)
-        else:
-            return key
 
 
 class Root(TabNode):
