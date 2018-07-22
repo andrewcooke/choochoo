@@ -15,6 +15,8 @@ class Factory:
                 widget = OnFocus(widget, message, self.bar)
         elif message:
             raise Exception('Message but no bar for %s (type %s)' % (widget, type(widget)))
-        if self.tabs is not None:
+        if tab and self.tabs is not None:
             widget = self.tabs.append(widget)
+        else:
+            widget = FocusAttr(widget)
         return widget
