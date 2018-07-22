@@ -24,16 +24,16 @@ class InjuryWidget(FocusWrap):
 
     def __init__(self, tabs, bar, injury):
         factory = Factory(tabs, bar)
-        self.pain_avg = factory(Rating(caption='average: '))
+        self.pain_average = factory(Rating(caption='average: '))
         self.pain_peak = factory(Rating(caption='peak: '))
-        self.pain_freq = factory(Rating(caption='freq: '))
+        self.pain_frequency = factory(Rating(caption='freq: '))
         self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
         super().__init__(
             Pile([Columns([('weight', 1, Text(injury.title)),
                            ('weight', 1, Columns([ColText('Pain - '),
-                                                  (11, self.pain_avg),
+                                                  (11, self.pain_average),
                                                   (8, self.pain_peak),
-                                                  (9, self.pain_freq),
+                                                  (9, self.pain_frequency),
                                                   ColSpace(),
                                                   ])),
                            ]),

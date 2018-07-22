@@ -1,4 +1,6 @@
 
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -20,9 +22,29 @@ class Database:
         path = args.file(DATABASE)
         self._log.info('Using database at %s' % path)
         self.engine = create_engine('sqlite:///%s' % path, echo=False)
-        self.__create_tables()
         self.session = sessionmaker(bind=self.engine)
+        self.__create_tables()
+        self.__create_instances()
 
     def __create_tables(self):
         self._log.info('Creating tables')
         Base.metadata.create_all(self.engine)
+
+    def __create_instances(self):
+        with self.session_context() as session:
+            if session.query(ScheduleType).count() == 0:
+                session.add(ScheduleType(name='Reminder'))
+                session.add(ScheduleType(name='Aim'))
+
+    @contextmanager
+    def session_context(self):
+        session = self.session()
+        try:
+            yield session
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
+
