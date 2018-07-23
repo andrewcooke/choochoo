@@ -1,13 +1,13 @@
 
 import datetime as dt
 from abc import ABC, abstractmethod
-
 from re import sub, compile
 
 from .date import parse_date, format_date
 
+
 # my calculations are done relative to the unix epoch.  the "gregorian ordinal"
-# is relative to year 1, but i have no idea how teh details of that work.  i
+# is relative to year 1, but i have no idea how the details of that work.  i
 # guess i could do everything in gregorian ordinals simply projecting back the
 # current weeks / months and it would be equivalent, but i'd need to tweak the
 # week offset by hand (here it's because 1970-01-01 is a thursday).
@@ -39,7 +39,8 @@ class Specification:
     def __date_to_ordinal(self, text):
         return DateOrdinals(text).ordinals[self.frame_type]
 
-    def __parse_ordinal(self, text):
+    @staticmethod
+    def __parse_ordinal(text):
         if text.isdecimal():
             return int(text), 'd'
         elif len(text) > 1:

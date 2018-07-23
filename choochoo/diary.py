@@ -88,16 +88,17 @@ class ScheduleWidget(FocusWrap):
 class Schedules(DynamicDate):
 
     def _make(self):
-        ordinals = DateOrdinals(self._date)
-        root_schedules = [schedule for schedule in
-                          self._session.query(Schedule).filter(Schedule.parent_id == None).all()
-                          if schedule.at_location(ordinals)]
+        root_schedules = Schedule.query_root(self._session, date=self._date)
         tabs = TabList()
         body = []
-        for schedule in sorted(root_schedules):
-            body.append(self.__make_schedule(tabs, ordinals, schedule))
+        prev = None
+        for schedule in root_schedules:
+            body.append(self.__make_schedule(tabs, DateOrdinals(self._date), schedule))
+            if prev and prev.type != schedule.type:
+                body.append(Divider())
+            prev = schedule
         if body:
-            return DividedPile([Text('Schedule'), Padding(DividedPile(body), left=2)]), tabs
+            return DividedPile([Text('Schedule'), Indent(Pile(body), width=2)]), tabs
         else:
             return Pile([]), tabs
 

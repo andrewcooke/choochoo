@@ -157,17 +157,9 @@ class SchedulesFilter(DynamicContent):
         super().__init__(log, session, bar)
 
     def _make(self):
-        query = self._session.query(Schedule).filter(Schedule.parent_id == None)
-        type_id = self.filter_type.state
-        if type_id is not None:
-            query = query.filter(Schedule.type_id == type_id)
-        root_schedules = list(query.all())
-        self._log.debug('Found %d root schedules' % len(root_schedules))
         date = self.filter_date.state
-        if date is not None:
-            date = DateOrdinals(date)
-            root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]
-            self._log.debug('Root schedules at %s: %d' % (date, len(root_schedules)))
+        root_schedules = Schedule.query_root(self._session, date=date, type_id=self.filter_type.state)
+        self._log.debug('Found %d root schedules' % len(root_schedules))
         editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules, date,
                                  self.__types, self.__type_names)
         # on initial call, add tabs; later calls replace them (keeping filter tabs)

@@ -1,9 +1,10 @@
+
 from functools import total_ordering
 
 from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, backref
 
-from ..lib.repeating import Specification
+from ..lib.repeating import Specification, DateOrdinals
 from .types import Ordinal
 from .support import Base
 
@@ -70,6 +71,17 @@ class Schedule(Base):
 
     def __eq__(self, other):
         return isinstance(other, Schedule) and other.id == self.id
+
+    @classmethod
+    def query_root(cls, session, date=None, type_id=None):
+        query = session.query(Schedule).filter(Schedule.parent_id == None)
+        if type_id is not None:
+            query = query.filter(Schedule.type_id == type_id)
+        root_schedules = list(query.all())
+        if date is not None:
+            date = DateOrdinals(date)
+            root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]
+        return list(sorted(root_schedules))
 
 
 class ScheduleDiary(Base):
