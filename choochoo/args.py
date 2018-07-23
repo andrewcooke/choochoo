@@ -23,6 +23,7 @@ def mm(name): return '--' + name
 
 
 VARIABLE = compile(r'(.*(?:[^$]|^))\${(\w+)\}(.*)')
+MEMORY  = ':memory:'
 
 
 class NamespaceWithVariables(Mapping):
@@ -39,6 +40,8 @@ class NamespaceWithVariables(Mapping):
         return sub(r'\$\$', '$', value)
 
     def path(self, name):
+        # special case sqlite3 in-memory database
+        if self[name] == MEMORY: return self[name]
         path = expanduser(self[name])
         if relpath(path) and name != ROOT:
             path = join(self.path(ROOT), path)
@@ -46,6 +49,8 @@ class NamespaceWithVariables(Mapping):
 
     def file(self, name):
         file = self.path(name)
+        # special case sqlite3 in-memory database
+        if file == MEMORY: return file
         path = dirname(file)
         if not exists(path):
             makedirs(path)

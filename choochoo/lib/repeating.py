@@ -1,10 +1,10 @@
 
 import datetime as dt
-import time as t
 from abc import ABC, abstractmethod
 
 from re import sub, compile
 
+from .date import parse_date, format_date
 
 # my calculations are done relative to the unix epoch.  the "gregorian ordinal"
 # is relative to year 1, but i have no idea how teh details of that work.  i
@@ -12,13 +12,9 @@ from re import sub, compile
 # current weeks / months and it would be equivalent, but i'd need to tweak the
 # week offset by hand (here it's because 1970-01-01 is a thursday).
 
-
 WEEK_OFFSET = 3
 EPOCH_OFFSET = dt.date(1970, 1, 1).toordinal()
-
-
-def parse_date(text):
-    return dt.date(*t.strptime(text, '%Y-%m-%d')[:3])
+DOW = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
 
 class Specification:
@@ -26,7 +22,6 @@ class Specification:
     Parse a spec and reduce it to a normalized form (available through __str__()).
     """
 
-    DOW = ('mo', "tu", 'we', "th", 'fr', 'sa', 'su')
     DOW_INDEX = dict((day, i) for i, day in enumerate(DOW))
 
     def __init__(self, spec):
@@ -65,9 +60,9 @@ class Specification:
         self.offset %= self.repeat
 
     def __parse_location(self, location):
-        if location[-2:] in self.DOW:
-            if len(location) > 2:
-                return int(location[:-2]), self.DOW_INDEX[location[-2:]]
+        if location[-3:] in DOW:
+            if len(location) > 3:
+                return int(location[:-3]), self.DOW_INDEX[location[-3:]]
             else:
                 return 1, self.DOW_INDEX[location]
         else:
@@ -102,7 +97,7 @@ class Specification:
 
     def __str_location(self, location):
         try:
-            return '%d%s' % (location[0], self.DOW[location[1]])
+            return '%d%s' % (location[0], DOW[location[1]])
         except:
             return str(location)
 
@@ -118,7 +113,7 @@ class Specification:
         if range is None:
             return ''
         else:
-            return range.strftime('%Y-%m-%d')
+            return format_date(range)
 
     def frame(self):
         return {'d': Day, 'w':Week, 'm':Month}[self.frame_type](self)
@@ -161,7 +156,7 @@ class DateOrdinals:
         self.date = date
 
     def __str__(self):
-        return self.date.strftime('%Y-%m-%d')
+        return format_date(self.date)
 
 
 class Frame(ABC):

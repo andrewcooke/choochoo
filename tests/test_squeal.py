@@ -56,6 +56,7 @@ class DataWidget(WidgetWrap):
 
 
 def test_bind():
+
     db = Database()
     session = db.session()
 

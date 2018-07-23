@@ -19,15 +19,15 @@ def assert_bad(f, *args):
 
 def test_specification():
     # from the spec doc
-    assert_str(Specification('m[2Tu]'), '0/1m[2tu]')
-    assert_str(Specification('2m[2Tu]'), '0/2m[2tu]')
-    assert_str(Specification('1/2m[2Tu]'), '1/2m[2tu]')
-    assert_str(Specification('m[2Tu]1970-01-01-1970-12-31'), '0/1m[2tu]1970-01-01-1970-12-31')
+    assert_str(Specification('m[2Tue]'), '0/1m[2tue]')
+    assert_str(Specification('2m[2Tue]'), '0/2m[2tue]')
+    assert_str(Specification('1/2m[2Tue]'), '1/2m[2tue]')
+    assert_str(Specification('m[2Tue]1970-01-01-1970-12-31'), '0/1m[2tue]1970-01-01-1970-12-31')
     assert_str(Specification('2018-07-05/5d[]'), '2/5d[1]')
     assert_str(Specification('d2018-07-05'), '0/1d[1]2018-07-05')
     # others
     assert_str(Specification('1/2w[1]2018-01-01-'), '1/2w[1]2018-01-01-')
-    assert_str(Specification('1/2w[Mo,2,3]-1970-01-01'), '1/2w[1mo,2,3]-1970-01-01')
+    assert_str(Specification('1/2w[Mon,2,3]-1970-01-01'), '1/2w[1mon,2,3]-1970-01-01')
     # some errors
     assert_bad(Specification, '1/2[]2018-01-01-')   # must specify type
     assert_bad(Specification, '1/2w[1d]2018-01-01-')  # no longer support type in location
@@ -47,24 +47,24 @@ def test_day():
     assert_at('2d', '2018-07-07', False, False)
     assert_at('2d[1]', '2018-07-06', True, True)
     assert_at('2d[2]', '2018-07-06', True, False)
-    assert_at('2d[Fr]', '2018-07-06', True, True)
-    assert_at('2d[1Fr]', '2018-07-06', True, True)
-    assert_at('2d[2Fr]', '2018-07-06', True, False)
-    assert_at('2d[Mo]', '2018-07-06', True, False)
-    assert_at('2d[Fr]2018-07-06', '2018-07-06', True, True)
-    assert_at('2d[Fr]2018-07-07', '2018-07-06', False, False)
-    assert_at('2d[Fr]2018-07-06-2018-07-06', '2018-07-06', True, True)
-    assert_at('2d[Fr]2018-07-07-2018-07-07', '2018-07-06', False, False)
-    assert_at('2d[Fr]2018-07-05-2018-07-05', '2018-07-06', False, False)
+    assert_at('2d[Fri]', '2018-07-06', True, True)
+    assert_at('2d[1Fri]', '2018-07-06', True, True)
+    assert_at('2d[2Fri]', '2018-07-06', True, False)
+    assert_at('2d[Mon]', '2018-07-06', True, False)
+    assert_at('2d[Fri]2018-07-06', '2018-07-06', True, True)
+    assert_at('2d[Fri]2018-07-07', '2018-07-06', False, False)
+    assert_at('2d[Fri]2018-07-06-2018-07-06', '2018-07-06', True, True)
+    assert_at('2d[Fri]2018-07-07-2018-07-07', '2018-07-06', False, False)
+    assert_at('2d[Fri]2018-07-05-2018-07-05', '2018-07-06', False, False)
 
 
 def test_week():
-    assert_at('2018-07-06/w[Fr]', '2018-07-06', True, True)
+    assert_at('2018-07-06/w[Fri]', '2018-07-06', True, True)
     assert_at('2018-07-06/w[1]', '2018-07-02', True, True)
 
 
 def test_month():
-    assert_at('2018-07-07/m[Sa]', '2018-07-07', True, True)
+    assert_at('2018-07-07/m[Sat]', '2018-07-07', True, True)
     assert_at('2018-07-07/m[2]', '2018-07-02', True, True)
 
 

@@ -4,6 +4,7 @@ from calendar import month_name, day_abbr, Calendar, monthrange
 
 from urwid import Columns, GridFlow, Pile, Text, Padding, emit_signal, connect_signal, WEIGHT
 
+from ..lib.date import format_date
 from .fixed import Fixed
 from .focus import FocusFor, FocusAttr, FocusWrap, OnFocus
 from .state import ImmutableStatefulText, MutableStatefulText
@@ -286,7 +287,7 @@ class BaseDate(FocusWrap):
 
     def date_change(self, unused_widget, date):
         if date != self._date:
-            self._log.info('Date has changed: %s - %s' % (self._date.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d')))
+            self._log.info('Date has changed: %s - %s' % (format_date(self._date), format_date(date)))
             old_date = date
             self._date = date
             self._log.debug('Sending change signal for date change')
