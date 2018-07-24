@@ -60,7 +60,13 @@ def test_day():
 
 def test_week():
     assert_at('2018-07-06/w[Fri]', '2018-07-06', True, True)
+    assert_at('2018-07-06/w[Fri]', '2018-07-05', True, False)
+    assert_at('2018-07-06/w[Fri]', '2018-07-07', True, False)
     assert_at('2018-07-06/w[1]', '2018-07-02', True, True)
+    assert_at('2018-07-06/w[1]', '2018-07-01', True, False)
+    assert_at('2018-07-06/w[1]', '2018-07-03', True, False)
+    # bug in diary
+    assert_at('0/1w[1sun]', '2018-07-29', True, True)
 
 
 def test_month():

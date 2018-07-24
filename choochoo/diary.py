@@ -73,9 +73,10 @@ class Injuries(DynamicDate):
 
 class ScheduleWidget(FocusWrap):
 
-    def __init__(self, log, tabs, bar, schedule, has_type):
+    def __init__(self, log, tabs, bar, schedule, show_type):
+        log.debug('Schedule: %s' % schedule)
         factory = Factory(tabs, bar)
-        if has_type:
+        if show_type:
             body = [Text('%s: %s' % (schedule.type.name, schedule.title))]
         else:
             body = [Text(schedule.title)]
@@ -90,10 +91,11 @@ class Schedules(DynamicDate):
     def _make(self):
         root_schedules = Schedule.query_root(self._session, date=self._date)
         tabs = TabList()
+        ordinals = DateOrdinals(self._date)
         body = []
         prev = None
         for schedule in root_schedules:
-            body.append(self.__make_schedule(tabs, DateOrdinals(self._date), schedule))
+            body.append(self.__make_schedule(tabs, ordinals, schedule))
             if prev and prev.type != schedule.type:
                 body.append(Divider())
             prev = schedule
@@ -102,14 +104,16 @@ class Schedules(DynamicDate):
         else:
             return Pile([]), tabs
 
-    def __make_schedule(self, tabs, ordinals, schedule, has_type=True):
-        widget = ScheduleWidget(self._log, tabs, self._bar, schedule, has_type)
+    def __make_schedule(self, tabs, ordinals, schedule, show_type=True):
+        widget = ScheduleWidget(self._log, tabs, self._bar, schedule, show_type)
         Binder(self._log, self._session, widget, table=ScheduleDiary,
                defaults={'date': ordinals.date, 'schedule_id': schedule.id})
         children = []
         for child in sorted(schedule.children):
             if child.at_location(ordinals):
-                children.append(self.__make_schedule(tabs, ordinals, child, has_type=False))
+                children.append(self.__make_schedule(tabs, ordinals, child, show_type=False))
+            else:
+                self._log.debug('Child %s not at %s' % (child, ordinals))
         if children:
             widget = DividedPile([widget, Indent(DividedPile(children), width=2)])
         return widget
@@ -119,6 +123,7 @@ class DiaryApp(App):
 
     def __init__(self, log, session, bar, date=None):
 
+        self._log = log
         self.__session = session
         if not date: date = dt.date.today()
         factory = Factory(TabList(), bar)
@@ -152,6 +157,7 @@ class DiaryApp(App):
         super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, session)
 
     def date_change(self, _widget, date):
+        self._log.debug('Date change: %s' % date)
         self.__session.commit()
         self.injuries.rebuild(date)
         self.schedules.rebuild(date)

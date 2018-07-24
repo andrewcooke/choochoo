@@ -61,11 +61,11 @@ class Schedule(Base):
 
     @property
     def comparison(self):
-        return self.type.sort, self.type.name, self.sort, self.title
+        return self.type.sort if self.type else '', self.type.name if self.type else '', self.sort, self.title
 
     def __lt__(self, other):
         if isinstance(other, Schedule):
-            return other.comparison < self.comparison
+            return self.comparison < other.comparison
         else:
             raise NotImplemented
 

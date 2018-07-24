@@ -70,9 +70,9 @@ class Week(Assert, ORMUtils):
 
     def __create_children(self, log, session, root):
         date = self.__start
-        for day in DOW:
+        for sort, day in enumerate(DOW):
             if day in self.__days:
-                self.__days[day].create(log, session, root, date)
+                self.__days[day].create(log, session, root, sort, date, self.__n_weeks)
             date += dt.timedelta(days=1)
 
 
@@ -115,11 +115,11 @@ class Day(Assert):
                 for y in self.__unwind(x):
                     yield y
 
-    def create(self, log, session, root, date):
+    def create(self, log, session, root, sort, date, n_weeks):
         dow = date.weekday()
-        finish = date + dt.timedelta(days=7 * len(self.__notes))
+        finish = date + dt.timedelta(days=7 * n_weeks)
         child = Schedule(parent=root, repeat='%s/w[%s]' % (format_date(date), DOW[dow]), start=date, finish=finish,
-                         title=self.__title, has_notes=True)
+                         title=self.__title, has_notes=True, sort=str(sort))
         session.add(child)
         for week, note in enumerate(self.__notes):
             diary = ScheduleDiary(date=date + dt.timedelta(days=7 * week), schedule=child, notes=note)

@@ -264,6 +264,8 @@ class DynamicContent(TabNode):
         node, tabs = self._make()
         self._w = node
         self.replace(tabs)
+        self._invalidate()
+        self._log.debug('Rebuilt %s' % self)
 
 
 class Menu(MutableStatefulText):

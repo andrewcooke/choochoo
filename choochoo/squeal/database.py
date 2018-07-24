@@ -1,7 +1,8 @@
 
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from .diary import Diary
@@ -13,6 +14,14 @@ from ..args import DATABASE
 
 # import these so they are "created"
 Diary, Injury, InjuryDiary, ScheduleType, Schedule, ScheduleDiary
+
+
+# https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf
+@event.listens_for(Engine, "connect")
+def fk_pragma_on_connect(dbapi_con, _con_record):
+    cursor = dbapi_con.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 
 class Database:
