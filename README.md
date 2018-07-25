@@ -15,13 +15,13 @@ LICENCE).
 
   * Injury tracking
 
-* Efficient command line interface for basic actions (to come)
+* Efficient command line interface for basic actions
 
 * Sophisticated schedule engine:
 
   * Flexible, compact specification of repeating events
   
-  * Programmatic generation of training schedules (to come)
+  * Programmatic generation of training schedules
   
 * All data exposed:
 

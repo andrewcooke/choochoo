@@ -1,13 +1,20 @@
 
-
+from ..lib.date import parse_date
 from .weekly import Week, Day
 
 
-def twelve_week_improver():
+def twelve_week_improver(date):
+    """
+    The twelve-week plan described at https://www.britishcycling.org.uk.
+    Takes a single argument: the start date.
+    Example:
+
+      ch2 plan british-cycling-12-week-improver 2018-07-20
+    """
 
     return Week(title='British Cycling 12 Week improver',
                 description='https://www.britishcycling.org.uk/zuvvi/media/bc_files/sportivetrainingplans/improver_plan/TRAINING_PLAN_-_Improvers_plan.pdf',
-                start='2018-07-22',
+                start=parse_date(date),
                 days={
                     'mon': Day(title='Rest day'),
                     'tue': Day(title='Outdoor / indoor',

@@ -12,7 +12,7 @@ PLANS = {'british-cycling-12-week-improver': twelve_week_improver}
 
 def list():
     for name, plan in PLANS.items():
-        print('  %s:' % name)
+        print('\n  %s:' % name)
         print(plan.__doc__)
 
 

@@ -1,15 +1,13 @@
 
 import datetime as dt
-import pdb
 from calendar import month_name, day_abbr, Calendar, monthrange
 
 from urwid import Columns, GridFlow, Pile, Text, Padding, emit_signal, connect_signal, WEIGHT
 
-from ..lib.date import format_date
 from .fixed import Fixed
 from .focus import FocusFor, FocusAttr, FocusWrap, OnFocus
 from .state import ImmutableStatefulText, MutableStatefulText
-
+from ..lib.date import format_date
 
 MONTHS = month_name
 DAYS2 = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
