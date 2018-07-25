@@ -82,7 +82,7 @@ def parser():
                    help='The root directory for the default configuration')
     p.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
                    help='The directory for logs')
-    p.add_argument(mm(DATABASE), action='store', default='${root}/database.sqlb', metavar='FILE',
+    p.add_argument(mm(DATABASE), action='store', default='${root}/database.sqla', metavar='FILE',
                    help='The database file')
 
     subparsers = p.add_subparsers()

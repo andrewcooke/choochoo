@@ -89,7 +89,7 @@ class Binder:
         self.__connect(widget, column.name)
 
     def __connect(self, widget, name):
-        # we don't use weak args because we want the bineder to be around as long as the widget
+        # we don't use weak args because we want the binder to be around as long as the widget
         user_args = [name]
         self.__log.debug('Disconnecting %s' % widget)
         disconnect_signal(widget, 'change', self.__change_callback, user_args=user_args)

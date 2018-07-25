@@ -1,5 +1,6 @@
 
 import datetime as dt
+import pdb
 
 from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
@@ -95,9 +96,9 @@ class Schedules(DynamicDate):
         body = []
         prev = None
         for schedule in root_schedules:
-            body.append(self.__make_schedule(tabs, ordinals, schedule))
             if prev and prev.type != schedule.type:
                 body.append(Divider())
+            body.append(self.__make_schedule(tabs, ordinals, schedule))
             prev = schedule
         if body:
             return DividedPile([Text('Schedule'), Indent(Pile(body), width=2)]), tabs
@@ -137,8 +138,9 @@ class DiaryApp(App):
         self.weather = factory(Edit(caption='Weather: '))
         self.weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'))
         self.medication = factory(Edit(caption='Meds: '))
-        Binder(log, session, self, Diary, multirow=True, defaults={'date': date})
+        # order important here - binder re-binds on change and so muct come last(!)
         connect_signal(calendar, 'change', self.date_change)
+        Binder(log, session, self, Diary, multirow=True, defaults={'date': date})
 
         self.injuries = factory.tabs.append(Injuries(log, session, bar, date=date))
         self.schedules = factory.tabs.append(Schedules(log, session, bar, date=date))
