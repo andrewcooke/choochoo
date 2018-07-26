@@ -90,7 +90,7 @@ def exponential_distance(title, repeat, distance, percent, start, duration):
       month, and w[mon,wed,fri] indicates which days of each week.
     """
     match = compile(r'(\d+)(\D*)').match(distance)
-    dist, unit = match.group(1), match.group(2)
+    dist, unit = float(match.group(1)), match.group(2)
     ratio = 1 + float(percent) / 100.0
     spec = Specification(start + "/" + repeat)
     start = parse_date(start)

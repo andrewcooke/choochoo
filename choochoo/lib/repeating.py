@@ -252,7 +252,7 @@ class Week(Frame):
                 if self.spec.in_range(date):
                     yield date
                 else:
-                    break
+                    return
             week += dt.timedelta(days=7)
 
 
