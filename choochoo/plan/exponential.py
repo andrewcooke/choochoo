@@ -33,7 +33,7 @@ class TimeBuilder(Builder):
 
     def __init__(self, title, description, spec, time, ratio):
         self.__time = time
-        super().__init(title, description, spec, ratio)
+        super().__init__(title, description, spec, ratio)
 
     def _next_value(self):
         time = self.__time
@@ -46,7 +46,7 @@ class DistanceBuilder(Builder):
     def __init__(self, title, description, spec, distance, unit, ratio):
         self.__distance = distance
         self.__unit = unit
-        super().__init(title, description, spec, ratio)
+        super().__init__(title, description, spec, ratio)
 
     def _next_value(self):
         distance = self.__distance
