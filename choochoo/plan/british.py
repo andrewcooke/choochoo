@@ -8,7 +8,7 @@ def twelve_week_improver(date):
     Takes a single argument: the start date.
     Example:
 
-      ch2 plan british-cycling-12-week-improver '2018-07-20'
+      ch2 plan british-cycling-12-week-improver 2018-07-20
     """
 
     return Week(title='British Cycling 12 Week improver',

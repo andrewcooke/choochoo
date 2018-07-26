@@ -1,16 +1,18 @@
 
 from .british import twelve_week_improver
-from .exponential import exponential_time
+from .exponential import exponential_time, exponential_distance
 from ..args import LIST, PLAN
 from ..log import make_log
 from ..squeal.database import Database
 
+
 PLANS = {'british-cycling-12-week-improver': twelve_week_improver,
-         'percent-time': exponential_time}
+         'percent-time': exponential_time,
+         'percent-distance': exponential_distance}
 
 
 def list():
-    for name, plan in PLANS.items():
+    for name, plan in sorted(PLANS.items()):
         print('\n  %s:' % name)
         print(plan.__doc__)
 
