@@ -70,9 +70,9 @@ class ScheduleWidget(FocusWrap):
 
 class SchedulesEditor(DynamicContent):
 
-    def __init__(self, log, session, bar, schedules, ordinals, types, type_names):
+    def __init__(self, log, session, bar, schedules, date, types, type_names):
         self.__schedules = schedules
-        self.__ordinals = ordinals
+        self.__date = date
         self.__types = types
         self.__type_names = type_names
         super().__init__(log, session, bar)
@@ -94,7 +94,7 @@ class SchedulesEditor(DynamicContent):
                                         self, schedule, has_type))
         children = []
         for child in sorted(schedule.children):
-            if child.at_location(self.__ordinals):
+            if child.at_location(self.__date):
                 children.append(self.__nested(child, factory, has_type=False))
         if children:
             widget = DividedPile([widget, Indent(DividedPile(children), width=2)])

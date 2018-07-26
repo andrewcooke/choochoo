@@ -1,13 +1,12 @@
 
-import pdb
-
 from .british import twelve_week_improver
+from .exponential import exponential_time
 from ..args import LIST, PLAN
 from ..log import make_log
 from ..squeal.database import Database
 
-
-PLANS = {'british-cycling-12-week-improver': twelve_week_improver}
+PLANS = {'british-cycling-12-week-improver': twelve_week_improver,
+         'percent-time': exponential_time}
 
 
 def list():

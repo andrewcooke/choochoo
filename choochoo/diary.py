@@ -92,29 +92,28 @@ class Schedules(DynamicDate):
     def _make(self):
         root_schedules = Schedule.query_root(self._session, date=self._date)
         tabs = TabList()
-        ordinals = DateOrdinals(self._date)
         body = []
         prev = None
         for schedule in root_schedules:
             if prev and prev.type != schedule.type:
                 body.append(Divider())
-            body.append(self.__make_schedule(tabs, ordinals, schedule))
+            body.append(self.__make_schedule(tabs, schedule))
             prev = schedule
         if body:
             return DividedPile([Text('Schedule'), Indent(Pile(body), width=2)]), tabs
         else:
             return Pile([]), tabs
 
-    def __make_schedule(self, tabs, ordinals, schedule, show_type=True):
+    def __make_schedule(self, tabs, schedule, show_type=True):
         widget = ScheduleWidget(self._log, tabs, self._bar, schedule, show_type)
         Binder(self._log, self._session, widget, table=ScheduleDiary,
-               defaults={'date': ordinals.date, 'schedule_id': schedule.id})
+               defaults={'date': self._date, 'schedule_id': schedule.id})
         children = []
         for child in sorted(schedule.children):
-            if child.at_location(ordinals):
-                children.append(self.__make_schedule(tabs, ordinals, child, show_type=False))
+            if child.at_location(self._date):
+                children.append(self.__make_schedule(tabs, child, show_type=False))
             else:
-                self._log.debug('Child %s not at %s' % (child, ordinals))
+                self._log.debug('Child %s not at %s' % (child, self._date))
         if children:
             widget = DividedPile([widget, Indent(DividedPile(children), width=2)])
         return widget

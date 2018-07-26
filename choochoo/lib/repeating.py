@@ -1,6 +1,7 @@
 
 import datetime as dt
 from abc import ABC, abstractmethod
+from calendar import monthrange
 from re import sub, compile
 
 from .date import parse_date, format_date
@@ -117,7 +118,7 @@ class Specification:
             return format_date(range)
 
     def frame(self):
-        return {'d': Day, 'w':Week, 'm':Month}[self.frame_type](self)
+        return {'d': Day, 'w': Week, 'm': Month}[self.frame_type](self)
 
     # allow range to be set separately (allows separate column in database, so
     # we can select for valid reminders).
@@ -142,6 +143,10 @@ class Specification:
     start = property(lambda self: self.__start, __set_start)
     finish = property(lambda self: self.__finish, __set_finish)
 
+    def in_range(self, date):
+        return (self.start is None or date >= self.start) and \
+               (self.finish is None or date <= self.finish)
+
 
 class DateOrdinals:
 
@@ -154,6 +159,7 @@ class DateOrdinals:
         self.d = (date - dt.date(1970, 1, 1)).days
         self.w = (self.d + WEEK_OFFSET) // 7  # 1970-01-01 is Th
         self.ordinals = vars(self)
+        self.dow = (self.d + WEEK_OFFSET) % 7
         self.date = date
 
     def __str__(self):
@@ -165,71 +171,111 @@ class Frame(ABC):
     def __init__(self, spec):
         self.spec = spec
 
-    def at_frame(self, ordinals):
+    def at_frame(self, date):
+        ordinals = DateOrdinals(date)
         if self.spec.start is None or self.spec.start <= ordinals.date:
             if self.spec.finish is None or ordinals.date <= self.spec.finish:
                 ordinal = ordinals.ordinals[self.spec.frame_type]
                 return self.spec.offset == ordinal % self.spec.repeat
         return False
 
-    def at_location(self, ordinals):
-        for date in self.locations_in_frame(ordinals):
-            if date == ordinals.date:
-                return True
-        return False
+    def at_location(self, date):
+        try:
+            return date == next(self.dates(date))
+        except StopIteration:
+            return False
 
     @abstractmethod
-    def locations_in_frame(self, ordinals):
-        pass
+    def dates(self, start):
+        """
+        All dates consistent with the spec, ordered, starting from start.
+        """
+        yield None  # for type inference
 
 
 class Day(Frame):
 
-    def locations_in_frame(self, ordinals):
-        if self.at_frame(ordinals):
-            for location in self.spec.locations:
-                if location == 1:
-                    yield ordinals.date
+    def __parse_locations(self):
+        dows = set()
+        for location in self.spec.locations:
+            if location == 1:
+                return True, None
+            else:
+                try:
+                    n, dow = location
+                    if n == 1:
+                        dows.add(dow)
+                except TypeError:
+                    pass
+        return False, dows
+
+    def dates(self, start):
+        all, dows = self.__parse_locations()
+        if all or dows:
+            date, delta = start, dt.timedelta(days=self.spec.repeat)
+            while self.spec.in_range(date):
+                if self.at_frame(date):
+                    if all or DateOrdinals(date).dow in dows:
+                        yield date
+                    date += delta
+                    break
                 else:
-                    try:
-                        n, day = location
-                        if n == 1 and ordinals.date.weekday() == day:
-                            yield ordinals.date
-                    except TypeError:
-                        pass
+                    date += dt.timedelta(days=1)
+            while self.spec.in_range(date):
+                if all or DateOrdinals(date).dow in dows:
+                    yield date
+                date += delta
 
 
 class Week(Frame):
 
-    def locations_in_frame(self, ordinals):
-        if self.at_frame(ordinals):
-            ordinal = 7 * ordinals.w - WEEK_OFFSET + EPOCH_OFFSET
-            for location in self.spec.locations:
-                try:
-                    if 1 <= location <= 7:
-                        yield dt.date.fromordinal(ordinal + location - 1)
-                except TypeError:
-                    n, d = location
-                    if n == 1:
-                        yield dt.date.fromordinal(ordinal + d)
+    def __locations_to_days(self):
+        # 0-index
+        for location in self.spec.locations:
+            if isinstance(location, int):
+                yield location - 1
+            elif location[0] == 1:
+                yield location[1]
+
+    def dates(self, start):
+        date, ordinals = start, DateOrdinals(start)
+        dows = list(sorted(self.__locations_to_days()))
+        while ordinals.dow and self.spec.in_range(date):
+            if ordinals.dow in dows:
+                yield date
+            date += dt.timedelta(days=1)
+            ordinals = DateOrdinals(date)
+        week, deltas = date, [dt.timedelta(days=d) for d in dows]
+        while True:
+            for delta in deltas:
+                date = week + delta
+                if self.spec.in_range(date):
+                    yield date
+                else:
+                    break
+            week += dt.timedelta(days=7)
 
 
 class Month(Frame):
 
-    def locations_in_frame(self, ordinals):
-        if self.at_frame(ordinals):
-            m = ordinals.m
-            day_start = dt.date(1970 + m // 12, 1 + m % 12, 1)
-            dow_start = day_start.weekday()
-            day_end = dt.date(1970 + (m+1) // 12, 1 + (m+1) % 12, 1) - dt.timedelta(days=1)
-            for location in self.spec.locations:
-                try:
-                    if 1 <= location <= day_end.day:
-                        yield day_start + dt.timedelta(days=location-1)
-                except TypeError:
-                    n, d = location
-                    d -= dow_start
-                    if d < 0: d += 7
-                    d += (n-1) * 7
-                    if 0 <= d < day_end.day:
-                        yield day_start + dt.timedelta(days=d)
+    def __locations_to_days(self, som):
+        # 1-index
+        for location in self.spec.locations:
+            if isinstance(location, int):
+                yield location
+            else:
+                week, dow = location
+                if dow >= som:
+                    week -= 1
+                yield 7 * week + dow - som + 1
+
+    def dates(self, start):
+        month = dt.date(start.year, start.month, 1)
+        while self.spec.finish is None or month < self.spec.finish:
+            som, lom = monthrange(month.year, month.month)
+            days = [day for day in sorted(self.__locations_to_days(som)) if day < lom]
+            for day in days:
+                date = dt.date(start.year, start.month, day)
+                if self.spec.in_range(date):
+                    yield date
+            month = dt.date(month.year, month.month, lom) + dt.delta(days=1)

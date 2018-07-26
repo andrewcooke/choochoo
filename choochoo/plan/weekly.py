@@ -3,9 +3,10 @@ import datetime as dt
 
 from sqlalchemy import or_
 
+from .utils import ORMUtils
+from ..lib.date import parse_date, format_date
 from ..lib.repeating import DOW
 from ..squeal.schedule import ScheduleType, Schedule, ScheduleDiary
-from ..lib.date import parse_date, format_date
 
 
 class Assert:
@@ -13,19 +14,6 @@ class Assert:
     def _assert(self, value, msg):
         if not value:
             raise Exception(msg)
-
-
-class ORMUtils:
-
-    def _get_or_create(self, session, cls, **kargs):
-        query = session.query(cls)
-        for (name, value) in kargs.items():
-            query = query.filter(getattr(cls, name) == value)
-        instance = query.one_or_none()
-        if instance is None:
-            instance = cls(**kargs)
-            session.add(instance)
-        return instance
 
 
 class Week(Assert, ORMUtils):

@@ -2,6 +2,7 @@
 import datetime as dt
 
 from choochoo.lib.repeating import Specification, DateOrdinals
+from choochoo.lib.date import parse_date
 
 
 def assert_str(x, s):
@@ -34,10 +35,10 @@ def test_specification():
 
 
 def assert_at(spec, date, at_frame, at_location):
-    ordinals = DateOrdinals(date)
+    date = parse_date(date)
     frame = Specification(spec).frame()
-    assert frame.at_frame(ordinals) == at_frame, '%s %s' % (spec, date)
-    assert frame.at_location(ordinals) == at_location, '%s %s' % (spec, date)
+    assert frame.at_frame(date) == at_frame, '%s %s' % (spec, date)
+    assert frame.at_location(date) == at_location, '%s %s' % (spec, date)
 
 
 def test_day():
@@ -80,3 +81,9 @@ def test_start_finish():
     p.start = None
     assert p.start is None
     assert p.finish == dt.date(2018, 7, 9)
+
+
+def test_ordinals():
+    d = dt.date(2018, 7, 25)
+    o = DateOrdinals(d)
+    assert o.dow == 2, o.dow  # wednesday

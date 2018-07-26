@@ -4,9 +4,10 @@ from functools import total_ordering
 from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, backref
 
-from ..lib.repeating import Specification, DateOrdinals
-from .types import Ordinal
 from .support import Base
+from .types import Ordinal
+from ..lib.date import format_date
+from ..lib.repeating import Specification
 
 
 class ScheduleType(Base):
@@ -46,9 +47,9 @@ class Schedule(Base):
         spec.finish = self.finish
         return spec
 
-    def at_location(self, ordinals):
-        if ordinals:
-            return self.specification.frame().at_location(ordinals)
+    def at_location(self, date):
+        if date:
+            return self.specification.frame().at_location(date)
         else:
             return True
 
@@ -79,7 +80,6 @@ class Schedule(Base):
             query = query.filter(Schedule.type_id == type_id)
         root_schedules = list(query.all())
         if date is not None:
-            date = DateOrdinals(date)
             root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]
         return list(sorted(root_schedules))
 
@@ -92,3 +92,6 @@ class ScheduleDiary(Base):
     schedule_id = Column(Integer, ForeignKey('schedule.id'), primary_key=True)
     schedule = relationship('Schedule')
     notes = Column(Text, nullable=False, server_default='')
+
+    def __repr__(self):
+        return'%s: %s (schedule %s)' % (format_date(self.date), self.notes, self.schedule_id)
