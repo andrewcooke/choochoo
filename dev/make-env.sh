@@ -9,4 +9,7 @@ pip install sqlalchemy
 pip install nose
 pip install robotframework
 
+pip install more-itertools
+pip install openpyxl
+
 echo "source env/bin/activate"
