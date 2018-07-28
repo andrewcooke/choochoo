@@ -121,7 +121,9 @@ class AutoIntegerBaseType(IntegerBaseType):
         if self.length not in self.size_to_format:
             raise Exception('Cannot unpack %d bytes as an integer' % self.length)
         format = self.size_to_format[self.length]
-        self.formats = ['<' + format, '>' + format.upper()]
+        if not self.signed:
+            format = format.upper()
+        self.formats = ['<' + format, '>' + format]
         self.bad = 0 if match.group(3) == 'z' else 2 ** (bits - 1 if self.signed else 0) - 1
 
     def raw_to_internal(self, data, endian):
@@ -359,7 +361,7 @@ class Header(AbstractMessage):
         self._add_field(MessageField(log, 'protocol_version', 1, types.profile_to_type('uint8')))
         self._add_field(MessageField(log, 'profile_version', 2, types.profile_to_type('uint16', auto_create=True)))
         self._add_field(MessageField(log, 'data_size', 3, types.profile_to_type('uint32', auto_create=True)))
-        self._add_field(MessageField(log, 'fit_text', 4, types.profile_to_type('uint64', auto_create=True)))  # todo array of byte
+        self._add_field(MessageField(log, 'fit_text', 4, types.profile_to_type('uint32', auto_create=True)))  # todo array of byte
         self._add_field(MessageField(log, 'checksum', 5, types.profile_to_type('uint16', auto_create=True)))
 
     def raw_to_internal(self, data, numbers=None, endian=LITTLE):
