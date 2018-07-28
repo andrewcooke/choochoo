@@ -1,20 +1,71 @@
 
 from abc import abstractmethod
+from os.path import dirname, join
+from pickle import dump, load
 from re import compile
 from struct import unpack
 
 import openpyxl as xls
 from more_itertools import peekable
+from pkg_resources import resource_stream
+
+from ..args import PATH
+from ..log import make_log
 
 
 LITTLE, BIG = 0, 1
+PROFILE = 'global-profile.pkl'
+
+
+def package_fit_profile(args):
+    log = make_log(args)
+    in_path = args.file(PATH, 0)
+    log.info('Reading from "%s"' % in_path)
+    nlog, types, messages = read_profile(log, in_path)
+    out_path = join(dirname(__file__), PROFILE)
+    nlog.set_log(None)
+    log.info('Writing to "%s"' % out_path)
+    with open(out_path, 'wb') as output:
+        dump((nlog, types, messages), output)
+    # test loading
+    log.info('Test loading from "%s"' % PROFILE)
+    log.info('Loaded %s, %s' % load_profile(log))
 
 
 def read_profile(log, path):
+    nlog = NullableLog(log)
     wb = xls.load_workbook(path)
-    types = Types(log, wb['Types'])
-    messages = Messages(log, wb['Messages'], types)
+    types = Types(nlog, wb['Types'])
+    messages = Messages(nlog, wb['Messages'], types)
+    return nlog, types, messages
+
+
+def load_profile(log):
+    input = resource_stream(__name__, PROFILE)
+    nlog, types, messages = load(input)
+    nlog.set_log(log)
     return types, messages
+
+
+class NullableLog:
+
+    def __init__(self, log):
+        self.set_log(log)
+
+    def set_log(self, log):
+        self.__log = log
+
+    def debug(self, *args):
+        self.__log.debug(*args)
+
+    def info(self, *args):
+        self.__log.info(*args)
+
+    def warn(self, *args):
+        self.__log.warn(*args)
+
+    def error(self, *args):
+        self.__log.error(*args)
 
 
 class Named:
@@ -95,7 +146,11 @@ class StringBaseType(InternalBaseType):
 class IntegerBaseType(InternalBaseType):
 
     def __init__(self, log, name):
-        super().__init__(log, name, lambda cell: int(cell, 0))
+        super().__init__(log, name, self.int)
+
+    @staticmethod
+    def int(cell):
+        return int(cell, 0)
 
 
 class BooleanBaseType(InternalBaseType):
@@ -390,3 +445,5 @@ class Messages:
 
     def profile_to_message(self, name):
         return self.__profile_to_message[name]
+
+

@@ -14,12 +14,13 @@ DIARY = 'diary'
 INJURIES = 'injuries'
 SCHEDULES = 'schedules'
 PLAN = 'plan'
+PACKAGE_FIT_PROFILE = 'package-fit-profile'
 
 ROOT = 'root'
 DATABASE = 'database'
 LOGS = 'logs'
 LIST = 'list'
-
+PATH = 'path'
 
 def mm(name): return '--' + name
 
@@ -44,16 +45,18 @@ class NamespaceWithVariables(Mapping):
         except TypeError:
             return value
 
-    def path(self, name):
+    def path(self, name, index=None):
         # special case sqlite3 in-memory database
         if self[name] == MEMORY: return self[name]
-        path = expanduser(self[name])
+        path = self[name]
+        if index is not None: path = path[index]
+        path = expanduser(path)
         if relpath(path) and name != ROOT:
             path = join(self.path(ROOT), path)
         return realpath(normpath(path))
 
-    def file(self, name):
-        file = self.path(name)
+    def file(self, name, index=None):
+        file = self.path(name, index=index)
         # special case sqlite3 in-memory database
         if file == MEMORY: return file
         path = dirname(file)
@@ -61,8 +64,8 @@ class NamespaceWithVariables(Mapping):
             makedirs(path)
         return file
 
-    def dir(self, name):
-        path = self.path(name)
+    def dir(self, name, index=None):
+        path = self.path(name, index=index)
         if not exists(path):
             makedirs(path)
         return path
@@ -76,36 +79,43 @@ class NamespaceWithVariables(Mapping):
 
 def parser():
 
-    p = ArgumentParser()
+    parser = ArgumentParser()
 
-    p.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
-                   help='The root directory for the default configuration')
-    p.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
-                   help='The directory for logs')
-    p.add_argument(mm(DATABASE), action='store', default='${root}/database.sqla', metavar='FILE',
-                   help='The database file')
+    parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
+                        help='The root directory for the default configuration')
+    parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
+                        help='The directory for logs')
+    parser.add_argument(mm(DATABASE), action='store', default='${root}/database.sqla', metavar='FILE',
+                        help='The database file')
 
-    subparsers = p.add_subparsers()
+    subparsers = parser.add_subparsers()
 
-    p_diary = subparsers.add_parser(DIARY,
-                                    help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
-    p_diary.set_defaults(command=DIARY)
+    diary = subparsers.add_parser(DIARY,
+                                  help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
+    diary.set_defaults(command=DIARY)
 
-    p_injuries = subparsers.add_parser(INJURIES,
-                                       help='manage injury entries - see `%s %s -h` for more details' %
-                                            (PROGNAME, INJURIES))
-    p_injuries.set_defaults(command=INJURIES)
+    injuries = subparsers.add_parser(INJURIES,
+                                     help='manage injury entries - see `%s %s -h` for more details' %
+                                          (PROGNAME, INJURIES))
+    injuries.set_defaults(command=INJURIES)
 
-    p_schedules = subparsers.add_parser(SCHEDULES,
-                                        help='manage schedules - see `%s %s -h` for more details' % (PROGNAME, SCHEDULES))
-    p_schedules.set_defaults(command=SCHEDULES)
+    schedules = subparsers.add_parser(SCHEDULES,
+                                      help='manage schedules - see `%s %s -h` for more details' % (PROGNAME, SCHEDULES))
+    schedules.set_defaults(command=SCHEDULES)
 
-    p_plan = subparsers.add_parser(PLAN,
-                                   help='training plans - see `%s %s -h` for more details' % (PROGNAME, PLAN))
-    p_plan.add_argument(mm(LIST), action='store_true',
-                        help='List available plans')
-    p_plan.add_argument(PLAN, action='store', metavar='PARAM', nargs='*',
-                        help='The plan name and possible parameters')
-    p_plan.set_defaults(command=PLAN)
+    plan = subparsers.add_parser(PLAN,
+                                 help='training plans - see `%s %s -h` for more details' % (PROGNAME, PLAN))
+    plan.add_argument(mm(LIST), action='store_true',
+                      help='List available plans')
+    plan.add_argument(PLAN, action='store', metavar='PARAM', nargs='*',
+                      help='The plan name and possible parameters')
+    plan.set_defaults(command=PLAN)
 
-    return p
+    package = subparsers.add_parser(PACKAGE_FIT_PROFILE,
+                                    help='parse and save the global fit profile (dev only) - ' +
+                                         'see `%s %s -h` for more details' % (PROGNAME, PACKAGE_FIT_PROFILE))
+    package.add_argument(PATH, action='store', metavar='PROFILE', nargs=1,
+                         help='The path to the profile (Profile.xlsx)')
+    package.set_defaults(command=PACKAGE_FIT_PROFILE)
+
+    return parser

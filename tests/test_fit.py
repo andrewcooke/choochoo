@@ -3,7 +3,7 @@ from logging import getLogger, basicConfig, DEBUG
 from sys import stdout
 
 from choochoo.fit.profile import read_profile
-from choochoo.fit.decode import decode
+from choochoo.fit.decode import decode_all
 
 
 def test_profile():
@@ -38,4 +38,4 @@ def test_decode():
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
     types, messages = read_profile(log, 'data/Profile.xlsx')
-    decode(log, 'data/example.fit', messages)
+    decode_all(log, 'data/example.fit', messages)
