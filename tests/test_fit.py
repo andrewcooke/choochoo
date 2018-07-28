@@ -10,7 +10,7 @@ def test_profile():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    types, messages = read_profile(log, 'data/Profile.xlsx')
+    nlog, types, messages = read_profile(log, '/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx')
 
     cen = types.profile_to_type('carry_exercise_name')
     assert cen.profile_to_internal('farmers_walk') == 1
@@ -37,5 +37,4 @@ def test_decode():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    types, messages = read_profile(log, 'data/Profile.xlsx')
-    decode_all(log, 'data/example.fit', messages)
+    decode_all(log, '/home/andrew/archive/fit/2018-07-26-rec.fit')
