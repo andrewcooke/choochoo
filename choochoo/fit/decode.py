@@ -14,14 +14,17 @@ def decode_all(log, fit_path, profile_path):
     log.debug('Read profile')
     data = read_path(fit_path)
     log.debug('Read "%s"' % fit_path)
-    _offset, header = read_header(log, data, types, messages)
+    header = read_header(log, data, types, messages)
     log.debug('Header: %s' % header)
     stripped, checksum = strip_header_crc(data)
     log.debug('Checked length')
     check_crc(stripped, checksum)
     log.debug('Checked checksum')
     tokenizer = Tokenizer(log, stripped, types, messages)
-    for value in apply(tokenizer, [(DataMsg, drop)]):
+    for value in apply(tokenizer,
+                       [(DataMsg, expand(log)),
+                        (dict, display_and_drop(log))
+                        ]):
         print(value)
 
 
@@ -42,7 +45,7 @@ def strip_header_crc(data):
 def header_defn(log, types, messages):
     message = messages.number_to_message(HEADER_GLOBAL_TYPE)
     return Definition(log, LITTLE, message,
-                      [Field(log, n, field[1],
+                      [Field(log, n, field[1] * types.profile_to_type(field[2]).size,
                              message.number_to_field(n),
                              types.profile_to_type(field[2]))
                        for n, field in enumerate(HEADER_FIELDS)])
@@ -50,7 +53,8 @@ def header_defn(log, types, messages):
 
 def read_header(log, data, types, messages):
     header = messages.profile_to_message('HEADER')
-    return header.raw_to_internal(data, header_defn(log, types, messages))
+    defn = header_defn(log, types, messages)
+    return header.raw_to_internal(data[0:defn.size], defn)
 
 
 CRC = [0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401,
@@ -73,7 +77,7 @@ def check_crc(data, reference):
 ENDIAN = '<>'
 
 
-DataMsg = namedtuple('DataMsg', 'definition data')
+DataMsg = namedtuple('DataMsg', 'definition data, time')
 
 TimedMsg = namedtuple('TimedMsg', 'definition data time')
 
@@ -112,7 +116,7 @@ class Tokenizer:
         self.__log.debug('Definition: %s' % hexlify(self.__data[self.__offset:self.__offset+6+n_fields*3]))
         try:
             message = self.__messages.number_to_message(global_type)
-            self.__log.info('Definition for message "%s"' % self.message.name)
+            self.__log.info('Definition for message "%s"' % message.name)
         except KeyError:
             message = None
             self.__log.warn('No message %d' % global_type)
@@ -127,12 +131,12 @@ class Tokenizer:
     def __make_field(self, bytes, message):
         number, size, base = bytes
         field = None
-        if self.message:
+        if message:
             try:
-                field = self.message.number_to_field(number)
+                field = message.number_to_field(number)
             except KeyError:
                 field = None
-                self.__log.warn('No field %d for message %d (%s)' % (number, self.message))
+                self.__log.warn('No field %d for message %s' % (number, message))
         base_type = self.__types.base_types[base & 0xf]
         return Field(self.__log, number, size, field, base_type)
 
@@ -141,7 +145,8 @@ class Tokenizer:
         payload = self.__data[self.__offset+1:self.__offset+1+definition.size]
         self.__offset += 1 + definition.size
         # todo - check for timestamp?
-        return DataMsg(definition, payload)
+        # include timestamp here so that things like laps can be correlated with timed data
+        return DataMsg(definition, payload, self.__timestamp)
 
     def __compressed_timestamp_msg(self, local_type, time_offset):
         rollover = time_offset < self.__timestamp & 0x1f
@@ -184,7 +189,17 @@ def apply(source, pipeline):
             yield value
 
 
-def drop(value): pass
+def drop(msg): pass
 
 
+def display_and_drop(log):
+    def drop(msg):
+        log.debug('Value: %s' % (msg,))
+    return drop
 
+
+def expand(log):
+    def expand(msg):
+        defn = msg.definition
+        defn.message.raw_to_internal(msg.data, msg.definition)
+    return expand

@@ -141,7 +141,7 @@ class AbstractType(Named):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
     @abstractmethod
-    def raw_to_internal(self, bytes, size, endian):
+    def raw_to_internal(self, bytes, count, endian):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
 
@@ -153,8 +153,8 @@ class UnimplementedType(AbstractType):
     def profile_to_internal(self, cell_contents):
         return super().profile_to_internal(cell_contents)
 
-    def raw_to_internal(self, bytes, size, endian):
-        return super().raw_to_internal(bytes, size, endian)
+    def raw_to_internal(self, bytes, count, endian):
+        return super().raw_to_internal(bytes, count, endian)
 
 
 class InternalType(UnimplementedType):
@@ -184,17 +184,16 @@ class StructSupport(InternalType):
         length = len(data) // size
         all(bad == data[size*i:size*(i+1)] for i in range(length))
 
-    def _unpack(self, data, formats, bad, size, endian):
-        offset = self.size * size
+    def _unpack(self, data, formats, bad, count, endian):
         if self._is_bad(data, bad[endian]):
-            return offset, None
+            return None
         else:
-            value = unpack(formats[endian] % size, data[0:size * self.size])
-            if size == 1:
+            value = unpack(formats[endian] % count, data[0:count * self.size])
+            if count == 1:
                 value = value[0]
             else:
                 value = list(value)
-            return offset, value
+            return value
 
 
 class StringType(InternalType):
@@ -202,8 +201,8 @@ class StringType(InternalType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, str)
 
-    def raw_to_internal(self, bytes, size, endian):
-        return size, str(b''.join(unpack('%dc' % size, bytes)), encoding='utf-8')
+    def raw_to_internal(self, bytes, count, endian):
+        return str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')
 
 
 class BooleanType(InternalType):
@@ -240,8 +239,8 @@ class AutoIntegerBaseType(StructSupport):
         else:
             return int(cell, 0)
 
-    def raw_to_internal(self, data, size, endian):
-        return self._unpack(data, self.formats, self.bad, size, endian)
+    def raw_to_internal(self, data, count, endian):
+        return self._unpack(data, self.formats, self.bad, count, endian)
 
 
 class AliasIntegerBaseType(AutoIntegerBaseType):
@@ -269,8 +268,8 @@ class AutoFloatType(StructSupport):
         self.formats = ['<%d' + format, '>%d' + format]
         self.bad = self._pack_bad(2 ** bits - 1)
 
-    def raw_to_internal(self, data, size, endian):
-        return self._unpack(data, self.formats, self.bad, size, endian)
+    def raw_to_internal(self, data, count, endian):
+        return self._unpack(data, self.formats, self.bad, count, endian)
 
 
 class MappingType(AbstractType):
@@ -378,8 +377,8 @@ class MessageField:
     def raw_to_internal(self, data, size, endian):
         if self.is_dynamic:
             raise NotImplementedError()
-        offset, value = self.type.raw_to_internal(data, size, endian)
-        return offset, self.name, value
+        # have to return name because of dynamic fields
+        return self.name, self.type.raw_to_internal(data, size, endian)
 
 
 class RowMessageField(MessageField):
@@ -449,16 +448,14 @@ class AbstractMessage(Named):
         message = {}
         for field_desc in definition.fields:
             field = self.number_to_field(field_desc.number)
-            size = field_desc.size * field.type.size
-            delta, name, value = self._parse_field(message, field, data[offset:offset+size],
-                                                   field_desc.size, definition.endian)
-            if delta:
-                message[name] = value
-                offset += delta
-        return offset, message
+            name, value = self._parse_field(message, field, data[offset:offset+field_desc.size],
+                                            field_desc.size // field.type.size, definition.endian)
+            message[name] = value
+            offset += field_desc.size
+        return message
 
-    def _parse_field(self, _message, field, data, size, endian):
-        return field.raw_to_internal(data, size, endian)
+    def _parse_field(self, _message, field, data, count, endian):
+        return field.raw_to_internal(data, count, endian)
 
 
 class RowMessage(AbstractMessage):
@@ -490,11 +487,11 @@ class Header(AbstractMessage):
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(MessageField(log, name, n, types.profile_to_type(base_type)))
 
-    def _parse_field(self, message, field, data, size, endian):
+    def _parse_field(self, message, field, data, count, endian):
         if field.name == 'checksum' and message['header_size'] == 12:
-            return 0, None, None
+            return None, None
         else:
-            return super()._parse_field(message, field, data, size, endian)
+            return super()._parse_field(message, field, data, count, endian)
 
 
 class Messages:
