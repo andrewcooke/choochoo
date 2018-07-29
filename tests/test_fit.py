@@ -37,4 +37,5 @@ def test_decode():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    decode_all(log, '/home/andrew/archive/fit/2018-07-26-rec.fit')
+    decode_all(log, '/home/andrew/archive/fit/2018-07-26-rec.fit',
+               '/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx')
