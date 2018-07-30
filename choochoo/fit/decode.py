@@ -22,7 +22,7 @@ def decode_all(log, fit_path, profile_path):
     log.debug('Checked checksum')
     tokenizer = Tokenizer(log, stripped, types, messages)
     for value in pipeline(tokenizer,
-                          [(DataMsg, Expand(log)),
+                          [(DataMsg, expand(log)),
                            (dict, to_degrees),
                            (dict, clean_undefined),
                            (dict, display_and_drop(log))
@@ -165,6 +165,9 @@ class Field:
         self.field = field
         self.base_type = base_type
         self.count = self.size // base_type.size
+        # set by definiton
+        self.start = 0
+        self.finish = 0
 
 
 class Definition:
@@ -173,7 +176,12 @@ class Definition:
         self.__log = log
         self.endian = endian
         self.message = message
-        self.fields = fields
+        offset = 0
+        for field in fields:
+            field.start = offset
+            offset += field.size
+            field.finish = offset
+        self.fields = list(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
         self.size = sum(field.size for field in self.fields)
         self.number_to_index = dict((field.number, n) for (n, field) in enumerate(fields))
 
@@ -208,33 +216,11 @@ def expand(log):
     return expand
 
 
-class Expand:
-
-    def __init__(self, log):
-        self.__log = log
-        self.__current_msg = None
-
-    def __call__(self, msg):
-        self.__current_msg = msg
+def expand(log):
+    def expand(msg):
         defn = msg.definition
-        # result = defn.message.raw_to_internal(msg.data, msg.definition, self.dynamic_cb)
-        result = defn.message.parse(msg.data, msg.definition)
-        result['MESSAGE'] = msg.definition.message.name
-        result['TIMESTAMP'] = msg.timestamp
-        return result
-
-    def dynamic_cb(self, references):
-        # todo - is this used?
-        msg = self.__current_msg
-        defn = msg.definition
-        for reference in references:
-            self.__log.debug(reference)
-            index = defn.number_to_index[reference.number]
-            offset = sum(field.size for field in defn.fields[0:index])
-            field = defn.fields[index]
-            value, units = reference.parse(
-                msg.data[offset:offset+field.size], field.count, defn.endian, None)
-            yield reference.name, value
+        return defn.message.parse(msg.data, defn)
+    return expand
 
 
 def to_degrees(msg, units='°'):

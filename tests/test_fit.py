@@ -21,7 +21,7 @@ def test_profile():
     for ref in field.references:
         assert ref.name == 'sport'
     keys = ','.join('%s:%s' % (name, value) for name, value in sorted(field.dynamic.keys()))
-    assert keys == 'sport:1,sport:11', keys
+    assert keys == 'sport:running,sport:walking', keys
 
     workout_step = messages.profile_to_message('workout_step')
     field = workout_step.number_to_field(4)
@@ -30,8 +30,7 @@ def test_profile():
     fields = ','.join(sorted(field.name for field in field.references))
     assert fields == 'duration_type,target_type', fields
     keys = ','.join('%s:%s' % (name, value) for name, value in sorted(field.dynamic.keys()))
-    assert keys == 'duration_type:6,duration_type:7,duration_type:8,duration_type:9,duration_type:10,duration_type:11,duration_type:12,duration_type:13,target_type:0,target_type:1,target_type:3,target_type:4,target_type:11', keys
-
+    assert keys == 'duration_type:repeat_until_calories,duration_type:repeat_until_distance,duration_type:repeat_until_hr_greater_than,duration_type:repeat_until_hr_less_than,duration_type:repeat_until_power_greater_than,duration_type:repeat_until_power_less_than,duration_type:repeat_until_steps_cmplt,duration_type:repeat_until_time,target_type:cadence,target_type:heart_rate,target_type:power,target_type:speed,target_type:swim_stroke'
 
 def test_decode():
 

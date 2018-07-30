@@ -384,18 +384,7 @@ class MessageField(Named):
         self.is_dynamic = False
         self.type = type
 
-    def profile_to_internal(self, name):
-        return self.type.profile_to_internal(name)
-
-    def parse(self, data, count, endian, message, dynamic_cb):
-        if self.is_dynamic:
-            for pair in dynamic_cb(self.references, message):
-                try:
-                    return self.dynamic[pair].parse(data, count, endian, message, dynamic_cb)
-                except KeyError:
-                    pass
-            raise Exception('No match for dynamic field %r' % self.name)
-        # have to return name because of dynamic fields
+    def parse(self, data, count, endian, message):
         return self.name, (self.type.parse(data, count, endian), self.units)
 
 
@@ -439,6 +428,21 @@ class DynamicMessageField(RowMessageField):
     def dynamic(self):
         return self.__dynamic_lookup
 
+    def parse(self, data, count, endian, message):
+        if self.is_dynamic:
+            for reference in self.references:
+                name = reference.name
+                if name in message:
+                    value = message[name][0]  # drop units
+                    self._log.debug('Found reference %r=%r' % (name, value))
+                    try:
+                        return self.dynamic[(name, value)].parse(data, count, endian, message)
+                    except KeyError:
+                        pass
+            raise Exception('No match for dynamic field %r' % self.name)
+        # have to return name because of dynamic fields
+        return super().parse(data, count, endian, message)
+
 
 class Message(Named):
 
@@ -459,35 +463,22 @@ class Message(Named):
     def number_to_field(self, value):
         return self._number_to_field[value]
 
-    def parse(self, data, definition, dynamic_cb=None):
-        if dynamic_cb is None: dynamic_cb = self._default_dynamic_cb
-        offset = 0
+    def parse(self, data, definition):
         message = {}
-        for field_desc in definition.fields:
-            bytes = data[offset:offset+field_desc.size]
-            try:
-                field = self.number_to_field(field_desc.number)
-                count = field_desc.size // field.type.size
-                name, value = self._parse_field(field, bytes, count, definition.endian, message, dynamic_cb)
-            except KeyError:
-                name = str(field_desc.number)
-                count = field_desc.size // field_desc.base_type.size
-                value = (field_desc.base_type.parse(bytes, count, definition.endian), None)
+        # note this is a field description not a message field
+        for field in definition.fields:
+            bytes = data[field.start:field.finish]
+            if field.field:
+                name, value = self._parse_field(field.field, bytes, field.count, definition.endian, message)
+            else:
+                name = str(field.number)
+                value = (field.base_type.parse(bytes, field.count, definition.endian), None)
             message[name] = value
-            offset += field_desc.size
         return message
 
-    def _default_dynamic_cb(self, references, message):
-        for reference in references:
-            if reference.name in message:
-                name = reference.name
-                value = message[name][0]  # drop units
-                self._log.debug('Found reference %r=%r' % (name, value))
-                yield name, value
-
-    def _parse_field(self, field, bytes, count, endian, message, dynamic_cb):
+    def _parse_field(self, field, bytes, count, endian, message):
         # allow interception for optional field in header
-        return field.parse(bytes, count, endian, message, dynamic_cb)
+        return field.parse(bytes, count, endian, message)
 
 
 class NumberedMessage(Message):
@@ -529,11 +520,11 @@ class Header(Message):
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(MessageField(log, name, n, None, types.profile_to_type(base_type)))
 
-    def _parse_field(self, field, data, count, endian, message, dynamic_cb):
+    def _parse_field(self, field, data, count, endian, message):
         if field.name == 'checksum' and message['header_size'] == 12:
             return None, None
         else:
-            return super()._parse_field(field, data, count, endian, message, dynamic_cb)
+            return super()._parse_field(field, data, count, endian, message)
 
 
 class Missing(Message):
