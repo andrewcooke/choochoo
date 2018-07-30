@@ -377,15 +377,21 @@ class Types:
 
 class MessageField(Named):
 
-    def __init__(self, log, name, number, units, type):
+    def __init__(self, log, name, number, units, type, scale=1, offset=0):
         super().__init__(log, name)
         self.number = number
         self.units = units if units else ''
         self.is_dynamic = False
         self.type = type
+        self.scale = scale
+        self.offset = offset
+        self.__is_scaled = (scale != 1 or offset != 0)
 
     def parse(self, data, count, endian, result, message):
-        return self.name, (self.type.parse(data, count, endian), self.units)
+        value = self.type.parse(data, count, endian)
+        if self.__is_scaled:
+            value = (value / self.scale) - self.offset
+        return self.name, (value, self.units)
 
 
 class RowMessageField(MessageField):
