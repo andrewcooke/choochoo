@@ -216,13 +216,6 @@ def expand(log):
     return expand
 
 
-def expand(log):
-    def expand(msg):
-        defn = msg.definition
-        return defn.message.parse(msg.data, defn)
-    return expand
-
-
 def to_degrees(msg, units='°'):
     for name, pair in list(msg.items()):
         if name[0].islower():
