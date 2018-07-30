@@ -13,6 +13,7 @@ from pkg_resources import resource_stream
 from ..args import PATH
 from ..log import make_log
 
+
 LITTLE, BIG = 0, 1
 PROFILE = 'global-profile.pkl'
 HEADER_GLOBAL_TYPE = -1
@@ -375,6 +376,16 @@ class Types:
             raise
 
 
+def scale_offset(log, cell, default, name):
+    if cell is None or cell == '':
+        return default
+    try:
+        return int(cell)
+    except:
+        log.warn('Could not parse %r for %s (scale/offset)' % (cell, name))
+        return default
+
+
 class MessageField(Named):
 
     def __init__(self, log, name, number, units, type, scale=1, offset=0):
@@ -383,13 +394,13 @@ class MessageField(Named):
         self.units = units if units else ''
         self.is_dynamic = False
         self.type = type
-        self.scale = scale
-        self.offset = offset
-        self.__is_scaled = (scale != 1 or offset != 0)
+        self.scale = scale_offset(log, scale, 1, name)
+        self.offset = scale_offset(log, offset, 0, name)
+        self.__is_scaled = (self.scale != 1 or self.offset != 0)
 
     def parse(self, data, count, endian, result, message):
         value = self.type.parse(data, count, endian)
-        if self.__is_scaled:
+        if self.__is_scaled and value is not None:
             value = (value / self.scale) - self.offset
         return self.name, (value, self.units)
 
@@ -400,7 +411,8 @@ class RowMessageField(MessageField):
         super().__init__(log, row[2],
                          int(row[1]) if row[1] is not None else None,
                          row[8],
-                         types.profile_to_type(row[3], auto_create=True))
+                         types.profile_to_type(row[3], auto_create=True),
+                         row[6], row[7])
 
 
 class DynamicMessageField(RowMessageField):
@@ -518,9 +530,9 @@ class RowMessage(NumberedMessage):
 
     def __complete_dynamic(self, types):
         # these may be forward references
-        for data in self._profile_to_field.values():
-            if data.is_dynamic:
-                data._complete_dynamic(self, types)
+        for field in self._profile_to_field.values():
+            if field.is_dynamic:
+                field._complete_dynamic(self, types)
 
 
 class Header(Message):
