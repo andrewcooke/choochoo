@@ -104,7 +104,7 @@ class ErrorDict(dict):
         try:
             return super().__getitem__(item)
         except KeyError:
-            msg = self.__error_msg % item
+            msg = self.__error_msg % (item,)
             self.__log.error(msg)
             raise KeyError(msg)
 
@@ -137,7 +137,7 @@ class AbstractType(Named):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
     @abstractmethod
-    def raw_to_internal(self, bytes, count, endian):
+    def parse(self, bytes, count, endian):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
 
@@ -185,7 +185,7 @@ class String(BaseType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, str)
 
-    def raw_to_internal(self, bytes, count, endian):
+    def parse(self, bytes, count, endian):
         return str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')
 
 
@@ -194,7 +194,7 @@ class Boolean(BaseType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, bool)
 
-    def raw_to_internal(self, bytes, count, endian):
+    def parse(self, bytes, count, endian):
         bools = [bool(byte) for byte in bytes]
         if count == 1:
             return bools[0]
@@ -230,7 +230,7 @@ class AutoInteger(StructSupport):
         else:
             return int(cell, 0)
 
-    def raw_to_internal(self, data, count, endian):
+    def parse(self, data, count, endian):
         return self._unpack(data, self.formats, self.bad, count, endian)
 
 
@@ -247,8 +247,8 @@ class Date(AliasInteger):
         super().__init__(log, name, 'uint32')
         self.__tzinfo = dt.timezone.utc if utc else None
 
-    def raw_to_internal(self, data, count, endian):
-        time = super().raw_to_internal(data, count, endian)
+    def parse(self, data, count, endian):
+        time = super().parse(data, count, endian)
         if time >= 0x10000000:
             time = dt.datetime(1989, 12, 31, tzinfo=self.__tzinfo) + dt.timedelta(seconds=time)
         return time
@@ -272,7 +272,7 @@ class AutoFloat(StructSupport):
         self.formats = ['<%d' + format, '>%d' + format]
         self.bad = self._pack_bad(2 ** bits - 1)
 
-    def raw_to_internal(self, data, count, endian):
+    def parse(self, data, count, endian):
         return self._unpack(data, self.formats, self.bad, count, endian)
 
 
@@ -298,8 +298,12 @@ class Mapping(AbstractType):
     def internal_to_profile(self, value):
         return self._internal_to_profile[value]
 
-    def raw_to_internal(self, bytes, size, endian):
-        return self.base_type.raw_to_internal(bytes, size, endian)
+    def parse(self, bytes, size, endian):
+        value = self.base_type.parse(bytes, size, endian)
+        try:
+            return self.internal_to_profile(value)
+        except KeyError:
+            return value
 
     def __add_mapping(self, row):
         profile = row[2]
@@ -377,30 +381,22 @@ class MessageField(Named):
         super().__init__(log, name)
         self.number = number
         self.units = units if units else ''
-        self.is_dynamic = self.number is None
+        self.is_dynamic = False
         self.type = type
 
     def profile_to_internal(self, name):
         return self.type.profile_to_internal(name)
 
-    def _with_unit(self, value):
-        if value is None:
-            return value
-        else:
-            return str(value) + self.units
-
-    def raw_to_internal(self, data, size, endian, dynamic_cb):
+    def parse(self, data, count, endian, message, dynamic_cb):
         if self.is_dynamic:
-            if not dynamic_cb:
-                raise NotImplementedError('Dynamic field (and no callback)')
-            for pair in dynamic_cb(self.references):
+            for pair in dynamic_cb(self.references, message):
                 try:
-                    return self[self.dynamic[pair]].raw_to_internal(data, size, endian, None)
+                    return self.dynamic[pair].parse(data, count, endian, message, dynamic_cb)
                 except KeyError:
                     pass
-            raise Exception('No match for dynamic field %r' % self)
+            raise Exception('No match for dynamic field %r' % self.name)
         # have to return name because of dynamic fields
-        return self.name, self._with_unit(self.type.raw_to_internal(data, size, endian))
+        return self.name, (self.type.parse(data, count, endian), self.units)
 
 
 class RowMessageField(MessageField):
@@ -436,9 +432,8 @@ class DynamicMessageField(RowMessageField):
     def _complete_dynamic(self, message, types):
         for reference_name, reference_value, row in self.__dynamic_tmp_data:
             reference = message.profile_to_field(reference_name)
-            value = reference.profile_to_internal(reference_value)
             self.references.add(reference)
-            self.__dynamic_lookup[(reference_name, value)] = RowMessageField(self._log, row, types)
+            self.__dynamic_lookup[(reference_name, reference_value)] = RowMessageField(self._log, row, types)
 
     @property
     def dynamic(self):
@@ -464,7 +459,8 @@ class Message(Named):
     def number_to_field(self, value):
         return self._number_to_field[value]
 
-    def raw_to_internal(self, data, definition, dynamic_cb=None):
+    def parse(self, data, definition, dynamic_cb=None):
+        if dynamic_cb is None: dynamic_cb = self._default_dynamic_cb
         offset = 0
         message = {}
         for field_desc in definition.fields:
@@ -472,18 +468,26 @@ class Message(Named):
             try:
                 field = self.number_to_field(field_desc.number)
                 count = field_desc.size // field.type.size
-                name, value = self._parse_field(message, field, bytes, count, definition.endian, dynamic_cb)
+                name, value = self._parse_field(field, bytes, count, definition.endian, message, dynamic_cb)
             except KeyError:
                 name = str(field_desc.number)
                 count = field_desc.size // field_desc.base_type.size
-                value = str(field_desc.base_type.raw_to_internal(bytes, count, definition.endian))
+                value = (field_desc.base_type.parse(bytes, count, definition.endian), None)
             message[name] = value
             offset += field_desc.size
         return message
 
-    def _parse_field(self, _message, field, bytes, count, endian, dynamic_cb):
+    def _default_dynamic_cb(self, references, message):
+        for reference in references:
+            if reference.name in message:
+                name = reference.name
+                value = message[name][0]  # drop units
+                self._log.debug('Found reference %r=%r' % (name, value))
+                yield name, value
+
+    def _parse_field(self, field, bytes, count, endian, message, dynamic_cb):
         # allow interception for optional field in header
-        return field.raw_to_internal(bytes, count, endian, dynamic_cb)
+        return field.parse(bytes, count, endian, message, dynamic_cb)
 
 
 class NumberedMessage(Message):
@@ -525,11 +529,11 @@ class Header(Message):
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(MessageField(log, name, n, None, types.profile_to_type(base_type)))
 
-    def _parse_field(self, message, field, data, count, endian, dynamic_cb):
+    def _parse_field(self, field, data, count, endian, message, dynamic_cb):
         if field.name == 'checksum' and message['header_size'] == 12:
             return None, None
         else:
-            return super()._parse_field(message, field, data, count, endian, dynamic_cb)
+            return super()._parse_field(field, data, count, endian, message, dynamic_cb)
 
 
 class Missing(Message):

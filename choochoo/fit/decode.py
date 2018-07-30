@@ -56,7 +56,7 @@ def header_defn(log, types, messages):
 def read_header(log, data, types, messages):
     header = messages.profile_to_message('HEADER')
     defn = header_defn(log, types, messages)
-    return header.raw_to_internal(data[0:defn.size], defn)
+    return header.parse(data[0:defn.size], defn)
 
 
 CRC = [0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401,
@@ -164,6 +164,7 @@ class Field:
         self.size = size
         self.field = field
         self.base_type = base_type
+        self.count = self.size // base_type.size
 
 
 class Definition:
@@ -200,7 +201,7 @@ def display_and_drop(log):
 def expand(log):
     def expand(msg):
         defn = msg.definition
-        result = defn.message.raw_to_internal(msg.data, msg.definition)
+        result = defn.message.parse(msg.data, msg.definition)
         result['MESSAGE'] = msg.definition.message.name
         result['TIMESTAMP'] = msg.timestamp
         return result
@@ -216,26 +217,43 @@ class Expand:
     def __call__(self, msg):
         self.__current_msg = msg
         defn = msg.definition
-        result = defn.message.raw_to_internal(msg.data, msg.definition, self.dynamic_cb)
+        # result = defn.message.raw_to_internal(msg.data, msg.definition, self.dynamic_cb)
+        result = defn.message.parse(msg.data, msg.definition)
         result['MESSAGE'] = msg.definition.message.name
         result['TIMESTAMP'] = msg.timestamp
         return result
 
     def dynamic_cb(self, references):
+        # todo - is this used?
+        msg = self.__current_msg
+        defn = msg.definition
         for reference in references:
             self.__log.debug(reference)
-            raise NotImplementedError()
+            index = defn.number_to_index[reference.number]
+            offset = sum(field.size for field in defn.fields[0:index])
+            field = defn.fields[index]
+            value, units = reference.parse(
+                msg.data[offset:offset+field.size], field.count, defn.endian, None)
+            yield reference.name, value
 
 
 def to_degrees(msg, units='°'):
-    for name, value in list(msg.items()):
-        if value is not None and value.endswith('semicircles'):
-            msg[name] = str(int(value[:-len('semicircles')]) * 180 / 2**31) + units
+    for name, pair in list(msg.items()):
+        if name[0].islower():
+            value, units = pair
+            if units is not None and units.endswith('semicircles'):
+                msg[name] = (value * 180 / 2**31, units)
     return msg
 
 
 def clean_undefined(msg):
-    for name, value in list(msg.items()):
-        if value is None:
+    for name, pair in list(msg.items()):
+        if pair is None:
             del msg[name]
+        else:
+            try:
+                if pair[0] is None:
+                    del msg[name]
+            except TypeError:
+                pass
     return msg
