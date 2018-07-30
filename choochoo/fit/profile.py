@@ -17,6 +17,7 @@ from ..log import make_log
 LITTLE, BIG = 0, 1
 PROFILE = 'global-profile.pkl'
 HEADER_GLOBAL_TYPE = -1
+TIMESTAMP_GLOBAL_TYPE = 253
 HEADER_FIELDS = [
     ('header_size', 1, 'uint8'),
     ('protocol_version', 1, 'uint8'),
@@ -244,13 +245,14 @@ class AliasInteger(AutoInteger):
 
 class Date(AliasInteger):
 
-    def __init__(self, log, name, utc):
+    def __init__(self, log, name, utc, to_datetime=True):
         super().__init__(log, name, 'uint32')
         self.__tzinfo = dt.timezone.utc if utc else None
+        self.__to_datetime = to_datetime
 
     def parse(self, data, count, endian):
         time = super().parse(data, count, endian)
-        if time >= 0x10000000:
+        if time >= 0x10000000 and self.__to_datetime:
             time = dt.datetime(1989, 12, 31, tzinfo=self.__tzinfo) + dt.timedelta(seconds=time)
         return time
 
@@ -321,13 +323,13 @@ BASE_TYPE_NAMES = ['enum', 'sint8', 'uint8', 'sint16', 'uint16', 'sint32', 'uint
 
 class Types:
 
-    def __init__(self, log, sheet):
+    def __init__(self, log, sheet, to_datetime=True):
         self.__log = log
         self.__profile_to_type = ErrorDict(log, 'No type for profile %r')
         # these are not 'base types' in the same sense as types having base types.
         # rather, they are the 'base (integer) types' described in the docs
         self.base_types = ErrorList(log, 'No base type for number %r')
-        self.__add_known_types()
+        self.__add_known_types(to_datetime)
         rows = peekable([cell.value for cell in row] for row in sheet.iter_rows())
         for row in rows:
             if row[0] and row[0][0].isupper():
@@ -336,7 +338,7 @@ class Types:
                 self.__log.info('Parsing type %s' % row[0])
                 self.__add_type(Mapping(self.__log, row, rows, self))
 
-    def __add_known_types(self):
+    def __add_known_types(self, to_datetime):
         # these cannot be inferred from name
         self.__add_type(String(self.__log, 'string'))
         self.__add_type(AliasInteger(self.__log, 'enum', 'uint8'))
@@ -348,8 +350,8 @@ class Types:
         # this is in the spreadsheet, but not in the doc
         self.__add_type(Boolean(self.__log, 'bool'))
         # these are defined in the spreadsheet, but the interpretation is in comments
-        self.__add_type(Date(self.__log, 'date_time', True))
-        self.__add_type(Date(self.__log, 'local_date_time', False))
+        self.__add_type(Date(self.__log, 'date_time', True, to_datetime=to_datetime))
+        self.__add_type(Date(self.__log, 'local_date_time', False, to_datetime=to_datetime))
 
     def __add_type(self, type):
         if type.name in self.__profile_to_type:

@@ -3,7 +3,8 @@ from binascii import hexlify
 from collections import namedtuple
 from struct import unpack
 
-from choochoo.fit.profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile
+from choochoo.fit.profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
+    TIMESTAMP_GLOBAL_TYPE, Date
 
 
 def decode_all(log, fit_path, profile_path):
@@ -94,6 +95,7 @@ class Tokenizer:
         self.__messages = messages
         self.__timestamp = None
         self.__definitions = {}
+        self.__parse_date = Date(log, 'timestamp', True, to_datetime=False)
 
     def __iter__(self):
         while self.__offset < len(self.__data):
@@ -139,21 +141,26 @@ class Tokenizer:
         return Field(self.__log, number, size, field, base_type)
 
     def __data_msg(self, local_type):
-        definition = self.__definitions[local_type]
-        payload = self.__data[self.__offset+1:self.__offset+1+definition.size]
-        self.__offset += 1 + definition.size
-        # todo - check for timestamp?
+        defn = self.__definitions[local_type]
+        data = self.__data[self.__offset+1:self.__offset+1+defn.size]
+        if defn.has_timestamp:
+            self.__timestamp = self.__parse_timestamp(defn, data)
+            self.__log.debug('New timestamp: %s' % self.__timestamp)
+        self.__offset += 1 + defn.size
         # include timestamp here so that things like laps can be correlated with timed data
-        return DataMsg(definition, payload, self.__timestamp)
+        return DataMsg(defn, data, self.__timestamp)
+
+    def __parse_timestamp(self, defn, data):
+        field = defn.fields[defn.number_to_index[TIMESTAMP_GLOBAL_TYPE]]
+        return self.__parse_date.parse(data[field.start:field.finish], 1, defn.endian)
 
     def __compressed_timestamp_msg(self, local_type, time_offset):
         rollover = time_offset < self.__timestamp & 0x1f
         self.__timestamp = (self.__timestamp & 0xffffffe0) + time_offset + (0x20 if rollover else 0)
-        definition = self.__definitions[local_type]
-        payload = self.__data[self.__offset+1:self.__offset+1+definition.size]
-        self.__offset += 1 + definition.size
-        # todo - check for timestamp?
-        return TimedMsg(definition, payload, self.__timestamp)
+        defn = self.__definitions[local_type]
+        payload = self.__data[self.__offset+1:self.__offset+1+defn.size]
+        self.__offset += 1 + defn.size
+        return TimedMsg(defn, payload, self.__timestamp)
 
 
 class Field:
@@ -176,14 +183,27 @@ class Definition:
         self.__log = log
         self.endian = endian
         self.message = message
+        self.__set_field_offsets(fields)
+        self.fields = list(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
+        self.size = sum(field.size for field in self.fields)
+        self.number_to_index = {}
+        self.has_timestamp = False
+        self.__scan_fields(fields)
+
+    def __scan_fields(self, fields):
+        for index, field in enumerate(fields):
+            number = field.number
+            self.number_to_index[field.number] = index
+            if number == TIMESTAMP_GLOBAL_TYPE:
+                self.has_timestamp = True
+
+    @staticmethod
+    def __set_field_offsets(fields):
         offset = 0
         for field in fields:
             field.start = offset
             offset += field.size
             field.finish = offset
-        self.fields = list(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
-        self.size = sum(field.size for field in self.fields)
-        self.number_to_index = dict((field.number, n) for (n, field) in enumerate(fields))
 
 
 def pipeline(source, pipeline):
