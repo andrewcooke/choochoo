@@ -1,4 +1,5 @@
 
+import datetime as dt
 from abc import abstractmethod
 from os.path import dirname, join
 from pickle import dump, load
@@ -11,7 +12,6 @@ from pkg_resources import resource_stream
 
 from ..args import PATH
 from ..log import make_log
-
 
 LITTLE, BIG = 0, 1
 PROFILE = 'global-profile.pkl'
@@ -241,6 +241,19 @@ class AliasIntegerBaseType(AutoIntegerBaseType):
         self.name = name
 
 
+class DateType(AliasIntegerBaseType):
+
+    def __init__(self, log, name, utc):
+        super().__init__(log, name, 'uint32')
+        self.__tzinfo = dt.timezone.utc if utc else None
+
+    def raw_to_internal(self, data, count, endian):
+        time = super().raw_to_internal(data, count, endian)
+        if time >= 0x10000000:
+            time = dt.datetime(1989, 12, 31, tzinfo=self.__tzinfo) + dt.timedelta(seconds=time)
+        return time
+
+
 class AutoFloatType(StructSupport):
 
     pattern = compile(r'^float(\d{1,2})$')
@@ -321,19 +334,33 @@ class Types:
                 self.__log.debug('Skipping %s' % row)
             elif row[0]:
                 self.__log.info('Parsing type %s' % row[0])
-                self.__profile_to_type.add_named(DefinedType(self.__log, row, rows, self))
+                self.__add_type(DefinedType(self.__log, row, rows, self))
 
     def __add_known_types(self):
         # these cannot be inferred from name
-        self.__profile_to_type.add_named(StringType(self.__log, 'string'))
-        self.__profile_to_type.add_named(AliasIntegerBaseType(self.__log, 'enum', 'uint8'))
-        self.__profile_to_type.add_named(AliasIntegerBaseType(self.__log, 'byte', 'uint8'))
+        self.__add_type(StringType(self.__log, 'string'))
+        self.__add_type(AliasIntegerBaseType(self.__log, 'enum', 'uint8'))
+        self.__add_type(AliasIntegerBaseType(self.__log, 'byte', 'uint8'))
         # these can be inferred
         for name in BASE_TYPE_NAMES:
             self.profile_to_type(name, auto_create=True)
             self.base_types.append(self.profile_to_type(name))
         # this is in the spreadsheet, but not in the doc
-        self.__profile_to_type.add_named(BooleanType(self.__log, 'bool'))
+        self.__add_type(BooleanType(self.__log, 'bool'))
+        # these are defined in the spreadsheet, but the interpretation is in comments
+        self.__add_type(DateType(self.__log, 'date_time', True))
+        self.__add_type(DateType(self.__log, 'local_date_time', False))
+
+    def __add_type(self, type):
+        if type.name in self.__profile_to_type:
+            duplicate  = self.__profile_to_type[type.name]
+            if duplicate.size == type.size:
+                self.__log.warn('Ignoring duplicate type for %r' % type.name)
+            else:
+                raise Exception('Duplicate type for %r with differing size (%d  %d)' %
+                                (type.name, type.size, duplicate.size))
+        else:
+            self.__profile_to_type.add_named(type)
 
     def profile_to_type(self, name, auto_create=False):
         try:
@@ -344,7 +371,7 @@ class Types:
                     match = cls.pattern.match(name)
                     if match:
                         self.__log.warn('Auto-adding type %s for %r' % (cls.__name__, name))
-                        self.__profile_to_type.add_named(cls(self.__log, name))
+                        self.__add_type(cls(self.__log, name))
                         return self.profile_to_type(name)
             raise
 
