@@ -129,11 +129,7 @@ class AbstractType(Named):
 
     def __init__(self, log, name, size, base_type=None):
         super().__init__(log, name)
-        if base_type is None:
-            self.is_base_type = True
-        else:
-            self.is_base_type = False
-            self.base_type = base_type
+        self.base_type = base_type
         self.size = size
 
     @abstractmethod
@@ -145,19 +141,7 @@ class AbstractType(Named):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
 
-class UnimplementedType(AbstractType):
-    """
-    Helper class for incomplete code during development
-    """
-
-    def profile_to_internal(self, cell_contents):
-        return super().profile_to_internal(cell_contents)
-
-    def raw_to_internal(self, bytes, count, endian):
-        return super().raw_to_internal(bytes, count, endian)
-
-
-class InternalType(UnimplementedType):
+class InternalType(AbstractType):
 
     def __init__(self, log, name, size, func):
         super().__init__(log, name, size)
@@ -302,8 +286,6 @@ class DefinedType(MappingType):
         name = row[0]
         base_type_name = row[1]
         base_type = types.profile_to_type(base_type_name, auto_create=True)
-        if not base_type.is_base_type:
-            raise Exception('Base type (%s) for %s is not as bae type' % (base_type_name, name))
         super().__init__(log, name, base_type)
         for row in rows:
             if row[0] or row[2] is None or row[3] is None:
@@ -329,8 +311,10 @@ class Types:
     def __init__(self, log, sheet):
         self.__log = log
         self.__profile_to_type = ErrorDict(log, 'No type for profile %r')
+        # these are not 'base types' in the same sense as types having base types.
+        # rather, they are the 'base (integer) types' described in the docs
         self.base_types = ErrorList(log, 'No base type for number %r')
-        self.__add_base_types()
+        self.__add_known_types()
         rows = peekable([cell.value for cell in row] for row in sheet.iter_rows())
         for row in rows:
             if row[0] and row[0][0].isupper():
@@ -339,21 +323,17 @@ class Types:
                 self.__log.info('Parsing type %s' % row[0])
                 self.__profile_to_type.add_named(DefinedType(self.__log, row, rows, self))
 
-    def __add_base_types(self):
+    def __add_known_types(self):
         # these cannot be inferred from name
-        self.__add_base_type(StringType(self.__log, 'string'))
-        self.__add_base_type(AliasIntegerBaseType(self.__log, 'enum', 'uint8'))
-        self.__add_base_type(AliasIntegerBaseType(self.__log, 'byte', 'uint8'))
+        self.__profile_to_type.add_named(StringType(self.__log, 'string'))
+        self.__profile_to_type.add_named(AliasIntegerBaseType(self.__log, 'enum', 'uint8'))
+        self.__profile_to_type.add_named(AliasIntegerBaseType(self.__log, 'byte', 'uint8'))
+        # these can be inferred
         for name in BASE_TYPE_NAMES:
             self.profile_to_type(name, auto_create=True)
             self.base_types.append(self.profile_to_type(name))
         # this is in the spreadsheet, but not in the doc
-        self.__add_base_type(BooleanType(self.__log, 'bool'))  # todo - why is this here?
-
-    def __add_base_type(self, type):
-        if not type.is_base_type:
-            raise Exception('Bad base type %r' % type)
-        self.__profile_to_type.add_named(type)
+        self.__profile_to_type.add_named(BooleanType(self.__log, 'bool'))
 
     def profile_to_type(self, name, auto_create=False):
         try:
@@ -363,30 +343,37 @@ class Types:
                 for cls in (AutoFloatType, AutoIntegerBaseType):
                     match = cls.pattern.match(name)
                     if match:
-                        self.__log.warn('Auto-adding base type %s for %r' % (cls.__name__, name))
-                        self.__add_base_type(cls(self.__log, name))
+                        self.__log.warn('Auto-adding type %s for %r' % (cls.__name__, name))
+                        self.__profile_to_type.add_named(cls(self.__log, name))
                         return self.profile_to_type(name)
             raise
 
 
 class MessageField:
 
-    def __init__(self, log, name, number, type):
+    def __init__(self, log, name, number, units, type):
         self._log = log
         self.name = name
         self.number = number
+        self.units = units if units else ''
         self.is_dynamic = self.number is None
         self.type = type
 
     def profile_to_internal(self, name):
         return self.type.profile_to_internal(name)
 
+    def _with_unit(self, value):
+        if value is None:
+            return value
+        else:
+            return str(value) + self.units
+
     def raw_to_internal(self, data, size, endian):
         # TODO!
         # if self.is_dynamic:
         #     raise NotImplementedError('Dynamic field')
         # have to return name because of dynamic fields
-        return self.name, self.type.raw_to_internal(data, size, endian)
+        return self.name, self._with_unit(self.type.raw_to_internal(data, size, endian))
 
 
 class RowMessageField(MessageField):
@@ -394,6 +381,7 @@ class RowMessageField(MessageField):
     def __init__(self, log, row, types):
         super().__init__(log, row[2],
                          int(row[1]) if row[1] is not None else None,
+                         row[8],
                          types.profile_to_type(row[3], auto_create=True))
 
 
@@ -461,7 +449,7 @@ class AbstractMessage(Named):
             except KeyError:
                 name = str(field_desc.number)
                 count = field_desc.size // field_desc.base_type.size
-                value = field_desc.base_type.raw_to_internal(bytes, count, definition.endian)
+                value = str(field_desc.base_type.raw_to_internal(bytes, count, definition.endian))
             message[name] = value
             offset += field_desc.size
         return message
@@ -505,10 +493,9 @@ class RowMessage(NumberedMessage):
 class Header(AbstractMessage):
 
     def __init__(self, log, types):
-        super().__init__(log, 'HEADER')
-        self.number = HEADER_GLOBAL_TYPE
+        super().__init__(log, 'HEADER', number=HEADER_GLOBAL_TYPE)
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
-            self._add_field(MessageField(log, name, n, types.profile_to_type(base_type)))
+            self._add_field(MessageField(log, name, n, None, types.profile_to_type(base_type)))
 
     def _parse_field(self, message, field, data, count, endian):
         if field.name == 'checksum' and message['header_size'] == 12:

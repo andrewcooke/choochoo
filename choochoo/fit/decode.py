@@ -21,10 +21,12 @@ def decode_all(log, fit_path, profile_path):
     check_crc(stripped, checksum)
     log.debug('Checked checksum')
     tokenizer = Tokenizer(log, stripped, types, messages)
-    for value in apply(tokenizer,
-                       [(DataMsg, expand(log)),
-                        (dict, display_and_drop(log))
-                        ]):
+    for value in pipeline(tokenizer,
+                          [(DataMsg, expand(log)),
+                           (dict, to_degrees),
+                           (dict, clean_undefined),
+                           (dict, display_and_drop(log))
+                           ]):
         print(value)
 
 
@@ -114,12 +116,8 @@ class Tokenizer:
         global_type = unpack(ENDIAN[endian]+'H', self.__data[self.__offset+3:self.__offset+5])[0]
         n_fields = self.__data[self.__offset+5]
         self.__log.debug('Definition: %s' % hexlify(self.__data[self.__offset:self.__offset+6+n_fields*3]))
-        try:
-            message = self.__messages.number_to_message(global_type)
-            self.__log.info('Definition for message "%s"' % message.name)
-        except KeyError:
-            message = None
-            self.__log.warn('No message %d' % global_type)
+        message = self.__messages.number_to_message(global_type)
+        self.__log.info('Definition for message "%s"' % message.name)
         self.__definitions[local_type] = \
             Definition(self.__log, endian, message,
                        [self.__make_field(self.__data[self.__offset+6+i*3:self.__offset+6+(i+1)*3], message)
@@ -178,7 +176,7 @@ class Definition:
         self.size = sum(field.size for field in self.fields)
 
 
-def apply(source, pipeline):
+def pipeline(source, pipeline):
     for value in source:
         for (cls, transform) in pipeline:
             if isinstance(value, cls):
@@ -206,3 +204,17 @@ def expand(log):
         result['TIMESTAMP'] = msg.timestamp
         return result
     return expand
+
+
+def to_degrees(msg):
+    for name, value in list(msg.items()):
+        if value is not None and value.endswith('semicircles'):
+            msg[name] = str(int(value[:-len('semicircles')]) * 180 / 2**31) + '°'
+    return msg
+
+
+def clean_undefined(msg):
+    for name, value in list(msg.items()):
+        if value is None:
+            del msg[name]
+    return msg
