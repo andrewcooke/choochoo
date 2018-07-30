@@ -384,7 +384,7 @@ class MessageField(Named):
         self.is_dynamic = False
         self.type = type
 
-    def parse(self, data, count, endian, message):
+    def parse(self, data, count, endian, result, message):
         return self.name, (self.type.parse(data, count, endian), self.units)
 
 
@@ -428,20 +428,23 @@ class DynamicMessageField(RowMessageField):
     def dynamic(self):
         return self.__dynamic_lookup
 
-    def parse(self, data, count, endian, message):
+    def parse(self, data, count, endian, result, message):
         if self.is_dynamic:
             for reference in self.references:
                 name = reference.name
-                if name in message:
-                    value = message[name][0]  # drop units
+                if name in result:
+                    value = result[name][0]  # drop units
                     self._log.debug('Found reference %r=%r' % (name, value))
                     try:
-                        return self.dynamic[(name, value)].parse(data, count, endian, message)
+                        return self.dynamic[(name, value)].parse(data, count, endian, result, message)
                     except KeyError:
                         pass
-            raise Exception('No match for dynamic field %r' % self.name)
+            self._log.warn('No match for dynamic field %s (message %s)' % (self.name, message.name))
+            for option, field in self.__dynamic_lookup.items():
+                self._log.debug('Option: %s -> %r' % (option, field.name))
+            # and if nothing found, fall though to default behaviour
         # have to return name because of dynamic fields
-        return super().parse(data, count, endian, message)
+        return super().parse(data, count, endian, result, message)
 
 
 class Message(Named):
@@ -464,21 +467,22 @@ class Message(Named):
         return self._number_to_field[value]
 
     def parse(self, data, definition):
-        message = {}
+        result = {}
         # note this is a field description not a message field
         for field in definition.fields:
             bytes = data[field.start:field.finish]
             if field.field:
-                name, value = self._parse_field(field.field, bytes, field.count, definition.endian, message)
+                name, value = self._parse_field(
+                    field.field, bytes, field.count, definition.endian, result, self)
             else:
                 name = str(field.number)
                 value = (field.base_type.parse(bytes, field.count, definition.endian), None)
-            message[name] = value
-        return message
+            result[name] = value
+        return result
 
-    def _parse_field(self, field, bytes, count, endian, message):
+    def _parse_field(self, field, bytes, count, endian, result, message):
         # allow interception for optional field in header
-        return field.parse(bytes, count, endian, message)
+        return field.parse(bytes, count, endian, result, message)
 
 
 class NumberedMessage(Message):
@@ -520,11 +524,11 @@ class Header(Message):
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(MessageField(log, name, n, None, types.profile_to_type(base_type)))
 
-    def _parse_field(self, field, data, count, endian, message):
-        if field.name == 'checksum' and message['header_size'] == 12:
+    def _parse_field(self, field, data, count, endian, result, message):
+        if field.name == 'checksum' and result['header_size'] == 12:
             return None, None
         else:
-            return super()._parse_field(field, data, count, endian, message)
+            return super()._parse_field(field, data, count, endian, result, message)
 
 
 class Missing(Message):

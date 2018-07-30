@@ -134,7 +134,7 @@ class Tokenizer:
                 field = message.number_to_field(number)
             except KeyError:
                 field = None
-                self.__log.warn('No field %d for message %s' % (number, message))
+                self.__log.warn('No field %d for message %s' % (number, message.name))
         base_type = self.__types.base_types[base & 0xf]
         return Field(self.__log, number, size, field, base_type)
 
@@ -216,12 +216,12 @@ def expand(log):
     return expand
 
 
-def to_degrees(msg, units='°'):
+def to_degrees(msg, new_units='°'):
     for name, pair in list(msg.items()):
         if name[0].islower():
-            value, units = pair
-            if units is not None and units.endswith('semicircles'):
-                msg[name] = (value * 180 / 2**31, units)
+            value, old_units = pair
+            if old_units == 'semicircles':
+                msg[name] = (value * 180 / 2**31, new_units)
     return msg
 
 
