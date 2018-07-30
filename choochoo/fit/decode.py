@@ -22,7 +22,7 @@ def decode_all(log, fit_path, profile_path):
     log.debug('Checked checksum')
     tokenizer = Tokenizer(log, stripped, types, messages)
     for value in pipeline(tokenizer,
-                          [(DataMsg, expand(log)),
+                          [(DataMsg, Expand(log)),
                            (dict, to_degrees),
                            (dict, clean_undefined),
                            (dict, display_and_drop(log))
@@ -174,6 +174,7 @@ class Definition:
         self.message = message
         self.fields = fields
         self.size = sum(field.size for field in self.fields)
+        self.number_to_index = dict((field.number, n) for (n, field) in enumerate(fields))
 
 
 def pipeline(source, pipeline):
@@ -206,10 +207,30 @@ def expand(log):
     return expand
 
 
-def to_degrees(msg):
+class Expand:
+
+    def __init__(self, log):
+        self.__log = log
+        self.__current_msg = None
+
+    def __call__(self, msg):
+        self.__current_msg = msg
+        defn = msg.definition
+        result = defn.message.raw_to_internal(msg.data, msg.definition, self.dynamic_cb)
+        result['MESSAGE'] = msg.definition.message.name
+        result['TIMESTAMP'] = msg.timestamp
+        return result
+
+    def dynamic_cb(self, references):
+        for reference in references:
+            self.__log.debug(reference)
+            raise NotImplementedError()
+
+
+def to_degrees(msg, units='°'):
     for name, value in list(msg.items()):
         if value is not None and value.endswith('semicircles'):
-            msg[name] = str(int(value[:-len('semicircles')]) * 180 / 2**31) + '°'
+            msg[name] = str(int(value[:-len('semicircles')]) * 180 / 2**31) + units
     return msg
 
 

@@ -141,7 +141,7 @@ class AbstractType(Named):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
 
-class InternalType(AbstractType):
+class BaseType(AbstractType):
 
     def __init__(self, log, name, size, func):
         super().__init__(log, name, size)
@@ -151,7 +151,7 @@ class InternalType(AbstractType):
         return self.__func(cell_contents)
 
 
-class StructSupport(InternalType):
+class StructSupport(BaseType):
 
     def _pack_bad(self, value):
         bad = (bytearray(self.size), bytearray(self.size))
@@ -180,7 +180,7 @@ class StructSupport(InternalType):
             return value
 
 
-class StringType(InternalType):
+class String(BaseType):
 
     def __init__(self, log, name):
         super().__init__(log, name, 1, str)
@@ -189,7 +189,7 @@ class StringType(InternalType):
         return str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')
 
 
-class BooleanType(InternalType):
+class Boolean(BaseType):
 
     def __init__(self, log, name):
         super().__init__(log, name, 1, bool)
@@ -202,7 +202,7 @@ class BooleanType(InternalType):
             return bools
 
 
-class AutoIntegerBaseType(StructSupport):
+class AutoInteger(StructSupport):
 
     pattern = compile(r'^([su]?)int(\d{1,2})(z?)$')
 
@@ -234,14 +234,14 @@ class AutoIntegerBaseType(StructSupport):
         return self._unpack(data, self.formats, self.bad, count, endian)
 
 
-class AliasIntegerBaseType(AutoIntegerBaseType):
+class AliasInteger(AutoInteger):
 
     def __init__(self, log, name, spec):
         super().__init__(log, spec)
         self.name = name
 
 
-class DateType(AliasIntegerBaseType):
+class Date(AliasInteger):
 
     def __init__(self, log, name, utc):
         super().__init__(log, name, 'uint32')
@@ -254,7 +254,7 @@ class DateType(AliasIntegerBaseType):
         return time
 
 
-class AutoFloatType(StructSupport):
+class AutoFloat(StructSupport):
 
     pattern = compile(r'^float(\d{1,2})$')
 
@@ -276,12 +276,21 @@ class AutoFloatType(StructSupport):
         return self._unpack(data, self.formats, self.bad, count, endian)
 
 
-class MappingType(AbstractType):
+class Mapping(AbstractType):
 
-    def __init__(self, log, name, base_type):
+    def __init__(self, log, row, rows, types):
+        name = row[0]
+        base_type_name = row[1]
+        base_type = types.profile_to_type(base_type_name, auto_create=True)
         super().__init__(log, name, base_type.size, base_type=base_type)
         self._profile_to_internal = ErrorDict(log, 'No internal value for profile %r')
         self._internal_to_profile = ErrorDict(log, 'No profile value for internal %r')
+        for row in rows:
+            if row[0] or row[2] is None or row[3] is None:
+                rows.prepend(row)
+                break
+            self.__add_mapping(row)
+        log.debug('Parsed %d values' % len(self._profile_to_internal))
 
     def profile_to_internal(self, cell_contents):
         return self._profile_to_internal[cell_contents]
@@ -292,21 +301,6 @@ class MappingType(AbstractType):
     def raw_to_internal(self, bytes, size, endian):
         return self.base_type.raw_to_internal(bytes, size, endian)
 
-
-class DefinedType(MappingType):
-
-    def __init__(self, log, row, rows, types):
-        name = row[0]
-        base_type_name = row[1]
-        base_type = types.profile_to_type(base_type_name, auto_create=True)
-        super().__init__(log, name, base_type)
-        for row in rows:
-            if row[0] or row[2] is None or row[3] is None:
-                rows.prepend(row)
-                break
-            self.__add_mapping(row)
-        log.debug('Parsed %d values' % len(self._profile_to_internal))
-
     def __add_mapping(self, row):
         profile = row[2]
         internal = self.base_type.profile_to_internal(row[3])
@@ -315,8 +309,9 @@ class DefinedType(MappingType):
 
 
 # table 4-6 of FIT defn doc
-BASE_TYPE_NAMES = ['enum', 'sint8', 'uint8', 'sint16', 'uint16', 'sint32', 'uint32', 'string',
-                   'float32', 'float64', 'uint8z', 'uint16z', 'uint32z', 'byte', 'sint64', 'uint64', 'uint64z']
+BASE_TYPE_NAMES = ['enum', 'sint8', 'uint8', 'sint16', 'uint16', 'sint32', 'uint32',
+                   'string', 'float32', 'float64',
+                   'uint8z', 'uint16z', 'uint32z', 'byte', 'sint64', 'uint64', 'uint64z']
 
 
 class Types:
@@ -334,26 +329,26 @@ class Types:
                 self.__log.debug('Skipping %s' % row)
             elif row[0]:
                 self.__log.info('Parsing type %s' % row[0])
-                self.__add_type(DefinedType(self.__log, row, rows, self))
+                self.__add_type(Mapping(self.__log, row, rows, self))
 
     def __add_known_types(self):
         # these cannot be inferred from name
-        self.__add_type(StringType(self.__log, 'string'))
-        self.__add_type(AliasIntegerBaseType(self.__log, 'enum', 'uint8'))
-        self.__add_type(AliasIntegerBaseType(self.__log, 'byte', 'uint8'))
+        self.__add_type(String(self.__log, 'string'))
+        self.__add_type(AliasInteger(self.__log, 'enum', 'uint8'))
+        self.__add_type(AliasInteger(self.__log, 'byte', 'uint8'))
         # these can be inferred
         for name in BASE_TYPE_NAMES:
             self.profile_to_type(name, auto_create=True)
             self.base_types.append(self.profile_to_type(name))
         # this is in the spreadsheet, but not in the doc
-        self.__add_type(BooleanType(self.__log, 'bool'))
+        self.__add_type(Boolean(self.__log, 'bool'))
         # these are defined in the spreadsheet, but the interpretation is in comments
-        self.__add_type(DateType(self.__log, 'date_time', True))
-        self.__add_type(DateType(self.__log, 'local_date_time', False))
+        self.__add_type(Date(self.__log, 'date_time', True))
+        self.__add_type(Date(self.__log, 'local_date_time', False))
 
     def __add_type(self, type):
         if type.name in self.__profile_to_type:
-            duplicate  = self.__profile_to_type[type.name]
+            duplicate = self.__profile_to_type[type.name]
             if duplicate.size == type.size:
                 self.__log.warn('Ignoring duplicate type for %r' % type.name)
             else:
@@ -367,7 +362,7 @@ class Types:
             return self.__profile_to_type[name]
         except KeyError:
             if auto_create:
-                for cls in (AutoFloatType, AutoIntegerBaseType):
+                for cls in (AutoFloat, AutoInteger):
                     match = cls.pattern.match(name)
                     if match:
                         self.__log.warn('Auto-adding type %s for %r' % (cls.__name__, name))
@@ -376,11 +371,10 @@ class Types:
             raise
 
 
-class MessageField:
+class MessageField(Named):
 
     def __init__(self, log, name, number, units, type):
-        self._log = log
-        self.name = name
+        super().__init__(log, name)
         self.number = number
         self.units = units if units else ''
         self.is_dynamic = self.number is None
@@ -395,10 +389,16 @@ class MessageField:
         else:
             return str(value) + self.units
 
-    def raw_to_internal(self, data, size, endian):
-        # TODO!
-        # if self.is_dynamic:
-        #     raise NotImplementedError('Dynamic field')
+    def raw_to_internal(self, data, size, endian, dynamic_cb):
+        if self.is_dynamic:
+            if not dynamic_cb:
+                raise NotImplementedError('Dynamic field (and no callback)')
+            for pair in dynamic_cb(self.references):
+                try:
+                    return self[self.dynamic[pair]].raw_to_internal(data, size, endian, None)
+                except KeyError:
+                    pass
+            raise Exception('No match for dynamic field %r' % self)
         # have to return name because of dynamic fields
         return self.name, self._with_unit(self.type.raw_to_internal(data, size, endian))
 
@@ -445,7 +445,7 @@ class DynamicMessageField(RowMessageField):
         return self.__dynamic_lookup
 
 
-class AbstractMessage(Named):
+class Message(Named):
 
     def __init__(self, log, name, number=None):
         super().__init__(log, name)
@@ -464,7 +464,7 @@ class AbstractMessage(Named):
     def number_to_field(self, value):
         return self._number_to_field[value]
 
-    def raw_to_internal(self, data, definition):
+    def raw_to_internal(self, data, definition, dynamic_cb=None):
         offset = 0
         message = {}
         for field_desc in definition.fields:
@@ -472,7 +472,7 @@ class AbstractMessage(Named):
             try:
                 field = self.number_to_field(field_desc.number)
                 count = field_desc.size // field.type.size
-                name, value = self._parse_field(message, field, bytes, count, definition.endian)
+                name, value = self._parse_field(message, field, bytes, count, definition.endian, dynamic_cb)
             except KeyError:
                 name = str(field_desc.number)
                 count = field_desc.size // field_desc.base_type.size
@@ -481,11 +481,12 @@ class AbstractMessage(Named):
             offset += field_desc.size
         return message
 
-    def _parse_field(self, _message, field, bytes, count, endian):
-        return field.raw_to_internal(bytes, count, endian)
+    def _parse_field(self, _message, field, bytes, count, endian, dynamic_cb):
+        # allow interception for optional field in header
+        return field.raw_to_internal(bytes, count, endian, dynamic_cb)
 
 
-class NumberedMessage(AbstractMessage):
+class NumberedMessage(Message):
 
      def __init__(self, log, name, types):
         try:
@@ -517,21 +518,21 @@ class RowMessage(NumberedMessage):
                 data._complete_dynamic(self, types)
 
 
-class Header(AbstractMessage):
+class Header(Message):
 
     def __init__(self, log, types):
         super().__init__(log, 'HEADER', number=HEADER_GLOBAL_TYPE)
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(MessageField(log, name, n, None, types.profile_to_type(base_type)))
 
-    def _parse_field(self, message, field, data, count, endian):
+    def _parse_field(self, message, field, data, count, endian, dynamic_cb):
         if field.name == 'checksum' and message['header_size'] == 12:
             return None, None
         else:
-            return super()._parse_field(message, field, data, count, endian)
+            return super()._parse_field(message, field, data, count, endian, dynamic_cb)
 
 
-class DefaultMessage(AbstractMessage):
+class Missing(Message):
 
     def __init__(self, log, number):
         super().__init__(log, 'MESSAGE %d' % number, number)
@@ -566,6 +567,6 @@ class Messages:
         try:
             return self.__number_to_message[number]
         except KeyError:
-            message = DefaultMessage(self.__log, number)
+            message = Missing(self.__log, number)
             self.__number_to_message[number] = message
             return message
