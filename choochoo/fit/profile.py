@@ -181,8 +181,8 @@ class StructSupport(InternalType):
 
     def _is_bad(self, data, bad):
         size = len(bad)
-        length = len(data) // size
-        all(bad == data[size*i:size*(i+1)] for i in range(length))
+        count = len(data) // size
+        return all(bad == data[size*i:size*(i+1)] for i in range(count))
 
     def _unpack(self, data, formats, bad, count, endian):
         if self._is_bad(data, bad[endian]):
@@ -210,6 +210,13 @@ class BooleanType(InternalType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, bool)
 
+    def raw_to_internal(self, bytes, count, endian):
+        bools = [bool(byte) for byte in bytes]
+        if count == 1:
+            return bools[0]
+        else:
+            return bools
+
 
 class AutoIntegerBaseType(StructSupport):
 
@@ -230,7 +237,7 @@ class AutoIntegerBaseType(StructSupport):
         if not self.signed:
             format = format.upper()
         self.formats = ['<%d' + format, '>%d' + format]
-        self.bad = self._pack_bad(0 if match.group(3) == 'z' else 2 ** (bits - 1 if self.signed else 0) - 1)
+        self.bad = self._pack_bad(0 if match.group(3) == 'z' else 2 ** (bits - (1 if self.signed else 0)) - 1)
 
     @staticmethod
     def int(cell):
@@ -375,8 +382,9 @@ class MessageField:
         return self.type.profile_to_internal(name)
 
     def raw_to_internal(self, data, size, endian):
-        if self.is_dynamic:
-            raise NotImplementedError()
+        # TODO!
+        # if self.is_dynamic:
+        #     raise NotImplementedError('Dynamic field')
         # have to return name because of dynamic fields
         return self.name, self.type.raw_to_internal(data, size, endian)
 
@@ -424,12 +432,10 @@ class DynamicMessageField(RowMessageField):
 
 class AbstractMessage(Named):
 
-    def __init__(self, log, name, types):
+    def __init__(self, log, name, number=None):
         super().__init__(log, name)
-        try:
-            self.number = types.profile_to_type('mesg_num').profile_to_internal(name)
-        except KeyError:
-            log.warn('No mesg_num for %r' % name)
+        if number is not None:
+            self.number = number
         self._profile_to_field = ErrorDict(log, 'No field for profile %r')
         self._number_to_field = ErrorDict(log, 'No field for number %r')
 
@@ -447,18 +453,35 @@ class AbstractMessage(Named):
         offset = 0
         message = {}
         for field_desc in definition.fields:
-            field = self.number_to_field(field_desc.number)
-            name, value = self._parse_field(message, field, data[offset:offset+field_desc.size],
-                                            field_desc.size // field.type.size, definition.endian)
+            bytes = data[offset:offset+field_desc.size]
+            try:
+                field = self.number_to_field(field_desc.number)
+                count = field_desc.size // field.type.size
+                name, value = self._parse_field(message, field, bytes, count, definition.endian)
+            except KeyError:
+                name = str(field_desc.number)
+                count = field_desc.size // field_desc.base_type.size
+                value = field_desc.base_type.raw_to_internal(bytes, count, definition.endian)
             message[name] = value
             offset += field_desc.size
         return message
 
-    def _parse_field(self, _message, field, data, count, endian):
-        return field.raw_to_internal(data, count, endian)
+    def _parse_field(self, _message, field, bytes, count, endian):
+        return field.raw_to_internal(bytes, count, endian)
 
 
-class RowMessage(AbstractMessage):
+class NumberedMessage(AbstractMessage):
+
+     def __init__(self, log, name, types):
+        try:
+            number = types.profile_to_type('mesg_num').profile_to_internal(name)
+        except KeyError:
+            number = None
+            log.warn('No mesg_num for %r' % name)
+        super().__init__(log, name, number)
+
+
+class RowMessage(NumberedMessage):
 
     def __init__(self, log, row, rows, types):
         super().__init__(log, row[0], types)
@@ -482,7 +505,7 @@ class RowMessage(AbstractMessage):
 class Header(AbstractMessage):
 
     def __init__(self, log, types):
-        super().__init__(log, 'HEADER', types)
+        super().__init__(log, 'HEADER')
         self.number = HEADER_GLOBAL_TYPE
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(MessageField(log, name, n, types.profile_to_type(base_type)))
@@ -492,6 +515,12 @@ class Header(AbstractMessage):
             return None, None
         else:
             return super()._parse_field(message, field, data, count, endian)
+
+
+class DefaultMessage(AbstractMessage):
+
+    def __init__(self, log, number):
+        super().__init__(log, 'MESSAGE %d' % number, number)
 
 
 class Messages:
@@ -520,4 +549,9 @@ class Messages:
         return self.__profile_to_message[name]
 
     def number_to_message(self, number):
-        return self.__number_to_message[number]
+        try:
+            return self.__number_to_message[number]
+        except KeyError:
+            message = DefaultMessage(self.__log, number)
+            self.__number_to_message[number] = message
+            return message

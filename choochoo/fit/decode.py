@@ -77,9 +77,9 @@ def check_crc(data, reference):
 ENDIAN = '<>'
 
 
-DataMsg = namedtuple('DataMsg', 'definition data, time')
+DataMsg = namedtuple('DataMsg', 'definition data timestamp')
 
-TimedMsg = namedtuple('TimedMsg', 'definition data time')
+TimedMsg = namedtuple('TimedMsg', 'definition data timestamp')
 
 
 class Tokenizer:
@@ -201,5 +201,8 @@ def display_and_drop(log):
 def expand(log):
     def expand(msg):
         defn = msg.definition
-        defn.message.raw_to_internal(msg.data, msg.definition)
+        result = defn.message.raw_to_internal(msg.data, msg.definition)
+        result['MESSAGE'] = msg.definition.message.name
+        result['TIMESTAMP'] = msg.timestamp
+        return result
     return expand
