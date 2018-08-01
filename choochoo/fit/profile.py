@@ -466,17 +466,11 @@ class DynamicMessageField(RowMessageField):
         return super().parse(data, count, endian, result, message)
 
 
-class Record(namedtuple('BaseRecord', 'name, number, definition, timestamp, data')):
-
-    def is_known(self):
-        return self.name[0].islower()
-
-
 def no_filter(data):
     return data
 
 
-def no_nulls(data):
+def no_bad_values(data):
     for name, (value, units) in data:
         if value is not None:
             yield name, (value, units)
@@ -506,7 +500,9 @@ def no_units(data):
 
 def append_units(data, separator=''):
     for name, (value, units) in data:
-        if units:
+        if value is None:  # preserve bad values as bad
+            yield name, None
+        elif units:
             yield name, str(value) + separator + units
         else:
             yield name, str(value)
@@ -530,10 +526,15 @@ def chain(*filters):
     return expand
 
 
-class LazyRecord(Record):
+class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')):
+
+    __slots__ = ()
+
+    def is_known(self):
+        return self.name[0].islower()
 
     def into(self, container, filter=no_filter):
-        return Record(self.name, self.number, self.definition, self.timestamp,
+        return Record(self.name, self.number, self.identity, self.timestamp,
                       container(filter(self.data)))
 
     def as_dict(self, filter=no_filter):
@@ -545,8 +546,11 @@ class LazyRecord(Record):
     def as_values(self, filter=no_filter):
         return self.into(tuple, filter=chain(no_names, filter))
 
+
+class LazyRecord(Record):
+
     def force(self):
-        return LazyRecord(self.name, self.number, self.definition, self.timestamp, list(self.data))
+        return Record(self.name, self.number, self.identity, self.timestamp, list(self.data))
 
 
 class Message(Named):
@@ -568,7 +572,7 @@ class Message(Named):
         return self._number_to_field[value]
 
     def parse(self, data, defn, timestamp=None):
-        return LazyRecord(self.name, self.number, defn, timestamp, self.__parse(data, defn))
+        return LazyRecord(self.name, self.number, defn.identity, timestamp, self.__parse(data, defn))
 
     def __parse(self, data, defn):
         references = {} if defn.references else None

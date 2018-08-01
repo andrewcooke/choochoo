@@ -1,6 +1,6 @@
 
 from binascii import hexlify
-from collections import namedtuple
+from collections import namedtuple, Counter
 from struct import unpack
 
 from choochoo.fit.profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
@@ -41,7 +41,7 @@ def strip_header_crc(data):
 
 def header_defn(log, types, messages):
     message = messages.number_to_message(HEADER_GLOBAL_TYPE)
-    return Definition(log, LITTLE, message,
+    return Definition(log, Identity(message.name, 0), LITTLE, message,
                       [Field(log, n, field[1] * types.profile_to_type(field[2]).size,
                              message.number_to_field(n),
                              types.profile_to_type(field[2]))
@@ -74,6 +74,8 @@ def check_crc(data, reference):
 
 class Msg(namedtuple('MsgTuple', 'definition data timestamp')):
 
+    __slots__ = ()
+
     def parse(self):
         return self.definition.message.parse(self.data, self.definition, self.timestamp)
 
@@ -93,6 +95,7 @@ class Tokenizer:
         self.__types = types
         self.__messages = messages
         self.__timestamp = None
+        self.__definiton_counter = Counter()
         self.__definitions = {}
         self.__parse_date = Date(log, 'timestamp', True, to_datetime=False)
 
@@ -119,8 +122,9 @@ class Tokenizer:
         self.__log.debug('Definition: %s' % hexlify(self.__data[self.__offset:self.__offset+6+n_fields*3]))
         message = self.__messages.number_to_message(global_type)
         self.__log.info('Definition for message "%s"' % message.name)
+        self.__definiton_counter[global_type] += 1
         self.__definitions[local_type] = \
-            Definition(self.__log, endian, message,
+            Definition(self.__log, Identity(message.name, self.__definiton_counter[global_type]), endian, message,
                        [self.__make_field(self.__data[self.__offset+6+i*3:self.__offset+6+(i+1)*3], message)
                         for i in range(n_fields)])
         self.__offset += 6 + n_fields * 3
@@ -175,10 +179,25 @@ class Field:
         self.finish = 0
 
 
+class Identity:
+
+    def __init__(self, name, count):
+        self.name = name
+        self.count = count
+        # todo - total count
+
+    def __str__(self):
+        if self.count:
+            return '%s (defn %d)' % (self.name, self.count)
+        else:
+            return self.name
+
+
 class Definition:
 
-    def __init__(self, log, endian, message, fields, references=None):
+    def __init__(self, log, identity, endian, message, fields, references=None):
         self.__log = log
+        self.identity = identity
         self.endian = endian
         self.message = message
         # set offsets before ordering
