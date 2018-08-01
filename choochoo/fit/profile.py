@@ -1,6 +1,7 @@
 
 import datetime as dt
 from abc import abstractmethod
+from collections import namedtuple
 from os.path import dirname, join
 from pickle import dump, load
 from re import compile
@@ -465,18 +466,71 @@ class DynamicMessageField(RowMessageField):
         return super().parse(data, count, endian, result, message)
 
 
-class WithUnits(tuple): pass
+Record = namedtuple('Record', 'name, number, definition, timestamp, data')
 
 
-class WithoutUnits(tuple): pass
+def no_filter(data):
+    return data
+
+
+def no_nulls(data):
+    for name, (value, units) in data:
+        if value is not None:
+            yield name, (value, units)
+
+
+def no_units(data):
+    for name, (value, units) in data:
+        if value is not None:
+            yield name, value
+
+
+def fix_degrees(data, new_units='°'):
+    for name, (value, units) in data:
+        if units == 'semicircles':
+            value = value * 180 / 2**31
+            units = new_units
+        yield name, (value, units)
+
+
+def chain(*filters):
+    def expand(data, filters=filters):
+        filter, filters = filters[0], filters[1:]
+        if filters:
+            return filter(expand(data, filters=filters))
+        else:
+            return filter(data)
+    return expand
+
+
+class LazyRecord(Record):
+
+    def with_units(self, container, filter=no_filter):
+        return Record(self.name, self.number, self.definition, self.timestamp,
+                      container(filter(self.data)))
+
+    def without_units(self, container, filter=no_filter):
+        return Record(self.name, self.number, self.definition, self.timestamp,
+                      container(chain(no_units, filter)(self.data)))
+
+    def as_tuple_with_units(self, filter=no_filter):
+        return self.with_units(tuple, filter=filter)
+
+    def as_tuple_without_units(self, filter=no_filter):
+        return self.without_units(tuple, filter=filter)
+
+    def as_dict_with_units(self, filter=no_filter):
+        return self.with_units(dict, filter=filter)
+
+    def as_dict_without_units(self, filter=no_filter):
+        return self.without_units(dict, filter=filter)
 
 
 class Message(Named):
 
     def __init__(self, log, name, number=None):
         super().__init__(log, name)
-        if number is not None:
-            self.number = number
+        self.number = number
         self._profile_to_field = ErrorDict(log, 'No field for profile %r')
         self._number_to_field = ErrorDict(log, 'No field for number %r')
 
@@ -490,14 +544,8 @@ class Message(Named):
     def number_to_field(self, value):
         return self._number_to_field[value]
 
-    def parse_as_dict(self, data, defn):
-        return dict(self.__parse(data, defn))
-
-    def parse_as_tuple(self, data, defn, units=True):
-        if units:
-            return WithUnits(value for name, value in self.__parse(data, defn))
-        else:
-            return WithoutUnits(value[0] for name, value in self.__parse(data, defn))
+    def parse(self, data, defn, timestamp=None):
+        return LazyRecord(self.name, self.number, defn, timestamp, self.__parse(data, defn))
 
     def __parse(self, data, defn):
         references = {} if defn.references else None

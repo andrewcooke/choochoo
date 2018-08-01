@@ -1,29 +1,15 @@
 
 from binascii import hexlify
 from collections import namedtuple
-from pprint import PrettyPrinter
 from struct import unpack
 
 from choochoo.fit.profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
-    TIMESTAMP_GLOBAL_TYPE, Date, WithUnits
+    TIMESTAMP_GLOBAL_TYPE, Date
 
 
-def decode_all(log, fit_path, profile_path=None):
+def parse_all(log, fit_path, profile_path=None):
     data, types, messages, header = load(log, fit_path, profile_path=profile_path)
-    tokenizer = Tokenizer(log, data, types, messages)
-    time_series = {}
-    for value in pipeline(tokenizer,
-                          [(instances(DataMsg), expand_as_dict(log)),
-                           # (DataMsg, collect_as_tuples(log, time_series)),
-                           (instances(dict), to_degrees),
-                           (instances(dict), delete_undefined_values),
-                           (instances(dict), display_and_drop(log))
-                           ]):
-        print(value)
-    PrettyPrinter().pprint(time_series)
-    for name in time_series:
-        print(name)
-        print([len(x) for x in time_series[name]])
+    return (msg.parse() for msg in Tokenizer(log, data, types, messages))
 
 
 def load(log, fit_path, profile_path=None):
@@ -36,7 +22,7 @@ def load(log, fit_path, profile_path=None):
         data =input.read()
     log.debug('Read "%s"' % fit_path)
     header = read_header(log, data, types, messages)
-    log.debug('Header: %s' % header)
+    log.debug('Header: %s' % (header,))
     stripped, checksum = strip_header_crc(data)
     log.debug('Checked length')
     check_crc(stripped, checksum)
@@ -66,9 +52,7 @@ def header_defn(log, types, messages):
 def read_header(log, data, types, messages):
     header = messages.profile_to_message('HEADER')
     defn = header_defn(log, types, messages)
-    result = header.parse_as_dict(data[0:defn.size], defn)
-    result['MESSAGE'] = 'HEADER'
-    return result
+    return header.parse(data[0:defn.size], defn).as_dict_with_units()
 
 
 CRC = [0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401,
@@ -88,12 +72,16 @@ def check_crc(data, reference):
         raise Exception('Bad checksum (%04x / %04x)' % (checksum, reference))
 
 
-ENDIAN = '<>'
+class Msg(namedtuple('MsgTuple', 'definition data timestamp')):
+
+    def parse(self):
+        return self.definition.message.parse(self.data, self.definition, self.timestamp)
 
 
-DataMsg = namedtuple('DataMsg', 'definition data timestamp')
+class DataMsg(Msg): pass
 
-TimedMsg = namedtuple('TimedMsg', 'definition data timestamp')
+
+class TimedMsg(Msg): pass
 
 
 class Tokenizer:
@@ -126,7 +114,7 @@ class Tokenizer:
 
     def __definition_msg(self, local_type, extended):
         endian = self.__data[self.__offset+2] & 0x1
-        global_type = unpack(ENDIAN[endian]+'H', self.__data[self.__offset+3:self.__offset+5])[0]
+        global_type = unpack('<>'[endian]+'H', self.__data[self.__offset+3:self.__offset+5])[0]
         n_fields = self.__data[self.__offset+5]
         self.__log.debug('Definition: %s' % hexlify(self.__data[self.__offset:self.__offset+6+n_fields*3]))
         message = self.__messages.number_to_message(global_type)
@@ -218,179 +206,3 @@ class Definition:
             field.start = offset
             offset += field.size
             field.finish = offset
-
-
-def pipeline(source, pipeline):
-    for value in source:
-        for actions in pipeline:
-            for action in actions:
-                if action.test(value):
-                    value = action(value)
-                if value is None:
-                    break
-            if value is None:
-                break
-        if value is not None:
-            yield value
-
-
-def exhaust(pipeline):
-    for _ in pipeline:
-        pass
-
-
-def add_test(test):
-    def decorator(f):
-        f.test = test
-        return f
-    return decorator
-
-
-pipeline_any = add_test(lambda value: True)
-
-
-def pipeline_instance(*cls_list):
-    def test(value):
-        if cls_list:
-            return any(isinstance(value, cls) for cls in cls_list)
-        else:
-            return True
-    return add_test(test)
-
-
-def drop(log, *cls):
-    @pipeline_instance(*cls)
-    def action(msg):
-        return None
-    return [action]
-
-
-def display_and_drop(log, *cls):
-    @pipeline_instance(*cls)
-    def action(msg):
-        log.debug('Drop: %s' % (msg,))
-    return [action]
-
-
-def save_definitions(log, defintions):
-    @pipeline_instance(DataMsg, TimedMsg)
-    def action(msg):
-        defintions[msg.definition.message.name] = msg.definition
-        return msg
-    return [action]
-
-
-def expand_as_dict(log, *cls, add_timestamp=True):
-    @pipeline_instance(*cls)
-    def action(msg):
-        defn = msg.definition
-        result = defn.message.parse_as_dict(msg.data, msg.definition)
-        result['MESSAGE'] = msg.definition.message.name
-        if add_timestamp:
-            result['TIMESTAMP'] = (msg.timestamp, 's')
-        return result
-    return [action]
-
-
-def expand_as_tuple(log, *cls, add_timestamp=True):
-    @pipeline_instance(*cls)
-    def action(msg):
-        defn = msg.definition
-        result = defn.message.parse_as_tuple(msg.data, msg.definition)
-        if add_timestamp:
-            return (msg.definition.message.name, msg.timestamp) + result
-        else:
-            return (msg.definition.message.name,) + result
-    return [action]
-
-
-def collect_tuples(log, definitions, results, add_timestamp=True):
-    @pipeline_instance(tuple)
-    def action(msg):
-        name = msg[0]
-        if name not in results:
-            defn = definitions[name]
-            header = tuple(field.field.name if field.field else field.number for field in defn.fields)
-            if add_timestamp:
-                header = ('TIMESTAMP',) + header
-            results[name] = header
-        results[name].append(msg)
-    return [action]
-
-
-def collect(log, results, *cls):
-    @pipeline_instance(*cls)
-    def action(msg):
-        results.append(msg)
-    return action
-
-
-def to_degrees(log, new_units='°'):
-    @pipeline_instance(dict)
-    def data_action(msg):
-        for name, pair in list(msg.items()):
-            if name[0].islower():
-                value, old_units = pair
-                if old_units == 'semicircles':
-                    msg[name] = (value * 180 / 2**31, new_units)
-        return msg
-    @pipeline_instance(WithUnits)
-    def timed_action(msg):
-        def filter(pair):
-            try:
-                value, units = pair
-                if units == 'semicircles':
-                    pair = (value * 180 / 2**31, new_units)
-            except TypeError:
-                pass
-            return pair
-        msg = WithUnits((name, filter(pair)) for name, pair in msg)
-        return msg
-    return [data_action, timed_action]
-
-
-def delete_undefined_values(log):
-    def dict(msg):
-        for name, pair in list(msg.items()):
-            if pair is None:
-                del msg[name]
-            else:
-                try:
-                    if pair[0] is None:
-                        del msg[name]
-                except TypeError:
-                    pass
-        return msg
-    return filter
-
-
-def clean_unknown_messages(log):
-    def filter(msg):
-        if not msg['MESSAGE'][0].isupper():
-            return msg
-    return filter
-
-
-def clean_unknown_fields(log):
-    def filter(msg):
-        for name, value in list(msg.items()):
-            if name[0].isdigit():
-                del msg[name]
-        return msg
-    return filter
-
-
-def clean_empty_messages(log):
-    def filter(msg):
-        if msg:
-            return msg
-    return filter
-
-
-def clean_fields(log, fields):
-    def filter(msg):
-        for name, value in list(msg.items()):
-            if name in fields:
-                del msg[name]
-        return msg
-    return filter
