@@ -1,19 +1,39 @@
 
 from binascii import hexlify
 from collections import namedtuple
+from pprint import PrettyPrinter
 from struct import unpack
 
 from choochoo.fit.profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
-    TIMESTAMP_GLOBAL_TYPE, Date
+    TIMESTAMP_GLOBAL_TYPE, Date, WithUnits
 
 
-def decode_all(log, fit_path, profile_path):
+def decode_all(log, fit_path, profile_path=None):
+    data, types, messages, header = load(log, fit_path, profile_path=profile_path)
+    tokenizer = Tokenizer(log, data, types, messages)
+    time_series = {}
+    for value in pipeline(tokenizer,
+                          [(instances(DataMsg), expand_as_dict(log)),
+                           # (DataMsg, collect_as_tuples(log, time_series)),
+                           (instances(dict), to_degrees),
+                           (instances(dict), delete_undefined_values),
+                           (instances(dict), display_and_drop(log))
+                           ]):
+        print(value)
+    PrettyPrinter().pprint(time_series)
+    for name in time_series:
+        print(name)
+        print([len(x) for x in time_series[name]])
+
+
+def load(log, fit_path, profile_path=None):
     if profile_path:
         _nlog, types, messages = read_profile(log, profile_path)
     else:
         types, messages = load_profile(log)
     log.debug('Read profile')
-    data = read_path(fit_path)
+    with open(fit_path, 'rb') as input:
+        data =input.read()
     log.debug('Read "%s"' % fit_path)
     header = read_header(log, data, types, messages)
     log.debug('Header: %s' % header)
@@ -21,19 +41,7 @@ def decode_all(log, fit_path, profile_path):
     log.debug('Checked length')
     check_crc(stripped, checksum)
     log.debug('Checked checksum')
-    tokenizer = Tokenizer(log, stripped, types, messages)
-    for value in pipeline(tokenizer,
-                          [(DataMsg, expand(log)),
-                           (dict, to_degrees),
-                           (dict, clean_undefined),
-                           (dict, display_and_drop(log))
-                           ]):
-        print(value)
-
-
-def read_path(path):
-    with open(path, 'rb') as input:
-        return input.read()
+    return stripped, types, messages, header
 
 
 def strip_header_crc(data):
@@ -51,13 +59,16 @@ def header_defn(log, types, messages):
                       [Field(log, n, field[1] * types.profile_to_type(field[2]).size,
                              message.number_to_field(n),
                              types.profile_to_type(field[2]))
-                       for n, field in enumerate(HEADER_FIELDS)])
+                       for n, field in enumerate(HEADER_FIELDS)],
+                      {'header_size'})  # this needed as reference for optional field logic
 
 
 def read_header(log, data, types, messages):
     header = messages.profile_to_message('HEADER')
     defn = header_defn(log, types, messages)
-    return header.parse(data[0:defn.size], defn)
+    result = header.parse_as_dict(data[0:defn.size], defn)
+    result['MESSAGE'] = 'HEADER'
+    return result
 
 
 CRC = [0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401,
@@ -125,7 +136,6 @@ class Tokenizer:
                        [self.__make_field(self.__data[self.__offset+6+i*3:self.__offset+6+(i+1)*3], message)
                         for i in range(n_fields)])
         self.__offset += 6 + n_fields * 3
-        # todo - check for timestamp?
         if extended: raise NotImplementedError()
 
     def __make_field(self, bytes, message):
@@ -179,15 +189,17 @@ class Field:
 
 class Definition:
 
-    def __init__(self, log, endian, message, fields):
+    def __init__(self, log, endian, message, fields, references=None):
         self.__log = log
         self.endian = endian
         self.message = message
+        # set offsets before ordering
         self.__set_field_offsets(fields)
         self.fields = list(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
         self.size = sum(field.size for field in self.fields)
         self.number_to_index = {}
         self.has_timestamp = False
+        self.references = references if references else set()
         self.__scan_fields(fields)
 
     def __scan_fields(self, fields):
@@ -196,6 +208,8 @@ class Definition:
             self.number_to_index[field.number] = index
             if number == TIMESTAMP_GLOBAL_TYPE:
                 self.has_timestamp = True
+            if field.field and field.field.is_dynamic:
+                self.references.update(field.field.references)
 
     @staticmethod
     def __set_field_offsets(fields):
@@ -208,51 +222,175 @@ class Definition:
 
 def pipeline(source, pipeline):
     for value in source:
-        for (cls, transform) in pipeline:
-            if isinstance(value, cls):
-                value = transform(value)
+        for actions in pipeline:
+            for action in actions:
+                if action.test(value):
+                    value = action(value)
+                if value is None:
+                    break
             if value is None:
                 break
         if value is not None:
             yield value
 
 
-def drop(msg): pass
+def exhaust(pipeline):
+    for _ in pipeline:
+        pass
 
 
-def display_and_drop(log):
-    def drop(msg):
-        log.debug('Value: %s' % (msg,))
-    return drop
+def add_test(test):
+    def decorator(f):
+        f.test = test
+        return f
+    return decorator
 
 
-def expand(log):
-    def expand(msg):
-        defn = msg.definition
-        result = defn.message.parse(msg.data, msg.definition)
-        result['MESSAGE'] = msg.definition.message.name
-        result['TIMESTAMP'] = msg.timestamp
-        return result
-    return expand
+pipeline_any = add_test(lambda value: True)
 
 
-def to_degrees(msg, new_units='°'):
-    for name, pair in list(msg.items()):
-        if name[0].islower():
-            value, old_units = pair
-            if old_units == 'semicircles':
-                msg[name] = (value * 180 / 2**31, new_units)
-    return msg
-
-
-def clean_undefined(msg):
-    for name, pair in list(msg.items()):
-        if pair is None:
-            del msg[name]
+def pipeline_instance(*cls_list):
+    def test(value):
+        if cls_list:
+            return any(isinstance(value, cls) for cls in cls_list)
         else:
+            return True
+    return add_test(test)
+
+
+def drop(log, *cls):
+    @pipeline_instance(*cls)
+    def action(msg):
+        return None
+    return [action]
+
+
+def display_and_drop(log, *cls):
+    @pipeline_instance(*cls)
+    def action(msg):
+        log.debug('Drop: %s' % (msg,))
+    return [action]
+
+
+def save_definitions(log, defintions):
+    @pipeline_instance(DataMsg, TimedMsg)
+    def action(msg):
+        defintions[msg.definition.message.name] = msg.definition
+        return msg
+    return [action]
+
+
+def expand_as_dict(log, *cls, add_timestamp=True):
+    @pipeline_instance(*cls)
+    def action(msg):
+        defn = msg.definition
+        result = defn.message.parse_as_dict(msg.data, msg.definition)
+        result['MESSAGE'] = msg.definition.message.name
+        if add_timestamp:
+            result['TIMESTAMP'] = (msg.timestamp, 's')
+        return result
+    return [action]
+
+
+def expand_as_tuple(log, *cls, add_timestamp=True):
+    @pipeline_instance(*cls)
+    def action(msg):
+        defn = msg.definition
+        result = defn.message.parse_as_tuple(msg.data, msg.definition)
+        if add_timestamp:
+            return (msg.definition.message.name, msg.timestamp) + result
+        else:
+            return (msg.definition.message.name,) + result
+    return [action]
+
+
+def collect_tuples(log, definitions, results, add_timestamp=True):
+    @pipeline_instance(tuple)
+    def action(msg):
+        name = msg[0]
+        if name not in results:
+            defn = definitions[name]
+            header = tuple(field.field.name if field.field else field.number for field in defn.fields)
+            if add_timestamp:
+                header = ('TIMESTAMP',) + header
+            results[name] = header
+        results[name].append(msg)
+    return [action]
+
+
+def collect(log, results, *cls):
+    @pipeline_instance(*cls)
+    def action(msg):
+        results.append(msg)
+    return action
+
+
+def to_degrees(log, new_units='°'):
+    @pipeline_instance(dict)
+    def data_action(msg):
+        for name, pair in list(msg.items()):
+            if name[0].islower():
+                value, old_units = pair
+                if old_units == 'semicircles':
+                    msg[name] = (value * 180 / 2**31, new_units)
+        return msg
+    @pipeline_instance(WithUnits)
+    def timed_action(msg):
+        def filter(pair):
             try:
-                if pair[0] is None:
-                    del msg[name]
+                value, units = pair
+                if units == 'semicircles':
+                    pair = (value * 180 / 2**31, new_units)
             except TypeError:
                 pass
-    return msg
+            return pair
+        msg = WithUnits((name, filter(pair)) for name, pair in msg)
+        return msg
+    return [data_action, timed_action]
+
+
+def delete_undefined_values(log):
+    def dict(msg):
+        for name, pair in list(msg.items()):
+            if pair is None:
+                del msg[name]
+            else:
+                try:
+                    if pair[0] is None:
+                        del msg[name]
+                except TypeError:
+                    pass
+        return msg
+    return filter
+
+
+def clean_unknown_messages(log):
+    def filter(msg):
+        if not msg['MESSAGE'][0].isupper():
+            return msg
+    return filter
+
+
+def clean_unknown_fields(log):
+    def filter(msg):
+        for name, value in list(msg.items()):
+            if name[0].isdigit():
+                del msg[name]
+        return msg
+    return filter
+
+
+def clean_empty_messages(log):
+    def filter(msg):
+        if msg:
+            return msg
+    return filter
+
+
+def clean_fields(log, fields):
+    def filter(msg):
+        for name, value in list(msg.items()):
+            if name in fields:
+                del msg[name]
+        return msg
+    return filter

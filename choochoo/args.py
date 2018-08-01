@@ -15,6 +15,7 @@ INJURIES = 'injuries'
 SCHEDULES = 'schedules'
 PLAN = 'plan'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
+DUMP_FIT = 'dump-fit'
 
 ROOT = 'root'
 DATABASE = 'database'
@@ -117,5 +118,12 @@ def parser():
     package.add_argument(PATH, action='store', metavar='PROFILE', nargs=1,
                          help='The path to the profile (Profile.xlsx)')
     package.set_defaults(command=PACKAGE_FIT_PROFILE)
+
+    dump = subparsers.add_parser(DUMP_FIT,
+                                 help='print contents of fit file to screen - ' +
+                                      'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
+    dump.add_argument(PATH, action='store', metavar='FIT', nargs=1,
+                      help='The path to the fit file')
+    dump.set_defaults(command=DUMP_FIT)
 
     return parser

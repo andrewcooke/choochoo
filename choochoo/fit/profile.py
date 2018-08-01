@@ -439,10 +439,9 @@ class DynamicMessageField(RowMessageField):
         self.__dynamic_tmp_data.append((reference_name, reference_value, row))
 
     def _complete_dynamic(self, message, types):
-        for reference_name, reference_value, row in self.__dynamic_tmp_data:
-            reference = message.profile_to_field(reference_name)
-            self.references.add(reference)
-            self.__dynamic_lookup[(reference_name, reference_value)] = RowMessageField(self._log, row, types)
+        for name, value, row in self.__dynamic_tmp_data:
+            self.references.add(name)
+            self.__dynamic_lookup[(name, value)] = RowMessageField(self._log, row, types)
 
     @property
     def dynamic(self):
@@ -450,8 +449,7 @@ class DynamicMessageField(RowMessageField):
 
     def parse(self, data, count, endian, result, message):
         if self.is_dynamic:
-            for reference in self.references:
-                name = reference.name
+            for name in self.references:
                 if name in result:
                     value = result[name][0]  # drop units
                     self._log.debug('Found reference %r=%r' % (name, value))
@@ -465,6 +463,12 @@ class DynamicMessageField(RowMessageField):
             # and if nothing found, fall though to default behaviour
         # have to return name because of dynamic fields
         return super().parse(data, count, endian, result, message)
+
+
+class WithUnits(tuple): pass
+
+
+class WithoutUnits(tuple): pass
 
 
 class Message(Named):
@@ -486,23 +490,33 @@ class Message(Named):
     def number_to_field(self, value):
         return self._number_to_field[value]
 
-    def parse(self, data, definition):
-        result = {}
+    def parse_as_dict(self, data, defn):
+        return dict(self.__parse(data, defn))
+
+    def parse_as_tuple(self, data, defn, units=True):
+        if units:
+            return WithUnits(value for name, value in self.__parse(data, defn))
+        else:
+            return WithoutUnits(value[0] for name, value in self.__parse(data, defn))
+
+    def __parse(self, data, defn):
+        references = {} if defn.references else None
         # note this is a field description not a message field
-        for field in definition.fields:
+        for field in defn.fields:
             bytes = data[field.start:field.finish]
             if field.field:
                 name, value = self._parse_field(
-                    field.field, bytes, field.count, definition.endian, result, self)
+                    field.field, bytes, field.count, defn.endian, references, self)
             else:
                 name = str(field.number)
-                value = (field.base_type.parse(bytes, field.count, definition.endian), None)
-            result[name] = value
-        return result
+                value = (field.base_type.parse(bytes, field.count, defn.endian), None)
+            if name in defn.references:
+                references[name] = value
+            yield name, value
 
-    def _parse_field(self, field, bytes, count, endian, result, message):
+    def _parse_field(self, field, bytes, count, endian, references, message):
         # allow interception for optional field in header
-        return field.parse(bytes, count, endian, result, message)
+        return field.parse(bytes, count, endian, references, message)
 
 
 class NumberedMessage(Message):
@@ -544,11 +558,11 @@ class Header(Message):
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(MessageField(log, name, n, None, types.profile_to_type(base_type)))
 
-    def _parse_field(self, field, data, count, endian, result, message):
-        if field.name == 'checksum' and result['header_size'] == 12:
+    def _parse_field(self, field, data, count, endian, references, message):
+        if field.name == 'checksum' and references['header_size'] == 12:
             return None, None
         else:
-            return super()._parse_field(field, data, count, endian, result, message)
+            return super()._parse_field(field, data, count, endian, references, message)
 
 
 class Missing(Message):
