@@ -52,7 +52,7 @@ def header_defn(log, types, messages):
 def read_header(log, data, types, messages):
     header = messages.profile_to_message('HEADER')
     defn = header_defn(log, types, messages)
-    return header.parse(data[0:defn.size], defn).as_dict_with_units()
+    return header.parse(data[0:defn.size], defn).as_dict()
 
 
 CRC = [0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401,

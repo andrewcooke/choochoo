@@ -3,8 +3,8 @@ from logging import getLogger, basicConfig, DEBUG
 from sys import stdout
 
 from choochoo.fit.decode import parse_all
-from choochoo.fit.profile import read_profile, fix_degrees, no_nulls, chain
-from choochoo.fit.summary import dump
+from choochoo.fit.profile import read_profile, fix_degrees, no_nulls, chain, no_names, append_units
+from choochoo.fit.summary import dump_fit, summarize
 
 
 def test_profile():
@@ -40,12 +40,12 @@ def test_decode():
     log = getLogger()
     for record in parse_all(log, '/home/andrew/archive/fit/2018-07-26-rec.fit',
                             profile_path='/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx'):
-        print(record.as_tuple_with_units(filter=chain(no_nulls, fix_degrees)))
+        print(record.into(tuple, filter=chain(no_names, append_units, no_nulls, fix_degrees)))
 
 
 def test_dump():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    dump(log, '/home/andrew/archive/fit/2018-07-26-rec.fit',
-         profile_path='/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx')
+    summarize(log, '/home/andrew/archive/fit/2018-07-26-rec.fit',
+              profile_path='/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx')

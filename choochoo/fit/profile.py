@@ -479,10 +479,28 @@ def no_nulls(data):
             yield name, (value, units)
 
 
+def no_names(data):
+    for name, value_or_pair in data:
+        yield value_or_pair
+
+
+def no_values(data):
+    for name, value_or_pair in data:
+        yield name
+
+
 def no_units(data):
     for name, (value, units) in data:
         if value is not None:
             yield name, value
+
+
+def append_units(data, separator=''):
+    for name, (value, units) in data:
+        if units:
+            yield name, str(value) + separator + units
+        else:
+            yield name, str(value)
 
 
 def fix_degrees(data, new_units='°'):
@@ -505,25 +523,18 @@ def chain(*filters):
 
 class LazyRecord(Record):
 
-    def with_units(self, container, filter=no_filter):
+    def into(self, container, filter=no_filter):
         return Record(self.name, self.number, self.definition, self.timestamp,
                       container(filter(self.data)))
 
-    def without_units(self, container, filter=no_filter):
-        return Record(self.name, self.number, self.definition, self.timestamp,
-                      container(chain(no_units, filter)(self.data)))
+    def as_dict(self, filter=no_filter):
+        return self.into(dict, filter=filter)
 
-    def as_tuple_with_units(self, filter=no_filter):
-        return self.with_units(tuple, filter=filter)
+    def as_names(self, filter=no_filter):
+        return self.into(tuple, filter=chain(no_values, filter))
 
-    def as_tuple_without_units(self, filter=no_filter):
-        return self.without_units(tuple, filter=filter)
-
-    def as_dict_with_units(self, filter=no_filter):
-        return self.with_units(dict, filter=filter)
-
-    def as_dict_without_units(self, filter=no_filter):
-        return self.without_units(dict, filter=filter)
+    def as_values(self, filter=no_filter):
+        return self.into(tuple, filter=chain(no_names, filter))
 
 
 class Message(Named):
