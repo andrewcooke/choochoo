@@ -466,7 +466,10 @@ class DynamicMessageField(RowMessageField):
         return super().parse(data, count, endian, result, message)
 
 
-Record = namedtuple('Record', 'name, number, definition, timestamp, data')
+class Record(namedtuple('BaseRecord', 'name, number, definition, timestamp, data')):
+
+    def is_known(self):
+        return self.name[0].islower()
 
 
 def no_filter(data):
@@ -477,6 +480,12 @@ def no_nulls(data):
     for name, (value, units) in data:
         if value is not None:
             yield name, (value, units)
+
+
+def no_unknown(data):
+    for name, value_or_pair in data:
+        if name[0].islower():
+            yield name, value_or_pair
 
 
 def no_names(data):
@@ -535,6 +544,9 @@ class LazyRecord(Record):
 
     def as_values(self, filter=no_filter):
         return self.into(tuple, filter=chain(no_names, filter))
+
+    def force(self):
+        return LazyRecord(self.name, self.number, self.definition, self.timestamp, list(self.data))
 
 
 class Message(Named):

@@ -23,3 +23,14 @@ def force_iterable(data):
         return data
     except TypeError:
         return [data]
+
+
+def unique(elements, key=lambda x: x):
+    known = set()
+    for element in elements:
+        value = key(element)
+        if value not in known:
+            known.add(value)
+            yield element
+
+
