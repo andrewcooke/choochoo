@@ -105,5 +105,3 @@ class LazyRecord(Record):
 
     def force(self, filter=no_filter, extra=None):
         return self.into(list, filter=filter, extra=extra)
-
-

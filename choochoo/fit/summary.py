@@ -45,8 +45,13 @@ def pprint_as_dicts(records):
             print()
 
 
+def sort_by_name(data):
+    return sorted(list(data), key=lambda x: ' ' if x[0] == 'timestamp' else x[0])
+
+
 def pprint_as_tuples(records):
-    records = [record.force(filter=unique_names, extra={'timestamp': Date.convert(record.timestamp)})
+    records = [record.force(filter=chain(sort_by_name, unique_names),
+                            extra={'timestamp': Date.convert(record.timestamp)})
                for record in records]
     titles = [record.as_names(filter=no_unknown)
               for record in unique(records, key=lambda x: x.identity)
