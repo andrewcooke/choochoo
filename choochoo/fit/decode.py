@@ -174,7 +174,7 @@ class Field:
         self.field = field
         self.base_type = base_type
         self.count = self.size // base_type.size
-        # set by definiton
+        # set by definition later
         self.start = 0
         self.finish = 0
 
@@ -187,10 +187,7 @@ class Identity:
         # todo - total count
 
     def __str__(self):
-        if self.count:
-            return '%s (defn %d)' % (self.name, self.count)
-        else:
-            return self.name
+        return '%s (defn %d)' % (self.name, self.count)
 
 
 class Definition:

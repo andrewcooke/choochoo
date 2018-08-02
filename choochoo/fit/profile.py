@@ -1,7 +1,6 @@
 
 import datetime as dt
 from abc import abstractmethod
-from collections import namedtuple
 from os.path import dirname, join
 from pickle import dump, load
 from re import compile
@@ -11,9 +10,9 @@ import openpyxl as xls
 from more_itertools import peekable
 from pkg_resources import resource_stream
 
+from .records import LazyRecord
 from ..args import PATH
 from ..log import make_log
-
 
 LITTLE, BIG = 0, 1
 PROFILE = 'global-profile.pkl'
@@ -251,10 +250,17 @@ class Date(AliasInteger):
         self.__tzinfo = dt.timezone.utc if utc else None
         self.__to_datetime = to_datetime
 
+    @staticmethod
+    def convert(time, tzinfo=dt.timezone.utc):
+        if time >= 0x10000000 :
+            return dt.datetime(1989, 12, 31, tzinfo=tzinfo) + dt.timedelta(seconds=time)
+        else:
+            return time
+
     def parse(self, data, count, endian):
         time = super().parse(data, count, endian)
-        if time >= 0x10000000 and self.__to_datetime:
-            time = dt.datetime(1989, 12, 31, tzinfo=self.__tzinfo) + dt.timedelta(seconds=time)
+        if self.__to_datetime:
+            time = self.convert(time, tzinfo=self.__tzinfo)
         return time
 
 
@@ -464,93 +470,6 @@ class DynamicMessageField(RowMessageField):
             # and if nothing found, fall though to default behaviour
         # have to return name because of dynamic fields
         return super().parse(data, count, endian, result, message)
-
-
-def no_filter(data):
-    return data
-
-
-def no_bad_values(data):
-    for name, (value, units) in data:
-        if value is not None:
-            yield name, (value, units)
-
-
-def no_unknown(data):
-    for name, value_or_pair in data:
-        if name[0].islower():
-            yield name, value_or_pair
-
-
-def no_names(data):
-    for name, value_or_pair in data:
-        yield value_or_pair
-
-
-def no_values(data):
-    for name, value_or_pair in data:
-        yield name
-
-
-def no_units(data):
-    for name, (value, units) in data:
-        if value is not None:
-            yield name, value
-
-
-def append_units(data, separator=''):
-    for name, (value, units) in data:
-        if value is None:  # preserve bad values as bad
-            yield name, None
-        elif units:
-            yield name, str(value) + separator + units
-        else:
-            yield name, str(value)
-
-
-def fix_degrees(data, new_units='°'):
-    for name, (value, units) in data:
-        if units == 'semicircles':
-            value = value * 180 / 2**31
-            units = new_units
-        yield name, (value, units)
-
-
-def chain(*filters):
-    def expand(data, filters=filters):
-        filter, filters = filters[0], filters[1:]
-        if filters:
-            return filter(expand(data, filters=filters))
-        else:
-            return filter(data)
-    return expand
-
-
-class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')):
-
-    __slots__ = ()
-
-    def is_known(self):
-        return self.name[0].islower()
-
-    def into(self, container, filter=no_filter):
-        return Record(self.name, self.number, self.identity, self.timestamp,
-                      container(filter(self.data)))
-
-    def as_dict(self, filter=no_filter):
-        return self.into(dict, filter=filter)
-
-    def as_names(self, filter=no_filter):
-        return self.into(tuple, filter=chain(no_values, filter))
-
-    def as_values(self, filter=no_filter):
-        return self.into(tuple, filter=chain(no_names, filter))
-
-
-class LazyRecord(Record):
-
-    def force(self):
-        return Record(self.name, self.number, self.identity, self.timestamp, list(self.data))
 
 
 class Message(Named):
