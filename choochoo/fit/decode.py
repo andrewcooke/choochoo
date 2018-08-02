@@ -3,8 +3,9 @@ from binascii import hexlify
 from collections import namedtuple, Counter
 from struct import unpack
 
-from choochoo.fit.profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
+from .profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
     TIMESTAMP_GLOBAL_TYPE, Date
+from .records import chain, join_values, append_units
 
 
 def parse_all(log, fit_path, profile_path=None):
@@ -41,7 +42,7 @@ def strip_header_crc(data):
 
 def header_defn(log, types, messages):
     message = messages.number_to_message(HEADER_GLOBAL_TYPE)
-    return Definition(log, Identity(message.name, 0), LITTLE, message,
+    return Definition(log, Identity(message.name), LITTLE, message,
                       [Field(log, n, field[1] * types.profile_to_type(field[2]).size,
                              message.number_to_field(n),
                              types.profile_to_type(field[2]))
@@ -52,7 +53,7 @@ def header_defn(log, types, messages):
 def read_header(log, data, types, messages):
     header = messages.profile_to_message('HEADER')
     defn = header_defn(log, types, messages)
-    return header.parse(data[0:defn.size], defn).as_dict()
+    return header.parse(data[0:defn.size], defn).as_dict(filter=chain(join_values, append_units)).data
 
 
 CRC = [0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401,
@@ -102,7 +103,7 @@ class Tokenizer:
     def __iter__(self):
         while self.__offset < len(self.__data):
             header = self.__data[self.__offset]
-            self.__log.debug('Header %02x' % header)
+            # self.__log.debug('Header %02x' % header)
             if header & 0x80:
                 local_type = (header & 0x60) >> 5
                 time_offset = header & 0x1f
@@ -138,7 +139,7 @@ class Tokenizer:
                 field = message.number_to_field(number)
             except KeyError:
                 field = None
-                self.__log.warn('No field %d for message %s' % (number, message.name))
+                # self.__log.warn('No field %d for message %s' % (number, message.name))
         base_type = self.__types.base_types[base & 0xf]
         return Field(self.__log, number, size, field, base_type)
 
@@ -147,14 +148,14 @@ class Tokenizer:
         data = self.__data[self.__offset+1:self.__offset+1+defn.size]
         if defn.has_timestamp:
             self.__timestamp = self.__parse_timestamp(defn, data)
-            self.__log.debug('New timestamp: %s' % self.__timestamp)
+            # self.__log.debug('New timestamp: %s' % self.__timestamp)
         self.__offset += 1 + defn.size
         # include timestamp here so that things like laps can be correlated with timed data
         return DataMsg(defn, data, self.__timestamp)
 
     def __parse_timestamp(self, defn, data):
         field = defn.fields[defn.number_to_index[TIMESTAMP_GLOBAL_TYPE]]
-        return self.__parse_date.parse(data[field.start:field.finish], 1, defn.endian)
+        return self.__parse_date.parse(data[field.start:field.finish], 1, defn.endian)[0]
 
     def __compressed_timestamp_msg(self, local_type, time_offset):
         rollover = time_offset < self.__timestamp & 0x1f
@@ -181,12 +182,12 @@ class Field:
 
 class Identity:
 
-    def __init__(self, name, count):
+    def __init__(self, name, count=1):
         self.name = name
         self.count = count
         # todo - total count
 
-    def __str__(self):
+    def __repr__(self):
         return '%s (defn %d)' % (self.name, self.count)
 
 

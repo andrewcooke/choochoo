@@ -8,56 +8,64 @@ def no_filter(data):
 
 
 def no_bad_values(data):
-    for name, (value, units) in data:
-        if value is not None:
-            yield name, (value, units)
+    for name, (values, units) in data:
+        if values is not None:
+            yield name, (values, units)
 
 
 def no_unknown(data):
-    for name, value_or_pair in data:
+    for name, values_or_pair in data:
         if name[0].islower():
-            yield name, value_or_pair
+            yield name, values_or_pair
 
 
 def no_names(data):
-    for name, value_or_pair in data:
-        yield value_or_pair
+    for name, values_or_pair in data:
+        yield values_or_pair
 
 
 def no_values(data):
-    for name, value_or_pair in data:
+    for name, values_or_pair in data:
         yield name
 
 
 def no_units(data):
-    for name, (value, units) in data:
-        if value is not None:
-            yield name, value
+    for name, (values, units) in data:
+        if values is not None:
+            yield name, values
 
 
 def append_units(data, separator=''):
-    for name, (value, units) in data:
-        if value is None:  # preserve bad values as bad
+    for name, (values, units) in data:
+        if values is None:  # preserve bad values as bad
             yield name, None
         elif units:
-            yield name, str(value) + separator + units
+            yield name, tuple(str(value) + separator + units for value in values)
         else:
-            yield name, str(value)
+            yield name, tuple(str(value) for value in values)
+
+
+def join_values(data, separator='.'):
+    for name, values in data:
+        if values is None:
+            yield name, values
+        else:
+            yield name, separator.join(values)
 
 
 def fix_degrees(data, new_units='°'):
-    for name, (value, units) in data:
+    for name, (values, units) in data:
         if units == 'semicircles':
-            value = value * 180 / 2**31
+            values = tuple(value * 180 / 2**31 for value in values)
             units = new_units
-        yield name, (value, units)
+        yield name, (values, units)
 
 
 def unique_names(data):
     known = set()
-    for name, value_or_pair in data:
+    for name, values_or_pair in data:
         if name not in known:
-            yield name, value_or_pair
+            yield name, values_or_pair
         known.add(name)
 
 

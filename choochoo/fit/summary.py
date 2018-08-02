@@ -3,7 +3,7 @@ from collections import Counter
 
 from .decode import parse_all
 from .profile import Date
-from .records import chain, no_bad_values, fix_degrees, append_units, no_unknown, unique_names
+from .records import chain, no_bad_values, fix_degrees, append_units, no_unknown, unique_names, join_values
 from ..args import PATH
 from ..log import make_log
 from ..utils import unique
@@ -39,7 +39,7 @@ def partition(records, counts, threshold=3):
 def pprint_as_dicts(records):
     for record in records:
         if record.is_known():
-            record = record.as_dict(filter=chain(append_units, fix_degrees, no_unknown, no_bad_values))
+            record = record.as_dict(filter=chain(join_values, append_units, fix_degrees, no_unknown, no_bad_values))
             print(record.name)
             pprint_with_tabs('%s: %s' % (name, value) for name, value in sorted(record.data.items()))
             print()
@@ -57,7 +57,7 @@ def pprint_as_tuples(records):
               for record in unique(records, key=lambda x: x.identity)
               if record.is_known()]
     for title in titles:
-        pprint_series(title, [record.as_values(filter=chain(append_units, fix_degrees, no_unknown))
+        pprint_series(title, [record.as_values(filter=chain(join_values, append_units, fix_degrees, no_unknown))
                               for record in records
                               if record.identity == title.identity])
 
@@ -93,8 +93,10 @@ def pprint_series(title, records):
     print()
 
 
-def pprint_with_tabs(data, first_indent=None, indent=2, tab=4, width=79, separator=','):
-    if first_indent is None: first_indent = indent
+def pprint_with_tabs(data, first_indent=None, indent=2, tab=4, width=79, min_space=2, separator=','):
+    if first_indent is None:
+        first_indent = indent
+    min_space -= 1
     line = ' ' * first_indent
     first = True
     for datum in data:
@@ -102,7 +104,7 @@ def pprint_with_tabs(data, first_indent=None, indent=2, tab=4, width=79, separat
             line += separator
         l_old = len(line)
         if l_old > indent:
-            l_new = (1 + (l_old - indent + 1) // tab) * tab + indent
+            l_new = (1 + (l_old - indent + min_space) // tab) * tab + indent
             if l_new + len(datum) > width:
                 print(line)
                 line = ' ' * indent + datum

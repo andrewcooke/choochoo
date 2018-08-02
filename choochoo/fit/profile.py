@@ -174,12 +174,7 @@ class StructSupport(BaseType):
         if self._is_bad(data, bad[endian]):
             return None
         else:
-            value = unpack(formats[endian] % count, data[0:count * self.size])
-            if count == 1:
-                value = value[0]
-            else:
-                value = list(value)
-            return value
+            return unpack(formats[endian] % count, data[0:count * self.size])
 
 
 class String(BaseType):
@@ -188,7 +183,7 @@ class String(BaseType):
         super().__init__(log, name, 1, str)
 
     def parse(self, bytes, count, endian):
-        return str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')
+        return [str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')]
 
 
 class Boolean(BaseType):
@@ -197,11 +192,7 @@ class Boolean(BaseType):
         super().__init__(log, name, 1, bool)
 
     def parse(self, bytes, count, endian):
-        bools = [bool(byte) for byte in bytes]
-        if count == 1:
-            return bools[0]
-        else:
-            return bools
+        return tuple(bool(byte) for byte in bytes)
 
 
 class AutoInteger(StructSupport):
@@ -258,10 +249,10 @@ class Date(AliasInteger):
             return time
 
     def parse(self, data, count, endian):
-        time = super().parse(data, count, endian)
+        times = super().parse(data, count, endian)
         if self.__to_datetime:
-            time = self.convert(time, tzinfo=self.__tzinfo)
-        return time
+            times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
+        return times
 
 
 class AutoFloat(StructSupport):
@@ -300,7 +291,7 @@ class Mapping(AbstractType):
                 rows.prepend(row)
                 break
             self.__add_mapping(row)
-        log.debug('Parsed %d values' % len(self._profile_to_internal))
+        # log.debug('Parsed %d values' % len(self._profile_to_internal))
 
     def profile_to_internal(self, cell_contents):
         return self._profile_to_internal[cell_contents]
@@ -308,12 +299,17 @@ class Mapping(AbstractType):
     def internal_to_profile(self, value):
         return self._internal_to_profile[value]
 
-    def parse(self, bytes, size, endian):
-        value = self.base_type.parse(bytes, size, endian)
+    def safe_internal_to_profile(self, value):
         try:
             return self.internal_to_profile(value)
         except KeyError:
             return value
+
+    def parse(self, bytes, size, endian):
+        values = self.base_type.parse(bytes, size, endian)
+        if values:
+            values = tuple(self.safe_internal_to_profile(value) for value in values)
+        return values
 
     def __add_mapping(self, row):
         profile = row[2]
@@ -342,7 +338,7 @@ class Types:
             if row[0] and row[0][0].isupper():
                 self.__log.debug('Skipping %s' % row)
             elif row[0]:
-                self.__log.info('Parsing type %s' % row[0])
+                # self.__log.info('Parsing type %s' % row[0])
                 self.__add_type(Mapping(self.__log, row, rows, self))
 
     def __add_known_types(self, to_datetime):
@@ -408,10 +404,10 @@ class MessageField(Named):
         self.__is_scaled = (self.scale != 1 or self.offset != 0)
 
     def parse(self, data, count, endian, result, message):
-        value = self.type.parse(data, count, endian)
-        if self.__is_scaled and value is not None:
-            value = (value / self.scale) - self.offset
-        return self.name, (value, self.units)
+        values = self.type.parse(data, count, endian)
+        if self.__is_scaled and values is not None:
+            values = tuple(value / self.scale - self.offset for value in values)
+        return self.name, (values, self.units)
 
 
 class RowMessageField(MessageField):
@@ -464,9 +460,10 @@ class DynamicMessageField(RowMessageField):
                         return self.dynamic[(name, value)].parse(data, count, endian, result, message)
                     except KeyError:
                         pass
-            self._log.warn('No match for dynamic field %s (message %s)' % (self.name, message.name))
+            # self._log.warn('No match for dynamic field %s (message %s)' % (self.name, message.name))
             for option, field in self.__dynamic_lookup.items():
-                self._log.debug('Option: %s -> %r' % (option, field.name))
+                # self._log.debug('Option: %s -> %r' % (option, field.name))
+                pass
             # and if nothing found, fall though to default behaviour
         # have to return name because of dynamic fields
         return super().parse(data, count, endian, result, message)
@@ -576,7 +573,7 @@ class Messages:
             if row[0] and row[0][0].isupper():
                 self.__log.debug('Skipping %s' % row)
             elif row[0]:
-                self.__log.info('Parsing message %s' % row[0])
+                # self.__log.info('Parsing message %s' % row[0])
                 self.__add_message(RowMessage(self.__log, row, rows, types))
         self.__add_message(Header(self.__log, types))
 
