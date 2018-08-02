@@ -13,7 +13,7 @@ def no_bad_values(data):
             yield name, (values, units)
 
 
-def no_unknown(data):
+def no_unknown_messages(data):
     for name, values_or_pair in data:
         if name[0].islower():
             yield name, values_or_pair
@@ -71,11 +71,11 @@ def unique_names(data):
 
 def chain(*filters):
     def expand(data, filters=filters):
-        filter, filters = filters[0], filters[1:]
         if filters:
+            filter, filters = filters[0], filters[1:]
             return filter(expand(data, filters=filters))
         else:
-            return filter(data)
+            return data
     return expand
 
 
@@ -86,30 +86,24 @@ class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')
     def is_known(self):
         return self.name[0].islower()
 
-    def data_with(self, *args, **kargs):
-        return it.chain(self.data, args, kargs.items())
+    def data_with(self, **kargs):
+        return it.chain(self.data, kargs.items())
 
-    def into(self, container, filter=no_filter, extra=None):
-        kargs, args = {}, ()
-        if extra:
-            if isinstance(extra, dict):
-                kargs = extra
-            else:
-                args = extra
+    def into(self, container, *filters, **extras):
         return Record(self.name, self.number, self.identity, self.timestamp,
-                      container(filter(self.data_with(*args, **kargs))))
+                      container(chain(*filters)(self.data_with(**extras))))
 
-    def as_dict(self, filter=no_filter, extra=None):
-        return self.into(dict, filter=filter, extra=extra)
+    def as_dict(self, *filters, **extras):
+        return self.into(dict, *filters, **extras)
 
-    def as_names(self, filter=no_filter, extra=None):
-        return self.into(tuple, filter=chain(no_values, filter), extra=extra)
+    def as_names(self, *filters, **extras):
+        return self.into(tuple, *(no_values,)+filters, **extras)
 
-    def as_values(self, filter=no_filter, extra=None):
-        return self.into(tuple, filter=chain(no_names, filter), extra=extra)
+    def as_values(self, *filters, **extras):
+        return self.into(tuple, *(no_names,)+filters, **extras)
 
 
 class LazyRecord(Record):
 
-    def force(self, filter=no_filter, extra=None):
-        return self.into(list, filter=filter, extra=extra)
+    def force(self, *filters, **extras):
+        return self.into(list, *filters, **extras)

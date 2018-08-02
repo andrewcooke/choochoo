@@ -3,7 +3,7 @@ from collections import Counter
 
 from .decode import parse_all
 from .profile import Date
-from .records import chain, no_bad_values, fix_degrees, append_units, no_unknown, unique_names, join_values
+from .records import no_bad_values, fix_degrees, append_units, no_unknown_messages, unique_names, join_values
 from ..args import PATH
 from ..log import make_log
 from ..utils import unique
@@ -39,25 +39,25 @@ def partition(records, counts, threshold=3):
 def pprint_as_dicts(records):
     for record in records:
         if record.is_known():
-            record = record.as_dict(filter=chain(join_values, append_units, fix_degrees, no_unknown, no_bad_values))
+            record = record.as_dict(join_values, append_units, fix_degrees, no_unknown_messages, no_bad_values)
             print(record.name)
             pprint_with_tabs('%s: %s' % (name, value) for name, value in sorted(record.data.items()))
             print()
 
 
-def sort_by_name(data):
+def sort_names(data):
     return sorted(list(data), key=lambda x: ' ' if x[0] == 'timestamp' else x[0])
 
 
 def pprint_as_tuples(records):
-    records = [record.force(filter=chain(sort_by_name, unique_names),
-                            extra={'timestamp': Date.convert(record.timestamp)})
+    records = [record.force(sort_names, unique_names,
+                            timestamp=([Date.convert(record.timestamp)], 's'))
                for record in records]
-    titles = [record.as_names(filter=no_unknown)
+    titles = [record.as_names(no_unknown_messages)
               for record in unique(records, key=lambda x: x.identity)
               if record.is_known()]
     for title in titles:
-        pprint_series(title, [record.as_values(filter=chain(join_values, append_units, fix_degrees, no_unknown))
+        pprint_series(title, [record.as_values(join_values, append_units, fix_degrees, no_unknown_messages)
                               for record in records
                               if record.identity == title.identity])
 
@@ -84,7 +84,6 @@ def pad_to_lengths(record, lengths, separator=',', bad='-'):
 
 
 def pprint_series(title, records):
-    # todo - fold in timestamp (filter?)
     print(title.identity)
     lengths = measure_lengths([title], keep_bad=True, lengths=measure_lengths(records))
     pprint_with_tabs(pad_to_lengths(title, lengths), first_indent=2, indent=4, separator='')
