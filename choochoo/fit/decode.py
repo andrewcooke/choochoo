@@ -131,7 +131,7 @@ class Tokenizer:
         while self.__offset < len(self.__data):
             header = Header(self.__data[self.__offset])
             if header.is_definition():
-                self.__offset += self.__definition(header.local_type(), header.is_extended())
+                self.__offset += self.__add_definition(header.local_type(), header.is_extended())
             else:
                 defn = self.__definitions[header.local_type()]
                 data = self.__data[self.__offset+1:self.__offset+1+defn.size]
@@ -159,19 +159,16 @@ class Tokenizer:
         self.__timestamp = (self.__timestamp & 0xffffffe0) + time_offset + (0x20 if rollover else 0)
         return TimedMsg(defn, data, self.__timestamp)
 
-    def __definition(self, local_type, extended):
+    def __add_definition(self, local_type, extended):
         endian = self.__data[self.__offset+2] & 0x1
         global_type = unpack('<>'[endian]+'H', self.__data[self.__offset+3:self.__offset+5])[0]
-        n_fields = self.__data[self.__offset+5]
         message = self.__messages.number_to_message(global_type)
-        self.__definitions[local_type] = Definition(self.__log, Identity(message.name, self.__defn_counter),
-                                                    endian, message, tuple(self.__fields(n_fields, message)))
+        identity = Identity(message.name, self.__defn_counter)
+        n_fields = self.__data[self.__offset+5]
+        fields = tuple(self.__fields(n_fields, message))
+        self.__definitions[local_type] = Definition(self.__log, identity, endian, message, fields)
         if extended: raise NotImplementedError()
         return 6 + n_fields * 3
-
-    def __identity(self, message):
-        self.__defn_counter[message.number] += 1
-        return Identity(message.name, self.__defn_counter[message.number]),
 
     def __fields(self, n_fields, message):
         for i in range(n_fields):
@@ -227,7 +224,7 @@ class Definition:
         self.message = message
         # set offsets before ordering
         self.__set_field_offsets(fields)
-        self.fields = list(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
+        self.fields = tuple(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
         self.size = sum(field.size for field in self.fields)
         self.number_to_index = {}
         self.has_timestamp = False
