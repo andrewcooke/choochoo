@@ -50,3 +50,11 @@ def test_dump():
     log = getLogger()
     summarize(log, '/home/andrew/archive/fit/2018-07-30-rec.fit',
               profile_path='/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx')
+
+
+def test_developer():
+
+    basicConfig(stream=stdout, level=DEBUG)
+    log = getLogger()
+    summarize(log, '/home/andrew/project/choochoo/python-fitparse/tests/files/DeveloperData.fit',
+              profile_path='/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx')

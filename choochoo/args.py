@@ -46,18 +46,18 @@ class NamespaceWithVariables(Mapping):
         except TypeError:
             return value
 
-    def path(self, name, index=None):
+    def path(self, name, index=None, rooted=True):
         # special case sqlite3 in-memory database
         if self[name] == MEMORY: return self[name]
         path = self[name]
         if index is not None: path = path[index]
         path = expanduser(path)
-        if relpath(path) and name != ROOT:
+        if rooted and relpath(path) and name != ROOT:
             path = join(self.path(ROOT), path)
         return realpath(normpath(path))
 
-    def file(self, name, index=None):
-        file = self.path(name, index=index)
+    def file(self, name, index=None, rooted=True):
+        file = self.path(name, index=index, rooted=rooted)
         # special case sqlite3 in-memory database
         if file == MEMORY: return file
         path = dirname(file)
@@ -65,8 +65,8 @@ class NamespaceWithVariables(Mapping):
             makedirs(path)
         return file
 
-    def dir(self, name, index=None):
-        path = self.path(name, index=index)
+    def dir(self, name, index=None, rooted=True):
+        path = self.path(name, index=index, rooted=rooted)
         if not exists(path):
             makedirs(path)
         return path

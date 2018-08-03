@@ -13,7 +13,7 @@ def dump_fit(args, profile_path=None):
     # todo - remove!
     profile_path='/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx'
     log = make_log(args)
-    fit_path = args.file(PATH, 0)
+    fit_path = args.file(PATH, 0, rooted=False)
     summarize(log, fit_path, profile_path=profile_path)
 
 
@@ -40,7 +40,7 @@ def pprint_as_dicts(records):
     for record in records:
         if record.is_known():
             record = record.as_dict(join_values, append_units, fix_degrees, no_unknown_messages, no_bad_values)
-            print(record.name)
+            print(record.identity)
             pprint_with_tabs('%s: %s' % (name, value) for name, value in sorted(record.data.items()))
             print()
 

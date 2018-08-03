@@ -1,5 +1,4 @@
 
-from binascii import hexlify
 from collections import namedtuple, Counter
 from struct import unpack
 
@@ -10,7 +9,7 @@ from .records import chain, join_values, append_units
 
 def parse_all(log, fit_path, profile_path=None):
     data, types, messages, header = load(log, fit_path, profile_path=profile_path)
-    return (msg.parse() for msg in Tokenizer(log, data, types, messages))
+    return Tokenizer(log, data, types, messages)
 
 
 def load(log, fit_path, profile_path=None):
@@ -42,7 +41,7 @@ def strip_header_crc(data):
 
 def header_defn(log, types, messages):
     message = messages.number_to_message(HEADER_GLOBAL_TYPE)
-    return Definition(log, Identity(message.name), LITTLE, message,
+    return Definition(log, Identity(message.name, Counter()), LITTLE, message,
                       [Field(log, n, field[1] * types.profile_to_type(field[2]).size,
                              message.number_to_field(n),
                              types.profile_to_type(field[2]))
@@ -87,83 +86,122 @@ class DataMsg(Msg): pass
 class TimedMsg(Msg): pass
 
 
+class Header:
+
+    __slots__ = ('__byte')
+
+    def __init__(self, byte):
+        self.__byte = byte
+
+    def is_timestamp(self):
+        return self.__byte & 0x80
+
+    def is_definition(self):
+        return self.__byte & 0x40
+
+    def local_type(self):
+        if self.is_timestamp():
+            return (self.__byte & 0x60) >> 5
+        else:
+            return self.__byte & 0x0f
+
+    def time_offset(self):
+        return self.__byte & 0x1f
+
+    def is_extended(self):
+        return self.__byte & 0x20
+
+
 class Tokenizer:
 
     def __init__(self, log, data, types, messages, offset=0):
+
         self.__log = log
         self.__data = data
-        self.__offset = offset
         self.__types = types
         self.__messages = messages
+        self.__offset = offset
+
         self.__timestamp = None
-        self.__definiton_counter = Counter()
+        self.__defn_counter = Counter()
         self.__definitions = {}
         self.__parse_date = Date(log, 'timestamp', True, to_datetime=False)
 
     def __iter__(self):
         while self.__offset < len(self.__data):
-            header = self.__data[self.__offset]
-            # self.__log.debug('Header %02x' % header)
-            if header & 0x80:
-                local_type = (header & 0x60) >> 5
-                time_offset = header & 0x1f
-                yield self.__compressed_timestamp_msg(local_type, time_offset)
+            header = Header(self.__data[self.__offset])
+            if header.is_definition():
+                self.__offset += self.__definition(header.local_type(), header.is_extended())
             else:
-                local_type = header & 0x0f
-                if header & 0x40:
-                    extended = header & 0x20
-                    self.__definition_msg(local_type, extended)
+                defn = self.__definitions[header.local_type()]
+                data = self.__data[self.__offset+1:self.__offset+1+defn.size]
+                self.__offset += 1 + defn.size
+                if header.is_timestamp():
+                    yield self.__exit_control(self.__timed_msg(defn, data, header.time_offset()))
                 else:
-                    yield self.__data_msg(local_type)
+                    yield self.__exit_control(self.__data_msg(defn, data))
 
-    def __definition_msg(self, local_type, extended):
-        endian = self.__data[self.__offset+2] & 0x1
-        global_type = unpack('<>'[endian]+'H', self.__data[self.__offset+3:self.__offset+5])[0]
-        n_fields = self.__data[self.__offset+5]
-        self.__log.debug('Definition: %s' % hexlify(self.__data[self.__offset:self.__offset+6+n_fields*3]))
-        message = self.__messages.number_to_message(global_type)
-        self.__log.info('Definition for message "%s"' % message.name)
-        self.__definiton_counter[global_type] += 1
-        self.__definitions[local_type] = \
-            Definition(self.__log, Identity(message.name, self.__definiton_counter[global_type]), endian, message,
-                       [self.__make_field(self.__data[self.__offset+6+i*3:self.__offset+6+(i+1)*3], message)
-                        for i in range(n_fields)])
-        self.__offset += 6 + n_fields * 3
-        if extended: raise NotImplementedError()
+    def __exit_control(self, msg):
+        return msg.parse()
 
-    def __make_field(self, bytes, message):
-        number, size, base = bytes
-        field = None
-        if message:
-            try:
-                field = message.number_to_field(number)
-            except KeyError:
-                field = None
-                # self.__log.warn('No field %d for message %s' % (number, message.name))
-        base_type = self.__types.base_types[base & 0xf]
-        return Field(self.__log, number, size, field, base_type)
-
-    def __data_msg(self, local_type):
-        defn = self.__definitions[local_type]
-        data = self.__data[self.__offset+1:self.__offset+1+defn.size]
+    def __data_msg(self, defn, data):
         if defn.has_timestamp:
-            self.__timestamp = self.__parse_timestamp(defn, data)
-            # self.__log.debug('New timestamp: %s' % self.__timestamp)
-        self.__offset += 1 + defn.size
+            self.__timestamp = self.__read_timestamp(defn, data)
         # include timestamp here so that things like laps can be correlated with timed data
         return DataMsg(defn, data, self.__timestamp)
 
-    def __parse_timestamp(self, defn, data):
+    def __read_timestamp(self, defn, data):
         field = defn.fields[defn.number_to_index[TIMESTAMP_GLOBAL_TYPE]]
         return self.__parse_date.parse(data[field.start:field.finish], 1, defn.endian)[0]
 
-    def __compressed_timestamp_msg(self, local_type, time_offset):
+    def __timed_msg(self, defn, data, time_offset):
         rollover = time_offset < self.__timestamp & 0x1f
         self.__timestamp = (self.__timestamp & 0xffffffe0) + time_offset + (0x20 if rollover else 0)
-        defn = self.__definitions[local_type]
-        payload = self.__data[self.__offset+1:self.__offset+1+defn.size]
-        self.__offset += 1 + defn.size
-        return TimedMsg(defn, payload, self.__timestamp)
+        return TimedMsg(defn, data, self.__timestamp)
+
+    def __definition(self, local_type, extended):
+        endian = self.__data[self.__offset+2] & 0x1
+        global_type = unpack('<>'[endian]+'H', self.__data[self.__offset+3:self.__offset+5])[0]
+        n_fields = self.__data[self.__offset+5]
+        message = self.__messages.number_to_message(global_type)
+        self.__definitions[local_type] = Definition(self.__log, Identity(message.name, self.__defn_counter),
+                                                    endian, message, tuple(self.__fields(n_fields, message)))
+        if extended: raise NotImplementedError()
+        return 6 + n_fields * 3
+
+    def __identity(self, message):
+        self.__defn_counter[message.number] += 1
+        return Identity(message.name, self.__defn_counter[message.number]),
+
+    def __fields(self, n_fields, message):
+        for i in range(n_fields):
+            yield self.__field(self.__data[self.__offset + 6 + i * 3:self.__offset + 6 + (i + 1) * 3], message)
+
+    def __field(self, data, message):
+        number, size, base = data
+        try:
+            field = message.number_to_field(number)
+        except KeyError:
+            field = None
+            self.__log.warn('No field %d for message %s' % (number, message.name))
+        base_type = self.__types.base_types[base & 0xf]
+        return Field(self.__log, number, size, field, base_type)
+
+
+class Identity:
+
+    def __init__(self, name, counter):
+        self.name = name
+        counter[name] += 1
+        self.count = counter[name]
+        self.__counter = counter
+
+    def __repr__(self):
+        current = self.__counter[self.name]
+        if current == 1:
+            return self.name
+        else:
+            return '%s (defn %d/%d)' % (self.name, self.count, current)
 
 
 class Field:
@@ -178,17 +216,6 @@ class Field:
         # set by definition later
         self.start = 0
         self.finish = 0
-
-
-class Identity:
-
-    def __init__(self, name, count=1):
-        self.name = name
-        self.count = count
-        # todo - total count
-
-    def __repr__(self):
-        return '%s (defn %d)' % (self.name, self.count)
 
 
 class Definition:
