@@ -1,6 +1,6 @@
 
 import itertools as it
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 
 def no_filter(data):
@@ -102,14 +102,14 @@ class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')
     def data_with(self, **kargs):
         return it.chain(self.data, kargs.items())
 
-    def into(self, container, *filters, cls=None, **extras):
-        if not cls:
-            cls = self.__class__
-        return cls(self.name, self.number, self.identity, self.timestamp,
-                   container(chain(*filters)(self.data_with(**extras))))
+    def into(self, container, *filters, _cls=None, **extras):
+        if not _cls:
+            _cls = self.__class__
+        return _cls(self.name, self.number, self.identity, self.timestamp,
+                    container(chain(*filters)(self.data_with(**extras))))
 
     def as_dict(self, *filters, **extras):
-        return self.into(dict, *filters, **extras, cls=DictRecord)
+        return self.into(OrderedDict, *filters, **extras, _cls=DictRecord)
 
     def as_names(self, *filters, **extras):
         return self.into(tuple, *(no_values,)+filters, **extras)
@@ -117,16 +117,19 @@ class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')
     def as_values(self, *filters, **extras):
         return self.into(tuple, *(no_names,)+filters, **extras)
 
-    def force(self):
-        return self
+    def force(self, *filters, **extras):
+        if filters or extras:
+            return self.into(type(self.data), *filters, **extras)
+        else:
+            return self
 
 
 class LazyRecord(Record):
 
-    def into(self, container, *filters, cls=None, **extras):
-        if not cls:
-            cls = Record
-        return super().into(container, *filters, cls=cls, **extras)
+    def into(self, container, *filters, _cls=None, **extras):
+        if not _cls:
+            _cls = Record
+        return super().into(container, *filters, _cls=_cls, **extras)
 
     def force(self, *filters, **extras):
         return self.as_dict(*filters, **extras)
