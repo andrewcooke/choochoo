@@ -35,6 +35,19 @@ def no_units(data):
             yield name, values
 
 
+def to_hex(data):
+    for name, (values, units) in data:
+        if values is None:
+            yield name, (values, units)
+        else:
+            if len(values) > 1:  # single values are best displayed as integers (common data type)
+                try:
+                    values = ('0x'+values.hex(),)
+                except AttributeError:
+                    pass
+            yield name, (values, units)
+
+
 def append_units(data, separator=''):
     for name, (values, units) in data:
         if values is None:  # preserve bad values as bad
@@ -89,12 +102,14 @@ class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')
     def data_with(self, **kargs):
         return it.chain(self.data, kargs.items())
 
-    def into(self, container, *filters, **extras):
-        return Record(self.name, self.number, self.identity, self.timestamp,
-                      container(chain(*filters)(self.data_with(**extras))))
+    def into(self, container, *filters, cls=None, **extras):
+        if not cls:
+            cls = self.__class__
+        return cls(self.name, self.number, self.identity, self.timestamp,
+                   container(chain(*filters)(self.data_with(**extras))))
 
     def as_dict(self, *filters, **extras):
-        return self.into(dict, *filters, **extras)
+        return self.into(dict, *filters, **extras, cls=DictRecord)
 
     def as_names(self, *filters, **extras):
         return self.into(tuple, *(no_values,)+filters, **extras)
@@ -102,8 +117,39 @@ class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')
     def as_values(self, *filters, **extras):
         return self.into(tuple, *(no_names,)+filters, **extras)
 
+    def force(self):
+        return self
+
 
 class LazyRecord(Record):
 
+    def into(self, container, *filters, cls=None, **extras):
+        if not cls:
+            cls = Record
+        return super().into(container, *filters, cls=cls, **extras)
+
     def force(self, *filters, **extras):
-        return self.into(list, *filters, **extras)
+        return self.as_dict(*filters, **extras)
+
+
+class Attributes(dict):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
+class DictRecord(Record):
+
+    def data_with(self, **kargs):
+        return it.chain(self.data.items(), kargs.items())
+
+    @property
+    def attr(self):
+        try:
+            cache = self.__cache
+        except AttributeError:
+            cache = Attributes(self.data)
+            self.__cache = cache
+        return cache
+

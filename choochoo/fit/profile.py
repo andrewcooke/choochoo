@@ -224,7 +224,10 @@ class AutoInteger(StructSupport):
             return int(cell, 0)
 
     def parse(self, data, count, endian):
-        return self._unpack(data, self.formats, self.bad, count, endian)
+        result = self._unpack(data, self.formats, self.bad, count, endian)
+        if result is not None and self.size == 1:
+            result = bytes(result)
+        return result
 
 
 class AliasInteger(AutoInteger):
@@ -393,12 +396,13 @@ def scale_offset(log, cell, default, name):
 
 class MessageField(Named):
 
-    def __init__(self, log, name, number, units, type, scale=1, offset=0):
+    def __init__(self, log, name, number, units, type, count=None, scale=1, offset=0):
         super().__init__(log, name)
         self.number = number
         self.units = units if units else ''
         self.is_dynamic = False
         self.type = type
+        self.count = count
         self.scale = scale_offset(log, scale, 1, name)
         self.offset = scale_offset(log, offset, 0, name)
         self.__is_scaled = (self.scale != 1 or self.offset != 0)
@@ -417,7 +421,7 @@ class RowMessageField(MessageField):
                          int(row[1]) if row[1] is not None else None,
                          row[8],
                          types.profile_to_type(row[3], auto_create=True),
-                         row[6], row[7])
+                         row[15], row[6], row[7])
 
 
 class DynamicMessageField(RowMessageField):

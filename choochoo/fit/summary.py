@@ -3,7 +3,7 @@ from collections import Counter
 
 from .decode import parse_all
 from .profile import Date
-from .records import no_bad_values, fix_degrees, append_units, no_unknown_messages, unique_names, join_values
+from .records import no_bad_values, fix_degrees, append_units, no_unknown_messages, unique_names, join_values, to_hex
 from ..args import PATH
 from ..log import make_log
 from ..utils import unique
@@ -39,7 +39,7 @@ def partition(records, counts, threshold=3):
 def pprint_as_dicts(records):
     for record in records:
         if record.is_known():
-            record = record.as_dict(join_values, append_units, fix_degrees, no_unknown_messages, no_bad_values)
+            record = record.as_dict(join_values, append_units, to_hex, fix_degrees, no_unknown_messages, no_bad_values)
             print(record.identity)
             pprint_with_tabs('%s: %s' % (name, value) for name, value in sorted(record.data.items()))
             print()
@@ -57,7 +57,7 @@ def pprint_as_tuples(records):
               for record in unique(records, key=lambda x: x.identity)
               if record.is_known()]
     for title in titles:
-        pprint_series(title, [record.as_values(join_values, append_units, fix_degrees, no_unknown_messages)
+        pprint_series(title, [record.as_values(join_values, append_units, to_hex, fix_degrees, no_unknown_messages)
                               for record in records
                               if record.identity == title.identity])
 

@@ -1,9 +1,9 @@
 
-from collections import namedtuple, Counter
+from collections import namedtuple, Counter, defaultdict
 from struct import unpack
 
 from .profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
-    TIMESTAMP_GLOBAL_TYPE, Date
+    TIMESTAMP_GLOBAL_TYPE, Date, MessageField
 from .records import chain, join_values, append_units
 
 
@@ -46,6 +46,7 @@ def header_defn(log, types, messages):
                              message.number_to_field(n),
                              types.profile_to_type(field[2]))
                        for n, field in enumerate(HEADER_FIELDS)],
+                      (),
                       {'header_size'})  # this needed as reference for optional field logic
 
 
@@ -126,6 +127,7 @@ class Tokenizer:
         self.__defn_counter = Counter()
         self.__definitions = {}
         self.__parse_date = Date(log, 'timestamp', True, to_datetime=False)
+        self.__dev_fields = defaultdict(dict)
 
     def __iter__(self):
         while self.__offset < len(self.__data):
@@ -137,12 +139,28 @@ class Tokenizer:
                 data = self.__data[self.__offset+1:self.__offset+1+defn.size]
                 self.__offset += 1 + defn.size
                 if header.is_timestamp():
-                    yield self.__exit_control(self.__timed_msg(defn, data, header.time_offset()))
+                    yield self.__eval_and_check(defn, self.__timed_msg(defn, data, header.time_offset()))
                 else:
-                    yield self.__exit_control(self.__data_msg(defn, data))
+                    yield self.__eval_and_check(defn, self.__data_msg(defn, data))
 
-    def __exit_control(self, msg):
-        return msg.parse()
+    def __eval_and_check(self, defn, msg):
+        record = msg.parse()
+        # we don't care about developer data because the application id has no meaning to us
+        # so we simply accept new developer indices when they appear in developer fields
+        if defn.message.number == 206:
+            record = record.force()
+            self.__field_description(defn, record)
+        return record
+
+    def __field_description(self, defn, record):
+        developer_index = record.attr.developer_data_index[0][0]
+        number = record.attr.field_definition_number[0][0]
+        # ooof...
+        base_type = self.__types.base_types[
+            defn.fields[2].field.type.profile_to_internal(record.attr.fit_base_type_id[0][0])]
+        name = record.attr.field_name[0][0]
+        units = record.attr.units[0][0]
+        self.__dev_fields[developer_index][number] = MessageField(self.__log, name, number, units, base_type)
 
     def __data_msg(self, defn, data):
         if defn.has_timestamp:
@@ -165,14 +183,20 @@ class Tokenizer:
         message = self.__messages.number_to_message(global_type)
         identity = Identity(message.name, self.__defn_counter)
         n_fields = self.__data[self.__offset+5]
-        fields = tuple(self.__fields(n_fields, message))
-        self.__definitions[local_type] = Definition(self.__log, identity, endian, message, fields)
-        if extended: raise NotImplementedError()
-        return 6 + n_fields * 3
+        fields = tuple(self.__fields(self.__field,self.__offset+6, n_fields, message))
+        offset = 6 + n_fields * 3
+        if extended:
+            n_dev_fields = self.__data[self.__offset+offset]
+            dev_fields = tuple(self.__fields(self.__dev_field, self.__offset+offset+1, n_dev_fields))
+            offset += 1 + n_dev_fields * 3
+        else:
+            dev_fields = tuple()
+        self.__definitions[local_type] = Definition(self.__log, identity, endian, message, fields, dev_fields)
+        return offset
 
-    def __fields(self, n_fields, message):
+    def __fields(self, field, offset, n_fields, *args):
         for i in range(n_fields):
-            yield self.__field(self.__data[self.__offset + 6 + i * 3:self.__offset + 6 + (i + 1) * 3], message)
+            yield field(self.__data[offset + i * 3:offset + (i + 1) * 3], *args)
 
     def __field(self, data, message):
         number, size, base = data
@@ -183,6 +207,11 @@ class Tokenizer:
             self.__log.warn('No field %d for message %s' % (number, message.name))
         base_type = self.__types.base_types[base & 0xf]
         return Field(self.__log, number, size, field, base_type)
+
+    def __dev_field(self, data):
+        number, size, developer_index = data
+        field = self.__dev_fields[developer_index][number]
+        return Field(self.__log, number, size, field, field.type)
 
 
 class Identity:
@@ -217,14 +246,16 @@ class Field:
 
 class Definition:
 
-    def __init__(self, log, identity, endian, message, fields, references=None):
+    def __init__(self, log, identity, endian, message, fields, dev_fields, references=None):
         self.__log = log
         self.identity = identity
         self.endian = endian
         self.message = message
         # set offsets before ordering
         self.__set_field_offsets(fields)
-        self.fields = tuple(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
+        self.fields = \
+            tuple(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0)) + \
+            tuple(dev_fields)
         self.size = sum(field.size for field in self.fields)
         self.number_to_index = {}
         self.has_timestamp = False
