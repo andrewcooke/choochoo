@@ -139,11 +139,11 @@ class Tokenizer:
                 data = self.__data[self.__offset+1:self.__offset+1+defn.size]
                 self.__offset += 1 + defn.size
                 if header.is_timestamp():
-                    yield self.__eval_and_check(defn, self.__timed_msg(defn, data, header.time_offset()))
+                    yield self.__parse_and_save_dev_fields(defn, self.__timed_msg(defn, data, header.time_offset()))
                 else:
-                    yield self.__eval_and_check(defn, self.__data_msg(defn, data))
+                    yield self.__parse_and_save_dev_fields(defn, self.__data_msg(defn, data))
 
-    def __eval_and_check(self, defn, msg):
+    def __parse_and_save_dev_fields(self, defn, msg):
         record = msg.parse()
         # we don't care about developer data because the application id has no meaning to us
         # so we simply accept new developer indices when they appear in developer fields
@@ -211,7 +211,7 @@ class Tokenizer:
     def __dev_field(self, data):
         number, size, developer_index = data
         field = self.__dev_fields[developer_index][number]
-        return Field(self.__log, number, size, field, field.type)
+        return Field(self.__log, -1, size, field, field.type)
 
 
 class Identity:
@@ -252,7 +252,7 @@ class Definition:
         self.endian = endian
         self.message = message
         # set offsets before ordering
-        self.__set_field_offsets(fields)
+        self.__set_field_offsets(dev_fields, offset=self.__set_field_offsets(fields))
         self.fields = \
             tuple(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0)) + \
             tuple(dev_fields)
@@ -272,9 +272,9 @@ class Definition:
                 self.references.update(field.field.references)
 
     @staticmethod
-    def __set_field_offsets(fields):
-        offset = 0
+    def __set_field_offsets(fields, offset=0):
         for field in fields:
             field.start = offset
             offset += field.size
             field.finish = offset
+        return offset
