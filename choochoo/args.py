@@ -17,11 +17,14 @@ PLAN = 'plan'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 DUMP_FIT = 'dump-fit'
 
-ROOT = 'root'
+ALL_MESSAGES = 'all-messages'
+ALL_FIELDS = 'all-fields'
 DATABASE = 'database'
 LOGS = 'logs'
 LIST = 'list'
 PATH = 'path'
+ROOT = 'root'
+
 
 def mm(name): return '--' + name
 
@@ -36,6 +39,7 @@ class NamespaceWithVariables(Mapping):
         self._dict = vars(ns)
 
     def __getitem__(self, name):
+        name = sub('-', '_', name)
         value = self._dict[name]
         try:
             match = VARIABLE.match(value)
@@ -120,10 +124,12 @@ def parser():
     package.set_defaults(command=PACKAGE_FIT_PROFILE)
 
     dump = subparsers.add_parser(DUMP_FIT,
-                                 help='print contents of fit file to screen - ' +
+                                 help='display contents of fit file - ' +
                                       'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
     dump.add_argument(PATH, action='store', metavar='FIT', nargs=1,
                       help='The path to the fit file')
+    dump.add_argument(mm(ALL_FIELDS), action='store_true', help='Display undocumented fields?')
+    dump.add_argument(mm(ALL_MESSAGES), action='store_true', help='Display undocumented messages?')
     dump.set_defaults(command=DUMP_FIT)
 
     return parser

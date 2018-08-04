@@ -398,7 +398,7 @@ def scale_offset(log, cell, default, name):
         return default
 
 
-class MessageField(Named):
+class SimpleMessageField(Named):
 
     def __init__(self, log, name, number, units, type, count=None, scale=1, offset=0):
         super().__init__(log, name)
@@ -418,22 +418,14 @@ class MessageField(Named):
         yield self.name, (values, self.units)
 
 
-class RowMessageField(MessageField):
+class RowMessageField(SimpleMessageField):
 
-    def __init__(self, log, row, types):
+    def __init__(self, log, row, rows, types):
         super().__init__(log, row[2],
                          int(row[1]) if row[1] is not None else None,
                          row[8],
                          types.profile_to_type(row[3], auto_create=True),
                          row[15], row[6], row[7])
-
-
-class DynamicMessageField(RowMessageField):
-
-    # actually a possible dynamic field - see is_dynamic
-
-    def __init__(self, log, row, rows, types):
-        super().__init__(log, row, types)
         self.__dynamic_tmp_data = []
         self.__dynamic_lookup = ErrorDict(log, 'No dynamic field for %r')
         self.references = set()
@@ -442,19 +434,13 @@ class DynamicMessageField(RowMessageField):
             while peek[2] and peek[1] is None:
                 row = next(rows)
                 for name, value in zip(row[11].split(','), row[12].split(',')):
-                    self.__save_dynamic(name.strip(), value.strip(), row)
+                    name, value = name.strip(), value.strip()
+                    self.is_dynamic = True
+                    self.references.add(name)
+                    self.__dynamic_lookup[(name, value)] = RowMessageField(self._log, row, rows, types)
                 peek = rows.peek()
         except StopIteration:
             return
-
-    def __save_dynamic(self, reference_name, reference_value, row):
-        self.is_dynamic = True
-        self.__dynamic_tmp_data.append((reference_name, reference_value, row))
-
-    def _complete_dynamic(self, message, types):
-        for name, value, row in self.__dynamic_tmp_data:
-            self.references.add(name)
-            self.__dynamic_lookup[(name, value)] = RowMessageField(self._log, row, types)
 
     @property
     def dynamic(self):
@@ -509,7 +495,7 @@ class Message(Named):
                         references[name] = value
                     yield name, value
             else:
-                name = str(field.number)
+                name = '@%d:%d' % (field.start, field.finish)
                 value = (field.base_type.parse(bytes, field.count, defn.endian), None)
                 if name in defn.references:
                     references[name] = value
@@ -539,17 +525,7 @@ class RowMessage(NumberedMessage):
             if not row[2]:
                 rows.prepend(row)
                 break
-            self.__parse_row(row, rows, types)
-        self.__complete_dynamic(types)
-
-    def __parse_row(self, row, rows, types):
-        self._add_field(DynamicMessageField(self._log, row, rows, types))
-
-    def __complete_dynamic(self, types):
-        # these may be forward references
-        for field in self._profile_to_field.values():
-            if field.is_dynamic:
-                field._complete_dynamic(self, types)
+            self._add_field(RowMessageField(self._log, row, rows, types))
 
 
 class Header(Message):
@@ -557,7 +533,7 @@ class Header(Message):
     def __init__(self, log, types):
         super().__init__(log, 'HEADER', number=HEADER_GLOBAL_TYPE)
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
-            self._add_field(MessageField(log, name, n, None, types.profile_to_type(base_type)))
+            self._add_field(SimpleMessageField(log, name, n, None, types.profile_to_type(base_type)))
 
     def _parse_field(self, field, data, count, endian, references, message):
         if field.name == 'checksum' and references['header_size'] == 12:

@@ -3,7 +3,7 @@ from collections import namedtuple, Counter, defaultdict
 from struct import unpack
 
 from .profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
-    TIMESTAMP_GLOBAL_TYPE, Date, MessageField
+    TIMESTAMP_GLOBAL_TYPE, Date, SimpleMessageField
 from .records import chain, join_values, append_units
 
 
@@ -42,7 +42,7 @@ def strip_header_crc(data):
 def header_defn(log, types, messages):
     message = messages.number_to_message(HEADER_GLOBAL_TYPE)
     return Definition(log, Identity(message.name, Counter()), LITTLE, message,
-                      [Field(log, n, field[1] * types.profile_to_type(field[2]).size,
+                      [Field(log, field[1] * types.profile_to_type(field[2]).size,
                              message.number_to_field(n),
                              types.profile_to_type(field[2]))
                        for n, field in enumerate(HEADER_FIELDS)],
@@ -160,7 +160,7 @@ class Tokenizer:
             defn.fields[2].field.type.profile_to_internal(record.attr.fit_base_type_id[0][0])]
         name = record.attr.field_name[0][0]
         units = record.attr.units[0][0]
-        self.__dev_fields[developer_index][number] = MessageField(self.__log, name, number, units, base_type)
+        self.__dev_fields[developer_index][number] = SimpleMessageField(self.__log, name, None, units, base_type)
 
     def __data_msg(self, defn, data):
         if defn.timestamp_field:
@@ -203,12 +203,12 @@ class Tokenizer:
             field = None
             self.__log.warn('No field %d for message %s' % (number, message.name))
         base_type = self.__types.base_types[base & 0xf]
-        return Field(self.__log, number, size, field, base_type)
+        return Field(self.__log, size, field, base_type)
 
     def __dev_field(self, data):
         number, size, developer_index = data
         field = self.__dev_fields[developer_index][number]
-        return Field(self.__log, -1, size, field, field.type)
+        return Field(self.__log, size, field, field.type)
 
 
 class Identity:
@@ -231,10 +231,9 @@ class Identity:
 
 class Field:
 
-    def __init__(self, log, number, size, field, base_type):
+    def __init__(self, log, size, field, base_type):
 
         self.__log = log
-        self.number = number
         self.size = size
         self.field = field
         self.base_type = base_type
@@ -266,7 +265,7 @@ class Definition:
             field.start = offset
             offset += field.size
             field.finish = offset
-            if field.number == TIMESTAMP_GLOBAL_TYPE:
+            if field.field and field.field.number == TIMESTAMP_GLOBAL_TYPE:
                 self.timestamp_field = field
             if field.field and field.field.is_dynamic:
                 self.references.update(field.field.references)

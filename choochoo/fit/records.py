@@ -13,7 +13,7 @@ def no_bad_values(data):
             yield name, (values, units)
 
 
-def no_unknown_messages(data):
+def no_unknown_fields(data):
     for name, values_or_pair in data:
         if name[0].islower():
             yield name, values_or_pair
