@@ -415,7 +415,7 @@ class MessageField(Named):
         values = self.type.parse(data, count, endian)
         if self.__is_scaled and values is not None:
             values = tuple(value / self.scale - self.offset for value in values)
-        return self.name, (values, self.units)
+        yield self.name, (values, self.units)
 
 
 class RowMessageField(MessageField):
@@ -505,18 +505,21 @@ class Message(Named):
         for field in defn.fields:
             bytes = data[field.start:field.finish]
             if field.field:
-                name, value = self._parse_field(
-                    field.field, bytes, field.count, defn.endian, references, self)
+                for name, value in self._parse_field(
+                        field.field, bytes, field.count, defn.endian, references, self):
+                    if name in defn.references:
+                        references[name] = value
+                    yield name, value
             else:
                 name = str(field.number)
                 value = (field.base_type.parse(bytes, field.count, defn.endian), None)
-            if name in defn.references:
-                references[name] = value
-            yield name, value
+                if name in defn.references:
+                    references[name] = value
+                yield name, value
 
     def _parse_field(self, field, bytes, count, endian, references, message):
         # allow interception for optional field in header
-        return field.parse(bytes, count, endian, references, message)
+        yield from field.parse(bytes, count, endian, references, message)
 
 
 class NumberedMessage(Message):
@@ -560,9 +563,9 @@ class Header(Message):
 
     def _parse_field(self, field, data, count, endian, references, message):
         if field.name == 'checksum' and references['header_size'] == 12:
-            return None, None
+            yield None, None
         else:
-            return super()._parse_field(field, data, count, endian, references, message)
+            yield from super()._parse_field(field, data, count, endian, references, message)
 
 
 class Missing(Message):

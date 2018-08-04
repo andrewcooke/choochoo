@@ -220,6 +220,8 @@ class Identity:
         self.__counter = counter
 
     def __repr__(self):
+        # this assumes all instances have been evaluated, which is risky given
+        # the lazy approach, but the cost of an error is low
         current = self.__counter[self.name]
         if current == 1:
             return self.name
@@ -251,9 +253,9 @@ class Definition:
         self.identity = identity
         self.endian = endian
         self.message = message
+        self.references = references if references else set()
 
         self.timestamp_field = None
-        self.references = references if references else set()
         self.size = 0
         self.fields = self.__process_fields(fields, dev_fields)
 
