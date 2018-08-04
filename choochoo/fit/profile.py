@@ -179,11 +179,15 @@ class StructSupport(BaseType):
 
 class String(BaseType):
 
+    # it may seem weird this returns a singleton tuple.  shouldn't it be treated like a
+    # Character field where count is the mutliplicity?  but dynamic fields treat it as
+    # a single value...
+
     def __init__(self, log, name):
         super().__init__(log, name, 1, str)
 
     def parse(self, bytes, count, endian):
-        return [str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')]
+        return (str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8'),)
 
 
 class Boolean(BaseType):
@@ -426,6 +430,8 @@ class RowMessageField(MessageField):
 
 class DynamicMessageField(RowMessageField):
 
+    # actually a possible dynamic field - see is_dynamic
+
     def __init__(self, log, row, rows, types):
         super().__init__(log, row, types)
         self.__dynamic_tmp_data = []
@@ -458,7 +464,7 @@ class DynamicMessageField(RowMessageField):
         if self.is_dynamic:
             for name in self.references:
                 if name in result:
-                    value = result[name][0]  # drop units
+                    value = result[name][0][0]  # drop units and take first value
                     self._log.debug('Found reference %r=%r' % (name, value))
                     try:
                         return self.dynamic[(name, value)].parse(data, count, endian, result, message)
@@ -469,7 +475,6 @@ class DynamicMessageField(RowMessageField):
                 # self._log.debug('Option: %s -> %r' % (option, field.name))
                 pass
             # and if nothing found, fall though to default behaviour
-        # have to return name because of dynamic fields
         return super().parse(data, count, endian, result, message)
 
 

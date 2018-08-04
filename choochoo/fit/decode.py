@@ -163,14 +163,11 @@ class Tokenizer:
         self.__dev_fields[developer_index][number] = MessageField(self.__log, name, number, units, base_type)
 
     def __data_msg(self, defn, data):
-        if defn.has_timestamp:
-            self.__timestamp = self.__read_timestamp(defn, data)
+        if defn.timestamp_field:
+            field = defn.timestamp_field
+            self.__timestamp = self.__parse_date.parse(data[field.start:field.finish], 1, defn.endian)[0]
         # include timestamp here so that things like laps can be correlated with timed data
         return DataMsg(defn, data, self.__timestamp)
-
-    def __read_timestamp(self, defn, data):
-        field = defn.fields[defn.number_to_index[TIMESTAMP_GLOBAL_TYPE]]
-        return self.__parse_date.parse(data[field.start:field.finish], 1, defn.endian)[0]
 
     def __timed_msg(self, defn, data, time_offset):
         rollover = time_offset < self.__timestamp & 0x1f
@@ -190,7 +187,7 @@ class Tokenizer:
             dev_fields = tuple(self.__fields(self.__dev_field, self.__offset+offset+1, n_dev_fields))
             offset += 1 + n_dev_fields * 3
         else:
-            dev_fields = tuple()
+            dev_fields = ()
         self.__definitions[local_type] = Definition(self.__log, identity, endian, message, fields, dev_fields)
         return offset
 
@@ -233,11 +230,13 @@ class Identity:
 class Field:
 
     def __init__(self, log, number, size, field, base_type):
+
         self.__log = log
         self.number = number
         self.size = size
         self.field = field
         self.base_type = base_type
+
         self.count = self.size // base_type.size
         # set by definition later
         self.start = 0
@@ -247,34 +246,27 @@ class Field:
 class Definition:
 
     def __init__(self, log, identity, endian, message, fields, dev_fields, references=None):
+
         self.__log = log
         self.identity = identity
         self.endian = endian
         self.message = message
-        # set offsets before ordering
-        self.__set_field_offsets(dev_fields, offset=self.__set_field_offsets(fields))
-        self.fields = \
-            tuple(sorted(fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0)) + \
-            tuple(dev_fields)
-        self.size = sum(field.size for field in self.fields)
-        self.number_to_index = {}
-        self.has_timestamp = False
+
+        self.timestamp_field = None
         self.references = references if references else set()
-        self.__scan_fields(fields)
+        self.size = 0
+        self.fields = self.__process_fields(fields, dev_fields)
 
-    def __scan_fields(self, fields):
-        for index, field in enumerate(fields):
-            number = field.number
-            self.number_to_index[field.number] = index
-            if number == TIMESTAMP_GLOBAL_TYPE:
-                self.has_timestamp = True
-            if field.field and field.field.is_dynamic:
-                self.references.update(field.field.references)
-
-    @staticmethod
-    def __set_field_offsets(fields, offset=0):
-        for field in fields:
+    def __process_fields(self, fields, dev_fields):
+        all_fields = tuple(fields) + tuple(dev_fields)
+        offset = 0
+        for field in all_fields:
             field.start = offset
             offset += field.size
             field.finish = offset
-        return offset
+            if field.number == TIMESTAMP_GLOBAL_TYPE:
+                self.timestamp_field = field
+            if field.field and field.field.is_dynamic:
+                self.references.update(field.field.references)
+        self.size = offset
+        return tuple(sorted(all_fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))

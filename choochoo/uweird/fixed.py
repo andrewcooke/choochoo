@@ -20,6 +20,6 @@ class Fixed(FocusWrap):
         return self._size
 
     def render(self, size, focus=False):
-        if size != tuple():
+        if size != ():
             raise Exception('Using fixed widget incorrectly (received size of %s)' % size)
         return super().render((self._size[0], ), focus)
