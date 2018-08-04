@@ -1,16 +1,13 @@
 
 from collections import Counter
 
+from .profile.types import Date
 from .decode import parse_all
-from .profile import Date
 from .records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, to_hex, \
     no_filter
 from ..args import PATH, ALL_FIELDS, ALL_MESSAGES
 from ..log import make_log
 from ..utils import unique
-
-
-no_unknown_fields = no_filter
 
 
 def dump_fit(args, profile_path=None):

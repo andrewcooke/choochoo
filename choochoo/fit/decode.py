@@ -2,8 +2,10 @@
 from collections import namedtuple, Counter, defaultdict
 from struct import unpack
 
-from .profile import LITTLE, load_profile, HEADER_FIELDS, HEADER_GLOBAL_TYPE, read_profile, \
-    TIMESTAMP_GLOBAL_TYPE, Date, SimpleMessageField
+from .profile.fields import SimpleMessageField, TIMESTAMP_GLOBAL_TYPE
+from .profile.messages import HEADER_FIELDS, HEADER_GLOBAL_TYPE
+from .profile.profile import read_profile, load_profile
+from .profile.types import LITTLE, Date
 from .records import chain, join_values, append_units
 
 
