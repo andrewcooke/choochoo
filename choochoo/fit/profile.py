@@ -423,7 +423,7 @@ class SimpleMessageField(Named):
 
 class Row(namedtuple('BaseRow',
                      'msg_name, field_no_, field_name, field_type, array, components, scale, offset, ' +
-                     'units, bits, accumulate, ref_name, ref_value, comment, products, example')):
+                     'units, bits_, accumulate, ref_name, ref_value, comment, products, example')):
 
     __slots__ = ()
 
@@ -434,14 +434,27 @@ class Row(namedtuple('BaseRow',
     def field_no(self):
         return None if self.field_no_ is None else int(self.field_no_)
 
+    @property
+    def bits(self):
+        return None if self.bits_ is None else str(self.bits_)
+
 
 class ComponentMessageField(SimpleMessageField):
+
+    @staticmethod
+    def _zip(field1, field2):
+        return ((f1.strip(), f2.strip()) for f1, f2 in zip(field1.split(','), field2.split(',')))
 
     def __init__(self, log, row, types):
         super().__init__(log, row.field_name, row.field_no,
                          row.units,
                          types.profile_to_type(row.field_type, auto_create=True),
                          row.example, row.scale, row.offset)
+        if row.components:
+            self.__components = []
+            for (name, bits) in self._zip(row.components, row.bits):
+                self.is_component = True
+                self.__components.append((int(bits), name))
 
 
 class DynamicMessageField(ComponentMessageField):
@@ -455,8 +468,7 @@ class DynamicMessageField(ComponentMessageField):
             peek = rows.peek()
             while peek.field_name and peek.field_no is None:
                 row = next(rows)
-                for name, value in zip(row.ref_name.split(','), row.ref_value.split(',')):
-                    name, value = name.strip(), value.strip()
+                for name, value in self._zip(row.ref_name, row.ref_value):
                     self.is_dynamic = True
                     self.references.add(name)
                     self.__dynamic_lookup[(name, value)] = DynamicMessageField(self._log, row, rows, types)
