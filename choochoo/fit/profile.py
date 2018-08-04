@@ -467,15 +467,13 @@ class DynamicMessageField(RowMessageField):
                     value = result[name][0][0]  # drop units and take first value
                     self._log.debug('Found reference %r=%r' % (name, value))
                     try:
-                        return self.dynamic[(name, value)].parse(data, count, endian, result, message)
+                        yield from self.dynamic[(name, value)].parse(data, count, endian, result, message)
+                        return
                     except KeyError:
                         pass
             # self._log.warn('No match for dynamic field %s (message %s)' % (self.name, message.name))
-            for option, field in self.__dynamic_lookup.items():
-                # self._log.debug('Option: %s -> %r' % (option, field.name))
-                pass
             # and if nothing found, fall though to default behaviour
-        return super().parse(data, count, endian, result, message)
+        yield from super().parse(data, count, endian, result, message)
 
 
 class Message(Named):
