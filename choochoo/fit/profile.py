@@ -1,6 +1,8 @@
 
 import datetime as dt
 from abc import abstractmethod
+from collections import namedtuple
+from enum import Enum
 from os.path import dirname, join
 from pickle import dump, load
 from re import compile
@@ -405,6 +407,7 @@ class SimpleMessageField(Named):
         self.number = number
         self.units = units if units else ''
         self.is_dynamic = False
+        self.is_component = False
         self.type = type
         self.count = count
         self.scale = scale_offset(log, scale, 1, name)
@@ -418,26 +421,45 @@ class SimpleMessageField(Named):
         yield self.name, (values, self.units)
 
 
-class RowMessageField(SimpleMessageField):
+class Row(namedtuple('BaseRow',
+                     'msg_name, field_no_, field_name, field_type, array, components, scale, offset, ' +
+                     'units, bits, accumulate, ref_name, ref_value, comment, products, example')):
+
+    __slots__ = ()
+
+    def __new__(cls, row):
+        return super().__new__(cls, *tuple(cell.value for cell in row[0:16]))
+
+    @property
+    def field_no(self):
+        return None if self.field_no_ is None else int(self.field_no_)
+
+
+class ComponentMessageField(SimpleMessageField):
+
+    def __init__(self, log, row, types):
+        super().__init__(log, row.field_name, row.field_no,
+                         row.units,
+                         types.profile_to_type(row.field_type, auto_create=True),
+                         row.example, row.scale, row.offset)
+
+
+class DynamicMessageField(ComponentMessageField):
 
     def __init__(self, log, row, rows, types):
-        super().__init__(log, row[2],
-                         int(row[1]) if row[1] is not None else None,
-                         row[8],
-                         types.profile_to_type(row[3], auto_create=True),
-                         row[15], row[6], row[7])
+        super().__init__(log, row, types)
         self.__dynamic_tmp_data = []
         self.__dynamic_lookup = ErrorDict(log, 'No dynamic field for %r')
         self.references = set()
         try:
             peek = rows.peek()
-            while peek[2] and peek[1] is None:
+            while peek.field_name and peek.field_no is None:
                 row = next(rows)
-                for name, value in zip(row[11].split(','), row[12].split(',')):
+                for name, value in zip(row.ref_name.split(','), row.ref_value.split(',')):
                     name, value = name.strip(), value.strip()
                     self.is_dynamic = True
                     self.references.add(name)
-                    self.__dynamic_lookup[(name, value)] = RowMessageField(self._log, row, rows, types)
+                    self.__dynamic_lookup[(name, value)] = DynamicMessageField(self._log, row, rows, types)
                 peek = rows.peek()
         except StopIteration:
             return
@@ -484,8 +506,8 @@ class Message(Named):
         return LazyRecord(self.name, self.number, defn.identity, timestamp, self.__parse(data, defn))
 
     def __parse(self, data, defn):
+        # this is the generator that lives inside a record and is evaluated on demand
         references = {} if defn.references else None
-        # note this is a field description not a message field
         for field in defn.fields:
             bytes = data[field.start:field.finish]
             if field.field:
@@ -525,7 +547,7 @@ class RowMessage(NumberedMessage):
             if not row[2]:
                 rows.prepend(row)
                 break
-            self._add_field(RowMessageField(self._log, row, rows, types))
+            self._add_field(DynamicMessageField(self._log, row, rows, types))
 
 
 class Header(Message):
@@ -554,12 +576,12 @@ class Messages:
         self.__log = log
         self.__profile_to_message = ErrorDict(log, 'No message for profile %r')
         self.__number_to_message = ErrorDict(log, 'No message for number %r')
-        rows = peekable([cell.value for cell in row] for row in sheet.iter_rows())
+        rows = peekable(Row(row) for row in sheet.iter_rows())
         for row in rows:
-            if row[0] and row[0][0].isupper():
-                self.__log.debug('Skipping %s' % row)
-            elif row[0]:
-                # self.__log.info('Parsing message %s' % row[0])
+            if row.msg_name and row.msg_name[0].isupper():
+                self.__log.debug('Skipping %s' % (row,))
+            elif row.msg_name:
+                # self.__log.info('Parsing message %s' % row.msg_name)
                 self.__add_message(RowMessage(self.__log, row, rows, types))
         self.__add_message(Header(self.__log, types))
 
