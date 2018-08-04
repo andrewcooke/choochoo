@@ -17,23 +17,35 @@ def parse_scale_offset(log, cell, default, name):
 
 class SimpleMessageField(Named):
 
-    def __init__(self, log, name, number, units, type, count=None, scale=1, offset=0):
+    def __init__(self, log, name, number, units, type, scale=1, offset=0, accumulate=False):
         super().__init__(log, name)
-        self.number = number
-        self.units = units if units else ''
-        self.is_dynamic = False
-        self.is_component = False
-        self.type = type
-        self.count = count
-        self.scale = parse_scale_offset(log, scale, 1, name)
-        self.offset = parse_scale_offset(log, offset, 0, name)
-        self.__is_scaled = (self.scale != 1 or self.offset != 0)
+        self.number = number  # public for indexing in message
+        self.__units = units if units else ''
+        self.is_dynamic = False  # public because need to delay evaluation (order fields)
+        self._is_component = False
+        self.type = type  # public for Field (in Definition) base type
+        self.__scale = parse_scale_offset(log, scale, 1, name)
+        self.__offset = parse_scale_offset(log, offset, 0, name)
+        self.__is_accumulate = accumulate
+        self.__is_scaled = (self.__scale != 1 or self.__offset != 0)
+        self.__sum = None
 
     def parse(self, data, count, endian, result, message):
         values = self.type.parse(data, count, endian)
-        if self.__is_scaled and values is not None:
-            values = tuple(value / self.scale - self.offset for value in values)
-        yield self.name, (values, self.units)
+        if values is not None:
+            if self.__is_scaled:
+                values = tuple(value / self.__scale - self.__offset for value in values)
+            if self.__is_accumulate:
+                values = self.__accumulate(values)
+        yield self.name, (values, self.__units)
+
+    def __accumulate(self, values):
+        if self.__sum:
+            # hope this is always the same size...
+            self.__sum = tuple(s + v for s, v in zip(self.__sum, values))
+        else:
+            self.__sum = values
+        return self.__sum
 
 
 class ComponentMessageField(SimpleMessageField):
@@ -43,18 +55,17 @@ class ComponentMessageField(SimpleMessageField):
         return ((f1.strip(), f2.strip()) for f1, f2 in zip(field1.split(','), field2.split(',')))
 
     def __init__(self, log, row, types):
-        super().__init__(log, row.field_name, row.field_no,
-                         row.units,
+        super().__init__(log, row.field_name, row.field_no, row.units,
                          types.profile_to_type(row.field_type, auto_create=True),
-                         row.example, row.scale, row.offset)
+                         row.scale, row.offset)
         self.__components = []
         if row.components:
             for (name, bits) in self._zip(row.components, row.bits):
-                self.is_component = True
+                self._is_component = True
                 self.__components.append((int(bits), name))
 
     def parse(self, data, count, endian, result, message):
-        if self.is_component:
+        if self._is_component:
             byteorder = ['little', 'big'][endian]
             bits = int.from_bytes(data, byteorder=byteorder)
             for nbits, name in self.__components:

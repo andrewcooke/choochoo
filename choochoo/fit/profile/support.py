@@ -1,3 +1,4 @@
+from collections.__init__ import namedtuple
 
 
 class NullableLog:
@@ -67,3 +68,25 @@ class ErrorList(list):
             msg = self.__error_msg % item
             self.__log.error(msg)
             raise IndexError(msg)
+
+
+class Row(namedtuple('BaseRow',
+                     'msg_name, field_no_, field_name, field_type, array, components, scale, offset, ' +
+                     'units, bits_, accumulate_, ref_name, ref_value, comment, products, example')):
+
+    __slots__ = ()
+
+    def __new__(cls, row):
+        return super().__new__(cls, *tuple(cell.value for cell in row[0:16]))
+
+    @property
+    def field_no(self):
+        return None if self.field_no_ is None else int(self.field_no_)
+
+    @property
+    def bits(self):
+        return None if self.bits_ is None else str(self.bits_)
+
+    @property
+    def accumulate(self):
+        return self.accumulate_ and int(self.accumulate_)

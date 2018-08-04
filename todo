@@ -9,7 +9,7 @@
   * XXX  Bits
   * XXX  Developer fields
   * Multiple scaling for components (eg compressed_speed)
-  * Accumulate flag
+  * XXX  Accumulate flag
 
 * Command line addition of reminders
 

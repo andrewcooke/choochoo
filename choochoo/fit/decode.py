@@ -157,9 +157,9 @@ class Tokenizer:
     def __field_description(self, defn, record):
         developer_index = record.attr.developer_data_index[0][0]
         number = record.attr.field_definition_number[0][0]
-        # ooof...
         base_type = self.__types.base_types[
-            defn.fields[2].field.type.profile_to_internal(record.attr.fit_base_type_id[0][0])]
+            self.__types.profile_to_type('fit_base_type').profile_to_internal(
+                record.attr.fit_base_type_id[0][0])]
         name = record.attr.field_name[0][0]
         units = record.attr.units[0][0]
         self.__dev_fields[developer_index][number] = SimpleMessageField(self.__log, name, None, units, base_type)
