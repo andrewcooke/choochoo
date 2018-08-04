@@ -421,24 +421,6 @@ class SimpleMessageField(Named):
         yield self.name, (values, self.units)
 
 
-class Row(namedtuple('BaseRow',
-                     'msg_name, field_no_, field_name, field_type, array, components, scale, offset, ' +
-                     'units, bits_, accumulate, ref_name, ref_value, comment, products, example')):
-
-    __slots__ = ()
-
-    def __new__(cls, row):
-        return super().__new__(cls, *tuple(cell.value for cell in row[0:16]))
-
-    @property
-    def field_no(self):
-        return None if self.field_no_ is None else int(self.field_no_)
-
-    @property
-    def bits(self):
-        return None if self.bits_ is None else str(self.bits_)
-
-
 class ComponentMessageField(SimpleMessageField):
 
     @staticmethod
@@ -580,6 +562,24 @@ class Missing(Message):
 
     def __init__(self, log, number):
         super().__init__(log, 'MESSAGE %d' % number, number)
+
+
+class Row(namedtuple('BaseRow',
+                     'msg_name, field_no_, field_name, field_type, array, components, scale, offset, ' +
+                     'units, bits_, accumulate, ref_name, ref_value, comment, products, example')):
+
+    __slots__ = ()
+
+    def __new__(cls, row):
+        return super().__new__(cls, *tuple(cell.value for cell in row[0:16]))
+
+    @property
+    def field_no(self):
+        return None if self.field_no_ is None else int(self.field_no_)
+
+    @property
+    def bits(self):
+        return None if self.bits_ is None else str(self.bits_)
 
 
 class Messages:
