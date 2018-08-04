@@ -47,18 +47,30 @@ class ComponentMessageField(SimpleMessageField):
                          row.units,
                          types.profile_to_type(row.field_type, auto_create=True),
                          row.example, row.scale, row.offset)
+        self.__components = []
         if row.components:
-            self.__components = []
             for (name, bits) in self._zip(row.components, row.bits):
                 self.is_component = True
                 self.__components.append((int(bits), name))
+
+    def parse(self, data, count, endian, result, message):
+        if self.is_component:
+            byteorder = ['little', 'big'][endian]
+            bits = int.from_bytes(data, byteorder=byteorder)
+            for nbits, name in self.__components:
+                field = message.profile_to_field(name)
+                nbytes = max((nbits+7) // 8, field.type.size)
+                data = (bits & ((1 << bits) - 1)).to_bytes(nbytes, byteorder=byteorder)
+                bits >>= nbits
+                yield from field.parse(data, 1, endian, result, message)
+            return
+        yield from super().parse(data, count, endian, result, message)
 
 
 class DynamicMessageField(ComponentMessageField):
 
     def __init__(self, log, row, rows, types):
         super().__init__(log, row, types)
-        self.__dynamic_tmp_data = []
         self.__dynamic_lookup = ErrorDict(log, 'No dynamic field for %r')
         self.references = set()
         try:

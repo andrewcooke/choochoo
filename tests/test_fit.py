@@ -3,7 +3,7 @@ from logging import getLogger, basicConfig, DEBUG
 from sys import stdout
 
 from choochoo.fit.decode import parse_all
-from choochoo.fit.profile import read_profile
+from choochoo.fit.profile.profile import read_profile
 from choochoo.fit.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from choochoo.fit.summary import summarize
 

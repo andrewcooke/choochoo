@@ -15,7 +15,6 @@ from ...log import make_log
 PROFILE = 'global-profile.pkl'
 
 
-
 def package_fit_profile(args):
     log = make_log(args)
     in_path = args.file(PATH, 0)

@@ -135,7 +135,7 @@ class Date(AliasInteger):
 
     @staticmethod
     def convert(time, tzinfo=dt.timezone.utc):
-        if time >= 0x10000000 :
+        if time is not None and time >= 0x10000000 :
             return dt.datetime(1989, 12, 31, tzinfo=tzinfo) + dt.timedelta(seconds=time)
         else:
             return time

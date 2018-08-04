@@ -3,7 +3,7 @@
 class NullableLog:
 
     def __init__(self, log):
-        self.set_log(log)
+        self.__log = log
 
     def set_log(self, log):
         self.__log = log

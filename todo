@@ -6,8 +6,10 @@
 * XXX  Database migration
 
 * Read FITS files
-  * Bits
+  * XXX  Bits
   * XXX  Developer fields
+  * Multiple scaling for components (eg compressed_speed)
+  * Accumulate flag
 
 * Command line addition of reminders
 
