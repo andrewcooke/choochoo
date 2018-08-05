@@ -8,7 +8,8 @@
 * Read FITS files
   * XXX  Bits
   * XXX  Developer fields
-  * Multiple scaling for components (eg compressed_speed)
+  * Multiple accumulate, scaling and offset for components
+    (eg compressed_speed)
   * XXX  Accumulate flag
 
 * Command line addition of reminders

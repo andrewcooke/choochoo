@@ -37,9 +37,9 @@ class Named:
 
 class ErrorDict(dict):
 
-    def __init__(self, log, error_msg):
+    def __init__(self, log, msg):
         self.__log = log
-        self.__error_msg = error_msg
+        self.__msg = msg
         super().__init__()
 
     def add_named(self, item):
@@ -49,24 +49,24 @@ class ErrorDict(dict):
         try:
             return super().__getitem__(item)
         except KeyError:
-            msg = self.__error_msg % (item,)
-            self.__log.error(msg)
+            msg = self.__msg % (item,)
+            self.__log.warn(msg)
             raise KeyError(msg)
 
 
 class ErrorList(list):
 
-    def __init__(self, log, error_msg):
+    def __init__(self, log, msg):
         self.__log = log
-        self.__error_msg = error_msg
+        self.__msg = msg
         super().__init__()
 
     def __getitem__(self, item):
         try:
             return super().__getitem__(item)
         except IndexError:
-            msg = self.__error_msg % item
-            self.__log.error(msg)
+            msg = self.__msg % item
+            self.__log.warn(msg)
             raise IndexError(msg)
 
 
@@ -89,4 +89,4 @@ class Row(namedtuple('BaseRow',
 
     @property
     def accumulate(self):
-        return self.accumulate_ and int(self.accumulate_)
+        return None if self.accumulate_ is None else str(self.accumulate_)

@@ -203,7 +203,6 @@ class Tokenizer:
             field = message.number_to_field(number)
         except KeyError:
             field = None
-            self.__log.warn('No field %d for message %s' % (number, message.name))
         base_type = self.__types.base_types[base & 0xf]
         return Field(self.__log, size, field, base_type)
 

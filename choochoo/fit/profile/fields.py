@@ -1,18 +1,9 @@
+from itertools import repeat
 
 from .support import Named, ErrorDict
 
 
 TIMESTAMP_GLOBAL_TYPE = 253
-
-
-def parse_scale_offset(log, cell, default, name):
-    if cell is None or cell == '':
-        return default
-    try:
-        return int(cell)
-    except:
-        log.warn('Could not parse %r for %s (scale/offset)' % (cell, name))
-        return default
 
 
 class SimpleMessageField(Named):
@@ -24,11 +15,19 @@ class SimpleMessageField(Named):
         self.is_dynamic = False  # public because need to delay evaluation (order fields)
         self._is_component = False
         self.type = type  # public for Field (in Definition) base type
-        self.__scale = parse_scale_offset(log, scale, 1, name)
-        self.__offset = parse_scale_offset(log, offset, 0, name)
-        self.__is_accumulate = accumulate
+        self.__scale = self.__parse_int(scale, 1, name)
+        self.__offset = self.__parse_int(offset, 0, name)
         self.__is_scaled = (self.__scale != 1 or self.__offset != 0)
-        self.__sum = None
+        self.__is_accumulate = self.__parse_int(accumulate, 0, name)
+
+    def __parse_int(self, cell, default, name):
+        if cell is None or cell == '':
+            return default
+        try:
+            return int(cell)
+        except:
+            self._log.warn('Could not parse %r for %s (scale/offset)' % (cell, name))
+            return default
 
     def parse(self, data, count, endian, references, accumulate, message):
         values = self.type.parse(data, count, endian)
@@ -42,17 +41,31 @@ class SimpleMessageField(Named):
 
 class ComponentMessageField(SimpleMessageField):
 
-    @staticmethod
-    def _zip(field1, field2):
-        return ((f1.strip(), f2.strip()) for f1, f2 in zip(field1.split(','), field2.split(',')))
+    def _zip(self, *fields):
+        return zip(*(self.__split(field, extend=n > 1) for n, field in enumerate(fields)))
+
+    def __split(self, field, extend=False):
+        if field:
+            for value in str(field).split(','):
+                yield value.strip()
+        else:
+            yield None
+        if extend:
+            self._log.warn('Extending field')
+            yield from repeat(None)
 
     def __init__(self, log, row, types):
         super().__init__(log, row.field_name, row.field_no, row.units,
                          types.profile_to_type(row.field_type, auto_create=True),
-                         row.scale, row.offset)
+                         None if row.components else row.scale,
+                         None if row.components else row.offset,
+                         None if row.components else row.accumulate)
         self.__components = []
         if row.components:
-            for (name, bits) in self._zip(row.components, row.bits):
+            for (name, bits, accumulate, scale, offset) in \
+                    self._zip(row.components, row.bits, row.accumulate, row.scale, row.offset):
+                if accumulate or scale or offset:
+                    print(accumulate)
                 self._is_component = True
                 self.__components.append((int(bits), name))
 
@@ -83,7 +96,7 @@ class DynamicMessageField(ComponentMessageField):
                 for name, value in self._zip(row.ref_name, row.ref_value):
                     self.is_dynamic = True
                     self.references.add(name)
-                    self.__dynamic_lookup[(name, value)] = DynamicMessageField(self._log, row, rows, types)
+                    self.__dynamic_lookup[(name, value)] = ComponentMessageField(self._log, row, types)
                 peek = rows.peek()
         except StopIteration:
             return
@@ -97,7 +110,6 @@ class DynamicMessageField(ComponentMessageField):
             for name in self.references:
                 if name in references:
                     value = references[name][0][0]  # drop units and take first value
-                    self._log.debug('Found reference %r=%r' % (name, value))
                     try:
                         yield from self.dynamic[(name, value)].parse(
                             data, count, endian, references, accumulate, message)
