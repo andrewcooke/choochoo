@@ -1,12 +1,11 @@
 
 import datetime as dt
 from abc import abstractmethod
+from collections import namedtuple
 from re import compile
 from struct import unpack
 
-from more_itertools import peekable
-
-from .support import Named, ErrorDict, ErrorList
+from .support import Named, ErrorDict, ErrorList, Rows
 
 
 LITTLE, BIG = 0, 1
@@ -172,18 +171,17 @@ class AutoFloat(StructSupport):
 class Mapping(AbstractType):
 
     def __init__(self, log, row, rows, types):
-        name = row[0]
-        base_type_name = row[1]
+        name = row.type_name
+        base_type_name = row.base_type
         base_type = types.profile_to_type(base_type_name, auto_create=True)
         super().__init__(log, name, base_type.size, base_type=base_type)
         self._profile_to_internal = ErrorDict(log, 'No internal value for profile %r')
         self._internal_to_profile = ErrorDict(log, 'No profile value for internal %r')
-        for row in rows:
-            if row[0] or row[2] is None or row[3] is None:
-                rows.prepend(row)
-                break
-            self.__add_mapping(row)
-        # log.debug('Parsed %d values' % len(self._profile_to_internal))
+        while rows:
+            peek = rows.peek()
+            if peek.type_name or peek.value_name is None or peek.value is None:
+                return
+            self.__add_mapping(next(rows))
 
     def profile_to_internal(self, cell_contents):
         return self._profile_to_internal[cell_contents]
@@ -204,8 +202,8 @@ class Mapping(AbstractType):
         return values
 
     def __add_mapping(self, row):
-        profile = row[2]
-        internal = self.base_type.profile_to_internal(row[3])
+        profile = row.value_name
+        internal = self.base_type.profile_to_internal(row.value)
         self._profile_to_internal[profile] = internal
         self._internal_to_profile[internal] = profile
 
@@ -224,10 +222,10 @@ class Types:
         # rather, they are the 'base (integer) types' described in the docs
         self.base_types = ErrorList(log, 'No base type for number %r')
         self.__add_known_types(to_datetime)
-        rows = peekable([cell.value for cell in row] for row in sheet.iter_rows())
+        rows = Rows(sheet, wrapper=Row)
         for row in rows:
-            if row[0] and row[0][0].isupper():
-                self.__log.debug('Skipping %s' % row)
+            if row[0] and row.type_name[0].isupper():
+                self.__log.debug('Skipping %s' % (row,))
             elif row[0]:
                 # self.__log.info('Parsing type %s' % row[0])
                 self.__add_type(Mapping(self.__log, row, rows, self))
@@ -270,3 +268,13 @@ class Types:
                         self.__add_type(cls(self.__log, name))
                         return self.profile_to_type(name)
             raise
+
+
+class Row(namedtuple('BaseRow',
+                     'type_name, base_type, value_name, value, comment')):
+
+    __slots__ = ()
+
+    def __new__(cls, row):
+        return super().__new__(cls, *tuple(row)[0:5])
+

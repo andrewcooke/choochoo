@@ -1,6 +1,7 @@
-from more_itertools import peekable
 
-from .support import Row
+from collections import namedtuple
+
+from .support import Rows
 from .fields import DynamicMessageField, SimpleMessageField
 from .support import Named, ErrorDict
 from ..records import LazyRecord
@@ -77,12 +78,11 @@ class NumberedMessage(Message):
 class RowMessage(NumberedMessage):
 
     def __init__(self, log, row, rows, types):
-        super().__init__(log, row[0], types)
-        for row in rows:
-            if not row[2]:
-                rows.prepend(row)
+        super().__init__(log, row.msg_name, types)
+        while rows:
+            if not rows.peek().field_name:
                 break
-            self._add_field(DynamicMessageField(self._log, row, rows, types))
+            self._add_field(DynamicMessageField(self._log, next(rows), rows, types))
 
 
 class Header(Message):
@@ -111,7 +111,7 @@ class Messages:
         self.__log = log
         self.__profile_to_message = ErrorDict(log, 'No message for profile %r')
         self.__number_to_message = ErrorDict(log, 'No message for number %r')
-        rows = peekable(Row(row) for row in sheet.iter_rows())
+        rows = Rows(sheet, wrapper=Row)
         for row in rows:
             if row.msg_name and row.msg_name[0].isupper():
                 self.__log.debug('Skipping %s' % (row,))
@@ -137,3 +137,27 @@ class Messages:
             message = Missing(self.__log, number)
             self.__number_to_message[number] = message
             return message
+
+
+class Row(namedtuple('BaseRow',
+                     'msg_name, field_no_, field_name, field_type, array, components, scale, offset, ' +
+                     'units, bits_, accumulate_, ref_name, ref_value, comment, products, example')):
+
+    __slots__ = ()
+
+    def __new__(cls, row):
+        return super().__new__(cls, *tuple(row)[0:16])
+
+    @property
+    def field_no(self):
+        return None if self.field_no_ is None else int(self.field_no_)
+
+    @property
+    def bits(self):
+        return None if self.bits_ is None else str(self.bits_)
+
+    @property
+    def accumulate(self):
+        return None if self.accumulate_ is None else str(self.accumulate_)
+
+

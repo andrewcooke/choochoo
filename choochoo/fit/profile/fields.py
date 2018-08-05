@@ -89,17 +89,14 @@ class DynamicMessageField(ComponentMessageField):
         super().__init__(log, row, types)
         self.__dynamic_lookup = ErrorDict(log, 'No dynamic field for %r')
         self.references = set()
-        try:
+        peek = rows.peek()
+        while peek and peek.field_name and peek.field_no is None:
+            row = next(rows)
+            for name, value in self._zip(row.ref_name, row.ref_value):
+                self.is_dynamic = True
+                self.references.add(name)
+                self.__dynamic_lookup[(name, value)] = ComponentMessageField(self._log, row, types)
             peek = rows.peek()
-            while peek.field_name and peek.field_no is None:
-                row = next(rows)
-                for name, value in self._zip(row.ref_name, row.ref_value):
-                    self.is_dynamic = True
-                    self.references.add(name)
-                    self.__dynamic_lookup[(name, value)] = ComponentMessageField(self._log, row, types)
-                peek = rows.peek()
-        except StopIteration:
-            return
 
     @property
     def dynamic(self):

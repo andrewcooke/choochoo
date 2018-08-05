@@ -70,23 +70,31 @@ class ErrorList(list):
             raise IndexError(msg)
 
 
-class Row(namedtuple('BaseRow',
-                     'msg_name, field_no_, field_name, field_type, array, components, scale, offset, ' +
-                     'units, bits_, accumulate_, ref_name, ref_value, comment, products, example')):
+class Rows:
 
-    __slots__ = ()
+    def __init__(self, sheet, wrapper=tuple):
+        self.__rows = (wrapper(cell.value for cell in row) for row in sheet.iter_rows())
+        self.__next = None
 
-    def __new__(cls, row):
-        return super().__new__(cls, *tuple(cell.value for cell in row[0:16]))
+    def __next__(self):
+        if self.__next:
+            value, self.__next = self.__next, None
+        else:
+            value = next(self.__rows)
+        return value
 
-    @property
-    def field_no(self):
-        return None if self.field_no_ is None else int(self.field_no_)
+    def __iter__(self):
+        return self
 
-    @property
-    def bits(self):
-        return None if self.bits_ is None else str(self.bits_)
+    def __bool__(self):
+        return bool(self.peek())
 
-    @property
-    def accumulate(self):
-        return None if self.accumulate_ is None else str(self.accumulate_)
+    def peek(self):
+        if not self.__next:
+            try:
+                self.__next = next(self.__rows)
+                return self.__next
+            except StopIteration:
+                pass
+        return self.__next
+
