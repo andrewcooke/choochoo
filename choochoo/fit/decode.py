@@ -259,6 +259,7 @@ class Definition:
         self.timestamp_field = None
         self.size = 0
         self.fields = self.__process_fields(fields, dev_fields)
+        self.__sums = {}
 
     def __process_fields(self, fields, dev_fields):
         all_fields = tuple(fields) + tuple(dev_fields)
@@ -273,3 +274,17 @@ class Definition:
                 self.references.update(field.field.references)
         self.size = offset
         return tuple(sorted(all_fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
+
+    def accumulate(self, field, values):
+        n = len(values)
+        if field in self.__sums:
+            sum = self.__sums[field]
+            while len(sum) < n:
+                self.__sums += (0,)
+            while len(values) < len(sum):
+                values += (0,)
+            sum = tuple(s + v for s, v in zip(sum, values))
+            self.__sums[field] = sum
+        else:
+            self.__sums[field] = values
+        return self.__sums[field][0:n]

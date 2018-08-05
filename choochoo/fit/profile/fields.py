@@ -30,22 +30,14 @@ class SimpleMessageField(Named):
         self.__is_scaled = (self.__scale != 1 or self.__offset != 0)
         self.__sum = None
 
-    def parse(self, data, count, endian, result, message):
+    def parse(self, data, count, endian, references, accumulate, message):
         values = self.type.parse(data, count, endian)
         if values is not None:
             if self.__is_scaled:
                 values = tuple(value / self.__scale - self.__offset for value in values)
             if self.__is_accumulate:
-                values = self.__accumulate(values)
+                values = accumulate(self, values)
         yield self.name, (values, self.__units)
-
-    def __accumulate(self, values):
-        if self.__sum:
-            # hope this is always the same size...
-            self.__sum = tuple(s + v for s, v in zip(self.__sum, values))
-        else:
-            self.__sum = values
-        return self.__sum
 
 
 class ComponentMessageField(SimpleMessageField):
@@ -64,7 +56,7 @@ class ComponentMessageField(SimpleMessageField):
                 self._is_component = True
                 self.__components.append((int(bits), name))
 
-    def parse(self, data, count, endian, result, message):
+    def parse(self, data, count, endian, references, accumulate, message):
         if self._is_component:
             byteorder = ['little', 'big'][endian]
             bits = int.from_bytes(data, byteorder=byteorder)
@@ -73,9 +65,9 @@ class ComponentMessageField(SimpleMessageField):
                 nbytes = max((nbits+7) // 8, field.type.size)
                 data = (bits & ((1 << bits) - 1)).to_bytes(nbytes, byteorder=byteorder)
                 bits >>= nbits
-                yield from field.parse(data, 1, endian, result, message)
+                yield from field.parse(data, 1, endian, references, accumulate, message)
             return
-        yield from super().parse(data, count, endian, result, message)
+        yield from super().parse(data, count, endian, references, accumulate, message)
 
 
 class DynamicMessageField(ComponentMessageField):
@@ -100,17 +92,18 @@ class DynamicMessageField(ComponentMessageField):
     def dynamic(self):
         return self.__dynamic_lookup
 
-    def parse(self, data, count, endian, result, message):
+    def parse(self, data, count, endian, references, accumulate, message):
         if self.is_dynamic:
             for name in self.references:
-                if name in result:
-                    value = result[name][0][0]  # drop units and take first value
+                if name in references:
+                    value = references[name][0][0]  # drop units and take first value
                     self._log.debug('Found reference %r=%r' % (name, value))
                     try:
-                        yield from self.dynamic[(name, value)].parse(data, count, endian, result, message)
+                        yield from self.dynamic[(name, value)].parse(
+                            data, count, endian, references, accumulate, message)
                         return
                     except KeyError:
                         pass
             # self._log.warn('No match for dynamic field %s (message %s)' % (self.name, message.name))
             # and if nothing found, fall though to default behaviour
-        yield from super().parse(data, count, endian, result, message)
+        yield from super().parse(data, count, endian, references, accumulate, message)

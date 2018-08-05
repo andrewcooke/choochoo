@@ -42,11 +42,12 @@ class Message(Named):
     def __parse(self, data, defn):
         # this is the generator that lives inside a record and is evaluated on demand
         references = {} if defn.references else None
+        # accumulator = defn.accumulator
         for field in defn.fields:
             bytes = data[field.start:field.finish]
             if field.field:
                 for name, value in self._parse_field(
-                        field.field, bytes, field.count, defn.endian, references, self):
+                        field.field, bytes, field.count, defn.endian, references, defn.accumulate, self):
                     if name in defn.references:
                         references[name] = value
                     yield name, value
@@ -57,9 +58,9 @@ class Message(Named):
                     references[name] = value
                 yield name, value
 
-    def _parse_field(self, field, bytes, count, endian, references, message):
+    def _parse_field(self, field, bytes, count, endian, references, accumulate, message):
         # allow interception for optional field in header
-        yield from field.parse(bytes, count, endian, references, message)
+        yield from field.parse(bytes, count, endian, references, accumulate, message)
 
 
 class NumberedMessage(Message):
@@ -91,11 +92,11 @@ class Header(Message):
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(SimpleMessageField(log, name, n, None, types.profile_to_type(base_type)))
 
-    def _parse_field(self, field, data, count, endian, references, message):
+    def _parse_field(self, field, data, count, endian, references, accumulate, message):
         if field.name == 'checksum' and references['header_size'] == 12:
             yield None, None
         else:
-            yield from super()._parse_field(field, data, count, endian, references, message)
+            yield from super()._parse_field(field, data, count, endian, references, accumulate, message)
 
 
 class Missing(Message):
