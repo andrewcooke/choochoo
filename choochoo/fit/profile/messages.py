@@ -1,11 +1,8 @@
 
-from collections import namedtuple
-
-from .support import Rows
-from .fields import DynamicMessageField, SimpleMessageField
+from .fields import DynamicMessageField, SimpleMessageField, Row
 from .support import Named, ErrorDict
+from .support import Rows
 from ..records import LazyRecord
-
 
 HEADER_GLOBAL_TYPE = -1
 
@@ -137,27 +134,5 @@ class Messages:
             message = Missing(self.__log, number)
             self.__number_to_message[number] = message
             return message
-
-
-class Row(namedtuple('BaseRow',
-                     'msg_name, field_no_, field_name, field_type, array, components, scale, offset, ' +
-                     'units, bits_, accumulate_, ref_name, ref_value, comment, products, example')):
-
-    __slots__ = ()
-
-    def __new__(cls, row):
-        return super().__new__(cls, *tuple(row)[0:16])
-
-    @property
-    def field_no(self):
-        return None if self.field_no_ is None else int(self.field_no_)
-
-    @property
-    def bits(self):
-        return None if self.bits_ is None else str(self.bits_)
-
-    @property
-    def accumulate(self):
-        return None if self.accumulate_ is None else str(self.accumulate_)
 
 
