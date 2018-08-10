@@ -5,7 +5,7 @@ from collections import namedtuple
 from re import compile
 from struct import unpack
 
-from .support import Named, ErrorDict, ErrorList, Rows
+from .support import Named, WarnDict, WarnList, Rows
 
 
 LITTLE, BIG = 0, 1
@@ -175,8 +175,8 @@ class Mapping(AbstractType):
         base_type_name = row.base_type
         base_type = types.profile_to_type(base_type_name, auto_create=True)
         super().__init__(log, name, base_type.size, base_type=base_type)
-        self._profile_to_internal = ErrorDict(log, 'No internal value for profile %r')
-        self._internal_to_profile = ErrorDict(log, 'No profile value for internal %r')
+        self._profile_to_internal = WarnDict(log, 'No internal value for profile %r')
+        self._internal_to_profile = WarnDict(log, 'No profile value for internal %r')
         while rows:
             peek = rows.peek()
             if peek.type_name or peek.value_name is None or peek.value is None:
@@ -217,10 +217,10 @@ class Types:
 
     def __init__(self, log, sheet, to_datetime=True):
         self.__log = log
-        self.__profile_to_type = ErrorDict(log, 'No type for profile %r')
+        self.__profile_to_type = WarnDict(log, 'No type for profile %r')
         # these are not 'base types' in the same sense as types having base types.
         # rather, they are the 'base (integer) types' described in the docs
-        self.base_types = ErrorList(log, 'No base type for number %r')
+        self.base_types = WarnList(log, 'No base type for number %r')
         self.__add_known_types(to_datetime)
         rows = Rows(sheet, wrapper=Row)
         for row in rows:

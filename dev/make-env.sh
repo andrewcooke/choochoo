@@ -1,7 +1,7 @@
 #!/bin/bash
 
 rm -fr env
-virtualenv-3.5 env
+virtualenv-3.6 env
 source env/bin/activate
 pip install --upgrade pip
 pip install urwid

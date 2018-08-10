@@ -1,8 +1,9 @@
 
-from .fields import DynamicMessageField, SimpleMessageField, Row
-from .support import Named, ErrorDict
+from .fields import Row, MessageField, TypedField
+from .support import Named, WarnDict
 from .support import Rows
 from ..records import LazyRecord
+
 
 HEADER_GLOBAL_TYPE = -1
 
@@ -21,8 +22,8 @@ class Message(Named):
     def __init__(self, log, name, number=None):
         super().__init__(log, name)
         self.number = number
-        self._profile_to_field = ErrorDict(log, 'No field for profile %r')
-        self._number_to_field = ErrorDict(log, 'No field for number %r')
+        self._profile_to_field = WarnDict(log, 'No field for profile %r')
+        self._number_to_field = WarnDict(log, 'No field for number %r')
 
     def _add_field(self, field):
         self._profile_to_field.add_named(field)
@@ -61,25 +62,19 @@ class Message(Named):
         yield from field.parse(bytes, count, endian, references, accumulate, message)
 
 
-class NumberedMessage(Message):
+class RowMessage(Message):
 
-     def __init__(self, log, name, types):
+    def __init__(self, log, row, rows, types):
         try:
-            number = types.profile_to_type('mesg_num').profile_to_internal(name)
+            number = types.profile_to_type('mesg_num').profile_to_internal(row.msg_name)
         except KeyError:
             number = None
             log.warn('No mesg_num for %r' % name)
-        super().__init__(log, name, number)
-
-
-class RowMessage(NumberedMessage):
-
-    def __init__(self, log, row, rows, types):
-        super().__init__(log, row.msg_name, types)
+        super().__init__(log, row.msg_name, number)
         while rows:
             if not rows.peek().field_name:
                 break
-            self._add_field(DynamicMessageField(self._log, next(rows), rows, types))
+            self._add_field(MessageField(self._log, next(rows), rows, types))
 
 
 class Header(Message):
@@ -87,7 +82,7 @@ class Header(Message):
     def __init__(self, log, types):
         super().__init__(log, 'HEADER', number=HEADER_GLOBAL_TYPE)
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
-            self._add_field(SimpleMessageField(log, name, n, None, types.profile_to_type(base_type)))
+            self._add_field(TypedField(log, name, n, None, None, None, None, base_type, types))
 
     def _parse_field(self, field, data, count, endian, references, accumulate, message):
         if field.name == 'checksum' and references['header_size'] == 12:
@@ -106,8 +101,8 @@ class Messages:
 
     def __init__(self, log, sheet, types):
         self.__log = log
-        self.__profile_to_message = ErrorDict(log, 'No message for profile %r')
-        self.__number_to_message = ErrorDict(log, 'No message for number %r')
+        self.__profile_to_message = WarnDict(log, 'No message for profile %r')
+        self.__number_to_message = WarnDict(log, 'No message for number %r')
         rows = Rows(sheet, wrapper=Row)
         for row in rows:
             if row.msg_name and row.msg_name[0].isupper():

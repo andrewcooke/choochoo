@@ -2,7 +2,7 @@
 from collections import namedtuple, Counter, defaultdict
 from struct import unpack
 
-from .profile.fields import SimpleMessageField, TIMESTAMP_GLOBAL_TYPE
+from .profile.fields import TIMESTAMP_GLOBAL_TYPE, DynamicField, RowField, TypedField
 from .profile.messages import HEADER_FIELDS, HEADER_GLOBAL_TYPE
 from .profile.profile import read_profile, load_profile
 from .profile.types import LITTLE, Date
@@ -162,7 +162,8 @@ class Tokenizer:
                 record.attr.fit_base_type_id[0][0])]
         name = record.attr.field_name[0][0]
         units = record.attr.units[0][0]
-        self.__dev_fields[developer_index][number] = SimpleMessageField(self.__log, name, None, units, base_type)
+        self.__dev_fields[developer_index][number] = \
+            TypedField(self.__log, name, number, units, None, None, None, base_type, self.__types)
 
     def __data_msg(self, defn, data):
         if defn.timestamp_field:
@@ -269,10 +270,10 @@ class Definition:
             field.finish = offset
             if field.field and field.field.number == TIMESTAMP_GLOBAL_TYPE:
                 self.timestamp_field = field
-            if field.field and field.field.is_dynamic:
+            if field.field and isinstance(field.field, DynamicField):
                 self.references.update(field.field.references)
         self.size = offset
-        return tuple(sorted(all_fields, key=lambda field: 1 if field.field and field.field.is_dynamic else 0))
+        return tuple(sorted(all_fields, key=lambda field: 1 if field.field and isinstance(field.field, DynamicField) else 0))
 
     def accumulate(self, field, values):
         n = len(values)

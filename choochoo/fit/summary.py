@@ -12,7 +12,7 @@ from ..utils import unique
 
 def dump_fit(args, profile_path=None):
     # todo - remove!
-    profile_path='/home/andrew/Downloads/FitSDKRelease_20.67.00/Profile.xlsx'
+    profile_path = '/home/andrew/project/ch2/Profile.xlsx'
     log = make_log(args)
     fit_path = args.file(PATH, 0, rooted=False)
     all_messages = args[ALL_MESSAGES]
