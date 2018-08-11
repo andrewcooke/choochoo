@@ -1,6 +1,6 @@
 
-from .args import COMMAND, DIARY, INJURIES, parser, NamespaceWithVariables, SCHEDULES, PLAN, PACKAGE_FIT_PROFILE, \
-    DUMP_FIT, PROGNAME, HELP, DEV
+from .args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, DUMP_FIT, INJURIES, \
+    PLAN, PACKAGE_FIT_PROFILE, SCHEDULES
 from .diary import diary
 from .fit.profile.profile import package_fit_profile
 from .fit.summary import dump_fit
@@ -26,7 +26,11 @@ def main():
     log = make_log(args)
     try:
         if COMMAND in args:
-            COMMANDS[args[COMMAND]](args, log)
+            if args[COMMAND] == HELP:
+                # avoid dependency loop
+                help(args, log, COMMANDS)
+            else:
+                COMMANDS[args[COMMAND]](args, log)
         else:
             raise Exception('No command given')
     except Exception as e:

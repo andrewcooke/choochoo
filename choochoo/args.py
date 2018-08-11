@@ -6,7 +6,6 @@ from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
-
 PROGNAME = 'ch2'
 COMMAND = 'command'
 TOPIC = 'topic'
@@ -27,7 +26,6 @@ LOGS = 'logs'
 LIST = 'list'
 PATH = 'path'
 ROOT = 'root'
-
 
 def mm(name): return '--' + name
 
@@ -91,7 +89,7 @@ def parser():
 
     parser.add_argument(mm(DATABASE), action='store', default='${root}/database.sqla', metavar='FILE',
                         help='the database file')
-    parser.add_argument(mm(DEV), action='store_true', help='Enable development mode')
+    parser.add_argument(mm(DEV), action='store_true', help='enable development mode')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
                         help='the directory for logs')
     parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
@@ -108,12 +106,12 @@ def parser():
                                       'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
     dump.add_argument(PATH, action='store', metavar='FIT', nargs=1,
                       help='the path to the fit file')
-    dump.add_argument(mm(ALL_FIELDS), action='store_true', help='Display undocumented fields?')
-    dump.add_argument(mm(ALL_MESSAGES), action='store_true', help='Display undocumented messages?')
+    dump.add_argument(mm(ALL_FIELDS), action='store_true', help='display undocumented fields?')
+    dump.add_argument(mm(ALL_MESSAGES), action='store_true', help='display undocumented messages?')
     dump.set_defaults(command=DUMP_FIT)
 
     help = subparsers.add_parser(HELP,
-                                    help='display help - ' + 'see `%s %s -h` for more details' % (PROGNAME, HELP))
+                                 help='display help - ' + 'see `%s %s -h` for more details' % (PROGNAME, HELP))
     help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
                       help='the subject for help')
     help.set_defaults(command=HELP)
@@ -143,3 +141,4 @@ def parser():
     schedules.set_defaults(command=SCHEDULES)
 
     return parser
+
