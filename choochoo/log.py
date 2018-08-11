@@ -19,15 +19,15 @@ def make_log(args):
     slog.setLevel(INFO)
     slog.addHandler(file_handler)
 
-    stderr_formatter = Formatter('%(levelname)-8s: %(message)s')
-    stderr_handler = StreamHandler()
-    stderr_handler.setLevel(INFO)
-    stderr_handler.setFormatter(stderr_formatter)
+    # stderr_formatter = Formatter('%(levelname)-8s: %(message)s')
+    # stderr_handler = StreamHandler()
+    # stderr_handler.setLevel(INFO)
+    # stderr_handler.setFormatter(stderr_formatter)
 
     log = getLogger(name)
     log.setLevel(DEBUG)
     log.addHandler(file_handler)
-    log.addHandler(stderr_handler)
+    # log.addHandler(stderr_handler)
 
     return log
 

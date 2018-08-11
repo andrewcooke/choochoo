@@ -104,7 +104,7 @@ def parser():
     dump = subparsers.add_parser(DUMP_FIT,
                                  help='display contents of fit file - ' +
                                       'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
-    dump.add_argument(PATH, action='store', metavar='FIT', nargs=1,
+    dump.add_argument(PATH, action='store', metavar='FIT-FILE', nargs=1,
                       help='the path to the fit file')
     dump.add_argument(mm(ALL_FIELDS), action='store_true', help='display undocumented fields?')
     dump.add_argument(mm(ALL_MESSAGES), action='store_true', help='display undocumented messages?')

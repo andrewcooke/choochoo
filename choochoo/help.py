@@ -1,7 +1,98 @@
+from abc import abstractmethod
+from shutil import get_terminal_size
+from sys import stdout
 
-from .args import TOPIC
+from .args import TOPIC, HELP, PROGNAME
+
+
+class Fmt:
+
+    def print_all(self, text):
+        self.print()
+        for para in self.paras(text):
+            self.print(para)
+        self.print()
+
+    def paras(self, text):
+        para = ''
+        for line in text.split('\n'):
+            if line.strip().startswith('*'):
+                if para:
+                    yield para
+                para = line
+            elif para and not line:
+                yield para
+                yield ''
+                para = ''
+            elif para:
+                para += ' ' + line
+            else:
+                para = line
+        if para:
+            yield para
+
+    @abstractmethod
+    def print(self, para):
+        raise NotImplementedError()
+
+
+class LengthFmt(Fmt):
+
+    def __init__(self, stream=stdout, width=None, margin=1):
+        self.__out = stream
+        self.__width = get_terminal_size()[0] if width is None else width
+        self.__margin = margin
+
+    def print(self, text=None):
+        if text:
+            indent = ' ' * self.__margin
+            while text and text[0] == ' ':
+                indent += ' '
+                text = text[1:]
+            line = indent
+            while text:
+                try:
+                    word, text = text.split(' ', 1)
+                except ValueError:
+                    word, text = text, ''
+                if len(line) == len(indent):
+                    line += word
+                elif len(line) + 1 + len(word) <= self.__width:
+                    line += ' ' + word
+                else:
+                    print(line, file=self.__out)
+                    line = indent + word
+            print(line, file=self.__out)
+        else:
+            print(file=self.__out)
+
+
+def commands(COMMANDS):
+    return '''
+# Commands
+
+* ''' + '\n* '.join(name for name in sorted(COMMANDS.keys()))
 
 
 def help(args, logs, COMMANDS):
+    '''
+# help
+
+    ch2 help [TOPIC]
+
+Displays help for a particular topic.
+
+## Examples
+
+    ch2 help help
+
+Displays this information.
+
+    ch2 help
+
+Lists available topics.
+    '''
     if args[TOPIC] in COMMANDS:
-        print(COMMANDS[args[TOPIC]].__doc__)
+        LengthFmt().print_all(COMMANDS[args[TOPIC]].__doc__)
+    else:
+        LengthFmt().print_all(commands(COMMANDS))
