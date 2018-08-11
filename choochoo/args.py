@@ -17,6 +17,7 @@ INJURIES = 'injuries'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 PLAN = 'plan'
 SCHEDULES = 'schedules'
+V, VERSION = 'v', 'version'
 
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
@@ -28,7 +29,7 @@ PATH = 'path'
 ROOT = 'root'
 
 def mm(name): return '--' + name
-
+def m(name): return '-' + name
 
 VARIABLE = compile(r'(.*(?:[^$]|^))\${(\w+)\}(.*)')
 MEMORY  = ':memory:'
@@ -94,6 +95,8 @@ def parser():
                         help='the directory for logs')
     parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
                         help='the root directory for the default configuration')
+    parser.add_argument(m(V), mm(VERSION), action='version', version='0.0.1',
+                        help='display version and exit')
 
     subparsers = parser.add_subparsers()
 

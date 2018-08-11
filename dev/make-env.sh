@@ -8,8 +8,9 @@ pip install urwid
 pip install sqlalchemy
 pip install nose
 pip install robotframework
-
-pip install more-itertools
 pip install openpyxl
+
+pip install setuptools wheel twine
+#pip install more-itertools
 
 echo "source env/bin/activate"

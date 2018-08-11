@@ -1,48 +1,16 @@
 
-# Choo-Choo
+# choochoo (ch2)
 
-This is a training diary built around my own needs as an (injured)
-cyclist and programmer.
+A training diary written mainly for myself, but perhaps also attractive to
+others who want a way to track and plan their progress that is open, 
+lightweight and extensible.
 
-Copyright (c) 2018 Andrew Cooke andrew@acooke.org, GPL v2 licence (see
-LICENCE).
+The main interface is a curses-style daily diary, used to track daily activity
+as well as progress towards aims.  A flexible "schedule spec" is used to
+define periodic events (eg training routines) and (unfortunately) there's 
+dedicated fuctionality for tracking injuries.
 
-## Features
-
-* Simple, quick diary through TUI (Test User Interface) with
-  
-  * Basic daily stats (resting HR, sleep time, etc)
-
-  * Injury tracking
-
-* Efficient command line interface for basic actions
-
-* Sophisticated schedule engine:
-
-  * Flexible, compact specification of repeating events
-  
-  * Programmatic generation of training schedules
-  
-* All data exposed:
-
-  * Simple, normalised SQLite3 schema
-  
-  * SQLAlchemy object model
-
-## Getting Started
-
-This is very basic, still in development, could break at any point,
-and was written to scratch a personal itch rather than be a general
-tool.  So I don't promise much.  But if you want to try anyway you
-would need to do something like:
-
-* Clone this repo
-
-* Run the `dev/make-env.sh` script to set the Python environment
-
-* Enable the environment with `source env/bin/activate`
-
-* Start the program with `dev/ch2 diary`
-
-It's developed on Linux but with a little care should be
-cross-platform.
+In the future there will be support for plotting data as well as better
+integration of FIT format files (which already have a rudimentary parser).
+One omission that may be important to some people is tha (purposeful)
+lack of emphasis on power meters.
