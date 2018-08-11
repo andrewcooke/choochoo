@@ -40,7 +40,7 @@ class LengthFmt(Fmt):
 
     def __init__(self, stream=stdout, width=None, margin=1):
         self.__out = stream
-        self.__width = get_terminal_size()[0] if width is None else width
+        self.__width = (get_terminal_size()[0] if width is None else width) - margin
         self.__margin = margin
 
     def print(self, text=None):
