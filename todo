@@ -8,9 +8,14 @@
 * Read FITS files
   * XXX  Bits
   * XXX  Developer fields
-  * Multiple accumulate, scaling and offset for components
+  * XXX  Multiple accumulate, scaling and offset for components
     (eg compressed_speed)
   * XXX  Accumulate flag
+  * Developer fields w trimmings (see all possible fields in excel)
+  * Tests:
+    * Output to CSV
+    * Checksum errors
+    * Data directory?  Copyright?
 
 * Command line addition of reminders
 
@@ -19,7 +24,11 @@
 * Plotting
 
 * XXX  Command line definition of traning plans
-
   * XXX  Examples from British Cycling
 
 * Heart rate zone analysis
+
+* Docs, docs, docs
+  * How to organise on gihub
+  * Help command
+  

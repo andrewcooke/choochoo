@@ -2,7 +2,6 @@
 from .british import twelve_week_improver
 from .exponential import exponential_time, exponential_distance
 from ..args import LIST, PLAN
-from ..log import make_log
 from ..squeal.database import Database
 
 
@@ -17,8 +16,7 @@ def list():
         print(plan.__doc__)
 
 
-def load(args):
-    log = make_log(args)
+def load(args, log):
     db = Database(args, log)
     plan = args[PLAN][0]
     extra = args[PLAN][1:]
@@ -29,10 +27,10 @@ def load(args):
         raise Exception('Unknown plan "%s"' % plan)
 
 
-def main(args):
+def plan(args, log):
     if args[LIST]:
         list()
     elif not args[PLAN]:
         raise Exception('No plan name')
     else:
-        load(args)
+        load(args, log)

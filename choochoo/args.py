@@ -9,17 +9,20 @@ from typing import Mapping
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
+TOPIC = 'topic'
 
 DIARY = 'diary'
-INJURIES = 'injuries'
-SCHEDULES = 'schedules'
-PLAN = 'plan'
-PACKAGE_FIT_PROFILE = 'package-fit-profile'
 DUMP_FIT = 'dump-fit'
+HELP = 'help'
+INJURIES = 'injuries'
+PACKAGE_FIT_PROFILE = 'package-fit-profile'
+PLAN = 'plan'
+SCHEDULES = 'schedules'
 
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 DATABASE = 'database'
+DEV = 'dev'
 LOGS = 'logs'
 LIST = 'list'
 PATH = 'path'
@@ -84,14 +87,15 @@ class NamespaceWithVariables(Mapping):
 
 def parser():
 
-    parser = ArgumentParser()
+    parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
-                        help='The root directory for the default configuration')
-    parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
-                        help='The directory for logs')
     parser.add_argument(mm(DATABASE), action='store', default='${root}/database.sqla', metavar='FILE',
-                        help='The database file')
+                        help='the database file')
+    parser.add_argument(mm(DEV), action='store_true', help='Enable development mode')
+    parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
+                        help='the directory for logs')
+    parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
+                        help='the root directory for the default configuration')
 
     subparsers = parser.add_subparsers()
 
@@ -99,37 +103,43 @@ def parser():
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
     diary.set_defaults(command=DIARY)
 
+    dump = subparsers.add_parser(DUMP_FIT,
+                                 help='display contents of fit file - ' +
+                                      'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
+    dump.add_argument(PATH, action='store', metavar='FIT', nargs=1,
+                      help='the path to the fit file')
+    dump.add_argument(mm(ALL_FIELDS), action='store_true', help='Display undocumented fields?')
+    dump.add_argument(mm(ALL_MESSAGES), action='store_true', help='Display undocumented messages?')
+    dump.set_defaults(command=DUMP_FIT)
+
+    help = subparsers.add_parser(HELP,
+                                    help='display help - ' + 'see `%s %s -h` for more details' % (PROGNAME, HELP))
+    help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
+                      help='the subject for help')
+    help.set_defaults(command=HELP)
+
     injuries = subparsers.add_parser(INJURIES,
                                      help='manage injury entries - see `%s %s -h` for more details' %
                                           (PROGNAME, INJURIES))
     injuries.set_defaults(command=INJURIES)
 
-    schedules = subparsers.add_parser(SCHEDULES,
-                                      help='manage schedules - see `%s %s -h` for more details' % (PROGNAME, SCHEDULES))
-    schedules.set_defaults(command=SCHEDULES)
-
-    plan = subparsers.add_parser(PLAN,
-                                 help='training plans - see `%s %s -h` for more details' % (PROGNAME, PLAN))
-    plan.add_argument(mm(LIST), action='store_true',
-                      help='List available plans')
-    plan.add_argument(PLAN, action='store', metavar='PARAM', nargs='*',
-                      help='The plan name and possible parameters')
-    plan.set_defaults(command=PLAN)
-
     package = subparsers.add_parser(PACKAGE_FIT_PROFILE,
                                     help='parse and save the global fit profile (dev only) - ' +
                                          'see `%s %s -h` for more details' % (PROGNAME, PACKAGE_FIT_PROFILE))
     package.add_argument(PATH, action='store', metavar='PROFILE', nargs=1,
-                         help='The path to the profile (Profile.xlsx)')
+                         help='the path to the profile (Profile.xlsx)')
     package.set_defaults(command=PACKAGE_FIT_PROFILE)
 
-    dump = subparsers.add_parser(DUMP_FIT,
-                                 help='display contents of fit file - ' +
-                                      'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
-    dump.add_argument(PATH, action='store', metavar='FIT', nargs=1,
-                      help='The path to the fit file')
-    dump.add_argument(mm(ALL_FIELDS), action='store_true', help='Display undocumented fields?')
-    dump.add_argument(mm(ALL_MESSAGES), action='store_true', help='Display undocumented messages?')
-    dump.set_defaults(command=DUMP_FIT)
+    plan = subparsers.add_parser(PLAN,
+                                 help='training plans - see `%s %s -h` for more details' % (PROGNAME, PLAN))
+    plan.add_argument(mm(LIST), action='store_true',
+                      help='list available plans')
+    plan.add_argument(PLAN, action='store', metavar='PARAM', nargs='*',
+                      help='the plan name and possible parameters')
+    plan.set_defaults(command=PLAN)
+
+    schedules = subparsers.add_parser(SCHEDULES,
+                                      help='manage schedules - see `%s %s -h` for more details' % (PROGNAME, SCHEDULES))
+    schedules.set_defaults(command=SCHEDULES)
 
     return parser

@@ -1,13 +1,10 @@
 
 import datetime as dt
-import pdb
 
 from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
-from .lib.repeating import DateOrdinals
 from .lib.widgets import App
-from .log import make_log
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.diary import Diary
@@ -165,7 +162,6 @@ class DiaryApp(App):
         self.root.discover()
 
 
-def main(args):
-    log = make_log(args)
+def diary(args, log):
     session = Database(args, log).session()
     DiaryApp(log, session, MessageBar()).run()

@@ -1,19 +1,17 @@
 
 from collections import Counter
 
-from .profile.types import Date
 from .decode import parse_all
+from .profile.types import Date
 from .records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, to_hex, \
     no_filter
 from ..args import PATH, ALL_FIELDS, ALL_MESSAGES
-from ..log import make_log
 from ..utils import unique
 
 
-def dump_fit(args, profile_path=None):
+def dump_fit(args, log, profile_path=None):
     # todo - remove!
     profile_path = '/home/andrew/project/ch2/Profile.xlsx'
-    log = make_log(args)
     fit_path = args.file(PATH, 0, rooted=False)
     all_messages = args[ALL_MESSAGES]
     all_fields = args[ALL_FIELDS]

@@ -2,7 +2,6 @@
 from urwid import WEIGHT, Edit, Pile, Columns, connect_signal, Padding, Divider
 
 from .lib.widgets import App
-from .log import make_log
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.injury import Injury
@@ -108,7 +107,6 @@ class InjuryApp(App):
         super().__init__(log, 'Diary', bar, self.injuries, tabs, session)
 
 
-def main(args):
-    log = make_log(args)
+def injuries(args, logs):
     session = Database(args, log).session()
     InjuryApp(log, session, MessageBar()).run()

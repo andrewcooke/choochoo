@@ -9,14 +9,12 @@ from .messages import Messages
 from .support import NullableLog
 from .types import Types
 from ...args import PATH
-from ...log import make_log
 
 
 PROFILE = 'global-profile.pkl'
 
 
-def package_fit_profile(args):
-    log = make_log(args)
+def package_fit_profile(args, log):
     in_path = args.file(PATH, 0)
     log.info('Reading from %s' % in_path)
     nlog, types, messages = read_profile(log, in_path)
