@@ -37,6 +37,6 @@ def main():
             raise Exception('No command given (try `ch2 help`)')
     except Exception as e:
         log.critical(e)
-        log.info('See "%s %s" for help' % (PROGNAME, HELP))
+        log.info('See `%s %s` for help' % (PROGNAME, HELP))
         if not args or args[DEV]:
             raise

@@ -11,6 +11,7 @@ PLANS = {'british-cycling-12-week-improver': twelve_week_improver,
 
 
 def list():
+    # todo - reformat to width
     for name, plan in sorted(PLANS.items()):
         print('\n  %s:' % name)
         print(plan.__doc__)
@@ -24,13 +25,29 @@ def load(args, log):
         with db.session_context() as session:
             PLANS[plan](*extra).create(log, session)
     else:
-        raise Exception('Unknown plan "%s"' % plan)
+        raise Exception('Unknown plan "%s" (see `ch2 plan --list` for available plans)' % plan)
 
 
 def plan(args, log):
+    '''
+# plan
+
+    ch2 plan --list
+    ch2 plan PLAN-NAME
+
+Schedule reminders for a given plan.
+
+## Example
+
+    ch2 plan percent-time Run 'w[mon,wed,fri]' 20m 10 2018-07-20 1M
+
+This schedules reminders labelled 'Run' on Mondays, Wednesdays and Fridays of each
+week, starting 2018-07-20 and continuing for a month (1M), with times that start
+at 20 minutes (20m) and increase each time by 10%.
+    '''
     if args[LIST]:
         list()
     elif not args[PLAN]:
-        raise Exception('No plan name')
+        raise Exception('No plan name (see `ch2 plan --list` for available plans)')
     else:
         load(args, log)

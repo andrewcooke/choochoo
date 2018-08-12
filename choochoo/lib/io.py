@@ -10,4 +10,5 @@ def tui(command):
     def wrapper(*args, **kargs):
         return command(*args, **kargs)
     wrapper.tui = True
+    wrapper.__doc__ = command.__doc__
     return wrapper

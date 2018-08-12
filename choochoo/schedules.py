@@ -1,6 +1,7 @@
 
 from urwid import Edit, Columns, Pile, CheckBox, connect_signal, Divider, Text
 
+from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
@@ -190,6 +191,16 @@ class ScheduleApp(App):
         super().__init__(log, 'Schedules', bar, self.injuries, tabs, session)
 
 
+@tui
 def schedules(args, log):
+    '''
+# schedules
+
+    ch2 schedules
+
+Start the interactive schedules editor.
+
+To exit, alt-q (or, without saving, alt-x).
+    '''
     session = Database(args, log).session()
     ScheduleApp(log, session, MessageBar()).run()
