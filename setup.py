@@ -13,6 +13,12 @@ setuptools.setup(name='choochoo',
                  url='https://github.com/andrewcooke/choochoo',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
+                 include_package_data=True,
+                 entry_points={
+                     'console_scripts': [
+                         'ch2 = choochoo:main',
+                     ],
+                 },
                  classifiers=(
                      "Programming Language :: Python :: 3.5",
                      "Programming Language :: Python :: 3.6",

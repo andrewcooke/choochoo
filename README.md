@@ -2,7 +2,7 @@
 # choochoo (ch2)
 
 A training diary written mainly for myself, but perhaps also attractive to
-others who want a way to track and plan their progress that is open, 
+others who also want a way to track and plan their progress that is open, 
 lightweight and extensible.
 
 The main interface is a curses-style diary, used to track daily activity

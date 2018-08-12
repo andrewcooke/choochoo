@@ -6,6 +6,8 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
+dev/package-profile.sh
+
 VERSION=$1
 
 OLD_VERSION=`grep version= choochoo/args.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
@@ -19,6 +21,6 @@ sed -i setup.py -e "s/\(.*version='\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VE
 git tag -a "v$VERSION" -m "version $VERSION"
 git push origin "v$VERSION"
 
-source env/bin/activate
-python3 setup.py sdist bdist_wheel
+dev/package-profile.sh
+dev/package-python.sh
 twine upload --repository-url https://test.pypi.org/legacy/ dist/*

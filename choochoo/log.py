@@ -6,7 +6,7 @@ from os.path import join
 from .args import COMMAND, LOGS, PROGNAME
 
 
-def make_log(args):
+def make_log(args, tui=False):
 
     file_formatter = Formatter('%(levelname)-8s %(asctime)s: %(message)s')
     name = args[COMMAND] if COMMAND in args else PROGNAME
@@ -19,15 +19,16 @@ def make_log(args):
     slog.setLevel(INFO)
     slog.addHandler(file_handler)
 
-    # stderr_formatter = Formatter('%(levelname)-8s: %(message)s')
-    # stderr_handler = StreamHandler()
-    # stderr_handler.setLevel(INFO)
-    # stderr_handler.setFormatter(stderr_formatter)
-
     log = getLogger(name)
     log.setLevel(DEBUG)
     log.addHandler(file_handler)
-    # log.addHandler(stderr_handler)
+
+    if not tui:
+        stderr_formatter = Formatter('%(levelname)8s: %(message)s')
+        stderr_handler = StreamHandler()
+        stderr_handler.setLevel(INFO)
+        stderr_handler.setFormatter(stderr_formatter)
+        log.addHandler(stderr_handler)
 
     return log
 

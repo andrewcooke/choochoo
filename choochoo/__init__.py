@@ -23,16 +23,18 @@ COMMANDS = {DIARY: diary,
 def main():
     p = parser()
     args = NamespaceWithVariables(p.parse_args())
-    log = make_log(args)
+    command_name = args[COMMAND] if COMMAND in args else None
+    command = COMMANDS[command_name] if command_name in COMMANDS else None
+    tui = command and hasattr(command, 'tui') and command.tui
+    log = make_log(args, tui=tui)
     try:
-        if COMMAND in args:
-            if args[COMMAND] == HELP:
-                # avoid dependency loop
-                help(args, log, COMMANDS)
-            else:
-                COMMANDS[args[COMMAND]](args, log)
+        if command_name == HELP:
+            # avoid dependency loop
+            help(args, log, COMMANDS)
+        elif command:
+            command(args, log)
         else:
-            raise Exception('No command given')
+            raise Exception('No command given (try `ch2 help`)')
     except Exception as e:
         log.critical(e)
         log.info('See "%s %s" for help' % (PROGNAME, HELP))

@@ -26,8 +26,6 @@ For full options see `ch2 dump-fit -h`.
 
 Will print the contents of the file to stdout.
     '''
-    # todo - remove!
-    profile_path = '/home/andrew/project/ch2/Profile.xlsx'
     fit_path = args.file(PATH, 0, rooted=False)
     all_messages = args[ALL_MESSAGES]
     all_fields = args[ALL_FIELDS]
