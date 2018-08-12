@@ -36,5 +36,6 @@ def main():
     except Exception as e:
         log.critical(e)
         log.info('See "%s %s" for help' % (PROGNAME, HELP))
+        print(e)
         if not args or args[DEV]:
             raise

@@ -61,7 +61,7 @@ def exponential_time(title, repeat, time, percent, start, duration):
                        start date, duration
     Example:
 
-      ch2 plan percent-time 'Run duration' 'w[mon,wed,fri]' 20m 10 2018-07-20 1M
+      ch2 plan percent-time Run 'w[mon,wed,fri]' 20m 10 2018-07-20 1M
 
       where 20m is the 20 minute initial time, 1M generates plans over a
       month, and w[mon,wed,fri] indicates which days of each week.

@@ -10,6 +10,21 @@ from ..utils import unique
 
 
 def dump_fit(args, log, profile_path=None):
+    '''
+# dump-fit
+
+    ch2 dump-fit FILE.FIT
+
+Print the contents of a fit file.
+
+For full options see `ch2 dump-fit -h`.
+
+## Example
+
+    ch2 dump-fit ride.fit
+
+Will print the contents of the file to stdout.
+    '''
     # todo - remove!
     profile_path = '/home/andrew/project/ch2/Profile.xlsx'
     fit_path = args.file(PATH, 0, rooted=False)

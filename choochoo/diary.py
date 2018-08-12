@@ -170,7 +170,7 @@ def diary(args, log):
 
 The daily diary.  Select the date using the calendar and then enter daily information.
 
-To exit, Alt-q (or, without saving, Alt-x).
+To exit, alt-q (or, without saving, Alt-x).
     '''
     session = Database(args, log).session()
     DiaryApp(log, session, MessageBar()).run()

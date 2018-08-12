@@ -107,6 +107,17 @@ class InjuryApp(App):
         super().__init__(log, 'Diary', bar, self.injuries, tabs, session)
 
 
-def injuries(args, logs):
+def injuries(args, log):
+    '''
+# injuries
+
+    ch2 injuries
+
+The interactive editor for injuries.  Allows addition, deletion and modification of injuries.
+
+Once added, injuries are displayed in the diary.
+
+To exit, alt-q (or, without saving, Alt-x).
+    '''
     session = Database(args, log).session()
     InjuryApp(log, session, MessageBar()).run()
