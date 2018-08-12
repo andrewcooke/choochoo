@@ -22,9 +22,10 @@ For full options see `ch2 dump-fit -h`.
 
 ## Example
 
-    ch2 dump-fit ride.fit
+    ch2 -v 0 dump-fit ride.fit
 
-Will print the contents of the file to stdout.
+Will print the contents of the file to stdout (use `-v 0` to suppress logging
+or redirect stderr elsewhere).
     '''
     fit_path = args.file(PATH, 0, rooted=False)
     all_messages = args[ALL_MESSAGES]

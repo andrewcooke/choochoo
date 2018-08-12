@@ -41,7 +41,7 @@ class LengthFmt(Fmt):
 
     def __init__(self, stream=stdout, width=None, margin=1):
         self.__out = stream
-        self.__width = terminal_width(width)
+        self.__width = terminal_width(width) - margin
         self.__margin = margin
 
     def print(self, text=None):

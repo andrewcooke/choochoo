@@ -3,10 +3,14 @@ from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler
 from logging.handlers import RotatingFileHandler
 from os.path import join
 
-from .args import COMMAND, LOGS, PROGNAME
+from .args import COMMAND, LOGS, PROGNAME, VERBOSITY
 
 
 def make_log(args, tui=False):
+
+    level_unset = args[VERBOSITY] is None
+    level = 4 if level_unset else args[VERBOSITY][0]
+    level = 10 * (6 - level)
 
     file_formatter = Formatter('%(levelname)-8s %(asctime)s: %(message)s')
     name = args[COMMAND] if COMMAND in args else PROGNAME
@@ -23,10 +27,10 @@ def make_log(args, tui=False):
     log.setLevel(DEBUG)
     log.addHandler(file_handler)
 
-    if not tui:
+    if not tui or not level_unset:
         stderr_formatter = Formatter('%(levelname)8s: %(message)s')
         stderr_handler = StreamHandler()
-        stderr_handler.setLevel(INFO)
+        stderr_handler.setLevel(level)
         stderr_handler.setFormatter(stderr_formatter)
         log.addHandler(stderr_handler)
 
