@@ -1,8 +1,9 @@
+
 from abc import abstractmethod
-from shutil import get_terminal_size
 from sys import stdout
 
-from .args import TOPIC, HELP, PROGNAME
+from .args import TOPIC
+from .lib.io import terminal_width
 
 
 class Fmt:
@@ -40,7 +41,7 @@ class LengthFmt(Fmt):
 
     def __init__(self, stream=stdout, width=None, margin=1):
         self.__out = stream
-        self.__width = (get_terminal_size()[0] if width is None else width) - margin
+        self.__width = terminal_width(width)
         self.__margin = margin
 
     def print(self, text=None):
