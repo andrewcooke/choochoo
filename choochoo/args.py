@@ -95,7 +95,7 @@ def parser():
                         help='the directory for logs')
     parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
                         help='the root directory for the default configuration')
-    parser.add_argument(m(V), mm(VERSION), action='version', version='0.0.1',
+    parser.add_argument(m(V), mm(VERSION), action='version', version='0.0.3',
                         help='display version and exit')
 
     subparsers = parser.add_subparsers()
