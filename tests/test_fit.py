@@ -3,6 +3,7 @@ from logging import getLogger, basicConfig, DEBUG
 from sys import stdout
 
 from choochoo.fit.decode import parse_all
+from choochoo.fit.tokens import parse_all as parse_all_2
 from choochoo.fit.profile.fields import DynamicField
 from choochoo.fit.profile.profile import read_profile
 from choochoo.fit.records import no_names, append_units, no_bad_values, fix_degrees, chain
@@ -13,7 +14,7 @@ def test_profile():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    nlog, types, messages = read_profile(log, '/home/andrew/project/ch2/Profile.xlsx')
+    nlog, types, messages = read_profile(log, '/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
 
     cen = types.profile_to_type('carry_exercise_name')
     assert cen.profile_to_internal('farmers_walk') == 1
@@ -35,8 +36,11 @@ def test_decode():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    for record in parse_all(log, '/home/andrew/project/ch2/2018-07-26-rec.fit',
-                            profile_path='/home/andrew/project/ch2/Profile.xlsx'):
+    # for record in parse_all(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
+    #                         profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'):
+    #     print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
+    for record in parse_all_2(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
+                              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'):
         print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
 
 

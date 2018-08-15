@@ -15,7 +15,7 @@
   * Tests:
     * Output to CSV
     * Checksum errors
-    * Data directory?  Copyright?
+    * XXX  Data directory?  Copyright?
 
 * Command line addition of reminders
 
@@ -30,5 +30,5 @@
 
 * Docs, docs, docs
   * How to organise on gihub
-  * Help command
+  * XXX  Help command
   

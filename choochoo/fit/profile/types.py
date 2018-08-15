@@ -5,8 +5,8 @@ from collections import namedtuple
 from re import compile
 from struct import unpack
 
-from .support import Named, WarnDict, WarnList, Rows
-
+from .support import Named, Rows
+from ...lib.data import WarnDict, WarnList
 
 LITTLE, BIG = 0, 1
 

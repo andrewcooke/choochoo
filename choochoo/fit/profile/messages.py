@@ -1,9 +1,9 @@
 
 from .fields import Row, MessageField, TypedField
-from .support import Named, WarnDict
+from .support import Named
 from .support import Rows
 from ..records import LazyRecord
-
+from ...lib.data import WarnDict
 
 HEADER_GLOBAL_TYPE = -1
 

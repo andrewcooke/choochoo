@@ -8,8 +8,6 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-dev/package-profile.sh
-
 VERSION=$1
 
 OLD_VERSION=`grep version= choochoo/args.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`

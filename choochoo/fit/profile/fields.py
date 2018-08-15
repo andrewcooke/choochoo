@@ -1,9 +1,9 @@
 
-from collections.__init__ import namedtuple
+from collections import namedtuple
 from itertools import repeat
 
-from .support import Named, WarnDict
-
+from .support import Named
+from ...lib.data import WarnDict
 
 TIMESTAMP_GLOBAL_TYPE = 253
 
