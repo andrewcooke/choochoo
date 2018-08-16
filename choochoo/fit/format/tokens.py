@@ -1,11 +1,12 @@
 
+from binascii import hexlify
 from collections import defaultdict, Counter
 from struct import unpack
 
-from .profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
-from .profile.profile import read_profile, load_profile
-from .profile.types import Date
-from ..lib.data import WarnDict
+from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
+from ..profile.profile import read_profile, load_profile
+from ..profile.types import Date
+from ...lib.data import WarnDict
 
 
 class Identity:
@@ -26,42 +27,52 @@ class Identity:
             return '%s (defn %d/%d)' % (self.name, self.count, current)
 
 
-class FileHeaderToken:
+class Token:
+
+    def __init__(self, tag, is_user, data):
+        self.tag = tag
+        self.is_user = is_user
+        self.data = data
+
+    def __str__(self):
+        return '%s: %s' % (self.tag, hexlify(self.data).decode('ascii'))
+
+    def __len__(self):
+        return len(self.data)
+
+
+class FileHeader(Token):
 
     def __init__(self, data):
-        self.is_user = False
-        self.__len = data[0]
+        super().__init__('HDR', False, data[:data[0]])
         self.protocol_version = data[1]
         self.profile_version = unpack('<H', data[2:4])[0]
         self.data_size = unpack('<I', data[4:8])[0]
         self.data_type = b''.join(unpack('4c', data[8:12]))
-        if self.__len > 13:
+        if len(self) > 13:
             self.checksum = unpack('<H', data[12:14])[0]
             self.has_checksum = self.checksum != 0
         else:
             self.has_checksum = False
 
     def validate(self, data):
-        if self.__len < 12:
-            raise Exception('Header too short (%d)' % self.__len)
-        if len(data) != self.data_size + self.__len + 2:
-            raise Exception('Data length (%d/%d)' % (len(data), self.data_size + self.__len + 2))
+        if len(self) < 12:
+            raise Exception('Header too short (%d)' % len(self))
+        if len(data) != self.data_size + len(self) + 2:
+            raise Exception('Data length (%d/%d)' % (len(data), self.data_size + len(self) + 2))
         if self.data_type != b'.FIT':
             raise Exception('Data type incorrect (%s)' % (self.data_type,))
         if self.has_checksum:
-            checksum = ChecksumToken.crc(data[0:12])
+            checksum = Checksum.crc(data[0:12])
             if checksum != self.checksum:
                 raise Exception('Inconsistent checksum (%04x/%04x)' % (checksum, self.checksum))
 
-    def __len__(self):
-        return self.__len
 
+class Defined(Token):
 
-class DefinedToken:
-
-    def __init__(self, data, state, local_message_type):
+    def __init__(self, tag, data, state, local_message_type):
         self.definition = state.definitions[local_message_type]
-        self.data = data[0:self.definition.size]
+        super().__init__(tag, True, data[0:self.definition.size])
         if self.definition.timestamp_field:
             field = self.definition.timestamp_field
             state.timestamp = state.date.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
@@ -84,23 +95,20 @@ class DefinedToken:
     def parse(self):
         return self.definition.message.parse(self.data, self.definition, self.timestamp)
 
-    def __len__(self):
-        return self.definition.size
 
-
-class DataToken(DefinedToken):
+class Data(Defined):
 
     def __init__(self, data, state):
-        super().__init__(data, state, data[0] & 0x0f)
+        super().__init__('DTA', data, state, data[0] & 0x0f)
 
 
-class CompressedTimsestampToken(DefinedToken):
+class CompressedTimsestamp(Defined):
 
     def __init__(self, data, state):
         offset = data[0] & 0x1f
         rollover = offset < state.timestamp & 0x1f
         state.timestamp = (state.timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0)
-        super().__init__(data, state, data[0] & 0x60 >> 5)
+        super().__init__('TIM', data, state, data[0] & 0x60 >> 5)
 
 
 class Field:
@@ -118,9 +126,9 @@ class Field:
         self.finish = 0
 
 
-class DefinitionToken:
+class Definition(Token):
 
-    def __init__(self, data, state):
+    def __init__(self, data, state, overhead=6, tag='DFN'):
         self.is_user = False
         self.references = set()
         self.timestamp_field = None
@@ -129,7 +137,7 @@ class DefinitionToken:
         self.message = state.messages.number_to_message(self.global_message_no)
         self.identity = Identity(self.message.name, state.definition_counter)
         self.fields = self._process_fields(self._make_fields(data, self.message, state))
-        self._overhead = 6
+        super().__init__(tag, False, data[0:overhead+3*len(self.fields)])
         local_message_type = data[0] & 0x0f
         state.definitions[local_message_type] = self
 
@@ -148,7 +156,7 @@ class DefinitionToken:
         return Field(state.log, size, field, base_type)
 
     def _process_fields(self, fields):
-        offset = 1
+        offset = 1  # header
         fields = tuple(fields)
         for field in fields:
             field.start = offset
@@ -160,9 +168,6 @@ class DefinitionToken:
                 self.references.update(field.field.references)
         self.size = offset
         return tuple(sorted(fields, key=lambda field: 1 if field.field and isinstance(field.field, DynamicField) else 0))
-
-    def __len__(self):
-        return len(self.fields) * 3 + self._overhead
 
     def accumulate(self, field, values):
         n = len(values)
@@ -179,11 +184,10 @@ class DefinitionToken:
         return self.__sums[field][0:n]
 
 
-class DeveloperDefinitionToken(DefinitionToken):
+class DeveloperDefinition(Definition):
 
     def __init__(self, data, state):
-        super().__init__(data, state)
-        self._overhead = 7
+        super().__init__(data, state, overhead=7, tag='DFX')
 
     def _make_fields(self, data, message, state):
         fields = tuple(super()._make_fields(data, message, state))
@@ -199,7 +203,7 @@ class DeveloperDefinitionToken(DefinitionToken):
         return Field(state.log, size, field, field.type)
 
 
-class ChecksumToken:
+class Checksum(Token):
 
     @staticmethod
     def crc(data):
@@ -218,31 +222,31 @@ class ChecksumToken:
         return checksum
 
     def __init__(self, data):
-        self.is_user = False
-        self.data = data[:-2]
-        self.checksum = unpack('<H', data[-2:])[0]
+        super().__init__('CRC', False, data[-2:])
+        self.all_data = data[:-2]
+        self.checksum = unpack('<H', self.data)[0]
 
-    def validate(self, offset, file_header):
+    def validate(self, offset):
         # length already validated in header
-        if len(self.data) != offset:
-            raise Exception('Did not consume all data (%d/%d)' % (len(self.data), offset))
-        checksum = self.crc(self.data)
+        if len(self.all_data) != offset:
+            raise Exception('Did not consume all data (%d/%d)' % (len(self.all_data), offset))
+        checksum = self.crc(self.all_data)
         if checksum != self.checksum:
-            raise Exception('Bad checksum (%04x / %04x)' % (checksum, self.checksum))
+            raise Exception('Bad checksum (%04x/%04x)' % (checksum, self.checksum))
 
 
-def Token(data, state):
+def token_factory(data, state):
     header = data[0]
     if header & 0x80:
-        return CompressedTimsestampToken(data, state)
+        return CompressedTimsestamp(data, state)
     else:
         if header & 0x40:
             if header & 0x20:
-                return DeveloperDefinitionToken(data, state)
+                return DeveloperDefinition(data, state)
             else:
-                return DefinitionToken(data, state)
+                return Definition(data, state)
         else:
-            return DataToken(data, state)
+            return Data(data, state)
 
 
 class State:
@@ -258,25 +262,32 @@ class State:
         self.timestamp = None
 
 
-def tokens(data, state):
-    file_header = FileHeaderToken(data)
+def tokens(log, data, types, messages):
+    state = State(log, types, messages)
+    file_header = FileHeader(data)
     offset = len(file_header)
     yield file_header
     file_header.validate(data)
     while len(data) - offset > 2:
-        token = Token(data[offset:], state)
+        token = token_factory(data[offset:], state)
         offset += len(token)
         yield token
-    checksum = ChecksumToken(data)
+    checksum = Checksum(data)
     yield checksum
-    checksum.validate(offset, file_header)
+    checksum.validate(offset)
 
 
-def parse_all(log, fit_path, profile_path=None):
+def raw_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
     data, types, messages = load(log, fit_path, profile_path=profile_path)
-    state = State(log, types, messages)
-    for token in tokens(data, state):
-        if token.is_user:
+    for i, token in enumerate(tokens(log, data, types, messages)):
+        if i >= after and (limit < 0 or i - after < limit):
+            yield token
+
+
+def user_records(log, fit_path, after=0, limit=-1, profile_path=None):
+    data, types, messages = load(log, fit_path, profile_path=profile_path)
+    for i, token in enumerate(token for token in tokens(log, data, types, messages) if token.is_user):
+        if i >= after and (limit < 0 or i - after < limit):
             yield token.parse()
 
 

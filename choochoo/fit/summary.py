@@ -1,11 +1,11 @@
 
 from collections import Counter
 
+from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
+    to_hex, no_filter
+from .format.tokens import user_records, raw_tokens
 from .profile.types import Date
-from .records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, to_hex, \
-    no_filter
-from .tokens import parse_all
-from ..args import PATH, ALL_FIELDS, ALL_MESSAGES
+from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, RAW
 from ..lib.io import terminal_width
 from ..utils import unique
 
@@ -28,13 +28,27 @@ Will print the contents of the file to stdout (use `-v 0` to suppress logging
 or redirect stderr elsewhere).
     '''
     fit_path = args.file(PATH, 0, rooted=False)
-    all_messages = args[ALL_MESSAGES]
-    all_fields = args[ALL_FIELDS]
-    summarize(log, fit_path, all_fields=all_fields, all_messages=all_messages, profile_path=profile_path)
+    summarize(log, fit_path, args[RAW], all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
+              after=args[AFTER][0], limit=args[LIMIT][0], profile_path=profile_path)
 
 
-def summarize(log, fit_path, all_fields=False, all_messages=False, profile_path=None):
-    records = list(parse_all(log, fit_path, profile_path=profile_path))
+def summarize(log, fit_path, raw, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
+    if raw:
+        summarize_raw_tokens(log, fit_path,
+                             after=after, limit=limit, profile_path=profile_path)
+    else:
+        summarize_user_records(log, fit_path,
+                               all_fields=all_fields, all_messages=all_messages,
+                               after=after, limit=limit, profile_path=profile_path)
+
+
+def summarize_raw_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
+    for token in raw_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
+        print(token)
+
+
+def summarize_user_records(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
+    records = list(user_records(log, fit_path, after=after, limit=limit, profile_path=profile_path))
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
     width = terminal_width()
@@ -78,7 +92,8 @@ def pprint_as_tuples(records, all_fields, all_messages, width=80):
               if all_messages or record.is_known()]
     for title in titles:
         pprint_series(title,
-                      [record.as_values(join_values, append_units, to_hex, fix_degrees, no_unknown_fields)
+                      [record.as_values(join_values, append_units, to_hex, fix_degrees,
+                                        no_filter if all_fields else no_unknown_fields)
                        for record in records
                        if record.identity == title.identity],
                       width=width)

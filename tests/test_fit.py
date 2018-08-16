@@ -4,9 +4,9 @@ from sys import stdout
 
 from choochoo.fit.profile.fields import DynamicField
 from choochoo.fit.profile.profile import read_profile
-from choochoo.fit.records import no_names, append_units, no_bad_values, fix_degrees, chain
+from fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from choochoo.fit.summary import summarize
-from choochoo.fit.tokens import parse_all
+from fit.format.tokens import user_records
 
 
 def test_profile():
@@ -35,8 +35,8 @@ def test_decode():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    for record in parse_all(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
-                            profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'):
+    for record in user_records(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
+                               profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'):
         print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
 
 

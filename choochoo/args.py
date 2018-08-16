@@ -20,13 +20,16 @@ SCHEDULES = 'schedules'
 V, VERBOSITY = 'v', 'verbosity'
 VERSION = 'version'
 
+AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 DATABASE = 'database'
 DEV = 'dev'
+LIMIT = 'limit'
 LOGS = 'logs'
 LIST = 'list'
 PATH = 'path'
+RAW = 'raw'
 ROOT = 'root'
 
 def mm(name): return '--' + name
@@ -114,6 +117,11 @@ def parser():
                       help='the path to the fit file')
     dump.add_argument(mm(ALL_FIELDS), action='store_true', help='display undocumented fields?')
     dump.add_argument(mm(ALL_MESSAGES), action='store_true', help='display undocumented messages?')
+    dump.add_argument(mm(RAW), action='store_true', help='show low-level binary details')
+    dump.add_argument(mm(AFTER), action='store', nargs=1, type=int, metavar='N', default=[0],
+                      help='skip initial messages')
+    dump.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
+                      help='limit number of messages displayed')
     dump.set_defaults(command=DUMP_FIT)
 
     help = subparsers.add_parser(HELP,

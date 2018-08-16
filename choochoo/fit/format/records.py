@@ -68,7 +68,7 @@ def join_values(data, separator='.'):
 
 def fix_degrees(data, new_units='°'):
     for name, (values, units) in data:
-        if units == 'semicircles':
+        if values is not None and units == 'semicircles':
             values = tuple(value * 180 / 2**31 for value in values)
             units = new_units
         yield name, (values, units)
