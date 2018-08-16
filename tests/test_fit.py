@@ -2,12 +2,11 @@
 from logging import getLogger, basicConfig, DEBUG
 from sys import stdout
 
-from choochoo.fit.decode import parse_all
-from choochoo.fit.tokens import parse_all as parse_all_2
 from choochoo.fit.profile.fields import DynamicField
 from choochoo.fit.profile.profile import read_profile
 from choochoo.fit.records import no_names, append_units, no_bad_values, fix_degrees, chain
-from choochoo.fit.summary import summarize, summarize_2
+from choochoo.fit.summary import summarize
+from choochoo.fit.tokens import parse_all
 
 
 def test_profile():
@@ -36,11 +35,8 @@ def test_decode():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    # for record in parse_all(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
-    #                         profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'):
-    #     print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
-    for record in parse_all_2(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
-                              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'):
+    for record in parse_all(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
+                            profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'):
         print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
 
 
@@ -48,7 +44,7 @@ def test_dump():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    summarize_2(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit',
+    summarize(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit',
               profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
 
 
@@ -56,5 +52,5 @@ def test_developer():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    summarize_2(log, '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit',
+    summarize(log, '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit',
               profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
