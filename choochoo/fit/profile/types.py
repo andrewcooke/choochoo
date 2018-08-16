@@ -64,7 +64,7 @@ class StructSupport(BaseType):
 class String(BaseType):
 
     # it may seem weird this returns a singleton tuple.  shouldn't it be treated like a
-    # Character field where count is the mutliplicity?  but dynamic fields treat it as
+    # character field where count is the mutliplicity?  but dynamic fields treat it as
     # a single value...
 
     def __init__(self, log, name):

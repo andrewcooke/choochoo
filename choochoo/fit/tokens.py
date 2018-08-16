@@ -61,15 +61,14 @@ class DefinedToken:
 
     def __init__(self, data, state, local_message_type):
         self.definition = state.definitions[local_message_type]
-        self.data = data[0:len(self.definition)]
+        self.data = data[0:self.definition.size]
         if self.definition.timestamp_field:
             field = self.definition.timestamp_field
             state.timestamp = state.date.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
         self.timestamp = state.timestamp
         if self.definition.global_message_no == 206:
             self.is_user = False
-            record = self.parse()
-            record.force()
+            record = self.parse().force()
             developer_index = record.attr.developer_data_index[0][0]
             number = record.attr.field_definition_number[0][0]
             base_type = state.types.base_types[
@@ -78,7 +77,7 @@ class DefinedToken:
             name = record.attr.field_name[0][0]
             units = record.attr.units[0][0]
             state.dev_fields[developer_index][number] = \
-                TypedField(self.__log, name, number, units, None, None, None, base_type, state.types)
+                TypedField(state.log, name, number, units, None, None, None, base_type.name, state.types)
         else:
             self.is_user = True
 
@@ -125,14 +124,14 @@ class DefinitionToken:
         self.is_user = False
         self.references = set()
         self.timestamp_field = None
-        local_message_type = data[0] & 0x0f
-        state.definitions[local_message_type] = self
         self.endian = data[2] & 0x01
         self.global_message_no = unpack('<>'[self.endian]+'H', data[3:5])[0]
         self.message = state.messages.number_to_message(self.global_message_no)
         self.identity = Identity(self.message.name, state.definition_counter)
         self.fields = self._process_fields(self._make_fields(data, self.message, state))
         self._overhead = 6
+        local_message_type = data[0] & 0x0f
+        state.definitions[local_message_type] = self
 
     def _make_fields(self, data, message, state):
         n_fields = data[5]
@@ -191,7 +190,7 @@ class DeveloperDefinitionToken(DefinitionToken):
         yield from fields
         offset = len(fields) * 3 + 7
         n_dev_fields = data[offset-1]
-        for i in n_dev_fields:
+        for i in range(n_dev_fields):
             yield self.__field(data[offset + i * 3:offset + (i + 1) * 3], state)
 
     def __field(self, data, state):

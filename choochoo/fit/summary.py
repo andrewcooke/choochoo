@@ -2,6 +2,7 @@
 from collections import Counter
 
 from .decode import parse_all
+from .tokens import parse_all as parse_all_2
 from .profile.types import Date
 from .records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, to_hex, \
     no_filter
@@ -35,6 +36,16 @@ or redirect stderr elsewhere).
 
 def summarize(log, fit_path, all_fields=False, all_messages=False, profile_path=None):
     records = list(parse_all(log, fit_path, profile_path=profile_path))
+    counts = Counter(record.identity for record in records)
+    small, large = partition(records, counts)
+    width = terminal_width()
+    print()
+    pprint_as_dicts(small, all_fields, all_messages, width=width)
+    pprint_as_tuples(large, all_fields, all_messages, width=width)
+
+
+def summarize_2(log, fit_path, all_fields=False, all_messages=False, profile_path=None):
+    records = list(parse_all_2(log, fit_path, profile_path=profile_path))
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
     width = terminal_width()

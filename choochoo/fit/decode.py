@@ -163,7 +163,7 @@ class Tokenizer:
         name = record.attr.field_name[0][0]
         units = record.attr.units[0][0]
         self.__dev_fields[developer_index][number] = \
-            TypedField(self.__log, name, number, units, None, None, None, base_type, self.__types)
+            TypedField(self.__log, name, number, units, None, None, None, base_type.name, self.__types)
 
     def __data_msg(self, defn, data):
         if defn.timestamp_field:

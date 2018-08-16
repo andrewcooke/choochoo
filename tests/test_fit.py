@@ -7,7 +7,7 @@ from choochoo.fit.tokens import parse_all as parse_all_2
 from choochoo.fit.profile.fields import DynamicField
 from choochoo.fit.profile.profile import read_profile
 from choochoo.fit.records import no_names, append_units, no_bad_values, fix_degrees, chain
-from choochoo.fit.summary import summarize
+from choochoo.fit.summary import summarize, summarize_2
 
 
 def test_profile():
@@ -48,13 +48,13 @@ def test_dump():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    summarize(log, '/home/andrew/project/ch2/2018-07-30-rec.fit',
-              profile_path='/home/andrew/project/ch2/Profile.xlsx')
+    summarize_2(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit',
+              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
 
 
 def test_developer():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    summarize(log, '/home/andrew/project/ch2/DeveloperData.fit',
-              profile_path='/home/andrew/project/ch2/Profile.xlsx')
+    summarize_2(log, '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit',
+              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
