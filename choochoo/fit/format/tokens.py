@@ -76,25 +76,34 @@ class Defined(Token):
 
     def __init__(self, tag, data, state, local_message_type):
         self.definition = state.definitions[local_message_type]
-        super().__init__(tag, True, data[0:self.definition.size])
+        # some things cannot be lazy...
         if self.definition.timestamp_field:
-            field = self.definition.timestamp_field
-            state.timestamp = state.date.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
+            self.__parse_timestamp(state)
         self.timestamp = state.timestamp
         if self.definition.global_message_no == 206:
-            self.is_user = False
-            record = self.parse().force()
-            developer_index = record.attr.developer_data_index[0][0]
-            number = record.attr.field_definition_number[0][0]
-            base_type = state.types.base_types[
-                state.types.profile_to_type('fit_base_type').profile_to_internal(
-                    record.attr.fit_base_type_id[0][0])]
-            name = record.attr.field_name[0][0]
-            units = record.attr.units[0][0]
-            state.dev_fields[developer_index][number] = \
-                TypedField(state.log, name, number, units, None, None, None, base_type.name, state.types)
+            self.__parse_field_definition(state)
+            is_user = False
         else:
-            self.is_user = True
+            is_user = True
+        super().__init__(tag, is_user, data[0:self.definition.size])
+
+    def __parse_timestamp(self, state):
+        field = self.definition.timestamp_field
+        state.timestamp = state.date.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
+
+    def __parse_field_definition(self, state):
+        record = self.parse().force()
+        developer_index = record.attr.developer_data_index[0][0]
+        number = record.attr.field_definition_number[0][0]
+        # todo - we don't really need to convert name to type just to extrat name below
+        base_type = state.types.base_types[
+            state.types.profile_to_type('fit_base_type').profile_to_internal(
+                record.attr.fit_base_type_id[0][0])]
+        # todo - more fields (optional)
+        name = record.attr.field_name[0][0]
+        units = record.attr.units[0][0]
+        state.dev_fields[developer_index][number] = \
+            TypedField(state.log, name, number, units, None, None, None, base_type.name, state.types)
 
     def parse(self):
         return self.definition.message.parse(self.data, self.definition, self.timestamp)
@@ -178,6 +187,7 @@ class Definition(Token):
         return tuple(sorted(fields, key=lambda field: 1 if field.field and isinstance(field.field, DynamicField) else 0))
 
     def accumulate(self, field, values):
+        # todo - need test for this (currently clearly broken)
         n = len(values)
         if field in self.__sums:
             sum = self.__sums[field]
