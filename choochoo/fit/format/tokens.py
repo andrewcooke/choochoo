@@ -29,6 +29,8 @@ class Identity:
 
 class Token:
 
+    __slots__ = ('tag', 'is_user', 'data')
+
     def __init__(self, tag, is_user, data):
         self.tag = tag
         self.is_user = is_user
@@ -70,6 +72,8 @@ class FileHeader(Token):
 
 class Defined(Token):
 
+    __slots__ = ('definition', 'timestamp')
+
     def __init__(self, tag, data, state, local_message_type):
         self.definition = state.definitions[local_message_type]
         super().__init__(tag, True, data[0:self.definition.size])
@@ -98,11 +102,15 @@ class Defined(Token):
 
 class Data(Defined):
 
+    __slots__ = ()
+
     def __init__(self, data, state):
         super().__init__('DTA', data, state, data[0] & 0x0f)
 
 
-class CompressedTimsestamp(Defined):
+class CompressedTimestamp(Defined):
+
+    __slots__ = ()
 
     def __init__(self, data, state):
         offset = data[0] & 0x1f
@@ -238,7 +246,7 @@ class Checksum(Token):
 def token_factory(data, state):
     header = data[0]
     if header & 0x80:
-        return CompressedTimsestamp(data, state)
+        return CompressedTimestamp(data, state)
     else:
         if header & 0x40:
             if header & 0x20:

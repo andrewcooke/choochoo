@@ -126,6 +126,8 @@ class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')
 
 class LazyRecord(Record):
 
+    __slots__ = ()
+
     def into(self, container, *filters, _cls=None, **extras):
         if not _cls:
             _cls = Record
@@ -143,6 +145,8 @@ class Attributes(dict):
 
 
 class DictRecord(Record):
+
+    __slots__ = ()
 
     def data_with(self, **kargs):
         return it.chain(self.data.items(), kargs.items())
