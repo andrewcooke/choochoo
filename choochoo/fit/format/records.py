@@ -68,7 +68,7 @@ def join_values(data, separator='.'):
 
 def fix_degrees(data, new_units='°'):
     for name, (values, units) in data:
-        if units == 'semicircles':
+        if values is not None and units == 'semicircles':
             values = tuple(value * 180 / 2**31 for value in values)
             units = new_units
         yield name, (values, units)
@@ -126,6 +126,8 @@ class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')
 
 class LazyRecord(Record):
 
+    __slots__ = ()
+
     def into(self, container, *filters, _cls=None, **extras):
         if not _cls:
             _cls = Record
@@ -143,6 +145,8 @@ class Attributes(dict):
 
 
 class DictRecord(Record):
+
+    __slots__ = ()
 
     def data_with(self, **kargs):
         return it.chain(self.data.items(), kargs.items())

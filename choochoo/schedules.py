@@ -1,9 +1,8 @@
 
 from urwid import Edit, Columns, Pile, CheckBox, connect_signal, Divider, Text
 
-from .lib.repeating import DateOrdinals
+from .lib.io import tui
 from .lib.widgets import App
-from .log import make_log
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.schedule import Schedule, ScheduleType
@@ -11,9 +10,8 @@ from .uweird.calendar import TextDate
 from .uweird.decorators import Indent
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
-from .uweird.tabs import TabList, TabNode
+from .uweird.tabs import TabList
 from .uweird.widgets import DynamicContent, DividedPile, Menu, ColText, ColSpace, Nullable, SquareButton
-
 
 TYPE_WIDTH = 18
 DATE_WIDTH = 18
@@ -193,7 +191,16 @@ class ScheduleApp(App):
         super().__init__(log, 'Schedules', bar, self.injuries, tabs, session)
 
 
-def main(args):
-    log = make_log(args)
+@tui
+def schedules(args, log):
+    '''
+# schedules
+
+    ch2 schedules
+
+Start the interactive schedules editor.
+
+To exit, alt-q (or, without saving, alt-x).
+    '''
     session = Database(args, log).session()
     ScheduleApp(log, session, MessageBar()).run()

@@ -1,13 +1,11 @@
 
 import datetime as dt
-import pdb
 
 from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
-from .lib.repeating import DateOrdinals
+from .lib.io import tui
 from .lib.widgets import App
-from .log import make_log
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.diary import Diary
@@ -165,7 +163,16 @@ class DiaryApp(App):
         self.root.discover()
 
 
-def main(args):
-    log = make_log(args)
+@tui
+def diary(args, log):
+    '''
+# diary
+
+    ch2 diary
+
+The daily diary.  Select the date using the calendar and then enter daily information.
+
+To exit, alt-q (or, without saving, alt-x).
+    '''
     session = Database(args, log).session()
     DiaryApp(log, session, MessageBar()).run()

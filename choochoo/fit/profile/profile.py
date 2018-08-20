@@ -9,15 +9,23 @@ from .messages import Messages
 from .support import NullableLog
 from .types import Types
 from ...args import PATH
-from ...log import make_log
 
 
 PROFILE = 'global-profile.pkl'
 
 
-def package_fit_profile(args):
-    log = make_log(args)
-    in_path = args.file(PATH, 0)
+def package_fit_profile(args, log):
+    '''
+# package-fit-profile
+
+    ch2 package-fit-profile data/sdk/Profile.xlsx
+
+Parse the global profile and save the structures containing types and messages
+to a pickle file that is distributed with this package.
+
+This command is intended for internal use only.
+    '''
+    in_path = args.file(PATH, index=0, rooted=False)
     log.info('Reading from %s' % in_path)
     nlog, types, messages = read_profile(log, in_path)
     out_path = join(dirname(__file__), PROFILE)

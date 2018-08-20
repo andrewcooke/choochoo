@@ -6,3 +6,7 @@ env
 *.log
 #*
 *~
+build
+dist
+*.egg-info
+*.pkl
