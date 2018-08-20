@@ -236,7 +236,7 @@ class CompositeField(Named):
             yield from repeat(None)
 
 
-class DynamicField()
+class DynamicField():
 
     def __init__(self, log, row, rows, types):
         super().__init__(log, row, types)
