@@ -12,5 +12,5 @@ dedicated fuctionality for tracking injuries.
 
 In the future there will be support for plotting data as well as better
 integration of FIT format files (which already have a rudimentary parser).
-One omission that may be important to some people is tha (purposeful)
+One omission that may be important to some people is the (purposeful)
 lack of emphasis on power meters.
