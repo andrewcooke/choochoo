@@ -3,7 +3,7 @@ from collections import Counter
 
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
     to_hex, no_filter
-from .format.tokens import user_records, raw_tokens
+from .format.tokens import filtered_records, filtered_tokens
 from .profile.types import Date
 from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, RAW
 from ..lib.io import terminal_width
@@ -43,12 +43,12 @@ def summarize(log, fit_path, raw, all_fields=False, all_messages=False, after=0,
 
 
 def summarize_raw_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
-    for token in raw_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
-        print(token)
+    for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
+        print('%03d %05d %s' % (index, offset, token))
 
 
 def summarize_user_records(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
-    records = list(user_records(log, fit_path, after=after, limit=limit, profile_path=profile_path))
+    records = list(filtered_records(log, fit_path, after=after, limit=limit, profile_path=profile_path))
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
     width = terminal_width()

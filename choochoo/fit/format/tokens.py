@@ -37,7 +37,7 @@ class Token:
         self.data = data
 
     def __str__(self):
-        return '%s: %s' % (self.tag, hexlify(self.data).decode('ascii'))
+        return '%s %s' % (self.tag, hexlify(self.data).decode('ascii'))
 
     def __len__(self):
         return len(self.data)
@@ -78,7 +78,7 @@ class Defined(Token):
         self.definition = state.definitions[local_message_type]
         # some things cannot be lazy...
         if self.definition.timestamp_field:
-            self.__parse_timestamp(state)
+            self.__parse_timestamp(data, state)
         self.timestamp = state.timestamp
         if self.definition.global_message_no == 206:
             self.__parse_field_definition(state)
@@ -87,7 +87,7 @@ class Defined(Token):
             is_user = True
         super().__init__(tag, is_user, data[0:self.definition.size])
 
-    def __parse_timestamp(self, state):
+    def __parse_timestamp(self, data, state):
         field = self.definition.timestamp_field
         state.timestamp = state.date.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
 
@@ -95,7 +95,7 @@ class Defined(Token):
         record = self.parse().force()
         developer_index = record.attr.developer_data_index[0][0]
         number = record.attr.field_definition_number[0][0]
-        # todo - we don't really need to convert name to type just to extrat name below
+        # todo - we don't really need to convert name to type just to extract name below
         base_type = state.types.base_types[
             state.types.profile_to_type('fit_base_type').profile_to_internal(
                 record.attr.fit_base_type_id[0][0])]
@@ -283,28 +283,28 @@ class State:
 def tokens(log, data, types, messages):
     state = State(log, types, messages)
     file_header = FileHeader(data)
+    yield 0, file_header
     offset = len(file_header)
-    yield file_header
     file_header.validate(data)
     while len(data) - offset > 2:
         token = token_factory(data[offset:], state)
+        yield offset, token
         offset += len(token)
-        yield token
     checksum = Checksum(data)
-    yield checksum
+    yield offset, checksum
     checksum.validate(offset)
 
 
-def raw_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
+def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
     data, types, messages = load(log, fit_path, profile_path=profile_path)
-    for i, token in enumerate(tokens(log, data, types, messages)):
+    for i, (offset, token) in enumerate(tokens(log, data, types, messages)):
         if i >= after and (limit < 0 or i - after < limit):
-            yield token
+            yield i, offset, token
 
 
-def user_records(log, fit_path, after=0, limit=-1, profile_path=None):
+def filtered_records(log, fit_path, after=0, limit=-1, profile_path=None):
     data, types, messages = load(log, fit_path, profile_path=profile_path)
-    for i, token in enumerate(token for token in tokens(log, data, types, messages) if token.is_user):
+    for i, (offset, token) in enumerate(token for token in tokens(log, data, types, messages) if token.is_user):
         if i >= after and (limit < 0 or i - after < limit):
             yield token.parse()
 
