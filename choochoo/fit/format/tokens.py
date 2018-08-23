@@ -304,7 +304,9 @@ def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
 
 def filtered_records(log, fit_path, after=0, limit=-1, profile_path=None):
     data, types, messages = load(log, fit_path, profile_path=profile_path)
-    for i, (offset, token) in enumerate(token for token in tokens(log, data, types, messages) if token.is_user):
+    for i, (offset, token) in enumerate((offset, token)
+                                        for (offset, token) in tokens(log, data, types, messages)
+                                        if token.is_user):
         if i >= after and (limit < 0 or i - after < limit):
             yield token.parse()
 
