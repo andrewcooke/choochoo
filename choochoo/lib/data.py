@@ -1,4 +1,7 @@
 
+from binascii import hexlify
+
+
 class WarnDict(dict):
 
     def __init__(self, log, msg):
@@ -32,3 +35,7 @@ class WarnList(list):
             msg = self.__msg % item
             self.__log.warn(msg)
             raise IndexError(msg)
+
+
+def tohex(data):
+    return hexlify(data).decode('ascii')

@@ -1,12 +1,11 @@
 
-from binascii import hexlify
 from collections import defaultdict, Counter
 from struct import unpack
 
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
 from ..profile.profile import read_profile, load_profile
 from ..profile.types import Date
-from ...lib.data import WarnDict
+from ...lib.data import WarnDict, tohex
 
 
 class Identity:
@@ -37,7 +36,7 @@ class Token:
         self.data = data
 
     def __str__(self):
-        return '%s %s' % (self.tag, hexlify(self.data).decode('ascii'))
+        return '%s %s' % (self.tag, tohex(self.data))
 
     def __len__(self):
         return len(self.data)
@@ -68,6 +67,15 @@ class FileHeader(Token):
             checksum = Checksum.crc(data[0:12])
             if checksum != self.checksum:
                 raise Exception('Inconsistent checksum (%04x/%04x)' % (checksum, self.checksum))
+
+    def describe(self, types):
+        yield '%s - header' % tohex(self.data[0:1])
+        yield '%s - protocol version' % tohex(self.data[1:2])
+        yield '%s - profile version' % tohex(self.data[2:4])
+        yield '%s - data size' % tohex(self.data[4:8])
+        yield '%s - data type' % tohex(self.data[8:12])
+        if self.has_checksum:
+            yield '%s - checksum' % tohex(self.data[12:14])
 
 
 class Defined(Token):
@@ -108,6 +116,14 @@ class Defined(Token):
     def parse(self):
         return self.definition.message.parse(self.data, self.definition, self.timestamp)
 
+    def describe_header(self, types):
+        return '%s - header' % tohex(self.data[0:1])
+
+    def describe(self, types):
+        yield self.describe_header(types)
+        for field in sorted(self.definition.fields, key=lambda field: field.start):
+            yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
+
 
 class Data(Defined):
 
@@ -115,6 +131,9 @@ class Data(Defined):
 
     def __init__(self, data, state):
         super().__init__('DTA', data, state, data[0] & 0x0f)
+
+    def describe_header(self, types):
+        return '%s - header (msg %d)' % (tohex(self.data[0:1]), self.data[0] & 0x0f)
 
 
 class CompressedTimestamp(Defined):
@@ -130,11 +149,11 @@ class CompressedTimestamp(Defined):
 
 class Field:
 
-    def __init__(self, log, size, field, base_type):
+    def __init__(self, size, field, base_type):
 
-        self.__log = log
         self.size = size
         self.field = field
+        self.name = self.field.name if self.field else 'unknown'
         self.base_type = base_type
 
         self.count = self.size // base_type.size
@@ -146,6 +165,7 @@ class Field:
 class Definition(Token):
 
     def __init__(self, data, state, overhead=6, tag='DFN'):
+        self.local_message_type = data[0] & 0x0f
         self.is_user = False
         self.references = set()
         self.timestamp_field = None
@@ -155,22 +175,21 @@ class Definition(Token):
         self.identity = Identity(self.message.name, state.definition_counter)
         self.fields = self._process_fields(self._make_fields(data, self.message, state))
         super().__init__(tag, False, data[0:overhead+3*len(self.fields)])
-        local_message_type = data[0] & 0x0f
-        state.definitions[local_message_type] = self
+        state.definitions[self.local_message_type] = self
 
     def _make_fields(self, data, message, state):
         n_fields = data[5]
         for i in range(n_fields):
-            yield self.__field(data[6 + i * 3:6 + (i + 1) * 3], message, state)
+            yield self.__field(data[6 + i * 3:6 + (i + 1) * 3], message, state.types)
 
-    def __field(self, data, message, state):
+    def __field(self, data, message, types):
         number, size, base = data
         try:
             field = message.number_to_field(number)
         except KeyError:
             field = None
-        base_type = state.types.base_types[base & 0xf]
-        return Field(state.log, size, field, base_type)
+        base_type = types.base_types[base & 0xf]
+        return Field(size, field, base_type)
 
     def _process_fields(self, fields):
         offset = 1  # header
@@ -201,6 +220,16 @@ class Definition(Token):
             self.__sums[field] = values
         return self.__sums[field][0:n]
 
+    def describe(self, types):
+        yield '%s - header (msg %d)' % (tohex(self.data[0:1]), self.local_message_type)
+        yield '%s - reserved' % tohex(self.data[1:2])
+        yield '%s - architecture' % tohex(self.data[2:3])
+        yield '%s - msg no (%s)' % (tohex(self.data[3:5]), self.message.name)
+        yield '%s - no of fields' % tohex(self.data[5:6])
+        for i, _ in enumerate(self.fields):
+            field = self.__field(self.data[6 + i*3:9 + i*3], self.message, types)
+            yield '  fld %d: %s' % (i, field.name)
+
 
 class DeveloperDefinition(Definition):
 
@@ -213,12 +242,12 @@ class DeveloperDefinition(Definition):
         offset = len(fields) * 3 + 7
         n_dev_fields = data[offset-1]
         for i in range(n_dev_fields):
-            yield self.__field(data[offset + i * 3:offset + (i + 1) * 3], state)
+            yield self.__field(data[offset + i * 3:offset + (i + 1) * 3], state.dev_fields)
 
-    def __field(self, data, state):
+    def __field(self, data, dev_fields):
         number, size, developer_index = data
-        field = state.dev_fields[developer_index][number]
-        return Field(state.log, size, field, field.type)
+        field = dev_fields[developer_index][number]
+        return Field(size, field, field.type)
 
 
 class Checksum(Token):
@@ -251,6 +280,9 @@ class Checksum(Token):
         checksum = self.crc(self.all_data)
         if checksum != self.checksum:
             raise Exception('Bad checksum (%04x/%04x)' % (checksum, self.checksum))
+
+    def describe(self, types):
+        yield '%s - checksum' % tohex(self.data)
 
 
 def token_factory(data, state):
@@ -295,8 +327,10 @@ def tokens(log, data, types, messages):
     checksum.validate(offset)
 
 
-def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
+def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None, include_data=False):
     data, types, messages = load(log, fit_path, profile_path=profile_path)
+    if include_data:
+        yield data, types
     for i, (offset, token) in enumerate(tokens(log, data, types, messages)):
         if i >= after and (limit < 0 or i - after < limit):
             yield i, offset, token

@@ -5,7 +5,8 @@ from .format.records import no_bad_values, fix_degrees, append_units, no_unknown
     to_hex, no_filter
 from .format.tokens import filtered_records, filtered_tokens
 from .profile.types import Date
-from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS
+from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS
+from ..lib.data import tohex
 from ..lib.io import terminal_width
 from ..utils import unique
 
@@ -36,6 +37,9 @@ def summarize(log, fit_path, format, all_fields=False, all_messages=False, after
     if format == MESSAGES:
         summarize_messages(log, fit_path,
                            after=after, limit=limit, profile_path=profile_path)
+    elif format == FIELDS:
+        summarize_fields(log, fit_path,
+                         after=after, limit=limit, profile_path=profile_path)
     elif format == RECORDS:
         summarize_records(log, fit_path,
                           all_fields=all_fields, all_messages=all_messages,
@@ -47,6 +51,15 @@ def summarize(log, fit_path, format, all_fields=False, all_messages=False, after
 def summarize_messages(log, fit_path, after=0, limit=-1, profile_path=None):
     for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
         print('%03d %05d %s' % (index, offset, token))
+
+
+def summarize_fields(log, fit_path, after=0, limit=-1, profile_path=None):
+    tokens = filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path, include_data=True)
+    data, types = next(tokens)
+    for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
+        print('%03d %05d %s' % (index, offset, token))
+        for line in token.describe(types):
+            print('  %s' % line)
 
 
 def summarize_records(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
