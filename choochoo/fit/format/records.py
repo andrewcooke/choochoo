@@ -146,7 +146,7 @@ class Attributes(dict):
 
 class DictRecord(Record):
 
-    __slots__ = ()
+    # this has a __dict__ (for __cache, since slots not allowed)
 
     def data_with(self, **kargs):
         return it.chain(self.data.items(), kargs.items())

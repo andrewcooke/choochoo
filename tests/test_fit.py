@@ -2,11 +2,12 @@
 from logging import getLogger, basicConfig, DEBUG
 from sys import stdout
 
+from choochoo.args import FIELDS
+from choochoo.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
+from choochoo.fit.format.tokens import filtered_records
 from choochoo.fit.profile.fields import DynamicField
 from choochoo.fit.profile.profile import read_profile
-from fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from choochoo.fit.summary import summarize
-from fit.format.tokens import filtered_records
 
 
 def test_profile():
@@ -44,7 +45,8 @@ def test_dump():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    summarize(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit',
+    summarize(log, FIELDS,
+              '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit',
               profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
 
 
@@ -52,5 +54,6 @@ def test_developer():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    summarize(log, '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit',
+    summarize(log, FIELDS,
+              '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit',
               profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')

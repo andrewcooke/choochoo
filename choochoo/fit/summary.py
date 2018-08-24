@@ -29,11 +29,11 @@ Will print the contents of the file to stdout (use `-v 0` to suppress logging
 or redirect stderr elsewhere).
     '''
     fit_path = args.file(PATH, 0, rooted=False)
-    summarize(log, fit_path, args[DUMP_FORMAT], all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
+    summarize(log, args[DUMP_FORMAT], fit_path, all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
               after=args[AFTER][0], limit=args[LIMIT][0], profile_path=profile_path)
 
 
-def summarize(log, fit_path, format, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
+def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
     if format == MESSAGES:
         summarize_messages(log, fit_path,
                            after=after, limit=limit, profile_path=profile_path)

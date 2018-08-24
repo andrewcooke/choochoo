@@ -84,16 +84,13 @@ class Defined(Token):
 
     def __init__(self, tag, data, state, local_message_type):
         self.definition = state.definitions[local_message_type]
-        # some things cannot be lazy...
         if self.definition.timestamp_field:
             self.__parse_timestamp(data, state)
         self.timestamp = state.timestamp
+        super().__init__(tag, True, data[0:self.definition.size])
         if self.definition.global_message_no == 206:
             self.__parse_field_definition(state)
-            is_user = False
-        else:
-            is_user = True
-        super().__init__(tag, is_user, data[0:self.definition.size])
+            self.is_user = False
 
     def __parse_timestamp(self, data, state):
         field = self.definition.timestamp_field
@@ -173,14 +170,16 @@ class Definition(Token):
         self.global_message_no = unpack('<>'[self.endian]+'H', data[3:5])[0]
         self.message = state.messages.number_to_message(self.global_message_no)
         self.identity = Identity(self.message.name, state.definition_counter)
-        self.fields = self._process_fields(self._make_fields(data, self.message, state))
+        self.fields = self._process_fields(self._make_fields(data, state))
         super().__init__(tag, False, data[0:overhead+3*len(self.fields)])
         state.definitions[self.local_message_type] = self
 
-    def _make_fields(self, data, message, state):
-        n_fields = data[5]
-        for i in range(n_fields):
-            yield self.__field(data[6 + i * 3:6 + (i + 1) * 3], message, state.types)
+    def _make_fields(self, data, state):
+        yield from self.__fields(data, state.types)
+
+    def __fields(self, data, types):
+        for i in range(data[5]):
+            yield self.__field(data[6 + i * 3:6 + (i + 1) * 3], self.message, types)
 
     def __field(self, data, message, types):
         number, size, base = data
@@ -226,9 +225,11 @@ class Definition(Token):
         yield '%s - architecture' % tohex(self.data[2:3])
         yield '%s - msg no (%s)' % (tohex(self.data[3:5]), self.message.name)
         yield '%s - no of fields' % tohex(self.data[5:6])
-        for i, _ in enumerate(self.fields):
-            field = self.__field(self.data[6 + i*3:9 + i*3], self.message, types)
-            yield '  fld %d: %s' % (i, field.name)
+        for i in range(self.data[5]):
+            data = self.data[6 + i*3:9 + i*3]
+            field = self.__field(data, self.message, types)
+            mult = '' if field.count == 1 else 'x%d' % field.count
+            yield '  %s - fld %d: %s (%s%s)' % (tohex(data), i, field.name, field.base_type.name, mult)
 
 
 class DeveloperDefinition(Definition):
@@ -236,18 +237,29 @@ class DeveloperDefinition(Definition):
     def __init__(self, data, state):
         super().__init__(data, state, overhead=7, tag='DFX')
 
-    def _make_fields(self, data, message, state):
-        fields = tuple(super()._make_fields(data, message, state))
-        yield from fields
-        offset = len(fields) * 3 + 7
+    def _make_fields(self, data, state):
+        yield from super()._make_fields(data, state)
+        for field_data in self.__field_data(data):
+            yield self.__field(field_data, state.dev_fields)
+
+    def __field_data(self, data):
+        offset = data[5] * 3 + 7
         n_dev_fields = data[offset-1]
         for i in range(n_dev_fields):
-            yield self.__field(data[offset + i * 3:offset + (i + 1) * 3], state.dev_fields)
+            yield data[offset + i * 3:offset + (i + 1) * 3]
 
     def __field(self, data, dev_fields):
         number, size, developer_index = data
         field = dev_fields[developer_index][number]
         return Field(size, field, field.type)
+
+    def describe(self, types):
+        yield from super().describe(types)
+        offset = self.data[5] * 3 + 7
+        yield '%s - no of dev fields' % tohex(self.data[offset-1:offset])
+        for field_data in self.__field_data(self.data):
+            fdn, size, ddi = field_data
+            yield '  %s - dev fld %d/%d' % (tohex(field_data), fdn, ddi)
 
 
 class Checksum(Token):
