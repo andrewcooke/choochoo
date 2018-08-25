@@ -197,7 +197,7 @@ class Mapping(AbstractType):
             return value
 
     def parse(self, bytes, size, endian, map_values=True, **options):
-        values = self.base_type.parse(bytes, size, endian, map_values=True, **options)
+        values = self.base_type.parse(bytes, size, endian, map_values=map_values, **options)
         if map_values and values:
             values = tuple(self.safe_internal_to_profile(value) for value in values)
         return values

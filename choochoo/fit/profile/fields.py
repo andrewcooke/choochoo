@@ -114,7 +114,7 @@ class CompositeField(Zip, Named):
             nbytes = max((nbits+7) // 8, field.size(message))
             data = (bits & ((1 << bits) - 1)).to_bytes(nbytes, byteorder=byteorder)
             bits >>= nbits
-            components = list(field.parse(data, 1, endian, references, accumulate, message))
+            components = list(field.parse(data, 1, endian, references, accumulate, message, csv_hack=csv_hack, **options))
             # the sdk csv duplicates altitude and enhanced_altitude, etc.
             if csv_hack:
                 components.append((self.name, components[0][1]))
