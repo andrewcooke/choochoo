@@ -1,6 +1,6 @@
 
 from collections import namedtuple
-from itertools import repeat
+from itertools import repeat, zip_longest
 
 from .support import Named
 from ...lib.data import WarnDict
@@ -28,6 +28,12 @@ class ScaledField(Named):
             if self._is_accumulate:
                 values = accumulate(self, values)
         yield self.name, (values, self._units)
+
+    def post(self, message, types):
+        """
+        Called after message creation.
+        """
+        pass
 
 
 class TypedField(ScaledField):
@@ -73,16 +79,14 @@ class DelegateField(ScaledField):
 class Zip:
 
     def _zip(self, *fields):
-        return zip(*(self.__split(field, extend=n > 1) for n, field in enumerate(fields)))
+        return zip_longest(*(self.__split(field) for field in fields))
 
-    def __split(self, field, extend=False):
+    def __split(self, field):
         if field:
             for value in str(field).split(','):
                 yield value.strip()
         else:
             yield None
-        if extend:
-            yield from repeat(None)
 
 
 class CompositeField(Zip, Named):
@@ -98,6 +102,9 @@ class CompositeField(Zip, Named):
                                                     None if scale is None else float(scale),
                                                     None if offset is None else float(offset),
                                                     accumulate)))
+
+    def post(self, message, types):
+        pass
 
     def parse(self, data, count, endian, references, accumulate, message, **options):
         byteorder = ['little', 'big'][endian]
@@ -120,12 +127,14 @@ class DynamicField(Zip, RowField):
                 for name, value in self._zip(row.ref_name, row.ref_value):
                     self.references.add(name)
                     self.__dynamic_lookup[(name, value)] = row.field_name
-                    # when no mapping is used we need the internal value
-                    if types.is_type(name):
-                        value = types.profile_to_type(name).profile_to_internal(value)
-                        self.__dynamic_lookup[(name, value)] = row.field_name
             else:
                 break
+
+    def post(self, message, types):
+        # fill in values for when mapping is not used
+        for (name, value), field in list(self.__dynamic_lookup.items()):
+            value = types.profile_to_type(message.profile_to_field(name).type.name).profile_to_internal(value)
+            self.__dynamic_lookup[(name, value)] = field
 
     def parse(self, data, count, endian, references, accumulate, message, **options):
         for name in self.references:
@@ -133,7 +142,7 @@ class DynamicField(Zip, RowField):
                 lookup = (name, references[name][0][0])  # drop units and take first value
                 if lookup in self.__dynamic_lookup:
                     yield from message.profile_to_field(self.__dynamic_lookup[lookup]).parse(
-                        data, count, endian, references, accumulate, message)
+                        data, count, endian, references, accumulate, message, **options)
                     return
         self._log.warn('Could not resolve dynamic field %s' % self.name)
         yield from super().parse(data, count, endian, references, accumulate, message, **options)

@@ -140,9 +140,9 @@ class Date(AliasInteger):
         else:
             return time
 
-    def parse(self, data, count, endian, to_datetime=None, **options):
-        times = super().parse(data, count, endian, **options)
-        if (to_datetime is None and self.__to_datetime) or to_datetime:
+    def parse(self, data, count, endian, cvt_times=None, **options):
+        times = super().parse(data, count, endian, cvt_times=None, **options)
+        if (cvt_times is None and self.__to_datetime) or cvt_times:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
         return times
 
@@ -196,9 +196,9 @@ class Mapping(AbstractType):
         except KeyError:
             return value
 
-    def parse(self, bytes, size, endian, map=True, **options):
-        values = self.base_type.parse(bytes, size, endian, **options)
-        if map and values:
+    def parse(self, bytes, size, endian, map_values=True, **options):
+        values = self.base_type.parse(bytes, size, endian, map_values=True, **options)
+        if map_values and values:
             values = tuple(self.safe_internal_to_profile(value) for value in values)
         return values
 

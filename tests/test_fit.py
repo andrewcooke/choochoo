@@ -121,6 +121,7 @@ def test_csv():
 
     with TemporaryDirectory() as dir:
         for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/sdk/*.fit'):
+            print(fit_file)
             fit_dir, file = split(fit_file)
             name = splitext(file)[0]
             csv_name = '%s.%s' % (name, 'csv')

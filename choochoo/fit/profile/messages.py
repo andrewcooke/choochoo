@@ -35,6 +35,10 @@ class Message(Named):
     def number_to_field(self, value):
         return self._number_to_field[value]
 
+    def _post(self, types):
+        for field in self._number_to_field.values():
+            field.post(self, types)
+
     def parse(self, data, defn, timestamp, **options):
         return LazyRecord(self.name, self.number, defn.identity, timestamp, self.__parse(data, defn, **options))
 
@@ -62,14 +66,11 @@ class Message(Named):
 class RowMessage(Message):
 
     def __init__(self, log, row, rows, types):
-        try:
-            number = types.profile_to_type('mesg_num').profile_to_internal(row.msg_name)
-        except KeyError:
-            number = None
-            log.warn('No mesg_num for %r' % name)
+        number = types.profile_to_type('mesg_num').profile_to_internal(row.msg_name)
         super().__init__(log, row.msg_name, number)
         while rows:
             if not rows.peek().field_name:
+                self._post(types)
                 break
             self._add_field(MessageField(self._log, next(rows), rows, types))
 
