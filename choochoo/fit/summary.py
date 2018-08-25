@@ -64,7 +64,7 @@ def summarize_fields(log, fit_path, after=0, limit=-1, profile_path=None):
     data, types = next(tokens)
     for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
         print('%03d %05d %s' % (index, offset, token))
-        for line in token.describe(types):
+        for line in token.describe_fields(types):
             print('  %s' % line)
 
 
@@ -80,33 +80,8 @@ def summarize_records(log, fit_path, all_fields=False, all_messages=False, after
 
 def summarize_csv(log, fit_path, after=0, limit=-1, profile_path=None, out=stdout):
     for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
-        if not isinstance(token, FileHeader) and not isinstance(token, Checksum):
-            if isinstance(token, Definition):
-                print(','.join(str(component) for component in token_components(token)), file=out)
-            else:
-                print(','.join(str(component) for component in record_components(token)), file=out)
-
-
-def token_components(token):
-    yield token.__class__.__name__
-    yield token.local_message_type
-    yield token.message.name
-    for field in token.fields:
-        yield field.name
-        yield field.count
-        yield ''
-
-
-def record_components(token):
-    record = token.parse()
-    yield token.__class__.__name__
-    yield token.definition.local_message_type
-    yield record.name
-    for name, (values, units) in record.data:
-        for value in values:
-            yield name
-            yield '' if value is None else value
-            yield '' if units is None else units
+        if hasattr(token, 'describe_csv'):
+            print(','.join(str(component) for component in token.describe_csv()), file=out)
 
 
 def partition(records, counts, threshold=3):

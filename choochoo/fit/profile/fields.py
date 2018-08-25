@@ -18,8 +18,8 @@ class ScaledField(Named):
         self._is_scaled = self._scale != 1 or self._offset != 0
         self._is_accumulate = accumulate
 
-    def _parse_and_scale(self, type, data, count, endian, accumulate):
-        values = type.parse(data, count, endian)
+    def _parse_and_scale(self, type, data, count, endian, accumulate, **options):
+        values = type.parse(data, count, endian, **options)
         if values is not None:
             if self._is_scaled:
                 if any(isinstance(value, str) for value in values) or isinstance(self._scale, str):
@@ -37,8 +37,8 @@ class TypedField(ScaledField):
         self.number = field_no
         self.type = types.profile_to_type(field_type)
 
-    def parse(self, data, count, endian, references, accumulate, message):
-        yield from self._parse_and_scale(self.type, data, count, endian, accumulate)
+    def parse(self, data, count, endian, references, accumulate, message, **options):
+        yield from self._parse_and_scale(self.type, data, count, endian, accumulate, **options)
 
 
 class RowField(TypedField):
@@ -51,11 +51,11 @@ class RowField(TypedField):
 
 class DelegateField(ScaledField):
 
-    def parse(self, data, count, endian, references, accumulate, message):
+    def parse(self, data, count, endian, references, accumulate, message, **options):
         # todo - do we need to worry about padding data?
         delegate = message.profile_to_field(self.name)
         if isinstance(delegate, RowField):
-            yield from self._parse_and_scale(delegate.type, data, count, endian, accumulate)
+            yield from self._parse_and_scale(delegate.type, data, count, endian, accumulate, **options)
         else:
             # on dangerous ground here.  docs are unclear.  we'll do a complete delegation
             # unless this is scaled, in which case we don't know how to both scale and
@@ -63,7 +63,7 @@ class DelegateField(ScaledField):
             if self._is_scaled:
                 raise Exception('Scaled component is not a simple field')
             else:
-                yield from delegate.parse(data, count, endian, references, accumulate, message)
+                yield from delegate.parse(data, count, endian, references, accumulate, message, **options)
 
     def size(self, message):
         delegate = message.profile_to_field(self.name)
@@ -99,7 +99,7 @@ class CompositeField(Zip, Named):
                                                     None if offset is None else float(offset),
                                                     accumulate)))
 
-    def parse(self, data, count, endian, references, accumulate, message):
+    def parse(self, data, count, endian, references, accumulate, message, **options):
         byteorder = ['little', 'big'][endian]
         bits = int.from_bytes(data, byteorder=byteorder)
         for nbits, field in self.__components:
@@ -120,10 +120,14 @@ class DynamicField(Zip, RowField):
                 for name, value in self._zip(row.ref_name, row.ref_value):
                     self.references.add(name)
                     self.__dynamic_lookup[(name, value)] = row.field_name
+                    # when no mapping is used we need the internal value
+                    if types.is_type(name):
+                        value = types.profile_to_type(name).profile_to_internal(value)
+                        self.__dynamic_lookup[(name, value)] = row.field_name
             else:
                 break
 
-    def parse(self, data, count, endian, references, accumulate, message):
+    def parse(self, data, count, endian, references, accumulate, message, **options):
         for name in self.references:
             if name in references:
                 lookup = (name, references[name][0][0])  # drop units and take first value
@@ -132,7 +136,7 @@ class DynamicField(Zip, RowField):
                         data, count, endian, references, accumulate, message)
                     return
         self._log.warn('Could not resolve dynamic field %s' % self.name)
-        yield from super().parse(data, count, endian, references, accumulate, message)
+        yield from super().parse(data, count, endian, references, accumulate, message, **options)
 
 
 def MessageField(log, row, rows, types):

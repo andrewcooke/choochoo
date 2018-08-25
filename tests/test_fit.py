@@ -65,7 +65,9 @@ def test_developer():
 
 def dump_csv(log, fit_file, csv_file):
     with open(csv_file, 'w') as output:
-        summarize_csv(log, fit_file, out=output)
+        summarize_csv(log, fit_file,
+                      profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx',
+                      out=output)
 
 
 # https://docs.python.org/3/library/itertools.html#itertools-recipes

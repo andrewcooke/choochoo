@@ -23,7 +23,7 @@ class AbstractType(Named):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
     @abstractmethod
-    def parse(self, bytes, count, endian):
+    def parse(self, bytes, count, endian, **options):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
 
@@ -70,7 +70,7 @@ class String(BaseType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, str)
 
-    def parse(self, bytes, count, endian):
+    def parse(self, bytes, count, endian, **options):
         return (str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8'),)
 
 
@@ -79,7 +79,7 @@ class Boolean(BaseType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, bool)
 
-    def parse(self, bytes, count, endian):
+    def parse(self, bytes, count, endian, **options):
         return tuple(bool(byte) for byte in bytes)
 
 
@@ -111,7 +111,7 @@ class AutoInteger(StructSupport):
         else:
             return int(cell, 0)
 
-    def parse(self, data, count, endian):
+    def parse(self, data, count, endian, **options):
         result = self._unpack(data, self.formats, self.bad, count, endian)
         if result is not None and self.size == 1:
             result = bytes(result)
@@ -139,8 +139,8 @@ class Date(AliasInteger):
         else:
             return time
 
-    def parse(self, data, count, endian):
-        times = super().parse(data, count, endian)
+    def parse(self, data, count, endian, **options):
+        times = super().parse(data, count, endian, **options)
         if self.__to_datetime:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
         return times
@@ -164,7 +164,7 @@ class AutoFloat(StructSupport):
         self.formats = ['<%d' + format, '>%d' + format]
         self.bad = self._pack_bad(2 ** bits - 1)
 
-    def parse(self, data, count, endian):
+    def parse(self, data, count, endian, **options):
         return self._unpack(data, self.formats, self.bad, count, endian)
 
 
@@ -195,9 +195,9 @@ class Mapping(AbstractType):
         except KeyError:
             return value
 
-    def parse(self, bytes, size, endian):
-        values = self.base_type.parse(bytes, size, endian)
-        if values:
+    def parse(self, bytes, size, endian, map=True, **options):
+        values = self.base_type.parse(bytes, size, endian, **options)
+        if map and values:
             values = tuple(self.safe_internal_to_profile(value) for value in values)
         return values
 
@@ -255,6 +255,9 @@ class Types:
                                 (type.name, type.size, duplicate.size))
         else:
             self.__profile_to_type.add_named(type)
+
+    def is_type(self, name):
+        return name in self.__profile_to_type
 
     def profile_to_type(self, name, auto_create=False):
         try:

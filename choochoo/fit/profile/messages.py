@@ -35,30 +35,28 @@ class Message(Named):
     def number_to_field(self, value):
         return self._number_to_field[value]
 
-    def parse(self, data, defn, timestamp=None):
-        return LazyRecord(self.name, self.number, defn.identity, timestamp, self.__parse(data, defn))
+    def parse(self, data, defn, timestamp, **options):
+        return LazyRecord(self.name, self.number, defn.identity, timestamp, self.__parse(data, defn, **options))
 
-    def __parse(self, data, defn):
+    def __parse(self, data, defn, **options):
         # this is the generator that lives inside a record and is evaluated on demand
         references = {} if defn.references else None
         for field in defn.fields:
             bytes = data[field.start:field.finish]
             if field.field:
                 for name, value in self._parse_field(
-                        field.field, bytes, field.count, defn.endian, references, defn.accumulate, self):
+                        field.field, bytes, field.count, defn.endian, references, defn.accumulate, self, **options):
                     if name in defn.references:
                         references[name] = value
                     yield name, value
             else:
                 name = '@%d:%d' % (field.start, field.finish)
                 value = (field.base_type.parse(bytes, field.count, defn.endian), None)
-                if name in defn.references:
-                    references[name] = value
                 yield name, value
 
-    def _parse_field(self, field, bytes, count, endian, references, accumulate, message):
+    def _parse_field(self, field, bytes, count, endian, references, accumulate, message, **options):
         # allow interception for optional field in header
-        yield from field.parse(bytes, count, endian, references, accumulate, message)
+        yield from field.parse(bytes, count, endian, references, accumulate, message, **options)
 
 
 class RowMessage(Message):

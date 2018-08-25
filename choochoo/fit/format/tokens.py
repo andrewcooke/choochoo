@@ -68,7 +68,7 @@ class FileHeader(Token):
             if checksum != self.checksum:
                 raise Exception('Inconsistent checksum (%04x/%04x)' % (checksum, self.checksum))
 
-    def describe(self, types):
+    def describe_fields(self, types):
         yield '%s - header' % tohex(self.data[0:1])
         yield '%s - protocol version' % tohex(self.data[1:2])
         yield '%s - profile version' % tohex(self.data[2:4])
@@ -110,16 +110,27 @@ class Defined(Token):
         state.dev_fields[developer_index][number] = \
             TypedField(state.log, name, number, units, None, None, None, base_type.name, state.types)
 
-    def parse(self):
-        return self.definition.message.parse(self.data, self.definition, self.timestamp)
+    def parse(self, **options):
+        return self.definition.message.parse(self.data, self.definition, self.timestamp, **options)
 
     def describe_header(self, types):
         return '%s - header' % tohex(self.data[0:1])
 
-    def describe(self, types):
+    def describe_fields(self, types):
         yield self.describe_header(types)
         for field in sorted(self.definition.fields, key=lambda field: field.start):
             yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
+
+    def describe_csv(self):
+        record = self.parse(map=False)
+        yield self.__class__.__name__
+        yield self.definition.local_message_type
+        yield record.name
+        for name, (values, units) in record.data:
+            for value in values:
+                yield name
+                yield '' if value is None else value
+                yield '' if units is None else units
 
 
 class Data(Defined):
@@ -219,7 +230,7 @@ class Definition(Token):
             self.__sums[field] = values
         return self.__sums[field][0:n]
 
-    def describe(self, types):
+    def describe_fields(self, types):
         yield '%s - header (msg %d)' % (tohex(self.data[0:1]), self.local_message_type)
         yield '%s - reserved' % tohex(self.data[1:2])
         yield '%s - architecture' % tohex(self.data[2:3])
@@ -230,6 +241,15 @@ class Definition(Token):
             field = self.__field(data, self.message, types)
             mult = '' if field.count == 1 else 'x%d' % field.count
             yield '  %s - fld %d: %s (%s%s)' % (tohex(data), i, field.name, field.base_type.name, mult)
+
+    def describe_csv(self):
+        yield self.__class__.__name__
+        yield self.local_message_type
+        yield self.message.name
+        for field in self.fields:
+            yield field.name
+            yield field.count
+            yield ''
 
 
 class DeveloperDefinition(Definition):
@@ -253,8 +273,8 @@ class DeveloperDefinition(Definition):
         field = dev_fields[developer_index][number]
         return Field(size, field, field.type)
 
-    def describe(self, types):
-        yield from super().describe(types)
+    def describe_fields(self, types):
+        yield from super().describe_fields(types)
         offset = self.data[5] * 3 + 7
         yield '%s - no of dev fields' % tohex(self.data[offset-1:offset])
         for field_data in self.__field_data(self.data):
@@ -293,7 +313,7 @@ class Checksum(Token):
         if checksum != self.checksum:
             raise Exception('Bad checksum (%04x/%04x)' % (checksum, self.checksum))
 
-    def describe(self, types):
+    def describe_fields(self, types):
         yield '%s - checksum' % tohex(self.data)
 
 
