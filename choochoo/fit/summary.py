@@ -90,17 +90,23 @@ def summarize_csv(log, fit_path, after=0, limit=-1, profile_path=None, out=stdou
 def token_components(token):
     yield token.__class__.__name__
     yield token.local_message_type
+    yield token.message.name
+    for field in token.fields:
+        yield field.name
+        yield field.count
+        yield ''
 
 
 def record_components(token):
     record = token.parse()
     yield token.__class__.__name__
-    yield token.local_message_type
+    yield token.definition.local_message_type
     yield record.name
     for name, (values, units) in record.data:
-        yield name
-        yield values
-        yield units
+        for value in values:
+            yield name
+            yield '' if value is None else value
+            yield '' if units is None else units
 
 
 def partition(records, counts, threshold=3):
