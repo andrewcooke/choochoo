@@ -122,7 +122,7 @@ class Defined(Token):
             yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
 
     def describe_csv(self):
-        record = self.parse(map=False)
+        record = self.parse(map=False, to_datetime=False)
         yield self.__class__.__name__
         yield self.definition.local_message_type
         yield record.name

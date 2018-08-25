@@ -71,7 +71,8 @@ class String(BaseType):
         super().__init__(log, name, 1, str)
 
     def parse(self, bytes, count, endian, **options):
-        return (str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8'),)
+        return (str(b''.join(byte for byte in unpack('%dc' % count, bytes) if byte != b'\0'),
+                    encoding='utf-8'),)
 
 
 class Boolean(BaseType):
@@ -139,9 +140,9 @@ class Date(AliasInteger):
         else:
             return time
 
-    def parse(self, data, count, endian, **options):
+    def parse(self, data, count, endian, to_datetime=None, **options):
         times = super().parse(data, count, endian, **options)
-        if self.__to_datetime:
+        if (to_datetime is None and self.__to_datetime) or to_datetime:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
         return times
 
@@ -215,13 +216,13 @@ BASE_TYPE_NAMES = ['enum', 'sint8', 'uint8', 'sint16', 'uint16', 'sint32', 'uint
 
 class Types:
 
-    def __init__(self, log, sheet, to_datetime=True):
+    def __init__(self, log, sheet):
         self.__log = log
         self.__profile_to_type = WarnDict(log, 'No type for profile %r')
         # these are not 'base types' in the same sense as types having base types.
         # rather, they are the 'base (integer) types' described in the docs
         self.base_types = WarnList(log, 'No base type for number %r')
-        self.__add_known_types(to_datetime)
+        self.__add_known_types()
         rows = Rows(sheet, wrapper=Row)
         for row in rows:
             if row[0] and row.type_name[0].isupper():
@@ -230,7 +231,7 @@ class Types:
                 # self.__log.info('Parsing type %s' % row[0])
                 self.__add_type(Mapping(self.__log, row, rows, self))
 
-    def __add_known_types(self, to_datetime):
+    def __add_known_types(self):
         # these cannot be inferred from name
         self.__add_type(String(self.__log, 'string'))
         self.__add_type(AliasInteger(self.__log, 'enum', 'uint8'))
@@ -242,8 +243,8 @@ class Types:
         # this is in the spreadsheet, but not in the doc
         self.__add_type(Boolean(self.__log, 'bool'))
         # these are defined in the spreadsheet, but the interpretation is in comments
-        self.__add_type(Date(self.__log, 'date_time', True, to_datetime=to_datetime))
-        self.__add_type(Date(self.__log, 'local_date_time', False, to_datetime=to_datetime))
+        self.__add_type(Date(self.__log, 'date_time', True))
+        self.__add_type(Date(self.__log, 'local_date_time', False))
 
     def __add_type(self, type):
         if type.name in self.__profile_to_type:

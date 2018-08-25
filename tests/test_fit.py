@@ -3,6 +3,7 @@ from glob import glob
 from itertools import zip_longest
 from logging import getLogger, basicConfig, DEBUG
 from os.path import splitext, basename, split, join
+from re import sub
 from sys import stdout
 from tempfile import TemporaryDirectory
 
@@ -81,9 +82,11 @@ def grouper(iterable, n, fillvalue=None):
 def compare_rows(log, us, them, name):
     assert us[0:3] == them[0:3], "%s != %s for %s\n(%s\n%s)" % (us[0:3], them[0:3], name, us, them)
     excess = len(them) % 3
-    if excess and not all(them[-excess:]):
+    if excess and not any(them[-excess:]):
         log.warn('Discarding %d empty values from reference' % excess)
         them = them[:-excess]
+    while len(them) > len(us) + 2 and not any(them[-3:]):
+        them = them[:-3]
     # after first 3 entries need to sort to be sure order is correct
     for us_nvu, them_nvu in zip_longest(sorted(grouper(us[3:], 3)),
                                         sorted(grouper(them[3:], 3))):
@@ -91,6 +94,18 @@ def compare_rows(log, us, them, name):
 
 
 def compare_csv(log, us, them, name):
+    # print(us)
+    # with open(us, 'r') as us_in:
+    #     for line in us_in.readlines():
+    #         print("%s" % line.strip())
+    #         if '\0' in line:
+    #             print(sub('\0', 'NULL', line.strip()))
+    # print(them)
+    # with open(them, 'r') as them_in:
+    #     for line in them_in.readlines():
+    #         print("%s" % line.strip())
+    #         if '\0' in line:
+    #             print(sub('\0', 'NULL', line.strip()))
     with open(us, 'r') as us_in, open(them, 'r') as them_in:
         us_reader = reader(us_in)
         them_reader = reader(them_in)
