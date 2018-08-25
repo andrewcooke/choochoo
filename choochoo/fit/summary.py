@@ -1,12 +1,12 @@
 
 from collections import Counter
+from sys import stdout
 
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
     to_hex, no_filter
-from .format.tokens import filtered_records, filtered_tokens
+from .format.tokens import filtered_records, filtered_tokens, FileHeader, Definition, Checksum
 from .profile.types import Date
-from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS
-from ..lib.data import tohex
+from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV
 from ..lib.io import terminal_width
 from ..utils import unique
 
@@ -18,6 +18,9 @@ def dump_fit(args, log, profile_path=None):
     ch2 dump-fit FILE.FIT
 
 Print the contents of a fit file.
+
+The format and details displayed can be selected with --records,
+--messages, --fields, and --csv.
 
 For full options see `ch2 dump-fit -h`.
 
@@ -44,6 +47,9 @@ def summarize(log, format, fit_path, all_fields=False, all_messages=False, after
         summarize_records(log, fit_path,
                           all_fields=all_fields, all_messages=all_messages,
                           after=after, limit=limit, profile_path=profile_path)
+    elif format == CSV:
+        summarize_csv(log, fit_path,
+                      after=after, limit=limit, profile_path=profile_path)
     else:
         raise Exception('Bad format: %s' % format)
 
@@ -70,6 +76,31 @@ def summarize_records(log, fit_path, all_fields=False, all_messages=False, after
     print()
     pprint_as_dicts(small, all_fields, all_messages, width=width)
     pprint_as_tuples(large, all_fields, all_messages, width=width)
+
+
+def summarize_csv(log, fit_path, after=0, limit=-1, profile_path=None, out=stdout):
+    for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
+        if not isinstance(token, FileHeader) and not isinstance(token, Checksum):
+            if isinstance(token, Definition):
+                print(','.join(str(component) for component in token_components(token)), file=out)
+            else:
+                print(','.join(str(component) for component in record_components(token)), file=out)
+
+
+def token_components(token):
+    yield token.__class__.__name__
+    yield token.local_message_type
+
+
+def record_components(token):
+    record = token.parse()
+    yield token.__class__.__name__
+    yield token.local_message_type
+    yield record.name
+    for name, (values, units) in record.data:
+        yield name
+        yield values
+        yield units
 
 
 def partition(records, counts, threshold=3):

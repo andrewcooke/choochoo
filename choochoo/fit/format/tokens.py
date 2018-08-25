@@ -80,9 +80,10 @@ class FileHeader(Token):
 
 class Defined(Token):
 
-    __slots__ = ('definition', 'timestamp')
+    __slots__ = ('local_message_type', 'definition', 'timestamp')
 
     def __init__(self, tag, data, state, local_message_type):
+        self.local_message_type = local_message_type
         self.definition = state.definitions[local_message_type]
         if self.definition.timestamp_field:
             self.__parse_timestamp(data, state)

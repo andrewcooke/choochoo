@@ -23,6 +23,7 @@ VERSION = 'version'
 AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
+CSV = 'csv'
 DATABASE = 'database'
 DEV = 'dev'
 DUMP_FORMAT = 'dump_format'
@@ -120,19 +121,23 @@ def parser():
                                       'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
     dump.add_argument(PATH, action='store', metavar='FIT-FILE', nargs=1,
                       help='the path to the fit file')
-    dump.add_argument(mm(ALL_FIELDS), action='store_true', help='display undocumented fields?')
-    dump.add_argument(mm(ALL_MESSAGES), action='store_true', help='display undocumented messages?')
     dump.add_argument(mm(AFTER), action='store', nargs=1, type=int, metavar='N', default=[0],
                       help='skip initial messages')
     dump.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
                       help='limit number of messages displayed')
     dump_format = dump.add_mutually_exclusive_group()
     dump_format.add_argument(mm(RECORDS), action='store_const', dest=DUMP_FORMAT, const=RECORDS,
-                             help='show high-level record structure')
+                             help='show high-level structure')
+    dump_format.add_argument(mm(CSV), action='store_const', dest=DUMP_FORMAT, const=CSV,
+                             help='show med-level structure (CSV format)')
     dump_format.add_argument(mm(MESSAGES), action='store_const', dest=DUMP_FORMAT, const=MESSAGES,
                              help='show low-level message structure')
     dump_format.add_argument(mm(FIELDS), action='store_const', dest=DUMP_FORMAT, const=FIELDS,
-                             help='show low-level field structure (within messages)')
+                             help='show low-level field structure (details)')
+    dump.add_argument(mm(ALL_FIELDS), action='store_true',
+                      help='display undocumented fields (for %s)' % mm(RECORDS))
+    dump.add_argument(mm(ALL_MESSAGES), action='store_true',
+                      help='display undocumented messages (for %s)' % mm(RECORDS))
     dump.set_defaults(command=DUMP_FIT, dump_format=RECORDS)
 
     help = subparsers.add_parser(HELP,

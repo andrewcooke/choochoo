@@ -13,8 +13,8 @@
   * XXX  Accumulate flag
   * Developer fields w trimmings (see all possible fields in excel)
   * Tests:
-    * Output to CSV
-    * Checksum errors
+    * Output to CSV and tests
+    * XXX  Checksum errors
     * XXX  Data directory?  Copyright?
 
 * Command line addition of reminders
@@ -29,6 +29,6 @@
 * Heart rate zone analysis
 
 * Docs, docs, docs
-  * How to organise on gihub
+  * How to organise on github
   * XXX  Help command
   
