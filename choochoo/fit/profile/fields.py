@@ -106,14 +106,19 @@ class CompositeField(Zip, Named):
     def post(self, message, types):
         pass
 
-    def parse(self, data, count, endian, references, accumulate, message, **options):
+    def parse(self, data, count, endian, references, accumulate, message, csv_hack=False, **options):
+        csv_hack = csv_hack and len(self.__components) == 1
         byteorder = ['little', 'big'][endian]
         bits = int.from_bytes(data, byteorder=byteorder)
         for nbits, field in self.__components:
             nbytes = max((nbits+7) // 8, field.size(message))
             data = (bits & ((1 << bits) - 1)).to_bytes(nbytes, byteorder=byteorder)
             bits >>= nbits
-            yield from field.parse(data, 1, endian, references, accumulate, message)
+            components = list(field.parse(data, 1, endian, references, accumulate, message))
+            # the sdk csv duplicates altitude and enhanced_altitude, etc.
+            if csv_hack:
+                components.append((self.name, components[0][1]))
+            yield from components
 
 
 class DynamicField(Zip, RowField):
@@ -121,11 +126,14 @@ class DynamicField(Zip, RowField):
     def __init__(self, log, row, rows, types):
         super().__init__(log, row, types)
         self.__dynamic_lookup = WarnDict(log, 'No dynamic field for %r')
-        self.references = set()
+        self.references = []
         for row in rows.lookahead():
             if row and row.field_name and row.field_no is None:
                 for name, value in self._zip(row.ref_name, row.ref_value):
-                    self.references.add(name)
+                    # need to use a list (not set) to preserve order
+                    # (and consistently disambiguate multiple matches)
+                    if name not in self.references:
+                        self.references.append(name)
                     self.__dynamic_lookup[(name, value)] = row.field_name
             else:
                 break
