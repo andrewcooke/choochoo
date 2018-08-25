@@ -127,10 +127,9 @@ class Defined(Token):
         yield self.definition.local_message_type
         yield record.name
         for name, (values, units) in record.data:
-            for value in values:
-                yield name
-                yield '' if value is None else value
-                yield '' if units is None else units
+            yield name
+            yield '' if values is None else '|'.join(str(value) for value in values)
+            yield '' if units is None else units
 
 
 class Data(Defined):
