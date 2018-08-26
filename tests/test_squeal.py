@@ -30,7 +30,7 @@ class Data(Base):
     __tablename__ = 'data'
 
     integer = s.Column(s.Integer, primary_key=True)
-    text = s.Column(s.Text, nullable=False, default='')
+    text = s.Column(s.Text, nullable=False, server_default='')
     date = s.Column(Ordinal)
 
 
@@ -89,7 +89,7 @@ def test_bind():
         pass
 
     session.expunge_all()
-    # no need to add data - it was saved when teh first binder above did a query
+    # no need to add data - it was saved when the first binder above did a query
     widget = DataWidget()
     binder = Binder(log, session, widget, Data, multirow=True, defaults={'integer': 42})
 
