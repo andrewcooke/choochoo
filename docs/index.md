@@ -1,4 +1,8 @@
 
+---
+title: choochoo (ch2)
+---
+
 A training diary written mainly for myself, but perhaps attractive to others
 who also want a way to track and plan their progress that is open, lightweight
 and extensible.
