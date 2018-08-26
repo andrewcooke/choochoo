@@ -242,7 +242,7 @@ class Definition(Token):
             yield '  %s - fld %d: %s (%s%s)' % (tohex(data), i, field.name, field.base_type.name, mult)
 
     def describe_csv(self):
-        yield self.__class__.__name__
+        yield 'Definition'
         yield self.local_message_type
         yield self.message.name
         for field in self.fields:

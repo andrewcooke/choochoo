@@ -60,7 +60,6 @@ class DelegateField(ScaledField):
         delegate = message.profile_to_field(self.name)
         if isinstance(delegate, RowField):
             yield from self._parse_and_scale(delegate.type, data, count, endian, accumulate, **options)
-            # yield from delegate.parse(data, count, endian, references, accumulate, message, **options)
         else:
             # on dangerous ground here.  docs are unclear.  we'll do a complete delegation
             # unless this is scaled, in which case we don't know how to both scale and
@@ -108,8 +107,7 @@ class CompositeField(Zip, TypedField):
 
     def parse(self, data, count, endian, references, accumulate, message, rtn_composite=False, **options):
         if rtn_composite:
-            yield from super().parse(data, count, endian, references, accumulate, message,
-                                     rtn_composite=rtn_composite, **options)
+            yield (self.name, (('COMPOSITE',), self._units))
         byteorder = ['little', 'big'][endian]
         bits = int.from_bytes(data, byteorder=byteorder)
         for nbits, field in self.__components:

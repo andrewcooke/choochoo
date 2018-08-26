@@ -94,7 +94,7 @@ class Skip:
 def cleaned(values):
     # want a good example for scaling errors, not zero
     # also, suspect some 0.0 might be 0.... (remove this later to check)
-    return ('0' if value == '0.0' else value for value in values)
+    return (value[:-2] if value.endswith('.0') else value for value in values)
 
 
 def compare_rows(log, us, them, name, skip):
@@ -108,7 +108,8 @@ def compare_rows(log, us, them, name, skip):
     # after first 3 entries need to sort to be sure order is correct
     for us_nvu, them_nvu in zip_longest(sorted(grouper(cleaned(us[3:]), 3)),
                                         sorted(grouper(cleaned(them[3:]), 3))):
-        assert us_nvu == them_nvu or skip, "%s != %s for %s\n(%s\n%s)" % (us_nvu, them_nvu, name, us, them)
+        if 'COMPOSITE' not in us_nvu[1]:
+            assert us_nvu == them_nvu or skip, "%s != %s for %s\n(%s\n%s)" % (us_nvu, them_nvu, name, us, them)
 
 
 def compare_csv(log, us, them, name, skip):
@@ -138,7 +139,7 @@ def test_csv():
     log = getLogger()
 
     with TemporaryDirectory() as dir:
-        skip = Skip(2)
+        skip = Skip(2)  # timer_trigger in Activity.fit
         for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/sdk/*.fit'):
             print(fit_file)
             fit_dir, file = split(fit_file)
@@ -148,3 +149,4 @@ def test_csv():
             csv_them = join(fit_dir, csv_name)
             dump_csv(log, fit_file, csv_us)
             compare_csv(log, csv_us, csv_them, name, skip)
+        assert skip.skip == 0, 'Unused skipped tests'
