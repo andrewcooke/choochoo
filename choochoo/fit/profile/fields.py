@@ -22,8 +22,6 @@ class ScaledField(Named):
         values = type.parse(data, count, endian, **options)
         if values is not None:
             if self._is_scaled:
-                if any(isinstance(value, str) for value in values) or isinstance(self._scale, str):
-                    print('x')
                 values = tuple(value / self._scale - self._offset for value in values)
             if self._is_accumulate:
                 values = accumulate(self, values)
@@ -62,6 +60,7 @@ class DelegateField(ScaledField):
         delegate = message.profile_to_field(self.name)
         if isinstance(delegate, RowField):
             yield from self._parse_and_scale(delegate.type, data, count, endian, accumulate, **options)
+            # yield from delegate.parse(data, count, endian, references, accumulate, message, **options)
         else:
             # on dangerous ground here.  docs are unclear.  we'll do a complete delegation
             # unless this is scaled, in which case we don't know how to both scale and
@@ -89,10 +88,11 @@ class Zip:
             yield None
 
 
-class CompositeField(Zip, Named):
+class CompositeField(Zip, TypedField):
 
-    def __init__(self, log, row):
-        super().__init__(log, row.field_name)
+    def __init__(self, log, row, types):
+        super().__init__(log, row.field_name, row.single_int(log, row.field_no), row.units,
+                         None, None, None, row.field_type, types)
         self.number = row.single_int(log, row.field_no)
         self.__components = []
         for (name, bits, units, scale, offset, accumulate) in \
@@ -106,19 +106,18 @@ class CompositeField(Zip, Named):
     def post(self, message, types):
         pass
 
-    def parse(self, data, count, endian, references, accumulate, message, csv_hack=False, **options):
-        csv_hack = csv_hack and len(self.__components) == 1
+    def parse(self, data, count, endian, references, accumulate, message, rtn_composite=False, **options):
+        if rtn_composite:
+            yield from super().parse(data, count, endian, references, accumulate, message,
+                                     rtn_composite=rtn_composite, **options)
         byteorder = ['little', 'big'][endian]
         bits = int.from_bytes(data, byteorder=byteorder)
         for nbits, field in self.__components:
             nbytes = max((nbits+7) // 8, field.size(message))
-            data = (bits & ((1 << bits) - 1)).to_bytes(nbytes, byteorder=byteorder)
+            data = (bits & ((1 << nbits) - 1)).to_bytes(nbytes, byteorder=byteorder)
             bits >>= nbits
-            components = list(field.parse(data, 1, endian, references, accumulate, message, csv_hack=csv_hack, **options))
-            # the sdk csv duplicates altitude and enhanced_altitude, etc.
-            if csv_hack:
-                components.append((self.name, components[0][1]))
-            yield from components
+            yield from field.parse(data, 1, endian, references, accumulate, message,
+                                   rtn_composite=rtn_composite, **options)
 
 
 class DynamicField(Zip, RowField):
@@ -159,7 +158,7 @@ class DynamicField(Zip, RowField):
 def MessageField(log, row, rows, types):
     # log.debug('Parsing field %s' % row.field_name)
     if row.components:
-        return CompositeField(log, row)
+        return CompositeField(log, row, types)
     else:
         peek = rows.peek()
         if peek and peek.field_name and peek.field_no is None:

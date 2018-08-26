@@ -44,7 +44,7 @@ class Message(Named):
 
     def __parse(self, data, defn, **options):
         # this is the generator that lives inside a record and is evaluated on demand
-        references = {} if defn.references else None
+        references = {}
         for field in defn.fields:
             bytes = data[field.start:field.finish]
             if field.field:

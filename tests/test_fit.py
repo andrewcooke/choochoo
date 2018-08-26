@@ -91,6 +91,12 @@ class Skip:
             self.skip -= 1
 
 
+def cleaned(values):
+    # want a good example for scaling errors, not zero
+    # also, suspect some 0.0 might be 0.... (remove this later to check)
+    return ('0' if value == '0.0' else value for value in values)
+
+
 def compare_rows(log, us, them, name, skip):
     assert us[0:3] == them[0:3] or skip, "%s != %s for %s\n(%s\n%s)" % (us[0:3], them[0:3], name, us, them)
     excess = len(them) % 3
@@ -100,8 +106,8 @@ def compare_rows(log, us, them, name, skip):
     while len(them) > len(us) + 2 and not any(them[-3:]):
         them = them[:-3]
     # after first 3 entries need to sort to be sure order is correct
-    for us_nvu, them_nvu in zip_longest(sorted(grouper(us[3:], 3)),
-                                        sorted(grouper(them[3:], 3))):
+    for us_nvu, them_nvu in zip_longest(sorted(grouper(cleaned(us[3:]), 3)),
+                                        sorted(grouper(cleaned(them[3:]), 3))):
         assert us_nvu == them_nvu or skip, "%s != %s for %s\n(%s\n%s)" % (us_nvu, them_nvu, name, us, them)
 
 
