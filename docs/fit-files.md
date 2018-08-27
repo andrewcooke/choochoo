@@ -21,18 +21,19 @@ is displaying the data in a variety of formats.
   * [The `records` format](#the-records-format) (the default) - this
     shows the file contents in a high-level, easy-to-read format.
   
-  * The `messages` format - this displays the low-level binary data and
-    is mostly of use when debugging errors.
+  * [The `messages` format](#the-messages-format) - this displays the
+    low-level binary data and is mostly of use when debugging errors.
 
-  * The `fields` format - a more detailed low-level display that is also
-    mostly used for debugging.
+  * [The `fields` format](#the-fields-format) - a more detailed
+    low-level display that is also mostly used for debugging.
 
-  * The `csv` format - used to compare test data with the examples
-    provided in the [SDK](https://www.thisisant.com/resources/fit).
+  * [The `csv` format](#the-csv-format) - used to compare test data
+    with the examples provided in the
+    [SDK](https://www.thisisant.com/resources/fit).
 
-* Third-party API use
+* [Third-party API use](#third-party-api-use)
 
-* Implementation and limitations
+* [Implementation and limitations](#implementation-and-limitations)
 
 ## Displaying FIT Data
 
@@ -51,6 +52,10 @@ For details of all the options:
     ch2 -v 0 dump-fit --records --all-fields --all-messages FILE
 
     ch2 -v 0 dump-fit --records --after N1 --limit N2 FILE
+
+Note that `-v 0` is used to supress any logging that would otherwise
+confuse the output to the screen.  Logs are still written to the logs
+directory.
 
 #### Format Description
 
@@ -275,3 +280,36 @@ and type.
 
 The example above shows header (HDR), definition (DFN), data (DTA),
 and checksum (CRC) messages.
+
+## Implementation and Limitations
+
+The spreadsheet included in the FIT SDK is read directly by the Python
+code and used to generate an in-memory description of the known fields
+and messages.  This is then saved to disk ("pickled" in Python
+parlance) so that it can be read quickly when needed.
+
+Details of parsing the data are done lazily wherever possible.  So if
+a program only wants to read a certain kind of message it does not
+have to do teh work of decoding all the other message types.
+
+The code is validated against the examples provided in the ANT SDK and
+has the following known limtations:
+
+* Accumulated fields are broken.
+
+* The code cannot reproduce the values for the `timer_trigger` fields
+  in the Activity example.
+
+* The order of fields (within a single message) returned is not
+  guaranteed to match the order of fields in the raw data or the order
+  used in the CSV examples.
+
+* The CSV data in the examples sometimes specifies floating point
+  whole numbers (eg 2.0) while this library returns integers.
+
+* The CSV data in the examples include a value for *composite* fields
+  (as well as the values for the sub-fields).  This library does not
+  return these values (which do not appear to be well-defined) and,
+  for the `csv` format (only) returns the fields name along with the
+  value `COMPOSITE`.
+
