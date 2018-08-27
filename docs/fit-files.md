@@ -290,7 +290,7 @@ parlance) so that it can be read quickly when needed.
 
 Details of parsing the data are done lazily wherever possible.  So if
 a program only wants to read a certain kind of message it does not
-have to do teh work of decoding all the other message types.
+have to do the work of decoding all the other message types.
 
 The code is validated against the examples provided in the ANT SDK and
 has the following known limtations:
@@ -305,11 +305,11 @@ has the following known limtations:
   used in the CSV examples.
 
 * The CSV data in the examples sometimes specifies floating point
-  whole numbers (eg 2.0) while this library returns integers.
+  whole numbers (eg 2.0) where this library returns integers (eg 2).
 
 * The CSV data in the examples include a value for *composite* fields
   (as well as the values for the sub-fields).  This library does not
-  return these values (which do not appear to be well-defined) and,
-  for the `csv` format (only) returns the fields name along with the
+  return these values (which do not appear to be well-defined) but,
+  for the `csv` format only, returns the field name along with the
   value `COMPOSITE`.
 
