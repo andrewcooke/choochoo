@@ -31,7 +31,7 @@ is displaying the data in a variety of formats.
     with the examples provided in the
     [SDK](https://www.thisisant.com/resources/fit).
 
-* [Third-party API use](#third-party-api-use)
+* [Third party API use](#third-party-api-use)
 
 * [Implementation and limitations](#implementation-and-limitations)
 
@@ -280,6 +280,44 @@ and type.
 
 The example above shows header (HDR), definition (DFN), data (DTA),
 and checksum (CRC) messages.
+
+## Third Party API Use
+
+The main entry point is `filtered_records` in `choochoo.fit.format.tokens`.
+
+This takes the following arguments:
+
+* `log` - an instance of the standard Python logger.
+
+* `fit_path` - the path to the FIT format file.
+
+* `after=0` - the number of records to skip on reading.
+
+* `limit=-1` - the number of records to return on reading (-1 implines all).
+
+* `profile_path=None` - the path to the `Profile.xlsx` file in the
+  sdk.  If `None` then the "pickled" cache is used.
+
+It returns the following values:
+
+* `data` - the raw data (`bytes`) from the FIT file
+
+* `types` - an instance of `choochoo.fit.profile.types.Types`
+  describing the types in `Profile.xlsx` (the first sheet).
+
+* `messages` - an instance of `choochoo.fit.profile.messages.Messages`
+  describing the messages in `Prfoile.xslx` (the second sheet).
+
+* `generator` - an iterator over
+  `choochoo.fit.profile.record.LazyRecord` instances that describe the
+  records in the FIT file.  The `data` attribute is an iterator over
+  the fields within a record, structures as `(name, (values, units))`
+  where `name` and `units` are strings (`units` is `None` if no units
+  are defined), and `values` is a tuple of string values.
+
+Both `generator` and the `data` attribute are lazy - the data are
+generated only on demand and are available just once.  To make the
+data permanent use `list(generator)` and `LazyRecord.force()`.
 
 ## Implementation and Limitations
 
