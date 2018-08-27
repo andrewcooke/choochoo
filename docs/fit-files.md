@@ -354,6 +354,38 @@ and type.
     237 05793 CRC 01a2
       01a2 - checksum
 
+### The `csv` Format
+
+#### Example Usage
+
+    ch2 -v 0 dump-fit --csv FILE
+
+    ch2 -v 0 dump-fit --csv --after N1 --limit N2 FILE
+
+#### Format Description
+
+The output generated is tailored to match the CSV format used by the
+FIT SDK in their examples.  Exceptions are decribed in [implementation
+and limitations](#implementation-and-limitations).
+
+#### Example Output
+
+    Definition,0,file_id,serial_number,1,,time_created,1,,unknown,1,,manufacturer,1,,number,1,,type,1,,product,1,
+    Data,0,file_id,serial_number,3918730542,,time_created,902245932,,@9:13,,,manufacturer,1,,number,,,type,4,,garmin_product,2157,
+    Definition,1,file_creator,software_version,1,,hardware_version,1,
+    Data,1,file_creator,software_version,710,,hardware_version,,
+    Definition,2,event,timestamp,1,,event,1,,event_type,1,,event_group,1,,data,1,
+    Data,2,event,timestamp,902245933,s,event,0,,event_type,0,,event_group,0,,timer_trigger,0,
+    Definition,3,device_info,timestamp,1,,serial_number,1,,cum_operating_time,1,,unknown,1,,unknown,1,,unknown,1,,unknown,1,,manufacturer,1,,software_version,1,,battery_voltage,1,,ant_device_number,1,,device_index,1,,hardware_version,1,,unknown,1,,battery_status,1,,ant_transmission_type,1,,ant_network,1,,unknown,1,,source_type,1,,product,1,,device_type,1,
+    Data,3,device_info,timestamp,902245933,s,serial_number,3918730542,,cum_operating_time,,s,@13:17,,,@17:21,,,@21:25,,,@25:29,,,manufacturer,1,,software_version,7.1,,battery_voltage,,V,ant_device_number,,,device_index,0,,hardware_version,,,@42:43,,,battery_status,,,ant_transmission_type,,,ant_network,,,@46:47,,,source_type,5,,garmin_product,2157,,device_type,,
+    [...]
+    Definition,0,lap,timestamp,1,,start_time,1,,start_position_lat,1,,start_position_long,1,,end_position_lat,1,,end_position_long,1,,total_elapsed_time,1,,total_timer_time,1,,total_distance,1,,unknown,1,,unknown,1,,unknown,1,,unknown,1,,message_index,1,,total_calories,1,,avg_speed,1,,max_speed,1,,total_ascent,1,,total_descent,1,,wkt_step_index,1,,avg_vertical_oscillation,1,,avg_stance_time_percent,1,,avg_stance_time,1,,event,1,,event_type,1,,avg_heart_rate,1,,max_heart_rate,1,,intensity,1,,lap_trigger,1,,sport,1,,event_group,1,,sub_sport,1,,avg_temperature,1,,max_temperature,1,,unknown,1,,avg_fractional_cadence,1,,max_fractional_cadence,1,,total_fractional_cycles,1,,total_cycles,1,,avg_cadence,1,,max_cadence,1,
+    Data,0,lap,timestamp,902247388,s,start_time,902245933,,start_position_lat,-398805895,semicircles,start_position_long,-842386569,semicircles,end_position_lat,-398803708,semicircles,end_position_long,-842386236,semicircles,total_elapsed_time,1398.718,s,total_timer_time,1162.728,s,total_distance,6500.22,m,@41:45,-398803683,,@45:49,-842065018,,@49:53,-398900061,,@53:57,-842386569,,message_index,0,,total_calories,193,kcal,avg_speed,COMPOSITE,m/s,enhanced_avg_speed,5.59,m/s,max_speed,COMPOSITE,m/s,enhanced_max_speed,8.295,m/s,total_ascent,35,m,total_descent,81,m,wkt_step_index,,,avg_vertical_oscillation,,mm,avg_stance_time_percent,,percent,avg_stance_time,,ms,event,9,,event_type,1,,avg_heart_rate,,bpm,max_heart_rate,,bpm,intensity,,,lap_trigger,7,,sport,2,,event_group,,,sub_sport,0,,avg_temperature,,C,max_temperature,,C,@90:91,,,avg_fractional_cadence,,rpm,max_fractional_cadence,,rpm,total_fractional_cycles,,cycles,total_cycles,,cycles,avg_cadence,,rpm,max_cadence,,rpm
+    Definition,1,session,timestamp,1,,start_time,1,,start_position_lat,1,,start_position_long,1,,total_elapsed_time,1,,total_timer_time,1,,total_distance,1,,nec_lat,1,,nec_long,1,,swc_lat,1,,swc_long,1,,unknown,1,,unknown,16,,message_index,1,,total_calories,1,,avg_speed,1,,max_speed,1,,total_ascent,1,,total_descent,1,,first_lap_index,1,,num_laps,1,,avg_vertical_oscillation,1,,avg_stance_time_percent,1,,avg_stance_time,1,,event,1,,event_type,1,,sport,1,,sub_sport,1,,avg_heart_rate,1,,max_heart_rate,1,,total_training_effect,1,,event_group,1,,trigger,1,,avg_temperature,1,,max_temperature,1,,unknown,1,,avg_fractional_cadence,1,,max_fractional_cadence,1,,total_fractional_cycles,1,,unknown,1,,sport_index,1,,total_cycles,1,,avg_cadence,1,,max_cadence,1,
+    Data,1,session,timestamp,902247388,s,start_time,902245933,,start_position_lat,-398805895,semicircles,start_position_long,-842386569,semicircles,total_elapsed_time,1398.718,s,total_timer_time,1162.728,s,total_distance,6500.22,m,nec_lat,-398803683,semicircles,nec_long,-842065018,semicircles,swc_lat,-398900061,semicircles,swc_long,-842386569,semicircles,@49:53,,,@53:69,Bike,,message_index,0,,total_calories,193,kcal,avg_speed,COMPOSITE,m/s,enhanced_avg_speed,5.59,m/s,max_speed,COMPOSITE,m/s,enhanced_max_speed,8.295,m/s,total_ascent,35,m,total_descent,81,m,first_lap_index,0,,num_laps,1,,avg_vertical_oscillation,,mm,avg_stance_time_percent,,percent,avg_stance_time,,ms,event,9,,event_type,1,,sport,2,,sub_sport,0,,avg_heart_rate,,bpm,max_heart_rate,,bpm,total_training_effect,,,event_group,,,trigger,0,,avg_temperature,,C,max_temperature,,C,@104:105,0,,avg_fractional_cadence,,rpm,max_fractional_cadence,,rpm,total_fractional_cycles,,cycles,@108:109,,,sport_index,,,total_cycles,,cycles,avg_cadence,,rpm,max_cadence,,rpm
+    Definition,4,activity,timestamp,1,,total_timer_time,1,,local_timestamp,1,,num_sessions,1,,type,1,,event,1,,event_type,1,,event_group,1,
+    Data,4,activity,timestamp,902247388,,total_timer_time,1162.728,s,local_timestamp,902232988,,num_sessions,1,,type,0,,event,26,,event_type,1,,event_group,,
+
 ## Third Party API Use
 
 The main entry point is `filtered_records` in `choochoo.fit.format.tokens`.
@@ -425,3 +457,7 @@ has the following known limtations:
   for the `csv` format only, returns the field name along with the
   value `COMPOSITE`.
 
+* The CSV examples in the FIT SDK include a tile row and empty fields
+  as padding on some lines.  This is not duplicated by the CSV format
+  output from this library.
+  
