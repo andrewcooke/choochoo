@@ -17,8 +17,6 @@ class Identity:
         self.__counter = counter
 
     def __repr__(self):
-        # this assumes all instances have been evaluated, which is risky given
-        # the lazy approach, but the cost of an error is low
         current = self.__counter[self.name]
         if current == 1:
             return self.name
