@@ -281,6 +281,79 @@ and type.
 The example above shows header (HDR), definition (DFN), data (DTA),
 and checksum (CRC) messages.
 
+### The `fields` Format
+
+#### Example Usage
+
+    ch2 -v 0 dump-fit --fields FILE
+
+    ch2 -v 0 dump-fit --fields --after N1 --limit N2 FILE
+
+#### Format Description
+
+Messages and fields are displayed as hex values.  The message data are
+preceded by the record number, offset (in bytes from the file start),
+and type.
+
+#### Example Output
+
+    000 00000 HDR 0e10de07931600002e4649541e51
+      0e - header
+      10 - protocol version
+      de07 - profile version
+      93160000 - data size
+      2e464954 - data type
+      1e51 - checksum
+    001 00014 DFN 40000000000703048c040486070486010284020284050284000100
+      40 - header (msg 0)
+      00 - reserved
+      00 - architecture
+      0000 - msg no (file_id)
+      07 - no of fields
+	03048c - fld 0: serial_number (uint32z)
+	040486 - fld 1: time_created (uint32)
+	070486 - fld 2: unknown (uint32)
+	010284 - fld 3: manufacturer (uint16)
+	020284 - fld 4: product (uint16)
+	050284 - fld 5: number (uint16)
+	000100 - fld 6: type (enum)
+    002 00041 DTA 002e1593e92c2ec735ffffffff01006d08ffff04
+      00 - header (msg 0 - file_id)
+      2e1593e9 - serial_number (uint32z)
+      2c2ec735 - time_created (uint32)
+      ffffffff - unknown (uint32)
+      0100 - manufacturer (uint16)
+      6d08 - product (uint16)
+      ffff - number (uint16)
+      04 - type (enum)
+    [...]
+    235 05744 DFN 440000220008fd0486000486050486010284020100030100040100060102
+      44 - header (msg 4)
+      00 - reserved
+      00 - architecture
+      2200 - msg no (activity)
+      08 - no of fields
+	fd0486 - fld 0: timestamp (uint32)
+	000486 - fld 1: total_timer_time (uint32)
+	050486 - fld 2: local_timestamp (uint32)
+	010284 - fld 3: num_sessions (uint16)
+	020100 - fld 4: type (enum)
+	030100 - fld 5: event (enum)
+	040100 - fld 6: event_type (enum)
+	060102 - fld 7: event_group (uint8)
+    236 05774 DTA 04dc33c735e8bd11009cfbc6350100001a01ff
+      04 - header (msg 4 - activity)
+      dc33c735 - timestamp (uint32)
+      e8bd1100 - total_timer_time (uint32)
+      9cfbc635 - local_timestamp (uint32)
+      0100 - num_sessions (uint16)
+      00 - type (enum)
+      1a - event (enum)
+      01 - event_type (enum)
+      ff - event_group (uint8)
+    237 05793 CRC 01a2
+      01a2 - checksum
+
 ## Third Party API Use
 
 The main entry point is `filtered_records` in `choochoo.fit.format.tokens`.
@@ -306,7 +379,7 @@ It returns the following values:
   describing the types in `Profile.xlsx` (the first sheet).
 
 * `messages` - an instance of `choochoo.fit.profile.messages.Messages`
-  describing the messages in `Prfoile.xslx` (the second sheet).
+  describing the messages in `Profile.xslx` (the second sheet).
 
 * `generator` - an iterator over
   `choochoo.fit.profile.record.LazyRecord` instances that describe the
@@ -321,10 +394,11 @@ data permanent use `list(generator)` and `LazyRecord.force()`.
 
 ## Implementation and Limitations
 
-The spreadsheet included in the FIT SDK is read directly by the Python
-code and used to generate an in-memory description of the known fields
-and messages.  This is then saved to disk ("pickled" in Python
-parlance) so that it can be read quickly when needed.
+The `Profile.xlsx` spreadsheet included in the FIT SDK is read
+directly by the Python code and used to generate an in-memory
+description of the known fields and messages.  This is then saved to
+disk ("pickled" in Python parlance) so that it can be read quickly
+when needed.
 
 Details of parsing the data are done lazily wherever possible.  So if
 a program only wants to read a certain kind of message it does not
