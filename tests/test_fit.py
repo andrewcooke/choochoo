@@ -1,9 +1,9 @@
+
 from _csv import reader
 from glob import glob
 from itertools import zip_longest
 from logging import getLogger, basicConfig, DEBUG
-from os.path import splitext, basename, split, join
-from re import sub
+from os.path import splitext, split, join
 from sys import stdout
 from tempfile import TemporaryDirectory
 
@@ -41,8 +41,10 @@ def test_decode():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    for record in filtered_records(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
-                                   profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'):
+    data, types, messages, records = \
+        filtered_records(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
+                         profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+    for record in records:
         print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
 
 

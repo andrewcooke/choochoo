@@ -113,11 +113,9 @@ class Defined(Token):
     def parse(self, **options):
         return self.definition.message.parse(self.data, self.definition, self.timestamp, **options)
 
-    def describe_header(self, types):
-        return '%s - header' % tohex(self.data[0:1])
-
     def describe_fields(self, types):
-        yield self.describe_header(types)
+        yield '%s - header (msg %d - %s)' % \
+              (tohex(self.data[0:1]), self.data[0] & 0x0f, self.definition.message.name)
         for field in sorted(self.definition.fields, key=lambda field: field.start):
             yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
 
@@ -138,9 +136,6 @@ class Data(Defined):
 
     def __init__(self, data, state):
         super().__init__('DTA', data, state, data[0] & 0x0f)
-
-    def describe_header(self, types):
-        return '%s - header (msg %d)' % (tohex(self.data[0:1]), self.data[0] & 0x0f)
 
 
 class CompressedTimestamp(Defined):
@@ -358,22 +353,28 @@ def tokens(log, data, types, messages):
     checksum.validate(offset)
 
 
-def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None, include_data=False):
+def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
     data, types, messages = load(log, fit_path, profile_path=profile_path)
-    if include_data:
-        yield data, types
-    for i, (offset, token) in enumerate(tokens(log, data, types, messages)):
-        if i >= after and (limit < 0 or i - after < limit):
-            yield i, offset, token
+
+    def generator():
+        for i, (offset, token) in enumerate(tokens(log, data, types, messages)):
+            if i >= after and (limit < 0 or i - after < limit):
+                yield i, offset, token
+
+    return data, types, messages, generator()
 
 
 def filtered_records(log, fit_path, after=0, limit=-1, profile_path=None):
     data, types, messages = load(log, fit_path, profile_path=profile_path)
-    for i, (offset, token) in enumerate((offset, token)
-                                        for (offset, token) in tokens(log, data, types, messages)
-                                        if token.is_user):
-        if i >= after and (limit < 0 or i - after < limit):
-            yield token.parse()
+
+    def generator():
+        for i, (offset, token) in enumerate((offset, token)
+                                            for (offset, token) in tokens(log, data, types, messages)
+                                            if token.is_user):
+            if i >= after and (limit < 0 or i - after < limit):
+                yield token.parse()
+
+    return data, types, messages, generator()
 
 
 def load(log, fit_path, profile_path=None):

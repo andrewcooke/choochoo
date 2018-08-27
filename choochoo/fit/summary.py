@@ -55,21 +55,25 @@ def summarize(log, format, fit_path, all_fields=False, all_messages=False, after
 
 
 def summarize_messages(log, fit_path, after=0, limit=-1, profile_path=None):
-    for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
+    data, types, messages, tokens = \
+        filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path)
+    for index, offset, token in tokens:
         print('%03d %05d %s' % (index, offset, token))
 
 
 def summarize_fields(log, fit_path, after=0, limit=-1, profile_path=None):
-    tokens = filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path, include_data=True)
-    data, types = next(tokens)
-    for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
+    data, types, messages, tokens = \
+        filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path)
+    for index, offset, token in tokens:
         print('%03d %05d %s' % (index, offset, token))
         for line in token.describe_fields(types):
             print('  %s' % line)
 
 
 def summarize_records(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
-    records = list(filtered_records(log, fit_path, after=after, limit=limit, profile_path=profile_path))
+    data, types, messages, records = \
+        filtered_records(log, fit_path, after=after, limit=limit, profile_path=profile_path)
+    records = list(records)
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
     width = terminal_width()
@@ -79,7 +83,9 @@ def summarize_records(log, fit_path, all_fields=False, all_messages=False, after
 
 
 def summarize_csv(log, fit_path, after=0, limit=-1, profile_path=None, out=stdout):
-    for index, offset, token in filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path):
+    data, types, messages, tokens = \
+        filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path)
+    for index, offset, token in tokens:
         if hasattr(token, 'describe_csv'):
             print(','.join(str(component) for component in token.describe_csv()), file=out)
 
