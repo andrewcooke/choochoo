@@ -12,3 +12,5 @@ In the future there will be support for plotting data as well as better
 integration of FIT format files (which already have a rudimentary parser).
 One omission that may be important to some people is the (purposeful)
 lack of emphasis on power meters.
+
+* [FIT Files](fit-files) - displaying FIT format data.

@@ -457,7 +457,7 @@ has the following known limtations:
   for the `csv` format only, returns the field name along with the
   value `COMPOSITE`.
 
-* The CSV examples in the FIT SDK include a tile row and empty fields
+* The CSV examples in the FIT SDK include a title row and empty fields
   as padding on some lines.  This is not duplicated by the CSV format
   output from this library.
   
