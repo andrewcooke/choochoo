@@ -10,6 +10,7 @@ PROGNAME = 'ch2'
 COMMAND = 'command'
 TOPIC = 'topic'
 
+ACTIVITIES = 'activities'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
 HELP = 'help'
@@ -98,7 +99,7 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(mm(DATABASE), action='store', default='${root}/database.sqla', metavar='FILE',
+    parser.add_argument(mm(DATABASE), action='store', default='${root}/database.sqlb', metavar='FILE',
                         help='the database file')
     parser.add_argument(mm(DEV), action='store_true', help='enable development mode')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
@@ -111,6 +112,11 @@ def parser():
                         help='display version and exit')
 
     subparsers = parser.add_subparsers()
+
+    activities = subparsers.add_parser(ACTIVITIES,
+                                       help='manage activity entries - see `%s %s -h` for more details' %
+                                            (PROGNAME, ACTIVITIES))
+    activities.set_defaults(command=ACTIVITIES)
 
     diary = subparsers.add_parser(DIARY,
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))

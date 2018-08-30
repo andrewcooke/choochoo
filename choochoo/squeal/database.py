@@ -6,7 +6,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from .support import Base
-from .tables.activity import Activity, ActivityData, DirectoryScan
+from .tables.activity import ActivityDiary, ActivityData, DirectoryScan
 from .tables.diary import Diary
 from .tables.heartrate import HeartRateZones, HeartRateZone
 from .tables.injury import InjuryDiary, Injury
@@ -14,7 +14,7 @@ from .tables.schedule import ScheduleDiary, Schedule, ScheduleType
 from ..args import DATABASE
 
 # import these so they are "created"
-Diary, Injury, InjuryDiary, ScheduleType, Schedule, ScheduleDiary, Activity, ActivityData, DirectoryScan
+Diary, Injury, InjuryDiary, ScheduleType, Schedule, ScheduleDiary, ActivityDiary, ActivityData, DirectoryScan
 HeartRateZones, HeartRateZone
 
 

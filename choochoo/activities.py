@@ -1,24 +1,21 @@
 
-from urwid import WEIGHT, Edit, Pile, Columns, connect_signal
+from urwid import Edit, Pile, Columns, connect_signal
 
 from .lib.io import tui
 from .squeal.database import Database
-from .squeal.tables.injury import Injury
-from .uweird.calendar import TextDate
+from .squeal.tables.activity import Activity
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
 from .uweird.focus import MessageBar, FocusWrap
-from .uweird.widgets import Nullable, SquareButton, ColSpace, ColText
+from .uweird.widgets import SquareButton, ColSpace
 
 
-class InjuryWidget(FocusWrap):
+class ActivityWidget(FocusWrap):
 
     def __init__(self, log, tabs, bar, outer):
         self.__outer = outer
         factory = Factory(tabs=tabs, bar=bar)
         self.title = factory(Edit(caption='Title: '))
-        self.start = factory(Nullable('Open', lambda date: TextDate(log, bar=bar), bar=bar))
-        self.finish = factory(Nullable('Open', lambda date: TextDate(log, bar=bar), bar=bar))
         self.sort = factory(Edit(caption='Sort: '))
         self.delete = SquareButton('Delete')
         delete = factory(self.delete, message='delete from database')
@@ -27,11 +24,7 @@ class InjuryWidget(FocusWrap):
         self.description = factory(Edit(caption='Description: ', multiline=True))
         super().__init__(
             Pile([self.title,
-                  Columns([(18, self.start),
-                           ColText(' to '),
-                           (18, self.finish),
-                           ColSpace(),
-                           (WEIGHT, 3, self.sort),
+                  Columns([(20, self.sort),
                            ColSpace(),
                            (10, delete),
                            (9, reset)
@@ -47,18 +40,19 @@ class InjuryWidget(FocusWrap):
         binder.delete()
         self.__outer.remove(self)
 
+
 @tui
-def injuries(args, log):
+def activities(args, log):
     '''
-# injuries
+# activities
 
-    ch2 injuries
+    ch2 activities
 
-The interactive editor for injuries.  Allows addition, deletion and modification of injuries.
+The interactive editor for activities.  Allows addition, deletion and modification of activities.
 
-Once added, injuries are displayed in the diary.
+Once added, activities can be imported and will appear in the diary.
 
 To exit, alt-q (or, without saving, Alt-x).
     '''
     session = Database(args, log).session()
-    EditorApp(log, session, MessageBar(), "Injuries", InjuryWidget, Injury).run()
+    EditorApp(log, session, MessageBar(), "Activities", ActivityWidget, Activity).run()

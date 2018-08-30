@@ -1,6 +1,7 @@
 
+from .activities import activities
 from .args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, DUMP_FIT, INJURIES, \
-    PLAN, PACKAGE_FIT_PROFILE, SCHEDULES
+    PLAN, PACKAGE_FIT_PROFILE, SCHEDULES, ACTIVITIES
 from .diary import diary
 from .fit.profile.profile import package_fit_profile
 from .fit.summary import dump_fit
@@ -10,7 +11,8 @@ from .log import make_log
 from .plan import plan
 from .schedules import schedules
 
-COMMANDS = {DIARY: diary,
+COMMANDS = {ACTIVITIES: activities,
+            DIARY: diary,
             DUMP_FIT: dump_fit,
             HELP: help,
             INJURIES: injuries,
