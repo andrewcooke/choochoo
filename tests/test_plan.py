@@ -4,7 +4,7 @@ from choochoo.log import make_log
 from choochoo.plan.british import twelve_week_improver
 from choochoo.plan.exponential import exponential_time, exponential_distance
 from choochoo.squeal.database import Database
-from choochoo.squeal.schedule import Schedule, ScheduleDiary
+from choochoo.squeal.tables.schedule import Schedule, ScheduleDiary
 
 
 def test_british():

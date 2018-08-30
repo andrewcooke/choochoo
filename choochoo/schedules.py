@@ -5,7 +5,7 @@ from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.schedule import Schedule, ScheduleType
+from .squeal.tables.schedule import Schedule, ScheduleType
 from .uweird.calendar import TextDate
 from .uweird.decorators import Indent
 from .uweird.factory import Factory

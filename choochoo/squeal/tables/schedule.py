@@ -4,10 +4,10 @@ from functools import total_ordering
 from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, backref
 
-from .support import Base
-from .types import Ordinal
-from ..lib.date import format_date
-from ..lib.repeating import Specification
+from ..support import Base
+from ..types import Ordinal
+from ...lib.date import format_date
+from ...lib.repeating import Specification
 
 
 class ScheduleType(Base):

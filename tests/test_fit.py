@@ -12,7 +12,7 @@ from choochoo.fit.format.records import no_names, append_units, no_bad_values, f
 from choochoo.fit.format.tokens import filtered_records
 from choochoo.fit.profile.fields import DynamicField
 from choochoo.fit.profile.profile import read_profile
-from choochoo.fit.summary import summarize, summarize_csv
+from choochoo.fit.summary import summarize, summarize_csv, summarize_records
 
 
 def test_profile():
@@ -152,3 +152,15 @@ def test_csv():
             dump_csv(log, fit_file, csv_us)
             compare_csv(log, csv_us, csv_them, name, skip)
         assert skip.skip == 0, 'Unused skipped tests'
+
+
+def test_personal():
+
+    basicConfig(stream=stdout, level=DEBUG)
+    log = getLogger()
+
+    with TemporaryDirectory() as dir:
+        skip = Skip(2)  # timer_trigger in Activity.fit
+        for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
+            print(fit_file)
+            summarize_records(log, fit_file)

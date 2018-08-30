@@ -1,8 +1,8 @@
 
 from sqlalchemy import Column, Integer, Text, Float
 
-from .types import Ordinal
-from .support import Base
+from ..types import Ordinal
+from ..support import Base
 
 
 class Diary(Base):

@@ -50,7 +50,7 @@ class Message(Named):
             if field.field:
                 for name, value in self._parse_field(
                         field.field, bytes, field.count, defn.endian, references, defn.accumulate, self, **options):
-                    if name in defn.references:
+                    if name in defn.references and value[0] is not None:
                         references[name] = value
                     yield name, value
             else:

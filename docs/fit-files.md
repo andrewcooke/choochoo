@@ -416,7 +416,7 @@ It returns the following values:
 * `generator` - an iterator over
   `choochoo.fit.profile.record.LazyRecord` instances that describe the
   records in the FIT file.  The `data` attribute is an iterator over
-  the fields within a record, structures as `(name, (values, units))`
+  the fields within a record, structured as `(name, (values, units))`
   where `name` and `units` are strings (`units` is `None` if no units
   are defined), and `values` is a tuple of string values.
 

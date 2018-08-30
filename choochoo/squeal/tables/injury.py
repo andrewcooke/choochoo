@@ -2,8 +2,8 @@
 from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
 
-from .types import Ordinal
-from .support import Base
+from ..support import Base
+from ..types import Ordinal
 
 
 class Injury(Base):

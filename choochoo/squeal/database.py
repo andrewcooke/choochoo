@@ -5,15 +5,17 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
-from .diary import Diary
-from .injury import InjuryDiary, Injury
-from .schedule import ScheduleDiary, Schedule, ScheduleType
 from .support import Base
+from .tables.activity import Activity, ActivityData, DirectoryScan
+from .tables.diary import Diary
+from .tables.heartrate import HeartRateZones, HeartRateZone
+from .tables.injury import InjuryDiary, Injury
+from .tables.schedule import ScheduleDiary, Schedule, ScheduleType
 from ..args import DATABASE
 
-
 # import these so they are "created"
-Diary, Injury, InjuryDiary, ScheduleType, Schedule, ScheduleDiary
+Diary, Injury, InjuryDiary, ScheduleType, Schedule, ScheduleDiary, Activity, ActivityData, DirectoryScan
+HeartRateZones, HeartRateZone
 
 
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf

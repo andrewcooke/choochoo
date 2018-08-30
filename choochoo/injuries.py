@@ -4,7 +4,7 @@ from urwid import WEIGHT, Edit, Pile, Columns, connect_signal, Padding, Divider
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.injury import Injury
+from .squeal.tables.injury import Injury
 from .uweird.calendar import TextDate
 from .uweird.factory import Factory
 from .uweird.fixed import Fixed

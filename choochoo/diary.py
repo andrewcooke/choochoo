@@ -8,9 +8,9 @@ from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.diary import Diary
-from .squeal.injury import Injury, InjuryDiary
-from .squeal.schedule import Schedule, ScheduleDiary
+from .squeal.tables.diary import Diary
+from .squeal.tables.injury import Injury, InjuryDiary
+from .squeal.tables.schedule import Schedule, ScheduleDiary
 from .uweird.calendar import Calendar
 from .uweird.decorators import Indent
 from .uweird.factory import Factory
