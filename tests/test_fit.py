@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 from choochoo.args import FIELDS
 from choochoo.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
-from choochoo.fit.format.tokens import filtered_records
+from fit.format.read import filtered_records
 from choochoo.fit.profile.fields import DynamicField
 from choochoo.fit.profile.profile import read_profile
 from choochoo.fit.summary import summarize, summarize_csv, summarize_tables

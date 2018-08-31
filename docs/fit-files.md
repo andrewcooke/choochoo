@@ -216,7 +216,7 @@ tabular format; all others are listed beforehand.
 
 Some fields could not be completely parsed.  This is not unusual with
 the FIT format, which is very extensible and incompletely documented.
-Such fields are marker by `-`.
+Such fields are marked by `-`.
 
 ### The `records` Format
 
@@ -401,7 +401,7 @@ In the example above some details have been elided with `[...]`.
 
 Some fields could not be completely parsed.  This is not unusual with
 the FIT format, which is very extensible and incompletely documented.
-Such fields are marker by `-`.
+Such fields are marked by `-`.
 
 ### The `messages` Format
 
@@ -579,7 +579,7 @@ and limitations](#implementation-and-limitations).
 
 ## Third Party API Use
 
-The main entry point is `filtered_records` in `choochoo.fit.format.tokens`.
+The main entry point is `filtered_records` in `choochoo.fit.format.read`.
 
 This takes the following arguments:
 

@@ -10,7 +10,7 @@ class FileScan(Base):
     __tablename__ = 'file_scan'
 
     path = Column(Text, nullable=False, primary_key=True)
-    last_scan = Column(DateTime, nullable=False)
+    last_scan = Column(Integer, nullable=False)  # unix epoch
 
 
 class Activity(Base):
@@ -36,9 +36,9 @@ class ActivityDiary(Base):
     finish = Column(DateTime, nullable=False)
 
 
-class ActivityData(Base):
+class ActivityWaypoint(Base):
 
-    __tablename__ = 'activity_data'
+    __tablename__ = 'activity_waypoint'
 
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id'), nullable=False, primary_key=True)
     epoch = Column(Float, primary_key=True)
@@ -49,11 +49,23 @@ class ActivityData(Base):
     speed = Column(Float)
 
 
+class ActivityTimespan(Base):
+
+    __tablename__ = 'activity_timespan'
+
+    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id'), nullable=False, primary_key=True)
+    start = Column(Integer, nullable=False)  # unix epoch
+    finish = Column(Integer, nullable=False)  # unix epoch
+
+
 class ActivityStatistic(Base):
 
     __tablename__ = 'activity_statistic'
+
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id'), nullable=False, primary_key=True)
+    time = Column(Integer, nullable=False)  # unix epoch
     name = Column(Text, nullable=False)
     value = Column(Float, nullable=False)
     units = Column(Text, nullable=False, server_default='')
     UniqueConstraint('activity_diary_id', 'name')
+

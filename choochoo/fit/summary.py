@@ -2,9 +2,9 @@
 from collections import Counter
 from sys import stdout
 
+from .format.read import filtered_records, filtered_tokens
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
     to_hex, no_filter
-from .format.tokens import filtered_records, filtered_tokens, FileHeader, Definition, Checksum
 from .profile.types import Date
 from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV, TABLES
 from ..lib.io import terminal_width

@@ -3,7 +3,6 @@ from collections import defaultdict, Counter
 from struct import unpack
 
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
-from ..profile.profile import read_profile, load_profile
 from ..profile.types import Date
 from ...lib.data import WarnDict, tohex
 
@@ -336,52 +335,3 @@ class State:
         self.timestamp = None
 
 
-def tokens(log, data, types, messages):
-    state = State(log, types, messages)
-    file_header = FileHeader(data)
-    yield 0, file_header
-    offset = len(file_header)
-    file_header.validate(data)
-    while len(data) - offset > 2:
-        token = token_factory(data[offset:], state)
-        yield offset, token
-        offset += len(token)
-    checksum = Checksum(data)
-    yield offset, checksum
-    checksum.validate(offset)
-
-
-def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
-    data, types, messages = load(log, fit_path, profile_path=profile_path)
-
-    def generator():
-        for i, (offset, token) in enumerate(tokens(log, data, types, messages)):
-            if i >= after and (limit < 0 or i - after < limit):
-                yield i, offset, token
-
-    return data, types, messages, generator()
-
-
-def filtered_records(log, fit_path, after=0, limit=-1, profile_path=None):
-    data, types, messages = load(log, fit_path, profile_path=profile_path)
-
-    def generator():
-        for i, (offset, token) in enumerate((offset, token)
-                                            for (offset, token) in tokens(log, data, types, messages)
-                                            if token.is_user):
-            if i >= after and (limit < 0 or i - after < limit):
-                yield token.parse()
-
-    return data, types, messages, generator()
-
-
-def load(log, fit_path, profile_path=None):
-    # todo separate?
-    if profile_path:
-        _nlog, types, messages = read_profile(log, profile_path)
-    else:
-        types, messages = load_profile(log)
-    log.debug('Read profile')
-    with open(fit_path, 'rb') as input:
-        data =input.read()
-    return data, types, messages

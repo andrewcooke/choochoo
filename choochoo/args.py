@@ -123,7 +123,7 @@ def parser():
                               help='an activity name')
     add_activity.add_argument(PATH, action='store', metavar='PATH', nargs=1,
                               help='a fit file or directory containing fit files')
-
+    add_activity.set_defaults(command=ADD_ACTIVITY)
 
     add_plan = subparsers.add_parser(ADD_PLAN,
                                      help='training plans - see `%s %s -h` for more details' % (PROGNAME, ADD_PLAN))

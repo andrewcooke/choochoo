@@ -51,3 +51,15 @@ def load_profile(log):
     nlog, types, messages = load(input)
     nlog.set_log(log)
     return types, messages
+
+
+def load_fit(log, fit_path, profile_path=None):
+    # todo separate?
+    if profile_path:
+        _nlog, types, messages = read_profile(log, profile_path)
+    else:
+        types, messages = load_profile(log)
+    log.debug('Read profile')
+    with open(fit_path, 'rb') as input:
+        data =input.read()
+    return data, types, messages
