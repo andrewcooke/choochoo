@@ -12,7 +12,7 @@ from choochoo.fit.format.records import no_names, append_units, no_bad_values, f
 from choochoo.fit.format.tokens import filtered_records
 from choochoo.fit.profile.fields import DynamicField
 from choochoo.fit.profile.profile import read_profile
-from choochoo.fit.summary import summarize, summarize_csv, summarize_records
+from choochoo.fit.summary import summarize, summarize_csv, summarize_tables
 
 
 def test_profile():
@@ -163,4 +163,4 @@ def test_personal():
         skip = Skip(2)  # timer_trigger in Activity.fit
         for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
             print(fit_file)
-            summarize_records(log, fit_file)
+            summarize_tables(log, fit_file)

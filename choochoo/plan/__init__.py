@@ -28,12 +28,12 @@ def load(args, log):
         raise Exception('Unknown plan "%s" (see `ch2 plan --list` for available plans)' % plan)
 
 
-def plan(args, log):
+def add_plan(args, log):
     '''
-# plan
+# add-plan
 
-    ch2 plan --list
-    ch2 plan PLAN-NAME
+    ch2 add-plan --list
+    ch2 add-plan NAME [values]
 
 Schedule reminders for a given plan.
 

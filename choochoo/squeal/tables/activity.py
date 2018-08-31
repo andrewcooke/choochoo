@@ -5,11 +5,11 @@ from ..support import Base
 from ..types import Ordinal
 
 
-class DirectoryScan(Base):
+class FileScan(Base):
 
-    __tablename__ = 'directory_scan'
+    __tablename__ = 'file_scan'
 
-    directory = Column(Text, nullable=False, primary_key=True)
+    path = Column(Text, nullable=False, primary_key=True)
     last_scan = Column(DateTime, nullable=False)
 
 
@@ -47,3 +47,13 @@ class ActivityData(Base):
     hr_bpm = Column(Integer)
     distance = Column(Float)
     speed = Column(Float)
+
+
+class ActivityStatistic(Base):
+
+    __tablename__ = 'activity_statistic'
+    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id'), nullable=False, primary_key=True)
+    name = Column(Text, nullable=False)
+    value = Column(Float, nullable=False)
+    units = Column(Text, nullable=False, server_default='')
+    UniqueConstraint('activity_diary_id', 'name')

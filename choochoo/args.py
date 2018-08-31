@@ -10,17 +10,17 @@ PROGNAME = 'ch2'
 COMMAND = 'command'
 TOPIC = 'topic'
 
-ACTIVITIES = 'activities'
+ADD_ACTIVITY = 'add-activity'
+ADD_PLAN = 'add-plan'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
+EDIT_ACTIVITIES = 'edit-activities'
+EDIT_INJURIES = 'edit-injuries'
+EDIT_SCHEDULES = 'edit-schedules'
 HELP = 'help'
-INJURIES = 'injuries'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
-PLAN = 'plan'
-SCHEDULES = 'schedules'
-V, VERBOSITY = 'v', 'verbosity'
-VERSION = 'version'
 
+ACTIVITY = 'activity'
 AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
@@ -34,8 +34,12 @@ LOGS = 'logs'
 LIST = 'list'
 MESSAGES = 'messages'
 PATH = 'path'
+PLAN = 'plan'
 RECORDS = 'records'
 ROOT = 'root'
+TABLES = 'tables'
+V, VERBOSITY = 'v', 'verbosity'
+VERSION = 'version'
 
 
 def mm(name): return '--' + name
@@ -113,38 +117,65 @@ def parser():
 
     subparsers = parser.add_subparsers()
 
-    activities = subparsers.add_parser(ACTIVITIES,
-                                       help='manage activity entries - see `%s %s -h` for more details' %
-                                            (PROGNAME, ACTIVITIES))
-    activities.set_defaults(command=ACTIVITIES)
+    add_activity = subparsers.add_parser(ADD_ACTIVITY,
+                                         help='add a new activity - see `%s %s -h` for more details' % (PROGNAME, ADD_ACTIVITY))
+    add_activity.add_argument(ACTIVITY, action='store', metavar='ACTIVITY', nargs=1,
+                              help='an activity name')
+    add_activity.add_argument(PATH, action='store', metavar='PATH', nargs=1,
+                              help='a fit file or directory containing fit files')
+
+
+    add_plan = subparsers.add_parser(ADD_PLAN,
+                                     help='training plans - see `%s %s -h` for more details' % (PROGNAME, ADD_PLAN))
+    add_plan.add_argument(mm(LIST), action='store_true',
+                          help='list available plans')
+    add_plan.add_argument(PLAN, action='store', metavar='PARAM', nargs='*',
+                          help='the plan name and possible parameters')
+    add_plan.set_defaults(command=ADD_PLAN)
 
     diary = subparsers.add_parser(DIARY,
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
     diary.set_defaults(command=DIARY)
 
-    dump = subparsers.add_parser(DUMP_FIT,
-                                 help='display contents of fit file - ' +
-                                      'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
-    dump.add_argument(PATH, action='store', metavar='FIT-FILE', nargs=1,
-                      help='the path to the fit file')
-    dump.add_argument(mm(AFTER), action='store', nargs=1, type=int, metavar='N', default=[0],
-                      help='skip initial messages')
-    dump.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
-                      help='limit number of messages displayed')
-    dump_format = dump.add_mutually_exclusive_group()
+    dump_fit = subparsers.add_parser(DUMP_FIT,
+                                     help='display contents of fit file - ' +
+                                          'see `%s %s -h` for more details' % (PROGNAME, DUMP_FIT))
+    dump_fit.add_argument(PATH, action='store', metavar='FIT-FILE', nargs=1,
+                          help='the path to the fit file')
+    dump_fit.add_argument(mm(AFTER), action='store', nargs=1, type=int, metavar='N', default=[0],
+                          help='skip initial messages')
+    dump_fit.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
+                          help='limit number of messages displayed')
+    dump_format = dump_fit.add_mutually_exclusive_group()
     dump_format.add_argument(mm(RECORDS), action='store_const', dest=DUMP_FORMAT, const=RECORDS,
-                             help='show high-level structure')
+                             help='show high-level structure (ordered by time)')
+    dump_format.add_argument(mm(TABLES), action='store_const', dest=DUMP_FORMAT, const=TABLES,
+                             help='show high-level structure (default: grouped in tables)')
     dump_format.add_argument(mm(CSV), action='store_const', dest=DUMP_FORMAT, const=CSV,
                              help='show med-level structure (CSV format)')
     dump_format.add_argument(mm(MESSAGES), action='store_const', dest=DUMP_FORMAT, const=MESSAGES,
                              help='show low-level message structure')
     dump_format.add_argument(mm(FIELDS), action='store_const', dest=DUMP_FORMAT, const=FIELDS,
-                             help='show low-level field structure (details)')
-    dump.add_argument(mm(ALL_FIELDS), action='store_true',
-                      help='display undocumented fields (for %s)' % mm(RECORDS))
-    dump.add_argument(mm(ALL_MESSAGES), action='store_true',
-                      help='display undocumented messages (for %s)' % mm(RECORDS))
-    dump.set_defaults(command=DUMP_FIT, dump_format=RECORDS)
+                             help='show low-level field structure (more details)')
+    dump_fit.add_argument(mm(ALL_FIELDS), action='store_true',
+                          help='display undocumented fields (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
+    dump_fit.add_argument(mm(ALL_MESSAGES), action='store_true',
+                          help='display undocumented messages (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
+    dump_fit.set_defaults(command=DUMP_FIT, dump_format=TABLES)
+
+    edit_activities = subparsers.add_parser(EDIT_ACTIVITIES,
+                                            help='manage activity entries - see `%s %s -h` for more details' %
+                                                 (PROGNAME, EDIT_ACTIVITIES))
+    edit_activities.set_defaults(command=EDIT_ACTIVITIES)
+
+    edit_injuries = subparsers.add_parser(EDIT_INJURIES,
+                                          help='manage injury entries - see `%s %s -h` for more details' %
+                                               (PROGNAME, EDIT_INJURIES))
+    edit_injuries.set_defaults(command=EDIT_INJURIES)
+
+    edit_schedules = subparsers.add_parser(EDIT_SCHEDULES,
+                                           help='manage schedules - see `%s %s -h` for more details' % (PROGNAME, EDIT_SCHEDULES))
+    edit_schedules.set_defaults(command=EDIT_SCHEDULES)
 
     help = subparsers.add_parser(HELP,
                                  help='display help - ' + 'see `%s %s -h` for more details' % (PROGNAME, HELP))
@@ -152,29 +183,12 @@ def parser():
                       help='the subject for help')
     help.set_defaults(command=HELP)
 
-    injuries = subparsers.add_parser(INJURIES,
-                                     help='manage injury entries - see `%s %s -h` for more details' %
-                                          (PROGNAME, INJURIES))
-    injuries.set_defaults(command=INJURIES)
-
-    package = subparsers.add_parser(PACKAGE_FIT_PROFILE,
-                                    help='parse and save the global fit profile (dev only) - ' +
-                                         'see `%s %s -h` for more details' % (PROGNAME, PACKAGE_FIT_PROFILE))
-    package.add_argument(PATH, action='store', metavar='PROFILE', nargs=1,
-                         help='the path to the profile (Profile.xlsx)')
-    package.set_defaults(command=PACKAGE_FIT_PROFILE)
-
-    plan = subparsers.add_parser(PLAN,
-                                 help='training plans - see `%s %s -h` for more details' % (PROGNAME, PLAN))
-    plan.add_argument(mm(LIST), action='store_true',
-                      help='list available plans')
-    plan.add_argument(PLAN, action='store', metavar='PARAM', nargs='*',
-                      help='the plan name and possible parameters')
-    plan.set_defaults(command=PLAN)
-
-    schedules = subparsers.add_parser(SCHEDULES,
-                                      help='manage schedules - see `%s %s -h` for more details' % (PROGNAME, SCHEDULES))
-    schedules.set_defaults(command=SCHEDULES)
+    package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
+                                                help='parse and save the global fit profile (dev only) - ' +
+                                                     'see `%s %s -h` for more details' % (PROGNAME, PACKAGE_FIT_PROFILE))
+    package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE', nargs=1,
+                                     help='the path to the profile (Profile.xlsx)')
+    package_fit_profile.set_defaults(command=PACKAGE_FIT_PROFILE)
 
     return parser
 

@@ -48,11 +48,11 @@ class InjuryWidget(FocusWrap):
         self.__outer.remove(self)
 
 @tui
-def injuries(args, log):
+def edit_injuries(args, log):
     '''
-# injuries
+# edit-injuries
 
-    ch2 injuries
+    ch2 edit-injuries
 
 The interactive editor for injuries.  Allows addition, deletion and modification of injuries.
 

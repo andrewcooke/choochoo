@@ -192,11 +192,11 @@ class ScheduleApp(App):
 
 
 @tui
-def schedules(args, log):
+def edit_schedules(args, log):
     '''
-# schedules
+# edit-schedules
 
-    ch2 schedules
+    ch2 edit-schedules
 
 Start the interactive schedules editor.
 

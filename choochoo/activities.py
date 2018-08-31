@@ -1,9 +1,14 @@
+from glob import glob
+from os import stat
+from os.path import isdir, join
 
+from sqlalchemy.orm.exc import NoResultFound
 from urwid import Edit, Pile, Columns, connect_signal
 
+from .args import PATH, ACTIVITY
 from .lib.io import tui
 from .squeal.database import Database
-from .squeal.tables.activity import Activity
+from .squeal.tables.activity import Activity, FileScan
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
 from .uweird.focus import MessageBar, FocusWrap
@@ -42,11 +47,11 @@ class ActivityWidget(FocusWrap):
 
 
 @tui
-def activities(args, log):
+def edit_activities(args, log):
     '''
-# activities
+# edit-activities
 
-    ch2 activities
+    ch2 edit-activities
 
 The interactive editor for activities.  Allows addition, deletion and modification of activities.
 
@@ -56,3 +61,39 @@ To exit, alt-q (or, without saving, Alt-x).
     '''
     session = Database(args, log).session()
     EditorApp(log, session, MessageBar(), "Activities", ActivityWidget, Activity).run()
+
+
+def add_file(log, session, activity, path):
+    pass
+
+
+def add_activity(args, log):
+    '''
+# add-activity
+
+    ch2 add-activity ACTIVITY PATH
+
+Read one or more (if PATH is a directory) FIT files and associated them with the given activity type.
+    '''
+    session = Database(args, log).session()
+    activity = session.query(Activity).where(title=args[ACTIVITY]).one()
+    path = args.path(PATH)
+    if isdir(path):
+        path = join(path, '*.fit')
+    for file in glob(path):
+        try:
+            scan = session.query(FileScan).where(path=file).one()
+        except NoResultFound:
+            scan = FileScan(path=file, last_scan=0)
+            session.add(scan)
+        last_modified = stat(file).st_mtime
+        if last_modified > scan.last_scan:
+            log.info('Scanning %s' % file)
+            add_file(log, session, activity, file)
+            add_stats(log, session, activity, file)
+            scan.last_scan = last_modified
+            session.flush()
+        else:
+            log.debug('Skipping %s (already scanned)' % file)
+            session.expunge(scan)
+

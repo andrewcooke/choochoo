@@ -6,7 +6,7 @@ from .format.records import no_bad_values, fix_degrees, append_units, no_unknown
     to_hex, no_filter
 from .format.tokens import filtered_records, filtered_tokens, FileHeader, Definition, Checksum
 from .profile.types import Date
-from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV
+from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV, TABLES
 from ..lib.io import terminal_width
 from ..utils import unique
 
@@ -45,8 +45,12 @@ def summarize(log, format, fit_path, all_fields=False, all_messages=False, after
                          after=after, limit=limit, profile_path=profile_path)
     elif format == RECORDS:
         summarize_records(log, fit_path,
-                          all_fields=all_fields, all_messages=all_messages,
-                          after=after, limit=limit, profile_path=profile_path)
+                         all_fields=all_fields, all_messages=all_messages,
+                         after=after, limit=limit, profile_path=profile_path)
+    elif format == TABLES:
+        summarize_tables(log, fit_path,
+                         all_fields=all_fields, all_messages=all_messages,
+                         after=after, limit=limit, profile_path=profile_path)
     elif format == CSV:
         summarize_csv(log, fit_path,
                       after=after, limit=limit, profile_path=profile_path)
@@ -71,6 +75,15 @@ def summarize_fields(log, fit_path, after=0, limit=-1, profile_path=None):
 
 
 def summarize_records(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
+    data, types, messages, records = \
+        filtered_records(log, fit_path, after=after, limit=limit, profile_path=profile_path)
+    records = list(records)
+    width = terminal_width()
+    print()
+    pprint_as_dicts(records, all_fields, all_messages, width=width)
+
+
+def summarize_tables(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
     data, types, messages, records = \
         filtered_records(log, fit_path, after=after, limit=limit, profile_path=profile_path)
     records = list(records)

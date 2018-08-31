@@ -18,8 +18,14 @@ is displaying the data in a variety of formats.
 
 * [Displaying FIT data](#displaying-fit-data)
 
-  * [The `records` format](#the-records-format) (the default) - this
-    shows the file contents in a high-level, easy-to-read format.
+  * [The `tables` format](#the-tabless-format) (the default) - this
+    shows the file contents in a high-level, compact, easy-to-read
+    format.  Common records are grouped into tables.
+  
+  * [The `records` format](#the-records-format) - this shows the file
+    contents in a high-level format, ordered as they appear in the
+    file.  Because each entry is displayed separately this is more
+    verbose than the `tables` format.
   
   * [The `messages` format](#the-messages-format) - this displays the
     low-level binary data and is mostly of use when debugging errors.
@@ -41,17 +47,17 @@ For details of all the options:
 
     ch2 dump-fit -h
 
-### The `records` Format
+### The `tables` Format
 
 #### Example Usage
 
     ch2 -v 0 dump-fit FILE
 
-    ch2 -v 0 dump-fit --records FILE
+    ch2 -v 0 dump-fit --tables FILE
 
-    ch2 -v 0 dump-fit --records --all-fields --all-messages FILE
+    ch2 -v 0 dump-fit --tables --all-fields --all-messages FILE
 
-    ch2 -v 0 dump-fit --records --after N1 --limit N2 FILE
+    ch2 -v 0 dump-fit --tables --after N1 --limit N2 FILE
 
 Note that `-v 0` is used to supress any logging that would otherwise
 confuse the output to the screen.  Logs are still written to the logs
@@ -207,6 +213,191 @@ In the example above some details have been elided with `[...]`.
 
 The `event`, `device_info` and `record` messages are displayed in
 tabular format; all others are listed beforehand.
+
+Some fields could not be completely parsed.  This is not unusual with
+the FIT format, which is very extensible and incompletely documented.
+Such fields are marker by `-`.
+
+### The `records` Format
+
+#### Example Usage
+
+    ch2 -v 0 dump-fit --records FILE
+
+    ch2 -v 0 dump-fit --records --all-fields --all-messages FILE
+
+    ch2 -v 0 dump-fit --records --after N1 --limit N2 FILE
+
+Note that `-v 0` is used to supress any logging that would otherwise
+confuse the output to the screen.  Logs are still written to the logs
+directory.
+
+#### Format Description
+
+This command displays the contents of the file as a series of
+messages, in the order they appear in the file.
+
+#### Example Output
+
+    file_id
+      garmin_product: fr230,  manufacturer: garmin,
+      serial_number: 3918730542,
+      time_created: 2018-08-03 15:52:12+00:00,
+      type: activity
+
+    file_creator
+      software_version: 710
+
+    event
+      event: timer,   event_group: 0,     event_type: start,
+      timer_trigger: manual,
+      timestamp: 2018-08-03 15:52:13+00:00s
+
+    device_info
+      device_index: creator,  garmin_product: fr230,
+      manufacturer: garmin,   serial_number: 3918730542,
+      software_version: 7.1,  source_type: local,
+      timestamp: 2018-08-03 15:52:13+00:00s
+
+    device_info
+      device_index: 1,    device_type: 0,
+      garmin_product: 1619,   manufacturer: garmin,
+      software_version: 3.0,  source_type: local,
+      timestamp: 2018-08-03 15:52:13+00:00s
+
+    device_settings
+      active_time_zone: 0,    activity_tracker_enabled: False,
+      autosync_min_steps: 1000steps,
+      autosync_min_time: 60minutes,   backlight_mode: manual,
+      mounting_side: left,    move_alert_enabled: True,
+      time_mode: hour24,  time_offset: 4294952896s,
+      time_zone_offset: 0.0hr,    utc_offset: 0
+
+    user_profile
+      activity_class: 0,  dist_setting: metric,
+      elev_setting: metric,   gender: male,   height: 1.73m,
+      height_setting: metric,     hr_setting: max,
+      language: english,
+      position_setting: degree_minute_second,
+      resting_heart_rate: 42bpm,  sleep_time: 79200,
+      speed_setting: metric,  temperature_setting: metric,
+      wake_time: 21600,   weight: 65.0kg,
+      weight_setting: metric
+
+    sport
+      name: Bike,     sport: cycling,     sub_sport: generic
+
+    zones_target
+      hr_calc_type: percent_max_hr
+
+    record
+      distance: 1.44m,    enhanced_altitude: 617.2m,
+      enhanced_speed: 1.176m/s,
+      position_lat: -33.42752396129072°,
+      position_long: -70.60802654363215°,
+      timestamp: 2018-08-03 15:52:13+00:00s
+
+    record
+      distance: 13.22m,   enhanced_altitude: 616.5999999999999m,
+      enhanced_speed: 1.997m/s,
+      position_lat: -33.42753980308771°,
+      position_long: -70.60791338793933°,
+      timestamp: 2018-08-03 15:52:20+00:00s
+
+    [...]
+
+    record
+      distance: 6378.29m,
+      enhanced_altitude: 599.5999999999999m,
+      enhanced_speed: 7.017m/s,
+      position_lat: -33.428278835490346°,
+      position_long: -70.607436792925°,
+      timestamp: 2018-08-03 16:15:01+00:00s
+
+    record
+      distance: 6440.3m,  enhanced_altitude: 596.8m,
+      enhanced_speed: 6.149m/s,
+      position_lat: -33.42774691991508°,
+      position_long: -70.60764122754335°,
+      timestamp: 2018-08-03 16:15:11+00:00s
+
+    event
+      event: timer,   event_group: 0,     event_type: stop_all,
+      timer_trigger: auto,
+      timestamp: 2018-08-03 16:15:31+00:00s
+
+    event
+      data: 4,    event: 38,  event_type: marker,
+      timestamp: 2018-08-03 16:15:31+00:00s
+
+    record
+      distance: 6500.22m,     enhanced_altitude: 594.8m,
+      enhanced_speed: 0.0m/s,
+      position_lat: -33.427340649068356°,
+      position_long: -70.60799863189459°,
+      timestamp: 2018-08-03 16:15:31+00:00s
+
+    event
+      data: 4,    event: 38,  event_type: marker,
+      timestamp: 2018-08-03 16:15:35+00:00s
+
+    event
+      event: timer,   event_group: 0,     event_type: stop_all,
+      timer_trigger: manual,
+      timestamp: 2018-08-03 16:15:36+00:00s
+
+    device_info
+      device_index: creator,  garmin_product: fr230,
+      manufacturer: garmin,   serial_number: 3918730542,
+      software_version: 7.1,  source_type: local,
+      timestamp: 2018-08-03 16:15:36+00:00s
+
+    device_info
+      device_index: 1,    device_type: 0,
+      garmin_product: 1619,   manufacturer: garmin,
+      software_version: 3.0,  source_type: local,
+      timestamp: 2018-08-03 16:15:36+00:00s
+
+    lap
+      end_position_lat: -33.427340649068356°,
+      end_position_long: -70.60799863189459°,
+      enhanced_avg_speed: 5.59m/s,
+      enhanced_max_speed: 8.295m/s,   event: lap,
+      event_type: stop,   lap_trigger: session_end,
+      message_index: 0,   sport: cycling,
+      start_position_lat: -33.42752396129072°,
+      start_position_long: -70.60802654363215°,
+      start_time: 2018-08-03 15:52:13+00:00,
+      sub_sport: generic,
+      timestamp: 2018-08-03 16:16:28+00:00s,  total_ascent: 35m,
+      total_calories: 193kcal,    total_descent: 81m,
+      total_distance: 6500.22m,   total_elapsed_time: 1398.718s,
+      total_timer_time: 1162.728s
+
+    session
+      enhanced_avg_speed: 5.59m/s,
+      enhanced_max_speed: 8.295m/s,   event: lap,
+      event_type: stop,   first_lap_index: 0,
+      message_index: 0,   nec_lat: -33.42733855359256°,
+      nec_long: -70.58107445016503°,  num_laps: 1,
+      sport: cycling,
+      start_position_lat: -33.42752396129072°,
+      start_position_long: -70.60802654363215°,
+      start_time: 2018-08-03 15:52:13+00:00,
+      sub_sport: generic,     swc_lat: -33.43541686423123°,
+      swc_long: -70.60802654363215°,
+      timestamp: 2018-08-03 16:16:28+00:00s,  total_ascent: 35m,
+      total_calories: 193kcal,    total_descent: 81m,
+      total_distance: 6500.22m,   total_elapsed_time: 1398.718s,
+      total_timer_time: 1162.728s,    trigger: activity_end
+
+    activity
+      event: activity,    event_type: stop,
+      local_timestamp: 2018-08-03 12:16:28,   num_sessions: 1,
+      timestamp: 2018-08-03 16:16:28+00:00,
+      total_timer_time: 1162.728s,    type: manual
+
+In the example above some details have been elided with `[...]`.
 
 Some fields could not be completely parsed.  This is not unusual with
 the FIT format, which is very extensible and incompletely documented.
