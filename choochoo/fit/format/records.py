@@ -104,7 +104,7 @@ class Record(namedtuple('BaseRecord', 'name, number, identity, timestamp, data')
 
     def into(self, container, *filters, _cls=None, **extras):
         if not _cls:
-            _cls = self.__class__
+            _cls = Record
         return _cls(self.name, self.number, self.identity, self.timestamp,
                     container(chain(*filters)(self.data_with(**extras))))
 
@@ -128,11 +128,6 @@ class LazyRecord(Record):
 
     __slots__ = ()
 
-    def into(self, container, *filters, _cls=None, **extras):
-        if not _cls:
-            _cls = Record
-        return super().into(container, *filters, _cls=_cls, **extras)
-
     def force(self, *filters, **extras):
         return self.as_dict(*filters, **extras)
 
@@ -144,20 +139,32 @@ class Attributes(dict):
         self.__dict__ = self
 
 
+class Values:
+
+    def __init__(self, attr, or_none=False):
+        self.__attr = attr
+        self.__or_none = or_none
+
+    def __getattr__(self, name):
+        try:
+            (values, units) = getattr(self.__attr, name)
+            return values[0]
+        except:
+            if self.__or_none:
+                return None
+            else:
+                raise
+
+
 class DictRecord(Record):
 
-    # this has a __dict__ (for __cache, since slots not allowed)
+    def __new__(cls, *args, **kargs):
+        self = super().__new__(cls, *args, **kargs)
+        self.attr = Attributes(self.data.items())
+        self.value = Values(self.attr)
+        self.none = Values(self.attr, or_none=True)
+        return self
 
     def data_with(self, **kargs):
         return it.chain(self.data.items(), kargs.items())
-
-    @property
-    def attr(self):
-        try:
-            cache = self.__cache
-        except AttributeError:
-            cache = Attributes(self.data)
-            self.__cache = cache
-        return cache
-
 

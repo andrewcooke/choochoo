@@ -29,6 +29,7 @@ DATABASE = 'database'
 DEV = 'dev'
 DUMP_FORMAT = 'dump_format'
 FIELDS = 'fields'
+FORCE, F = 'force', 'f'
 LIMIT = 'limit'
 LOGS = 'logs'
 LIST = 'list'
@@ -119,6 +120,7 @@ def parser():
 
     add_activity = subparsers.add_parser(ADD_ACTIVITY,
                                          help='add a new activity - see `%s %s -h` for more details' % (PROGNAME, ADD_ACTIVITY))
+    add_activity.add_argument(m(F), mm(FORCE), action='store_true', help='re-read file and delete existing data')
     add_activity.add_argument(ACTIVITY, action='store', metavar='ACTIVITY', nargs=1,
                               help='an activity name')
     add_activity.add_argument(PATH, action='store', metavar='PATH', nargs=1,

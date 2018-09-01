@@ -10,7 +10,7 @@ from choochoo.squeal.tables.schedule import Schedule, ScheduleDiary
 def test_british():
     plan = twelve_week_improver('2018-07-25')
     p = parser()
-    args = NamespaceWithVariables(p.parse_args(['--database', ':memory:', 'plan']))
+    args = NamespaceWithVariables(p.parse_args(['--database', ':memory:', 'add-plan']))
     log = make_log(args)
     db = Database(args, log)
     with db.session_context() as session:
@@ -25,7 +25,7 @@ def test_british():
 def test_exponential_time():
     plan = exponential_time('Time test', '2d', '20m', '5', '2018-07-25', '1M')
     p = parser()
-    args = NamespaceWithVariables(p.parse_args(['--database', ':memory:', 'plan']))
+    args = NamespaceWithVariables(p.parse_args(['--database', ':memory:', 'add-plan']))
     log = make_log(args)
     db = Database(args, log)
     with db.session_context() as session:
@@ -41,7 +41,7 @@ def test_exponential_time():
 def test_exponential_distance():
     plan = exponential_distance('Distance test', 'w[mon,wed,fri]', '20km', '5', '2018-07-25', '1M')
     p = parser()
-    args = NamespaceWithVariables(p.parse_args(['--database', ':memory:', 'plan']))
+    args = NamespaceWithVariables(p.parse_args(['--database', ':memory:', 'add-plan']))
     log = make_log(args)
     db = Database(args, log)
     with db.session_context() as session:

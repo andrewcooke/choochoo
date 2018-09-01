@@ -1,4 +1,6 @@
 
+import time as t
+
 
 def sign(x):
     if x == 0:
@@ -34,3 +36,5 @@ def unique(elements, key=lambda x: x):
             yield element
 
 
+def datetime_to_epoch(datetime):
+    return t.mktime(datetime.timetuple())

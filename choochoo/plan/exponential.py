@@ -2,10 +2,10 @@
 from abc import abstractmethod
 from re import compile
 
-from .utils import ORMUtils
 from ..lib.date import parse_duration, duration_to_secs, parse_date, add_duration, format_duration
 from ..lib.repeating import Specification
 from ..squeal.tables.schedule import ScheduleType, Schedule, ScheduleDiary
+from ..squeal.utils import ORMUtils
 
 
 class Builder(ORMUtils):

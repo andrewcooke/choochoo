@@ -3,10 +3,10 @@ import datetime as dt
 
 from sqlalchemy import or_
 
-from .utils import ORMUtils
 from ..lib.date import parse_date, format_date
 from ..lib.repeating import DOW
 from ..squeal.tables.schedule import ScheduleType, Schedule, ScheduleDiary
+from ..squeal.utils import ORMUtils
 
 
 class Assert:

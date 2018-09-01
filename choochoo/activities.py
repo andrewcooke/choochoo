@@ -1,3 +1,4 @@
+
 from glob import glob
 from os import stat
 from os.path import isdir, join
@@ -5,11 +6,12 @@ from os.path import isdir, join
 from sqlalchemy.orm.exc import NoResultFound
 from urwid import Edit, Pile, Columns, connect_signal
 
-from .args import PATH, ACTIVITY, EDIT_ACTIVITIES
+from .utils import datetime_to_epoch
+from .args import PATH, ACTIVITY, EDIT_ACTIVITIES, FORCE
 from .fit.format.read import filtered_records
 from .lib.io import tui
 from .squeal.database import Database
-from .squeal.tables.activity import Activity, FileScan, ActivityDiary
+from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
 from .uweird.focus import MessageBar, FocusWrap
@@ -64,12 +66,34 @@ To exit, alt-q (or, without saving, Alt-x).
     EditorApp(log, session, MessageBar(), "Activities", ActivityWidget, Activity).run()
 
 
-def add_file(log, session, activity_id, path):
+def add_file(log, session, activity, path, force):
+    if force:
+        session.query(ActivityDiary).filter(ActivityDiary.fit_file == path).delete()
     data, types, messages, records = filtered_records(log, path)
-    diary = ActivityDiary()
+    diary = ActivityDiary(activity=activity, fit_file=path)
     session.add(diary)
+    timespan = None
     for record in records:
-        print(record)
+        record = record.force()
+        if record.name == 'event' and not diary.start:
+            diary.start = record.value.timestamp
+            diary.date = record.value.timestamp
+        if record.name == 'event' and record.value.event_type == 'start':
+            timespan = ActivityTimespan(activity_diary=diary,
+                                        start=datetime_to_epoch(record.value.timestamp))
+            session.add(timespan)
+        if record.name == 'record':
+            waypoint = ActivityWaypoint(activity_diary=diary,
+                                        epoch=datetime_to_epoch(record.value.timestamp),
+                                        latitude=record.value.position_lat,
+                                        longitude=record.value.position_long,
+                                        hr_bpm=record.none.heart_rate,
+                                        distance=record.value.distance,
+                                        speed=record.value.enhanced_speed)
+            session.add(waypoint)
+        if record.name == 'event' and record.value.event_type == 'stop_all':
+            timespan.finish = datetime_to_epoch(record.value.timestamp)
+            diary.finish = record.value.timestamp
 
 
 def add_stats(log, session, activity_id, path):
@@ -85,13 +109,17 @@ def add_activity(args, log):
 Read one or more (if PATH is a directory) FIT files and associated them with the given activity type.
     '''
     db = Database(args, log)
-
+    force = args[FORCE]
     activity = args[ACTIVITY][0]
-    try:
-        with db.session_context() as session:
-            activity_id = session.query(Activity).filter(Activity.title == activity).one().id
-    except NoResultFound:
-        raise Exception('Activity "%s" is not defined - see ch2 %s' % (activity, EDIT_ACTIVITIES))
+    with db.session_context() as session:
+        try:
+            activity = session.query(Activity).filter(Activity.title == activity).one()
+        except NoResultFound:
+            if force:
+                activity = Activity(title=activity)
+                session.add(activity)
+            else:
+                raise Exception('Activity "%s" is not defined - see ch2 %s' % (activity, EDIT_ACTIVITIES))
 
     path = args.path(PATH, index=0, rooted=False)
     if isdir(path):
@@ -107,13 +135,12 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
                 scan = FileScan(path=file, last_scan=0)
                 session.add(scan)
             last_modified = stat(file).st_mtime
-            if last_modified > scan.last_scan:
+            if force or last_modified > scan.last_scan:
                 log.info('Scanning %s' % file)
-                add_file(log, session, activity_id, file)
-                add_stats(log, session, activity_id, file)
+                add_file(log, session, activity, file, force)
+                add_stats(log, session, activity, file)
                 scan.last_scan = last_modified
                 session.flush()
             else:
                 log.debug('Skipping %s (already scanned)' % file)
                 session.expunge(scan)
-
