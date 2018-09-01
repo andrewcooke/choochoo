@@ -16,6 +16,7 @@
     * Output to CSV and tests
     * XXX  Checksum errors
     * XXX  Data directory?  Copyright?
+  * Number records consistently
 
 * Command line addition of reminders
 

@@ -171,13 +171,13 @@ class AutoFloat(StructSupport):
 
 class Mapping(AbstractType):
 
-    def __init__(self, log, row, rows, types):
+    def __init__(self, log, row, rows, types, warn=False):
         name = row.type_name
         base_type_name = row.base_type
         base_type = types.profile_to_type(base_type_name, auto_create=True)
         super().__init__(log, name, base_type.size, base_type=base_type)
-        self._profile_to_internal = WarnDict(log, 'No internal value for profile %r')
-        self._internal_to_profile = WarnDict(log, 'No profile value for internal %r')
+        self._profile_to_internal = WarnDict(log, 'No internal value for profile %r') if warn else dict()
+        self._internal_to_profile = WarnDict(log, 'No profile value for internal %r') if warn else dict()
         while rows:
             peek = rows.peek()
             if peek.type_name or peek.value_name is None or peek.value is None:
@@ -216,7 +216,7 @@ BASE_TYPE_NAMES = ['enum', 'sint8', 'uint8', 'sint16', 'uint16', 'sint32', 'uint
 
 class Types:
 
-    def __init__(self, log, sheet):
+    def __init__(self, log, sheet, warn=False):
         self.__log = log
         self.__profile_to_type = WarnDict(log, 'No type for profile %r')
         # these are not 'base types' in the same sense as types having base types.
@@ -229,7 +229,7 @@ class Types:
                 self.__log.debug('Skipping %s' % (row,))
             elif row[0]:
                 # self.__log.info('Parsing type %s' % row[0])
-                self.__add_type(Mapping(self.__log, row, rows, self))
+                self.__add_type(Mapping(self.__log, row, rows, self, warn=warn))
 
     def __add_known_types(self):
         # these cannot be inferred from name

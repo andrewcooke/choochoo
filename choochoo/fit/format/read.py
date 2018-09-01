@@ -29,7 +29,7 @@ def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
     return data, types, messages, generator()
 
 
-def filtered_records(log, fit_path, after=0, limit=-1, profile_path=None):
+def filtered_records(log, fit_path, after=0, limit=-1, records=None, profile_path=None):
     data, types, messages = load_fit(log, fit_path, profile_path=profile_path)
 
     def generator():
@@ -37,6 +37,8 @@ def filtered_records(log, fit_path, after=0, limit=-1, profile_path=None):
                                             for (offset, token) in tokens(log, data, types, messages)
                                             if token.is_user):
             if i >= after and (limit < 0 or i - after < limit):
-                yield token.parse()
+                record = token.parse()
+                if not records or record.name in records:
+                    yield record
 
     return data, types, messages, generator()

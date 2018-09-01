@@ -36,6 +36,7 @@ LIST = 'list'
 MESSAGES = 'messages'
 PATH = 'path'
 PLAN = 'plan'
+RECORD, R = 'record', 'r'
 RECORDS = 'records'
 ROOT = 'root'
 TABLES = 'tables'
@@ -163,6 +164,8 @@ def parser():
                           help='display undocumented fields (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
     dump_fit.add_argument(mm(ALL_MESSAGES), action='store_true',
                           help='display undocumented messages (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
+    dump_fit.add_argument(m(R), mm(RECORD), action='store', metavar='name',
+                          help='display only named record(s) (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
     dump_fit.set_defaults(command=DUMP_FIT, dump_format=TABLES)
 
     edit_activities = subparsers.add_parser(EDIT_ACTIVITIES,

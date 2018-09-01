@@ -141,7 +141,7 @@ class DynamicField(Zip, RowField):
             value = types.profile_to_type(message.profile_to_field(name).type.name).profile_to_internal(value)
             self.__dynamic_lookup[(name, value)] = field
 
-    def parse(self, data, count, endian, references, accumulate, message, **options):
+    def parse(self, data, count, endian, references, accumulate, message, warn=False, **options):
         for name in self.references:
             if name in references:
                 lookup = (name, references[name][0][0])  # drop units and take first value
@@ -149,8 +149,9 @@ class DynamicField(Zip, RowField):
                     yield from message.profile_to_field(self.__dynamic_lookup[lookup]).parse(
                         data, count, endian, references, accumulate, message, **options)
                     return
-        self._log.warn('Could not resolve dynamic field %s' % self.name)
-        yield from super().parse(data, count, endian, references, accumulate, message, **options)
+        if warn:
+            self._log.warn('Could not resolve dynamic field %s' % self.name)
+        yield from super().parse(data, count, endian, references, accumulate, message, warn=warn, **options)
 
 
 def MessageField(log, row, rows, types):

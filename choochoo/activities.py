@@ -72,28 +72,35 @@ def add_file(log, session, activity, path, force):
     data, types, messages, records = filtered_records(log, path)
     diary = ActivityDiary(activity=activity, fit_file=path)
     session.add(diary)
-    timespan = None
+    timespan, warned = None, 0
     for record in records:
         record = record.force()
-        if record.name == 'event' and not diary.start:
-            diary.start = record.value.timestamp
-            diary.date = record.value.timestamp
-        if record.name == 'event' and record.value.event_type == 'start':
-            timespan = ActivityTimespan(activity_diary=diary,
-                                        start=datetime_to_epoch(record.value.timestamp))
-            session.add(timespan)
-        if record.name == 'record':
-            waypoint = ActivityWaypoint(activity_diary=diary,
-                                        epoch=datetime_to_epoch(record.value.timestamp),
-                                        latitude=record.value.position_lat,
-                                        longitude=record.value.position_long,
-                                        hr_bpm=record.none.heart_rate,
-                                        distance=record.value.distance,
-                                        speed=record.value.enhanced_speed)
-            session.add(waypoint)
-        if record.name == 'event' and record.value.event_type == 'stop_all':
-            timespan.finish = datetime_to_epoch(record.value.timestamp)
-            diary.finish = record.value.timestamp
+        try:
+            if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
+                if not diary.start:
+                    diary.date = record.value.timestamp
+                    diary.start = record.value.timestamp
+                timespan = ActivityTimespan(activity_diary=diary,
+                                            start=datetime_to_epoch(record.value.timestamp))
+                session.add(timespan)
+            if record.name == 'record':
+                waypoint = ActivityWaypoint(activity_diary=diary,
+                                            epoch=datetime_to_epoch(record.value.timestamp),
+                                            latitude=record.value.position_lat,
+                                            longitude=record.value.position_long,
+                                            hr_bpm=record.none.heart_rate,
+                                            distance=record.value.distance,
+                                            speed=record.value.enhanced_speed)
+                session.add(waypoint)
+            if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'stop_all':
+                timespan.finish = datetime_to_epoch(record.value.timestamp)
+                diary.finish = record.value.timestamp
+        except (AttributeError, TypeError) as e:
+            if warned < 10:
+                log.warn('Error while reading %s - some data may be missing (%s)' % (path, e))
+            elif warned == 10:
+                log.warn('No more warnings will be given for %s' % path)
+            warned += 1
 
 
 def add_stats(log, session, activity_id, path):
@@ -124,7 +131,7 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
     path = args.path(PATH, index=0, rooted=False)
     if isdir(path):
         path = join(path, '*.fit')
-    files = list(glob(path))
+    files = list(sorted(glob(path)))
     if not files:
         raise Exception('No match for "%s"' % path)
     for file in files:

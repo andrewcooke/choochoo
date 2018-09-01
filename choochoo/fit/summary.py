@@ -6,7 +6,8 @@ from .format.read import filtered_records, filtered_tokens
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
     to_hex, no_filter
 from .profile.types import Date
-from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV, TABLES
+from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV, TABLES, \
+    RECORD
 from ..lib.io import terminal_width
 from ..utils import unique
 
@@ -33,10 +34,11 @@ or redirect stderr elsewhere).
     '''
     fit_path = args.file(PATH, 0, rooted=False)
     summarize(log, args[DUMP_FORMAT], fit_path, all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
-              after=args[AFTER][0], limit=args[LIMIT][0], profile_path=profile_path)
+              after=args[AFTER][0], limit=args[LIMIT][0], records=args[RECORD], profile_path=profile_path)
 
 
-def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
+def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1,
+              records=None, profile_path=None):
     if format == MESSAGES:
         summarize_messages(log, fit_path,
                            after=after, limit=limit, profile_path=profile_path)
@@ -46,11 +48,11 @@ def summarize(log, format, fit_path, all_fields=False, all_messages=False, after
     elif format == RECORDS:
         summarize_records(log, fit_path,
                          all_fields=all_fields, all_messages=all_messages,
-                         after=after, limit=limit, profile_path=profile_path)
+                         after=after, limit=limit, records=records, profile_path=profile_path)
     elif format == TABLES:
         summarize_tables(log, fit_path,
                          all_fields=all_fields, all_messages=all_messages,
-                         after=after, limit=limit, profile_path=profile_path)
+                         after=after, limit=limit, records=records, profile_path=profile_path)
     elif format == CSV:
         summarize_csv(log, fit_path,
                       after=after, limit=limit, profile_path=profile_path)
@@ -74,18 +76,20 @@ def summarize_fields(log, fit_path, after=0, limit=-1, profile_path=None):
             print('  %s' % line)
 
 
-def summarize_records(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
+def summarize_records(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, records=None,
+                      profile_path=None):
     data, types, messages, records = \
-        filtered_records(log, fit_path, after=after, limit=limit, profile_path=profile_path)
+        filtered_records(log, fit_path, after=after, limit=limit, records=records, profile_path=profile_path)
     records = list(records)
     width = terminal_width()
     print()
-    pprint_as_dicts(records, all_fields, all_messages, width=width)
+    pprint_as_dicts(records, all_fields, all_messages, width=width, count=True)
 
 
-def summarize_tables(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, profile_path=None):
+def summarize_tables(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, records=None,
+                     profile_path=None):
     data, types, messages, records = \
-        filtered_records(log, fit_path, after=after, limit=limit, profile_path=profile_path)
+        filtered_records(log, fit_path, after=after, limit=limit, records=records, profile_path=profile_path)
     records = list(records)
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
@@ -95,7 +99,7 @@ def summarize_tables(log, fit_path, all_fields=False, all_messages=False, after=
     pprint_as_tuples(large, all_fields, all_messages, width=width)
 
 
-def summarize_csv(log, fit_path, after=0, limit=-1, profile_path=None, out=stdout):
+def summarize_csv(log, fit_path, after=0, limit=-1 ,profile_path=None, out=stdout):
     data, types, messages, tokens = \
         filtered_tokens(log, fit_path, after=after, limit=limit, profile_path=profile_path)
     for index, offset, token in tokens:
@@ -113,12 +117,14 @@ def partition(records, counts, threshold=3):
     return small, large
 
 
-def pprint_as_dicts(records, all_fields, all_messages, width=80):
-    for record in records:
+def pprint_as_dicts(records, all_fields, all_messages, width=80, count=False):
+    for i, record in enumerate(records):
         if all_messages or record.is_known():
             record = record.as_dict(join_values, append_units, to_hex, fix_degrees,
                                     no_filter if all_fields else no_unknown_fields,
                                     no_bad_values)
+            if count:
+                print('%04d ' % i, end='')
             print(record.identity)
             pprint_with_tabs(('%s: %s' % (name, value) for name, value in sorted(record.data.items())),
                              width=width)
