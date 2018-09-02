@@ -9,9 +9,6 @@ class WarnDict(dict):
         self.__msg = msg
         super().__init__()
 
-    def add_named(self, item):
-        self[item.name] = item
-
     def __getitem__(self, item):
         try:
             return super().__getitem__(item)

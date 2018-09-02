@@ -126,6 +126,10 @@ class AliasInteger(AutoInteger):
         self.name = name
 
 
+def timestamp_to_datetime(time, tzinfo=dt.timezone.utc):
+    return dt.datetime(1989, 12, 31, tzinfo=tzinfo) + dt.timedelta(seconds=time)
+
+
 class Date(AliasInteger):
 
     def __init__(self, log, name, utc, to_datetime=True):
@@ -135,8 +139,8 @@ class Date(AliasInteger):
 
     @staticmethod
     def convert(time, tzinfo=dt.timezone.utc):
-        if time is not None and time >= 0x10000000 :
-            return dt.datetime(1989, 12, 31, tzinfo=tzinfo) + dt.timedelta(seconds=time)
+        if time is not None and time >= 0x10000000:
+            return timestamp_to_datetime(time, tzinfo=tzinfo)
         else:
             return time
 
@@ -255,7 +259,7 @@ class Types:
                 raise Exception('Duplicate type for %r with differing size (%d  %d)' %
                                 (type.name, type.size, duplicate.size))
         else:
-            self.__profile_to_type.add_named(type)
+            self.__profile_to_type[type.name] = type
 
     def is_type(self, name):
         return name in self.__profile_to_type

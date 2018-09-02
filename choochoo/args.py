@@ -42,6 +42,7 @@ ROOT = 'root'
 TABLES = 'tables'
 V, VERBOSITY = 'v', 'verbosity'
 VERSION = 'version'
+WARN, W = 'warn', 'w'
 
 
 def mm(name): return '--' + name
@@ -166,6 +167,8 @@ def parser():
                           help='display undocumented messages (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
     dump_fit.add_argument(m(R), mm(RECORD), action='store', metavar='name',
                           help='display only named record(s) (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
+    dump_fit.add_argument(m(W), mm(WARN), action='store', metavar='name',
+                          help='additional warning messages')
     dump_fit.set_defaults(command=DUMP_FIT, dump_format=TABLES)
 
     edit_activities = subparsers.add_parser(EDIT_ACTIVITIES,

@@ -18,8 +18,8 @@ def tokens(log, data, types, messages):
     checksum.validate(offset)
 
 
-def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
-    data, types, messages = load_fit(log, fit_path, profile_path=profile_path)
+def filtered_tokens(log, fit_path, after=0, limit=-1, warn=False, profile_path=None):
+    data, types, messages = load_fit(log, fit_path, warn=warn, profile_path=profile_path)
 
     def generator():
         for i, (offset, token) in enumerate(tokens(log, data, types, messages)):
@@ -29,15 +29,15 @@ def filtered_tokens(log, fit_path, after=0, limit=-1, profile_path=None):
     return data, types, messages, generator()
 
 
-def filtered_records(log, fit_path, after=0, limit=-1, records=None, profile_path=None):
-    data, types, messages = load_fit(log, fit_path, profile_path=profile_path)
+def filtered_records(log, fit_path, after=0, limit=-1, records=None, warn=False, profile_path=None):
+    data, types, messages = load_fit(log, fit_path, warn=warn, profile_path=profile_path)
 
     def generator():
         for i, (offset, token) in enumerate((offset, token)
                                             for (offset, token) in tokens(log, data, types, messages)
                                             if token.is_user):
             if i >= after and (limit < 0 or i - after < limit):
-                record = token.parse()
+                record = token.parse(warn=warn)
                 if not records or record.name in records:
                     yield record
 

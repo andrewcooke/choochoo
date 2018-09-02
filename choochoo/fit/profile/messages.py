@@ -19,14 +19,14 @@ HEADER_FIELDS = [
 
 class Message(Named):
 
-    def __init__(self, log, name, number=None):
+    def __init__(self, log, name, number=None, warn=False):
         super().__init__(log, name)
         self.number = number
-        self._profile_to_field = WarnDict(log, 'No field for profile %r')
-        self._number_to_field = WarnDict(log, 'No field for number %r')
+        self._profile_to_field = WarnDict(log, 'No field for profile %r') if warn else dict()
+        self._number_to_field = WarnDict(log, 'No field for number %r') if warn else dict()
 
     def _add_field(self, field):
-        self._profile_to_field.add_named(field)
+        self._profile_to_field[field.name] = field
         self._number_to_field[field.number] = field
 
     def profile_to_field(self, name):
@@ -65,9 +65,9 @@ class Message(Named):
 
 class RowMessage(Message):
 
-    def __init__(self, log, row, rows, types):
+    def __init__(self, log, row, rows, types, warn=False):
         number = types.profile_to_type('mesg_num').profile_to_internal(row.msg_name)
-        super().__init__(log, row.msg_name, number)
+        super().__init__(log, row.msg_name, number, warn=warn)
         while rows:
             if not rows.peek().field_name:
                 self._post(types)
@@ -77,8 +77,8 @@ class RowMessage(Message):
 
 class Header(Message):
 
-    def __init__(self, log, types):
-        super().__init__(log, 'HEADER', number=HEADER_GLOBAL_TYPE)
+    def __init__(self, log, types, warn=False):
+        super().__init__(log, 'HEADER', number=HEADER_GLOBAL_TYPE, warn=warn)
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(TypedField(log, name, n, None, None, None, None, base_type, types))
 
@@ -97,21 +97,21 @@ class Missing(Message):
 
 class Messages:
 
-    def __init__(self, log, sheet, types):
+    def __init__(self, log, sheet, types, warn=False):
         self.__log = log
-        self.__profile_to_message = WarnDict(log, 'No message for profile %r')
-        self.__number_to_message = WarnDict(log, 'No message for number %r')
+        self.__profile_to_message = WarnDict(log, 'No message for profile %r') if warn else dict()
+        self.__number_to_message = WarnDict(log, 'No message for number %r') if warn else dict()
         rows = Rows(sheet, wrapper=Row)
         for row in rows:
             if row.msg_name and row.msg_name[0].isupper():
                 self.__log.debug('Skipping %s' % (row,))
             elif row.msg_name:
                 # self.__log.info('Parsing message %s' % row.msg_name)
-                self.__add_message(RowMessage(self.__log, row, rows, types))
-        self.__add_message(Header(self.__log, types))
+                self.__add_message(RowMessage(self.__log, row, rows, types, warn=warn))
+        self.__add_message(Header(self.__log, types, warn=warn))
 
     def __add_message(self, message):
-        self.__profile_to_message.add_named(message)
+        self.__profile_to_message[message.name] = message
         try:
             self.__number_to_message[message.number] = message
         except AttributeError:

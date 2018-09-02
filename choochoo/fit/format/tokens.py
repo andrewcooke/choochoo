@@ -3,7 +3,7 @@ from collections import defaultdict, Counter
 from struct import unpack
 
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
-from ..profile.types import Date
+from ..profile.types import Date, timestamp_to_datetime
 from ...lib.data import WarnDict, tohex
 
 
@@ -114,7 +114,11 @@ class Defined(Token):
         yield '%s - header (msg %d - %s)' % \
               (tohex(self.data[0:1]), self.data[0] & 0x0f, self.definition.message.name)
         for field in sorted(self.definition.fields, key=lambda field: field.start):
-            yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
+            if field.name == 'timestamp':
+                yield '%s - %s (%s) %s' % (tohex(self.data[field.start:field.finish]), field.name,
+                                           field.base_type.name, timestamp_to_datetime(self.timestamp))
+            else:
+                yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
 
     def describe_csv(self):
         record = self.parse(map_values=False, cvt_times=False, rtn_composite=True)

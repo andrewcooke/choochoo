@@ -6,12 +6,13 @@ from os.path import isdir, join
 from sqlalchemy.orm.exc import NoResultFound
 from urwid import Edit, Pile, Columns, connect_signal
 
-from .utils import datetime_to_epoch
 from .args import PATH, ACTIVITY, EDIT_ACTIVITIES, FORCE
 from .fit.format.read import filtered_records
+from .fit.profile.types import timestamp_to_datetime
 from .lib.io import tui
 from .squeal.database import Database
 from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint
+from .utils import datetime_to_epoch
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
 from .uweird.focus import MessageBar, FocusWrap
@@ -72,29 +73,36 @@ def add_file(log, session, activity, path, force):
     data, types, messages, records = filtered_records(log, path)
     diary = ActivityDiary(activity=activity, fit_file=path)
     session.add(diary)
-    timespan, warned = None, 0
-    for record in records:
+    timespan, warned, latest = None, 0, 0
+    for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0):
         record = record.force()
         try:
-            if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
-                if not diary.start:
-                    diary.date = record.value.timestamp
-                    diary.start = record.value.timestamp
-                timespan = ActivityTimespan(activity_diary=diary,
-                                            start=datetime_to_epoch(record.value.timestamp))
-                session.add(timespan)
-            if record.name == 'record':
-                waypoint = ActivityWaypoint(activity_diary=diary,
-                                            epoch=datetime_to_epoch(record.value.timestamp),
-                                            latitude=record.value.position_lat,
-                                            longitude=record.value.position_long,
-                                            hr_bpm=record.none.heart_rate,
-                                            distance=record.value.distance,
-                                            speed=record.value.enhanced_speed)
-                session.add(waypoint)
-            if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'stop_all':
-                timespan.finish = datetime_to_epoch(record.value.timestamp)
-                diary.finish = record.value.timestamp
+            if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
+                if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
+                    if not diary.start:
+                        diary.date = record.value.timestamp
+                        diary.start = record.value.timestamp
+                    timespan = ActivityTimespan(activity_diary=diary,
+                                                start=datetime_to_epoch(record.value.timestamp))
+                    session.add(timespan)
+                if record.name == 'record':
+                    waypoint = ActivityWaypoint(activity_diary=diary,
+                                                epoch=datetime_to_epoch(record.value.timestamp),
+                                                latitude=record.none.position_lat,
+                                                longitude=record.none.position_long,
+                                                hr_bpm=record.none.heart_rate,
+                                                distance=record.value.distance,
+                                                speed=record.none.enhanced_speed)
+                    session.add(waypoint)
+                if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'stop_all':
+                    timespan.finish = datetime_to_epoch(record.value.timestamp)
+                    diary.finish = record.value.timestamp
+                if record.name == 'record':
+                    latest = record.timestamp
+            else:
+                if record.name == 'record':
+                    log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
+                             (path, timestamp_to_datetime(record.timestamp)))
         except (AttributeError, TypeError) as e:
             if warned < 10:
                 log.warn('Error while reading %s - some data may be missing (%s)' % (path, e))

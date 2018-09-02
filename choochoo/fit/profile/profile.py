@@ -41,8 +41,8 @@ This command is intended for internal use only.
 def read_profile(log, path, warn=False):
     nlog = NullableLog(log)
     wb = xls.load_workbook(path)
-    types = Types(nlog, wb['Types'], warn)
-    messages = Messages(nlog, wb['Messages'], types)
+    types = Types(nlog, wb['Types'], warn=warn)
+    messages = Messages(nlog, wb['Messages'], types, warn=warn)
     return nlog, types, messages
 
 
@@ -53,7 +53,7 @@ def load_profile(log):
     return types, messages
 
 
-def load_fit(log, fit_path, profile_path=None, warn=False):
+def load_fit(log, fit_path, warn=False, profile_path=None):
     # todo separate?
     if profile_path:
         _nlog, types, messages = read_profile(log, profile_path, warn=warn)
