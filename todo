@@ -13,10 +13,13 @@
   * XXX  Accumulate flag
   * Developer fields w trimmings (see all possible fields in excel)
   * Tests:
-    * Output to CSV and tests
+    * XXX  Output to CSV and tests
     * XXX  Checksum errors
     * XXX  Data directory?  Copyright?
-  * Number records consistently
+  * XXX  Add warn flag to packaging
+  * XXX  Construct activity entries
+  * Construct stats
+  * Display activity and stats
 
 * Command line addition of reminders
 

@@ -85,7 +85,7 @@ def summarize_records(log, fit_path, all_fields=False, all_messages=False, after
     records = list(records)
     width = terminal_width()
     print()
-    pprint_as_dicts(records, all_fields, all_messages, width=width, count=True)
+    pprint_as_dicts(records, all_fields, all_messages, width=width)
 
 
 def summarize_tables(log, fit_path, all_fields=False, all_messages=False, after=0, limit=-1, records=None,
@@ -120,14 +120,12 @@ def partition(records, counts, threshold=3):
     return small, large
 
 
-def pprint_as_dicts(records, all_fields, all_messages, width=80, count=False):
-    for i, record in enumerate(records):
+def pprint_as_dicts(records, all_fields, all_messages, width=80):
+    for record in records:
         if all_messages or record.is_known():
             record = record.as_dict(join_values, append_units, to_hex, fix_degrees,
                                     no_filter if all_fields else no_unknown_fields,
                                     no_bad_values)
-            if count:
-                print('%04d ' % i, end='')
             print(record.identity)
             pprint_with_tabs(('%s: %s' % (name, value) for name, value in sorted(record.data.items())),
                              width=width)

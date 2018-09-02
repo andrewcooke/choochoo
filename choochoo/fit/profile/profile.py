@@ -8,8 +8,7 @@ from pkg_resources import resource_stream
 from .messages import Messages
 from .support import NullableLog
 from .types import Types
-from ...args import PATH
-
+from ...args import PATH, WARN
 
 PROFILE = 'global-profile.pkl'
 
@@ -27,7 +26,7 @@ This command is intended for internal use only.
     '''
     in_path = args.file(PATH, index=0, rooted=False)
     log.info('Reading from %s' % in_path)
-    nlog, types, messages = read_profile(log, in_path)
+    nlog, types, messages = read_profile(log, in_path, warn=args[WARN])
     out_path = join(dirname(__file__), PROFILE)
     nlog.set_log(None)
     log.info('Writing to %s' % out_path)

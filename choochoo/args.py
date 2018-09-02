@@ -196,6 +196,8 @@ def parser():
                                                      'see `%s %s -h` for more details' % (PROGNAME, PACKAGE_FIT_PROFILE))
     package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE', nargs=1,
                                      help='the path to the profile (Profile.xlsx)')
+    package_fit_profile.add_argument(m(W), mm(WARN), action='store', metavar='name',
+                                     help='additional warning messages')
     package_fit_profile.set_defaults(command=PACKAGE_FIT_PROFILE)
 
     return parser

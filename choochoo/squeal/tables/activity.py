@@ -1,5 +1,6 @@
 
 from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, Float, UniqueConstraint
+from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
@@ -45,7 +46,9 @@ class ActivityWaypoint(Base):
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
                                nullable=False, primary_key=True)
     activity_diary = relationship('ActivityDiary',
-                                  backref=backref('waypoints', cascade='all, delete-orphan', passive_deletes=True))
+                                  backref=backref('waypoints', cascade='all, delete-orphan', passive_deletes=True,
+                                                  order_by='ActivityWaypoint.epoch',
+                                                  collection_class=ordering_list('epoch')))
     epoch = Column(Float, primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
@@ -61,7 +64,9 @@ class ActivityTimespan(Base):
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
                                nullable=False, primary_key=True)
     activity_diary = relationship('ActivityDiary',
-                                  backref=backref('timespans', cascade='all, delete-orphan', passive_deletes=True))
+                                  backref=backref('timespans', cascade='all, delete-orphan', passive_deletes=True,
+                                                  order_by='ActivityTimespan.start',
+                                                  collection_class=ordering_list('start')))
     start = Column(Float, nullable=False, primary_key=True)  # unix epoch
     finish = Column(Float, nullable=False)  # unix epoch
 
@@ -73,8 +78,9 @@ class ActivityStatistic(Base):
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
                                nullable=False, primary_key=True)
     activity_diary = relationship('ActivityDiary',
-                                  backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True))
-    time = Column(Integer, nullable=False)  # unix epoch
+                                  backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
+                                                  order_by='ActivityStatistic.name',
+                                                  collection_class=ordering_list('name')))
     name = Column(Text, nullable=False)
     value = Column(Float, nullable=False)
     units = Column(Text, nullable=False, server_default='')
