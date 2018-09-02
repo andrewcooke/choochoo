@@ -11,6 +11,7 @@ COMMAND = 'command'
 TOPIC = 'topic'
 
 ADD_ACTIVITY = 'add-activity'
+ADD_FTHR = 'add-fthr'
 ADD_PLAN = 'add-plan'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
@@ -26,9 +27,11 @@ ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 CSV = 'csv'
 DATABASE = 'database'
+DATE = 'date'
 DEV = 'dev'
 DUMP_FORMAT = 'dump_format'
 FIELDS = 'fields'
+FTHR = 'fthr'
 FORCE, F = 'force', 'f'
 LIMIT = 'limit'
 LOGS = 'logs'
@@ -128,6 +131,14 @@ def parser():
     add_activity.add_argument(PATH, action='store', metavar='PATH', nargs=1,
                               help='a fit file or directory containing fit files')
     add_activity.set_defaults(command=ADD_ACTIVITY)
+
+    add_fthr = subparsers.add_parser(ADD_FTHR,
+                                     help='define a new set of HR zones - see `%s %s -h` for more details' % (PROGNAME, ADD_FTHR))
+    add_fthr.add_argument(FTHR, action='store', metavar='FTHR', nargs=1, type=int,
+                          help='the FTHR')
+    add_fthr.add_argument(DATE, action='store', metavar='DATE', nargs='?',
+                          help='an optional date')
+    add_fthr.set_defaults(command=ADD_FTHR)
 
     add_plan = subparsers.add_parser(ADD_PLAN,
                                      help='training plans - see `%s %s -h` for more details' % (PROGNAME, ADD_PLAN))

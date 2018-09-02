@@ -39,6 +39,23 @@ class ActivityDiary(Base):
     finish = Column(DateTime, nullable=False)
 
 
+class ActivityTimespan(Base):
+
+    __tablename__ = 'activity_timespan'
+
+    id = Column(Integer, primary_key=True)
+    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
+                               nullable=False)
+    activity_diary = relationship('ActivityDiary',
+                                  backref=backref('timespans', cascade='all, delete-orphan',
+                                                  passive_deletes=True,
+                                                  order_by='ActivityTimespan.start',
+                                                  collection_class=ordering_list('start')))
+    start = Column(Float, nullable=False)  # unix epoch
+    finish = Column(Float, nullable=False)  # unix epoch
+    UniqueConstraint('activity_diary_id', 'start')
+
+
 class ActivityWaypoint(Base):
 
     __tablename__ = 'activity_waypoint'
@@ -46,29 +63,21 @@ class ActivityWaypoint(Base):
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
                                nullable=False, primary_key=True)
     activity_diary = relationship('ActivityDiary',
-                                  backref=backref('waypoints', cascade='all, delete-orphan', passive_deletes=True,
+                                  backref=backref('waypoints', cascade='all, delete-orphan',
+                                                  passive_deletes=True,
                                                   order_by='ActivityWaypoint.epoch',
                                                   collection_class=ordering_list('epoch')))
+    activity_timespan_id = Column(Integer, ForeignKey('activity_timespan.id'))
+    activity_timespan = relationship('ActivityTimespan',
+                                     backref=backref('waypoints',
+                                                     order_by='ActivityWaypoint.epoch',
+                                                     collection_class=ordering_list('epoch')))
     epoch = Column(Float, primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
-    hr_bpm = Column(Integer)
+    hr = Column(Integer)
     distance = Column(Float)
     speed = Column(Float)
-
-
-class ActivityTimespan(Base):
-
-    __tablename__ = 'activity_timespan'
-
-    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
-                               nullable=False, primary_key=True)
-    activity_diary = relationship('ActivityDiary',
-                                  backref=backref('timespans', cascade='all, delete-orphan', passive_deletes=True,
-                                                  order_by='ActivityTimespan.start',
-                                                  collection_class=ordering_list('start')))
-    start = Column(Float, nullable=False, primary_key=True)  # unix epoch
-    finish = Column(Float, nullable=False)  # unix epoch
 
 
 class ActivityStatistic(Base):
@@ -81,8 +90,9 @@ class ActivityStatistic(Base):
                                   backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
                                                   order_by='ActivityStatistic.name',
                                                   collection_class=ordering_list('name')))
-    name = Column(Text, nullable=False)
+    name = Column(Text, nullable=False, primary_key=True)
     value = Column(Float, nullable=False)
     units = Column(Text, nullable=False, server_default='')
-    UniqueConstraint('activity_diary_id', 'name')
 
+    def __str__(self):
+        return '%s: %f %s' % (self.name, self.value, self.units)

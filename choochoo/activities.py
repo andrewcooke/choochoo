@@ -12,6 +12,7 @@ from .fit.profile.types import timestamp_to_datetime
 from .lib.io import tui
 from .squeal.database import Database
 from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint
+from .statistics import add_stats
 from .utils import datetime_to_epoch
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
@@ -87,16 +88,20 @@ def add_file(log, session, activity, path, force):
                     session.add(timespan)
                 if record.name == 'record':
                     waypoint = ActivityWaypoint(activity_diary=diary,
+                                                activity_timespan=timespan,
                                                 epoch=datetime_to_epoch(record.value.timestamp),
                                                 latitude=record.none.position_lat,
                                                 longitude=record.none.position_long,
-                                                hr_bpm=record.none.heart_rate,
+                                                hr=record.none.heart_rate,
+                                                # if distance is not set in some future file, calculate from
+                                                # lat/long?
                                                 distance=record.value.distance,
                                                 speed=record.none.enhanced_speed)
                     session.add(waypoint)
                 if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'stop_all':
                     timespan.finish = datetime_to_epoch(record.value.timestamp)
                     diary.finish = record.value.timestamp
+                    timespan = None
                 if record.name == 'record':
                     latest = record.timestamp
             else:
@@ -109,10 +114,7 @@ def add_file(log, session, activity, path, force):
             elif warned == 10:
                 log.warn('No more warnings will be given for %s' % path)
             warned += 1
-
-
-def add_stats(log, session, activity_id, path):
-    pass
+    return diary
 
 
 def add_activity(args, log):
@@ -152,8 +154,8 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
             last_modified = stat(file).st_mtime
             if force or last_modified > scan.last_scan:
                 log.info('Scanning %s' % file)
-                add_file(log, session, activity, file, force)
-                add_stats(log, session, activity, file)
+                diary = add_file(log, session, activity, file, force)
+                add_stats(log, session, diary)
                 scan.last_scan = last_modified
                 session.flush()
             else:
