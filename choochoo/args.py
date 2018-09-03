@@ -13,6 +13,7 @@ TOPIC = 'topic'
 ADD_ACTIVITY = 'add-activity'
 ADD_FTHR = 'add-fthr'
 ADD_PLAN = 'add-plan'
+CREATE_DATABASE = 'create-database'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
 EDIT_ACTIVITIES = 'edit-activities'
@@ -147,6 +148,10 @@ def parser():
     add_plan.add_argument(PLAN, action='store', metavar='PARAM', nargs='*',
                           help='the plan name and possible parameters')
     add_plan.set_defaults(command=ADD_PLAN)
+
+    diary = subparsers.add_parser(CREATE_DATABASE,
+                                  help='create the database if missing')
+    diary.set_defaults(command=CREATE_DATABASE)
 
     diary = subparsers.add_parser(DIARY,
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
