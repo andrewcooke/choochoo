@@ -1,7 +1,7 @@
 
 from glob import glob
 from os import stat
-from os.path import isdir, join
+from os.path import isdir, join, basename, splitext
 
 from sqlalchemy.orm.exc import NoResultFound
 from urwid import Edit, Pile, Columns, connect_signal
@@ -72,7 +72,7 @@ def add_file(log, session, activity, path, force):
     if force:
         session.query(ActivityDiary).filter(ActivityDiary.fit_file == path).delete()
     data, types, messages, records = filtered_records(log, path)
-    diary = ActivityDiary(activity=activity, fit_file=path)
+    diary = ActivityDiary(activity=activity, fit_file=path, title=splitext(basename(path))[0])
     session.add(diary)
     timespan, warned, latest = None, 0, 0
     for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0):

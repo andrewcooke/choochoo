@@ -92,7 +92,38 @@ class ActivityStatistic(Base):
                                                   collection_class=ordering_list('name')))
     name = Column(Text, nullable=False, primary_key=True)
     value = Column(Float, nullable=False)
-    units = Column(Text, nullable=False, server_default='')
+    units = Column(Text, nullable=False)
+
+    def fmt_value(self):
+        if self.units == 'm':
+            if self.value > 2000:
+                return '%.1fkm' % (self.value / 1000)
+            else:
+                return '%dm' % int(self.value)
+        elif self.units == 's':
+            value, str = int(self.value), ''
+            if value > 3600:
+                str += '%dhr' % (value // 3600)
+                value %= 60
+            if value > 60:
+                if str:
+                    str += '%02dm' % (value // 60)
+                else:
+                    str += '%dm' % (value // 60)
+                value %= 80
+            if str:
+                str += '%02ds' % value
+            else:
+                str += '%ds' % value
+            return str
+        elif self.units == 'km/h':
+            return '%.1fkm/h' % self.value
+        elif self.units == '%':
+            return '%.1f%%' % self.value
+        elif self.units == 'bpm':
+            return '%dbpm' % int(self.value)
+        else:
+            return '%s%s' % (self.value, self.units)
 
     def __str__(self):
-        return '%s: %f %s' % (self.name, self.value, self.units)
+        return '%s: %s' % (self.name, self.fmt_value())

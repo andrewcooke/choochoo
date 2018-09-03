@@ -1,5 +1,6 @@
 
 from collections import deque, Counter
+from itertools import chain
 
 from .squeal.tables.activity import ActivityStatistic
 from .squeal.tables.heartrate import HeartRateZones
@@ -17,29 +18,35 @@ class Chunk:
     def popleft(self):
         return self.__waypoints.popleft()
 
-    def distance(self):
+    def __diff(self, index, attr):
         if len(self.__waypoints) > 1:
-            return self.__waypoints[-1].distance - self.__waypoints[0].distance
+            return attr(self.__waypoints[index]) - attr(self.__waypoints[0])
         else:
             return 0
 
-    def delta(self):
-        if len(self.__waypoints) > 1:
-            return self.__waypoints[1].distance - self.__waypoints[0].distance
-        else:
-            return 0
+    def distance(self):
+        return self.__diff(-1, lambda w: w.distance)
+
+    def distance_delta(self):
+        return self.__diff(1, lambda w: w.distance)
 
     def time(self):
-        if len(self.__waypoints) > 1:
-            return self.__waypoints[-1].epoch - self.__waypoints[0].epoch
-        else:
-            return 0
+        return self.__diff(-1, lambda w: w.epoch)
+
+    def time_delta(self):
+        return self.__diff(1, lambda w: w.epoch)
 
     def hrs(self):
         return (waypoint.hr for waypoint in self.__waypoints)
 
+    def __len__(self):
+        return len(self.__waypoints)
+
+    def __getitem__(self, item):
+        return self.__waypoints[item]
+
     def __bool__(self):
-        return self.delta() > 0
+        return self.distance_delta() > 0
 
 
 class Chunks:
@@ -61,7 +68,7 @@ class Chunks:
                 yield chunks
 
 
-class DistanceTimes(Chunks):
+class TimeForDistance(Chunks):
 
     def __init__(self, diary, distance):
         super().__init__(diary)
@@ -71,13 +78,40 @@ class DistanceTimes(Chunks):
         for chunks in self.chunks():
             distance = sum(chunk.distance() for chunk in chunks)
             if distance > self.__distance:
-                while chunks and distance + chunks[0].delta() > self.__distance:
-                    distance -= chunks[0].delta()
+                while chunks and distance - chunks[0].distance_delta() > self.__distance:
+                    distance -= chunks[0].distance_delta()
                     chunks[0].popleft()
                     if not chunks[0]:
                         chunks.popleft()
                 time = sum(chunk.time() for chunk in chunks)
                 yield time * self.__distance / distance
+
+
+class MedianHRForTime(Chunks):
+
+    def __init__(self, diary, time, max_gap=None):
+        super().__init__(diary)
+        self.__time = time
+        self.__max_gap = 0.1 * time if max_gap is None else max_gap
+
+    def _max_gap(self, chunks):
+        return max(c1[0].activity_timespan.start - c2[0].activity_timespan.finish
+                   for c1, c2 in zip(list(chunks)[1:], chunks))
+
+    def hrs(self):
+        for chunks in self.chunks():
+            while len(chunks) > 1 and self._max_gap(chunks) > self.__max_gap:
+                chunks.popleft()
+            time = sum(chunk.time() for chunk in chunks)
+            if time > self.__time:
+                while chunks and time - chunks[0].time_delta() > self.__time:
+                    time -= chunks[0].time_delta()
+                    chunks[0].popleft()
+                    if not chunks[0]:
+                        chunks.popleft()
+                hrs = list(sorted(chain(*(chunk.hrs() for chunk in chunks))))
+                median = len(hrs) // 2
+                yield hrs[median]
 
 
 class Totals(Chunks):
@@ -93,6 +127,7 @@ class Zones(Chunks):
 
     def __init__(self, diary, zones):
         super().__init__(diary)
+        # this assumes record data are evenly distributed
         chunks = list(self.chunks())[-1]
         counts = Counter()
         lower = 0
@@ -127,7 +162,7 @@ def add_stats(log, session, diary):
     add_stat(log, session, diary, 'Active time', totals.time, 's')
     add_stat(log, session, diary, 'Active speed', totals.distance * 3.6 / totals.time, 'km/h')
     for target in round_km():
-        times = list(sorted(DistanceTimes(diary, target * 1000).times()))
+        times = list(sorted(TimeForDistance(diary, target * 1000).times()))
         if not times:
             break
         median = len(times) // 2
@@ -139,3 +174,8 @@ def add_stats(log, session, diary):
             add_stat(log, session, diary, 'Percent in Z%d' % zone, 100 * frac, '%')
         for (zone, frac) in Zones(diary, zones).zones:
             add_stat(log, session, diary, 'Time in Z%d' % zone, frac * totals.time, 's')
+    for target in (5, 10, 20, 30, 60, 90, 120, 180):
+        hrs = sorted(MedianHRForTime(diary, target * 60).hrs(), reverse=True)
+        if not hrs:
+            break
+        add_stat(log, session, diary, 'Max med HR over %dm' % target, hrs[0], 'bpm')
