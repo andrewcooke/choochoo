@@ -80,27 +80,42 @@ class ActivityWaypoint(Base):
     speed = Column(Float)
 
 
+class ActivityStatistics(Base):
+
+    __tablename__ = 'activity_statistics'
+
+    id = Column(Integer, primary_key=True)
+    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
+                               nullable=False)
+    activity_diary = relationship('ActivityDiary',
+                                  backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
+                                                  order_by='ActivityStatistics.name',
+                                                  collection_class=ordering_list('name')))
+    name = Column(Text, nullable=False, unique=True)
+    units = Column(Text, nullable=False)
+    best = Column(Text)  # max, min etc
+
+
 class ActivityStatistic(Base):
 
     __tablename__ = 'activity_statistic'
 
-    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
-                               nullable=False, primary_key=True)
-    activity_diary = relationship('ActivityDiary',
-                                  backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
-                                                  order_by='ActivityStatistic.name',
-                                                  collection_class=ordering_list('name')))
-    name = Column(Text, nullable=False, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    activity_statistics_id = Column(Integer, ForeignKey('activity_statistics.id', ondelete='cascade'),
+                                    nullable=False)
+    activity_statistics = relationship('ActivityStatistics',
+                                       backref=backref('statistics',
+                                                       cascade='all, delete-orphan', passive_deletes=True))
     value = Column(Float, nullable=False)
-    units = Column(Text, nullable=False)
 
     def fmt_value(self):
-        if self.units == 'm':
+        units = self.activity_statistics.units
+        if units == 'm':
             if self.value > 2000:
                 return '%.1fkm' % (self.value / 1000)
             else:
                 return '%dm' % int(self.value)
-        elif self.units == 's':
+        elif units == 's':
             value, str = int(self.value), ''
             if value > 3600:
                 str += '%dhr' % (value // 3600)
@@ -116,14 +131,16 @@ class ActivityStatistic(Base):
             else:
                 str += '%ds' % value
             return str
-        elif self.units == 'km/h':
+        elif units == 'km/h':
             return '%.1fkm/h' % self.value
-        elif self.units == '%':
+        elif units == '%':
             return '%.1f%%' % self.value
-        elif self.units == 'bpm':
+        elif units == 'bpm':
             return '%dbpm' % int(self.value)
         else:
-            return '%s%s' % (self.value, self.units)
+            return '%s%s' % (self.value, units)
 
     def __str__(self):
-        return '%s: %s' % (self.name, self.fmt_value())
+        return '%s: %s' % (self.activity_statistics.name, self.fmt_value())
+
+
