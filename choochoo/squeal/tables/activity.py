@@ -144,3 +144,37 @@ class ActivityStatistic(Base):
         return '%s: %s' % (self.activity_statistics.name, self.fmt_value())
 
 
+class SummaryStatistics(Base):
+
+    __tablename__ = 'summary_statistics'
+
+    id = Column(Integer, primary_key=True)
+    activity_statistics_id = Column(Integer, ForeignKey('activity_statistics.id', ondelete='cascade'),
+                                    nullable=False)
+    activity_statistics = relationship('ActivityStatistics')  # provides units
+    name = Column(Text, nullable=False, unique=True)
+
+    def __str__(self):
+        return '%s: %s%s' % (self.name,
+                             ','.join('%g' % s.activity_statistic.value for s in self.statistics),
+                             self.activity_statistics.units)
+
+
+class SummaryStatistic(Base):
+
+    __tablename__ = 'summary_statistic'
+
+    id = Column(Integer, primary_key=True)
+    summary_statistics_id = Column(Integer, ForeignKey('summary_statistics.id', ondelete='cascade'),
+                                   nullable=False)
+    summary_statistics = relationship('SummaryStatistics',
+                                      backref=backref('statistics',
+                                                      cascade='all, delete-orphan', passive_deletes=True,
+                                                      order_by='SummaryStatistic.rank',
+                                                      collection_class=ordering_list('rank')))
+    activity_statistic_id = Column(Integer, ForeignKey('activity_statistic.id', ondelete='cascade'),
+                                   nullable=False)
+    activity_statistic = relationship('ActivityStatistic',
+                                      backref=backref('summary',
+                                                      cascade='all, delete-orphan', passive_deletes=True))
+    rank = Column(Integer, nullable=False)  # 1, 2, 3...

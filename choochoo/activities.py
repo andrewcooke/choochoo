@@ -12,7 +12,7 @@ from .fit.profile.types import timestamp_to_datetime
 from .lib.io import tui
 from .squeal.database import Database
 from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint
-from .statistics import add_stats
+from .statistics import add_stats, add_summary_stats
 from .utils import datetime_to_epoch
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
@@ -156,6 +156,7 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
                 log.info('Scanning %s' % file)
                 diary = add_file(log, session, activity, file, force)
                 add_stats(log, session, diary)
+                add_summary_stats(log, session)
                 scan.last_scan = last_modified
                 session.flush()
             else:

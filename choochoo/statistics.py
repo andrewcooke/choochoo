@@ -2,7 +2,7 @@
 from collections import deque, Counter
 from itertools import chain
 
-from .squeal.tables.activity import ActivityStatistic, ActivityStatistics
+from .squeal.tables.activity import ActivityStatistic, ActivityStatistics, SummaryStatistics, SummaryStatistic
 from .squeal.tables.heartrate import HeartRateZones
 
 
@@ -184,10 +184,29 @@ def add_stats(log, session, diary):
             add_stat(log, session, diary, 'Percent in Z%d' % zone, None, 100 * frac, '%')
         for (zone, frac) in Zones(log, diary, zones).zones:
             add_stat(log, session, diary, 'Time in Z%d' % zone,  None, frac * totals.time, 's')
-        for target in (5, 10, 20, 30, 60, 90, 120, 180):
+        for target in (5, 10, 15, 20, 30, 60, 90, 120, 180):
             hrs = sorted(MedianHRForTime(log, diary, target * 60).hrs(), reverse=True)
             if not hrs:
                 break
             add_stat(log, session, diary, 'Max med HR over %dm' % target, 'max', hrs[0], 'bpm')
     else:
         log.warn('No HR zones defined for %s or before' % diary.date)
+
+
+def add_summary_stats(log, session):
+    for statistics in session.query(ActivityStatistics).all():
+        if statistics.best:
+            values = sorted(statistics.statistics, reverse=(statistics.best == 'max'), key=lambda s: s.value)
+            if values:
+                name = '%s(%s)' % (statistics.best, statistics.name)
+                summary = session.query(SummaryStatistics).filter(SummaryStatistics.name == name).one_or_none()
+                if not summary:
+                    summary = SummaryStatistics(name=name, activity_statistics=statistics)
+                    session.add(summary)
+                else:
+                    for value in summary.statistics:
+                        session.delete(value)
+                for rank in range(min(len(values), 3)):
+                    session.add(SummaryStatistic(summary_statistics=summary, activity_statistic=values[rank],
+                                                 rank=rank+1))
+                log.info(summary)
