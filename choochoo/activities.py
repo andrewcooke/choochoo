@@ -156,9 +156,10 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
                 log.info('Scanning %s' % file)
                 diary = add_file(log, session, activity, file, force)
                 add_stats(log, session, diary)
-                add_summary_stats(log, session)
                 scan.last_scan = last_modified
                 session.flush()
             else:
                 log.debug('Skipping %s (already scanned)' % file)
                 session.expunge(scan)
+    with db.session_context() as session:
+        add_summary_stats(log, session)

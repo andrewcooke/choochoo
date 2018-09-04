@@ -12,8 +12,6 @@ select * from injury_diary;
 select * from schedule;
 .mode insert schedule_diary
 select * from schedule_diary;
-.mode insert schedule_type
-select * from schedule_type;
 EOF
 
 rm ~/.ch2/database.sqlb

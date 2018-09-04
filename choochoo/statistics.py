@@ -159,7 +159,8 @@ def round_km():
 def add_stat(log, session, diary, name, best, value, units):
     statistics = session.query(ActivityStatistics).filter(ActivityStatistics.name == name).one_or_none()
     if not statistics:
-        statistics = ActivityStatistics(activity_diary=diary, name=name, units=units, best=best)
+        statistics = ActivityStatistics(activity=diary.activity, activity_diary=diary,
+                                        name=name, units=units, best=best)
         session.add(statistics)
     statistic = ActivityStatistic(activity_statistics=statistics, value=value)
     session.add(statistic)
@@ -200,12 +201,12 @@ def add_summary_stats(log, session):
             if values:
                 name = '%s(%s)' % (statistics.best, statistics.name)
                 summary = session.query(SummaryStatistics).filter(SummaryStatistics.name == name).one_or_none()
-                if not summary:
-                    summary = SummaryStatistics(name=name, activity_statistics=statistics)
-                    session.add(summary)
-                else:
-                    for value in summary.statistics:
-                        session.delete(value)
+                if summary:
+                    session.delete(summary)
+                    session.flush()
+                summary = SummaryStatistics(activity=statistics.activity,
+                                            activity_statistics=statistics, name=name)
+                session.add(summary)
                 for rank in range(min(len(values), 3)):
                     session.add(SummaryStatistic(summary_statistics=summary, activity_statistic=values[rank],
                                                  rank=rank+1))

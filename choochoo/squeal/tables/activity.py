@@ -85,15 +85,22 @@ class ActivityStatistics(Base):
     __tablename__ = 'activity_statistics'
 
     id = Column(Integer, primary_key=True)
+    activity_id = Column(Integer, ForeignKey('activity.id', ondelete='cascade'),
+                         nullable=False)
+    activity = relationship('Activity',
+                            backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
+                                            order_by='ActivityStatistics.name',
+                                            collection_class=ordering_list('name')))
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
                                nullable=False)
     activity_diary = relationship('ActivityDiary',
                                   backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
                                                   order_by='ActivityStatistics.name',
                                                   collection_class=ordering_list('name')))
-    name = Column(Text, nullable=False, unique=True)
+    name = Column(Text, nullable=False)
     units = Column(Text, nullable=False)
     best = Column(Text)  # max, min etc
+    UniqueConstraint('activity', 'name')
 
 
 class ActivityStatistic(Base):
@@ -108,6 +115,7 @@ class ActivityStatistic(Base):
                                                        cascade='all, delete-orphan', passive_deletes=True))
     value = Column(Float, nullable=False)
 
+    @property
     def fmt_value(self):
         units = self.activity_statistics.units
         if units == 'm':
@@ -141,7 +149,7 @@ class ActivityStatistic(Base):
             return '%s%s' % (self.value, units)
 
     def __str__(self):
-        return '%s: %s' % (self.activity_statistics.name, self.fmt_value())
+        return '%s: %s' % (self.activity_statistics.name, self.fmt_value)
 
 
 class SummaryStatistics(Base):
@@ -149,15 +157,18 @@ class SummaryStatistics(Base):
     __tablename__ = 'summary_statistics'
 
     id = Column(Integer, primary_key=True)
+    activity_id = Column(Integer, ForeignKey('activity.id', ondelete='cascade'),
+                         nullable=False)
+    activity = relationship('Activity')
     activity_statistics_id = Column(Integer, ForeignKey('activity_statistics.id', ondelete='cascade'),
                                     nullable=False)
     activity_statistics = relationship('ActivityStatistics')  # provides units
-    name = Column(Text, nullable=False, unique=True)
+    name = Column(Text, nullable=False)
+    UniqueConstraint('activity', 'name')
 
     def __str__(self):
-        return '%s: %s%s' % (self.name,
-                             ','.join('%g' % s.activity_statistic.value for s in self.statistics),
-                             self.activity_statistics.units)
+        return '%s: %s' % (self.name,
+                           ', '.join(s.activity_statistic.fmt_value for s in self.statistics))
 
 
 class SummaryStatistic(Base):
