@@ -157,7 +157,8 @@ def round_km():
 
 
 def add_stat(log, session, diary, name, best, value, units):
-    statistics = session.query(ActivityStatistics).filter(ActivityStatistics.name == name).one_or_none()
+    statistics = session.query(ActivityStatistics).filter(
+        ActivityStatistics.name == name, ActivityStatistics.activity == diary.activity).one_or_none()
     if not statistics:
         statistics = ActivityStatistics(activity=diary.activity, activity_diary=diary,
                                         name=name, units=units, best=best)
@@ -168,6 +169,7 @@ def add_stat(log, session, diary, name, best, value, units):
 
 
 def add_stats(log, session, diary):
+    import pdb; pdb.set_trace()
     totals = Totals(log, diary)
     add_stat(log, session, diary, 'Active distance', 'max', totals.distance, 'm')
     add_stat(log, session, diary, 'Active time', 'max', totals.time, 's')
@@ -195,6 +197,7 @@ def add_stats(log, session, diary):
 
 
 def add_summary_stats(log, session):
+    import pdb; pdb.set_trace()
     for statistics in session.query(ActivityStatistics).all():
         if statistics.best:
             values = sorted(statistics.statistics, reverse=(statistics.best == 'max'), key=lambda s: s.value)
@@ -202,8 +205,9 @@ def add_summary_stats(log, session):
                 name = '%s(%s)' % (statistics.best, statistics.name)
                 summary = session.query(SummaryStatistics).filter(SummaryStatistics.name == name).one_or_none()
                 if summary:
+                    for statistic in summary.statistics:
+                        session.delete(statistic)
                     session.delete(summary)
-                    session.flush()
                 summary = SummaryStatistics(activity=statistics.activity,
                                             activity_statistics=statistics, name=name)
                 session.add(summary)
