@@ -11,6 +11,7 @@ def parse_date(text):
 def format_date(date):
     return date.strftime('%Y-%m-%d')
 
+
 def format_time(datetime):
     return datetime.strftime('%H:%M:%S')
 
@@ -56,10 +57,10 @@ def duration_to_secs(duration):
 
 
 def format_duration(seconds):
-    if seconds > 59:
-        minutes, seconds = seconds / 60, seconds % 60
-        if minutes > 59:
-            hours, minutes = minutes / 60, minutes % 60
+    if seconds >= 60:
+        minutes, seconds = seconds // 60, seconds % 60
+        if minutes >= 60:
+            hours, minutes = minutes // 60, minutes % 60
             return '%dh%02dm%02ds' % (hours, minutes, seconds)
         else:
             return '%dm%02ds' % (minutes, seconds)

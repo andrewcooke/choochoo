@@ -3,6 +3,7 @@ from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, Float, Uniqu
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref
 
+from ...lib.date import format_duration
 from ..support import Base
 from ..types import Ordinal
 
@@ -127,21 +128,7 @@ class ActivityStatistic(Base):
             else:
                 return '%dm' % int(self.value)
         elif units == 's':
-            value, str = int(self.value), ''
-            if value > 3600:
-                str += '%dhr' % (value // 3600)
-                value %= 60
-            if value > 60:
-                if str:
-                    str += '%02dm' % (value // 60)
-                else:
-                    str += '%dm' % (value // 60)
-                value %= 80
-            if str:
-                str += '%02ds' % value
-            else:
-                str += '%ds' % value
-            return str
+            return format_duration(self.value)
         elif units == 'km/h':
             return '%.1fkm/h' % self.value
         elif units == '%':

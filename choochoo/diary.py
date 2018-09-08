@@ -125,10 +125,14 @@ class ActivityWidget(FocusWrap):
     def __init__(self, tabs, session, bar, activity):
         factory = Factory(tabs, bar)
         self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
-        time = '%s - %s' % (format_time(activity.start), format_time(activity.finish))
+        title = Text(activity.title)
+        timespan = Text('%s - %s' % (format_time(activity.start), format_time(activity.finish)))
         distance = self.build_statistic('Active distance', session, activity)
-        body = [Text('%s: %s' % (statistic.activity_statistics.name, statistic.fmt_value)) for statistic in activity.statistics] + [distance, self.notes]
-        super().__init__(DividedPile([Columns([Text(activity.title), ColSpace(), Text(time)]),
+        time = self.build_statistic('Active time', session, activity)
+        speed = self.build_statistic('Active speed', session, activity)
+        body = [Columns([Text('Totals'), ColText(' '), distance, ColText(' '), time, ColText(' '), speed])] + \
+               [Text('%s: %s' % (statistic.activity_statistics.name, statistic.fmt_value)) for statistic in activity.statistics] + [distance, self.notes]
+        super().__init__(DividedPile([Columns([title, ColSpace(), timespan]),
                                       Indent(Pile(body), width=2)]))
 
     def build_statistic(self, name, session, activity):
@@ -138,10 +142,10 @@ class ActivityWidget(FocusWrap):
         percentile = session.query(ActivityStatistic).join(ActivityStatistic.activity_statistics).\
             filter(ActivityStatistics.name == 'Percentile(%s)'% name, ActivityStatistics.activity == activity.activity,
                    ActivityStatistic.activity_diary == activity).one()
-        value = Text('%s (%d%%)' % (statistic.fmt_value, int(percentile.value)))
+        text = Text('%s [%d%%]' % (statistic.fmt_value, int(percentile.value)))
         if statistic.summary:
-            value = AttrMap(value, 'rank-%d' % statistic.summary.rank)
-        return value
+            text = AttrMap(text, 'rank-%d' % statistic.summary.rank)
+        return text
 
 
 class Activities(DynamicDate):
