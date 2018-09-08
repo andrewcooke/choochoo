@@ -25,7 +25,7 @@ class Activity(Base):
     sort = Column(Text, nullable=False, server_default='')
 
 
-class ActivityDiary(Base):
+class   ActivityDiary(Base):
 
     __tablename__ = 'activity_diary'
 
@@ -37,6 +37,7 @@ class ActivityDiary(Base):
     fit_file = Column(Text, nullable=False, unique=True)
     start = Column(DateTime, nullable=False)
     finish = Column(DateTime, nullable=False)
+    notes = Column(Text)
 
 
 class ActivityTimespan(Base):
@@ -91,16 +92,13 @@ class ActivityStatistics(Base):
                             backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
                                             order_by='ActivityStatistics.name',
                                             collection_class=ordering_list('name')))
-    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
-                               nullable=False)
-    activity_diary = relationship('ActivityDiary',
-                                  backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
-                                                  order_by='ActivityStatistics.name',
-                                                  collection_class=ordering_list('name')))
     name = Column(Text, nullable=False)
     units = Column(Text, nullable=False)
     best = Column(Text)  # max, min etc
     UniqueConstraint('activity', 'name')
+
+    def __str__(self):
+        return '%s (%s)' % (self.name, self.activity.title)
 
 
 class ActivityStatistic(Base):
@@ -113,7 +111,12 @@ class ActivityStatistic(Base):
     activity_statistics = relationship('ActivityStatistics',
                                        backref=backref('statistics',
                                                        cascade='all, delete-orphan', passive_deletes=True))
+    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
+                               nullable=False)
+    activity_diary = relationship('ActivityDiary',
+                                  backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True))
     value = Column(Float, nullable=False)
+    UniqueConstraint('activity_statistics_id', 'activity_diary_id')
 
     @property
     def fmt_value(self):

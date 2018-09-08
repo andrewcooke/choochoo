@@ -155,6 +155,8 @@ def parser():
 
     diary = subparsers.add_parser(DIARY,
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
+    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
+                       help='an optional date to display (default is today)')
     diary.set_defaults(command=DIARY)
 
     dump_fit = subparsers.add_parser(DUMP_FIT,

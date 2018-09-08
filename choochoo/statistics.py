@@ -160,16 +160,14 @@ def add_stat(log, session, diary, name, best, value, units):
     statistics = session.query(ActivityStatistics).filter(
         ActivityStatistics.name == name, ActivityStatistics.activity == diary.activity).one_or_none()
     if not statistics:
-        statistics = ActivityStatistics(activity=diary.activity, activity_diary=diary,
-                                        name=name, units=units, best=best)
+        statistics = ActivityStatistics(activity=diary.activity, name=name, units=units, best=best)
         session.add(statistics)
-    statistic = ActivityStatistic(activity_statistics=statistics, value=value)
+    statistic = ActivityStatistic(activity_statistics=statistics, activity_diary=diary, value=value)
     session.add(statistic)
     log.info(statistic)
 
 
 def add_stats(log, session, diary):
-    import pdb; pdb.set_trace()
     totals = Totals(log, diary)
     add_stat(log, session, diary, 'Active distance', 'max', totals.distance, 'm')
     add_stat(log, session, diary, 'Active time', 'max', totals.time, 's')
@@ -197,7 +195,6 @@ def add_stats(log, session, diary):
 
 
 def add_summary_stats(log, session):
-    import pdb; pdb.set_trace()
     for statistics in session.query(ActivityStatistics).all():
         if statistics.best:
             values = sorted(statistics.statistics, reverse=(statistics.best == 'max'), key=lambda s: s.value)
@@ -205,8 +202,8 @@ def add_summary_stats(log, session):
                 name = '%s(%s)' % (statistics.best, statistics.name)
                 summary = session.query(SummaryStatistics).filter(SummaryStatistics.name == name).one_or_none()
                 if summary:
-                    for statistic in summary.statistics:
-                        session.delete(statistic)
+                    # for statistic in summary.statistics:
+                    #     session.delete(statistic)
                     session.delete(summary)
                 summary = SummaryStatistics(activity=statistics.activity,
                                             activity_statistics=statistics, name=name)
@@ -215,3 +212,22 @@ def add_summary_stats(log, session):
                     session.add(SummaryStatistic(summary_statistics=summary, activity_statistic=values[rank],
                                                  rank=rank+1))
                 log.info(summary)
+
+def add_activity_percentiles(log, session, activity):
+    for statistics in session.query(ActivityStatistics).all():
+        if statistics.best:
+            values = sorted(statistics.statistics, reverse=(statistics.best == 'max'), key=lambda s: s.value)
+            if values:
+                name = 'Percentile(%s)' %  statistics.name
+                statistics = session.query(ActivityStatistics).filter(ActivityStatistics.name == name).one_or_none()
+                if statistics:
+                    # for statistic in statistics.statistics:
+                    #     session.delete(statistic)
+                    session.delete(statistics)
+                statistics = ActivityStatistics(activity=activity, units='', name=name)
+                session.add(statistics)
+                for rank, value in enumerate(values, start=1):
+                    percentile = 100 * rank / len(values)
+                    session.add(ActivityStatistic(activity_statistics=statistics, activity_diary=value.activity_diary,
+                                                  value=percentile))
+                log.info(statistics)

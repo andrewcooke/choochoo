@@ -4,10 +4,13 @@ import datetime as dt
 from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
+from .args import DATE
+from .lib.date import parse_date
 from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
+from .squeal.tables.activity import ActivityDiary
 from .squeal.tables.diary import Diary
 from .squeal.tables.injury import Injury, InjuryDiary
 from .squeal.tables.schedule import Schedule, ScheduleDiary
@@ -17,6 +20,17 @@ from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList
 from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile, DynamicContent
+
+
+class DynamicDate(DynamicContent):
+
+    def __init__(self, log, session, bar, date):
+        self._date = date
+        super().__init__(log, session, bar)
+
+    def rebuild(self, date):
+        self._date = date
+        super().rebuild()
 
 
 class InjuryWidget(FocusWrap):
@@ -38,17 +52,6 @@ class InjuryWidget(FocusWrap):
                            ]),
                   self.notes,
                   ]))
-
-
-class DynamicDate(DynamicContent):
-
-    def __init__(self, log, session, bar, date):
-        self._date = date
-        super().__init__(log, session, bar)
-
-    def rebuild(self, date):
-        self._date = date
-        super().rebuild()
 
 
 class Injuries(DynamicDate):
@@ -117,6 +120,32 @@ class Schedules(DynamicDate):
         return widget
 
 
+class ActivityWidget(FocusWrap):
+
+    def __init__(self, tabs, bar, activity):
+        factory = Factory(tabs, bar)
+        self.title = Text(activity.title)
+        # self.start = Time()
+        # self.finish = Time()
+        self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
+        # todo - append stats
+        body = [self.notes] + [Text('%s: %s' % (statistic.activity_statistics.name, statistic.fmt_value)) for statistic in activity.statistics]
+        super().__init__(Pile([self.title, Indent(Pile(body))]))
+
+
+class Activities(DynamicDate):
+
+    def _make(self):
+        tabs = TabList()
+        body = []
+        for activity in self._session.query(ActivityDiary).filter(ActivityDiary.date == self._date).\
+                order_by(ActivityDiary.start).all():
+            widget = ActivityWidget(tabs, self._bar, activity)
+            Binder(self._log, self._session, widget, ActivityDiary, defaults={'id': activity.id})
+            body.append(widget)
+        return Pile(body), tabs
+
+
 class DiaryApp(App):
 
     def __init__(self, log, session, bar, date=None):
@@ -141,6 +170,7 @@ class DiaryApp(App):
 
         self.injuries = factory.tabs.append(Injuries(log, session, bar, date=date))
         self.schedules = factory.tabs.append(Schedules(log, session, bar, date=date))
+        self.activities = factory.tabs.append(Activities(log, session, bar, date=date))
 
         body = [Columns([(20, Padding(self.date, width='clip')),
                          ('weight', 1, Pile([self.notes,
@@ -148,6 +178,7 @@ class DiaryApp(App):
                                              Columns([self.rest_hr, self.sleep, self.mood]),
                                              Columns([('weight', 2, self.weather), ('weight', 1, self.weight)]),
                                              self.medication,
+                                             self.activities,
                                              ]))],
                         dividechars=2),
                 self.injuries,
@@ -160,6 +191,7 @@ class DiaryApp(App):
         self.__session.commit()
         self.injuries.rebuild(date)
         self.schedules.rebuild(date)
+        self.activities.rebuild(date)
         self.root.discover()
 
 
@@ -175,4 +207,8 @@ The daily diary.  Select the date using the calendar and then enter daily inform
 To exit, alt-q (or, without saving, alt-x).
     '''
     session = Database(args, log).session()
-    DiaryApp(log, session, MessageBar()).run()
+    if args[DATE]:
+        date = parse_date(args[DATE])
+    else:
+        date = None
+    DiaryApp(log, session, MessageBar(), date=date).run()
