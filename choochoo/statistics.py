@@ -110,7 +110,7 @@ class MedianHRForTime(Chunks):
                 while chunks and time - chunks[0].time_delta() > self.__time:
                     time -= chunks[0].time_delta()
                     chunks[0].popleft()
-                    if not chunks[0]:
+                    while chunks and not chunks[0]:
                         chunks.popleft()
                 hrs = list(sorted(chain(*(chunk.hrs() for chunk in chunks))))
                 if hrs:
@@ -187,9 +187,8 @@ def add_stats(log, session, diary):
             add_stat(log, session, diary, 'Time in Z%d' % zone,  None, frac * totals.time, 's')
         for target in (5, 10, 15, 20, 30, 60, 90, 120, 180):
             hrs = sorted(MedianHRForTime(log, diary, target * 60).hrs(), reverse=True)
-            if not hrs:
-                break
-            add_stat(log, session, diary, 'Max med HR over %dm' % target, 'max', hrs[0], 'bpm')
+            if hrs:
+                add_stat(log, session, diary, 'Max med HR over %dm' % target, 'max', hrs[0], 'bpm')
     else:
         log.warn('No HR zones defined for %s or before' % diary.date)
 
@@ -202,8 +201,6 @@ def add_summary_stats(log, session):
                 name = '%s(%s)' % (statistics.best, statistics.name)
                 summary = session.query(SummaryStatistics).filter(SummaryStatistics.name == name).one_or_none()
                 if summary:
-                    # for statistic in summary.statistics:
-                    #     session.delete(statistic)
                     session.delete(summary)
                 summary = SummaryStatistics(activity=statistics.activity,
                                             activity_statistics=statistics, name=name)

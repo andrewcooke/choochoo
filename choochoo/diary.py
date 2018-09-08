@@ -10,16 +10,18 @@ from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.tables.activity import ActivityDiary, ActivityStatistic, ActivityStatistics, SummaryStatistic
+from .squeal.tables.activity import ActivityDiary, ActivityStatistic
 from .squeal.tables.diary import Diary
+from .squeal.tables.heartrate import HeartRateZones
 from .squeal.tables.injury import Injury, InjuryDiary
 from .squeal.tables.schedule import Schedule, ScheduleDiary
+from .statistics import round_km
 from .uweird.calendar import Calendar
 from .uweird.decorators import Indent
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList
-from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile, DynamicContent
+from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile, DynamicContent, ColPack
 
 
 class DynamicDate(DynamicContent):
@@ -126,26 +128,56 @@ class ActivityWidget(FocusWrap):
         factory = Factory(tabs, bar)
         self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
         title = Text(activity.title)
-        timespan = Text('%s - %s' % (format_time(activity.start), format_time(activity.finish)))
+        timespan = ColText('%s - %s' % (format_time(activity.start), format_time(activity.finish)))
         distance = self.build_statistic('Active distance', session, activity)
         time = self.build_statistic('Active time', session, activity)
         speed = self.build_statistic('Active speed', session, activity)
-        body = [Columns([Text('Totals'), ColText(' '), distance, ColText(' '), time, ColText(' '), speed])] + \
-               [Text('%s: %s' % (statistic.activity_statistics.name, statistic.fmt_value)) for statistic in activity.statistics] + [distance, self.notes]
-        super().__init__(DividedPile([Columns([title, ColSpace(), timespan]),
+        body = [Columns([timespan, ColSpace(), distance, ColSpace(), time, ColSpace(), speed]),
+                self.build_times(session, activity)]
+        zones = self.build_zones(session, activity)
+        if zones:
+            body.append(Columns([(12, zones), self.notes]))
+        else:
+            body.append(self.notes)
+        super().__init__(DividedPile([title,
                                       Indent(Pile(body), width=2)]))
 
     def build_statistic(self, name, session, activity):
-        statistic = session.query(ActivityStatistic).join(ActivityStatistic.activity_statistics).\
-            filter(ActivityStatistics.name == name, ActivityStatistics.activity == activity.activity,
-                   ActivityStatistic.activity_diary == activity).one()
-        percentile = session.query(ActivityStatistic).join(ActivityStatistic.activity_statistics).\
-            filter(ActivityStatistics.name == 'Percentile(%s)'% name, ActivityStatistics.activity == activity.activity,
-                   ActivityStatistic.activity_diary == activity).one()
+        statistic = ActivityStatistic.from_name(session, name, activity)
+        percentile = ActivityStatistic.from_name(session, 'Percentile(%s)'% name, activity)
         text = Text('%s [%d%%]' % (statistic.fmt_value, int(percentile.value)))
         if statistic.summary:
             text = AttrMap(text, 'rank-%d' % statistic.summary.rank)
-        return text
+        return ColPack(text)
+
+    def build_times(self, session, activity):
+        cols = []
+        for km in round_km():
+            try:
+                statistic = self.build_statistic('Median %dkm time' % km, session, activity)
+                if cols:
+                    cols.append(ColText(' '))
+                cols.append(ColText('%dk ' % km))
+                cols.append(statistic)
+            except:
+                 break
+        return Columns(cols)
+
+    def build_zones(self, session, activity):
+        try:
+            zones = session.query(HeartRateZones).filter(HeartRateZones.date <= activity.date) \
+                .order_by(HeartRateZones.date.desc()).limit(1).one()
+            body = []
+            for zone in range(len(zones.zones), 0, -1):
+                statistic = ActivityStatistic.from_name(session, 'Percent in Z%d' % zone, activity)
+                text = '%d:    %3d%%' % (zone, int(0.5 + statistic.value))
+                left = int((statistic.value + 5) // 10)
+                text_left = text[0:left]
+                text_right = text[left:10]
+                body.append(Text([('zone-%d' % zone, text_left), text_right]))
+            return Pile(body)
+        except:
+            return None
 
 
 class Activities(DynamicDate):

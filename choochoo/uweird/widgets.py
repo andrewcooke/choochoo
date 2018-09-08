@@ -1,5 +1,5 @@
 
-from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT
+from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT, PACK
 
 from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
 from .state import MutableStatefulText
@@ -95,6 +95,10 @@ def ColSpace(weight=1):
     Shorthand for an empty, expanding column.
     """
     return WEIGHT, weight, Padding(Text(''))
+
+
+def ColPack(widget):
+    return PACK, widget
 
 
 class Rating(MutableStatefulText):

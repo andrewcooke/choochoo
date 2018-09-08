@@ -119,6 +119,12 @@ class ActivityStatistic(Base):
     value = Column(Float, nullable=False)
     UniqueConstraint('activity_statistics_id', 'activity_diary_id')
 
+    @staticmethod
+    def from_name(session, name, activity_diary):
+        return session.query(ActivityStatistic).join(ActivityStatistic.activity_statistics).\
+            filter(ActivityStatistics.name == name, ActivityStatistics.activity == activity_diary.activity,
+                   ActivityStatistic.activity_diary == activity_diary).one()
+
     @property
     def fmt_value(self):
         units = self.activity_statistics.units
