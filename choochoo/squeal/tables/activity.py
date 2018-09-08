@@ -189,6 +189,6 @@ class SummaryStatistic(Base):
     activity_statistic_id = Column(Integer, ForeignKey('activity_statistic.id', ondelete='cascade'),
                                    nullable=False)
     activity_statistic = relationship('ActivityStatistic',
-                                      backref=backref('summary',
+                                      backref=backref('summary', uselist=False,
                                                       cascade='all, delete-orphan', passive_deletes=True))
     rank = Column(Integer, nullable=False)  # 1, 2, 3...

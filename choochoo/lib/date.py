@@ -11,6 +11,9 @@ def parse_date(text):
 def format_date(date):
     return date.strftime('%Y-%m-%d')
 
+def format_time(datetime):
+    return datetime.strftime('%H:%M:%S')
+
 
 def parse_duration(duration):
     try:

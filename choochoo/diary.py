@@ -2,15 +2,15 @@
 import datetime as dt
 
 from sqlalchemy import and_, or_
-from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
+from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal, AttrMap
 
 from .args import DATE
-from .lib.date import parse_date
+from .lib.date import parse_date, format_time
 from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.tables.activity import ActivityDiary
+from .squeal.tables.activity import ActivityDiary, ActivityStatistic, ActivityStatistics, SummaryStatistic
 from .squeal.tables.diary import Diary
 from .squeal.tables.injury import Injury, InjuryDiary
 from .squeal.tables.schedule import Schedule, ScheduleDiary
@@ -122,15 +122,26 @@ class Schedules(DynamicDate):
 
 class ActivityWidget(FocusWrap):
 
-    def __init__(self, tabs, bar, activity):
+    def __init__(self, tabs, session, bar, activity):
         factory = Factory(tabs, bar)
-        self.title = Text(activity.title)
-        # self.start = Time()
-        # self.finish = Time()
         self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
-        # todo - append stats
-        body = [self.notes] + [Text('%s: %s' % (statistic.activity_statistics.name, statistic.fmt_value)) for statistic in activity.statistics]
-        super().__init__(Pile([self.title, Indent(Pile(body))]))
+        time = '%s - %s' % (format_time(activity.start), format_time(activity.finish))
+        distance = self.build_statistic('Active distance', session, activity)
+        body = [Text('%s: %s' % (statistic.activity_statistics.name, statistic.fmt_value)) for statistic in activity.statistics] + [distance, self.notes]
+        super().__init__(DividedPile([Columns([Text(activity.title), ColSpace(), Text(time)]),
+                                      Indent(Pile(body), width=2)]))
+
+    def build_statistic(self, name, session, activity):
+        statistic = session.query(ActivityStatistic).join(ActivityStatistic.activity_statistics).\
+            filter(ActivityStatistics.name == name, ActivityStatistics.activity == activity.activity,
+                   ActivityStatistic.activity_diary == activity).one()
+        percentile = session.query(ActivityStatistic).join(ActivityStatistic.activity_statistics).\
+            filter(ActivityStatistics.name == 'Percentile(%s)'% name, ActivityStatistics.activity == activity.activity,
+                   ActivityStatistic.activity_diary == activity).one()
+        value = Text('%s (%d%%)' % (statistic.fmt_value, int(percentile.value)))
+        if statistic.summary:
+            value = AttrMap(value, 'rank-%d' % statistic.summary.rank)
+        return value
 
 
 class Activities(DynamicDate):
@@ -140,7 +151,7 @@ class Activities(DynamicDate):
         body = []
         for activity in self._session.query(ActivityDiary).filter(ActivityDiary.date == self._date).\
                 order_by(ActivityDiary.start).all():
-            widget = ActivityWidget(tabs, self._bar, activity)
+            widget = ActivityWidget(tabs, self._session, self._bar, activity)
             Binder(self._log, self._session, widget, ActivityDiary, defaults={'id': activity.id})
             body.append(widget)
         return Pile(body), tabs
@@ -164,7 +175,7 @@ class DiaryApp(App):
         self.weather = factory(Edit(caption='Weather: '))
         self.weight = factory(Float(caption='Weight: ', maximum=100, dp=1, units='kg'))
         self.medication = factory(Edit(caption='Meds: '))
-        # order important here - binder re-binds on change and so muct come last(!)
+        # order important here - binder re-binds on change and so must come last(!)
         connect_signal(calendar, 'change', self.date_change)
         Binder(log, session, self, Diary, multirow=True, defaults={'date': date})
 
@@ -178,11 +189,11 @@ class DiaryApp(App):
                                              Columns([self.rest_hr, self.sleep, self.mood]),
                                              Columns([('weight', 2, self.weather), ('weight', 1, self.weight)]),
                                              self.medication,
-                                             self.activities,
                                              ]))],
                         dividechars=2),
                 self.injuries,
                 self.schedules,
+                self.activities,
                 ]
         super().__init__(log, 'Diary', bar, DividedPile(body), factory.tabs, session)
 
