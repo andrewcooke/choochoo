@@ -132,7 +132,7 @@ class ActivityWidget(FocusWrap):
         distance = self.build_statistic('Active distance', session, activity)
         time = self.build_statistic('Active time', session, activity)
         speed = self.build_statistic('Active speed', session, activity)
-        body = [Columns([timespan, ColSpace(), distance, ColSpace(), time, ColSpace(), speed]),
+        body = [Columns([timespan, ColText(' '), distance, ColText(' '), time, ColText(' '), speed]),
                 self.build_times(session, activity)]
         zones = self.build_zones(session, activity)
         if zones:
@@ -145,10 +145,12 @@ class ActivityWidget(FocusWrap):
     def build_statistic(self, name, session, activity):
         statistic = ActivityStatistic.from_name(session, name, activity)
         percentile = ActivityStatistic.from_name(session, 'Percentile(%s)'% name, activity)
-        text = Text('%s [%d%%]' % (statistic.fmt_value, int(percentile.value)))
+        text = statistic.fmt_value
         if statistic.summary:
-            text = AttrMap(text, 'rank-%d' % statistic.summary.rank)
-        return ColPack(text)
+            attr = 'rank-%d' % statistic.summary.rank
+        else:
+            attr = 'qunitile-%d' % (1 + max(4, int(percentile) // 20))
+        return ColPack(Text((attr, text)))
 
     def build_times(self, session, activity):
         cols = []
