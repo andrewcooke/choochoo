@@ -12,7 +12,7 @@ from .fit.profile.types import timestamp_to_datetime
 from .lib.io import tui
 from .squeal.database import Database
 from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint
-from .statistics import add_stats, add_summary_stats, add_activity_percentiles
+from .statistics import add_stats
 from .utils import datetime_to_epoch
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
@@ -160,7 +160,3 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
             else:
                 log.debug('Skipping %s (already scanned)' % file)
                 session.expunge(scan)
-    with db.session_context() as session:
-        add_summary_stats(log, session)
-    with db.session_context() as session:
-        add_activity_percentiles(log, session, activity)

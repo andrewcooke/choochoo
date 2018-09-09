@@ -7,7 +7,8 @@ from sqlalchemy.orm import sessionmaker
 
 from .support import Base
 from .tables.activity import ActivityStatistic, ActivityWaypoint, Activity, ActivityTimespan, ActivityDiary, \
-    SummaryStatistics, SummaryStatistic, ActivityStatistics
+    Statistic
+from .tables.summary import RankingStatistic, DistributionStatistic
 from .tables.diary import Diary
 from .tables.heartrate import HeartRateZones, HeartRateZone
 from .tables.injury import InjuryDiary, Injury
@@ -16,8 +17,8 @@ from ..args import DATABASE
 
 # import these so they are "created"
 Diary, Injury, InjuryDiary, ScheduleType, Schedule, ScheduleDiary,
-Activity, ActivityDiary, ActivityWaypoint, ActivityTimespan, ActivityStatistics, ActivityStatistic,
-SummaryStatistics, SummaryStatistic,
+Activity, ActivityDiary, ActivityWaypoint, ActivityTimespan, Statistic, ActivityStatistic,
+RankingStatistic, DistributionStatistic,
 HeartRateZones, HeartRateZone
 
 

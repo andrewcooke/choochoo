@@ -2,7 +2,7 @@
 import datetime as dt
 
 from sqlalchemy import and_, or_
-from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal, AttrMap
+from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
 from .args import DATE
 from .lib.date import parse_date, format_time
@@ -15,6 +15,7 @@ from .squeal.tables.diary import Diary
 from .squeal.tables.heartrate import HeartRateZones
 from .squeal.tables.injury import Injury, InjuryDiary
 from .squeal.tables.schedule import Schedule, ScheduleDiary
+from .squeal.tables.summary import RankingStatistic
 from .statistics import round_km
 from .uweird.calendar import Calendar
 from .uweird.decorators import Indent
@@ -132,7 +133,7 @@ class ActivityWidget(FocusWrap):
         distance = self.build_statistic('Active distance', session, activity)
         time = self.build_statistic('Active time', session, activity)
         speed = self.build_statistic('Active speed', session, activity)
-        body = [Columns([timespan, ColText(' '), distance, ColText(' '), time, ColText(' '), speed]),
+        body = [Columns([timespan, ColText('    '), distance, ColText('    '), time, ColText('    '), speed]),
                 self.build_times(session, activity)]
         zones = self.build_zones(session, activity)
         if zones:
@@ -144,12 +145,12 @@ class ActivityWidget(FocusWrap):
 
     def build_statistic(self, name, session, activity):
         statistic = ActivityStatistic.from_name(session, name, activity)
-        percentile = ActivityStatistic.from_name(session, 'Percentile(%s)'% name, activity)
+        percentile = RankingStatistic.from_name(session, 'Percentile(%s)'% name, activity)
         text = statistic.fmt_value
         if statistic.summary:
             attr = 'rank-%d' % statistic.summary.rank
         else:
-            attr = 'qunitile-%d' % (1 + max(4, int(percentile) // 20))
+            attr = 'quintile-%d' % (1 + min(4, int(percentile.value) // 20))
         return ColPack(Text((attr, text)))
 
     def build_times(self, session, activity):

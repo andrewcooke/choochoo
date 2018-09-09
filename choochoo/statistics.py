@@ -2,8 +2,9 @@
 from collections import deque, Counter
 from itertools import chain
 
-from .squeal.tables.activity import ActivityStatistic, ActivityStatistics, SummaryStatistics, SummaryStatistic
+from .squeal.tables.activity import ActivityStatistic, Statistic
 from .squeal.tables.heartrate import HeartRateZones
+from .squeal.tables.summary import RankingStatistic
 
 
 class Chunk:
@@ -157,12 +158,12 @@ def round_km():
 
 
 def add_stat(log, session, diary, name, best, value, units):
-    statistics = session.query(ActivityStatistics).filter(
-        ActivityStatistics.name == name, ActivityStatistics.activity == diary.activity).one_or_none()
-    if not statistics:
-        statistics = ActivityStatistics(activity=diary.activity, name=name, units=units, best=best)
-        session.add(statistics)
-    statistic = ActivityStatistic(activity_statistics=statistics, activity_diary=diary, value=value)
+    statistic = session.query(Statistic).filter(
+        Statistic.name == name, Statistic.activity == diary.activity).one_or_none()
+    if not statistic:
+        statistic = Statistic(activity=diary.activity, name=name, units=units, best=best)
+        session.add(statistic)
+    statistic = ActivityStatistic(statistic=statistic, activity_diary=diary, value=value)
     session.add(statistic)
     log.info(statistic)
 
@@ -193,38 +194,37 @@ def add_stats(log, session, diary):
         log.warn('No HR zones defined for %s or before' % diary.date)
 
 
-def add_summary_stats(log, session):
-    for statistics in session.query(ActivityStatistics).all():
-        if statistics.best:
-            values = sorted(statistics.statistics, reverse=(statistics.best == 'max'), key=lambda s: s.value)
-            if values:
-                name = '%s(%s)' % (statistics.best, statistics.name)
-                summary = session.query(SummaryStatistics).filter(SummaryStatistics.name == name).one_or_none()
-                if summary:
-                    session.delete(summary)
-                summary = SummaryStatistics(activity=statistics.activity,
-                                            activity_statistics=statistics, name=name)
-                session.add(summary)
-                for rank in range(min(len(values), 3)):
-                    session.add(SummaryStatistic(summary_statistics=summary, activity_statistic=values[rank],
-                                                 rank=rank+1))
-                log.info(summary)
-
-def add_activity_percentiles(log, session, activity):
-    for statistics in session.query(ActivityStatistics).all():
-        if statistics.best:
-            values = sorted(statistics.statistics, reverse=(statistics.best == 'max'), key=lambda s: s.value)
-            if values:
-                name = 'Percentile(%s)' %  statistics.name
-                statistics = session.query(ActivityStatistics).filter(ActivityStatistics.name == name).one_or_none()
-                if statistics:
-                    # for statistic in statistics.statistics:
-                    #     session.delete(statistic)
-                    session.delete(statistics)
-                statistics = ActivityStatistics(activity=activity, units='', name=name)
-                session.add(statistics)
-                for rank, value in enumerate(values, start=1):
-                    percentile = 100 * rank / len(values)
-                    session.add(ActivityStatistic(activity_statistics=statistics, activity_diary=value.activity_diary,
-                                                  value=percentile))
-                log.info(statistics)
+# def add_summary_stats(log, session):
+#     for statistics in session.query(Statistic).all():
+#         if statistics.best:
+#             values = sorted(statistics.statistics, reverse=(statistics.best == 'max'), key=lambda s: s.value)
+#             if values:
+#                 name = '%s(%s)' % (statistics.best, statistics.name)
+#                 summary = session.query(RankingStatistics).filter(RankingStatistics.name == name).one_or_none()
+#                 if summary:
+#                     session.delete(summary)
+#                 summary = RankingStatistics(activity=statistics.activity,
+#                                             activity_statistics=statistics, name=name)
+#                 session.add(summary)
+#                 for rank in range(min(len(values), 5)):
+#                     session.add(RankingStatistic(summary_statistics=summary, activity_statistic=values[rank],
+#                                                  rank=rank+1))
+#                 log.info(summary)
+#
+#
+# def add_activity_percentiles(log, session, activity):
+#     for statistics in session.query(Statistic).all():
+#         if statistics.best:
+#             values = sorted(statistics.statistics, reverse=(statistics.best == 'max'), key=lambda s: s.value)
+#             if values:
+#                 name = 'Percentile(%s)' %  statistics.name
+#                 statistics = session.query(Statistic).filter(Statistic.name == name).one_or_none()
+#                 if statistics:
+#                     session.delete(statistics)
+#                 statistics = Statistic(activity=activity, units='', name=name)
+#                 session.add(statistics)
+#                 for rank, value in enumerate(values, start=1):
+#                     percentile = 100 * rank / len(values)
+#                     session.add(ActivityStatistic(activity_statistics=statistics, activity_diary=value.activity_diary,
+#                                                   value=percentile))
+#                 log.info(statistics)

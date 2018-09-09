@@ -82,16 +82,16 @@ class ActivityWaypoint(Base):
     speed = Column(Float)
 
 
-class ActivityStatistics(Base):
+class Statistic(Base):
 
-    __tablename__ = 'activity_statistics'
+    __tablename__ = 'statistic'
 
     id = Column(Integer, primary_key=True)
     activity_id = Column(Integer, ForeignKey('activity.id', ondelete='cascade'),
                          nullable=False)
     activity = relationship('Activity',
                             backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
-                                            order_by='ActivityStatistics.name',
+                                            order_by='Statistic.name',
                                             collection_class=ordering_list('name')))
     name = Column(Text, nullable=False)
     units = Column(Text, nullable=False)
@@ -107,27 +107,27 @@ class ActivityStatistic(Base):
     __tablename__ = 'activity_statistic'
 
     id = Column(Integer, primary_key=True)
-    activity_statistics_id = Column(Integer, ForeignKey('activity_statistics.id', ondelete='cascade'),
-                                    nullable=False)
-    activity_statistics = relationship('ActivityStatistics',
-                                       backref=backref('statistics',
-                                                       cascade='all, delete-orphan', passive_deletes=True))
+    statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'),
+                          nullable=False)
+    statistic = relationship('Statistic',
+                             backref=backref('statistic',
+                                             cascade='all, delete-orphan', passive_deletes=True))
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
                                nullable=False)
     activity_diary = relationship('ActivityDiary',
                                   backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True))
     value = Column(Float, nullable=False)
-    UniqueConstraint('activity_statistics_id', 'activity_diary_id')
+    UniqueConstraint('statistic_id', 'activity_diary_id')
 
     @staticmethod
     def from_name(session, name, activity_diary):
-        return session.query(ActivityStatistic).join(ActivityStatistic.activity_statistics).\
-            filter(ActivityStatistics.name == name, ActivityStatistics.activity == activity_diary.activity,
+        return session.query(ActivityStatistic).join(ActivityStatistic.statistic).\
+            filter(Statistic.name == name, Statistic.activity == activity_diary.activity,
                    ActivityStatistic.activity_diary == activity_diary).one()
 
     @property
     def fmt_value(self):
-        units = self.activity_statistics.units
+        units = self.statistic.units
         if units == 'm':
             if self.value > 2000:
                 return '%.1fkm' % (self.value / 1000)
@@ -145,43 +145,6 @@ class ActivityStatistic(Base):
             return '%s%s' % (self.value, units)
 
     def __str__(self):
-        return '%s: %s' % (self.activity_statistics.name, self.fmt_value)
+        return '%s: %s' % (self.statistic.name, self.fmt_value)
 
 
-class SummaryStatistics(Base):
-
-    __tablename__ = 'summary_statistics'
-
-    id = Column(Integer, primary_key=True)
-    activity_id = Column(Integer, ForeignKey('activity.id', ondelete='cascade'),
-                         nullable=False)
-    activity = relationship('Activity')
-    activity_statistics_id = Column(Integer, ForeignKey('activity_statistics.id', ondelete='cascade'),
-                                    nullable=False)
-    activity_statistics = relationship('ActivityStatistics')  # provides units
-    name = Column(Text, nullable=False)
-    UniqueConstraint('activity', 'name')
-
-    def __str__(self):
-        return '%s: %s' % (self.name,
-                           ', '.join(s.activity_statistic.fmt_value for s in self.statistics))
-
-
-class SummaryStatistic(Base):
-
-    __tablename__ = 'summary_statistic'
-
-    id = Column(Integer, primary_key=True)
-    summary_statistics_id = Column(Integer, ForeignKey('summary_statistics.id', ondelete='cascade'),
-                                   nullable=False)
-    summary_statistics = relationship('SummaryStatistics',
-                                      backref=backref('statistics',
-                                                      cascade='all, delete-orphan', passive_deletes=True,
-                                                      order_by='SummaryStatistic.rank',
-                                                      collection_class=ordering_list('rank')))
-    activity_statistic_id = Column(Integer, ForeignKey('activity_statistic.id', ondelete='cascade'),
-                                   nullable=False)
-    activity_statistic = relationship('ActivityStatistic',
-                                      backref=backref('summary', uselist=False,
-                                                      cascade='all, delete-orphan', passive_deletes=True))
-    rank = Column(Integer, nullable=False)  # 1, 2, 3...
