@@ -13,6 +13,7 @@ TOPIC = 'topic'
 ADD_ACTIVITY = 'add-activity'
 ADD_FTHR = 'add-fthr'
 ADD_PLAN = 'add-plan'
+ADD_SUMMARY = 'add-summary'
 CREATE_DATABASE = 'create-database'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
@@ -32,21 +33,25 @@ DATE = 'date'
 DEV = 'dev'
 DUMP_FORMAT = 'dump_format'
 FIELDS = 'fields'
+FINISH = 'finish'
 FTHR = 'fthr'
 FORCE, F = 'force', 'f'
 LIMIT = 'limit'
 LOGS = 'logs'
 LIST = 'list'
 MESSAGES = 'messages'
+MONTH = 'month'
 PATH = 'path'
 PLAN = 'plan'
 RECORD, R = 'record', 'r'
 RECORDS = 'records'
 ROOT = 'root'
+START = 'start'
 TABLES = 'tables'
 V, VERBOSITY = 'v', 'verbosity'
 VERSION = 'version'
 WARN, W = 'warn', 'w'
+YEAR = 'year'
 
 
 def mm(name): return '--' + name
@@ -126,6 +131,9 @@ def parser():
 
     add_activity = subparsers.add_parser(ADD_ACTIVITY,
                                          help='add a new activity - see `%s %s -h` for more details' % (PROGNAME, ADD_ACTIVITY))
+    add_activity_period = add_activity.add_mutually_exclusive_group()
+    add_activity_period.add_argument(mm(MONTH), action='store_true', help='generate monthly summary')
+    add_activity_period.add_argument(mm(YEAR), action='store_true', help='generate yearly summary')
     add_activity.add_argument(m(F), mm(FORCE), action='store_true', help='re-read file and delete existing data')
     add_activity.add_argument(ACTIVITY, action='store', metavar='ACTIVITY', nargs=1,
                               help='an activity name')
@@ -149,6 +157,20 @@ def parser():
                           help='the plan name and possible parameters')
     add_plan.set_defaults(command=ADD_PLAN)
 
+    add_summary = subparsers.add_parser(ADD_SUMMARY,
+                                        help='create a new summary (or summaries) - see `%s %s -h` for more details' % (PROGNAME, ADD_SUMMARY))
+    add_summary.add_argument(m(F), mm(FORCE), action='store_true', help='re-generate existing summary statistics')
+    add_summary_period = add_summary.add_mutually_exclusive_group()
+    add_summary_period.add_argument(mm(MONTH), action='store_true', help='generate monthly summary (no start / finish)')
+    add_summary_period.add_argument(mm(YEAR), action='store_true', help='generate yearly summary (no start / fininsh)')
+    add_summary.add_argument(ACTIVITY, action='store', metavar='ACTIVITY', nargs=1,
+                             help='an activity name')
+    add_summary.add_argument(START, action='store', metavar='DATE', nargs='?',
+                             help='start date (inclusive)')
+    add_summary.add_argument(FINISH, action='store', metavar='DATE', nargs='?',
+                             help='finish date (inclusive)')
+    add_summary.set_defaults(command=ADD_SUMMARY)
+
     diary = subparsers.add_parser(CREATE_DATABASE,
                                   help='create the database if missing')
     diary.set_defaults(command=CREATE_DATABASE)
@@ -168,17 +190,17 @@ def parser():
                           help='skip initial messages')
     dump_fit.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
                           help='limit number of messages displayed')
-    dump_format = dump_fit.add_mutually_exclusive_group()
-    dump_format.add_argument(mm(RECORDS), action='store_const', dest=DUMP_FORMAT, const=RECORDS,
-                             help='show high-level structure (ordered by time)')
-    dump_format.add_argument(mm(TABLES), action='store_const', dest=DUMP_FORMAT, const=TABLES,
-                             help='show high-level structure (default: grouped in tables)')
-    dump_format.add_argument(mm(CSV), action='store_const', dest=DUMP_FORMAT, const=CSV,
-                             help='show med-level structure (CSV format)')
-    dump_format.add_argument(mm(MESSAGES), action='store_const', dest=DUMP_FORMAT, const=MESSAGES,
-                             help='show low-level message structure')
-    dump_format.add_argument(mm(FIELDS), action='store_const', dest=DUMP_FORMAT, const=FIELDS,
-                             help='show low-level field structure (more details)')
+    dump_fit_format = dump_fit.add_mutually_exclusive_group()
+    dump_fit_format.add_argument(mm(RECORDS), action='store_const', dest=DUMP_FORMAT, const=RECORDS,
+                                 help='show high-level structure (ordered by time)')
+    dump_fit_format.add_argument(mm(TABLES), action='store_const', dest=DUMP_FORMAT, const=TABLES,
+                                 help='show high-level structure (default: grouped in tables)')
+    dump_fit_format.add_argument(mm(CSV), action='store_const', dest=DUMP_FORMAT, const=CSV,
+                                 help='show med-level structure (CSV format)')
+    dump_fit_format.add_argument(mm(MESSAGES), action='store_const', dest=DUMP_FORMAT, const=MESSAGES,
+                                 help='show low-level message structure')
+    dump_fit_format.add_argument(mm(FIELDS), action='store_const', dest=DUMP_FORMAT, const=FIELDS,
+                                 help='show low-level field structure (more details)')
     dump_fit.add_argument(mm(ALL_FIELDS), action='store_true',
                           help='display undocumented fields (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
     dump_fit.add_argument(mm(ALL_MESSAGES), action='store_true',

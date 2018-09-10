@@ -13,11 +13,12 @@ from .fit.format.read import filtered_records
 from .fit.profile.types import timestamp_to_datetime
 from .lib.io import tui
 from .squeal.database import Database
-from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint
-from .squeal.tables.activity import Statistic, ActivityStatistic
+from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint, \
+    ActivityStatistic
 from .squeal.tables.heartrate import HeartRateZones
+from .squeal.tables.statistic import Statistic
 from .statistics import round_km, ACTIVE_SPEED, ACTIVE_TIME, MEDIAN_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, \
-    MAX_MED_HR_OVER_M, MAX, BPM, PC, S, KMH, HR_MINUTES
+    MAX_MED_HR_OVER_M, MAX, BPM, PC, S, KMH, HR_MINUTES, M
 from .utils import datetime_to_epoch
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
