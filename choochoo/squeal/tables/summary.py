@@ -12,8 +12,12 @@ class Summary(Base):
     __tablename__ = 'summary'
 
     id = Column(Integer, primary_key=True)
-    start = Column(Ordinal)
-    finish = Column(Ordinal)
+    activity_id = Column(Integer, ForeignKey('activity.id', ondelete='cascade'),
+                         nullable=False)
+    start = Column(Ordinal)  # inclusive (eg start of this month)
+    finish = Column(Ordinal)  # exclusive (eg start of next month)
+    created = Column(Integer, nullable=False)  # unix epoch
+    total_activities = Column(Integer)
     total_distance = Column(Float)
     total_time = Column(Float)
 
