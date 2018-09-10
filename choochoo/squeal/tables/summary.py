@@ -2,7 +2,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, Float, UniqueConstraint, Text
 from sqlalchemy.orm import relationship, backref
 
-from .activity import ActivityStatistic
+from .activity import ActivityStatistic, Activity
 from .statistic import Statistic
 from ..support import Base
 from ..types import Ordinal
@@ -19,6 +19,17 @@ class Summary(Base):
     type = Column(Text, nullable=False)  #  month / year / custom
     UniqueConstraint('activity_id')
 
+    @staticmethod
+    def from_activity_name(session, activity_title, create=False):
+        return session.query(Summary).join(Activity).filter(Activity.title == activity_title).one_or_none()
+
+    @staticmethod
+    def new(session, activity_title, type):
+        activity = session.query(Activity).filter(Activity.title == activity_title).one()
+        summary = Summary(activity=activity, type=type)
+        session.add(summary)
+        return summary
+
 
 class SummaryTimespan(Base):
 
@@ -30,9 +41,9 @@ class SummaryTimespan(Base):
     summary = relationship('Summary',
                            backref=backref('timespans',
                                            cascade='all, delete-orphan', passive_deletes=True))
-    start = Column(Ordinal)  # inclusive (eg start of this month)
-    finish = Column(Ordinal)  # exclusive (eg start of next month)
-    created = Column(Integer, nullable=False)  # unix epoch
+    start = Column(Ordinal, nullable=False)  # inclusive (eg start of this month)
+    finish = Column(Ordinal, nullable=False)  # exclusive (eg start of next month)
+    created = Column(Ordinal, nullable=False)
     total_activities = Column(Integer, nullable=False)
     total_distance = Column(Float, nullable=False)
     total_time = Column(Float, nullable=False)
@@ -53,8 +64,8 @@ class RankingStatistic(Base):
     activity_statistic = relationship('ActivityStatistic',
                                       backref=backref('ranking', uselist=False,
                                                       cascade='all, delete-orphan', passive_deletes=True))
-    rank = Column(Integer, nullable=False)  # 1, 2, 3...
-    percentile = Column(Float, nullable=False)  # [0, 100)
+    rank = Column(Integer, nullable=False)  # 1, 2, 3...  smaller better
+    percentile = Column(Float, nullable=False)  # [0, 100)  larger better
 
 
 class DistributionStatistic(Base):

@@ -90,9 +90,7 @@ class ActivityStatistic(Base):
     id = Column(Integer, primary_key=True)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'),
                           nullable=False)
-    statistic = relationship('Statistic',
-                             backref=backref('statistic',
-                                             cascade='all, delete-orphan', passive_deletes=True))
+    statistic = relationship('Statistic')  # no backref here as it could be huge
     activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
                                nullable=False)
     activity_diary = relationship('ActivityDiary',

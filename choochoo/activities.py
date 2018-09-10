@@ -8,7 +8,7 @@ from os.path import isdir, join, basename, splitext
 from sqlalchemy.orm.exc import NoResultFound
 from urwid import Edit, Pile, Columns, connect_signal
 
-from .args import PATH, ACTIVITY, EDIT_ACTIVITIES, FORCE
+from .args import PATH, ACTIVITY, EDIT_ACTIVITIES, FORCE, MONTH, YEAR
 from .fit.format.read import filtered_records
 from .fit.profile.types import timestamp_to_datetime
 from .lib.io import tui
@@ -18,7 +18,8 @@ from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityT
 from .squeal.tables.heartrate import HeartRateZones
 from .squeal.tables.statistic import Statistic
 from .statistics import round_km, ACTIVE_SPEED, ACTIVE_TIME, MEDIAN_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, \
-    MAX_MED_HR_OVER_M, MAX, BPM, PC, S, KMH, HR_MINUTES, M
+    MAX_MED_HR_OVER_M, MAX, BPM, PC, S, KMH, HR_MINUTES, M, ACTIVE_DISTANCE
+from .summary import regular_summary
 from .utils import datetime_to_epoch
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
@@ -84,13 +85,13 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
     '''
     db = Database(args, log)
     force = args[FORCE]
-    activity = args[ACTIVITY][0]
+    activity_title = args[ACTIVITY][0]
     with db.session_context() as session:
         try:
-            activity = session.query(Activity).filter(Activity.title == activity).one()
+            activity = session.query(Activity).filter(Activity.title == activity_title).one()
         except NoResultFound:
             if force:
-                activity = Activity(title=activity)
+                activity = Activity(title=activity_title)
                 session.add(activity)
             else:
                 raise Exception('Activity "%s" is not defined - see ch2 %s' % (activity, EDIT_ACTIVITIES))
@@ -117,6 +118,8 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
             else:
                 log.debug('Skipping %s (already scanned)' % file)
                 session.expunge(scan)
+    if args[MONTH] or args[YEAR]:
+        regular_summary(args[MONTH], activity_title, force, db, log)
 
 
 def add_file(log, session, activity, path, force):
@@ -324,7 +327,7 @@ def add_stat(log, session, diary, name, best, value, units):
 
 def add_stats(log, session, diary):
     totals = Totals(log, diary)
-    add_stat(log, session, diary, ACTIVE_SPEED, MAX, totals.distance, M)
+    add_stat(log, session, diary, ACTIVE_DISTANCE, MAX, totals.distance, M)
     add_stat(log, session, diary, ACTIVE_TIME, MAX, totals.time, S)
     add_stat(log, session, diary, ACTIVE_SPEED, MAX, totals.distance * 3.6 / totals.time, KMH)
     for target in round_km():

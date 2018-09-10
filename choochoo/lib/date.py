@@ -23,6 +23,10 @@ def parse_duration(duration):
         return int(duration[:-1]), duration[-1]
 
 
+def to_date(datetime):
+    return dt.date(datetime.year, datetime.month, datetime.day)
+
+
 def add_duration(date, duration):
     (n, unit) = duration
     if unit == 'd':

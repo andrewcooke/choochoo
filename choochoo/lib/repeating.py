@@ -278,4 +278,4 @@ class Month(Frame):
                 date = dt.date(start.year, start.month, day)
                 if self.spec.in_range(date):
                     yield date
-            month = dt.date(month.year, month.month, lom) + dt.delta(days=1)
+            month = dt.date(month.year, month.month, lom) + dt.timedelta(days=1)
