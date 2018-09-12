@@ -1,7 +1,7 @@
 
 import datetime as dt
 
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, asc
 
 from .args import MONTH, YEAR, START, FORCE, ACTIVITY, FINISH
 from .lib.date import to_date
@@ -13,6 +13,19 @@ from .statistics import ACTIVE_DISTANCE, ACTIVE_TIME
 
 
 def add_summary(args, log):
+    '''
+# add-summary
+
+    ch2 add-summary ACTIVITY --month [-f]
+
+    ch2 add-summary ACTIVITY --year [-f]
+
+Generate summary data for the activities.  By default, if the summary already
+exists, only new activities are processed.  Adding -f forces re-processing of all.
+
+Only one period (month or year) can exist at a time; if the other is requested
+the previous values are deleted.
+    '''
     db = Database(args, log)
     force = args[FORCE]
     activity = args[ACTIVITY][0]
@@ -27,7 +40,7 @@ def add_summary(args, log):
 
 
 def custom_summary(start, finish, activity, force, db, log):
-    pass
+    raise Exception('Custom summary intervals not yet supported')
 
 
 def regular_summary(month, activity, force, db, log):
@@ -72,8 +85,8 @@ def years(start, finish):
 
 
 def add_range(start, finish, summary, session, log):
-    timespan = session.query(SummaryTimespan).filter(SummaryTimespan.summary == summary and
-                                                     SummaryTimespan.start == start and
+    timespan = session.query(SummaryTimespan).filter(SummaryTimespan.summary == summary,
+                                                     SummaryTimespan.start == start,
                                                      SummaryTimespan.finish == finish).one_or_none()
     if timespan:
         latest = session.query(ActivityDiary).filter(ActivityDiary.date >= start,
@@ -114,11 +127,12 @@ def add_timespan(start, finish, summary, session, log):
 def add_ranking(start, finish, timespan, session, log):
     for statistic in session.query(Statistic).filter(Statistic.activity == timespan.summary.activity).all():
         if statistic.best:
+            order = desc if statistic.best == 'max' else asc
             values = session.query(ActivityStatistic).join(ActivityDiary).filter(
                 ActivityStatistic.statistic == statistic,
                 ActivityDiary.date >= start,
                 ActivityDiary.date < finish
-            ).all()
+            ).order_by(order(ActivityStatistic.value)).all()
             if values:
                 n = len(values)
                 for rank, value in enumerate(values, start=1):

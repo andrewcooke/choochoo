@@ -5,7 +5,7 @@ from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
 from .args import DATE
-from .lib.date import parse_date, format_time
+from .lib.date import parse_date, format_time, format_date
 from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
@@ -15,14 +15,15 @@ from .squeal.tables.diary import Diary
 from .squeal.tables.heartrate import HeartRateZones
 from .squeal.tables.injury import Injury, InjuryDiary
 from .squeal.tables.schedule import Schedule, ScheduleDiary
-from .squeal.tables.summary import RankingStatistic
-from .statistics import round_km
+from .statistics import round_km, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, PERCENT_IN_Z, MEDIAN_KM_TIME, HR_MINUTES, \
+    MAX_MED_HR_OVER_M
 from .uweird.calendar import Calendar
 from .uweird.decorators import Indent
 from .uweird.factory import Factory
 from .uweird.focus import FocusWrap, MessageBar
 from .uweird.tabs import TabList
-from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile, DynamicContent, ColPack
+from .uweird.widgets import ColText, Rating, ColSpace, Integer, Float, DividedPile, DynamicContent, ColPack, \
+    FilteredPile
 
 
 class DynamicDate(DynamicContent):
@@ -127,52 +128,78 @@ class ActivityWidget(FocusWrap):
 
     def __init__(self, tabs, session, bar, activity):
         factory = Factory(tabs, bar)
+        self.title = factory(Edit(caption='%s - ' % activity.activity.title, edit_text=activity.title))
+        date = Text('%s  %s-%s (%s)' % (format_date(activity.date),
+                                        format_time(activity.start), format_time(activity.finish),
+                                        activity.finish - activity.start))
         self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
-        title = Text(activity.title)
-        timespan = ColText('%s - %s' % (format_time(activity.start), format_time(activity.finish)))
-        distance = self.build_statistic('Active distance', session, activity)
-        time = self.build_statistic('Active time', session, activity)
-        speed = self.build_statistic('Active speed', session, activity)
-        body = [Columns([timespan, ColText('    '), distance, ColText('    '), time, ColText('    '), speed]),
-                self.build_times(session, activity)]
+        active = [
+            'Active: ',
+            self.build_statistic(ACTIVE_DISTANCE, session, activity),
+            '   ',
+            self.build_statistic(ACTIVE_TIME, session, activity),
+            '   ',
+            self.build_statistic(ACTIVE_SPEED, session, activity)]
+        body = [self.title,
+                Text(active),
+                self.build_times(session, activity),
+                self.build_max_med(session, activity)]
         zones = self.build_zones(session, activity)
         if zones:
-            body.append(Columns([(12, zones), self.notes]))
+            body.append(Columns([(14, zones), self.notes]))
         else:
             body.append(self.notes)
-        super().__init__(DividedPile([title,
-                                      Indent(Pile(body), width=2)]))
+        super().__init__(DividedPile([date,
+                                      Indent(FilteredPile(body, divide=True), width=2)]))
 
-    def build_statistic(self, name, session, activity):
+    def build_statistic(self, name, session, activity, prefix=''):
         statistic = ActivityStatistic.from_name(session, name, activity)
-        percentile = RankingStatistic.from_name(session, 'Percentile(%s)'% name, activity)
         text = statistic.fmt_value
-        if statistic.summary:
-            attr = 'rank-%d' % statistic.summary.rank
+        if statistic.ranking and statistic.ranking.rank < 6:
+            attr = 'rank-%d' % statistic.ranking.rank
+        elif statistic.ranking:
+            attr = 'quintile-%d' % (1 + min(4, int(statistic.ranking.percentile) // 20))
         else:
-            attr = 'quintile-%d' % (1 + min(4, int(percentile.value) // 20))
-        return ColPack(Text((attr, text)))
+            attr = 'plain'
+        return attr, prefix + text
 
     def build_times(self, session, activity):
-        cols = []
+        text = []
         for km in round_km():
             try:
-                statistic = self.build_statistic('Median %dkm time' % km, session, activity)
-                if cols:
-                    cols.append(ColText(' '))
-                cols.append(ColText('%dk ' % km))
-                cols.append(statistic)
+                statistic = self.build_statistic(MEDIAN_KM_TIME % km, session, activity, prefix='%dkm:' % km)
+                if text:
+                    text.append('  ')
+                text.append(statistic)
             except:
-                 break
-        return Columns(cols)
+                pass
+        if text:
+            return Columns([('pack', Text('Times:  ')), Text(text)])
+        else:
+            return None
+
+    def build_max_med(self, session, activity):
+        text = []
+        for time in HR_MINUTES:
+            try:
+                statistic = self.build_statistic(MAX_MED_HR_OVER_M % time, session, activity, prefix='%dm:' % time)
+                if text:
+                    text.append('  ')
+                text.append(statistic)
+            except:
+                pass
+        if text:
+            return Columns([('pack', Text('MM HR:  ')), Text(text)])
+        else:
+            return None
 
     def build_zones(self, session, activity):
         try:
             zones = session.query(HeartRateZones).filter(HeartRateZones.date <= activity.date) \
                 .order_by(HeartRateZones.date.desc()).limit(1).one()
-            body = []
+            body = [Text('HR Zones:')]
             for zone in range(len(zones.zones), 0, -1):
-                statistic = ActivityStatistic.from_name(session, 'Percent in Z%d' % zone, activity)
+                statistic = ActivityStatistic.from_name(session, PERCENT_IN_Z % zone, activity)
                 text = '%d:    %3d%%' % (zone, int(0.5 + statistic.value))
                 left = int((statistic.value + 5) // 10)
                 text_left = text[0:left]
@@ -188,7 +215,7 @@ class Activities(DynamicDate):
     def _make(self):
         tabs = TabList()
         body = []
-        for activity in self._session.query(ActivityDiary).filter(ActivityDiary.date == self._date).\
+        for activity in self._session.query(ActivityDiary).filter(ActivityDiary.date == self._date). \
                 order_by(ActivityDiary.start).all():
             widget = ActivityWidget(tabs, self._session, self._bar, activity)
             Binder(self._log, self._session, widget, ActivityDiary, defaults={'id': activity.id})
@@ -229,7 +256,7 @@ class DiaryApp(App):
                                              Columns([('weight', 2, self.weather), ('weight', 1, self.weight)]),
                                              self.medication,
                                              ]))],
-                        dividechars=2),
+                        dividechars=3),
                 self.injuries,
                 self.schedules,
                 self.activities,

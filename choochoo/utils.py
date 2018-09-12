@@ -17,11 +17,11 @@ PALETTE = [('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
            ('error', 'dark red', 'black'), ('error-focus', 'light red', 'black'),
            ('bar', 'dark gray', 'black'), ('bar-focus', 'dark gray', 'black'),
            ('rank-1', 'black', 'white'), ('rank-2', 'black', 'dark red'), ('rank-3', 'black', 'yellow'),
-           ('rank-1', 'black', 'dark green'), ('rank-2', 'black', 'dark gray'),
+           ('rank-4', 'black', 'dark green'), ('rank-5', 'black', 'light gray'),
            ('zone-5', 'black', 'white'), ('zone-4', 'black', 'dark red'), ('zone-3', 'black', 'yellow'),
            ('zone-2', 'black', 'dark green'), ('zone-1', 'black', 'light gray'),
-           ('quintile-5', 'light gray', 'black'), ('quintile-4', 'light green', 'black'), ('quintile-3', 'yellow', 'black'),
-           ('quintile-2', 'light red', 'black'), ('quintile-1', 'white', 'black'),
+           ('quintile-1', 'light gray', 'black'), ('quintile-2', 'light green', 'black'), ('quintile-3', 'yellow', 'black'),
+           ('quintile-4', 'light red', 'black'), ('quintile-5', 'white', 'black'),
            ]
 
 

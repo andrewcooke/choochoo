@@ -243,12 +243,21 @@ class Float(Number):
 
 class DividedPile(Pile):
 
-    def __init__(self, widget_list, focus_item=None):
-        divided = []
-        for i, widget in enumerate(widget_list):
-            if i: divided.append(Divider())
-            divided.append(widget)
-        super().__init__(divided, focus_item=focus_item)
+    def __init__(self, widget_list, focus_item=None, divide=True):
+        if divide:
+            divided = []
+            for i, widget in enumerate(widget_list):
+                if i: divided.append(Divider())
+                divided.append(widget)
+            super().__init__(divided, focus_item=focus_item)
+        else:
+            super().__init__(widget_list, focus_item=focus_item)
+
+
+class FilteredPile(DividedPile):
+
+    def __init__(self, widget_list, focus_item=None, divide=False):
+        super().__init__([w for w in widget_list if w is not None], focus_item=focus_item, divide=divide)
 
 
 class DynamicContent(TabNode):
