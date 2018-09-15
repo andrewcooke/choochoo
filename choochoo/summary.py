@@ -106,18 +106,21 @@ def add_timespan(start, finish, summary, session, log):
         ActivityDiary.date >= start,
         ActivityDiary.date < finish
     ).all())
-    total_distance = session.query(func.sum(ActivityStatistic.value)).select_from(ActivityStatistic). \
-        join(ActivityDiary).join(Statistic).filter(
-        Statistic.name == ACTIVE_DISTANCE,
-        Statistic.activity == summary.activity,
-        ActivityDiary.date >= start,
-        ActivityDiary.date < finish).one()[0]
-    total_time = session.query(func.sum(ActivityStatistic.value)).select_from(ActivityStatistic). \
-        join(ActivityDiary).join(Statistic).filter(
-        Statistic.name == ACTIVE_TIME,
-        Statistic.activity == summary.activity,
-        ActivityDiary.date >= start,
-        ActivityDiary.date < finish).one()[0]
+    if total_activities:
+        total_distance = session.query(func.sum(ActivityStatistic.value)).select_from(ActivityStatistic). \
+            join(ActivityDiary).join(Statistic).filter(
+            Statistic.name == ACTIVE_DISTANCE,
+            Statistic.activity == summary.activity,
+            ActivityDiary.date >= start,
+            ActivityDiary.date < finish).one()[0]
+        total_time = session.query(func.sum(ActivityStatistic.value)).select_from(ActivityStatistic). \
+            join(ActivityDiary).join(Statistic).filter(
+            Statistic.name == ACTIVE_TIME,
+            Statistic.activity == summary.activity,
+            ActivityDiary.date >= start,
+            ActivityDiary.date < finish).one()[0]
+    else:
+        total_distance, total_time = 0, 0
     timespan = SummaryTimespan(summary=summary, start=start, finish=finish, created=dt.date.today(),
                                total_time=total_time, total_distance=total_distance, total_activities=total_activities)
     session.add(timespan)

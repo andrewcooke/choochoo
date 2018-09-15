@@ -11,8 +11,6 @@ about the technical details, see the
 Choochoo includes a library that reads (but does not write) FIT format
 data.  This can be used by third parties (see the API docs below), but
 is intended mainly to allow data to be imported into the ch2 diary.
-However, this is not yet implemented - currently all that is possible
-is displaying the data in a variety of formats.
 
 ## Contents
 
