@@ -7,12 +7,12 @@ from os.path import splitext, split, join
 from sys import stdout
 from tempfile import TemporaryDirectory
 
-from choochoo.args import FIELDS
-from choochoo.fit.format.read import filtered_records
-from choochoo.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
-from choochoo.fit.profile.fields import DynamicField
-from choochoo.fit.profile.profile import read_profile
-from choochoo.fit.summary import summarize, summarize_csv, summarize_tables
+from ch2.args import FIELDS
+from ch2.fit.format.read import filtered_records
+from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
+from ch2.fit.profile.fields import DynamicField
+from ch2.fit.profile.profile import read_profile
+from ch2.fit.summary import summarize, summarize_csv, summarize_tables
 
 
 def test_profile():

@@ -1,10 +1,10 @@
 
-from choochoo.args import parser, NamespaceWithVariables
-from choochoo.log import make_log
-from choochoo.plan.british import twelve_week_improver
-from choochoo.plan.exponential import exponential_time, exponential_distance
-from choochoo.squeal.database import Database
-from choochoo.squeal.tables.schedule import Schedule, ScheduleDiary
+from ch2.args import parser, NamespaceWithVariables
+from ch2.log import make_log
+from ch2.plan.british import twelve_week_improver
+from ch2.plan.exponential import exponential_time, exponential_distance
+from ch2.squeal.database import Database
+from ch2.squeal.tables.schedule import Schedule, ScheduleDiary
 
 
 def test_british():

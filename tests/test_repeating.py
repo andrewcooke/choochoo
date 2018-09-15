@@ -1,8 +1,8 @@
 
 import datetime as dt
 
-from choochoo.lib.repeating import Specification, DateOrdinals
-from choochoo.lib.date import parse_date
+from ch2.lib.repeating import Specification, DateOrdinals
+from ch2.lib.date import parse_date
 
 
 def assert_str(x, s):

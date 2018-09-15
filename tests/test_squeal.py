@@ -8,9 +8,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from urwid import WidgetWrap, Pile, Edit, Filler
 
-from choochoo.squeal.binders import Binder
-from choochoo.squeal.types import Ordinal
-from choochoo.uweird.widgets import Integer
+from ch2.squeal.binders import Binder
+from ch2.squeal.types import Ordinal
+from ch2.uweird.widgets import Integer
 
 
 basicConfig()
