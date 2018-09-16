@@ -27,7 +27,7 @@ class Activity(Base):
     sort = Column(Text, nullable=False, server_default='')
 
 
-class   ActivityDiary(Base):
+class ActivityDiary(Base):
 
     __tablename__ = 'activity_diary'
 

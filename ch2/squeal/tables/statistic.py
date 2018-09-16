@@ -23,4 +23,4 @@ class Statistic(Base):
     UniqueConstraint('activity', 'name')
 
     def __str__(self):
-        return '%s (%s)' % (self.name, self.activity.title)
+        return self.name
