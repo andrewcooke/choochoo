@@ -15,6 +15,7 @@ ADD_FTHR = 'add-fthr'
 ADD_PLAN = 'add-plan'
 ADD_SUMMARY = 'add-summary'
 CREATE_DATABASE = 'create-database'
+DATA = 'data'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
 EDIT_ACTIVITIES = 'edit-activities'
@@ -170,6 +171,10 @@ def parser():
     add_summary.add_argument(FINISH, action='store', metavar='DATE', nargs='?',
                              help='finish date (inclusive)')
     add_summary.set_defaults(command=ADD_SUMMARY)
+
+    data = subparsers.add_parser(DATA,
+                                 help='used within jupyter (no-op from cmd line)')
+    data.set_defaults(command=DATA)
 
     diary = subparsers.add_parser(CREATE_DATABASE,
                                   help='create the database if missing')

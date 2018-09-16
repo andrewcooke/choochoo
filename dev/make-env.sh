@@ -10,7 +10,10 @@ pip install nose
 pip install robotframework
 pip install openpyxl
 
+pip install numpy
+pip install pandas
+pip install jupyter
+
 pip install setuptools wheel twine
-#pip install more-itertools
 
 echo "source env/bin/activate"

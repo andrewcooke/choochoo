@@ -1,0 +1,2 @@
+
+from .database import data
