@@ -33,7 +33,7 @@ def make_log(args, tui=False):
         stderr_handler.setLevel(level)
         stderr_handler.setFormatter(stderr_formatter)
         log.addHandler(stderr_handler)
-        # slog.addHandler(stderr_handler)
+        slog.addHandler(stderr_handler)
 
     return log
 

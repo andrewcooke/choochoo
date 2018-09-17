@@ -3,7 +3,8 @@ from collections import defaultdict
 from re import compile
 
 from pandas import DataFrame
-from sqlalchemy.orm import joinedload, contains_eager
+from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, contains_eager, aliased
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..args import parser, NamespaceWithVariables, DATA
@@ -11,6 +12,7 @@ from ..log import make_log
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity, ActivityStatistic, ActivityDiary
 from ..squeal.tables.statistic import Statistic
+from ..squeal.tables.summary import SummaryTimespan, DistributionStatistic, Summary
 
 
 class Data:
@@ -23,15 +25,15 @@ class Data:
 
     def activity(self, name):
         try:
-            activity = self.__session.query(Activity).\
-                    options(joinedload(Activity.statistics),
-                            contains_eager('statistics.activity')).filter(Activity.title == name).one()
-            return AcitvityData(self.__log, self.__session, activity)
+            activity = self.__session.query(Activity). \
+                options(joinedload(Activity.statistics),
+                        contains_eager('statistics.activity')).filter(Activity.title == name).one()
+            return ActivityData(self.__log, self.__session, activity)
         except NoResultFound:
             raise Exception('No such activity (%s)' % name)
 
 
-class AcitvityData:
+class ActivityData:
 
     def __init__(self, log, session, activity):
         self.__log = log
@@ -45,28 +47,67 @@ class AcitvityData:
     def statistics(self, *names):
         return list(self.__expand_statistic_names(names))
 
-    def activity_statistics(self, *names):
-        names = {s.name for s in self.__expand_statistic_names(names)}
-        data = defaultdict(list)
-        start = []
-        for diary in self.__session.query(ActivityDiary).\
-                join(ActivityDiary.statistics, ActivityStatistic.statistic).\
-                options(joinedload(ActivityDiary.statistics).joinedload(ActivityStatistic.statistic)).\
-                filter(Statistic.activity == self.__activity).\
+    def __activity_starts(self):
+        for start in self.__session.query(ActivityDiary.start). \
+                filter(ActivityDiary.activity == self.__activity). \
                 order_by(ActivityDiary.start).all():
-            start.append(diary.start)
-            known = set()
-            for statistic in diary.statistics:
-                name = statistic.statistic.name
-                if name in names:
-                    data[name].append(statistic.value)
-                    known.add(name)
-            for name in names.difference(known):
-                data[name].append(None)
-        for s in data:
-            self.__log.debug('%s: %d' % (s, len(data[s])))
-        self.__log.debug('start: %d' % len(start))
-        return DataFrame(data, index=start)
+            yield start[0]
+
+    def __summary_starts(self):
+        for start in self.__session.query(SummaryTimespan.start). \
+                join(SummaryTimespan.summary). \
+                filter(Summary.activity == self.__activity). \
+                order_by(SummaryTimespan.start).all():
+            yield start[0]
+
+    def activity_statistics(self, *names):
+        starts = list(self.__activity_starts())
+        data_by_date = defaultdict(dict)
+        for statistic in self.__expand_statistic_names(names):
+            for (date, value) in self.__session.query(ActivityDiary.start, ActivityStatistic.value). \
+                    join(ActivityDiary.statistics). \
+                    filter(ActivityDiary.activity == self.__activity,
+                           ActivityStatistic.statistic_id == statistic.id).all():
+                data_by_date[statistic.name][date] = value
+        data = defaultdict(list)
+        for name in data_by_date.keys():
+            stat_data = data_by_date[name]
+            for start in starts:
+                data[name].append(stat_data[start] if start in stat_data else None)
+        return DataFrame(data, index=starts)
+
+    def summary_statistics(self, *names):
+        starts = list(self.__summary_starts())
+        data_by_date = defaultdict(dict)
+        for statistic in self.__expand_statistic_names(names):
+            ds = [aliased(DistributionStatistic) for _ in range(5)]
+            xs = [aliased(ActivityStatistic) for _ in range(5)]
+            for (date, q0, q1, q2, q3, q4) in self.__session.query(SummaryTimespan.start, xs[0].value, xs[1].value,
+                                                                   xs[2].value, xs[3].value, xs[4].value). \
+                    join(SummaryTimespan.summary). \
+                    filter(Summary.activity == self.__activity,
+                           ds[0].statistic_id == statistic.id, ds[0].percentile == 0,
+                           ds[0].summary_timespan_id == SummaryTimespan.id,
+                           ds[0].activity_statistic_id == xs[0].id,
+                           ds[1].statistic_id == statistic.id, ds[1].percentile == 25,
+                           ds[1].summary_timespan_id == SummaryTimespan.id,
+                           ds[1].activity_statistic_id == xs[1].id,
+                           ds[2].statistic_id == statistic.id, ds[2].percentile == 50,
+                           ds[2].summary_timespan_id == SummaryTimespan.id,
+                           ds[2].activity_statistic_id == xs[2].id,
+                           ds[3].statistic_id == statistic.id, ds[3].percentile == 75,
+                           ds[3].summary_timespan_id == SummaryTimespan.id,
+                           ds[3].activity_statistic_id == xs[3].id,
+                           ds[4].statistic_id == statistic.id, ds[4].percentile == 100,
+                           ds[4].summary_timespan_id == SummaryTimespan.id,
+                           ds[4].activity_statistic_id == xs[4].id).all():
+                data_by_date[statistic.name][date] = (q0, q1, q2, q3, q4)
+        data = defaultdict(list)
+        for name in data_by_date.keys():
+            stat_data = data_by_date[name]
+            for start in starts:
+                data[name].append(stat_data[start] if start in stat_data else None)
+        return DataFrame(data, index=starts)
 
     def __expand_statistic_names(self, names):
         if not names:
