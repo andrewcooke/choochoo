@@ -43,7 +43,7 @@ class AcitvityData:
         return [s.name for s in self.__activity.statistics]
 
     def statistics(self, *names):
-        return self.__expand_statistic_names(names)
+        return list(self.__expand_statistic_names(names))
 
     def activity_statistics(self, *names):
         names = {s.name for s in self.__expand_statistic_names(names)}
@@ -71,21 +71,24 @@ class AcitvityData:
     def __expand_statistic_names(self, names):
         if not names:
             return self.__activity.statistics
-        lookup = dict((s.name, s) for s in self.__activity.statistics)
-        known = set(lookup.keys())
-        all_names = set()
+        all_names, statistics = set(), set()
         for name in names:
-            all_names.update(n.strip() for n in name.split(','))
-        statistics = set()
-        for name in list(all_names):
-            if name in known:
-                statistics.add(lookup[name])
-                all_names.remove(name)
-        for name in all_names:
-            m = compile(name)
-            for k in known:
-                if m.fullmatch(k):
-                    statistics.add(lookup[k])
+            if isinstance(name, Statistic):
+                statistics.add(name)
+            else:
+                all_names.update(n.strip() for n in name.split(','))
+        if all_names:
+            lookup = dict((s.name, s) for s in self.__activity.statistics)
+            known = set(lookup.keys())
+            for name in list(all_names):
+                if name in known:
+                    statistics.add(lookup[name])
+                    all_names.remove(name)
+            for name in all_names:
+                m = compile(name)
+                for k in known:
+                    if m.fullmatch(k):
+                        statistics.add(lookup[k])
         if not statistics:
             raise Exception('Matched no statistics')
         return statistics

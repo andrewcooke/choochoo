@@ -10,4 +10,5 @@ build
 dist
 *.egg-info
 *.pkl
-*.ipynb
+/*.ipynb
+.ipynb_checkpoints

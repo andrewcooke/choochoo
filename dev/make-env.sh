@@ -13,6 +13,7 @@ pip install openpyxl
 pip install numpy
 pip install pandas
 pip install jupyter
+pip install bokeh
 
 pip install setuptools wheel twine
 
