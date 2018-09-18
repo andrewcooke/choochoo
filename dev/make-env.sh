@@ -11,9 +11,9 @@ pip install robotframework
 pip install openpyxl
 pip install numpy
 pip install pandas
-pip install matplotlib
 pip install pyGeoTile
 
+pip install matplotlib
 pip install bokeh
 pip install jupyter
 
