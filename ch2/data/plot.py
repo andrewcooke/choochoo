@@ -2,9 +2,26 @@
 import datetime as dt
 
 
-def boxplot(f, col):
+def col_to_boxstats(frame, name):
     '''
-    Generate a boxplot for a column (andas series) containing a tuple of 5 values
+    Allow inter-op with matplotlib using pre-calculated stats
+    See test_data.py
+    '''
+    stats = []
+    for index, row in frame.iterrows():
+        if row[name]:
+            stats.append({'label': index,
+                          'whislo': row[name][0],
+                          'q1': row[name][1],
+                          'med': row[name][2],
+                          'q3': row[name][3],
+                          'whishi': row[name][4]})
+    return stats
+
+
+def bokeh_boxplot(f, col):
+    '''
+    Generate a boxplot for a column (pandas series) containing a tuple of 5 values
     (index date) as provided by summary statistics,
     '''
     def pick(n):

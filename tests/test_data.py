@@ -1,8 +1,11 @@
 
-from ch2.data import data
+import matplotlib.pyplot as plt
+
+from ch2.data import data, col_to_boxstats
 
 
 def test_activities():
+    # there's a bokeh version of this in the notebooks
     ch2 = data('-v', '5')
     cycling = ch2.activity('Cycling')
     stats = cycling.statistics('Active .*')
@@ -10,16 +13,34 @@ def test_activities():
         print(s.name, ':', s.units)
     frame = cycling.activity_statistics(*stats)
     print(frame.describe())
-    p = frame.plot.scatter(x='index', y='Active distance')
-    # f = figure(plot_width=800, plot_height=250, x_axis_type='datetime', title='Distance for all rides')
-    # f.circle(x=frame.index, y=frame['Active distance'] / 1000)
-    # f.xaxis.axis_label = 'Date'
-    # f.yaxis.axis_label = 'Distance / km'
-    # export_png(f, '/tmp/distance.png')
+    plt.scatter(x=frame.index, y=frame['Active distance'] / 1000)
+    plt.xlabel('Date')
+    plt.ylabel('Distance / km')
+    plt.title('Active distance')
+    plt.savefig('/tmp/distance.png')
 
 
-# def test_sumamries():
-#     d = data('-v', '5')
-#     a = d.activity('Cycling')
-#     s = a.summary_statistics('.*')
-#     print(s)
+def test_sumamries():
+    # there's a bokeh version of this in the notebooks
+    ch2 = data('-v', '0')
+    cycling = ch2.activity('Cycling')
+    stats = cycling.statistics('.*')
+    for s in stats:
+        print(s.name, ':', s.units)
+    frame = cycling.summary_statistics('Max med HR over 30m')
+    stats = col_to_boxstats(frame, 'Max med HR over 30m')
+    # https://matplotlib.org/gallery/statistics/bxp.html
+    fig, ax = plt.subplots()
+    ax.bxp(stats, showfliers=False)
+    fig.autofmt_xdate()
+    plt.savefig('/tmp/summary.png')
+
+
+def test_route():
+    ch2 = data('-v', '0')
+    cycling = ch2.activity('Cycling')
+    frames = cycling.activity_diary('2018-09-06-rec')
+    # can't find a good, portable solution past this point
+    # within jupyter, bokeh works ok, but you can't save images without
+    # getting into problems with node (javascript).  seems to be a general
+    # problem of python map libraries.
