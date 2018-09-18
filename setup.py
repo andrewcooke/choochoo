@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
-                 version='0.0.7',
+                 version='0.0.8',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
                  description='A Programmable Training Diary',
@@ -20,8 +20,6 @@ setuptools.setup(name='choochoo',
                      ],
                  },
                  classifiers=(
-                     "Programming Language :: Python :: 3.5",
-                     "Programming Language :: Python :: 3.6",
                      "Programming Language :: Python :: 3.7",
                      "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
                      "Operating System :: OS Independent",
