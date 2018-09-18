@@ -1,4 +1,6 @@
 
+An **open**, **hackable** and **free** training diary.
+
 The main interface is a curses-style diary, used to track daily activity
 as well as progress towards aims.  A flexible "schedule spec" is used to
 define periodic events (eg training routines) and (unfortunately) there's 
