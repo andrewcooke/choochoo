@@ -70,7 +70,6 @@ The `ch2.data.database.ActivityData` instance provides access to:
 To see examples of how to plot this data see:
 
 * The Jupyter notebooks in `ch2/data/notebooks` - these use Bokeh.
-
 * The code in `tests/test_data.py` - these use Matplotlib.
 
 A few helper routines are available in `ch2.data.plot` to help massage the
