@@ -1,8 +1,4 @@
 
-A training diary written mainly for myself, but perhaps attractive to others
-who also want a way to track and plan their progress that is open, lightweight
-and extensible.
-
 The main interface is a curses-style diary, used to track daily activity
 as well as progress towards aims.  A flexible "schedule spec" is used to
 define periodic events (eg training routines) and (unfortunately) there's 
