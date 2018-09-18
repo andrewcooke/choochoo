@@ -27,4 +27,5 @@ git push origin "v$VERSION"
 
 dev/package-profile.sh
 dev/package-python.sh
-twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+#twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+twine upload --repository-url https://pypi.org/ dist/*
