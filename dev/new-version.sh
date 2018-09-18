@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source env/bin/activate
+
 if [ "$#" -ne 1 ]; then
     echo "usage: $0 version"
     echo "eg: $0 1.2.3"
