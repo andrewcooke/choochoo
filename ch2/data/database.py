@@ -1,9 +1,10 @@
 
+import datetime as dt
 from collections import defaultdict
 from re import compile
 
 from pandas import DataFrame
-from sqlalchemy import or_
+from pygeotile.point import Point
 from sqlalchemy.orm import joinedload, contains_eager, aliased
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -32,6 +33,9 @@ class Data:
         except NoResultFound:
             raise Exception('No such activity (%s)' % name)
 
+    def activity_names(self):
+        return [activity.title for activity in self.__session.query(Activity).all()]
+
 
 class ActivityData:
 
@@ -39,10 +43,6 @@ class ActivityData:
         self.__log = log
         self.__session = session
         self.__activity = activity
-
-    @property
-    def statistic_names(self):
-        return [s.name for s in self.__activity.statistics]
 
     def statistics(self, *names):
         return list(self.__expand_statistic_names(names))
@@ -133,6 +133,36 @@ class ActivityData:
         if not statistics:
             raise Exception('Matched no statistics')
         return statistics
+
+    def activity_diary_names(self):
+        return [diary.title for diary in
+                self.__session.query(ActivityDiary).
+                    filter(ActivityDiary.activity == self.__activity).
+                    order_by(ActivityDiary.start)]
+
+    def activity_diary(self, name):
+        diary = self.__session.query(ActivityDiary). \
+            filter(ActivityDiary.title == name).one()
+        frames = []
+        for timespan in diary.timespans:
+            start = []
+            data = defaultdict(list)
+            for waypoint in timespan.waypoints:
+                start.append(dt.datetime.fromtimestamp(waypoint.epoch))
+                data['latitude'].append(waypoint.latitude)
+                data['longitude'].append(waypoint.longitude)
+                if waypoint.latitude and waypoint.longitude:
+                    p = Point.from_latitude_longitude(waypoint.latitude, waypoint.longitude)
+                    x, y = p.meters
+                else:
+                    x, y = None, None
+                data['x'].append(x)
+                data['y'].append(y)
+                data['heartrate'].append(waypoint.hr)
+                data['distance'].append(waypoint.distance)
+                data['speed'].append(waypoint.speed)
+            frames.append(DataFrame(data, index=start))
+        return frames
 
 
 def data(*args):

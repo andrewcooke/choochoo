@@ -35,7 +35,7 @@ class ActivityDiary(Base):
     date = Column(Ordinal, nullable=False)
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=False)
     activity = relationship('Activity')
-    title = Column(Text)
+    title = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
     start = Column(DateTime, nullable=False)
     finish = Column(DateTime, nullable=False)

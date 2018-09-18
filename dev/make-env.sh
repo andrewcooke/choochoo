@@ -9,11 +9,11 @@ pip install sqlalchemy
 pip install nose
 pip install robotframework
 pip install openpyxl
-
 pip install numpy
 pip install pandas
+pip install geopandas
+
 pip install jupyter
-pip install bokeh
 
 pip install setuptools wheel twine
 

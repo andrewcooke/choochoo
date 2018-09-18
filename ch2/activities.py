@@ -8,6 +8,7 @@ from os.path import isdir, join, basename, splitext
 from sqlalchemy.orm.exc import NoResultFound
 from urwid import Edit, Pile, Columns, connect_signal
 
+from .fit.format.records import fix_degrees
 from .args import PATH, ACTIVITY, EDIT_ACTIVITIES, FORCE, MONTH, YEAR
 from .fit.format.read import filtered_records
 from .fit.profile.types import timestamp_to_datetime
@@ -130,7 +131,7 @@ def add_file(log, session, activity, path, force):
     session.add(diary)
     timespan, warned, latest = None, 0, 0
     for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0):
-        record = record.force()
+        record = record.force(fix_degrees)
         try:
             if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
                 if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
