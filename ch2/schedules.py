@@ -26,7 +26,7 @@ class ScheduleWidget(FocusWrap):
         factory = Factory()
         if has_type:
             self.type_id = factory(Menu('Type: ', type_names))
-        self.title = factory(Edit('Title: '))
+        self.name = factory(Edit('Name: '))
         self.repeat = factory(Edit('Repeat: '))
         self.start = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
         self.finish = factory(Nullable('Open', lambda state: TextDate(log, date=state)))
@@ -39,9 +39,9 @@ class ScheduleWidget(FocusWrap):
         if has_type:
             body = [Columns([(TYPE_WIDTH, self.type_id),
                              ColText('  '),
-                             ('weight', 3, self.title)])]
+                             ('weight', 3, self.name)])]
         else:
-            body = [self.title]
+            body = [self.name]
         body.extend([Columns([self.repeat,
                               ColText('  '),
                               (DATE_WIDTH, self.start),
@@ -62,7 +62,7 @@ class ScheduleWidget(FocusWrap):
         connect_signal(reset, 'click', lambda widget: binder.reset())  # todo - children?
 
     def __add_child(self):
-        self.__instance.children.append(Schedule(type_id=None, has_notes=0, sort='', title=''))
+        self.__instance.children.append(Schedule(type_id=None, has_notes=0, sort='', name=''))
         self.__editor.rebuild()
 
 
@@ -100,11 +100,11 @@ class SchedulesEditor(DynamicContent):
 
     def __add_top_level(self, type_id):
         self.__schedules.append(Schedule(type_id=type_id, type=self.__types[type_id],
-                                         has_notes=0, sort='', title=''))
+                                         has_notes=0, sort='', name=''))
         self.rebuild()
 
     def __add_child(self, parent):
-        parent.children.append(Schedule(type_id=None, has_notes=0, sort='', title=''))
+        parent.children.append(Schedule(type_id=None, has_notes=0, sort='', name=''))
         self.rebuild()
 
 

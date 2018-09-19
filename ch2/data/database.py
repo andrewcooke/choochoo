@@ -8,6 +8,8 @@ from pygeotile.point import Point
 from sqlalchemy.orm import joinedload, contains_eager, aliased
 from sqlalchemy.orm.exc import NoResultFound
 
+from ch2.squeal.tables.diary import Diary
+from ch2.squeal.tables.injury import Injury, InjuryDiary
 from ..args import parser, NamespaceWithVariables, DATA
 from ..log import make_log
 from ..squeal.database import Database
@@ -16,45 +18,110 @@ from ..squeal.tables.statistic import Statistic
 from ..squeal.tables.summary import SummaryTimespan, DistributionStatistic, Summary
 
 
-class Data:
+class NameMatcher:
+    
+    def __init__(self, log, session):
+        self._log = log
+        self._session = session
+
+    @staticmethod
+    def _expand_names(type, names, defaults):
+        if not names:
+            return defaults
+        all_names, values = set(), set()
+        for name in names:
+            if isinstance(name, type):
+                values.add(name)
+            else:
+                all_names.update(n.strip() for n in name.split(','))
+        if all_names:
+            lookup = dict((x.name, x) for x in defaults)
+            known = set(lookup.keys())
+            for name in list(all_names):
+                if name in known:
+                    values.add(lookup[name])
+                    all_names.remove(name)
+            for name in all_names:
+                m = compile(name)
+                for k in known:
+                    if m.fullmatch(k):
+                        values.add(lookup[k])
+        if not values:
+            raise Exception('No matches')
+        return values
+
+
+class Data(NameMatcher):
 
     def __init__(self, log, db):
-        self.__log = log
         # we use a single, long-lived session so that object access is easy
         # (we're only reading and assume the database doesn't change)
-        self.__session = db.session()
+        super().__init__(log, db.session())
 
     def activity(self, name):
         try:
-            activity = self.__session.query(Activity). \
+            activity = self._session.query(Activity). \
                 options(joinedload(Activity.statistics),
-                        contains_eager('statistics.activity')).filter(Activity.title == name).one()
-            return ActivityData(self.__log, self.__session, activity)
+                        contains_eager('statistics.activity')).filter(Activity.name == name).one()
+            return ActivityData(self._log, self._session, activity)
         except NoResultFound:
             raise Exception('No such activity (%s)' % name)
 
     def activity_names(self):
-        return [activity.title for activity in self.__session.query(Activity).all()]
+        return [activity.name for activity in self._session.query(Activity).all()]
+
+    def diaries(self):
+        data = defaultdict(list)
+        dates = []
+        for diary in self._session.query(Diary).all():
+            dates.append(diary.date)
+            data['notes'].append(diary.notes)
+            data['rest heart rate'].append(diary.rest_heart_rate)
+            data['sleep'].append(diary.sleep)
+            data['mood'].append(diary.mood)
+            data['weather'].append(diary.weather)
+            data['medication'].append(diary.medication)
+            data['weight'].append(diary.weight)
+        return DataFrame(data, index=dates)
+
+    def injury_names(self):
+        return [injury.name for injury in self._session.query(Injury).all()]
+
+    def injuries(self, *names):
+        frames = {}
+        for injury in self.__expand_injury_names(names):
+            data = defaultdict(list)
+            dates = []
+            for diary in self._session.query(InjuryDiary).filter(InjuryDiary.injury == injury).all():
+                dates.append(diary.date)
+                data['pain average'].append(diary.pain_average)
+                data['pain peak'].append(diary.pain_peak)
+                data['pain frequency'].append(diary.pain_frequency)
+                data['notes'].append(diary.notes)
+            frames[injury.name] = DataFrame(data, index=dates)
+        return frames
+
+    def __expand_injury_names(self, names):
+        return self._expand_names(Injury, names, self._session.query(Injury).all())
 
 
-class ActivityData:
+class ActivityData(NameMatcher):
 
     def __init__(self, log, session, activity):
-        self.__log = log
-        self.__session = session
+        super().__init__(log, session)
         self.__activity = activity
 
     def statistics(self, *names):
         return list(self.__expand_statistic_names(names))
 
     def __activity_starts(self):
-        for start in self.__session.query(ActivityDiary.start). \
+        for start in self._session.query(ActivityDiary.start). \
                 filter(ActivityDiary.activity == self.__activity). \
                 order_by(ActivityDiary.start).all():
             yield start[0]
 
     def __summary_starts(self):
-        for start in self.__session.query(SummaryTimespan.start). \
+        for start in self._session.query(SummaryTimespan.start). \
                 join(SummaryTimespan.summary). \
                 filter(Summary.activity == self.__activity). \
                 order_by(SummaryTimespan.start).all():
@@ -64,7 +131,7 @@ class ActivityData:
         starts = list(self.__activity_starts())
         data_by_date = defaultdict(dict)
         for statistic in self.__expand_statistic_names(names):
-            for (date, value) in self.__session.query(ActivityDiary.start, ActivityStatistic.value). \
+            for (date, value) in self._session.query(ActivityDiary.start, ActivityStatistic.value). \
                     join(ActivityDiary.statistics). \
                     filter(ActivityDiary.activity == self.__activity,
                            ActivityStatistic.statistic_id == statistic.id).all():
@@ -82,7 +149,7 @@ class ActivityData:
         for statistic in self.__expand_statistic_names(names):
             ds = [aliased(DistributionStatistic) for _ in range(5)]
             xs = [aliased(ActivityStatistic) for _ in range(5)]
-            for (date, q0, q1, q2, q3, q4) in self.__session.query(SummaryTimespan.start, xs[0].value, xs[1].value,
+            for (date, q0, q1, q2, q3, q4) in self._session.query(SummaryTimespan.start, xs[0].value, xs[1].value,
                                                                    xs[2].value, xs[3].value, xs[4].value). \
                     join(SummaryTimespan.summary). \
                     filter(Summary.activity == self.__activity,
@@ -110,45 +177,23 @@ class ActivityData:
         return DataFrame(data, index=starts)
 
     def __expand_statistic_names(self, names):
-        if not names:
-            return self.__activity.statistics
-        all_names, statistics = set(), set()
-        for name in names:
-            if isinstance(name, Statistic):
-                statistics.add(name)
-            else:
-                all_names.update(n.strip() for n in name.split(','))
-        if all_names:
-            lookup = dict((s.name, s) for s in self.__activity.statistics)
-            known = set(lookup.keys())
-            for name in list(all_names):
-                if name in known:
-                    statistics.add(lookup[name])
-                    all_names.remove(name)
-            for name in all_names:
-                m = compile(name)
-                for k in known:
-                    if m.fullmatch(k):
-                        statistics.add(lookup[k])
-        if not statistics:
-            raise Exception('Matched no statistics')
-        return statistics
+        return self._expand_names(Statistic, names, self.__activity.statistics)
 
     def activity_diary_names(self):
-        return [diary.title for diary in
-                self.__session.query(ActivityDiary).
+        return [diary.name for diary in
+                self._session.query(ActivityDiary).
                     filter(ActivityDiary.activity == self.__activity).
                     order_by(ActivityDiary.start)]
 
     def activity_diary(self, name):
-        diary = self.__session.query(ActivityDiary). \
-            filter(ActivityDiary.title == name).one()
+        diary = self._session.query(ActivityDiary). \
+            filter(ActivityDiary.name == name).one()
         frames = []
         for timespan in diary.timespans:
-            start = []
+            dates = []
             data = defaultdict(list)
             for waypoint in timespan.waypoints:
-                start.append(dt.datetime.fromtimestamp(waypoint.epoch))
+                dates.append(dt.datetime.fromtimestamp(waypoint.epoch))
                 data['latitude'].append(waypoint.latitude)
                 data['longitude'].append(waypoint.longitude)
                 if waypoint.latitude and waypoint.longitude:
@@ -158,10 +203,10 @@ class ActivityData:
                     x, y = None, None
                 data['x'].append(x)
                 data['y'].append(y)
-                data['heartrate'].append(waypoint.hr)
+                data['heart rate'].append(waypoint.heart_rate)
                 data['distance'].append(waypoint.distance)
                 data['speed'].append(waypoint.speed)
-            frames.append(DataFrame(data, index=start))
+            frames.append(DataFrame(data, index=dates))
         return frames
 
 

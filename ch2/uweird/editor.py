@@ -63,9 +63,9 @@ class Editor(TabNode):
 
 class EditorApp(App):
 
-    def __init__(self, log, session, bar, title, Widget, Model):
+    def __init__(self, log, session, bar, name, Widget, Model):
         self.__session = session
         tabs = TabList()
         self.editor = tabs.append(Editor(log, session, bar, Widget, Model))
-        super().__init__(log, title, bar, self.editor, tabs, session)
+        super().__init__(log, name, bar, self.editor, tabs, session)
 

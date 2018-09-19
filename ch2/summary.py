@@ -50,9 +50,9 @@ def regular_summary(month, activity, force, db, log):
         summary = Summary.from_activity_name(session, activity)
         if not summary:
             summary = Summary.new(session, activity, type)
-        start = to_date(session.query(ActivityDiary).join(Activity).filter(Activity.title == activity).
+        start = to_date(session.query(ActivityDiary).join(Activity).filter(Activity.name == activity).
                         order_by(ActivityDiary.start).limit(1).one().start)
-        finish = to_date(session.query(ActivityDiary).join(Activity).filter(Activity.title == activity).
+        finish = to_date(session.query(ActivityDiary).join(Activity).filter(Activity.name == activity).
                          order_by(desc(ActivityDiary.finish)).limit(1).one().finish)
         for s, f in months(start, finish) if month else years(start, finish):
             add_range(s, f, summary, session, log)

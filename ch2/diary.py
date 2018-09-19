@@ -46,7 +46,7 @@ class InjuryWidget(FocusWrap):
         self.pain_frequency = factory(Rating(caption='freq: '))
         self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
         super().__init__(
-            Pile([Columns([('weight', 1, Text(injury.title)),
+            Pile([Columns([('weight', 1, Text(injury.name)),
                            ('weight', 1, Columns([ColText('Pain - '),
                                                   (11, self.pain_average),
                                                   (8, self.pain_peak),
@@ -83,9 +83,9 @@ class ScheduleWidget(FocusWrap):
         log.debug('Schedule: %s' % schedule)
         factory = Factory(tabs, bar)
         if show_type:
-            body = [Text('%s: %s' % (schedule.type.name, schedule.title))]
+            body = [Text('%s: %s' % (schedule.type.name, schedule.name))]
         else:
-            body = [Text(schedule.title)]
+            body = [Text(schedule.name)]
         if schedule.has_notes:
             self.notes = factory(Edit(caption='Notes: ', edit_text='', multiline=True))
             body.append(self.notes)
@@ -128,7 +128,7 @@ class ActivityWidget(FocusWrap):
 
     def __init__(self, tabs, session, bar, activity):
         factory = Factory(tabs, bar)
-        self.title = factory(Edit(caption='%s - ' % activity.activity.title, edit_text=activity.title))
+        self.name = factory(Edit(caption='%s - ' % activity.activity.name, edit_text=activity.name))
         date = Text('%s  %s-%s (%s)' % (format_date(activity.date),
                                         format_time(activity.start), format_time(activity.finish),
                                         activity.finish - activity.start))
@@ -140,7 +140,7 @@ class ActivityWidget(FocusWrap):
             self.build_statistic(ACTIVE_TIME, session, activity),
             '   ',
             self.build_statistic(ACTIVE_SPEED, session, activity)]
-        body = [self.title,
+        body = [self.name,
                 Text(active),
                 self.build_times(session, activity),
                 self.build_max_med(session, activity)]

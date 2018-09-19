@@ -22,7 +22,7 @@ class Activity(Base):
     __tablename__ = 'activity'
 
     id = Column(Integer, primary_key=True)
-    title = Column(Text, nullable=False, server_default='')
+    name = Column(Text, nullable=False, server_default='')
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Text, nullable=False, server_default='')
 
@@ -35,7 +35,7 @@ class ActivityDiary(Base):
     date = Column(Ordinal, nullable=False)
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=False)
     activity = relationship('Activity')
-    title = Column(Text, unique=True)
+    name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
     start = Column(DateTime, nullable=False)
     finish = Column(DateTime, nullable=False)
@@ -78,7 +78,7 @@ class ActivityWaypoint(Base):
     epoch = Column(Float, primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
-    hr = Column(Integer)
+    heart_rate = Column(Integer)
     distance = Column(Float)
     speed = Column(Float)
 

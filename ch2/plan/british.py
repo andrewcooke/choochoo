@@ -11,12 +11,12 @@ def twelve_week_improver(date):
       ch2 plan british-cycling-12-week-improver 2018-07-20
     """
 
-    return Week(title='British Cycling 12 Week improver',
+    return Week(name='British Cycling 12 Week improver',
                 description='https://www.britishcycling.org.uk/zuvvi/media/bc_files/sportivetrainingplans/improver_plan/TRAINING_PLAN_-_Improvers_plan.pdf',
                 start=date,
                 days={
-                    'mon': Day(title='Rest day'),
-                    'tue': Day(title='Outdoor / indoor',
+                    'mon': Day(name='Rest day'),
+                    'tue': Day(name='Outdoor / indoor',
                                notes=['1h / low / easy ride',
                                       '1h / med / zone build',
                                       '1h / med / zone build',
@@ -31,8 +31,8 @@ def twelve_week_improver(date):
                                       '1h / low / spin out session'
                                       ]
                                ),
-                    'wed': Day(title='Rest day'),
-                    'thu': Day(title='Outdoor / indoor',
+                    'wed': Day(name='Rest day'),
+                    'thu': Day(name='Outdoor / indoor',
                                notes=['1h10m / med/high / threshold test',
                                       '1h / med / tempo intervals',
                                       '1h / med / tempo intervals',
@@ -47,16 +47,16 @@ def twelve_week_improver(date):
                                       '1h / low / spin out session'
                                       ]
                                ),
-                    'fri': Day(title='Cross-training',
+                    'fri': Day(name='Cross-training',
                                notes=[(3,
                                        ((3, 'Bonus session - non-cycling activity'),
                                         'Rest day'))
                                       ]),
-                    'sat': Day(title='Flexible day',
+                    'sat': Day(name='Flexible day',
                                notes=[(11, None),
                                       '30m / low / improvers pre-event ride'
                                       ]),
-                    'sun': Day(title='Outdoor ride',
+                    'sun': Day(name='Outdoor ride',
                                notes=['1h30m / low/med / improvers endurance ride',
                                       '1h40m / low/med / improvers endurance ride',
                                       '1h50m / low/med / improvers endurance ride',

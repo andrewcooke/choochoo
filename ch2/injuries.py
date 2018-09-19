@@ -16,7 +16,7 @@ class InjuryWidget(FocusWrap):
     def __init__(self, log, tabs, bar, outer):
         self.__outer = outer
         factory = Factory(tabs=tabs, bar=bar)
-        self.title = factory(Edit(caption='Title: '))
+        self.name = factory(Edit(caption='Title: '))
         self.start = factory(Nullable('Open', lambda date: TextDate(log, bar=bar), bar=bar))
         self.finish = factory(Nullable('Open', lambda date: TextDate(log, bar=bar), bar=bar))
         self.sort = factory(Edit(caption='Sort: '))
@@ -26,7 +26,7 @@ class InjuryWidget(FocusWrap):
         reset = factory(self.reset, message='reset from database')
         self.description = factory(Edit(caption='Description: ', multiline=True))
         super().__init__(
-            Pile([self.title,
+            Pile([self.name,
                   Columns([(18, self.start),
                            ColText(' to '),
                            (18, self.finish),

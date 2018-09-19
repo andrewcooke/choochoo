@@ -21,8 +21,8 @@ class HeartRateZone(Base):
     Following https://www.britishcycling.org.uk/membership/article/20120925-Power-Calculator-0
     we specify zones via the upper limit.
 
-    So HeartRateZones.zones[0].upper is the upper HR to zone 1.
-    Zone 2 is HeartRateZones.zones[0].upper to  HeartRateZones.zones[1].upper
+    So HeartRateZones.zones[0].upper_limit is the upper limit HR to zone 1.
+    Zone 2 is HeartRateZones.zones[0].upper_limit to  HeartRateZones.zones[1].upper_limit
     etc
     '''
 
@@ -33,7 +33,7 @@ class HeartRateZone(Base):
     heart_rate_zones = relationship('HeartRateZones',
                                     backref=backref('zones', cascade='all, delete-orphan',
                                                     passive_deletes=True,
-                                                    order_by='HeartRateZone.upper',
-                                                    collection_class=ordering_list('upper')))
-    upper = Column(Integer, nullable=False)
+                                                    order_by='HeartRateZone.upper_limit',
+                                                    collection_class=ordering_list('upper_limit')))
+    upper_limit = Column(Integer, nullable=False)
 

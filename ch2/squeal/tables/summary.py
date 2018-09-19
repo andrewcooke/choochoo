@@ -20,12 +20,12 @@ class Summary(Base):
     UniqueConstraint('activity_id')
 
     @staticmethod
-    def from_activity_name(session, activity_title, create=False):
-        return session.query(Summary).join(Activity).filter(Activity.title == activity_title).one_or_none()
+    def from_activity_name(session, activity_name, create=False):
+        return session.query(Summary).join(Activity).filter(Activity.name == activity_name).one_or_none()
 
     @staticmethod
-    def new(session, activity_title, type):
-        activity = session.query(Activity).filter(Activity.title == activity_title).one()
+    def new(session, activity_name, type):
+        activity = session.query(Activity).filter(Activity.name == activity_name).one()
         summary = Summary(activity=activity, type=type)
         session.add(summary)
         return summary

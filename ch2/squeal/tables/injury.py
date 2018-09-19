@@ -13,7 +13,7 @@ class Injury(Base):
     id = Column(Integer, primary_key=True)
     start = Column(Ordinal)
     finish = Column(Ordinal)
-    title = Column(Text, nullable=False, server_default='')
+    name = Column(Text, nullable=False, server_default='', unique=True)
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Text, nullable=False, server_default='')
 

@@ -18,8 +18,8 @@ class Assert:
 
 class Week(Assert, ORMUtils):
 
-    def __init__(self, title=None, description=None, start=None, days=None):
-        self.__title = title
+    def __init__(self, name=None, description=None, start=None, days=None):
+        self.__name = name
         self.__description = description
         self.__start = parse_date(start)
         self.__days = dict((key.lower(), value) for key, value in days.items())
@@ -27,7 +27,7 @@ class Week(Assert, ORMUtils):
         self.__validate()
 
     def __validate(self):
-        self._assert(self.__title, 'No title')
+        self._assert(self.__name, 'No name')
         self._assert(self.__description, 'No description')
         self._assert(self.__start, 'No start')
         self._assert(self.__days, 'No days')
@@ -52,7 +52,7 @@ class Week(Assert, ORMUtils):
             raise Exception('A training plan is already defined for this date range')
         type = self._get_or_create(session, ScheduleType, name='Plan')
         root = Schedule(type=type, repeat='', start=self.__start, finish=finish,
-                        title=self.__title, description=self.__description, has_notes=False)
+                        name=self.__name, description=self.__description, has_notes=False)
         session.add(root)
         return root
 
@@ -66,13 +66,13 @@ class Week(Assert, ORMUtils):
 
 class Day(Assert):
 
-    def __init__(self, title=None, notes=None):
-        self.__title = title
+    def __init__(self, name=None, notes=None):
+        self.__name = name
         self.__notes = self.__expand(notes)
         self.__validate()
 
     def __validate(self):
-        self._assert(self.__title, 'No title')
+        self._assert(self.__name, 'No name')
 
     def __len__(self):
         return len(self.__notes)
@@ -107,7 +107,7 @@ class Day(Assert):
         dow = date.weekday()
         finish = date + dt.timedelta(days=7 * n_weeks)
         child = Schedule(parent=root, repeat='%s/w[%s]' % (format_date(date), DOW[dow]), start=date, finish=finish,
-                         title=self.__title, has_notes=True, sort=str(sort))
+                         name=self.__name, has_notes=True, sort=str(sort))
         session.add(child)
         for week, note in enumerate(self.__notes):
             diary = ScheduleDiary(date=date + dt.timedelta(days=7 * week), schedule=child, notes=note)

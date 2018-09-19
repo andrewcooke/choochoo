@@ -11,7 +11,7 @@ class Diary(Base):
 
     date = Column(Ordinal, primary_key=True)
     notes = Column(Text, nullable=False, server_default='')
-    rest_hr = Column(Integer)
+    rest_heart_rate = Column(Integer)
     sleep = Column(Float)
     mood = Column(Integer)
     weather = Column(Text, nullable=False, server_default='')

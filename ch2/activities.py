@@ -33,7 +33,7 @@ class ActivityWidget(FocusWrap):
     def __init__(self, log, tabs, bar, outer):
         self.__outer = outer
         factory = Factory(tabs=tabs, bar=bar)
-        self.title = factory(Edit(caption='Title: '))
+        self.name = factory(Edit(caption='Name: '))
         self.sort = factory(Edit(caption='Sort: '))
         self.delete = SquareButton('Delete')
         delete = factory(self.delete, message='delete from database')
@@ -41,7 +41,7 @@ class ActivityWidget(FocusWrap):
         reset = factory(self.reset, message='reset from database')
         self.description = factory(Edit(caption='Description: ', multiline=True))
         super().__init__(
-            Pile([self.title,
+            Pile([self.name,
                   Columns([(20, self.sort),
                            ColSpace(),
                            (10, delete),
@@ -86,13 +86,13 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
     '''
     db = Database(args, log)
     force = args[FORCE]
-    activity_title = args[ACTIVITY][0]
+    activity_name = args[ACTIVITY][0]
     with db.session_context() as session:
         try:
-            activity = session.query(Activity).filter(Activity.title == activity_title).one()
+            activity = session.query(Activity).filter(Activity.name == activity_name).one()
         except NoResultFound:
             if force:
-                activity = Activity(title=activity_title)
+                activity = Activity(name=activity_name)
                 session.add(activity)
             else:
                 raise Exception('Activity "%s" is not defined - see ch2 %s' % (activity, EDIT_ACTIVITIES))
@@ -120,14 +120,14 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
                 log.debug('Skipping %s (already scanned)' % file)
                 session.expunge(scan)
     if args[MONTH] or args[YEAR]:
-        regular_summary(args[MONTH], activity_title, force, db, log)
+        regular_summary(args[MONTH], activity_name, force, db, log)
 
 
 def add_file(log, session, activity, path, force):
     if force:
         session.query(ActivityDiary).filter(ActivityDiary.fit_file == path).delete()
     data, types, messages, records = filtered_records(log, path)
-    diary = ActivityDiary(activity=activity, fit_file=path, title=splitext(basename(path))[0])
+    diary = ActivityDiary(activity=activity, fit_file=path, name=splitext(basename(path))[0])
     session.add(diary)
     timespan, warned, latest = None, 0, 0
     for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0):
@@ -147,7 +147,7 @@ def add_file(log, session, activity, path, force):
                                                 epoch=datetime_to_epoch(record.value.timestamp),
                                                 latitude=record.none.position_lat,
                                                 longitude=record.none.position_long,
-                                                hr=record.none.heart_rate,
+                                                heart_rate=record.none.heart_rate,
                                                 # if distance is not set in some future file, calculate from
                                                 # lat/long?
                                                 distance=record.value.distance,
@@ -202,8 +202,8 @@ class Chunk:
     def time_delta(self):
         return self.__diff(1, lambda w: w.epoch)
 
-    def hrs(self):
-        return (waypoint.hr for waypoint in self.__waypoints if waypoint.hr is not None)
+    def heart_rates(self):
+        return (waypoint.heart_rate for waypoint in self.__waypoints if waypoint.heart_rate is not None)
 
     def __len__(self):
         return len(self.__waypoints)
@@ -266,7 +266,7 @@ class MedianHRForTime(Chunks):
         return max(c1[0].activity_timespan.start - c2[0].activity_timespan.finish
                    for c1, c2 in zip(list(chunks)[1:], chunks))
 
-    def hrs(self):
+    def heart_rates(self):
         for chunks in self.chunks():
             while len(chunks) > 1 and self._max_gap(chunks) > self.__max_gap:
                 self._log.debug('Rejecting chunk because of gap (%ds)' % int(self._max_gap(chunks)))
@@ -278,10 +278,10 @@ class MedianHRForTime(Chunks):
                     chunks[0].popleft()
                     while chunks and not chunks[0]:
                         chunks.popleft()
-                hrs = list(sorted(chain(*(chunk.hrs() for chunk in chunks))))
-                if hrs:
-                    median = len(hrs) // 2
-                    yield hrs[median]
+                heart_rates = list(sorted(chain(*(chunk.heart_rates() for chunk in chunks))))
+                if heart_rates:
+                    median = len(heart_rates) // 2
+                    yield heart_rates[median]
 
 
 class Totals(Chunks):
@@ -301,14 +301,14 @@ class Zones(Chunks):
         self.zones = []
         chunks = list(self.chunks())[-1]
         counts = Counter()
-        lower = 0
-        for zone, upper in enumerate(zone.upper for zone in zones.zones):
+        lower_limit = 0
+        for zone, upper_limit in enumerate(zone.upper_limit for zone in zones.zones):
             for chunk in chunks:
-                for hr in chunk.hrs():
-                    if hr is not None:
-                        if lower <= hr < upper:
+                for heart_rate in chunk.heart_rates():
+                    if heart_rate is not None:
+                        if lower_limit <= heart_rate < upper_limit:
                             counts[zone] += 1
-            lower = upper
+            lower_limit = upper_limit
         total = sum(counts.values())
         if total:
             for zone in range(len(zones.zones)):
@@ -345,8 +345,8 @@ def add_stats(log, session, diary):
         for (zone, frac) in Zones(log, diary, zones).zones:
             add_stat(log, session, diary, TIME_IN_Z % zone,  None, frac * totals.time, S)
         for target in HR_MINUTES:
-            hrs = sorted(MedianHRForTime(log, diary, target * 60).hrs(), reverse=True)
-            if hrs:
-                add_stat(log, session, diary, MAX_MED_HR_OVER_M % target, MAX, hrs[0], BPM)
+            heart_rates = sorted(MedianHRForTime(log, diary, target * 60).heart_rates(), reverse=True)
+            if heart_rates:
+                add_stat(log, session, diary, MAX_MED_HR_OVER_M % target, MAX, heart_rates[0], BPM)
     else:
         log.warn('No HR zones defined for %s or before' % diary.date)

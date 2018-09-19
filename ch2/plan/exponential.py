@@ -10,8 +10,8 @@ from ..squeal.utils import ORMUtils
 
 class Builder(ORMUtils):
 
-    def __init__(self, title, description, spec, ratio):
-        self._title = title
+    def __init__(self, name, description, spec, ratio):
+        self._name = name
         self._description = description
         self._spec = spec
         self._ratio = ratio
@@ -19,7 +19,7 @@ class Builder(ORMUtils):
     def create(self, log, session):
         type = self._get_or_create(session, ScheduleType, name='Plan')
         schedule = Schedule(type=type, repeat=str(self._spec), start=self._spec.start, finish=self._spec.finish,
-                            title=self._title, description=self._description, has_notes=True)
+                            name=self._name, description=self._description, has_notes=True)
         session.add(schedule)
         for day in self._spec.frame().dates(self._spec.start):
             session.add(ScheduleDiary(date=day, schedule=schedule, notes=self._next_value()))
@@ -31,9 +31,9 @@ class Builder(ORMUtils):
 
 class TimeBuilder(Builder):
 
-    def __init__(self, title, description, spec, time, ratio):
+    def __init__(self, name, description, spec, time, ratio):
         self.__time = time
-        super().__init__(title, description, spec, ratio)
+        super().__init__(name, description, spec, ratio)
 
     def _next_value(self):
         time = self.__time
@@ -43,10 +43,10 @@ class TimeBuilder(Builder):
 
 class DistanceBuilder(Builder):
 
-    def __init__(self, title, description, spec, distance, unit, ratio):
+    def __init__(self, name, description, spec, distance, unit, ratio):
         self.__distance = distance
         self.__unit = unit
-        super().__init__(title, description, spec, ratio)
+        super().__init__(name, description, spec, ratio)
 
     def _next_value(self):
         distance = self.__distance
@@ -54,10 +54,10 @@ class DistanceBuilder(Builder):
         return '%.1f%s' % (distance, self.__unit)
 
 
-def exponential_time(title, repeat, time, percent, start, duration):
+def exponential_time(name, repeat, time, percent, start, duration):
     """
     A time interval that increases steadily by a given percentage.
-    Takes 6 arguments: title, repeat spec, initial time, percent increase,
+    Takes 6 arguments: name, repeat spec, initial time, percent increase,
                        start date, duration
     Example:
 
@@ -73,14 +73,14 @@ def exponential_time(title, repeat, time, percent, start, duration):
     finish = add_duration(start, parse_duration(duration))
     spec.start = start
     spec.finish = finish
-    return TimeBuilder(title, 'Time starting at %s and incrementing by %s%%' % (time, percent),
+    return TimeBuilder(name, 'Time starting at %s and incrementing by %s%%' % (time, percent),
                        spec, time_s, ratio)
 
 
-def exponential_distance(title, repeat, distance, percent, start, duration):
+def exponential_distance(name, repeat, distance, percent, start, duration):
     """
     A distance that increases steadily by a given percentage.
-    Takes 6 arguments: title, repeat spec, initial distance, percent increase,
+    Takes 6 arguments: name, repeat spec, initial distance, percent increase,
                        start date, duration
     Example:
 
@@ -97,5 +97,5 @@ def exponential_distance(title, repeat, distance, percent, start, duration):
     finish = add_duration(start, parse_duration(duration))
     spec.start = start
     spec.finish = finish
-    return DistanceBuilder(title, 'Distance starting at %s and incrementing by %s%%' % (distance, percent),
+    return DistanceBuilder(name, 'Distance starting at %s and incrementing by %s%%' % (distance, percent),
                            spec, dist, unit, ratio)

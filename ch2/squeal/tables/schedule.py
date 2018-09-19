@@ -34,7 +34,7 @@ class Schedule(Base):
     repeat = Column(Text, nullable=False, server_default='')
     start = Column(Ordinal)
     finish = Column(Ordinal)
-    title = Column(Text, nullable=False, server_default='')
+    name = Column(Text, nullable=False, server_default='', unique=True)
     description = Column(Text, nullable=False, server_default='')
     has_notes = Column(Boolean, nullable=False, server_default='0')
     sort = Column(Text, nullable=False, server_default='')
@@ -55,14 +55,14 @@ class Schedule(Base):
 
     def __repr__(self):
         text = '%s: %s (parent %s; children %s)' % \
-               (self.id, self.title, self.parent.id if self.parent else None, [c.id for c in self.children])
+               (self.id, self.name, self.parent.id if self.parent else None, [c.id for c in self.children])
         if self.repeat or self.start or self.finish:
             text += ' %s' % self.specification
         return text
 
     @property
     def comparison(self):
-        return self.type.sort if self.type else '', self.type.name if self.type else '', self.sort, self.title
+        return self.type.sort if self.type else '', self.type.name if self.type else '', self.sort, self.name
 
     def __lt__(self, other):
         if isinstance(other, Schedule):

@@ -25,5 +25,5 @@ Define heart rate zones using teh British Cycling calculator (roughly) from the 
         zones = HeartRateZones(date=date, basis='FTHR %d (British Cycling)' % fthr)
         session.add(zones)
         for pc in (68, 83, 94, 105, 121):
-            HeartRateZone(heart_rate_zones=zones, upper=int(0.5 + pc * fthr / 100.0))
+            HeartRateZone(heart_rate_zones=zones, upper_limit=int(0.5 + pc * fthr / 100.0))
 
