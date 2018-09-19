@@ -10,13 +10,14 @@ this will let you read, manipulate and plot data within your web browser.
 Plotting packages in Python - especially for maps - seem to be unreliable,
 so the emphasis here is on providing the data in an agnostic way.  Hopefully
 you cna then display that data with whatever you find works for you.
-Currently, the examples in Jupyter use [Bokeh](https://bokeh.pydata.org/) and
+Current examples use [Bokeh](https://bokeh.pydata.org/) and
 [Matplotlib](https://matplotlib.org/).
 
-All Choochoo's data (*your* data) are stored in an SQLite3 file at 
-`~/.ch2/database.sqlc` (the final character may change with database
+All Choochoo's data (all *your* data) are stored in an SQLite3 file at 
+`~/.ch2/database.sql?` (the final character changes with database
 schema version).  So you can also use any programming language with an 
-SQLite binding.
+SQLite binding (for Python the `ch2.squeal.tables` package contains a
+[SQLAchemy](https://www.sqlalchemy.org/) ORM mapping).
 
 ## Contents
 
@@ -67,8 +68,8 @@ The `ch2.data.database.ActivityData` instance provides access to:
   
 In addition, the `Data` instance provides direct access to:
 
-* **Diary** - these are the values in the diary entries (mood, resting hear 
-  rate, etc).  The `.diaries()` method returns a DataFrame with all data,
+* **Diary Data** - these are the values in the diary entries (mood, resting 
+  heart rate, etc).  The `.diaries()` method returns a DataFrame with all data.
   
 * **Injury Data** - these are the "pain" scores and notes for each injury.
   The available injuries are listed by `.injury_names()` and the DataFrames
@@ -78,6 +79,8 @@ The various methods above that take a name can typically take a list
 of names (comma separated or as separated arguments) and regular expressions.
 This can lead to some confusion if the name contains characters with special 
 meaning for regexps (in particular parentheses).
+
+DataFrames usually have the date / time information as index.
 
 ## Plotting Data
 
