@@ -40,30 +40,44 @@ examples from `ch2/data/notebooks`.
 
 Data are accessed via the `ch2.data.data()` function, which returns a
 `ch2.data.database.Data` instance.  Data associated with a particular
-activity type are then selected using the `.activity()` method (see
+activity type are then selected using the `.activity(...)` method (see
 `.activity_names()` for available activity types).
 
 The `ch2.data.database.ActivityData` instance provides access to:
 
 * **Activity Statistics** - these are measures calculated for each activity
   diary entry (eg each bike ride).  For example, the total time active.
-  The statistic names are available from `.statistics()` and the
+  The statistic names are available from `.statistics(...)` and the
   `.activity_statistics()` method returns a pandas DataFrame containing data
   for the given statistic(s) for each diary entry.
   
 * **Summary Statistics** - these are calculated regularly (eg once per
   month) and summarise the activity statistics mentioned above.  The
-  `.summary_statistics()` method returns a pandas DataFrame containing a
+  `.summary_statistics(...)` method returns a pandas DataFrame containing a
   tuple of values for each statistic.  This tuple has the min, max and quartile
   values for the given period.
   
 * **Activity Diary** - these are the values imported from the FIT file for
   the activity diary entry (eg position, heart rate, etc).  The available
   diary entries are listed in `.activity_diary_names()` and the 
-  `.activity_diary()` method returns, for a *single* name, a set of DataFrames
+  `.activity_diary(...)` method returns, for a *single* name, a set of DataFrames
   that contain data for each timespan (eg lap, or data between auto-pauses).
   Note that the `x` and `y` columns contain data in "web coordinates" suitable
   for plotting on Google Maps etc.   
+  
+In addition, the `Data` instance provides direct access to:
+
+* **Diary** - these are the values in the diary entries (mood, resting hear 
+  rate, etc).  The `.diaries()` method returns a DataFrame with all data,
+  
+* **Injury Data** - these are the "pain" scores and notes for each injury.
+  The available injuries are listed by `.injury_names()` and the DataFrames
+  provide via a map (dct) from name to frame via `.injuries(...)`.
+
+The various methods above that take a name can typically take a list
+of names (comma separated or as separated arguments) and regular expressions.
+This can lead to some confusion if the name contains characters with special 
+meaning for regexps (in particular parentheses).
 
 ## Plotting Data
 
@@ -76,6 +90,9 @@ A few helper routines are available in `ch2.data.plot` to help massage the
 data into the correct format.
 
 ## Examples
+
+These are taken from the Jupyter notebooks described above.  Obviously results
+depend on the data entered into the system.
 
 ![](distance.png)
 
