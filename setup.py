@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
-                 version='0.0.10',
+                 version='0.0.11',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
                  description='A Programmable Training Diary',
@@ -14,6 +14,19 @@ setuptools.setup(name='choochoo',
                  long_description=long_description,
                  long_description_content_type='text/markdown',
                  include_package_data=True,
+                 install_requires=[
+                     'urwid',
+                     'sqlalchemy',
+                     'nose',
+                     'robotframework',
+                     'openpyxl',
+                     'numpy',
+                     'pandas',
+                     'pyGeoTile',
+                     'matplotlib',
+                     'bokeh',
+                     'jupyter'
+                     ].
                  entry_points={
                      'console_scripts': [
                          'ch2 = ch2:main',

@@ -20,6 +20,8 @@ it within the virtualenv:
     dev/install-in-env.sh
     source env/bin/activate
     ch2 help
+    
+(you will need to re-install whenever you alter the code).
 
 ## From Pypi
 
@@ -31,4 +33,4 @@ the latest release from Pypi.  It's still worth using a virtualenv:
     pip install --upgrade pip
     pip install choochoo
     ch2 help
-    
+ 
