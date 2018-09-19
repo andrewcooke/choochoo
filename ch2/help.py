@@ -70,6 +70,8 @@ class LengthFmt(Fmt):
 
 def commands(COMMANDS):
     return '''
+Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
+
 # Commands
 
 * ''' + '\n* '.join(name for name in sorted(COMMANDS.keys()))
