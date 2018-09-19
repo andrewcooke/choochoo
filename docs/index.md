@@ -19,6 +19,10 @@ it's all available).
 One omission that may be important to some people is the (purposeful)
 lack of emphasis on power meters.
 
+* [Install](install) - installing Choochoo.
+* [The Diary](diary) - entering daily data.
 * [Activities](activities) - import and organise activity data.
+* [Scheduling](scheduling) - defining regular events.
+* [Training Plans](training-plans) - in-built and custom plans.
 * [Analysis](analysis) - explore data in Jupyter notebooks. 
 * [FIT Files](fit-files) - display FIT format data.
