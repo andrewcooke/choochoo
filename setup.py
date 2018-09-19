@@ -26,7 +26,7 @@ setuptools.setup(name='choochoo',
                      'matplotlib',
                      'bokeh',
                      'jupyter'
-                     ].
+                     ],
                  entry_points={
                      'console_scripts': [
                          'ch2 = ch2:main',
