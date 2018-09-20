@@ -32,7 +32,7 @@ The two most basic are:
 * **Percent Time** - this increases the time each activity by a given
   percentage, starting from a base amount.
   
-Both take a [specification](scheduling@specifications) that defines when the
+Both take a [specification](scheduling#specifications) that defines when the
 activities happen.
 
 ## Adding Your Own
