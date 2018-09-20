@@ -13,7 +13,7 @@ def add_fthr(args, log):
 
     ch2 add-fthr FTHR [DATE]
 
-Define heart rate zones using teh British Cycling calculator (roughly) from the given date (default today).
+Define heart rate zones using the British Cycling calculator (roughly) from the given date (default today).
     '''
     db = Database(args, log)
     fthr = args[FTHR][0]

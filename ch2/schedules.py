@@ -82,8 +82,8 @@ class SchedulesEditor(DynamicContent):
         for schedule in sorted(self.__schedules):
             body.append(self.__nested(schedule, factory))
         parent_type = Menu('Type: ', self.__type_names)
-        add_top_level = SquareButton('Add Parent')
-        body.append(Columns([(12, factory(add_top_level)), ColText('  '), factory(parent_type), ColSpace()]))
+        add_top_level = SquareButton('Add')
+        body.append(Columns([(5, factory(add_top_level)), ColText('  '), factory(parent_type), ColSpace()]))
         connect_signal(add_top_level, 'click', lambda widget: self.__add_top_level(parent_type.state))
         return DividedPile(body), tabs
 

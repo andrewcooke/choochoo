@@ -26,3 +26,10 @@ lack of emphasis on power meters.
 * [Training Plans](training-plans) - in-built and custom plans.
 * [Analysis](analysis) - explore data in Jupyter notebooks. 
 * [FIT Files](fit-files) - display FIT format data.
+
+## Current Status
+
+The framework is there.  A database.  Various ways of getting data into
+the database.  Various ways of getting it out again.  Unfortunately I am
+injured and recently had a set-back in my recovery, so the actual 
+training part isn't so detailed.

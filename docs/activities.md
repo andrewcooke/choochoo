@@ -20,6 +20,8 @@ are also calculated.  These can be either monthly or yearly.
 * [Adding Activities](#adding-activities)
 * [Calculating Summary Statistics](#calculating-summary-statistics)
 * [Both](#both)
+* [FTHR](#fthr)
+* [Timespans](#timespans)
 
 ## Defining Activities
 
@@ -67,10 +69,39 @@ a time - yearly replace monthly, etc).
 By default only "missing" statistics are calculated.  Use `-f` to recalculate all
 values.
 
-# Both
+## Both
 
 It is possible to calculate summary statistics when reading activities by
 adding `--month` or `--year` to the `add-activity` command.  For example:
 
     ch2 add-activity Cycling /path/to/FIT/file --month
     
+## FTHR
+
+Some of the statistics require heart rate zones.  Currently these are defined
+via FTHR using the command
+
+    ch2 add-fthr FTHR [DATE]
+    
+where `FTHR` is the value (bpm) and `DATE` is the start date for validity.
+
+The zones are calculated using the British Cycling zones (taken from their
+online calculator).
+
+A possible estimator for your FTHR is the "Max med HR over 30m" statistic.
+This is the maximum value found for the median heart rate over 30 minutes in
+ride (so the heart rate for the entire ride is median filtered with a 30 minute
+window and then the maximum value taken).
+
+## Timespans
+
+The format in which activity data are stored in the database may need a 
+little explanation.  They are grouped into "timespans", where a single
+timespan contains data between pauses in the FIT stream (ie laps or
+auto-pausing at road junctions etc).
+
+Some statistics are "aware" of timespans.  For example, "Active Time" 
+is the total time *within* timespans - it excludes pauses.  Similarly
+the "Max med" heart rate statistics (see [above](#fthr)) exclude gaps
+above a certain threshold (this is to avoid many short, intense intervals
+appearing as a single, long period of intense activity).
