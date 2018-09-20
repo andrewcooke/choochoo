@@ -9,7 +9,7 @@ this will let you read, manipulate and plot data within your web browser.
 
 Plotting packages in Python - especially for maps - seem to be unreliable,
 so the emphasis here is on providing the data in an agnostic way.  Hopefully
-you cna then display that data with whatever you find works for you.
+you can then display that data with whatever you find works for you.
 Current examples use [Bokeh](https://bokeh.pydata.org/) and
 [Matplotlib](https://matplotlib.org/).
 

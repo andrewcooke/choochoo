@@ -66,7 +66,7 @@ are displayed in the diary.
 
 ## Activities
 
-Reading activities is described [here](activities).
+Reading activities (ie reading FIT files) is described [here](activities).
 
 The colour scheme, although not beautiful, is easy to remember:
 white is the "top" of the scale, moving down through red, yellow 
