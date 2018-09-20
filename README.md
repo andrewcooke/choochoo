@@ -12,4 +12,7 @@ as well as progress towards aims.  A flexible "schedule spec" is used to
 define periodic events (eg training routines) and (unfortunately) there's 
 dedicated fuctionality for tracking injuries.
 
+Data analysis is possible using [Jupyter](http://jupyter.org/) - some
+example notebooks are included.
+
 [See Documentation](https://andrewcooke.github.io/choochoo/)
