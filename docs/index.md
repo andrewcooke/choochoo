@@ -41,19 +41,13 @@ me clarify to myself what I was trying to do here:
 
 * Rewrite the database so that numerical values are isolated in a single
   table (and the ORM to use factories that look-up values there).
-  
 * Make calculation of summary statistics more general, working on the
   single table of values.
-  
 * Allow summary statistics over multiple ranges.
-
 * Support pluggable / extensible statistics.
-  
 * Remove the complexity of configuration TUIs by moving configuration
   to something done at the Python (or Jupyter) prompt (like analysis).
-  
 * Rewrite the diary display so that it can handle arbitrary fields
   (and the binder). 
-
 * Document all the above in the spirit of "you can extend it" and
   "move data in and out of database".
