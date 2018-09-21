@@ -33,3 +33,27 @@ The framework is there.  A database.  Various ways of getting data into
 the database.  Various ways of getting it out again.  Unfortunately I am
 injured and recently had a set-back in my recovery, so the actual 
 training part isn't so detailed.
+
+## Future Plans
+
+Motivated by an initial announcement of this code on Reddit, which helped
+me clarify to myself what I was trying to do here:
+
+* Rewrite the database so that numerical values are isolated in a single
+  table (and the ORM to use factories that look-up values there).
+  
+* Make calculation of summary statistics more general, working on the
+  single table of values.
+  
+* Allow summary statistics over multiple ranges.
+
+* Support pluggable / extensible statistics.
+  
+* Remove the complexity of configuration TUIs by moving configuration
+  to something done at the Python (or Jupyter) prompt (like analysis).
+  
+* Rewrite the diary display so that it can handle arbitrary fields
+  (and the binder). 
+
+* Document all the above in the spirit of "you can extend it" and
+  "move data in and out of database".

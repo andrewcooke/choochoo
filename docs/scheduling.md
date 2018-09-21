@@ -17,7 +17,7 @@ way, of defining a calendar-based event that repeats regularly.
 
 A specification has the form:
 
-    DATE/N[DAYs]START-END
+    DATE/N[DAYS]START-END
     
 for example
 
@@ -36,7 +36,7 @@ So the specification is equivalent to "the first Monday of every second
 week in 2018 (including the Monday of the week including 2018-09-20)".
 
 For more details see [this blog post](http://acooke.org/cute/ASpecifica0.html)
-(although I don't promise that descriptino is exact - in doubt, see the code).
+(although I don't promise that description is exact - in doubt, see the code).
 
 The UI tries to hide some of the details of these for common cases.
 
