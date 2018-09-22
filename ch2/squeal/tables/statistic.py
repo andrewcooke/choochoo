@@ -13,13 +13,13 @@ class Statistic(Base):
 
     id = Column(Integer, primary_key=True)
     cls = Column(Text, nullable=False)
-    cls_id = Column(Integer)
+    cls_constraint = Column(Integer)
     name = Column(Text, nullable=False)
     namespace = Column(Text, nullable=False)
     units = Column(Text)
     best = Column(Text)  # max, min etc (possibly comma-separated?)
-    UniqueConstraint('cls', 'cls_id')
-    UniqueConstraint('name', 'qualifier')
+    UniqueConstraint('cls', 'cls_constraint')
+    UniqueConstraint('name', 'namespace')
 
 
 class StatisticDiary(Base):
