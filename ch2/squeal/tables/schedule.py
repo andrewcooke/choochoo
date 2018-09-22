@@ -10,9 +10,9 @@ from ...lib.date import format_date
 from ...lib.repeating import Specification
 
 
-class ScheduleType(Base):
+class ScheduleGroup(Base):
 
-    __tablename__ = 'schedule_type'
+    __tablename__ = 'schedule_group'
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, server_default='')
@@ -28,9 +28,9 @@ class Schedule(Base):
     parent_id = Column(Integer, ForeignKey('schedule.id'), nullable=True)
     # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
     children = relationship('Schedule', backref=backref('parent', remote_side=[id]))
-    # type is used only for top-level parents (where parent_id is NULL)
-    type_id = Column(Integer, ForeignKey('schedule_type.id'))
-    type = relationship('ScheduleType')
+    # group is used only for top-level parents (where parent_id is NULL)
+    group_id = Column(Integer, ForeignKey('schedule_group.id'))
+    group = relationship('ScheduleGroup')
     repeat = Column(Text, nullable=False, server_default='')
     start = Column(Ordinal)
     finish = Column(Ordinal)
@@ -62,7 +62,7 @@ class Schedule(Base):
 
     @property
     def comparison(self):
-        return self.type.sort if self.type else '', self.type.name if self.type else '', self.sort, self.name
+        return self.group.sort if self.group else '', self.group.name if self.group else '', self.sort, self.name
 
     def __lt__(self, other):
         if isinstance(other, Schedule):
@@ -77,7 +77,7 @@ class Schedule(Base):
     def query_root(cls, session, date=None, type_id=None):
         query = session.query(Schedule).filter(Schedule.parent_id == None)
         if type_id is not None:
-            query = query.filter(Schedule.type_id == type_id)
+            query = query.filter(Schedule.group_id == type_id)
         root_schedules = list(query.all())
         if date is not None:
             root_schedules = [schedule for schedule in root_schedules if schedule.at_location(date)]

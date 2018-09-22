@@ -10,10 +10,10 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from ch2.squeal.tables.diary import Diary
 from ch2.squeal.tables.injury import Injury, InjuryDiary
-from ..args import parser, NamespaceWithVariables, DATA
+from ..args import parser, NamespaceWithVariables, NO_OP
 from ..log import make_log
 from ..squeal.database import Database
-from ..squeal.tables.activity import Activity, ActivityStatistic, ActivityDiary
+from ..squeal.tables.activity import Activity, ActivityDiary
 from ..squeal.tables.statistic import Statistic
 from ..squeal.tables.summary import SummaryTimespan, DistributionStatistic, Summary
 
@@ -211,9 +211,16 @@ class ActivityData(NameMatcher):
 
 
 def data(*args):
+    '''
+    Start here to access data.  Create an instance in Jupyter:
+
+        d = data('-v', '4')
+        print(d.activity_names())
+        ...
+    '''
     p = parser()
     args = list(args)
-    args.append(DATA)
+    args.append(NO_OP)
     ns = NamespaceWithVariables(p.parse_args(args))
     log = make_log(ns)
     db = Database(ns, log)

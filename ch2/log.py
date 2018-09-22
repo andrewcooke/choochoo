@@ -23,6 +23,10 @@ def make_log(args, tui=False):
     slog.setLevel(INFO)
     slog.addHandler(file_handler)
 
+    mlog = getLogger('matplotlib')
+    mlog.setLevel(INFO)
+    mlog.addHandler(file_handler)
+
     log = getLogger(name)
     log.setLevel(DEBUG)
     log.addHandler(file_handler)
@@ -34,6 +38,7 @@ def make_log(args, tui=False):
         stderr_handler.setFormatter(stderr_formatter)
         log.addHandler(stderr_handler)
         # slog.addHandler(stderr_handler)
+        # mlog.addHandler(stderr_handler)
 
     return log
 

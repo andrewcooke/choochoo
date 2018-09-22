@@ -1,9 +1,10 @@
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint
-from sqlalchemy.ext.orderinglist import ordering_list
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
+from sqlalchemy.orm import relationship
 
 from ..support import Base
+from ..types import Epoch
+from ...lib.date import format_duration
 
 
 class Statistic(Base):
@@ -11,16 +12,47 @@ class Statistic(Base):
     __tablename__ = 'statistic'
 
     id = Column(Integer, primary_key=True)
-    activity_id = Column(Integer, ForeignKey('activity.id', ondelete='cascade'),
-                         nullable=False)
-    activity = relationship('Activity',
-                            backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True,
-                                            order_by='Statistic.name',
-                                            collection_class=ordering_list('name')))
+    cls = Column(Text, nullable=False)
+    cls_id = Column(Integer)
     name = Column(Text, nullable=False)
-    units = Column(Text, nullable=False)
-    best = Column(Text)  # max, min etc
-    UniqueConstraint('activity', 'name')
+    namespace = Column(Text, nullable=False)
+    units = Column(Text)
+    best = Column(Text)  # max, min etc (possibly comma-separated?)
+    UniqueConstraint('cls', 'cls_id')
+    UniqueConstraint('name', 'qualifier')
+
+
+class StatisticDiary(Base):
+
+    __tablename__ = 'statistic_diary'
+
+    id = Column(Integer, primary_key=True)
+    statistic_id = Column(Integer, ForeignKey('statistic.id'), nullable=False)
+    statistic = relationship('Statistic')
+    value = Column(Float)
+    time = Column(Epoch, nullable=False)
+    UniqueConstraint('statistic_id', 'time')
+
+    @property
+    def fmt_value(self):
+        units = self.statistic.units
+        if not units:
+            return '%s' % self.value
+        elif units == 'm':
+            if self.value > 2000:
+                return '%.1fkm' % (self.value / 1000)
+            else:
+                return '%dm' % int(self.value)
+        elif units == 's':
+            return format_duration(self.value)
+        elif units == 'km/h':
+            return '%.1fkm/h' % self.value
+        elif units == '%':
+            return '%.1f%%' % self.value
+        elif units == 'bpm':
+            return '%dbpm' % int(self.value)
+        else:
+            return '%s%s' % (self.value, units)
 
     def __str__(self):
-        return self.name
+        return '%s: %s' % (self.statistic.name, self.fmt_value)

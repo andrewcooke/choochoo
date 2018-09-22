@@ -14,8 +14,7 @@ from .fit.format.read import filtered_records
 from .fit.profile.types import timestamp_to_datetime
 from .lib.io import tui
 from .squeal.database import Database
-from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint, \
-    ActivityStatistic
+from .squeal.tables.activity import Activity, FileScan, ActivityDiary, ActivityTimespan, ActivityWaypoint
 from .squeal.tables.heartrate import HeartRateZones
 from .squeal.tables.statistic import Statistic
 from .statistics import round_km, ACTIVE_SPEED, ACTIVE_TIME, MEDIAN_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, \
@@ -350,3 +349,10 @@ def add_stats(log, session, diary):
                 add_stat(log, session, diary, MAX_MED_HR_OVER_M % target, MAX, heart_rates[0], BPM)
     else:
         log.warn('No HR zones defined for %s or before' % diary.date)
+
+
+class ActivityStatistics:
+
+    def __init__(self, log, db):
+        self.__log = log
+        self.__db = db

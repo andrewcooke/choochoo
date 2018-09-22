@@ -15,13 +15,13 @@ ADD_FTHR = 'add-fthr'
 ADD_PLAN = 'add-plan'
 ADD_SUMMARY = 'add-summary'
 CREATE_DATABASE = 'create-database'
-DATA = 'data'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
 EDIT_ACTIVITIES = 'edit-activities'
 EDIT_INJURIES = 'edit-injuries'
 EDIT_SCHEDULES = 'edit-schedules'
 HELP = 'help'
+NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 
 ACTIVITY = 'activity'
@@ -116,7 +116,7 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(mm(DATABASE), action='store', default='${root}/database.sqld', metavar='FILE',
+    parser.add_argument(mm(DATABASE), action='store', default='${root}/database.sqls', metavar='FILE',
                         help='the database file')
     parser.add_argument(mm(DEV), action='store_true', help='enable development mode')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
@@ -172,9 +172,9 @@ def parser():
                              help='finish date (inclusive)')
     add_summary.set_defaults(command=ADD_SUMMARY)
 
-    data = subparsers.add_parser(DATA,
+    data = subparsers.add_parser(NO_OP,
                                  help='used within jupyter (no-op from cmd line)')
-    data.set_defaults(command=DATA)
+    data.set_defaults(command=NO_OP)
 
     diary = subparsers.add_parser(CREATE_DATABASE,
                                   help='create the database if missing')

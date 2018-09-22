@@ -5,7 +5,7 @@ from sqlalchemy import or_
 
 from ..lib.date import parse_date, format_date
 from ..lib.repeating import DOW
-from ..squeal.tables.schedule import ScheduleType, Schedule, ScheduleDiary
+from ..squeal.tables.schedule import ScheduleGroup, Schedule, ScheduleDiary
 from ..squeal.utils import ORMUtils
 
 
@@ -46,11 +46,11 @@ class Week(Assert, ORMUtils):
             log.warn('The start day (%s) is not a Monday, so the days will be rotated appropriately',
                      DOW[self.__start.weekday()])
         finish = self.__start + dt.timedelta(days=7 * self.__n_weeks)
-        if session.query(Schedule).join(Schedule.type).filter(ScheduleType.name == 'Plan'). \
+        if session.query(Schedule).join(Schedule.group).filter(ScheduleGroup.name == 'Plan'). \
                 filter(or_(Schedule.start <= finish, Schedule.start == None)). \
                 filter(or_(Schedule.finish >= self.__start, Schedule.finish == None)).count():
             raise Exception('A training plan is already defined for this date range')
-        type = self._get_or_create(session, ScheduleType, name='Plan')
+        type = self._get_or_create(session, ScheduleGroup, name='Plan')
         root = Schedule(type=type, repeat='', start=self.__start, finish=finish,
                         name=self.__name, description=self.__description, has_notes=False)
         session.add(root)

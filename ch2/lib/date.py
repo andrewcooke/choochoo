@@ -8,12 +8,25 @@ def parse_date(text):
     return dt.date(*t.strptime(text, '%Y-%m-%d')[:3])
 
 
+def parse_datetime(text):
+    for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d'):
+        try:
+            return dt.datetime.strptime(text, format)
+        except ValueError:
+            pass
+    raise ValueError('Cannot parse "%s" as a datetime' % text)
+
+
 def format_date(date):
     return date.strftime('%Y-%m-%d')
 
 
 def format_time(datetime):
     return datetime.strftime('%H:%M:%S')
+
+
+def format_datetime(datetime):
+    return datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')
 
 
 def parse_duration(duration):

@@ -1,12 +1,10 @@
 
-from sqlalchemy import Column, Text, DateTime, Integer, ForeignKey, Float, UniqueConstraint
+from sqlalchemy import Column, Text, Integer, ForeignKey, Float, UniqueConstraint
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref
 
-from .statistic import Statistic
 from ..support import Base
-from ..types import Ordinal
-from ...lib.date import format_duration
+from ..types import Ordinal, Epoch
 
 
 class FileScan(Base):
@@ -37,8 +35,8 @@ class ActivityDiary(Base):
     activity = relationship('Activity')
     name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
-    start = Column(DateTime, nullable=False)
-    finish = Column(DateTime, nullable=False)
+    start = Column(Epoch, nullable=False)
+    finish = Column(Epoch, nullable=False)
     notes = Column(Text)
 
 
@@ -81,49 +79,3 @@ class ActivityWaypoint(Base):
     heart_rate = Column(Integer)
     distance = Column(Float)
     speed = Column(Float)
-
-
-class ActivityStatistic(Base):
-
-    __tablename__ = 'activity_statistic'
-
-    id = Column(Integer, primary_key=True)
-    statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'),
-                          nullable=False)
-    statistic = relationship('Statistic')  # no backref here as it could be huge
-    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
-                               nullable=False)
-    activity_diary = relationship('ActivityDiary',
-                                  backref=backref('statistics', cascade='all, delete-orphan', passive_deletes=True))
-    value = Column(Float, nullable=False)
-    UniqueConstraint('statistic_id', 'activity_diary_id')
-
-    @staticmethod
-    def from_name(session, name, activity_diary):
-        return session.query(ActivityStatistic).join(ActivityStatistic.statistic).\
-            filter(Statistic.name == name, Statistic.activity == activity_diary.activity,
-                   ActivityStatistic.activity_diary == activity_diary).one()
-
-    @property
-    def fmt_value(self):
-        units = self.statistic.units
-        if units == 'm':
-            if self.value > 2000:
-                return '%.1fkm' % (self.value / 1000)
-            else:
-                return '%dm' % int(self.value)
-        elif units == 's':
-            return format_duration(self.value)
-        elif units == 'km/h':
-            return '%.1fkm/h' % self.value
-        elif units == '%':
-            return '%.1f%%' % self.value
-        elif units == 'bpm':
-            return '%dbpm' % int(self.value)
-        else:
-            return '%s%s' % (self.value, units)
-
-    def __str__(self):
-        return '%s: %s' % (self.statistic.name, self.fmt_value)
-
-

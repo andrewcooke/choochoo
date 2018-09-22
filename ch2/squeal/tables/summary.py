@@ -2,7 +2,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, Float, UniqueConstraint, Text
 from sqlalchemy.orm import relationship, backref
 
-from .activity import ActivityStatistic, Activity
+from .activity import Activity
 from .statistic import Statistic
 from ..support import Base
 from ..types import Ordinal
@@ -59,11 +59,11 @@ class RankingStatistic(Base):
     summary_timespan = relationship('SummaryTimespan',
                                     backref=backref('rankings',
                                                     cascade='all, delete-orphan', passive_deletes=True))
-    activity_statistic_id = Column(Integer, ForeignKey('activity_statistic.id', ondelete='cascade'),
-                                   nullable=False)
-    activity_statistic = relationship('ActivityStatistic',
-                                      backref=backref('ranking', uselist=False,
-                                                      cascade='all, delete-orphan', passive_deletes=True))
+    # activity_statistic_id = Column(Integer, ForeignKey('activity_statistic.id', ondelete='cascade'),
+    #                                nullable=False)
+    # activity_statistic = relationship('ActivityStatistic',
+    #                                   backref=backref('ranking', uselist=False,
+    #                                                   cascade='all, delete-orphan', passive_deletes=True))
     rank = Column(Integer, nullable=False)  # 1, 2, 3...  smaller better
     percentile = Column(Float, nullable=False)  # [0, 100)  larger better
 
@@ -82,7 +82,7 @@ class DistributionStatistic(Base):
                           nullable=False)
     statistic = relationship(Statistic)
     percentile = Column(Integer, nullable=False)  # 0, 25, 50, 75, 100
-    activity_statistic_id = Column(Integer, ForeignKey('activity_statistic.id', ondelete='cascade'),
-                                   nullable=False)
-    activity_statistic = relationship(ActivityStatistic)
+    # activity_statistic_id = Column(Integer, ForeignKey('activity_statistic.id', ondelete='cascade'),
+    #                                nullable=False)
+    # activity_statistic = relationship(ActivityStatistic)
     UniqueConstraint('summary_id', 'statistic_id')

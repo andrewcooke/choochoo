@@ -6,7 +6,7 @@ from sqlalchemy import desc, func, asc
 from .args import MONTH, YEAR, START, FORCE, ACTIVITY, FINISH
 from .lib.date import to_date
 from .squeal.database import Database
-from .squeal.tables.activity import ActivityDiary, Activity, ActivityStatistic
+from .squeal.tables.activity import ActivityDiary, Activity
 from .squeal.tables.statistic import Statistic
 from .squeal.tables.summary import Summary, SummaryTimespan, RankingStatistic, DistributionStatistic
 from .statistics import ACTIVE_DISTANCE, ACTIVE_TIME

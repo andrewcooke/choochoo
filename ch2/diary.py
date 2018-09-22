@@ -10,7 +10,7 @@ from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.tables.activity import ActivityDiary, ActivityStatistic
+from .squeal.tables.activity import ActivityDiary
 from .squeal.tables.diary import Diary
 from .squeal.tables.heartrate import HeartRateZones
 from .squeal.tables.injury import Injury, InjuryDiary

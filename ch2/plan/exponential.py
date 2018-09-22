@@ -4,7 +4,7 @@ from re import compile
 
 from ..lib.date import parse_duration, duration_to_secs, parse_date, add_duration, format_duration
 from ..lib.repeating import Specification
-from ..squeal.tables.schedule import ScheduleType, Schedule, ScheduleDiary
+from ..squeal.tables.schedule import ScheduleGroup, Schedule, ScheduleDiary
 from ..squeal.utils import ORMUtils
 
 
@@ -17,7 +17,7 @@ class Builder(ORMUtils):
         self._ratio = ratio
 
     def create(self, log, session):
-        type = self._get_or_create(session, ScheduleType, name='Plan')
+        type = self._get_or_create(session, ScheduleGroup, name='Plan')
         schedule = Schedule(type=type, repeat=str(self._spec), start=self._spec.start, finish=self._spec.finish,
                             name=self._name, description=self._description, has_notes=True)
         session.add(schedule)

@@ -5,7 +5,7 @@ from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.tables.schedule import Schedule, ScheduleType
+from .squeal.tables.schedule import Schedule, ScheduleGroup
 from .uweird.calendar import TextDate
 from .uweird.decorators import Indent
 from .uweird.factory import Factory
@@ -117,7 +117,7 @@ class SchedulesFilter(DynamicContent):
     def __init__(self, log, session, bar):
         self.__tabs = TabList()
         factory = Factory(self.__tabs, bar)
-        self.__types = dict((type.id, type) for type in session.query(ScheduleType).all())
+        self.__types = dict((type.id, type) for type in session.query(ScheduleGroup).all())
         self.__type_names = dict((id, type.name) for id, type in self.__types.items())
         self.filter_type = Nullable('Any type', lambda state: Menu('', self.__type_names, state=state))
         self.filter_date = Nullable('Open', lambda state: TextDate(log, date=state))
