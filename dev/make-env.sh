@@ -1,4 +1,4 @@
-\0;115;0c#!/bin/bash
+#!/bin/bash
 
 rm -fr env
 virtualenv env -p python3.7

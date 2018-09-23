@@ -1,5 +1,6 @@
+from types import SimpleNamespace
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, inspect
 from sqlalchemy.orm import relationship
 
 from ..support import Base
@@ -18,6 +19,7 @@ class Statistic(Base):
     namespace = Column(Text, nullable=False)
     units = Column(Text)
     best = Column(Text)  # max, min etc (possibly comma-separated?)
+    display = Column(Text)
     UniqueConstraint('cls', 'cls_constraint')
     UniqueConstraint('name', 'namespace')
 
@@ -56,3 +58,19 @@ class StatisticDiary(Base):
 
     def __str__(self):
         return '%s: %s' % (self.statistic.name, self.fmt_value)
+
+
+class StatisticMixin:
+
+    def populate_statistics(self, session):
+        cls = self.__class__
+        cls_name = inspect(cls).tables[0].name
+        cls_constraint_attr = cls.__statistic_constraint__
+        cls_constraint = getattr(self, cls_constraint_attr)
+        time_attr = cls.__statistic_time__
+        time = getattr(self, time_attr)
+        self.statistics = SimpleNamespace()
+        for statistic in session.query(StatisticDiary).join(Statistic). \
+                filter(Statistic.cls == cls_name, Statistic.cls_constraint == cls_constraint,
+                       StatisticDiary.time == time).all():
+            setattr(self.statistics, statistic.statistic.name, statistic)

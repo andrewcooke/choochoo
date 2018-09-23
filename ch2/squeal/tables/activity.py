@@ -3,6 +3,7 @@ from sqlalchemy import Column, Text, Integer, ForeignKey, Float, UniqueConstrain
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref
 
+from .statistic import StatisticMixin
 from ..support import Base
 from ..types import Ordinal, Epoch
 
@@ -25,9 +26,11 @@ class Activity(Base):
     sort = Column(Text, nullable=False, server_default='')
 
 
-class ActivityDiary(Base):
+class ActivityDiary(StatisticMixin, Base):
 
     __tablename__ = 'activity_diary'
+    __statistic_constraint__ = 'activity_id'
+    __statistic_time__ = 'date'
 
     id = Column(Integer, primary_key=True)
     date = Column(Ordinal, nullable=False)

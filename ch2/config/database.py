@@ -8,7 +8,7 @@ class Session:
 
     def __init__(self, log, session):
         self.__log = log
-        self.__session = session
+        self.session = session  # only use for good...
         self.__open = True
 
     def __bool__(self):
@@ -21,17 +21,17 @@ class Session:
     def close(self, expunge=False):
         self.__assert_open()
         if expunge:
-            self.__session.rollback()
+            self.session.rollback()
         else:
-            self.__session.commit()
-        self.__session.close()
+            self.session.commit()
+        self.session.close()
         self.__open = False
 
     def all(self, cls, *filter):
-        return self.__session.query(cls).filter(*filter).all()
+        return self.session.query(cls).filter(*filter).all()
 
     def add(self, instance):
-        self.__session.add(instance)
+        self.session.add(instance)
         return instance  # for chaining
 
 
@@ -42,7 +42,7 @@ class Config:
         self.__db = db
         self.__session = None
 
-    def context(self):
+    def session_context(self):
 
         class Context:
 

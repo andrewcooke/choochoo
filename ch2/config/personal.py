@@ -8,7 +8,7 @@ from .default import default
 
 def acooke(config):
     default(config)
-    with config.context() as s:
+    with config.session_context() as s:
         reminder = s.all(ScheduleGroup, ScheduleGroup.name == 'Reminder')[0]
         s.add(Schedule(group=reminder, repeat='2018-08-07/2d', name='Betaferon'))
         aim = s.all(ScheduleGroup, ScheduleGroup.name == 'Aim')[0]

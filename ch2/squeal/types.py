@@ -35,6 +35,10 @@ class Epoch(TypeDecorator):
             return datetime
         if isinstance(datetime, str):
             datetime = parse_datetime(datetime)
+        elif isinstance(datetime, dt.date):
+            datetime = dt.datetime.combine(datetime, dt.time())
+        elif isinstance(datetime, int) or isinstance(datetime, float):
+            datetime = dt.datetime.utcfromtimestamp(datetime)
         return datetime.replace(tzinfo=dt.timezone.utc).timestamp()
 
     process_bind_param = process_literal_param
