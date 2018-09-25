@@ -3,7 +3,7 @@ from sqlalchemy import Column, Text, Integer, ForeignKey, Float, UniqueConstrain
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref
 
-from .statistic import StatisticMixin
+from ...stoats.database import StatisticMixin
 from ..support import Base
 from ..types import Ordinal, Epoch
 

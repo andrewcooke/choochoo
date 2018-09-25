@@ -1,7 +1,7 @@
 
 import datetime as dt
 
-from sqlalchemy import TypeDecorator, Integer, Float
+from sqlalchemy import TypeDecorator, Integer, Float, Text
 
 from ch2.lib.date import parse_datetime, parse_date
 
@@ -48,3 +48,22 @@ class Epoch(TypeDecorator):
             return value
         else:
             return dt.datetime.utcfromtimestamp(value)
+
+
+class Cls(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, cls, dialect):
+        if cls is None:
+            return cls
+        if not isinstance(cls, str) and not isinstance(cls, type):
+            cls = type(cls)
+        if isinstance(cls, type):
+            cls = cls.__name__
+        return cls
+
+    process_bind_param = process_literal_param
+
+    def process_result_value(self, value, dialect):
+        return value
