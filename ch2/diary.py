@@ -11,7 +11,7 @@ from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.tables.activity import ActivityDiary
-from .squeal.tables.diary import Diary
+from .squeal.tables.diary import DailyDiary
 from .squeal.tables.heartrate import HeartRateZones
 from .squeal.tables.injury import Injury, InjuryDiary
 from .squeal.tables.schedule import Schedule, ScheduleDiary
@@ -243,7 +243,7 @@ class DiaryApp(App):
         self.medication = factory(Edit(caption='Meds: '))
         # order important here - binder re-binds on change and so must come last(!)
         connect_signal(calendar, 'change', self.date_change)
-        Binder(log, session, self, Diary, multirow=True, defaults={'date': date})
+        Binder(log, session, self, DailyDiary, multirow=True, defaults={'date': date})
 
         self.injuries = factory.tabs.append(Injuries(log, session, bar, date=date))
         self.schedules = factory.tabs.append(Schedules(log, session, bar, date=date))

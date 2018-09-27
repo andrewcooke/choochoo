@@ -48,7 +48,7 @@ class Statistic(Base):
     UniqueConstraint('cls', 'cls_constraint')
 
 
-class StatisticDiary(Base):
+class StatisticValue(Base):
 
     __tablename__ = 'statistic_diary'
 
@@ -56,13 +56,13 @@ class StatisticDiary(Base):
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
     value = Column(Float)
-    time = Column(Epoch, nullable=False)
-    statistic_diary_id = Column(Integer,  # often null
-                                ForeignKey('statistic_diary.id', ondelete='cascade'))
+    base_diary_id = Column(Integer,  # null for intervals
+                           ForeignKey('diary.id', ondelete='cascade'))
+    diary = relationship('base_diary_id')
     statistic_interval_id = Column(Integer,  # often null
                                    ForeignKey('statistic_interval.id', ondelete='cascade'))
     interval = relationship('statistic_interval_id')
-    UniqueConstraint('statistic_id', 'time')
+    UniqueConstraint('statistic_id', 'base_diary_id', 'statistic_interval_id')
 
     @property
     def fmt_value(self):

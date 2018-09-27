@@ -1,19 +1,37 @@
 
-from sqlalchemy import Column, Integer, Text, Float
+from sqlalchemy import Column, Integer, Text, Float, UniqueConstraint
 
 from ..types import Ordinal
 from ..support import Base
 
 
-class Diary(Base):
+class BaseDiary(Base):
 
-    __tablename__ = 'diary'
+    __tablename__ = 'base_diary'
 
-    date = Column(Ordinal, primary_key=True)
+    id = Column(Integer, primary_key=True)
+    type = Column(Text)
+    time = Column(Epoch)
+    UniqueConstraint('type', 'time')
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'diary',
+        'polymorphic_on': type
+    }
+
+
+class DailyDiary(BaseDiary):
+
+    __tablename__ = 'daily_diary'
+
     notes = Column(Text, nullable=False, server_default='')
-    rest_heart_rate = Column(Integer)
-    sleep = Column(Float)
-    mood = Column(Integer)
     weather = Column(Text, nullable=False, server_default='')
     medication = Column(Text, nullable=False, server_default='')
-    weight = Column(Float)
+    # rest_heart_rate = Column(Integer)
+    # sleep = Column(Float)
+    # mood = Column(Integer)
+    # weight = Column(Float)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'daily',
+    }

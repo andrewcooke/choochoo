@@ -1,7 +1,7 @@
 
 from types import SimpleNamespace
 
-from ..squeal.tables.statistic import StatisticDiary, Statistic
+from ..squeal.tables.statistic import StatisticValue, Statistic
 
 
 class StatisticMixin:
@@ -14,7 +14,7 @@ class StatisticMixin:
         time_attr = cls.__statistic_time__
         time = getattr(self, time_attr)
         self.statistics = SimpleNamespace()
-        for statistic in session.query(StatisticDiary).join(Statistic). \
+        for statistic in session.query(StatisticValue).join(Statistic). \
                 filter(Statistic.cls == cls_name, Statistic.cls_constraint == cls_constraint,
-                       StatisticDiary.time == time).all():
+                       StatisticValue.time == time).all():
             setattr(self.statistics, statistic.statistic.name, statistic)

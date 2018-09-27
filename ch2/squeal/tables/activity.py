@@ -3,9 +3,10 @@ from sqlalchemy import Column, Text, Integer, ForeignKey, Float, UniqueConstrain
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref
 
-from ...stoats.database import StatisticMixin
+from .diary import BaseDiary
 from ..support import Base
-from ..types import Ordinal, Epoch
+from ..types import Epoch
+from ...stoats.database import StatisticMixin
 
 
 class FileScan(Base):
@@ -26,21 +27,22 @@ class Activity(Base):
     sort = Column(Text, nullable=False, server_default='')
 
 
-class ActivityDiary(StatisticMixin, Base):
+class ActivityDiary(StatisticMixin, BaseDiary):
 
     __tablename__ = 'activity_diary'
     __statistic_constraint__ = 'activity_id'
-    __statistic_time__ = 'date'
 
     id = Column(Integer, primary_key=True)
-    date = Column(Ordinal, nullable=False)
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=False)
     activity = relationship('Activity')
     name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
-    start = Column(Epoch, nullable=False)
     finish = Column(Epoch, nullable=False)
     notes = Column(Text)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'activity',
+    }
 
 
 class ActivityTimespan(Base):

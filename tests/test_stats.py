@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 from ch2.config.database import config
 from ch2.config.personal import acooke
 from ch2.squeal.tables.activity import Activity, ActivityDiary
-from ch2.squeal.tables.statistic import Statistic, StatisticDiary
+from ch2.squeal.tables.statistic import Statistic, StatisticValue
 
 
 def test_config():
@@ -25,7 +25,7 @@ def test_stats():
             statistic = s.add(Statistic(cls=ActivityDiary.__tablename__,
                                         cls_constraint=activity.id,
                                         name="example", namespace=''))
-            s.add(StatisticDiary(statistic=statistic, value=42, time=diary.date))
+            s.add(StatisticValue(statistic=statistic, value=42, time=diary.date))
         with c.session_context() as s:
             diary = s.all(ActivityDiary)[0]
             diary.populate_statistics(s.session)

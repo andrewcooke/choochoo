@@ -9,14 +9,14 @@ from .support import Base
 from .tables.activity import ActivityWaypoint, Activity, ActivityTimespan, ActivityDiary
 from .tables.statistic import Statistic
 from .tables.summary import RankingStatistic, DistributionStatistic, SummaryTimespan, Summary
-from .tables.diary import Diary
+from .tables.diary import DailyDiary
 from .tables.heartrate import HeartRateZones, HeartRateZone
 from .tables.injury import InjuryDiary, Injury
 from .tables.schedule import ScheduleDiary, Schedule, ScheduleGroup
 from ..args import DATABASE
 
 # import these so they are "created"
-Diary, Injury, InjuryDiary, ScheduleGroup, Schedule, ScheduleDiary,
+DailyDiary, Injury, InjuryDiary, ScheduleGroup, Schedule, ScheduleDiary,
 Activity, ActivityDiary, ActivityWaypoint, ActivityTimespan, Statistic,
 Summary, SummaryTimespan, RankingStatistic, DistributionStatistic,
 HeartRateZones, HeartRateZone

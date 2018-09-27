@@ -8,7 +8,7 @@ from pygeotile.point import Point
 from sqlalchemy.orm import joinedload, contains_eager, aliased
 from sqlalchemy.orm.exc import NoResultFound
 
-from ch2.squeal.tables.diary import Diary
+from ch2.squeal.tables.diary import DailyDiary
 from ch2.squeal.tables.injury import Injury, InjuryDiary
 from ..args import parser, NamespaceWithVariables, NO_OP
 from ..log import make_log
@@ -73,7 +73,7 @@ class Data(NameMatcher):
     def diaries(self):
         data = defaultdict(list)
         dates = []
-        for diary in self._session.query(Diary).all():
+        for diary in self._session.query(DailyDiary).all():
             dates.append(diary.date)
             data['notes'].append(diary.notes)
             data['rest heart rate'].append(diary.rest_heart_rate)
