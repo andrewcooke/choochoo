@@ -3,16 +3,31 @@
 
 An **open**, **hackable** and **free** training diary.
 
-I wrote this mainly for myself, but perhaps it will also be attractive to 
-others who want a way to track and plan their progress that is open, 
-lightweight and extensible.
+* Training data are stored in a database
+  * There are tools to get data into the database:
+    * Read FIT files from smart watches, bike computers, etc
+    * Daily information (eg weight) can be entered via the diary
+      * Ability to add custom fields for general data capture
+      * Dedicated tracking of injuries
+    * Other data (eg FTHR) can be entered at the command line
+  * There are tools to process data in the database:
+    * Prepared calculations for data totals, ranking
+    * Calculation of TSS
+    * Ability to extend processing with Python
+  * There are tools to get data out of the database:
+    * Pandas tables for analysis in numpy
+    * Support for Jupyter notebooks
+    * Prepared plotting routines for common operations (eg ???)
+    * Daily, monthly and yearly textual summaries
+  * Clear database schema, designed for third party access
+    * SQLAlchemy ORM interface
+* Ability to schedule diary reminders for regular events
+  * This is used to schedule training plans
+    * Prepared / example training plans included
+    * Simple, declarative library for defining your own plans
+* System configuration via Python prompt
 
-The main interface is a curses-style diary, used to track daily activity
-as well as progress towards aims.  A flexible "schedule spec" is used to
-define periodic events (eg training routines) and (unfortunately) there's 
-dedicated fuctionality for tracking injuries.
+Can be used stand-alone or could be extended with a GUI.
+See [documentation](https://andrewcooke.github.io/choochoo/).
 
-Data analysis is possible using [Jupyter](http://jupyter.org/) - some
-example notebooks are included.
-
-[See Documentation](https://andrewcooke.github.io/choochoo/)
+**This branch under development - not all the above implemented.**

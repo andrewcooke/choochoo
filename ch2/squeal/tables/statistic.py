@@ -8,21 +8,27 @@ from ..types import Epoch, Cls
 from ...lib.date import format_duration
 
 
+# values extracted from FIT files, entered in diary, etc:
 # classes that add "raw" (underived) values must:
 # 1 - do so with a statistic that references themselves (they can use cls_constraint for extra state)
 # 2 - clean up when necessary (eg activity diary must delete values it "owns" if a diary entry is deleted)
 # 3 - delete any intervals affected by changes (call SummaryStatistics.delete_around())
 
-# classes that add "derived" values that depend on a single value must:
+# training stress score, total intensity, etc:
+# classes that add "derived" values that depend on values at a single time:
 # 1 - set the StatisticDiary.statistic_diary_id to identify the "source"
+#     (if multiple sources, pick one - they are typically added / deleted in a group)
 # with that, values should be deleted on cascade when the source is deleted
 # 2 - clean out Statistic entries if no longer used
 
-# classes that add "derived" values that depend on a range of values must:
-# 1 - define a suitable interval
+# totals, averages, etc:
+# classes that add "derived" values that depend on values over a range of times:
+# 1 - define a suitable interval (or use a pre-existing one)
 # 2 - set the StatisticDiary.statistic_interval_id to identify the interval
-# wuth that, values should be deleted on cascade when data are modified (and intervals deleted)
+# with that, values should be deleted on cascade when data are modified (and intervals deleted)
+# 3 - clean out Statistic entries if no longer used
 
+# ranks. percentiles
 # similarly, classes that add ranks should add an interval and define StatisticRank.statistic_interval_id
 
 
@@ -35,8 +41,10 @@ class Statistic(Base):
     cls_constraint = Column(Integer)  # eg activity for activity_diary (possibly null)
     name = Column(Text, nullable=False)  # simple, displayable name
     units = Column(Text)
-    best = Column(Text)  # max, min etc (possibly comma-separated?)
-    display = Column(Text)  # some desc of widget?  value range?
+    interval_process = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
+    widget = Column(Text)  # some desc of widget?  value range?  null for pre-calculated / constant
+    display = Column(Text)  # 'd', 'm', 'y' - what screen to display (null for no display)
+    sort = Column(Text)  # sorting for display
     UniqueConstraint('cls', 'cls_constraint')
 
 

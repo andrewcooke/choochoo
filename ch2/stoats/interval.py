@@ -1,3 +1,4 @@
+from re import split
 
 from sqlalchemy import func
 
@@ -5,7 +6,7 @@ from ..lib.date import add_duration
 from ..squeal.tables.statistic import StatisticDiary, Statistic, StatisticInterval
 
 
-class IntervalStatistics:
+class IntervalProcessing:
 
     def __init__(self, log, db):
         self.__log = log
@@ -18,7 +19,8 @@ class IntervalStatistics:
 
     def __raw_statistics_date_range(self, s):
         start, finish = s.query(func.min(StatisticDiary.time), func.max(StatisticDiary.time)). \
-            filter(StatisticDiary.depends_on_id == None).one()
+            filter(StatisticDiary.statistic_diary_id == None,
+                   StatisticDiary.statistic_interval_id == None).one()
         return start.date(), finish.date()
 
     def __intervals(self, s, duration, units):
@@ -40,22 +42,36 @@ class IntervalStatistics:
             s.add(interval)
         return interval
 
-    def __current_statistics(self, s, start, finish):
-        s.query(Statistic).join(StatisticDiary). \
+    def __statistics_missing_values(self, s, start, finish):
+        return s.query(Statistic).join(StatisticDiary). \
             filter(StatisticDiary.time <= start,
                    StatisticDiary.time > finish,
-                   Statistic.cls != self)
+                   Statistic.cls != self,
+                   Statistic.interval_process != None).all()
 
-    def create_summaries(self, duration, units):
+    def __diary_entries(self, s, statistic, start, finish):
+        return [x.value for x in
+                s.query(StatisticDiary).
+                    filter(StatisticDiary.statistic == statistic,
+                           StatisticDiary.time >= start,
+                           StatisticDiary.time < finish).all()]
+
+    def create_values(self, duration, units):
         with self.__db.session_context() as s:
             for start, finish in self.__intervals(s, duration, units):
                 interval = self.__interval(s, start, duration, units)
-                for statistic in self.__current_statistics(s, start, finish):
-                    self.__create_summary(s, statistic)
+                for statistic in self.__statistics_missing_values(s, start, finish):
+                    processes = split(r'[\s,]*\[([^\]])\][\s ]*', statistic.interval_process)
+                    if processes:
+                        data = self.__diary_entries(s, statistic, start, finish)
+                        for process in processes:
+                            self.__create_value(s, interval, statistic, process, data)
+                    else:
+                        self.__log.warn('No valid process for %s ("%s")' % (statistic, statistic.interval_process))
 
     def create_all(self, force=False):
         if force:
             self.delete_all()
         for interval in (1, 'm'), (1, 'y'):
-            create_summaries(*interval)
-            create_yearly_ranks(*interval)
+            self.create_values(*interval)
+            self.create_ranks(*interval)
