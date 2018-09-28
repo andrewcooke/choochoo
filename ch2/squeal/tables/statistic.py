@@ -59,12 +59,21 @@ class StatisticValue(Base):
     base_diary_id = Column(Integer,  # null for intervals
                            ForeignKey('diary.id', ondelete='cascade'))
     diary = relationship('base_diary_id')
-    statistic_interval_id = Column(Integer,  # often null
+    statistic_diary_id = Column(Integer,  # eiter this or statistic_interval defined
+                                ForeignKey('statistic_value.id', ondelete='cascade'))
+    source = relationship('statistic_diary_id')
+    statistic_interval_id = Column(Integer,  # either this or statistic_value defined
                                    ForeignKey('statistic_interval.id', ondelete='cascade'))
     interval = relationship('statistic_interval_id')
     UniqueConstraint('statistic_id', 'base_diary_id', 'statistic_interval_id')
 
     @property
+    def time(self):
+        if self.interval:
+            return self.interval.start
+        else:
+            return self.diary.time
+
     def fmt_value(self):
         units = self.statistic.units
         if not units:
