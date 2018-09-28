@@ -25,10 +25,10 @@ associated with entries in the StatisticJournal - each entry combines a
 There are two kinds of Statistic, which are distinguished by their Sources
 (more on those below):
 
-# Raw statistics are entered into the system from outside.  For example,
-  values entered into the diary, or values read from a FIT file.
+1. Raw statistics are entered into the system from outside.  For example,
+   values entered into the diary, or values read from a FIT file.
 
-# Derived statistics are calculated from other, pre-existing statistics.
+2. Derived statistics are calculated from other, pre-existing statistics.
 
 (A careful reader may have noted that the above statements use "statistic" to
 refer to *values*, which are actually stored in the StatisticJournal.  This is
