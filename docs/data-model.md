@@ -11,6 +11,16 @@ reliable enough to avoid errors.
 
 ## Contents
 
+* [Concepts](#concepts)
+  * [Statistics](#statistics)
+  * [Sources](#sources)
+* [Implementation](#implementation)
+  * [Inheritance](#inheritance)
+  * [Correctness](#correctness)
+  * [Events](#events)
+  * [Rules](#rules)
+  * [Hard Reset](#hard-reset)
+
 ## Concepts
 
 ### Statistics
@@ -62,6 +72,8 @@ As with Statistics and the StatisticJournal, the data associated with these
 Activities and Topics are stored in **ActivityJournal** and **TopicJournal**
 (the Activity and Topic tables store metadata).
 
+Every Source has an associated time - this is also the time for the statistic.
+
 ## Implementation
 
 ### Inheritance
@@ -79,7 +91,7 @@ Inheritance](https://docs.sqlalchemy.org/en/latest/orm/inheritance.html#joined-t
 in the SQLALchemy docs.
 
 A single inheritance hierarchy is used, with Source as the base type, and
-three children: Interval, ActivityJournal, and TpicJournal.  StatisticJournal
+three children: Interval, ActivityJournal, and TopicJournal.  StatisticJournal
 has a foreign key relationship with Source, so that when a Source is deleted
 the corresponding statistics are deleted (via cascade).
 
