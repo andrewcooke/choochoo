@@ -15,12 +15,12 @@ reliable enough to avoid errors.
 
 ### Statistics
 
-A Statistic is a fairly simple thing - basically a name with (optional) units
-and description (in practice they also have "metadata" for display, tracking
-who is responsible for creating new values, etc).  For a Statistic to be
-useful it must be associated with some values.  More exactly, it must be
-associated with entries in the StatisticJournal - each entry combines a
-(double) value with a time and a Source.
+A **Statistic** is a simple thing - a name with (optional) units and
+description (in practice they also have "metadata" for display, tracking who
+is responsible for creating new values, etc).  For a Statistic to be useful it
+must also be associated with some values.  More exactly, it must be associated
+with entries in the **StatisticJournal** - each entry combines a (double)
+value with a **Source**.
 
 There are two kinds of Statistic, which are distinguished by their Sources
 (more on those below):
@@ -43,24 +43,24 @@ but are stored separately.
 
 There are several different Sources:
 
-* Activities are read from FIT files and provide a wealth of statistics (note
-  that the GPS trace, HR time series, etc, are not stored as statistics
+* **Activities** are read from FIT files and provide a wealth of statistics
+  (note that the GPS trace, HR time series, etc, are not stored as statistics
   themselves, but values calculated from these, like time in HR zones, total
   distance, are).
 
-* Topics are used to structure entries in the diary and can be associated with
-  statistics that are entered by the user (depending on the details of
+* **Topics** are used to structure entries in the diary and can be associated
+  with statistics that are entered by the user (depending on the details of
   configuration).
 
-* Intervals in time are used as sources for derived statistics.  This may seem
-  somewhat abstract, but it helps avoid stale data (see below).  An Interval
-  has a start time and a duration - typically a day, month or year.  So the
-  total distance cycled over May 2018, for example, is a derived statistic
-  whose source is the interval covering that month.
+* **Intervals** in time are used as sources for derived statistics.  This may
+  seem somewhat abstract, but it helps avoid stale data (see below).  An
+  Interval has a start time and a duration - typically a day, month or year.
+  So the total distance cycled over May 2018, for example, is a derived
+  statistic whose source is the interval covering that month.
 
 As with Statistics and the StatisticJournal, the data associated with these
-Activities and Topics are stored in ActivityJournal and TopicJournal (the
-Activity and Topic tables store metadata).
+Activities and Topics are stored in **ActivityJournal** and **TopicJournal**
+(the Activity and Topic tables store metadata).
 
 ## Implementation
 
@@ -124,6 +124,9 @@ Following from the above, we have the following rules that must be followed:
      justification.
 
   2. So that automatic delteion of Intervals can be triggered.
+
+Together these allow us to calculate derived statistics only when needed (ie
+when an Interval is missing).
 
 ### Hard Reset
 
