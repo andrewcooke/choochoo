@@ -4,7 +4,7 @@
 ## Introduction
 
 Choochoo is all about the data.  In particular - getting statistics that you
-can analyse and use to improve performance.  The data model is a key part of
+can analyze and use to improve performance.  The data model is a key part of
 this.  We need a model that is flexible enough to capture anything that might
 be important, simple enough that analysis doesn't have many special cases, and
 reliable enough to avoid errors.
@@ -88,7 +88,7 @@ Inheritance resolves this conflict by associating multiple types with a single
 For more details on inheritance and the SQLAlchemy approach used, please see
 [Joined Table
 Inheritance](https://docs.sqlalchemy.org/en/latest/orm/inheritance.html#joined-table-inheritance)
-in the SQLALchemy docs.
+in the SQLAlchemy docs.
 
 A single inheritance hierarchy is used, with Source as the base type, and
 three children: Interval, ActivityJournal, and TopicJournal.  StatisticJournal
@@ -98,7 +98,7 @@ the corresponding statistics are deleted (via cascade).
 ### Correctness
 
 It is important that the data in the StatisticJournal are correct.  To ensure
-this we must consider what happends when data are inserted, updated and
+this we must consider what happens when data are inserted, updated and
 deleted:
 
 * Insertions into StatisticJournal are associated with the appropriate Source.
@@ -118,7 +118,7 @@ Sources).
 
 ### Events
 
-The above "deletoin of associated intervals" can be automated within
+The above "deletion of associated intervals" can be automated within
 SQLAlchemy using the `before_flush()` hook.  Whenever the database is going to
 be modified (via the ORM) we can check and automatically delete appropriate
 Intervals.
@@ -135,7 +135,7 @@ Following from the above, we have the following rules that must be followed:
   1. So that the entire hierarchy is removed.  See `test_inheritance.py` for
      justification.
 
-  2. So that automatic delteion of Intervals can be triggered.
+  2. So that automatic deletion of Intervals can be triggered.
 
 Together these allow us to calculate derived statistics only when needed (ie
 when an Interval is missing).
@@ -143,5 +143,5 @@ when an Interval is missing).
 ### Hard Reset
 
 Following the rules above allows us to (efficiently) calculate only *missing*
-derived statistics.  In pratice it will also be useful to have the option of
+derived statistics.  In practice it will also be useful to have the option of
 deleting all derived statistics (by deleting all Intervals).
