@@ -78,9 +78,10 @@ For more details on inheritance and the SQLAlchemy approach used, please see
 Inheritance](https://docs.sqlalchemy.org/en/latest/orm/inheritance.html#joined-table-inheritance)
 in the SQLALchemy docs.
 
-TODO
-
-
+A single inheritance hierarchy is used, with Source as the base type, and
+three children: Interval, ActivityJournal, and TpicJournal.  StatisticJournal
+has a foreign key relationship with Source, so that when a Source is deleted
+the corresponding statistics are deleted (via cascade).
 
 ### Correctness
 
@@ -103,6 +104,13 @@ deleted:
 The above is true for both raw and derived statistics (since Intervals are
 Sources).
 
+### Events
+
+The above "deletoin of associated intervals" can be automated within
+SQLAlchemy using the `before_flush()` hook.  Whenever the database is going to
+be modified (via the ORM) we can check and automatically delete appropriate
+Intervals.
+
 ### Rules
 
 Following from the above, we have the following rules that must be followed:
@@ -110,13 +118,15 @@ Following from the above, we have the following rules that must be followed:
 * Do not delete from StatisticJournal directly.  Delete Sources.
 
 * Do not delete Sources via SQL.  Delete at the object level (within
-  SQLAlchemy) so that the entire hierarchy is removed.  See
-  `test_inheritance.py` for justification.
+  SQLAlchemy).  This is required for two reasons:
 
-TODO
+  1. So that the entire hierarchy is removed.  See `test_inheritance.py` for
+     justification.
+
+  2. So that automatic delteion of Intervals can be triggered.
 
 ### Hard Reset
 
 Following the rules above allows us to (efficiently) calculate only *missing*
 derived statistics.  In pratice it will also be useful to have the option of
-deleting all derived statistics (by deleteing all Intervals).
+deleting all derived statistics (by deleting all Intervals).
