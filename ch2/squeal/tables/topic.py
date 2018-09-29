@@ -69,16 +69,16 @@ class Topic(Base):
     #     return list(sorted(root_topics))
 
 
-class TopicStatistic(Base):
+class TopicField(Base):
 
     __tablename__ = 'topic_statistic'
 
     id = Column(Integer, primary_key=True)
     topic_id = Column(Integer, ForeignKey('topic.id', ondelete='cascade'), nullable=False)
     topic = relationship('Topic',
-                         backref=backref('statistics', cascade='all, delete-orphan',
+                         backref=backref('fields', cascade='all, delete-orphan',
                                          passive_deletes=True,
-                                         order_by='TopicStatistic.sort',
+                                         order_by='TopicField.sort',
                                          collection_class=ordering_list('sort')))
     type = Column(Integer, nullable=False)  # StatisticType
     sort = Column(Integer)
@@ -99,22 +99,22 @@ class TopicJournal(Source):
         'polymorphic_identity': SourceType.TOPIC
     }
 
-    def populate(self, session):
+    def on_add(self, session):
         if self.time is None:
             raise Exception('No time defined')
-        self.statistics = SimpleNamespace()
-        for statistic in self.topic.statistics:
+        self.journal = {}
+        for field in self.topic.fields:
             journal = session.query(StatisticJournal). \
                 filter(StatisticJournal.source == self,
                        StatisticJournal.time == self.time).one_or_none()
             if not journal:
-                journal = STATISTIC_JOURNAL_CLASSES[statistic.type](statistic=statistic.statistic, source=self)
+                journal = STATISTIC_JOURNAL_CLASSES[field.type](statistic=field.statistic, source=self)
                 session.add(journal)
-            setattr(self.statistics, statistic.statistic.name, (statistic, journal))
+            self.journal[field] = journal
 
 
 @listens_for(Session, 'transient_to_pending')
 def populate(session, instance):
     if isinstance(instance, TopicJournal):
         with session.no_autoflush:
-            instance.populate(session)
+            instance.on_add(session)

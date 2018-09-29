@@ -33,4 +33,16 @@ def test_sources():
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = TopicJournal(topic=diary, time='2018-09-29')
             s.add(d)
-            assert d,statistics.notes[1].value is None
+            assert len(d.topic.fields) == 1
+            assert d.topic.fields[0].statistic.name == 'Notes'
+            assert d.journal[d.topic.fields[0]].value == None
+            d.journal[d.topic.fields[0]].value = 'hello world'
+
+        with db.session_context() as s:
+
+            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+            d = TopicJournal(topic=diary, time='2018-09-29')
+            s.add(d)
+            assert len(d.topic.fields) == 1
+            assert d.topic.fields[0].statistic.name == 'Notes'
+            assert d.journal[d.topic.fields[0]].value == 'hello world'
