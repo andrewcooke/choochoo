@@ -1,35 +1,10 @@
-from types import SimpleNamespace
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, inspect
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
+from sqlalchemy.orm import relationship
 
 from ..support import Base
-from ..types import Epoch, Cls
+from ..types import Cls
 from ...lib.date import format_duration
-
-
-# values extracted from FIT files, entered in diary, etc:
-# classes that add "raw" (underived) values must:
-# 1 - do so with a statistic that references themselves (they can use cls_constraint for extra state)
-# 2 - clean up when necessary (eg activity diary must delete values it "owns" if a diary entry is deleted)
-# 3 - delete any intervals affected by changes (call SummaryStatistics.delete_around())
-
-# training stress score, total intensity, etc:
-# classes that add "derived" values that depend on values at a single time:
-# 1 - set the StatisticDiary.statistic_diary_id to identify the "source"
-#     (if multiple sources, pick one - they are typically added / deleted in a group)
-# with that, values should be deleted on cascade when the source is deleted
-# 2 - clean out Statistic entries if no longer used
-
-# totals, averages, etc:
-# classes that add "derived" values that depend on values over a range of times:
-# 1 - define a suitable interval (or use a pre-existing one)
-# 2 - set the StatisticDiary.statistic_interval_id to identify the interval
-# with that, values should be deleted on cascade when data are modified (and intervals deleted)
-# 3 - clean out Statistic entries if no longer used
-
-# ranks. percentiles
-# similarly, classes that add ranks should add an interval and define StatisticRank.statistic_interval_id
 
 
 class Statistic(Base):
@@ -40,44 +15,91 @@ class Statistic(Base):
     cls = Column(Cls, nullable=False)  # class name of owner / creator
     cls_constraint = Column(Integer)  # eg activity for activity_diary (possibly null)
     name = Column(Text, nullable=False)  # simple, displayable name
+    description = Column(Text)
     units = Column(Text)
-    interval_process = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
+    summary_process = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
     widget = Column(Text)  # some desc of widget?  value range?  null for pre-calculated / constant
     display = Column(Text)  # 'd', 'm', 'y' - what screen to display (null for no display)
     sort = Column(Text)  # sorting for display
     UniqueConstraint('cls', 'cls_constraint')
 
 
-class StatisticValue(Base):
+class StatisticType(Enum):
 
-    __tablename__ = 'statistic_diary'
+    STATISTIC = 0
+    INTEGER = 1
+    FLOAT = 2
+    TEXT = 3
+
+
+class StatisticJournal(Base):
+
+    __tablename__ = 'statistic_journal'
 
     id = Column(Integer, primary_key=True)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
     value = Column(Float)
-    base_diary_id = Column(Integer,  # null for intervals
-                           ForeignKey('diary.id', ondelete='cascade'))
-    diary = relationship('base_diary_id')
-    statistic_diary_id = Column(Integer,  # eiter this or statistic_interval defined
-                                ForeignKey('statistic_value.id', ondelete='cascade'))
-    source = relationship('statistic_diary_id')
-    statistic_interval_id = Column(Integer,  # either this or statistic_value defined
-                                   ForeignKey('statistic_interval.id', ondelete='cascade'))
-    interval = relationship('statistic_interval_id')
-    UniqueConstraint('statistic_id', 'base_diary_id', 'statistic_interval_id')
+    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
+    source = relationship('Source')
+
+    __mapper_args__ = {
+        'polymorphic_identity': StatisticType.STATISTIC,
+        'polymorphic_on': type
+    }
 
     @property
     def time(self):
-        if self.interval:
-            return self.interval.start
-        else:
-            return self.diary.time
+        return self.source.time
 
-    def fmt_value(self):
+
+class StatisticJournalInteger(StatisticJournal):
+
+    __tablename__ = 'statistic_journal_integer'
+
+    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    value = Column(Integer)
+
+    __mapper_args__ = {
+        'polymorphic_identity': StatisticType.INTEGER
+    }
+
+    def formatted(self):
         units = self.statistic.units
         if not units:
-            return '%s' % self.value
+            return '%d' % self.value
+        elif units == 'm':
+            if self.value > 2000:
+                return '%dkm' % (self.value / 1000)
+            else:
+                return '%dm' % self.value
+        elif units == 's':
+            return format_duration(self.value)
+        elif units == 'km/h':
+            return '%dkm/h' % self.value
+        elif units == '%':
+            return '%d%%' % self.value
+        elif units == 'bpm':
+            return '%dbpm' % self.value
+        else:
+            return '%d%s' % (self.value, units)
+
+
+class StatisticJournalFloat(StatisticJournal):
+
+    __tablename__ = 'statistic_journal_float'
+
+    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    value = Column(Float)
+
+    __mapper_args__ = {
+        'polymorphic_identity': StatisticType.FLOAT
+    }
+
+    def formatted(self):
+        units = self.statistic.units
+        if not units:
+            return '%f' % self.value
         elif units == 'm':
             if self.value > 2000:
                 return '%.1fkm' % (self.value / 1000)
@@ -94,19 +116,23 @@ class StatisticValue(Base):
         else:
             return '%s%s' % (self.value, units)
 
-    def __str__(self):
-        return '%s: %s' % (self.statistic.name, self.fmt_value)
 
+class StatisticJournalText(StatisticJournal):
 
-class StatisticInterval(Base):
+    __tablename__ = 'statistic_journal_integer'
 
-    __tablename__ = 'statistic_interval'
+    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    value = Column(Text)
 
-    id = Column(Integer, primary_key=True)
-    start = Column(Epoch)
-    value = Column(Integer)  # null if open (null unit too), otherwise number of days etc (see units)
-    units = Column(Text)   # 'm', 'd' etc
-    UniqueConstraint('start', 'value', 'units')
+    __mapper_args__ = {
+        'polymorphic_identity': StatisticType.TEXT
+    }
+
+    def formatted(self):
+        if not self.units:
+            return '%s' % self.value
+        else:
+            return '%s%s' % (self.value, self.units)
 
 
 class StatisticRank(Base):
@@ -114,10 +140,7 @@ class StatisticRank(Base):
     __tablename__ = 'statistic_rank'
 
     id = Column(Integer, primary_key=True)
-    statistic_diary_id = Column(Integer, ForeignKey('statistic_diary.id', ondelete='cascade'), nullable=False)
-    diary = relationship('statistic_diary_id',
-                         backref=backref('ranks', cascade='all, delete-orphan', passive_deletes=True))
-    statistic_interval_id = Column(Integer, ForeignKey('statistic_interval.id', ondelete='cascade'), nullable=False)
-    interval = relationship('statistic_interval_id')
+    statistic_journal_id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)  # must be an interval
     rank = Column(Integer, nullable=False)  # 1 is best
     percentile = Column(Float, nullable=False)  # 100 is best

@@ -3,7 +3,7 @@ from sqlalchemy import Column, Text, Integer, ForeignKey, Float, UniqueConstrain
 from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref
 
-from .diary import BaseDiary
+from .source import Source, SourceType
 from ..support import Base
 from ..types import Epoch
 from ...stoats.database import StatisticMixin
@@ -27,9 +27,9 @@ class Activity(Base):
     sort = Column(Text, nullable=False, server_default='')
 
 
-class ActivityDiary(StatisticMixin, BaseDiary):
+class ActivityJournal(StatisticMixin, Source):
 
-    __tablename__ = 'activity_diary'
+    __tablename__ = 'activity_journal'
     __statistic_constraint__ = 'activity_id'
 
     id = Column(Integer, primary_key=True)
@@ -41,7 +41,7 @@ class ActivityDiary(StatisticMixin, BaseDiary):
     notes = Column(Text)
 
     __mapper_args__ = {
-        'polymorphic_identity': 'activity',
+        'polymorphic_identity': SourceType.ACTIVITY
     }
 
 
@@ -50,25 +50,25 @@ class ActivityTimespan(Base):
     __tablename__ = 'activity_timespan'
 
     id = Column(Integer, primary_key=True)
-    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
+    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
                                nullable=False)
-    activity_diary = relationship('ActivityDiary',
+    activity_journal = relationship('ActivityDiary',
                                   backref=backref('timespans', cascade='all, delete-orphan',
                                                   passive_deletes=True,
                                                   order_by='ActivityTimespan.start',
                                                   collection_class=ordering_list('start')))
     start = Column(Float, nullable=False)  # unix epoch
     finish = Column(Float, nullable=False)  # unix epoch
-    UniqueConstraint('activity_diary_id', 'start')
+    UniqueConstraint('activity_journal_id', 'start')
 
 
 class ActivityWaypoint(Base):
 
     __tablename__ = 'activity_waypoint'
 
-    activity_diary_id = Column(Integer, ForeignKey('activity_diary.id', ondelete='cascade'),
+    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
                                nullable=False, primary_key=True)
-    activity_diary = relationship('ActivityDiary',
+    activity_journal = relationship('ActivityDiary',
                                   backref=backref('waypoints', cascade='all, delete-orphan',
                                                   passive_deletes=True,
                                                   order_by='ActivityWaypoint.epoch',

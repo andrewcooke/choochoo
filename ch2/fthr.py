@@ -4,7 +4,7 @@ import datetime as dt
 from .args import FTHR, DATE
 from .lib.date import parse_date
 from .squeal.database import Database
-from .squeal.tables.heartrate import HeartRateZones, HeartRateZone
+from .squeal.tables.zone import HeartRateZones, HeartRateZone
 
 
 def add_fthr(args, log):

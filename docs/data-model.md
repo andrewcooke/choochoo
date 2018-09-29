@@ -49,6 +49,9 @@ Many statistics have ranking and percentile information.  These behave
 similarly to derived statistics (they are associated with Interval Sources),
 but are stored separately.
 
+There are three types of StatisticJournal, for values that are integers,
+floats and text.
+
 ### Sources
 
 There are several different Sources:
@@ -90,10 +93,16 @@ For more details on inheritance and the SQLAlchemy approach used, please see
 Inheritance](https://docs.sqlalchemy.org/en/latest/orm/inheritance.html#joined-table-inheritance)
 in the SQLAlchemy docs.
 
-A single inheritance hierarchy is used, with Source as the base type, and
-three children: Interval, ActivityJournal, and TopicJournal.  StatisticJournal
-has a foreign key relationship with Source, so that when a Source is deleted
-the corresponding statistics are deleted (via cascade).
+Two inheritance hierarchies are used, for Source and StatisticJournal.  In
+both cases the structure is very simple, with all concrete classes being
+direct children of the base.
+
+Source has three children: Interval, ActivityJournal, and TopicJournal.
+
+StatisticJournal also has three children: StatisticJournalInteger,
+StatisticJournalFloat and StatisticJournalText.  StatisticJournal has a
+foreign key relationship with Source, so that when a Source is deleted the
+corresponding statistics are deleted (via cascade).
 
 ### Correctness
 
@@ -145,3 +154,47 @@ when an Interval is missing).
 Following the rules above allows us to (efficiently) calculate only *missing*
 derived statistics.  In practice it will also be useful to have the option of
 deleting all derived statistics (by deleting all Intervals).
+
+## Data Input
+
+### Schedules
+
+Schedules do not have their own table in the database (they are part of
+Topics, see below), but play an important role in the diary.
+
+A schedule is a specification for a repeating event within a certain date
+range.  An example would be
+
+    2018-09-29/2w[1mon,2wed]2018-01-01-2019-01-01
+
+which "reads" as "the first monday and second wednesday of each fortnight (2
+weeks) in 2018 (the time range at the end), shifted so that 2018-09-29 occurs
+in the first week)".
+
+TODO - check shifting implementation.
+
+For a more precise definition see the code in `ch2.lib.schedule`.
+
+### Topics
+
+Direct data input, via the diary, is structured with Topics.  These are
+categories, with a tree-like structure, that are scheduled to appear at
+certain times.
+
+A Topic can be associated with various Statistics.  The associated
+StatisticJournal entries can then be read and modified within the diary.
+
+Configuration of this is necessarily quite complex, but a default
+configuration is provided with Choochoo.
+
+Example Topics include:
+
+* Simple diary entries (mood, weather, sleep tracking).  In this case the
+  schedule is daily with open range.
+
+* Injuries and medication.  In this case the schedule will have the range of
+  the injury and, for a particular medicine or treatment, might be on certain
+  days.
+
+* Training plans.  In this case the tree structure of Topics is used heavily
+  and individual entries may be only a single day.

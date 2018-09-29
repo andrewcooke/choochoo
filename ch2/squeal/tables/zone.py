@@ -7,6 +7,8 @@ from ..support import Base
 from ..types import Ordinal
 
 
+# todo - should these be a statistic?
+
 class HeartRateZones(Base):
 
     __tablename__ = 'heart_rate_zones'

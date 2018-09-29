@@ -3,8 +3,8 @@ from abc import abstractmethod
 from re import compile
 
 from ..lib.date import parse_duration, duration_to_secs, parse_date, add_duration, format_duration
-from ..lib.repeating import Specification
-from ..squeal.tables.schedule import ScheduleGroup, Schedule, ScheduleDiary
+from ..lib.schedule import Specification
+from ..squeal.tables.topic import TopicGroup, Topic, TopicJournal
 from ..squeal.utils import ORMUtils
 
 
@@ -17,12 +17,12 @@ class Builder(ORMUtils):
         self._ratio = ratio
 
     def create(self, log, session):
-        type = self._get_or_create(session, ScheduleGroup, name='Plan')
-        schedule = Schedule(type=type, repeat=str(self._spec), start=self._spec.start, finish=self._spec.finish,
-                            name=self._name, description=self._description, has_notes=True)
+        type = self._get_or_create(session, TopicGroup, name='Plan')
+        schedule = Topic(type=type, repeat=str(self._spec), start=self._spec.start, finish=self._spec.finish,
+                         name=self._name, description=self._description, has_notes=True)
         session.add(schedule)
         for day in self._spec.frame().dates(self._spec.start):
-            session.add(ScheduleDiary(date=day, schedule=schedule, notes=self._next_value()))
+            session.add(TopicJournal(date=day, schedule=schedule, notes=self._next_value()))
 
     @abstractmethod
     def _next_value(self):

@@ -4,7 +4,7 @@ from ch2.log import make_log
 from ch2.plan.british import twelve_week_improver
 from ch2.plan.exponential import exponential_time, exponential_distance
 from ch2.squeal.database import Database
-from ch2.squeal.tables.schedule import Schedule, ScheduleDiary
+from ch2.squeal.tables.topic import Topic, TopicJournal
 
 
 def test_british():
@@ -16,7 +16,7 @@ def test_british():
     with db.session_context() as session:
         plan.create(log, session)
         session.flush()
-    root = session.query(Schedule).filter(Schedule.parent_id == None).one()
+    root = session.query(Topic).filter(Topic.parent_id == None).one()
     assert len(root.children) == 7, root.children
     for child in root.children:
         print(child)
@@ -31,8 +31,8 @@ def test_exponential_time():
     with db.session_context() as session:
         plan.create(log, session)
         session.flush()
-    schedule = session.query(Schedule).filter(Schedule.parent_id == None).one()
-    notes = session.query(ScheduleDiary).filter(ScheduleDiary.schedule == schedule).all()
+    schedule = session.query(Topic).filter(Topic.parent_id == None).one()
+    notes = session.query(TopicJournal).filter(TopicJournal.topic == schedule).all()
     assert len(notes) == 16, len(notes)
     for note in notes:
         print(note)
@@ -47,8 +47,8 @@ def test_exponential_distance():
     with db.session_context() as session:
         plan.create(log, session)
         session.flush()
-    schedule = session.query(Schedule).filter(Schedule.parent_id == None).one()
-    notes = session.query(ScheduleDiary).filter(ScheduleDiary.schedule == schedule).all()
+    schedule = session.query(Topic).filter(Topic.parent_id == None).one()
+    notes = session.query(TopicJournal).filter(TopicJournal.topic == schedule).all()
     assert len(notes) == 14, len(notes)
     for note in notes:
         print(note)

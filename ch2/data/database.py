@@ -13,7 +13,7 @@ from ch2.squeal.tables.injury import Injury, InjuryDiary
 from ..args import parser, NamespaceWithVariables, NO_OP
 from ..log import make_log
 from ..squeal.database import Database
-from ..squeal.tables.activity import Activity, ActivityDiary
+from ..squeal.tables.activity import Activity, ActivityJournal
 from ..squeal.tables.statistic import Statistic
 from ..squeal.tables.summary import SummaryTimespan, DistributionStatistic, Summary
 
@@ -115,9 +115,9 @@ class ActivityData(NameMatcher):
         return list(self.__expand_statistic_names(names))
 
     def __activity_starts(self):
-        for start in self._session.query(ActivityDiary.start). \
-                filter(ActivityDiary.activity == self.__activity). \
-                order_by(ActivityDiary.start).all():
+        for start in self._session.query(ActivityJournal.start). \
+                filter(ActivityJournal.activity == self.__activity). \
+                order_by(ActivityJournal.start).all():
             yield start[0]
 
     def __summary_starts(self):
@@ -131,9 +131,9 @@ class ActivityData(NameMatcher):
         starts = list(self.__activity_starts())
         data_by_date = defaultdict(dict)
         for statistic in self.__expand_statistic_names(names):
-            for (date, value) in self._session.query(ActivityDiary.start, ActivityStatistic.value). \
-                    join(ActivityDiary.statistics). \
-                    filter(ActivityDiary.activity == self.__activity,
+            for (date, value) in self._session.query(ActivityJournal.start, ActivityStatistic.value). \
+                    join(ActivityJournal.statistics). \
+                    filter(ActivityJournal.activity == self.__activity,
                            ActivityStatistic.statistic_id == statistic.id).all():
                 data_by_date[statistic.name][date] = value
         data = defaultdict(list)
@@ -181,13 +181,13 @@ class ActivityData(NameMatcher):
 
     def activity_diary_names(self):
         return [diary.name for diary in
-                self._session.query(ActivityDiary).
-                    filter(ActivityDiary.activity == self.__activity).
-                    order_by(ActivityDiary.start)]
+                self._session.query(ActivityJournal).
+                    filter(ActivityJournal.activity == self.__activity).
+                    order_by(ActivityJournal.start)]
 
     def activity_diary(self, name):
-        diary = self._session.query(ActivityDiary). \
-            filter(ActivityDiary.name == name).one()
+        diary = self._session.query(ActivityJournal). \
+            filter(ActivityJournal.name == name).one()
         frames = []
         for timespan in diary.timespans:
             dates = []

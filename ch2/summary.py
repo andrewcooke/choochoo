@@ -6,7 +6,7 @@ from sqlalchemy import desc, func, asc
 from .args import MONTH, YEAR, START, FORCE, ACTIVITY, FINISH
 from .lib.date import to_date
 from .squeal.database import Database
-from .squeal.tables.activity import ActivityDiary, Activity
+from .squeal.tables.activity import ActivityJournal, Activity
 from .squeal.tables.statistic import Statistic
 from .squeal.tables.summary import Summary, SummaryTimespan, RankingStatistic, DistributionStatistic
 from .statistics import ACTIVE_DISTANCE, ACTIVE_TIME
@@ -50,10 +50,10 @@ def regular_summary(month, activity, force, db, log):
         summary = Summary.from_activity_name(session, activity)
         if not summary:
             summary = Summary.new(session, activity, type)
-        start = to_date(session.query(ActivityDiary).join(Activity).filter(Activity.name == activity).
-                        order_by(ActivityDiary.start).limit(1).one().start)
-        finish = to_date(session.query(ActivityDiary).join(Activity).filter(Activity.name == activity).
-                         order_by(desc(ActivityDiary.finish)).limit(1).one().finish)
+        start = to_date(session.query(ActivityJournal).join(Activity).filter(Activity.name == activity).
+                        order_by(ActivityJournal.start).limit(1).one().start)
+        finish = to_date(session.query(ActivityJournal).join(Activity).filter(Activity.name == activity).
+                         order_by(desc(ActivityJournal.finish)).limit(1).one().finish)
         for s, f in months(start, finish) if month else years(start, finish):
             add_range(s, f, summary, session, log)
 
@@ -89,9 +89,9 @@ def add_range(start, finish, summary, session, log):
                                                      SummaryTimespan.start == start,
                                                      SummaryTimespan.finish == finish).one_or_none()
     if timespan:
-        latest = session.query(ActivityDiary).filter(ActivityDiary.date >= start,
-                                                     ActivityDiary.date < finish). \
-            order_by(desc(ActivityDiary.date)).limit(1).one().date
+        latest = session.query(ActivityJournal).filter(ActivityJournal.date >= start,
+                                                       ActivityJournal.date < finish). \
+            order_by(desc(ActivityJournal.date)).limit(1).one().date
         if latest <= timespan.created:
             return  # nothing to do here
         else:
@@ -101,24 +101,24 @@ def add_range(start, finish, summary, session, log):
 
 
 def add_timespan(start, finish, summary, session, log):
-    total_activities = len(session.query(ActivityDiary).filter(
-        ActivityDiary.activity == summary.activity,
-        ActivityDiary.date >= start,
-        ActivityDiary.date < finish
+    total_activities = len(session.query(ActivityJournal).filter(
+        ActivityJournal.activity == summary.activity,
+        ActivityJournal.date >= start,
+        ActivityJournal.date < finish
     ).all())
     if total_activities:
         total_distance = session.query(func.sum(ActivityStatistic.value)).select_from(ActivityStatistic). \
-            join(ActivityDiary).join(Statistic).filter(
+            join(ActivityJournal).join(Statistic).filter(
             Statistic.name == ACTIVE_DISTANCE,
             Statistic.activity == summary.activity,
-            ActivityDiary.date >= start,
-            ActivityDiary.date < finish).one()[0]
+            ActivityJournal.date >= start,
+            ActivityJournal.date < finish).one()[0]
         total_time = session.query(func.sum(ActivityStatistic.value)).select_from(ActivityStatistic). \
-            join(ActivityDiary).join(Statistic).filter(
+            join(ActivityJournal).join(Statistic).filter(
             Statistic.name == ACTIVE_TIME,
             Statistic.activity == summary.activity,
-            ActivityDiary.date >= start,
-            ActivityDiary.date < finish).one()[0]
+            ActivityJournal.date >= start,
+            ActivityJournal.date < finish).one()[0]
     else:
         total_distance, total_time = 0, 0
     timespan = SummaryTimespan(summary=summary, start=start, finish=finish, created=dt.date.today(),
@@ -131,10 +131,10 @@ def add_ranking(start, finish, timespan, session, log):
     for statistic in session.query(Statistic).filter(Statistic.activity == timespan.summary.activity).all():
         if statistic.best:
             order = desc if statistic.best == 'max' else asc
-            values = session.query(ActivityStatistic).join(ActivityDiary).filter(
+            values = session.query(ActivityStatistic).join(ActivityJournal).filter(
                 ActivityStatistic.statistic == statistic,
-                ActivityDiary.date >= start,
-                ActivityDiary.date < finish
+                ActivityJournal.date >= start,
+                ActivityJournal.date < finish
             ).order_by(order(ActivityStatistic.value)).all()
             if values:
                 n = len(values)

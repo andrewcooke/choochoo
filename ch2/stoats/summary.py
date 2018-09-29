@@ -4,10 +4,10 @@ from re import split
 from sqlalchemy import func
 
 from ..lib.date import add_duration
-from ..squeal.tables.statistic import StatisticValue, Statistic, StatisticInterval, StatisticRank
+from ..squeal.tables.statistic import StatisticJournal, Statistic, Interval, StatisticRank
 
 
-class IntervalProcessing:
+class SummaryProcessing:
 
     def __init__(self, log, db):
         self._log = log
@@ -16,12 +16,12 @@ class IntervalProcessing:
     def _delete_all(self):
         with self._db.session_context() as s:
             # we delete the intervals that all summary statistics depend on and they will cascade
-            s.query(StatisticInterval).delete()
+            s.query(Interval).delete()
 
     def _raw_statistics_date_range(self, s):
-        start, finish = s.query(func.min(StatisticValue.time), func.max(StatisticValue.time)). \
-            filter(StatisticValue.statistic_diary_id == None,
-                   StatisticValue.statistic_interval_id == None).one()
+        start, finish = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
+            filter(StatisticJournal.statistic_diary_id == None,
+                   StatisticJournal.statistic_interval_id == None).one()
         return start.date(), finish.date()
 
     def _intervals(self, s, duration, units):
@@ -35,28 +35,28 @@ class IntervalProcessing:
             start = next_start
 
     def _interval(self, s, start, duration, units):
-        interval = s.query(StatisticInterval). \
-            filter(StatisticInterval.start == start,
-                   StatisticInterval.value == duration,
-                   StatisticInterval.units == units).one_or_none()
+        interval = s.query(Interval). \
+            filter(Interval.start == start,
+                   Interval.value == duration,
+                   Interval.units == units).one_or_none()
         if not interval:
-            interval = StatisticInterval(value=duration, units=units, start=start)
+            interval = Interval(value=duration, units=units, start=start)
             s.add(interval)
         return interval
 
     def _statistics_missing_values(self, s, start, finish):
-        return s.query(Statistic).join(StatisticValue). \
-            filter(StatisticValue.time <= start,
-                   StatisticValue.time > finish,
+        return s.query(Statistic).join(StatisticJournal). \
+            filter(StatisticJournal.time <= start,
+                   StatisticJournal.time > finish,
                    Statistic.cls != self,
                    Statistic.interval_process != None).all()
 
     def _diary_entries(self, s, statistic, start, finish):
         return [x.value for x in
-                s.query(StatisticValue).
-                    filter(StatisticValue.statistic == statistic,
-                           StatisticValue.time >= start,
-                           StatisticValue.time < finish).all()]
+                s.query(StatisticJournal).
+                    filter(StatisticJournal.statistic == statistic,
+                           StatisticJournal.time >= start,
+                           StatisticJournal.time < finish).all()]
 
     def _calculate_value(self, process, values):
         defined = [x for x in values if x is not None]
@@ -94,7 +94,7 @@ class IntervalProcessing:
         value, template =  self._calculate_value(process, values)
         name = template % statistic.name
         new_statistic = self._get_statistic(s, name)
-        s.add(StatisticValue(statistic=new_statistic, value=value, time=start, interval=interval))
+        s.add(StatisticJournal(statistic=new_statistic, value=value, time=start, interval=interval))
         self._log.debug('Created %s=%s at %s' % (statistic, value, interval))
 
     def _create_ranks(self, s, interval, statistic, data):

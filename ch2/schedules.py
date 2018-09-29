@@ -5,7 +5,7 @@ from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.tables.schedule import Schedule, ScheduleGroup
+from .squeal.tables.topic import Topic, TopicGroup
 from .uweird.calendar import TextDate
 from .uweird.decorators import Indent
 from .uweird.factory import Factory
@@ -62,7 +62,7 @@ class ScheduleWidget(FocusWrap):
         connect_signal(reset, 'click', lambda widget: binder.reset())  # todo - children?
 
     def __add_child(self):
-        self.__instance.children.append(Schedule(type_id=None, has_notes=0, sort='', name=''))
+        self.__instance.children.append(Topic(type_id=None, has_notes=0, sort='', name=''))
         self.__editor.rebuild()
 
 
@@ -99,12 +99,12 @@ class SchedulesEditor(DynamicContent):
         return widget
 
     def __add_top_level(self, type_id):
-        self.__schedules.append(Schedule(type_id=type_id, type=self.__types[type_id],
-                                         has_notes=0, sort='', name=''))
+        self.__schedules.append(Topic(type_id=type_id, type=self.__types[type_id],
+                                      has_notes=0, sort='', name=''))
         self.rebuild()
 
     def __add_child(self, parent):
-        parent.children.append(Schedule(type_id=None, has_notes=0, sort='', name=''))
+        parent.children.append(Topic(type_id=None, has_notes=0, sort='', name=''))
         self.rebuild()
 
 
@@ -117,7 +117,7 @@ class SchedulesFilter(DynamicContent):
     def __init__(self, log, session, bar):
         self.__tabs = TabList()
         factory = Factory(self.__tabs, bar)
-        self.__types = dict((type.id, type) for type in session.query(ScheduleGroup).all())
+        self.__types = dict((type.id, type) for type in session.query(TopicGroup).all())
         self.__type_names = dict((id, type.name) for id, type in self.__types.items())
         self.filter_type = Nullable('Any type', lambda state: Menu('', self.__type_names, state=state))
         self.filter_date = Nullable('Open', lambda state: TextDate(log, date=state))
@@ -156,7 +156,7 @@ class SchedulesFilter(DynamicContent):
 
     def _make(self):
         date = self.filter_date.state
-        root_schedules = Schedule.query_root(self._session, date=date, type_id=self.filter_type.state)
+        root_schedules = Topic.query_root(self._session, date=date, type_id=self.filter_type.state)
         self._log.debug('Found %d root schedules' % len(root_schedules))
         editor = SchedulesEditor(self._log, self._session, self._bar, root_schedules, date,
                                  self.__types, self.__type_names)

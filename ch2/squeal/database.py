@@ -6,18 +6,18 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from .support import Base
-from .tables.activity import ActivityWaypoint, Activity, ActivityTimespan, ActivityDiary
+from .tables.activity import ActivityWaypoint, Activity, ActivityTimespan, ActivityJournal
 from .tables.statistic import Statistic
 from .tables.summary import RankingStatistic, DistributionStatistic, SummaryTimespan, Summary
 from .tables.diary import DailyDiary
-from .tables.heartrate import HeartRateZones, HeartRateZone
+from .tables.zone import HeartRateZones, HeartRateZone
 from .tables.injury import InjuryDiary, Injury
-from .tables.schedule import ScheduleDiary, Schedule, ScheduleGroup
+from .tables.topic import TopicJournal, Topic, TopicGroup
 from ..args import DATABASE
 
 # import these so they are "created"
-DailyDiary, Injury, InjuryDiary, ScheduleGroup, Schedule, ScheduleDiary,
-Activity, ActivityDiary, ActivityWaypoint, ActivityTimespan, Statistic,
+DailyDiary, Injury, InjuryDiary, TopicGroup, Topic, TopicJournal,
+Activity, ActivityJournal, ActivityWaypoint, ActivityTimespan, Statistic,
 Summary, SummaryTimespan, RankingStatistic, DistributionStatistic,
 HeartRateZones, HeartRateZone
 

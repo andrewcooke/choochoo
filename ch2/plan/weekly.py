@@ -4,8 +4,8 @@ import datetime as dt
 from sqlalchemy import or_
 
 from ..lib.date import parse_date, format_date
-from ..lib.repeating import DOW
-from ..squeal.tables.schedule import ScheduleGroup, Schedule, ScheduleDiary
+from ..lib.schedule import DOW
+from ..squeal.tables.topic import TopicGroup, Topic, TopicJournal
 from ..squeal.utils import ORMUtils
 
 
@@ -46,13 +46,13 @@ class Week(Assert, ORMUtils):
             log.warn('The start day (%s) is not a Monday, so the days will be rotated appropriately',
                      DOW[self.__start.weekday()])
         finish = self.__start + dt.timedelta(days=7 * self.__n_weeks)
-        if session.query(Schedule).join(Schedule.group).filter(ScheduleGroup.name == 'Plan'). \
-                filter(or_(Schedule.start <= finish, Schedule.start == None)). \
-                filter(or_(Schedule.finish >= self.__start, Schedule.finish == None)).count():
+        if session.query(Topic).join(Topic.group).filter(TopicGroup.name == 'Plan'). \
+                filter(or_(Topic.start <= finish, Topic.start == None)). \
+                filter(or_(Topic.finish >= self.__start, Topic.finish == None)).count():
             raise Exception('A training plan is already defined for this date range')
-        type = self._get_or_create(session, ScheduleGroup, name='Plan')
-        root = Schedule(type=type, repeat='', start=self.__start, finish=finish,
-                        name=self.__name, description=self.__description, has_notes=False)
+        type = self._get_or_create(session, TopicGroup, name='Plan')
+        root = Topic(type=type, repeat='', start=self.__start, finish=finish,
+                     name=self.__name, description=self.__description, has_notes=False)
         session.add(root)
         return root
 
@@ -106,9 +106,9 @@ class Day(Assert):
     def create(self, log, session, root, sort, date, n_weeks):
         dow = date.weekday()
         finish = date + dt.timedelta(days=7 * n_weeks)
-        child = Schedule(parent=root, repeat='%s/w[%s]' % (format_date(date), DOW[dow]), start=date, finish=finish,
-                         name=self.__name, has_notes=True, sort=str(sort))
+        child = Topic(parent=root, repeat='%s/w[%s]' % (format_date(date), DOW[dow]), start=date, finish=finish,
+                      name=self.__name, has_notes=True, sort=str(sort))
         session.add(child)
         for week, note in enumerate(self.__notes):
-            diary = ScheduleDiary(date=date + dt.timedelta(days=7 * week), schedule=child, notes=note)
+            diary = TopicJournal(date=date + dt.timedelta(days=7 * week), schedule=child, notes=note)
             session.add(diary)

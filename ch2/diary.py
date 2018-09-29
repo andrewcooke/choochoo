@@ -10,11 +10,11 @@ from .lib.io import tui
 from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
-from .squeal.tables.activity import ActivityDiary
+from .squeal.tables.activity import ActivityJournal
 from .squeal.tables.diary import DailyDiary
-from .squeal.tables.heartrate import HeartRateZones
+from .squeal.tables.zone import HeartRateZones
 from .squeal.tables.injury import Injury, InjuryDiary
-from .squeal.tables.schedule import Schedule, ScheduleDiary
+from .squeal.tables.topic import Topic, TopicJournal
 from .statistics import round_km, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, PERCENT_IN_Z, MEDIAN_KM_TIME, HR_MINUTES, \
     MAX_MED_HR_OVER_M
 from .uweird.calendar import Calendar
@@ -95,7 +95,7 @@ class ScheduleWidget(FocusWrap):
 class Schedules(DynamicDate):
 
     def _make(self):
-        root_schedules = Schedule.query_root(self._session, date=self._date)
+        root_schedules = Topic.query_root(self._session, date=self._date)
         tabs = TabList()
         body = []
         prev = None
@@ -111,7 +111,7 @@ class Schedules(DynamicDate):
 
     def __make_schedule(self, tabs, schedule, show_type=True):
         widget = ScheduleWidget(self._log, tabs, self._bar, schedule, show_type)
-        Binder(self._log, self._session, widget, table=ScheduleDiary,
+        Binder(self._log, self._session, widget, table=TopicJournal,
                defaults={'date': self._date, 'schedule_id': schedule.id})
         children = []
         for child in sorted(schedule.children):
@@ -215,10 +215,10 @@ class Activities(DynamicDate):
     def _make(self):
         tabs = TabList()
         body = []
-        for activity in self._session.query(ActivityDiary).filter(ActivityDiary.date == self._date). \
-                order_by(ActivityDiary.start).all():
+        for activity in self._session.query(ActivityJournal).filter(ActivityJournal.date == self._date). \
+                order_by(ActivityJournal.start).all():
             widget = ActivityWidget(tabs, self._session, self._bar, activity)
-            Binder(self._log, self._session, widget, ActivityDiary, defaults={'id': activity.id})
+            Binder(self._log, self._session, widget, ActivityJournal, defaults={'id': activity.id})
             body.append(widget)
         return Pile(body), tabs
 

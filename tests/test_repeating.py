@@ -1,7 +1,7 @@
 
 import datetime as dt
 
-from ch2.lib.repeating import Specification, DateOrdinals
+from ch2.lib.schedule import Specification, DateOrdinals
 from ch2.lib.date import parse_date
 
 
