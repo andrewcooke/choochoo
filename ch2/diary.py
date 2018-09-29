@@ -11,7 +11,6 @@ from .lib.widgets import App
 from .squeal.binders import Binder
 from .squeal.database import Database
 from .squeal.tables.activity import ActivityJournal
-from .squeal.tables.zone import HeartRateZones
 from .squeal.tables.topic import Topic, TopicJournal
 from .statistics import round_km, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, PERCENT_IN_Z, MEDIAN_KM_TIME, HR_MINUTES, \
     MAX_MED_HR_OVER_M

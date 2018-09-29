@@ -32,5 +32,5 @@ def test_sources():
 
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = TopicJournal(topic=diary, time='2018-09-29')
-            d.populate_statistics(s)  # todo - in mapper?  what about saving?
-            assert d,statistics.notes.value is None
+            s.add(d)
+            assert d,statistics.notes[1].value is None

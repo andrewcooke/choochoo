@@ -15,8 +15,6 @@ from .fit.profile.types import timestamp_to_datetime
 from .lib.io import tui
 from .squeal.database import Database
 from .squeal.tables.activity import Activity, FileScan, ActivityJournal, ActivityTimespan, ActivityWaypoint
-from .squeal.tables.zone import HeartRateZones
-from .squeal.tables.statistic import Statistic
 from .statistics import round_km, ACTIVE_SPEED, ACTIVE_TIME, MEDIAN_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, \
     MAX_MED_HR_OVER_M, MAX, BPM, PC, S, KMH, HR_MINUTES, M, ACTIVE_DISTANCE
 from .summary import regular_summary

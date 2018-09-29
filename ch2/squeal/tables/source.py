@@ -2,6 +2,7 @@
 from enum import IntEnum
 
 from sqlalchemy import ForeignKey, Column, Integer, Text
+from sqlalchemy.orm import relationship
 
 from ..support import Base
 from ..types import Epoch
@@ -45,14 +46,3 @@ class Interval(Source):
 
     def range(self):
         return self.time, add_duration(self.time, (self.value, self.units))
-
-
-class Constant(Source):
-
-    __tablename__ = 'constant'
-
-    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-
-    __mapper_args__ = {
-        'polymorphic_identity': SourceType.CONSTANT
-    }

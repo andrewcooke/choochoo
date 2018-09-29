@@ -1,15 +1,15 @@
 
-from functools import total_ordering
 from types import SimpleNamespace
 
 from sqlalchemy import Column, Integer, Text, ForeignKey
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.event import listens_for
+from sqlalchemy.ext.orderinglist import ordering_list
+from sqlalchemy.orm import relationship, backref, Session
 
 from .source import SourceType, Source
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from ..support import Base
 from ..types import Ordinal
-from ...lib.date import to_datetime
 
 
 # @total_ordering
@@ -75,8 +75,13 @@ class TopicStatistic(Base):
 
     id = Column(Integer, primary_key=True)
     topic_id = Column(Integer, ForeignKey('topic.id', ondelete='cascade'), nullable=False)
-    topic = relationship('Topic')
+    topic = relationship('Topic',
+                         backref=backref('statistics', cascade='all, delete-orphan',
+                                         passive_deletes=True,
+                                         order_by='TopicStatistic.sort',
+                                         collection_class=ordering_list('sort')))
     type = Column(Integer, nullable=False)  # StatisticType
+    sort = Column(Integer)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
 
@@ -94,17 +99,22 @@ class TopicJournal(Source):
         'polymorphic_identity': SourceType.TOPIC
     }
 
-    def populate_statistics(self, session):
+    def populate(self, session):
         if self.time is None:
             raise Exception('No time defined')
         self.statistics = SimpleNamespace()
-        for statistic in session.query(TopicStatistic). \
-                filter(TopicStatistic.topic == self.topic).all():
+        for statistic in self.topic.statistics:
             journal = session.query(StatisticJournal). \
                 filter(StatisticJournal.source == self,
                        StatisticJournal.time == self.time).one_or_none()
             if not journal:
                 journal = STATISTIC_JOURNAL_CLASSES[statistic.type](statistic=statistic.statistic, source=self)
                 session.add(journal)
-            setattr(self.statistics, statistic.statistic.name, journal)
+            setattr(self.statistics, statistic.statistic.name, (statistic, journal))
 
+
+@listens_for(Session, 'transient_to_pending')
+def populate(session, instance):
+    if isinstance(instance, TopicJournal):
+        with session.no_autoflush:
+            instance.populate(session)
