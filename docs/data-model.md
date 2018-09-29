@@ -20,7 +20,7 @@ reliable enough to avoid errors.
   * [Events](#events)
   * [Rules](#rules)
   * [Hard Reset](#hard-reset)
-* [Data Input]
+* [Data Input](#data-input)
   * [Schedules](#schedules)
   * [Topics](#topics)
 
