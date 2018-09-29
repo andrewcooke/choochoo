@@ -20,6 +20,9 @@ reliable enough to avoid errors.
   * [Events](#events)
   * [Rules](#rules)
   * [Hard Reset](#hard-reset)
+* [Data Input]
+  * [Schedules](#schedules)
+  * [Topics](#topics)
 
 ## Concepts
 
