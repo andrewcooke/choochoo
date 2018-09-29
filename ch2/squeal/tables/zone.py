@@ -38,4 +38,3 @@ class HeartRateZone(Base):
                                                     order_by='HeartRateZone.upper_limit',
                                                     collection_class=ordering_list('upper_limit')))
     upper_limit = Column(Integer, nullable=False)
-

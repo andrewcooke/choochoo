@@ -7,19 +7,17 @@ from sqlalchemy.orm import sessionmaker
 
 from .support import Base
 from .tables.activity import ActivityWaypoint, Activity, ActivityTimespan, ActivityJournal
-from .tables.statistic import Statistic
-from .tables.summary import RankingStatistic, DistributionStatistic, SummaryTimespan, Summary
-from .tables.diary import DailyDiary
-from .tables.zone import HeartRateZones, HeartRateZone
-from .tables.injury import InjuryDiary, Injury
-from .tables.topic import TopicJournal, Topic, TopicGroup
+from .tables.source import Source, Interval
+from .tables.statistic import Statistic, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
+    StatisticJournal
+from .tables.topic import TopicJournal, Topic
 from ..args import DATABASE
 
 # import these so they are "created"
-DailyDiary, Injury, InjuryDiary, TopicGroup, Topic, TopicJournal,
-Activity, ActivityJournal, ActivityWaypoint, ActivityTimespan, Statistic,
-Summary, SummaryTimespan, RankingStatistic, DistributionStatistic,
-HeartRateZones, HeartRateZone
+Source,  Interval,
+Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint,
+Topic, TopicJournal,
+Statistic, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText
 
 
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf

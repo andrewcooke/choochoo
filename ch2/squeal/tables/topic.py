@@ -4,11 +4,11 @@ from functools import total_ordering
 from sqlalchemy import Column, Integer, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship, backref
 
-from ch2.squeal.tables.source import SourceType, Source
+from .source import SourceType, Source
 from ..support import Base
 from ..types import Ordinal
-from ...lib.date import format_date
 from ...lib.schedule import Specification
+from ch2.squeal.tables.statistic import StatisticMixin
 
 
 @total_ordering
@@ -69,7 +69,7 @@ class Topic(Base):
         return list(sorted(root_topics))
 
 
-class TopicJournal(Source):
+class TopicJournal(StatisticMixin, Source):
 
     __tablename__ = 'topic_journal'
 

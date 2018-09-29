@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, backref
 from .source import Source, SourceType
 from ..support import Base
 from ..types import Epoch
-from ...stoats.database import StatisticMixin
+from ch2.squeal.tables.statistic import StatisticMixin
 
 
 class FileScan(Base):
