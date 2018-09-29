@@ -1,5 +1,5 @@
 
-from enum import Enum
+from enum import IntEnum
 
 from sqlalchemy import ForeignKey, Column, Integer, Text
 
@@ -8,7 +8,7 @@ from ..types import Epoch
 from ...lib.date import add_duration
 
 
-class SourceType(Enum):
+class SourceType(IntEnum):
 
     SOURCE = 0
     INTERVAL = 1

@@ -40,6 +40,10 @@ def to_date(datetime):
     return dt.date(datetime.year, datetime.month, datetime.day)
 
 
+def to_datetime(date):
+    return dt.datetime(date.yeat, date.month, date.day)
+
+
 def add_duration(date, duration):
     (n, unit) = duration
     if unit == 'd':

@@ -6,7 +6,6 @@ from sqlalchemy.orm import relationship, backref
 from .source import Source, SourceType
 from ..support import Base
 from ..types import Epoch
-from ch2.squeal.tables.statistic import StatisticMixin
 
 
 class FileScan(Base):
@@ -27,7 +26,7 @@ class Activity(Base):
     sort = Column(Text, nullable=False, server_default='')
 
 
-class ActivityJournal(StatisticMixin, Source):
+class ActivityJournal(Source):
 
     __tablename__ = 'activity_journal'
     __statistic_constraint__ = 'activity_id'

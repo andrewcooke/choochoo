@@ -1,8 +1,8 @@
 
-from enum import Enum
+from enum import Enum, IntEnum
 from types import SimpleNamespace
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, inspect
 from sqlalchemy.orm import relationship
 
 from ..support import Base
@@ -15,20 +15,14 @@ class Statistic(Base):
     __tablename__ = 'statistic'
 
     id = Column(Integer, primary_key=True)
-    cls = Column(Cls, nullable=False)  # class name of owner / creator / displayer
-    # eg activity for activity_diary (possibly null, possibly index into more complex data)
-    cls_constraint = Column(Integer)
     name = Column(Text, nullable=False)  # simple, displayable name
     description = Column(Text)
     units = Column(Text)
     summary = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
-    widget = Column(Text)  # some desc of widget?  value range?  null for pre-calculated / constant
-    display = Column(Text)  # 'd', 'm', 'y' - what screen to display (null for no display)
     sort = Column(Text)  # sorting for display
-    UniqueConstraint('cls', 'cls_constraint')
 
 
-class StatisticType(Enum):
+class StatisticType(IntEnum):
 
     STATISTIC = 0
     INTEGER = 1
@@ -150,20 +144,8 @@ class StatisticRank(Base):
     percentile = Column(Float, nullable=False)  # 100 is best
 
 
-class StatisticMixin:
-    '''
-    This is used in Source sub-classes that are associated with statistics.
-    '''
-
-    def populate_statistics(self, session):
-        cls = self.__class__
-        cls_name = inspect(cls).tables[0].name
-        cls_constraint_attr = cls.__statistic_constraint__
-        cls_constraint = getattr(self, cls_constraint_attr)
-        time_attr = cls.__statistic_time__
-        time = getattr(self, time_attr)
-        self.statistics = SimpleNamespace()
-        for statistic in session.query(StatisticJournal).join(Statistic). \
-                filter(Statistic.cls == cls_name, Statistic.cls_constraint == cls_constraint,
-                       StatisticJournal.time == time).all():
-            setattr(self.statistics, statistic.statistic.name, statistic)
+STATISTIC_JOURNAL_CLASSES = {
+    StatisticType.INTEGER: StatisticJournalInteger,
+    StatisticType.FLOAT: StatisticJournalFloat,
+    StatisticType.TEXT: StatisticJournalText
+}
