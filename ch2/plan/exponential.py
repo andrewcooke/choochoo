@@ -4,7 +4,7 @@ from re import compile
 
 from ..lib.date import parse_duration, duration_to_secs, parse_date, add_duration, format_duration
 from ..lib.schedule import Specification
-from ..squeal.tables.topic import TopicGroup, Topic, TopicJournal
+from ..squeal.tables.topic import Topic, TopicJournal
 from ..squeal.utils import ORMUtils
 
 

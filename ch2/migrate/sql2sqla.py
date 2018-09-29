@@ -5,9 +5,6 @@ from sqlite3 import connect, Row
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from squeal.tables.diary import Diary
-from squeal.tables.injury import InjuryDiary, Injury
-from squeal.tables.schedule import Schedule, ScheduleDiary, ScheduleType
 
 
 def date_or_null(ordinal):

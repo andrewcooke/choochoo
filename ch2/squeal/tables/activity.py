@@ -32,7 +32,7 @@ class ActivityJournal(StatisticMixin, Source):
     __tablename__ = 'activity_journal'
     __statistic_constraint__ = 'activity_id'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=False)
     activity = relationship('Activity')
     name = Column(Text, unique=True)
@@ -51,14 +51,14 @@ class ActivityTimespan(Base):
 
     id = Column(Integer, primary_key=True)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
-                               nullable=False)
-    activity_journal = relationship('ActivityDiary',
-                                  backref=backref('timespans', cascade='all, delete-orphan',
-                                                  passive_deletes=True,
-                                                  order_by='ActivityTimespan.start',
-                                                  collection_class=ordering_list('start')))
-    start = Column(Float, nullable=False)  # unix epoch
-    finish = Column(Float, nullable=False)  # unix epoch
+                                 nullable=False)
+    activity_journal = relationship('ActivityJournal',
+                                    backref=backref('timespans', cascade='all, delete-orphan',
+                                                    passive_deletes=True,
+                                                    order_by='ActivityTimespan.start',
+                                                    collection_class=ordering_list('start')))
+    start = Column(Epoch, nullable=False)
+    finish = Column(Epoch, nullable=False)
     UniqueConstraint('activity_journal_id', 'start')
 
 
@@ -67,18 +67,18 @@ class ActivityWaypoint(Base):
     __tablename__ = 'activity_waypoint'
 
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
-                               nullable=False, primary_key=True)
-    activity_journal = relationship('ActivityDiary',
-                                  backref=backref('waypoints', cascade='all, delete-orphan',
-                                                  passive_deletes=True,
-                                                  order_by='ActivityWaypoint.epoch',
-                                                  collection_class=ordering_list('epoch')))
+                                 nullable=False, primary_key=True)
+    activity_journal = relationship('ActivityJournal',
+                                    backref=backref('waypoints', cascade='all, delete-orphan',
+                                                    passive_deletes=True,
+                                                    order_by='ActivityWaypoint.time',
+                                                    collection_class=ordering_list('time')))
     activity_timespan_id = Column(Integer, ForeignKey('activity_timespan.id'))
     activity_timespan = relationship('ActivityTimespan',
                                      backref=backref('waypoints',
-                                                     order_by='ActivityWaypoint.epoch',
-                                                     collection_class=ordering_list('epoch')))
-    epoch = Column(Float, primary_key=True)
+                                                     order_by='ActivityWaypoint.time',
+                                                     collection_class=ordering_list('time')))
+    time = Column(Float, primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
     heart_rate = Column(Integer)

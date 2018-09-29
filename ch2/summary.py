@@ -8,7 +8,6 @@ from .lib.date import to_date
 from .squeal.database import Database
 from .squeal.tables.activity import ActivityJournal, Activity
 from .squeal.tables.statistic import Statistic
-from .squeal.tables.summary import Summary, SummaryTimespan, RankingStatistic, DistributionStatistic
 from .statistics import ACTIVE_DISTANCE, ACTIVE_TIME
 
 

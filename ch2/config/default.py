@@ -1,8 +1,8 @@
 
-from ..squeal.tables.topic import TopicGroup
+from ..squeal.tables.activity import Activity
 
 
 def default(config):
     with config.session_context() as s:
-        s.add(TopicGroup(name='Reminder'))
-        s.add(TopicGroup(name='Aim'))
+        bike = s.add(Activity(name='Bike', description='All cycling activities'))
+        # todo - add stats for bike

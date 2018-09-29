@@ -14,6 +14,7 @@ class SourceType(Enum):
     INTERVAL = 1
     ACTIVITY = 2
     TOPIC = 3
+    CONSTANT = 4
 
 
 class Source(Base):
@@ -34,7 +35,7 @@ class Interval(Source):
 
     __tablename__ = 'interval'
 
-    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     value = Column(Integer)  # null if open (null unit too), otherwise number of days etc (see units)
     units = Column(Text)   # 'm', 'd' etc
 
@@ -44,3 +45,14 @@ class Interval(Source):
 
     def range(self):
         return self.time, add_duration(self.time, (self.value, self.units))
+
+
+class Constant(Source):
+
+    __tablename__ = 'constant'
+
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': SourceType.CONSTANT
+    }

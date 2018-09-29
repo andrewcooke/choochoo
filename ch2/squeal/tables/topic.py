@@ -17,9 +17,9 @@ class Topic(Base):
     __tablename__ = 'topic'
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('schedule.id'), nullable=True)
+    parent_id = Column(Integer, ForeignKey('topic.id'), nullable=True)
     # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
-    children = relationship('Schedule', backref=backref('parent', remote_side=[id]))
+    children = relationship('Topic', backref=backref('parent', remote_side=[id]))
     repeat = Column(Text, nullable=False, server_default='')
     start = Column(Ordinal)
     finish = Column(Ordinal)
@@ -73,10 +73,10 @@ class TopicJournal(StatisticMixin, Source):
 
     __tablename__ = 'topic_journal'
 
-    date = Column(Ordinal, primary_key=True)
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
+    date = Column(Ordinal, nullable=False)
     topic_id = Column(Integer, ForeignKey('topic.id'), primary_key=True)
     topic = relationship('Topic')
-    notes = Column(Text, nullable=False, server_default='')
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.TOPIC

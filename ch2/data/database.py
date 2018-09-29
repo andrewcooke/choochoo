@@ -8,14 +8,11 @@ from pygeotile.point import Point
 from sqlalchemy.orm import joinedload, contains_eager, aliased
 from sqlalchemy.orm.exc import NoResultFound
 
-from ch2.squeal.tables.diary import DailyDiary
-from ch2.squeal.tables.injury import Injury, InjuryDiary
 from ..args import parser, NamespaceWithVariables, NO_OP
 from ..log import make_log
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity, ActivityJournal
 from ..squeal.tables.statistic import Statistic
-from ..squeal.tables.summary import SummaryTimespan, DistributionStatistic, Summary
 
 
 class NameMatcher:

@@ -1,3 +1,5 @@
+
+from enum import Enum
 from types import SimpleNamespace
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
@@ -39,15 +41,15 @@ class StatisticJournal(Base):
     __tablename__ = 'statistic_journal'
 
     id = Column(Integer, primary_key=True)
+    type = Column(Integer, nullable=False)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
-    value = Column(Float)
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.STATISTIC,
-        'polymorphic_on': type
+        'polymorphic_on': 'type'
     }
 
     @property
@@ -59,7 +61,7 @@ class StatisticJournalInteger(StatisticJournal):
 
     __tablename__ = 'statistic_journal_integer'
 
-    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Integer)
 
     __mapper_args__ = {
@@ -91,7 +93,7 @@ class StatisticJournalFloat(StatisticJournal):
 
     __tablename__ = 'statistic_journal_float'
 
-    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Float)
 
     __mapper_args__ = {
@@ -121,9 +123,9 @@ class StatisticJournalFloat(StatisticJournal):
 
 class StatisticJournalText(StatisticJournal):
 
-    __tablename__ = 'statistic_journal_integer'
+    __tablename__ = 'statistic_journal_text'
 
-    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Text)
 
     __mapper_args__ = {

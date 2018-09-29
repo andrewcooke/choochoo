@@ -5,7 +5,7 @@ from sqlalchemy import or_
 
 from ..lib.date import parse_date, format_date
 from ..lib.schedule import DOW
-from ..squeal.tables.topic import TopicGroup, Topic, TopicJournal
+from ..squeal.tables.topic import Topic, TopicJournal
 from ..squeal.utils import ORMUtils
 
 

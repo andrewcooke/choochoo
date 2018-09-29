@@ -3,7 +3,6 @@ from urwid import WEIGHT, Edit, Pile, Columns, connect_signal
 
 from .lib.io import tui
 from .squeal.database import Database
-from .squeal.tables.injury import Injury
 from .uweird.calendar import TextDate
 from .uweird.editor import EditorApp
 from .uweird.factory import Factory
