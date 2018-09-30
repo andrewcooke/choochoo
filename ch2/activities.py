@@ -6,71 +6,16 @@ from os import stat
 from os.path import isdir, join, basename, splitext
 
 from sqlalchemy.orm.exc import NoResultFound
-from urwid import Edit, Pile, Columns, connect_signal
 
-from .fit.format.records import fix_degrees
 from .args import PATH, ACTIVITY, EDIT_ACTIVITIES, FORCE, MONTH, YEAR
 from .fit.format.read import filtered_records
+from .fit.format.records import fix_degrees
 from .fit.profile.types import timestamp_to_datetime
-from .lib.io import tui
 from .squeal.database import Database
 from .squeal.tables.activity import Activity, FileScan, ActivityJournal, ActivityTimespan, ActivityWaypoint
 from .statistics import round_km, ACTIVE_SPEED, ACTIVE_TIME, MEDIAN_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, \
     MAX_MED_HR_OVER_M, MAX, BPM, PC, S, KMH, HR_MINUTES, M, ACTIVE_DISTANCE
-from .summary import regular_summary
 from .utils import datetime_to_epoch
-from .uweird.editor import EditorApp
-from .uweird.factory import Factory
-from .uweird.focus import MessageBar, FocusWrap
-from .uweird.widgets import SquareButton, ColSpace
-
-
-class ActivityWidget(FocusWrap):
-
-    def __init__(self, log, tabs, bar, outer):
-        self.__outer = outer
-        factory = Factory(tabs=tabs, bar=bar)
-        self.name = factory(Edit(caption='Name: '))
-        self.sort = factory(Edit(caption='Sort: '))
-        self.delete = SquareButton('Delete')
-        delete = factory(self.delete, message='delete from database')
-        self.reset = SquareButton('Reset')
-        reset = factory(self.reset, message='reset from database')
-        self.description = factory(Edit(caption='Description: ', multiline=True))
-        super().__init__(
-            Pile([self.name,
-                  Columns([(20, self.sort),
-                           ColSpace(),
-                           (10, delete),
-                           (9, reset)
-                           ]),
-                  self.description,
-                  ]))
-
-    def connect(self, binder):
-        connect_signal(self.reset, 'click', lambda widget: binder.reset())
-        connect_signal(self.delete, 'click', lambda widget: self.__on_delete(widget, binder))
-
-    def __on_delete(self, _unused_widget, binder):
-        binder.delete()
-        self.__outer.remove(self)
-
-
-@tui
-def edit_activities(args, log):
-    '''
-# edit-activities
-
-    ch2 edit-activities
-
-The interactive editor for activities.  Allows addition, deletion and modification of activities.
-
-Once added, activities can be imported and will appear in the diary.
-
-To exit, alt-q (or, without saving, Alt-x).
-    '''
-    session = Database(args, log).session()
-    EditorApp(log, session, MessageBar(), "Activities", ActivityWidget, Activity).run()
 
 
 def add_activity(args, log):
