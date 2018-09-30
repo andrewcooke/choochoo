@@ -3,11 +3,12 @@ from re import split
 
 from sqlalchemy import func
 
+from ch2.squeal.tables.source import Interval, Source
 from ..lib.date import add_duration
-from ..squeal.tables.statistic import StatisticJournal, Statistic, Interval, StatisticRank
+from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES
 
 
-class SummaryProcessing:
+class SummaryProcess:
 
     def __init__(self, log, db):
         self._log = log
@@ -19,9 +20,8 @@ class SummaryProcessing:
             s.query(Interval).delete()
 
     def _raw_statistics_date_range(self, s):
-        start, finish = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
-            filter(StatisticJournal.statistic_diary_id == None,
-                   StatisticJournal.statistic_interval_id == None).one()
+        start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
+            join(StatisticJournal).filter(StatisticJournal.source != None).one()
         return start.date(), finish.date()
 
     def _intervals(self, s, duration, units):
@@ -34,29 +34,27 @@ class SummaryProcessing:
             yield start, next_start
             start = next_start
 
-    def _interval(self, s, start, duration, units):
+    def _interval(self, s, start, duration, units, days):
         interval = s.query(Interval). \
-            filter(Interval.start == start,
+            filter(Interval.time == start,
                    Interval.value == duration,
                    Interval.units == units).one_or_none()
         if not interval:
-            interval = Interval(value=duration, units=units, start=start)
+            interval = Interval(time=start, value=duration, units=units, days=days)
             s.add(interval)
         return interval
 
     def _statistics_missing_values(self, s, start, finish):
-        return s.query(Statistic).join(StatisticJournal). \
-            filter(StatisticJournal.time <= start,
-                   StatisticJournal.time > finish,
-                   Statistic.cls != self,
-                   Statistic.interval_process != None).all()
+        return s.query(Statistic).join(StatisticJournal, Source). \
+            filter(Source.time >= start,
+                   Source.time < finish,
+                   Statistic.summary != None).all()
 
     def _diary_entries(self, s, statistic, start, finish):
-        return [x.value for x in
-                s.query(StatisticJournal).
-                    filter(StatisticJournal.statistic == statistic,
-                           StatisticJournal.time >= start,
-                           StatisticJournal.time < finish).all()]
+        return s.query(StatisticJournal).join(Source). \
+            filter(StatisticJournal.statistic == statistic,
+                   Source.time >= start,
+                   Source.time < finish).all()
 
     def _calculate_value(self, process, values):
         defined = [x for x in values if x is not None]
@@ -79,50 +77,53 @@ class SummaryProcessing:
                 return None, 'Med %s'
         else:
             self._log.warn('No algorithm for "%s"' % process)
+            return None, None
 
-    def _get_statistic(self, s, old_statistic, name):
-        statistic = s.query(Statistic).\
+    def _get_statistic(self, s, root, name):
+        statistic = s.query(Statistic). \
             filter(Statistic.name == name,
-                   Statistic.cls == self).one_or_none()
+                   Statistic.owner == self).one_or_none()
         if not statistic:
-            statistic = Statistic(cls=self, cls_constraint=old_statistic.cls_constraint, name=name,
-                                  units=old_statistic.units)  # todo - dsplay, sort?  encoded in process?
+            statistic = Statistic(name=name, owner=self, units=root.units)
             s.add(statistic)
         return statistic
 
-    def _create_value(self, s, interval, statistic, process, start, values):
-        value, template =  self._calculate_value(process, values)
-        name = template % statistic.name
-        new_statistic = self._get_statistic(s, name)
-        s.add(StatisticJournal(statistic=new_statistic, value=value, time=start, interval=interval))
-        self._log.debug('Created %s=%s at %s' % (statistic, value, interval))
+    def _create_value(self, s, interval, statistic, process, start, data, values):
+        value, template = self._calculate_value(process, values)
+        if value is not None:
+            name = template % statistic.name
+            new_statistic = self._get_statistic(s, statistic, name)
+            s.add(STATISTIC_JOURNAL_CLASSES[data[0].type](
+                statistic=new_statistic, source=interval, value=value))
+            self._log.debug('Created %s=%s at %s' % (statistic, value, interval))
 
     def _create_ranks(self, s, interval, statistic, data):
         # we only rank non-NULL values
-        ordered = sorted([x for x in data if x.value is not None], key=lambda x: x.value, reverse=True)
+        ordered = sorted([journal for journal in data if journal.value is not None],
+                         key=lambda journal: journal.value, reverse=True)
         n = len(ordered)
-        for rank, x in enumerate(ordered, start=1):
+        for rank, journal in enumerate(ordered, start=1):
             percentile = (n - rank) / n * 100
-            s.add(StatisticRank(diary=x, interval=interval, rank=rank, percentile=percentile))
+            s.add(StatisticMeasure(statistic_journal=journal, source=interval, rank=rank, percentile=percentile))
         self._log.debug('Ranked %s' % statistic)
 
     def _create_values(self, duration, units):
         with self._db.session_context() as s:
             for start, finish in self._intervals(s, duration, units):
-                interval = self._interval(s, start, duration, units)
+                interval = self._interval(s, start, duration, units, (finish - start).days)
                 for statistic in self._statistics_missing_values(s, start, finish):
                     data = self._diary_entries(s, statistic, start, finish)
-                    processes = split(r'[\s,]*\[([^\]])\][\s ]*', statistic.interval_process)
+                    processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
                     if processes:
                         values = [x.value for x in data]
                         for process in processes:
-                            self._create_value(s, interval, statistic, process.lower(), start, values)
+                            self._create_value(s, interval, statistic, process.lower(), start, data, values)
                     else:
-                        self._log.warn('No valid process for %s ("%s")' % (statistic, statistic.interval_process))
+                        self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
                     self._create_ranks(s, interval, statistic, data)
 
     def run(self, force=False):
         if force:
             self._delete_all()
-        for interval in (1, 'm'), (1, 'y'):
+        for interval in (1, 'M'), (1, 'y'):
             self._create_values(*interval)

@@ -38,7 +38,8 @@ class Interval(Source):
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     value = Column(Integer)  # null if open (null unit too), otherwise number of days etc (see units)
-    units = Column(Text)   # 'm', 'd' etc
+    units = Column(Text)   # 'M', 'd' etc
+    days = Column(Integer, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL

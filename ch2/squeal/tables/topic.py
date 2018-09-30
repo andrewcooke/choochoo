@@ -78,8 +78,7 @@ class TopicField(Base):
     topic = relationship('Topic',
                          backref=backref('fields', cascade='all, delete-orphan',
                                          passive_deletes=True,
-                                         order_by='TopicField.sort',
-                                         collection_class=ordering_list('sort')))
+                                         order_by='TopicField.sort'))
     type = Column(Integer, nullable=False)  # StatisticType
     sort = Column(Integer)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)

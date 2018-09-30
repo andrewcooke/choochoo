@@ -54,8 +54,7 @@ class ActivityTimespan(Base):
     activity_journal = relationship('ActivityJournal',
                                     backref=backref('timespans', cascade='all, delete-orphan',
                                                     passive_deletes=True,
-                                                    order_by='ActivityTimespan.start',
-                                                    collection_class=ordering_list('start')))
+                                                    order_by='ActivityTimespan.start'))
     start = Column(Epoch, nullable=False)
     finish = Column(Epoch, nullable=False)
     UniqueConstraint('activity_journal_id', 'start')
@@ -70,13 +69,11 @@ class ActivityWaypoint(Base):
     activity_journal = relationship('ActivityJournal',
                                     backref=backref('waypoints', cascade='all, delete-orphan',
                                                     passive_deletes=True,
-                                                    order_by='ActivityWaypoint.time',
-                                                    collection_class=ordering_list('time')))
+                                                    order_by='ActivityWaypoint.time'))
     activity_timespan_id = Column(Integer, ForeignKey('activity_timespan.id'))
     activity_timespan = relationship('ActivityTimespan',
                                      backref=backref('waypoints',
-                                                     order_by='ActivityWaypoint.time',
-                                                     collection_class=ordering_list('time')))
+                                                     order_by='ActivityWaypoint.time'))
     time = Column(Float, primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)

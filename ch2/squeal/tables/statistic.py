@@ -3,7 +3,8 @@ from enum import Enum, IntEnum
 from types import SimpleNamespace
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, inspect
-from sqlalchemy.orm import relationship
+from sqlalchemy.ext.orderinglist import ordering_list
+from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
 from ..types import Cls
@@ -19,7 +20,12 @@ class Statistic(Base):
     description = Column(Text)
     units = Column(Text)
     summary = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
-    sort = Column(Text)  # sorting for display
+    # we need to disambiguate statistics with the same name.
+    # this is done by (1) "owner" (typically the source of the data) and
+    # (2) by some additional (optional) state used by the owner
+    # (eg activity.id so that the same statistic can be used across different activities)
+    owner = Column(Cls, nullable=False)
+    owner_state = Column(Integer)
 
 
 class StatisticType(IntEnum):
@@ -133,13 +139,18 @@ class StatisticJournalText(StatisticJournal):
             return '%s%s' % (self.value, self.units)
 
 
-class StatisticRank(Base):
+class StatisticMeasure(Base):
 
     __tablename__ = 'statistic_rank'
 
     id = Column(Integer, primary_key=True)
     statistic_journal_id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    statistic_journal = relationship('StatisticJournal',
+                                     backref=backref('measures', cascade='all, delete-orphan',
+                                                     passive_deletes=True,
+                                                     order_by='desc(StatisticMeasure.rank)'))
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)  # must be an interval
+    source = relationship('Source')
     rank = Column(Integer, nullable=False)  # 1 is best
     percentile = Column(Float, nullable=False)  # 100 is best
 
