@@ -1,9 +1,6 @@
 
-from types import SimpleNamespace
-
 from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.event import listens_for
-from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref, Session
 
 from .source import SourceType, Source

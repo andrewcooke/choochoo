@@ -29,17 +29,18 @@ reliable enough to avoid errors.
 ### Statistics
 
 A **Statistic** is a simple thing - a name with (optional) units and
-description (in practice they also have "metadata" for display, tracking who
-is responsible for creating new values, etc).  For a Statistic to be useful it
-must also be associated with some values.  More exactly, it must be associated
-with entries in the **StatisticJournal** - each entry combines a (double)
-value with a **Source**.
+description (in practice they also have "metadata" for display,
+tracking who is responsible for creating new values, etc).  For a
+Statistic to be useful it must also be associated with some values.
+More exactly, it must be associated with entries in the
+**StatisticJournal** - each entry combines a value with a **Source**.
 
 There are two kinds of Statistic, which are distinguished by their Sources
 (more on those below):
 
-1. Raw statistics are entered into the system from outside.  For example,
-   values entered into the diary, or values read from a FIT file.
+1. Raw statistics are entered into the system from outside: values
+   entered into the diary, values read from a FIT file, or "constants"
+   entered by the user from the command line.
 
 2. Derived statistics are calculated from other, pre-existing statistics.
 
@@ -49,8 +50,8 @@ why I used "statistic" with a lower case "s" - when I am referring to a
 particular table I will revert to capitalized names.)
 
 Many statistics have ranking and percentile information.  These behave
-similarly to derived statistics (they are associated with Interval Sources),
-but are stored separately.
+similarly to derived statistics (they are associated with Interval
+Sources), but are stored separately.
 
 There are three types of StatisticJournal, for values that are integers,
 floats and text.

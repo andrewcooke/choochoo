@@ -2,7 +2,6 @@
 from enum import IntEnum
 
 from sqlalchemy import ForeignKey, Column, Integer, Text
-from sqlalchemy.orm import relationship
 
 from ..support import Base
 from ..types import Epoch
