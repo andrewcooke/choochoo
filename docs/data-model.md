@@ -100,12 +100,15 @@ Two inheritance hierarchies are used, for Source and StatisticJournal.  In
 both cases the structure is very simple, with all concrete classes being
 direct children of the base.
 
-Source has three children: Interval, ActivityJournal, and TopicJournal.
+Source has four children: Interval, ActivityJournal, TopicJournal and
+**Constant** (arbitrary values entered by the user, but not on a
+scheduled basis - FTHR, for example).
 
-StatisticJournal also has three children: StatisticJournalInteger,
-StatisticJournalFloat and StatisticJournalText.  StatisticJournal has a
-foreign key relationship with Source, so that when a Source is deleted the
-corresponding statistics are deleted (via cascade).
+StatisticJournal has three children: **StatisticJournalInteger**,
+**StatisticJournalFloat** and **StatisticJournalText** - used for
+storing values of the respective types.  StatisticJournal has a
+foreign key relationship with Source, so that when a Source is deleted
+the corresponding statistics are deleted (via cascade).
 
 ### Correctness
 
@@ -134,6 +137,9 @@ The above "deletion of associated intervals" can be automated within
 SQLAlchemy using the `before_flush()` hook.  Whenever the database is going to
 be modified (via the ORM) we can check and automatically delete appropriate
 Intervals.
+
+In addition, the association of statistics with TopicJournal entries
+is peformed by an event-driven callback.
 
 ### Rules
 
@@ -199,5 +205,5 @@ Example Topics include:
   the injury and, for a particular medicine or treatment, might be on certain
   days.
 
-* Training plans.  In this case the tree structure of Topics is used heavily
-  and individual entries may be only a single day.
+* Training plans.  In this case the tree structure of Topics is
+  important and individual entries may be for only a single day.
