@@ -191,8 +191,9 @@ Direct data input, via the diary, is structured with Topics.  These are
 categories, with a tree-like structure, that are scheduled to appear at
 certain times.
 
-A Topic can be associated with various Statistics.  The associated
-StatisticJournal entries can then be read and modified within the diary.
+A Topic can be associated with various Statistics (via
+**TopicFields**).  The appropriate StatisticJournal entries can then
+be read and modified within the diary.
 
 Configuration of this is necessarily quite complex, but a default
 configuration is provided with Choochoo.
