@@ -33,13 +33,8 @@ class Epoch(TypeDecorator):
     def process_literal_param(self, datetime, dialect):
         if datetime is None:
             return datetime
-        if isinstance(datetime, str):
-            datetime = parse_datetime(datetime)
-        elif isinstance(datetime, dt.date):
-            datetime = dt.datetime.combine(datetime, dt.time())
-        elif isinstance(datetime, int) or isinstance(datetime, float):
-            datetime = dt.datetime.utcfromtimestamp(datetime)
-        return datetime.replace(tzinfo=dt.timezone.utc).timestamp()
+        else:
+            return self.to_time(datetime).replace(tzinfo=dt.timezone.utc).timestamp()
 
     process_bind_param = process_literal_param
 
@@ -48,6 +43,18 @@ class Epoch(TypeDecorator):
             return value
         else:
             return dt.datetime.utcfromtimestamp(value)
+
+    @staticmethod
+    def to_time(datetime):
+        if datetime is None:
+            return datetime
+        if isinstance(datetime, str):
+            datetime = parse_datetime(datetime)
+        elif isinstance(datetime, dt.date):
+            datetime = dt.datetime.combine(datetime, dt.time())
+        elif isinstance(datetime, int) or isinstance(datetime, float):
+            datetime = dt.datetime.utcfromtimestamp(datetime)
+        return datetime
 
 
 class Cls(TypeDecorator):

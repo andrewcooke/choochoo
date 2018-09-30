@@ -1,7 +1,10 @@
 
 from enum import IntEnum
+from itertools import chain
 
 from sqlalchemy import ForeignKey, Column, Integer, Text
+from sqlalchemy.event import listens_for
+from sqlalchemy.orm import Session
 
 from ..support import Base
 from ..types import Epoch
@@ -30,6 +33,23 @@ class Source(Base):
         'polymorphic_on': type
     }
 
+    @classmethod
+    def clear_intervals(cls, session):
+        from ...stoats.summary import SummaryProcess
+        intervals = set()
+        for instances in [session.new, session.dirty, session.deleted]:
+            sources = [instance for instance in instances
+                       if isinstance(instance, Source) and instance.time is not None]
+            intervals |= set(chain(*[SummaryProcess.intervals_including(Epoch.to_time(source.time))
+                                     for source in sources]))
+        for start, (value, units) in intervals:
+            interval = session.query(Interval).\
+                filter(Interval.time == start,
+                       Interval.value == value,
+                       Interval.units == units).one_or_none()
+            if interval:
+                session.delete(interval)
+
 
 class Interval(Source):
 
@@ -46,3 +66,8 @@ class Interval(Source):
 
     def range(self):
         return self.time, add_duration(self.time, (self.value, self.units))
+
+
+@listens_for(Session, 'before_flush')
+def populate(session, context, instances):
+    Source.clear_intervals(session)

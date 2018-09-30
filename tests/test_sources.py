@@ -1,4 +1,4 @@
-
+from subprocess import run
 from tempfile import NamedTemporaryFile
 
 from sqlalchemy.sql.functions import count
@@ -95,6 +95,8 @@ def test_sources():
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.time == '2018-09-29').one()
             s.delete(d)
+
+        run('sqlite3 %s ".dump"' % f.name, shell=True)
 
         with db.session_context() as s:
 

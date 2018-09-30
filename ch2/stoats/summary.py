@@ -1,10 +1,11 @@
 
+import datetime as dt
 from re import split
 
 from sqlalchemy import func
 
-from ch2.squeal.tables.source import Interval, Source
-from ..lib.date import add_duration
+from ..lib.date import add_duration, MONTH, YEAR
+from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES
 
 
@@ -27,7 +28,7 @@ class SummaryProcess:
     def _intervals(self, s, duration, units):
         start, finish = self._raw_statistics_date_range(s)
         start = start.replace(day=1)
-        if units == 'y':
+        if units == YEAR:
             start = start.replace(month=1)
         while start < finish:
             next_start = add_duration(start, (duration, units))
@@ -125,5 +126,11 @@ class SummaryProcess:
     def run(self, force=False):
         if force:
             self._delete_all()
-        for interval in (1, 'M'), (1, 'y'):
+        for interval in (1, MONTH), (1, YEAR):
             self._create_values(*interval)
+
+    @classmethod
+    def intervals_including(cls, time):
+        # this MUST match the intervals used in processing above
+        yield (dt.datetime(time.year, 1, 1), (1, YEAR))
+        yield (dt.datetime(time.year, time.month, 1), (1, MONTH))

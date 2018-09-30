@@ -68,7 +68,7 @@ class Topic(Base):
 
 class TopicField(Base):
 
-    __tablename__ = 'topic_statistic'
+    __tablename__ = 'topic_field'
 
     id = Column(Integer, primary_key=True)
     topic_id = Column(Integer, ForeignKey('topic.id', ondelete='cascade'), nullable=False)
