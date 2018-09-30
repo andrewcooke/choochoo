@@ -99,22 +99,29 @@ class TopicJournal(Source):
         'polymorphic_identity': SourceType.TOPIC
     }
 
-    def on_add(self, session):
+    def populate(self, session):
         if self.time is None:
             raise Exception('No time defined')
         self.journal = {}
         for field in self.topic.fields:
-            journal = session.query(StatisticJournal). \
-                filter(StatisticJournal.source == self,
-                       StatisticJournal.time == self.time).one_or_none()
+            if self.id:
+                journal = session.query(StatisticJournal). \
+                    filter(StatisticJournal.source == self,
+                           StatisticJournal.statistic == field.statistic).one_or_none()
+            else:
+                # we're not yet registered with the database so cannot search for matching
+                # StatisticJournal entries.  either this is an error or (mire likely!) we
+                # did query, found nothing, and are creating a new entry.
+                journal = None
             if not journal:
                 journal = STATISTIC_JOURNAL_CLASSES[field.type](statistic=field.statistic, source=self)
                 session.add(journal)
             self.journal[field] = journal
 
 
+@listens_for(Session, 'loaded_as_persistent')
 @listens_for(Session, 'transient_to_pending')
 def populate(session, instance):
     if isinstance(instance, TopicJournal):
         with session.no_autoflush:
-            instance.on_add(session)
+            instance.populate(session)
