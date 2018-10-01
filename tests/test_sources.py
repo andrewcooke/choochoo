@@ -1,13 +1,11 @@
+
 from subprocess import run
 from tempfile import NamedTemporaryFile
 
 from sqlalchemy.sql.functions import count
 
-from ch2.args import DATABASE, mm, m, V, NamespaceWithVariables, parser
-from ch2.config.database import config
+from ch2.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
-from ch2.log import make_log
-from ch2.squeal.database import Database
 from ch2.squeal.tables.source import Source, Interval
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic
 from ch2.squeal.tables.topic import TopicJournal, Topic
@@ -23,15 +21,7 @@ def test_sources():
 
     with NamedTemporaryFile() as f:
 
-        args = [mm(DATABASE), f.name, m(V), '5']
-        c = config(*args)
-        acooke(c)
-
-        # todo - this should be simpler
-        p = parser()
-        a = NamespaceWithVariables(p.parse_args(args))
-        log = make_log(a)
-        db = Database(a, log)
+        log, db = bootstrap_file(f, acooke, m(V), '5')
 
         with db.session_context() as s:
 

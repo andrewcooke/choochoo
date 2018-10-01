@@ -7,7 +7,7 @@ from os.path import isdir, join, basename, splitext
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from .args import PATH, ACTIVITY, EDIT_ACTIVITIES, FORCE, MONTH, YEAR
+from .args import PATH, ACTIVITY, FORCE, MONTH, YEAR
 from .fit.format.read import filtered_records
 from .fit.format.records import fix_degrees
 from .fit.profile.types import timestamp_to_datetime
@@ -37,7 +37,14 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
                 activity = Activity(name=activity_name)
                 session.add(activity)
             else:
-                raise Exception('Activity "%s" is not defined - see ch2 %s' % (activity, EDIT_ACTIVITIES))
+                activities = session.query(Activity).all()
+                if activities:
+                    log.info('Available activities:')
+                    for activity in activities:
+                        log.info('%s - %s' % (activity.name, activity.description))
+                else:
+                    log.error('No activities defined - configure system correctly')
+                raise Exception('Activity "%s" is not defined' % activity_name)
 
     path = args.path(PATH, index=0, rooted=False)
     if isdir(path):
@@ -69,24 +76,23 @@ def add_file(log, session, activity, path, force):
     if force:
         session.query(ActivityJournal).filter(ActivityJournal.fit_file == path).delete()
     data, types, messages, records = filtered_records(log, path)
-    diary = ActivityJournal(activity=activity, fit_file=path, name=splitext(basename(path))[0])
-    session.add(diary)
+    journal = ActivityJournal(activity=activity, fit_file=path, name=splitext(basename(path))[0])
+    session.add(journal)
     timespan, warned, latest = None, 0, 0
     for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0):
         record = record.force(fix_degrees)
         try:
             if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
                 if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
-                    if not diary.start:
-                        diary.date = record.value.timestamp
-                        diary.start = record.value.timestamp
-                    timespan = ActivityTimespan(activity_diary=diary,
+                    if not journal.time:
+                        journal.time = record.value.timestamp
+                    timespan = ActivityTimespan(activity_journal=journal,
                                                 start=datetime_to_epoch(record.value.timestamp))
                     session.add(timespan)
                 if record.name == 'record':
-                    waypoint = ActivityWaypoint(activity_diary=diary,
+                    waypoint = ActivityWaypoint(activity_journal=journal,
                                                 activity_timespan=timespan,
-                                                epoch=datetime_to_epoch(record.value.timestamp),
+                                                time=datetime_to_epoch(record.value.timestamp),
                                                 latitude=record.none.position_lat,
                                                 longitude=record.none.position_long,
                                                 heart_rate=record.none.heart_rate,
@@ -97,7 +103,7 @@ def add_file(log, session, activity, path, force):
                     session.add(waypoint)
                 if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'stop_all':
                     timespan.finish = datetime_to_epoch(record.value.timestamp)
-                    diary.finish = record.value.timestamp
+                    journal.finish = record.value.timestamp
                     timespan = None
                 if record.name == 'record':
                     latest = record.timestamp
@@ -106,12 +112,13 @@ def add_file(log, session, activity, path, force):
                     log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
                              (path, timestamp_to_datetime(record.timestamp)))
         except (AttributeError, TypeError) as e:
+            raise e
             if warned < 10:
                 log.warn('Error while reading %s - some data may be missing (%s)' % (path, e))
             elif warned == 10:
                 log.warn('No more warnings will be given for %s' % path)
             warned += 1
-    return diary
+    return journal
 
 
 class Chunk:

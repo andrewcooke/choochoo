@@ -49,7 +49,7 @@ class ActivityTimespan(Base):
     __tablename__ = 'activity_timespan'
 
     id = Column(Integer, primary_key=True)
-    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
+    activity_journal_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
                                  nullable=False)
     activity_journal = relationship('ActivityJournal',
                                     backref=backref('timespans', cascade='all, delete-orphan',
@@ -74,7 +74,7 @@ class ActivityWaypoint(Base):
     activity_timespan = relationship('ActivityTimespan',
                                      backref=backref('waypoints',
                                                      order_by='ActivityWaypoint.time'))
-    time = Column(Float, primary_key=True)
+    time = Column(Epoch, primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
     heart_rate = Column(Integer)

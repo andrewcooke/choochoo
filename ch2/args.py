@@ -6,20 +6,15 @@ from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
+
 PROGNAME = 'ch2'
 COMMAND = 'command'
 TOPIC = 'topic'
 
 ADD_ACTIVITY = 'add-activity'
-ADD_FTHR = 'add-fthr'
-ADD_PLAN = 'add-plan'
-ADD_SUMMARY = 'add-summary'
-CREATE_DATABASE = 'create-database'
+DEFAULT_CONFIG = 'default-config'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
-EDIT_ACTIVITIES = 'edit-activities'
-EDIT_INJURIES = 'edit-injuries'
-EDIT_SCHEDULES = 'edit-schedules'
 HELP = 'help'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
@@ -142,43 +137,14 @@ def parser():
                               help='a fit file or directory containing fit files')
     add_activity.set_defaults(command=ADD_ACTIVITY)
 
-    add_fthr = subparsers.add_parser(ADD_FTHR,
-                                     help='define a new set of HR zones - see `%s %s -h` for more details' % (PROGNAME, ADD_FTHR))
-    add_fthr.add_argument(FTHR, action='store', metavar='FTHR', nargs=1, type=int,
-                          help='the FTHR')
-    add_fthr.add_argument(DATE, action='store', metavar='DATE', nargs='?',
-                          help='an optional date')
-    add_fthr.set_defaults(command=ADD_FTHR)
-
-    add_plan = subparsers.add_parser(ADD_PLAN,
-                                     help='training plans - see `%s %s -h` for more details' % (PROGNAME, ADD_PLAN))
-    add_plan.add_argument(mm(LIST), action='store_true',
-                          help='list available plans')
-    add_plan.add_argument(PLAN, action='store', metavar='PARAM', nargs='*',
-                          help='the plan name and possible parameters')
-    add_plan.set_defaults(command=ADD_PLAN)
-
-    add_summary = subparsers.add_parser(ADD_SUMMARY,
-                                        help='create a new summary (or summaries) - see `%s %s -h` for more details' % (PROGNAME, ADD_SUMMARY))
-    add_summary.add_argument(m(F), mm(FORCE), action='store_true', help='re-generate existing summary statistics')
-    add_summary_period = add_summary.add_mutually_exclusive_group()
-    add_summary_period.add_argument(mm(MONTH), action='store_true', help='generate monthly summary (no start / finish)')
-    add_summary_period.add_argument(mm(YEAR), action='store_true', help='generate yearly summary (no start / fininsh)')
-    add_summary.add_argument(ACTIVITY, action='store', metavar='ACTIVITY', nargs=1,
-                             help='an activity name')
-    add_summary.add_argument(START, action='store', metavar='DATE', nargs='?',
-                             help='start date (inclusive)')
-    add_summary.add_argument(FINISH, action='store', metavar='DATE', nargs='?',
-                             help='finish date (inclusive)')
-    add_summary.set_defaults(command=ADD_SUMMARY)
-
-    data = subparsers.add_parser(NO_OP,
+    noop = subparsers.add_parser(NO_OP,
                                  help='used within jupyter (no-op from cmd line)')
-    data.set_defaults(command=NO_OP)
+    noop.set_defaults(command=NO_OP)
 
-    diary = subparsers.add_parser(CREATE_DATABASE,
-                                  help='create the database if missing')
-    diary.set_defaults(command=CREATE_DATABASE)
+    default_config = subparsers.add_parser(DEFAULT_CONFIG,
+                                           help='configure the default database ' +
+                                                '(see docs for full configuration instructions)')
+    default_config.set_defaults(command=DEFAULT_CONFIG)
 
     diary = subparsers.add_parser(DIARY,
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
@@ -216,20 +182,6 @@ def parser():
                           help='additional warning messages')
     dump_fit.set_defaults(command=DUMP_FIT, dump_format=TABLES)
 
-    edit_activities = subparsers.add_parser(EDIT_ACTIVITIES,
-                                            help='manage activity entries - see `%s %s -h` for more details' %
-                                                 (PROGNAME, EDIT_ACTIVITIES))
-    edit_activities.set_defaults(command=EDIT_ACTIVITIES)
-
-    edit_injuries = subparsers.add_parser(EDIT_INJURIES,
-                                          help='manage injury entries - see `%s %s -h` for more details' %
-                                               (PROGNAME, EDIT_INJURIES))
-    edit_injuries.set_defaults(command=EDIT_INJURIES)
-
-    edit_schedules = subparsers.add_parser(EDIT_SCHEDULES,
-                                           help='manage schedules - see `%s %s -h` for more details' % (PROGNAME, EDIT_SCHEDULES))
-    edit_schedules.set_defaults(command=EDIT_SCHEDULES)
-
     help = subparsers.add_parser(HELP,
                                  help='display help - ' + 'see `%s %s -h` for more details' % (PROGNAME, HELP))
     help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
@@ -247,3 +199,24 @@ def parser():
 
     return parser
 
+
+def bootstrap(args=None):
+
+    from .log import make_log
+    from .squeal.database import Database
+
+    p = parser()
+    a = NamespaceWithVariables(p.parse_args(args))
+    log = make_log(a)
+    db = Database(a, log)
+
+    return log, db
+
+
+def bootstrap_file(file, configurator, *args):
+
+    from .config.database import config
+
+    args = [mm(DATABASE), file.name] + list(args)
+    configurator(config(*args))
+    return bootstrap(args)

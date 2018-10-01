@@ -1,8 +1,8 @@
 
 from .activities import add_activity
-from .args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, DUMP_FIT, EDIT_INJURIES, \
-    ADD_PLAN, PACKAGE_FIT_PROFILE, EDIT_SCHEDULES, EDIT_ACTIVITIES, ADD_ACTIVITY, ADD_FTHR, CREATE_DATABASE, \
-    ADD_SUMMARY, NO_OP
+from .args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, DUMP_FIT, \
+    PACKAGE_FIT_PROFILE, ADD_ACTIVITY, NO_OP, DEFAULT_CONFIG
+from .default_config import default_config
 from .diary import diary
 from .fit.profile.profile import package_fit_profile
 from .fit.summary import dump_fit
@@ -23,6 +23,7 @@ at the command line.
 
 
 COMMANDS = {ADD_ACTIVITY: add_activity,
+            DEFAULT_CONFIG: default_config,
             DIARY: diary,
             DUMP_FIT: dump_fit,
             HELP: help,
@@ -32,6 +33,10 @@ COMMANDS = {ADD_ACTIVITY: add_activity,
 
 
 def main():
+
+    # don't use bootstrap because we don't want database created for help,
+    # need to worry about TUI. etc
+
     p = parser()
     args = NamespaceWithVariables(p.parse_args())
     command_name = args[COMMAND] if COMMAND in args else None
