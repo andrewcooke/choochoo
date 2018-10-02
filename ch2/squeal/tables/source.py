@@ -68,7 +68,9 @@ class Interval(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     value = Column(Integer)  # null if open (null unit too), otherwise number of days etc (see units)
     units = Column(Text)   # 'M', 'd' etc
+    # these next two values make it easier to work with these even though they're duplicating data
     days = Column(Integer, nullable=False)
+    finish = Column(Epoch, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL

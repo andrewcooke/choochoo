@@ -1,11 +1,12 @@
+
 from sqlalchemy import desc
 from sqlalchemy.sql.functions import count
 
-from .args import DATE, NAME, VALUE, DELETE, FORCE, mm
-from .squeal.database import Database
-from .squeal.tables.constant import Constant, ConstantJournal
-from .squeal.tables.source import Source
-from .squeal.tables.statistic import StatisticJournal, Statistic
+from ..args import DATE, NAME, VALUE, DELETE, FORCE, mm
+from ..squeal.database import Database
+from ..squeal.tables.constant import Constant, ConstantJournal
+from ..squeal.tables.source import Source
+from ..squeal.tables.statistic import StatisticJournal, Statistic
 
 
 def constant(args, log):
@@ -68,6 +69,7 @@ def delete_entry(log, s, constant, date, value, force):
             raise Exception('Provide value or use %s' % mm(FORCE))
         log.info('Deleting value %s from %s' % (journal.value, journal.time))
         s.delete(journal.source)
+        log.warn('You may want to (re-)calculate statistics')
     else:
         log.warn('No value found for %s at (or before) %s' % (constant.statistic.name, date))
 
@@ -79,6 +81,7 @@ def set_entry(log, s, constant, date, value):
                          constant.statistic.name, constant.statistic.units, constant.statistic.summary,
                          Constant, None, journal, value, constant.type)
     log.info('Added value %s at %s' % (value, date))
+    log.warn('You may want to (re-)calculate statistics')
 
 
 def print_entry(log, s, constant, date):
@@ -99,6 +102,7 @@ def delete_all(log, s, constant, force):
                 filter(StatisticJournal.statistic == constant.statistic).all():
             log.info('Deleting value %s from %s' % (journal.value, journal.time))
             s.delete(journal.source)
+        log.warn('You may want to (re-)calculate statistics')
     else:
         log.info('No entries to delete for %s' % constant.statistic.name)
 
@@ -106,7 +110,7 @@ def delete_all(log, s, constant, force):
 def print_description(log, s, constant):
     print('name: %s' % constant.statistic.name)
     if constant.statistic.description:
-        print('description: %s', constant.statistic.description)
+        print('description: %s' % constant.statistic.description)
     else:
         log.warn('No description for %s' % constant.statistic.name)
     found = False

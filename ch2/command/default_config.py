@@ -1,7 +1,7 @@
 
-from .config.database import Config
-from .config.default import default
-from .squeal.database import Database
+from ..config.database import Config
+from ..config.default import default
+from ..squeal.database import Database
 
 
 def default_config(args, log):

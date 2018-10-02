@@ -3,6 +3,7 @@ import datetime as dt
 from re import split
 
 from sqlalchemy import func
+from sqlalchemy.sql.functions import count
 
 from ..lib.date import add_duration, MONTH, YEAR
 from ..squeal.tables.source import Interval, Source
@@ -15,10 +16,39 @@ class SummaryStatistics:
         self._log = log
         self._db = db
 
-    def _delete_all(self):
+    def run(self, force=False, date=None):
+        if force:
+            self._delete(date=date)
+        for interval in (1, MONTH), (1, YEAR):
+            self._create_values(*interval)
+
+    @classmethod
+    def intervals_including(cls, time):
+        # this MUST match the intervals used in processing above
+        yield (dt.datetime(time.year, 1, 1), (1, YEAR))
+        yield (dt.datetime(time.year, time.month, 1), (1, MONTH))
+
+    def _delete(self, date=None):
+        # we delete the intervals that all summary statistics depend on and they will cascade
         with self._db.session_context() as s:
-            # we delete the intervals that all summary statistics depend on and they will cascade
-            s.query(Interval).delete()
+            for repeat in range(2):
+                if repeat:
+                    q = s.query(Interval)
+                else:
+                    q = s.query(count(Interval.id))
+                if date:
+                    q = q.filter(Interval.finish >= date)
+                if repeat:
+                    for interval in q.all():
+                        self._log.debug('Deleting %s interval from %s to %s' %
+                                        (interval.units, interval.time, interval.finish))
+                        s.delete(interval)
+                else:
+                    n = q.scalar()
+                    if n:
+                        self._log.warn('Deleting %d intervals' % n)
+                    else:
+                        self._log.warn('No intervals to delete')
 
     def _raw_statistics_date_range(self, s):
         start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
@@ -35,13 +65,14 @@ class SummaryStatistics:
             yield start, next_start
             start = next_start
 
-    def _interval(self, s, start, duration, units, days):
+    def _interval(self, s, start, finish, duration, units):
         interval = s.query(Interval). \
             filter(Interval.time == start,
                    Interval.value == duration,
                    Interval.units == units).one_or_none()
         if not interval:
-            interval = Interval(time=start, value=duration, units=units, days=days)
+            interval = Interval(time=start, finish=finish, value=duration, units=units,
+                                days=(finish - start).days)
             s.add(interval)
         return interval
 
@@ -111,7 +142,7 @@ class SummaryStatistics:
     def _create_values(self, duration, units):
         with self._db.session_context() as s:
             for start, finish in self._intervals(s, duration, units):
-                interval = self._interval(s, start, duration, units, (finish - start).days)
+                interval = self._interval(s, start, finish, duration, units)
                 for statistic in self._statistics_missing_values(s, start, finish):
                     data = self._diary_entries(s, statistic, start, finish)
                     processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
@@ -123,14 +154,3 @@ class SummaryStatistics:
                         self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
                     self._create_ranks(s, interval, statistic, data)
 
-    def run(self, force=False):
-        if force:
-            self._delete_all()
-        for interval in (1, MONTH), (1, YEAR):
-            self._create_values(*interval)
-
-    @classmethod
-    def intervals_including(cls, time):
-        # this MUST match the intervals used in processing above
-        yield (dt.datetime(time.year, 1, 1), (1, YEAR))
-        yield (dt.datetime(time.year, time.month, 1), (1, MONTH))

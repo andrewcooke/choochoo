@@ -1,13 +1,14 @@
 
-from .activities import add_activity
 from .args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, DUMP_FIT, \
-    PACKAGE_FIT_PROFILE, ADD_ACTIVITY, NO_OP, DEFAULT_CONFIG, CONSTANT
-from .constant import constant
-from .default_config import default_config
-from .diary import diary
+    PACKAGE_FIT_PROFILE, ADD_ACTIVITY, NO_OP, DEFAULT_CONFIG, CONSTANT, STATISTICS
+from .command.add_activity import add_activity
+from .command.constant import constant
+from .command.default_config import default_config
+from .command.diary import diary
+from .command.statistics import statistics
 from .fit.profile.profile import package_fit_profile
 from .fit.summary import dump_fit
-from .help import help
+from ch2.command.help import help
 from .log import make_log
 from .plan import add_plan
 from .squeal.database import Database
@@ -31,6 +32,7 @@ COMMANDS = {ADD_ACTIVITY: add_activity,
             HELP: help,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,
+            STATISTICS: statistics,
             }
 
 

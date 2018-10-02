@@ -3,9 +3,10 @@ from subprocess import run
 from tempfile import NamedTemporaryFile
 
 from ch2 import constant
-from ch2.activities import add_activity
+from ch2.command.add_activity import add_activity
 from ch2.args import bootstrap_file, m, V, DEV, mm
 from ch2.config.default import default
+from ch2.stoats import ActivityStatistics, run_statistics
 
 
 def test_activities():
@@ -25,3 +26,6 @@ def test_activities():
         add_activity(args, log)
 
         run('sqlite3 %s ".dump"' % f.name, shell=True)
+
+        run_statistics(log, db, force=True, date='2018-12-01')
+        run_statistics(log, db, force=True, date='2018-01-01')

@@ -1,15 +1,16 @@
+
 from glob import glob
 from os import stat
 from os.path import isdir, join, basename, splitext
 
-from .args import PATH, ACTIVITY, FORCE
-from .fit.format.read import filtered_records
-from .fit.format.records import fix_degrees
-from .fit.profile.types import timestamp_to_datetime
-from .squeal.database import Database
-from .squeal.tables.activity import Activity, FileScan, ActivityJournal, ActivityTimespan, ActivityWaypoint
-from .stoats.activity import ActivityStatistics
-from .utils import datetime_to_epoch
+from ..args import PATH, ACTIVITY, FORCE
+from ..fit.format.read import filtered_records
+from ..fit.format.records import fix_degrees
+from ..fit.profile.types import timestamp_to_datetime
+from ..squeal.database import Database
+from ..squeal.tables.activity import Activity, FileScan, ActivityJournal, ActivityTimespan, ActivityWaypoint
+from ..stoats import run_statistics
+from ..utils import datetime_to_epoch
 
 
 def add_activity(args, log):
@@ -24,8 +25,8 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
     force = args[FORCE]
     activity = args[ACTIVITY][0]
     path = args.path(PATH, index=0, rooted=False)
-    for source_id in FITImporter(log, db, activity, path).run(force):
-        ActivityStatistics(log, db, activity).run(source_id)
+    FITImporter(log, db, activity, path).run(force=force)
+    run_statistics(log, db, force=force)
 
 
 class FITImporter:
@@ -37,14 +38,11 @@ class FITImporter:
         self._path = path
 
     def run(self, force=False):
-        sources = []
         with self._db.session_context() as s:
             activity = Activity.lookup(self._log, s, self._activity_name)
             for file in self._modified_files(s, force):
                 self._log.info('Scanning %s' % file)
-                sources.append(self._import(s, file, activity, force))
-            s.flush()  # load ids
-            return [source.id for source in sources]
+                self._import(s, file, activity, force)
 
     def _modified_files(self, s, force):
         path = self._path
@@ -117,4 +115,3 @@ class FITImporter:
                 elif warned == 10:
                     self._log.warn('No more warnings will be given for %s' % path)
                 warned += 1
-        return journal

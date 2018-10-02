@@ -3,24 +3,60 @@ import datetime as dt
 from collections.__init__ import deque, Counter
 from itertools import chain
 
-from ch2.stoats.heart_rate import hr_zones
+from sqlalchemy.sql.functions import count
+
 from .names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_OVER_M, BPM
 from ..squeal.tables.activity import Activity, ActivityJournal
-from ..squeal.tables.statistic import StatisticJournalFloat
+from ..squeal.tables.source import Source
+from ..squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, Statistic
+from ..stoats.heart_rate import hr_zones
 
 
 class ActivityStatistics:
 
-    def __init__(self, log, db, activity):
+    def __init__(self, log, db):
         self._log = log
         self._db = db
-        self._activity_name = activity
 
-    def run(self, source_id):
+    def run(self, force=False, date=None):
         with self._db.session_context() as s:
-            activity = Activity.lookup(self._log, s, self._activity_name)
-            journal = s.query(ActivityJournal).filter(ActivityJournal.id == source_id).one()
+            for activity in s.query(Activity).all():
+                self._log.debug('Checking statistics for activity %s' % activity.name)
+                if force:
+                    self._delete_activity(s, activity, date=date)
+                self._run_activity(s, activity, force=force, date=date)
+
+    def _delete_activity(self, s, activity, date=None):
+        # we can't delete the source because that's the activity journal.
+        # so instead we wipe all statistics that are owned by us.
+        # we do this in SQL for speed, but are careful to use the parent node.
+        for repeat in range(2):
+            if repeat:
+                q = s.query(StatisticJournal)
+            else:
+                q = s.query(count(StatisticJournal.id))
+            q = q.join(Statistic, Source, ActivityJournal). \
+                filter(Statistic.owner == self,
+                       ActivityJournal.activity == activity)
+            if date:
+                q = q.filter(Source.time >= date)
+            if repeat:
+                for journal in q.all():
+                    self._log.debug('Deleting %s on %s' % (journal.statistic.name, journal.source.time))
+                    s.delete(journal)
+            else:
+                n = q.scalar()
+                if n:
+                    self._log.warn('Deleting %d statistics' % n)
+                else:
+                    self._log.warn('No statistics to delete')
+
+    def _run_activity(self, s, activity, force=False, date=None):
+        for journal in s.query(ActivityJournal).outerjoin(Activity, StatisticJournal). \
+                filter(Activity.id == activity.id,
+                       StatisticJournal.source == None).all():
+            self._log.debug('Adding statistics for activity journal on %s' % journal.time)
             self._add_stats(s, journal, activity)
 
     def _add_stats(self, s, journal, activity):

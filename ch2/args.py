@@ -19,6 +19,7 @@ DUMP_FIT = 'dump-fit'
 HELP = 'help'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
+STATISTICS = 'statistics'
 
 ACTIVITY = 'activity'
 AFTER = 'after'
@@ -211,6 +212,14 @@ def parser():
     package_fit_profile.add_argument(m(W), mm(WARN), action='store', metavar='name',
                                      help='additional warning messages')
     package_fit_profile.set_defaults(command=PACKAGE_FIT_PROFILE)
+
+    statistics = subparsers.add_parser(STATISTICS,
+                                       help='(re-)generate statistics - ' +
+                                            'see `%s %s -h` for more details' % (PROGNAME, STATISTICS))
+    statistics.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
+    statistics.add_argument(DATE, action='store', nargs='?', metavar=DATE,
+                            help='date from which statistics are deleted')
+    statistics.set_defaults(command=STATISTICS)
 
     return parser
 
