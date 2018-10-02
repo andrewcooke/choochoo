@@ -21,7 +21,7 @@ def test_sources():
 
     with NamedTemporaryFile() as f:
 
-        args, log, db = bootstrap_file(f, acooke, m(V), '5')
+        args, log, db = bootstrap_file(f, m(V), '5', configurator=acooke)
 
         with db.session_context() as s:
 

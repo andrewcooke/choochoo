@@ -9,7 +9,9 @@ from ..squeal.tables.topic import Topic, TopicField
 def default(config):
     with config.session_context() as s:
         fthr = s.add(Constant(type=StatisticType.INTEGER,
-                              statistic=s.add(Statistic(name='FTHR', owner=Constant, units=BPM))))
+                              statistic=s.add(Statistic(name='FTHR', owner=Constant, units=BPM,
+                                                        description='''Heart rate at functional threshold.
+See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0'''))))
         diary = s.add(Topic(name='Diary'))
         s.add(TopicField(topic=diary, sort=10, type=StatisticType.TEXT,
                          statistic=s.add(Statistic(name='Notes', owner=diary))))

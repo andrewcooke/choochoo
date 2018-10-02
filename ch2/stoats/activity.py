@@ -37,11 +37,11 @@ class ActivityStatistics:
         zones = hr_zones(self._log, s, journal.time)
         if zones:
             for (zone, frac) in Zones(self._log, journal, zones).zones:
-                self._add_float_stat(self._log, s, journal, PERCENT_IN_Z % zone, None, 100 * frac, PC)
+                self._add_float_stat(s, journal, activity, PERCENT_IN_Z % zone, None, 100 * frac, PC)
             for (zone, frac) in Zones(self._log, journal, zones).zones:
-                self._add_float_stat(self._log, s, journal, TIME_IN_Z % zone, None, frac * totals.time, S)
+                self._add_float_stat(s, journal, activity, TIME_IN_Z % zone, None, frac * totals.time, S)
             for target in HR_MINUTES:
-                heart_rates = sorted(MedianHRForTime(journal, target * 60).heart_rates(), reverse=True)
+                heart_rates = sorted(MedianHRForTime(self._log, journal, target * 60).heart_rates(), reverse=True)
                 if heart_rates:
                     self._add_float_stat(s, journal, activity, MAX_MED_HR_OVER_M % target, MAX, heart_rates[0], BPM)
         else:
@@ -76,10 +76,10 @@ class Chunk:
         return self.__diff(1, lambda w: w.distance)
 
     def time(self):
-        return self.__diff(-1, lambda w: w.time, dt.timedelta(0))
+        return self.__diff(-1, lambda w: w.time, dt.timedelta(0)).total_seconds()
 
     def time_delta(self):
-        return self.__diff(1, lambda w: w.time, dt.timedelta(0))
+        return self.__diff(1, lambda w: w.time, dt.timedelta(0)).total_seconds()
 
     def heart_rates(self):
         return (waypoint.heart_rate for waypoint in self.__waypoints if waypoint.heart_rate is not None)
@@ -129,7 +129,7 @@ class TimeForDistance(Chunks):
                     chunks[0].popleft()
                     if not chunks[0]:
                         chunks.popleft()
-                time = sum(chunk.time().total_seconds() for chunk in chunks)
+                time = sum(chunk.time() for chunk in chunks)
                 yield time * self.__distance / distance
 
 
@@ -143,7 +143,7 @@ class MedianHRForTime(Chunks):
 
     def _max_gap(self, chunks):
         return max(c1[0].activity_timespan.start - c2[0].activity_timespan.finish
-                   for c1, c2 in zip(list(chunks)[1:], chunks))
+                   for c1, c2 in zip(list(chunks)[1:], chunks)).total_seconds()
 
     def heart_rates(self):
         for chunks in self.chunks():
@@ -169,7 +169,7 @@ class Totals(Chunks):
         super().__init__(log, journal)
         chunks = list(self.chunks())[-1]
         self.distance = sum(chunk.distance() for chunk in chunks)
-        self.time = sum(chunk.time().total_seconds() for chunk in chunks)
+        self.time = sum(chunk.time() for chunk in chunks)
 
 
 class Zones(Chunks):

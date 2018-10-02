@@ -215,14 +215,15 @@ def parser():
     return parser
 
 
-def bootstrap_file(file, configurator, *args, post_config=None):
+def bootstrap_file(file, *args, configurator=None, post_config=None):
 
     from .config.database import config
     from .log import make_log
     from .squeal.database import Database
 
     args = [mm(DATABASE), file.name] + list(args)
-    configurator(config(*args))
+    if configurator:
+        configurator(config(*args))
     args += post_config if post_config else []
     args = NamespaceWithVariables(parser().parse_args(args))
     log = make_log(args)
