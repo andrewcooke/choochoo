@@ -4,9 +4,9 @@ from ..config.default import default
 from ..squeal.database import Database
 
 
-def default_config(args, log):
+def example_config(args, log):
     '''
-# default-config
+# example-config
 
 THis is provided only for testing and demonstration.
 

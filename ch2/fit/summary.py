@@ -6,37 +6,10 @@ from .format.read import filtered_records, filtered_tokens
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
     to_hex, no_filter
 from .profile.types import Date
-from ..lib.args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV, \
-    TABLES, \
-    RECORD, WARN
+from ..lib.args import MESSAGES, RECORDS, FIELDS, CSV, \
+    TABLES
 from ..lib.io import terminal_width
 from ..lib.utils import unique
-
-
-def dump_fit(args, log, profile_path=None):
-    '''
-# dump-fit
-
-    ch2 dump-fit FILE.FIT
-
-Print the contents of a fit file.
-
-The format and details displayed can be selected with --records,
---messages, --fields, and --csv.
-
-For full options see `ch2 dump-fit -h`.
-
-## Example
-
-    ch2 -v 0 dump-fit ride.fit
-
-Will print the contents of the file to stdout (use `-v 0` to suppress logging
-or redirect stderr elsewhere).
-    '''
-    fit_path = args.file(PATH, 0, rooted=False)
-    summarize(log, args[DUMP_FORMAT], fit_path, all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
-              after=args[AFTER][0], limit=args[LIMIT][0], records=args[RECORD], warn=args[WARN],
-              profile_path=profile_path)
 
 
 def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1,

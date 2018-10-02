@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from sys import stdout
 
-from ..lib.args import TOPIC
+from ..lib.args import TOPIC, HELP, PROGNAME, m, H
 from ..lib.io import terminal_width
 
 
@@ -74,7 +74,10 @@ Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
 
 # Commands
 
-* ''' + '\n* '.join(name for name in sorted(COMMANDS.keys()))
+* %s
+
+See also `%s %s`, '%s CMD %s` and `%s %s CMD`.''' % (
+        '\n* '.join(COMMANDS.keys()), PROGNAME, m(H), PROGNAME, m(H), PROGNAME, HELP)
 
 
 def help(args, logs, COMMANDS):

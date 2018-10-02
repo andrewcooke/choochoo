@@ -2,7 +2,7 @@
 from subprocess import run
 from tempfile import NamedTemporaryFile
 
-from ch2.command.add_activity import add_activity
+from ch2.command.activity import add_activity
 from ch2.command.constant import constant
 from ch2.config.default import default
 from ch2.lib.args import bootstrap_file, m, V, DEV, mm

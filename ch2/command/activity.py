@@ -15,9 +15,9 @@ from ..stoats import run_statistics
 
 def add_activity(args, log):
     '''
-# add-activity
+# activity
 
-    ch2 add-activity ACTIVITY PATH
+    ch2 activity ACTIVITY PATH
 
 Read one or more (if PATH is a directory) FIT files and associated them with the given activity type.
     '''
