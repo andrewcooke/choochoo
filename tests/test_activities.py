@@ -1,4 +1,5 @@
 
+from subprocess import run
 from tempfile import NamedTemporaryFile
 
 from ch2.activities import add_activity
@@ -13,3 +14,5 @@ def test_activities():
         args, log, db = bootstrap_file(f, default, m(V), '5', mm(DEV),
                                        post_config=['add-activity', 'Bike', 'data/test/personal/2018-07-26-rec.fit'])
         add_activity(args, log)
+
+        run('sqlite3 %s ".dump"' % f.name, shell=True)

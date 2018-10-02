@@ -94,6 +94,8 @@ class StatisticJournalInteger(StatisticJournal):
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Integer)
 
+    parse = int
+
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.INTEGER
     }
@@ -130,6 +132,8 @@ class StatisticJournalFloat(StatisticJournal):
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Float)
 
+    parse = float
+
     @classmethod
     def add(cls, log, s, name, units, summary, owner, state, source, value):
         return super().add(log, s, name, units, summary, owner, state, source, value, StatisticType.FLOAT)
@@ -165,6 +169,8 @@ class StatisticJournalText(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Text)
+
+    parse = str
 
     @classmethod
     def add(cls, log, s, name, units, summary, owner, state, source, value):

@@ -12,6 +12,7 @@ COMMAND = 'command'
 TOPIC = 'topic'
 
 ADD_ACTIVITY = 'add-activity'
+CONSTANT = 'constant'
 DEFAULT_CONFIG = 'default-config'
 DIARY = 'diary'
 DUMP_FIT = 'dump-fit'
@@ -26,6 +27,7 @@ ALL_FIELDS = 'all-fields'
 CSV = 'csv'
 DATABASE = 'database'
 DATE = 'date'
+DELETE = 'delete'
 DEV = 'dev'
 DUMP_FORMAT = 'dump_format'
 FIELDS = 'fields'
@@ -37,6 +39,7 @@ LOGS = 'logs'
 LIST = 'list'
 MESSAGES = 'messages'
 MONTH = 'month'
+NAME = 'name'
 PATH = 'path'
 PLAN = 'plan'
 RECORD, R = 'record', 'r'
@@ -45,6 +48,7 @@ ROOT = 'root'
 START = 'start'
 TABLES = 'tables'
 V, VERBOSITY = 'v', 'verbosity'
+VALUE = 'value'
 VERSION = 'version'
 WARN, W = 'warn', 'w'
 YEAR = 'year'
@@ -126,7 +130,8 @@ def parser():
     subparsers = parser.add_subparsers()
 
     add_activity = subparsers.add_parser(ADD_ACTIVITY,
-                                         help='add a new activity - see `%s %s -h` for more details' % (PROGNAME, ADD_ACTIVITY))
+                                         help='add a new activity - see `%s %s -h` for more details' %
+                                              (PROGNAME, ADD_ACTIVITY))
     add_activity_period = add_activity.add_mutually_exclusive_group()
     add_activity_period.add_argument(mm(MONTH), action='store_true', help='generate monthly summary')
     add_activity_period.add_argument(mm(YEAR), action='store_true', help='generate yearly summary')
@@ -137,9 +142,15 @@ def parser():
                               help='a fit file or directory containing fit files')
     add_activity.set_defaults(command=ADD_ACTIVITY)
 
-    noop = subparsers.add_parser(NO_OP,
-                                 help='used within jupyter (no-op from cmd line)')
-    noop.set_defaults(command=NO_OP)
+    constant = subparsers.add_parser(CONSTANT,
+                                     help='set and examine constants - see `%s %s -h` for more details' %
+                                          (PROGNAME, CONSTANT))
+    constant.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
+    constant.add_argument(mm(FORCE), action='store_true', help='confirm deletion(s) without value')
+    constant.add_argument(NAME, action='store', nargs='?', metavar=NAME, help='constant name')
+    constant.add_argument(DATE, action='store', nargs='?', metavar=DATE, help='date when measured')
+    constant.add_argument(VALUE, action='store', nargs='?', metavar=VALUE, help='constant value')
+    constant.set_defaults(command=CONSTANT)
 
     default_config = subparsers.add_parser(DEFAULT_CONFIG,
                                            help='configure the default database ' +
@@ -187,6 +198,10 @@ def parser():
     help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
                       help='the subject for help')
     help.set_defaults(command=HELP)
+
+    noop = subparsers.add_parser(NO_OP,
+                                 help='used within jupyter (no-op from cmd line)')
+    noop.set_defaults(command=NO_OP)
 
     package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
                                                 help='parse and save the global fit profile (dev only) - ' +

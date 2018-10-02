@@ -1,7 +1,8 @@
 
 from .activities import add_activity
 from .args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, DUMP_FIT, \
-    PACKAGE_FIT_PROFILE, ADD_ACTIVITY, NO_OP, DEFAULT_CONFIG
+    PACKAGE_FIT_PROFILE, ADD_ACTIVITY, NO_OP, DEFAULT_CONFIG, CONSTANT
+from .constant import constant
 from .default_config import default_config
 from .diary import diary
 from .fit.profile.profile import package_fit_profile
@@ -23,6 +24,7 @@ at the command line.
 
 
 COMMANDS = {ADD_ACTIVITY: add_activity,
+            CONSTANT: constant,
             DEFAULT_CONFIG: default_config,
             DIARY: diary,
             DUMP_FIT: dump_fit,
@@ -50,6 +52,8 @@ def main():
         elif command:
             command(args, log)
         else:
+            log.debug('If you are seeing the "No command given" error during development ' +
+                      'you may have forgotten to set the command name via `set_defaults()`.')
             raise Exception('No command given (try `ch2 help`)')
     except Exception as e:
         log.critical(e)
