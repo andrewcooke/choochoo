@@ -1,6 +1,6 @@
 
-from ch2.args import parser, NamespaceWithVariables
-from ch2.log import make_log
+from ch2.lib.args import parser, NamespaceWithVariables
+from ch2.lib.log import make_log
 from ch2.plan.british import twelve_week_improver
 from ch2.plan.exponential import exponential_time, exponential_distance
 from ch2.squeal.database import Database

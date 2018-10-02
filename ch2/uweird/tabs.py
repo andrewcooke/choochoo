@@ -3,8 +3,8 @@ from collections.abc import Sequence
 
 from urwid import emit_signal, connect_signal, Widget, ExitMainLoop, disconnect_signal
 
-from ..utils import force_iterable
 from .focus import Focus, FocusAttr, FocusWrap
+from ..lib.utils import force_iterable
 
 
 # new tab manager design

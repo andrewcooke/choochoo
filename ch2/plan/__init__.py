@@ -1,7 +1,7 @@
 
 from .british import twelve_week_improver
 from .exponential import exponential_time, exponential_distance
-from ..args import LIST, PLAN
+from ..lib.args import LIST, PLAN
 from ..squeal.database import Database
 
 

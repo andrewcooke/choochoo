@@ -40,8 +40,7 @@ class SummaryStatistics:
                     q = q.filter(Interval.finish >= date)
                 if repeat:
                     for interval in q.all():
-                        self._log.debug('Deleting %s interval from %s to %s' %
-                                        (interval.units, interval.time, interval.finish))
+                        self._log.debug('Deleting %s' % interval)
                         s.delete(interval)
                 else:
                     n = q.scalar()
@@ -125,9 +124,10 @@ class SummaryStatistics:
         if value is not None:
             name = template % statistic.name
             new_statistic = self._get_statistic(s, statistic, name)
-            s.add(STATISTIC_JOURNAL_CLASSES[data[0].type](
-                statistic=new_statistic, source=interval, value=value))
-            self._log.debug('Created %s=%s at %s' % (statistic, value, interval))
+            journal = STATISTIC_JOURNAL_CLASSES[data[0].type](
+                statistic=new_statistic, source=interval, value=value)
+            s.add(journal)
+            self._log.debug('Created %s over %s for %s' % (journal, interval, statistic))
 
     def _create_ranks(self, s, interval, statistic, data):
         # we only rank non-NULL values

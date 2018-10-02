@@ -1,6 +1,6 @@
 
-from ..args import parser, NamespaceWithVariables, NO_OP
-from ..log import make_log
+from ..lib.args import parser, NamespaceWithVariables, NO_OP
+from ..lib.log import make_log
 from ..squeal.database import Database
 
 

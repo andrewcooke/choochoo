@@ -1,7 +1,7 @@
 
 from urwid import Pile, MainLoop, Filler, Divider, Frame, Text
 
-from ..utils import PALETTE
+from ..lib.utils import PALETTE
 from ..uweird.decorators import Border
 from ..uweird.tabs import Root
 

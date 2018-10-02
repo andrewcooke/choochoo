@@ -27,6 +27,9 @@ class Statistic(Base):
     owner = Column(Cls, nullable=False)
     owner_state = Column(Integer)
 
+    def __str__(self):
+        return 'Statistic "%s"' % self.name
+
 
 class StatisticType(IntEnum):
 
@@ -51,6 +54,12 @@ class StatisticJournal(Base):
         'polymorphic_identity': StatisticType.STATISTIC,
         'polymorphic_on': 'type'
     }
+
+    def __str__(self):
+        try:
+            return 'Journal "%s"' % self.value
+        except AttributeError:
+            return 'Base Journal'
 
     @property
     def time(self):

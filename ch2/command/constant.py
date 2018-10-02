@@ -2,7 +2,7 @@
 from sqlalchemy import desc
 from sqlalchemy.sql.functions import count
 
-from ..args import DATE, NAME, VALUE, DELETE, FORCE, mm
+from ..lib.args import DATE, NAME, VALUE, DELETE, FORCE, mm
 from ..squeal.database import Database
 from ..squeal.tables.constant import Constant, ConstantJournal
 from ..squeal.tables.source import Source
@@ -67,7 +67,7 @@ def delete_entry(log, s, constant, date, value, force):
                                 (journal.value, value))
         elif not force:
             raise Exception('Provide value or use %s' % mm(FORCE))
-        log.info('Deleting value %s from %s' % (journal.value, journal.time))
+        log.info('Deleting  %s' % journal.time)
         s.delete(journal.source)
         log.warn('You may want to (re-)calculate statistics')
     else:
@@ -100,11 +100,11 @@ def delete_all(log, s, constant, force):
             raise Exception('Confirm with %s' % mm(FORCE))
         for journal in s.query(StatisticJournal).join(ConstantJournal). \
                 filter(StatisticJournal.statistic == constant.statistic).all():
-            log.info('Deleting value %s from %s' % (journal.value, journal.time))
+            log.info('Deleting %s' % journal)
             s.delete(journal.source)
         log.warn('You may want to (re-)calculate statistics')
     else:
-        log.info('No entries to delete for %s' % constant.statistic.name)
+        log.info('No entries to delete for %s' % constant.statistic)
 
 
 def print_description(log, s, constant):
@@ -112,7 +112,7 @@ def print_description(log, s, constant):
     if constant.statistic.description:
         print('description: %s' % constant.statistic.description)
     else:
-        log.warn('No description for %s' % constant.statistic.name)
+        log.warn('No description for %s' % constant.statistic)
     found = False
     for journal in s.query(StatisticJournal).join(Source). \
             filter(StatisticJournal.statistic == constant.statistic). \
@@ -120,7 +120,7 @@ def print_description(log, s, constant):
         print('%s: %s' % (journal.time, journal.value))
         found = True
     if not found:
-        log.warn('No values for %s' % constant.statistic.name)
+        log.warn('No values for %s' % constant.statistic)
 
 
 def print_all(log, s):

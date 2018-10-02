@@ -11,7 +11,7 @@ from .tables.source import Source, Interval
 from .tables.statistic import Statistic, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
     StatisticJournal
 from .tables.topic import TopicJournal, Topic
-from ..args import DATABASE
+from ..lib.args import DATABASE
 
 # import these so they are "created"
 Source,  Interval,

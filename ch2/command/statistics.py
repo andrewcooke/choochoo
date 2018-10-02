@@ -1,7 +1,7 @@
 
-from ..stoats import run_statistics
-from ..args import DATE, FORCE, mm
+from ..lib.args import DATE, FORCE, mm
 from ..squeal.database import Database
+from ..stoats import run_statistics
 
 
 def statistics(args, log):

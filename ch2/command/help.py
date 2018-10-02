@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from sys import stdout
 
-from ..args import TOPIC
+from ..lib.args import TOPIC
 from ..lib.io import terminal_width
 
 

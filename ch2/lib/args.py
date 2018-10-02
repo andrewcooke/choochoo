@@ -226,9 +226,9 @@ def parser():
 
 def bootstrap_file(file, *args, configurator=None, post_config=None):
 
-    from .config.database import config
     from .log import make_log
-    from .squeal.database import Database
+    from ..config.database import config
+    from ..squeal.database import Database
 
     args = [mm(DATABASE), file.name] + list(args)
     if configurator:

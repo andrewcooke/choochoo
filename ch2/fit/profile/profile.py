@@ -8,7 +8,7 @@ from pkg_resources import resource_stream
 from .messages import Messages
 from .support import NullableLog
 from .types import Types
-from ...args import PATH, WARN
+from ...lib.args import PATH, WARN
 
 PROFILE = 'global-profile.pkl'
 

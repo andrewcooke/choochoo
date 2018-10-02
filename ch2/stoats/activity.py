@@ -25,7 +25,7 @@ class ActivityStatistics:
                 self._log.debug('Checking statistics for activity %s' % activity.name)
                 if force:
                     self._delete_activity(s, activity, date=date)
-                self._run_activity(s, activity, force=force, date=date)
+                self._run_activity(s, activity)
 
     def _delete_activity(self, s, activity, date=None):
         # we can't delete the source because that's the activity journal.
@@ -43,7 +43,7 @@ class ActivityStatistics:
                 q = q.filter(Source.time >= date)
             if repeat:
                 for journal in q.all():
-                    self._log.debug('Deleting %s on %s' % (journal.statistic.name, journal.source.time))
+                    self._log.debug('Deleting %s (%s)' % (journal, journal.statistic))
                     s.delete(journal)
             else:
                 n = q.scalar()
@@ -52,7 +52,7 @@ class ActivityStatistics:
                 else:
                     self._log.warn('No statistics to delete')
 
-    def _run_activity(self, s, activity, force=False, date=None):
+    def _run_activity(self, s, activity):
         for journal in s.query(ActivityJournal).outerjoin(Activity, StatisticJournal). \
                 filter(Activity.id == activity.id,
                        StatisticJournal.source == None).all():

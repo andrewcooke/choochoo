@@ -3,7 +3,7 @@ import datetime as dt
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
-from ch2.lib.date import parse_datetime, parse_date
+from ..lib.date import parse_datetime, parse_date
 
 
 class Ordinal(TypeDecorator):

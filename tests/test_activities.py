@@ -2,11 +2,11 @@
 from subprocess import run
 from tempfile import NamedTemporaryFile
 
-from ch2 import constant
 from ch2.command.add_activity import add_activity
-from ch2.args import bootstrap_file, m, V, DEV, mm
+from ch2.command.constant import constant
 from ch2.config.default import default
-from ch2.stoats import ActivityStatistics, run_statistics
+from ch2.lib.args import bootstrap_file, m, V, DEV, mm
+from ch2.stoats import run_statistics
 
 
 def test_activities():

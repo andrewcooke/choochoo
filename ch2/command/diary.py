@@ -4,7 +4,7 @@ import datetime as dt
 from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
-from ..args import DATE
+from ..lib.args import DATE
 from ..lib.date import parse_date, format_time, format_date
 from ..lib.io import tui
 from ..lib.widgets import App
@@ -12,7 +12,8 @@ from ..squeal.binders import Binder
 from ..squeal.database import Database
 from ..squeal.tables.activity import ActivityJournal
 from ..squeal.tables.topic import Topic, TopicJournal
-from ..stoats.names import round_km, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, PERCENT_IN_Z, MEDIAN_KM_TIME, HR_MINUTES, \
+from ..stoats.names import round_km, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, PERCENT_IN_Z, MEDIAN_KM_TIME, \
+    HR_MINUTES, \
     MAX_MED_HR_OVER_M
 from ..uweird.calendar import Calendar
 from ..uweird.decorators import Indent

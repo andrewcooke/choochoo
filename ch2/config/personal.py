@@ -1,8 +1,6 @@
 
-from ch2.squeal.tables.activity import Activity
-
-from ..squeal.tables.topic import Topic
 from .default import default
+from ..squeal.tables.topic import Topic
 
 
 def acooke(config):

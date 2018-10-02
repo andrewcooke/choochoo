@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..support import Base
 from ..types import Epoch
-from ...lib.date import add_duration
+from ...lib.date import add_duration, to_date
 
 
 class SourceType(IntEnum):
@@ -75,6 +75,9 @@ class Interval(Source):
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL
     }
+
+    def __str__(self):
+        return 'Interval "%d%s from %s"' % (self.value, self.units, to_date(self.time))
 
     def range(self):
         return self.time, add_duration(self.time, (self.value, self.units))

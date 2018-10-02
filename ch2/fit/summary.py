@@ -6,10 +6,11 @@ from .format.read import filtered_records, filtered_tokens
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
     to_hex, no_filter
 from .profile.types import Date
-from ..args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV, TABLES, \
+from ..lib.args import PATH, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, DUMP_FORMAT, MESSAGES, RECORDS, FIELDS, CSV, \
+    TABLES, \
     RECORD, WARN
 from ..lib.io import terminal_width
-from ..utils import unique
+from ..lib.utils import unique
 
 
 def dump_fit(args, log, profile_path=None):
