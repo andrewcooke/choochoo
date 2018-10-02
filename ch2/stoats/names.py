@@ -2,6 +2,7 @@
 ACTIVE_DISTANCE = 'Active distance'
 ACTIVE_TIME = 'Active time'
 ACTIVE_SPEED = 'Active speed'
+FTHR = 'FTHR'
 MEDIAN_KM_TIME = 'Median %dkm time'
 PERCENT_IN_Z = 'Percent in Z%d'
 TIME_IN_Z = 'Time in Z%d'

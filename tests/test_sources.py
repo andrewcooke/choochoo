@@ -9,7 +9,7 @@ from ch2.config.personal import acooke
 from ch2.squeal.tables.source import Source, Interval
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic
 from ch2.squeal.tables.topic import TopicJournal, Topic
-from ch2.stoats.summary import SummaryProcess
+from ch2.stoats.summary import SummaryStatistics
 
 
 # the idea here is to test the new database schema with sources etc
@@ -21,7 +21,7 @@ def test_sources():
 
     with NamedTemporaryFile() as f:
 
-        log, db = bootstrap_file(f, acooke, m(V), '5')
+        args, log, db = bootstrap_file(f, acooke, m(V), '5')
 
         with db.session_context() as s:
 
@@ -53,7 +53,7 @@ def test_sources():
 
         # generate summary stats
 
-        process = SummaryProcess(log, db)
+        process = SummaryStatistics(log, db)
         process.run()
 
         with db.session_context() as s:

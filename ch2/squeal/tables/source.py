@@ -35,7 +35,7 @@ class Source(Base):
 
     @classmethod
     def clear_intervals(cls, session):
-        from ...stoats.summary import SummaryProcess  # avoid import loop
+        from ...stoats.summary import SummaryStatistics  # avoid import loop
         intervals = set()
         for always, instances in [(True, session.new), (False, session.dirty), (True, session.deleted)]:
             # wipe the containing intervals if this is a source that has changed in some way
@@ -45,7 +45,7 @@ class Source(Base):
                            not isinstance(instance, Interval) and
                            instance.time is not None and
                            (always or session.is_modified(instance)))]
-            intervals |= set(chain(*[SummaryProcess.intervals_including(Epoch.to_time(source.time))
+            intervals |= set(chain(*[SummaryStatistics.intervals_including(Epoch.to_time(source.time))
                                      for source in sources]))
         for start, (value, units) in intervals:
             interval = session.query(Interval). \
@@ -57,7 +57,7 @@ class Source(Base):
 
 
 @listens_for(Session, 'before_flush')
-def populate(session, context, instances):
+def clear_intervals(session, context, instances):
     Source.clear_intervals(session)
 
 

@@ -56,6 +56,36 @@ class StatisticJournal(Base):
     def time(self):
         return self.source.time
 
+    @classmethod
+    def add(cls, log, s, name, units, summary, owner, state, source, value, type):
+        statistic = s.query(Statistic). \
+            filter(Statistic.name == name,
+                   Statistic.owner == owner,
+                   Statistic.owner_state == state).one_or_none()
+        if not statistic:
+            statistic = Statistic(name=name, units=units, summary=summary, owner=owner, owner_state=state)
+            s.add(statistic)
+        else:
+            if statistic.units != units:
+                log.warn('Changing units on %s (%s -> %s)' % (statistic.name, statistic.units, units))
+                statistic.units = units
+            if statistic.summary != summary:
+                log.warn('Changing summary on %s (%s -> %s)' % (statistic.name, statistic.summary, summary))
+                statistic.summary = summary
+        journal = s.query(StatisticJournal). \
+            filter(StatisticJournal.statistic == statistic,
+                   StatisticJournal.source == source)
+        if not journal:
+            journal = STATISTIC_JOURNAL_CLASSES[type](
+                statistic=statistic, source=source, value=value)
+            s.add(journal)
+        else:
+            if journal.type != type:
+                raise Exception('Inconsistent StatisticJournal type (%d != %d' %
+                                (journal.type, journal))
+            journal.value = value
+        return journal
+
 
 class StatisticJournalInteger(StatisticJournal):
 
@@ -67,6 +97,10 @@ class StatisticJournalInteger(StatisticJournal):
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.INTEGER
     }
+
+    @classmethod
+    def add(cls, log, s, name, owner, state, source, value):
+        return super().add(log, s, name, owner, state, source, value, StatisticType.INTEGER)
 
     def formatted(self):
         units = self.statistic.units
@@ -95,6 +129,10 @@ class StatisticJournalFloat(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Float)
+
+    @classmethod
+    def add(cls, log, s, name, owner, state, source, value):
+        return super().add(log, s, name, owner, state, source, value, StatisticType.FLOAT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.FLOAT
@@ -127,6 +165,10 @@ class StatisticJournalText(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Text)
+
+    @classmethod
+    def add(cls, log, s, name, owner, state, source, value):
+        return super().add(log, s, name, owner, state, source, value, StatisticType.TEXT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.TEXT

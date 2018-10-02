@@ -25,6 +25,20 @@ class Activity(Base):
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Text, nullable=False, server_default='')
 
+    @staticmethod
+    def lookup(log, s, name):
+        activity = s.query(Activity).filter(Activity.name == name).one_or_none()
+        if not activity:
+            activities = s.query(Activity).all()
+            if activities:
+                log.info('Available activities:')
+                for activity in activities:
+                    log.info('%s - %s' % (activity.name, activity.description))
+            else:
+                log.error('No activities defined - configure system correctly')
+            raise Exception('Activity "%s" is not defined' % name)
+        return activity
+
 
 class ActivityJournal(Source):
 

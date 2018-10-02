@@ -1,20 +1,14 @@
-
-from collections.__init__ import deque, Counter
 from glob import glob
-from itertools import chain
 from os import stat
 from os.path import isdir, join, basename, splitext
 
-from sqlalchemy.orm.exc import NoResultFound
-
-from .args import PATH, ACTIVITY, FORCE, MONTH, YEAR
+from .args import PATH, ACTIVITY, FORCE
 from .fit.format.read import filtered_records
 from .fit.format.records import fix_degrees
 from .fit.profile.types import timestamp_to_datetime
 from .squeal.database import Database
 from .squeal.tables.activity import Activity, FileScan, ActivityJournal, ActivityTimespan, ActivityWaypoint
-from .statistics import round_km, ACTIVE_SPEED, ACTIVE_TIME, MEDIAN_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, \
-    MAX_MED_HR_OVER_M, MAX, BPM, PC, S, KMH, HR_MINUTES, M, ACTIVE_DISTANCE
+from .stoats.activity import ActivityStatistics
 from .utils import datetime_to_epoch
 
 
@@ -28,281 +22,98 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
     '''
     db = Database(args, log)
     force = args[FORCE]
-    activity_name = args[ACTIVITY][0]
-    with db.session_context() as session:
-        try:
-            activity = session.query(Activity).filter(Activity.name == activity_name).one()
-        except NoResultFound:
-            if force:
-                activity = Activity(name=activity_name)
-                session.add(activity)
-            else:
-                activities = session.query(Activity).all()
-                if activities:
-                    log.info('Available activities:')
-                    for activity in activities:
-                        log.info('%s - %s' % (activity.name, activity.description))
-                else:
-                    log.error('No activities defined - configure system correctly')
-                raise Exception('Activity "%s" is not defined' % activity_name)
-
+    activity = args[ACTIVITY][0]
     path = args.path(PATH, index=0, rooted=False)
-    if isdir(path):
-        path = join(path, '*.fit')
-    files = list(sorted(glob(path)))
-    if not files:
-        raise Exception('No match for "%s"' % path)
-    for file in files:
-        with db.session_context() as session:
-            try:
-                scan = session.query(FileScan).filter(FileScan.path == file).one()
-            except NoResultFound:
+    for source_id in FITImporter(log, db, activity, path).run(force):
+        ActivityStatistics(log, db, activity).run(source_id)
+
+
+class FITImporter:
+
+    def __init__(self, log, db, activity, path):
+        self._log = log
+        self._db = db
+        self._activity_name = activity
+        self._path = path
+
+    def run(self, force=False):
+        source_ids = []
+        with self._db.session_context() as s:
+            activity = Activity.lookup(self._log, s, self._activity_name)
+            for file in self._modified_files(s, force):
+                self._log.info('Scanning %s' % file)
+                source_ids.append(self._import(s, file, activity, force).id)
+        return source_ids
+
+    def _modified_files(self, s, force):
+        path = self._path
+        if isdir(path):
+            path = join(path, '*.fit')
+        files = list(sorted(glob(path)))
+        if not files:
+            raise Exception('No match for "%s"' % self._path)
+        for file in files:
+            scan = s.query(FileScan).filter(FileScan.path == file).one_or_none()
+            if not scan:
                 scan = FileScan(path=file, last_scan=0)
-                session.add(scan)
+                s.add(scan)
             last_modified = stat(file).st_mtime
             if force or last_modified > scan.last_scan:
-                log.info('Scanning %s' % file)
-                diary = add_file(log, session, activity, file, force)
-                add_stats(log, session, diary)
+                yield file
                 scan.last_scan = last_modified
             else:
-                log.debug('Skipping %s (already scanned)' % file)
-                session.expunge(scan)
-    if args[MONTH] or args[YEAR]:
-        regular_summary(args[MONTH], activity_name, force, db, log)
+                self._log.debug('Skipping %s (already scanned)' % file)
 
+    def _import(self, s, path, activity, force):
 
-def add_file(log, session, activity, path, force):
-    if force:
-        session.query(ActivityJournal).filter(ActivityJournal.fit_file == path).delete()
-    data, types, messages, records = filtered_records(log, path)
-    journal = ActivityJournal(activity=activity, fit_file=path, name=splitext(basename(path))[0])
-    session.add(journal)
-    timespan, warned, latest = None, 0, 0
-    for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0):
-        record = record.force(fix_degrees)
-        try:
-            if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
-                if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
-                    if not journal.time:
-                        journal.time = record.value.timestamp
-                    timespan = ActivityTimespan(activity_journal=journal,
-                                                start=datetime_to_epoch(record.value.timestamp))
-                    session.add(timespan)
-                if record.name == 'record':
-                    waypoint = ActivityWaypoint(activity_journal=journal,
-                                                activity_timespan=timespan,
-                                                time=datetime_to_epoch(record.value.timestamp),
-                                                latitude=record.none.position_lat,
-                                                longitude=record.none.position_long,
-                                                heart_rate=record.none.heart_rate,
-                                                # if distance is not set in some future file, calculate from
-                                                # lat/long?
-                                                distance=record.value.distance,
-                                                speed=record.none.enhanced_speed)
-                    session.add(waypoint)
-                if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'stop_all':
-                    timespan.finish = datetime_to_epoch(record.value.timestamp)
-                    journal.finish = record.value.timestamp
-                    timespan = None
-                if record.name == 'record':
-                    latest = record.timestamp
-            else:
-                if record.name == 'record':
-                    log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
-                             (path, timestamp_to_datetime(record.timestamp)))
-        except (AttributeError, TypeError) as e:
-            raise e
-            if warned < 10:
-                log.warn('Error while reading %s - some data may be missing (%s)' % (path, e))
-            elif warned == 10:
-                log.warn('No more warnings will be given for %s' % path)
-            warned += 1
-    return journal
+        if force:
+            s.query(ActivityJournal).filter(ActivityJournal.fit_file == path).delete()
+        data, types, messages, records = filtered_records(self._log, path)
+        journal = ActivityJournal(activity=activity, fit_file=path, name=splitext(basename(path))[0])
+        s.add(journal)
 
-
-class Chunk:
-
-    def __init__(self, waypoint):
-        self.__timespan = waypoint.activity_timespan
-        self.__waypoints = deque([waypoint])
-
-    def append(self, waypoint):
-        self.__waypoints.append(waypoint)
-
-    def popleft(self):
-        return self.__waypoints.popleft()
-
-    def __diff(self, index, attr):
-        if len(self.__waypoints) > 1:
-            return attr(self.__waypoints[index]) - attr(self.__waypoints[0])
-        else:
-            return 0
-
-    def distance(self):
-        return self.__diff(-1, lambda w: w.distance)
-
-    def distance_delta(self):
-        return self.__diff(1, lambda w: w.distance)
-
-    def time(self):
-        return self.__diff(-1, lambda w: w.epoch)
-
-    def time_delta(self):
-        return self.__diff(1, lambda w: w.epoch)
-
-    def heart_rates(self):
-        return (waypoint.heart_rate for waypoint in self.__waypoints if waypoint.heart_rate is not None)
-
-    def __len__(self):
-        return len(self.__waypoints)
-
-    def __getitem__(self, item):
-        return self.__waypoints[item]
-
-    def __bool__(self):
-        return self.distance_delta() > 0
-
-
-class Chunks:
-
-    def __init__(self, log, diary):
-        self._log = log
-        self.__diary = diary
-
-    def chunks(self):
-        chunks, chunk_index = deque(), {}
-        for waypoint in self.__diary.waypoints:
-            timespan = waypoint.activity_timespan
-            if timespan:
-                if timespan in chunk_index:
-                    chunk_index[timespan].append(waypoint)
+        timespan, warned, latest = None, 0, 0
+        for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0):
+            record = record.force(fix_degrees)
+            try:
+                if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
+                    if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
+                        if not journal.time:
+                            journal.time = record.value.timestamp
+                        timespan = ActivityTimespan(activity_journal=journal,
+                                                    start=datetime_to_epoch(record.value.timestamp))
+                        s.add(timespan)
+                    if record.name == 'record':
+                        waypoint = ActivityWaypoint(activity_journal=journal,
+                                                    activity_timespan=timespan,
+                                                    time=datetime_to_epoch(record.value.timestamp),
+                                                    latitude=record.none.position_lat,
+                                                    longitude=record.none.position_long,
+                                                    heart_rate=record.none.heart_rate,
+                                                    # if distance is not set in some future file, calculate from
+                                                    # lat/long?
+                                                    distance=record.value.distance,
+                                                    speed=record.none.enhanced_speed)
+                        s.add(waypoint)
+                    if record.name == 'event' and record.value.event == 'timer' \
+                            and record.value.event_type == 'stop_all':
+                        if timespan:
+                            timespan.finish = datetime_to_epoch(record.value.timestamp)
+                            journal.finish = record.value.timestamp
+                            timespan = None
+                        else:
+                            self._log.warn('Ignoring stop with no corresponding start (possible lost data?)')
+                    if record.name == 'record':
+                        latest = record.timestamp
                 else:
-                    chunk = Chunk(waypoint)
-                    chunk_index[timespan] = chunk
-                    chunks.append(chunk)
-                yield chunks
-
-
-class TimeForDistance(Chunks):
-
-    def __init__(self, log, diary, distance):
-        super().__init__(log, diary)
-        self.__distance = distance
-
-    def times(self):
-        for chunks in self.chunks():
-            distance = sum(chunk.distance() for chunk in chunks)
-            if distance > self.__distance:
-                while chunks and distance - chunks[0].distance_delta() > self.__distance:
-                    distance -= chunks[0].distance_delta()
-                    chunks[0].popleft()
-                    if not chunks[0]:
-                        chunks.popleft()
-                time = sum(chunk.time() for chunk in chunks)
-                yield time * self.__distance / distance
-
-
-class MedianHRForTime(Chunks):
-
-    def __init__(self, log, diary, time, max_gap=None):
-        super().__init__(log, diary)
-        self.__time = time
-        self.__max_gap = 0.01 * time if max_gap is None else max_gap
-        log.debug('Will reject gaps > %ds' % int(self.__max_gap))
-
-    def _max_gap(self, chunks):
-        return max(c1[0].activity_timespan.start - c2[0].activity_timespan.finish
-                   for c1, c2 in zip(list(chunks)[1:], chunks))
-
-    def heart_rates(self):
-        for chunks in self.chunks():
-            while len(chunks) > 1 and self._max_gap(chunks) > self.__max_gap:
-                self._log.debug('Rejecting chunk because of gap (%ds)' % int(self._max_gap(chunks)))
-                chunks.popleft()
-            time = sum(chunk.time() for chunk in chunks)
-            if time > self.__time:
-                while chunks and time - chunks[0].time_delta() > self.__time:
-                    time -= chunks[0].time_delta()
-                    chunks[0].popleft()
-                    while chunks and not chunks[0]:
-                        chunks.popleft()
-                heart_rates = list(sorted(chain(*(chunk.heart_rates() for chunk in chunks))))
-                if heart_rates:
-                    median = len(heart_rates) // 2
-                    yield heart_rates[median]
-
-
-class Totals(Chunks):
-
-    def __init__(self, log, diary):
-        super().__init__(log, diary)
-        chunks = list(self.chunks())[-1]
-        self.distance = sum(chunk.distance() for chunk in chunks)
-        self.time = sum(chunk.time() for chunk in chunks)
-
-
-class Zones(Chunks):
-
-    def __init__(self, log, diary, zones):
-        super().__init__(log, diary)
-        # this assumes record data are evenly distributed
-        self.zones = []
-        chunks = list(self.chunks())[-1]
-        counts = Counter()
-        lower_limit = 0
-        for zone, upper_limit in enumerate(zone.upper_limit for zone in zones.zones):
-            for chunk in chunks:
-                for heart_rate in chunk.heart_rates():
-                    if heart_rate is not None:
-                        if lower_limit <= heart_rate < upper_limit:
-                            counts[zone] += 1
-            lower_limit = upper_limit
-        total = sum(counts.values())
-        if total:
-            for zone in range(len(zones.zones)):
-                self.zones.append((zone + 1, counts[zone] / total))
-
-
-def add_stat(log, session, diary, name, best, value, units):
-    statistic = session.query(Statistic).filter(
-        Statistic.name == name, Statistic.activity == diary.activity).one_or_none()
-    if not statistic:
-        statistic = Statistic(activity=diary.activity, name=name, units=units, best=best)
-        session.add(statistic)
-    statistic = ActivityStatistic(statistic=statistic, activity_diary=diary, value=value)
-    session.add(statistic)
-    log.info(statistic)
-
-
-def add_stats(log, session, diary):
-    totals = Totals(log, diary)
-    add_stat(log, session, diary, ACTIVE_DISTANCE, MAX, totals.distance, M)
-    add_stat(log, session, diary, ACTIVE_TIME, MAX, totals.time, S)
-    add_stat(log, session, diary, ACTIVE_SPEED, MAX, totals.distance * 3.6 / totals.time, KMH)
-    for target in round_km():
-        times = list(sorted(TimeForDistance(log, diary, target * 1000).times()))
-        if not times:
-            break
-        median = len(times) // 2
-        add_stat(log, session, diary, MEDIAN_KM_TIME % target, 'min', times[median], S)
-    zones = session.query(HeartRateZones).filter(HeartRateZones.date <= diary.date)\
-        .order_by(HeartRateZones.date.desc()).limit(1).one_or_none()
-    if zones:
-        for (zone, frac) in Zones(log, diary, zones).zones:
-            add_stat(log, session, diary, PERCENT_IN_Z % zone, None, 100 * frac, PC)
-        for (zone, frac) in Zones(log, diary, zones).zones:
-            add_stat(log, session, diary, TIME_IN_Z % zone,  None, frac * totals.time, S)
-        for target in HR_MINUTES:
-            heart_rates = sorted(MedianHRForTime(log, diary, target * 60).heart_rates(), reverse=True)
-            if heart_rates:
-                add_stat(log, session, diary, MAX_MED_HR_OVER_M % target, MAX, heart_rates[0], BPM)
-    else:
-        log.warn('No HR zones defined for %s or before' % diary.date)
-
-
-class ActivityStatistics:
-
-    def __init__(self, log, db):
-        self.__log = log
-        self.__db = db
+                    if record.name == 'record':
+                        self._log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
+                                       (path, timestamp_to_datetime(record.timestamp)))
+            except (AttributeError, TypeError) as e:
+                raise e
+                if warned < 10:
+                    self._log.warn('Error while reading %s - some data may be missing (%s)' % (path, e))
+                elif warned == 10:
+                    self._log.warn('No more warnings will be given for %s' % path)
+                warned += 1
+        return journal

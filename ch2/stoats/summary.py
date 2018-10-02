@@ -9,7 +9,7 @@ from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES
 
 
-class SummaryProcess:
+class SummaryStatistics:
 
     def __init__(self, log, db):
         self._log = log
