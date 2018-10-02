@@ -74,7 +74,7 @@ class StatisticJournal(Base):
                 statistic.summary = summary
         journal = s.query(StatisticJournal). \
             filter(StatisticJournal.statistic == statistic,
-                   StatisticJournal.source == source)
+                   StatisticJournal.source == source).one_or_none()
         if not journal:
             journal = STATISTIC_JOURNAL_CLASSES[type](
                 statistic=statistic, source=source, value=value)
@@ -99,8 +99,8 @@ class StatisticJournalInteger(StatisticJournal):
     }
 
     @classmethod
-    def add(cls, log, s, name, owner, state, source, value):
-        return super().add(log, s, name, owner, state, source, value, StatisticType.INTEGER)
+    def add(cls, log, s, name, units, summary, owner, state, source, value):
+        return super().add(log, s, name, units, summary, owner, state, source, value, StatisticType.INTEGER)
 
     def formatted(self):
         units = self.statistic.units
@@ -131,8 +131,8 @@ class StatisticJournalFloat(StatisticJournal):
     value = Column(Float)
 
     @classmethod
-    def add(cls, log, s, name, owner, state, source, value):
-        return super().add(log, s, name, owner, state, source, value, StatisticType.FLOAT)
+    def add(cls, log, s, name, units, summary, owner, state, source, value):
+        return super().add(log, s, name, units, summary, owner, state, source, value, StatisticType.FLOAT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.FLOAT
@@ -167,8 +167,8 @@ class StatisticJournalText(StatisticJournal):
     value = Column(Text)
 
     @classmethod
-    def add(cls, log, s, name, owner, state, source, value):
-        return super().add(log, s, name, owner, state, source, value, StatisticType.TEXT)
+    def add(cls, log, s, name, units, summary, owner, state, source, value):
+        return super().add(log, s, name, units, summary, owner, state, source, value, StatisticType.TEXT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.TEXT

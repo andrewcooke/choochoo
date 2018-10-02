@@ -37,13 +37,14 @@ class FITImporter:
         self._path = path
 
     def run(self, force=False):
-        source_ids = []
+        sources = []
         with self._db.session_context() as s:
             activity = Activity.lookup(self._log, s, self._activity_name)
             for file in self._modified_files(s, force):
                 self._log.info('Scanning %s' % file)
-                source_ids.append(self._import(s, file, activity, force).id)
-        return source_ids
+                sources.append(self._import(s, file, activity, force))
+            s.flush()  # load ids
+            return [source.id for source in sources]
 
     def _modified_files(self, s, force):
         path = self._path

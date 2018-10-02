@@ -1,4 +1,5 @@
 
+import datetime as dt
 from collections.__init__ import deque, Counter
 from itertools import chain
 
@@ -44,7 +45,7 @@ class ActivityStatistics:
                 if heart_rates:
                     self._add_float_stat(s, journal, activity, MAX_MED_HR_OVER_M % target, MAX, heart_rates[0], BPM)
         else:
-            self._log.warn('No HR zones defined for %s or before' % journal.date)
+            self._log.warn('No HR zones defined for %s or before' % journal.time)
 
     def _add_float_stat(self, s, journal, activity, name, summary, value, units):
         StatisticJournalFloat.add(self._log, s, name, units, summary, self, activity.id, journal, value)
@@ -62,11 +63,11 @@ class Chunk:
     def popleft(self):
         return self.__waypoints.popleft()
 
-    def __diff(self, index, attr):
+    def __diff(self, index, attr, zero=0):
         if len(self.__waypoints) > 1:
             return attr(self.__waypoints[index]) - attr(self.__waypoints[0])
         else:
-            return 0
+            return zero
 
     def distance(self):
         return self.__diff(-1, lambda w: w.distance)
@@ -75,10 +76,10 @@ class Chunk:
         return self.__diff(1, lambda w: w.distance)
 
     def time(self):
-        return self.__diff(-1, lambda w: w.time)
+        return self.__diff(-1, lambda w: w.time, dt.timedelta(0))
 
     def time_delta(self):
-        return self.__diff(1, lambda w: w.time)
+        return self.__diff(1, lambda w: w.time, dt.timedelta(0))
 
     def heart_rates(self):
         return (waypoint.heart_rate for waypoint in self.__waypoints if waypoint.heart_rate is not None)
@@ -128,7 +129,7 @@ class TimeForDistance(Chunks):
                     chunks[0].popleft()
                     if not chunks[0]:
                         chunks.popleft()
-                time = sum(chunk.time() for chunk in chunks)
+                time = sum(chunk.time().total_seconds() for chunk in chunks)
                 yield time * self.__distance / distance
 
 
@@ -168,7 +169,7 @@ class Totals(Chunks):
         super().__init__(log, journal)
         chunks = list(self.chunks())[-1]
         self.distance = sum(chunk.distance() for chunk in chunks)
-        self.time = sum(chunk.time() for chunk in chunks)
+        self.time = sum(chunk.time().total_seconds() for chunk in chunks)
 
 
 class Zones(Chunks):
