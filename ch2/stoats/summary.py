@@ -52,7 +52,10 @@ class SummaryStatistics:
     def _raw_statistics_date_range(self, s):
         start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
             join(StatisticJournal).filter(StatisticJournal.source != None).one()
-        return start.date(), finish.date()
+        if start and finish:
+            return start.date(), finish.date()
+        else:
+            raise Exception('No statistics are currently defined')
 
     def _intervals(self, s, duration, units):
         start, finish = self._raw_statistics_date_range(s)

@@ -59,6 +59,7 @@ def main():
             raise Exception('No command given (try `ch2 help`)')
     except Exception as e:
         log.critical(e)
-        log.info('See `%s %s` for help' % (PROGNAME, HELP))
+        log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
+        log.info('Docs at http://andrewcooke.github.io/choochoo/index')
         if not args or args[DEV]:
             raise

@@ -7,7 +7,7 @@ def fit(args, log, profile_path=None):
     '''
 # fit
 
-    ch2 fit FILE.FIT
+    ch2 fit file.fit
 
 Print the contents of a fit file.
 

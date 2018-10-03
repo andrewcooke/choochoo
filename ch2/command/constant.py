@@ -12,33 +12,17 @@ def constant(args, log):
     '''
 # constant
 
-    ch2 constant
+    ch2 constant [name [date]]
 
-Lists all constant names to stdout.
-
-    ch2 constant name
-
-Displays information on the given constant.
-
-    ch2 constant name date
-
-Displays the value for the constant at the given date.
+Lists constants to stdout.
 
     ch2 constant --set name [date] value
 
 Defines a new entry.  If date is omitted a single value is used for all time.
 
-    ch2 constant --set name value --force
-
-Defines a new entry for all time, deleting any previous values.
-
-    ch2 constant --delete name date
+    ch2 constant --delete name [date]
 
 Deletes an entry.
-
-    ch2 constant --delete name --force
-
-Deletes multiple entries.
 
 Activity names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and FTHR.Bike, for example.
 In such a case "entry" in the descriptions above may refer to multiple entries.

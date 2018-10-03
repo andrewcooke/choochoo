@@ -76,7 +76,9 @@ Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
 
 * %s
 
-See also `%s %s`, '%s CMD %s` and `%s %s CMD`.''' % (
+See also `%s %s`, '%s CMD %s` and `%s %s CMD`.
+
+Docs at http://andrewcooke.github.io/choochoo/index''' % (
         '\n* '.join(COMMANDS.keys()), PROGNAME, m(H), PROGNAME, m(H), PROGNAME, HELP)
 
 
@@ -84,7 +86,7 @@ def help(args, logs, COMMANDS):
     '''
 # help
 
-    ch2 help [TOPIC]
+    ch2 help [topic]
 
 Displays help for a particular topic.
 
