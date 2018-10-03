@@ -70,7 +70,7 @@ class ActivityStatistics:
                 break
             median = len(times) // 2
             self._add_float_stat(s, journal, activity, MEDIAN_KM_TIME % target, 'min', times[median], S)
-        zones = hr_zones(self._log, s, journal.time)
+        zones = hr_zones(self._log, s, activity, journal.time)
         if zones:
             for (zone, frac) in Zones(self._log, journal, zones).zones:
                 self._add_float_stat(s, journal, activity, PERCENT_IN_Z % zone, None, 100 * frac, PC)

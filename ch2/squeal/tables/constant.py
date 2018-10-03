@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from .statistic import Statistic, StatisticJournal
@@ -13,14 +13,13 @@ class Constant(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False)  # StatisticType
+    name = Column(Text, nullable=False)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
 
     @staticmethod
-    def lookup(log, s, name):
-        constant = s.query(Constant).join(Statistic). \
-            filter(Statistic.name == name,
-                   Statistic.owner == Constant).one_or_none()
+    def lookup_all(log, s, name):
+        constant = s.query(Constant).filter(Constant.name.like(name)).all()
         if not constant:
             constants = s.query(Constant).all()
             if constants:
@@ -40,10 +39,11 @@ class ConstantJournal(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
 
     @staticmethod
-    def lookup(log, s, name, time):
-        constant = Constant.lookup(log, s, name)
-        return s.query(StatisticJournal).join(ConstantJournal). \
-            filter(StatisticJournal.statistic == constant.statistic,
+    def lookup(log, s, name, constraint, time):
+        # order important in join here
+        return s.query(StatisticJournal).join(ConstantJournal, Statistic, Constant). \
+            filter(Statistic.constraint == constraint,
+                   Constant.name == name,
                    ConstantJournal.time <= time).one_or_none()
 
     __mapper_args__ = {

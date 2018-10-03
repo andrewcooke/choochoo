@@ -15,10 +15,10 @@ def test_activities():
 
         bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-        args, log, db = bootstrap_file(f, m(V), '5', 'constant', 'FTHR', '2010-01-01', '154')
+        args, log, db = bootstrap_file(f, m(V), '5', 'constant', 'FTHR.%', '2010-01-01', '154')
         constant(args, log)
 
-        args, log, db = bootstrap_file(f, m(V), '5', 'constant', 'FTHR')
+        args, log, db = bootstrap_file(f, m(V), '5', 'constant', 'FTHR.%')
         constant(args, log)
 
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),

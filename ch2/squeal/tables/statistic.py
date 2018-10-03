@@ -22,10 +22,10 @@ class Statistic(Base):
     summary = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
     # we need to disambiguate statistics with the same name.
     # this is done by (1) "owner" (typically the source of the data) and
-    # (2) by some additional (optional) state used by the owner
+    # (2) by some additional (optional) constraint used by the owner (typically)
     # (eg activity.id so that the same statistic can be used across different activities)
     owner = Column(Cls, nullable=False)
-    owner_state = Column(Integer)
+    constraint = Column(Integer)
 
     def __str__(self):
         return 'Statistic "%s"' % self.name
@@ -66,13 +66,13 @@ class StatisticJournal(Base):
         return self.source.time
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, state, source, value, type):
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, type):
         statistic = s.query(Statistic). \
             filter(Statistic.name == name,
                    Statistic.owner == owner,
-                   Statistic.owner_state == state).one_or_none()
+                   Statistic.constraint == constraint).one_or_none()
         if not statistic:
-            statistic = Statistic(name=name, units=units, summary=summary, owner=owner, owner_state=state)
+            statistic = Statistic(name=name, units=units, summary=summary, owner=owner, constraint=constraint)
             s.add(statistic)
         else:
             if statistic.units != units:
@@ -110,8 +110,8 @@ class StatisticJournalInteger(StatisticJournal):
     }
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, state, source, value):
-        return super().add(log, s, name, units, summary, owner, state, source, value, StatisticType.INTEGER)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticType.INTEGER)
 
     def formatted(self):
         units = self.statistic.units
@@ -144,8 +144,8 @@ class StatisticJournalFloat(StatisticJournal):
     parse = float
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, state, source, value):
-        return super().add(log, s, name, units, summary, owner, state, source, value, StatisticType.FLOAT)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticType.FLOAT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.FLOAT
@@ -182,8 +182,8 @@ class StatisticJournalText(StatisticJournal):
     parse = str
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, state, source, value):
-        return super().add(log, s, name, units, summary, owner, state, source, value, StatisticType.TEXT)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticType.TEXT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.TEXT
