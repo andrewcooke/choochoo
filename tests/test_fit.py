@@ -7,7 +7,7 @@ from os.path import splitext, split, join
 from sys import stdout
 from tempfile import TemporaryDirectory
 
-from ch2.lib.args import FIELDS
+from ch2.command.args import FIELDS
 from ch2.fit.format.read import filtered_records
 from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from ch2.fit.profile.fields import DynamicField

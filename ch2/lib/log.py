@@ -3,7 +3,7 @@ from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler
 from logging.handlers import RotatingFileHandler
 from os.path import join
 
-from .args import COMMAND, LOGS, PROGNAME, VERBOSITY
+from ..command.args import COMMAND, LOGS, PROGNAME, VERBOSITY
 
 
 def make_log(args, tui=False):

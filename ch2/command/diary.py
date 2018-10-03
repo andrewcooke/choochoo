@@ -4,7 +4,7 @@ import datetime as dt
 from sqlalchemy import and_, or_
 from urwid import Text, Padding, Pile, Columns, Divider, Edit, connect_signal
 
-from ..lib.args import DATE
+from .args import DATE
 from ..lib.date import parse_date, format_time, format_date
 from ..lib.io import tui
 from ..lib.widgets import App

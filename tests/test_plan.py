@@ -1,5 +1,5 @@
 
-from ch2.lib.args import parser, NamespaceWithVariables
+from ch2.command.args import parser, NamespaceWithVariables
 from ch2.lib.log import make_log
 from ch2.plan.british import twelve_week_improver
 from ch2.plan.exponential import exponential_time, exponential_distance

@@ -1,6 +1,6 @@
 
+from .args import PATH, DUMP_FORMAT, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, RECORD, WARN
 from ..fit.summary import summarize
-from ..lib.args import PATH, DUMP_FORMAT, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, RECORD, WARN
 
 
 def fit(args, log, profile_path=None):

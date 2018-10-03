@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 
 from sqlalchemy.sql.functions import count
 
-from ch2.lib.args import m, V, bootstrap_file
+from ch2.command.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
 from ch2.squeal.tables.source import Source, Interval
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic

@@ -6,7 +6,7 @@ from .format.read import filtered_records, filtered_tokens
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
     to_hex, no_filter
 from .profile.types import Date
-from ..lib.args import MESSAGES, RECORDS, FIELDS, CSV, \
+from ..command.args import MESSAGES, RECORDS, FIELDS, CSV, \
     TABLES
 from ..lib.io import terminal_width
 from ..lib.utils import unique

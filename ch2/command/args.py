@@ -45,6 +45,7 @@ PLAN = 'plan'
 RECORD, R = 'record', 'r'
 RECORDS = 'records'
 ROOT = 'root'
+SET = 'set'
 START = 'start'
 TABLES = 'tables'
 V, VERBOSITY = 'v', 'verbosity'
@@ -145,7 +146,9 @@ def parser():
     constant = subparsers.add_parser(CONSTANT,
                                      help='set and examine constants - see `%s %s -h` for more details' %
                                           (PROGNAME, CONSTANT))
-    constant.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
+    constant_flags = constant.add_mutually_exclusive_group()
+    constant_flags.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
+    constant_flags.add_argument(mm(SET), action='store_true', help='store a new value')
     constant.add_argument(mm(FORCE), action='store_true', help='confirm deletion(s) without value')
     constant.add_argument(NAME, action='store', nargs='?', metavar=NAME, help='constant name')
     constant.add_argument(DATE, action='store', nargs='?', metavar=DATE, help='date when measured')
@@ -226,7 +229,7 @@ def parser():
 
 def bootstrap_file(file, *args, configurator=None, post_config=None):
 
-    from .log import make_log
+    from ..lib.log import make_log
     from ..config.database import config
     from ..squeal.database import Database
 

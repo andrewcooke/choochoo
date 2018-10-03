@@ -1,5 +1,5 @@
 
-from ..lib.args import DATE, FORCE, mm
+from .args import DATE, FORCE, mm
 from ..squeal.database import Database
 from ..stoats import run_statistics
 

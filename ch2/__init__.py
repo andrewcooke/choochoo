@@ -1,5 +1,7 @@
 
 from .command.activity import add_activity
+from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
+    PACKAGE_FIT_PROFILE, ACTIVITY, NO_OP, EXAMPLE_CONFIG, CONSTANT, STATISTICS
 from .command.constant import constant
 from .command.diary import diary
 from .command.example_config import example_config
@@ -7,8 +9,6 @@ from .command.fit import fit
 from .command.help import help
 from .command.statistics import statistics
 from .fit.profile.profile import package_fit_profile
-from .lib.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
-    PACKAGE_FIT_PROFILE, ACTIVITY, NO_OP, EXAMPLE_CONFIG, CONSTANT, STATISTICS
 from .lib.log import make_log
 from .plan import add_plan
 from .squeal.database import Database

@@ -3,10 +3,10 @@ from glob import glob
 from os import stat
 from os.path import isdir, join, basename, splitext
 
+from ..command.args import PATH, ACTIVITY, FORCE
 from ..fit.format.read import filtered_records
 from ..fit.format.records import fix_degrees
 from ..fit.profile.types import timestamp_to_datetime
-from ..lib.args import PATH, ACTIVITY, FORCE
 from ..lib.utils import datetime_to_epoch
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity, FileScan, ActivityJournal, ActivityTimespan, ActivityWaypoint
