@@ -1,5 +1,6 @@
 
 import datetime as dt
+from pydoc import locate
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
@@ -57,6 +58,9 @@ class Epoch(TypeDecorator):
         return datetime
 
 
+CLS_CACHE = {}
+
+
 class Cls(TypeDecorator):
 
     impl = Text
@@ -67,10 +71,15 @@ class Cls(TypeDecorator):
         if not isinstance(cls, str) and not isinstance(cls, type):
             cls = type(cls)
         if isinstance(cls, type):
-            cls = cls.__name__
+            cls = cls.__module__ + '.' + cls.__name__
         return cls
 
     process_bind_param = process_literal_param
 
     def process_result_value(self, value, dialect):
-        return value
+        # https://stackoverflow.com/a/24815361
+        if not value:
+            return None
+        if value not in CLS_CACHE:
+            CLS_CACHE[value] = locate(value)
+        return CLS_CACHE[value]

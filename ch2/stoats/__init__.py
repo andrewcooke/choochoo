@@ -1,8 +1,11 @@
 
-from .activity import ActivityStatistics
-from .summary import SummaryStatistics
+from ..squeal.tables.statistic import StatisticPipeline
 
 
 def run_statistics(log, db, force=False, date=None):
-    ActivityStatistics(log, db).run(force=force, date=date)
-    SummaryStatistics(log, db).run(force=force, date=date)
+    with db.session_context() as s:
+        classes = [pipeline.cls
+                   for pipeline in s.query(StatisticPipeline).order_by(StatisticPipeline.sort).all()]
+    for cls in classes:
+        log.info('Running %s' % cls)
+        cls(log, db).run(force=force, date=date)

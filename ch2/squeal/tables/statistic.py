@@ -217,3 +217,13 @@ STATISTIC_JOURNAL_CLASSES = {
     StatisticType.FLOAT: StatisticJournalFloat,
     StatisticType.TEXT: StatisticJournalText
 }
+
+
+class StatisticPipeline(Base):
+
+    __tablename__ = 'statistic_pipeline'
+
+    id = Column(Integer, primary_key=True)
+    cls = Column(Cls, nullable=False)
+    sort = Column(Integer)
+

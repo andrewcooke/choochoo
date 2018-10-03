@@ -22,7 +22,7 @@ def test_activities():
         constant(args, log)
 
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                       'add-activity', 'Bike', 'data/test/personal/2018-08-27-rec.fit')
+                                       'activity', 'Bike', 'data/test/personal/2018-08-27-rec.fit')
         add_activity(args, log)
 
         run('sqlite3 %s ".dump"' % f.name, shell=True)
