@@ -4,8 +4,8 @@ from urwid import WEIGHT, connect_signal, Padding, Divider
 from .fixed import Fixed
 from .tabs import TabList, TabNode
 from .widgets import DividedPile, SquareButton
-from ..lib.widgets import App
-from ..squeal.binders import Binder
+from ...lib.widgets import App
+from ...squeal.binders import Binder
 
 
 class Editor(TabNode):

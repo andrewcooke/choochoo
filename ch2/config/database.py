@@ -19,3 +19,8 @@ def config(*args):
     log = make_log(ns)
     db = Database(ns, log)
     return log, db
+
+
+def add(session, instance):
+    session.add(instance)
+    return instance

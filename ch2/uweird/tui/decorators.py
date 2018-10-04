@@ -21,7 +21,7 @@ class Border(LineBox):
 
 class Indent(FocusWrap):
     """
-    An indent on the left..
+    An indent on the left.
     """
 
     def __init__(self, contents, width=1):

@@ -10,7 +10,7 @@ from urwid import WidgetWrap, Pile, Edit, Filler
 
 from ch2.squeal.binders import Binder
 from ch2.squeal.types import Ordinal
-from ch2.uweird.widgets import Integer
+from ch2.uweird.tui.widgets import Integer
 
 
 basicConfig()

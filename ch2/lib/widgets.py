@@ -2,8 +2,8 @@
 from urwid import Pile, MainLoop, Filler, Divider, Frame, Text
 
 from ..lib.utils import PALETTE
-from ..uweird.decorators import Border
-from ..uweird.tabs import Root
+from ch2.uweird.tui.decorators import Border
+from ch2.uweird.tui.tabs import Root
 
 
 class App(MainLoop):

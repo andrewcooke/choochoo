@@ -1,5 +1,6 @@
 
 import datetime as dt
+from json import dumps, loads
 from pydoc import locate
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
@@ -83,3 +84,16 @@ class Cls(TypeDecorator):
         if value not in CLS_CACHE:
             CLS_CACHE[value] = locate(value)
         return CLS_CACHE[value]
+
+
+class Json(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, value, dialect):
+        return dumps(value)
+
+    process_bind_param = process_literal_param
+
+    def process_result_value(self, value, dialect):
+        return loads(value)

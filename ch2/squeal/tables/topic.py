@@ -1,3 +1,4 @@
+from json import dumps
 
 from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.event import listens_for
@@ -6,7 +7,8 @@ from sqlalchemy.orm import relationship, backref, Session
 from .source import SourceType, Source
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from ..support import Base
-from ..types import Ordinal
+from ..types import Ordinal, Cls, Json
+from ...lib.schedule import Specification
 
 
 # @total_ordering
@@ -25,13 +27,21 @@ class Topic(Base):
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Text, nullable=False, server_default='')
 
-    # def specification(self):
-    #     # allow for empty repeat, but still support start / finish
-    #     spec = Specification(self.repeat if self.repeat else 'd')
-    #     spec.start = self.start
-    #     spec.finish = self.finish
-    #     return spec
-    #
+    def specification(self):
+        # allow for empty repeat, but still support start / finish
+        spec = Specification(self.repeat if self.repeat else 'd')
+        spec.start = self.start
+        spec.finish = self.finish
+        return spec
+
+    def populate(self, s, date):
+        self.journal = s.query(TopicJournal). \
+            filter(TopicJournal.topic == self,
+                   TopicJournal.time == date).one_or_none()
+        if not self.journal:
+            self.journal = TopicJournal(topic=self, time=date)
+            s.add(self.journal)
+
     # def at_location(self, date):
     #     if date:
     #         return self.specification().frame().at_location(date)
@@ -80,6 +90,12 @@ class TopicField(Base):
     sort = Column(Integer)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
+    display_cls = Column(Cls, nullable=None)
+    display_args = Column(Json, nullable=None, server_default=dumps(()))
+    display_kargs = Column(Json, nullable=None, server_default=dumps({}))
+
+    def __str__(self):
+        return 'TopicField "%s"' % self.statistic.name
 
 
 class TopicJournal(Source):
@@ -95,24 +111,24 @@ class TopicJournal(Source):
         'polymorphic_identity': SourceType.TOPIC
     }
 
-    def populate(self, session):
+    def populate(self, s):
         if self.time is None:
             raise Exception('No time defined')
-        self.journal = {}
+        self.fields = {}
         for field in self.topic.fields:
             if self.id:
-                journal = session.query(StatisticJournal). \
+                journal = s.query(StatisticJournal). \
                     filter(StatisticJournal.source == self,
                            StatisticJournal.statistic == field.statistic).one_or_none()
             else:
                 # we're not yet registered with the database so cannot search for matching
-                # StatisticJournal entries.  either this is an error or (mire likely!) we
+                # StatisticJournal entries.  either this is an error or (more likely!) we
                 # did query, found nothing, and are creating a new entry.
                 journal = None
             if not journal:
                 journal = STATISTIC_JOURNAL_CLASSES[field.type](statistic=field.statistic, source=self)
-                session.add(journal)
-            self.journal[field] = journal
+                s.add(journal)
+            self.fields[field] = journal
 
 
 @listens_for(Session, 'loaded_as_persistent')

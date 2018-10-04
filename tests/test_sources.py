@@ -34,9 +34,9 @@ def test_sources():
             assert d.topic.fields[0].statistic.name == 'Notes'
             assert d.topic.fields[1].statistic.name == 'Sleep'
             for field in d.topic.fields:
-                assert d.journal[field].value is None
-            d.journal[d.topic.fields[0]].value = 'hello world'
-            d.journal[d.topic.fields[1]].value = 8
+                assert d.fields[field].value is None
+            d.fields[d.topic.fields[0]].value = 'hello world'
+            d.fields[d.topic.fields[1]].value = 8
 
         with db.session_context() as s:
 
