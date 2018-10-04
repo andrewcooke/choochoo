@@ -48,7 +48,7 @@ class Float(Base):
 
 class Score(Base):
 
-     def __init__(self, log, s, journal, width=1):
+    def __init__(self, log, s, journal, width=1):
         super().__init__(log, s, journal, width=width)
 
     def format_value(self):
