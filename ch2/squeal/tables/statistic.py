@@ -198,7 +198,7 @@ class StatisticJournalText(StatisticJournal):
 
 class StatisticMeasure(Base):
 
-    __tablename__ = 'statistic_rank'
+    __tablename__ = 'statistic_measure'
 
     id = Column(Integer, primary_key=True)
     statistic_journal_id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)

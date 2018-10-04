@@ -13,16 +13,25 @@ class Base:
 
     def __str__(self):
         if self._journal.value is None:
-            return '%s: _' % self._journal.statistic.name + self.format_units()
+            return '%s: _' % self._journal.statistic.name + self._format_units()
         else:
-            return ('%s: ' % self._journal.statistic.name) + self.format_value() + self.format_units()
+            return ('%s: ' % self._journal.statistic.name) + self._format_value() + self._format_units()
 
     @abstractmethod
-    def format_value(self):
+    def _format_value(self):
         pass
 
-    def format_units(self):
+    def _format_units(self):
         return (' ' + self._journal.statistic.units) if self._journal.statistic.units else ''
+
+    def bound_widget(self):
+        widget = self._widget()
+        # bind
+        return widget
+
+    @abstractmethod
+    def _widget(self):
+        pass
 
 
 class Text(Base):
@@ -30,8 +39,19 @@ class Text(Base):
     def __init__(self, log, s, journal, width=PAGE_WIDTH):
         super().__init__(log, s, journal, width=width)
 
-    def format_value(self):
+    def _format_value(self):
         return repr(self._journal.value)
+
+
+class Integer(Base):
+
+    def __init__(self, log, s, journal, lo=None, hi=None, width=1):
+        super().__init__(log, s, journal, width=width)
+        self._lo = lo
+        self._hi = hi
+
+    def _format_value(self):
+        return '%d' % self._journal.value
 
 
 class Float(Base):
@@ -42,7 +62,7 @@ class Float(Base):
         self._hi = hi
         self._format = format
 
-    def format_value(self):
+    def _format_value(self):
         return self._format % self._journal.value
 
 
@@ -51,6 +71,5 @@ class Score(Base):
     def __init__(self, log, s, journal, width=1):
         super().__init__(log, s, journal, width=width)
 
-    def format_value(self):
+    def _format_value(self):
         return '%d' % self._journal.value
-
