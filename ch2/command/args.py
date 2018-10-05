@@ -30,6 +30,7 @@ DATE = 'date'
 DELETE = 'delete'
 DEV = 'dev'
 DUMP_FORMAT = 'dump_format'
+F = 'f'
 FIELDS = 'fields'
 FINISH = 'finish'
 FTHR = 'fthr'
@@ -116,7 +117,7 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(mm(DATABASE), action='store', default='${root}/database.sqls', metavar='FILE',
+    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqls', metavar='FILE',
                         help='the database file')
     parser.add_argument(mm(DEV), action='store_true', help='enable development mode')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',

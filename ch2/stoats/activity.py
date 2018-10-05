@@ -48,15 +48,15 @@ class ActivityStatistics:
             else:
                 n = q.scalar()
                 if n:
-                    self._log.warn('Deleting %d statistics' % n)
+                    self._log.warn('Deleting %d statistics for %s' % (n, activity))
                 else:
-                    self._log.warn('No statistics to delete')
+                    self._log.warn('No statistics to delete for %s' % activity)
 
     def _run_activity(self, s, activity):
         for journal in s.query(ActivityJournal).outerjoin(Activity, StatisticJournal). \
                 filter(Activity.id == activity.id,
                        StatisticJournal.source == None).all():
-            self._log.debug('Adding statistics for activity journal on %s' % journal.time)
+            self._log.info('Adding statistics for activity journal on %s' % journal.time)
             self._add_stats(s, journal, activity)
 
     def _add_stats(self, s, journal, activity):

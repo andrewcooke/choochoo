@@ -2,7 +2,7 @@
 from subprocess import run
 from tempfile import NamedTemporaryFile
 
-from ch2.command.activity import add_activity
+from ch2.command.activity import activity
 from ch2.command.constant import constant
 from ch2.config.default import default
 from ch2.command.args import bootstrap_file, m, V, DEV, mm
@@ -23,7 +23,7 @@ def test_activities():
 
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                        'activity', 'Bike', 'data/test/personal/2018-08-27-rec.fit')
-        add_activity(args, log)
+        activity(args, log)
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
 

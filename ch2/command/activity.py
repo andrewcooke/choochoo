@@ -13,7 +13,7 @@ from ..squeal.tables.activity import Activity, FileScan, ActivityJournal, Activi
 from ..stoats import run_statistics
 
 
-def add_activity(args, log):
+def activity(args, log):
     '''
 # activity
 

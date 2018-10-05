@@ -1,6 +1,7 @@
 
 from collections import defaultdict
 
+from ch2.squeal.tables.source import Interval
 from pandas import DataFrame
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
@@ -9,7 +10,7 @@ from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity, ActivityJournal
-from ..squeal.tables.statistic import Statistic, StatisticJournal
+from ..squeal.tables.statistic import Statistic, StatisticJournal, StatisticMeasure
 
 
 def extract(data, instance, *attributes):
@@ -66,20 +67,29 @@ class Data:
             frames.append(DataFrame(data, index=times))
         return frames
 
-    def statistics(self):
+    def statistics(self, *statistics):
+        statistic_names, statistic_ids = self._collect_statistics(statistics)
         data = defaultdict(list)
-        for statistic in self._session.query(Statistic).order_by(Statistic.name):
+        for statistic in self._session.query(Statistic). \
+                filter(Statistic.id.in_(statistic_ids)).order_by(Statistic.name):
             extract(data, statistic, 'name', 'description', 'units', 'summary', 'owner', 'constraint')
             data['count'].append(self._session.query(count(StatisticJournal.id)).
                                  filter(StatisticJournal.statistic == statistic).scalar())
         return DataFrame(data)
 
-    def statistic_journals(self, *statistics, start=None, finish=None, owner=None, constraint=None):
-        statistic_ids = []
+    def _collect_statistics(self, statistics):
+        if not statistics:
+            statistics = ['%']
+        statistic_ids, statistic_names = set(), set()
         for statistic in statistics:
-            statistic_ids.append(self._session.query(Statistic.id).filter(Statistic.name == statistic).scalar())
-        q = self._session.query(StatisticJournal).join(Statistic).\
-            filter(Statistic.id.in_(statistic_ids))
+            for statistic in self._session.query(Statistic).filter(Statistic.name.like(statistic)).all():
+                statistic_ids.add(statistic.id)
+                statistic_names.add(statistic.name)
+        return statistic_names, statistic_ids
+
+    def _build_statistic_journal_query(self, statistic_ids, q,
+            start, finish, owner, constraint, interval, interval_units):
+        q = q.filter(Statistic.id.in_(statistic_ids))
         if start:
             q = q.filter(StatisticJournal.time >= start)
         if finish:
@@ -88,18 +98,55 @@ class Data:
             q = q.filter(Statistic.owner == owner)
         if constraint:
             q = q.filter(Statistic.constraint == constraint)
+        return q
+
+    def statistic_journals(self, *statistics, start=None, finish=None, owner=None, constraint=None,
+                           interval=1, interval_units=None):
+        statistic_names, statistic_ids = self._collect_statistics(statistics)
+        q = self._build_statistic_journal_query(
+            statistic_ids, self._session.query(StatisticJournal).join(Statistic),
+            start, finish, owner, constraint, interval, interval_units)
+        if interval_units:
+            q = q.join(Interval).filter(Interval.value == interval, Interval.units == interval_units)
         raw_data = defaultdict(dict)
         for journal in q.all():  # todo - eager load
             raw_data[journal.time][journal.statistic.name] = journal.value
         data, times = defaultdict(list), []
-        for time in sorted(data.keys()):
+        for time in sorted(raw_data.keys()):
             times.append(time)
             sub_data = raw_data[time]
-            for statistic in statistics:
+            for statistic in statistic_names:
                 if statistic in sub_data:
                     data[statistic].append(sub_data[statistic])
                 else:
                     data[statistic].append(None)
+        return DataFrame(data, index=times)
+
+    def statistic_quartiles(self, *statistics, interval=1, interval_units='M',
+                            start=None, finish=None, owner=None, constraint=None):
+        statistic_names, statistic_ids = self._collect_statistics(statistics)
+        q = self._build_statistic_journal_query(
+            statistic_ids, self._session.query(StatisticMeasure).join(StatisticJournal, Statistic),
+            start, finish, owner, constraint, interval, interval_units)
+        if interval_units:
+            q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \
+                filter(Interval.value == interval, Interval.units == interval_units)
+        q = q.filter(StatisticMeasure.quartile != None)
+        raw_data = defaultdict(lambda: defaultdict(lambda: [0] * 5))
+        for measure in q.all():
+            raw_data[measure.source.time][measure.statistic_journal.statistic.name][measure.quartile] = \
+                measure.statistic_journal.value
+        data, times = defaultdict(list), []
+        for time in sorted(raw_data.keys()):
+            times.append(time)
+            sub_data = raw_data[time]
+            for statistic in statistic_names:
+                if statistic in sub_data:
+                    data[statistic].append(sub_data[statistic])
+                else:
+                    data[statistic].append(None)
+        print(data)
+        print(times)
         return DataFrame(data, index=times)
 
 

@@ -1,5 +1,6 @@
 
 import datetime as dt
+from random import choice
 from re import split
 
 from sqlalchemy import func
@@ -136,10 +137,15 @@ class SummaryStatistics:
         # we only rank non-NULL values
         ordered = sorted([journal for journal in data if journal.value is not None],
                          key=lambda journal: journal.value, reverse=True)
-        n = len(ordered)
+        n, measures = len(ordered), []
         for rank, journal in enumerate(ordered, start=1):
             percentile = (n - rank) / n * 100
-            s.add(StatisticMeasure(statistic_journal=journal, source=interval, rank=rank, percentile=percentile))
+            measure = StatisticMeasure(statistic_journal=journal, source=interval, rank=rank, percentile=percentile)
+            s.add(measure)
+            measures.append(measure)
+        if n > 8:  # avoid overlap in fuzzing (and also, plot individual points in this case)
+            for q in range(5):
+                measures[fuzz(n, q)].quartile = q
         self._log.debug('Ranked %s' % statistic)
 
     def _create_values(self, duration, units):
@@ -157,3 +163,9 @@ class SummaryStatistics:
                         self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
                     self._create_ranks(s, interval, statistic, data)
 
+
+def fuzz(n, q):
+    i = (n-1) * q / 4
+    if i != int(i):
+        i = int(i) + choice([0, 1])  # if we're between two points, pick either
+    return int(i)

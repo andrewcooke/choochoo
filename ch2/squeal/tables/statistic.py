@@ -210,6 +210,7 @@ class StatisticMeasure(Base):
     source = relationship('Source')
     rank = Column(Integer, nullable=False)  # 1 is best
     percentile = Column(Float, nullable=False)  # 100 is best
+    quartile = Column(Integer)  # 0..4 at the min, 25%, median, 75% and max points
 
 
 STATISTIC_JOURNAL_CLASSES = {
