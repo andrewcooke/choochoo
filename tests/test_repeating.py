@@ -25,7 +25,7 @@ def test_specification():
     assert_str(Specification('1/2m[2Tue]'), '1/2m[2tue]')
     assert_str(Specification('m[2Tue]1970-01-01-1970-12-31'), '0/1m[2tue]1970-01-01-1970-12-31')
     assert_str(Specification('2018-07-05/5d[]'), '2/5d[1]')
-    assert_str(Specification('d2018-07-05'), '0/1d[1]2018-07-05')
+    assert_str(Specification('d2018-07-05'), '0/1d[1]2018-07-05-2018-07-06')
     # others
     assert_str(Specification('1/2w[1]2018-01-01-'), '1/2w[1]2018-01-01-')
     assert_str(Specification('1/2w[Mon,2,3]-1970-01-01'), '1/2w[1mon,2,3]-1970-01-01')
@@ -54,9 +54,9 @@ def test_day():
     assert_at('2d[Mon]', '2018-07-06', True, False)
     assert_at('2d[Fri]2018-07-06', '2018-07-06', True, True)
     assert_at('2d[Fri]2018-07-07', '2018-07-06', False, False)
-    assert_at('2d[Fri]2018-07-06-2018-07-06', '2018-07-06', True, True)
-    assert_at('2d[Fri]2018-07-07-2018-07-07', '2018-07-06', False, False)
-    assert_at('2d[Fri]2018-07-05-2018-07-05', '2018-07-06', False, False)
+    assert_at('2d[Fri]2018-07-06-2018-07-07', '2018-07-06', True, True)
+    assert_at('2d[Fri]2018-07-07-2018-07-08', '2018-07-06', False, False)
+    assert_at('2d[Fri]2018-07-05-2018-07-06', '2018-07-06', False, False)
 
 
 def test_week():
@@ -87,3 +87,9 @@ def test_ordinals():
     d = dt.date(2018, 7, 25)
     o = DateOrdinals(d)
     assert o.dow == 2, o.dow  # wednesday
+
+
+def test_frame_start():
+    s = Specification('2018-01-01/2y')
+    assert s.frame().start('2018-01-02') == parse_date('2018-01-01')
+    assert s.frame().start('2017-01-02') == parse_date('2016-01-01')

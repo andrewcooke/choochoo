@@ -1,10 +1,12 @@
-from ch2.stoats.clean import CleanUnusedStatistics
+
 from .database import add, Counter
+from ..lib.date import YEAR, MONTH
 from ..squeal.tables.activity import Activity
 from ..squeal.tables.constant import Constant
 from ..squeal.tables.statistic import Statistic, StatisticType, StatisticPipeline
 from ..squeal.tables.topic import Topic, TopicField
 from ..stoats.activity import ActivityStatistics
+from ..stoats.clean import CleanUnusedStatistics
 from ..stoats.names import BPM, FTHR
 from ..stoats.summary import SummaryStatistics
 from ..uweird.fields import Text, Float, Score, Integer
@@ -19,9 +21,11 @@ def default(db):
 
         # statistics pipeline
 
-        s.add(StatisticPipeline(cls=ActivityStatistics, sort=10))
-        s.add(StatisticPipeline(cls=SummaryStatistics, sort=20))
-        s.add(StatisticPipeline(cls=CleanUnusedStatistics, sort=30))
+        c = Counter()
+        s.add(StatisticPipeline(cls=ActivityStatistics, sort=c()))
+        s.add(StatisticPipeline(cls=SummaryStatistics, kargs={'spec': 'm'}, sort=c()))
+        s.add(StatisticPipeline(cls=SummaryStatistics, kargs={'spec': 'y'}, sort=c()))
+        s.add(StatisticPipeline(cls=CleanUnusedStatistics, sort=c()))
 
         # basic activities
 

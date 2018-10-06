@@ -6,9 +6,11 @@ from re import split
 from sqlalchemy import func
 from sqlalchemy.sql.functions import count
 
+from ch2.lib.schedule import Specification
 from ..lib.date import add_duration, MONTH, YEAR
 from ..squeal.tables.source import Interval, Source
-from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES
+from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
+    StatisticPipeline
 
 
 class SummaryStatistics:
@@ -17,19 +19,33 @@ class SummaryStatistics:
         self._log = log
         self._db = db
 
-    def run(self, force=False, date=None):
+    def run(self, spec=None, force=False, after=None):
+        if spec is None:
+            for spec in self._pipeline_specs():
+                self._run(spec, force, after)
+        else:
+            self._run(spec, force, after)
+
+    def _run(self, spec, force, after):
+        spec = Specification(spec)
         if force:
-            self._delete(date=date)
-        for interval in (1, MONTH), (1, YEAR):
-            self._create_values(*interval)
+            self._delete(spec, after)
+        self._create_values(spec)
 
-    @classmethod
-    def intervals_including(cls, time):
-        # this MUST match the intervals used in processing above
-        yield (dt.datetime(time.year, 1, 1), (1, YEAR))
-        yield (dt.datetime(time.year, time.month, 1), (1, MONTH))
+    def _pipeline_specs(self):
+        with self._db.session_context() as s:
+            for kargs in s.query(StatisticPipeline.kargs).filter(StatisticPipeline.cls == self).all():
+                if 'spec' in kargs:
+                    yield kargs['soec']
+                else:
+                    self._log.warn('No spec in kargs for Statistic Pipeline (%s)' % self.__class__.__name__)
 
-    def _delete(self, date=None):
+    def intervals_including(self, time):
+        for spec in self._pipeline_specs():
+            spec = Specification(spec)
+            yield spec.frame().start(time), (spec.repeat, spec.duration)
+
+    def _delete(self, spec, after):
         # we delete the intervals that all summary statistics depend on and they will cascade
         with self._db.session_context() as s:
             for repeat in range(2):
@@ -37,8 +53,10 @@ class SummaryStatistics:
                     q = s.query(Interval)
                 else:
                     q = s.query(count(Interval.id))
-                if date:
-                    q = q.filter(Interval.finish >= date)
+                    q = q.filter(
+                        Interval.finish >= date,
+                        Interval.value == value,
+                        Interval.units == units)
                 if repeat:
                     for interval in q.all():
                         self._log.debug('Deleting %s' % interval)

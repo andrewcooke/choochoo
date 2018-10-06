@@ -19,15 +19,15 @@ class ActivityStatistics:
         self._log = log
         self._db = db
 
-    def run(self, force=False, date=None):
+    def run(self, force=False, after=None):
         with self._db.session_context() as s:
             for activity in s.query(Activity).all():
                 self._log.debug('Checking statistics for activity %s' % activity.name)
                 if force:
-                    self._delete_activity(s, activity, date=date)
+                    self._delete_activity(s, activity, after=after)
                 self._run_activity(s, activity)
 
-    def _delete_activity(self, s, activity, date=None):
+    def _delete_activity(self, s, activity, after=None):
         # we can't delete the source because that's the activity journal.
         # so instead we wipe all statistics that are owned by us.
         # we do this in SQL for speed, but are careful to use the parent node.
@@ -39,8 +39,8 @@ class ActivityStatistics:
             q = q.join(Statistic, Source, ActivityJournal). \
                 filter(Statistic.owner == self,
                        ActivityJournal.activity == activity)
-            if date:
-                q = q.filter(Source.time >= date)
+            if after:
+                q = q.filter(Source.time >= after)
             if repeat:
                 for journal in q.all():
                     self._log.debug('Deleting %s (%s)' % (journal, journal.statistic))

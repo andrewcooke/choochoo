@@ -4,17 +4,27 @@ import time as t
 from calendar import monthrange
 
 
-def parse_date(text):
-    return dt.date(*t.strptime(text, '%Y-%m-%d')[:3])
+def parse_date(value):
+    if isinstance(value, dt.date):
+        return value
+    elif isinstance(value, dt.datetime):
+        return to_date(value)
+    else:
+        return dt.date(*t.strptime(value, '%Y-%m-%d')[:3])
 
 
-def parse_datetime(text):
-    for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d'):
-        try:
-            return dt.datetime.strptime(text, format)
-        except ValueError:
-            pass
-    raise ValueError('Cannot parse "%s" as a datetime' % text)
+def parse_datetime(value):
+    if isinstance(value, dt.datetime):
+        return value
+    elif isinstance(value, dt.date):
+        return to_datetime(value)
+    else:
+        for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d'):
+            try:
+                return dt.datetime.strptime(value, format)
+            except ValueError:
+                pass
+        raise ValueError('Cannot parse "%s" as a datetime' % value)
 
 
 def format_date(date):
@@ -36,14 +46,22 @@ def parse_duration(duration):
         return int(duration[:-1]), duration[-1]
 
 
-def to_date(datetime):
-    return dt.date(datetime.year, datetime.month, datetime.day)
+def to_date(value):
+    if isinstance(value, dt.date):
+        return value
+    else:
+        return dt.date(value.year, value.month, value.day)
 
 
-def to_datetime(date):
-    return dt.datetime(date.yeat, date.month, date.day)
+def to_datetime(value):
+    if isinstance(value, dt.datetime):
+        return value
+    else:
+        return dt.datetime(value.year, value.month, value.day)
 
 
+# these reflect the conventions used in string parsing / formatting
+# schedules are for longer intervals (>= 1d) and so can be case-agnostic.
 SECOND = 's'
 MINUTE = 'm'
 HOUR = 'h'
@@ -69,6 +87,10 @@ def add_duration(date, duration):
         year = date.year + n
         return dt.date(year, date.month, min(date.day, monthrange(year, date.month)[1]))
     raise Exception('Unexpected unit "%s" (need one of d, w, M, y)' % unit)
+
+
+def mul_duration(n, duration):
+    return n * duration[0], duration[1]
 
 
 def duration_to_secs(duration):

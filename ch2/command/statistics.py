@@ -20,4 +20,4 @@ Delete statistics after the date (or all, if omitted) and then generate new valu
     if date and not force:
         raise Exception('Only give a date when using %s' % mm(FORCE))
     db = Database(args, log)
-    run_statistics(log, db, force=force, date=date)
+    run_statistics(log, db, force=force, after=date)

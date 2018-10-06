@@ -27,8 +27,8 @@ def test_activities():
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-        run_statistics(log, db, force=True, date='2018-12-01')
-        run_statistics(log, db, force=True, date='2018-01-01')
+        run_statistics(log, db, force=True, after='2018-12-01')
+        run_statistics(log, db, force=True, after='2018-01-01')
 
         run('sqlite3 %s ".dump"' % f.name, shell=True)
 

@@ -45,7 +45,8 @@ class Source(Base):
                            not isinstance(instance, Interval) and
                            instance.time is not None and
                            (always or session.is_modified(instance)))]
-            intervals |= set(chain(*[SummaryStatistics.intervals_including(Epoch.to_time(source.time))
+            summary = SummaryStatistics(log, db)
+            intervals |= set(chain(*[summary.intervals_including(Epoch.to_time(source.time))
                                      for source in sources]))
         for start, (value, units) in intervals:
             interval = session.query(Interval). \
