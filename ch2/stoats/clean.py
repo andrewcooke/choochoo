@@ -1,5 +1,5 @@
 
-from ..command.args import FORCE
+from ..command.args import FORCE, mm
 from ..squeal.tables.statistic import StatisticJournal, Statistic
 
 
@@ -9,7 +9,7 @@ class CleanUnusedStatistics:
         self._log = log
         self._db = db
 
-    def run(self, force=False, date=None):
+    def run(self, force=False, after=None):
         if not force:
             self._log.info('Unused statistics cleaned only with %s' % mm(FORCE))
             return

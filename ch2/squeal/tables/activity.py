@@ -51,7 +51,6 @@ class ActivityJournal(Source):
     name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
     finish = Column(Epoch, nullable=False)
-    notes = Column(Text)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY
@@ -59,6 +58,9 @@ class ActivityJournal(Source):
 
     def __str__(self):
         return 'Activity Journal from %s' % self.time
+
+
+# todo - maybe activity fields?  like topic fields.
 
 
 class ActivityTimespan(Base):

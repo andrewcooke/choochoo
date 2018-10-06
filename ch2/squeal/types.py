@@ -49,7 +49,7 @@ class Epoch(TypeDecorator):
     @staticmethod
     def to_time(datetime):
         if datetime is None:
-            return datetime
+            return None
         if isinstance(datetime, str):
             datetime = parse_datetime(datetime)
         elif isinstance(datetime, dt.date):

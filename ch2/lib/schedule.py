@@ -176,6 +176,10 @@ class Specification:
         return (self.start is None or date >= self.start) and \
                (self.finish is None or date <= self.finish)
 
+    @classmethod
+    def normalize(cls, spec):
+        return str(Specification(spec))
+
 
 class DateOrdinals:
 

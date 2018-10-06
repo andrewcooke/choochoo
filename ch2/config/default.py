@@ -1,6 +1,5 @@
-
+from ch2.lib.schedule import Specification
 from .database import add, Counter
-from ..lib.date import YEAR, MONTH
 from ..squeal.tables.activity import Activity
 from ..squeal.tables.constant import Constant
 from ..squeal.tables.statistic import Statistic, StatisticType, StatisticPipeline
@@ -23,8 +22,10 @@ def default(db):
 
         c = Counter()
         s.add(StatisticPipeline(cls=ActivityStatistics, sort=c()))
-        s.add(StatisticPipeline(cls=SummaryStatistics, kargs={'spec': 'm'}, sort=c()))
-        s.add(StatisticPipeline(cls=SummaryStatistics, kargs={'spec': 'y'}, sort=c()))
+        s.add(StatisticPipeline(cls=SummaryStatistics, sort=c(),
+                                kargs={'spec': Specification.normalize('m')}))
+        s.add(StatisticPipeline(cls=SummaryStatistics,  sort=c(),
+                                kargs={'spec': Specification.normalize('y')}))
         s.add(StatisticPipeline(cls=CleanUnusedStatistics, sort=c()))
 
         # basic activities
