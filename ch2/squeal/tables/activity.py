@@ -57,6 +57,9 @@ class ActivityJournal(Source):
         'polymorphic_identity': SourceType.ACTIVITY
     }
 
+    def __str__(self):
+        return 'Activity Journal from %s' % self.time
+
 
 class ActivityTimespan(Base):
 

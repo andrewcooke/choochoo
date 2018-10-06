@@ -1,4 +1,4 @@
-
+from ch2.stoats.clean import CleanUnusedStatistics
 from .database import add, Counter
 from ..squeal.tables.activity import Activity
 from ..squeal.tables.constant import Constant
@@ -20,7 +20,8 @@ def default(db):
         # statistics pipeline
 
         s.add(StatisticPipeline(cls=ActivityStatistics, sort=10))
-        s.add(StatisticPipeline(cls=SummaryStatistics, sort=100))
+        s.add(StatisticPipeline(cls=SummaryStatistics, sort=20))
+        s.add(StatisticPipeline(cls=CleanUnusedStatistics, sort=30))
 
         # basic activities
 

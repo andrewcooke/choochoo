@@ -56,7 +56,7 @@ class ActivityStatistics:
         for journal in s.query(ActivityJournal).outerjoin(Activity, StatisticJournal). \
                 filter(Activity.id == activity.id,
                        StatisticJournal.source == None).all():
-            self._log.info('Adding statistics for activity journal on %s' % journal.time)
+            self._log.info('Adding statistics for %s' % journal)
             self._add_stats(s, journal, activity)
 
     def _add_stats(self, s, journal, activity):

@@ -91,25 +91,28 @@ class SummaryStatistics:
                    Source.time >= start,
                    Source.time < finish).all()
 
-    def _calculate_value(self, process, values):
+    def _calculate_value(self, process, values, interval):
+        range = {'M': 'Month', 'y': 'Year'}[interval.units]
+        if interval.value > 1:
+            range = '%d %ss' % (interval.value, range)
         defined = [x for x in values if x is not None]
         if process == 'min':
-            return min(defined) if defined else None, 'Min %s'
+            return min(defined) if defined else None, 'Min/%s %%s' % range
         elif process == 'max':
-            return max(defined) if defined else None, 'Max %s'
+            return max(defined) if defined else None, 'Max/%s %%s' % range
         elif process == 'sum':
-            return sum(defined, 0), 'Total %s'
+            return sum(defined, 0), 'Total/%s %%s' % range
         elif process == 'avg':
-            return sum(defined) / len(defined) if defined else None, 'Avg %s'
+            return sum(defined) / len(defined) if defined else None, 'Avg/%s %%s' % range
         elif process == 'med':
             defined = sorted(defined)
             if len(defined):
                 if len(defined) % 2:
-                    return defined[len(defined) // 2], 'Med %s'
+                    return defined[len(defined) // 2], 'Med/%s %%s' % range
                 else:
-                    return 0.5 * (defined[len(defined) // 2 - 1] + defined[len(defined) // 2]), 'Med %s'
+                    return 0.5 * (defined[len(defined) // 2 - 1] + defined[len(defined) // 2]), 'Med/%s %%s' % range
             else:
-                return None, 'Med %s'
+                return None, 'Med/%s %%s' % range
         else:
             self._log.warn('No algorithm for "%s"' % process)
             return None, None
@@ -123,8 +126,8 @@ class SummaryStatistics:
             s.add(statistic)
         return statistic
 
-    def _create_value(self, s, interval, statistic, process, start, data, values):
-        value, template = self._calculate_value(process, values)
+    def _create_value(self, s, interval, statistic, process, data, values):
+        value, template = self._calculate_value(process, values, interval)
         if value is not None:
             name = template % statistic.name
             new_statistic = self._get_statistic(s, statistic, name)
@@ -152,13 +155,14 @@ class SummaryStatistics:
         with self._db.session_context() as s:
             for start, finish in self._intervals(s, duration, units):
                 interval = self._interval(s, start, finish, duration, units)
+                self._log.info('Adding statistics for %s' % interval)
                 for statistic in self._statistics_missing_values(s, start, finish):
                     data = self._diary_entries(s, statistic, start, finish)
                     processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
                     if processes:
                         values = [x.value for x in data]
                         for process in processes:
-                            self._create_value(s, interval, statistic, process.lower(), start, data, values)
+                            self._create_value(s, interval, statistic, process.lower(), data, values)
                     else:
                         self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
                     self._create_ranks(s, interval, statistic, data)
