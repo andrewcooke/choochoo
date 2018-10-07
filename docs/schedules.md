@@ -8,35 +8,47 @@ some kind of repetition.  They are very flexible, but I've tried to
 make the simple cases easy to write and understand.  Before getting
 into any details it's best to look at some examples:
 
-* **2018-10-
+* **2018-10-**
 
   This is a single date - the day that I am writing this document,
   Sunday 7th of October, 2018.
 
-* **2018-10-07-** This is all the days from today (Sunday) onwards
-  (include the given date).
+* **2018-10-07-**
 
-* **-2018-10-07-** All the days before today (Sunday) (excluding the
-  given date - date ranges are semi-open).
+  This is all the days from today (Sunday) onwards (include the given
+  date).
 
-* **d** Every day (always - the open range).
+* **-2018-10-07-**
 
-* **2w** Every two weeks.  This may seem a strange thing to want to
-  specify, but perhaps you want to calculate your total distance every
+  All the days before today (Sunday) (excluding the given date - date
+  ranges are semi-open).
+
+* **d**
+
+  Every day (always - the open range).
+
+* **2w**
+
+  Every two weeks.  This may seem a strange thing to want to specify,
+  but perhaps you want to calculate your total distance every
   fortnight?  If so, you'll need this to specify the interval in the
   statistics pipeline.
 
-* **2w[1mon,2tue]** The first Monday and the second Tuesday in each
-  fortnight (maybe you have some weird appointment you need to keep).
+* **2w[1mon,2tue]**
 
-* **2018-10-07/2w[1mon,2tue]** The first Monday and second Tuesday in
-  each fortnight when the fortnights are chosen so that Sunday 7th of
-  October 2018 is in the first week (because weeks always start on
-  Mondays, buy you can still divide up time into fortnights in two
-  different ways).
+  The first Monday and the second Tuesday in each fortnight (maybe you
+  have some weird appointment you need to keep).
 
-* **2018-10-07/2w[1mon,2tue]2019-01-01-2020-01-01** The first ... (as
-  above) during all of 2019.
+* **2018-10-07/2w[1mon,2tue]**
+
+  The first Monday and second Tuesday in each fortnight when the
+  fortnights are chosen so that Sunday 7th of October 2018 is in the
+  first week (because weeks always start on Mondays, buy you can still
+  divide up time into fortnights in two different ways).
+
+* **2018-10-07/2w[1mon,2tue]2019-01-01-2020-01-01**
+
+  The first ... (as above) during all of 2019.
 
 Hopefully that gives the idea.  
 
