@@ -30,13 +30,13 @@ def test_sources():
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = TopicJournal(topic=diary, time='2018-09-29')
             s.add(d)
-            assert len(d.topic.fields) == 2
+            assert len(d.topic.fields) == 6, d.topic.fields
             assert d.topic.fields[0].statistic.name == 'Notes'
-            assert d.topic.fields[1].statistic.name == 'Sleep'
+            assert d.topic.fields[1].statistic.name == 'Rest HR'
             for field in d.topic.fields:
                 assert d.fields[field].value is None
             d.fields[d.topic.fields[0]].value = 'hello world'
-            d.fields[d.topic.fields[1]].value = 8
+            d.fields[d.topic.fields[1]].value = 60
 
         with db.session_context() as s:
 
@@ -45,11 +45,11 @@ def test_sources():
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.time == '2018-09-29').one()
-            assert len(d.topic.fields) == 2
+            assert len(d.topic.fields) == 6
             assert d.topic.fields[0].statistic.name == 'Notes'
-            assert d.journal[d.topic.fields[0]].value == 'hello world'
-            assert d.topic.fields[1].statistic.name == 'Sleep'
-            assert d.journal[d.topic.fields[1]].value == 8
+            assert d.fields[d.topic.fields[0]].value == 'hello world'
+            assert d.topic.fields[1].statistic.name == 'Rest HR'
+            assert d.fields[d.topic.fields[1]].value == 60
 
         # generate summary stats
 
@@ -62,20 +62,19 @@ def test_sources():
 
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             sleep = s.query(StatisticJournalFloat).join(Statistic). \
-                filter(Statistic.owner == diary).one()
-            assert sleep.value == 8
+                filter(Statistic.owner == diary, Statistic.name == 'Rest HR').one()
+            assert sleep.value == 60
             assert len(sleep.measures) == 2
             assert sleep.measures[0].rank == 1
             assert sleep.measures[0].percentile == 0
-            assert s.query(count(StatisticJournalFloat.id)).scalar() == 3
-            m_avg = s.query(StatisticJournalFloat).join(Statistic, Interval). \
-                filter(Statistic.name == 'Avg Sleep',
-                       Interval.units == 'M').one()
-            assert m_avg.value == 8
-            y_avg = s.query(StatisticJournalFloat).join(Statistic, Interval). \
-                filter(Statistic.name == 'Avg Sleep',
-                       Interval.units == 'y').one()
-            assert y_avg.value == 8
+            n = s.query(count(StatisticJournalFloat.id)).scalar()
+            assert n == 5, n
+            m_avg = s.query(StatisticJournalFloat).join(Statistic). \
+                filter(Statistic.name == 'Avg/Month Rest HR').one()
+            assert m_avg.value == 60
+            y_avg = s.query(StatisticJournalFloat).join(Statistic). \
+                filter(Statistic.name == 'Avg/Year Rest HR').one()
+            assert y_avg.value == 60
 
         with db.session_context() as s:
 

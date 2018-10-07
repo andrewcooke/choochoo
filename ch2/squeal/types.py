@@ -5,7 +5,8 @@ from pydoc import locate
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
-from ..lib.date import parse_datetime, parse_date
+from ch2.lib.schedule import Specification
+from ..lib.date import to_datetime, to_date
 
 
 class Ordinal(TypeDecorator):
@@ -16,7 +17,7 @@ class Ordinal(TypeDecorator):
         if date is None:
             return date
         if isinstance(date, str):
-            date = parse_date(date)
+            date = to_date(date)
         return date.toordinal()
 
     process_bind_param = process_literal_param
@@ -51,7 +52,7 @@ class Epoch(TypeDecorator):
         if datetime is None:
             return None
         if isinstance(datetime, str):
-            datetime = parse_datetime(datetime)
+            datetime = to_datetime(datetime)
         elif isinstance(datetime, dt.date):
             datetime = dt.datetime.combine(datetime, dt.time())
         elif isinstance(datetime, int) or isinstance(datetime, float):
@@ -97,3 +98,37 @@ class Json(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         return loads(value)
+
+
+class Spec(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, spec, dialect):
+        if spec is None:
+            return spec
+        if not isinstance(spec, Specification):
+            spec = Specification(spec)
+        return str(spec)
+
+    process_bind_param = process_literal_param
+
+    def process_result_value(self, value, dialect):
+        if not value:
+            return None
+        return Specification(value)
+
+
+class OpenSpec(Spec):
+
+    def process_literal_param(self, spec, dialect):
+        if spec is None:
+            return spec
+        if not isinstance(spec, Specification):
+            spec = Specification(spec)
+        spec.start = None
+        spec.finish = None
+        return str(spec)
+
+    process_bind_param = process_literal_param
+

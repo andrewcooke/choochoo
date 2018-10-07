@@ -50,7 +50,7 @@ class SummaryStatistics:
                     q = s.query(Interval)
                 else:
                     q = s.query(count(Interval.id))
-                q = q.filter(Interval.spec == str(spec))
+                q = q.filter(Interval.spec == spec)
                 if after:
                     q.q.filter(Interval.finish > after)
                 if repeat:
@@ -83,10 +83,10 @@ class SummaryStatistics:
     def _interval(self, s, start, finish, spec):
         interval = s.query(Interval). \
             filter(Interval.time == start,
-                   Interval.spec == str(spec),
+                   Interval.spec == spec,
                    Interval.finish == finish).one_or_none()
         if not interval:
-            interval = Interval(time=start, finish=finish, spec=str(spec))
+            interval = Interval(time=start, finish=finish, spec=spec)
             s.add(interval)
         return interval
 

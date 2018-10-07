@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from calendar import monthrange
 from re import sub, compile
 
-from .date import parse_date, format_date, MONTH, add_duration, mul_duration
+from .date import to_date, format_date, MONTH, add_duration, mul_duration
 
 # my calculations are done relative to the unix epoch.  the "gregorian ordinal"
 # is relative to year 1, but i have no idea how the details of that work.  i
@@ -102,12 +102,12 @@ class Specification:
         if range:
             m = compile(r'^(\d+-\d+-\d+)?-(\d+-\d+-\d+)?$').match(range)
             if m:
-                self.__start = parse_date(m.group(1)) if m.group(1) else None
-                self.__finish = parse_date(m.group(2)) if m.group(2) else None
+                self.__start = to_date(m.group(1)) if m.group(1) else None
+                self.__finish = to_date(m.group(2)) if m.group(2) else None
             else:
                 # if a single value is given then it is the start with an implicit finish that
                 # is the day after (so a single day, since finish is exclusive)
-                self.__start = parse_date(range)
+                self.__start = to_date(range)
                 self.__finish = self.__start + dt.timedelta(days=1)
         else:
             self.__start, self.__finish = None, None
@@ -149,7 +149,7 @@ class Specification:
         if date is None:
             return date
         try:
-            return parse_date(date)
+            return to_date(date)
         except TypeError:
             try:
                 dt.date.fromordinal(int(date))
@@ -183,8 +183,8 @@ class Specification:
 
 class DateOrdinals:
 
-    def __init__(self, date_or_text):
-        date = parse_date(date_or_text)
+    def __init__(self, date):
+        date = to_date(date)
         self.y = date.year - 1970
         self.m = 12 * self.y + date.month - 1
         self.d = (date - dt.date(1970, 1, 1)).days

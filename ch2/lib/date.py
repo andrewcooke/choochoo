@@ -4,29 +4,6 @@ import time as t
 from calendar import monthrange
 
 
-def parse_date(value):
-    if isinstance(value, dt.date):
-        return value
-    elif isinstance(value, dt.datetime):
-        return to_date(value)
-    else:
-        return dt.date(*t.strptime(value, '%Y-%m-%d')[:3])
-
-
-def parse_datetime(value):
-    if isinstance(value, dt.datetime):
-        return value
-    elif isinstance(value, dt.date):
-        return to_datetime(value)
-    else:
-        for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d'):
-            try:
-                return dt.datetime.strptime(value, format)
-            except ValueError:
-                pass
-        raise ValueError('Cannot parse "%s" as a datetime' % value)
-
-
 def format_date(date):
     return date.strftime('%Y-%m-%d')
 
@@ -47,17 +24,26 @@ def parse_duration(duration):
 
 
 def to_date(value):
-    if isinstance(value, dt.date):
+    if isinstance(value, dt.datetime):
+        return dt.date(value.year, value.month, value.day)
+    elif isinstance(value, dt.date):
         return value
     else:
-        return dt.date(value.year, value.month, value.day)
+        return dt.date(*t.strptime(value, '%Y-%m-%d')[:3])
 
 
 def to_datetime(value):
     if isinstance(value, dt.datetime):
         return value
-    else:
+    elif isinstance(value, dt.date):
         return dt.datetime(value.year, value.month, value.day)
+    else:
+        for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d'):
+            try:
+                return dt.datetime.strptime(value, format)
+            except ValueError:
+                pass
+        raise ValueError('Cannot parse "%s" as a datetime' % value)
 
 
 # these reflect the conventions used in string parsing / formatting

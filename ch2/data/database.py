@@ -88,7 +88,7 @@ class Data:
         return statistic_names, statistic_ids
 
     def _build_statistic_journal_query(self, statistic_ids, q,
-            start, finish, owner, constraint, interval, interval_units):
+            start, finish, owner, constraint):
         q = q.filter(Statistic.id.in_(statistic_ids))
         if start:
             q = q.filter(StatisticJournal.time >= start)
@@ -100,14 +100,13 @@ class Data:
             q = q.filter(Statistic.constraint == constraint)
         return q
 
-    def statistic_journals(self, *statistics, start=None, finish=None, owner=None, constraint=None,
-                           interval=1, interval_units=None):
+    def statistic_journals(self, *statistics, start=None, finish=None, owner=None, constraint=None, spec=None):
         statistic_names, statistic_ids = self._collect_statistics(statistics)
         q = self._build_statistic_journal_query(
             statistic_ids, self._session.query(StatisticJournal).join(Statistic),
-            start, finish, owner, constraint, interval, interval_units)
-        if interval_units:
-            q = q.join(Interval).filter(Interval.value == interval, Interval.units == interval_units)
+            start, finish, owner, constraint)
+        if spec:
+            q = q.join(Interval).filter(Interval.spec == spec)
         raw_data = defaultdict(dict)
         for journal in q.all():  # todo - eager load
             raw_data[journal.time][journal.statistic.name] = journal.value
@@ -122,15 +121,14 @@ class Data:
                     data[statistic].append(None)
         return DataFrame(data, index=times)
 
-    def statistic_quartiles(self, *statistics, interval=1, interval_units='M',
-                            start=None, finish=None, owner=None, constraint=None):
+    def statistic_quartiles(self, *statistics, spec='m', start=None, finish=None, owner=None, constraint=None):
         statistic_names, statistic_ids = self._collect_statistics(statistics)
         q = self._build_statistic_journal_query(
             statistic_ids, self._session.query(StatisticMeasure).join(StatisticJournal, Statistic),
-            start, finish, owner, constraint, interval, interval_units)
-        if interval_units:
+            start, finish, owner, constraint)
+        if spec:
             q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \
-                filter(Interval.value == interval, Interval.units == interval_units)
+                filter(Interval.spec == spec)
         q = q.filter(StatisticMeasure.quartile != None)
         raw_data = defaultdict(lambda: defaultdict(lambda: [0] * 5))
         for measure in q.all():

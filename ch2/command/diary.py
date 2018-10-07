@@ -4,7 +4,7 @@ import datetime as dt
 from sqlalchemy import or_
 
 from .args import DATE
-from ..lib.date import parse_date
+from ..lib.date import to_date
 from ..squeal.database import Database
 from ..squeal.tables.topic import Topic
 
@@ -27,7 +27,7 @@ To exit, alt-q (or, without saving, alt-x).
         date = dt.date.today()
     else:
         try:
-            date = parse_date(date)
+            date = to_date(date)
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
     db = Database(args, log)

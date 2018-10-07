@@ -3,7 +3,7 @@ import datetime as dt
 
 from sqlalchemy import or_
 
-from ..lib.date import parse_date, format_date
+from ..lib.date import to_date, format_date
 from ..lib.schedule import DOW
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..squeal.utils import ORMUtils
@@ -21,7 +21,7 @@ class Week(Assert, ORMUtils):
     def __init__(self, name=None, description=None, start=None, days=None):
         self.__name = name
         self.__description = description
-        self.__start = parse_date(start)
+        self.__start = to_date(start)
         self.__days = dict((key.lower(), value) for key, value in days.items())
         self.__n_weeks = max(len(day) for day in self.__days.values())
         self.__validate()
