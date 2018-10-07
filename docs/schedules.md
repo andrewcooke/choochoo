@@ -8,8 +8,10 @@ some kind of repetition.  They are very flexible, but I've tried to
 make the simple cases easy to write and understand.  Before getting
 into any details it's best to look at some examples:
 
-* **2018-10-07** This is a single date - the day that I am writing
-  this document, Sunday 7th of October, 2018.
+* **2018-10-
+
+  This is a single date - the day that I am writing this document,
+  Sunday 7th of October, 2018.
 
 * **2018-10-07-** This is all the days from today (Sunday) onwards
   (include the given date).
@@ -42,14 +44,14 @@ Hopefully that gives the idea.
 
 ## Structure
 
-A schedule consists of four sections:
+A schedule consists of four sections
 
     offset / repeat [ locations ] range
 
-Which are individuall discussed below.  Many sections can be omitted
-if the default value is sufficient.  The exact details are complex (to
-handle common cases nicely) so the best guidance is probably to follow
-the examples here.
+which are discussed below.  Many sections can be omitted if the
+default value is sufficient.  The exact details are complex (to handle
+common cases nicely) so the best guidance is probably to follow the
+examples here.
 
 ## Offset
 
