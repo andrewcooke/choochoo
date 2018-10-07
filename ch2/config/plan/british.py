@@ -48,14 +48,9 @@ def twelve_week_improver(date):
                                       ]
                                ),
                     'fri': Day(name='Cross-training',
-                               notes=[(3,
-                                       ((3, 'Bonus session - non-cycling activity'),
-                                        'Rest day'))
-                                      ]),
+                               notes=3 * (3 * ['Bonus session - non-cycling activity'] + ['Rest day'])),
                     'sat': Day(name='Flexible day',
-                               notes=[(11, None),
-                                      '30m / low / improvers pre-event ride'
-                                      ]),
+                               notes=11 * [None] + ['30m / low / improvers pre-event ride']),
                     'sun': Day(name='Outdoor ride',
                                notes=['1h30m / low/med / improvers endurance ride',
                                       '1h40m / low/med / improvers endurance ride',

@@ -5,8 +5,12 @@ from ch2.lib.schedule import Schedule, DateOrdinals
 from ch2.lib.date import to_date
 
 
-def assert_str(x, s):
-    assert str(x) == s, '%s != %s' % (str(x), s)
+def assert_str(x1, s):
+    s1 = str(x1)
+    assert s1 == s, '%s != %s' % (s1, s)
+    x2 = Schedule(s1)
+    s2 = str(x2)
+    assert s1 == s2, 'Not idempotent:  %s != %s' % (s1, s2)
 
 
 def assert_bad(f, *args):
@@ -28,7 +32,7 @@ def test_specification():
     assert_str(Schedule('d2018-07-05'), '2018-07-05')
     # others
     assert_str(Schedule('1/2w[1]2018-01-01-'), '1/2w[1]2018-01-01-')
-    assert_str(Schedule('1/2w[Mon,2,3]-1970-01-01'), '1/2w[1mon,2,3]-1970-01-01')
+    assert_str(Schedule('1/2w[Mon,2,3]-1970-01-01'), '1/2w[mon,2,3]-1970-01-01')
     # some errors
     assert_bad(Schedule, '1/2[]2018-01-01-')   # must specify type
     assert_bad(Schedule, '1/2w[1d]2018-01-01-')  # no longer support type in location

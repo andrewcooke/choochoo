@@ -89,7 +89,7 @@ class Schedule:
             if len(location) > 3:
                 return int(location[:-3]), self.DOW_INDEX[location[-3:]]
             else:
-                return 1, self.DOW_INDEX[location]
+                return 0, self.DOW_INDEX[location]  # 0 means all weeks (in a month)
         else:
             return int(location)
 
@@ -135,7 +135,10 @@ class Schedule:
 
     def __str_location(self, location):
         try:
-            return '%d%s' % (location[0], DOW[location[1]])
+            if location[0]:
+                return '%d%s' % (location[0], DOW[location[1]])
+            else:
+                return DOW[location[1]]
         except:
             return str(location)
 
@@ -289,7 +292,7 @@ class Day(Frame):
             else:
                 try:
                     n, dow = location
-                    if n == 1:
+                    if n < 2:
                         dows.add(dow)
                 except TypeError:
                     pass
@@ -320,7 +323,7 @@ class Week(Frame):
         for location in self.schedule.locations:
             if isinstance(location, int):
                 yield location - 1
-            elif location[0] == 1:
+            elif location[0] < 2:
                 yield location[1]
 
     def dates(self, start):
@@ -347,16 +350,23 @@ class Week(Frame):
 
 class Month(Frame):
 
-    def __locations_to_days(self, som):
+    def __locations_to_days(self, som, fom):
         # 1-index
         for location in self.schedule.locations:
             if isinstance(location, int):
                 yield location
             else:
                 week, dow = location
-                if dow >= som:
-                    week -= 1
-                yield 7 * week + dow - som + 1
+                if week:
+                    if dow >= som:
+                        week -= 1
+                    yield 7 * week + dow - som + 1
+                else:
+                    dow -= som - 1
+                    while dow < 1: dow += 7
+                    while dow <= fom:
+                        yield dow
+                        dow += 7
 
     def dates(self, start):
         month = dt.date(start.year, start.month, 1)
@@ -364,7 +374,7 @@ class Month(Frame):
         while True:
             som, fom = monthrange(month.year, month.month)
             if self.schedule.locations:
-                days = [day for day in sorted(self.__locations_to_days(som)) if first <= day < fom]
+                days = [day for day in sorted(self.__locations_to_days(som, fom)) if first <= day < fom]
             else:
                 days = range(first, fom+1)
             for day in days:
@@ -379,14 +389,11 @@ class Month(Frame):
 class Year(Frame):
 
     def __locations_to_days(self):
-        # 1-index (only)
-        for location in self.schedule.locations:
-            if isinstance(location, int):
-                yield location
-            else:
-                raise Exception('Day of week in yearly frame')
+        pass
 
     def dates(self, start):
+        if self.schedule.locations:
+            raise Exception('Location in yearly frame')
         while self.schedule.in_range(start):
             yield start
             start += dt.timedelta(days=1)

@@ -104,12 +104,12 @@ class Sched(TypeDecorator):
 
     impl = Text
 
-    def process_literal_param(self, spec, dialect):
-        if spec is None:
-            return spec
-        if not isinstance(spec, Schedule):
-            spec = Schedule(spec)
-        return str(spec)
+    def process_literal_param(self, sched, dialect):
+        if sched is None:
+            return sched
+        if not isinstance(sched, Schedule):
+            sched = Schedule(sched)
+        return str(sched)
 
     process_bind_param = process_literal_param
 
@@ -121,14 +121,14 @@ class Sched(TypeDecorator):
 
 class OpenSched(Sched):
 
-    def process_literal_param(self, spec, dialect):
-        if spec is None:
-            return spec
-        if not isinstance(spec, Schedule):
-            spec = Schedule(spec)
-        spec.start = None
-        spec.finish = None
-        return str(spec)
+    def process_literal_param(self, sched, dialect):
+        if sched is None:
+            return sched
+        if not isinstance(sched, Schedule):
+            sched = Schedule(sched)
+        sched.start = None
+        sched.finish = None
+        return str(sched)
 
     process_bind_param = process_literal_param
 

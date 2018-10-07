@@ -24,7 +24,7 @@ class Topic(Base):
     schedule = Column(Sched, nullable=False)
     start = Column(Ordinal)
     finish = Column(Ordinal)
-    name = Column(Text, nullable=False, server_default='', unique=True)
+    name = Column(Text, nullable=False, server_default='')
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Text, nullable=False, server_default='')
 
@@ -42,6 +42,9 @@ class Topic(Base):
         self.sort = sort
         self.start = schedule.start
         self.finish = schedule.finish
+
+    def __str__(self):
+        return 'Topic "%s" (%s)' % (self.name, self.schedule)
 
     def populate(self, s, date):
         self.journal = s.query(TopicJournal). \

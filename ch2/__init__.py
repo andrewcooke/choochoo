@@ -10,7 +10,6 @@ from .command.help import help
 from .command.statistics import statistics
 from .fit.profile.profile import package_fit_profile
 from .lib.log import make_log
-from .plan import add_plan
 from .squeal.database import Database
 
 
