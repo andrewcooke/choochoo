@@ -2,7 +2,7 @@
 import datetime as dt
 from abc import ABC, abstractmethod
 from calendar import monthrange
-from re import sub, compile
+from re import sub, compile, match
 
 from .date import to_date, format_date, MONTH, add_duration, mul_duration
 
@@ -18,7 +18,7 @@ EPOCH_OFFSET = ZERO.toordinal()
 DOW = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
 
-class Specification:
+class Schedule:
     """
     Parse a spec and reduce it to a normalized form (available through __str__()).
 
@@ -32,8 +32,6 @@ class Specification:
     depending on the start data, but the week always starts on a Monday.
     """
 
-    # TODO - is finish exclusive everywhere?
-
     DOW_INDEX = dict((day, i) for i, day in enumerate(DOW))
 
     def __init__(self, spec):
@@ -43,17 +41,20 @@ class Specification:
         self.repeat = None  # int (units of frame)
         self.frame_type = None  # character (as spec, so all lower case)
         self.duration = None  # character (as lib.date, so capital M for month)
-        self.locations = None  # list of day offsets or (week, dow) tuples
+        self.locations = None  # list of day offsets or (week, dow) tuples (if empty, all dates)
         try:
+            spec = '' if spec is None else spec
             spec = sub(r'\s+', '', spec)
             spec = spec.lower()
-            m = compile(r'^([\d\-/]*[dwmy])(\[[^\]]*\])?([\d\-]*)$').match(spec)
+            m = match(r'^([\d\-/]*[dwmy])?(\[[^\]]*\])?([\d\-]*)$', spec)
             frame, locations, range = m.group(1), m.group(2), m.group(3)
             self.__parse_frame(frame)
             self.__parse_locations(locations)
             self.__parse_range(range)
         except:
             raise Exception('Cannot parse %s' % spec)
+        if self.locations and self.frame_type == 'y':
+            raise Exception('Locations not supported in yearly schedules')
 
     def __date_to_ordinal(self, text):
         return DateOrdinals(text).ordinals[self.frame_type]
@@ -68,6 +69,8 @@ class Specification:
             return 1, text
 
     def __parse_frame(self, frame):
+        if frame is None:
+            frame = 'd'
         if '/' in frame:
             offset, rft = frame.split('/')
         else:
@@ -96,7 +99,7 @@ class Specification:
         if locations:
             self.locations = list(map(self.__parse_location, locations.split(',')))
         else:
-            self.locations = [1]
+            self.locations = []  # all
 
     def __parse_range(self, range):
         if range:
@@ -113,11 +116,22 @@ class Specification:
             self.__start, self.__finish = None, None
 
     def __str__(self):
-        return '%d/%d%s[%s]%s' % (self.offset, self.repeat, self.frame_type,
-                                  self.__str_locations(), self.__str_ranges())
+        return '%s%s%s' % (self.__str_offset(), self.__str_locations(), self.__str_ranges())
+
+    def __str_offset(self):
+        repeat = '%d' % self.repeat if self.repeat > 1 else ''
+        if self.offset:
+            return '%d/%s%s' % (self.offset, repeat, self.frame_type)
+        elif repeat or self.frame_type != 'd' or not (self.start or self.finish):
+            return '%s%s' % (repeat, self.frame_type)
+        else:
+            return ''
 
     def __str_locations(self):
-        return ','.join(map(self.__str_location, self.locations))
+        if self.locations:
+            return '[%s]' % ','.join(map(self.__str_location, self.locations))
+        else:
+            return ''
 
     def __str_location(self, location):
         try:
@@ -128,8 +142,12 @@ class Specification:
     def __str_ranges(self):
         if self.__start is None and self.__finish is None:
             return ''
-        elif self.__start == self.__finish:
+        elif self.__start and self.__start + dt.timedelta(days=1) == self.__finish:
             return self.__str_range(self.__start)
+        elif self.__start and not self.__finish:
+            return '%s-' % self.__str_range(self.__start)
+        elif self.__finish and not self.__start:
+            return '-%s' % self.__str_range(self.__finish)
         else:
             return '%s-%s' % (self.__str_range(self.__start), self.__str_range(self.finish))
 
@@ -178,7 +196,7 @@ class Specification:
 
     @classmethod
     def normalize(cls, spec):
-        return str(Specification(spec))
+        return str(Schedule(spec))
 
 
 class DateOrdinals:
@@ -200,8 +218,8 @@ class DateOrdinals:
 
 class Frame(ABC):
 
-    def __init__(self, spec):
-        self.spec = spec
+    def __init__(self, schedule):
+        self.schedule = schedule
 
     def at_frame(self, date):
         '''
@@ -214,10 +232,10 @@ class Frame(ABC):
         (and lie within the start/finish range, if given)
         '''
         ordinals = DateOrdinals(date)
-        if (self.spec.start is None or self.spec.start <= date) and \
-                (self.spec.finish is None or date < self.spec.finish):
-            ordinal = ordinals.ordinals[self.spec.frame_type]
-            return self.spec.offset == ordinal % self.spec.repeat
+        if (self.schedule.start is None or self.schedule.start <= date) and \
+                (self.schedule.finish is None or date < self.schedule.finish):
+            ordinal = ordinals.ordinals[self.schedule.frame_type]
+            return self.schedule.offset == ordinal % self.schedule.repeat
         return False
 
     def start(self, date):
@@ -226,8 +244,8 @@ class Frame(ABC):
         (None if outside range).
         '''
         start = self.start_open(date)
-        if (self.spec.start is None or self.spec.start <= start) and \
-                (self.spec.finish is None or self.spec.finish > start):
+        if (self.schedule.start is None or self.schedule.start <= start) and \
+                (self.schedule.finish is None or self.schedule.finish > start):
             return start
         else:
             return None
@@ -238,16 +256,16 @@ class Frame(ABC):
         (ignoring range).
         '''
         date = DateOrdinals(date)
-        n = (date.ordinals[self.spec.frame_type] - self.spec.offset) // self.spec.repeat
-        zero = add_duration(ZERO, (self.spec.offset, self.spec.duration))
-        return add_duration(zero, mul_duration(n, (self.spec.repeat, self.spec.duration)))
+        n = (date.ordinals[self.schedule.frame_type] - self.schedule.offset) // self.schedule.repeat
+        zero = add_duration(ZERO, (self.schedule.offset, self.schedule.duration))
+        return add_duration(zero, mul_duration(n, (self.schedule.repeat, self.schedule.duration)))
 
     def at_location(self, date):
         '''
         Does the given day coincide with the specification?
         '''
         try:
-            return date == next(self.dates(date))
+            return self.schedule.in_range(date) and date == next(self.dates(date))
         except StopIteration:
             return False
 
@@ -263,7 +281,9 @@ class Day(Frame):
 
     def __parse_locations(self):
         dows = set()
-        for location in self.spec.locations:
+        if not self.schedule.locations:
+            return True, None
+        for location in self.schedule.locations:
             if location == 1:
                 return True, None
             else:
@@ -278,8 +298,8 @@ class Day(Frame):
     def dates(self, start):
         all, dows = self.__parse_locations()
         if all or dows:
-            date, delta = start, dt.timedelta(days=self.spec.repeat)
-            while self.spec.in_range(date):
+            date, delta = start, dt.timedelta(days=self.schedule.repeat)
+            while self.schedule.in_range(date):
                 if self.at_frame(date):
                     if all or DateOrdinals(date).dow in dows:
                         yield date
@@ -287,21 +307,17 @@ class Day(Frame):
                     break
                 else:
                     date += dt.timedelta(days=1)
-            while self.spec.in_range(date):
+            while self.schedule.in_range(date):
                 if all or DateOrdinals(date).dow in dows:
                     yield date
                 date += delta
 
 
 class Week(Frame):
-    '''
-    Note that week frames start on Mon.  So they don't fit neatly into a year.
-    No special casing is done for the final week in a year.  TODO - maybe we should?
-    '''
 
     def __locations_to_days(self):
         # 0-index
-        for location in self.spec.locations:
+        for location in self.schedule.locations:
             if isinstance(location, int):
                 yield location - 1
             elif location[0] == 1:
@@ -309,9 +325,12 @@ class Week(Frame):
 
     def dates(self, start):
         date, ordinals = start, DateOrdinals(start)
-        dows = list(sorted(self.__locations_to_days()))
-        while ordinals.dow and self.spec.in_range(date):
-            if ordinals.dow in dows:
+        if self.schedule.locations:
+            all, dows = False, list(sorted(self.__locations_to_days()))
+        else:
+            all, dows = True, range(7)
+        while ordinals.dow and self.schedule.in_range(date):
+            if all or ordinals.dow in dows:
                 yield date
             date += dt.timedelta(days=1)
             ordinals = DateOrdinals(date)
@@ -319,8 +338,8 @@ class Week(Frame):
         while True:
             for delta in deltas:
                 date = week + delta
-                if self.spec.in_range(date):
-                        yield date
+                if self.schedule.in_range(date):
+                    yield date
                 else:
                     return
             week += dt.timedelta(days=7)
@@ -330,7 +349,7 @@ class Month(Frame):
 
     def __locations_to_days(self, som):
         # 1-index
-        for location in self.spec.locations:
+        for location in self.schedule.locations:
             if isinstance(location, int):
                 yield location
             else:
@@ -341,29 +360,33 @@ class Month(Frame):
 
     def dates(self, start):
         month = dt.date(start.year, start.month, 1)
-        while self.spec.finish is None or month < self.spec.finish:
+        first = start.day
+        while True:
             som, fom = monthrange(month.year, month.month)
-            days = [day for day in sorted(self.__locations_to_days(som)) if day < fom]
+            if self.schedule.locations:
+                days = [day for day in sorted(self.__locations_to_days(som)) if first <= day < fom]
+            else:
+                days = range(first, fom+1)
             for day in days:
-                date = dt.date(start.year, start.month, day)
-                if self.spec.in_range(date):
+                date = dt.date(month.year, month.month, day)
+                if self.schedule.in_range(date):
                     yield date
-            month = dt.date(month.year, month.month, fom) + dt.timedelta(days=1)
+                else:
+                    return
+            first, month = 1, dt.date(month.year, month.month, fom) + dt.timedelta(days=1)
 
 
 class Year(Frame):
 
     def __locations_to_days(self):
         # 1-index (only)
-        for location in self.spec.locations:
+        for location in self.schedule.locations:
             if isinstance(location, int):
                 yield location
             else:
                 raise Exception('Day of week in yearly frame')
 
     def dates(self, start):
-        year = dt.date(start.year, 1, 1)
-        while self.spec.finish is None or year < self.spec.finish:
-            for days in self.__locations_to_days():
-                yield year + dt.timedelta(days=days)
-            year = dt.date(year.year + 1, 1, 1)
+        while self.schedule.in_range(start):
+            yield start
+            start += dt.timedelta(days=1)

@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.sql.functions import count
 
 from ..lib.date import add_duration
-from ..lib.schedule import Specification
+from ..lib.schedule import Schedule
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
     StatisticPipeline
@@ -18,29 +18,29 @@ class SummaryStatistics:
         self._log = log
         self._db = db
 
-    def run(self, spec=None, force=False, after=None):
-        if spec is None:
-            for spec in self._pipeline_specs():
-                self._run(spec, force, after)
+    def run(self, schedule=None, force=False, after=None):
+        if schedule is None:
+            for schedule in self._pipeline_schedules():
+                self._run(schedule, force, after)
         else:
-            self._run(Specification(spec), force, after=None)
+            self._run(Schedule(schedule), force, after=None)
 
     def _run(self, spec, force, after=None):
         if force:
             self._delete(spec, after)
         self._create_values(spec)
 
-    def _pipeline_specs(self):
+    def _pipeline_schedules(self):
         with self._db.session_context() as s:
-            return [Specification(spec) for spec in self.pipeline_specs(s)]
+            return [Schedule(spec) for spec in self.pipeline_schedules(s)]
 
     @classmethod
-    def pipeline_specs(cls, s):
+    def pipeline_schedules(cls, s):
         for kargs in s.query(StatisticPipeline.kargs).filter(StatisticPipeline.cls == cls).all():
-            if 'spec' in kargs[0]:
-                yield kargs[0]['spec']
+            if 'schedule' in kargs[0]:
+                yield kargs[0]['schedule']
             else:
-                raise Exception('No spec in kargs for Statistic Pipeline (%s)' % cls.__name__)
+                raise Exception('No schedule in kargs for Statistic Pipeline (%s)' % cls.__name__)
 
     def _delete(self, spec, after=None):
         # we delete the intervals that all summary statistics depend on and they will cascade
@@ -50,7 +50,7 @@ class SummaryStatistics:
                     q = s.query(Interval)
                 else:
                     q = s.query(count(Interval.id))
-                q = q.filter(Interval.spec == spec)
+                q = q.filter(Interval.schedule == spec)
                 if after:
                     q.q.filter(Interval.finish > after)
                 if repeat:
@@ -80,15 +80,17 @@ class SummaryStatistics:
             yield start, next_start
             start = next_start
 
-    def _interval(self, s, start, finish, spec):
+    def _interval(self, s, start, finish, schedule):
+        new = False
         interval = s.query(Interval). \
             filter(Interval.time == start,
-                   Interval.spec == spec,
+                   Interval.schedule == schedule,
                    Interval.finish == finish).one_or_none()
         if not interval:
-            interval = Interval(time=start, finish=finish, spec=spec)
+            interval = Interval(time=start, finish=finish, schedule=schedule)
             s.add(interval)
-        return interval
+            new = True
+        return new, interval
 
     def _statistics_missing_values(self, s, start, finish):
         return s.query(Statistic).join(StatisticJournal, Source). \
@@ -102,10 +104,10 @@ class SummaryStatistics:
                    Source.time >= start,
                    Source.time < finish).all()
 
-    def _calculate_value(self, process, values, spec):
-        range = {'d': 'Day', 'w': 'Week', 'm': 'Month', 'y': 'Year'}[spec.frame_type]
-        if spec.repeat > 1:
-            range = '%d%ss' % (spec.repeat, range)
+    def _calculate_value(self, process, values, schedule):
+        range = {'d': 'Day', 'w': 'Week', 'm': 'Month', 'y': 'Year'}[schedule.frame_type]
+        if schedule.repeat > 1:
+            range = '%d%ss' % (schedule.repeat, range)
         defined = [x for x in values if x is not None]
         if process == 'min':
             return min(defined) if defined else None, 'Min/%s %%s' % range
@@ -165,18 +167,24 @@ class SummaryStatistics:
     def _create_values(self, spec):
         with self._db.session_context() as s:
             for start, finish in self._intervals(s, spec):
-                interval = self._interval(s, start, finish, spec)
-                self._log.info('Adding statistics for %s' % interval)
+                new, interval = self._interval(s, start, finish, spec)
+                have_data = False
                 for statistic in self._statistics_missing_values(s, start, finish):
                     data = self._diary_entries(s, statistic, start, finish)
-                    processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
-                    if processes:
-                        values = [x.value for x in data]
-                        for process in processes:
-                            self._create_value(s, interval, spec, statistic, process.lower(), data, values)
-                    else:
-                        self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
-                    self._create_ranks(s, interval, statistic, data)
+                    if data:
+                        processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
+                        if processes:
+                            values = [x.value for x in data]
+                            for process in processes:
+                                self._create_value(s, interval, spec, statistic, process.lower(), data, values)
+                        else:
+                            self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
+                        self._create_ranks(s, interval, statistic, data)
+                        have_data = True
+                if have_data:
+                    self._log.info('Added statistics for %s' % interval)
+                elif new:
+                    s.delete(interval)
 
 
 def fuzz(n, q):

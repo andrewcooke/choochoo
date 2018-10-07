@@ -3,7 +3,7 @@ from abc import abstractmethod
 from re import compile
 
 from ..lib.date import parse_duration, duration_to_secs, to_date, add_duration, format_duration
-from ..lib.schedule import Specification
+from ..lib.schedule import Schedule
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..squeal.utils import ORMUtils
 
@@ -68,7 +68,7 @@ def exponential_time(name, repeat, time, percent, start, duration):
     """
     time_s = duration_to_secs(parse_duration(time))
     ratio = 1 + float(percent) / 100.0
-    spec = Specification(start + "/" + repeat)
+    spec = Schedule(start + "/" + repeat)
     start = to_date(start)
     finish = add_duration(start, parse_duration(duration))
     spec.start = start
@@ -92,7 +92,7 @@ def exponential_distance(name, repeat, distance, percent, start, duration):
     match = compile(r'(\d+)(\D*)').match(distance)
     dist, unit = float(match.group(1)), match.group(2)
     ratio = 1 + float(percent) / 100.0
-    spec = Specification(start + "/" + repeat)
+    spec = Schedule(start + "/" + repeat)
     start = to_date(start)
     finish = add_duration(start, parse_duration(duration))
     spec.start = start

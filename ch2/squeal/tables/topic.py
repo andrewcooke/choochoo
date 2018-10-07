@@ -1,3 +1,4 @@
+
 from json import dumps
 
 from sqlalchemy import Column, Integer, Text, ForeignKey
@@ -7,8 +8,8 @@ from sqlalchemy.orm import relationship, backref, Session
 from .source import SourceType, Source
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from ..support import Base
-from ..types import Ordinal, Cls, Json
-from ...lib.schedule import Specification
+from ..types import Ordinal, Cls, Json, Sched
+from ...lib.schedule import Schedule
 
 
 # @total_ordering
@@ -20,19 +21,27 @@ class Topic(Base):
     parent_id = Column(Integer, ForeignKey('topic.id'), nullable=True)
     # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
     children = relationship('Topic', backref=backref('parent', remote_side=[id]))
-    repeat = Column(Text, nullable=False, server_default='')
+    schedule = Column(Sched, nullable=False)
     start = Column(Ordinal)
     finish = Column(Ordinal)
     name = Column(Text, nullable=False, server_default='', unique=True)
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Text, nullable=False, server_default='')
 
-    def specification(self):
-        # allow for empty repeat, but still support start / finish
-        spec = Specification(self.repeat if self.repeat else 'd')
-        spec.start = self.start
-        spec.finish = self.finish
-        return spec
+    def __init__(self, id=None, parent=None, parent_id=None, schedule=None, name=None, description=None, sort=None):
+        # Topic instances are only created in config.  so we intercept here to
+        # duplicate data for start and finish - it's not needed elsewhere.
+        if not isinstance(schedule, Schedule):
+            schedule = Schedule(schedule)
+        self.id = id
+        self.parent = parent
+        self.parent_id = parent_id
+        self.schedule = schedule
+        self.name = name
+        self.description = description
+        self.sort = sort
+        self.start = schedule.start
+        self.finish = schedule.finish
 
     def populate(self, s, date):
         self.journal = s.query(TopicJournal). \

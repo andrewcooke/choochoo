@@ -6,9 +6,9 @@ from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session
 
 from ..support import Base
-from ..types import Epoch, OpenSpec
+from ..types import Epoch, OpenSched
 from ...lib.date import to_date
-from ...lib.schedule import Specification
+from ...lib.schedule import Schedule
 
 
 class SourceType(IntEnum):
@@ -36,7 +36,7 @@ class Source(Base):
     @classmethod
     def clear_intervals(cls, session):
         from ...stoats.summary import SummaryStatistics  # avoid import loop
-        specs = [Specification(spec) for spec in SummaryStatistics.pipeline_specs(session)]
+        specs = [Schedule(spec) for spec in SummaryStatistics.pipeline_schedules(session)]
         times = set()
         for always, instances in [(True, session.new), (False, session.dirty), (True, session.deleted)]:
             # wipe the containing intervals if this is a source that has changed in some way
@@ -52,7 +52,7 @@ class Source(Base):
             for spec in specs:
                 start = spec.frame().start(time)
                 interval = session.query(Interval). \
-                    filter(Interval.time == start, Interval.spec == spec).one_or_none()
+                    filter(Interval.time == start, Interval.schedule == spec).one_or_none()
                 if interval:
                     session.delete(interval)
 
@@ -67,7 +67,7 @@ class Interval(Source):
     __tablename__ = 'interval'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    spec = Column(OpenSpec, nullable=False)
+    schedule = Column(OpenSched, nullable=False)
     # duplicates data for simplicity in processing
     # day after (exclusive date)
     finish = Column(Epoch, nullable=False)
@@ -77,4 +77,4 @@ class Interval(Source):
     }
 
     def __str__(self):
-        return 'Interval "%s from %s"' % (self.spec, to_date(self.time))
+        return 'Interval "%s from %s"' % (self.schedule, to_date(self.time))

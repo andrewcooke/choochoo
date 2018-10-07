@@ -1,8 +1,8 @@
 
 import datetime as dt
 
-from ch2.lib.schedule import Specification, DateOrdinals
-from ch2.lib.date import parse_date
+from ch2.lib.schedule import Schedule, DateOrdinals
+from ch2.lib.date import to_date
 
 
 def assert_str(x, s):
@@ -20,23 +20,27 @@ def assert_bad(f, *args):
 
 def test_specification():
     # from the spec doc
-    assert_str(Specification('m[2Tue]'), '0/1m[2tue]')
-    assert_str(Specification('2m[2Tue]'), '0/2m[2tue]')
-    assert_str(Specification('1/2m[2Tue]'), '1/2m[2tue]')
-    assert_str(Specification('m[2Tue]1970-01-01-1970-12-31'), '0/1m[2tue]1970-01-01-1970-12-31')
-    assert_str(Specification('2018-07-05/5d[]'), '2/5d[1]')
-    assert_str(Specification('d2018-07-05'), '0/1d[1]2018-07-05-2018-07-06')
+    assert_str(Schedule('m[2Tue]'), 'm[2tue]')
+    assert_str(Schedule('2m[2Tue]'), '2m[2tue]')
+    assert_str(Schedule('1/2m[2Tue]'), '1/2m[2tue]')
+    assert_str(Schedule('m[2Tue]1970-01-01-1970-12-31'), 'm[2tue]1970-01-01-1970-12-31')
+    assert_str(Schedule('2018-07-05/5d[]'), '2/5d')
+    assert_str(Schedule('d2018-07-05'), '2018-07-05')
     # others
-    assert_str(Specification('1/2w[1]2018-01-01-'), '1/2w[1]2018-01-01-')
-    assert_str(Specification('1/2w[Mon,2,3]-1970-01-01'), '1/2w[1mon,2,3]-1970-01-01')
+    assert_str(Schedule('1/2w[1]2018-01-01-'), '1/2w[1]2018-01-01-')
+    assert_str(Schedule('1/2w[Mon,2,3]-1970-01-01'), '1/2w[1mon,2,3]-1970-01-01')
     # some errors
-    assert_bad(Specification, '1/2[]2018-01-01-')   # must specify type
-    assert_bad(Specification, '1/2w[1d]2018-01-01-')  # no longer support type in location
+    assert_bad(Schedule, '1/2[]2018-01-01-')   # must specify type
+    assert_bad(Schedule, '1/2w[1d]2018-01-01-')  # no longer support type in location
+    # some additional shortcuts for easier config
+    assert_str(Schedule('-2019-10-07'), '-2019-10-07')
+    assert_str(Schedule('2019-10-07-'), '2019-10-07-')
+    assert_str(Schedule('2019-10-07'), '2019-10-07')
 
 
 def assert_at(spec, date, at_frame, at_location):
-    date = parse_date(date)
-    frame = Specification(spec).frame()
+    date = to_date(date)
+    frame = Schedule(spec).frame()
     assert frame.at_frame(date) == at_frame, '%s %s' % (spec, date)
     assert frame.at_location(date) == at_location, '%s %s' % (spec, date)
 
@@ -66,6 +70,9 @@ def test_week():
     assert_at('2018-07-06/w[1]', '2018-07-02', True, True)
     assert_at('2018-07-06/w[1]', '2018-07-01', True, False)
     assert_at('2018-07-06/w[1]', '2018-07-03', True, False)
+    assert_at('2018-07-06/w', '2018-07-02', True, True)
+    assert_at('2018-07-06/w', '2018-07-01', True, True)
+    assert_at('2018-07-06/w', '2018-07-03', True, True)
     # bug in diary
     assert_at('0/1w[1sun]', '2018-07-29', True, True)
 
@@ -73,10 +80,15 @@ def test_week():
 def test_month():
     assert_at('2018-07-07/m[Sat]', '2018-07-07', True, True)
     assert_at('2018-07-07/m[2]', '2018-07-02', True, True)
+    assert_at('2018-07-07/m', '2018-07-02', True, True)
+
+
+def test_year():
+    assert_at('2018-07-07/y', '2018-07-02', True, True)
 
 
 def test_start_finish():
-    p = Specification('2018-07-08/2d2018-07-08-2018-07-09')
+    p = Schedule('2018-07-08/2d2018-07-08-2018-07-09')
     assert p.start == dt.date(2018, 7, 8)
     p.start = None
     assert p.start is None
@@ -90,6 +102,6 @@ def test_ordinals():
 
 
 def test_frame_start():
-    s = Specification('2018-01-01/2y')
-    assert s.frame().start('2018-01-02') == parse_date('2018-01-01')
-    assert s.frame().start('2017-01-02') == parse_date('2016-01-01')
+    s = Schedule('2018-01-01/2y')
+    assert s.frame().start('2018-01-02') == to_date('2018-01-01')
+    assert s.frame().start('2017-01-02') == to_date('2016-01-01')

@@ -23,3 +23,5 @@ class CleanUnusedStatistics:
         if n:
             self._log.warn('Deleted %d unused Statistics' % n)
 
+
+# todo - empty intervals?

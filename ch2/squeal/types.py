@@ -5,7 +5,7 @@ from pydoc import locate
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
-from ch2.lib.schedule import Specification
+from ch2.lib.schedule import Schedule
 from ..lib.date import to_datetime, to_date
 
 
@@ -100,15 +100,15 @@ class Json(TypeDecorator):
         return loads(value)
 
 
-class Spec(TypeDecorator):
+class Sched(TypeDecorator):
 
     impl = Text
 
     def process_literal_param(self, spec, dialect):
         if spec is None:
             return spec
-        if not isinstance(spec, Specification):
-            spec = Specification(spec)
+        if not isinstance(spec, Schedule):
+            spec = Schedule(spec)
         return str(spec)
 
     process_bind_param = process_literal_param
@@ -116,16 +116,16 @@ class Spec(TypeDecorator):
     def process_result_value(self, value, dialect):
         if not value:
             return None
-        return Specification(value)
+        return Schedule(value)
 
 
-class OpenSpec(Spec):
+class OpenSched(Sched):
 
     def process_literal_param(self, spec, dialect):
         if spec is None:
             return spec
-        if not isinstance(spec, Specification):
-            spec = Specification(spec)
+        if not isinstance(spec, Schedule):
+            spec = Schedule(spec)
         spec.start = None
         spec.finish = None
         return str(spec)
