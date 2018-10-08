@@ -32,7 +32,7 @@ def test_specification():
     assert_str(Schedule('d2018-07-05'), '2018-07-05')
     # others
     assert_str(Schedule('1/2w[1]2018-01-01-'), '1/2w[1]2018-01-01-')
-    assert_str(Schedule('1/2w[Mon,2,3]-1970-01-01'), '1/2w[mon,2,3]-1970-01-01')
+    assert_str(Schedule('1/2w[2Mon,Fri,2,3]-1970-01-01'), '1/2w[2,3,fri,2mon]-1970-01-01')
     # some errors
     assert_bad(Schedule, '1/2[]2018-01-01-')   # must specify type
     assert_bad(Schedule, '1/2w[1d]2018-01-01-')  # no longer support type in location

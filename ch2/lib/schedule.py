@@ -102,9 +102,15 @@ class Schedule:
             if self.frame_type == 'y':
                 raise Exception('Locations in yearly frames not supported')
             # todo - sort that respects day ordering
-            self.locations = list(map(self.__parse_location, locations.split(',')))
+            self.locations = sorted(map(self.__parse_location, locations.split(',')), key=self.__key)
         else:
             self.locations = []  # all
+
+    def __key(self, location):
+        if isinstance(location, int):
+            return (-1, location)
+        else:
+            return location
 
     def __parse_range(self, range):
         if range:

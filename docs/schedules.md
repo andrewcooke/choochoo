@@ -102,17 +102,16 @@ Day names (first three letters in english) can be used, as can simple
 numbers (1 for Monday within a week, or day of week within a month).
 
 It is also possible to use the form `2wed` to mean "the second
-Wednesday", although this only makes sense for monthly repeats.
-Similarly `1thu` is "the first Thursday" while `fri` means "all
-Fridays".
+Wednesday".  In contrast, `fri` means "all Fridays".
 
 If no location is given then *all* days are assumed.
 
-Locations cannot be given for yearly repeats.
+No locations can be given for yearly repeats and numbered days
+cannot be given for daily repeats.
 
 ## Range
 
-This is a pair of dates, start ands finish, separated by a dash.  The
+This is a pair of dates, start and finish, separated by a dash.  The
 range is semi-open and either can be omitted.  If both are omitted
 then the dash should be omitetd too.
 
