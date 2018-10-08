@@ -42,10 +42,9 @@ def test_specification():
     assert_str(Schedule('2019-10-07'), '2019-10-07')
 
 
-def assert_at(spec, date, at_start, at_location):
+def assert_at(spec, date, UNUSED, at_location):
     date = to_date(date)
     frame = Schedule(spec).frame()
-    assert frame.in_start(date) == at_start, '%s %s' % (spec, date)
     assert frame.at_location(date) == at_location, '%s %s' % (spec, date)
 
 
@@ -86,9 +85,16 @@ def test_week():
 
 
 def test_month():
-    assert_at('2018-07-07/m[Sat]', '2018-07-07', True, True)
-    assert_at('2018-07-07/m[2]', '2018-07-02', True, True)
-    assert_at('2018-07-07/m', '2018-07-02', True, True)
+    assert_at('m[Sat]', '2018-07-07', True, True)
+    assert_at('m[2]', '2018-07-02', True, True)
+    assert_at('m[2]', '2018-07-01', True, False)
+    assert_at('m', '2018-07-02', True, True)
+    # todo - numbering is different for months.  "2nd sunday" may not be in 2nd week.
+    assert_at('m[1sat]', '2018-09-01', True, True)
+    assert_at('m[1sun]', '2018-09-02', True, True)
+    assert_at('m[1mon]', '2018-09-03', True, True)
+    assert_at('m[1fri]', '2018-09-07', True, True)
+    assert_at('m[2sat]', '2018-09-08', True, True)
 
 
 def test_year():
@@ -106,7 +112,7 @@ def test_start_finish():
 def test_ordinals():
     d = dt.date(2018, 7, 25)
     o = DateOrdinals(d)
-    assert o.dow == 2, o.dow  # wednesday
+    assert o.dow == 3, o.dow  # wednesday
 
 
 def test_frame_start():

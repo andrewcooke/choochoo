@@ -229,26 +229,6 @@ class Frame(ABC):
     def __init__(self, schedule):
         self.schedule = schedule
 
-    def in_start(self, date):
-        '''
-        Does the given date lie in the start "unit" of the frame?
-
-        eg. For a frame that repeats every 7 months, does the year/month of
-        the given date specify a month that is a multiple of 7 from the start
-        of the unix epoch?
-
-        (and lie within the start/finish range, if given)
-
-        Note this is not the same as equality with start_of-frame() except for day
-        intervals.
-        '''
-        ordinals = DateOrdinals(date)
-        if (self.schedule.start is None or self.schedule.start <= date) and \
-                (self.schedule.finish is None or date < self.schedule.finish):
-            ordinal = ordinals.ordinals[self.schedule.frame_type]
-            return self.schedule.offset == ordinal % self.schedule.repeat
-        return False
-
     def start_of_frame(self, date):
         '''
         The start date for the frame that includes or precedes the given date
@@ -271,7 +251,7 @@ class Frame(ABC):
         zero = add_duration(self.zero, (self.schedule.offset, self.schedule.duration))
         return add_duration(zero, (n * self.schedule.repeat, self.schedule.duration))
 
-    def all_locations_from(self, start):
+    def locations_from(self, start):
         yield from self.frame_locations_from(start)
         while True:
             start = self.next_frame_open(start)
@@ -289,6 +269,10 @@ class Frame(ABC):
                 yield date
 
     def _location_offsets(self, dow, limit):
+        '''
+        Generate offsets into frame for locations specified.
+        Returns ordered values in [0, limit).
+        '''
         # this should check against lower (0) and upper bounds (limit), but not range
         # or start value passed to dates()
         if self.schedule.locations:
@@ -302,6 +286,8 @@ class Frame(ABC):
                             days.add(location - 1)
                     else:
                         n, day = location
+                        if n and day < dow:
+                            n += 1  # months only - numbering is not per week, but consecutive
                         if (n == 0 or week + 1 == n) and 0 <= week * 7 + day - dow < limit:
                             days.add(week*7 + day - dow)
                 yield from days
@@ -316,6 +302,13 @@ class Frame(ABC):
             return self.schedule.in_range(date) and date == next(self.frame_locations_from(date))
         except StopIteration:
             return False
+
+    def next_frame(self, date):
+        date = self.next_frame_open(date)
+        if self.schedule.in_range(date):
+            return date
+        else:
+            return None
 
     def next_frame_open(self, date):
         return self.start_of_frame_open(date) + dt.timedelta(days=self.length_in_days(date))
