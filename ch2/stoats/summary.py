@@ -74,7 +74,7 @@ class SummaryStatistics:
 
     def _intervals(self, s, spec):
         start, finish = self._raw_statistics_date_range(s)
-        start = spec.frame().start(start)
+        start = spec.frame().start_of_frame(start)
         while start <= finish:
             next_start = add_duration(start, (spec.repeat, spec.duration))
             yield start, next_start

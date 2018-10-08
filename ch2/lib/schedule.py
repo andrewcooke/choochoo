@@ -87,9 +87,11 @@ class Schedule:
     def __parse_location(self, location):
         if location[-3:] in DOW:
             if len(location) > 3:
-                return int(location[:-3]), self.DOW_INDEX[location[-3:]]
+                if self.frame_type == 'd':
+                    raise Exception('Numbered locations in daily frames not supported')
+                return int(location[:-3]), self.DOW_INDEX[location[-3:]] + 1  # dow is 1-index
             else:
-                return 0, self.DOW_INDEX[location]  # 0 means all weeks (in a month)
+                return 0, self.DOW_INDEX[location] + 1  # 0 means all weeks (in a month), dow is 1-index
         else:
             return int(location)
 
@@ -97,6 +99,9 @@ class Schedule:
         if locations:
             locations = locations[1:-1]  # drop []
         if locations:
+            if self.frame_type == 'y':
+                raise Exception('Locations in yearly frames not supported')
+            # todo - sort that respects day ordering
             self.locations = list(map(self.__parse_location, locations.split(',')))
         else:
             self.locations = []  # all
@@ -136,9 +141,9 @@ class Schedule:
     def __str_location(self, location):
         try:
             if location[0]:
-                return '%d%s' % (location[0], DOW[location[1]])
+                return '%d%s' % (location[0], DOW[location[1] - 1])
             else:
-                return DOW[location[1]]
+                return DOW[location[1] - 1]
         except:
             return str(location)
 
@@ -195,7 +200,7 @@ class Schedule:
 
     def in_range(self, date):
         return (self.start is None or date >= self.start) and \
-               (self.finish is None or date <= self.finish)
+               (self.finish is None or date < self.finish)
 
     @classmethod
     def normalize(cls, spec):
@@ -211,7 +216,7 @@ class DateOrdinals:
         self.d = (date - dt.date(1970, 1, 1)).days
         day = self.d + WEEK_OFFSET
         self.w = day // 7  # 1970-01-01 is Th
-        self.dow = day % 7
+        self.dow = 1 + day % 7  # python convention for day of week
         self.date = date
         self.ordinals = vars(self)
 
@@ -224,15 +229,18 @@ class Frame(ABC):
     def __init__(self, schedule):
         self.schedule = schedule
 
-    def at_frame(self, date):
+    def in_start(self, date):
         '''
-        Does the given date lie at the start of the frame?
+        Does the given date lie in the start "unit" of the frame?
 
         eg. For a frame that repeats every 7 months, does the year/month of
         the given date specify a month that is a multiple of 7 from the start
         of the unix epoch?
 
         (and lie within the start/finish range, if given)
+
+        Note this is not the same as equality with start_of-frame() except for day
+        intervals.
         '''
         ordinals = DateOrdinals(date)
         if (self.schedule.start is None or self.schedule.start <= date) and \
@@ -241,159 +249,110 @@ class Frame(ABC):
             return self.schedule.offset == ordinal % self.schedule.repeat
         return False
 
-    def start(self, date):
+    def start_of_frame(self, date):
         '''
         The start date for the frame that includes or precedes the given date
         (None if outside range).
         '''
-        start = self.start_open(date)
+        start = self.start_of_frame_open(date)
         if (self.schedule.start is None or self.schedule.start <= start) and \
                 (self.schedule.finish is None or self.schedule.finish > start):
             return start
         else:
             return None
 
-    def start_open(self, date):
+    def start_of_frame_open(self, date):
         '''
         The start date for the frame that includes or precedes the given date
         (ignoring range).
         '''
         date = DateOrdinals(date)
         n = (date.ordinals[self.schedule.frame_type] - self.schedule.offset) // self.schedule.repeat
-        zero = add_duration(ZERO, (self.schedule.offset, self.schedule.duration))
-        return add_duration(zero, mul_duration(n, (self.schedule.repeat, self.schedule.duration)))
+        zero = add_duration(self.zero, (self.schedule.offset, self.schedule.duration))
+        return add_duration(zero, (n * self.schedule.repeat, self.schedule.duration))
+
+    def all_locations_from(self, start):
+        yield from self.frame_locations_from(start)
+        while True:
+            start = self.next_frame_open(start)
+            if self.schedule.in_range(start):
+                yield from self.frame_locations_from(start)
+            else:
+                return
+
+    def frame_locations_from(self, start):
+        frame = self.start_of_frame_open(start)
+        ordinals = DateOrdinals(frame)
+        for delta in self._location_offsets(ordinals.dow, self.length_in_days(start)):
+            date = frame + dt.timedelta(days=delta)
+            if self.schedule.in_range(date) and date >= start:
+                yield date
+
+    def _location_offsets(self, dow, limit):
+        # this should check against lower (0) and upper bounds (limit), but not range
+        # or start value passed to dates()
+        if self.schedule.locations:
+            # locations may not be ordered, but is finite, so calculate a week in a batch
+            # this guarantees that the offsets are ordered and unique (needed by dates())
+            for week in range(1 + (dow + limit - 2) // 7):
+                days = set()
+                for location in self.schedule.locations:
+                    if isinstance(location, int):
+                        if 7*(week+1) >= dow + location - 1 > 7*week and location <= limit:
+                            days.add(location - 1)
+                    else:
+                        n, day = location
+                        if (n == 0 or week + 1 == n) and 0 <= week * 7 + day - dow < limit:
+                            days.add(week*7 + day - dow)
+                yield from days
+        else:
+            yield from range(limit)
 
     def at_location(self, date):
         '''
         Does the given day coincide with the specification?
         '''
         try:
-            return self.schedule.in_range(date) and date == next(self.dates(date))
+            return self.schedule.in_range(date) and date == next(self.frame_locations_from(date))
         except StopIteration:
             return False
 
+    def next_frame_open(self, date):
+        return self.start_of_frame_open(date) + dt.timedelta(days=self.length_in_days(date))
+
     @abstractmethod
-    def dates(self, start):
-        """
-        All dates consistent with the spec, ordered, starting from start.
-        """
-        yield None  # for type inference
+    def length_in_days(self, date):
+        pass
 
 
 class Day(Frame):
 
-    def __parse_locations(self):
-        dows = set()
-        if not self.schedule.locations:
-            return True, None
-        for location in self.schedule.locations:
-            if location == 1:
-                return True, None
-            else:
-                try:
-                    n, dow = location
-                    if n < 2:
-                        dows.add(dow)
-                except TypeError:
-                    pass
-        return False, dows
+    zero = ZERO
 
-    def dates(self, start):
-        all, dows = self.__parse_locations()
-        if all or dows:
-            date, delta = start, dt.timedelta(days=self.schedule.repeat)
-            while self.schedule.in_range(date):
-                if self.at_frame(date):
-                    if all or DateOrdinals(date).dow in dows:
-                        yield date
-                    date += delta
-                    break
-                else:
-                    date += dt.timedelta(days=1)
-            while self.schedule.in_range(date):
-                if all or DateOrdinals(date).dow in dows:
-                    yield date
-                date += delta
+    def length_in_days(self, date):
+        return self.schedule.repeat
 
 
 class Week(Frame):
 
-    def __locations_to_days(self):
-        # 0-index
-        for location in self.schedule.locations:
-            if isinstance(location, int):
-                yield location - 1
-            elif location[0] < 2:
-                yield location[1]
+    zero = ZERO - dt.timedelta(days=WEEK_OFFSET)
 
-    def dates(self, start):
-        date, ordinals = start, DateOrdinals(start)
-        if self.schedule.locations:
-            all, dows = False, list(sorted(self.__locations_to_days()))
-        else:
-            all, dows = True, range(7)
-        while ordinals.dow and self.schedule.in_range(date):
-            if all or ordinals.dow in dows:
-                yield date
-            date += dt.timedelta(days=1)
-            ordinals = DateOrdinals(date)
-        week, deltas = date, [dt.timedelta(days=d) for d in dows]
-        while True:
-            for delta in deltas:
-                date = week + delta
-                if self.schedule.in_range(date):
-                    yield date
-                else:
-                    return
-            week += dt.timedelta(days=7)
+    def length_in_days(self, date):
+        return self.schedule.repeat * 7
 
 
 class Month(Frame):
 
-    def __locations_to_days(self, som, fom):
-        # 1-index
-        for location in self.schedule.locations:
-            if isinstance(location, int):
-                yield location
-            else:
-                week, dow = location
-                if week:
-                    if dow >= som:
-                        week -= 1
-                    yield 7 * week + dow - som + 1
-                else:
-                    dow -= som - 1
-                    while dow < 1: dow += 7
-                    while dow <= fom:
-                        yield dow
-                        dow += 7
+    zero = ZERO
 
-    def dates(self, start):
-        month = dt.date(start.year, start.month, 1)
-        first = start.day
-        while True:
-            som, fom = monthrange(month.year, month.month)
-            if self.schedule.locations:
-                days = [day for day in sorted(self.__locations_to_days(som, fom)) if first <= day < fom]
-            else:
-                days = range(first, fom+1)
-            for day in days:
-                date = dt.date(month.year, month.month, day)
-                if self.schedule.in_range(date):
-                    yield date
-                else:
-                    return
-            first, month = 1, dt.date(month.year, month.month, fom) + dt.timedelta(days=1)
+    def length_in_days(self, date):
+        return monthrange(date.year, date.month)[1]
 
 
 class Year(Frame):
 
-    def __locations_to_days(self):
-        pass
+    zero = ZERO
 
-    def dates(self, start):
-        if self.schedule.locations:
-            raise Exception('Location in yearly frame')
-        while self.schedule.in_range(start):
-            yield start
-            start += dt.timedelta(days=1)
+    def length_in_days(self, date):
+        return (dt.date(date.year+1, 1, 1) - dt.date(date.year, 1, 1)).days
+

@@ -46,7 +46,7 @@ class Message(Named):
         # this is the generator that lives inside a record and is evaluated on demand
         references = {}
         for field in defn.fields:
-            bytes = data[field.start:field.finish]
+            bytes = data[field.start_of_frame:field.finish]
             if field.field:
                 for name, value in self._parse_field(
                         field.field, bytes, field.count, defn.endian, references, defn.accumulate, self, **options):
@@ -54,7 +54,7 @@ class Message(Named):
                         references[name] = value
                     yield name, value
             else:
-                name = '@%d:%d' % (field.start, field.finish)
+                name = '@%d:%d' % (field.start_of_frame, field.finish)
                 value = (field.base_type.parse(bytes, field.count, defn.endian), None)
                 yield name, value
 

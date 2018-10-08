@@ -42,10 +42,10 @@ def test_specification():
     assert_str(Schedule('2019-10-07'), '2019-10-07')
 
 
-def assert_at(spec, date, at_frame, at_location):
+def assert_at(spec, date, at_start, at_location):
     date = to_date(date)
     frame = Schedule(spec).frame()
-    assert frame.at_frame(date) == at_frame, '%s %s' % (spec, date)
+    assert frame.in_start(date) == at_start, '%s %s' % (spec, date)
     assert frame.at_location(date) == at_location, '%s %s' % (spec, date)
 
 
@@ -53,18 +53,22 @@ def test_day():
     assert_at('d', '2018-07-06', True, True)
     assert_at('d', '2018-07-07', True, True)
     assert_at('2d', '2018-07-06', True, True)
-    assert_at('2d', '2018-07-07', False, False)
+    assert_at('2d', '2018-07-07', False, True)
     assert_at('2d[1]', '2018-07-06', True, True)
     assert_at('2d[2]', '2018-07-06', True, False)
+    assert_at('2d[3]', '2018-07-06', True, False)
+    assert_at('2d[1]', '2018-07-07', False, False)
+    assert_at('2d[2]', '2018-07-07', False, True)
     assert_at('2d[Fri]', '2018-07-06', True, True)
-    assert_at('2d[1Fri]', '2018-07-06', True, True)
-    assert_at('2d[2Fri]', '2018-07-06', True, False)
     assert_at('2d[Mon]', '2018-07-06', True, False)
     assert_at('2d[Fri]2018-07-06', '2018-07-06', True, True)
     assert_at('2d[Fri]2018-07-07', '2018-07-06', False, False)
     assert_at('2d[Fri]2018-07-06-2018-07-07', '2018-07-06', True, True)
     assert_at('2d[Fri]2018-07-07-2018-07-08', '2018-07-06', False, False)
     assert_at('2d[Fri]2018-07-05-2018-07-06', '2018-07-06', False, False)
+    assert_at('2018-10-10/3d[1,fri]', '2018-10-10', True, True)
+    assert_at('2018-10-10/3d[1,fri]', '2018-10-11', False, False)
+    assert_at('2018-10-10/3d[1,fri]', '2018-10-12', False, True)
 
 
 def test_week():
@@ -107,5 +111,5 @@ def test_ordinals():
 
 def test_frame_start():
     s = Schedule('2018-01-01/2y')
-    assert s.frame().start('2018-01-02') == to_date('2018-01-01')
-    assert s.frame().start('2017-01-02') == to_date('2016-01-01')
+    assert s.frame().start_of_frame('2018-01-02') == to_date('2018-01-01')
+    assert s.frame().start_of_frame('2017-01-02') == to_date('2016-01-01')
