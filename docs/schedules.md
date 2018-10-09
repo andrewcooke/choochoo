@@ -8,7 +8,7 @@ some kind of repetition.  They are very flexible, but I've tried to
 make the simple cases easy to write and understand.  Before getting
 into any details it's best to look at some examples:
 
-* **2018-10-**
+* **2018-10-07**
 
   This is a single date - the day that I am writing this document,
   Sunday 7th of October, 2018.
