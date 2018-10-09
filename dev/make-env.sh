@@ -12,6 +12,7 @@ pip install openpyxl
 pip install numpy
 pip install pandas
 pip install pyGeoTile
+pip install colorama
 
 pip install matplotlib
 pip install bokeh

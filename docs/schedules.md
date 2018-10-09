@@ -58,6 +58,14 @@ Hopefully that gives the idea.
 
 ## Contents
 
+* [Introduction](#introduction)
+* [Structure](#structure)
+  * [Offset](#offset)
+  * [Repeat](#repeat)
+  * [Locations](#locations)
+  * [Range](#range)
+* [Exploration](#exploration)  
+
 ## Structure
 
 A schedule consists of four sections
@@ -123,10 +131,13 @@ If a single date without leading or trailing dash is given, it is
 taken as specifying a range of a single day (so has an implicit finish
 value a day later).
 
-## Exmploration
+## Exploration
 
 You can use the
 
     ch2 test-schedule SCHEDULE
 
-command to test what a given schedule "looks like".
+command to test what a given schedule "looks like".  This will print a
+calendar with days that match the specification highlighted in red and
+green.
+

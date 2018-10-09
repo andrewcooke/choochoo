@@ -42,63 +42,65 @@ def test_specification():
     assert_str(Schedule('2019-10-07'), '2019-10-07')
 
 
-def assert_at(spec, date, UNUSED, at_location):
+def assert_at(spec, date, at_location):
     date = to_date(date)
     frame = Schedule(spec).frame()
     assert frame.at_location(date) == at_location, '%s %s' % (spec, date)
 
 
 def test_day():
-    assert_at('d', '2018-07-06', True, True)
-    assert_at('d', '2018-07-07', True, True)
-    assert_at('2d', '2018-07-06', True, True)
-    assert_at('2d', '2018-07-07', False, True)
-    assert_at('2d[1]', '2018-07-06', True, True)
-    assert_at('2d[2]', '2018-07-06', True, False)
-    assert_at('2d[3]', '2018-07-06', True, False)
-    assert_at('2d[1]', '2018-07-07', False, False)
-    assert_at('2d[2]', '2018-07-07', False, True)
-    assert_at('2d[Fri]', '2018-07-06', True, True)
-    assert_at('2d[Mon]', '2018-07-06', True, False)
-    assert_at('2d[Fri]2018-07-06', '2018-07-06', True, True)
-    assert_at('2d[Fri]2018-07-07', '2018-07-06', False, False)
-    assert_at('2d[Fri]2018-07-06-2018-07-07', '2018-07-06', True, True)
-    assert_at('2d[Fri]2018-07-07-2018-07-08', '2018-07-06', False, False)
-    assert_at('2d[Fri]2018-07-05-2018-07-06', '2018-07-06', False, False)
-    assert_at('2018-10-10/3d[1,fri]', '2018-10-10', True, True)
-    assert_at('2018-10-10/3d[1,fri]', '2018-10-11', False, False)
-    assert_at('2018-10-10/3d[1,fri]', '2018-10-12', False, True)
+    assert_at('d', '2018-07-06', True)
+    assert_at('d', '2018-07-07', True)
+    assert_at('2d', '2018-07-06', True)
+    assert_at('2d', '2018-07-07', True)
+    assert_at('2d[1]', '2018-07-06', True)
+    assert_at('2d[2]', '2018-07-06', False)
+    assert_at('2d[3]', '2018-07-06', False)
+    assert_at('2d[1]', '2018-07-07', False)
+    assert_at('2d[2]', '2018-07-07', True)
+    assert_at('2d[Fri]', '2018-07-06', True)
+    assert_at('2d[Mon]', '2018-07-06', False)
+    assert_at('2d[Fri]2018-07-06', '2018-07-06', True)
+    assert_at('2d[Fri]2018-07-07', '2018-07-06',  False)
+    assert_at('2d[Fri]2018-07-06-2018-07-07', '2018-07-06', True)
+    assert_at('2d[Fri]2018-07-07-2018-07-08', '2018-07-06', False)
+    assert_at('2d[Fri]2018-07-05-2018-07-06', '2018-07-06', False)
+    assert_at('2018-10-10/3d[1,fri]', '2018-10-10', True)
+    assert_at('2018-10-10/3d[1,fri]', '2018-10-11', False)
+    assert_at('2018-10-10/3d[1,fri]', '2018-10-12', True)
 
 
 def test_week():
-    assert_at('2018-07-06/w[Fri]', '2018-07-06', True, True)
-    assert_at('2018-07-06/w[Fri]', '2018-07-05', True, False)
-    assert_at('2018-07-06/w[Fri]', '2018-07-07', True, False)
-    assert_at('2018-07-06/w[1]', '2018-07-02', True, True)
-    assert_at('2018-07-06/w[1]', '2018-07-01', True, False)
-    assert_at('2018-07-06/w[1]', '2018-07-03', True, False)
-    assert_at('2018-07-06/w', '2018-07-02', True, True)
-    assert_at('2018-07-06/w', '2018-07-01', True, True)
-    assert_at('2018-07-06/w', '2018-07-03', True, True)
+    assert_at('2018-07-06/w[Fri]', '2018-07-06', True)
+    assert_at('2018-07-06/w[Fri]', '2018-07-05', False)
+    assert_at('2018-07-06/w[Fri]', '2018-07-07', False)
+    assert_at('2018-07-06/w[1]', '2018-07-02', True)
+    assert_at('2018-07-06/w[1]', '2018-07-01', False)
+    assert_at('2018-07-06/w[1]', '2018-07-03', False)
+    assert_at('2018-07-06/w', '2018-07-02', True)
+    assert_at('2018-07-06/w', '2018-07-01', True)
+    assert_at('2018-07-06/w', '2018-07-03', True)
     # bug in diary
-    assert_at('0/1w[1sun]', '2018-07-29', True, True)
+    assert_at('0/1w[1sun]', '2018-07-29', True)
 
 
 def test_month():
-    assert_at('m[Sat]', '2018-07-07', True, True)
-    assert_at('m[2]', '2018-07-02', True, True)
-    assert_at('m[2]', '2018-07-01', True, False)
-    assert_at('m', '2018-07-02', True, True)
+    assert_at('m[Sat]', '2018-07-07', True)
+    assert_at('m[2]', '2018-07-02', True)
+    assert_at('m[2]', '2018-07-01', False)
+    assert_at('m', '2018-07-02', True)
     # numbering is different for months.  "2nd sunday" may not be in 2nd week.
-    assert_at('m[1sat]', '2018-09-01', True, True)
-    assert_at('m[1sun]', '2018-09-02', True, True)
-    assert_at('m[1mon]', '2018-09-03', True, True)
-    assert_at('m[1fri]', '2018-09-07', True, True)
-    assert_at('m[2sat]', '2018-09-08', True, True)
+    assert_at('m[1sat]', '2018-09-01', True)
+    assert_at('m[1sun]', '2018-09-02', True)
+    assert_at('m[1mon]', '2018-09-03', True)
+    assert_at('m[1fri]', '2018-09-07', True)
+    assert_at('m[2sat]', '2018-09-08', True)
+    # bug seen in output from test_schedule command
+    assert_at('m[mon,tue,5]', '2018-10-08', True)
 
 
 def test_year():
-    assert_at('2018-07-07/y', '2018-07-02', True, True)
+    assert_at('2018-07-07/y', '2018-07-02', True)
 
 
 def test_start_finish():
@@ -112,7 +114,7 @@ def test_start_finish():
 def test_ordinals():
     d = dt.date(2018, 7, 25)
     o = DateOrdinals(d)
-    assert o.dow == 3, o.dow  # wednesday
+    assert o.dow == 2, o.dow  # wednesday
 
 
 def test_frame_start():

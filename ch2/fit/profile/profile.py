@@ -24,7 +24,7 @@ to a pickle file that is distributed with this package.
 
 This command is intended for internal use only.
     '''
-    in_path = args.file(PATH, index=0, rooted=False)
+    in_path = args.file(PATH, rooted=False)
     log.info('Reading from %s' % in_path)
     nlog, types, messages = read_profile(log, in_path, warn=args[WARN])
     out_path = join(dirname(__file__), PROFILE)

@@ -89,9 +89,9 @@ class Schedule:
             if len(location) > 3:
                 if self.frame_type == 'd':
                     raise Exception('Numbered locations in daily frames not supported')
-                return int(location[:-3]), self.DOW_INDEX[location[-3:]] + 1  # dow is 1-index
+                return int(location[:-3]), self.DOW_INDEX[location[-3:]]
             else:
-                return 0, self.DOW_INDEX[location] + 1  # 0 means all weeks (in a month), dow is 1-index
+                return 0, self.DOW_INDEX[location]  # 0 means all weeks (in a month)
         else:
             return int(location)
 
@@ -147,9 +147,9 @@ class Schedule:
     def __str_location(self, location):
         try:
             if location[0]:
-                return '%d%s' % (location[0], DOW[location[1] - 1])
+                return '%d%s' % (location[0], DOW[location[1]])
             else:
-                return DOW[location[1] - 1]
+                return DOW[location[1]]
         except:
             return str(location)
 
@@ -214,7 +214,7 @@ class DateOrdinals:
         self.d = (date - dt.date(1970, 1, 1)).days
         day = self.d + WEEK_OFFSET
         self.w = day // 7  # 1970-01-01 is Th
-        self.dow = 1 + day % 7  # python convention for day of week
+        self.dow = day % 7
         self.date = date
         self.ordinals = vars(self)
 
@@ -278,16 +278,17 @@ class Frame(ABC):
         Generate offsets into frame for locations specified.
         Returns ordered values in [0, limit).
         '''
+        # in future we could cache these for efficiency?
         # this should check against lower (0) and upper bounds (limit), but not range
         # or start value passed to dates()
         if self.schedule.locations:
             # locations may not be ordered, but is finite, so calculate a week in a batch
             # this guarantees that the offsets are ordered and unique (needed by dates())
-            for week in range(1 + (dow + limit - 2) // 7):
+            for week in range(1 + (dow + limit - 1) // 7):
                 days = set()
                 for location in self.schedule.locations:
                     if isinstance(location, int):
-                        if 7*(week+1) >= dow + location - 1 > 7*week and location <= limit:
+                        if 7*(week+1) >= dow + location > 7*week and location <= limit:
                             days.add(location - 1)
                     else:
                         n, day = location
@@ -295,7 +296,7 @@ class Frame(ABC):
                             n += 1  # months only - numbering is not per week, but consecutive
                         if (n == 0 or week + 1 == n) and 0 <= week * 7 + day - dow < limit:
                             days.add(week*7 + day - dow)
-                yield from days
+                yield from sorted(days)
         else:
             yield from range(limit)
 
@@ -364,3 +365,8 @@ class Year(Frame):
     def length_in_days(self, date):
         return (dt.date(date.year+1, 1, 1) - dt.date(date.year, 1, 1)).days
 
+    def at_location(self, date):
+        '''
+        Locations not supported, so ignore for efficiency.
+        '''
+        return self.schedule.in_range(date)
