@@ -43,7 +43,7 @@ into any details it's best to look at some examples:
 
   The first Monday and second Tuesday in each fortnight when the
   fortnights are chosen so that Sunday 7th of October 2018 is in the
-  first week (because weeks always start on Mondays, buy you can still
+  first week (because weeks always start on Mondays, but you can still
   divide up time into fortnights in two different ways).
 
 * **2018-10-07/2w[1mon,2tue]2019-01-01-2020-01-01**
