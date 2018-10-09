@@ -50,6 +50,10 @@ into any details it's best to look at some examples:
 
   The first ... (as above) during all of 2019.
 
+* **m[sun,5,10]**
+
+  Every Sunday, every month.  Also, the 5th and 10th of the month.
+
 Hopefully that gives the idea.  
 
 ## Contents
@@ -65,7 +69,7 @@ default value is sufficient.  The exact details are complex (to handle
 common cases nicely) so the best guidance is probably to follow the
 examples here.
 
-## Offset
+### Offset
 
 The offset is only useful if the repeat is larger than 1 (ie `2d`,
 `3w` etc).  It allows you to choose the "alignment" of the repetition.
@@ -83,7 +87,7 @@ but the system will convert to the second form (units from start of
 epoch) internally because this is moder directly useful in date
 calculations.
 
-## Repeat
+### Repeat
 
 This consists of a multiple (default 1) of "units", where a unit is
 represented by a single letter (`d` for day, `w` for week, `m` for
@@ -93,7 +97,7 @@ The repeat defines the "frame" within which locations are placed.  To,
 for example, if the repeat is `w` then the locations will identify
 certain days within the week.
 
-## Locations
+### Locations
 
 These identify particular days within the frame given by the repeat.
 They are written inside square brackets and separated by commas.
@@ -109,7 +113,7 @@ If no location is given then *all* days are assumed.
 No locations can be given for yearly repeats and numbered days
 cannot be given for daily repeats.
 
-## Range
+### Range
 
 This is a pair of dates, start and finish, separated by a dash.  The
 range is semi-open and either can be omitted.  If both are omitted
@@ -118,3 +122,11 @@ then the dash should be omitetd too.
 If a single date without leading or trailing dash is given, it is
 taken as specifying a range of a single day (so has an implicit finish
 value a day later).
+
+## Exmploration
+
+You can use the
+
+    ch2 test-schedule SCHEDULE
+
+command to test what a given schedule "looks like".
