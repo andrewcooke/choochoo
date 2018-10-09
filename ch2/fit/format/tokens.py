@@ -91,7 +91,7 @@ class Defined(Token):
 
     def __parse_timestamp(self, data, state):
         field = self.definition.timestamp_field
-        state.timestamp = state.date.parse(data[field.start_of_frame:field.finish], 1, self.definition.endian)[0]
+        state.timestamp = state.date.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
 
     def __parse_field_definition(self, state):
         record = self.parse().force()
@@ -113,12 +113,12 @@ class Defined(Token):
     def describe_fields(self, types):
         yield '%s - header (msg %d - %s)' % \
               (tohex(self.data[0:1]), self.data[0] & 0x0f, self.definition.message.name)
-        for field in sorted(self.definition.fields, key=lambda field: field.start_of_frame):
+        for field in sorted(self.definition.fields, key=lambda field: field.start):
             if field.name == 'timestamp':
-                yield '%s - %s (%s) %s' % (tohex(self.data[field.start_of_frame:field.finish]), field.name,
+                yield '%s - %s (%s) %s' % (tohex(self.data[field.start:field.finish]), field.name,
                                            field.base_type.name, timestamp_to_datetime(self.timestamp))
             else:
-                yield '%s - %s (%s)' % (tohex(self.data[field.start_of_frame:field.finish]), field.name, field.base_type.name)
+                yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
 
     def describe_csv(self):
         record = self.parse(map_values=False, cvt_times=False, rtn_composite=True)
@@ -200,7 +200,7 @@ class Definition(Token):
         offset = 1  # header
         fields = tuple(fields)
         for field in fields:
-            field.start_of_frame = offset
+            field.start = offset
             offset += field.size
             field.finish = offset
             if field.field and field.field.number == TIMESTAMP_GLOBAL_TYPE:

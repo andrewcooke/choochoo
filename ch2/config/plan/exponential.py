@@ -18,11 +18,11 @@ class Builder(ORMUtils):
 
     def create(self, log, session):
         type = self._get_or_create(session, TopicGroup, name='Plan')
-        schedule = Topic(type=type, repeat=str(self._spec), start=self._spec.start_of_frame, finish=self._spec.finish,
+        schedule = Topic(type=type, repeat=str(self._spec), start=self._spec.start, finish=self._spec.finish,
                          name=self._name, description=self._description, has_notes=True)
         session.add(schedule)
         # todo - this is broken because dates is only within a single frame
-        for day in self._spec.frame().frame_locations_from(self._spec.start_of_frame):
+        for day in self._spec.frame().frame_locations_from(self._spec.start):
             session.add(TopicJournal(date=day, schedule=schedule, notes=self._next_value()))
 
     @abstractmethod
@@ -72,7 +72,7 @@ def exponential_time(name, repeat, time, percent, start, duration):
     spec = Schedule(start + "/" + repeat)
     start = to_date(start)
     finish = add_duration(start, parse_duration(duration))
-    spec.start_of_frame = start
+    spec.start = start
     spec.finish = finish
     return TimeBuilder(name, 'Time starting at %s and incrementing by %s%%' % (time, percent),
                        spec, time_s, ratio)
@@ -96,7 +96,7 @@ def exponential_distance(name, repeat, distance, percent, start, duration):
     spec = Schedule(start + "/" + repeat)
     start = to_date(start)
     finish = add_duration(start, parse_duration(duration))
-    spec.start_of_frame = start
+    spec.start = start
     spec.finish = finish
     return DistanceBuilder(name, 'Distance starting at %s and incrementing by %s%%' % (distance, percent),
                            spec, dist, unit, ratio)

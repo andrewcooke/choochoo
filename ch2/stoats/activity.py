@@ -178,7 +178,7 @@ class MedianHRForTime(Chunks):
         log.debug('Will reject gaps > %ds' % int(self.__max_gap))
 
     def _max_gap(self, chunks):
-        return max(c1[0].activity_timespan.start_of_frame - c2[0].activity_timespan.finish
+        return max(c1[0].activity_timespan.start - c2[0].activity_timespan.finish
                    for c1, c2 in zip(list(chunks)[1:], chunks)).total_seconds()
 
     def heart_rates(self):

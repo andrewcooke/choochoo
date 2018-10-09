@@ -23,20 +23,30 @@ def parse_duration(duration):
         return int(duration[:-1]), duration[-1]
 
 
-def to_date(value):
+def to_date(value, none=False):
+    if none and value is None:
+        return None
     if isinstance(value, dt.datetime):
         return dt.date(value.year, value.month, value.day)
     elif isinstance(value, dt.date):
         return value
+    elif isinstance(value, int):
+        return dt.date.fromordinal(value)
     else:
         return dt.date(*t.strptime(value, '%Y-%m-%d')[:3])
 
 
-def to_datetime(value):
+def to_datetime(value, none=False):
+    if none and value is None:
+        return None
     if isinstance(value, dt.datetime):
         return value
     elif isinstance(value, dt.date):
         return dt.datetime(value.year, value.month, value.day)
+    elif isinstance(value, int):
+        return dt.datetime.fromtimestamp(value, dt.timezone.utc)
+    elif isinstance(value, float):
+        return dt.datetime.fromtimestamp(value, dt.timezone.utc)
     else:
         for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d'):
             try:

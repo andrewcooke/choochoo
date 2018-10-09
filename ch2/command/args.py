@@ -20,6 +20,7 @@ H, HELP = 'h', 'help'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 STATISTICS = 'statistics'
+TEST_SCHEDULE = 'test-schedule'
 
 AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
@@ -40,6 +41,7 @@ LOGS = 'logs'
 LIST = 'list'
 MESSAGES = 'messages'
 MONTH = 'month'
+MONTHS = 'months'
 NAME = 'name'
 PATH = 'path'
 PLAN = 'plan'
@@ -47,6 +49,7 @@ RECORD, R = 'record', 'r'
 RECORDS = 'records'
 ROOT = 'root'
 SET = 'set'
+SCHEDULE = 'schedule'
 START = 'start'
 TABLES = 'tables'
 V, VERBOSITY = 'v', 'verbosity'
@@ -224,6 +227,17 @@ def parser():
     package_fit_profile.add_argument(m(W), mm(WARN), action='store', metavar='name',
                                      help='additional warning messages')
     package_fit_profile.set_defaults(command=PACKAGE_FIT_PROFILE)
+
+    test_schedule = subparsers.add_parser(TEST_SCHEDULE,
+                                          help='print schedule locations in a calendar. - ' +
+                                               'see `%s %s -h` for more details' % (PROGNAME, TEST_SCHEDULE))
+    test_schedule.add_argument(SCHEDULE, action='store', metavar='SCHEDULE', nargs=1,
+                               help='the schedule to test')
+    test_schedule.add_argument(mm(START), action='store', metavar='DATE', nargs=1,
+                               help='the date to start displaying data')
+    test_schedule.add_argument(mm(MONTHS), action='store', metavar='N', nargs=1,
+                               help='the number of months to display')
+    test_schedule.set_defaults(command=TEST_SCHEDULE)
 
     return parser
 

@@ -28,8 +28,8 @@ class Schedule:
     These repeat "forever" - they are not relative a surrounding year.  So 3w
     means every 3 weeks even if that bridges a year end.
 
-    The start can shift whole "units" only.  So 3w can start on *any* Monday,
-    depending on the start data, but the week always starts on a Monday.
+    The offset can shift whole "units" only.  So 3w can start on *any* Monday,
+    depending on the offset data, but the week always starts on a Monday.
     """
 
     DOW_INDEX = dict((day, i) for i, day in enumerate(DOW))
@@ -172,41 +172,33 @@ class Schedule:
             return format_date(range)
 
     def frame(self):
-        return {'d': Day, 'w': Week, 'm': Month, 'y': Year}[self.frame_type](self)
+        return self.frame_class()(self)
+
+    def frame_class(self):
+        return {'d': Day, 'w': Week, 'm': Month, 'y': Year}[self.frame_type]
 
     # allow range to be set separately (allows separate column in database, so
     # we can select for valid reminders).
 
-    def __parse_null_date(self, date):
-        if date is None:
-            return date
-        try:
-            return to_date(date)
-        except TypeError:
-            try:
-                dt.date.fromordinal(int(date))
-            except TypeError:
-                return date
-
     def __set_start(self, date):
-        self.__start = self.__parse_null_date(date)
+        self.__start = to_date(date, none=True)
 
     def __set_finish(self, date):
-        self.__finish = self.__parse_null_date(date)
+        self.__finish = to_date(date, none=True)
 
     start = property(lambda self: self.__start, __set_start)
     finish = property(lambda self: self.__finish, __set_finish)
 
-    @property
-    def start_or_zero(self):
-        if self.start:
-            return self.start
-        else:
-            return ZERO
-
     def in_range(self, date):
         return (self.start is None or date >= self.start) and \
                (self.finish is None or date < self.finish)
+
+    def describe(self):
+        text = '%s' % self.frame_class().__name__
+        if self.repeat > 1:
+            text = '%d%ss' % (self.repeat, text)
+        text = '%s%s' % (text, self.__str_locations())
+        return text
 
     @classmethod
     def normalize(cls, spec):
@@ -258,6 +250,9 @@ class Frame(ABC):
         return add_duration(zero, (n * self.schedule.repeat, self.schedule.duration))
 
     def locations_from(self, start):
+        '''
+        Locations in successive frames (ordered), starting at the give date.
+        '''
         yield from self.frame_locations_from(start)
         while True:
             start = self.next_frame_open(start)
@@ -267,6 +262,10 @@ class Frame(ABC):
                 return
 
     def frame_locations_from(self, start):
+        '''
+        Locations in a single frame, starting at the give date
+        (so if the date isn't at the start of the frame you might not get all locations).
+        '''
         frame = self.start_of_frame_open(start)
         ordinals = DateOrdinals(frame)
         for delta in self._location_offsets(ordinals.dow, self.length_in_days(start)):
@@ -310,6 +309,10 @@ class Frame(ABC):
             return False
 
     def next_frame(self, date):
+        '''
+        Returns the start of the frame following the one containing the given date as
+        long as it is within range.  Otherwise, it returns None.
+        '''
         date = self.next_frame_open(date)
         if self.schedule.in_range(date):
             return date
@@ -317,10 +320,16 @@ class Frame(ABC):
             return None
 
     def next_frame_open(self, date):
+        '''
+        Returns the start of the frame following the one containing the given date.
+        '''
         return self.start_of_frame_open(date) + dt.timedelta(days=self.length_in_days(date))
 
     @abstractmethod
     def length_in_days(self, date):
+        '''
+        The duration of a single frame containing the given date, in days.
+        '''
         pass
 
 

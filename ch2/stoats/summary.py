@@ -5,7 +5,7 @@ from re import split
 from sqlalchemy import func
 from sqlalchemy.sql.functions import count
 
-from ..lib.date import add_duration
+from ..lib.date import add_duration, to_date
 from ..lib.schedule import Schedule
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
@@ -105,9 +105,7 @@ class SummaryStatistics:
                    Source.time < finish).all()
 
     def _calculate_value(self, process, values, schedule):
-        range = {'d': 'Day', 'w': 'Week', 'm': 'Month', 'y': 'Year'}[schedule.frame_type]
-        if schedule.repeat > 1:
-            range = '%d%ss' % (schedule.repeat, range)
+        range = schedule.describe()
         defined = [x for x in values if x is not None]
         if process == 'min':
             return min(defined) if defined else None, 'Min/%s %%s' % range
@@ -170,7 +168,8 @@ class SummaryStatistics:
                 new, interval = self._interval(s, start, finish, spec)
                 have_data = False
                 for statistic in self._statistics_missing_values(s, start, finish):
-                    data = self._diary_entries(s, statistic, start, finish)
+                    data = [journal for journal in self._diary_entries(s, statistic, start, finish)
+                            if spec.frame().at_location(to_date(journal.time))]
                     if data:
                         processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
                         if processes:

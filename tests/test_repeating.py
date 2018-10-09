@@ -89,7 +89,7 @@ def test_month():
     assert_at('m[2]', '2018-07-02', True, True)
     assert_at('m[2]', '2018-07-01', True, False)
     assert_at('m', '2018-07-02', True, True)
-    # todo - numbering is different for months.  "2nd sunday" may not be in 2nd week.
+    # numbering is different for months.  "2nd sunday" may not be in 2nd week.
     assert_at('m[1sat]', '2018-09-01', True, True)
     assert_at('m[1sun]', '2018-09-02', True, True)
     assert_at('m[1mon]', '2018-09-03', True, True)
