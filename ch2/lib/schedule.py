@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from calendar import monthrange
 from re import sub, compile, match
 
-from .date import to_date, format_date, MONTH, add_duration, mul_duration
+from .date import to_date, format_date, MONTH, add_duration
 
 # my calculations are done relative to the unix epoch.  the "gregorian ordinal"
 # is relative to year 1, but i have no idea how the details of that work.  i
@@ -22,13 +22,7 @@ class Schedule:
     """
     Parse a spec and reduce it to a normalized form (available through __str__()).
 
-    This doesn't have much logic associated with it.  That's the job of the "frame"
-    which is interval-specific.
-
-    These repeat "forever" - they are not relative a surrounding year.  So 3w
-    means every 3 weeks even if that bridges a year end.
-
-    The offset can shift whole "units" only.  So 3w can start on *any* Monday,
+    Offset can shift whole "units" only.  So 3w can start on *any* Monday,
     depending on the offset data, but the week always starts on a Monday.
     """
 
@@ -42,7 +36,6 @@ class Schedule:
         self.frame_type = None  # character (as spec, so all lower case)
         self.duration = None  # character (as lib.date, so capital M for month)
         self.locations = None  # list of day offsets or (week, dow) tuples (if empty, all dates)
-        self.__frame = None
         try:
             spec = '' if spec is None else spec
             spec = sub(r'\s+', '', spec)
@@ -56,6 +49,7 @@ class Schedule:
             raise Exception('Cannot parse %s' % spec)
         if self.locations and self.frame_type == 'y':
             raise Exception('Locations not supported in yearly schedules')
+        self.__frame = self.frame_class()(self)
 
     def __date_to_ordinal(self, text):
         return DateOrdinals(text).ordinals[self.frame_type]
@@ -202,11 +196,6 @@ class Schedule:
     def normalize(cls, spec):
         return str(Schedule(spec))
 
-    def __get_frame(self):
-        if not self.__frame:
-            self.__frame = self.frame_class()(self)
-        return self.__frame
-
     def __in_range_or_none(self, date):
         if self.in_range(date):
             return date
@@ -214,28 +203,28 @@ class Schedule:
             return None
 
     def start_of_frame(self, date):
-        return self.__in_range_or_none(self.__get_frame().start_of_frame(date))
+        return self.__in_range_or_none(self.__frame.start_of_frame(date))
 
     def next_frame(self, date):
-        return self.__in_range_or_none(self.__get_frame().next_frame(date))
+        return self.__in_range_or_none(self.__frame.next_frame(date))
 
     def frame_length_in_days(self, date):
-        return self.__get_frame().length_in_days(date)
+        return self.__frame.length_in_days(date)
 
     def locations_from(self, start):
         '''
         Locations in successive frames (ordered), starting at the give date.
         '''
-        yield from self.__get_frame().locations_from(start)
+        yield from self.__frame.locations_from(start)
         while True:
             start = self.next_frame(start)
             if start:
-                yield from self.__get_frame().locations_from(start)
+                yield from self.__frame.locations_from(start)
             else:
                 return
 
     def at_location(self, date):
-        return self.__get_frame().at_location(date)
+        return self.__frame.at_location(date)
 
 
 class DateOrdinals:
