@@ -4,14 +4,13 @@ from logging import getLogger, basicConfig, DEBUG, StreamHandler, Formatter
 from sys import stdout
 
 import sqlalchemy as s
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from urwid import WidgetWrap, Pile, Edit, Filler
 
 from ch2.squeal.binders import Binder
+from ch2.squeal.support import Base
 from ch2.squeal.types import Ordinal
 from ch2.uweird.tui.widgets import Integer
-
 
 basicConfig()
 log = getLogger()
@@ -21,8 +20,6 @@ handler.setLevel(DEBUG)
 formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 handler.setFormatter(formatter)
 log.addHandler(handler)
-
-Base = declarative_base()
 
 
 class Data(Base):

@@ -8,6 +8,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql.functions import count
 
+from ch2.squeal.support import Base
+
 basicConfig()
 log = getLogger()
 log.setLevel(DEBUG)
@@ -16,8 +18,6 @@ handler.setLevel(DEBUG)
 formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 handler.setFormatter(formatter)
 log.addHandler(handler)
-
-Base = declarative_base()
 
 
 class Database:

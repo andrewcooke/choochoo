@@ -9,7 +9,7 @@ from .support import Base
 from .tables.activity import ActivityWaypoint, Activity, ActivityTimespan, ActivityJournal
 from .tables.source import Source, Interval
 from .tables.statistic import Statistic, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
-    StatisticJournal
+    StatisticJournal, StatisticPipeline
 from .tables.topic import TopicJournal, Topic
 from ..command.args import DATABASE
 
@@ -17,7 +17,7 @@ from ..command.args import DATABASE
 Source,  Interval,
 Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint,
 Topic, TopicJournal,
-Statistic, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText
+Statistic, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticPipeline
 
 
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf

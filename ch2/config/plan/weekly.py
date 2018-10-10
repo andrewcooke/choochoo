@@ -1,11 +1,9 @@
 
 import datetime as dt
 
-from sqlalchemy import or_
-
 from ...lib.date import to_date, format_date
 from ...lib.schedule import DOW, Schedule
-from ...squeal.tables.topic import Topic, TopicJournal
+from ...squeal.tables.topic import Topic
 from ...squeal.utils import ORMUtils
 
 
@@ -40,7 +38,7 @@ class Week(Assert, ORMUtils):
     def create(self, log, db, parent='Plan', sort=10):
         with db.session_context() as s:
             parent = self.__create_parent(log, s, parent, sort)
-            self.__create_children(log, s, parent)
+            self.__create_children(log, s, parent, sort)
 
     def __create_parent(self, log, s, root, sort):
         if self.__start.weekday():
@@ -55,9 +53,9 @@ class Week(Assert, ORMUtils):
         s.add(parent)
         return parent
 
-    def __create_children(self, log, s, parent):
+    def __create_children(self, log, s, parent, sort):
         date = self.__start
-        for sort, day in enumerate(DOW):
+        for day in DOW:
             if day in self.__days:
                 self.__days[day].create(log, s, parent, sort, date, self.__n_weeks)
             date += dt.timedelta(days=1)

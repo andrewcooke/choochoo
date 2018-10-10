@@ -366,7 +366,5 @@ class Year(Frame):
         return (dt.date(date.year+1, 1, 1) - dt.date(date.year, 1, 1)).days
 
     def at_location(self, date):
-        '''
-        Locations not supported, so ignore for efficiency.
-        '''
+        # locations not supported, so ignore for efficiency
         return self.schedule.in_range(date)

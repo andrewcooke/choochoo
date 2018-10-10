@@ -2,10 +2,10 @@
 from abc import abstractmethod
 from re import compile
 
-from ..lib.date import parse_duration, duration_to_secs, to_date, add_duration, format_duration
-from ..lib.schedule import Schedule
-from ..squeal.tables.topic import Topic, TopicJournal
-from ..squeal.utils import ORMUtils
+from ...lib.schedule import Schedule
+from ...lib.date import format_duration, duration_to_secs, parse_duration, to_date, add_duration
+from ...squeal.tables.topic import Topic
+from ...squeal.utils import ORMUtils
 
 
 class Builder(ORMUtils):
@@ -16,14 +16,14 @@ class Builder(ORMUtils):
         self._spec = spec
         self._ratio = ratio
 
-    def create(self, log, session):
-        type = self._get_or_create(session, TopicGroup, name='Plan')
-        schedule = Topic(type=type, repeat=str(self._spec), start=self._spec.start, finish=self._spec.finish,
-                         name=self._name, description=self._description, has_notes=True)
-        session.add(schedule)
-        # todo - this is broken because dates is only within a single frame
-        for day in self._spec.frame().frame_locations_from(self._spec.start):
-            session.add(TopicJournal(date=day, schedule=schedule, notes=self._next_value()))
+    def create(self, log, db, parent='Plan', sort=10):
+        with db.session_context() as s:
+            root = self._get_or_create(s, Topic, name=parent, sort=sort)
+            child = Topic(parent=root, schedule=self._spec,
+                          name=self._name, description=self._description, sort=sort)
+            s.add(child)
+            for day in self._spec.frame().locations_from(self._spec.start):
+                s.add(Topic(parent=child, schedule=str(day), name=self._next_value()))
 
     @abstractmethod
     def _next_value(self):
@@ -39,7 +39,7 @@ class TimeBuilder(Builder):
     def _next_value(self):
         time = self.__time
         self.__time *= self._ratio
-        return format_duration(self.__time)
+        return format_duration(time)
 
 
 class DistanceBuilder(Builder):
