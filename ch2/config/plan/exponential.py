@@ -22,7 +22,7 @@ class Builder(ORMUtils):
             child = Topic(parent=root, schedule=self._spec,
                           name=self._name, description=self._description, sort=sort)
             s.add(child)
-            for day in self._spec.frame().locations_from(self._spec.start):
+            for day in self._spec.locations_from(self._spec.start):
                 s.add(Topic(parent=child, schedule=str(day), name=self._next_value()))
 
     @abstractmethod

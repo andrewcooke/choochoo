@@ -50,7 +50,7 @@ class Source(Base):
             times |= set(Epoch.to_time(source.time) for source in sources)
         for time in times:
             for spec in specs:
-                start = spec.frame().start_of_frame(time)
+                start = spec.start_of_frame(time)
                 interval = session.query(Interval). \
                     filter(Interval.time == start, Interval.schedule == spec).one_or_none()
                 if interval:

@@ -23,7 +23,7 @@ def test_schedule(args, log):
 
 def print_calendar(schedule, start, months):
     init()
-    frame, next_frame = 0, schedule.frame().next_frame(start)
+    frame, next_frame = 0, schedule.next_frame(start)
     for _ in range(months):
         print()
         print(INDENT, end='')
@@ -42,8 +42,8 @@ def print_calendar(schedule, start, months):
                     date = dt.date(start.year, start.month, day)
                     if date >= next_frame:
                         frame += 1
-                        next_frame = schedule.frame().next_frame(date)
-                    if schedule.frame().at_location(date):
+                        next_frame = schedule.next_frame(date)
+                    if schedule.at_location(date):
                         colour = Fore.RED if frame % 2 else Fore.GREEN
                         print(colour + ' %2d' % day + Style.RESET_ALL, end='')
                     else:

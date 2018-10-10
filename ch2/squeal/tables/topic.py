@@ -56,7 +56,7 @@ class Topic(Base):
 
     # def at_location(self, date):
     #     if date:
-    #         return self.specification().frame().at_location(date)
+    #         return self.specification().at_location(date)
     #     else:
     #         return True
     #

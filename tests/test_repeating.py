@@ -44,8 +44,7 @@ def test_specification():
 
 def assert_at(spec, date, at_location):
     date = to_date(date)
-    frame = Schedule(spec).frame()
-    assert frame.at_location(date) == at_location, '%s %s' % (spec, date)
+    assert Schedule(spec).at_location(date) == at_location, '%s %s' % (spec, date)
 
 
 def test_day():
@@ -119,5 +118,5 @@ def test_ordinals():
 
 def test_frame_start():
     s = Schedule('2018-01-01/2y')
-    assert s.frame().start_of_frame('2018-01-02') == to_date('2018-01-01')
-    assert s.frame().start_of_frame('2017-01-02') == to_date('2016-01-01')
+    assert s.start_of_frame('2018-01-02') == to_date('2018-01-01')
+    assert s.start_of_frame('2017-01-02') == to_date('2016-01-01')

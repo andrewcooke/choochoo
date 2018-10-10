@@ -74,7 +74,7 @@ class SummaryStatistics:
 
     def _intervals(self, s, spec):
         start, finish = self._raw_statistics_date_range(s)
-        start = spec.frame().start_of_frame(start)
+        start = spec.start_of_frame(start)
         while start <= finish:
             next_start = add_duration(start, (spec.repeat, spec.duration))
             yield start, next_start
@@ -169,7 +169,7 @@ class SummaryStatistics:
                 have_data = False
                 for statistic in self._statistics_missing_values(s, start, finish):
                     data = [journal for journal in self._diary_entries(s, statistic, start, finish)
-                            if spec.frame().at_location(to_date(journal.time))]
+                            if spec.at_location(to_date(journal.time))]
                     if data:
                         processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
                         if processes:

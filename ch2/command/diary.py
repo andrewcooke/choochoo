@@ -33,6 +33,7 @@ To exit, alt-q (or, without saving, alt-x).
     db = Database(args, log)
     render(log, db, date)
 
+
 def render(log, db, date):
     with db.session_context() as s:
         root_topics = [topic for topic in
@@ -41,7 +42,7 @@ def render(log, db, date):
                                   or_(Topic.start <= date, Topic.start == None),
                                   or_(Topic.finish >= date, Topic.finish == None)).
                            order_by(Topic.sort).all()
-                       if topic.specification().in_range(date)]
+                       if topic.schedule.at_location(date)]
         print(root_topics)
         for topic in root_topics:
             topic.populate(s, date)

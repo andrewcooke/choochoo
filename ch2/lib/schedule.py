@@ -42,6 +42,7 @@ class Schedule:
         self.frame_type = None  # character (as spec, so all lower case)
         self.duration = None  # character (as lib.date, so capital M for month)
         self.locations = None  # list of day offsets or (week, dow) tuples (if empty, all dates)
+        self.__frame = None
         try:
             spec = '' if spec is None else spec
             spec = sub(r'\s+', '', spec)
@@ -171,9 +172,6 @@ class Schedule:
         else:
             return format_date(range)
 
-    def frame(self):
-        return self.frame_class()(self)
-
     def frame_class(self):
         return {'d': Day, 'w': Week, 'm': Month, 'y': Year}[self.frame_type]
 
@@ -204,6 +202,41 @@ class Schedule:
     def normalize(cls, spec):
         return str(Schedule(spec))
 
+    def __get_frame(self):
+        if not self.__frame:
+            self.__frame = self.frame_class()(self)
+        return self.__frame
+
+    def __in_range_or_none(self, date):
+        if self.in_range(date):
+            return date
+        else:
+            return None
+
+    def start_of_frame(self, date):
+        return self.__in_range_or_none(self.__get_frame().start_of_frame(date))
+
+    def next_frame(self, date):
+        return self.__in_range_or_none(self.__get_frame().next_frame(date))
+
+    def frame_length_in_days(self, date):
+        return self.__get_frame().length_in_days(date)
+
+    def locations_from(self, start):
+        '''
+        Locations in successive frames (ordered), starting at the give date.
+        '''
+        yield from self.__get_frame().locations_from(start)
+        while True:
+            start = self.next_frame(start)
+            if start:
+                yield from self.__get_frame().locations_from(start)
+            else:
+                return
+
+    def at_location(self, date):
+        return self.__get_frame().at_location(date)
+
 
 class DateOrdinals:
 
@@ -230,18 +263,6 @@ class Frame(ABC):
     def start_of_frame(self, date):
         '''
         The start date for the frame that includes or precedes the given date
-        (None if outside range).
-        '''
-        start = self.start_of_frame_open(date)
-        if (self.schedule.start is None or self.schedule.start <= start) and \
-                (self.schedule.finish is None or self.schedule.finish > start):
-            return start
-        else:
-            return None
-
-    def start_of_frame_open(self, date):
-        '''
-        The start date for the frame that includes or precedes the given date
         (ignoring range).
         '''
         date = DateOrdinals(date)
@@ -251,22 +272,10 @@ class Frame(ABC):
 
     def locations_from(self, start):
         '''
-        Locations in successive frames (ordered), starting at the give date.
-        '''
-        yield from self.frame_locations_from(start)
-        while True:
-            start = self.next_frame_open(start)
-            if self.schedule.in_range(start):
-                yield from self.frame_locations_from(start)
-            else:
-                return
-
-    def frame_locations_from(self, start):
-        '''
         Locations in a single frame, starting at the give date
         (so if the date isn't at the start of the frame you might not get all locations).
         '''
-        frame = self.start_of_frame_open(start)
+        frame = self.start_of_frame(start)
         ordinals = DateOrdinals(frame)
         for delta in self._location_offsets(ordinals.dow, self.length_in_days(start)):
             date = frame + dt.timedelta(days=delta)
@@ -305,26 +314,15 @@ class Frame(ABC):
         Does the given day coincide with the specification?
         '''
         try:
-            return self.schedule.in_range(date) and date == next(self.frame_locations_from(date))
+            return self.schedule.in_range(date) and date == next(self.locations_from(date))
         except StopIteration:
             return False
 
     def next_frame(self, date):
         '''
-        Returns the start of the frame following the one containing the given date as
-        long as it is within range.  Otherwise, it returns None.
-        '''
-        date = self.next_frame_open(date)
-        if self.schedule.in_range(date):
-            return date
-        else:
-            return None
-
-    def next_frame_open(self, date):
-        '''
         Returns the start of the frame following the one containing the given date.
         '''
-        return self.start_of_frame_open(date) + dt.timedelta(days=self.length_in_days(date))
+        return self.start_of_frame(date) + dt.timedelta(days=self.length_in_days(date))
 
     @abstractmethod
     def length_in_days(self, date):
