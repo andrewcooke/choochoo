@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from calendar import monthrange
 from re import sub, compile, match
 
-from .date import to_date, format_date, MONTH, add_duration
+from .date import to_date, format_date, MONTH, add_duration, YEAR
 
 # my calculations are done relative to the unix epoch.  the "gregorian ordinal"
 # is relative to year 1, but i have no idea how the details of that work.  i
@@ -34,7 +34,7 @@ class Schedule:
         self.offset = None  # int (units of frame relative to start of unix epoch)
         self.repeat = None  # int (units of frame)
         self.frame_type = None  # character (as spec, so all lower case)
-        self.duration = None  # character (as lib.date, so capital M for month)
+        self.duration = None  # character (as lib.date, so capital Y for year)
         self.locations = None  # list of day offsets or (week, dow) tuples (if empty, all dates)
         try:
             spec = '' if spec is None else spec
@@ -72,7 +72,7 @@ class Schedule:
             offset, rft = '0', frame
         self.repeat, self.frame_type = self.__parse_ordinal(rft)
         # convert from case insensitive spec to convention used in lib.date
-        self.duration = MONTH if self.frame_type == MONTH.lower() else self.frame_type
+        self.duration = YEAR if self.frame_type == YEAR.lower() else self.frame_type
         if '-' in offset:
             self.offset = self.__date_to_ordinal(offset)
         else:
@@ -96,7 +96,6 @@ class Schedule:
         if locations:
             if self.frame_type == 'y':
                 raise Exception('Locations in yearly frames not supported')
-            # todo - sort that respects day ordering
             self.locations = sorted(map(self.__parse_location, locations.split(',')), key=self.__key)
         else:
             self.locations = []  # all

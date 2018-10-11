@@ -1,13 +1,11 @@
 
 from tempfile import NamedTemporaryFile
 
-from ch2.command.args import parser, NamespaceWithVariables, bootstrap_file, m, V, mm, DEV
+from ch2.command.args import bootstrap_file, m, V, mm, DEV
 from ch2.config.default import default
 from ch2.config.plan.british import twelve_week_improver
 from ch2.config.plan.exponential import exponential_time, exponential_distance
-from ch2.lib.log import make_log
-from ch2.squeal.database import Database
-from ch2.squeal.tables.topic import Topic, TopicJournal
+from ch2.squeal.tables.topic import Topic
 
 
 def test_british():
@@ -36,7 +34,7 @@ def test_exponential_time():
 
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-        plan = exponential_time('Time test', '2d[2]', '20m', 5, '2018-07-25', '3M')
+        plan = exponential_time('Time test', '2d[2]', '20M', 5, '2018-07-25', '3m')
         plan.create(log, db)
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -56,7 +54,7 @@ def test_exponential_distance():
 
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-        plan = exponential_distance('Distance test', 'w[mon,wed,fri]', '20km', 5, '2018-07-25', '1M')
+        plan = exponential_distance('Distance test', 'w[mon,wed,fri]', '20km', 5, '2018-07-25', '1m')
         plan.create(log, db)
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)

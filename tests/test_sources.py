@@ -34,9 +34,9 @@ def test_sources():
             assert d.topic.fields[0].statistic.name == 'Notes'
             assert d.topic.fields[1].statistic.name == 'Rest HR'
             for field in d.topic.fields:
-                assert d.fields[field].value is None
-            d.fields[d.topic.fields[0]].value = 'hello world'
-            d.fields[d.topic.fields[1]].value = 60
+                assert d.statistics[field].value is None
+            d.statistics[d.topic.fields[0]].value = 'hello world'
+            d.statistics[d.topic.fields[1]].value = 60
 
         with db.session_context() as s:
 
@@ -47,9 +47,9 @@ def test_sources():
                                              TopicJournal.time == '2018-09-29').one()
             assert len(d.topic.fields) == 6
             assert d.topic.fields[0].statistic.name == 'Notes'
-            assert d.fields[d.topic.fields[0]].value == 'hello world'
+            assert d.statistics[d.topic.fields[0]].value == 'hello world'
             assert d.topic.fields[1].statistic.name == 'Rest HR'
-            assert d.fields[d.topic.fields[1]].value == 60
+            assert d.statistics[d.topic.fields[1]].value == 60
 
         # generate summary stats
 

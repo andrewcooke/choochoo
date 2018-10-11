@@ -58,13 +58,13 @@ def to_datetime(value, none=False):
 
 # these reflect the conventions used in string parsing / formatting
 # schedules are for longer intervals (>= 1d) and so can be case-agnostic.
-SECOND = 's'
-MINUTE = 'm'
-HOUR = 'h'
+SECOND = 'S'
+MINUTE = 'M'
+HOUR = 'H'
 DAY = 'd'
 WEEK = 'w'
-MONTH = 'M'
-YEAR = 'y'
+MONTH = 'm'
+YEAR = 'Y'
 
 
 def add_duration(date, duration):
@@ -82,7 +82,7 @@ def add_duration(date, duration):
     if unit == YEAR:
         year = date.year + n
         return dt.date(year, date.month, min(date.day, monthrange(year, date.month)[1]))
-    raise Exception('Unexpected unit "%s" (need one of d, w, M, y)' % unit)
+    raise Exception('Unexpected unit "%s" (need one of %s, %s, %s, %s)' % (unit, DAY, WEEK, MONTH, YEAR))
 
 
 def mul_duration(n, duration):
@@ -101,7 +101,7 @@ def duration_to_secs(duration):
         return n * 24 * 60 * 60
     if unit == WEEK:
         return n * 7 * 24 * 60 * 60
-    raise Exception('Unexpected unit "%s" (need one of s, m, h, d, w' % unit)
+    raise Exception('Unexpected unit "%s" (need one of %s %s %s %s %s' % (unit, SECOND, MINUTE, HOUR, DAY, WEEK))
 
 
 def format_duration(seconds):

@@ -10,7 +10,7 @@ from ...lib.utils import force_iterable
 # new tab manager design
 
 # tabs can be arranged in groups.  group contents can be wiped and re-added.
-# this allows tabs in the "middle" of a travers to be rebuilt.
+# this allows tabs in the "middle" of a traverse to be rebuilt.
 # tabs are assembled in a TabList and then passed to a TabNode which
 # contains the group.  the TabNode has to be a widget itself since it
 # needs to re-raise signals for tabbing.  because it is a WidgetWrap we need

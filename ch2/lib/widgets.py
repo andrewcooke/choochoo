@@ -2,8 +2,8 @@
 from urwid import Pile, MainLoop, Filler, Divider, Frame, Text
 
 from ..lib.utils import PALETTE
-from ch2.uweird.tui.decorators import Border
-from ch2.uweird.tui.tabs import Root
+from ..uweird.tui.decorators import Border
+from ..uweird.tui.tabs import Root
 
 
 class App(MainLoop):
@@ -15,3 +15,5 @@ class App(MainLoop):
                          tab_list, session=session)
         self.root.discover()
         super().__init__(self.root, palette=PALETTE)
+
+

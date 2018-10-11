@@ -1,15 +1,22 @@
 
+
 import datetime as dt
 
 from sqlalchemy import or_
+from urwid import MainLoop, ExitMainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
 from .args import DATE
 from ..lib.date import to_date
+from ..lib.io import tui
+from ..lib.utils import PALETTE
 from ..squeal.database import Database
-from ..squeal.tables.topic import Topic
+from ..squeal.tables.topic import Topic, TopicJournal
+from ..uweird.fields import PAGE_WIDTH
+from ..uweird.tui.decorators import Border, Indent
+from ..uweird.tui.tabs import TabNode, TabList
 
 
-# @tui
+@tui
 def diary(args, log):
     '''
 # diary
@@ -31,22 +38,99 @@ To exit, alt-q (or, without saving, alt-x).
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
     db = Database(args, log)
-    render(log, db, date)
+    MainLoop(DiaryBuilder(log, db, date), palette=PALETTE).run()
 
 
-def render(log, db, date):
-    with db.session_context() as s:
+class DiaryApp(TabNode):
+
+    def __init__(self, log, db, date):
+        self._log = log
+        self.__db = db
+        self.__session = None
+        self.__date = date
+        super().__init__(log, *self._build(self.__new_session(), self.__date))
+
+    def __new_session(self):
+        if self.__session:
+            self.__session.flush()
+            self.__session.close()
+        self.__session = self.__db.session()
+        return self.__session
+
+    def keypress(self, size, key):
+        if key == self.__quit:
+            self.save()
+            raise ExitMainLoop()
+        elif key == self.__abort:
+            raise ExitMainLoop()
+        elif key == self.__save:
+            self.save()
+        else:
+            return super().keypress(size, key)
+
+    def save(self):
+        if self.__session:
+            self.__session.flush()
+            self.__session.commit()
+
+
+class DiaryBuilder(DiaryApp):
+
+    def _build(self, s, date):
+        self._log.debug('Building diary at %s' % date)
+        body, tabs = [], TabList()
         root_topics = [topic for topic in
-                       s.query(Topic).
-                           filter(Topic.parent == None,
-                                  or_(Topic.start <= date, Topic.start == None),
-                                  or_(Topic.finish >= date, Topic.finish == None)).
+                       s.query(Topic).filter(Topic.parent == None,
+                                             or_(Topic.start <= date, Topic.start == None),
+                                             or_(Topic.finish >= date, Topic.finish == None)).
                            order_by(Topic.sort).all()
                        if topic.schedule.at_location(date)]
-        print(root_topics)
-        for topic in root_topics:
-            topic.populate(s, date)
-            for field in topic.fields:
-                print(field)
-                print(topic.journal.fields[field])
-                print(field.display_cls(log, s, topic.journal.fields[field], *field.display_args))
+        for started, topic in enumerate(root_topics):
+            if started:
+                body.append(Divider())
+            body.append(self._build_topic(s, topic, date))
+        body = Border(Frame(Filler(Pile(body), valign='top'),
+                            header=Pile([Text(date.strftime('%A %Y-%m-%d')), Divider()]),
+                            footer=Pile([Divider(), Text('footer')])))
+        return body, tabs
+
+    def _build_topic(self, s, topic, date):
+        self._log.debug(topic)
+        body, title = [], None
+        if topic.name:
+            title = Text(topic.name)
+        if topic.description:
+            body.append(Text(topic.description))
+        columns, width = [], 0
+        for field in topic.fields:
+            self._log.debug(field)
+            journal = self._journal(s, topic, date)
+            display = field.display_cls(self._log, s, journal.statistics[field], *field.display_args)
+            self._log.debug(display)
+            if width + display.width > PAGE_WIDTH:
+                body.append(Columns(columns))
+                columns, width = [], 0
+            columns.append((WEIGHT, display.width, display.bound_widget()))
+            width += display.width
+        if width:
+            body.append(Columns(columns))
+        for child in topic.children:
+            if child.schedule.at_location(date):
+                extra = self._build_topic(s, child, date)
+                if extra:
+                    body.append(extra)
+        if body:
+            body = Indent(Pile(body))
+        if title:
+            if body:
+                body = Pile([title, body])
+            else:
+                body = title
+        return body
+
+    def _journal(self, s, topic, date):
+        journal = s.query(TopicJournal).filter(TopicJournal.topic == topic, TopicJournal.time == date).one_or_none()
+        if not journal:
+            journal = TopicJournal(topic=topic, time=date)
+            s.add(journal)
+        return journal

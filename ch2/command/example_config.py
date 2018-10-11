@@ -1,5 +1,8 @@
 
-from ..config.default import default
+import datetime as dt
+
+from ..config.personal import acooke
+from ..config.plan.british import twelve_week_improver
 from ..squeal.database import Database
 
 
@@ -15,4 +18,7 @@ The whole damn point of using Choochoo is that you configure it how you need it.
 Please see the documentation.
     '''
     db = Database(args, log)
-    default(db)
+    acooke(db)
+    plan = twelve_week_improver(dt.date.today())
+    plan.create(log, db)
+

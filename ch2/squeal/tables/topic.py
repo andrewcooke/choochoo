@@ -107,7 +107,7 @@ class TopicField(Base):
     display_kargs = Column(Json, nullable=None, server_default=dumps({}))
 
     def __str__(self):
-        return 'TopicField "%s"' % self.statistic.name
+        return 'TopicField "%s"/"%s"' % (self.topic.name, self.statistic.name)
 
 
 class TopicJournal(Source):
@@ -115,8 +115,8 @@ class TopicJournal(Source):
     __tablename__ = 'topic_journal'
     __statistic_constraint__ = 'topic_id'
 
-    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
-    topic_id = Column(Integer, ForeignKey('topic.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
+    topic_id = Column(Integer, ForeignKey('topic.id'))
     topic = relationship('Topic')
 
     __mapper_args__ = {
@@ -126,7 +126,7 @@ class TopicJournal(Source):
     def populate(self, s):
         if self.time is None:
             raise Exception('No time defined')
-        self.fields = {}
+        self.statistics = {}
         for field in self.topic.fields:
             if self.id:
                 journal = s.query(StatisticJournal). \
@@ -140,7 +140,7 @@ class TopicJournal(Source):
             if not journal:
                 journal = STATISTIC_JOURNAL_CLASSES[field.type](statistic=field.statistic, source=self)
                 s.add(journal)
-            self.fields[field] = journal
+            self.statistics[field] = journal
 
 
 @listens_for(Session, 'loaded_as_persistent')
