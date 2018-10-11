@@ -27,6 +27,7 @@ class Statistic(Base):
     # (eg activity.id so that the same statistic can be used across different activities)
     owner = Column(Cls, nullable=False)
     constraint = Column(Integer)
+    UniqueConstraint(name, owner, constraint)
 
     def __str__(self):
         return 'Statistic "%s"' % self.name

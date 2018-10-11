@@ -36,14 +36,12 @@ def default(db):
 
         # constants used by statistics
 
-        fthr_bike = add(s, Statistic(name=FTHR, owner=Constant, units=BPM,
-                                     constraint=bike.id,
+        fthr_bike = add(s, Statistic(name=FTHR, owner=Constant, constraint=bike.id, units=BPM,
                                      description='''Heart rate at functional threshold (cycling).
                                      See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0'''))
         s.add(Constant(type=StatisticType.INTEGER, name='%s.%s' % (FTHR, BIKE), statistic=fthr_bike))
 
-        fthr_run = add(s, Statistic(name=FTHR, owner=Constant, units=BPM,
-                                    constraint=run.id,
+        fthr_run = add(s, Statistic(name=FTHR, owner=Constant, constraint=run.id, units=BPM,
                                     description='''Heart rate at functional threshold (running).
                                     See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0'''))
         s.add(Constant(type=StatisticType.INTEGER, name='%s.%s' % (FTHR, RUN), statistic=fthr_run))
@@ -55,21 +53,25 @@ def default(db):
 
         s.add(TopicField(topic=diary, sort=c(), type=StatisticType.TEXT,
                          display_cls=Text,
-                         statistic=add(s, Statistic(name='Notes', owner=diary))))
+                         statistic=add(s, Statistic(name='Notes', owner=diary, constraint=diary.id))))
 
         s.add(TopicField(topic=diary, sort=c(), type=StatisticType.FLOAT,
                          display_cls=Integer, display_kargs={'lo': 25, 'hi': 75},
-                         statistic=add(s, Statistic(name='Rest HR', owner=diary, units='kg', summary='[avg]'))))
+                         statistic=add(s, Statistic(name='Rest HR', owner=diary, constraint=diary.id,
+                                                    units='kg', summary='[avg]'))))
         s.add(TopicField(topic=diary, sort=c(), type=StatisticType.FLOAT,
                          display_cls=Float, display_kargs={'lo': 40, 'hi': 100, 'format': '%f2.1'},
-                         statistic=add(s, Statistic(name='Weight', owner=diary, units='kg', summary='[avg]'))))
+                         statistic=add(s, Statistic(name='Weight', owner=diary, constraint=diary.id,
+                                                    units='kg', summary='[avg]'))))
         s.add(TopicField(topic=diary, sort=c(), type=StatisticType.FLOAT,
                          display_cls=Float, display_kargs={'lo': 0, 'hi': 24, 'format': '%f2.1'},
-                         statistic=add(s, Statistic(name='Sleep', owner=diary, units='hr', summary='[avg]'))))
+                         statistic=add(s, Statistic(name='Sleep', owner=diary, constraint=diary.id,
+                                                    units='hr', summary='[avg]'))))
         s.add(TopicField(topic=diary, sort=c(), type=StatisticType.INTEGER,
                          display_cls=Score,
-                         statistic=add(s, Statistic(name='Mood', owner=diary, summary='[avg]'))))
+                         statistic=add(s, Statistic(name='Mood', owner=diary, constraint=diary.id,
+                                                    summary='[avg]'))))
 
         s.add(TopicField(topic=diary, sort=c(), type=StatisticType.TEXT,
                          display_cls=Text,
-                         statistic=add(s, Statistic(name='Medication', owner=diary))))
+                         statistic=add(s, Statistic(name='Medication', owner=diary, constraint=diary.id))))
