@@ -51,34 +51,97 @@ class Counter:
 
 
 def add(session, instance):
+    '''
+    Add an instance to the session (and so to the database), returning the instance.
+    You likely don't need this - see the more specific helpers below.
+
+    The instance can of any class that subclasses the Base class from SQLAlchemy.
+    In practice, that means most classes in the ch2.squeal.tables mdoule.
+    However, only some classes make sense in the context of a configuration, and
+    more specific helpers probably already exist for those.
+    '''
     session.add(instance)
     return instance
 
 
 def add_pipeline(session, cls, sort, **kargs):
+    '''
+    Add a class to the statistics pipeline.
+
+    The pipeline classes are invoked when the diary is modified and when activities are added.
+    They detect new data and calculate appropriate statistics.
+    See the ch2.stoats module for examples.
+
+    The sort argument fixes the order in which the classes are instantiated and called and can
+    be an integer or a callable (that returns an integer) like Counter above.
+
+    The kargs are passed to the constructor and so can be used to customize the processing.
+    '''
     return add(session, StatisticPipeline(cls=cls, sort=sort, kargs=kargs))
 
 
 def add_activity(session, name, sort, description=None):
+    '''
+    Add an activity type to the configuration.
+
+    These are used to group activities (and related statistics).
+    So typical entries might be for cycling, running, etc.
+    '''
     return add(session, Activity(name=name, sort=sort, description=description))
 
 
 def add_activity_constant(session, activity, name, description=None, units=None, type=StatisticType.INTEGER):
+    '''
+    Add a constant associated with an activity.
+
+    Configuring a constant allows the user to supply a value later, using the `ch2 constant` command.
+    This can be useful for values that don't vary often, and so aren't worth adding to the diary.
+    An example is FTHR, which you will only measure occasionally, but which is needed when calculating
+    activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
+    '''
     statistic = add(session, Statistic(name=name, owner=Constant, constraint=activity.id, units=units,
                                        description=description))
     constant = add(session, Constant(type=type, name='%s.%s' % (name, activity.name), statistic=statistic))
 
 
 def add_topic(session, name, sort, description=None, schedule=None):
+    '''
+    Add a root topic.
+
+    Topics are displayed in the diary.
+    They can be permanent, or associated with some schedule.
+    They can also be associated with fields (and so with statistics).
+
+    A root topic is usually used as a header to group related children.
+    For example, 'Diary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
+    '''
     return add(session, Topic(name=name, sort=sort, description=description, schedule=schedule))
 
 
 def add_child_topic(session, parent, name, sort, description=None, schedule=None):
+    '''
+    Add a child topic.
+
+    Topics are displayed in the diary.
+    They can be permanent, or associated with some schedule.
+    They can also be associated with fields (and so with statistics).
+
+    A child topic is used to add additional structrure to an existing topic.
+    For example, the parent topic might be "injuries" and permanent, while children are defined for
+    specific injuries with a schedule that gives start and end dates.
+    '''
     return add(session, Topic(parent=parent, name=name, sort=sort, description=description, schedule=schedule))
 
 
 def add_topic_field(session, topic, name, sort, description=None, units=None, summary=None,
                     display_cls=Integer, **display_kargs):
+    '''
+    Add a field and associated statistic to a topic entry.
+
+    This is how the user can enter values into the diary.
+    The field describes how the values are displayed in the diary.
+    The statistic describes how the values are stored in the database.
+    '''
     statistic = add(session, Statistic(name=name, owner=topic, constraint=topic.id,
                                        description=description, units=units, summary=summary))
     field = add(session, TopicField(topic=topic, sort=sort, type=display_cls.statistic_type,
