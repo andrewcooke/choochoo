@@ -3,6 +3,7 @@ from abc import abstractmethod, ABC
 
 from urwid import Edit
 
+from ch2.uweird.tui.widgets import Rating
 from ..squeal.tables.statistic import StatisticType
 
 PAGE_WIDTH = 4
@@ -103,4 +104,4 @@ class Score(Base):
         return '%d' % value
 
     def _widget(self, journal):
-        return Edit(caption='%s: ' % journal.statistic.name)
+        return Rating(caption='%s: ' % journal.statistic.name)

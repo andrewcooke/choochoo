@@ -1,4 +1,4 @@
-from ch2.uweird.fields import Integer
+
 from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
@@ -6,6 +6,7 @@ from ..squeal.tables.activity import Activity
 from ..squeal.tables.constant import Constant
 from ..squeal.tables.statistic import StatisticPipeline, Statistic, StatisticType
 from ..squeal.tables.topic import Topic, TopicField
+from ..uweird.fields import Integer
 
 
 def config(*args):

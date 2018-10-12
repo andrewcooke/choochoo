@@ -13,6 +13,9 @@ def default(db):
 
     with db.session_context() as s:
 
+        # the following users heleper functions (add_...) but you can also
+        # execute arbitrary python code, use the session, etc.
+
         # statistics pipeline
 
         c = Counter()
@@ -44,13 +47,17 @@ def default(db):
         diary = add_topic(s, 'Diary', c)
         add_topic_field(s, diary, 'Notes', c,
                         display_cls=Text)
-        add_topic_field(s, diary, 'Rest HR', c, units=BPM, summary='[avg]',
+        add_topic_field(s, diary, 'Rest HR', c,
+                        units=BPM, summary='[avg]',
                         display_cls=Integer, display_kargs={'lo': 25, 'hi': 75})
-        add_topic_field(s, diary, 'Weight', c, units='kg', summary='[avg]',
+        add_topic_field(s, diary, 'Weight', c,
+                        units='kg', summary='[avg]',
                         display_cls=Float, display_kargs={'lo': 40, 'hi': 100, 'dp': 1})
-        add_topic_field(s, diary, 'Sleep', c, units='hr', summary='[avg]',
+        add_topic_field(s, diary, 'Sleep', c,
+                        units='hr', summary='[avg]',
                         display_cls=Float, display_kargs={'lo': 0, 'hi': 24, 'dp': 1})
-        add_topic_field(s, diary, 'Mood', c, summary='[avg]',
+        add_topic_field(s, diary, 'Mood', c,
+                        summary='[avg]',
                         display_cls=Score)
         add_topic_field(s, diary, 'Medication', c,
                         display_cls=Text)

@@ -5,6 +5,7 @@ from abc import abstractmethod
 from sqlalchemy import or_
 from urwid import MainLoop, ExitMainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
+from ch2.uweird.tui.factory import Factory
 from .args import DATE
 from ..lib.date import to_date, YEAR, MONTH, WEEK, DAY, add_duration
 from ..lib.io import tui
@@ -127,7 +128,7 @@ class Diary(DateSwitcher):
 
     def _build_date(self, s, date):
         self._log.debug('Building diary at %s' % date)
-        body, tabs = [], TabList()
+        body, f = [], Factory(TabList())
         root_topics = [topic for topic in
                        s.query(Topic).filter(Topic.parent == None,
                                              or_(Topic.start <= date, Topic.start == None),
@@ -135,21 +136,21 @@ class Diary(DateSwitcher):
                                       order_by(Topic.sort).all()
                        if topic.schedule.at_location(date)]
         for started, topic in enumerate(root_topics):
-            body.append(self.__topic(s, topic, date))
+            body.append(self.__topic(s, f, topic, date))
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([Text(date.strftime('%Y-%m-%d - %A')), Divider()]),
                             footer=Pile([Divider(), Text('footer')])))
-        return body, tabs
+        return body, f.tabs
 
-    def __topic(self, s, topic, date):
+    def __topic(self, s, f, topic, date):
         self._log.debug(topic)
         body, title = [], None
         if topic.name:
             title = Text(topic.name)
         if topic.description:
             body.append(Text(topic.description))
-        body += list(self.__fields(s, topic, date))
-        body += list(self.__children(s, topic, date))
+        body += list(self.__fields(s, f, topic, date))
+        body += list(self.__children(s, f, topic, date))
         if not body:
             return title
         body = Indent(Pile(body))
@@ -157,7 +158,7 @@ class Diary(DateSwitcher):
             body = Pile([title, body])
         return body
 
-    def __fields(self, s, topic, date):
+    def __fields(self, s, f, topic, date):
         columns, width = [], 0
         for field in topic.fields:
             self._log.debug(field)
@@ -167,15 +168,15 @@ class Diary(DateSwitcher):
             if width + display.width > PAGE_WIDTH:
                 yield Columns(columns)
                 columns, width = [], 0
-            columns.append((WEIGHT, display.width, display.bound_widget()))
+            columns.append((WEIGHT, display.width, f(display.bound_widget())))
             width += display.width
         if width:
             yield Columns(columns)
 
-    def __children(self, s, topic, date):
+    def __children(self, s, f, topic, date):
         for child in topic.children:
             if child.schedule.at_location(date):
-                extra = self.__topic(s, child, date)
+                extra = self.__topic(s, f, child, date)
                 if extra:
                     yield extra
 
