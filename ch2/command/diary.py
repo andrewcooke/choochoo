@@ -72,6 +72,7 @@ class App(TabNode):
 
     def save(self):
         if self.__session:
+            self._log.debug('Flushing and committing')
             self.__session.flush()
             self.__session.commit()
             self.__session = None

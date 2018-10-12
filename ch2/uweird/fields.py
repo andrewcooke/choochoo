@@ -1,7 +1,7 @@
 
 from abc import abstractmethod, ABC
 
-from urwid import Edit
+from urwid import Edit, connect_signal
 
 from ch2.uweird.tui.widgets import Rating
 from ..squeal.tables.statistic import StatisticType
@@ -33,8 +33,12 @@ class Base(ABC):
 
     def bound_widget(self):
         widget = self._widget(self.__journal)
-        # bind
+        connect_signal(widget, 'change', self.__on_change)
         return widget
+
+    def __on_change(self, widget, value):
+        self._log.debug('Setting %s=%r' % (self.__journal.statistic.name, value))
+        self.__journal.value = value
 
     @abstractmethod
     def _widget(self, journal):
@@ -52,7 +56,7 @@ class Text(Base):
         return repr(value)
 
     def _widget(self, journal):
-        return Edit(caption='%s: ' % journal.statistic.name)
+        return Edit(caption='%s: ' % journal.statistic.name, edit_text=journal.value or '')
 
 
 class Integer(Base):
@@ -69,7 +73,7 @@ class Integer(Base):
 
     def _widget(self, journal):
         from .tui.widgets import Integer
-        return Integer(caption='%s: ' % journal.statistic.name,
+        return Integer(caption='%s: ' % journal.statistic.name, state=journal.value,
                        minimum=self._lo, maximum=self._hi, units=journal.statistic.units)
 
 
@@ -89,7 +93,7 @@ class Float(Base):
 
     def _widget(self, journal):
         from .tui.widgets import Float
-        return Float(caption='%s: ' % journal.statistic.name,
+        return Float(caption='%s: ' % journal.statistic.name, state=journal.value,
                      minimum=self._lo, maximum=self._hi, dp=self._dp, units=journal.statistic.units)
 
 
@@ -104,4 +108,4 @@ class Score(Base):
         return '%d' % value
 
     def _widget(self, journal):
-        return Rating(caption='%s: ' % journal.statistic.name)
+        return Rating(caption='%s: ' % journal.statistic.name, state=journal.value)
