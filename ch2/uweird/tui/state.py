@@ -50,14 +50,16 @@ class MutableStatefulText(ImmutableStatefulText):
     def _set_state_external(self, state):
         self._set_state_internal(state)
 
-    def _set_state_internal(self, state):
+    def _set_state_internal(self, state, signal=True):
         if state != self._state:
             old_state = self._state
             self._state = state
             # argument list to match Edit behaviour
-            emit_signal(self, 'change', self, state)
+            if signal:
+                emit_signal(self, 'change', self, state)
             self._update_text()
             # this is similar behaviour to the edit widget
-            emit_signal(self, 'postchange', self, old_state)
+            if signal:
+                emit_signal(self, 'postchange', self, old_state)
 
     state = property(_get_state, _set_state)

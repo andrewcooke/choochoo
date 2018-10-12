@@ -212,6 +212,7 @@ class Number(MutableStatefulText):
             except Exception as e:
                 # todo - add log and log this
                 error = True
+                self._set_state_internal(state, signal=False)
         else:
             self._set_state_internal(None)
         self._update_text()

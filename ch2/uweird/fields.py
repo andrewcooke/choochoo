@@ -81,7 +81,7 @@ class Float(Base):
 
     statistic_type = StatisticType.FLOAT
 
-    def __init__(self, log, s, journal, lo=None, hi=None, dp=2, width=1):
+    def __init__(self, log, s, journal, lo=None, hi=None, dp=2, format='%f', width=1):
         super().__init__(log, s, journal, width=width)
         self._lo = lo
         self._hi = hi

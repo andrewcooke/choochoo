@@ -144,7 +144,7 @@ class Diary(DateSwitcher):
         return body, f.tabs
 
     def __topic(self, s, f, topic, date):
-        self._log.debug(topic)
+        self._log.debug('%s' % topic)
         body, title = [], None
         if topic.name:
             title = Text(topic.name)
@@ -162,10 +162,11 @@ class Diary(DateSwitcher):
     def __fields(self, s, f, topic, date):
         columns, width = [], 0
         for field in topic.fields:
-            self._log.debug(field)
+            self._log.debug('%s' % field)
             journal = self.__journal(s, topic, date)
-            display = field.display_cls(self._log, s, journal.statistics[field], *field.display_args)
-            self._log.debug(display)
+            display = field.display_cls(self._log, s, journal.statistics[field],
+                                        *field.display_args, **field.display_kargs)
+            self._log.debug('%s' % display)
             if width + display.width > PAGE_WIDTH:
                 yield Columns(columns)
                 columns, width = [], 0
