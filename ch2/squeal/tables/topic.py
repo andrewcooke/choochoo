@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship, backref, Session
 from .source import SourceType, Source
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from ..support import Base
-from ..types import Ordinal, Cls, Json, Sched
+from ..types import Ordinal, Cls, Json, Sched, Sort
 from ...lib.schedule import Schedule
 
 
@@ -26,7 +26,7 @@ class Topic(Base):
     finish = Column(Ordinal)
     name = Column(Text, nullable=False, server_default='')
     description = Column(Text, nullable=False, server_default='')
-    sort = Column(Text, nullable=False, server_default='')
+    sort = Column(Sort, nullable=False, server_default='')
 
     def __init__(self, id=None, parent=None, parent_id=None, schedule=None, name=None, description=None, sort=None):
         # Topic instances are only created in config.  so we intercept here to
@@ -99,7 +99,7 @@ class TopicField(Base):
                                          passive_deletes=True,
                                          order_by='TopicField.sort'))
     type = Column(Integer, nullable=False)  # StatisticType
-    sort = Column(Integer)
+    sort = Column(Sort)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
     display_cls = Column(Cls, nullable=None)

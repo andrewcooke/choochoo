@@ -3,6 +3,8 @@ from abc import abstractmethod, ABC
 
 from urwid import Edit
 
+from ..squeal.tables.statistic import StatisticType
+
 PAGE_WIDTH = 4
 
 
@@ -40,6 +42,8 @@ class Base(ABC):
 
 class Text(Base):
 
+    statistic_type = StatisticType.TEXT
+
     def __init__(self, log, s, journal, width=PAGE_WIDTH):
         super().__init__(log, s, journal, width=width)
 
@@ -52,6 +56,8 @@ class Text(Base):
 
 class Integer(Base):
 
+    statistic_type = StatisticType.INTEGER
+
     def __init__(self, log, s, journal, lo=None, hi=None, width=1):
         super().__init__(log, s, journal, width=width)
         self._lo = lo
@@ -61,25 +67,34 @@ class Integer(Base):
         return '%d' % value
 
     def _widget(self, journal):
-        return Edit(caption='%s: ' % journal.statistic.name)
+        from .tui.widgets import Integer
+        return Integer(caption='%s: ' % journal.statistic.name,
+                       minimum=self._lo, maximum=self._hi, units=journal.statistic.units)
 
 
 class Float(Base):
 
-    def __init__(self, log, s, journal, lo=None, hi=None, format='%f', width=1):
+    statistic_type = StatisticType.FLOAT
+
+    def __init__(self, log, s, journal, lo=None, hi=None, dp=2, width=1):
         super().__init__(log, s, journal, width=width)
         self._lo = lo
         self._hi = hi
+        self._dp = dp
         self._format = format
 
     def _format_value(self, value):
         return self._format % value
 
     def _widget(self, journal):
-        return Edit(caption='%s: ' % journal.statistic.name)
+        from .tui.widgets import Float
+        return Float(caption='%s: ' % journal.statistic.name,
+                     minimum=self._lo, maximum=self._hi, dp=self._dp, units=journal.statistic.units)
 
 
 class Score(Base):
+
+    statistic_type = StatisticType.INTEGER
 
     def __init__(self, log, s, journal, width=1):
         super().__init__(log, s, journal, width=width)

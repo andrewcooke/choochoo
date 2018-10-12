@@ -20,5 +20,5 @@ Please see the documentation.
     db = Database(args, log)
     acooke(db)
     plan = twelve_week_improver(dt.date.today())
-    plan.create(log, db)
+    plan.create(log, db, sort=1000)
 

@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
-from ..types import Epoch
+from ..types import Epoch, Sort
 
 
 class FileScan(Base):
@@ -23,7 +23,7 @@ class Activity(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, server_default='')
     description = Column(Text, nullable=False, server_default='')
-    sort = Column(Text, nullable=False, server_default='')
+    sort = Column(Sort, nullable=False, server_default='')
 
     @staticmethod
     def lookup(log, s, name):

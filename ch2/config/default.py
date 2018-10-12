@@ -1,79 +1,56 @@
-from ch2.lib.schedule import Schedule
-from .database import add, Counter
-from ..squeal.tables.activity import Activity
-from ..squeal.tables.constant import Constant
-from ..squeal.tables.statistic import Statistic, StatisticType, StatisticPipeline
-from ..squeal.tables.topic import Topic, TopicField
+
+from .database import Counter, add_pipeline, add_activity, add_activity_constant, add_topic, add_topic_field
+from ..lib.schedule import Schedule
+from ..squeal.tables.statistic import StatisticType
 from ..stoats.activity import ActivityStatistics
 from ..stoats.clean import CleanUnusedStatistics
 from ..stoats.names import BPM, FTHR
 from ..stoats.summary import SummaryStatistics
 from ..uweird.fields import Text, Float, Score, Integer
 
-BIKE = 'Bike'
-RUN = 'Run'
-
 
 def default(db):
-
-    # todo - SIMPLIFY!!!
 
     with db.session_context() as s:
 
         # statistics pipeline
 
         c = Counter()
-        s.add(StatisticPipeline(cls=ActivityStatistics, sort=c()))
-        s.add(StatisticPipeline(cls=SummaryStatistics, sort=c(),
-                                kargs={'schedule': Schedule.normalize('m')}))
-        s.add(StatisticPipeline(cls=SummaryStatistics, sort=c(),
-                                kargs={'schedule': Schedule.normalize('y')}))
-        s.add(StatisticPipeline(cls=CleanUnusedStatistics, sort=c()))
+        add_pipeline(s, ActivityStatistics, c)
+        # need to call normalize here because schedule isn't a schedule type column,
+        # but part of a kargs JSON blob.
+        add_pipeline(s, SummaryStatistics, c, schedule=Schedule.normalize('m'))
+        add_pipeline(s, SummaryStatistics, c, schedule=Schedule.normalize('y'))
+        add_pipeline(s, CleanUnusedStatistics, c)
 
         # basic activities
 
-        bike = add(s, Activity(name='Bike', description='All cycling activities'))
-        run = add(s, Activity(name='Run', description='All running activities'))
-        s.flush()  # set IDs
+        bike = add_activity(s, 'Bike', c, description='All cycling activities')
+        run = add_activity(s, 'Run', c, description='All running activities')
+        s.flush()  # set IDs because these are used below
 
         # constants used by statistics
 
-        fthr_bike = add(s, Statistic(name=FTHR, owner=Constant, constraint=bike.id, units=BPM,
-                                     description='''Heart rate at functional threshold (cycling).
-                                     See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0'''))
-        s.add(Constant(type=StatisticType.INTEGER, name='%s.%s' % (FTHR, BIKE), statistic=fthr_bike))
-
-        fthr_run = add(s, Statistic(name=FTHR, owner=Constant, constraint=run.id, units=BPM,
-                                    description='''Heart rate at functional threshold (running).
-                                    See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0'''))
-        s.add(Constant(type=StatisticType.INTEGER, name='%s.%s' % (FTHR, RUN), statistic=fthr_run))
+        add_activity_constant(s, bike, FTHR,
+                              description='Heart rate at functional threshold (cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0',
+                              units=BPM, type=StatisticType.INTEGER)
+        add_activity_constant(s, run, FTHR,
+                              description='Heart rate at functional threshold (running).',
+                              units=BPM, type=StatisticType.INTEGER)
 
         # a basic diary
 
         c = Counter()
-        diary = add(s, Topic(name='Diary'))
-
-        s.add(TopicField(topic=diary, sort=c(), type=StatisticType.TEXT,
-                         display_cls=Text,
-                         statistic=add(s, Statistic(name='Notes', owner=diary, constraint=diary.id))))
-
-        s.add(TopicField(topic=diary, sort=c(), type=StatisticType.FLOAT,
-                         display_cls=Integer, display_kargs={'lo': 25, 'hi': 75},
-                         statistic=add(s, Statistic(name='Rest HR', owner=diary, constraint=diary.id,
-                                                    units='kg', summary='[avg]'))))
-        s.add(TopicField(topic=diary, sort=c(), type=StatisticType.FLOAT,
-                         display_cls=Float, display_kargs={'lo': 40, 'hi': 100, 'format': '%f2.1'},
-                         statistic=add(s, Statistic(name='Weight', owner=diary, constraint=diary.id,
-                                                    units='kg', summary='[avg]'))))
-        s.add(TopicField(topic=diary, sort=c(), type=StatisticType.FLOAT,
-                         display_cls=Float, display_kargs={'lo': 0, 'hi': 24, 'format': '%f2.1'},
-                         statistic=add(s, Statistic(name='Sleep', owner=diary, constraint=diary.id,
-                                                    units='hr', summary='[avg]'))))
-        s.add(TopicField(topic=diary, sort=c(), type=StatisticType.INTEGER,
-                         display_cls=Score,
-                         statistic=add(s, Statistic(name='Mood', owner=diary, constraint=diary.id,
-                                                    summary='[avg]'))))
-
-        s.add(TopicField(topic=diary, sort=c(), type=StatisticType.TEXT,
-                         display_cls=Text,
-                         statistic=add(s, Statistic(name='Medication', owner=diary, constraint=diary.id))))
+        diary = add_topic(s, 'Diary', c)
+        add_topic_field(s, diary, 'Notes', c,
+                        display_cls=Text)
+        add_topic_field(s, diary, 'Rest HR', c, units=BPM, summary='[avg]',
+                        display_cls=Integer, display_kargs={'lo': 25, 'hi': 75})
+        add_topic_field(s, diary, 'Weight', c, units='kg', summary='[avg]',
+                        display_cls=Float, display_kargs={'lo': 40, 'hi': 100, 'dp': 1})
+        add_topic_field(s, diary, 'Sleep', c, units='hr', summary='[avg]',
+                        display_cls=Float, display_kargs={'lo': 0, 'hi': 24, 'dp': 1})
+        add_topic_field(s, diary, 'Mood', c, summary='[avg]',
+                        display_cls=Score)
+        add_topic_field(s, diary, 'Medication', c,
+                        display_cls=Text)

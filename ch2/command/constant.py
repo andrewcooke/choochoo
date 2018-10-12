@@ -107,9 +107,9 @@ def print_constants(log, s, constants, name, date):
         constants = s.query(Constant).order_by(Constant.name).all()
         if not constants:
             raise Exception('No Constants defined - configure system')
+    print()
     for constant in constants:
         if not date:
-            print()
             print('%s: %s' % (constant.name,
                               constant.statistic.description if constant.statistic.description else '[no description]'))
             if name:  # only print values if we're not listing all
@@ -120,6 +120,7 @@ def print_constants(log, s, constants, name, date):
                     found = True
                 if not found:
                     log.warn('No values found for %s' % constant.name)
+            print()
         else:
             journal = ConstantJournal.lookup_statistic_journal(log, s, constant.name,
                                                                constant.statistic.constraint, date)

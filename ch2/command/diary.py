@@ -135,21 +135,21 @@ class Diary(DateSwitcher):
                                       order_by(Topic.sort).all()
                        if topic.schedule.at_location(date)]
         for started, topic in enumerate(root_topics):
-            body.append(self._topic(s, topic, date))
+            body.append(self.__topic(s, topic, date))
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([Text(date.strftime('%Y-%m-%d - %A')), Divider()]),
                             footer=Pile([Divider(), Text('footer')])))
         return body, tabs
 
-    def _topic(self, s, topic, date):
+    def __topic(self, s, topic, date):
         self._log.debug(topic)
         body, title = [], None
         if topic.name:
             title = Text(topic.name)
         if topic.description:
             body.append(Text(topic.description))
-        body += list(self._fields(s, topic, date))
-        body += list(self._children(s, topic, date))
+        body += list(self.__fields(s, topic, date))
+        body += list(self.__children(s, topic, date))
         if not body:
             return title
         body = Indent(Pile(body))
@@ -157,11 +157,11 @@ class Diary(DateSwitcher):
             body = Pile([title, body])
         return body
 
-    def _fields(self, s, topic, date):
+    def __fields(self, s, topic, date):
         columns, width = [], 0
         for field in topic.fields:
             self._log.debug(field)
-            journal = self._journal(s, topic, date)
+            journal = self.__journal(s, topic, date)
             display = field.display_cls(self._log, s, journal.statistics[field], *field.display_args)
             self._log.debug(display)
             if width + display.width > PAGE_WIDTH:
@@ -172,14 +172,14 @@ class Diary(DateSwitcher):
         if width:
             yield Columns(columns)
 
-    def _children(self, s, topic, date):
+    def __children(self, s, topic, date):
         for child in topic.children:
             if child.schedule.at_location(date):
-                extra = self._topic(s, child, date)
+                extra = self.__topic(s, child, date)
                 if extra:
                     yield extra
 
-    def _journal(self, s, topic, date):
+    def __journal(self, s, topic, date):
         journal = s.query(TopicJournal).filter(TopicJournal.topic == topic, TopicJournal.time == date).one_or_none()
         if not journal:
             journal = TopicJournal(topic=topic, time=date)

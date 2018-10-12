@@ -132,3 +132,14 @@ class OpenSched(Sched):
 
     process_bind_param = process_literal_param
 
+
+class Sort(TypeDecorator):
+
+    impl = Integer
+
+    def process_literal_param(self, value, dialect):
+        if callable(value):
+            value = value()
+        return value
+
+    process_bind_param = process_literal_param

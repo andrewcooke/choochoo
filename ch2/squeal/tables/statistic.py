@@ -1,15 +1,12 @@
 
-from enum import Enum, IntEnum
+from enum import IntEnum
 from json import dumps
-from types import SimpleNamespace
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, inspect
-from sqlalchemy.ext.orderinglist import ordering_list
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
 from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
-from ..types import Cls, Json
-from ...lib.date import format_duration
+from ..types import Cls, Json, Sort
 
 
 class Statistic(Base):
@@ -230,4 +227,4 @@ class StatisticPipeline(Base):
     cls = Column(Cls, nullable=False)
     args = Column(Json, nullable=None, server_default=dumps(()))
     kargs = Column(Json, nullable=None, server_default=dumps({}))
-    sort = Column(Integer)
+    sort = Column(Sort)
