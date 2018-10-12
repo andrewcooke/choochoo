@@ -60,9 +60,6 @@ class ActivityJournal(Source):
         return 'Activity Journal from %s' % self.time
 
 
-# todo - maybe activity fields?  like topic fields.
-
-
 class ActivityTimespan(Base):
 
     __tablename__ = 'activity_timespan'

@@ -12,7 +12,6 @@ from ..types import Ordinal, Cls, Json, Sched, Sort
 from ...lib.schedule import Schedule
 
 
-# @total_ordering
 class Topic(Base):
 
     __tablename__ = 'topic'
@@ -53,39 +52,6 @@ class Topic(Base):
         if not self.journal:
             self.journal = TopicJournal(topic=self, time=date)
             s.add(self.journal)
-
-    # def at_location(self, date):
-    #     if date:
-    #         return self.specification().at_location(date)
-    #     else:
-    #         return True
-    #
-    # def __repr__(self):
-    #     text = '%s: %s (parent %s; children %s)' % \
-    #            (self.id, self.name, self.parent.id if self.parent else None, [c.id for c in self.children])
-    #     if self.repeat or self.start or self.finish:
-    #         text += ' %s' % self.specification()
-    #     return text
-    #
-    # # todo - rethink this to work on different levels?
-    # def comparison(self):
-    #     return self.sort, self.name
-    #
-    # def __lt__(self, other):
-    #     if isinstance(other, Topic):
-    #         return self.comparison() < other.comparison()
-    #     else:
-    #         raise NotImplemented
-    #
-    # def __eq__(self, other):
-    #     return isinstance(other, Topic) and other.id == self.id
-    #
-    # @classmethod
-    # def query_root(cls, session, date=None):
-    #     root_topics = list(session.query(Topic).filter(Topic.parent_id == None).all())
-    #     if date is not None:
-    #         root_topics = [schedule for schedule in root_topics if schedule.at_location(date)]
-    #     return list(sorted(root_topics))
 
 
 class TopicField(Base):

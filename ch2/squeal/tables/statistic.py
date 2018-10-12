@@ -112,26 +112,6 @@ class StatisticJournalInteger(StatisticJournal):
     def add(cls, log, s, name, units, summary, owner, constraint, source, value):
         return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticType.INTEGER)
 
-    # def formatted(self):
-    #     units = self.statistic.units
-    #     if not units:
-    #         return '%d' % self.value
-    #     elif units == 'm':
-    #         if self.value > 2000:
-    #             return '%dkm' % (self.value / 1000)
-    #         else:
-    #             return '%dm' % self.value
-    #     elif units == 's':
-    #         return format_duration(self.value)
-    #     elif units == 'km/h':
-    #         return '%dkm/h' % self.value
-    #     elif units == '%':
-    #         return '%d%%' % self.value
-    #     elif units == 'bpm':
-    #         return '%dbpm' % self.value
-    #     else:
-    #         return '%d%s' % (self.value, units)
-
 
 class StatisticJournalFloat(StatisticJournal):
 
@@ -150,26 +130,6 @@ class StatisticJournalFloat(StatisticJournal):
         'polymorphic_identity': StatisticType.FLOAT
     }
 
-    # def formatted(self):
-    #     units = self.statistic.units
-    #     if not units:
-    #         return '%f' % self.value
-    #     elif units == 'm':
-    #         if self.value > 2000:
-    #             return '%.1fkm' % (self.value / 1000)
-    #         else:
-    #             return '%dm' % int(self.value)
-    #     elif units == 's':
-    #         return format_duration(self.value)
-    #     elif units == 'km/h':
-    #         return '%.1fkm/h' % self.value
-    #     elif units == '%':
-    #         return '%.1f%%' % self.value
-    #     elif units == 'bpm':
-    #         return '%dbpm' % int(self.value)
-    #     else:
-    #         return '%s%s' % (self.value, units)
-
 
 class StatisticJournalText(StatisticJournal):
 
@@ -187,12 +147,6 @@ class StatisticJournalText(StatisticJournal):
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.TEXT
     }
-
-    # def formatted(self):
-    #     if not self.units:
-    #         return '%s' % self.value
-    #     else:
-    #         return '%s%s' % (self.value, self.units)
 
 
 class StatisticMeasure(Base):

@@ -9,7 +9,7 @@ from ..lib.date import add_duration, to_date
 from ..lib.schedule import Schedule
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
-    StatisticPipeline
+    StatisticPipeline, StatisticJournalFloat
 
 
 class SummaryStatistics:
@@ -142,7 +142,9 @@ class SummaryStatistics:
         if value is not None:
             name = template % statistic.name
             new_statistic = self._get_statistic(s, statistic, name)
-            journal = STATISTIC_JOURNAL_CLASSES[data[0].type](
+            # we always use a float for the result
+            # before, when we used the same type as the source, averages lost precision
+            journal = StatisticJournalFloat(
                 statistic=new_statistic, source=interval, value=value)
             s.add(journal)
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic))

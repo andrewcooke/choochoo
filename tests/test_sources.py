@@ -6,8 +6,9 @@ from sqlalchemy.sql.functions import count
 
 from ch2.command.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
-from ch2.squeal.tables.source import Source, Interval
-from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic
+from ch2.squeal.tables.source import Source
+from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic, \
+    StatisticJournalInteger
 from ch2.squeal.tables.topic import TopicJournal, Topic
 from ch2.stoats.summary import SummaryStatistics
 
@@ -61,14 +62,16 @@ def test_sources():
             # check the summary stats
 
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-            sleep = s.query(StatisticJournalFloat).join(Statistic). \
+            sleep = s.query(StatisticJournalInteger).join(Statistic). \
                 filter(Statistic.owner == diary, Statistic.name == 'Rest HR').one()
             assert sleep.value == 60
             assert len(sleep.measures) == 2
             assert sleep.measures[0].rank == 1
             assert sleep.measures[0].percentile == 0
             n = s.query(count(StatisticJournalFloat.id)).scalar()
-            assert n == 5, n
+            assert n == 4, n
+            n = s.query(count(StatisticJournalInteger.id)).scalar()
+            assert n == 2, n
             m_avg = s.query(StatisticJournalFloat).join(Statistic). \
                 filter(Statistic.name == 'Avg/Month Rest HR').one()
             assert m_avg.value == 60
