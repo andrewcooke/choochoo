@@ -5,6 +5,7 @@ import datetime as dt
 from sqlalchemy import or_
 from urwid import MainLoop, ExitMainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
+from ch2.uweird.tui.widgets import DividedPile
 from .args import DATE
 from ..lib.date import to_date
 from ..lib.io import tui
@@ -51,19 +52,17 @@ class DiaryApp(TabNode):
         super().__init__(log, *self._build(self.__new_session(), self.__date))
 
     def __new_session(self):
-        if self.__session:
-            self.__session.flush()
-            self.__session.close()
+        self.save()
         self.__session = self.__db.session()
         return self.__session
 
     def keypress(self, size, key):
-        if key == self.__quit:
+        if key == 'meta q':
             self.save()
             raise ExitMainLoop()
-        elif key == self.__abort:
+        elif key == 'meta x':
             raise ExitMainLoop()
-        elif key == self.__save:
+        elif key == 'meta s':
             self.save()
         else:
             return super().keypress(size, key)
@@ -83,13 +82,11 @@ class DiaryBuilder(DiaryApp):
                        s.query(Topic).filter(Topic.parent == None,
                                              or_(Topic.start <= date, Topic.start == None),
                                              or_(Topic.finish >= date, Topic.finish == None)).
-                           order_by(Topic.sort).all()
+                                      order_by(Topic.sort).all()
                        if topic.schedule.at_location(date)]
         for started, topic in enumerate(root_topics):
-            if started:
-                body.append(Divider())
             body.append(self._build_topic(s, topic, date))
-        body = Border(Frame(Filler(Pile(body), valign='top'),
+        body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([Text(date.strftime('%A %Y-%m-%d')), Divider()]),
                             footer=Pile([Divider(), Text('footer')])))
         return body, tabs
@@ -101,6 +98,16 @@ class DiaryBuilder(DiaryApp):
             title = Text(topic.name)
         if topic.description:
             body.append(Text(topic.description))
+        body += list(self._fields(s, topic, date))
+        body += list(self._children(s, topic, date))
+        if not body:
+            return title
+        body = Indent(Pile(body))
+        if title:
+            body = Pile([title, body])
+        return body
+
+    def _fields(self, s, topic, date):
         columns, width = [], 0
         for field in topic.fields:
             self._log.debug(field)
@@ -108,25 +115,19 @@ class DiaryBuilder(DiaryApp):
             display = field.display_cls(self._log, s, journal.statistics[field], *field.display_args)
             self._log.debug(display)
             if width + display.width > PAGE_WIDTH:
-                body.append(Columns(columns))
+                yield Columns(columns)
                 columns, width = [], 0
             columns.append((WEIGHT, display.width, display.bound_widget()))
             width += display.width
         if width:
-            body.append(Columns(columns))
+            yield Columns(columns)
+
+    def _children(self, s, topic, date):
         for child in topic.children:
             if child.schedule.at_location(date):
                 extra = self._build_topic(s, child, date)
                 if extra:
-                    body.append(extra)
-        if body:
-            body = Indent(Pile(body))
-        if title:
-            if body:
-                body = Pile([title, body])
-            else:
-                body = title
-        return body
+                    yield extra
 
     def _journal(self, s, topic, date):
         journal = s.query(TopicJournal).filter(TopicJournal.topic == topic, TopicJournal.time == date).one_or_none()

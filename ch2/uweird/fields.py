@@ -3,7 +3,7 @@ from abc import abstractmethod, ABC
 
 from urwid import Edit
 
-PAGE_WIDTH = 3
+PAGE_WIDTH = 4
 
 
 class Base(ABC):

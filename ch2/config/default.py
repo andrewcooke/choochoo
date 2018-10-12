@@ -16,6 +16,8 @@ RUN = 'Run'
 
 def default(db):
 
+    # todo - SIMPLIFY!!!
+
     with db.session_context() as s:
 
         # statistics pipeline
