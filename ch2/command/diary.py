@@ -1,13 +1,12 @@
 
-
 import datetime as dt
+from abc import abstractmethod
 
 from sqlalchemy import or_
 from urwid import MainLoop, ExitMainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
-from ch2.uweird.tui.widgets import DividedPile
 from .args import DATE
-from ..lib.date import to_date
+from ..lib.date import to_date, YEAR, MONTH, WEEK, DAY, add_duration
 from ..lib.io import tui
 from ..lib.utils import PALETTE
 from ..squeal.database import Database
@@ -15,6 +14,7 @@ from ..squeal.tables.topic import Topic, TopicJournal
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.tabs import TabNode, TabList
+from ..uweird.tui.widgets import DividedPile
 
 
 @tui
@@ -39,17 +39,19 @@ To exit, alt-q (or, without saving, alt-x).
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
     db = Database(args, log)
-    MainLoop(DiaryBuilder(log, db, date), palette=PALETTE).run()
+    MainLoop(Diary(log, db, date), palette=PALETTE).run()
 
 
-class DiaryApp(TabNode):
+class App(TabNode):
+    '''
+    An urwid mainlopp, database session and tabs.
+    '''
 
-    def __init__(self, log, db, date):
+    def __init__(self, log, db):
         self._log = log
         self.__db = db
         self.__session = None
-        self.__date = date
-        super().__init__(log, *self._build(self.__new_session(), self.__date))
+        super().__init__(log, *self._build(self.__new_session()))
 
     def __new_session(self):
         self.save()
@@ -71,11 +73,59 @@ class DiaryApp(TabNode):
         if self.__session:
             self.__session.flush()
             self.__session.commit()
+            self.__session = None
+
+    @abstractmethod
+    def _build(self, session):
+        pass
+
+    def rebuild(self):
+        widget, tabs = self._build(self.__new_session())
+        self._w = widget
+        self.replace(tabs)
 
 
-class DiaryBuilder(DiaryApp):
+class DateSwitcher(App):
+    '''
+    Extend App with shortcuts for changing date and rebuilding.
+    '''
 
-    def _build(self, s, date):
+    def __init__(self, log, db, date):
+        self.__date = date
+        super().__init__(log, db)
+
+    def keypress(self, size, key):
+        if key.startswith('meta'):
+            c = key[-1]
+            if c.lower() in (DAY, WEEK, MONTH, YEAR, '='):
+                self.__change_date(c)
+                return
+        return super().keypress(size, key)
+
+    def __change_date(self, c):
+        if c == '=':
+            self.__date = dt.date.today()
+        else:
+            delta = (-1 if c == c.lower() else 1, c.lower())
+            self.save()
+            self.__date = add_duration(self.__date, delta)
+        self.rebuild()
+        return
+
+    def _build(self, session):
+        return self._build_date(session, self.__date)
+
+    @abstractmethod
+    def _build_date(self, s, date):
+        pass
+
+
+class Diary(DateSwitcher):
+    '''
+    Render the diary at a given date.
+    '''
+
+    def _build_date(self, s, date):
         self._log.debug('Building diary at %s' % date)
         body, tabs = [], TabList()
         root_topics = [topic for topic in
@@ -85,13 +135,13 @@ class DiaryBuilder(DiaryApp):
                                       order_by(Topic.sort).all()
                        if topic.schedule.at_location(date)]
         for started, topic in enumerate(root_topics):
-            body.append(self._build_topic(s, topic, date))
+            body.append(self._topic(s, topic, date))
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
-                            header=Pile([Text(date.strftime('%A %Y-%m-%d')), Divider()]),
+                            header=Pile([Text(date.strftime('%Y-%m-%d - %A')), Divider()]),
                             footer=Pile([Divider(), Text('footer')])))
         return body, tabs
 
-    def _build_topic(self, s, topic, date):
+    def _topic(self, s, topic, date):
         self._log.debug(topic)
         body, title = [], None
         if topic.name:
@@ -125,7 +175,7 @@ class DiaryBuilder(DiaryApp):
     def _children(self, s, topic, date):
         for child in topic.children:
             if child.schedule.at_location(date):
-                extra = self._build_topic(s, child, date)
+                extra = self._topic(s, child, date)
                 if extra:
                     yield extra
 
