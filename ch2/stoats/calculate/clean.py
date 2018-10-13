@@ -1,6 +1,6 @@
 
-from ..command.args import FORCE, mm
-from ..squeal.tables.statistic import StatisticJournal, Statistic
+from ...command.args import FORCE, mm
+from ...squeal.tables.statistic import StatisticJournal, Statistic
 
 
 class CleanUnusedStatistics:

@@ -5,11 +5,12 @@ from re import split
 from sqlalchemy import func
 from sqlalchemy.sql.functions import count
 
-from ..lib.date import add_duration, to_date
-from ..lib.schedule import Schedule
-from ..squeal.tables.source import Interval, Source
-from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
-    StatisticPipeline, StatisticJournalFloat, StatisticType
+from ...lib.date import add_duration, to_date
+from ...lib.schedule import Schedule
+from ...squeal.tables.config import StatisticPipeline
+from ...squeal.tables.source import Interval, Source
+from ...squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
+    StatisticType
 
 
 class SummaryStatistics:

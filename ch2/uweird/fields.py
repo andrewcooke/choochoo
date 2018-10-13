@@ -3,7 +3,7 @@ from abc import abstractmethod, ABC
 
 from urwid import Edit, connect_signal
 
-from ch2.uweird.tui.widgets import Rating
+from ..uweird.tui.widgets import Rating
 from ..squeal.tables.statistic import StatisticType
 
 PAGE_WIDTH = 4

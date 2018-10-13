@@ -1,16 +1,16 @@
 
 import datetime as dt
-from collections.__init__ import deque, Counter
+from collections import deque, Counter
 from itertools import chain
 
 from sqlalchemy.sql.functions import count
 
-from .names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
+from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_OVER_M, BPM
-from ..squeal.tables.activity import Activity, ActivityJournal
-from ..squeal.tables.source import Source
-from ..squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, Statistic
-from ..stoats.heart_rate import hr_zones
+from ...squeal.tables.activity import Activity, ActivityJournal
+from ...squeal.tables.source import Source
+from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, Statistic
+from ...stoats.calculate.heart_rate import hr_zones
 
 
 class ActivityStatistics:

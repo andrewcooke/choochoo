@@ -11,6 +11,7 @@ from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
 from ..squeal.database import Database
 from ..squeal.tables.topic import Topic, TopicJournal
+from ..stoats.display import build_display
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
@@ -43,6 +44,9 @@ To exit, alt-q (or, without saving, alt-x).
     MainLoop(Diary(log, db, date), palette=PALETTE).run()
 
 
+# todo - new stats when data saved?  when diary exited?
+
+
 class Diary(DateSwitcher):
     '''
     Render the diary at a given date.
@@ -57,8 +61,10 @@ class Diary(DateSwitcher):
                                              or_(Topic.finish >= date, Topic.finish == None)).
                                       order_by(Topic.sort).all()
                        if topic.schedule.at_location(date)]
-        for started, topic in enumerate(root_topics):
+        for topic in root_topics:
             body.append(self.__topic(s, f, topic, date))
+        for extra in self.__pipeline(s, f, date):
+            body.append(extra)
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([Text(date.strftime('%Y-%m-%d - %A')), Divider()]),
                             footer=Pile([Divider(), Text('footer')])))
@@ -109,3 +115,6 @@ class Diary(DateSwitcher):
             journal = TopicJournal(topic=topic, time=date)
             s.add(journal)
         return journal
+
+    def __pipeline(self, s, f, date):
+        yield from build_display(self._log, s, f, date)

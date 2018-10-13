@@ -35,7 +35,7 @@ class Source(Base):
 
     @classmethod
     def clear_intervals(cls, session):
-        from ...stoats.summary import SummaryStatistics  # avoid import loop
+        from ...stoats.calculate.summary import SummaryStatistics  # avoid import loop
         specs = [Schedule(spec) for spec in SummaryStatistics.pipeline_schedules(session)]
         times = set()
         for always, instances in [(True, session.new), (False, session.dirty), (True, session.deleted)]:

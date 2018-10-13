@@ -3,8 +3,9 @@ from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity
+from ..squeal.tables.config import StatisticPipeline, DiaryPipeline
 from ..squeal.tables.constant import Constant
-from ..squeal.tables.statistic import StatisticPipeline, Statistic, StatisticType
+from ..squeal.tables.statistic import Statistic, StatisticType
 from ..squeal.tables.topic import Topic, TopicField
 from ..uweird.fields import Integer
 
@@ -65,7 +66,7 @@ def add(session, instance):
     return instance
 
 
-def add_pipeline(session, cls, sort, **kargs):
+def add_statistics(session, cls, sort, **kargs):
     '''
     Add a class to the statistics pipeline.
 
@@ -79,6 +80,22 @@ def add_pipeline(session, cls, sort, **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     return add(session, StatisticPipeline(cls=cls, sort=sort, kargs=kargs))
+
+
+def add_diary(session, cls, sort, **kargs):
+    '''
+    Add a class to the diary pipeline.
+
+    The pipeline classes are invoked when the diary is displyed.
+    They generate display classes for activity statistics (and similar)
+    See the ch2.stoats module for examples.
+
+    The sort argument fixes the order in which the classes are instantiated and called and can
+    be an integer or a callable (that returns an integer) like Counter above.
+
+    The kargs are passed to the constructor and so can be used to customize the processing.
+    '''
+    return add(session, DiaryPipeline(cls=cls, sort=sort, kargs=kargs))
 
 
 def add_activity(session, name, sort, description=None):

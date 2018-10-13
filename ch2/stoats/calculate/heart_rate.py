@@ -1,6 +1,6 @@
 
-from .names import FTHR
-from ..squeal.tables.constant import ConstantJournal
+from ..names import FTHR
+from ...squeal.tables.constant import ConstantJournal
 
 
 def hr_zones(log, s, activity, time):

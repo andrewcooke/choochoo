@@ -1,11 +1,13 @@
 
-from .database import Counter, add_pipeline, add_activity, add_activity_constant, add_topic, add_topic_field
+from .database import Counter, add_statistics, add_activity, add_activity_constant, add_topic, add_topic_field, \
+    add_diary
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticType
-from ..stoats.activity import ActivityStatistics
-from ..stoats.clean import CleanUnusedStatistics
+from ..stoats.calculate.activity import ActivityStatistics
+from ..stoats.display.activity import ActivityDiary
+from ..stoats.calculate.clean import CleanUnusedStatistics
 from ..stoats.names import BPM, FTHR
-from ..stoats.summary import SummaryStatistics
+from ..stoats.calculate.summary import SummaryStatistics
 from ..uweird.fields import Text, Float, Score, Integer
 
 
@@ -16,15 +18,20 @@ def default(db):
         # the following users heleper functions (add_...) but you can also
         # execute arbitrary python code, use the session, etc.
 
-        # statistics pipeline
+        # statistics pipeline (called to calculate missing statistics)
 
         c = Counter()
-        add_pipeline(s, ActivityStatistics, c)
+        add_statistics(s, ActivityStatistics, c)
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.
-        add_pipeline(s, SummaryStatistics, c, schedule=Schedule.normalize('m'))
-        add_pipeline(s, SummaryStatistics, c, schedule=Schedule.normalize('y'))
-        add_pipeline(s, CleanUnusedStatistics, c)
+        add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('m'))
+        add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('y'))
+        add_statistics(s, CleanUnusedStatistics, c)
+
+        # diary pipeline (called to display data in the diary)
+
+        c = Counter()
+        add_diary(s, ActivityDiary, c)
 
         # basic activities
 

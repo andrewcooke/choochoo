@@ -1,7 +1,6 @@
 
 from collections import defaultdict
 
-from ch2.squeal.tables.source import Interval
 from pandas import DataFrame
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
@@ -10,6 +9,7 @@ from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity, ActivityJournal
+from ..squeal.tables.source import Interval
 from ..squeal.tables.statistic import Statistic, StatisticJournal, StatisticMeasure
 
 

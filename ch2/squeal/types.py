@@ -5,7 +5,7 @@ from pydoc import locate
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
-from ch2.lib.schedule import Schedule
+from ..lib.schedule import Schedule
 from ..lib.date import to_datetime, to_date
 
 

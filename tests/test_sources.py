@@ -10,7 +10,7 @@ from ch2.squeal.tables.source import Source
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic, \
     StatisticJournalInteger, StatisticType
 from ch2.squeal.tables.topic import TopicJournal, Topic
-from ch2.stoats.summary import SummaryStatistics
+from ch2.stoats.calculate.summary import SummaryStatistics
 
 
 # the idea here is to test the new database schema with sources etc

@@ -10,7 +10,7 @@ from ..fit.profile.types import timestamp_to_datetime
 from ..lib.utils import datetime_to_epoch
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity, FileScan, ActivityJournal, ActivityTimespan, ActivityWaypoint
-from ..stoats import run_statistics
+from ..stoats.calculate import run_statistics
 
 
 def activity(args, log):

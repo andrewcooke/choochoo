@@ -1,12 +1,11 @@
 
 from enum import IntEnum
-from json import dumps
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
 from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
-from ..types import Cls, Json, Sort
+from ..types import Cls
 
 
 class Statistic(Base):
@@ -173,12 +172,3 @@ STATISTIC_JOURNAL_CLASSES = {
 }
 
 
-class StatisticPipeline(Base):
-
-    __tablename__ = 'statistic_pipeline'
-
-    id = Column(Integer, primary_key=True)
-    cls = Column(Cls, nullable=False)
-    args = Column(Json, nullable=None, server_default=dumps(()))
-    kargs = Column(Json, nullable=None, server_default=dumps({}))
-    sort = Column(Sort)
