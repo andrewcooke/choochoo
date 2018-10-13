@@ -8,7 +8,7 @@ from ch2.command.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
 from ch2.squeal.tables.source import Source
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic, \
-    StatisticJournalInteger
+    StatisticJournalInteger, StatisticType
 from ch2.squeal.tables.topic import TopicJournal, Topic
 from ch2.stoats.summary import SummaryStatistics
 
@@ -51,6 +51,7 @@ def test_sources():
             assert d.statistics[d.topic.fields[0]].value == 'hello world'
             assert d.topic.fields[1].statistic.name == 'Rest HR'
             assert d.statistics[d.topic.fields[1]].value == 60
+            assert d.statistics[d.topic.fields[1]].type == StatisticType.INTEGER
 
         # generate summary stats
 
@@ -75,6 +76,7 @@ def test_sources():
             m_avg = s.query(StatisticJournalFloat).join(Statistic). \
                 filter(Statistic.name == 'Avg/Month Rest HR').one()
             assert m_avg.value == 60
+            # note this is float even though Rest HR is int
             y_avg = s.query(StatisticJournalFloat).join(Statistic). \
                 filter(Statistic.name == 'Avg/Year Rest HR').one()
             assert y_avg.value == 60

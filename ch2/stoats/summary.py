@@ -9,7 +9,7 @@ from ..lib.date import add_duration, to_date
 from ..lib.schedule import Schedule
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
-    StatisticPipeline, StatisticJournalFloat
+    StatisticPipeline, StatisticJournalFloat, StatisticType
 
 
 class SummaryStatistics:
@@ -92,7 +92,7 @@ class SummaryStatistics:
             new = True
         return new, interval
 
-    def _statistics_missing_values(self, s, start, finish):
+    def _statistics_with_summaries(self, s, start, finish):
         return s.query(Statistic).join(StatisticJournal, Source). \
             filter(Source.time >= start,
                    Source.time < finish,
@@ -104,29 +104,30 @@ class SummaryStatistics:
                    Source.time >= start,
                    Source.time < finish).all()
 
-    def _calculate_value(self, process, values, schedule):
+    def _calculate_value(self, process, values, schedule, input_type):
         range = schedule.describe()
         defined = [x for x in values if x is not None]
         if process == 'min':
-            return min(defined) if defined else None, 'Min/%s %%s' % range
+            return min(defined) if defined else None, 'Min/%s %%s' % range, input_type
         elif process == 'max':
-            return max(defined) if defined else None, 'Max/%s %%s' % range
+            return max(defined) if defined else None, 'Max/%s %%s' % range, input_type
         elif process == 'sum':
-            return sum(defined, 0), 'Total/%s %%s' % range
+            return sum(defined, 0), 'Total/%s %%s' % range, input_type
         elif process == 'avg':
-            return sum(defined) / len(defined) if defined else None, 'Avg/%s %%s' % range
+            return sum(defined) / len(defined) if defined else None, 'Avg/%s %%s' % range, StatisticType.FLOAT
         elif process == 'med':
             defined = sorted(defined)
             if len(defined):
                 if len(defined) % 2:
-                    return defined[len(defined) // 2], 'Med/%s %%s' % range
+                    return defined[len(defined) // 2], 'Med/%s %%s' % range, StatisticType.FLOAT
                 else:
-                    return 0.5 * (defined[len(defined) // 2 - 1] + defined[len(defined) // 2]), 'Med/%s %%s' % range
+                    return 0.5 * (defined[len(defined) // 2 - 1] + defined[len(defined) // 2]), \
+                           'Med/%s %%s' % range, StatisticType.FLOAT
             else:
-                return None, 'Med/%s %%s' % range
+                return None, 'Med/%s %%s' % range, StatisticType.FLOAT
         else:
             self._log.warn('No algorithm for "%s"' % process)
-            return None, None
+            return None, None, None
 
     def _get_statistic(self, s, root, name):
         statistic = s.query(Statistic). \
@@ -138,13 +139,11 @@ class SummaryStatistics:
         return statistic
 
     def _create_value(self, s, interval, spec, statistic, process, data, values):
-        value, template = self._calculate_value(process, values, spec)
+        value, template, type = self._calculate_value(process, values, spec, data[0].type)
         if value is not None:
             name = template % statistic.name
             new_statistic = self._get_statistic(s, statistic, name)
-            # we always use a float for the result
-            # before, when we used the same type as the source, averages lost precision
-            journal = StatisticJournalFloat(
+            journal = STATISTIC_JOURNAL_CLASSES[type](
                 statistic=new_statistic, source=interval, value=value)
             s.add(journal)
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic))
@@ -169,7 +168,7 @@ class SummaryStatistics:
             for start, finish in self._intervals(s, spec):
                 new, interval = self._interval(s, start, finish, spec)
                 have_data = False
-                for statistic in self._statistics_missing_values(s, start, finish):
+                for statistic in self._statistics_with_summaries(s, start, finish):
                     data = [journal for journal in self._diary_entries(s, statistic, start, finish)
                             if spec.at_location(to_date(journal.time))]
                     if data:
