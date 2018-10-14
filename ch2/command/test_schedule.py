@@ -5,7 +5,7 @@ from calendar import monthrange
 from colorama import init, Fore, Style
 
 from ch2.lib.schedule import Schedule
-from ..lib.date import to_date, add_duration
+from ..lib.date import to_date, add_date, MONTH
 from ..command.args import SCHEDULE, MONTHS, START
 
 INDENT = '   '
@@ -49,7 +49,7 @@ def print_calendar(schedule, start, months):
                     else:
                         print(' %2d' % day, end='')
             print()
-        start = add_duration(start, (1, 'M'))
+        start = add_date(start, (1, MONTH))
     print()
 
 

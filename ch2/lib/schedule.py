@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from calendar import monthrange
 from re import sub, compile, match
 
-from .date import to_date, format_date, MONTH, add_duration, YEAR, to_time
+from .date import to_date, format_date, add_date
 
 # my calculations are done relative to the unix epoch.  the "gregorian ordinal"
 # is relative to year 1, but i have no idea how the details of that work.  i
@@ -36,7 +36,6 @@ class Schedule:
         self.offset = None  # int (units of frame relative to start of unix epoch)
         self.repeat = None  # int (units of frame)
         self.frame_type = None  # character (as spec, so all lower case)
-        self.duration = None  # character (as lib.date, so capital Y for year)
         self.locations = None  # list of day offsets or (week, dow) tuples (if empty, all dates)
         try:
             spec = '' if spec is None else spec
@@ -73,8 +72,6 @@ class Schedule:
         else:
             offset, rft = '0', frame
         self.repeat, self.frame_type = self.__parse_ordinal(rft)
-        # convert from case insensitive spec to convention used in lib.date
-        self.duration = YEAR if self.frame_type == YEAR.lower() else self.frame_type
         if '-' in offset:
             self.offset = self.__date_to_ordinal(offset)
         else:
@@ -261,8 +258,8 @@ class Frame(ABC):
         '''
         date = DateOrdinals(date)
         n = (date.ordinals[self.schedule.frame_type] - self.schedule.offset) // self.schedule.repeat
-        zero = add_duration(self.zero, (self.schedule.offset, self.schedule.duration))
-        return to_date(add_duration(zero, (n * self.schedule.repeat, self.schedule.duration)))
+        zero = add_date(self.zero, (self.schedule.offset, self.schedule.frame_type))
+        return add_date(zero, (n * self.schedule.repeat, self.schedule.frame_type))
 
     def locations_from(self, start):
         '''

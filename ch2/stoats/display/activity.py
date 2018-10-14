@@ -3,7 +3,7 @@ from urwid import Text, Pile, Columns
 
 from .heart_rate import build_zones
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME
-from ...lib.date import to_date, add_duration, format_seconds
+from ...lib.date import to_date, format_seconds, DAY, add_date
 from ...squeal.tables.activity import Activity, ActivityJournal
 from ...squeal.tables.statistic import StatisticJournal, Statistic
 from ...uweird.tui.decorators import Indent
@@ -18,7 +18,7 @@ class ActivityDiary:
 
     def build(self, s, f, date):
         start = to_date(date)
-        finish = add_duration(start, (1, 'd'))
+        finish = add_date(start, (1, DAY))
         for activity in s.query(Activity).order_by(Activity.sort).all():
             for journal in s.query(ActivityJournal). \
                     filter(ActivityJournal.time >= start,

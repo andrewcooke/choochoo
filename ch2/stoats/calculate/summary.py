@@ -5,7 +5,7 @@ from re import split
 from sqlalchemy import func
 from sqlalchemy.sql.functions import count
 
-from ...lib.date import add_duration, to_date
+from ...lib.date import to_date
 from ...lib.schedule import Schedule
 from ...squeal.tables.config import StatisticPipeline
 from ...squeal.tables.source import Interval, Source

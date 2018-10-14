@@ -2,8 +2,8 @@
 from abc import abstractmethod
 from re import compile
 
+from ...lib.date import format_seconds, to_date, add_date
 from ...lib.schedule import Schedule
-from ...lib.date import format_seconds, duration_to_secs, parse_duration, to_date, add_duration
 from ...squeal.tables.topic import Topic
 from ...squeal.utils import ORMUtils
 
@@ -67,11 +67,11 @@ def exponential_time(name, repeat, time, percent, start, duration):
       where 20m is the 20 minute initial time, 1M generates plans over a
       month, and w[mon,wed,fri] indicates which days of each week.
     """
-    time_s = duration_to_secs(parse_duration(time))
+    time_s = parse_time(time)
     ratio = 1 + float(percent) / 100.0
     spec = Schedule(start + "/" + repeat)
     start = to_date(start)
-    finish = add_duration(start, parse_duration(duration))
+    finish = add_date(start, parse_duration(duration))
     spec.start = start
     spec.finish = finish
     return TimeBuilder(name, 'Time starting at %s and incrementing by %s%%' % (time, percent),
@@ -95,8 +95,33 @@ def exponential_distance(name, repeat, distance, percent, start, duration):
     ratio = 1 + float(percent) / 100.0
     spec = Schedule(start + "/" + repeat)
     start = to_date(start)
-    finish = add_duration(start, parse_duration(duration))
+    finish = add_date(start, parse_duration(duration))
     spec.start = start
     spec.finish = finish
     return DistanceBuilder(name, 'Distance starting at %s and incrementing by %s%%' % (distance, percent),
                            spec, dist, unit, ratio)
+
+
+def parse_time(time):
+    '''
+    Convert to seconds.  Supports h, m, s.
+    '''
+    try:
+        return int(time)
+    except:
+        units, time = time[-1].lower(), int(time[:-1])
+        return {'s': 1, 'm': 60, 'h': 60*60}[units] * time
+
+
+def parse_duration(duration):
+    '''
+    Convert to duration used by lib.date.  Supports d, w, m, y
+    '''
+    try:
+        return int(duration), 'd'
+    except:
+        units, duration = duration[-1].lower(), duration[:-1]
+        if units in 'dwmy':
+            return int(duration), units
+        else:
+            raise

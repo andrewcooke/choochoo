@@ -6,7 +6,7 @@ from sqlalchemy import desc
 from urwid import ExitMainLoop
 
 from ..squeal.tables.activity import ActivityJournal
-from .date import DAY, WEEK, MONTH, YEAR, add_duration, to_time, to_date
+from .date import DAY, WEEK, MONTH, YEAR, to_time, to_date, add_date
 from ..uweird.tui.tabs import TabNode
 
 
@@ -95,7 +95,7 @@ class DateSwitcher(App):
         else:
             delta = (-1 if c == c.lower() else 1, c.lower())
             self.save()
-            self.__date = to_date(add_duration(self.__date, delta))
+            self.__date = add_date(self.__date, delta)
         self.rebuild()
 
     def _build(self, session):

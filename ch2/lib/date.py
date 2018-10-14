@@ -12,13 +12,6 @@ def format_time(time):
     return time.strftime('%Y-%m-%dT%H:%M:%S.%f')
 
 
-def parse_duration(duration):
-    try:
-        return int(duration), 'm'
-    except ValueError:
-        return int(duration[:-1]), duration[-1]
-
-
 def to_date(value, none=False):
     if none and value is None:
         return None
@@ -52,52 +45,31 @@ def to_time(value, none=False):
         raise ValueError('Cannot parse "%s" as a datetime' % value)
 
 
-# these reflect the conventions used in string parsing / formatting
-# schedules are for longer intervals (>= 1d) and so can be case-agnostic.
-SECOND = 'S'
-MINUTE = 'M'
-HOUR = 'H'
 DAY = 'd'
 WEEK = 'w'
 MONTH = 'm'
-YEAR = 'Y'
+YEAR = 'y'
 
 
-def add_duration(time, duration):
-    time, (n, unit) = to_time(time), duration
+def add_date(date, duration):
+    # this only works with dates
+    # before, working with datetime, we had confusion between dates and datetimes and unnecessary conversions
+    # now, for times, use timedelta.
+    date, n, unit = to_date(date), duration[0], duration[1].lower()
     if unit == DAY:
-        return time + dt.timedelta(days=n)
+        return date + dt.timedelta(days=n)
     if unit == WEEK:
-        return time + dt.timedelta(days=n * 7)
+        return date + dt.timedelta(days=n * 7)
     if unit == MONTH:
-        year, month = time.year, time.month + n
+        year, month = date.year, date.month + n
         while month > 12:
             month -= 12
             year += 1
-        return dt.datetime(year, month, min(time.day, monthrange(year, month)[1]), *time.timetuple()[3:6])
+        return dt.date(year, month, min(date.day, monthrange(year, month)[1]))
     if unit == YEAR:
-        year = time.year + n
-        return dt.datetime(year, time.month, min(time.day, monthrange(year, time.month)[1]), *time.timetuple()[3:6])
+        year = date.year + n
+        return dt.date(year, date.month, min(date.day, monthrange(year, date.month)[1]))
     raise Exception('Unexpected unit "%s" (need one of %s, %s, %s, %s)' % (unit, DAY, WEEK, MONTH, YEAR))
-
-
-def mul_duration(n, duration):
-    return n * duration[0], duration[1]
-
-
-def duration_to_secs(duration):
-    (n, unit) = duration
-    if unit == SECOND:
-        return n
-    if unit == MINUTE:
-        return n * 60
-    if unit == HOUR:
-        return n * 60 * 60
-    if unit == DAY:
-        return n * 24 * 60 * 60
-    if unit == WEEK:
-        return n * 7 * 24 * 60 * 60
-    raise Exception('Unexpected unit "%s" (need one of %s %s %s %s %s' % (unit, SECOND, MINUTE, HOUR, DAY, WEEK))
 
 
 def format_seconds(seconds):
