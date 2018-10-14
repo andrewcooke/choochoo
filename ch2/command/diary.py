@@ -118,3 +118,5 @@ class Diary(DateSwitcher):
 
     def __pipeline(self, s, f, date):
         yield from build_display(self._log, s, f, date)
+
+

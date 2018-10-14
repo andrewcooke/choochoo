@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
-from ..types import Epoch, Sort
+from ..types import Time, Sort
 
 
 class FileScan(Base):
@@ -50,7 +50,7 @@ class ActivityJournal(Source):
     activity = relationship('Activity')
     name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
-    finish = Column(Epoch, nullable=False)
+    finish = Column(Time, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY
@@ -71,8 +71,8 @@ class ActivityTimespan(Base):
                                     backref=backref('timespans', cascade='all, delete-orphan',
                                                     passive_deletes=True,
                                                     order_by='ActivityTimespan.start'))
-    start = Column(Epoch, nullable=False)
-    finish = Column(Epoch, nullable=False)
+    start = Column(Time, nullable=False)
+    finish = Column(Time, nullable=False)
     UniqueConstraint('activity_journal_id', 'start')
 
 
@@ -90,7 +90,7 @@ class ActivityWaypoint(Base):
     activity_timespan = relationship('ActivityTimespan',
                                      backref=backref('waypoints',
                                                      order_by='ActivityWaypoint.time'))
-    time = Column(Epoch, primary_key=True)
+    time = Column(Time, primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
     heart_rate = Column(Integer)

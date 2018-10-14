@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship, backref, Session
 from .source import SourceType, Source
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from ..support import Base
-from ..types import Ordinal, Cls, Json, Sched, Sort
+from ..types import Date, Cls, Json, Sched, Sort
 from ...lib.schedule import Schedule
 
 
@@ -21,8 +21,8 @@ class Topic(Base):
     # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
     children = relationship('Topic', backref=backref('parent', remote_side=[id]))
     schedule = Column(Sched, nullable=False)
-    start = Column(Ordinal)
-    finish = Column(Ordinal)
+    start = Column(Date)
+    finish = Column(Date)
     name = Column(Text, nullable=False, server_default='')
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Sort, nullable=False, server_default='')

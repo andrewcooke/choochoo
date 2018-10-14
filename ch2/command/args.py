@@ -32,6 +32,7 @@ DELETE = 'delete'
 DEV = 'dev'
 DUMP_FORMAT = 'dump_format'
 F = 'f'
+FAST = 'fast'
 FIELDS = 'fields'
 FINISH = 'finish'
 FTHR = 'fthr'
@@ -40,7 +41,6 @@ LIMIT = 'limit'
 LOGS = 'logs'
 LIST = 'list'
 MESSAGES = 'messages'
-MONTH = 'month'
 MONTHS = 'months'
 NAME = 'name'
 PATH = 'path'
@@ -56,7 +56,6 @@ V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
 W, WARN = 'w', 'warn'
-YEAR = 'year'
 
 
 def mm(name): return '--' + name
@@ -138,9 +137,8 @@ def parser():
                                      help='add a new activity - see `%s %s -h` for more details' %
                                           (PROGNAME, ACTIVITY))
     activity_period = activity.add_mutually_exclusive_group()
-    activity_period.add_argument(mm(MONTH), action='store_true', help='generate monthly summary')
-    activity_period.add_argument(mm(YEAR), action='store_true', help='generate yearly summary')
     activity.add_argument(m(F), mm(FORCE), action='store_true', help='re-read file and delete existing data')
+    activity.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activity.add_argument(ACTIVITY, action='store', metavar='ACTIVITY', nargs=1,
                           help='an activity name')
     activity.add_argument(PATH, action='store', metavar='PATH', nargs=1,

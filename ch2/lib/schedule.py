@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from calendar import monthrange
 from re import sub, compile, match
 
-from .date import to_date, format_date, MONTH, add_duration, YEAR
+from .date import to_date, format_date, MONTH, add_duration, YEAR, to_time
 
 # my calculations are done relative to the unix epoch.  the "gregorian ordinal"
 # is relative to year 1, but i have no idea how the details of that work.  i
@@ -24,6 +24,8 @@ class Schedule:
 
     Offset can shift whole "units" only.  So 3w can start on *any* Monday,
     depending on the offset data, but the week always starts on a Monday.
+
+    Note that dates are dates, not datetimes (times).
     """
 
     DOW_INDEX = dict((day, i) for i, day in enumerate(DOW))
@@ -181,11 +183,15 @@ class Schedule:
     finish = property(lambda self: self.__finish, __set_finish)
 
     def in_range(self, date):
+        date = to_date(date)
         return (self.start is None or date >= self.start) and \
                (self.finish is None or date < self.finish)
 
-    def describe(self):
-        text = '%s' % self.frame_class().__name__
+    def describe(self, compact=False):
+        if compact:
+            text = self.frame_type
+        else:
+            text = '%s' % self.frame_class().__name__
         if self.repeat > 1:
             text = '%d%ss' % (self.repeat, text)
         text = '%s%s' % (text, self.__str_locations())
@@ -256,13 +262,14 @@ class Frame(ABC):
         date = DateOrdinals(date)
         n = (date.ordinals[self.schedule.frame_type] - self.schedule.offset) // self.schedule.repeat
         zero = add_duration(self.zero, (self.schedule.offset, self.schedule.duration))
-        return add_duration(zero, (n * self.schedule.repeat, self.schedule.duration))
+        return to_date(add_duration(zero, (n * self.schedule.repeat, self.schedule.duration)))
 
     def locations_from(self, start):
         '''
         Locations in a single frame, starting at the give date
         (so if the date isn't at the start of the frame you might not get all locations).
         '''
+        start = to_date(start)
         frame = self.start_of_frame(start)
         ordinals = DateOrdinals(frame)
         for delta in self._location_offsets(ordinals.dow, self.length_in_days(start)):

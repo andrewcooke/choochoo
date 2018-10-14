@@ -6,8 +6,8 @@ from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session
 
 from ..support import Base
-from ..types import Epoch, OpenSched
-from ...lib.date import to_date
+from ..types import Time, OpenSched
+from ...lib.date import to_date, to_time
 from ...lib.schedule import Schedule
 
 
@@ -26,7 +26,7 @@ class Source(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False)
-    time = Column(Epoch, nullable=False)
+    time = Column(Time, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.SOURCE,
@@ -46,8 +46,7 @@ class Source(Base):
                            not isinstance(instance, Interval) and
                            instance.time is not None and
                            (always or session.is_modified(instance)))]
-            # this handles all the same formats that the DB field handles
-            times |= set(Epoch.to_time(source.time) for source in sources)
+            times |= set(to_time(source.time) for source in sources)
         for time in times:
             for spec in specs:
                 start = spec.start_of_frame(time)
@@ -70,7 +69,7 @@ class Interval(Source):
     schedule = Column(OpenSched, nullable=False)
     # duplicates data for simplicity in processing
     # day after (exclusive date)
-    finish = Column(Epoch, nullable=False)
+    finish = Column(Time, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL

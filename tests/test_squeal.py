@@ -9,7 +9,7 @@ from urwid import WidgetWrap, Pile, Edit, Filler
 
 from ch2.squeal.binders import Binder
 from ch2.squeal.support import Base
-from ch2.squeal.types import Ordinal
+from ch2.squeal.types import Date
 from ch2.uweird.tui.widgets import Integer
 
 basicConfig()
@@ -28,7 +28,7 @@ class Data(Base):
 
     integer = s.Column(s.Integer, primary_key=True)
     text = s.Column(s.Text, nullable=False, server_default='')
-    date = s.Column(Ordinal)
+    date = s.Column(Date)
 
 
 class Database:

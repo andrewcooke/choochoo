@@ -5,6 +5,7 @@ ACTIVE_SPEED = 'Active Speed'
 FTHR = 'FTHR'
 MEDIAN_KM_TIME = 'Median %dkm Time'
 PERCENT_IN_Z = 'Percent in Z%d'
+PERCENT_IN_Z_ANY = 'Percent in Z%'
 TIME_IN_Z = 'Time in Z%d'
 MAX_MED_HR_OVER_M = 'Max Med HR over %dm'
 HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)

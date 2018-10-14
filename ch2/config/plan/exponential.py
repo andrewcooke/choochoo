@@ -3,7 +3,7 @@ from abc import abstractmethod
 from re import compile
 
 from ...lib.schedule import Schedule
-from ...lib.date import format_duration, duration_to_secs, parse_duration, to_date, add_duration
+from ...lib.date import format_seconds, duration_to_secs, parse_duration, to_date, add_duration
 from ...squeal.tables.topic import Topic
 from ...squeal.utils import ORMUtils
 
@@ -39,7 +39,7 @@ class TimeBuilder(Builder):
     def _next_value(self):
         time = self.__time
         self.__time *= self._ratio
-        return format_duration(time)
+        return format_seconds(time)
 
 
 class DistanceBuilder(Builder):

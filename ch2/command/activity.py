@@ -3,7 +3,7 @@ from glob import glob
 from os import stat
 from os.path import isdir, join, basename, splitext
 
-from ..command.args import PATH, ACTIVITY, FORCE
+from ..command.args import PATH, ACTIVITY, FORCE, FAST
 from ..fit.format.read import filtered_records
 from ..fit.format.records import fix_degrees
 from ..fit.profile.types import timestamp_to_datetime
@@ -22,11 +22,12 @@ def activity(args, log):
 Read one or more (if PATH is a directory) FIT files and associated them with the given activity type.
     '''
     db = Database(args, log)
-    force = args[FORCE]
+    force, fast = args[FORCE], args[FAST]
     activity = args[ACTIVITY][0]
     path = args.path(PATH, index=0, rooted=False)
     FITImporter(log, db, activity, path).run(force=force)
-    run_statistics(log, db, force=force)
+    if not fast:
+        run_statistics(log, db, force=force)
 
 
 class FITImporter:

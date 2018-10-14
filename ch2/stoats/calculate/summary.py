@@ -77,7 +77,7 @@ class SummaryStatistics:
         start, finish = self._raw_statistics_date_range(s)
         start = spec.start_of_frame(start)
         while start <= finish:
-            next_start = add_duration(start, (spec.repeat, spec.duration))
+            next_start = spec.next_frame(start)
             yield start, next_start
             start = next_start
 
@@ -149,7 +149,7 @@ class SummaryStatistics:
             s.add(journal)
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic))
 
-    def _create_ranks(self, s, interval, statistic, data):
+    def _create_ranks(self, s, interval, spec, statistic, data):
         # we only rank non-NULL values
         ordered = sorted([journal for journal in data if journal.value is not None],
                          key=lambda journal: journal.value, reverse=True)
@@ -180,7 +180,7 @@ class SummaryStatistics:
                                 self._create_value(s, interval, spec, statistic, process.lower(), data, values)
                         else:
                             self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
-                        self._create_ranks(s, interval, statistic, data)
+                        self._create_ranks(s, interval, spec, statistic, data)
                         have_data = True
                 if have_data:
                     self._log.info('Added statistics for %s' % interval)

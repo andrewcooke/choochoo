@@ -8,12 +8,8 @@ def format_date(date):
     return date.strftime('%Y-%m-%d')
 
 
-def format_time(datetime):
-    return datetime.strftime('%H:%M:%S')
-
-
-def format_datetime(datetime):
-    return datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')
+def format_time(time):
+    return time.strftime('%Y-%m-%dT%H:%M:%S.%f')
 
 
 def parse_duration(duration):
@@ -36,13 +32,13 @@ def to_date(value, none=False):
         return dt.date(*t.strptime(value, '%Y-%m-%d')[:3])
 
 
-def to_datetime(value, none=False):
+def to_time(value, none=False):
     if none and value is None:
         return None
     if isinstance(value, dt.datetime):
-        return value
+        return value.replace(tzinfo=dt.timezone.utc)
     elif isinstance(value, dt.date):
-        return dt.datetime(value.year, value.month, value.day)
+        return dt.datetime(value.year, value.month, value.day, tzinfo=dt.timezone.utc)
     elif isinstance(value, int):
         return dt.datetime.fromtimestamp(value, dt.timezone.utc)
     elif isinstance(value, float):
@@ -50,7 +46,7 @@ def to_datetime(value, none=False):
     else:
         for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M', '%Y-%m-%d'):
             try:
-                return dt.datetime.strptime(value, format)
+                return dt.datetime.strptime(value, format).replace(tzinfo=dt.timezone.utc)
             except ValueError:
                 pass
         raise ValueError('Cannot parse "%s" as a datetime' % value)
@@ -67,21 +63,21 @@ MONTH = 'm'
 YEAR = 'Y'
 
 
-def add_duration(date, duration):
-    (n, unit) = duration
+def add_duration(time, duration):
+    time, (n, unit) = to_time(time), duration
     if unit == DAY:
-        return date + dt.timedelta(days=n)
+        return time + dt.timedelta(days=n)
     if unit == WEEK:
-        return date + dt.timedelta(days=n*7)
+        return time + dt.timedelta(days=n * 7)
     if unit == MONTH:
-        year, month = date.year, date.month + n
+        year, month = time.year, time.month + n
         while month > 12:
             month -= 12
             year += 1
-        return dt.date(year, month, min(date.day, monthrange(year, month)[1]))
+        return dt.datetime(year, month, min(time.day, monthrange(year, month)[1]), *time.timetuple()[3:6])
     if unit == YEAR:
-        year = date.year + n
-        return dt.date(year, date.month, min(date.day, monthrange(year, date.month)[1]))
+        year = time.year + n
+        return dt.datetime(year, time.month, min(time.day, monthrange(year, time.month)[1]), *time.timetuple()[3:6])
     raise Exception('Unexpected unit "%s" (need one of %s, %s, %s, %s)' % (unit, DAY, WEEK, MONTH, YEAR))
 
 
@@ -104,7 +100,7 @@ def duration_to_secs(duration):
     raise Exception('Unexpected unit "%s" (need one of %s %s %s %s %s' % (unit, SECOND, MINUTE, HOUR, DAY, WEEK))
 
 
-def format_duration(seconds):
+def format_seconds(seconds):
     if seconds >= 60:
         minutes, seconds = seconds // 60, seconds % 60
         if minutes >= 60:

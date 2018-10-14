@@ -6,19 +6,17 @@ from pydoc import locate
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
 from ..lib.schedule import Schedule
-from ..lib.date import to_datetime, to_date
+from ..lib.date import to_time, to_date
 
 
-class Ordinal(TypeDecorator):
+class Date(TypeDecorator):
 
     impl = Integer
 
     def process_literal_param(self, date, dialect):
         if date is None:
             return date
-        if isinstance(date, str):
-            date = to_date(date)
-        return date.toordinal()
+        return to_date(date).toordinal()
 
     process_bind_param = process_literal_param
 
@@ -29,15 +27,15 @@ class Ordinal(TypeDecorator):
             return dt.date.fromordinal(value)
 
 
-class Epoch(TypeDecorator):
+class Time(TypeDecorator):
 
     impl = Float
 
-    def process_literal_param(self, datetime, dialect):
-        if datetime is None:
-            return datetime
+    def process_literal_param(self, time, dialect):
+        if time is None:
+            return time
         else:
-            return self.to_time(datetime).replace(tzinfo=dt.timezone.utc).timestamp()
+            return to_time(time).timestamp()
 
     process_bind_param = process_literal_param
 
@@ -46,18 +44,6 @@ class Epoch(TypeDecorator):
             return value
         else:
             return dt.datetime.utcfromtimestamp(value)
-
-    @staticmethod
-    def to_time(datetime):
-        if datetime is None:
-            return None
-        if isinstance(datetime, str):
-            datetime = to_datetime(datetime)
-        elif isinstance(datetime, dt.date):
-            datetime = dt.datetime.combine(datetime, dt.time())
-        elif isinstance(datetime, int) or isinstance(datetime, float):
-            datetime = dt.datetime.utcfromtimestamp(datetime)
-        return datetime
 
 
 CLS_CACHE = {}
