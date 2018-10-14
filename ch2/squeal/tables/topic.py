@@ -108,6 +108,9 @@ class TopicJournal(Source):
                 s.add(journal)
             self.statistics[field] = journal
 
+    def __str__(self):
+        return 'TopicJournal from %s' % self.time
+
 
 @listens_for(Session, 'loaded_as_persistent')
 @listens_for(Session, 'transient_to_pending')

@@ -34,9 +34,35 @@ class Source(Base):
     }
 
     @classmethod
-    def clear_intervals(cls, session):
-        from ...stoats.calculate.summary import SummaryStatistics  # avoid import loop
-        specs = [Schedule(spec) for spec in SummaryStatistics.pipeline_schedules(session)]
+    def before_flush(cls, session):
+        cls.__clean_empty_diary(session)
+        cls.__clean_dirty_intervals(session)
+
+    @classmethod
+    def __clean_empty_diary(cls, session):
+        from .topic import TopicJournal
+        from .statistic import StatisticJournal
+        # if we have a journal entry that's new and associated with no new stats then remove it
+        diary_cleanup = set()
+        for instance in session.new:
+            dirty = False
+            if isinstance(instance, TopicJournal):
+                for field in instance.topic.fields:
+                    # todo - check for None explicitly once we can handle empty strings
+                    if instance.statistics[field].value:
+                        dirty = True
+                        break
+                if not dirty:
+                    session.expunge(instance)
+                    diary_cleanup.add(instance)
+        if diary_cleanup:
+            for instance in session.new:
+                if isinstance(instance, StatisticJournal) and instance.source in diary_cleanup:
+                    session.expunge(instance)
+
+    @classmethod
+    def __clean_dirty_intervals(cls, session):
+        from ...stoats.calculate.summary import SummaryStatistics
         times = set()
         for always, instances in [(True, session.new), (False, session.dirty), (True, session.deleted)]:
             # wipe the containing intervals if this is a source that has changed in some way
@@ -47,6 +73,7 @@ class Source(Base):
                            instance.time is not None and
                            (always or session.is_modified(instance)))]
             times |= set(to_time(source.time) for source in sources)
+        specs = [Schedule(spec) for spec in SummaryStatistics.pipeline_schedules(session)]
         for time in times:
             for spec in specs:
                 start = spec.start_of_frame(time)
@@ -57,8 +84,8 @@ class Source(Base):
 
 
 @listens_for(Session, 'before_flush')
-def clear_intervals(session, context, instances):
-    Source.clear_intervals(session)
+def before_flush(session, context, instances):
+    Source.before_flush(session)
 
 
 class Interval(Source):
