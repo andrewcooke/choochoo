@@ -81,9 +81,9 @@ class DateSwitcher(App):
         s = self._session()
         q = s.query(ActivityJournal)
         if c == 'a':
-            q = q.filter(ActivityJournal.time < to_time(self.__date)).order_by(desc(ActivityJournal.time))
+            q = q.filter(ActivityJournal.time < self.__date).order_by(desc(ActivityJournal.time))
         else:
-            q = q.filter(ActivityJournal.time > to_time(self.__date)).order_by(ActivityJournal.time)
+            q = q.filter(ActivityJournal.time >= add_date(self.__date, (1, DAY))).order_by(ActivityJournal.time)
         journal = q.limit(1).one_or_none()
         if journal:
             self.__date = to_date(journal.time)

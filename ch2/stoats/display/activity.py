@@ -49,10 +49,10 @@ class ActivityDiary:
     def __format(self, journal):
         words, first = ['%s: %s' % (journal.statistic.name, journal.formatted())], True
         for measure in journal.measures:
-            if not first:
-                words += [',']
-            if measure.rank < 5:
+             if measure.rank < 5:
+                if not first:
+                    words += [',']
+                    first = False
                 words += [' ', ('rank-%d' % measure.rank, '%d' % measure.rank),
                           '/' + measure.source.schedule.describe(compact=True)]
-            first = False
         return Text(words)

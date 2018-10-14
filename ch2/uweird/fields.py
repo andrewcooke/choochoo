@@ -56,7 +56,7 @@ class Text(Base):
         return repr(value)
 
     def _widget(self, journal):
-        return Edit(caption='%s: ' % journal.statistic.name, edit_text=journal.value or '')
+        return Edit(caption='%s: ' % journal.statistic.name, edit_text=journal.value)
 
 
 class Integer(Base):
