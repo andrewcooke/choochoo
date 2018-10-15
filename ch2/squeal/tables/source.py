@@ -2,7 +2,7 @@
 from enum import IntEnum
 
 from sqlalchemy import ForeignKey, Column, Integer
-from sqlalchemy.event import listens_for
+from sqlalchemy.event import listens_for, remove
 from sqlalchemy.orm import Session
 
 from ..support import Base
@@ -35,33 +35,10 @@ class Source(Base):
 
     @classmethod
     def before_flush(cls, session):
-        cls.__clean_empty_diary(session)
         cls.__clean_dirty_intervals(session)
 
     @classmethod
-    def __clean_empty_diary(cls, session):
-        from .topic import TopicJournal
-        from .statistic import StatisticJournal
-        # if we have a journal entry that's new and associated with no new stats then remove it
-        diary_cleanup = set()
-        for instance in session.new:
-            dirty = False
-            if isinstance(instance, TopicJournal):
-                for field in instance.topic.fields:
-                    if instance.statistics[field].value is not None:
-                        dirty = True
-                        break
-                if not dirty:
-                    session.expunge(instance)
-                    diary_cleanup.add(instance)
-        if diary_cleanup:
-            for instance in session.new:
-                if isinstance(instance, StatisticJournal) and instance.source in diary_cleanup:
-                    session.expunge(instance)
-
-    @classmethod
     def __clean_dirty_intervals(cls, session):
-        from ...stoats.calculate.summary import SummaryStatistics
         times = set()
         for always, instances in [(True, session.new), (False, session.dirty), (True, session.deleted)]:
             # wipe the containing intervals if this is a source that has changed in some way
@@ -72,6 +49,12 @@ class Source(Base):
                            instance.time is not None and
                            (always or session.is_modified(instance)))]
             times |= set(to_time(source.time) for source in sources)
+        if times:
+            cls.clean_times(session, times)
+
+    @classmethod
+    def clean_times(cls, session, times):
+        from ...stoats.calculate.summary import SummaryStatistics
         specs = [Schedule(spec) for spec in SummaryStatistics.pipeline_schedules(session)]
         for time in times:
             for spec in specs:
@@ -85,6 +68,10 @@ class Source(Base):
 @listens_for(Session, 'before_flush')
 def before_flush(session, context, instances):
     Source.before_flush(session)
+
+
+def disable_interval_cleaning():
+    remove(Session, 'before_flush', before_flush)
 
 
 class Interval(Source):

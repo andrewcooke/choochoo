@@ -66,5 +66,7 @@ def default(db):
         add_topic_field(s, diary, 'Mood', c,
                         summary='[avg]',
                         display_cls=Score)
+        add_topic_field(s, diary, 'Weather', c,
+                        display_cls=Text)
         add_topic_field(s, diary, 'Medication', c,
                         display_cls=Text)

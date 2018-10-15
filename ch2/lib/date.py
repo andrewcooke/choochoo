@@ -33,7 +33,7 @@ def to_time(value, none=False):
     elif isinstance(value, dt.date):
         return dt.datetime(value.year, value.month, value.day, tzinfo=dt.timezone.utc)
     elif isinstance(value, int):
-        return dt.datetime.fromtimestamp(value, dt.timezone.utc)
+        return to_time(to_date(value))
     elif isinstance(value, float):
         return dt.datetime.fromtimestamp(value, dt.timezone.utc)
     else:

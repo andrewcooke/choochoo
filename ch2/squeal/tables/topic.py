@@ -92,6 +92,8 @@ class TopicJournal(Source):
     def populate(self, s):
         if self.time is None:
             raise Exception('No time defined')
+        if hasattr(self, 'statistics'):
+            return
         self.statistics = {}
         for field in self.topic.fields:
             if self.id:
@@ -112,9 +114,3 @@ class TopicJournal(Source):
         return 'TopicJournal from %s' % self.time
 
 
-@listens_for(Session, 'loaded_as_persistent')
-@listens_for(Session, 'transient_to_pending')
-def populate(session, instance):
-    if isinstance(instance, TopicJournal):
-        with session.no_autoflush:
-            instance.populate(session)

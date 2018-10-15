@@ -117,6 +117,8 @@ def add_activity_constant(session, activity, name, description=None, units=None,
     An example is FTHR, which you will only measure occasionally, but which is needed when calculating
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
+    if activity.id is None:
+        session.flush()
     statistic = add(session, Statistic(name=name, owner=Constant, constraint=activity.id, units=units,
                                        description=description))
     constant = add(session, Constant(type=type, name='%s.%s' % (name, activity.name), statistic=statistic))
@@ -160,6 +162,8 @@ def add_topic_field(session, topic, name, sort, description=None, units=None, su
     The field describes how the values are displayed in the diary.
     The statistic describes how the values are stored in the database.
     '''
+    if topic.id is None:
+        session.flush()
     statistic = add(session, Statistic(name=name, owner=topic, constraint=topic.id,
                                        description=description, units=units, summary=summary))
     field = add(session, TopicField(topic=topic, sort=sort, type=display_cls.statistic_type,

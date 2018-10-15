@@ -10,6 +10,7 @@ from ..lib.io import tui
 from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
 from ..squeal.database import Database
+from ..squeal.tables.source import disable_interval_cleaning, Source
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import build_display
 from ..uweird.fields import PAGE_WIDTH
@@ -41,6 +42,7 @@ To exit, alt-q (or, without saving, alt-x).
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
     db = Database(args, log)
+    disable_interval_cleaning()
     MainLoop(Diary(log, db, date), palette=PALETTE).run()
 
 
@@ -52,36 +54,36 @@ class Diary(DateSwitcher):
     Render the diary at a given date.
     '''
 
-    def _build_date(self, s, date):
-        self._log.debug('Building diary at %s' % date)
+    def _build(self, s):
+        self._log.debug('Building diary at %s' % self._date)
         body, f = [], Factory(TabList())
         root_topics = [topic for topic in
                        s.query(Topic).filter(Topic.parent == None,
-                                             or_(Topic.start <= date, Topic.start == None),
-                                             or_(Topic.finish >= date, Topic.finish == None)).
-                                      order_by(Topic.sort).all()
-                       if topic.schedule.at_location(date)]
+                                             or_(Topic.start <= self._date, Topic.start == None),
+                                             or_(Topic.finish >= self._date, Topic.finish == None)).
+                           order_by(Topic.sort).all()
+                       if topic.schedule.at_location(self._date)]
         for topic in root_topics:
-            body.append(self.__topic(s, f, topic, date))
-        for extra in self.__pipeline(s, f, date):
+            body.append(self.__topic(s, f, topic))
+        for extra in self.__pipeline(s, f):
             body.append(extra)
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
-                            header=Pile([Text(date.strftime('%Y-%m-%d - %A')), Divider()]),
+                            header=Pile([Text(self._date.strftime('%Y-%m-%d - %A')), Divider()]),
                             footer=Pile([Divider(),
                                          Text(['meta-', ('em', 'q'), 'uit/e', ('em', 'x'), 'it/', ('em', 's'), 'ave',
                                                ' [shift]meta-', ('em', 'd/w/m/y/a'), 'ctivity'],
                                               align='center')])))
         return body, f.tabs
 
-    def __topic(self, s, f, topic, date):
+    def __topic(self, s, f, topic):
         self._log.debug('%s' % topic)
         body, title = [], None
         if topic.name:
             title = Text(topic.name)
         if topic.description:
             body.append(Text(topic.description))
-        body += list(self.__fields(s, f, topic, date))
-        body += list(self.__children(s, f, topic, date))
+        body += list(self.__fields(s, f, topic))
+        body += list(self.__children(s, f, topic))
         if not body:
             return title
         body = Indent(Pile(body))
@@ -89,12 +91,13 @@ class Diary(DateSwitcher):
             body = Pile([title, body])
         return body
 
-    def __fields(self, s, f, topic, date):
+    def __fields(self, s, f, topic):
         columns, width = [], 0
         for field in topic.fields:
             self._log.debug('%s' % field)
-            journal = self.__journal(s, topic, date)
-            display = field.display_cls(self._log, s, journal.statistics[field],
+            tjournal = self.__topic_journal(s, topic)
+            tjournal.populate(s)
+            display = field.display_cls(self._log, s, tjournal.statistics[field],
                                         *field.display_args, **field.display_kargs)
             self._log.debug('%s' % display)
             if width + display.width > PAGE_WIDTH:
@@ -105,21 +108,42 @@ class Diary(DateSwitcher):
         if width:
             yield Columns(columns)
 
-    def __children(self, s, f, topic, date):
+    def __children(self, s, f, topic):
         for child in topic.children:
-            if child.schedule.at_location(date):
-                extra = self.__topic(s, f, child, date)
+            if child.schedule.at_location(self._date):
+                extra = self.__topic(s, f, child)
                 if extra:
                     yield extra
 
-    def __journal(self, s, topic, date):
-        journal = s.query(TopicJournal).filter(TopicJournal.topic == topic, TopicJournal.time == date).one_or_none()
-        if not journal:
-            journal = TopicJournal(topic=topic, time=date)
-            s.add(journal)
-        return journal
+    def __topic_journal(self, s, topic):
+        tjournal = s.query(TopicJournal). \
+            filter(TopicJournal.topic == topic,
+                   TopicJournal.time == self._date).one_or_none()
+        if not tjournal:
+            tjournal = TopicJournal(topic=topic, time=self._date)
+            s.add(tjournal)
+        return tjournal
 
-    def __pipeline(self, s, f, date):
-        yield from build_display(self._log, s, f, date)
+    def __pipeline(self, s, f):
+        yield from build_display(self._log, s, f, self._date)
 
+    def save(self):
+        if self._session:
+            self.__interval_cleaning()
+        super().save()
 
+    def __interval_cleaning(self):
+        s, dirty = self._session, False
+        for tjournal in s.query(TopicJournal).filter(TopicJournal.time == self._date).all():
+            clean = True
+            tjournal.populate(s)
+            for field in tjournal.topic.fields:
+                if tjournal.statistics[field].value is not None:
+                    clean = False
+                    break
+            if clean:
+                s.delete(tjournal)
+            else:
+                dirty = True
+        if dirty:
+            Source.clean_times(s, [self._date])

@@ -26,6 +26,7 @@ class App(TabNode):
         self.__session = self.__db.session()
         return self.__session
 
+    @property
     def _session(self):
         return self.__session
 
@@ -78,7 +79,7 @@ class DateSwitcher(App):
         return super().keypress(size, key)
 
     def _change_activity(self, c):
-        s = self._session()
+        s = self._session
         q = s.query(ActivityJournal)
         if c == 'a':
             q = q.filter(ActivityJournal.time < self.__date).order_by(desc(ActivityJournal.time))
@@ -98,9 +99,6 @@ class DateSwitcher(App):
             self.__date = add_date(self.__date, delta)
         self.rebuild()
 
-    def _build(self, session):
-        return self._build_date(session, self.__date)
-
-    @abstractmethod
-    def _build_date(self, s, date):
-        pass
+    @property
+    def _date(self):
+        return self.__date
