@@ -155,7 +155,10 @@ class SummaryStatistics:
                          key=lambda journal: journal.value, reverse=True)
         n, measures = len(ordered), []
         for rank, journal in enumerate(ordered, start=1):
-            percentile = (n - rank) / n * 100
+            if n > 1:
+                percentile = (n - rank) / (n - 1) * 100
+            else:
+                percentile = 100
             measure = StatisticMeasure(statistic_journal=journal, source=interval, rank=rank, percentile=percentile)
             s.add(measure)
             measures.append(measure)

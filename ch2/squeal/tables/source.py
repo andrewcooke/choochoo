@@ -48,8 +48,7 @@ class Source(Base):
             dirty = False
             if isinstance(instance, TopicJournal):
                 for field in instance.topic.fields:
-                    # todo - check for None explicitly once we can handle empty strings
-                    if instance.statistics[field].value:
+                    if instance.statistics[field].value is not None:
                         dirty = True
                         break
                 if not dirty:

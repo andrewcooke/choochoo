@@ -207,8 +207,8 @@ class StatisticMeasure(Base):
                                                      order_by='desc(StatisticMeasure.rank)'))
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)  # must be an interval
     source = relationship('Source')
-    rank = Column(Integer, nullable=False)  # 1 is best
-    percentile = Column(Float, nullable=False)  # 100 is best
+    rank = Column(Integer, nullable=False)  # 1 is best [1..n]
+    percentile = Column(Float, nullable=False)  # 100 is best [0..100]
     quartile = Column(Integer)  # 0..4 at the min, 25%, median, 75% and max points
 
 
