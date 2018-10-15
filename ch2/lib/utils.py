@@ -12,6 +12,7 @@ def sign(x):
 
 
 PALETTE = [('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
+           ('em', 'white', 'black'),
            ('selected', 'black', 'light gray'), ('selected-focus', 'black', 'white'),
            ('unimportant', 'dark blue', 'black'), ('unimportant-focus', 'light blue', 'black'),
            ('error', 'dark red', 'black'), ('error-focus', 'light red', 'black'),
