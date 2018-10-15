@@ -194,10 +194,6 @@ class Schedule:
         text = '%s%s' % (text, self.__str_locations())
         return text
 
-    @classmethod
-    def normalize(cls, spec):
-        return str(Schedule(spec))
-
     def __in_range_or_none(self, date):
         if self.in_range(date):
             return date
@@ -227,6 +223,34 @@ class Schedule:
 
     def at_location(self, date):
         return self.__frame.at_location(date)
+
+    @classmethod
+    def normalize(cls, spec):
+        return str(Schedule(spec))
+
+    @classmethod
+    def include(cls, parent, child):
+        '''
+        Extend the parent (creating if necessary) to include the child.
+        '''
+        if parent is None:
+            parent = Schedule('')
+
+        def apply_with_none(f, a, b):
+            if a:
+                if b:
+                    return f(a, b)
+                else:
+                    return a
+            else:
+                if b:
+                    return b
+                else:
+                    return None
+
+        parent.start = apply_with_none(min, parent.start, child.start)
+        parent.finish = apply_with_none(max, parent.finish, child.finish)
+        return parent
 
 
 class DateOrdinals:

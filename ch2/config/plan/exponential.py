@@ -22,6 +22,7 @@ class Builder(ORMUtils):
             child = Topic(parent=root, schedule=self._spec,
                           name=self._name, description=self._description, sort=sort)
             s.add(child)
+            root.schedule = Schedule.include(root.schedule, child.schedule)
             for day in self._spec.locations_from(self._spec.start):
                 s.add(Topic(parent=child, schedule=str(day), name=self._next_value()))
 

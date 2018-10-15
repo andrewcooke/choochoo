@@ -51,6 +51,8 @@ class Week(Assert, ORMUtils):
         parent = Topic(parent=root, schedule=schedule, sort=sort,
                        name=self.__name, description=self.__description)
         s.add(parent)
+        # extend root to include parent
+        root.schedule = Schedule.include(root.schedule, parent.schedule)
         return parent
 
     def __create_children(self, log, s, parent, sort):
