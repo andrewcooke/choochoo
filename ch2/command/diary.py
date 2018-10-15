@@ -68,8 +68,9 @@ class Diary(DateSwitcher):
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([Text(date.strftime('%Y-%m-%d - %A')), Divider()]),
                             footer=Pile([Divider(),
-                                         Text(['Meta-', ('em', 'q'), 'uit/e', ('em', 'x'), 'it/', ('em', 's'), 'ave',
-                                               ' [Shift]Meta-', ('em', 'd/w/m/y/a'), 'ctivity']))))
+                                         Text(['meta-', ('em', 'q'), 'uit/e', ('em', 'x'), 'it/', ('em', 's'), 'ave',
+                                               ' [shift]meta-', ('em', 'd/w/m/y/a'), 'ctivity'],
+                                              align='center')])))
         return body, f.tabs
 
     def __topic(self, s, f, topic, date):
