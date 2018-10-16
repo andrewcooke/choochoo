@@ -13,25 +13,30 @@ Training data are stored in a database...
   * Other data (eg FTHR) can be entered at the command line
 * There are tools to process data in the database:
   * Prepared calculations for data totals, ranking
-  * Calculation of TSS
   * Ability to extend processing with Python
 * There are tools to get data out of the database:
   * Pandas tables for analysis in numpy and Jupyter notebooks
-  * Prepared plotting routines for common operations (eg ???)
-  * Daily, monthly and yearly textual summaries
+  * Examples for plotting spatial and time-series data
 * Clear database schema, designed for third party access
   * SQLAlchemy ORM interface
 
-You also have the ability to schedule diary reminders for regular events:
+The configuration is also stored in the database...
 
-* This is used to schedule training plans
+* You can schedule training plans
   * Prepared / example training plans included
   * Simple, declarative library for defining your own plans
-
-System configuration is via Python prompt.
+* You can add data fields to the diary
+* You can extend the statistics calculation pipeline
 
 The project can be used stand-alone by someone comfortable with the
 technologies used, or it could be extended with a GUI.  See
-[documentation](https://andrewcooke.github.io/choochoo/) for more details.
+[documentation](https://andrewcooke.github.io/choochoo/) for more
+details.
 
-**This branch under development - not all the above implemented.**
+## Latest Changes
+
+### v0.2.0
+
+Major rewrite to generalize the database schema.  Moved a lot of
+configuration into the database.  Now much more flexible, but less
+interactive.
