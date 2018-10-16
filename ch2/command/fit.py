@@ -3,7 +3,7 @@ from .args import PATH, DUMP_FORMAT, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, REC
 from ..fit.summary import summarize
 
 
-def fit(args, log, profile_path=None):
+def fit(args, log, db):
     '''
 # fit
 
@@ -25,5 +25,4 @@ or redirect stderr elsewhere).
     '''
     fit_path = args.file(PATH, 0, rooted=False)
     summarize(log, args[DUMP_FORMAT], fit_path, all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
-              after=args[AFTER][0], limit=args[LIMIT][0], records=args[RECORD], warn=args[WARN],
-              profile_path=profile_path)
+              after=args[AFTER][0], limit=args[LIMIT][0], records=args[RECORD], warn=args[WARN])

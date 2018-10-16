@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from sys import stdout
 
-from .args import TOPIC, HELP, PROGNAME, m, H
+from .args import TOPIC, HELP, PROGNAME, m, H, EXAMPLE_CONFIG
 from ..lib.io import terminal_width
 
 
@@ -76,13 +76,15 @@ Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
 
 * %s
 
-See also `%s %s`, '%s CMD %s` and `%s %s CMD`.
+See also `%s %s` for usage, '%s %s CMD` for guidance on a particular command, 
+and `%s %s CMD` for usage of that command.
 
 Docs at http://andrewcooke.github.io/choochoo/index''' % (
-        '\n* '.join(COMMANDS.keys()), PROGNAME, m(H), PROGNAME, m(H), PROGNAME, HELP)
+        '\n* '.join(COMMANDS.keys()), PROGNAME, m(H), PROGNAME, HELP, PROGNAME, m(H))
 
 
-def help(args, logs, COMMANDS):
+def help(args, logs, db):
+    from .. import COMMANDS
     '''
 # help
 
@@ -100,7 +102,22 @@ Displays this information.
 
 Lists available topics.
     '''
-    if args[TOPIC] in COMMANDS:
+    if db.is_empty():
+        LengthFmt().print_all('''
+Welcome to Choochoo.
+
+Before using the ch2 command you must configure the system.
+
+Please see the documentation at http://andrewcooke.github.io/choochoo/index
+
+To generate an example configuration use the command
+
+    %s %s
+
+NOTE: The example configuration is only an example.  It is not intended for
+general use.  It is important to configure your own system as you personally
+want it to be.''' % (PROGNAME, EXAMPLE_CONFIG))
+    elif args[TOPIC] in COMMANDS:
         LengthFmt().print_all(COMMANDS[args[TOPIC]].__doc__)
     else:
         LengthFmt().print_all(commands(COMMANDS))

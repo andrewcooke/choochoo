@@ -14,7 +14,7 @@ from .lib.log import make_log
 from .squeal.database import Database
 
 
-def no_op(args, log):
+def no_op(args, log, db):
     '''
 # no-op
 
@@ -38,22 +38,16 @@ COMMANDS = {ACTIVITY: activity,
 
 
 def main():
-
-    # don't use bootstrap because we don't want database created for help,
-    # need to worry about TUI. etc
-
     p = parser()
     args = NamespaceWithVariables(p.parse_args())
     command_name = args[COMMAND] if COMMAND in args else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     tui = command and hasattr(command, 'tui') and command.tui
     log = make_log(args, tui=tui)
+    db = Database(args, log)
     try:
-        if command_name == HELP:
-            # avoid dependency loop
-            help(args, log, COMMANDS)
-        elif command:
-            command(args, log)
+        if command:
+            command(args, log, db)
         else:
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')

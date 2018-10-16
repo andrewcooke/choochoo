@@ -9,7 +9,6 @@ from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.utils import PALETTE, em
 from ..lib.widgets import DateSwitcher
-from ..squeal.database import Database
 from ..squeal.tables.source import disable_interval_cleaning, Source
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import build_display
@@ -21,7 +20,7 @@ from ..uweird.tui.widgets import DividedPile
 
 
 @tui
-def diary(args, log):
+def diary(args, log, db):
     '''
 # diary
 
@@ -41,7 +40,6 @@ To exit, alt-q (or, without saving, alt-x).
             date = to_date(date)
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
-    db = Database(args, log)
     disable_interval_cleaning()
     MainLoop(Diary(log, db, date), palette=PALETTE).run()
 

@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.functions import count
 
 from .support import Base
 from .tables.activity import ActivityWaypoint, Activity, ActivityTimespan, ActivityJournal
@@ -41,8 +42,9 @@ class Database:
         self.__create_tables()
 
     def __create_tables(self):
-        self._log.info('Creating tables')
-        Base.metadata.create_all(self.engine)
+        if self.is_empty(tables=True):
+            self._log.info('Creating tables')
+            Base.metadata.create_all(self.engine)
 
     @contextmanager
     def session_context(self):
@@ -56,3 +58,13 @@ class Database:
         finally:
             session.close()
 
+    def is_empty(self, tables=False):
+        if tables:
+            # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
+            return not self.engine.dialect.has_table(self.engine, Source.__tablename__)
+        else:
+            with self.session_context() as s:
+                n_topics = s.query(count(Topic.id)).scalar()
+                n_activities = s.query(count(Activity.id)).scalar()
+                n_statistics = s.query(count(Statistic.id)).scalar()
+            return not (n_topics + n_activities + n_statistics)

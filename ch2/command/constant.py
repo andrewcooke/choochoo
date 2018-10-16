@@ -1,14 +1,10 @@
 
-from sqlalchemy.sql.functions import count
-
 from ..command.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANT, SET
-from ..squeal.database import Database
 from ..squeal.tables.constant import Constant, ConstantJournal
-from ..squeal.tables.source import Source
 from ..squeal.tables.statistic import StatisticJournal, Statistic
 
 
-def constant(args, log):
+def constant(args, log, db):
     '''
 # constant
 
@@ -28,7 +24,6 @@ Activity names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run 
 In such a case "entry" in the descriptions above may refer to multiple entries.
     '''
     name, date, value, set, delete, force = args[NAME], args[DATE], args[VALUE], args[SET], args[DELETE], args[FORCE]
-    db = Database(args, log)
     with db.session_context() as s:
         if name:
             constants = Constant.lookup_like(log, s, name)

@@ -3,8 +3,9 @@
 
 ## Development
 
-The "big idea" behind Choochoo is that it's extensible.  *You* can modify the code
-to make it work how *you* want.  So I would suggest installing from github:
+The "big idea" behind Choochoo is that it's extensible.  *You* can
+modify the code to make it work how *you* want.  So I would suggest
+installing from github:
 
     git clone git@github.com:andrewcooke/choochoo.git
     
@@ -14,8 +15,8 @@ and then executing the code within a virtualenv:
     dev/make-env.sh
     dev/ch2 help
     
-If you are not making frequent changes to the code you may want to install
-it within the virtualenv:
+If you are not making frequent changes to the code you may want to
+install it within the virtualenv:
 
     dev/install-in-env.sh
     source env/bin/activate
@@ -33,4 +34,7 @@ the latest release from Pypi.  It's still worth using a virtualenv:
     pip install --upgrade pip
     pip install choochoo
     ch2 help
- 
+
+## Configuration
+
+Once installed the system must be [configured](configure).

@@ -10,8 +10,8 @@ periodic events (eg training routines).
 Data can be imported from FIT files (from smart watches and bike
 computers) and summary statistics generated for configurable periods
 (eg per month or per year).  All data are stored in an sqlite3
-relation database.  For plotting and analysis they can be exported to
-pandas data frames in a Jupyter notebook.
+database.  For plotting and analysis they can be exported to pandas
+data frames in a Jupyter notebook.
 
 Above all, the system is *open and extensible*.  You can define your
 own training plans.  You can add calculations (eg training stress
@@ -19,8 +19,8 @@ score).  You can hack the code.  The code is structured so that you
 can re-use the parts you need (ORM for database?  library to read FIT
 files?  it's all available).
 
-One omission that may be important to some people is the (purposeful)
-lack of emphasis on power meters.
+One omission that may be important to some people is the lack of
+emphasis on power meters.
 
 * [Install](install) - installing Choochoo.
 * [The Diary](diary) - entering daily data.

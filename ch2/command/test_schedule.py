@@ -11,7 +11,7 @@ from ..command.args import SCHEDULE, MONTHS, START
 INDENT = '   '
 
 
-def test_schedule(args, log):
+def test_schedule(args, log, db):
     schedule, start, months = Schedule(args[SCHEDULE]), to_date(args[START], none=True), args[MONTHS]
     if not start:
         start = dt.date.today()

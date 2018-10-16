@@ -8,12 +8,11 @@ from ..fit.format.read import filtered_records
 from ..fit.format.records import fix_degrees
 from ..fit.profile.types import timestamp_to_datetime
 from ..lib.utils import datetime_to_epoch
-from ..squeal.database import Database
 from ..squeal.tables.activity import Activity, FileScan, ActivityJournal, ActivityTimespan, ActivityWaypoint
 from ..stoats.calculate import run_statistics
 
 
-def activity(args, log):
+def activity(args, log, db):
     '''
 # activity
 
@@ -21,7 +20,6 @@ def activity(args, log):
 
 Read one or more (if PATH is a directory) FIT files and associated them with the given activity type.
     '''
-    db = Database(args, log)
     force, fast = args[FORCE], args[FAST]
     activity = args[ACTIVITY][0]
     path = args.path(PATH, index=0, rooted=False)

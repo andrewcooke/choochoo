@@ -13,7 +13,7 @@ from ...command.args import PATH, WARN
 PROFILE = 'global-profile.pkl'
 
 
-def package_fit_profile(args, log):
+def package_fit_profile(args, log, db):
     '''
 # package-fit-profile
 
