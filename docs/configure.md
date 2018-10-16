@@ -19,8 +19,13 @@ practice.
 ## Connecting to the Database
 
     > python                               
-    Python 3.7.0 (default, Aug 20 2018, 18:32:46)                                  [GCC 7.3.1 20180323 [gcc-7-branch revision 258812]] on linux                   Type "help", "copyright", "credits" or "license" for more information.         >>> from ch2.config import *                                     
-    >>> log, db = config('-v 5 -f /tmp/db.sql')                                    INFO: Using database at /tmp/db.sql                                            >>>
+    Python 3.7.0 (default, Aug 20 2018, 18:32:46)
+    [GCC 7.3.1 20180323 [gcc-7-branch revision 258812]] on linux
+    Type "help", "copyright", "credits" or "license" for more information.
+    >>> from ch2.config import *
+    >>> log, db = config('-v 5 -f /tmp/db.sql')
+    INFO: Using database at /tmp/db.sql
+    >>>
 
 The `config()` command above takes command line arguments
 (space-separated or in separate strings) and returns a log (from the
