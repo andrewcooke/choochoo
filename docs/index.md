@@ -1,20 +1,23 @@
 
 An **open**, **hackable** and **free** training diary.
 
-The main interface is a curses-style diary, used to track daily activity
-as well as progress towards aims.  A flexible "schedule spec" is used to
-define periodic events (eg training routines) and (unfortunately) there's 
-dedicated functionality for tracking injuries.
+The main interface is a curses-style diary, used to track daily
+activity as well as progress towards aims.  Entries in the diary
+("topics") are configured by the user, can be associated with values
+in the database ("statistics"), and can include "schedules" to define
+periodic events (eg training routines).
 
-Data can be imported from FIT files (from smart watches and bike computers)
-and summary statistics generated monthly or annually.  All data are stored
-in an sqlite3 relation database.  For plotting and analysis they can be 
-exported to pandas data frames in a Jupyter notebook.
+Data can be imported from FIT files (from smart watches and bike
+computers) and summary statistics generated for configurable periods
+(eg per month or per year).  All data are stored in an sqlite3
+relation database.  For plotting and analysis they can be exported to
+pandas data frames in a Jupyter notebook.
 
-Above all, the system is *open and extensible*.  You can define your own 
-training plans.  You can hack the code.  The code is structured so that you
-can re-use the parts you need (ORM for database?  library to read FIT files?
-it's all available).  
+Above all, the system is *open and extensible*.  You can define your
+own training plans.  You can add calculations (eg training stress
+score).  You can hack the code.  The code is structured so that you
+can re-use the parts you need (ORM for database?  library to read FIT
+files?  it's all available).
 
 One omission that may be important to some people is the (purposeful)
 lack of emphasis on power meters.
@@ -29,25 +32,18 @@ lack of emphasis on power meters.
 
 ## Current Status
 
-The framework is there.  A database.  Various ways of getting data into
-the database.  Various ways of getting it out again.  Unfortunately I am
-injured and recently had a set-back in my recovery, so the actual 
+The framework is there: a database; various ways of getting data into
+the database; various ways of getting it out again.  Unfortunately I
+am injured and recently had a set-back in my recovery, so the actual
 training part isn't so detailed.
 
 ## Future Plans
 
-Motivated by an initial announcement of this code on Reddit, which helped
-me clarify to myself what I was trying to do here:
+The system was recently re-written to be more configurable and
+general.  Next steps include:
 
-* Rewrite the database so that numerical values are isolated in a single
-  table (and the ORM to use factories that look-up values there).
-* Make calculation of summary statistics more general, working on the
-  single table of values.
-* Allow summary statistics over multiple ranges.
-* Support pluggable / extensible statistics.
-* Remove the complexity of configuration TUIs by moving configuration
-  to something done at the Python (or Jupyter) prompt (like analysis).
-* Rewrite the diary display so that it can handle arbitrary fields
-  (and the binder). 
-* Document all the above in the spirit of "you can extend it" and
-  "move data in and out of database".
+* Updating this documentation.
+  * Add docs for "quantified self" users, since they may also be
+    interested.
+  * Add screenshots and examples.
+* Adding a TSS equivalent using heart rate values.
