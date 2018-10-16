@@ -3,6 +3,9 @@
 
 An **open**, **hackable** and **free** training diary.
 
+See [documentation](https://andrewcooke.github.io/choochoo/) for full
+details.
+
 Training data are stored in a database...
 
 * There are tools to get data into the database:
@@ -29,9 +32,7 @@ The configuration is also stored in the database...
 * You can extend the statistics calculation pipeline
 
 The project can be used stand-alone by someone comfortable with the
-technologies used, or it could be extended with a GUI.  See
-[documentation](https://andrewcooke.github.io/choochoo/) for more
-details.
+technologies used, or it could be extended with a GUI.
 
 ## Latest Changes
 
