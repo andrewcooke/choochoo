@@ -17,6 +17,7 @@ Training data are stored in a database...
   * Prepared calculations for data totals, ranking, averages
   * Ability to extend processing with Python
 * There are tools to get data out of the database:
+  * Browse and edit data in the diary
   * Pandas tables for analysis in numpy and Jupyter notebooks
   * Examples for plotting spatial and time-series data
 * Clear database schema, designed for third party access:
