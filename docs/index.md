@@ -23,7 +23,7 @@ One omission that may be important to some people is the lack of
 emphasis on power meters.
 
 * [Install](install) - installing Choochoo.
-* [Configuration](configure) - configuring the system.
+* [Configure](configure) - configuring the system.
 * [The Diary](diary) - entering daily data.
 * [Activities](activities) - import and organise activity data.
 * [Scheduling](scheduling) - defining regular events.

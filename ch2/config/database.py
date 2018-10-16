@@ -18,6 +18,8 @@ def config(*args):
         print(c...)  todo
         ...
     '''
+    if len(args) == 1:
+        args = args[0].split(' ')
     p = parser()
     args = list(args)
     args.append(NO_OP)

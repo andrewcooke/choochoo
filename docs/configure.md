@@ -1,3 +1,64 @@
 
-# Configuration
+# Configure
+
+## Introduction
+
+Choochoo is configured via the database.  This is most easily done by
+running Python commands, either via a script or at the command line.
+
+The price of a flexible system is complexity.  To understand things
+completely you will need to understand the [data model](data-model),
+but I've also tried to provide some simplified short-cuts and defaults
+that should ease the pain.
+
+In the examples that follow I will use the Python command line
+directly.  Using a script is similar and, because you can delete the
+database and re-run the script until debugged, more useful in
+practice.
+
+## Connecting to the Database
+
+    > python                               
+    Python 3.7.0 (default, Aug 20 2018, 18:32:46)                                  [GCC 7.3.1 20180323 [gcc-7-branch revision 258812]] on linux                   Type "help", "copyright", "credits" or "license" for more information.         >>> from ch2.config import *                                     
+    >>> log, db = config('-v 5 -f /tmp/db.sql')                                    INFO: Using database at /tmp/db.sql                                            >>>
+
+The `config()` command above takes command line arguments
+(space-separated or in separate strings) and returns a log (from the
+standard python logging librray; more useful in scripts) and a
+database connection.
+
+## The Default Configuration
+
+A default is pre-packaged and easy to apply:
+
+    >>> default(db)
+    >>>
+
+It is worth comparing the [source for the
+default](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/default.py)
+with the results:
+
+### Constants
+
+    > ch2 -f /tmp/db.sql constant
+    INFO: Using database at /tmp/db.sql
+
+    FTHR.Bike: Heart rate at functional threshold (cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0
+
+    FTHR.Run: Heart rate at functional threshold (running).
+
+The command above lists the available constants.  These are values
+that you can provide at the command line.  For example:
+
+    > ch2 constant --set FTHR.Bike 154
+
+These constants are defined in the
+[source](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/default.py)
+with `add_activity_constant()`.  This takes a reference to an
+activity, defined with `add_activity()`.  If you are unsure what an
+activity is, now is the time to study the [data model](data-model).
+
+### Topics and Statistics
+
+
 
