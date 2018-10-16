@@ -13,6 +13,7 @@ def sign(x):
 
 PALETTE = [('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
            ('em', 'white', 'black'),
+           ('label', 'dark gray', 'black'),
            ('selected', 'black', 'light gray'), ('selected-focus', 'black', 'white'),
            ('unimportant', 'dark blue', 'black'), ('unimportant-focus', 'light blue', 'black'),
            ('error', 'dark red', 'black'), ('error-focus', 'light red', 'black'),
@@ -24,6 +25,14 @@ PALETTE = [('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
            ('quintile-1', 'light gray', 'black'), ('quintile-2', 'light green', 'black'), ('quintile-3', 'yellow', 'black'),
            ('quintile-4', 'light red', 'black'), ('quintile-5', 'white', 'black'),
            ]
+
+
+def em(text):
+    return 'em', text
+
+
+def label(text):
+    return 'label', text
 
 
 def force_iterable(data):

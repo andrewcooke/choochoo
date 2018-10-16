@@ -1,6 +1,7 @@
 
 from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT, PACK
 
+from ch2.lib.utils import label
 from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
 from .state import MutableStatefulText
 from .tabs import TabNode
@@ -112,7 +113,7 @@ class Rating(MutableStatefulText):
             text = '_'
         else:
             text = str(self.state)
-        return self._caption + text
+        return [self._caption, text]
 
     def keypress(self, size, key):
         if self._command_map[key] == 'activate':
@@ -160,9 +161,9 @@ class Number(MutableStatefulText):
 
     def _state_as_text(self):
         if self.state is None:
-            return self._caption + '_'
+            return [self._caption, '_']
         else:
-            return self._caption + self._string + self._units
+            return [self._caption, self._string, label(self._units)]
 
     def _update_string(self, key):
         used = False

@@ -2,6 +2,7 @@ from re import search
 
 from urwid import Text, Pile, Columns, Divider
 
+from ch2.lib.utils import label
 from .heart_rate import build_zones
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_OVER_M_ANY
 from ...lib.date import to_date, format_seconds, DAY, add_date
@@ -61,12 +62,12 @@ class ActivityDiary:
         for sjournal in sorted(sjournals,
                                # order by integer embedded in name
                                key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic.name).group(1))):
-            body.append(Text([search(re, sjournal.statistic.name).group(1), ': '] +
+            body.append(Text([label(search(re, sjournal.statistic.name).group(1) + ': ')] +
                              self.__format_value(sjournal, date)))
         return body
 
     def __format(self, sjournal, date):
-        return ['%s: ' % sjournal.statistic.name] + self.__format_value(sjournal, date)
+        return [label('%s: ' % sjournal.statistic.name)] + self.__format_value(sjournal, date)
 
     def __format_value(self, sjournal, date):
         words, first = ['%s ' % sjournal.formatted()], True

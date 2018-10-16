@@ -7,7 +7,7 @@ from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 from .args import DATE
 from ..lib.date import to_date
 from ..lib.io import tui
-from ..lib.utils import PALETTE
+from ..lib.utils import PALETTE, em
 from ..lib.widgets import DateSwitcher
 from ..squeal.database import Database
 from ..squeal.tables.source import disable_interval_cleaning, Source
@@ -69,11 +69,17 @@ class Diary(DateSwitcher):
             body.append(extra)
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([Text(self._date.strftime('%Y-%m-%d - %A')), Divider()]),
-                            footer=Pile([Divider(),
-                                         Text(['meta-', ('em', 'q'), 'uit/e', ('em', 'x'), 'it/', ('em', 's'), 'ave',
-                                               ' [shift]meta-', ('em', 'd/w/m/y/a'), 'ctivity'],
-                                              align='center')])))
+                            footer=Pile([Divider(), Text(self.__footer(), align='center')])))
         return body, f.tabs
+
+    def __footer(self):
+        footer = ['meta-', em('q'), 'uit/e', em('x'), 'it/', em('s'), 'ave']
+        footer += [' [shift]meta-']
+        for sep, c in enumerate('dwmya'):
+            if sep: footer += ['/']
+            footer += [em(c)]
+        footer += ['ctivity/', em('t'), 'oday']
+        return footer
 
     def __topic(self, s, f, topic):
         self._log.debug('%s' % topic)

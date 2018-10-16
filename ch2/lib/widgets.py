@@ -22,7 +22,9 @@ class App(TabNode):
         super().__init__(log, *self._build(self.__new_session()))
 
     def __new_session(self):
-        self.save()
+        if self.__session:
+            self.save()
+            self.__session.close()
         self.__session = self.__db.session()
         return self.__session
 
@@ -35,18 +37,20 @@ class App(TabNode):
             self.save()
             raise ExitMainLoop()
         elif key == 'meta x':
+            self.abort()
             raise ExitMainLoop()
         elif key == 'meta s':
             self.save()
         else:
             return super().keypress(size, key)
 
+    def abort(self):
+        if self.__session:
+            self.__session.rollback()
+
     def save(self):
         if self.__session:
-            self._log.debug('Flushing and committing')
-            self.__session.flush()
             self.__session.commit()
-            self.__session = None
 
     @abstractmethod
     def _build(self, session):
@@ -70,7 +74,7 @@ class DateSwitcher(App):
     def keypress(self, size, key):
         if key.startswith('meta'):
             c = key[-1]
-            if c.lower() in (DAY, WEEK, MONTH, YEAR, '='):
+            if c.lower() in (DAY, WEEK, MONTH, YEAR, 't'):
                 self._change_date(c)
                 return
             if c.lower() == 'a':
@@ -91,7 +95,7 @@ class DateSwitcher(App):
             self.rebuild()
 
     def _change_date(self, c):
-        if c == '=':
+        if c == 't':
             self.__date = dt.date.today()
         else:
             delta = (-1 if c == c.lower() else 1, c.lower())

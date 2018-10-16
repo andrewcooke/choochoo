@@ -3,6 +3,7 @@ from abc import abstractmethod, ABC
 
 from urwid import Edit, connect_signal
 
+from ch2.lib.utils import label
 from ..uweird.tui.widgets import Rating
 from ..squeal.tables.statistic import StatisticType
 
@@ -56,7 +57,7 @@ class Text(Base):
         return repr(value)
 
     def _widget(self, journal):
-        return Edit(caption='%s: ' % journal.statistic.name, edit_text=journal.value or '')
+        return Edit(caption=label('%s: ' % journal.statistic.name), edit_text=journal.value or '')
 
 
 class Integer(Base):
@@ -73,7 +74,7 @@ class Integer(Base):
 
     def _widget(self, journal):
         from .tui.widgets import Integer
-        return Integer(caption='%s: ' % journal.statistic.name, state=journal.value,
+        return Integer(caption=label('%s: ' % journal.statistic.name), state=journal.value,
                        minimum=self._lo, maximum=self._hi, units=journal.statistic.units)
 
 
@@ -93,7 +94,7 @@ class Float(Base):
 
     def _widget(self, journal):
         from .tui.widgets import Float
-        return Float(caption='%s: ' % journal.statistic.name, state=journal.value,
+        return Float(caption=label('%s: ' % journal.statistic.name), state=journal.value,
                      minimum=self._lo, maximum=self._hi, dp=self._dp, units=journal.statistic.units)
 
 
@@ -108,4 +109,4 @@ class Score(Base):
         return '%d' % value
 
     def _widget(self, journal):
-        return Rating(caption='%s: ' % journal.statistic.name, state=journal.value)
+        return Rating(caption=label('%s: ' % journal.statistic.name), state=journal.value)
