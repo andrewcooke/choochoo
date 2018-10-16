@@ -5,16 +5,16 @@ source env/bin/activate
 if [ "$#" -ne 1 ]; then
     echo "usage: $0 version"
     echo "eg: $0 1.2.3"
-    OLD_VERSION=`grep version= ch2/args.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
+    OLD_VERSION=`grep version= ch2/command/args.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
     echo "old version is $OLD_VERSION"
     exit 1
 fi
 
 VERSION=$1
 
-OLD_VERSION=`grep version= ch2/args.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
-echo "args.py: $OLD_VERSION -> $VERSION"
-sed -i ch2/args.py -e "s/\(.*version='\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
+OLD_VERSION=`grep version= ch2/command/args.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
+echo "command/args.py: $OLD_VERSION -> $VERSION"
+sed -i ch2/command/args.py -e "s/\(.*version='\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
 
 OLD_VERSION=`grep version= setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
 echo "setup.py: $OLD_VERSION -> $VERSION"
