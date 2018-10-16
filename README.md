@@ -12,20 +12,19 @@ Training data are stored in a database...
   * Read FIT files from smart watches, bike computers, etc
   * Daily information (eg weight) can be entered via the diary
     * Ability to add custom fields for general data capture
-    * Dedicated tracking of injuries
   * Other data (eg FTHR) can be entered at the command line
 * There are tools to process data in the database:
-  * Prepared calculations for data totals, ranking
+  * Prepared calculations for data totals, ranking, averages
   * Ability to extend processing with Python
 * There are tools to get data out of the database:
   * Pandas tables for analysis in numpy and Jupyter notebooks
   * Examples for plotting spatial and time-series data
-* Clear database schema, designed for third party access
+* Clear database schema, designed for third party access:
   * SQLAlchemy ORM interface
 
 The configuration is also stored in the database...
 
-* You can schedule training plans
+* You can schedule training plans:
   * Prepared / example training plans included
   * Simple, declarative library for defining your own plans
 * You can add data fields to the diary
