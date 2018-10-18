@@ -15,7 +15,10 @@ from ..lib.utils import unique
 
 
 def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1,
-              records=None, warn=False, profile_path=None, grep=None):
+              records=None, warn=False, profile_path=None, grep=None, name=False, invert=False):
+    if name and format != GREP:
+        print()
+        print(fit_path)
     if format == RECORDS:
         summarize_records(log, fit_path,
                           all_fields=all_fields, all_messages=all_messages,
@@ -25,7 +28,7 @@ def summarize(log, format, fit_path, all_fields=False, all_messages=False, after
                          all_fields=all_fields, all_messages=all_messages,
                          after=after, limit=limit, records=records, warn=warn, profile_path=profile_path)
     elif format == GREP:
-        summarize_grep(log, fit_path, grep,
+        summarize_grep(log, fit_path, grep, name_file=name, invert=invert,
                        after=after, limit=limit, warn=warn, profile_path=profile_path)
     elif format == CSV:
         summarize_csv(log, fit_path,
@@ -81,20 +84,40 @@ def summarize_tables(log, fit_path, all_fields=False, all_messages=False, after=
     pprint_as_tuples(large, all_fields, all_messages, width=width)
 
 
-def summarize_grep(log, fit_path, grep, after=0, limit=-1, warn=False, profile_path=None):
+class Done(Exception):
+    pass
+
+
+def summarize_grep(log, fit_path, grep, name_file=False, invert=False, after=0, limit=-1,
+                   warn=False, profile_path=None):
     data, types, messages, records = \
         filtered_records(log, fit_path, warn=warn, profile_path=profile_path)
     matchers = [compile(pattern) for pattern in chain.from_iterable(grep)]
     counts = defaultdict(lambda: 0)
-    for record in records:
-        record = record.as_dict(join_values, append_units, to_hex, fix_degrees, no_bad_values)
-        for name, value in sorted(record.data.items()):
-            qualified = '%s:%s' % (record.name, name)
-            for matcher in matchers:
-                if matcher.match(qualified):
-                    counts[qualified] += 1
-                    if counts[qualified] > after and (limit < 0 or counts[qualified] - after <= limit):
-                        print('%s %s' % (qualified, value))
+    first = True
+    try:
+        for record in records:
+            record = record.as_dict(join_values, append_units, to_hex, fix_degrees, no_bad_values)
+            for name, value in sorted(record.data.items()):
+                target_1 = '%s:%s' % (record.name, name)
+                target_2 = '%s:%s=%s' % (record.name, name, value)
+                for matcher in matchers:
+                    if matcher.match(target_2 if '=' in matcher.pattern else target_1):
+                        counts[matcher] += 1
+                        if counts[matcher] > after:
+                            if limit < 0 or counts[matcher] - after <= limit:
+                                if first:
+                                    print()
+                                    first = False
+                                print('%s:%s=%s' % (record.name, name, value))
+                            # exit early if we've displayed all we need to
+                            if all(counts[m] < limit for m in matchers):
+                                raise Done()
+    except Done:
+        pass
+    if name_file:
+        if (not all(counts[m] > 0 for m in matchers)) == invert:
+            print(fit_path)
 
 
 def summarize_csv(log, fit_path, after=0, limit=-1 ,profile_path=None, warn=False, out=stdout):

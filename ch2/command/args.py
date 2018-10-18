@@ -45,6 +45,7 @@ M, MESSAGE = 'm', 'message'
 MESSAGES = 'messages'
 MONTHS = 'months'
 NAME = 'name'
+NOT = 'not'
 PATH = 'path'
 PLAN = 'plan'
 RECORDS = 'records'
@@ -173,8 +174,8 @@ def parser():
                             help='show high-level structure (ordered by time)')
     fit_format.add_argument(mm(TABLES), action='store_const', dest=FORMAT, const=TABLES,
                             help='show high-level structure (grouped in tables)')
-    fit_format.add_argument(mm(GREP), action='append', dest=GREP, nargs='+', metavar='MSG:FLD',
-                            help='show med-level matching messages and fields')
+    fit_format.add_argument(mm(GREP), action='append', dest=GREP, nargs='+', metavar='MSG:FLD[=VAL]',
+                            help='show med-level matching entries')
     fit_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV,
                             help='show med-level structure in CSV format')
     fit_format.add_argument(mm(MESSAGES), action='store_const', dest=FORMAT, const=MESSAGES,
@@ -193,6 +194,10 @@ def parser():
                      help='display only named high-level messages')
     fit.add_argument(m(W), mm(WARN), action='store_true',
                      help='additional warning messages')
+    fit.add_argument(mm(NAME), action='store_true',
+                     help='display file name')
+    fit.add_argument(mm(NOT), action='store_true',
+                     help='display file names that don\'t match (with --grep --name)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
     help = subparsers.add_parser(HELP,

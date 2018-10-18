@@ -34,10 +34,8 @@ def md5_hash(file_path):
     return hash.hexdigest()
 
 
-def glob_files(log, path_glob, file_glob='*.fit'):
+def glob_files(log, path_glob):
     found = False
-    if isdir(path_glob):
-        path_glob = join(path_glob, file_glob)
     for file_path in glob(path_glob, recursive=True):
         found = True
         file_path = realpath(file_path)
@@ -46,9 +44,9 @@ def glob_files(log, path_glob, file_glob='*.fit'):
         raise Exception('No match for "%s"' % path_glob)
 
 
-def glob_modified_files(log, s, path_glob, file_glob='*.fit', force=False):
+def glob_modified_files(log, s, path_glob, force=False):
 
-    for file_path in glob_files(log, path_glob, file_glob=file_glob):
+    for file_path in glob_files(log, path_glob):
         last_modified = to_time(stat(file_path).st_mtime)
         hash = md5_hash(file_path)
 

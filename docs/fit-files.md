@@ -34,6 +34,9 @@ is intended mainly to allow data to be imported into the ch2 diary.
   * [The `fields` format](#the-fields-format) - a more detailed
     low-level display that is also mostly used for debugging.
 
+  * [The `grep` format](#the-grep-format) - this filters the
+    data and can be used to find files containing certain values.
+
   * [The `csv` format](#the-csv-format) - used to compare test data
     with the examples provided in the
     [SDK](https://www.thisisant.com/resources/fit).
@@ -46,19 +49,30 @@ is intended mainly to allow data to be imported into the ch2 diary.
 
 For details of all the options:
 
-    ch2 dump-fit -h
+    ch2 fit -h
+
+All commands take a *single* path that can contain "file globbing".
+Care should be taken that this is not expanded by the shell (write
+glob patterns in quoted strings).
+
+For example
+
+    ch2 fit "/dir1/**/dir2/*.fit"
+
+will match FIT files in subdirectories called `dir2` at *any depth*
+under `dir`.
 
 ### The `tables` Format
 
 #### Example Usage
 
-    ch2 -v 0 dump-fit FILE
+    ch2 -v 0 fit FILE
 
-    ch2 -v 0 dump-fit --tables FILE
+    ch2 -v 0 fit --tables FILE
 
-    ch2 -v 0 dump-fit --tables --all-fields --all-messages FILE
+    ch2 -v 0 fit --tables --all-fields --all-messages FILE
 
-    ch2 -v 0 dump-fit --tables --after N1 --limit N2 FILE
+    ch2 -v 0 fit --tables --after N1 --limit N2 FILE
 
 Note that `-v 0` is used to supress any logging that would otherwise
 confuse the output to the screen.  Logs are still written to the logs
@@ -223,11 +237,11 @@ Such fields are marked by `-`.
 
 #### Example Usage
 
-    ch2 -v 0 dump-fit --records FILE
+    ch2 -v 0 fit --records FILE
 
-    ch2 -v 0 dump-fit --records --all-fields --all-messages FILE
+    ch2 -v 0 fit --records --all-fields --all-messages FILE
 
-    ch2 -v 0 dump-fit --records --after N1 --limit N2 FILE
+    ch2 -v 0 fit --records --after N1 --limit N2 FILE
 
 Note that `-v 0` is used to supress any logging that would otherwise
 confuse the output to the screen.  Logs are still written to the logs
@@ -408,9 +422,9 @@ Such fields are marked by `-`.
 
 #### Example Usage
 
-    ch2 -v 0 dump-fit --messages FILE
+    ch2 -v 0 fit --messages FILE
 
-    ch2 -v 0 dump-fit --messages --after N1 --limit N2 FILE
+    ch2 -v 0 fit --messages --after N1 --limit N2 FILE
 
 #### Format Description
 
@@ -477,9 +491,9 @@ and checksum (CRC) messages.
 
 #### Example Usage
 
-    ch2 -v 0 dump-fit --fields FILE
+    ch2 -v 0 fit --fields FILE
 
-    ch2 -v 0 dump-fit --fields --after N1 --limit N2 FILE
+    ch2 -v 0 fit --fields --after N1 --limit N2 FILE
 
 #### Format Description
 
@@ -546,13 +560,62 @@ and type.
     237 05793 CRC 01a2
       01a2 - checksum
 
+### The `grep` Format
+
+#### Example Usage
+
+    ch2 -v 0 fit --grep '.*'
+
+    ch2 -v 0 ./**/*.fit --limit 0 --grep '.*:sport=cycling' --name
+
+    ch2 -v 0 ./**/*.fit --limit 0 --grep '.*:sport=cycling' --not
+
+The first example will print `MSG:FLD=VAL` entries for every value in
+the file.  The second will list file names (`--name`) only (`--limit
+0` so 0 entries displayed) that contain a `sport` field with the value
+`cycling`.  The third will list files that *do not* contain a
+`cycling` value.
+
+#### Format Description
+
+The output format is verbose, so not useful for examining whole files,
+but the search (using regular expressions) allows you to check for
+specific values in a file, or to identify files that meet a certain
+criteria.
+
+Note that for this format the file name is printed *after* any
+matches.  Also, the file name is only printed if *all* matches have
+matched.  Finally, the `after`/`limit` counts and decision on whether
+all patterns have matched are based on the *patterns* and not the
+entries (a pattern may match multiple entries - each match is
+counted).
+
+#### Example Output
+
+    > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --limit 0 --name 
+    /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_6200097899_2016-08-20-mkt.fit
+    /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000953_tap-sync-31410-8dbc6f38af4ddbecede6e72cdd95f3cb.fit
+    /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000098_tap-sync-31410-1721f3de088eae17e31d3cea3042f2c1.fit
+
+
+    > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --limit 1 --name 
+
+    sport:sport=cycling
+    /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_6200097899_2016-08-20-mkt.fit
+
+    lap:sport=cycling
+    /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000953_tap-sync-31410-8dbc6f38af4ddbecede6e72cdd95f3cb.fit
+
+    lap:sport=cycling
+    /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000098_tap-sync-31410-1721f3de088eae17e31d3cea3042f2c1.fit
+
 ### The `csv` Format
 
 #### Example Usage
 
-    ch2 -v 0 dump-fit --csv FILE
+    ch2 -v 0 fit --csv FILE
 
-    ch2 -v 0 dump-fit --csv --after N1 --limit N2 FILE
+    ch2 -v 0 fit --csv --after N1 --limit N2 FILE
 
 #### Format Description
 
