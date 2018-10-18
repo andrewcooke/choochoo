@@ -15,7 +15,7 @@ from ..lib.utils import unique
 
 
 def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1,
-              records=None, warn=False, profile_path=None, grep=None, name=False, invert=False):
+              records=None, warn=False, profile_path=None, grep=None, name=False, invert=False, match=1):
     if name and format != GREP:
         print()
         print(fit_path)
@@ -28,7 +28,7 @@ def summarize(log, format, fit_path, all_fields=False, all_messages=False, after
                          all_fields=all_fields, all_messages=all_messages,
                          after=after, limit=limit, records=records, warn=warn, profile_path=profile_path)
     elif format == GREP:
-        summarize_grep(log, fit_path, grep, name_file=name, invert=invert,
+        summarize_grep(log, fit_path, grep, name_file=name, match=match, invert=invert,
                        after=after, limit=limit, warn=warn, profile_path=profile_path)
     elif format == CSV:
         summarize_csv(log, fit_path,
@@ -88,7 +88,7 @@ class Done(Exception):
     pass
 
 
-def summarize_grep(log, fit_path, grep, name_file=False, invert=False, after=0, limit=-1,
+def summarize_grep(log, fit_path, grep, name_file=False, match=1, invert=False, after=0, limit=-1,
                    warn=False, profile_path=None):
     data, types, messages, records = \
         filtered_records(log, fit_path, warn=warn, profile_path=profile_path)
@@ -96,27 +96,30 @@ def summarize_grep(log, fit_path, grep, name_file=False, invert=False, after=0, 
     counts = defaultdict(lambda: 0)
     first = True
     try:
-        for record in records:
-            record = record.as_dict(join_values, append_units, to_hex, fix_degrees, no_bad_values)
-            for name, value in sorted(record.data.items()):
-                target_1 = '%s:%s' % (record.name, name)
-                target_2 = '%s:%s=%s' % (record.name, name, value)
-                for matcher in matchers:
-                    if matcher.match(target_2 if '=' in matcher.pattern else target_1):
-                        counts[matcher] += 1
-                        if counts[matcher] > after:
-                            if limit < 0 or counts[matcher] - after <= limit:
-                                if first:
-                                    print()
-                                    first = False
-                                print('%s:%s=%s' % (record.name, name, value))
-                            # exit early if we've displayed all we need to
-                            if all(counts[m] < limit for m in matchers):
-                                raise Done()
+        for n, record in enumerate(records):
+            if n >= after:
+                if n < after + limit or limit < 0:
+                    record = record.as_dict(join_values, append_units, to_hex, fix_degrees, no_bad_values)
+                    for name, value in sorted(record.data.items()):
+                        target_1 = '%s:%s' % (record.name, name)
+                        target_2 = '%s:%s=%s' % (record.name, name, value)
+                        for matcher in matchers:
+                            if matcher.match(target_2 if '=' in matcher.pattern else target_1):
+                                counts[matcher] += 1
+                                if counts[matcher] <= match:
+                                    if first:
+                                        print()
+                                        first = False
+                                    print('%s:%s=%s' % (record.name, name, value))
+                                # exit early if we've displayed/matched all we need to
+                                if all(counts[m] >= max(1, match) for m in matchers):
+                                    raise Done()
+                else:
+                    raise Done()
     except Done:
         pass
     if name_file:
-        if (not all(counts[m] > 0 for m in matchers)) == invert:
+        if (not all(counts[m] for m in matchers)) == invert:
             print(fit_path)
 
 

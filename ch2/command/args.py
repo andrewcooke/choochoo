@@ -42,6 +42,7 @@ LIMIT = 'limit'
 LOGS = 'logs'
 LIST = 'list'
 M, MESSAGE = 'm', 'message'
+MATCH = 'match'
 MESSAGES = 'messages'
 MONTHS = 'months'
 NAME = 'name'
@@ -183,9 +184,9 @@ def parser():
     fit_format.add_argument(mm(FIELDS), action='store_const', dest=FORMAT, const=FIELDS,
                             help='show low-level field structure (more details)')
     fit.add_argument(mm(AFTER), action='store', nargs=1, type=int, metavar='N', default=[0],
-                     help='skip initial messages (or matches for --grep)')
+                     help='skip initial messages')
     fit.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
-                     help='limit number of messages  (or matches) displayed')
+                     help='limit number of messages')
     fit.add_argument(mm(ALL_FIELDS), action='store_true',
                      help='display undocumented high-level fields')
     fit.add_argument(mm(ALL_MESSAGES), action='store_true',
@@ -198,6 +199,8 @@ def parser():
                      help='display file name')
     fit.add_argument(mm(NOT), action='store_true',
                      help='display file names that don\'t match (with --grep --name)')
+    fit.add_argument(mm(MATCH), action='store', type=int, default=1,
+                     help='number of matches to display (with --grep)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
     help = subparsers.add_parser(HELP,

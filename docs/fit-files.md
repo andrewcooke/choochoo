@@ -566,15 +566,18 @@ and type.
 
     ch2 -v 0 fit --grep '.*'
 
-    ch2 -v 0 ./**/*.fit --limit 0 --grep '.*:sport=cycling' --name
+Prints `MSG:FLD=VAL` entries for every value in the file.
 
-    ch2 -v 0 ./**/*.fit --limit 0 --grep '.*:sport=cycling' --not
+    ch2 -v 0 ./**/*.fit --match 0 --grep '.*:sport=cycling' --name
 
-The first example will print `MSG:FLD=VAL` entries for every value in
-the file.  The second will list file names (`--name`) only (`--limit
-0` so 0 entries displayed) that contain a `sport` field with the value
-`cycling`.  The third will list files that *do not* contain a
-`cycling` value.
+List file names (`--name`) only (`--match 0` so 0 entries displayed)
+that contain a `sport` field with the value `cycling`.
+
+    ch2 -v 0 ./**/*.fit --match 0 --limit 10 --grep '.*:sport=cycling' --not
+
+List files that *do not* contain a `cycling` value.  For efficiency
+(but at the possible risk of missing some matches) only the first 10
+records are examined.
 
 #### Format Description
 
@@ -592,13 +595,13 @@ counted).
 
 #### Example Output
 
-    > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --limit 0 --name 
+    > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --match 0 --name 
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_6200097899_2016-08-20-mkt.fit
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000953_tap-sync-31410-8dbc6f38af4ddbecede6e72cdd95f3cb.fit
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000098_tap-sync-31410-1721f3de088eae17e31d3cea3042f2c1.fit
 
 
-    > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --limit 1 --name 
+    > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --name 
 
     sport:sport=cycling
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_6200097899_2016-08-20-mkt.fit

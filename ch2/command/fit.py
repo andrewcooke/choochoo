@@ -1,5 +1,5 @@
 from ch2.lib.io import glob_files
-from .args import PATH, FORMAT, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, WARN, GREP, MESSAGE, NAME, NOT
+from .args import PATH, FORMAT, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, WARN, GREP, MESSAGE, NAME, NOT, MATCH
 from ..fit.summary import summarize
 
 
@@ -28,4 +28,4 @@ or redirect stderr elsewhere).
         # there's a change of nomenclature here from message to record that is too much trouble to fix
         summarize(log, args[FORMAT], file_path, all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
                   after=args[AFTER][0], limit=args[LIMIT][0], records=args[MESSAGE], warn=args[WARN],
-                  grep=args[GREP], name=args[NAME], invert=args[NOT])
+                  grep=args[GREP], name=args[NAME], invert=args[NOT], match=args[MATCH])
