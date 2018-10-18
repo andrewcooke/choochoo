@@ -23,13 +23,13 @@ practice.
     [GCC 7.3.1 20180323 [gcc-7-branch revision 258812]] on linux
     Type "help", "copyright", "credits" or "license" for more information.
     >>> from ch2.config import *
-    >>> log, db = config('-v 5 -f /tmp/db.sql')
-    INFO: Using database at /tmp/db.sql
+    >>> log, db = config('-v 5')
+    INFO: Using database at ...
     >>>
 
-The `config()` command above takes command line arguments
-(space-separated or in separate strings) and returns a log (from the
-standard python logging librray; more useful in scripts) and a
+The `config()` command above takes command line arguments similar to
+`ch2` (space-separated or in separate strings) and returns a log (from
+the standard python logging library; more useful in scripts) and a
 database connection.
 
 ## The Default Configuration
@@ -45,8 +45,8 @@ with the results:
 
 ### Constants
 
-    > ch2 -f /tmp/db.sql constant
-    INFO: Using database at /tmp/db.sql
+    > ch2 constant
+    INFO: Using database at ...
 
     FTHR.Bike: Heart rate at functional threshold (cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0
 
@@ -65,5 +65,5 @@ activity is, now is the time to study the [data model](data-model).
 
 ### Topics and Statistics
 
-
-
+    > ch2 diary
+    

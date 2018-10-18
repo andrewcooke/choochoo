@@ -3,6 +3,7 @@ from glob import glob
 from os import stat
 from os.path import isdir, join, basename, splitext
 
+from ch2.lib.io import glob_modified_files
 from ..command.args import PATH, ACTIVITY, FORCE, FAST
 from ..fit.format.read import filtered_records
 from ..fit.format.records import fix_degrees
@@ -23,12 +24,12 @@ Read one or more (if PATH is a directory) FIT files and associated them with the
     force, fast = args[FORCE], args[FAST]
     activity = args[ACTIVITY][0]
     path = args.path(PATH, index=0, rooted=False)
-    FITImporter(log, db, activity, path).run(force=force)
+    ActivityImporter(log, db, activity, path).run(force=force)
     if not fast:
         run_statistics(log, db, force=force)
 
 
-class FITImporter:
+class ActivityImporter:
 
     def __init__(self, log, db, activity, path):
         self._log = log
@@ -39,28 +40,9 @@ class FITImporter:
     def run(self, force=False):
         with self._db.session_context() as s:
             activity = Activity.lookup(self._log, s, self._activity_name)
-            for file in self._modified_files(s, force):
+            for file in glob_modified_files(self._log, s, self._path, force=force):
                 self._log.info('Scanning %s' % file)
                 self._import(s, file, activity, force)
-
-    def _modified_files(self, s, force):
-        path = self._path
-        if isdir(path):
-            path = join(path, '*.fit')
-        files = list(sorted(glob(path)))
-        if not files:
-            raise Exception('No match for "%s"' % self._path)
-        for file in files:
-            scan = s.query(FileScan).filter(FileScan.path == file).one_or_none()
-            if not scan:
-                scan = FileScan(path=file, last_scan=0)
-                s.add(scan)
-            last_modified = stat(file).st_mtime
-            if force or last_modified > scan.last_scan:
-                yield file
-                scan.last_scan = last_modified
-            else:
-                self._log.debug('Skipping %s (already scanned)' % file)
 
     def _import(self, s, path, activity, force):
 

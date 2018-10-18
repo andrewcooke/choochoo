@@ -1,5 +1,7 @@
 
-from collections import Counter
+from collections import Counter, defaultdict
+from itertools import chain
+from re import compile
 from sys import stdout
 
 from .format.read import filtered_records, filtered_tokens
@@ -7,30 +9,33 @@ from .format.records import no_bad_values, fix_degrees, append_units, no_unknown
     to_hex, no_filter
 from .profile.types import Date
 from ..command.args import MESSAGES, RECORDS, FIELDS, CSV, \
-    TABLES
+    TABLES, GREP
 from ..lib.io import terminal_width
 from ..lib.utils import unique
 
 
 def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1,
-              records=None, warn=False, profile_path=None):
-    if format == MESSAGES:
+              records=None, warn=False, profile_path=None, grep=None):
+    if format == RECORDS:
+        summarize_records(log, fit_path,
+                          all_fields=all_fields, all_messages=all_messages,
+                          after=after, limit=limit, records=records, warn=warn, profile_path=profile_path)
+    elif format == TABLES:
+        summarize_tables(log, fit_path,
+                         all_fields=all_fields, all_messages=all_messages,
+                         after=after, limit=limit, records=records, warn=warn, profile_path=profile_path)
+    elif format == GREP:
+        summarize_grep(log, fit_path, grep,
+                       after=after, limit=limit, warn=warn, profile_path=profile_path)
+    elif format == CSV:
+        summarize_csv(log, fit_path,
+                      after=after, limit=limit, warn=warn, profile_path=profile_path)
+    elif format == MESSAGES:
         summarize_messages(log, fit_path,
                            after=after, limit=limit, warn=warn, profile_path=profile_path)
     elif format == FIELDS:
         summarize_fields(log, fit_path,
                          after=after, limit=limit, warn=warn, profile_path=profile_path)
-    elif format == RECORDS:
-        summarize_records(log, fit_path,
-                         all_fields=all_fields, all_messages=all_messages,
-                         after=after, limit=limit, records=records, warn=warn, profile_path=profile_path)
-    elif format == TABLES:
-        summarize_tables(log, fit_path,
-                         all_fields=all_fields, all_messages=all_messages,
-                         after=after, limit=limit, records=records, warn=warn, profile_path=profile_path)
-    elif format == CSV:
-        summarize_csv(log, fit_path,
-                      after=after, limit=limit, warn=warn, profile_path=profile_path)
     else:
         raise Exception('Bad format: %s' % format)
 
@@ -74,6 +79,22 @@ def summarize_tables(log, fit_path, all_fields=False, all_messages=False, after=
     print()
     pprint_as_dicts(small, all_fields, all_messages, width=width)
     pprint_as_tuples(large, all_fields, all_messages, width=width)
+
+
+def summarize_grep(log, fit_path, grep, after=0, limit=-1, warn=False, profile_path=None):
+    data, types, messages, records = \
+        filtered_records(log, fit_path, warn=warn, profile_path=profile_path)
+    matchers = [compile(pattern) for pattern in chain.from_iterable(grep)]
+    counts = defaultdict(lambda: 0)
+    for record in records:
+        record = record.as_dict(join_values, append_units, to_hex, fix_degrees, no_bad_values)
+        for name, value in sorted(record.data.items()):
+            qualified = '%s:%s' % (record.name, name)
+            for matcher in matchers:
+                if matcher.match(qualified):
+                    counts[qualified] += 1
+                    if counts[qualified] > after and (limit < 0 or counts[qualified] - after <= limit):
+                        print('%s %s' % (qualified, value))
 
 
 def summarize_csv(log, fit_path, after=0, limit=-1 ,profile_path=None, warn=False, out=stdout):

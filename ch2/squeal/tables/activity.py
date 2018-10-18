@@ -13,7 +13,8 @@ class FileScan(Base):
     __tablename__ = 'file_scan'
 
     path = Column(Text, nullable=False, primary_key=True)
-    last_scan = Column(Integer, nullable=False)  # unix epoch
+    md5_hash = Column(Text, nullable=False, index=True)
+    last_scan = Column(Time, nullable=False)
 
 
 class Activity(Base):

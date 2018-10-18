@@ -30,22 +30,23 @@ DATABASE = 'database'
 DATE = 'date'
 DELETE = 'delete'
 DEV = 'dev'
-DUMP_FORMAT = 'dump_format'
 F = 'f'
 FAST = 'fast'
 FIELDS = 'fields'
 FINISH = 'finish'
+FORMAT = 'format'
 FTHR = 'fthr'
 FORCE, F = 'force', 'f'
+GREP = 'grep'
 LIMIT = 'limit'
 LOGS = 'logs'
 LIST = 'list'
+M, MESSAGE = 'm', 'message'
 MESSAGES = 'messages'
 MONTHS = 'months'
 NAME = 'name'
 PATH = 'path'
 PLAN = 'plan'
-RECORD, R = 'record', 'r'
 RECORDS = 'records'
 ROOT = 'root'
 SET = 'set'
@@ -136,7 +137,6 @@ def parser():
     activity = subparsers.add_parser(ACTIVITY,
                                      help='add a new activity - see `%s %s -h` for more details' %
                                           (PROGNAME, ACTIVITY))
-    activity_period = activity.add_mutually_exclusive_group()
     activity.add_argument(m(F), mm(FORCE), action='store_true', help='re-read file and delete existing data')
     activity.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activity.add_argument(ACTIVITY, action='store', metavar='ACTIVITY', nargs=1,
@@ -168,30 +168,32 @@ def parser():
                                      'see `%s %s -h` for more details' % (PROGNAME, FIT))
     fit.add_argument(PATH, action='store', metavar='FIT-FILE', nargs=1,
                      help='the path to the fit file')
-    fit.add_argument(mm(AFTER), action='store', nargs=1, type=int, metavar='N', default=[0],
-                     help='skip initial messages')
-    fit.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
-                     help='limit number of messages displayed')
-    fit_format = fit.add_mutually_exclusive_group()
-    fit_format.add_argument(mm(RECORDS), action='store_const', dest=DUMP_FORMAT, const=RECORDS,
+    fit_format = fit.add_mutually_exclusive_group(required=True)
+    fit_format.add_argument(mm(RECORDS), action='store_const', dest=FORMAT, const=RECORDS,
                             help='show high-level structure (ordered by time)')
-    fit_format.add_argument(mm(TABLES), action='store_const', dest=DUMP_FORMAT, const=TABLES,
-                            help='show high-level structure (default: grouped in tables)')
-    fit_format.add_argument(mm(CSV), action='store_const', dest=DUMP_FORMAT, const=CSV,
-                            help='show med-level structure (CSV format)')
-    fit_format.add_argument(mm(MESSAGES), action='store_const', dest=DUMP_FORMAT, const=MESSAGES,
+    fit_format.add_argument(mm(TABLES), action='store_const', dest=FORMAT, const=TABLES,
+                            help='show high-level structure (grouped in tables)')
+    fit_format.add_argument(mm(GREP), action='append', dest=GREP, nargs='+', metavar='MSG:FLD',
+                            help='show med-level matching messages and fields')
+    fit_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV,
+                            help='show med-level structure in CSV format')
+    fit_format.add_argument(mm(MESSAGES), action='store_const', dest=FORMAT, const=MESSAGES,
                             help='show low-level message structure')
-    fit_format.add_argument(mm(FIELDS), action='store_const', dest=DUMP_FORMAT, const=FIELDS,
+    fit_format.add_argument(mm(FIELDS), action='store_const', dest=FORMAT, const=FIELDS,
                             help='show low-level field structure (more details)')
+    fit.add_argument(mm(AFTER), action='store', nargs=1, type=int, metavar='N', default=[0],
+                     help='skip initial messages (or matches for --grep)')
+    fit.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
+                     help='limit number of messages  (or matches) displayed')
     fit.add_argument(mm(ALL_FIELDS), action='store_true',
-                     help='display undocumented fields (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
+                     help='display undocumented high-level fields')
     fit.add_argument(mm(ALL_MESSAGES), action='store_true',
-                     help='display undocumented messages (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
-    fit.add_argument(m(R), mm(RECORD), action='store', metavar='name',
-                     help='display only named record(s) (for %s, %s)' % (mm(RECORDS), mm(TABLES)))
-    fit.add_argument(m(W), mm(WARN), action='store', metavar='name',
+                     help='display undocumented high-level messages')
+    fit.add_argument(m(M), mm(MESSAGE), action='store', metavar='MSG',
+                     help='display only named high-level messages')
+    fit.add_argument(m(W), mm(WARN), action='store_true',
                      help='additional warning messages')
-    fit.set_defaults(command=FIT, dump_format=TABLES)
+    fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
     help = subparsers.add_parser(HELP,
                                  help='display help - ' + 'see `%s %s -h` for more details' % (PROGNAME, HELP))
