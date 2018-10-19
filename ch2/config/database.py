@@ -3,7 +3,7 @@ from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity
-from ..squeal.tables.config import StatisticPipeline, DiaryPipeline
+from ..squeal.tables.config import StatisticPipeline, DiaryPipeline, ActivityPipeline
 from ..squeal.tables.constant import Constant
 from ..squeal.tables.statistic import Statistic, StatisticType
 from ..squeal.tables.topic import Topic, TopicField
@@ -108,6 +108,21 @@ def add_activity(session, name, sort, description=None):
     So typical entries might be for cycling, running, etc.
     '''
     return add(session, Activity(name=name, sort=sort, description=description))
+
+
+def add_activities(session, cls, sort, **kargs):
+    '''
+    Add a class to the activities pipeline.
+
+    The pipeline classes are invoked when activities are imported from FIT files.
+    They read the files and create ActivityJournal entries and associated statistics.
+
+    The sort argument fixes the order in which the classes are instantiated and called and can
+    be an integer or a callable (that returns an integer) like Counter above.
+
+    The kargs are passed to the constructor and so can be used to customize the processing.
+    '''
+    return add(session, ActivityPipeline(cls=cls, sort=sort, kargs=kargs))
 
 
 def add_activity_constant(session, activity, name, description=None, units=None, type=StatisticType.INTEGER):

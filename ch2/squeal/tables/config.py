@@ -7,23 +7,26 @@ from ..support import Base
 from ..types import Cls, Json, Sort
 
 
-class StatisticPipeline(Base):
+class PipelineMixin:
+
+    id = Column(Integer, primary_key=True)
+    cls = Column(Cls, nullable=False)
+    args = Column(Json, nullable=None, server_default=dumps(()))
+    kargs = Column(Json, nullable=None, server_default=dumps({}))
+    sort = Column(Sort)
+
+
+class StatisticPipeline(PipelineMixin, Base):
 
     __tablename__ = 'statistic_pipeline'
 
-    id = Column(Integer, primary_key=True)
-    cls = Column(Cls, nullable=False)
-    args = Column(Json, nullable=None, server_default=dumps(()))
-    kargs = Column(Json, nullable=None, server_default=dumps({}))
-    sort = Column(Sort)
 
-
-class DiaryPipeline(Base):
+class DiaryPipeline(PipelineMixin, Base):
 
     __tablename__ = 'diary_pipeline'
 
-    id = Column(Integer, primary_key=True)
-    cls = Column(Cls, nullable=False)
-    args = Column(Json, nullable=None, server_default=dumps(()))
-    kargs = Column(Json, nullable=None, server_default=dumps({}))
-    sort = Column(Sort)
+
+class ActivityPipeline(PipelineMixin, Base):
+
+    __tablename__ = 'activity_pipeline'
+

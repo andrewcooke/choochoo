@@ -1,13 +1,14 @@
 
 from .database import Counter, add_statistics, add_activity, add_activity_constant, add_topic, add_topic_field, \
-    add_diary
+    add_diary, add_activities
+from ..command.activities import ActivityImporter
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticType
 from ..stoats.calculate.activity import ActivityStatistics
-from ..stoats.display.activity import ActivityDiary
 from ..stoats.calculate.clean import CleanUnusedStatistics
-from ..stoats.names import BPM, FTHR
 from ..stoats.calculate.summary import SummaryStatistics
+from ..stoats.display.activity import ActivityDiary
+from ..stoats.names import BPM, FTHR
 from ..uweird.fields import Text, Float, Score, Integer
 
 
@@ -37,6 +38,9 @@ def default(db):
 
         bike = add_activity(s, 'Bike', c, description='All cycling activities')
         run = add_activity(s, 'Run', c, description='All running activities')
+        # sport_to_activity maps from the FIT sport field to the activity defined above
+        add_activities(s, ActivityImporter, c, sport_to_activity={'cycling': bike.name,
+                                                                  'running': run.name})
         s.flush()  # set IDs because these are used below
 
         # constants used by statistics

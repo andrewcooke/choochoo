@@ -11,7 +11,7 @@ PROGNAME = 'ch2'
 COMMAND = 'command'
 TOPIC = 'topic'
 
-ACTIVITY = 'activity'
+ACTIVITIES = 'activities'
 CONSTANT = 'constant'
 DIARY = 'diary'
 EXAMPLE_CONFIG = 'example-config'
@@ -136,16 +136,14 @@ def parser():
 
     subparsers = parser.add_subparsers()
 
-    activity = subparsers.add_parser(ACTIVITY,
-                                     help='add a new activity - see `%s %s -h` for more details' %
-                                          (PROGNAME, ACTIVITY))
-    activity.add_argument(m(F), mm(FORCE), action='store_true', help='re-read file and delete existing data')
-    activity.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
-    activity.add_argument(ACTIVITY, action='store', metavar='ACTIVITY', nargs=1,
-                          help='an activity name')
-    activity.add_argument(PATH, action='store', metavar='PATH', nargs=1,
-                          help='a fit file or directory containing fit files')
-    activity.set_defaults(command=ACTIVITY)
+    activities = subparsers.add_parser(ACTIVITIES,
+                                       help='add a new activity - see `%s %s -h` for more details' %
+                                            (PROGNAME, ACTIVITIES))
+    activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
+    activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
+    activities.add_argument(PATH, action='store', metavar='PATH', nargs=1,
+                            help='a glob path identifying fit files')
+    activities.set_defaults(command=ACTIVITIES)
 
     constant = subparsers.add_parser(CONSTANT,
                                      help='set and examine constants - see `%s %s -h` for more details' %
@@ -169,7 +167,7 @@ def parser():
                                 help='display contents of fit file - ' +
                                      'see `%s %s -h` for more details' % (PROGNAME, FIT))
     fit.add_argument(PATH, action='store', metavar='FIT-FILE', nargs=1,
-                     help='the path to the fit file')
+                     help='a glob path identifying fit files')
     fit_format = fit.add_mutually_exclusive_group(required=True)
     fit_format.add_argument(mm(RECORDS), action='store_const', dest=FORMAT, const=RECORDS,
                             help='show high-level structure (ordered by time)')

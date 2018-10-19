@@ -7,10 +7,10 @@ from shutil import get_terminal_size
 
 from sqlalchemy import desc
 
-from ch2.config import add
-from ch2.lib.date import to_time
-from ch2.lib.schedule import ZERO
-from ch2.squeal.tables.activity import FileScan
+from .date import to_time
+from .schedule import ZERO
+from ..squeal.database import add
+from ..squeal.tables.activity import FileScan
 
 
 def terminal_width(width=None):
@@ -57,11 +57,12 @@ def glob_modified_files(log, s, path_glob, force=False):
                 path_scan.md5_hash = hash
                 path_scan.last_scan = ZERO
         else:
-            path_scan = add(s, FileScan(path=file_path, md5_hash=hash, last_scan=ZERO))
+            path_scan = add(s, FileScan(path=file_path, md5_hash=hash, last_scan=to_time(ZERO)))
+            s.flush()
 
         hash_scan = s.query(FileScan).filter(FileScan.md5_hash == hash).\
-            order_by(desc(FileScan.last_scan)).one()  # must exist as path_scan is a candidate
-        if hash_scan != path_scan:
+            order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
+        if hash_scan.path != path_scan.path:
             log.warn('File at %s appears to be identical to file at %s' % (file_path, hash_scan.path))
 
         if force or last_modified > hash_scan.last_scan:

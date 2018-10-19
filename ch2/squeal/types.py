@@ -43,7 +43,7 @@ class Time(TypeDecorator):
         if value is None:
             return value
         else:
-            return dt.datetime.utcfromtimestamp(value)
+            return dt.datetime.fromtimestamp(value, dt.timezone.utc)
 
 
 CLS_CACHE = {}

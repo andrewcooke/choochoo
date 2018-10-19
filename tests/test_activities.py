@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile
 
 from sqlalchemy.sql.functions import count
 
-from ch2.command.activity import activity
+from ch2.command.activities import activities
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.command.constant import constant
 from ch2.config.default import default
@@ -30,7 +30,7 @@ def test_activities():
 
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                        'activity', mm(FAST), 'Bike', 'data/test/personal/2018-08-27-rec.fit')
-        activity(args, log)
+        activities(args, log)
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
 

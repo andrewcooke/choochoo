@@ -22,14 +22,9 @@ class SummaryStatistics:
     def run(self, schedule=None, force=False, after=None):
         if schedule is None:
             for schedule in self._pipeline_schedules():
-                self._run(schedule, force, after)
+                self._run_schedule(schedule, force, after=after)
         else:
-            self._run(Schedule(schedule), force, after=None)
-
-    def _run(self, spec, force, after=None):
-        if force:
-            self._delete(spec, after)
-        self._create_values(spec)
+            self._run_schedule(Schedule(schedule), force, after=after)
 
     def _pipeline_schedules(self):
         with self._db.session_context() as s:
@@ -42,6 +37,11 @@ class SummaryStatistics:
                 yield kargs[0]['schedule']
             else:
                 raise Exception('No schedule in kargs for Statistic Pipeline (%s)' % cls.__name__)
+
+    def _run_schedule(self, spec, force, after=None):
+        if force:
+            self._delete(spec, after)
+        self._create_values(spec)
 
     def _delete(self, spec, after=None):
         # we delete the intervals that all summary statistics depend on and they will cascade
@@ -171,24 +171,25 @@ class SummaryStatistics:
         with self._db.session_context() as s:
             for start, finish in self._intervals(s, spec):
                 new, interval = self._interval(s, start, finish, spec)
-                have_data = False
-                for statistic in self._statistics_with_summaries(s, start, finish):
-                    data = [journal for journal in self._diary_entries(s, statistic, start, finish)
-                            if spec.at_location(to_date(journal.time))]
-                    if data:
-                        processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
-                        if processes:
-                            values = [x.value for x in data]
-                            for process in processes:
-                                self._create_value(s, interval, spec, statistic, process.lower(), data, values)
-                        else:
-                            self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
-                        self._create_ranks(s, interval, spec, statistic, data)
-                        have_data = True
-                if have_data:
-                    self._log.info('Added statistics for %s' % interval)
-                elif new:
-                    s.delete(interval)
+                if new:
+                    have_data = False
+                    for statistic in self._statistics_with_summaries(s, start, finish):
+                        data = [journal for journal in self._diary_entries(s, statistic, start, finish)
+                                if spec.at_location(to_date(journal.time))]
+                        if data:
+                            processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
+                            if processes:
+                                values = [x.value for x in data]
+                                for process in processes:
+                                    self._create_value(s, interval, spec, statistic, process.lower(), data, values)
+                            else:
+                                self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
+                            self._create_ranks(s, interval, spec, statistic, data)
+                            have_data = True
+                    if have_data:
+                        self._log.info('Added statistics for %s' % interval)
+                    else:
+                        s.delete(interval)
 
 
 def fuzz(n, q):

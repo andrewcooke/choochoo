@@ -88,6 +88,10 @@ This command displays the contents of the file in two ways:
 * Messages which occur more often are displayed grouped into "tables",
   with values in columns and names in the column titles.
 
+*Warning* - the heading used in the tables may be incorrect if the
+data contain dynamic fields (the headings are based on the first
+record read).
+
 #### Example Output
 
     file_id

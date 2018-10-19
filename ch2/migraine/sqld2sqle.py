@@ -2,9 +2,9 @@
 from sqlite3 import connect, Row
 
 from ch2.command.args import bootstrap_file, m, V
-from ch2.config.database import add
 from ch2.config.personal import acooke
 from ch2.lib.date import to_time
+from ch2.squeal.database import add
 from ch2.squeal.tables.source import Source
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalText, StatisticJournalInteger, \
     StatisticJournalFloat, Statistic

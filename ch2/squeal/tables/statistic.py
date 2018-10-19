@@ -48,6 +48,7 @@ class StatisticJournal(Base):
     statistic = relationship('Statistic')
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
+    UniqueConstraint(statistic_id, source_id)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticType.STATISTIC,

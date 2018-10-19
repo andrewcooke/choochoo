@@ -3,7 +3,7 @@ from tempfile import NamedTemporaryFile
 
 import matplotlib.pyplot as plt
 
-from ch2.command.activity import activity
+from ch2.command.activities import activities
 from ch2.command.constant import constant
 from ch2.command.args import bootstrap_file, m, mm, DEV, V, F
 from ch2.config.default import default
@@ -16,7 +16,7 @@ def import_activity(f):
     constant(args, log)
     args, log, db = bootstrap_file(f, m(V), '0', mm(DEV),
                                    'activity', 'Bike', 'data/test/personal/2018-08-27-rec.fit')
-    activity(args, log)
+    activities(args, log)
 
 
 def test_activity():

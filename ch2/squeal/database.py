@@ -68,3 +68,8 @@ class Database:
                 n_activities = s.query(count(Activity.id)).scalar()
                 n_statistics = s.query(count(Statistic.id)).scalar()
             return not (n_topics + n_activities + n_statistics)
+
+
+def add(s, instance):
+    s.add(instance)
+    return instance
