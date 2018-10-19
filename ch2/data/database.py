@@ -9,7 +9,7 @@ from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity, ActivityJournal
-from ..squeal.tables.source import Interval
+from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import Statistic, StatisticJournal, StatisticMeasure
 
 
@@ -91,9 +91,9 @@ class Data:
             start, finish, owner, constraint):
         q = q.filter(Statistic.id.in_(statistic_ids))
         if start:
-            q = q.filter(StatisticJournal.time >= start)
+            q = q.filter(Source.time >= start)
         if finish:
-            q = q.filter(StatisticJournal.time <= finish)
+            q = q.filter(Source.time <= finish)
         if owner:
             q = q.filter(Statistic.owner == owner)
         if constraint:
@@ -103,7 +103,7 @@ class Data:
     def statistic_journals(self, *statistics, start=None, finish=None, owner=None, constraint=None, schedule=None):
         statistic_names, statistic_ids = self._collect_statistics(statistics)
         q = self._build_statistic_journal_query(
-            statistic_ids, self._session.query(StatisticJournal).join(Statistic),
+            statistic_ids, self._session.query(StatisticJournal).join(Statistic, Source),
             start, finish, owner, constraint)
         if schedule:
             q = q.join(Interval).filter(Interval.schedule == schedule)
@@ -124,7 +124,7 @@ class Data:
     def statistic_quartiles(self, *statistics, schedule='m', start=None, finish=None, owner=None, constraint=None):
         statistic_names, statistic_ids = self._collect_statistics(statistics)
         q = self._build_statistic_journal_query(
-            statistic_ids, self._session.query(StatisticMeasure).join(StatisticJournal, Statistic),
+            statistic_ids, self._session.query(StatisticMeasure).join(StatisticJournal, Statistic, Source),
             start, finish, owner, constraint)
         if schedule:
             q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \

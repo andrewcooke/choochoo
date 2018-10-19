@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Floa
 from sqlalchemy.orm import relationship, backref
 
 from ch2.lib.date import format_seconds
+from ch2.squeal.tables.source import Source
 from ..support import Base
 from ..types import Cls
 
@@ -48,6 +49,10 @@ class StatisticJournal(Base):
     statistic = relationship('Statistic')
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
+    # this is just for finding bugs
+    # in fact (statistic_id, time) should be unique but that's across inheritance tables
+    # the source_id field is only for delete on cascade. it's not an 'owner' as for statistics
+    # TODO - is this true?  seems to be used in code for things like HR zone stats
     UniqueConstraint(statistic_id, source_id)
 
     __mapper_args__ = {
@@ -81,9 +86,9 @@ class StatisticJournal(Base):
             if statistic.summary != summary:
                 log.warn('Changing summary on %s (%s -> %s)' % (statistic.name, statistic.summary, summary))
                 statistic.summary = summary
-        journal = s.query(StatisticJournal). \
+        journal = s.query(StatisticJournal).join(Source). \
             filter(StatisticJournal.statistic == statistic,
-                   StatisticJournal.source == source).one_or_none()
+                   Source.time == source.time).one_or_none()
         if not journal:
             journal = STATISTIC_JOURNAL_CLASSES[type](
                 statistic=statistic, source=source, value=value)

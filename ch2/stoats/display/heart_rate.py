@@ -1,15 +1,19 @@
 
 from urwid import Text, Pile
 
+from ch2.squeal.tables.source import Source
+from ch2.stoats.calculate.activity import ActivityStatistics
 from ..names import PERCENT_IN_Z_ANY
 from ...squeal.tables.statistic import StatisticJournal, Statistic
 
 
-def build_zones(s, journal, width):
+def build_zones(s, ajournal, width):
     body = []
-    percent_times = s.query(StatisticJournal).join(Statistic). \
-        filter(StatisticJournal.source == journal,
-               Statistic.name.like(PERCENT_IN_Z_ANY)) \
+    percent_times = s.query(StatisticJournal).join(Statistic, Source). \
+        filter(Source.time == ajournal.time,
+               Statistic.name.like(PERCENT_IN_Z_ANY),
+               Statistic.owner == ActivityStatistics,
+               Statistic.constraint == ajournal.activity.id) \
         .order_by(Statistic.name).all()
     for zone, percent_time in reversed(list(enumerate(percent_times, start=1))):
         text = ('%d:' + ' ' * (width - 6) + '%3d%%') % (zone, int(0.5 + percent_time.value))

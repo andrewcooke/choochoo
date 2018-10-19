@@ -6,7 +6,7 @@ from sqlalchemy.event import listens_for
 from sqlalchemy.orm import relationship, backref, Session
 
 from .source import SourceType, Source
-from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
+from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES, Statistic
 from ..support import Base
 from ..types import Date, Cls, Json, Sched, Sort
 from ...lib.schedule import Schedule
@@ -89,22 +89,22 @@ class TopicJournal(Source):
         'polymorphic_identity': SourceType.TOPIC
     }
 
-    def populate(self, s):
-        if self.time is None:
-            raise Exception('No time defined')
+    def populate(self, log, s):
         if hasattr(self, 'statistics'):
             return
+        if self.time is None:
+            raise Exception('No time defined')
+        if self.id is None:
+            s.flush()
+        log.debug('Populating journal for topic %s at %s' % (self.topic.name, self.time))
         self.statistics = {}
         for field in self.topic.fields:
-            if self.id:
-                journal = s.query(StatisticJournal). \
-                    filter(StatisticJournal.source == self,
-                           StatisticJournal.statistic == field.statistic).one_or_none()
-            else:
-                # we're not yet registered with the database so cannot search for matching
-                # StatisticJournal entries.  either this is an error or (more likely!) we
-                # did query, found nothing, and are creating a new entry.
-                journal = None
+            log.debug('Finding SJ for field %s' % field.statistic.name)
+            journal = s.query(StatisticJournal).join(Statistic, Source). \
+                filter(StatisticJournal.statistic == field.statistic,
+                       Source.time == self.time,
+                       Statistic.owner == self.topic,
+                       Statistic.constraint == self.topic.id).one_or_none()
             if not journal:
                 journal = STATISTIC_JOURNAL_CLASSES[field.type](statistic=field.statistic, source=self)
                 s.add(journal)

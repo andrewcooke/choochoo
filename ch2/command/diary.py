@@ -100,7 +100,7 @@ class Diary(DateSwitcher):
         for field in topic.fields:
             self._log.debug('%s' % field)
             tjournal = self.__topic_journal(s, topic)
-            tjournal.populate(s)
+            tjournal.populate(self._log, s)
             display = field.display_cls(self._log, s, tjournal.statistics[field],
                                         *field.display_args, **field.display_kargs)
             self._log.debug('%s' % display)
@@ -137,10 +137,13 @@ class Diary(DateSwitcher):
         super().save()
 
     def __interval_cleaning(self):
+        # on exit:
+        # - remove any journal entries with no data (all null)
+        # - remove any intervals affected by journals with non-null data
         s, dirty = self._session, False
         for tjournal in s.query(TopicJournal).filter(TopicJournal.time == self._date).all():
             clean = True
-            tjournal.populate(s)
+            tjournal.populate(self._log, s)
             for field in tjournal.topic.fields:
                 if tjournal.statistics[field].value is not None:
                     clean = False

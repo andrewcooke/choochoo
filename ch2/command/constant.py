@@ -1,4 +1,4 @@
-
+from ch2.squeal.database import add
 from ..command.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANT, SET
 from ..squeal.tables.constant import Constant, ConstantJournal
 from ..squeal.tables.statistic import StatisticJournal, Statistic
@@ -67,8 +67,7 @@ def set_constants(log, s, constants, date, value, force):
                 s.delete(journal)
         date = '1970-01-01'
     for constant in constants:
-        journal = ConstantJournal(time=date)
-        s.add(journal)
+        journal = add(s, ConstantJournal(time=date))
         StatisticJournal.add(log, s,
                              constant.statistic.name, constant.statistic.units, constant.statistic.summary,
                              Constant, constant.statistic.constraint, journal, value, constant.type)
