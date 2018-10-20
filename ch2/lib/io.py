@@ -8,7 +8,7 @@ from sqlalchemy import desc
 from .date import to_time
 from .schedule import ZERO
 from ..squeal.database import add
-from ..squeal.tables.activity import FileScan
+from ch2.squeal.tables.fit import FileScan
 
 
 def terminal_width(width=None):

@@ -26,3 +26,10 @@ class Pipeline(Base):
     args = Column(Json, nullable=None, server_default=dumps(()))
     kargs = Column(Json, nullable=None, server_default=dumps({}))
     sort = Column(Sort)
+
+    @classmethod
+    def all(cls, log, s, type):
+        pipelines = s.query(Pipeline).filter(Pipeline.type == type).order_by(Pipeline.sort).all()
+        if not pipelines:
+            raise Exception('No pipelines configured for type %s' % PipelineType(type).name)
+        yield from ((pipeline.cls, pipeline.args, pipeline.kargs) for pipeline in pipelines)

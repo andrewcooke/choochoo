@@ -1,20 +1,10 @@
 
 from sqlalchemy import Column, Text, Integer, ForeignKey, Float, UniqueConstraint
-from sqlalchemy.ext.orderinglist import ordering_list
 from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
 from ..types import Time, Sort
-
-
-class FileScan(Base):
-
-    __tablename__ = 'file_scan'
-
-    path = Column(Text, nullable=False, primary_key=True)
-    md5_hash = Column(Text, nullable=False, index=True)
-    last_scan = Column(Time, nullable=False)
 
 
 class Activity(Base):
@@ -44,7 +34,6 @@ class Activity(Base):
 class ActivityJournal(Source):
 
     __tablename__ = 'activity_journal'
-    __statistic_constraint__ = 'activity_id'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=False)

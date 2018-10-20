@@ -16,6 +16,8 @@ The format and details displayed can be selected with --records,
 
 For full options see `ch2 fit -h`.
 
+Note: When using bash use `shopt -s globstar` to enable ** globbing.
+
 ## Example
 
     ch2 -v 0 dump-fit ride.fit

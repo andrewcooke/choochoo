@@ -45,7 +45,6 @@ class ActivityImporter:
             return Activity.lookup(self._log, s, sport_to_activity[sport])
         else:
             self._log.warn('Unrecognised sport: "%s" in %s' % (sport, path))
-            self._log.warn('Unrecognised sport: "%s" in %s' % (sport, path))
             raise AbortImport()
 
     def _delete_journals(self, s, activity, first_timestamp):

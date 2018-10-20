@@ -79,7 +79,6 @@ class TopicField(Base):
 class TopicJournal(Source):
 
     __tablename__ = 'topic_journal'
-    __statistic_constraint__ = 'topic_id'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     topic_id = Column(Integer, ForeignKey('topic.id'))

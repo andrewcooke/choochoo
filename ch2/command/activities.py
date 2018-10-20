@@ -11,6 +11,8 @@ def activities(args, log, db):
     ch2 activities PATH [PATH ...]
 
 Read activities data from fit files.
+
+Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     force, fast, paths = args[FORCE], args[FAST], args[PATH]
     run_pipeline_paths(log, db, PipelineType.ACTIVITY, paths, force=force)

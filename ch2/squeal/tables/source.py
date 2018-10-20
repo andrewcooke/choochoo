@@ -18,6 +18,7 @@ class SourceType(IntEnum):
     ACTIVITY = 2
     TOPIC = 3
     CONSTANT = 4
+    MONITOR = 5
 
 
 class Source(Base):
