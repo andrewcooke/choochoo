@@ -12,7 +12,7 @@ COMMAND = 'command'
 TOPIC = 'topic'
 
 ACTIVITIES = 'activities'
-CONSTANT = 'constant'
+CONSTANTS = 'constants'
 DIARY = 'diary'
 EXAMPLE_CONFIG = 'example-config'
 FIT = 'fit'
@@ -145,9 +145,9 @@ def parser():
                             help='a glob path identifying fit files')
     activities.set_defaults(command=ACTIVITIES)
 
-    constant = subparsers.add_parser(CONSTANT,
+    constant = subparsers.add_parser(CONSTANTS,
                                      help='set and examine constants - see `%s %s -h` for more details' %
-                                          (PROGNAME, CONSTANT))
+                                          (PROGNAME, CONSTANTS))
     constant_flags = constant.add_mutually_exclusive_group()
     constant_flags.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
     constant_flags.add_argument(mm(SET), action='store_true', help='store a new value')
@@ -155,7 +155,7 @@ def parser():
     constant.add_argument(NAME, action='store', nargs='?', metavar=NAME, help='constant name')
     constant.add_argument(DATE, action='store', nargs='?', metavar=DATE, help='date when measured')
     constant.add_argument(VALUE, action='store', nargs='?', metavar=VALUE, help='constant value')
-    constant.set_defaults(command=CONSTANT)
+    constant.set_defaults(command=CONSTANTS)
 
     diary = subparsers.add_parser(DIARY,
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))

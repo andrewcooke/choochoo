@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 import matplotlib.pyplot as plt
 
 from ch2.command.activities import activities
-from ch2.command.constant import constant
+from ch2.command.constants import constants
 from ch2.command.args import bootstrap_file, m, mm, DEV, V, F
 from ch2.config.default import default
 from ch2.data import data, col_to_boxstats
@@ -13,7 +13,7 @@ from ch2.data import data, col_to_boxstats
 def import_activity(f):
     bootstrap_file(f, m(V), '0', mm(DEV), configurator=default)
     args, log, db = bootstrap_file(f, m(V), '0', 'constant', '--set', 'FTHR.%', '154')
-    constant(args, log, db)
+    constants(args, log, db)
     args, log, db = bootstrap_file(f, m(V), '0', mm(DEV),
                                    'activities', 'data/test/personal/2018-08-27-rec.fit')
     activities(args, log, db)

@@ -1,11 +1,10 @@
 from ch2.squeal.database import add
-from ch2.squeal.tables.source import Source
-from ..command.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANT, SET
+from ..command.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET
 from ..squeal.tables.constant import Constant, ConstantJournal
 from ..squeal.tables.statistic import StatisticJournal, Statistic, STATISTIC_JOURNAL_CLASSES
 
 
-def constant(args, log, db):
+def constants(args, log, db):
     '''
 # constant
 
@@ -29,7 +28,7 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
         if name:
             constants = Constant.lookup_like(log, s, name)
             if not constants:
-                raise Exception('Name "%s" matched no entries (see `%s %s`)' % (name, COMMAND, CONSTANT))
+                raise Exception('Name "%s" matched no entries (see `%s %s`)' % (name, COMMAND, CONSTANTS))
         else:
             constants = []
         if set:

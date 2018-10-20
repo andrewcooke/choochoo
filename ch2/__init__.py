@@ -1,8 +1,8 @@
 
 from .command.activities import activities
 from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
-    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, EXAMPLE_CONFIG, CONSTANT, STATISTICS, TEST_SCHEDULE
-from .command.constant import constant
+    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, EXAMPLE_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE
+from .command.constants import constants
 from .command.diary import diary
 from .command.example_config import example_config
 from .command.fit import fit
@@ -25,7 +25,7 @@ at the command line.
 
 
 COMMANDS = {ACTIVITIES: activities,
-            CONSTANT: constant,
+            CONSTANTS: constants,
             DIARY: diary,
             FIT: fit,
             HELP: help,

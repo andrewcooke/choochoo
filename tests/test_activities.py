@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 
 from ch2.command.activities import activities
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
-from ch2.command.constant import constant
+from ch2.command.constants import constants
 from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.statistic import StatisticJournal
@@ -23,10 +23,10 @@ def test_activities():
         bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
         args, log, db = bootstrap_file(f, m(V), '5', 'constant', '--set', 'FTHR.%', '154')
-        constant(args, log, db)
+        constants(args, log, db)
 
         args, log, db = bootstrap_file(f, m(V), '5', 'constant', 'FTHR.%')
-        constant(args, log, db)
+        constants(args, log, db)
 
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                        'activities', mm(FAST), 'data/test/personal/2018-08-27-rec.fit')
