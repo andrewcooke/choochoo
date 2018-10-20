@@ -8,15 +8,15 @@ def constants(args, log, db):
     '''
 # constant
 
-    ch2 constant [name [date]]
+    ch2 constants [name [date]]
 
 Lists constants to stdout.
 
-    ch2 constant --set name [date] value
+    ch2 constants --set name [date] value
 
 Defines a new entry.  If date is omitted a single value is used for all time.
 
-    ch2 constant --delete name [date]
+    ch2 constants --delete name [date]
 
 Deletes an entry.
 

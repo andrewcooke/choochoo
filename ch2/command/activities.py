@@ -8,9 +8,9 @@ def activities(args, log, db):
     '''
 # activities
 
-    ch2 activity ACTIVITY PATH
+    ch2 activities PATH
 
-Read one or more (if PATH is a directory) FIT files and associated them with the given activity type.
+Read activities from FIT files.  The PATH is glob-expended and should be quoted.
     '''
     force, fast = args[FORCE], args[FAST]
     path = args.path(PATH, index=0, rooted=False)
