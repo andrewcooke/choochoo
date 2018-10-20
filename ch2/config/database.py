@@ -100,6 +100,21 @@ def add_diary(session, cls, sort, **kargs):
     return add(session, Pipeline(cls=cls, type=PipelineType.DIARY, sort=sort, kargs=kargs))
 
 
+def add_monitor(session, cls, sort, **kargs):
+    '''
+    Add a class to the monitor pipeline.
+
+    The pipeline classes are invoked when activities are imported from FIT files.
+    They read the files and create MonitorJournal entries and associated statistics.
+
+    The sort argument fixes the order in which the classes are instantiated and called and can
+    be an integer or a callable (that returns an integer) like Counter above.
+
+    The kargs are passed to the constructor and so can be used to customize the processing.
+    '''
+    return add(session, Pipeline(cls=cls, type=PipelineType.MONITOR, sort=sort, kargs=kargs))
+
+
 def add_activity(session, name, sort, description=None):
     '''
     Add an activity type to the configuration.

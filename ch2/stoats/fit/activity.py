@@ -1,44 +1,22 @@
 
 from os.path import splitext, basename
 
+from ..fit import AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
 from ...fit.profile.types import timestamp_to_datetime
-from ...lib.io import modified_files
 from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
 from ...squeal.tables.activity import Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint
+from ...stoats.fit import Importer
 
 
-class AbortImport(Exception):
-    pass
-
-
-class ActivityImporter:
-
-    def __init__(self, log, db):
-        self._log = log
-        self._db = db
+class ActivityImporter(Importer):
 
     def run(self, paths, force=False, sport_to_activity=None):
         if sport_to_activity is None:
             raise Exception('No map from sport to activity')
-        with self._db.session_context() as s:
-            files = list(modified_files(self._log, s, paths, force=force))
-        for file in files:
-            self._log.info('Scanning %s' % file)
-            with self._db.session_context() as s:
-                try:
-                    self._import(s, file, sport_to_activity)
-                except AbortImport:
-                    self._log.debug('Aborted %s' % file)
-
-    def _first(self, path, records, *names):
-        try:
-            return next(iter(record for record in records if record.name in names))
-        except:
-            self._log.warn('No %s entry(s) in %s' % (str(names), path))
-            raise AbortImport()
+        self._run(paths, force=force, sport_to_activity=sport_to_activity)
 
     def _activity(self, s, path, sport, sport_to_activity):
         if sport in sport_to_activity:
@@ -53,6 +31,7 @@ class ActivityImporter:
                 filter(ActivityJournal.activity == activity,
                        ActivityJournal.time == first_timestamp).all():
             s.delete(journal)
+        s.flush()
 
     def _import(self, s, path, sport_to_activity):
 

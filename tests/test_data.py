@@ -12,7 +12,7 @@ from ch2.data import data, col_to_boxstats
 
 def import_activity(f):
     bootstrap_file(f, m(V), '0', mm(DEV), configurator=default)
-    args, log, db = bootstrap_file(f, m(V), '0', 'constant', '--set', 'FTHR.%', '154')
+    args, log, db = bootstrap_file(f, m(V), '0', 'constants', '--set', 'FTHR.%', '154')
     constants(args, log, db)
     args, log, db = bootstrap_file(f, m(V), '0', mm(DEV),
                                    'activities', 'data/test/personal/2018-08-27-rec.fit')

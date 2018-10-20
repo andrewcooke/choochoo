@@ -74,6 +74,14 @@ def fix_degrees(data, new_units='°'):
         yield name, (values, units)
 
 
+def unpack_single_bytes(data):
+    for name, (values, units) in data:
+        if values is None or not (isinstance(values, bytes) and len(values) == 1):
+            yield name, (values, units)
+        else:
+            yield name, (values[0], units)
+
+
 def unique_names(data):
     known = set()
     for name, values_or_pair in data:

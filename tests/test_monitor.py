@@ -1,11 +1,11 @@
 
+from subprocess import run
 from tempfile import NamedTemporaryFile
 
 from sqlalchemy.sql.functions import count
 
-from ch2.command.activities import activities
+from ch2 import monitor
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
-from ch2.command.constants import constants
 from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
@@ -21,15 +21,9 @@ def test_activities():
 
         bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-        args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
-        constants(args, log, db)
-
-        args, log, db = bootstrap_file(f, m(V), '5', 'constants', 'FTHR.%')
-        constants(args, log, db)
-
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                       'activities', mm(FAST), 'data/test/personal/2018-08-27-rec.fit')
-        activities(args, log, db)
+                                       'monitor', mm(FAST), 'data/test/personal/25822184777.fit')
+        monitor(args, log, db)
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
 

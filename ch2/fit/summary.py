@@ -1,6 +1,5 @@
 
 from collections import Counter, defaultdict
-from itertools import chain
 from re import compile
 from sys import stdout
 
@@ -144,6 +143,7 @@ def partition(records, counts, threshold=3):
 def pprint_as_dicts(records, all_fields, all_messages, width=80):
     for record in records:
         if all_messages or record.is_known():
+            import pdb; pdb.set_trace()
             record = record.as_dict(join_values, append_units, to_hex, fix_degrees,
                                     no_filter if all_fields else no_unknown_fields,
                                     no_bad_values)

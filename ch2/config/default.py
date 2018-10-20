@@ -1,6 +1,6 @@
 
 from .database import Counter, add_statistics, add_activity, add_activity_constant, add_topic, add_topic_field, \
-    add_diary, add_activities
+    add_diary, add_activities, add_monitor
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticType
 from ..stoats.calculate.activity import ActivityStatistics
@@ -8,6 +8,7 @@ from ..stoats.calculate.clean import CleanUnusedStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
 from ..stoats.fit.activity import ActivityImporter
+from ..stoats.fit.monitor import MonitorImporter
 from ..stoats.names import BPM, FTHR
 from ..uweird.fields import Text, Float, Score, Integer
 
@@ -33,6 +34,10 @@ def default(db):
 
         c = Counter()
         add_diary(s, ActivityDiary, c)
+
+        # monitor pipeline
+
+        add_monitor(s, MonitorImporter, c)
 
         # basic activities
 
