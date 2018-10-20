@@ -4,7 +4,7 @@ from os.path import splitext, basename
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
 from ...fit.profile.types import timestamp_to_datetime
-from ...lib.io import glob_modified_files
+from ...lib.io import modified_files
 from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
 from ...squeal.tables.activity import Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint
@@ -20,11 +20,11 @@ class ActivityImporter:
         self._log = log
         self._db = db
 
-    def run(self, path, force=False, sport_to_activity=None):
+    def run(self, paths, force=False, sport_to_activity=None):
         if sport_to_activity is None:
             raise Exception('No map from sport to activity')
         with self._db.session_context() as s:
-            files = list(glob_modified_files(self._log, s, path, force=force))
+            files = list(modified_files(self._log, s, paths, force=force))
         for file in files:
             self._log.info('Scanning %s' % file)
             with self._db.session_context() as s:

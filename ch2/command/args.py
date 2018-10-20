@@ -141,8 +141,8 @@ def parser():
                                             (PROGNAME, ACTIVITIES))
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
-    activities.add_argument(PATH, action='store', metavar='PATH', nargs=1,
-                            help='a glob path identifying fit files')
+    activities.add_argument(PATH, action='store', metavar='PATH', nargs='+',
+                            help='path to fit file')
     activities.set_defaults(command=ACTIVITIES)
 
     constant = subparsers.add_parser(CONSTANTS,
@@ -166,14 +166,14 @@ def parser():
     fit = subparsers.add_parser(FIT,
                                 help='display contents of fit file - ' +
                                      'see `%s %s -h` for more details' % (PROGNAME, FIT))
-    fit.add_argument(PATH, action='store', metavar='FIT-FILE', nargs=1,
-                     help='a glob path identifying fit files')
+    fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',
+                     help='path to fit file')
     fit_format = fit.add_mutually_exclusive_group(required=True)
     fit_format.add_argument(mm(RECORDS), action='store_const', dest=FORMAT, const=RECORDS,
                             help='show high-level structure (ordered by time)')
     fit_format.add_argument(mm(TABLES), action='store_const', dest=FORMAT, const=TABLES,
                             help='show high-level structure (grouped in tables)')
-    fit_format.add_argument(mm(GREP), action='append', dest=GREP, nargs='+', metavar='MSG:FLD[=VAL]',
+    fit_format.add_argument(mm(GREP), action='store', dest=GREP, nargs='+', metavar='MSG:FLD[=VAL]',
                             help='show med-level matching entries')
     fit_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV,
                             help='show med-level structure in CSV format')
@@ -181,9 +181,9 @@ def parser():
                             help='show low-level message structure')
     fit_format.add_argument(mm(FIELDS), action='store_const', dest=FORMAT, const=FIELDS,
                             help='show low-level field structure (more details)')
-    fit.add_argument(mm(AFTER), action='store', nargs=1, type=int, metavar='N', default=[0],
+    fit.add_argument(mm(AFTER), action='store', type=int, metavar='N', default=0,
                      help='skip initial messages')
-    fit.add_argument(mm(LIMIT), action='store', nargs=1, type=int, metavar='N', default=[-1],
+    fit.add_argument(mm(LIMIT), action='store', type=int, metavar='N', default=-1,
                      help='limit number of messages')
     fit.add_argument(mm(ALL_FIELDS), action='store_true',
                      help='display undocumented high-level fields')

@@ -92,7 +92,7 @@ def summarize_grep(log, fit_path, grep, name_file=False, match=1, invert=False, 
                    warn=False, profile_path=None):
     data, types, messages, records = \
         filtered_records(log, fit_path, warn=warn, profile_path=profile_path)
-    matchers = [compile(pattern) for pattern in chain.from_iterable(grep)]
+    matchers = [compile(pattern) for pattern in grep]
     counts = defaultdict(lambda: 0)
     first = True
     try:

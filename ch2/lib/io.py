@@ -1,8 +1,6 @@
 
 from hashlib import md5
-from glob import glob
 from os import stat
-from os.path import isdir, join, realpath
 from shutil import get_terminal_size
 
 from sqlalchemy import desc
@@ -34,19 +32,8 @@ def md5_hash(file_path):
     return hash.hexdigest()
 
 
-def glob_files(log, path_glob):
-    found = False
-    for file_path in glob(path_glob, recursive=True):
-        found = True
-        file_path = realpath(file_path)
-        yield file_path
-    if not found:
-        raise Exception('No match for "%s"' % path_glob)
-
-
-def glob_modified_files(log, s, path_glob, force=False):
-
-    for file_path in glob_files(log, path_glob):
+def modified_files(log, s, paths, force=False):
+    for file_path in paths:
         last_modified = to_time(stat(file_path).st_mtime)
         hash = md5_hash(file_path)
 
@@ -70,3 +57,4 @@ def glob_modified_files(log, s, path_glob, force=False):
             yield file_path
         else:
             log.debug('Skipping %s (already scanned)' % file_path)
+
