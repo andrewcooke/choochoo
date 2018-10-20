@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 
 from ...lib.date import to_date
 from ...lib.schedule import Schedule
-from ...squeal.tables.config import StatisticPipeline
+from ...squeal.tables.pipeline import Pipeline, PipelineType
 from ...squeal.tables.source import Interval, Source
 from ...squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
     StatisticType
@@ -32,7 +32,9 @@ class SummaryStatistics:
 
     @classmethod
     def pipeline_schedules(cls, s):
-        for kargs in s.query(StatisticPipeline.kargs).filter(StatisticPipeline.cls == cls).all():
+        for kargs in s.query(Pipeline.kargs). \
+                filter(Pipeline.cls == cls,
+                       Pipeline.type == PipelineType.STATISTIC).all():
             if 'schedule' in kargs[0]:
                 yield kargs[0]['schedule']
             else:

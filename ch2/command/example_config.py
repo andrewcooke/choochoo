@@ -1,6 +1,7 @@
 
 import datetime as dt
 
+from ch2.command.args import PLAN
 from ..config.personal import acooke
 from ..config.plan.british import twelve_week_improver
 
@@ -18,6 +19,6 @@ The whole damn point of using Choochoo is that you configure it how you need it.
 Please see the documentation at http://andrewcooke.github.io/choochoo/index
     '''
     acooke(db)
-    plan = twelve_week_improver(dt.date.today())
-    plan.create(log, db, sort=1000)
-
+    if not args[PLAN]:
+        plan = twelve_week_improver(dt.date.today())
+        plan.create(log, db, sort=1000)

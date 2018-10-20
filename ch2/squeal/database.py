@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import count
 
 from .support import Base
 from .tables.activity import ActivityWaypoint, Activity, ActivityTimespan, ActivityJournal
-from .tables.config import StatisticPipeline, DiaryPipeline
+from .tables.pipeline import Pipeline
 from .tables.source import Source, Interval
 from .tables.statistic import Statistic, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
     StatisticJournal
@@ -20,7 +20,7 @@ Source,  Interval,
 Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint,
 Topic, TopicJournal,
 Statistic, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText,
-StatisticPipeline, DiaryPipeline
+Pipeline
 
 
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf

@@ -3,8 +3,8 @@ from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
 from ..squeal.tables.activity import Activity
-from ..squeal.tables.config import StatisticPipeline, DiaryPipeline, ActivityPipeline
 from ..squeal.tables.constant import Constant
+from ..squeal.tables.pipeline import Pipeline, PipelineType
 from ..squeal.tables.statistic import Statistic, StatisticType
 from ..squeal.tables.topic import Topic, TopicField
 from ..uweird.fields import Integer
@@ -81,7 +81,7 @@ def add_statistics(session, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    return add(session, StatisticPipeline(cls=cls, sort=sort, kargs=kargs))
+    return add(session, Pipeline(cls=cls, type=PipelineType.STATISTIC, sort=sort, kargs=kargs))
 
 
 def add_diary(session, cls, sort, **kargs):
@@ -97,7 +97,7 @@ def add_diary(session, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    return add(session, DiaryPipeline(cls=cls, sort=sort, kargs=kargs))
+    return add(session, Pipeline(cls=cls, type=PipelineType.DIARY, sort=sort, kargs=kargs))
 
 
 def add_activity(session, name, sort, description=None):
@@ -122,7 +122,7 @@ def add_activities(session, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    return add(session, ActivityPipeline(cls=cls, sort=sort, kargs=kargs))
+    return add(session, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
 
 
 def add_activity_constant(session, activity, name, description=None, units=None, type=StatisticType.INTEGER):

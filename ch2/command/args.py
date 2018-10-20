@@ -44,6 +44,7 @@ LIST = 'list'
 M, MESSAGE = 'm', 'message'
 MATCH = 'match'
 MESSAGES = 'messages'
+MONITOR = 'monitor'
 MONTHS = 'months'
 NAME = 'name'
 NOT = 'not'
@@ -137,7 +138,7 @@ def parser():
     subparsers = parser.add_subparsers()
 
     activities = subparsers.add_parser(ACTIVITIES,
-                                       help='add a new activity - see `%s %s -h` for more details' %
+                                       help='read activity data - see `%s %s -h` for more details' %
                                             (PROGNAME, ACTIVITIES))
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
@@ -207,6 +208,14 @@ def parser():
                       help='the subject for help')
     help.set_defaults(command=HELP)
 
+    monitor = subparsers.add_parser(MONITOR,
+                                    help='read monitor data - see `%s %s -h` for more details' % (PROGNAME, MONITOR))
+    monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
+    monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
+    monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
+                         help='path to fit file')
+    monitor.set_defaults(command=MONITOR)
+
     statistics = subparsers.add_parser(STATISTICS,
                                        help='(re-)generate statistics - ' +
                                             'see `%s %s -h` for more details' % (PROGNAME, STATISTICS))
@@ -218,6 +227,7 @@ def parser():
     example_config = subparsers.add_parser(EXAMPLE_CONFIG,
                                            help='configure the default database ' +
                                                 '(see docs for full configuration instructions)')
+    example_config.add_argument(mm(PLAN), action='store_true', help='OMIT plan')
     example_config.set_defaults(command=EXAMPLE_CONFIG)
 
     noop = subparsers.add_parser(NO_OP,

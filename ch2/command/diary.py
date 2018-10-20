@@ -4,6 +4,7 @@ import datetime as dt
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
+from ch2.squeal.tables.pipeline import PipelineType
 from .args import DATE
 from ..lib.date import to_date
 from ..lib.io import tui
@@ -11,7 +12,7 @@ from ..lib.utils import PALETTE, em
 from ..lib.widgets import DateSwitcher
 from ..squeal.tables.source import disable_interval_cleaning, Source
 from ..squeal.tables.topic import Topic, TopicJournal
-from ..stoats.display import build_display
+from ..stoats.display import build_pipeline
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
@@ -129,7 +130,7 @@ class Diary(DateSwitcher):
         return tjournal
 
     def __pipeline(self, s, f):
-        yield from build_display(self._log, s, f, self._date)
+        yield from build_pipeline(self._log, s, PipelineType.DIARY, f, self._date)
 
     def save(self):
         if self._session:

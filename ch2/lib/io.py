@@ -57,4 +57,3 @@ def modified_files(log, s, paths, force=False):
             yield file_path
         else:
             log.debug('Skipping %s (already scanned)' % file_path)
-

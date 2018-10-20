@@ -11,7 +11,7 @@ from ch2.command.constants import constants
 from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.statistic import StatisticJournal
-from ch2.stoats.calculate import run_statistics
+from ch2.stoats.calculate import run_pipeline
 
 
 def test_activities():
@@ -34,7 +34,7 @@ def test_activities():
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-        run_statistics(log, db, force=True, after='2018-01-01')
+        run_pipeline(log, db, force=True, after='2018-01-01')
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
