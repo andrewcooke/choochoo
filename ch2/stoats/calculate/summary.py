@@ -53,7 +53,7 @@ class SummaryStatistics:
                     q = s.query(count(Interval.id))
                 q = q.filter(Interval.schedule == spec)
                 if after:
-                    q.q.filter(Interval.finish > after)
+                    q = q.filter(Interval.finish > after)
                 if repeat:
                     for interval in q.all():
                         self._log.debug('Deleting %s' % interval)

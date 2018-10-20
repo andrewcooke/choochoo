@@ -13,10 +13,10 @@ from ch2.data import data, col_to_boxstats
 def import_activity(f):
     bootstrap_file(f, m(V), '0', mm(DEV), configurator=default)
     args, log, db = bootstrap_file(f, m(V), '0', 'constant', '--set', 'FTHR.%', '154')
-    constant(args, log)
+    constant(args, log, db)
     args, log, db = bootstrap_file(f, m(V), '0', mm(DEV),
-                                   'activity', 'Bike', 'data/test/personal/2018-08-27-rec.fit')
-    activities(args, log)
+                                   'activities', 'data/test/personal/2018-08-27-rec.fit')
+    activities(args, log, db)
 
 
 def test_activity():

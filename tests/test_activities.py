@@ -23,14 +23,14 @@ def test_activities():
         bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
         args, log, db = bootstrap_file(f, m(V), '5', 'constant', '--set', 'FTHR.%', '154')
-        constant(args, log)
+        constant(args, log, db)
 
         args, log, db = bootstrap_file(f, m(V), '5', 'constant', 'FTHR.%')
-        constant(args, log)
+        constant(args, log, db)
 
         args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                       'activity', mm(FAST), 'Bike', 'data/test/personal/2018-08-27-rec.fit')
-        activities(args, log)
+                                       'activities', mm(FAST), 'data/test/personal/2018-08-27-rec.fit')
+        activities(args, log, db)
 
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
 

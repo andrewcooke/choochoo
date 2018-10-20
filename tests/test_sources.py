@@ -6,6 +6,7 @@ from sqlalchemy.sql.functions import count
 
 from ch2.command.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
+from ch2.squeal.database import add
 from ch2.squeal.tables.source import Source
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic, \
     StatisticJournalInteger, StatisticType
@@ -29,9 +30,9 @@ def test_sources():
             # add a diary entry
 
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-            d = TopicJournal(topic=diary, time='2018-09-29')
-            s.add(d)
-            assert len(d.topic.fields) == 6, d.topic.fields
+            d = add(s, TopicJournal(topic=diary, time='2018-09-29'))
+            d.populate(log, s)
+            assert len(d.topic.fields) == 7, d.topic.fields
             assert d.topic.fields[0].statistic.name == 'Notes'
             assert d.topic.fields[1].statistic.name == 'Rest HR'
             for field in d.topic.fields:
@@ -46,7 +47,8 @@ def test_sources():
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.time == '2018-09-29').one()
-            assert len(d.topic.fields) == 6
+            d.populate(log, s)
+            assert len(d.topic.fields) == 7
             assert d.topic.fields[0].statistic.name == 'Notes'
             assert d.statistics[d.topic.fields[0]].value == 'hello world'
             assert d.topic.fields[1].statistic.name == 'Rest HR'
@@ -68,7 +70,7 @@ def test_sources():
             assert sleep.value == 60
             assert len(sleep.measures) == 2
             assert sleep.measures[0].rank == 1
-            assert sleep.measures[0].percentile == 0
+            assert sleep.measures[0].percentile == 100, sleep.measures[0].percentile
             n = s.query(count(StatisticJournalFloat.id)).scalar()
             assert n == 4, n
             n = s.query(count(StatisticJournalInteger.id)).scalar()
