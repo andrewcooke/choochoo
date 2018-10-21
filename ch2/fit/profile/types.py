@@ -144,9 +144,9 @@ class Date(AliasInteger):
         else:
             return time
 
-    def parse(self, data, count, endian, cvt_times=None, **options):
-        times = super().parse(data, count, endian, cvt_times=None, **options)
-        if (cvt_times is None and self.__to_datetime) or cvt_times:
+    def parse(self, data, count, endian, raw_time=False, **options):
+        times = super().parse(data, count, endian, raw_time=raw_time, **options)
+        if not raw_time and self.__to_datetime:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
         return times
 

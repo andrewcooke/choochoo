@@ -122,7 +122,7 @@ class Defined(Token):
                 yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
 
     def describe_csv(self):
-        record = self.parse(map_values=False, cvt_times=False, rtn_composite=True)
+        record = self.parse(map_values=False, raw_time=True, rtn_composite=True)
         yield self.__class__.__name__
         yield self.definition.local_message_type
         yield record.name
@@ -336,7 +336,7 @@ class State:
         self.dev_fields = defaultdict(dict)
         self.definitions = WarnDict(log, 'No definition for local message type %s')
         self.definition_counter = Counter()
-        self.date = Date(log, 'timestamp', True, to_datetime=False)
+        # self.date = Date(log, 'timestamp', True, to_datetime=False)
         self.timestamp = None
 
 
