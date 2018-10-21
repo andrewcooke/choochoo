@@ -3,11 +3,11 @@
 
 ## Introduction
 
-Choochoo is all about the data.  In particular - getting statistics that you
-can analyze and use to improve performance.  The data model is a key part of
-this.  We need a model that is flexible enough to capture anything that might
-be important, simple enough that analysis doesn't have many special cases, and
-reliable enough to avoid errors.
+Choochoo is all about the data - getting statistics that you can
+analyze and use to improve performance.  The data model is a key part
+of this: we need a model that is flexible enough to capture anything
+that might be important, simple enough that analysis doesn't have many
+special cases, and reliable enough to avoid errors.
 
 ## Contents
 
@@ -28,58 +28,72 @@ reliable enough to avoid errors.
 
 ### Statistics
 
-A **Statistic** is a simple thing - a name with (optional) units and
-description (in practice they also have "metadata" for display,
-tracking who is responsible for creating new values, etc).  For a
-Statistic to be useful it must also be associated with some values.
-More exactly, it must be associated with entries in the
-**StatisticJournal** - each entry combines a value with a **Source**.
+A **Statistic** is a simple thing - a name with units.  For example,
+"Rest HR/bpm".  In practice it also has a description and some
+"metadata" for display, tracking who is responsible for creating new
+values, etc.
 
-There are two kinds of Statistic, which are distinguished by their Sources
-(more on those below):
+For a Statistic to be useful it must be associated with some values.
+More exactly, it must have entries in the **StatisticJournal** which
+associated values with **Source**s.
 
-1. Raw statistics are entered into the system from outside: values
-   entered into the diary, values read from a FIT file, or "constants"
-   entered by the user from the command line.
+There are three types of StatisticJournal, for values that are
+integers, floats and text.
 
-2. Derived statistics are calculated from other, pre-existing statistics.
+It will be convenient later to divide Statistics into two kinds:
 
-(A careful reader may have noted that the above statements use "statistic" to
-refer to *values*, which are actually stored in the StatisticJournal.  This is
-why I used "statistic" with a lower case "s" - when I am referring to a
-particular table I will revert to capitalized names.)
+1. Raw statistics that are entered into the system from outside:
+   values entered into the diary, values read from a FIT file, or
+   "constants" entered by the user from the command line.
 
-Many statistics have ranking and percentile information.  These behave
-similarly to derived statistics (they are associated with Interval
-Sources), but are stored separately.
+2. Derived statistics that are calculated from other, pre-existing
+   statistics.
 
-There are three types of StatisticJournal, for values that are integers,
-floats and text.
+(A careful reader may have noted that the above statements use
+"statistic" to refer to *values*, which are actually stored in the
+StatisticJournal.  This is why I used "statistic" with a lower case
+"s" - when I am referring to a particular table I will revert to
+capitalized names.)
+
+Many statistics also have ranking and percentile information.  These
+behave similarly to derived statistics (they are associated with
+Interval Sources), but are stored separately.
 
 ### Sources
 
+Sources are, well, the sources of statistics - where the values come
+from.
+
 There are several different Sources:
 
-* **Activities** are read from FIT files and provide a wealth of statistics
-  (note that the GPS trace, HR time series, etc, are not stored as statistics
-  themselves, but values calculated from these, like time in HR zones, total
-  distance, are).
+* **Activities** are read from FIT files and provide a wealth of
+  statistics (note that the GPS trace, HR time series, etc, are not
+  stored as statistics themselves, but values calculated from these,
+  like time in HR zones, total distance, are).
 
-* **Topics** are used to structure entries in the diary and can be associated
-  with statistics that are entered by the user (depending on the details of
-  configuration).
+* **Topics** are used to structure entries in the diary and can be
+  associated with statistics that are entered by the user (depending
+  on the details of configuration).
 
-* **Intervals** in time are used as sources for derived statistics.  This may
-  seem somewhat abstract, but it helps avoid stale data (see below).  An
-  Interval has a start time and a duration - typically a day, month or year.
-  So the total distance cycled over May 2018, for example, is a derived
-  statistic whose source is the interval covering that month.
+* **Intervals** in time are used as sources for derived statistics.
+  This may sound odd, but it helps avoid stale data (see below).  An
+  Interval has a start time and a duration - typically a day, month or
+  year.  So the total distance cycled over May 2018, for example, is a
+  derived statistic whose source is the interval covering that month.
 
-As with Statistics and the StatisticJournal, the data associated with these
-Activities and Topics are stored in **ActivityJournal** and **TopicJournal**
-(the Activity and Topic tables store metadata).
+* **Monitor** is similar to an Activity - it is read from FIT files -
+  but is background "wellness" data (rest HR, steps walked, etc).
+  (Dirty implementation detail: Monitor data are recorded at random
+  times throughout the day so the system also calculates a daily
+  value (total steps, lowest rest HR) and associates this with an
+  Interval corresponding to that day.)
 
-Every Source has an associated time - this is also the time for the statistic.
+As with Statistics and the StatisticJournal, the data associated with
+these Activities, Topics and Monitor are stored in
+**ActivityJournal**, **TopicJournal** and **MonitorJournal**.
+
+Every Source has an associated time - this is also the time for the
+statistic.
 
 ## Implementation
 

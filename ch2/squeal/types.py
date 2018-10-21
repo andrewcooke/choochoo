@@ -1,7 +1,9 @@
 
 import datetime as dt
+from hashlib import md5
 from json import dumps, loads
 from pydoc import locate
+from struct import unpack
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
@@ -84,6 +86,36 @@ class Json(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         return loads(value)
+
+
+HASH_CACHE = {}
+
+
+class Owner(TypeDecorator):
+    '''
+    The 'owner' of some data - typically the creating class.
+    We used to store the whole class name, but that was long text and seemed ot be a
+    waste of space.  Since it's an opaque value we now use a 32bit hash.
+    '''
+
+    impl = Integer
+
+    def process_literal_param(self, cls, dialect):
+        if cls is None or isinstance(cls, int):
+            return cls
+        if not isinstance(cls, str) and not isinstance(cls, type):
+            cls = type(cls)
+        if isinstance(cls, type):
+            cls = cls.__module__ + '.' + cls.__name__
+        if cls not in HASH_CACHE:
+            hash = md5()
+            hash.update(cls.encode('utf8'))
+            # 16 bits is more than enough - only expect to have a handful of distinct values
+            # signed value because that presumably fits into sqlite signed integer
+            HASH_CACHE[cls] = unpack('h', hash.digest()[:2])[0]
+        return HASH_CACHE[cls]
+
+    process_bind_param = process_literal_param
 
 
 class Sched(TypeDecorator):

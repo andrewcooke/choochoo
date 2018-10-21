@@ -6,8 +6,9 @@ from sqlalchemy.sql.functions import count
 
 from ch2.command.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
+from ch2.lib.date import to_time
 from ch2.squeal.database import add
-from ch2.squeal.tables.source import Source
+from ch2.squeal.tables.source import Source, Interval
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic, \
     StatisticJournalInteger, StatisticType
 from ch2.squeal.tables.topic import TopicJournal, Topic
@@ -82,6 +83,9 @@ def test_sources():
             y_avg = s.query(StatisticJournalFloat).join(Statistic). \
                 filter(Statistic.name == 'Avg/Year Rest HR').one()
             assert y_avg.value == 60
+            month = s.query(Interval).filter(Interval.schedule == 'm').one()
+            assert month.time == to_time('2018-09-01'), month.time
+            assert month.finish == to_time('2018-10-01'), month.finish
 
         with db.session_context() as s:
 
@@ -100,6 +104,10 @@ def test_sources():
 
             assert s.query(count(TopicJournal.id)).scalar() == 0
             # this should be zero because the Intervals were automatically deleted
-            assert s.query(count(Source.id)).scalar() == 0
-            assert s.query(count(StatisticJournalText.id)).scalar() == 0
-            assert s.query(count(StatisticJournal.id)).scalar() == 0
+            for source in s.query(Source).all():
+                print(source)
+            for journal in s.query(StatisticJournal).all():
+                print(journal)
+            assert s.query(count(Source.id)).scalar() == 0, s.query(count(Source.id)).scalar()
+            assert s.query(count(StatisticJournalText.id)).scalar() == 0, s.query(count(StatisticJournalText.id)).scalar()
+            assert s.query(count(StatisticJournal.id)).scalar() == 0, s.query(count(StatisticJournal.id)).scalar()

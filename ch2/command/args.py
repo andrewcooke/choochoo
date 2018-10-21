@@ -123,7 +123,7 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqle', metavar='FILE',
+    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlf', metavar='FILE',
                         help='the database file')
     parser.add_argument(mm(DEV), action='store_true', help='enable development mode')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
@@ -190,7 +190,7 @@ def parser():
                      help='display undocumented high-level fields')
     fit.add_argument(mm(ALL_MESSAGES), action='store_true',
                      help='display undocumented high-level messages')
-    fit.add_argument(m(M), mm(MESSAGE), action='store', metavar='MSG',
+    fit.add_argument(m(M), mm(MESSAGE), action='store', nargs='+', metavar='MSG',
                      help='display only named high-level messages')
     fit.add_argument(m(W), mm(WARN), action='store_true',
                      help='additional warning messages')

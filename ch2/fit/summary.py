@@ -15,6 +15,7 @@ from ..lib.utils import unique
 
 def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1,
               records=None, warn=False, profile_path=None, grep=None, name=False, invert=False, match=1):
+    # import pdb; pdb.set_trace()
     if name and format != GREP:
         print()
         print(fit_path)
@@ -143,7 +144,6 @@ def partition(records, counts, threshold=3):
 def pprint_as_dicts(records, all_fields, all_messages, width=80):
     for record in records:
         if all_messages or record.is_known():
-            import pdb; pdb.set_trace()
             record = record.as_dict(join_values, append_units, to_hex, fix_degrees,
                                     no_filter if all_fields else no_unknown_fields,
                                     no_bad_values)
@@ -159,7 +159,7 @@ def sort_names(data):
 
 def pprint_as_tuples(records, all_fields, all_messages, width=80):
     records = [record.force(sort_names, unique_names,
-                            timestamp=([Date.convert(record.timestamp)], 's'))
+                            timestamp=([record.timestamp], 's'))
                for record in records]
     titles = [record.as_names(no_filter if all_fields else no_unknown_fields)
               for record in unique(records, key=lambda x: x.identity)

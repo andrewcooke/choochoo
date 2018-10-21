@@ -7,7 +7,7 @@ from sqlalchemy.event import listens_for, remove
 from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
-from ..types import Time, OpenSched, Cls
+from ..types import Time, OpenSched, Owner
 from ...lib.date import to_date, to_time
 from ...lib.schedule import Schedule, ZERO
 
@@ -83,7 +83,7 @@ class Interval(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False)
     # disambiguate creator so each can wipe only its own data on force
-    owner = Column(Cls, nullable=False)
+    owner = Column(Owner, nullable=False)
     # duplicates data for simplicity in processing
     # day after (exclusive date)
     finish = Column(Time, nullable=False, index=True)
@@ -98,11 +98,11 @@ class Interval(Source):
     @classmethod
     def _missing_interval_starts(cls, log, s, schedule, owner):
         start, finish = cls._raw_statistics_time_range(s)
-        finish += dt.timedelta(days=1)
+        finish = to_time(schedule.next_frame(finish))
         log.debug('Statistics exist %s - %s' % (start, finish))
         starts = cls._open_intervals(s, schedule, owner)
         if not cls._get_interval(s, schedule, owner, start):
-            starts = [start] + starts
+            starts = [to_time(schedule.start_of_frame(start))] + starts
         if starts and starts[-1] == finish:
             starts = starts[:-1]
         log.debug('Have %d open blocks finishing at %s' % (len(starts), finish))

@@ -1,10 +1,11 @@
 
 from os.path import splitext, basename
 
+from ch2.lib.date import to_time
+from ch2.lib.schedule import ZERO
 from ..fit import AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
-from ...fit.profile.types import timestamp_to_datetime
 from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
 from ...squeal.tables.activity import Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint
@@ -37,7 +38,7 @@ class ActivityImporter(Importer):
 
         data, types, messages, records = filtered_records(self._log, path)
         records = [record.force(fix_degrees)
-                   for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0)]
+                   for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(ZERO))]
 
         first_timestamp = self._first(path, records, 'event', 'record').value.timestamp
         sport = self._first(path, records, 'sport').value.sport.lower()
@@ -46,7 +47,7 @@ class ActivityImporter(Importer):
         journal = add(s, ActivityJournal(activity=activity, time=first_timestamp,
                                          fit_file=path, name=splitext(basename(path))[0]))
 
-        timespan, warned, latest = None, 0, 0
+        timespan, warned, latest = None, 0, to_time(ZERO)
         for record in records:
             try:
                 if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
@@ -77,7 +78,7 @@ class ActivityImporter(Importer):
                 else:
                     if record.name == 'record':
                         self._log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
-                                       (path, timestamp_to_datetime(record.timestamp)))
+                                       (path, record.timestamp))
             except (AttributeError, TypeError) as e:
                 if warned < 10:
                     self._log.warn('Error while reading %s - some data may be missing (%s)' % (path, e))

@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source
 from ..support import Base
-from ..types import Cls
+from ..types import Owner
 from ...lib.date import format_seconds
 
 
@@ -23,7 +23,7 @@ class Statistic(Base):
     # this is done by (1) "owner" (typically the source of the data) and
     # (2) by some additional (optional) constraint used by the owner (typically)
     # (eg activity.id so that the same statistic can be used across different activities)
-    owner = Column(Cls, nullable=False)
+    owner = Column(Owner, nullable=False)
     constraint = Column(Integer)
     UniqueConstraint(name, owner, constraint)
 
