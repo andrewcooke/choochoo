@@ -164,3 +164,17 @@ def test_personal():
         for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
             print(fit_file)
             summarize_tables(log, fit_file)
+
+
+def test_timestamp_16():
+
+    basicConfig(stream=stdout, level=DEBUG)
+    log = getLogger()
+    data, types, messages, records = \
+        filtered_records(log, '/home/andrew/project/ch2/choochoo/data/test/personal/andrew@acooke.org_24755630065.fit',
+                         profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+    for record in records:
+        if record.name == 'monitoring':
+            print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
+
+

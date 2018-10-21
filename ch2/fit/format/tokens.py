@@ -3,7 +3,7 @@ from collections import defaultdict, Counter
 from struct import unpack
 
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
-from ..profile.types import Date, timestamp_to_datetime
+from ..profile.types import Date, timestamp_to_time
 from ...lib.data import WarnDict, tohex
 
 
@@ -93,7 +93,6 @@ class Defined(Token):
         field = self.definition.timestamp_field
         state.timestamp = field.field.type.parse(data[field.start:field.finish], 1,
                                                  self.definition.endian, state.timestamp)[0]
-        # state.timestamp = state.date.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
 
     def __parse_field_definition(self, state):
         record = self.parse().force()
@@ -205,7 +204,8 @@ class Definition(Token):
             field.start = offset
             offset += field.size
             field.finish = offset
-            if field.field and field.field.number == TIMESTAMP_GLOBAL_TYPE:
+            if field.field and \
+                    (field.field.number == TIMESTAMP_GLOBAL_TYPE or field.field.name == 'timestamp_16'):
                 self.timestamp_field = field
             if field.field and isinstance(field.field, DynamicField):
                 self.references.update(field.field.references)
@@ -337,7 +337,6 @@ class State:
         self.dev_fields = defaultdict(dict)
         self.definitions = WarnDict(log, 'No definition for local message type %s')
         self.definition_counter = Counter()
-        # self.date = Date(log, 'timestamp', True, to_datetime=False)
         self.timestamp = None
 
 

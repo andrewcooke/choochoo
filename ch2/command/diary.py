@@ -4,12 +4,12 @@ import datetime as dt
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
-from ch2.squeal.tables.pipeline import PipelineType
 from .args import DATE
 from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.utils import PALETTE, em
 from ..lib.widgets import DateSwitcher
+from ..squeal.tables.pipeline import PipelineType
 from ..squeal.tables.source import disable_interval_cleaning, Source
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import build_pipeline

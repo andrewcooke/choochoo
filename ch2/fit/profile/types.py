@@ -126,28 +126,51 @@ class AliasInteger(AutoInteger):
         self.name = name
 
 
-def timestamp_to_datetime(time, tzinfo=dt.timezone.utc):
-    return dt.datetime(1989, 12, 31, tzinfo=tzinfo) + dt.timedelta(seconds=time)
+def timestamp_to_time(timestamp, tzinfo=dt.timezone.utc):
+    return dt.datetime(1989, 12, 31, tzinfo=tzinfo) + dt.timedelta(seconds=timestamp)
+
+
+def time_to_timestamp(time, tzinfo=dt.timezone.utc):
+    return int((time - dt.datetime(1989, 12, 31, tzinfo=tzinfo)).total_seconds())
 
 
 class Date(AliasInteger):
 
-    def __init__(self, log, name, utc, to_datetime=True):
+    def __init__(self, log, name, utc=True):
         super().__init__(log, name, 'uint32')
         self.__tzinfo = dt.timezone.utc if utc else None
-        self.__to_datetime = to_datetime
 
     @staticmethod
     def convert(time, tzinfo=dt.timezone.utc):
         if time is not None and time >= 0x10000000:
-            return timestamp_to_datetime(time, tzinfo=tzinfo)
+            return timestamp_to_time(time, tzinfo=tzinfo)
         else:
             return time
 
     def parse(self, data, count, endian, timestamp, raw_time=False, **options):
         times = super().parse(data, count, endian, timestamp, raw_time=raw_time, **options)
-        if not raw_time and self.__to_datetime:
+        if not raw_time:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
+        return times
+
+
+class Date16(AliasInteger):
+
+    def __init__(self, log, name, utc=True):
+        super().__init__(log, name, 'uint16')
+        self.__tzinfo = dt.timezone.utc if utc else None
+
+    @staticmethod
+    def convert(time, timestamp, tzinfo=dt.timezone.utc):
+        # https://www.thisisant.com/forum/viewthread/6374
+        current = time_to_timestamp(timestamp, tzinfo=tzinfo)
+        current += (time - (current & 0xffff)) & 0xffff
+        return timestamp_to_time(current, tzinfo=tzinfo)
+
+    def parse(self, data, count, endian, timestamp, raw_time=False, **options):
+        times = super().parse(data, count, endian, timestamp, raw_time=raw_time, **options)
+        if not raw_time:
+            times = tuple(self.convert(time, timestamp, tzinfo=self.__tzinfo) for time in times)
         return times
 
 
@@ -247,8 +270,9 @@ class Types:
         # this is in the spreadsheet, but not in the doc
         self.__add_type(Boolean(self.__log, 'bool'))
         # these are defined in the spreadsheet, but the interpretation is in comments
-        self.__add_type(Date(self.__log, 'date_time', True))
-        self.__add_type(Date(self.__log, 'local_date_time', False))
+        self.__add_type(Date(self.__log, 'date_time', utc=True))
+        self.__add_type(Date(self.__log, 'local_date_time', utc=False))
+        self.__add_type(Date16(self.__log, 'timestamp_16', utc=True))
 
     def __add_type(self, type):
         if type.name in self.__profile_to_type:

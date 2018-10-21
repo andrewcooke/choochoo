@@ -39,7 +39,11 @@ class TypedField(ScaledField):
     def __init__(self, log, name, field_no, units, scale, offset, accumulate, field_type, types):
         super().__init__(log, name, units, scale, offset, accumulate)
         self.number = field_no
-        self.type = types.profile_to_type(field_type)
+        if types.is_type(name):
+            self.type = types.profile_to_type(name)
+            log.warn('Overriding type (%s) for predefined %s' % (field_type, name))
+        else:
+            self.type = types.profile_to_type(field_type)
 
     def parse(self, data, count, endian, timestamp, references, accumulate, message, **options):
         yield from self._parse_and_scale(self.type, data, count, endian, timestamp, accumulate, **options)
@@ -155,7 +159,9 @@ class DynamicField(Zip, RowField):
 
 
 def MessageField(log, row, rows, types):
-    # log.debug('Parsing field %s' % row.field_name)
+    log.debug('Parsing field %s' % row.field_name)
+    if row.field_name == 'timestamp_16':
+        print('xxx')
     if row.components:
         return CompositeField(log, row, types)
     else:

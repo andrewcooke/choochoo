@@ -240,7 +240,7 @@ def parser():
                                                      (PROGNAME, PACKAGE_FIT_PROFILE))
     package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE',
                                      help='the path to the profile (Profile.xlsx)')
-    package_fit_profile.add_argument(m(W), mm(WARN), action='store', metavar='name',
+    package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
                                      help='additional warning messages')
     package_fit_profile.set_defaults(command=PACKAGE_FIT_PROFILE)
 

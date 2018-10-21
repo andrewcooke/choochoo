@@ -1,9 +1,10 @@
-
-from pickle import load
+from os.path import join, dirname
+from pickle import load, dump
 
 import openpyxl as xls
 from pkg_resources import resource_stream
 
+from ch2.command.args import WARN
 from .messages import Messages
 from .support import NullableLog
 from .types import Types
@@ -20,6 +21,7 @@ def read_profile(log, path, warn=False):
 
 
 def load_profile(log):
+    log.debug('Unpickling profile')
     input = resource_stream(__name__, PROFILE)
     nlog, types, messages = load(input)
     nlog.set_log(log)
@@ -29,6 +31,7 @@ def load_profile(log):
 def load_fit(log, fit_path, warn=False, profile_path=None):
     # todo separate? (this is called a lot on repeated reads)
     if profile_path:
+        log.debug('Reading profile from %s' % profile_path)
         _nlog, types, messages = read_profile(log, profile_path, warn=warn)
     else:
         types, messages = load_profile(log)
@@ -36,3 +39,16 @@ def load_fit(log, fit_path, warn=False, profile_path=None):
     with open(fit_path, 'rb') as input:
         data =input.read()
     return data, types, messages
+
+
+def pickle_profile(log, in_path, warn=False):
+    log.info('Reading from %s' % in_path)
+    nlog, types, messages = read_profile(log, in_path, warn=warn)
+    out_path = join(dirname(__file__), PROFILE)
+    nlog.set_log(None)
+    log.info('Writing to %s' % out_path)
+    with open(out_path, 'wb') as output:
+        dump((nlog, types, messages), output)
+    # test loading
+    log.info('Test loading from %r' % PROFILE)
+    log.info('Loaded %s, %s' % load_profile(log))
