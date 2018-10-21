@@ -3,8 +3,10 @@ from random import choice
 from re import split
 
 from sqlalchemy import func
+from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import count
 
+from ch2.squeal.database import add
 from ...lib.date import to_date
 from ...lib.schedule import Schedule
 from ...squeal.tables.pipeline import Pipeline, PipelineType
@@ -46,14 +48,15 @@ class SummaryStatistics:
         self._create_values(spec)
 
     def _delete(self, spec, after=None):
-        # we delete the intervals that all summary statistics depend on and they will cascade
+        # we delete the intervals that summary statistics depend on and they will cascade
         with self._db.session_context() as s:
             for repeat in range(2):
                 if repeat:
                     q = s.query(Interval)
                 else:
                     q = s.query(count(Interval.id))
-                q = q.filter(Interval.schedule == spec)
+                q = q.filter(Interval.schedule == spec,
+                             Interval.owner == self)
                 if after:
                     q = q.filter(Interval.finish > after)
                 if repeat:
@@ -63,43 +66,19 @@ class SummaryStatistics:
                 else:
                     n = q.scalar()
                     if n:
-                        self._log.warn('Deleting %d intervals' % n)
+                        self._log.info('Deleting %d intervals' % n)
                     else:
                         self._log.warn('No intervals to delete')
 
-    def _raw_statistics_date_range(self, s):
-        start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
-            join(StatisticJournal).filter(StatisticJournal.source != None).one()
-        if start and finish:
-            return start.date(), finish.date()
-        else:
-            raise Exception('No statistics are currently defined')
-
-    def _intervals(self, s, spec):
-        start, finish = self._raw_statistics_date_range(s)
-        start = spec.start_of_frame(start)
-        while start <= finish:
-            next_start = spec.next_frame(start)
-            yield start, next_start
-            start = next_start
-
-    def _interval(self, s, start, finish, schedule):
-        new = False
-        interval = s.query(Interval). \
-            filter(Interval.time == start,
-                   Interval.schedule == schedule,
-                   Interval.finish == finish).one_or_none()
-        if not interval:
-            interval = Interval(time=start, finish=finish, schedule=schedule)
-            s.add(interval)
-            new = True
-        return new, interval
-
-    def _statistics_with_summaries(self, s, start, finish):
-        return s.query(Statistic).join(StatisticJournal, Source). \
+    def _statistics_missing_summaries(self, s, start, finish):
+        statistics_with_data_but_no_summary = s.query(Statistic.id). \
+            join(StatisticJournal, Source). \
             filter(Source.time >= start,
                    Source.time < finish,
-                   Statistic.summary != None).all()
+                   Statistic.summary != None)
+        return s.query(Statistic). \
+            filter(Statistic.id.in_(statistics_with_data_but_no_summary)). \
+            all()
 
     def _diary_entries(self, s, statistic, start, finish):
         return s.query(StatisticJournal).join(Source). \
@@ -133,12 +112,14 @@ class SummaryStatistics:
             return None, None, None
 
     def _get_statistic(self, s, root, name):
+        # we use the old statistic id as the constraint.  this lets us handle multiple
+        # statistics with the same name, but different owners and constraints.
         statistic = s.query(Statistic). \
             filter(Statistic.name == name,
-                   Statistic.owner == self).one_or_none()
+                   Statistic.owner == self,
+                   Statistic.constraint == root.id).one_or_none()
         if not statistic:
-            statistic = Statistic(name=name, owner=self, units=root.units)
-            s.add(statistic)
+            statistic = add(s, Statistic(name=name, owner=self, constraint=root.id, units=root.units))
         return statistic
 
     def _create_value(self, s, interval, spec, statistic, process, data, values):
@@ -146,9 +127,8 @@ class SummaryStatistics:
         if value is not None:
             name = template % statistic.name
             new_statistic = self._get_statistic(s, statistic, name)
-            journal = STATISTIC_JOURNAL_CLASSES[type](
-                statistic=new_statistic, source=interval, value=value)
-            s.add(journal)
+            journal = add(s, STATISTIC_JOURNAL_CLASSES[type](
+                statistic=new_statistic, source=interval, value=value))
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic))
 
     def _create_ranks(self, s, interval, spec, statistic, data):
@@ -171,27 +151,26 @@ class SummaryStatistics:
 
     def _create_values(self, spec):
         with self._db.session_context() as s:
-            for start, finish in self._intervals(s, spec):
-                new, interval = self._interval(s, start, finish, spec)
-                if new:
-                    have_data = False
-                    for statistic in self._statistics_with_summaries(s, start, finish):
-                        data = [journal for journal in self._diary_entries(s, statistic, start, finish)
-                                if spec.at_location(to_date(journal.time))]
-                        if data:
-                            processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
-                            if processes:
-                                values = [x.value for x in data]
-                                for process in processes:
-                                    self._create_value(s, interval, spec, statistic, process.lower(), data, values)
-                            else:
-                                self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
-                            self._create_ranks(s, interval, spec, statistic, data)
-                            have_data = True
-                    if have_data:
-                        self._log.info('Added statistics for %s' % interval)
-                    else:
-                        s.delete(interval)
+            for start, finish in Interval.missing(self._log, s, spec, self):
+                interval = add(s, Interval(time=start, finish=finish, schedule=spec, owner=self))
+                have_data = False
+                for statistic in self._statistics_missing_summaries(s, start, finish):
+                    data = [journal for journal in self._diary_entries(s, statistic, start, finish)
+                            if spec.at_location(to_date(journal.time))]
+                    if data:
+                        processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
+                        if processes:
+                            values = [x.value for x in data]
+                            for process in processes:
+                                self._create_value(s, interval, spec, statistic, process.lower(), data, values)
+                        else:
+                            self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
+                        self._create_ranks(s, interval, spec, statistic, data)
+                        have_data = True
+                if have_data:
+                    self._log.info('Added statistics for %s' % interval)
+                else:
+                    s.delete(interval)
 
 
 def fuzz(n, q):

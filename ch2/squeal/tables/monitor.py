@@ -13,7 +13,7 @@ class MonitorJournal(Source):
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     fit_file = Column(Text, nullable=False, unique=True)
-    finish = Column(Time, nullable=False)
+    finish = Column(Time, nullable=False, index=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.MONITOR

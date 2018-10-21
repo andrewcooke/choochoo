@@ -4,10 +4,10 @@ from enum import IntEnum
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
 from sqlalchemy.orm import relationship, backref
 
-from ch2.lib.date import format_seconds
-from ch2.squeal.tables.source import Source
+from .source import Source
 from ..support import Base
 from ..types import Cls
+from ...lib.date import format_seconds
 
 
 class Statistic(Base):
@@ -52,7 +52,6 @@ class StatisticJournal(Base):
     # this is just for finding bugs
     # in fact (statistic_id, time) should be unique but that's across inheritance tables
     # the source_id field is only for delete on cascade. it's not an 'owner' as for statistics
-    # TODO - is this true?  seems to be used in code for things like HR zone stats
     UniqueConstraint(statistic_id, source_id)
 
     __mapper_args__ = {

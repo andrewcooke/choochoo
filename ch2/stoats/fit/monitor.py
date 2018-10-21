@@ -26,13 +26,14 @@ class MonitorImporter(Importer):
         s.flush()
 
     def _import(self, s, path):
+        self._log.info('Importing monitor data from %s' % path)
 
         data, types, messages, records = filtered_records(self._log, path)
         records = [record.force(fix_degrees, unpack_single_bytes)
                    for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else 0)]
 
         first_timestamp = self._first(path, records, 'monitoring_info').value.timestamp
-        last_timestamp = self._last(path, records, 'monitoring_info').value.timestamp
+        last_timestamp = self._last(path, records, 'monitoring').value.timestamp
         self._delete_journals(s, first_timestamp, path)
         mjournal = add(s, MonitorJournal(time=first_timestamp, fit_file=path, finish=last_timestamp))
 
@@ -42,6 +43,10 @@ class MonitorImporter(Importer):
                 self._add_heart_rate(s, record, mjournal)
             if STEPS in record.data:
                 steps_to_date = self._add_steps(s, steps_to_date, record, mjournal, path)
+
+        s.flush()
+        self._log.debug('Imported %d steps and %d heart rate values' %
+                        (len(mjournal.steps), len(mjournal.heart_rate)))
 
     def _add_heart_rate(self, s, record, mjournal):
         add(s, MonitorHeartRate(time=Date.convert(record.timestamp), value=record.data[HEART_RATE][0],

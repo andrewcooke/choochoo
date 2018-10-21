@@ -1,14 +1,15 @@
 
+import datetime as dt
 from enum import IntEnum
 
-from sqlalchemy import ForeignKey, Column, Integer
+from sqlalchemy import ForeignKey, Column, Integer, func, and_
 from sqlalchemy.event import listens_for, remove
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
-from ..types import Time, OpenSched
+from ..types import Time, OpenSched, Cls
 from ...lib.date import to_date, to_time
-from ...lib.schedule import Schedule
+from ...lib.schedule import Schedule, ZERO
 
 
 class SourceType(IntEnum):
@@ -56,12 +57,12 @@ class Source(Base):
     @classmethod
     def clean_times(cls, session, times):
         from ...stoats.calculate.summary import SummaryStatistics
-        specs = [Schedule(spec) for spec in SummaryStatistics.pipeline_schedules(session)]
+        schedules = [Schedule(schedule) for schedule in SummaryStatistics.pipeline_schedules(session)]
         for time in times:
-            for spec in specs:
-                start = spec.start_of_frame(time)
+            for schedule in schedules:
+                start = schedule.start_of_frame(time)
                 interval = session.query(Interval). \
-                    filter(Interval.time == start, Interval.schedule == spec).one_or_none()
+                    filter(Interval.time == start, Interval.schedule == schedule).one_or_none()
                 if interval:
                     session.delete(interval)
 
@@ -81,9 +82,11 @@ class Interval(Source):
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False)
+    # disambiguate creator so each can wipe only its own data on force
+    owner = Column(Cls, nullable=False)
     # duplicates data for simplicity in processing
     # day after (exclusive date)
-    finish = Column(Time, nullable=False)
+    finish = Column(Time, nullable=False, index=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL
@@ -91,3 +94,63 @@ class Interval(Source):
 
     def __str__(self):
         return 'Interval "%s from %s"' % (self.schedule, to_date(self.time))
+
+    @classmethod
+    def _missing_interval_starts(cls, log, s, schedule, owner):
+        start, finish = cls._raw_statistics_time_range(s)
+        finish += dt.timedelta(days=1)
+        log.debug('Statistics exist %s - %s' % (start, finish))
+        starts = cls._open_intervals(s, schedule, owner)
+        if not cls._get_interval(s, schedule, owner, start):
+            starts = [start] + starts
+        if starts and starts[-1] == finish:
+            starts = starts[:-1]
+        log.debug('Have %d open blocks finishing at %s' % (len(starts), finish))
+        return starts, finish
+
+    @classmethod
+    def _raw_statistics_time_range(cls, s):
+        from .statistic import StatisticJournal, Statistic
+        start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
+            outerjoin(StatisticJournal). \
+            filter(Statistic.id != None,
+                   Source.time > ZERO).one()
+        if start and finish:
+            return start, finish
+        else:
+            raise Exception('No statistics are currently defined')
+
+    @classmethod
+    def _open_intervals(cls, s, schedule, owner):
+        close = aliased(Interval)
+        return [result[0] for result in s.query(Interval.finish). \
+            outerjoin(close,
+                      and_(Interval.finish == close.time,
+                           Interval.owner == close.owner,
+                           Interval.schedule == close.schedule)). \
+            filter(close.time == None,
+                   Interval.owner == owner,
+                   Interval.schedule == schedule). \
+            order_by(Interval.finish).all()]
+
+    @classmethod
+    def _get_interval(cls, s, schedule, owner, start):
+        return s.query(Interval). \
+            filter(Interval.time == start,
+                   Interval.schedule == schedule,
+                   Interval.owner == owner).one_or_none()
+
+    @classmethod
+    def _missing_intervals_from(cls, s, schedule, owner, start, finish):
+        while start < finish:
+            next = to_time(schedule.next_frame(start))
+            yield start, next
+            start = next
+            if cls._get_interval(s, schedule, owner, start):
+                return
+
+    @classmethod
+    def missing(cls, log, s, schedule, owner):
+        starts, overall_finish = cls._missing_interval_starts(log, s, schedule, owner)
+        for block_start in starts:
+            yield from cls._missing_intervals_from(s, schedule, owner, block_start, overall_finish)

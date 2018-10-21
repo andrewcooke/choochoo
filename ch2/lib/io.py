@@ -81,8 +81,8 @@ def for_modified_files(log, session, paths, callback, force=False):
                 path_scan.md5_hash = hash
                 path_scan.last_scan = ZERO
         else:
-            path_scan = add(s, FileScan(path=file_path, md5_hash=hash, last_scan=to_time(ZERO)))
-            s.flush()
+            path_scan = add(session, FileScan(path=file_path, md5_hash=hash, last_scan=to_time(ZERO)))
+            session.flush()
 
         hash_scan = session.query(FileScan).filter(FileScan.md5_hash == hash).\
             order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
