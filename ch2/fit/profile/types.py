@@ -23,7 +23,7 @@ class AbstractType(Named):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
     @abstractmethod
-    def parse(self, bytes, count, endian, **options):
+    def parse(self, bytes, count, endian, timestamp, **options):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
 
@@ -70,7 +70,7 @@ class String(BaseType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, str)
 
-    def parse(self, bytes, count, endian, **options):
+    def parse(self, bytes, count, endian, timestamp, **options):
         return (str(b''.join(byte for byte in unpack('%dc' % count, bytes) if byte != b'\0'),
                     encoding='utf-8'),)
 
@@ -80,7 +80,7 @@ class Boolean(BaseType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, bool)
 
-    def parse(self, bytes, count, endian, **options):
+    def parse(self, bytes, count, endian, timestamp, **options):
         return tuple(bool(byte) for byte in bytes)
 
 
@@ -112,7 +112,7 @@ class AutoInteger(StructSupport):
         else:
             return int(cell, 0)
 
-    def parse(self, data, count, endian, **options):
+    def parse(self, data, count, endian, timestamp, **options):
         result = self._unpack(data, self.formats, self.bad, count, endian)
         if result is not None and self.size == 1:
             result = bytes(result)
@@ -144,8 +144,8 @@ class Date(AliasInteger):
         else:
             return time
 
-    def parse(self, data, count, endian, raw_time=False, **options):
-        times = super().parse(data, count, endian, raw_time=raw_time, **options)
+    def parse(self, data, count, endian, timestamp, raw_time=False, **options):
+        times = super().parse(data, count, endian, timestamp, raw_time=raw_time, **options)
         if not raw_time and self.__to_datetime:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
         return times
@@ -169,7 +169,7 @@ class AutoFloat(StructSupport):
         self.formats = ['<%d' + format, '>%d' + format]
         self.bad = self._pack_bad(2 ** bits - 1)
 
-    def parse(self, data, count, endian, **options):
+    def parse(self, data, count, endian, timestamp, **options):
         return self._unpack(data, self.formats, self.bad, count, endian)
 
 
@@ -200,8 +200,8 @@ class Mapping(AbstractType):
         except KeyError:
             return value
 
-    def parse(self, bytes, size, endian, map_values=True, **options):
-        values = self.base_type.parse(bytes, size, endian, map_values=map_values, **options)
+    def parse(self, bytes, size, endian, timestamp, map_values=True, **options):
+        values = self.base_type.parse(bytes, size, endian, timestamp, map_values=map_values, **options)
         if map_values and values:
             values = tuple(self.safe_internal_to_profile(value) for value in values)
         return values

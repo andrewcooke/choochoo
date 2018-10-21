@@ -91,7 +91,8 @@ class Defined(Token):
 
     def __parse_timestamp(self, data, state):
         field = self.definition.timestamp_field
-        state.timestamp = field.field.type.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
+        state.timestamp = field.field.type.parse(data[field.start:field.finish], 1,
+                                                 self.definition.endian, state.timestamp)[0]
         # state.timestamp = state.date.parse(data[field.start:field.finish], 1, self.definition.endian)[0]
 
     def __parse_field_definition(self, state):

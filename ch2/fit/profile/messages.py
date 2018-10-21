@@ -40,27 +40,29 @@ class Message(Named):
             field.post(self, types)
 
     def parse(self, data, defn, timestamp, **options):
-        return LazyRecord(self.name, self.number, defn.identity, timestamp, self.__parse(data, defn, **options))
+        return LazyRecord(self.name, self.number, defn.identity, timestamp,
+                          self.__parse(data, defn, timestamp, **options))
 
-    def __parse(self, data, defn, **options):
+    def __parse(self, data, defn, timestamp, **options):
         # this is the generator that lives inside a record and is evaluated on demand
         references = {}
         for field in defn.fields:
             bytes = data[field.start:field.finish]
             if field.field:
                 for name, value in self._parse_field(
-                        field.field, bytes, field.count, defn.endian, references, defn.accumulate, self, **options):
+                        field.field, bytes, field.count, defn.endian, timestamp, references,
+                        defn.accumulate, self, **options):
                     if name in defn.references and value[0] is not None:
                         references[name] = value
                     yield name, value
             else:
                 name = '@%d:%d' % (field.start, field.finish)
-                value = (field.base_type.parse(bytes, field.count, defn.endian), None)
+                value = (field.base_type.parse(bytes, field.count, defn.endian, timestamp), None)
                 yield name, value
 
-    def _parse_field(self, field, bytes, count, endian, references, accumulate, message, **options):
+    def _parse_field(self, field, bytes, count, endian, timestamp, references, accumulate, message, **options):
         # allow interception for optional field in header
-        yield from field.parse(bytes, count, endian, references, accumulate, message, **options)
+        yield from field.parse(bytes, count, endian, timestamp, references, accumulate, message, **options)
 
 
 class RowMessage(Message):
@@ -82,11 +84,11 @@ class Header(Message):
         for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
             self._add_field(TypedField(log, name, n, None, None, None, None, base_type, types))
 
-    def _parse_field(self, field, data, count, endian, references, accumulate, message):
+    def _parse_field(self, field, data, count, endian, timestamp, references, accumulate, message):
         if field.name == 'checksum' and references['header_size'] == 12:
             yield None, None
         else:
-            yield from super()._parse_field(field, data, count, endian, references, accumulate, message)
+            yield from super()._parse_field(field, data, count, endian, timestamp, references, accumulate, message)
 
 
 class Missing(Message):

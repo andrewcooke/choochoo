@@ -8,9 +8,9 @@ from .command.example_config import example_config
 from .command.fit import fit
 from .command.help import help
 from .command.monitor import monitor
+from .command.package_fit_profile import package_fit_profile
 from .command.statistics import statistics
 from .command.test_schedule import test_schedule
-from .fit.profile.profile import package_fit_profile
 from .lib.log import make_log
 from .squeal.database import Database
 
