@@ -1,11 +1,12 @@
 
 from sqlalchemy.sql.functions import count, min, sum
 
+from ..names import STEPS, REST_HR
 from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
 from ...squeal.tables.source import Interval
-from ...squeal.tables.statistic import StatisticJournalFloat
+from ...squeal.tables.statistic import StatisticJournalInteger
 
 
 class MonitorStatistics:
@@ -55,13 +56,14 @@ class MonitorStatistics:
                    MonitorJournal.finish >= start,
                    MonitorSteps.time >= start,
                    MonitorSteps.time < finish).scalar()
-        self._add_float_stat(s, interval, 'Steps', '[sum],[avg]', steps, None)
+        self._add_integer_stat(s, interval, STEPS, '[sum],[avg]', steps, None)
         rest_heart_rate = s.query(min(MonitorHeartRate.value)).join(MonitorJournal). \
             filter(MonitorJournal.time < finish,
                    MonitorJournal.finish >= start,
                    MonitorHeartRate.time >= start,
                    MonitorHeartRate.time < finish).scalar()
-        self._add_float_stat(s, interval, 'Rest HR', '[min],[avg]', rest_heart_rate, None)
+        self._add_integer_stat(s, interval, REST_HR, '[min],[avg]', rest_heart_rate, None)
 
-    def _add_float_stat(self, s, journal, name, summary, value, units):
-        StatisticJournalFloat.add(self._log, s, name, units, summary, self, 0, journal, value)
+    def _add_integer_stat(self, s, journal, name, summary, value, units):
+        if value is not None:
+            StatisticJournalInteger.add(self._log, s, name, units, summary, self, None, journal, value)

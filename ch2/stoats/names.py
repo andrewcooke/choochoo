@@ -27,3 +27,7 @@ def round_km():
     yield from range(25, 76, 25)
     yield from range(100, 251, 50)
     yield from range(300, 1001, 100)
+
+
+STEPS = 'Steps'
+REST_HR = 'Rest HR'

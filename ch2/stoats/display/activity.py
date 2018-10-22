@@ -50,11 +50,7 @@ class ActivityDiary:
         body.append(Text('%s - %s  (%s)' % (ajournal.time.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
                                             format_seconds((ajournal.finish - ajournal.time).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
-            sjournal = s.query(StatisticJournal).join(Statistic, Source). \
-                filter(Source.time == ajournal.time,
-                       Statistic.name == name,
-                       Statistic.owner == ActivityStatistics,
-                       Statistic.constraint == ajournal.activity.id).one()
+            sjournal = StatisticJournal.get(s, name, ajournal.time, ActivityStatistics, ajournal.activity.id)
             body.append(Text([label('%s: ' % sjournal.statistic.name)] + self.__format_value(sjournal, date)))
         return body
 

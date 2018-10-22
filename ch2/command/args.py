@@ -38,6 +38,7 @@ FORMAT = 'format'
 FTHR = 'fthr'
 FORCE, F = 'force', 'f'
 GREP = 'grep'
+LIKE = 'like'
 LIMIT = 'limit'
 LOGS = 'logs'
 LIST = 'list'
@@ -153,9 +154,9 @@ def parser():
     constant_flags.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
     constant_flags.add_argument(mm(SET), action='store_true', help='store a new value')
     constant.add_argument(mm(FORCE), action='store_true', help='confirm deletion(s) without value')
-    constant.add_argument(NAME, action='store', nargs='?', metavar=NAME, help='constant name')
-    constant.add_argument(DATE, action='store', nargs='?', metavar=DATE, help='date when measured')
-    constant.add_argument(VALUE, action='store', nargs='?', metavar=VALUE, help='constant value')
+    constant.add_argument(NAME, action='store', nargs='?', metavar='NAME', help='constant name')
+    constant.add_argument(DATE, action='store', nargs='?', metavar='DATE', help='date when measured')
+    constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
     constant.set_defaults(command=CONSTANTS)
 
     diary = subparsers.add_parser(DIARY,
@@ -220,8 +221,10 @@ def parser():
                                        help='(re-)generate statistics - ' +
                                             'see `%s %s -h` for more details' % (PROGNAME, STATISTICS))
     statistics.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
-    statistics.add_argument(DATE, action='store', nargs='?', metavar=DATE,
+    statistics.add_argument(DATE, action='store', nargs='?', metavar='DATE',
                             help='date from which statistics are deleted')
+    statistics.add_argument(mm(LIKE), action='store', metavar='PATTERN',
+                            help='run only matching pipeline classes')
     statistics.set_defaults(command=STATISTICS)
 
     example_config = subparsers.add_parser(EXAMPLE_CONFIG,

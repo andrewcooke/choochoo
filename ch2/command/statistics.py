@@ -1,5 +1,5 @@
 
-from .args import DATE, FORCE, mm
+from .args import DATE, FORCE, mm, LIKE
 from ..squeal.tables.pipeline import PipelineType
 from ..stoats.calculate import run_pipeline_after
 
@@ -16,7 +16,7 @@ Generate any missing statistics.
 
 Delete statistics after the date (or all, if omitted) and then generate new values.
     '''
-    force, date = args[FORCE], args[DATE]
+    force, date, like = args[FORCE], args[DATE], args[LIKE]
     if date and not force:
         raise Exception('Only give a date when using %s' % mm(FORCE))
-    run_pipeline_after(log, db, PipelineType.STATISTIC, after=date, force=force)
+    run_pipeline_after(log, db, PipelineType.STATISTIC, after=date, force=force, like=like)
