@@ -1,6 +1,7 @@
 
-from urwid import Text, Columns
+from urwid import Text, Columns, Pile
 
+from ch2.uweird.tui.decorators import Indent
 from ..calculate.monitor import MonitorStatistics
 from ..names import STEPS, \
     REST_HR
@@ -18,7 +19,8 @@ class MonitorDiary:
         date = to_date(date)
         columns = list(self.__fields(s, date))
         if columns:
-            yield Columns(columns)
+            yield Pile([Text('Monitor'),
+                        Indent(Columns(columns))])
 
     def __fields(self, s, date):
         yield from self.__field(s, date, STEPS)

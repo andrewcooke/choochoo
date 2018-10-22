@@ -62,7 +62,7 @@ class MonitorStatistics:
                    MonitorJournal.finish >= start,
                    MonitorHeartRate.time >= start,
                    MonitorHeartRate.time < finish).scalar()
-        self._add_integer_stat(s, interval, REST_HR, '[min],[avg]', rest_heart_rate, None)
+        self._add_integer_stat(s, interval, REST_HR, '[min],[avg]', rest_heart_rate, 'bpm')
 
     def _add_integer_stat(self, s, journal, name, summary, value, units):
         if value is not None:
