@@ -7,7 +7,7 @@ from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 from .args import DATE
 from ..lib.date import to_date
 from ..lib.io import tui
-from ..lib.utils import PALETTE, em
+from ..lib.utils import PALETTE_RAINBOW, em
 from ..lib.widgets import DateSwitcher
 from ..squeal.tables.pipeline import PipelineType
 from ..squeal.tables.source import disable_interval_cleaning, Source
@@ -42,7 +42,7 @@ To exit, alt-q (or, without saving, alt-x).
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
     disable_interval_cleaning()
-    MainLoop(Diary(log, db, date), palette=PALETTE).run()
+    MainLoop(Diary(log, db, date), palette=PALETTE_RAINBOW).run()
 
 
 # todo - new stats when data saved?  when diary exited?

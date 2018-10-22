@@ -7,8 +7,12 @@ from ...lib.schedule import ZERO
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
 
+ACTIVITY_TYPE = 'activity_type'
 HEART_RATE = 'heart_rate'
+MONITORING = 'monitoring'
+MONITORING_INFO = 'monitoring_info'
 STEPS = 'steps'
+WALKING = 'walking'
 
 
 class MonitorImporter(Importer):
@@ -32,8 +36,8 @@ class MonitorImporter(Importer):
         records = [record.force(fix_degrees, unpack_single_bytes)
                    for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(ZERO))]
 
-        first_timestamp = self._first(path, records, 'monitoring_info').value.timestamp
-        last_timestamp = self._last(path, records, 'monitoring').value.timestamp
+        first_timestamp = self._first(path, records, MONITORING_INFO).timestamp
+        last_timestamp = self._last(path, records, MONITORING).timestamp
         self._delete_journals(s, first_timestamp, path)
         mjournal = add(s, MonitorJournal(time=first_timestamp, fit_file=path, finish=last_timestamp))
 
@@ -55,9 +59,9 @@ class MonitorImporter(Importer):
     def _add_steps(self, s, steps_to_date, record, mjournal, path):
         raw_value, steps = record.data[STEPS][0], None
         if isinstance(raw_value, tuple):
-            data = dict(zip(record.data['activity_type'][0], raw_value))
-            if 'walking' in data:
-                steps = data['walking']
+            data = dict(zip(record.data[ACTIVITY_TYPE][0], raw_value))
+            if WALKING in data:
+                steps = data[WALKING]
         else:
             steps = raw_value
         if steps is not None:
