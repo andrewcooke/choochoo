@@ -17,16 +17,22 @@ class MonitorDiary:
 
     def build(self, s, f, date):
         date = to_date(date)
-        columns = list(self.__fields(s, date))
+        columns = self.__fields(s, date)
         if columns:
             yield Pile([Text('Monitor'),
                         Indent(Columns(columns))])
 
     def __fields(self, s, date):
-        yield from self.__field(s, date, STEPS)
-        yield from self.__field(s, date, REST_HR)
+        steps = self.__field(s, date, STEPS)
+        rest_hr = self.__field(s, date, REST_HR)
+        if steps or rest_hr:
+            return [steps if steps else Text(''), rest_hr if rest_hr else Text('')]
+        else:
+            return None
 
     def __field(self, s, date, name):
         sjournal = StatisticJournal.get(s, name, date, MonitorStatistics, None)
         if sjournal:
-            yield Text([label(name + ': '), sjournal.formatted()])
+            return Text([label(name + ': '), sjournal.formatted()])
+        else:
+            return None

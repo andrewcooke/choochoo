@@ -43,7 +43,7 @@ class MonitorImporter(Importer):
         self._delete_journals(s, first_timestamp, path)
         mjournal = add(s, MonitorJournal(time=first_timestamp, fit_file=path, finish=last_timestamp))
 
-        steps_to_date = defaultdict(lambda: 0)
+        steps_to_date = defaultdict(lambda: None)
         for record in records:
             if HEART_RATE in record.data:
                 self._add_heart_rate(s, record, mjournal)
@@ -62,8 +62,9 @@ class MonitorImporter(Importer):
 
     def _add_steps(self, s, timestamp, steps, steps_to_date, mjournal, path):
         if steps is not None:
-            if steps < steps_to_date:
-                raise Exception('Decreasing steps in %s' % path)
-            add(s, MonitorSteps(time=timestamp, value=steps-steps_to_date, monitor_journal=mjournal))
+            if steps_to_date is not None:
+                if steps < steps_to_date:
+                    raise Exception('Decreasing steps in %s' % path)
+                add(s, MonitorSteps(time=timestamp, value=steps-steps_to_date, monitor_journal=mjournal))
             steps_to_date = steps
         return steps_to_date
