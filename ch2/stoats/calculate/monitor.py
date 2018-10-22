@@ -61,7 +61,8 @@ class MonitorStatistics:
             filter(MonitorJournal.time < finish,
                    MonitorJournal.finish >= start,
                    MonitorHeartRate.time >= start,
-                   MonitorHeartRate.time < finish).scalar()
+                   MonitorHeartRate.time < finish,
+                   MonitorHeartRate.value > 0).scalar()
         self._add_integer_stat(s, interval, REST_HR, '[min],[avg]', rest_heart_rate, 'bpm')
 
     def _add_integer_stat(self, s, journal, name, summary, value, units):

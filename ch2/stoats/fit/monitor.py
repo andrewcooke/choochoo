@@ -1,3 +1,4 @@
+from collections import defaultdict
 
 from ..fit import Importer
 from ...fit.format.read import filtered_records
@@ -12,7 +13,6 @@ HEART_RATE = 'heart_rate'
 MONITORING = 'monitoring'
 MONITORING_INFO = 'monitoring_info'
 STEPS = 'steps'
-WALKING = 'walking'
 
 
 class MonitorImporter(Importer):
@@ -21,11 +21,13 @@ class MonitorImporter(Importer):
         self._run(paths, force=force)
 
     def _delete_journals(self, s, first_timestamp, path):
+        # key only on time so that repeated files don't affect things
         if not first_timestamp:
             raise Exception('Missing timestamp in %s' % path)
         # need to iterate because sqlite doesn't support multi-table delete and we have inheritance.
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.time == first_timestamp).all():
+            self._log.debug('Deleting %s' % mjournal)
             s.delete(mjournal)
         s.flush()
 
@@ -41,12 +43,14 @@ class MonitorImporter(Importer):
         self._delete_journals(s, first_timestamp, path)
         mjournal = add(s, MonitorJournal(time=first_timestamp, fit_file=path, finish=last_timestamp))
 
-        steps_to_date = 0
+        steps_to_date = defaultdict(lambda: 0)
         for record in records:
             if HEART_RATE in record.data:
                 self._add_heart_rate(s, record, mjournal)
             if STEPS in record.data:
-                steps_to_date = self._add_steps(s, steps_to_date, record, mjournal, path)
+                for (activity, steps) in zip(record.data[ACTIVITY_TYPE][0], record.data[STEPS][0]):
+                    steps_to_date[activity] = self._add_steps(s, record.timestamp, steps, steps_to_date[activity],
+                                                              mjournal, path)
 
         s.flush()
         self._log.debug('Imported %d steps and %d heart rate values' %
@@ -56,18 +60,10 @@ class MonitorImporter(Importer):
         add(s, MonitorHeartRate(time=record.timestamp, value=record.data[HEART_RATE][0],
                                 monitor_journal=mjournal))
 
-    def _add_steps(self, s, steps_to_date, record, mjournal, path):
-        raw_value, steps = record.data[STEPS][0], None
-        if isinstance(raw_value, tuple):
-            data = dict(zip(record.data[ACTIVITY_TYPE][0], raw_value))
-            if WALKING in data:
-                steps = data[WALKING]
-        else:
-            steps = raw_value
+    def _add_steps(self, s, timestamp, steps, steps_to_date, mjournal, path):
         if steps is not None:
             if steps < steps_to_date:
                 raise Exception('Decreasing steps in %s' % path)
-            add(s, MonitorSteps(time=record.timestamp, value=steps-steps_to_date,
-                                monitor_journal=mjournal))
+            add(s, MonitorSteps(time=timestamp, value=steps-steps_to_date, monitor_journal=mjournal))
             steps_to_date = steps
         return steps_to_date

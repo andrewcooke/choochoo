@@ -177,4 +177,3 @@ def test_timestamp_16():
         if record.name == 'monitoring':
             print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
 
-
