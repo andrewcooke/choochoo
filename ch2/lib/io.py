@@ -44,7 +44,7 @@ def modified_files(log, s, paths, force=False):
                 path_scan.md5_hash = hash
                 path_scan.last_scan = ZERO
         else:
-            path_scan = add(s, FileScan(path=file_path, md5_hash=hash, last_scan=to_time(ZERO)))
+            path_scan = add(s, FileScan(path=file_path, md5_hash=hash, last_scan=to_time(0.0)))
             s.flush()
 
         hash_scan = s.query(FileScan).filter(FileScan.md5_hash == hash).\

@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
 from ..types import Time, OpenSched, Owner
-from ...lib.date import to_date, to_time
-from ...lib.schedule import Schedule, ZERO, TZSchedule
+from ...lib.date import to_time
+from ...lib.schedule import TZSchedule
 
 
 class SourceType(IntEnum):
@@ -97,7 +97,7 @@ class Interval(Source):
     @classmethod
     def _missing_interval_starts(cls, log, s, schedule, owner):
         start, finish = cls._raw_statistics_time_range(s)
-        finish = to_time(schedule.next_frame_time(finish))
+        finish = schedule.next_frame_time(finish)
         log.debug('Statistics exist %s - %s' % (start, finish))
         starts = cls._open_intervals(s, schedule, owner)
         if not cls._get_interval(s, schedule, owner, start):

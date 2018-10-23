@@ -4,7 +4,7 @@ import datetime as dt
 from sqlalchemy.sql.functions import count, min, sum
 
 from ..names import STEPS, REST_HR
-from ...lib.schedule import Schedule, TZSchedule
+from ...lib.schedule import TZSchedule
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
 from ...squeal.tables.source import Interval
@@ -51,7 +51,7 @@ class MonitorStatistics:
                 self._add_stats(s, start, finish)
 
     def _add_stats(self, s, start, finish):
-        interval = add(s, Interval(schedule=Schedule('d'), owner=self, time=start, finish=finish))
+        interval = add(s, Interval(schedule='d', owner=self, time=start, finish=finish))
         self._log.info('Adding monitor data for %s' % start)
         rest_heart_rate = s.query(min(MonitorHeartRate.value)).join(MonitorJournal). \
             filter(MonitorJournal.time < finish,
