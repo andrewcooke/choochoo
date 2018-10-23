@@ -2,13 +2,11 @@
 from random import choice
 from re import split
 
-from sqlalchemy import func
-from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import count
 
 from ch2.squeal.database import add
 from ...lib.date import to_date
-from ...lib.schedule import Schedule
+from ...lib.schedule import TZSchedule
 from ...squeal.tables.pipeline import Pipeline, PipelineType
 from ...squeal.tables.source import Interval, Source
 from ...squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
@@ -26,11 +24,11 @@ class SummaryStatistics:
             for schedule in self._pipeline_schedules():
                 self._run_schedule(schedule, force, after=after)
         else:
-            self._run_schedule(Schedule(schedule), force, after=after)
+            self._run_schedule(TZSchedule(schedule), force, after=after)
 
     def _pipeline_schedules(self):
         with self._db.session_context() as s:
-            return [Schedule(spec) for spec in self.pipeline_schedules(s)]
+            return [TZSchedule(spec) for spec in self.pipeline_schedules(s)]
 
     @classmethod
     def pipeline_schedules(cls, s):
@@ -156,7 +154,7 @@ class SummaryStatistics:
                 have_data = False
                 for statistic in self._statistics_missing_summaries(s, start, finish):
                     data = [journal for journal in self._diary_entries(s, statistic, start, finish)
-                            if spec.at_location(to_date(journal.time))]
+                            if spec.at_location_time(journal.time)]
                     if data:
                         processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
                         if processes:

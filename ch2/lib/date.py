@@ -1,4 +1,5 @@
 
+import pendulum as p
 import datetime as dt
 import time as t
 from calendar import monthrange
@@ -16,7 +17,7 @@ def to_date(value, none=False):
     if none and value is None:
         return None
     if isinstance(value, dt.datetime):
-        return dt.date(value.year, value.month, value.day)
+        raise Exception('Use tz-aware conversion')
     elif isinstance(value, dt.date):
         return value
     elif isinstance(value, int):
@@ -31,7 +32,7 @@ def to_time(value, none=False):
     if isinstance(value, dt.datetime):
         return value.replace(tzinfo=dt.timezone.utc)
     elif isinstance(value, dt.date):
-        return dt.datetime(value.year, value.month, value.day, tzinfo=dt.timezone.utc)
+        raise Exception('Use tz-aware conversion')
     elif isinstance(value, int):
         return to_time(to_date(value))
     elif isinstance(value, float):
@@ -67,6 +68,9 @@ def add_date(date, duration):
         while month > 12:
             month -= 12
             year += 1
+        while month < 1:
+            month += 12
+            year -= 1
         return dt.date(year, month, min(date.day, monthrange(year, month)[1]))
     if unit == YEAR:
         year = date.year + n
@@ -84,3 +88,14 @@ def format_seconds(seconds):
             return '%dm%02ds' % (minutes, seconds)
     else:
         return '%ds' % seconds
+
+
+def local_date_to_time(date):
+    ptime = p.DateTime(year=date.year, month=date.month, day=date.day,
+                       tzinfo=p.tz.get_local_timezone()).in_timezone(dt.timezone.utc)
+    return dt.datetime(*ptime.timetuple()[:6], tzinfo=dt.timezone.utc)
+
+
+def time_to_local_date(time):
+    ptime = p.DateTime(*time.timetuple()[:6], tzinfo=dt.timezone.utc).in_timezone(p.tz.get_local_timezone())
+    return dt.date(year=ptime.year, month=ptime.month, day=ptime.day)

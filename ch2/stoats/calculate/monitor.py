@@ -4,7 +4,7 @@ import datetime as dt
 from sqlalchemy.sql.functions import count, min, sum
 
 from ..names import STEPS, REST_HR
-from ...lib.schedule import Schedule
+from ...lib.schedule import Schedule, TZSchedule
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
 from ...squeal.tables.source import Interval
@@ -46,7 +46,7 @@ class MonitorStatistics:
 
     def _run(self):
         with self._db.session_context() as s:
-            for start, finish in Interval.missing(self._log, s, Schedule('d'), self):
+            for start, finish in Interval.missing(self._log, s, TZSchedule('d'), self):
                 self._log.info('Processing monitor data from %s to %s' % (start, finish))
                 self._add_stats(s, start, finish)
 

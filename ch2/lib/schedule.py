@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from calendar import monthrange
 from re import sub, compile, match
 
-from .date import to_date, format_date, add_date
+from .date import to_date, format_date, add_date, local_date_to_time, time_to_local_date
 
 # my calculations are done relative to the unix epoch.  the "gregorian ordinal"
 # is relative to year 1, but i have no idea how the details of that work.  i
@@ -382,3 +382,15 @@ class Year(Frame):
     def at_location(self, date):
         # locations not supported, so ignore for efficiency
         return self.schedule.in_range(date)
+
+
+class TZSchedule(Schedule):
+
+    def start_of_frame_time(self, time):
+        return local_date_to_time(super().start_of_frame(time_to_local_date(time)))
+
+    def next_frame_time(self, time):
+        return local_date_to_time(super().next_frame(time_to_local_date(time)))
+
+    def at_location_time(self, time):
+        return super().at_location(time_to_local_date(time))

@@ -223,3 +223,90 @@ Example Topics include:
 
 * Training plans.  In this case the tree structure of Topics is
   important and individual entries may be for only a single day.
+
+## Timezones
+
+All the above was written assuming that all calculations are in UTC.
+This was an oversight.  In fact, diary-related presentation is
+(obviously!) timezone-specific.
+
+This is a problem.  Some data are timezone-specific and some not.  How
+do we handle this?
+
+First, we need to identify which data vary with timezone.  In
+particular, which Sources.
+
+* Topic entries come from the diary.  These need to be saved (from the
+  diary, when values are changed) and retrieved (for display in the
+  diary).  What happens when the timezone changes?
+
+* Intervals should also depend on the timzeone.  This doesn't matter
+  so much for long (eg yearly) intervals, but for daily intervals, we
+  want to use the local definition of "day".
+
+* Constants may be a small issue, in that we users will assume they
+  are entering local date.  But only conversion on input is needed.
+
+Other than Sources, most data seem to work fine in UTC.  In
+particular, data obtained from FIT files can be converted to UTC (some
+care is needed with handling cumulative steps which accumulate
+throughout a local day).
+
+### Intervals
+
+The Schedule class works internally with dates (not times).  If we
+convert this to times using the local timzone then logic should remain
+consistent (nothing in the code assumes particular alignment except
+when using values derived from Schedule methods).
+
+There *is* going to be a problem if the timzone changes - existing
+Intervals will no longer be found at the "right" times.  But all
+Intervals are derived data and so can be recalculated in this case (eg
+if the user moves location).
+
+Steps to change:
+
+* Remove implicit conversion from date to time.
+
+* Subclass Schedule to include methods that are timezone aware and do
+  conversions.
+
+* Finally implement MonitorSteps coorrectly.
+
+* Get tests running (maybe add new tests).
+
+### Topics
+
+Diary entries, etc (plans, injuries, ...).
+
+We need to worry about:
+
+* Retrieving saved data for the correct day if timestamps change.
+
+* Deleting appropriate Intervals when data change.
+
+* Calculating values using Intervals.
+
+To fix the first of these we either need to save the date in the
+database or use some convention like always use UTC date.  But always
+using UTC date will affect Interval calculations - the `time` field
+must be usable by Interval calculation.
+
+So it seems that we need:
+
+* An additional field for TopicJournal, which is date.
+
+* The time should be set to the start of the local day (in UTC) so
+  that Interval calulations work.
+
+* When the user changes timezone retrieval will still work correctly
+  (using the date field), but time values will be wrong and Interval
+  calculations will be broken.  All I can think of here is that we
+  auto-detect timzeone changes and trigger fix-up (wipe Intervals and
+  set time to correct value based on date).
+
+* To auto-detect timezone data we need to store timezone in the
+  database.
+
+
+

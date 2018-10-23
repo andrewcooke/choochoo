@@ -6,7 +6,7 @@ from sqlalchemy.sql.functions import count
 
 from ch2.command.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
-from ch2.lib.date import to_time
+from ch2.lib.date import to_time, local_date_to_time, to_date
 from ch2.squeal.database import add
 from ch2.squeal.tables.source import Source, Interval
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic, \
@@ -31,7 +31,8 @@ def test_sources():
             # add a diary entry
 
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-            d = add(s, TopicJournal(topic=diary, time='2018-09-29'))
+            d = add(s, TopicJournal(topic=diary, date='2018-09-29',
+                                    time=local_date_to_time(to_date('2018-09-29'))))
             d.populate(log, s)
             assert len(d.topic.fields) == 7, d.topic.fields
             assert d.topic.fields[0].statistic.name == 'Notes'
@@ -47,7 +48,7 @@ def test_sources():
 
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
-                                             TopicJournal.time == '2018-09-29').one()
+                                             TopicJournal.date == '2018-09-29').one()
             d.populate(log, s)
             assert len(d.topic.fields) == 7
             assert d.topic.fields[0].statistic.name == 'Notes'
@@ -84,8 +85,8 @@ def test_sources():
                 filter(Statistic.name == 'Avg/Year Rest HR').one()
             assert y_avg.value == 60
             month = s.query(Interval).filter(Interval.schedule == 'm').one()
-            assert month.time == to_time('2018-09-01'), month.time
-            assert month.finish == to_time('2018-10-01'), month.finish
+            assert month.time == local_date_to_time(to_date('2018-09-01')), month.time
+            assert month.finish == local_date_to_time(to_date('2018-10-01')), month.finish
 
         with db.session_context() as s:
 
@@ -93,7 +94,7 @@ def test_sources():
 
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
-                                             TopicJournal.time == '2018-09-29').one()
+                                             TopicJournal.date == '2018-09-29').one()
             s.delete(d)
 
         run('sqlite3 %s ".dump"' % f.name, shell=True)

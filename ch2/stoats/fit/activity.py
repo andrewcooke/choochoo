@@ -38,7 +38,7 @@ class ActivityImporter(Importer):
 
         data, types, messages, records = filtered_records(self._log, path)
         records = [record.force(fix_degrees)
-                   for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(ZERO))]
+                   for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(0.0))]
 
         first_timestamp = self._first(path, records, 'event', 'record').value.timestamp
         sport = self._first(path, records, 'sport').value.sport.lower()
@@ -47,7 +47,7 @@ class ActivityImporter(Importer):
         journal = add(s, ActivityJournal(activity=activity, time=first_timestamp,
                                          fit_file=path, name=splitext(basename(path))[0]))
 
-        timespan, warned, latest = None, 0, to_time(ZERO)
+        timespan, warned, latest = None, 0, to_time(0.0)
         for record in records:
             try:
                 if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):

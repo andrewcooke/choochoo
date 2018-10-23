@@ -13,6 +13,7 @@ pip install numpy
 pip install pandas
 pip install pyGeoTile
 pip install colorama
+pip install pendulum
 
 pip install matplotlib
 pip install bokeh

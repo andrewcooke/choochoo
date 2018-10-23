@@ -42,6 +42,7 @@ To exit, alt-q (or, without saving, alt-x).
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
     disable_interval_cleaning()
+    TopicJournal.check_tz(db)
     MainLoop(Diary(log, db, date), palette=PALETTE_RAINBOW).run()
 
 

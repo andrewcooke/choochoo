@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, aliased
 from ..support import Base
 from ..types import Time, OpenSched, Owner
 from ...lib.date import to_date, to_time
-from ...lib.schedule import Schedule, ZERO
+from ...lib.schedule import Schedule, ZERO, TZSchedule
 
 
 class SourceType(IntEnum):
@@ -56,10 +56,10 @@ class Source(Base):
     @classmethod
     def clean_times(cls, session, times):
         from ...stoats.calculate.summary import SummaryStatistics
-        schedules = [Schedule(schedule) for schedule in SummaryStatistics.pipeline_schedules(session)]
+        schedules = [TZSchedule(schedule) for schedule in SummaryStatistics.pipeline_schedules(session)]
         for time in times:
             for schedule in schedules:
-                start = schedule.start_of_frame(time)
+                start = schedule.start_of_frame_time(time)
                 interval = session.query(Interval). \
                     filter(Interval.time == start, Interval.schedule == schedule).one_or_none()
                 if interval:
@@ -92,16 +92,16 @@ class Interval(Source):
     }
 
     def __str__(self):
-        return 'Interval "%s from %s"' % (self.schedule, to_date(self.time))
+        return 'Interval "%s from %s"' % (self.schedule, self.time)
 
     @classmethod
     def _missing_interval_starts(cls, log, s, schedule, owner):
         start, finish = cls._raw_statistics_time_range(s)
-        finish = to_time(schedule.next_frame(finish))
+        finish = to_time(schedule.next_frame_time(finish))
         log.debug('Statistics exist %s - %s' % (start, finish))
         starts = cls._open_intervals(s, schedule, owner)
         if not cls._get_interval(s, schedule, owner, start):
-            starts = [to_time(schedule.start_of_frame(start))] + starts
+            starts = [schedule.start_of_frame_time(start)] + starts
         if starts and starts[-1] == finish:
             starts = starts[:-1]
         log.debug('Have %d open blocks finishing at %s' % (len(starts), finish))
@@ -113,7 +113,7 @@ class Interval(Source):
         start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
             outerjoin(StatisticJournal). \
             filter(Statistic.id != None,
-                   Source.time > ZERO).one()
+                   Source.time > to_time(0.0)).one()
         if start and finish:
             return start, finish
         else:
@@ -142,7 +142,7 @@ class Interval(Source):
     @classmethod
     def _missing_intervals_from(cls, s, schedule, owner, start, finish):
         while start < finish:
-            next = to_time(schedule.next_frame(start))
+            next = schedule.next_frame_time(start)
             yield start, next
             start = next
             if cls._get_interval(s, schedule, owner, start):

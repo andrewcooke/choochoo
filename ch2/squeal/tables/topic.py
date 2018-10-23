@@ -1,15 +1,19 @@
 
+from pendulum.tz import get_local_timezone
 from json import dumps
 
 from sqlalchemy import Column, Integer, Text, ForeignKey
-from sqlalchemy.event import listens_for
-from sqlalchemy.orm import relationship, backref, Session
+from sqlalchemy.orm import relationship, backref
 
+from ch2.lib.date import local_date_to_time
+from ch2.squeal.tables.constant import SystemConstant
 from .source import SourceType, Source
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES, Statistic
 from ..support import Base
 from ..types import Date, Cls, Json, Sched, Sort
 from ...lib.schedule import Schedule
+
+TIMEZONE = 'timezone'
 
 
 class Topic(Base):
@@ -83,6 +87,7 @@ class TopicJournal(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     topic_id = Column(Integer, ForeignKey('topic.id'))
     topic = relationship('Topic')
+    date = Column(Date, nullable=False, index=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.TOPIC
@@ -112,4 +117,16 @@ class TopicJournal(Source):
     def __str__(self):
         return 'TopicJournal from %s' % self.time
 
+    @classmethod
+    def check_tz(cls, db):
+        with db.session_context() as s:
+            tz = get_local_timezone()
+            db_tz = s.select(SystemConstant).filter(SystemConstant.name == TIMEZONE).one_or_none()
+            if db_tz.value != tz.name:
+                cls.__reset_timezone(s)
+                db_tz.value = tz.name
 
+    @classmethod
+    def __reset_timezone(cls, s):
+        for tj in s.query(TopicJournal).all():
+            tj.time = local_date_to_time(tj.date)

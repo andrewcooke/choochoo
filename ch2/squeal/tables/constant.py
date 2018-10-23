@@ -52,3 +52,11 @@ class ConstantJournal(Source):
     __mapper_args__ = {
         'polymorphic_identity': SourceType.CONSTANT
     }
+
+
+class SystemConstant(Base):
+
+    __tablename__ = 'system_constant'
+
+    name = Column(Text, primary_key=True)
+    value = Column(Text, nullable=False)

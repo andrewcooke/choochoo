@@ -217,8 +217,6 @@ def parser():
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file')
-    monitor.add_argument(USER, action='store', help='user for download from garmin')
-    monitor.add_argument(PWD, action='store', help='password for download from garmin')
     monitor.set_defaults(command=MONITOR)
 
     statistics = subparsers.add_parser(STATISTICS,

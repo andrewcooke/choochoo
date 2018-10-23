@@ -5,7 +5,7 @@ from shutil import get_terminal_size
 
 from sqlalchemy import desc
 
-from .date import to_time
+from .date import to_time, local_date_to_time
 from .schedule import ZERO
 from ..squeal.database import add
 from ch2.squeal.tables.fit import FileScan
@@ -81,7 +81,7 @@ def for_modified_files(log, session, paths, callback, force=False):
                 path_scan.md5_hash = hash
                 path_scan.last_scan = ZERO
         else:
-            path_scan = add(session, FileScan(path=file_path, md5_hash=hash, last_scan=to_time(ZERO)))
+            path_scan = add(session, FileScan(path=file_path, md5_hash=hash, last_scan=0.0))
             session.flush()
 
         hash_scan = session.query(FileScan).filter(FileScan.md5_hash == hash).\
