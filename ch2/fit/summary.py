@@ -105,13 +105,13 @@ def summarize_grep(log, fit_path, grep, name_file=False, match=1, invert=False, 
                         for matcher in matchers:
                             if matcher.match(target_2 if '=' in matcher.pattern else target_1):
                                 counts[matcher] += 1
-                                if counts[matcher] <= match:
+                                if counts[matcher] <= match or match < 0:
                                     if first:
                                         print()
                                         first = False
                                     print('%s:%s=%s' % (record.name, name, value))
                                 # exit early if we've displayed/matched all we need to
-                                if all(counts[m] >= max(1, match) for m in matchers):
+                                if match > -1 and all(counts[m] >= max(1, match) for m in matchers):
                                     raise Done()
                 else:
                     raise Done()

@@ -51,12 +51,14 @@ NAME = 'name'
 NOT = 'not'
 PATH = 'path'
 PLAN = 'plan'
+PWD = 'pwd'
 RECORDS = 'records'
 ROOT = 'root'
 SET = 'set'
 SCHEDULE = 'schedule'
 START = 'start'
 TABLES = 'tables'
+USER = 'user'
 V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
@@ -200,7 +202,7 @@ def parser():
     fit.add_argument(mm(NOT), action='store_true',
                      help='display file names that don\'t match (with --grep --name)')
     fit.add_argument(mm(MATCH), action='store', type=int, default=1,
-                     help='number of matches to display (with --grep)')
+                     help='number of matches to display (with --grep, default 1, -1 for all)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
     help = subparsers.add_parser(HELP,
@@ -215,6 +217,8 @@ def parser():
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file')
+    monitor.add_argument(USER, action='store', help='user for download from garmin')
+    monitor.add_argument(PWD, action='store', help='password for download from garmin')
     monitor.set_defaults(command=MONITOR)
 
     statistics = subparsers.add_parser(STATISTICS,

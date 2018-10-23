@@ -1,4 +1,6 @@
 
+import datetime as dt
+
 from sqlalchemy.sql.functions import count, min, sum
 
 from ..names import STEPS, REST_HR
@@ -51,12 +53,6 @@ class MonitorStatistics:
     def _add_stats(self, s, start, finish):
         interval = add(s, Interval(schedule=Schedule('d'), owner=self, time=start, finish=finish))
         self._log.info('Adding monitor data for %s' % start)
-        steps = s.query(sum(MonitorSteps.value)).join(MonitorJournal). \
-            filter(MonitorJournal.time < finish,
-                   MonitorJournal.finish >= start,
-                   MonitorSteps.time >= start,
-                   MonitorSteps.time < finish).scalar()
-        self._add_integer_stat(s, interval, STEPS, '[sum],[avg]', steps, None)
         rest_heart_rate = s.query(min(MonitorHeartRate.value)).join(MonitorJournal). \
             filter(MonitorJournal.time < finish,
                    MonitorJournal.finish >= start,
@@ -64,6 +60,19 @@ class MonitorStatistics:
                    MonitorHeartRate.time < finish,
                    MonitorHeartRate.value > 0).scalar()
         self._add_integer_stat(s, interval, REST_HR, '[min],[avg]', rest_heart_rate, 'bpm')
+        # steps is actually the total to 3am (seems to be what garmin does and the data
+        # are recorded in a format that makes anything else complicated)
+        q = s.query(sum(MonitorSteps.value)). \
+            filter(MonitorJournal.time < finish + dt.timedelta(hours=3),
+                   MonitorJournal.finish >= start + dt.timedelta(hours=3),
+                   MonitorSteps.time >= start,
+                   MonitorSteps.time < finish).scalar()
+        steps = s.query(sum(MonitorSteps.value)). \
+            filter(MonitorJournal.time < finish,
+                   MonitorJournal.finish >= start,
+                   MonitorSteps.time >= start,
+                   MonitorSteps.time < finish).scalar()
+        self._add_integer_stat(s, interval, STEPS, '[sum],[avg]', steps, None)
 
     def _add_integer_stat(self, s, journal, name, summary, value, units):
         if value is not None:

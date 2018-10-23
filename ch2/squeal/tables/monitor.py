@@ -45,6 +45,8 @@ class MonitorHeartRate(MonitorIntegerMixin, Base):
 
 class MonitorSteps(MonitorIntegerMixin, Base):
 
+    # value here is cumulative to midnight local time
+
     __tablename__ = 'monitor_steps'
 
     monitor_journal_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
@@ -53,3 +55,5 @@ class MonitorSteps(MonitorIntegerMixin, Base):
                                    backref=backref('steps', cascade='all, delete-orphan',
                                                    passive_deletes=True,
                                                    order_by='MonitorSteps.time'))
+    delta = Column(Integer)
+    activity = Column(Text)

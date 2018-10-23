@@ -1,4 +1,3 @@
-from collections import defaultdict
 
 from ..fit import Importer
 from ...fit.format.read import filtered_records
@@ -43,14 +42,12 @@ class MonitorImporter(Importer):
         self._delete_journals(s, first_timestamp, path)
         mjournal = add(s, MonitorJournal(time=first_timestamp, fit_file=path, finish=last_timestamp))
 
-        steps_to_date = defaultdict(lambda: None)
         for record in records:
             if HEART_RATE in record.data:
                 self._add_heart_rate(s, record, mjournal)
             if STEPS in record.data:
                 for (activity, steps) in zip(record.data[ACTIVITY_TYPE][0], record.data[STEPS][0]):
-                    steps_to_date[activity] = self._add_steps(s, record.timestamp, steps, steps_to_date[activity],
-                                                              mjournal, path)
+                    self._add_steps(s, record.timestamp, steps, activity, mjournal)
 
         s.flush()
         self._log.debug('Imported %d steps and %d heart rate values' %
@@ -60,11 +57,5 @@ class MonitorImporter(Importer):
         add(s, MonitorHeartRate(time=record.timestamp, value=record.data[HEART_RATE][0],
                                 monitor_journal=mjournal))
 
-    def _add_steps(self, s, timestamp, steps, steps_to_date, mjournal, path):
-        if steps is not None:
-            if steps_to_date is not None:
-                if steps < steps_to_date:
-                    raise Exception('Decreasing steps in %s' % path)
-                add(s, MonitorSteps(time=timestamp, value=steps-steps_to_date, monitor_journal=mjournal))
-            steps_to_date = steps
-        return steps_to_date
+    def _add_steps(self, s, timestamp, steps, activity, mjournal):
+        add(s, MonitorSteps(time=timestamp, value=steps, activity=activity, monitor_journal=mjournal))
