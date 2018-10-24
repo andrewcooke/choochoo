@@ -126,7 +126,7 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlf', metavar='FILE',
+    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlg', metavar='FILE',
                         help='the database file')
     parser.add_argument(mm(DEV), action='store_true', help='enable development mode')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',

@@ -81,7 +81,7 @@ def test_values():
                        Statistic.owner == MonitorStatistics,
                        Statistic.name == STEPS).one()
             # connect has 12757 for this date,
-            assert summary.value == 12757, summary.value  # todo WRONG
+            assert summary.value == 12757, summary.value
             check = s.query(func.sum(MonitorSteps.delta)). \
                 filter(MonitorSteps.time >= to_time('2018-09-06 03:00'),
                        MonitorSteps.time < to_time('2018-09-07 03:00')).scalar()

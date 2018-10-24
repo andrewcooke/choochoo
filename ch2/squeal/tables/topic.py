@@ -1,17 +1,17 @@
 
-from pendulum.tz import get_local_timezone
 from json import dumps
 
+from pendulum.tz import get_local_timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from ch2.lib.date import local_date_to_time
-from ch2.squeal.tables.constant import SystemConstant
 from .source import SourceType, Source
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES, Statistic
 from ..support import Base
 from ..types import Date, Cls, Json, Sched, Sort
+from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
+from ...squeal.tables.constant import SystemConstant
 
 TIMEZONE = 'timezone'
 
@@ -72,9 +72,9 @@ class TopicField(Base):
     sort = Column(Sort)
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
-    display_cls = Column(Cls, nullable=None)
-    display_args = Column(Json, nullable=None, server_default=dumps(()))
-    display_kargs = Column(Json, nullable=None, server_default=dumps({}))
+    display_cls = Column(Cls, nullable=False)
+    display_args = Column(Json, nullable=False, server_default=dumps(()))
+    display_kargs = Column(Json, nullable=False, server_default=dumps({}))
 
     def __str__(self):
         return 'TopicField "%s"/"%s"' % (self.topic.name, self.statistic.name)
@@ -119,9 +119,12 @@ class TopicJournal(Source):
 
     @classmethod
     def check_tz(cls, db):
+        from ...squeal.database import add
         with db.session_context() as s:
             tz = get_local_timezone()
-            db_tz = s.select(SystemConstant).filter(SystemConstant.name == TIMEZONE).one_or_none()
+            db_tz = s.query(SystemConstant).filter(SystemConstant.name == TIMEZONE).one_or_none()
+            if not db_tz:
+                db_tz = add(s, SystemConstant(name=TIMEZONE, value=''))
             if db_tz.value != tz.name:
                 cls.__reset_timezone(s)
                 db_tz.value = tz.name

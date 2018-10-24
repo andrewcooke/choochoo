@@ -25,6 +25,8 @@ class Date(TypeDecorator):
     def process_result_value(self, value, dialect):
         if value is None:
             return value
+        if value < 1:  # bootstrap TopicJournal.date where we set values to 0
+            return None
         else:
             return dt.date.fromordinal(value)
 

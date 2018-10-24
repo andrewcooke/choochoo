@@ -1,29 +1,28 @@
 
+import datetime as dt
 from re import search
 
 from urwid import Text, Pile, Columns, Divider
 
-from ch2.lib.utils import label
-from ch2.squeal.tables.source import Source
-from ch2.stoats.calculate.activity import ActivityStatistics
+from . import Displayer
 from .heart_rate import build_zones
+from ..calculate.activity import ActivityStatistics
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_OVER_M_ANY
-from ...lib.date import to_date, format_seconds, DAY, add_date
+from ...lib.date import to_date, format_seconds, DAY, add_date, local_date_to_time
+from ...lib.utils import label
 from ...squeal.tables.activity import Activity, ActivityJournal
+from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournal, Statistic
 from ...uweird.tui.decorators import Indent
 
 HRZ_WIDTH = 30
 
 
-class ActivityDiary:
-
-    def __init__(self, log):
-        self._log = log
+class ActivityDiary(Displayer):
 
     def build(self, s, f, date):
-        start = to_date(date)
-        finish = add_date(start, (1, DAY))
+        start = local_date_to_time(date)
+        finish = start + dt.timedelta(days=1)
         for activity in s.query(Activity).order_by(Activity.sort).all():
             for journal in s.query(ActivityJournal). \
                     filter(ActivityJournal.time >= start,
@@ -50,7 +49,7 @@ class ActivityDiary:
         body.append(Text('%s - %s  (%s)' % (ajournal.time.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
                                             format_seconds((ajournal.finish - ajournal.time).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
-            sjournal = StatisticJournal.get(s, name, ajournal.time, ActivityStatistics, ajournal.activity.id)
+            sjournal = self._journal_at_time(s, ajournal.time, name, ActivityStatistics, ajournal.activity.id)
             body.append(Text([label('%s: ' % sjournal.statistic.name)] + self.__format_value(sjournal, date)))
         return body
 

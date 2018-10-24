@@ -6,7 +6,7 @@ from sqlalchemy import desc
 from urwid import ExitMainLoop
 
 from ..squeal.tables.activity import ActivityJournal
-from .date import DAY, WEEK, MONTH, YEAR, to_time, to_date, add_date
+from .date import DAY, WEEK, MONTH, YEAR, to_time, to_date, add_date, local_date_to_time, time_to_local_date
 from ..uweird.tui.tabs import TabNode
 
 
@@ -85,13 +85,14 @@ class DateSwitcher(App):
     def _change_activity(self, c):
         s = self._session
         q = s.query(ActivityJournal)
+        time = local_date_to_time(self._date)
         if c == 'a':
-            q = q.filter(ActivityJournal.time < self.__date).order_by(desc(ActivityJournal.time))
+            q = q.filter(ActivityJournal.time < time).order_by(desc(ActivityJournal.time))
         else:
-            q = q.filter(ActivityJournal.time >= add_date(self.__date, (1, DAY))).order_by(ActivityJournal.time)
+            q = q.filter(ActivityJournal.time >= (time + dt.timedelta(days=1))).order_by(ActivityJournal.time)
         journal = q.limit(1).one_or_none()
         if journal:
-            self.__date = to_date(journal.time)
+            self.__date = time_to_local_date(journal.time)
             self.rebuild()
 
     def _change_date(self, c):

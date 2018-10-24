@@ -41,6 +41,22 @@ class MonitorImporter(Importer):
         prev_steps[activity] = steps
         return delta
 
+    def _set_from_previous(self, s, first_timestamp, prev_steps):
+        prev = s.query(MonitorJournal). \
+            filter(MonitorJournal.finish <= first_timestamp). \
+            order_by(desc(MonitorJournal.finish)).limit(1).one_or_none()
+        if prev:
+            for step in prev.steps:
+                prev_steps[step.activity] = step.value
+
+    def _update_next(self, s, last_timestamp, prev_steps):
+        next = s.query(MonitorJournal). \
+            filter(MonitorJournal.time >= last_timestamp). \
+            order_by(MonitorJournal.time).limit(1).one_or_none()
+        if next:
+            for step in next.steps:
+                step.delta = self._delta(step.value, step.activity, prev_steps)
+
     def _import(self, s, path):
         self._log.info('Importing monitor data from %s' % path)
 
@@ -53,13 +69,8 @@ class MonitorImporter(Importer):
         self._delete_journals(s, first_timestamp, path)
         mjournal = add(s, MonitorJournal(time=first_timestamp, fit_file=path, finish=last_timestamp))
 
-        prev = s.query(MonitorJournal). \
-            filter(MonitorJournal.finish <= first_timestamp). \
-            order_by(desc(MonitorJournal.finish)).limit(1).one_or_none()
         prev_steps = defaultdict(lambda: 0)
-        if prev:
-            for step in prev.steps:
-                prev_steps[step.activity] = step.value
+        self._set_from_previous(s, first_timestamp, prev_steps)
 
         for record in records:
             if HEART_RATE in record.data:
@@ -68,12 +79,7 @@ class MonitorImporter(Importer):
                 for (activity, steps) in zip(record.data[ACTIVITY_TYPE][0], record.data[STEPS][0]):
                     self._add_steps(s, record.timestamp, steps, prev_steps, activity, mjournal)
 
-        next = s.query(MonitorJournal). \
-            filter(MonitorJournal.time >= last_timestamp). \
-            order_by(MonitorJournal.time).limit(1).one_or_none()
-        if next:
-            for step in next.steps:
-                step.delta = self._delta(step.value, step.activity, prev_steps)
+        self._update_next(s, last_timestamp, prev_steps)
 
         self._log.debug('Imported %d steps and %d heart rate values' %
                         (len(mjournal.steps), len(mjournal.heart_rate)))

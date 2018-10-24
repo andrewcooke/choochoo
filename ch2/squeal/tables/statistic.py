@@ -70,14 +70,6 @@ class StatisticJournal(Base):
         return self.source.time
 
     @classmethod
-    def get(cls, s, name, time, owner, constraint):
-        return s.query(StatisticJournal).join(Statistic, Source). \
-            filter(Statistic.name == name,
-                   Source.time == time,
-                   Statistic.owner == owner,
-                   Statistic.constraint == constraint).one_or_none()
-
-    @classmethod
     def add(cls, log, s, name, units, summary, owner, constraint, source, value, type):
         statistic = s.query(Statistic). \
             filter(Statistic.name == name,

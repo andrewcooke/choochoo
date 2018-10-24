@@ -271,7 +271,7 @@ Steps to change:
 * Subclass Schedule to include methods that are timezone aware and do
   conversions.
 
-* Finally implement MonitorSteps coorrectly.
+* Finally implement MonitorSteps correctly.
 
 * Get tests running (maybe add new tests).
 

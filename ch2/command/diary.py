@@ -5,7 +5,7 @@ from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
 from .args import DATE
-from ..lib.date import to_date
+from ..lib.date import to_date, local_date_to_time
 from ..lib.io import tui
 from ..lib.utils import PALETTE_RAINBOW, em
 from ..lib.widgets import DateSwitcher
@@ -46,7 +46,7 @@ To exit, alt-q (or, without saving, alt-x).
     MainLoop(Diary(log, db, date), palette=PALETTE_RAINBOW).run()
 
 
-# todo - new stats when data saved?  when diary exited?
+# todo - change to date + tz
 
 
 class Diary(DateSwitcher):
@@ -124,9 +124,9 @@ class Diary(DateSwitcher):
     def __topic_journal(self, s, topic):
         tjournal = s.query(TopicJournal). \
             filter(TopicJournal.topic == topic,
-                   TopicJournal.time == self._date).one_or_none()
+                   TopicJournal.date == self._date).one_or_none()
         if not tjournal:
-            tjournal = TopicJournal(topic=topic, time=self._date)
+            tjournal = TopicJournal(topic=topic, date=self._date, time=local_date_to_time(self._date))
             s.add(tjournal)
         return tjournal
 
@@ -143,7 +143,7 @@ class Diary(DateSwitcher):
         # - remove any journal entries with no data (all null)
         # - remove any intervals affected by journals with non-null data
         s, dirty = self._session, False
-        for tjournal in s.query(TopicJournal).filter(TopicJournal.time == self._date).all():
+        for tjournal in s.query(TopicJournal).filter(TopicJournal.date == self._date).all():
             clean = True
             tjournal.populate(self._log, s)
             for field in tjournal.topic.fields:
@@ -155,4 +155,4 @@ class Diary(DateSwitcher):
             else:
                 dirty = True
         if dirty:
-            Source.clean_times(s, [self._date])
+            Source.clean_times(s, [local_date_to_time(self._date)])
