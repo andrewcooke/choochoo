@@ -84,7 +84,6 @@ Docs at http://andrewcooke.github.io/choochoo/index''' % (
 
 
 def help(args, logs, db):
-    from .. import COMMANDS
     '''
 # help
 
@@ -102,6 +101,7 @@ Displays this information.
 
 Lists available topics.
     '''
+    from .. import COMMANDS
     if db.is_empty():
         LengthFmt().print_all('''
 Welcome to Choochoo.
