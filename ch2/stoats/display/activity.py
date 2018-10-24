@@ -8,7 +8,7 @@ from . import Displayer
 from .heart_rate import build_zones
 from ..calculate.activity import ActivityStatistics
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_OVER_M_ANY
-from ...lib.date import to_date, format_seconds, DAY, add_date, local_date_to_time
+from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import label
 from ...squeal.tables.activity import Activity, ActivityJournal
 from ...squeal.tables.source import Source
