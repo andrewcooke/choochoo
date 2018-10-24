@@ -6,6 +6,8 @@ An **open**, **hackable** and **free** training diary.
 See [documentation](https://andrewcooke.github.io/choochoo/) for full
 details.
 
+## Technical Features
+
 Training data are stored in a database...
 
 * There are tools to get data into the database:
