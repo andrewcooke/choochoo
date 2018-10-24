@@ -10,6 +10,8 @@ Training data are stored in a database...
 
 * There are tools to get data into the database:
   * Read FIT files from smart watches, bike computers, etc
+    * 'Activities' (eg bike rides) can be read
+    * 'Monitor' data (eg steps and rest HR) can be read
   * Daily information (eg weight) can be entered via the diary
     * Ability to add custom fields for general data capture
   * Other data (eg FTHR) can be entered at the command line
@@ -29,7 +31,12 @@ The configuration is also stored in the database...
   * Prepared / example training plans included
   * Simple, declarative library for defining your own plans
 * You can add data fields to the diary
-* You can extend the statistics calculation pipeline
+* You can extend various pipelines that are called during processing:
+  * Statistic pipeline to calculate new derived statistics
+    (eg values over intervals)
+  * Diary pipeline to generate items for diplsay in the diary
+  * Activity pipeline to generate new data based on activities
+  * Monitor pipeline to generate new data based on monitor data
 
 The project can be used stand-alone by someone comfortable with the
 technologies used, or it could be extended with a GUI.
