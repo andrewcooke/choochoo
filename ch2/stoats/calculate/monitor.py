@@ -60,14 +60,7 @@ class MonitorStatistics:
                    MonitorHeartRate.time < finish,
                    MonitorHeartRate.value > 0).scalar()
         self._add_integer_stat(s, interval, REST_HR, '[min],[avg]', rest_heart_rate, 'bpm')
-        # steps is actually the total to 3am (seems to be what garmin does and the data
-        # are recorded in a format that makes anything else complicated)
-        q = s.query(sum(MonitorSteps.value)). \
-            filter(MonitorJournal.time < finish + dt.timedelta(hours=3),
-                   MonitorJournal.finish >= start + dt.timedelta(hours=3),
-                   MonitorSteps.time >= start,
-                   MonitorSteps.time < finish).scalar()
-        steps = s.query(sum(MonitorSteps.value)). \
+        steps = s.query(sum(MonitorSteps.delta)).join(MonitorJournal). \
             filter(MonitorJournal.time < finish,
                    MonitorJournal.finish >= start,
                    MonitorSteps.time >= start,

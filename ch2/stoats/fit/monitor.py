@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+from sqlalchemy import desc
 
 from ..fit import Importer
 from ...fit.format.read import filtered_records
@@ -30,6 +33,14 @@ class MonitorImporter(Importer):
             s.delete(mjournal)
         s.flush()
 
+    def _delta(self, steps, activity, prev_steps):
+        if steps >= prev_steps[activity]:
+            delta = steps - prev_steps[activity]
+        else:
+            delta = steps
+        prev_steps[activity] = steps
+        return delta
+
     def _import(self, s, path):
         self._log.info('Importing monitor data from %s' % path)
 
@@ -42,14 +53,28 @@ class MonitorImporter(Importer):
         self._delete_journals(s, first_timestamp, path)
         mjournal = add(s, MonitorJournal(time=first_timestamp, fit_file=path, finish=last_timestamp))
 
+        prev = s.query(MonitorJournal). \
+            filter(MonitorJournal.finish <= first_timestamp). \
+            order_by(desc(MonitorJournal.finish)).limit(1).one_or_none()
+        prev_steps = defaultdict(lambda: 0)
+        if prev:
+            for step in prev.steps:
+                prev_steps[step.activity] = step.value
+
         for record in records:
             if HEART_RATE in record.data:
                 self._add_heart_rate(s, record, mjournal)
             if STEPS in record.data:
                 for (activity, steps) in zip(record.data[ACTIVITY_TYPE][0], record.data[STEPS][0]):
-                    self._add_steps(s, record.timestamp, steps, activity, mjournal)
+                    self._add_steps(s, record.timestamp, steps, prev_steps, activity, mjournal)
 
-        s.flush()
+        next = s.query(MonitorJournal). \
+            filter(MonitorJournal.time >= last_timestamp). \
+            order_by(MonitorJournal.time).limit(1).one_or_none()
+        if next:
+            for step in next.steps:
+                step.delta = self._delta(step.value, step.activity, prev_steps)
+
         self._log.debug('Imported %d steps and %d heart rate values' %
                         (len(mjournal.steps), len(mjournal.heart_rate)))
 
@@ -57,5 +82,7 @@ class MonitorImporter(Importer):
         add(s, MonitorHeartRate(time=record.timestamp, value=record.data[HEART_RATE][0],
                                 monitor_journal=mjournal))
 
-    def _add_steps(self, s, timestamp, steps, activity, mjournal):
-        add(s, MonitorSteps(time=timestamp, value=steps, activity=activity, monitor_journal=mjournal))
+    def _add_steps(self, s, timestamp, steps, prev_steps, activity, mjournal):
+        add(s, MonitorSteps(time=timestamp, value=steps,
+                            delta=self._delta(steps, activity, prev_steps),
+                            activity=activity, monitor_journal=mjournal))

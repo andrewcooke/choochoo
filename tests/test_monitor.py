@@ -61,54 +61,48 @@ def test_values():
         # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
         with db.session_context() as s:
+
             mjournals = s.query(MonitorJournal).order_by(MonitorJournal.time).all()
             assert mjournals[2].time == to_time('2018-09-06 15:06:00'), mjournals[2].time
             print(mjournals[2].fit_file)
 
             # steps
 
-            # todo - use deltas
-
-            # steps = sorted(mjournals[2].steps, key=lambda x: x.time)
-            # assert len(steps) == 72, len(steps)
-            # assert steps[0].value == 1336, steps[0].value
-            # assert steps[1].value == 355, steps[1].value
-            # total = sum(s.value for s in steps)
-            # # 12757 without None
-            # assert total == 11066, total
+            steps = mjournals[2].steps
+            assert len(steps) == 72, len(steps)
+            assert steps[0].value == 1336, steps[0].value
+            assert steps[1].value == 355, steps[1].value
+            total = sum(s.delta for s in steps)
+            assert total == 11066, total
             summary = s.query(StatisticJournal).join(Statistic, Source, Interval). \
                 filter(Source.type == SourceType.INTERVAL,
                        Source.time == local_date_to_time(to_date('2018-09-06')),
                        Interval.schedule == 'd',
                        Statistic.owner == MonitorStatistics,
                        Statistic.name == STEPS).one()
-            # connect has 12757 for this date, which matches the number above.
-            # seems they're using files rather than splitting by date
-            # looking at file, they seem to stop at 3am
-            # 12601 without None
-            # assert summary.value == 10888, summary.value
-            # check = s.query(func.sum(MonitorSteps.value)). \
-            #     filter(MonitorSteps.time >= to_time('2018-09-06 03:00'),
-            #            MonitorSteps.time < to_time('2018-09-07 03:00')).scalar()
-            # # still doesn't match but close
-            # assert check == 12735, check
-            #
-            # # heart rate
-            #
-            # hrs = sorted(mjournals[2].heart_rate, key=lambda x: x.time)
-            # assert len(hrs) == 571, len(hrs)
-            # assert hrs[0].value == 74, hrs[0].value
-            # hrs = [hr.value for hr in hrs]
-            # assert min(*hrs) == 0, min(*hrs)
-            # hrs = [hr for hr in hrs if hr > 0]
-            # assert min(*hrs) == 52, min(*hrs)
-            # summary = s.query(StatisticJournal).join(Statistic, Source, Interval). \
-            #     filter(Source.type == SourceType.INTERVAL,
-            #            Source.time == to_date('2018-09-06'),
-            #            Interval.schedule == 'd',
-            #            Statistic.owner == MonitorStatistics,
-            #            Statistic.name == REST_HR).one()
-            # assert summary.value == 42, summary.value
+            # connect has 12757 for this date,
+            assert summary.value == 12757, summary.value  # todo WRONG
+            check = s.query(func.sum(MonitorSteps.delta)). \
+                filter(MonitorSteps.time >= to_time('2018-09-06 03:00'),
+                       MonitorSteps.time < to_time('2018-09-07 03:00')).scalar()
+            assert check == 12757, check
+
+            # heart rate
+
+            hrs = sorted(mjournals[2].heart_rate, key=lambda x: x.time)
+            assert len(hrs) == 571, len(hrs)
+            assert hrs[0].value == 74, hrs[0].value
+            hrs = [hr.value for hr in hrs]
+            assert min(*hrs) == 0, min(*hrs)
+            hrs = [hr for hr in hrs if hr > 0]
+            assert min(*hrs) == 52, min(*hrs)
+            summary = s.query(StatisticJournal).join(Statistic, Source, Interval). \
+                filter(Source.type == SourceType.INTERVAL,
+                       Source.time == to_time('2018-09-06 03:00'),
+                       Interval.schedule == 'd',
+                       Statistic.owner == MonitorStatistics,
+                       Statistic.name == REST_HR).one()
+            assert summary.value == 42, summary.value
 
 
 def test_bug():
@@ -141,7 +135,5 @@ def test_bug():
                        Statistic.owner == MonitorStatistics,
                        Statistic.name == STEPS).one()
 
-            # todo - use deltas
-
-            # connect has 3031 for this date.  again, close
-            # assert summary.value == 3025, summary.value
+            # connect has 3031 for this date.
+            assert summary.value == 3031, summary.value

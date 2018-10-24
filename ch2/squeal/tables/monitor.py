@@ -55,5 +55,5 @@ class MonitorSteps(MonitorIntegerMixin, Base):
                                    backref=backref('steps', cascade='all, delete-orphan',
                                                    passive_deletes=True,
                                                    order_by='MonitorSteps.time'))
-    delta = Column(Integer)
-    activity = Column(Text)
+    delta = Column(Integer, nullable=False)
+    activity = Column(Text, nullable=False)

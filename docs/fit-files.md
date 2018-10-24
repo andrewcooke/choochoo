@@ -583,6 +583,11 @@ List files that *do not* contain a `cycling` value.  For efficiency
 (but at the possible risk of missing some matches) only the first 10
 records are examined.
 
+    ch2 fit --limit 10 --name --grep '.*:timestamp=2018-09-0[5-7]' \
+      -- ~/archive/fit/**/*.fit
+
+Finds files that have timestamps between 2018-09-05 and 2018-09-07.
+
 #### Format Description
 
 The output format is verbose, so not useful for examining whole files,
