@@ -47,7 +47,12 @@ technologies used, or it could be extended with a GUI.
 
 ### v0.3.0
 
-Diary now uses dates (rather than datetimes) and is timezone aware.
+Diary now uses dates (rather than datetimes) and is timezone aware
+(Previously all times were UTC datetimes; now data related to the
+diary - like statistics calculated on daily intervals - use the date
+and the local timezone to convert to time.  So, for example, stats
+based on monitor data are from your local "day" (midnight to
+midnight)).
 
 Monitor data from FIT files can be imported.
 

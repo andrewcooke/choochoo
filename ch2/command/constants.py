@@ -1,5 +1,6 @@
-from ch2.squeal.database import add
+
 from ..command.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET
+from ..squeal.database import add
 from ..squeal.tables.constant import Constant, ConstantJournal
 from ..squeal.tables.statistic import StatisticJournal, Statistic, STATISTIC_JOURNAL_CLASSES
 
@@ -26,7 +27,7 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
     name, date, value, set, delete, force = args[NAME], args[DATE], args[VALUE], args[SET], args[DELETE], args[FORCE]
     with db.session_context() as s:
         if name:
-            constants = Constant.lookup_like(log, s, name)
+            constants = constants_like(log, s, name)
             if not constants:
                 raise Exception('Name "%s" matched no entries (see `%s %s`)' % (name, COMMAND, CONSTANTS))
         else:
@@ -50,6 +51,20 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
             if value:
                 raise Exception('Do not provide a value when printing Constants')
             print_constants(log, s, constants, name, date)
+
+
+def constants_like(log, s, name):
+    constant = s.query(Constant).filter(Constant.name.like(name)).order_by(Constant.name).all()
+    if not constant:
+        constants = s.query(Constant).all()
+        if constants:
+            log.info('Available constants:')
+            for constant in constants:
+                log.info('%s - %s' % (constant.statistic.name, constant.statistic.description))
+        else:
+            log.error('No constants defined - configure system correctly')
+        raise Exception('Constant "%s" is not defined' % name)
+    return constant
 
 
 def set_constants(log, s, constants, date, value, force):

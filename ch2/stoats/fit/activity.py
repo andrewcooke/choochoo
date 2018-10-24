@@ -21,10 +21,23 @@ class ActivityImporter(Importer):
 
     def _activity(self, s, path, sport, sport_to_activity):
         if sport in sport_to_activity:
-            return Activity.lookup(self._log, s, sport_to_activity[sport])
+            return self._lookup_activity(s, sport_to_activity[sport])
         else:
             self._log.warn('Unrecognised sport: "%s" in %s' % (sport, path))
             raise AbortImport()
+
+    def _lookup_activity(self, s, name):
+        activity = s.query(Activity).filter(Activity.name == name).one_or_none()
+        if not activity:
+            activities = s.query(Activity).all()
+            if activities:
+                self._log.info('Available activities:')
+                for activity in activities:
+                    self._log.info('%s - %s' % (activity.name, activity.description))
+            else:
+                self._log.error('No activities defined - configure system correctly')
+            raise Exception('Activity "%s" is not defined' % name)
+        return activity
 
     def _delete_journals(self, s, activity, first_timestamp):
         # need to iterate because sqlite doesn't support multi-table delete and we have inheritance.

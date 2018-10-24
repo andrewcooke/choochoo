@@ -17,21 +17,6 @@ class Constant(Base):
     statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
     statistic = relationship('Statistic')
 
-    # todo - this called once.  move to caller
-    @staticmethod
-    def lookup_like(log, s, name):
-        constant = s.query(Constant).filter(Constant.name.like(name)).order_by(Constant.name).all()
-        if not constant:
-            constants = s.query(Constant).all()
-            if constants:
-                log.info('Available constants:')
-                for constant in constants:
-                    log.info('%s - %s' % (constant.statistic.name, constant.statistic.description))
-            else:
-                log.error('No constants defined - configure system correctly')
-            raise Exception('Constant "%s" is not defined' % name)
-        return constant
-
 
 class ConstantJournal(Source):
 
