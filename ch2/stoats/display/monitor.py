@@ -28,6 +28,7 @@ class MonitorDiary(Displayer):
 
     def __field(self, s, date, name):
         sjournal = self._journal_at_date(s, date, name, MonitorStatistics, None)
+        print(date, name, sjournal)
         if sjournal:
             return Text([label(name + ': '), sjournal.formatted()])
         else:

@@ -43,6 +43,12 @@ technologies used, or it could be extended with a GUI.
 
 ## Latest Changes
 
+### v0.3.0
+
+Diary now uses dates (rather than datetimes) and is timezone aware.
+
+Monitor data from FIT files can be imported.
+
 ### v0.2.0
 
 Major rewrite to generalize the database schema.  Moved a lot of
