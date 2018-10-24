@@ -86,7 +86,8 @@ def test_sources():
             assert y_avg.value == 60
             month = s.query(Interval).filter(Interval.schedule == 'm').one()
             assert month.time == local_date_to_time(to_date('2018-09-01')), month.time
-            assert month.finish == local_date_to_time(to_date('2018-10-01')), month.finish
+            assert month.start == to_date('2018-09-01'), month.start
+            assert month.finish == to_date('2018-10-01'), month.finish
 
         with db.session_context() as s:
 

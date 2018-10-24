@@ -6,9 +6,9 @@ from sqlalchemy.event import listens_for, remove
 from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
-from ..types import Time, OpenSched, Owner
-from ...lib.date import to_time
-from ...lib.schedule import TZSchedule
+from ..types import Time, OpenSched, Owner, Date
+from ...lib.date import to_time, local_date_to_time, time_to_local_date
+from ...lib.schedule import Schedule
 
 
 class SourceType(IntEnum):
@@ -56,10 +56,10 @@ class Source(Base):
     @classmethod
     def clean_times(cls, session, times):
         from ...stoats.calculate.summary import SummaryStatistics
-        schedules = [TZSchedule(schedule) for schedule in SummaryStatistics.pipeline_schedules(session)]
+        schedules = [Schedule(schedule) for schedule in SummaryStatistics.pipeline_schedules(session)]
         for time in times:
             for schedule in schedules:
-                start = schedule.start_of_frame_time(time)
+                start = local_date_to_time(schedule.start_of_frame(time_to_local_date(time)))
                 interval = session.query(Interval). \
                     filter(Interval.time == start, Interval.schedule == schedule).one_or_none()
                 if interval:
@@ -83,9 +83,9 @@ class Interval(Source):
     schedule = Column(OpenSched, nullable=False)
     # disambiguate creator so each can wipe only its own data on force
     owner = Column(Owner, nullable=False)
-    # duplicates data for simplicity in processing
-    # day after (exclusive date)
-    finish = Column(Time, nullable=False, index=True)
+    # these are for the schedule - finish is redundant (start is not because of timezone issues)
+    start = Column(Date, nullable=False, index=True)
+    finish = Column(Date, nullable=False, index=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL
@@ -96,16 +96,14 @@ class Interval(Source):
 
     @classmethod
     def _missing_interval_starts(cls, log, s, schedule, owner):
-        start, finish = cls._raw_statistics_time_range(s)
-        finish = schedule.next_frame_time(finish)
-        log.debug('Statistics exist %s - %s' % (start, finish))
+        stats_start, stats_finish = cls._raw_statistics_time_range(s)
+        log.debug('Statistics exist %s - %s' % (stats_start, stats_finish))
         starts = cls._open_intervals(s, schedule, owner)
-        if not cls._get_interval(s, schedule, owner, start):
-            starts = [schedule.start_of_frame_time(start)] + starts
-        if starts and starts[-1] == finish:
-            starts = starts[:-1]
-        log.debug('Have %d open blocks finishing at %s' % (len(starts), finish))
-        return starts, finish
+        stats_start_date = time_to_local_date(stats_start)
+        if not cls._get_interval(s, schedule, owner, stats_start_date):
+            starts = [schedule.start_of_frame(stats_start_date)] + starts
+        log.debug('Have %d open blocks finishing at %s' % (len(starts), stats_finish))
+        return starts, stats_finish
 
     @classmethod
     def _raw_statistics_time_range(cls, s):
@@ -124,10 +122,10 @@ class Interval(Source):
         close = aliased(Interval)
         return [result[0] for result in s.query(Interval.finish). \
             outerjoin(close,
-                      and_(Interval.finish == close.time,
+                      and_(Interval.finish == close.start,
                            Interval.owner == close.owner,
                            Interval.schedule == close.schedule)). \
-            filter(close.time == None,
+            filter(close.start == None,
                    Interval.owner == owner,
                    Interval.schedule == schedule). \
             order_by(Interval.finish).all()]
@@ -135,14 +133,15 @@ class Interval(Source):
     @classmethod
     def _get_interval(cls, s, schedule, owner, start):
         return s.query(Interval). \
-            filter(Interval.time == start,
+            filter(Interval.start == start,
                    Interval.schedule == schedule,
                    Interval.owner == owner).one_or_none()
 
     @classmethod
-    def _missing_intervals_from(cls, s, schedule, owner, start, finish):
-        while start < finish:
-            next = schedule.next_frame_time(start)
+    def _missing_intervals_from(cls, log, s, schedule, owner, start, finish):
+        while local_date_to_time(start) <= finish:
+            next = schedule.next_frame(start)
+            log.debug('%s - %s' % (start, next))
             yield start, next
             start = next
             if cls._get_interval(s, schedule, owner, start):
@@ -152,4 +151,4 @@ class Interval(Source):
     def missing(cls, log, s, schedule, owner):
         starts, overall_finish = cls._missing_interval_starts(log, s, schedule, owner)
         for block_start in starts:
-            yield from cls._missing_intervals_from(s, schedule, owner, block_start, overall_finish)
+            yield from cls._missing_intervals_from(log, s, schedule, owner, block_start, overall_finish)

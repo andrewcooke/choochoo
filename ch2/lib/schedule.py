@@ -204,7 +204,8 @@ class Schedule:
         return self.__in_range_or_none(self.__frame.start_of_frame(date))
 
     def next_frame(self, date):
-        return self.__in_range_or_none(self.__frame.next_frame(date))
+        return self.__in_range_or_none(self.__frame.start_of_frame(date) +
+                                       dt.timedelta(days=self.frame_length_in_days(date)))
 
     def frame_length_in_days(self, date):
         return self.__frame.length_in_days(date)
@@ -334,12 +335,6 @@ class Frame(ABC):
         except StopIteration:
             return False
 
-    def next_frame(self, date):
-        '''
-        Returns the start of the frame following the one containing the given date.
-        '''
-        return self.start_of_frame(date) + dt.timedelta(days=self.length_in_days(date))
-
     @abstractmethod
     def length_in_days(self, date):
         '''
@@ -382,15 +377,3 @@ class Year(Frame):
     def at_location(self, date):
         # locations not supported, so ignore for efficiency
         return self.schedule.in_range(date)
-
-
-class TZSchedule(Schedule):
-
-    def start_of_frame_time(self, time):
-        return local_date_to_time(super().start_of_frame(time_to_local_date(time)))
-
-    def next_frame_time(self, time):
-        return local_date_to_time(super().next_frame(time_to_local_date(time)))
-
-    def at_location_time(self, time):
-        return super().at_location(time_to_local_date(time))

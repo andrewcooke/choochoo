@@ -1,10 +1,9 @@
 
-import datetime as dt
-
 from sqlalchemy.sql.functions import count, min, sum
 
 from ..names import STEPS, REST_HR
-from ...lib.schedule import TZSchedule
+from ...lib.date import local_date_to_time
+from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
 from ...squeal.tables.source import Interval
@@ -46,25 +45,27 @@ class MonitorStatistics:
 
     def _run(self):
         with self._db.session_context() as s:
-            for start, finish in Interval.missing(self._log, s, TZSchedule('d'), self):
+            for start, finish in Interval.missing(self._log, s, Schedule('d'), self):
                 self._log.info('Processing monitor data from %s to %s' % (start, finish))
                 self._add_stats(s, start, finish)
 
     def _add_stats(self, s, start, finish):
-        interval = add(s, Interval(schedule='d', owner=self, time=start, finish=finish))
+        start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
+        interval = add(s, Interval(schedule='d', owner=self, time=start_time,
+                                   start=start, finish=finish))
         self._log.info('Adding monitor data for %s' % start)
         rest_heart_rate = s.query(min(MonitorHeartRate.value)).join(MonitorJournal). \
-            filter(MonitorJournal.time < finish,
-                   MonitorJournal.finish >= start,
-                   MonitorHeartRate.time >= start,
-                   MonitorHeartRate.time < finish,
+            filter(MonitorJournal.time < finish_time,
+                   MonitorJournal.finish >= start_time,
+                   MonitorHeartRate.time >= start_time,
+                   MonitorHeartRate.time < finish_time,
                    MonitorHeartRate.value > 0).scalar()
         self._add_integer_stat(s, interval, REST_HR, '[min],[avg]', rest_heart_rate, 'bpm')
         steps = s.query(sum(MonitorSteps.delta)).join(MonitorJournal). \
-            filter(MonitorJournal.time < finish,
-                   MonitorJournal.finish >= start,
-                   MonitorSteps.time >= start,
-                   MonitorSteps.time < finish).scalar()
+            filter(MonitorJournal.time < finish_time,
+                   MonitorJournal.finish >= start_time,
+                   MonitorSteps.time >= start_time,
+                   MonitorSteps.time < finish_time).scalar()
         self._add_integer_stat(s, interval, STEPS, '[sum],[avg]', steps, None)
 
     def _add_integer_stat(self, s, journal, name, summary, value, units):

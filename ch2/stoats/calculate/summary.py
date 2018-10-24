@@ -4,9 +4,9 @@ from re import split
 
 from sqlalchemy.sql.functions import count
 
-from ch2.squeal.database import add
-from ...lib.date import to_date
-from ...lib.schedule import TZSchedule
+from ...lib.date import local_date_to_time, time_to_local_date
+from ...lib.schedule import Schedule
+from ...squeal.database import add
 from ...squeal.tables.pipeline import Pipeline, PipelineType
 from ...squeal.tables.source import Interval, Source
 from ...squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
@@ -24,11 +24,11 @@ class SummaryStatistics:
             for schedule in self._pipeline_schedules():
                 self._run_schedule(schedule, force, after=after)
         else:
-            self._run_schedule(TZSchedule(schedule), force, after=after)
+            self._run_schedule(Schedule(schedule), force, after=after)
 
     def _pipeline_schedules(self):
         with self._db.session_context() as s:
-            return [TZSchedule(spec) for spec in self.pipeline_schedules(s)]
+            return [Schedule(spec) for spec in self.pipeline_schedules(s)]
 
     @classmethod
     def pipeline_schedules(cls, s):
@@ -78,7 +78,7 @@ class SummaryStatistics:
             filter(Statistic.id.in_(statistics_with_data_but_no_summary)). \
             all()
 
-    def _diary_entries(self, s, statistic, start, finish):
+    def _journal_data(self, s, statistic, start, finish):
         return s.query(StatisticJournal).join(Source). \
             filter(StatisticJournal.statistic == statistic,
                    Source.time >= start,
@@ -150,11 +150,12 @@ class SummaryStatistics:
     def _create_values(self, spec):
         with self._db.session_context() as s:
             for start, finish in Interval.missing(self._log, s, spec, self):
-                interval = add(s, Interval(time=start, finish=finish, schedule=spec, owner=self))
+                start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
+                interval = add(s, Interval(time=start_time, start=start, finish=finish, schedule=spec, owner=self))
                 have_data = False
-                for statistic in self._statistics_missing_summaries(s, start, finish):
-                    data = [journal for journal in self._diary_entries(s, statistic, start, finish)
-                            if spec.at_location_time(journal.time)]
+                for statistic in self._statistics_missing_summaries(s, start_time, finish_time):
+                    data = [journal for journal in self._journal_data(s, statistic, start_time, finish_time)
+                            if spec.at_location(time_to_local_date(journal.time))]
                     if data:
                         processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
                         if processes:

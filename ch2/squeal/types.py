@@ -7,8 +7,8 @@ from struct import unpack
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
-from ..lib.schedule import Schedule, TZSchedule
 from ..lib.date import to_time, to_date
+from ..lib.schedule import Schedule
 
 
 class Date(TypeDecorator):
@@ -136,7 +136,7 @@ class Sched(TypeDecorator):
     def process_result_value(self, value, dialect):
         if not value:
             return None
-        return TZSchedule(value)
+        return Schedule(value)
 
 
 class OpenSched(Sched):

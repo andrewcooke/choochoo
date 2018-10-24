@@ -1,8 +1,8 @@
 
 import datetime as dt
 
-from ch2.lib.schedule import Schedule, DateOrdinals
 from ch2.lib.date import to_date
+from ch2.lib.schedule import Schedule, DateOrdinals
 
 
 def assert_str(x1, s):
