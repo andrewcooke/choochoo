@@ -53,7 +53,6 @@ class MonitorStatistics:
         start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
         interval = add(s, Interval(schedule='d', owner=self, time=start_time,
                                    start=start, finish=finish))
-        self._log.info('Adding monitor data for %s' % start)
         rest_heart_rate = s.query(min(MonitorHeartRate.value)).join(MonitorJournal). \
             filter(MonitorJournal.time < finish_time,
                    MonitorJournal.finish >= start_time,
@@ -67,6 +66,7 @@ class MonitorStatistics:
                    MonitorSteps.time >= start_time,
                    MonitorSteps.time < finish_time).scalar()
         self._add_integer_stat(s, interval, STEPS, '[sum],[avg]', steps, None)
+        self._log.debug('Added data for %s' % interval)
 
     def _add_integer_stat(self, s, journal, name, summary, value, units):
         if value is not None:

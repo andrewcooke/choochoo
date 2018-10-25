@@ -1,4 +1,6 @@
 
+import sys
+
 from enum import IntEnum
 
 from sqlalchemy import ForeignKey, Column, Integer, func, and_, distinct
@@ -61,7 +63,6 @@ class Source(Base):
                 interval = session.query(Interval). \
                     filter(Interval.start == start, Interval.schedule == schedule).one_or_none()
                 if interval:
-                    # print(interval)
                     session.delete(interval)
 
 
