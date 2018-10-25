@@ -8,6 +8,10 @@ class AbortImport(Exception):
     pass
 
 
+class AbortImportButMarkScanned(AbortImport):
+    pass
+
+
 class Importer:
 
     def __init__(self, log, db):
@@ -19,7 +23,7 @@ class Importer:
             return next(iter(record for record in records if record.name in names))
         except StopIteration:
             self._log.warn('No %s entry(s) in %s' % (str(names), path))
-            raise AbortImport()
+            raise AbortImportButMarkScanned()
 
     def _last(self, path, records, *names):
         save = None
@@ -28,7 +32,7 @@ class Importer:
                 save = record
         if not save:
             self._log.warn('No %s entry(s) in %s' % (str(names), path))
-            raise AbortImport()
+            raise AbortImportButMarkScanned()
         return save
 
     def _run(self, paths, force=False, **kargs):
@@ -42,9 +46,9 @@ class Importer:
                 try:
                     self._import(s, file, **kargs)
                     return True
-                except AbortImport:
+                except AbortImport as e:
                     self._log.debug('Aborted %s' % file)
-                    return False
+                    return isinstance(e, AbortImportButMarkScanned)
         return callback
 
     @abstractmethod

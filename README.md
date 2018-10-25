@@ -16,6 +16,7 @@ Training data are stored in a database...
   * Read FIT files from smart watches, bike computers, etc
     * 'Activities' (eg bike rides) can be read
     * 'Monitor' data (eg steps and rest HR) can be read
+      * These can also be downloaded from Garmin Connect
   * Daily information (eg weight) can be entered via the diary
     * Ability to add custom fields for general data capture
   * Other data (eg FTHR) can be entered at the command line

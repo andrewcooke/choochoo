@@ -169,7 +169,7 @@ def parser():
 
     diary = subparsers.add_parser(DIARY,
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
-    diary.add_argument(DATE, action='store', metavar='DATE', type=to_date,
+    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?', type=to_date,
                        help='an optional date to display (default is today)')
     diary.set_defaults(command=DIARY)
 

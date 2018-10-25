@@ -5,10 +5,9 @@ from shutil import get_terminal_size
 
 from sqlalchemy import desc
 
-from .date import to_time, local_date_to_time
-from .schedule import ZERO
-from ..squeal.database import add
 from ch2.squeal.tables.fit import FileScan
+from .date import to_time
+from ..squeal.database import add
 
 
 def terminal_width(width=None):
@@ -38,7 +37,7 @@ def for_modified_files(log, session, paths, callback, force=False):
     after processing.  The callback should return True on success.
 
     The session is used throughout, but not passed to the callback.  The callback can
-    contain the same session as internal state, or create its own.  We avoid open
+    contain the same session as internal state or create its own.  We avoid open
     transactions across the callback.
     '''
 
@@ -54,22 +53,28 @@ def for_modified_files(log, session, paths, callback, force=False):
                 path_scan.md5_hash = hash
                 path_scan.last_scan = 0.0
         else:
-            path_scan = add(session, FileScan(path=file_path, md5_hash=hash, last_scan=0.0))
+            # need to_time here because it's not roundtripped via the database to convert for use below
+            path_scan = add(session, FileScan(path=file_path, md5_hash=hash, last_scan=to_time(0.0)))
             session.flush()
 
-        hash_scan = session.query(FileScan).filter(FileScan.md5_hash == hash).\
-            order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
-        if hash_scan.path != path_scan.path:
-            log.warn('File at %s appears to be identical to file at %s' % (file_path, hash_scan.path))
+        # only look at hash if we are going to process anyway
+        if last_modified > path_scan.last_scan:
 
-        session.commit()
+            hash_scan = session.query(FileScan).filter(FileScan.md5_hash == hash).\
+                order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
+            if hash_scan.path != path_scan.path:
+                log.warn('Two files have the same hash (details in debug log)')
+                log.debug('%s' % file_path)
+                log.debug('%s' % hash_scan.path)
+                # update the path to avoid triggering in future
+                path_scan.last_scan = hash_scan.last_scan
 
-        if force or last_modified > hash_scan.last_scan:
-            if callback(file_path):
-                log.debug('Marking %s as scanned' % file_path)
-                path_scan.last_scan = last_modified
-                session.commit()
-            else:
-                log.debug('Not marking %s as scanned' % file_path)
-        else:
-            log.debug('Skipping %s (already scanned)' % file_path)
+            session.commit()
+
+            if force or last_modified > hash_scan.last_scan:
+                if callback(file_path):
+                    log.debug('Marking %s as scanned' % file_path)
+                    path_scan.last_scan = last_modified
+                    session.commit()
+                else:
+                    log.debug('Not marking %s as scanned' % file_path)

@@ -1,3 +1,4 @@
+from time import sleep
 
 from .args import DIR, USER, PASS, DATE
 from ..fit.download.connect import GarminConnect
@@ -14,11 +15,17 @@ def garmin(args, log, db):
 
     '''
     dir, user, password, date = args.dir(DIR, rooted=False), args[USER], args[PASS], args[DATE]
-    connect = GarminConnect(log, log_response=False)
-    connect.login(user, password)
     if date:
-        connect.get_monitoring_to_fit_file(date, dir)
+        dates = [date]
     else:
+        # do this first to avoid login if not needed
         with db.session_context() as s:
-            for date in missing_dates(s):
-                connect.get_monitoring_to_fit_file(date, dir)
+            dates = list(missing_dates(log, s))
+    if dates:
+        connect = GarminConnect(log, log_response=False)
+        connect.login(user, password)
+        for repeat, date in enumerate(dates):
+            if repeat:
+                sleep(1)
+            log.info('Downloading data for %s' % date)
+            connect.get_monitoring_to_fit_file(date, dir)

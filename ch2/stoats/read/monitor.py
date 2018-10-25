@@ -1,4 +1,5 @@
 
+import datetime as dt
 from collections import defaultdict
 
 from sqlalchemy import desc
@@ -6,7 +7,7 @@ from sqlalchemy import desc
 from ..read import Importer
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, unpack_single_bytes
-from ...lib.date import to_time
+from ...lib.date import to_time, time_to_local_date
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
 
@@ -94,5 +95,25 @@ class MonitorImporter(Importer):
                             activity=activity, monitor_journal=mjournal))
 
 
-def missing_dates(s):
-    yield None
+def missing_dates(log, s):
+    # we don't try to be perfect here.  the idea is that it's called to get the latest
+    # updates, rather than fill in all gaps (do the bulk download thing for that).
+    # we also don't try to get fractional data.
+    # and as for timezones... we just assume garmin uses the local timezone.
+    latest = s.query(MonitorJournal).order_by(desc(MonitorJournal.time)).limit(1).one_or_none()
+    # find the mid-point to avoid any problems with timezones and edge cases
+    # (these files don't span more than a day)
+    seconds = (latest.finish - latest.time).total_seconds() / 2
+    start = time_to_local_date(latest.time + dt.timedelta(seconds=seconds) + dt.timedelta(days=1))
+    finish = dt.date.today()
+    days = (finish - start).days
+    if days > 10:
+        raise Exception('Too many days (%d) - ' % days +
+                        'do a bulk download instead: https://www.garmin.com/en-US/account/datamanagement/')
+    if days:
+        # exclude today since it will be incomplete
+        while start < finish:
+            yield start
+            start += dt.timedelta(days=1)
+    else:
+        log.warn('No dates to download')

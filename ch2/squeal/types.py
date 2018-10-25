@@ -74,6 +74,8 @@ class Cls(TypeDecorator):
             return None
         if value not in CLS_CACHE:
             CLS_CACHE[value] = locate(value)
+        if not CLS_CACHE[value]:
+            raise Exception('Cannot find %s' % value)
         return CLS_CACHE[value]
 
 

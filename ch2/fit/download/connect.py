@@ -28,6 +28,8 @@ class GarminConnect:
 
     def login(self, username, password):
 
+        self._log.info('Connecting to garmin as %s' % username)
+
         params = {
             'webhost': self.base_url,
             'service': self.modern,
