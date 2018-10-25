@@ -146,18 +146,14 @@ def parser():
 
     subparsers = parser.add_subparsers()
 
-    activities = subparsers.add_parser(ACTIVITIES,
-                                       help='read activity data - see `%s %s -h` for more details' %
-                                            (PROGNAME, ACTIVITIES))
+    activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activities.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                             help='path to fit file(s)')
     activities.set_defaults(command=ACTIVITIES)
 
-    constant = subparsers.add_parser(CONSTANTS,
-                                     help='set and examine constants - see `%s %s -h` for more details' %
-                                          (PROGNAME, CONSTANTS))
+    constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_flags = constant.add_mutually_exclusive_group()
     constant_flags.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
     constant_flags.add_argument(mm(SET), action='store_true', help='store a new value')
@@ -167,15 +163,12 @@ def parser():
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
     constant.set_defaults(command=CONSTANTS)
 
-    diary = subparsers.add_parser(DIARY,
-                                  help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
+    diary = subparsers.add_parser(DIARY, help='daily diary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?', type=to_date,
                        help='an optional date to display (default is today)')
     diary.set_defaults(command=DIARY)
 
-    fit = subparsers.add_parser(FIT,
-                                help='display contents of fit file - ' +
-                                     'see `%s %s -h` for more details' % (PROGNAME, FIT))
+    fit = subparsers.add_parser(FIT, help='display contents of fit file')
     fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                      help='path to fit file')
     fit_format = fit.add_mutually_exclusive_group(required=True)
@@ -211,9 +204,7 @@ def parser():
                      help='number of matches to display (with --grep, default 1, -1 for all)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
-    garmin = subparsers.add_parser(GARMIN,
-                                   help='download monitor data from garmin connect - ' +
-                                        'see `%s %s -h` for more details' % (PROGNAME, GARMIN))
+    garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
     garmin.add_argument(DIR, action='store', metavar='DIR',
                         help='the directory where FIT files are stored')
     garmin.add_argument(mm(USER), action='store', metavar='USER', required=True,
@@ -224,23 +215,19 @@ def parser():
                         help='date to download')
     garmin.set_defaults(command=GARMIN)
 
-    help = subparsers.add_parser(HELP,
-                                 help='display help - ' + 'see `%s %s -h` for more details' % (PROGNAME, HELP))
+    help = subparsers.add_parser(HELP, help='display help')
     help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
                       help='the subject for help')
     help.set_defaults(command=HELP)
 
-    monitor = subparsers.add_parser(MONITOR,
-                                    help='read monitor data - see `%s %s -h` for more details' % (PROGNAME, MONITOR))
+    monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file(s)')
     monitor.set_defaults(command=MONITOR)
 
-    statistics = subparsers.add_parser(STATISTICS,
-                                       help='(re-)generate statistics - ' +
-                                            'see `%s %s -h` for more details' % (PROGNAME, STATISTICS))
+    statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
     statistics.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
     statistics.add_argument(DATE, action='store', nargs='?', metavar='DATE',
                             help='date from which statistics are deleted')
@@ -259,18 +246,14 @@ def parser():
     noop.set_defaults(command=NO_OP)
 
     package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
-                                                help='parse and save the global fit profile (dev only) - ' +
-                                                     'see `%s %s -h` for more details' %
-                                                     (PROGNAME, PACKAGE_FIT_PROFILE))
+                                                help='parse and save the global fit profile (dev only)')
     package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE',
                                      help='the path to the profile (Profile.xlsx)')
     package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
                                      help='additional warning messages')
     package_fit_profile.set_defaults(command=PACKAGE_FIT_PROFILE)
 
-    test_schedule = subparsers.add_parser(TEST_SCHEDULE,
-                                          help='print schedule locations in a calendar. - ' +
-                                               'see `%s %s -h` for more details' % (PROGNAME, TEST_SCHEDULE))
+    test_schedule = subparsers.add_parser(TEST_SCHEDULE, help='print schedule locations in a calendar')
     test_schedule.add_argument(SCHEDULE, action='store', metavar='SCHEDULE',
                                help='the schedule to test')
     test_schedule.add_argument(mm(START), action='store', metavar='DATE',
