@@ -1,15 +1,14 @@
 
 from os.path import splitext, basename
 
-from ..fit import AbortImport
+from ..read import AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
 from ...lib.date import to_time
-from ...lib.schedule import ZERO
 from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
 from ...squeal.tables.activity import Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint
-from ...stoats.fit import Importer
+from ...stoats.read import Importer
 
 
 class ActivityImporter(Importer):

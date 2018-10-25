@@ -1,12 +1,12 @@
+
 from collections import defaultdict
 
 from sqlalchemy import desc
 
-from ..fit import Importer
+from ..read import Importer
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, unpack_single_bytes
 from ...lib.date import to_time
-from ...lib.schedule import ZERO
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
 
@@ -92,3 +92,7 @@ class MonitorImporter(Importer):
         add(s, MonitorSteps(time=timestamp, value=steps,
                             delta=self._delta(steps, activity, prev_steps),
                             activity=activity, monitor_journal=mjournal))
+
+
+def missing_dates(s):
+    yield None

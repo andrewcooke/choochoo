@@ -6,6 +6,7 @@ from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
+from ch2.lib.date import to_date
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
@@ -168,7 +169,7 @@ def parser():
 
     diary = subparsers.add_parser(DIARY,
                                   help='daily diary - see `%s %s -h` for more details' % (PROGNAME, DIARY))
-    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
+    diary.add_argument(DATE, action='store', metavar='DATE', type=to_date,
                        help='an optional date to display (default is today)')
     diary.set_defaults(command=DIARY)
 
@@ -219,6 +220,8 @@ def parser():
                         help='garmin connect username')
     garmin.add_argument(mm(PASS), action='store', metavar='PASSWORD', required=True,
                         help='garmin connect password')
+    garmin.add_argument(mm(DATE), action='store', metavar='DATE', type=to_date,
+                        help='date to download')
     garmin.set_defaults(command=GARMIN)
 
     help = subparsers.add_parser(HELP,

@@ -8,8 +8,8 @@ from ..stoats.calculate.clean import CleanUnusedStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
-from ..stoats.fit.activity import ActivityImporter
-from ..stoats.fit.monitor import MonitorImporter
+from ..stoats.read.activity import ActivityImporter
+from ..stoats.read.monitor import MonitorImporter
 from ..stoats.names import BPM, FTHR
 from ..uweird.fields import Text, Float, Score, Integer
 
