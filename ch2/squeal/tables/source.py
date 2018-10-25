@@ -1,14 +1,13 @@
 
 from enum import IntEnum
 
-from sqlalchemy import ForeignKey, Column, Integer, func, and_
+from sqlalchemy import ForeignKey, Column, Integer, func, and_, distinct
 from sqlalchemy.event import listens_for, remove
 from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
 from ..types import Time, OpenSched, Owner, Date
 from ...lib.date import to_time, local_date_to_time, time_to_local_date
-from ...lib.schedule import Schedule
 
 
 class SourceType(IntEnum):
@@ -55,14 +54,14 @@ class Source(Base):
 
     @classmethod
     def clean_times(cls, session, times):
-        from ...stoats.calculate.summary import SummaryStatistics
-        schedules = [Schedule(schedule) for schedule in SummaryStatistics.pipeline_schedules(session)]
+        schedules = [schedule[0] for schedule in session.query(distinct(Interval.schedule)).all()]
         for time in times:
             for schedule in schedules:
                 start = local_date_to_time(schedule.start_of_frame(time_to_local_date(time)))
                 interval = session.query(Interval). \
                     filter(Interval.time == start, Interval.schedule == schedule).one_or_none()
                 if interval:
+                    # print(interval)
                     session.delete(interval)
 
 
@@ -80,7 +79,7 @@ class Interval(Source):
     __tablename__ = 'interval'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    schedule = Column(OpenSched, nullable=False)
+    schedule = Column(OpenSched, nullable=False, index=True)
     # disambiguate creator so each can wipe only its own data on force
     owner = Column(Owner, nullable=False)
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
@@ -92,7 +91,8 @@ class Interval(Source):
     }
 
     def __str__(self):
-        return 'Interval "%s from %s"' % (self.schedule, self.time)
+        return 'Interval "%s from %s" (owner %d)' % \
+               (self.schedule, self.time, Owner().process_literal_param(self.owner, None))
 
     @classmethod
     def _missing_interval_starts(cls, log, s, schedule, owner):
@@ -139,9 +139,9 @@ class Interval(Source):
 
     @classmethod
     def _missing_intervals_from(cls, log, s, schedule, owner, start, finish):
-        while local_date_to_time(start) <= finish:
+        while start <= time_to_local_date(finish):
             next = schedule.next_frame(start)
-            log.debug('%s - %s' % (start, next))
+            log.debug('Missing Interval %s - %s' % (start, next))
             yield start, next
             start = next
             if cls._get_interval(s, schedule, owner, start):

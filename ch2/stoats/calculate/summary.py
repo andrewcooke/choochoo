@@ -7,7 +7,6 @@ from sqlalchemy.sql.functions import count
 from ...lib.date import local_date_to_time, time_to_local_date
 from ...lib.schedule import Schedule
 from ...squeal.database import add
-from ...squeal.tables.pipeline import Pipeline, PipelineType
 from ...squeal.tables.source import Interval, Source
 from ...squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
     StatisticType
@@ -20,30 +19,12 @@ class SummaryStatistics:
         self._db = db
 
     def run(self, schedule=None, force=False, after=None):
-        if schedule is None:
-            for schedule in self._pipeline_schedules():
-                self._run_schedule(schedule, force, after=after)
-        else:
-            self._run_schedule(Schedule(schedule), force, after=after)
-
-    def _pipeline_schedules(self):
-        with self._db.session_context() as s:
-            return [Schedule(spec) for spec in self.pipeline_schedules(s)]
-
-    @classmethod
-    def pipeline_schedules(cls, s):
-        for kargs in s.query(Pipeline.kargs). \
-                filter(Pipeline.cls == cls,
-                       Pipeline.type == PipelineType.STATISTIC).all():
-            if 'schedule' in kargs[0]:
-                yield kargs[0]['schedule']
-            else:
-                raise Exception('No schedule in kargs for Statistic Pipeline (%s)' % cls.__name__)
-
-    def _run_schedule(self, spec, force, after=None):
+        if not schedule:
+            raise Exception('schedule=... karg required')
+        schedule = Schedule(schedule)
         if force:
-            self._delete(spec, after)
-        self._create_values(spec)
+            self._delete(schedule, after)
+        self._create_values(schedule)
 
     def _delete(self, spec, after=None):
         # we delete the intervals that summary statistics depend on and they will cascade

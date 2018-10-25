@@ -1,3 +1,4 @@
+
 from io import BytesIO
 from os.path import join, exists
 from re import search, sub
@@ -18,7 +19,8 @@ class GarminConnect:
     daily = modern + '/proxy/download-service/files/wellness'
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0'
+        # 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0'
+        'User-Agent': 'Mozilla/5.0 (compatible; https://github.com/andrewcooke/choochoo)'
     }
 
     def __init__(self, log, log_response=False):
@@ -28,9 +30,10 @@ class GarminConnect:
 
     def login(self, username, password):
 
-        self._log.info('Connecting to garmin as %s' % username)
+        self._log.info('Connecting to Garmin Connect as %s' % username)
 
         params = {
+            # todo - are these all actually needed?  by an sso service?
             'webhost': self.base_url,
             'service': self.modern,
             'source': self.signin,
@@ -88,7 +91,7 @@ class GarminConnect:
             self._log.debug('reason: %s' % response.reason)
             self._log.debug('cookies: %s' % response.cookies)
             self._log.debug('history: %s' % response.history)
-            self._log.debug('text: %s' % response.text)
+            # self._log.debug('text: %s' % response.text)
         return response
 
     def get_monitoring_to_zip_file(self, date, dir):
@@ -105,4 +108,4 @@ class GarminConnect:
         zipfile = ZipFile(BytesIO(response.content))
         for name in zipfile.namelist():
             path = zipfile.extract(name, path=dir)
-            self._log.info('Downloaded data to %s' % path)
+            self._log.info('Downloaded data for %s to %s' % (date, path))

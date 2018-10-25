@@ -14,7 +14,6 @@ from ..lib.utils import unique
 
 def summarize(log, format, fit_path, all_fields=False, all_messages=False, after=0, limit=-1,
               records=None, warn=False, profile_path=None, grep=None, name=False, invert=False, match=1):
-    # import pdb; pdb.set_trace()
     if name and format != GREP:
         print()
         print(fit_path)

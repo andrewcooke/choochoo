@@ -229,7 +229,7 @@ def parser():
 
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
     statistics.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
-    statistics.add_argument(DATE, action='store', nargs='?', metavar='DATE',
+    statistics.add_argument(AFTER, action='store', nargs='?', metavar='DATE',
                             help='date from which statistics are deleted')
     statistics.add_argument(mm(LIKE), action='store', metavar='PATTERN',
                             help='run only matching pipeline classes')

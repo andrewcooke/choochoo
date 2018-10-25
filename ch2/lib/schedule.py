@@ -47,7 +47,7 @@ class Schedule:
             self.__parse_locations(locations)
             self.__parse_range(range)
         except:
-            raise Exception('Cannot parse %s' % spec)
+            raise Exception('Cannot parse "%s" (%s)' % (spec, type(spec)))
         if self.locations and self.frame_type == 'y':
             raise Exception('Locations not supported in yearly schedules')
         self.__frame = self.frame_class()(self)
