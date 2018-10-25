@@ -57,9 +57,9 @@ class Source(Base):
         schedules = [schedule[0] for schedule in session.query(distinct(Interval.schedule)).all()]
         for time in times:
             for schedule in schedules:
-                start = local_date_to_time(schedule.start_of_frame(time_to_local_date(time)))
+                start = schedule.start_of_frame(time_to_local_date(time))
                 interval = session.query(Interval). \
-                    filter(Interval.time == start, Interval.schedule == schedule).one_or_none()
+                    filter(Interval.start == start, Interval.schedule == schedule).one_or_none()
                 if interval:
                     # print(interval)
                     session.delete(interval)
