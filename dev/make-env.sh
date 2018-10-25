@@ -14,6 +14,7 @@ pip install pandas
 pip install pyGeoTile
 pip install colorama
 pip install pendulum
+pip install requests
 
 pip install matplotlib
 pip install bokeh

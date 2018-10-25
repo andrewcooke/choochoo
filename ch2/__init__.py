@@ -1,11 +1,12 @@
 
 from .command.activities import activities
 from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
-    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, EXAMPLE_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR
+    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, EXAMPLE_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN
 from .command.constants import constants
 from .command.diary import diary
 from .command.example_config import example_config
 from .command.fit import fit
+from .command.garmin import garmin
 from .command.help import help
 from .command.monitor import monitor
 from .command.package_fit_profile import package_fit_profile
@@ -29,6 +30,7 @@ COMMANDS = {ACTIVITIES: activities,
             CONSTANTS: constants,
             DIARY: diary,
             FIT: fit,
+            GARMIN: garmin,
             HELP: help,
             MONITOR: monitor,
             STATISTICS: statistics,

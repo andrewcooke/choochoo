@@ -18,19 +18,21 @@
     * XXX  Data directory?  Copyright?
   * XXX  Add warn flag to packaging
   * XXX  Construct activity entries
-  * Construct stats
-  * Display activity and stats
+  * XXX Construct stats
+  * XXX Display activity and stats
 
-* Command line addition of reminders
+* XXX  Command line addition of reminders (now via config
 
 * Command line dumps of, eg, injury data
 
 * Plotting
+  * XXX  Jupyter examples
+  * Steps example
 
 * XXX  Command line definition of traning plans
   * XXX  Examples from British Cycling
 
-* Heart rate zone analysis
+* XXX  Heart rate zone analysis
 
 * Docs, docs, docs
   * How to organise on github
@@ -39,3 +41,16 @@
 * Alarms based on stats (eg total distance)
   * Possibly means associating activities with bikes
     (not at first)
+
+* bash completion script
+
+* Automate donload of data from Garmin
+  * FIT file for activity
+  * FIT file for monitor
+
+* TSS but HR zones
+
+* Allow activity headings to be edited
+  * Worry about migrations
+
+* Get rid of all those blank text fields...

@@ -16,12 +16,14 @@ CONSTANTS = 'constants'
 DIARY = 'diary'
 EXAMPLE_CONFIG = 'example-config'
 FIT = 'fit'
+GARMIN = 'garmin'
 H, HELP = 'h', 'help'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
 
+ACTIVITY = 'activity'
 AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
@@ -30,6 +32,7 @@ DATABASE = 'database'
 DATE = 'date'
 DELETE = 'delete'
 DEV = 'dev'
+DIR = 'dir'
 F = 'f'
 FAST = 'fast'
 FIELDS = 'fields'
@@ -54,6 +57,7 @@ PLAN = 'plan'
 PWD = 'pwd'
 RECORDS = 'records'
 ROOT = 'root'
+SERVICE = 'service'
 SET = 'set'
 SCHEDULE = 'schedule'
 START = 'start'
@@ -146,7 +150,7 @@ def parser():
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activities.add_argument(PATH, action='store', metavar='PATH', nargs='+',
-                            help='path to fit file')
+                            help='path to fit file(s)')
     activities.set_defaults(command=ACTIVITIES)
 
     constant = subparsers.add_parser(CONSTANTS,
@@ -205,6 +209,13 @@ def parser():
                      help='number of matches to display (with --grep, default 1, -1 for all)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
+    garmin = subparsers.add_parser(GARMIN,
+                                   help='download monitor data from garmin connect - ' +
+                                        'see `%s %s -h` for more details' % (PROGNAME, GARMIN))
+    garmin.add_argument(PATH, action='store', metavar='DIR',
+                        help='the directory where FIT files are stored')
+    garmin.set_defaults(command=GARMIN)
+
     help = subparsers.add_parser(HELP,
                                  help='display help - ' + 'see `%s %s -h` for more details' % (PROGNAME, HELP))
     help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
@@ -216,7 +227,7 @@ def parser():
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
-                         help='path to fit file')
+                         help='path to fit file(s)')
     monitor.set_defaults(command=MONITOR)
 
     statistics = subparsers.add_parser(STATISTICS,
