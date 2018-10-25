@@ -52,6 +52,7 @@ MONITOR = 'monitor'
 MONTHS = 'months'
 NAME = 'name'
 NOT = 'not'
+PASS = 'pass'
 PATH = 'path'
 PLAN = 'plan'
 PWD = 'pwd'
@@ -212,8 +213,12 @@ def parser():
     garmin = subparsers.add_parser(GARMIN,
                                    help='download monitor data from garmin connect - ' +
                                         'see `%s %s -h` for more details' % (PROGNAME, GARMIN))
-    garmin.add_argument(PATH, action='store', metavar='DIR',
+    garmin.add_argument(DIR, action='store', metavar='DIR',
                         help='the directory where FIT files are stored')
+    garmin.add_argument(mm(USER), action='store', metavar='USER', required=True,
+                        help='garmin connect username')
+    garmin.add_argument(mm(PASS), action='store', metavar='PASSWORD', required=True,
+                        help='garmin connect password')
     garmin.set_defaults(command=GARMIN)
 
     help = subparsers.add_parser(HELP,
