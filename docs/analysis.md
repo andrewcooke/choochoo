@@ -40,11 +40,31 @@ examples from `ch2/data/notebooks`.
 ## Accessing Data
 
 Data are accessed via the `ch2.data.data()` function, which returns a
-`ch2.data.database.Data` instance.  Data associated with a particular
-activity type are then selected using the `.activity(...)` method (see
-`.activity_names()` for available activity types).
+`ch2.data.database.Data` instance.
 
-The `ch2.data.database.ActivityData` instance provides access to:
+For example, in a new Python 3 notebook:
+
+    from ch2.data import data
+    d = data('-v 0')
+    d.statistics()
+
+will show a list of the statistics available.
+
+You may want to revise the [data model](data-model) at this point.
+
+The `ch2.data.database.Data` instance provides access to:
+
+* **Statistics** - a list of all the available Statistics (ie a
+  description of what data are available).
+
+* **Statistic Journals* - time series values for particular
+  Statistics (ie the data themselves).
+
+      d.statistic_journals('Rest HR')
+
+  Since Statistic names are not unique these can be qualified by the
+  `owner` aond `constraint` values that are provided by
+  `Data.statistics()`.
 
 * **Activity Statistics** - these are measures calculated for each activity
   diary entry (eg each bike ride).  For example, the total time active.
