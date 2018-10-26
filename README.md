@@ -6,7 +6,13 @@ An **open**, **hackable** and **free** training diary.
 See [documentation](https://andrewcooke.github.io/choochoo/) for full
 details.
 
+## Diary
+
 ![](docs/diary2.png)
+
+## Jupyter
+
+![](docs/statistics.png)
 
 ## Technical Features
 
