@@ -85,6 +85,9 @@ The `ch2.data.database.Data` instance provides access to:
 
       d.activity_waypoints('Bike', '2018-02-18 10:26:56')
 
+  The `x` and `y` values are in the co-ordinates used by web plotting
+  tools (derived from the `latitude` and `longitude`).
+
 The various methods above typically take a list of names or SQL
 patterns.  The returned DataFrames usually have the date / time
 information as index.
