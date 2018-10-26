@@ -166,7 +166,7 @@ class Data:
                 filter(MonitorJournal.time == time). \
                 order_by(MonitorSteps.time).all():
             times.append(steps.time)
-            extract(data, steps, 'value')
+            extract(data, steps, 'value', 'activity')
         return DataFrame(data, index=times)
 
     def monitor_heart_rate(self, time):
