@@ -129,9 +129,11 @@ class Data:
 
     def statistic_quartiles(self, *statistics, schedule='m', start=None, finish=None, owner=None, constraint=None):
         statistic_names, statistic_ids = self._collect_statistics(statistics)
-        q = self._build_statistic_journal_query(
-            statistic_ids, self._session.query(StatisticMeasure).join(StatisticJournal, Statistic, Source),
-            start, finish, owner, constraint)
+        q = self._session.query(StatisticMeasure). \
+            join(StatisticJournal, StatisticMeasure.statistic_journal_id == StatisticJournal.id). \
+            join(Statistic, StatisticJournal.statistic_id == Statistic.id). \
+            join(Source, StatisticJournal.source_id == Source.id)
+        q = self._build_statistic_journal_query(statistic_ids, q, start, finish, owner, constraint)
         if schedule:
             q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \
                 filter(Interval.schedule == schedule)
@@ -177,17 +179,22 @@ class Data:
         return DataFrame(data, index=times)
 
 
-
 def data(*args):
     '''
     Start here to access data.  Create an instance in Jupyter:
 
+        from ch2.data import data
         d = data('-v', '4')
-        print(d.activities())
+        d.statistics()
         ...
     '''
     p = parser()
-    args = list(args)
+    if len(args) == 1:
+        args = args[0].split()
+    elif args:
+        args = list(args)
+    else:
+        args = []
     args.append(NO_OP)
     ns = NamespaceWithVariables(p.parse_args(args))
     log = make_log(ns)

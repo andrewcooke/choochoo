@@ -89,11 +89,12 @@ The `ch2.data.database.Data` instance provides access to:
   tools (derived from the `latitude` and `longitude`).
 
 * **Monitor Journals** - a list of the dates (files) with monitor data.
+  The dates are passed to the methods below.
 
       d.monitor_journals()
 
 * **Monitor Steps** and **Monitor Heart Rate** - the raw step and heart rate
-  data. Honestly, it's unlikely that you need this.  Daily statistics are
+  data. Honestly, it's unlikely that you need these.  Daily statistics are
   calculated from these values and available via `Data.statistic_journals()`.
 
       d.monitor_heart_rate('2018-10-02 10:12:00')
