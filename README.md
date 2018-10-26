@@ -14,6 +14,10 @@ details.
 
 ![](docs/statistics.png)
 
+## Plots
+
+![](docs/steps.png)
+
 ## Technical Features
 
 Training data are stored in a database...
