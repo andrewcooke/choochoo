@@ -143,8 +143,6 @@ class Data:
                     data[statistic].append(sub_data[statistic])
                 else:
                     data[statistic].append(None)
-        print(data)
-        print(times)
         return DataFrame(data, index=times)
 
 

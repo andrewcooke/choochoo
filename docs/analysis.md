@@ -68,6 +68,9 @@ The `ch2.data.database.Data` instance provides access to:
   `owner` aond `constraint` values that are provided by
   `Data.statistics()`.
 
+* **Statistic Quartiles** - pre-calculated quartile data useful for
+  box plots.
+
 * **Activities** - a list of all the Activities (ie activity *types* -
   eg Bike, Run, etc).
 
