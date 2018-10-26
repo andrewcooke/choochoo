@@ -27,11 +27,9 @@ class ConstantJournal(Source):
     @staticmethod
     def lookup_statistic_journal(log, s, name, constraint, time):
         # order important in join here
-        # todo - what is join with constant for?  using source as constraint?  should be owner
-        # todo - does it even work?
         return s.query(StatisticJournal).join(ConstantJournal, Statistic, Constant). \
             filter(Statistic.constraint == constraint,
-                   Statistic.name == name,
+                   Constant.name == name,
                    ConstantJournal.time <= time).one_or_none()
 
     __mapper_args__ = {
