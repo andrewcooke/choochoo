@@ -5,6 +5,7 @@ from pandas import DataFrame
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
+from ch2.squeal.tables.monitor import MonitorJournal, MonitorHeartRate, MonitorSteps
 from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
@@ -149,6 +150,32 @@ class Data:
                 else:
                     data[statistic].append(None)
         return DataFrame(data, index=times)
+
+    def monitor_journals(self):
+        data, times = defaultdict(list), []
+        for journal in self._session.query(MonitorJournal).order_by(MonitorJournal.time).all():
+            times.append(journal.time)
+            extract(data, journal, 'fit_file', 'finish')
+        return DataFrame(data, index=times)
+
+    def monitor_steps(self, time):
+        data, times = defaultdict(list), []
+        for steps in self._session.query(MonitorSteps).join(MonitorJournal). \
+                filter(MonitorJournal.time == time). \
+                order_by(MonitorSteps.time).all():
+            times.append(steps.time)
+            extract(data, steps, 'value')
+        return DataFrame(data, index=times)
+
+    def monitor_heart_rate(self, time):
+        data, times = defaultdict(list), []
+        for heart_rate in self._session.query(MonitorHeartRate).join(MonitorJournal). \
+                filter(MonitorJournal.time == time). \
+                order_by(MonitorHeartRate.time).all():
+            times.append(heart_rate.time)
+            extract(data, heart_rate, 'value')
+        return DataFrame(data, index=times)
+
 
 
 def data(*args):

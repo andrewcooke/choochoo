@@ -10,7 +10,7 @@ details.
 
 ![](docs/diary2.png)
 
-## Jupyter
+## Data
 
 ![](docs/statistics.png)
 

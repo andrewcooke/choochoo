@@ -88,9 +88,18 @@ The `ch2.data.database.Data` instance provides access to:
   The `x` and `y` values are in the co-ordinates used by web plotting
   tools (derived from the `latitude` and `longitude`).
 
-The various methods above typically take a list of names or SQL
-patterns.  The returned DataFrames usually have the date / time
-information as index.
+* **Monitor Journals** - a list of the dates (files) with monitor data.
+
+      d.monitor_journals()
+
+* **Monitor Steps** and **Monitor Heart Rate** - the raw step and heart rate
+  data. Honestly, it's unlikely that you need this.  Daily statistics are
+  calculated from these values and available via `Data.statistic_journals()`.
+
+      d.monitor_heart_rate('2018-10-02 10:12:00')
+
+The various methods above often take a list of names or SQL patterns.
+Returned DataFrames usually have the date / time information as index.
 
 ## Plotting Data
 
