@@ -57,7 +57,9 @@ The `ch2.data.database.Data` instance provides access to:
 * **Statistics** - a list of all the available Statistics (ie a
   description of what data are available).
 
-* **Statistic Journals* - time series values for particular
+      d.statistics('%HR%')
+
+* **Statistic Journals** - time series values for particular
   Statistics (ie the data themselves).
 
       d.statistic_journals('Rest HR')
@@ -66,41 +68,23 @@ The `ch2.data.database.Data` instance provides access to:
   `owner` aond `constraint` values that are provided by
   `Data.statistics()`.
 
-* **Activity Statistics** - these are measures calculated for each activity
-  diary entry (eg each bike ride).  For example, the total time active.
-  The statistic names are available from `.statistics(...)` and the
-  `.activity_statistics()` method returns a pandas DataFrame containing data
-  for the given statistic(s) for each diary entry.
-  
-* **Summary Statistics** - these are calculated regularly (eg once per
-  month) and summarise the activity statistics mentioned above.  The
-  `.summary_statistics(...)` method returns a pandas DataFrame containing a
-  tuple of values for each statistic.  This tuple has the min, max and quartile
-  values for the given period.
-  
-* **Activity Diary** - these are the values imported from the FIT file for
-  the activity diary entry (eg position, heart rate, etc).  The available
-  diary entries are listed in `.activity_diary_names()` and the 
-  `.activity_diary(...)` method returns, for a *single* name, a set of DataFrames
-  that contain data for each timespan (eg lap, or data between auto-pauses).
-  Note that the `x` and `y` columns contain data in "web coordinates" suitable
-  for plotting on Google Maps etc.   
-  
-In addition, the `Data` instance provides direct access to:
+* **Activities** - a list of all the Activities (ie activity *types* -
+  eg Bike, Run, etc).
 
-* **Diary Data** - these are the values in the diary entries (mood, resting 
-  heart rate, etc).  The `.diaries()` method returns a DataFrame with all data.
-  
-* **Injury Data** - these are the "pain" scores and notes for each injury.
-  The available injuries are listed by `.injury_names()` and the DataFrames
-  provide via a map (dct) from name to frame via `.injuries(...)`.
+      d.activities()
 
-The various methods above that take a name can typically take a list
-of names (comma separated or as separated arguments) and regular expressions.
-This can lead to some confusion if the name contains characters with special 
-meaning for regexps (in particular parentheses).
+* **Activity Journals** - entries for the activities themselves.
 
-DataFrames usually have the date / time information as index.
+      d.activity_journals('Bike')
+
+* **Activiy Waypoints** - time series assiciated with a single
+  activity.
+
+      d.activity_waypoints('Bike', '2018-02-18 10:26:56')
+
+The various methods above typically take a list of names or SQL
+patterns.  The returned DataFrames usually have the date / time
+information as index.
 
 ## Plotting Data
 
