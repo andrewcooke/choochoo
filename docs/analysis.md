@@ -77,7 +77,7 @@ The `ch2.data.database.Data` instance provides access to:
 
       d.activity_journals('Bike')
 
-* **Activiy Waypoints** - time series assiciated with a single
+* **Activity Waypoints** - time series associated with a single
   activity.
 
       d.activity_waypoints('Bike', '2018-02-18 10:26:56')
