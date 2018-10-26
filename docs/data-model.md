@@ -275,10 +275,13 @@ Steps to change:
 
 * Get tests running (maybe add new tests).
 
-### Timezones
+In addition, Intervals ended up needing start/finish date fields so that
+calculations for "next" intervals worked correctly during shifts related to
+summer time.
 
-(This section was written after the above while debugging an issue related to
-timezones)
+### Topics
+
+Diary entries, etc (plans, injuries, …).
 
 Diary entries are "per day", but are saved - like all data - by time.
 
@@ -311,6 +314,3 @@ So it seems that we need:
 * To auto-detect timezone data we need to store timezone in the
   database.
 
-In addition, Intervals ended up needing start/finish date fields so that
-calculations for "next" intervals worked correctly during shifts related to
-summer time.
