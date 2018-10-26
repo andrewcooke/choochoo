@@ -1,6 +1,4 @@
 
-import sys
-
 from enum import IntEnum
 
 from sqlalchemy import ForeignKey, Column, Integer, func, and_, distinct
@@ -9,7 +7,7 @@ from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
 from ..types import Time, OpenSched, Owner, Date
-from ...lib.date import to_time, local_date_to_time, time_to_local_date
+from ...lib.date import to_time, time_to_local_date
 
 
 class SourceType(IntEnum):
@@ -41,16 +39,35 @@ class Source(Base):
 
     @classmethod
     def __clean_dirty_intervals(cls, session):
+        from .statistic import StatisticJournal
+        from .topic import TopicJournal
         times = set()
-        for always, instances in [(True, session.new), (False, session.dirty), (True, session.deleted)]:
-            # wipe the containing intervals if this is a source that has changed in some way
-            # and it's not an interval itself
-            sources = [instance for instance in instances
-                       if (isinstance(instance, Source) and
-                           not isinstance(instance, Interval) and
-                           instance.time is not None and
-                           (always or session.is_modified(instance)))]
-            times |= set(to_time(source.time) for source in sources)
+        # all sources except intervals that are being deleted
+        times |= set(instance.time for instance in session.deleted
+                     if isinstance(instance, Source) and not isinstance(instance, Interval) and instance.time)
+        # all modified sources except intervals
+        times |= set(instance.time for instance in session.dirty
+                     if isinstance(instance, Source) and not isinstance(instance, Interval)
+                     and session.is_modified(instance) and instance.time)
+        # if any modified statistic journals are associated with an existing topic journal, include that
+        # this handles the case where a user edits something in the diaty
+        for instance in session.dirty:
+            # is it a subclass of StatisticJournal?
+            if isinstance(instance, StatisticJournal) and type(instance) != StatisticJournal:
+                if session.is_modified(instance) and isinstance(instance.source, TopicJournal):
+                    times.add(instance.source.time)
+        # all new sources except intervals and topic journals (the latter are handled below)
+        times |= set(instance.time for instance in session.new
+                     if isinstance(instance, Source) and not isinstance(instance, Interval)
+                     and not isinstance(instance, TopicJournal) and instance.time)
+        # include new topicjournals only if they have non-null data
+        # this handles the case where an empty diary entry is viewed
+        for instance in session.new:
+            # is it a subclass of StatisticJournal?
+            if isinstance(instance, StatisticJournal) and type(instance) != StatisticJournal:
+                if instance.value is not None:
+                    if instance.source and isinstance(instance.source, TopicJournal) and instance.source.time:
+                        times.add(instance.source.time)
         if times:
             cls.clean_times(session, times)
 
@@ -63,16 +80,13 @@ class Source(Base):
                 interval = session.query(Interval). \
                     filter(Interval.start == start, Interval.schedule == schedule).one_or_none()
                 if interval:
+                    print(interval)
                     session.delete(interval)
 
 
 @listens_for(Session, 'before_flush')
 def before_flush(session, context, instances):
     Source.before_flush(session)
-
-
-def disable_interval_cleaning():
-    remove(Session, 'before_flush', before_flush)
 
 
 class Interval(Source):

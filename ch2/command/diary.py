@@ -10,7 +10,6 @@ from ..lib.io import tui
 from ..lib.utils import PALETTE_RAINBOW, em
 from ..lib.widgets import DateSwitcher
 from ..squeal.tables.pipeline import PipelineType
-from ..squeal.tables.source import disable_interval_cleaning, Source
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import build_pipeline
 from ..uweird.fields import PAGE_WIDTH
@@ -41,7 +40,6 @@ To exit, alt-q (or, without saving, alt-x).
             date = to_date(date)
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
-    disable_interval_cleaning()
     TopicJournal.check_tz(db)
     MainLoop(Diary(log, db, date), palette=PALETTE_RAINBOW).run()
 
@@ -133,26 +131,3 @@ class Diary(DateSwitcher):
     def __pipeline(self, s, f):
         yield from build_pipeline(self._log, s, PipelineType.DIARY, f, self._date)
 
-    def save(self):
-        if self._session:
-            self.__interval_cleaning()
-        super().save()
-
-    def __interval_cleaning(self):
-        # on exit:
-        # - remove any journal entries with no data (all null)
-        # - remove any intervals affected by journals with non-null data
-        s, dirty = self._session, False
-        for tjournal in s.query(TopicJournal).filter(TopicJournal.date == self._date).all():
-            clean = True
-            tjournal.populate(self._log, s)
-            for field in tjournal.topic.fields:
-                if tjournal.statistics[field].value is not None:
-                    clean = False
-                    break
-            if clean:
-                s.delete(tjournal)
-            else:
-                dirty = True
-        if dirty:
-            Source.clean_times(s, [local_date_to_time(self._date)])
