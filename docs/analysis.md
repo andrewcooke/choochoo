@@ -94,7 +94,7 @@ information as index.
 
 ## Plotting Data
 
-To see examples of how to plot this data see:
+For examples of how to plot this data see:
 
 * The Jupyter notebooks in `ch2/data/notebooks` - these use Bokeh.
 * The code in `tests/test_data.py` - these use Matplotlib.

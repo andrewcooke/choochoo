@@ -22,6 +22,11 @@ def extract(data, instance, *attributes):
 
 
 class Data:
+    '''
+    Provide access to the database via DataFrames.
+    Intended for use in Jupyter notebooks.
+    All data retrieved in a single (read-only) session.
+    '''
 
     def __init__(self, log, db):
         self._log = log
