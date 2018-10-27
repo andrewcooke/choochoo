@@ -3,16 +3,18 @@
 
 ## Introduction
 
-Activities are defined in FIT files (from, for example, a Garmin watch).  To
-examine a FIT file see [here](fit-files).
+Activities are defined in FIT files (from, for example, a Garmin
+watch).  To examine a FIT file see [here](fit-files).
 
-More precisely, the day-to-day details are "Activity Diary" entries, which
-are grouped by an "Activity" (which might be cycling, running, etc).  But it's 
-common to call the "Activity Diary" just "Activity" (sorry for the confusion).
+More precisely, the day-to-day details are **ActivityJournal**
+entries, which are grouped by an **ActivityGroup** (which might be
+cycling, running, etc).
 
-Some statistics (distance, time, fastest time over certain common distances, etc)
-are calculated for each Activity.  In addition, Summary Statistics (ranking etc) 
-are also calculated.  These can be either monthly or yearly.
+Some statistics (distance, time, fastest time over certain common
+distances, etc) are calculated for each activity.  In addition,
+summary statistics (ranking, best etc) are also calculated.  These are
+defined using [**Schedule**s](scheduling) (the default configuration
+being per-month and per-year)
 
 ## Contents
 
@@ -23,24 +25,21 @@ are also calculated.  These can be either monthly or yearly.
 * [FTHR](#fthr)
 * [Timespans](#timespans)
 
-## Defining Activities
+## Defining ActivityGroups
 
-When you first start using CHoochoo you will need to define one or more
-activities using
-
-    ch2 edit-activities
-    
-In the examples below, I have one defined called "Cycling".
+ActivityGroups are defined during [configuraton](configuration).  The
+defaults are `Bike` and `Run`.
 
 ## Adding Activities
 
-After a ride (or run, or whatever) download your FIT file to somewhere on 
-disk and give it a unique name (I name mine by date with an extra short code
-that roughly indicates route).  You probably want to archive these as they are
-the raw data your training is based on and re-reading them later when Choochoo
-is improved may be worthwhile.
+After a ride (or run, or whatever) download your FIT file to somewhere
+on disk and give it a unique name (I name mine by date with an extra
+short code that roughly indicates route).  *You need to save (archive)
+these* as they are the raw data your training is based on and must be
+re-read when Choochoo is updated.
 
-Once you have the FIT file, you can impoty it into Choochoo with the command
+Once you have the FIT file, you can import it into Choochoo with the
+command
 
     ch2 add-activity Cycling /path/to/FIT/file
     

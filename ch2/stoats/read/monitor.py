@@ -101,6 +101,10 @@ def missing_dates(log, s):
     # we also don't try to get fractional data.
     # and as for timezones... we just assume garmin uses the local timezone.
     latest = s.query(MonitorJournal).order_by(desc(MonitorJournal.time)).limit(1).one_or_none()
+    if latest is None:
+        log.warn('No exiting monitor data - ' +
+                 'do a bulk download instead: https://www.garmin.com/en-US/account/datamanagement/')
+        return
     # find the mid-point to avoid any problems with timezones and edge cases
     # (these files don't span more than a day)
     seconds = (latest.finish - latest.time).total_seconds() / 2

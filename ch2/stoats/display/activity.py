@@ -10,9 +10,9 @@ from ..calculate.activity import ActivityStatistics
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_OVER_M_ANY
 from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import label
-from ...squeal.tables.activity import Activity, ActivityJournal
+from ...squeal.tables.activity import ActivityGroup, ActivityJournal
 from ...squeal.tables.source import Source
-from ...squeal.tables.statistic import StatisticJournal, Statistic
+from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.tui.decorators import Indent
 
 HRZ_WIDTH = 30
@@ -23,11 +23,11 @@ class ActivityDiary(Displayer):
     def build(self, s, f, date):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
-        for activity in s.query(Activity).order_by(Activity.sort).all():
+        for activity in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
             for journal in s.query(ActivityJournal). \
                     filter(ActivityJournal.time >= start,
                            ActivityJournal.time < finish,
-                           ActivityJournal.activity == activity). \
+                           ActivityJournal.activity_group == activity). \
                     order_by(ActivityJournal.time).all():
                 yield self.__journal_data(s, journal, date)
 
@@ -50,21 +50,21 @@ class ActivityDiary(Displayer):
                                             format_seconds((ajournal.finish - ajournal.time).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
             sjournal = self._journal_at_time(s, ajournal.time, name, ActivityStatistics, ajournal.activity.id)
-            body.append(Text([label('%s: ' % sjournal.statistic.name)] + self.__format_value(sjournal, date)))
+            body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         return body
 
     def __template(self, s, ajournal, template, title, re, date):
         body = [Text(title)]
-        sjournals = s.query(StatisticJournal).join(Statistic, Source). \
+        sjournals = s.query(StatisticJournal).join(StatisticName, Source). \
             filter(Source.time == ajournal.time,
-                   Statistic.name.like(template),
-                   Statistic.owner == ActivityStatistics,
-                   Statistic.constraint == ajournal.activity.id).order_by(Statistic.name).all()
+                   StatisticName.name.like(template),
+                   StatisticName.owner == ActivityStatistics,
+                   StatisticName.constraint == ajournal.activity.id).order_by(StatisticName.name).all()
         # extract
         for sjournal in sorted(sjournals,
                                # order by integer embedded in name
-                               key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic.name).group(1))):
-            body.append(Text([label(search(re, sjournal.statistic.name).group(1) + ': ')] +
+                               key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic_name.name).group(1))):
+            body.append(Text([label(search(re, sjournal.statistic_name.name).group(1) + ': ')] +
                              self.__format_value(sjournal, date)))
         return body
 

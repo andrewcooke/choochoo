@@ -31,7 +31,7 @@ def md5_hash(file_path):
     return hash.hexdigest()
 
 
-def for_modified_files(log, session, paths, callback, force=False):
+def for_modified_files(log, session, paths, callback, owner, force=False):
     '''
     This takes a callback because we need to know whether to mark the file as read or not
     after processing.  The callback should return True on success.
@@ -46,7 +46,9 @@ def for_modified_files(log, session, paths, callback, force=False):
         last_modified = to_time(stat(file_path).st_mtime)
         hash = md5_hash(file_path)
 
-        path_scan = session.query(FileScan).filter(FileScan.path == file_path).one_or_none()
+        path_scan = session.query(FileScan). \
+            filter(FileScan.path == file_path,
+                   FileScan.owner == owner).one_or_none()
         if path_scan:
             if hash != path_scan.md5_hash:
                 log.warn('File at %s appears to have changed since last read on %s')
@@ -54,13 +56,16 @@ def for_modified_files(log, session, paths, callback, force=False):
                 path_scan.last_scan = 0.0
         else:
             # need to_time here because it's not roundtripped via the database to convert for use below
-            path_scan = add(session, FileScan(path=file_path, md5_hash=hash, last_scan=to_time(0.0)))
+            path_scan = add(session, FileScan(path=file_path, owner=owner,
+                                              md5_hash=hash, last_scan=to_time(0.0)))
             session.flush()
 
         # only look at hash if we are going to process anyway
         if last_modified > path_scan.last_scan:
 
-            hash_scan = session.query(FileScan).filter(FileScan.md5_hash == hash).\
+            hash_scan = session.query(FileScan). \
+                filter(FileScan.md5_hash == hash,
+                       FileScan.owner == owner).\
                 order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
             if hash_scan.path != path_scan.path:
                 log.warn('Two files have the same hash (details in debug log)')

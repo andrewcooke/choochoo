@@ -7,7 +7,7 @@ from ch2.lib.date import to_time
 from ch2.squeal.database import add
 from ch2.squeal.tables.source import Source
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalText, StatisticJournalInteger, \
-    StatisticJournalFloat, Statistic
+    StatisticJournalFloat, StatisticName
 from ch2.squeal.tables.topic import TopicJournal, Topic
 
 old = connect('/home/andrew/.ch2/database.sqld')
@@ -32,7 +32,7 @@ assert_empty(TopicJournal)
 
 
 diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-fields = dict((field.statistic.name, field.statistic) for field in diary.fields)
+fields = dict((field.statistic_name.name, field.statistic_name) for field in diary.fields)
 notes = fields['Notes']
 mood = fields['Mood']
 hr = fields['Rest HR']
@@ -45,30 +45,30 @@ for row in old.execute('''select date, notes, rest_heart_rate, sleep, mood, weat
     if row['notes'] or row['mood'] or row['rest_heart_rate'] or row['weight'] or row['sleep'] or row['weather']:
         tj = add(s, TopicJournal(time=to_time(row['date']), topic=diary))
         if row['notes']:
-            add(s, StatisticJournalText(statistic=notes, source=tj, value=row['notes']))
+            add(s, StatisticJournalText(statistic_name=notes, source=tj, value=row['notes']))
         if row['mood']:
-            add(s, StatisticJournalInteger(statistic=mood, source=tj, value=row['mood']))
+            add(s, StatisticJournalInteger(statistic_name=mood, source=tj, value=row['mood']))
         if row['rest_heart_rate']:
-            add(s, StatisticJournalInteger(statistic=hr, source=tj, value=row['rest_heart_rate']))
+            add(s, StatisticJournalInteger(statistic_name=hr, source=tj, value=row['rest_heart_rate']))
         if row['weight']:
-            add(s, StatisticJournalFloat(statistic=weight, source=tj, value=row['weight']))
+            add(s, StatisticJournalFloat(statistic_name=weight, source=tj, value=row['weight']))
         if row['sleep']:
-            add(s, StatisticJournalFloat(statistic=sleep, source=tj, value=row['sleep']))
+            add(s, StatisticJournalFloat(statistic_name=sleep, source=tj, value=row['sleep']))
         if row['weather']:
-            add(s, StatisticJournalText(statistic=weather, source=tj, value=row['weather']))
+            add(s, StatisticJournalText(statistic_name=weather, source=tj, value=row['weather']))
         if row['medication']:
-            add(s, StatisticJournalText(statistic=meds, source=tj, value=row['medication']))
+            add(s, StatisticJournalText(statistic_name=meds, source=tj, value=row['medication']))
 
 
 def injury_notes(old_name, new_name):
     injury_id = next(old.execute('''select id from injury where name like ?''', [old_name]))[0]
     topic = s.query(Topic).filter(Topic.name == new_name).one()
-    notes = s.query(Statistic).filter(Statistic.name == 'Notes', Statistic.constraint == topic.id).one()
+    notes = s.query(StatisticName).filter(StatisticName.name == 'Notes', StatisticName.constraint == topic.id).one()
     for row in old.execute('''select date, notes from injury_diary where injury_id = ?''', [injury_id]):
         if row['notes']:
             # print(row['notes'], len(row['notes']))
             tj = add(s, TopicJournal(time=to_time(row['date']), topic=topic))
-            add(s, StatisticJournalText(statistic=notes, source=tj, value=row['notes']))
+            add(s, StatisticJournalText(statistic_name=notes, source=tj, value=row['notes']))
 
 
 injury_notes('MS (General Notes)', 'Multiple Sclerosis')

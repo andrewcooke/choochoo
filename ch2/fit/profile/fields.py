@@ -160,8 +160,6 @@ class DynamicField(Zip, RowField):
 
 def MessageField(log, row, rows, types):
     log.debug('Parsing field %s' % row.field_name)
-    if row.field_name == 'timestamp_16':
-        print('xxx')
     if row.components:
         return CompositeField(log, row, types)
     else:

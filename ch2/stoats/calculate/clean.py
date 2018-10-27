@@ -1,6 +1,6 @@
 
 from ...command.args import FORCE, mm
-from ...squeal.tables.statistic import StatisticJournal, Statistic
+from ...squeal.tables.statistic import StatisticJournal, StatisticName
 
 
 class CleanUnusedStatistics:
@@ -15,8 +15,8 @@ class CleanUnusedStatistics:
             return
         n = 0
         with self._db.session_context() as s:
-            for statistic in s.query(Statistic).outerjoin(StatisticJournal). \
-                    filter(StatisticJournal.statistic_id == None).all():
+            for statistic in s.query(StatisticName).outerjoin(StatisticJournal). \
+                    filter(StatisticJournal.statistic_name_id == None).all():
                 self._log.debug('Deleting unused %s' % statistic)
                 s.delete(statistic)
                 n += 1

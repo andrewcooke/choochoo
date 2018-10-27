@@ -9,9 +9,9 @@ from ch2.squeal.tables.monitor import MonitorJournal, MonitorHeartRate, MonitorS
 from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
-from ..squeal.tables.activity import Activity, ActivityJournal
+from ..squeal.tables.activity import ActivityGroup, ActivityJournal
 from ..squeal.tables.source import Interval, Source
-from ..squeal.tables.statistic import Statistic, StatisticJournal, StatisticMeasure
+from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticMeasure
 
 
 def extract(data, instance, *attributes):
@@ -35,16 +35,16 @@ class Data:
 
     def activities(self):
         data, ids = defaultdict(list), []
-        for activity in self._session.query(Activity).order_by(Activity.name):
+        for activity in self._session.query(ActivityGroup).order_by(ActivityGroup.name):
             ids.append(activity.id)
             extract(data, activity, 'name', 'description')
             data['count'].append(self._session.query(count(ActivityJournal.id)).
-                                 filter(ActivityJournal.activity == activity).scalar())
+                                 filter(ActivityJournal.activity_group == activity).scalar())
         return DataFrame(data, index=ids)
 
     def activity_journals(self, activity, start=None, finish=None):
         data, times = defaultdict(list), []
-        q = self._session.query(ActivityJournal).join(Activity).filter(Activity.name == activity)
+        q = self._session.query(ActivityJournal).join(ActivityGroup).filter(ActivityGroup.name == activity)
         if start:
             q = q.filter(ActivityJournal.time >= start)
         if finish:
@@ -55,8 +55,8 @@ class Data:
         return DataFrame(data, index=times)
 
     def activity_waypoints(self, activity, time):
-        journal = self._session.query(ActivityJournal).join(Activity). \
-            filter(Activity.name == activity, ActivityJournal.time == time).one()
+        journal = self._session.query(ActivityJournal).join(ActivityGroup). \
+            filter(ActivityGroup.name == activity, ActivityJournal.time == time).one()
         frames = []
         for timespan in journal.timespans:
             data, times = defaultdict(list), []
@@ -76,46 +76,47 @@ class Data:
     def statistics(self, *statistics):
         statistic_names, statistic_ids = self._collect_statistics(statistics)
         data = defaultdict(list)
-        for statistic in self._session.query(Statistic). \
-                filter(Statistic.id.in_(statistic_ids)).order_by(Statistic.name):
+        for statistic in self._session.query(StatisticName). \
+                filter(StatisticName.id.in_(statistic_ids)).order_by(StatisticName.name):
             extract(data, statistic, 'name', 'description', 'units', 'summary', 'owner', 'constraint')
             data['count'].append(self._session.query(count(StatisticJournal.id)).
-                                 filter(StatisticJournal.statistic == statistic).scalar())
+                                 filter(StatisticJournal.statistic_name == statistic).scalar())
         return DataFrame(data)
 
     def _collect_statistics(self, statistics):
         if not statistics:
             statistics = ['%']
         statistic_ids, statistic_names = set(), set()
-        for statistic in statistics:
-            for statistic in self._session.query(Statistic).filter(Statistic.name.like(statistic)).all():
-                statistic_ids.add(statistic.id)
-                statistic_names.add(statistic.name)
+        for statistic_name in statistics:
+            for statistic_name in self._session.query(StatisticName). \
+                    filter(StatisticName.name.like(statistic_name)).all():
+                statistic_ids.add(statistic_name.id)
+                statistic_names.add(statistic_name.name)
         return statistic_names, statistic_ids
 
     def _build_statistic_journal_query(self, statistic_ids, q,
             start, finish, owner, constraint):
-        q = q.filter(Statistic.id.in_(statistic_ids))
+        q = q.filter(StatisticName.id.in_(statistic_ids))
         if start:
             q = q.filter(Source.time >= start)
         if finish:
             q = q.filter(Source.time <= finish)
         if owner:
-            q = q.filter(Statistic.owner == owner)
+            q = q.filter(StatisticName.owner == owner)
         if constraint:
-            q = q.filter(Statistic.constraint == constraint)
+            q = q.filter(StatisticName.constraint == constraint)
         return q
 
     def statistic_journals(self, *statistics, start=None, finish=None, owner=None, constraint=None, schedule=None):
         statistic_names, statistic_ids = self._collect_statistics(statistics)
         q = self._build_statistic_journal_query(
-            statistic_ids, self._session.query(StatisticJournal).join(Statistic, Source),
+            statistic_ids, self._session.query(StatisticJournal).join(StatisticName, Source),
             start, finish, owner, constraint)
         if schedule:
             q = q.join(Interval).filter(Interval.schedule == schedule)
         raw_data = defaultdict(dict)
         for journal in q.all():  # todo - eager load
-            raw_data[journal.time][journal.statistic.name] = journal.value
+            raw_data[journal.time][journal.statistic_name.name] = journal.value
         data, times = defaultdict(list), []
         for time in sorted(raw_data.keys()):
             times.append(time)
@@ -131,7 +132,7 @@ class Data:
         statistic_names, statistic_ids = self._collect_statistics(statistics)
         q = self._session.query(StatisticMeasure). \
             join(StatisticJournal, StatisticMeasure.statistic_journal_id == StatisticJournal.id). \
-            join(Statistic, StatisticJournal.statistic_id == Statistic.id). \
+            join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             join(Source, StatisticJournal.source_id == Source.id)
         q = self._build_statistic_journal_query(statistic_ids, q, start, finish, owner, constraint)
         if schedule:
@@ -140,7 +141,7 @@ class Data:
         q = q.filter(StatisticMeasure.quartile != None)
         raw_data = defaultdict(lambda: defaultdict(lambda: [0] * 5))
         for measure in q.all():
-            raw_data[measure.source.time][measure.statistic_journal.statistic.name][measure.quartile] = \
+            raw_data[measure.source.time][measure.statistic_journal.statistic_name.name][measure.quartile] = \
                 measure.statistic_journal.value
         data, times = defaultdict(list), []
         for time in sorted(raw_data.keys()):

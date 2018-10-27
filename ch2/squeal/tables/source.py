@@ -80,7 +80,6 @@ class Source(Base):
                 interval = session.query(Interval). \
                     filter(Interval.start == start, Interval.schedule == schedule).one_or_none()
                 if interval:
-                    print(interval)
                     session.delete(interval)
 
 
@@ -107,7 +106,7 @@ class Interval(Source):
 
     def __str__(self):
         return 'Interval "%s from %s" (owner %d)' % \
-               (self.schedule, self.time, Owner().process_literal_param(self.owner, None))
+               (self.schedule, self.start, Owner().process_literal_param(self.owner, None))
 
     @classmethod
     def _missing_interval_starts(cls, log, s, schedule, owner):
@@ -122,10 +121,10 @@ class Interval(Source):
 
     @classmethod
     def _raw_statistics_time_range(cls, s):
-        from .statistic import StatisticJournal, Statistic
+        from .statistic import StatisticJournal, StatisticName
         start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
             outerjoin(StatisticJournal). \
-            filter(Statistic.id != None,
+            filter(StatisticName.id != None,
                    Source.time > to_time(0.0)).one()
         if start and finish:
             return start, finish

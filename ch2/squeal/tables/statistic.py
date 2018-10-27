@@ -10,9 +10,9 @@ from ..types import Owner
 from ...lib.date import format_seconds
 
 
-class Statistic(Base):
+class StatisticName(Base):
 
-    __tablename__ = 'statistic'
+    __tablename__ = 'statistic_name'
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)  # simple, displayable name
@@ -22,16 +22,16 @@ class Statistic(Base):
     # we need to disambiguate statistics with the same name.
     # this is done by (1) "owner" (typically the source of the data) and
     # (2) by some additional (optional) constraint used by the owner (typically)
-    # (eg activity.id so that the same statistic can be used across different activities)
+    # (eg activity_group.id so that the same statistic can be used across different activities)
     owner = Column(Owner, nullable=False)
     constraint = Column(Integer)
     UniqueConstraint(name, owner, constraint)
 
     def __str__(self):
-        return 'Statistic "%s"' % self.name
+        return 'StatisticName "%s"' % self.name
 
 
-class StatisticType(IntEnum):
+class StatisticJournalType(IntEnum):
 
     STATISTIC = 0
     INTEGER = 1
@@ -45,17 +45,17 @@ class StatisticJournal(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False)
-    statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
-    statistic = relationship('Statistic')
+    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
+    statistic_name = relationship('StatisticName')
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
     # this is just for finding bugs
     # in fact (statistic_id, time) should be unique but that's across inheritance tables
     # the source_id field is only for delete on cascade. it's not an 'owner' as for statistics
-    UniqueConstraint(statistic_id, source_id)
+    UniqueConstraint(statistic_name_id, source_id)
 
     __mapper_args__ = {
-        'polymorphic_identity': StatisticType.STATISTIC,
+        'polymorphic_identity': StatisticJournalType.STATISTIC,
         'polymorphic_on': 'type'
     }
 
@@ -71,26 +71,26 @@ class StatisticJournal(Base):
 
     @classmethod
     def add(cls, log, s, name, units, summary, owner, constraint, source, value, type):
-        statistic = s.query(Statistic). \
-            filter(Statistic.name == name,
-                   Statistic.owner == owner,
-                   Statistic.constraint == constraint).one_or_none()
-        if not statistic:
-            statistic = Statistic(name=name, units=units, summary=summary, owner=owner, constraint=constraint)
-            s.add(statistic)
+        statistic_name = s.query(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint).one_or_none()
+        if not statistic_name:
+            statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner, constraint=constraint)
+            s.add(statistic_name)
         else:
-            if statistic.units != units:
-                log.warn('Changing units on %s (%s -> %s)' % (statistic.name, statistic.units, units))
-                statistic.units = units
-            if statistic.summary != summary:
-                log.warn('Changing summary on %s (%s -> %s)' % (statistic.name, statistic.summary, summary))
-                statistic.summary = summary
+            if statistic_name.units != units:
+                log.warn('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
+                statistic_name.units = units
+            if statistic_name.summary != summary:
+                log.warn('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
+                statistic_name.summary = summary
         journal = s.query(StatisticJournal).join(Source). \
-            filter(StatisticJournal.statistic == statistic,
+            filter(StatisticJournal.statistic_name == statistic_name,
                    Source.time == source.time).one_or_none()
         if not journal:
             journal = STATISTIC_JOURNAL_CLASSES[type](
-                statistic=statistic, source=source, value=value)
+                statistic_name=statistic_name, source=source, value=value)
             s.add(journal)
         else:
             if journal.type != type:
@@ -102,7 +102,7 @@ class StatisticJournal(Base):
     def formatted(self):
         if self.value is None:
             return None
-        units = self.statistic.units
+        units = self.statistic_name.units
         if not units:
             return '%d' % self.value
         elif units == 'm':
@@ -132,12 +132,12 @@ class StatisticJournalInteger(StatisticJournal):
     parse = int
 
     __mapper_args__ = {
-        'polymorphic_identity': StatisticType.INTEGER
+        'polymorphic_identity': StatisticJournalType.INTEGER
     }
 
     @classmethod
     def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticType.INTEGER)
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.INTEGER)
 
 
 class StatisticJournalFloat(StatisticJournal):
@@ -151,16 +151,16 @@ class StatisticJournalFloat(StatisticJournal):
 
     @classmethod
     def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticType.FLOAT)
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.FLOAT)
 
     __mapper_args__ = {
-        'polymorphic_identity': StatisticType.FLOAT
+        'polymorphic_identity': StatisticJournalType.FLOAT
     }
 
     def formatted(self):
         if self.value is None:
             return None
-        units = self.statistic.units
+        units = self.statistic_name.units
         if not units:
             return '%f' % self.value
         elif units == 'm':
@@ -191,10 +191,10 @@ class StatisticJournalText(StatisticJournal):
 
     @classmethod
     def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticType.TEXT)
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.TEXT)
 
     __mapper_args__ = {
-        'polymorphic_identity': StatisticType.TEXT
+        'polymorphic_identity': StatisticJournalType.TEXT
     }
 
     def formatted(self):
@@ -224,9 +224,9 @@ class StatisticMeasure(Base):
 
 
 STATISTIC_JOURNAL_CLASSES = {
-    StatisticType.INTEGER: StatisticJournalInteger,
-    StatisticType.FLOAT: StatisticJournalFloat,
-    StatisticType.TEXT: StatisticJournalText
+    StatisticJournalType.INTEGER: StatisticJournalInteger,
+    StatisticJournalType.FLOAT: StatisticJournalFloat,
+    StatisticJournalType.TEXT: StatisticJournalText
 }
 
 

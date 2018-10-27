@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, Source
-from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES, Statistic
+from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES, StatisticName
 from ..support import Base
 from ..types import Date, Cls, Json, Sched, Sort
 from ...lib.date import local_date_to_time
@@ -68,16 +68,16 @@ class TopicField(Base):
                          backref=backref('fields', cascade='all, delete-orphan',
                                          passive_deletes=True,
                                          order_by='TopicField.sort'))
-    type = Column(Integer, nullable=False)  # StatisticType
+    type = Column(Integer, nullable=False)  # StatisticJournalType
     sort = Column(Sort)
-    statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
-    statistic = relationship('Statistic')
+    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
+    statistic_name = relationship('StatisticName')
     display_cls = Column(Cls, nullable=False)
     display_args = Column(Json, nullable=False, server_default=dumps(()))
     display_kargs = Column(Json, nullable=False, server_default=dumps({}))
 
     def __str__(self):
-        return 'TopicField "%s"/"%s"' % (self.topic.name, self.statistic.name)
+        return 'TopicField "%s"/"%s"' % (self.topic.name, self.statistic_name.name)
 
 
 class TopicJournal(Source):
@@ -103,19 +103,19 @@ class TopicJournal(Source):
         log.debug('Populating journal for topic %s at %s' % (self.topic.name, self.time))
         self.statistics = {}
         for field in self.topic.fields:
-            log.debug('Finding SJ for field %s' % field.statistic.name)
-            journal = s.query(StatisticJournal).join(Statistic, Source). \
-                filter(StatisticJournal.statistic == field.statistic,
+            log.debug('Finding SJ for field %s' % field.statistic_name.name)
+            journal = s.query(StatisticJournal).join(StatisticName, Source). \
+                filter(StatisticJournal.statistic_name == field.statistic_name,
                        Source.time == self.time,
-                       Statistic.owner == self.topic,
-                       Statistic.constraint == self.topic.id).one_or_none()
+                       StatisticName.owner == self.topic,
+                       StatisticName.constraint == self.topic.id).one_or_none()
             if not journal:
-                journal = STATISTIC_JOURNAL_CLASSES[field.type](statistic=field.statistic, source=self)
+                journal = STATISTIC_JOURNAL_CLASSES[field.type](statistic_name=field.statistic_name, source=self)
                 s.add(journal)
             self.statistics[field] = journal
 
     def __str__(self):
-        return 'TopicJournal from %s' % self.time
+        return 'TopicJournal from %s' % self.date
 
     @classmethod
     def check_tz(cls, db):

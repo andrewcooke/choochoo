@@ -1,10 +1,11 @@
 
-from sqlalchemy import Column, Text, Integer, ForeignKey, Float, UniqueConstraint
+from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
-from ..types import Time, Sort
+from ..types import Time
+from ...lib.date import format_time
 
 
 class MonitorJournal(Source):
@@ -20,7 +21,7 @@ class MonitorJournal(Source):
     }
 
     def __str__(self):
-        return 'Monitor Journal from %s' % self.time
+        return 'Monitor Journal from %s' % format_time(self.time)
 
 
 class MonitorIntegerMixin:
@@ -56,4 +57,4 @@ class MonitorSteps(MonitorIntegerMixin, Base):
                                                    passive_deletes=True,
                                                    order_by='MonitorSteps.time'))
     delta = Column(Integer, nullable=False)
-    activity = Column(Text, nullable=False)
+    activity = Column(Text, nullable=False)  # un0normalized text from FIT file

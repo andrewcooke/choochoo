@@ -10,7 +10,7 @@ from ch2.lib.date import to_time, to_date, local_date_to_time
 from ch2.squeal.tables.monitor import MonitorJournal, MonitorSteps
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.source import Source, SourceType, Interval
-from ch2.squeal.tables.statistic import StatisticJournal, Statistic
+from ch2.squeal.tables.statistic import StatisticJournal, StatisticName
 from ch2.stoats.calculate import run_pipeline_after
 from ch2.stoats.calculate.monitor import MonitorStatistics
 from ch2.stoats.names import STEPS, REST_HR
@@ -74,12 +74,12 @@ def test_values():
             assert steps[1].value == 355, steps[1].value
             total = sum(s.delta for s in steps)
             assert total == 11066, total
-            summary = s.query(StatisticJournal).join(Statistic, Source, Interval). \
+            summary = s.query(StatisticJournal).join(StatisticName, Source, Interval). \
                 filter(Source.type == SourceType.INTERVAL,
                        Source.time == local_date_to_time(to_date('2018-09-06')),
                        Interval.schedule == 'd',
-                       Statistic.owner == MonitorStatistics,
-                       Statistic.name == STEPS).one()
+                       StatisticName.owner == MonitorStatistics,
+                       StatisticName.name == STEPS).one()
             # connect has 12757 for this date,
             assert summary.value == 12757, summary.value
             check = s.query(func.sum(MonitorSteps.delta)). \
@@ -96,12 +96,12 @@ def test_values():
             assert min(*hrs) == 0, min(*hrs)
             hrs = [hr for hr in hrs if hr > 0]
             assert min(*hrs) == 52, min(*hrs)
-            summary = s.query(StatisticJournal).join(Statistic, Source, Interval). \
+            summary = s.query(StatisticJournal).join(StatisticName, Source, Interval). \
                 filter(Source.type == SourceType.INTERVAL,
                        Source.time == to_time('2018-09-06 03:00'),
                        Interval.schedule == 'd',
-                       Statistic.owner == MonitorStatistics,
-                       Statistic.name == REST_HR).one()
+                       StatisticName.owner == MonitorStatistics,
+                       StatisticName.name == REST_HR).one()
             assert summary.value == 42, summary.value
 
 
@@ -128,12 +128,12 @@ def test_bug():
 
             # steps
 
-            summary = s.query(StatisticJournal).join(Statistic, Source, Interval). \
+            summary = s.query(StatisticJournal).join(StatisticName, Source, Interval). \
                 filter(Source.type == SourceType.INTERVAL,
                        Source.time == local_date_to_time(to_date('2018-10-07')),
                        Interval.schedule == 'd',
-                       Statistic.owner == MonitorStatistics,
-                       Statistic.name == STEPS).one()
+                       StatisticName.owner == MonitorStatistics,
+                       StatisticName.name == STEPS).one()
 
             # connect has 3031 for this date.
             assert summary.value == 3031, summary.value

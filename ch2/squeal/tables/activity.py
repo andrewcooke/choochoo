@@ -5,11 +5,12 @@ from sqlalchemy.orm import relationship, backref
 from .source import Source, SourceType
 from ..support import Base
 from ..types import Time, Sort
+from ...lib.date import format_time
 
 
-class Activity(Base):
+class ActivityGroup(Base):
 
-    __tablename__ = 'activity'
+    __tablename__ = 'activity_group'
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, server_default='')
@@ -22,8 +23,8 @@ class ActivityJournal(Source):
     __tablename__ = 'activity_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    activity_id = Column(Integer, ForeignKey('activity.id'), nullable=False)
-    activity = relationship('Activity')
+    activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=False)
+    activity_group = relationship('ActivityGroup')
     name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
     finish = Column(Time, nullable=False)
@@ -33,7 +34,7 @@ class ActivityJournal(Source):
     }
 
     def __str__(self):
-        return 'Activity Journal from %s' % self.time
+        return 'ActivityJournal from %s' % format_time(self.time)
 
 
 class ActivityTimespan(Base):

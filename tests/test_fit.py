@@ -141,7 +141,7 @@ def test_csv():
     log = getLogger()
 
     with TemporaryDirectory() as dir:
-        skip = Skip(2)  # timer_trigger in Activity.fit
+        skip = Skip(2)  # timer_trigger in ActivityGroup.fit
         for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/sdk/*.fit'):
             print(fit_file)
             fit_dir, file = split(fit_file)
@@ -160,7 +160,7 @@ def test_personal():
     log = getLogger()
 
     with TemporaryDirectory() as dir:
-        skip = Skip(2)  # timer_trigger in Activity.fit
+        skip = Skip(2)  # timer_trigger in ActivityGroup.fit
         for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
             print(fit_file)
             summarize_tables(log, fit_file)

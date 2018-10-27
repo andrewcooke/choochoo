@@ -5,7 +5,7 @@ from urwid import Edit, connect_signal
 
 from ch2.lib.utils import label
 from ..uweird.tui.widgets import Rating
-from ..squeal.tables.statistic import StatisticType
+from ..squeal.tables.statistic import StatisticJournalType
 
 PAGE_WIDTH = 4
 
@@ -20,9 +20,9 @@ class Base(ABC):
 
     def __str__(self):
         if self.__journal.value is None:
-            return '%s: _' % self.__journal.statistic.name + self._format_units()
+            return '%s: _' % self.__journal.statistic_name.name + self._format_units()
         else:
-            return '%s: ' % self.__journal.statistic.name + \
+            return '%s: ' % self.__journal.statistic_name.name + \
                    self._format_value(self.__journal.value) + self._format_units()
 
     @abstractmethod
@@ -30,7 +30,7 @@ class Base(ABC):
         pass
 
     def _format_units(self):
-        return (' ' + self.__journal.statistic.units) if self.__journal.statistic.units else ''
+        return (' ' + self.__journal.statistic_name.units) if self.__journal.statistic_name.units else ''
 
     def bound_widget(self):
         widget = self._widget(self.__journal)
@@ -38,7 +38,7 @@ class Base(ABC):
         return widget
 
     def __on_change(self, widget, value):
-        self._log.debug('Setting %s=%r' % (self.__journal.statistic.name, value))
+        self._log.debug('Setting %s=%r' % (self.__journal.statistic_name.name, value))
         self.__journal.value = value
 
     @abstractmethod
@@ -48,7 +48,7 @@ class Base(ABC):
 
 class Text(Base):
 
-    statistic_type = StatisticType.TEXT
+    statistic_type = StatisticJournalType.TEXT
 
     def __init__(self, log, s, journal, width=PAGE_WIDTH):
         super().__init__(log, s, journal, width=width)
@@ -57,12 +57,12 @@ class Text(Base):
         return repr(value)
 
     def _widget(self, journal):
-        return Edit(caption=label('%s: ' % journal.statistic.name), edit_text=journal.value or '')
+        return Edit(caption=label('%s: ' % journal.statistic_name.name), edit_text=journal.value or '')
 
 
 class Integer(Base):
 
-    statistic_type = StatisticType.INTEGER
+    statistic_type = StatisticJournalType.INTEGER
 
     def __init__(self, log, s, journal, lo=None, hi=None, width=1):
         super().__init__(log, s, journal, width=width)
@@ -74,13 +74,13 @@ class Integer(Base):
 
     def _widget(self, journal):
         from .tui.widgets import Integer
-        return Integer(caption=label('%s: ' % journal.statistic.name), state=journal.value,
-                       minimum=self._lo, maximum=self._hi, units=journal.statistic.units)
+        return Integer(caption=label('%s: ' % journal.statistic_name.name), state=journal.value,
+                       minimum=self._lo, maximum=self._hi, units=journal.statistic_name.units)
 
 
 class Float(Base):
 
-    statistic_type = StatisticType.FLOAT
+    statistic_type = StatisticJournalType.FLOAT
 
     def __init__(self, log, s, journal, lo=None, hi=None, dp=2, format='%f', width=1):
         super().__init__(log, s, journal, width=width)
@@ -94,13 +94,13 @@ class Float(Base):
 
     def _widget(self, journal):
         from .tui.widgets import Float
-        return Float(caption=label('%s: ' % journal.statistic.name), state=journal.value,
-                     minimum=self._lo, maximum=self._hi, dp=self._dp, units=journal.statistic.units)
+        return Float(caption=label('%s: ' % journal.statistic_name.name), state=journal.value,
+                     minimum=self._lo, maximum=self._hi, dp=self._dp, units=journal.statistic_name.units)
 
 
 class Score(Base):
 
-    statistic_type = StatisticType.INTEGER
+    statistic_type = StatisticJournalType.INTEGER
 
     def __init__(self, log, s, journal, width=1):
         super().__init__(log, s, journal, width=width)
@@ -109,4 +109,4 @@ class Score(Base):
         return '%d' % value
 
     def _widget(self, journal):
-        return Rating(caption=label('%s: ' % journal.statistic.name), state=journal.value)
+        return Rating(caption=label('%s: ' % journal.statistic_name.name), state=journal.value)

@@ -2,10 +2,10 @@
 from ..command.args import parser, NamespaceWithVariables, NO_OP
 from ..lib.log import make_log
 from ..squeal.database import Database
-from ..squeal.tables.activity import Activity
+from ..squeal.tables.activity import ActivityGroup
 from ..squeal.tables.constant import Constant
 from ..squeal.tables.pipeline import Pipeline, PipelineType
-from ..squeal.tables.statistic import Statistic, StatisticType
+from ..squeal.tables.statistic import StatisticName, StatisticJournalType
 from ..squeal.tables.topic import Topic, TopicField
 from ..uweird.fields import Integer
 
@@ -115,14 +115,14 @@ def add_monitor(session, cls, sort, **kargs):
     return add(session, Pipeline(cls=cls, type=PipelineType.MONITOR, sort=sort, kargs=kargs))
 
 
-def add_activity(session, name, sort, description=None):
+def add_activity_group(session, name, sort, description=None):
     '''
     Add an activity type to the configuration.
 
     These are used to group activities (and related statistics).
     So typical entries might be for cycling, running, etc.
     '''
-    return add(session, Activity(name=name, sort=sort, description=description))
+    return add(session, ActivityGroup(name=name, sort=sort, description=description))
 
 
 def add_activities(session, cls, sort, **kargs):
@@ -140,7 +140,7 @@ def add_activities(session, cls, sort, **kargs):
     return add(session, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
 
 
-def add_activity_constant(session, activity, name, description=None, units=None, type=StatisticType.INTEGER):
+def add_activity_constant(session, activity_group, name, description=None, units=None, type=StatisticJournalType.INTEGER):
     '''
     Add a constant associated with an activity.
 
@@ -149,11 +149,12 @@ def add_activity_constant(session, activity, name, description=None, units=None,
     An example is FTHR, which you will only measure occasionally, but which is needed when calculating
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
-    if activity.id is None:
+    if activity_group.id is None:
         session.flush()
-    statistic = add(session, Statistic(name=name, owner=Constant, constraint=activity.id, units=units,
-                                       description=description))
-    constant = add(session, Constant(type=type, name='%s.%s' % (name, activity.name), statistic=statistic))
+    statistic_name = add(session, StatisticName(name=name, owner=Constant, constraint=activity_group.id, units=units,
+                                                description=description))
+    constant = add(session, Constant(type=type, name='%s.%s' % (name, activity_group.name),
+                                     statistic_name=statistic_name))
 
 
 def add_topic(session, name, sort, description=None, schedule=None):
@@ -196,8 +197,8 @@ def add_topic_field(session, topic, name, sort, description=None, units=None, su
     '''
     if topic.id is None:
         session.flush()
-    statistic = add(session, Statistic(name=name, owner=topic, constraint=topic.id,
-                                       description=description, units=units, summary=summary))
+    statistic_name = add(session, StatisticName(name=name, owner=topic, constraint=topic.id,
+                                                description=description, units=units, summary=summary))
     field = add(session, TopicField(topic=topic, sort=sort, type=display_cls.statistic_type,
                                     display_cls=display_cls, display_kargs=display_kargs,
-                                    statistic=statistic))
+                                    statistic_name=statistic_name))

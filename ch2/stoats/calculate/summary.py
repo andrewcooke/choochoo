@@ -8,8 +8,8 @@ from ...lib.date import local_date_to_time, time_to_local_date
 from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.source import Interval, Source
-from ...squeal.tables.statistic import StatisticJournal, Statistic, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
-    StatisticType
+from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
+    StatisticJournalType
 
 
 class SummaryStatistics:
@@ -50,18 +50,18 @@ class SummaryStatistics:
                         self._log.warn('No intervals to delete')
 
     def _statistics_missing_summaries(self, s, start, finish):
-        statistics_with_data_but_no_summary = s.query(Statistic.id). \
+        statistics_with_data_but_no_summary = s.query(StatisticName.id). \
             join(StatisticJournal, Source). \
             filter(Source.time >= start,
                    Source.time < finish,
-                   Statistic.summary != None)
-        return s.query(Statistic). \
-            filter(Statistic.id.in_(statistics_with_data_but_no_summary)). \
+                   StatisticName.summary != None)
+        return s.query(StatisticName). \
+            filter(StatisticName.id.in_(statistics_with_data_but_no_summary)). \
             all()
 
     def _journal_data(self, s, statistic, start, finish):
         return s.query(StatisticJournal).join(Source). \
-            filter(StatisticJournal.statistic == statistic,
+            filter(StatisticJournal.statistic_name == statistic,
                    Source.time >= start,
                    Source.time < finish).all()
 
@@ -75,40 +75,40 @@ class SummaryStatistics:
         elif process == 'sum':
             return sum(defined, 0), 'Total/%s %%s' % range, input_type
         elif process == 'avg':
-            return sum(defined) / len(defined) if defined else None, 'Avg/%s %%s' % range, StatisticType.FLOAT
+            return sum(defined) / len(defined) if defined else None, 'Avg/%s %%s' % range, StatisticJournalType.FLOAT
         elif process == 'med':
             defined = sorted(defined)
             if len(defined):
                 if len(defined) % 2:
-                    return defined[len(defined) // 2], 'Med/%s %%s' % range, StatisticType.FLOAT
+                    return defined[len(defined) // 2], 'Med/%s %%s' % range, StatisticJournalType.FLOAT
                 else:
                     return 0.5 * (defined[len(defined) // 2 - 1] + defined[len(defined) // 2]), \
-                           'Med/%s %%s' % range, StatisticType.FLOAT
+                           'Med/%s %%s' % range, StatisticJournalType.FLOAT
             else:
-                return None, 'Med/%s %%s' % range, StatisticType.FLOAT
+                return None, 'Med/%s %%s' % range, StatisticJournalType.FLOAT
         else:
             self._log.warn('No algorithm for "%s"' % process)
             return None, None, None
 
-    def _get_statistic(self, s, root, name):
+    def _get_statistic_name(self, s, root, name):
         # we use the old statistic id as the constraint.  this lets us handle multiple
         # statistics with the same name, but different owners and constraints.
-        statistic = s.query(Statistic). \
-            filter(Statistic.name == name,
-                   Statistic.owner == self,
-                   Statistic.constraint == root.id).one_or_none()
-        if not statistic:
-            statistic = add(s, Statistic(name=name, owner=self, constraint=root.id, units=root.units))
-        return statistic
+        statistic_name = s.query(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticName.owner == self,
+                   StatisticName.constraint == root.id).one_or_none()
+        if not statistic_name:
+            statistic_name = add(s, StatisticName(name=name, owner=self, constraint=root.id, units=root.units))
+        return statistic_name
 
-    def _create_value(self, s, interval, spec, statistic, process, data, values):
+    def _create_value(self, s, interval, spec, statistic_name, process, data, values):
         value, template, type = self._calculate_value(process, values, spec, data[0].type)
         if value is not None:
-            name = template % statistic.name
-            new_statistic = self._get_statistic(s, statistic, name)
+            name = template % statistic_name.name
+            new_name = self._get_statistic_name(s, statistic_name, name)
             journal = add(s, STATISTIC_JOURNAL_CLASSES[type](
-                statistic=new_statistic, source=interval, value=value))
-            self._log.debug('Created %s over %s for %s' % (journal, interval, statistic))
+                statistic_name=new_name, source=interval, value=value))
+            self._log.debug('Created %s over %s for %s' % (journal, interval, statistic_name))
 
     def _create_ranks(self, s, interval, spec, statistic, data):
         # we only rank non-NULL values

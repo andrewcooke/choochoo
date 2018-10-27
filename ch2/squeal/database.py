@@ -7,21 +7,21 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
 
 from .support import Base
-from .tables.activity import ActivityWaypoint, Activity, ActivityTimespan, ActivityJournal
+from .tables.activity import ActivityWaypoint, ActivityGroup, ActivityTimespan, ActivityJournal
 from .tables.constant import SystemConstant, Constant, ConstantJournal
 from .tables.monitor import MonitorHeartRate, MonitorSteps, MonitorJournal
 from .tables.pipeline import Pipeline
 from .tables.source import Source, Interval
-from .tables.statistic import Statistic, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
+from .tables.statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
     StatisticJournal
 from .tables.topic import TopicJournal, Topic
 from ..command.args import DATABASE
 
 # import these so they are "created"
 Source,  Interval,
-Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint,
+ActivityGroup, ActivityJournal, ActivityTimespan, ActivityWaypoint,
 Topic, TopicJournal,
-Statistic, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText,
+StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText,
 Pipeline
 MonitorJournal, MonitorSteps, MonitorHeartRate
 Constant, ConstantJournal, SystemConstant
@@ -69,8 +69,8 @@ class Database:
         else:
             with self.session_context() as s:
                 n_topics = s.query(count(Topic.id)).scalar()
-                n_activities = s.query(count(Activity.id)).scalar()
-                n_statistics = s.query(count(Statistic.id)).scalar()
+                n_activities = s.query(count(ActivityGroup.id)).scalar()
+                n_statistics = s.query(count(StatisticName.id)).scalar()
             return not (n_topics + n_activities + n_statistics)
 
 

@@ -1,8 +1,8 @@
 
-from .database import Counter, add_statistics, add_activity, add_activity_constant, add_topic, add_topic_field, \
+from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor
 from ..lib.schedule import Schedule
-from ..squeal.tables.statistic import StatisticType
+from ..squeal.tables.statistic import StatisticJournalType
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.clean import CleanUnusedStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
@@ -43,8 +43,8 @@ def default(db):
 
         # basic activities
 
-        bike = add_activity(s, 'Bike', c, description='All cycling activities')
-        run = add_activity(s, 'Run', c, description='All running activities')
+        bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
+        run = add_activity_group(s, 'Run', c, description='All running activities')
         # sport_to_activity maps from the FIT sport field to the activity defined above
         add_activities(s, ActivityImporter, c, sport_to_activity={'cycling': bike.name,
                                                                   'running': run.name})
@@ -54,10 +54,10 @@ def default(db):
 
         add_activity_constant(s, bike, FTHR,
                               description='Heart rate at functional threshold (cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0',
-                              units=BPM, type=StatisticType.INTEGER)
+                              units=BPM, type=StatisticJournalType.INTEGER)
         add_activity_constant(s, run, FTHR,
                               description='Heart rate at functional threshold (running).',
-                              units=BPM, type=StatisticType.INTEGER)
+                              units=BPM, type=StatisticJournalType.INTEGER)
 
         # a basic diary
 

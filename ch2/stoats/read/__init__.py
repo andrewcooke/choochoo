@@ -37,7 +37,7 @@ class Importer:
 
     def _run(self, paths, force=False, **kargs):
         with self._db.session_context() as s:
-            for_modified_files(self._log, s, paths, self._callback(kargs), force=force)
+            for_modified_files(self._log, s, paths, self._callback(kargs), self, force=force)
 
     def _callback(self, kargs):
         def callback(file):

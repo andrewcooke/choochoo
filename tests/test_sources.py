@@ -9,8 +9,8 @@ from ch2.config.personal import acooke
 from ch2.lib.date import to_time, local_date_to_time, to_date
 from ch2.squeal.database import add
 from ch2.squeal.tables.source import Source, Interval
-from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, Statistic, \
-    StatisticJournalInteger, StatisticType
+from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \
+    StatisticJournalInteger, StatisticJournalType
 from ch2.squeal.tables.topic import TopicJournal, Topic
 from ch2.stoats.calculate.summary import SummaryStatistics
 
@@ -35,8 +35,8 @@ def test_sources():
                                     time=local_date_to_time(to_date('2018-09-29'))))
             d.populate(log, s)
             assert len(d.topic.fields) == 7, d.topic.fields
-            assert d.topic.fields[0].statistic.name == 'Notes'
-            assert d.topic.fields[1].statistic.name == 'Rest HR'
+            assert d.topic.fields[0].statistic_name.name == 'Notes'
+            assert d.topic.fields[1].statistic_name.name == 'Rest HR'
             for field in d.topic.fields:
                 assert d.statistics[field].value is None
             d.statistics[d.topic.fields[0]].value = 'hello world'
@@ -51,24 +51,25 @@ def test_sources():
                                              TopicJournal.date == '2018-09-29').one()
             d.populate(log, s)
             assert len(d.topic.fields) == 7
-            assert d.topic.fields[0].statistic.name == 'Notes'
+            assert d.topic.fields[0].statistic_name.name == 'Notes'
             assert d.statistics[d.topic.fields[0]].value == 'hello world'
-            assert d.topic.fields[1].statistic.name == 'Rest HR'
+            assert d.topic.fields[1].statistic_name.name == 'Rest HR'
             assert d.statistics[d.topic.fields[1]].value == 60
-            assert d.statistics[d.topic.fields[1]].type == StatisticType.INTEGER
+            assert d.statistics[d.topic.fields[1]].type == StatisticJournalType.INTEGER
 
         # generate summary stats
 
         process = SummaryStatistics(log, db)
-        process.run()
+        process.run(schedule='m')
+        process.run(schedule='y')
 
         with db.session_context() as s:
 
             # check the summary stats
 
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-            sleep = s.query(StatisticJournalInteger).join(Statistic). \
-                filter(Statistic.owner == diary, Statistic.name == 'Rest HR').one()
+            sleep = s.query(StatisticJournalInteger).join(StatisticName). \
+                filter(StatisticName.owner == diary, StatisticName.name == 'Rest HR').one()
             assert sleep.value == 60
             assert len(sleep.measures) == 2
             assert sleep.measures[0].rank == 1
@@ -77,12 +78,12 @@ def test_sources():
             assert n == 4, n
             n = s.query(count(StatisticJournalInteger.id)).scalar()
             assert n == 2, n
-            m_avg = s.query(StatisticJournalFloat).join(Statistic). \
-                filter(Statistic.name == 'Avg/Month Rest HR').one()
+            m_avg = s.query(StatisticJournalFloat).join(StatisticName). \
+                filter(StatisticName.name == 'Avg/Month Rest HR').one()
             assert m_avg.value == 60
             # note this is float even though Rest HR is int
-            y_avg = s.query(StatisticJournalFloat).join(Statistic). \
-                filter(Statistic.name == 'Avg/Year Rest HR').one()
+            y_avg = s.query(StatisticJournalFloat).join(StatisticName). \
+                filter(StatisticName.name == 'Avg/Year Rest HR').one()
             assert y_avg.value == 60
             month = s.query(Interval).filter(Interval.schedule == 'm').one()
             assert month.time == local_date_to_time(to_date('2018-09-01')), month.time

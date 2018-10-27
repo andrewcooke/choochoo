@@ -12,8 +12,8 @@ MAX_MED_HR_OVER_M = 'Max Med HR over %dm'
 MAX_MED_HR_OVER_M_ANY = 'Max Med HR over %'
 HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
 
-MAX = 'max'
-MIN = 'min'
+MAX = '[max]'
+MIN = '[min]'
 
 M = 'm'
 S = 's'

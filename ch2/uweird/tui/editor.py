@@ -10,7 +10,7 @@ from ...squeal.binders import Binder
 
 class Editor(TabNode):
     '''
-    An editor for simple database classes (Injury, Activity)
+    An editor for simple database classes (Injury, ActivityGroup)
     '''
 
     # we have to be careful to work well with sqlalchemy's session semantics:

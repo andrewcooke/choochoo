@@ -2,7 +2,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
-from .statistic import Statistic, StatisticJournal
+from .statistic import StatisticName, StatisticJournal
 from .source import Source, SourceType
 from ..support import Base
 
@@ -12,10 +12,10 @@ class Constant(Base):
     __tablename__ = 'constant'
 
     id = Column(Integer, primary_key=True)
-    type = Column(Integer, nullable=False)  # StatisticType
+    type = Column(Integer, nullable=False)  # StatisticJournalType
     name = Column(Text, nullable=False)
-    statistic_id = Column(Integer, ForeignKey('statistic.id', ondelete='cascade'), nullable=False)
-    statistic = relationship('Statistic')
+    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
+    statistic_name = relationship('StatisticName')
 
 
 class ConstantJournal(Source):
@@ -27,9 +27,9 @@ class ConstantJournal(Source):
     @staticmethod
     def lookup_statistic_journal(log, s, name, constraint, time):
         # order important in join here
-        return s.query(StatisticJournal).join(ConstantJournal, Statistic, Constant). \
-            filter(Statistic.constraint == constraint,
-                   Constant.name == name,
+        return s.query(StatisticJournal).join(ConstantJournal, StatisticName, Constant). \
+            filter(StatisticName.constraint == constraint,
+                   StatisticName.name == name,
                    ConstantJournal.time <= time).one_or_none()
 
     __mapper_args__ = {

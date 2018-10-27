@@ -7,7 +7,7 @@ from ...fit.format.records import fix_degrees
 from ...lib.date import to_time
 from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
-from ...squeal.tables.activity import Activity, ActivityJournal, ActivityTimespan, ActivityWaypoint
+from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan, ActivityWaypoint
 from ...stoats.read import Importer
 
 
@@ -18,30 +18,30 @@ class ActivityImporter(Importer):
             raise Exception('No map from sport to activity')
         self._run(paths, force=force, sport_to_activity=sport_to_activity)
 
-    def _activity(self, s, path, sport, sport_to_activity):
+    def _activity_group(self, s, path, sport, sport_to_activity):
         if sport in sport_to_activity:
-            return self._lookup_activity(s, sport_to_activity[sport])
+            return self._lookup_activity_group(s, sport_to_activity[sport])
         else:
             self._log.warn('Unrecognised sport: "%s" in %s' % (sport, path))
             raise AbortImport()
 
-    def _lookup_activity(self, s, name):
-        activity = s.query(Activity).filter(Activity.name == name).one_or_none()
-        if not activity:
-            activities = s.query(Activity).all()
+    def _lookup_activity_group(self, s, name):
+        activity_group = s.query(ActivityGroup).filter(ActivityGroup.name == name).one_or_none()
+        if not activity_group:
+            activities = s.query(ActivityGroup).all()
             if activities:
                 self._log.info('Available activities:')
-                for activity in activities:
-                    self._log.info('%s - %s' % (activity.name, activity.description))
+                for activity_group in activities:
+                    self._log.info('%s - %s' % (activity_group.name, activity_group.description))
             else:
                 self._log.error('No activities defined - configure system correctly')
-            raise Exception('Activity "%s" is not defined' % name)
-        return activity
+            raise Exception('ActivityGroup "%s" is not defined' % name)
+        return activity_group
 
     def _delete_journals(self, s, activity, first_timestamp):
         # need to iterate because sqlite doesn't support multi-table delete and we have inheritance.
         for journal in s.query(ActivityJournal). \
-                filter(ActivityJournal.activity == activity,
+                filter(ActivityJournal.activity_group == activity,
                        ActivityJournal.time == first_timestamp).all():
             s.delete(journal)
         s.flush()
@@ -54,9 +54,9 @@ class ActivityImporter(Importer):
 
         first_timestamp = self._first(path, records, 'event', 'record').value.timestamp
         sport = self._first(path, records, 'sport').value.sport.lower()
-        activity = self._activity(s, path, sport, sport_to_activity)
-        self._delete_journals(s, activity, first_timestamp)
-        journal = add(s, ActivityJournal(activity=activity, time=first_timestamp,
+        activity_group = self._activity_group(s, path, sport, sport_to_activity)
+        self._delete_journals(s, activity_group, first_timestamp)
+        journal = add(s, ActivityJournal(activity_group=activity_group, time=first_timestamp,
                                          fit_file=path, name=splitext(basename(path))[0]))
 
         timespan, warned, latest = None, 0, to_time(0.0)
