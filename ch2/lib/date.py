@@ -10,7 +10,7 @@ def format_date(date):
 
 
 def format_time(time):
-    return time.strftime('%Y-%m-%dT%H:%M:%S.%f')
+    return time.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def to_date(value, none=False):

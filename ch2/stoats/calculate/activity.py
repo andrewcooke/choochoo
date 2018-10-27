@@ -43,7 +43,7 @@ class ActivityStatistics:
                 q = q.filter(Source.time >= after)
             if repeat:
                 for journal in q.all():
-                    self._log.debug('Deleting %s (%s)' % (journal, journal.statistic))
+                    self._log.debug('Deleting %s (%s)' % (journal, journal.statistic_name))
                     s.delete(journal)
             else:
                 n = q.scalar()

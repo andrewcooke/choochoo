@@ -61,7 +61,7 @@ def for_modified_files(log, session, paths, callback, owner, force=False):
             session.flush()
 
         # only look at hash if we are going to process anyway
-        if last_modified > path_scan.last_scan:
+        if force or last_modified > path_scan.last_scan:
 
             hash_scan = session.query(FileScan). \
                 filter(FileScan.md5_hash == hash,

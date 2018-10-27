@@ -199,6 +199,6 @@ def add_topic_field(session, topic, name, sort, description=None, units=None, su
         session.flush()
     statistic_name = add(session, StatisticName(name=name, owner=topic, constraint=topic.id,
                                                 description=description, units=units, summary=summary))
-    field = add(session, TopicField(topic=topic, sort=sort, type=display_cls.statistic_type,
+    field = add(session, TopicField(topic=topic, sort=sort, type=display_cls.statistic_journal_type,
                                     display_cls=display_cls, display_kargs=display_kargs,
                                     statistic_name=statistic_name))

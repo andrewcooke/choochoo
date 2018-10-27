@@ -48,7 +48,7 @@ class Base(ABC):
 
 class Text(Base):
 
-    statistic_type = StatisticJournalType.TEXT
+    statistic_journal_type = StatisticJournalType.TEXT
 
     def __init__(self, log, s, journal, width=PAGE_WIDTH):
         super().__init__(log, s, journal, width=width)
@@ -62,7 +62,7 @@ class Text(Base):
 
 class Integer(Base):
 
-    statistic_type = StatisticJournalType.INTEGER
+    statistic_journal_type = StatisticJournalType.INTEGER
 
     def __init__(self, log, s, journal, lo=None, hi=None, width=1):
         super().__init__(log, s, journal, width=width)
@@ -80,7 +80,7 @@ class Integer(Base):
 
 class Float(Base):
 
-    statistic_type = StatisticJournalType.FLOAT
+    statistic_journal_type = StatisticJournalType.FLOAT
 
     def __init__(self, log, s, journal, lo=None, hi=None, dp=2, format='%f', width=1):
         super().__init__(log, s, journal, width=width)
@@ -100,7 +100,7 @@ class Float(Base):
 
 class Score(Base):
 
-    statistic_type = StatisticJournalType.INTEGER
+    statistic_journal_type = StatisticJournalType.INTEGER
 
     def __init__(self, log, s, journal, width=1):
         super().__init__(log, s, journal, width=width)

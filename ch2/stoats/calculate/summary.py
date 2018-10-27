@@ -59,9 +59,9 @@ class SummaryStatistics:
             filter(StatisticName.id.in_(statistics_with_data_but_no_summary)). \
             all()
 
-    def _journal_data(self, s, statistic, start, finish):
+    def _journal_data(self, s, statistic_name, start, finish):
         return s.query(StatisticJournal).join(Source). \
-            filter(StatisticJournal.statistic_name == statistic,
+            filter(StatisticJournal.statistic_name == statistic_name,
                    Source.time >= start,
                    Source.time < finish).all()
 
@@ -134,18 +134,18 @@ class SummaryStatistics:
                 start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
                 interval = add(s, Interval(time=start_time, start=start, finish=finish, schedule=spec, owner=self))
                 have_data = False
-                for statistic in self._statistics_missing_summaries(s, start_time, finish_time):
-                    data = [journal for journal in self._journal_data(s, statistic, start_time, finish_time)
+                for statistic_name in self._statistics_missing_summaries(s, start_time, finish_time):
+                    data = [journal for journal in self._journal_data(s, statistic_name, start_time, finish_time)
                             if spec.at_location(time_to_local_date(journal.time))]
                     if data:
-                        processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic.summary) if x]
+                        processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic_name.summary) if x]
                         if processes:
                             values = [x.value for x in data]
                             for process in processes:
-                                self._create_value(s, interval, spec, statistic, process.lower(), data, values)
+                                self._create_value(s, interval, spec, statistic_name, process.lower(), data, values)
                         else:
-                            self._log.warn('Invalid summary for %s ("%s")' % (statistic, statistic.summary))
-                        self._create_ranks(s, interval, spec, statistic, data)
+                            self._log.warn('Invalid summary for %s ("%s")' % (statistic_name, statistic_name.summary))
+                        self._create_ranks(s, interval, spec, statistic_name, data)
                         have_data = True
                 if have_data:
                     self._log.info('Added statistics for %s' % interval)

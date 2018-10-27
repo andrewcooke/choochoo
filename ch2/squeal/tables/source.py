@@ -60,7 +60,7 @@ class Source(Base):
         times |= set(instance.time for instance in session.new
                      if isinstance(instance, Source) and not isinstance(instance, Interval)
                      and not isinstance(instance, TopicJournal) and instance.time)
-        # include new topicjournals only if they have non-null data
+        # include new topic journals only if they have non-null data
         # this handles the case where an empty diary entry is viewed
         for instance in session.new:
             # is it a subclass of StatisticJournal?
@@ -75,11 +75,14 @@ class Source(Base):
     def clean_times(cls, session, times):
         schedules = [schedule[0] for schedule in session.query(distinct(Interval.schedule)).all()]
         for time in times:
+            date = time_to_local_date(to_time(time))
             for schedule in schedules:
-                start = schedule.start_of_frame(time_to_local_date(time))
-                interval = session.query(Interval). \
-                    filter(Interval.start == start, Interval.schedule == schedule).one_or_none()
-                if interval:
+                start = schedule.start_of_frame(date)
+                finish = schedule.next_frame(date)
+                for interval in session.query(Interval). \
+                        filter(Interval.finish >= start,
+                               Interval.start < finish,
+                               Interval.schedule == schedule).all():
                     session.delete(interval)
 
 

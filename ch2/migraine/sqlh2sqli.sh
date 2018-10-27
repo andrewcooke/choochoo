@@ -9,6 +9,12 @@ sqlite3 /tmp/copy.sqlh <<EOF
 pragma foreign_keys = on;
 delete from source where type = 1;
 delete from source where type = 2;
+delete from statistic_journal where id in (
+  select statistic_journal.id 
+    from statistic_journal  
+    left join source 
+      on statistic_journal.source_id = source.id 
+   where source.id is null);
 .mode insert activity_group
 select * from activity;
 .mode insert system_constant
