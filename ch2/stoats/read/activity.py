@@ -38,10 +38,10 @@ class ActivityImporter(Importer):
             raise Exception('ActivityGroup "%s" is not defined' % name)
         return activity_group
 
-    def _delete_journals(self, s, activity, first_timestamp):
+    def _delete_journals(self, s, activity_group, first_timestamp):
         # need to iterate because sqlite doesn't support multi-table delete and we have inheritance.
         for journal in s.query(ActivityJournal). \
-                filter(ActivityJournal.activity_group == activity,
+                filter(ActivityJournal.activity_group == activity_group,
                        ActivityJournal.time == first_timestamp).all():
             s.delete(journal)
         s.flush()

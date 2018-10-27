@@ -35,11 +35,11 @@ class Data:
 
     def activities(self):
         data, ids = defaultdict(list), []
-        for activity in self._session.query(ActivityGroup).order_by(ActivityGroup.name):
-            ids.append(activity.id)
-            extract(data, activity, 'name', 'description')
+        for activity_group in self._session.query(ActivityGroup).order_by(ActivityGroup.name):
+            ids.append(activity_group.id)
+            extract(data, activity_group, 'name', 'description')
             data['count'].append(self._session.query(count(ActivityJournal.id)).
-                                 filter(ActivityJournal.activity_group == activity).scalar())
+                                 filter(ActivityJournal.activity_group == activity_group).scalar())
         return DataFrame(data, index=ids)
 
     def activity_journals(self, activity, start=None, finish=None):

@@ -23,11 +23,11 @@ class ActivityDiary(Displayer):
     def build(self, s, f, date):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
-        for activity in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
+        for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
             for journal in s.query(ActivityJournal). \
                     filter(ActivityJournal.time >= start,
                            ActivityJournal.time < finish,
-                           ActivityJournal.activity_group == activity). \
+                           ActivityJournal.activity_group == activity_group). \
                     order_by(ActivityJournal.time).all():
                 yield self.__journal_data(s, journal, date)
 
@@ -49,7 +49,7 @@ class ActivityDiary(Displayer):
         body.append(Text('%s - %s  (%s)' % (ajournal.time.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
                                             format_seconds((ajournal.finish - ajournal.time).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
-            sjournal = self._journal_at_time(s, ajournal.time, name, ActivityStatistics, ajournal.activity.id)
+            sjournal = self._journal_at_time(s, ajournal.time, name, ActivityStatistics, ajournal.activity_group.id)
             body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         return body
 
@@ -59,7 +59,7 @@ class ActivityDiary(Displayer):
             filter(Source.time == ajournal.time,
                    StatisticName.name.like(template),
                    StatisticName.owner == ActivityStatistics,
-                   StatisticName.constraint == ajournal.activity.id).order_by(StatisticName.name).all()
+                   StatisticName.constraint == ajournal.activity_group.id).order_by(StatisticName.name).all()
         # extract
         for sjournal in sorted(sjournals,
                                # order by integer embedded in name
