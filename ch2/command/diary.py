@@ -97,18 +97,19 @@ class Diary(DateSwitcher):
 
     def __fields(self, s, f, topic):
         columns, width = [], 0
+        tjournal = self.__topic_journal(s, topic)
+        tjournal.populate(self._log, s)
         for field in topic.fields:
-            self._log.debug('%s' % field)
-            tjournal = self.__topic_journal(s, topic)
-            tjournal.populate(self._log, s)
-            display = field.display_cls(self._log, s, tjournal.statistics[field],
-                                        *field.display_args, **field.display_kargs)
-            self._log.debug('%s' % display)
-            if width + display.width > PAGE_WIDTH:
-                yield Columns(columns)
-                columns, width = [], 0
-            columns.append((WEIGHT, display.width, f(display.bound_widget())))
-            width += display.width
+            if field in tjournal.statistics:  # might be outside schedule
+                self._log.debug('%s' % field)
+                display = field.display_cls(self._log, s, tjournal.statistics[field],
+                                            *field.display_args, **field.display_kargs)
+                self._log.debug('%s' % display)
+                if width + display.width > PAGE_WIDTH:
+                    yield Columns(columns)
+                    columns, width = [], 0
+                columns.append((WEIGHT, display.width, f(display.bound_widget())))
+                width += display.width
         if width:
             yield Columns(columns)
 

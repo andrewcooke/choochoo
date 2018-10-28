@@ -106,7 +106,7 @@ class TopicJournal(Source):
         for field in self.topic.fields:
             assert_attr(field, 'schedule')
             if field.schedule.at_location(self.date):
-                log.debug('Finding SJ for field %s' % field.statistic_name.name)
+                log.debug('Finding StatisticJournal for field %s' % field.statistic_name.name)
                 journal = s.query(StatisticJournal).join(StatisticName, Source). \
                     filter(StatisticJournal.statistic_name == field.statistic_name,
                            Source.time == self.time,
