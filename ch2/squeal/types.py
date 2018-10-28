@@ -136,7 +136,7 @@ class Sched(TypeDecorator):
     process_bind_param = process_literal_param
 
     def process_result_value(self, value, dialect):
-        if not value:
+        if value is None:
             return None
         return Schedule(value)
 

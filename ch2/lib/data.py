@@ -36,3 +36,9 @@ class WarnList(list):
 
 def tohex(data):
     return hexlify(data).decode('ascii')
+
+
+def assert_attr(instance, *attrs):
+    for attr in attrs:
+        if getattr(instance, attr) is None:
+            raise Exception('No %s defined' % attr)
