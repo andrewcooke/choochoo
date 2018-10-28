@@ -66,4 +66,32 @@ activity is, now is the time to study the [data model](data-model).
 ### Topics and Statistics
 
     > ch2 diary
-    
+
+TODO
+
+## Later Modifications
+
+Remember that it's easy to create a backup just by copying your
+database file.
+
+### Adding A Field
+
+    > sqlite3 ~/.ch2/database.sqlj 'select * from topic_field join statistic_name on statistic_name_id = statistic_name.id'
+
+    > python <<EOF
+    from ch2.config.database import config, add_topic_field
+    from ch2.squeal.tables.topic import Topic
+    from ch2.uweird.fields import Text
+    log, db = config('-v 5')
+    with db.session_context() as s:
+	diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+	add_topic_field(s, diary, 'Route', 90, display_cls=Text)
+    EOF
+
+### Changing Field Order
+
+    > sqlite3 ~/.ch2/database.sqlj 'select * from topic_field join statistic_name on statistic_name_id = statistic_name.id'
+    > sqlite3 ~/.ch2/database.sqlj 'update topic_field set sort=-1 where sort=70'
+    > sqlite3 ~/.ch2/database.sqlj 'update topic_field set sort=70 where sort=80'
+    > sqlite3 ~/.ch2/database.sqlj 'update topic_field set sort=80 where sort=-1'
+

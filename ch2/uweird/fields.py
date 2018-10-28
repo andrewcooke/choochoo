@@ -3,9 +3,9 @@ from abc import abstractmethod, ABC
 
 from urwid import Edit, connect_signal
 
-from ch2.lib.utils import label
-from ..uweird.tui.widgets import Rating
+from ..lib.utils import label
 from ..squeal.tables.statistic import StatisticJournalType
+from ..uweird.tui.widgets import Rating0, Rating1
 
 PAGE_WIDTH = 4
 
@@ -109,4 +109,19 @@ class Score(Base):
         return '%d' % value
 
     def _widget(self, journal):
-        return Rating(caption=label('%s: ' % journal.statistic_name.name), state=journal.value)
+        return self._field_cls(caption=label('%s: ' % journal.statistic_name.name), state=journal.value)
+
+    @property
+    @abstractmethod
+    def _field_cls(self):
+        pass
+
+
+class Score0(Score):
+
+    _field_cls = Rating0
+
+
+class Score1(Score):
+
+    _field_cls = Rating1

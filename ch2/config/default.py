@@ -81,3 +81,5 @@ def default(db):
                         display_cls=Text)
         add_topic_field(s, diary, 'Medication', c,
                         display_cls=Text)
+        add_topic_field(s, diary, 'Route', c,
+                        display_cls=Text)

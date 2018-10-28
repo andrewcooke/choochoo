@@ -102,7 +102,10 @@ def ColPack(widget):
     return PACK, widget
 
 
-class Rating(MutableStatefulText):
+class Rating0(MutableStatefulText):
+    '''
+    0-9 based scale.
+    '''
 
     def __init__(self, caption='', state=None):
         self._caption = caption
@@ -129,6 +132,17 @@ class Rating(MutableStatefulText):
             self.state = None
         else:
             return key
+
+
+class Rating1(Rating0):
+    '''
+    1-10 based scale.
+    '''
+
+    def keypress(self, size, key):
+        if key == '0':
+            key = '10'
+        return super().keypress(size, key)
 
 
 class Number(MutableStatefulText):
