@@ -1,7 +1,5 @@
 
-from ..command.args import parser, NamespaceWithVariables, NO_OP
-from ..lib.log import make_log
-from ..squeal.database import Database
+from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup
 from ..squeal.tables.constant import Constant
 from ..squeal.tables.pipeline import Pipeline, PipelineType
@@ -18,14 +16,7 @@ def config(*args):
         print(c...)  todo
         ...
     '''
-    if len(args) == 1:
-        args = args[0].split(' ')
-    p = parser()
-    args = list(args)
-    args.append(NO_OP)
-    ns = NamespaceWithVariables(p.parse_args(args))
-    log = make_log(ns)
-    db = Database(ns, log)
+    ns, log, db = connect(args)
     return log, db
 
 

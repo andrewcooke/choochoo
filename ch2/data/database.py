@@ -5,11 +5,9 @@ from pandas import DataFrame
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
-from ch2.squeal.tables.monitor import MonitorJournal, MonitorHeartRate, MonitorSteps
-from ..command.args import parser, NamespaceWithVariables, NO_OP
-from ..lib.log import make_log
-from ..squeal.database import Database
+from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup, ActivityJournal
+from ..squeal.tables.monitor import MonitorJournal, MonitorHeartRate, MonitorSteps
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticMeasure
 
@@ -189,15 +187,5 @@ def data(*args):
         d.statistics()
         ...
     '''
-    p = parser()
-    if len(args) == 1:
-        args = args[0].split()
-    elif args:
-        args = list(args)
-    else:
-        args = []
-    args.append(NO_OP)
-    ns = NamespaceWithVariables(p.parse_args(args))
-    log = make_log(ns)
-    db = Database(ns, log)
+    ns, log, db = connect(args)
     return Data(log, db)

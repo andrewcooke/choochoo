@@ -331,6 +331,7 @@ class Frame(ABC):
         Does the given day coincide with the specification?
         '''
         try:
+            date = to_date(date)
             return self.schedule.in_range(date) and date == next(self.locations_from(date))
         except StopIteration:
             return False

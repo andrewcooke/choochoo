@@ -34,11 +34,12 @@ def test_sources():
             d = add(s, TopicJournal(topic=diary, date='2018-09-29',
                                     time=local_date_to_time(to_date('2018-09-29'))))
             d.populate(log, s)
-            assert len(d.topic.fields) == 7, d.topic.fields
+            assert len(d.topic.fields) == 8, d.topic.fields
             assert d.topic.fields[0].statistic_name.name == 'Notes'
             assert d.topic.fields[1].statistic_name.name == 'Rest HR'
             for field in d.topic.fields:
-                assert d.statistics[field].value is None
+                if field in d.statistics:
+                    assert d.statistics[field].value is None, field
             d.statistics[d.topic.fields[0]].value = 'hello world'
             d.statistics[d.topic.fields[1]].value = 60
 
@@ -50,7 +51,7 @@ def test_sources():
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.date == '2018-09-29').one()
             d.populate(log, s)
-            assert len(d.topic.fields) == 7
+            assert len(d.topic.fields) == 8
             assert d.topic.fields[0].statistic_name.name == 'Notes'
             assert d.statistics[d.topic.fields[0]].value == 'hello world'
             assert d.topic.fields[1].statistic_name.name == 'Rest HR'

@@ -15,7 +15,8 @@ from .tables.source import Source, Interval
 from .tables.statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
     StatisticJournal
 from .tables.topic import TopicJournal, Topic
-from ..command.args import DATABASE
+from ..command.args import DATABASE, NamespaceWithVariables, NO_OP, parser
+from ..lib.log import make_log
 
 # import these so they are "created"
 Source,  Interval,
@@ -77,3 +78,22 @@ class Database:
 def add(s, instance):
     s.add(instance)
     return instance
+
+
+def connect(args):
+    '''
+    Bootstrap from commandline-like args.
+    '''
+    p = parser()
+    if len(args) == 1:
+        args = args[0].split()
+    elif args:
+        args = list(args)
+    else:
+        args = []
+    args.append(NO_OP)
+    ns = NamespaceWithVariables(p.parse_args(args))
+    log = make_log(ns)
+    db = Database(ns, log)
+    return ns, log, db
+
