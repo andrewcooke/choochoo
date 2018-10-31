@@ -23,7 +23,7 @@ class NullableLog:
 
 class Named:
     """
-    Has a name.  Base for both fields and messages
+    Has a name.  Field for both fields and messages
     """
 
     def __init__(self, log, name):

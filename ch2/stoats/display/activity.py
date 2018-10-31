@@ -49,7 +49,7 @@ class ActivityDiary(Displayer):
         body.append(Text('%s - %s  (%s)' % (ajournal.time.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
                                             format_seconds((ajournal.finish - ajournal.time).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
-            sjournal = self._journal_at_time(s, ajournal.time, name, ActivityStatistics, ajournal.activity_group.id)
+            sjournal = StatisticJournal.at_time(s, ajournal.time, name, ActivityStatistics, ajournal.activity_group.id)
             body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         return body
 

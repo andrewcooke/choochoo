@@ -79,12 +79,17 @@ def default(db):
                         summary='[avg]',
                         display_cls=Score)
         add_topic_field(s, diary, 'Nutrition', c,
+                        summary='[cnt]',
                         display_cls=Text)
         add_topic_field(s, diary, 'Soreness', c,
+                        summary='[cnt]',
                         display_cls=Text)
         add_topic_field(s, diary, 'Medication', c,
+                        summary='[cnt]',
                         display_cls=Text)
         add_topic_field(s, diary, 'Weather', c,
+                        summary='[cnt]',
                         display_cls=Text)
         add_topic_field(s, diary, 'Route', c,
+                        summary='[cnt]',
                         display_cls=Text)

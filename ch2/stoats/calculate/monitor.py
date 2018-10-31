@@ -59,13 +59,13 @@ class MonitorStatistics:
                    MonitorHeartRate.time >= start_time,
                    MonitorHeartRate.time < finish_time,
                    MonitorHeartRate.value > 0).scalar()
-        self._add_integer_stat(s, interval, REST_HR, '[min],[avg]', rest_heart_rate, 'bpm')
+        self._add_integer_stat(s, interval, REST_HR, '[min],[avg],[cnt]', rest_heart_rate, 'bpm')
         steps = s.query(sum(MonitorSteps.delta)).join(MonitorJournal). \
             filter(MonitorJournal.time < finish_time,
                    MonitorJournal.finish >= start_time,
                    MonitorSteps.time >= start_time,
                    MonitorSteps.time < finish_time).scalar()
-        self._add_integer_stat(s, interval, STEPS, '[sum],[avg]', steps, None)
+        self._add_integer_stat(s, interval, STEPS, '[sum],[avg],[cnt]', steps, None)
         self._log.debug('Added data for %s' % interval)
 
     def _add_integer_stat(self, s, journal, name, summary, value, units):

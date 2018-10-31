@@ -17,6 +17,9 @@ class ActivityGroup(Base):
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Sort, nullable=False, server_default='')
 
+    def __str__(self):
+        return 'ActivityGroup "%s"' % self.name
+
 
 class ActivityJournal(Source):
 

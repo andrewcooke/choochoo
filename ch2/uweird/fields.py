@@ -1,57 +1,32 @@
 
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 
 from urwid import Edit, connect_signal
 
+from . import Field, PAGE_WIDTH
 from ..lib.utils import label
 from ..squeal.tables.statistic import StatisticJournalType
 from ..uweird.tui.widgets import Rating0, Rating1
 
-PAGE_WIDTH = 4
 
+class EditableField(Field):
 
-class Base(ABC):
-
-    def __init__(self, log, s, journal, width=1):
-        self._log = log
-        self.__session = s
-        self.__journal = journal
-        self.width = width
-
-    def __str__(self):
-        if self.__journal.value is None:
-            return '%s: _' % self.__journal.statistic_name.name + self._format_units()
-        else:
-            return '%s: ' % self.__journal.statistic_name.name + \
-                   self._format_value(self.__journal.value) + self._format_units()
-
-    @abstractmethod
-    def _format_value(self, value):
-        pass
-
-    def _format_units(self):
-        return (' ' + self.__journal.statistic_name.units) if self.__journal.statistic_name.units else ''
-
-    def bound_widget(self):
-        widget = self._widget(self.__journal)
+    def widget(self):
+        widget = self._widget(self._journal)
         connect_signal(widget, 'change', self.__on_change)
         return widget
 
     def __on_change(self, widget, value):
-        self._log.debug('Setting %s=%r' % (self.__journal.statistic_name.name, value))
-        self.__journal.value = value
-
-    @abstractmethod
-    def _widget(self, journal):
-        pass
+        self._log.debug('Setting %s=%r' % (self._journal.statistic_name.name, value))
+        self._journal.value = value
 
 
-class Text(Base):
+class Text(EditableField):
 
     statistic_journal_type = StatisticJournalType.TEXT
 
-    def __init__(self, log, s, journal, width=PAGE_WIDTH):
-        super().__init__(log, s, journal, width=width)
+    def __init__(self, log, journal, width=PAGE_WIDTH):
+        super().__init__(log, journal, width=width)
 
     def _format_value(self, value):
         return repr(value)
@@ -60,12 +35,12 @@ class Text(Base):
         return Edit(caption=label('%s: ' % journal.statistic_name.name), edit_text=journal.value or '')
 
 
-class Integer(Base):
+class Integer(Field):
 
     statistic_journal_type = StatisticJournalType.INTEGER
 
-    def __init__(self, log, s, journal, lo=None, hi=None, width=1):
-        super().__init__(log, s, journal, width=width)
+    def __init__(self, log, journal, lo=None, hi=None, width=1):
+        super().__init__(log, journal, width=width)
         self._lo = lo
         self._hi = hi
 
@@ -78,12 +53,12 @@ class Integer(Base):
                        minimum=self._lo, maximum=self._hi, units=journal.statistic_name.units)
 
 
-class Float(Base):
+class Float(EditableField):
 
     statistic_journal_type = StatisticJournalType.FLOAT
 
-    def __init__(self, log, s, journal, lo=None, hi=None, dp=2, format='%f', width=1):
-        super().__init__(log, s, journal, width=width)
+    def __init__(self, log, journal, lo=None, hi=None, dp=2, format='%f', width=1):
+        super().__init__(log, journal, width=width)
         self._lo = lo
         self._hi = hi
         self._dp = dp
@@ -98,12 +73,12 @@ class Float(Base):
                      minimum=self._lo, maximum=self._hi, dp=self._dp, units=journal.statistic_name.units)
 
 
-class Score(Base):
+class Score(EditableField):
 
     statistic_journal_type = StatisticJournalType.INTEGER
 
-    def __init__(self, log, s, journal, width=1):
-        super().__init__(log, s, journal, width=width)
+    def __init__(self, log, journal, width=1):
+        super().__init__(log, journal, width=width)
 
     def _format_value(self, value):
         return '%d' % value

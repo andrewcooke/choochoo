@@ -1,13 +1,14 @@
 
+import datetime as dt
 from enum import IntEnum
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
 from sqlalchemy.orm import relationship, backref
 
-from .source import Source
+from .source import Source, Interval
 from ..support import Base
 from ..types import Owner
-from ...lib.date import format_seconds
+from ...lib.date import format_seconds, local_date_to_time
 
 
 class StatisticName(Base):
@@ -63,7 +64,7 @@ class StatisticJournal(Base):
         try:
             return 'StatisticJournal "%s"' % self.value
         except AttributeError:
-            return 'Base Journal'
+            return 'Field Journal'
 
     @property
     def time(self):
@@ -120,6 +121,35 @@ class StatisticJournal(Base):
             return '%dbpm' % self.value
         else:
             return '%d%s' % (self.value, units)
+
+    @classmethod
+    def at_date(cls, s, date, name, owner, constraint):
+        start = local_date_to_time(date)
+        finish = start + dt.timedelta(days=1)
+        return s.query(StatisticJournal).join(StatisticName, Source). \
+            filter(StatisticName.name == name,
+                   Source.time >= start,
+                   Source.time < finish,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint).one_or_none()
+
+    @classmethod
+    def at_time(cls, s, time, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName, Source). \
+            filter(StatisticName.name == name,
+                   Source.time == time,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint).one_or_none()
+
+    @classmethod
+    def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner):
+        return s.query(StatisticJournal).join(StatisticName, Interval). \
+                    filter(StatisticJournal.statistic_name_id == StatisticName.id,
+                           Interval.schedule == schedule,
+                           Interval.start == start,
+                           Interval.owner == interval_owner,
+                           StatisticName.owner == statistic_owner,
+                           StatisticName.constraint == statistic_constraint).all()
 
 
 class StatisticJournalInteger(StatisticJournal):

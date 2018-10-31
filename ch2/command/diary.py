@@ -1,25 +1,22 @@
 
 import datetime as dt
 
-from ch2.stoats.calculate.summary import SummaryStatistics
-
-from ch2.squeal.tables.source import Interval
-
-from ch2.squeal.tables.statistic import StatisticJournal, StatisticName
-
-from ch2.lib.schedule import Schedule
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
 from .args import DATE, SCHEDULE
 from ..lib.date import to_date, local_date_to_time
 from ..lib.io import tui
+from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em
 from ..lib.widgets import DateSwitcher
 from ..squeal.tables.pipeline import PipelineType
+from ..squeal.tables.statistic import StatisticJournal, StatisticJournalType
 from ..squeal.tables.topic import Topic, TopicJournal
+from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display import build_pipeline
 from ..uweird.fields import PAGE_WIDTH
+from ..uweird.summary import FloatSummary, SUMMARY_FIELDS
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
 from ..uweird.tui.tabs import TabList
@@ -125,13 +122,13 @@ class DailyDiary(Diary):
         for field in topic.fields:
             if field in tjournal.statistics:  # might be outside schedule
                 self._log.debug('%s' % field)
-                display = field.display_cls(self._log, s, tjournal.statistics[field],
+                display = field.display_cls(self._log, tjournal.statistics[field],
                                             *field.display_args, **field.display_kargs)
                 self._log.debug('%s' % display)
                 if width + display.width > PAGE_WIDTH:
                     yield Columns(columns)
                     columns, width = [], 0
-                columns.append((WEIGHT, display.width, f(display.bound_widget())))
+                columns.append((WEIGHT, display.width, f(display.widget())))
                 width += display.width
         if width:
             yield Columns(columns)
@@ -173,19 +170,21 @@ class ScheduleDiary(Diary):
     def _display_fields(self, s, f, topic):
         columns, width = [], 0
         for field in topic.fields:
-            # todo - when this actually has some data, display it read-only
             self._log.debug('******************************** %s' % field)
-            for journal in s.query(StatisticJournal).join(StatisticName, Interval). \
-                    filter(StatisticJournal.statistic_name == field.statistic_name,
-                           Interval.schedule == self._schedule,
-                           Interval.start == self._date,
-                           StatisticName.owner == SummaryStatistics).all():
-                display = field.display_cls(self._log, s, journal,
-                                            *field.display_args, **field.display_kargs)
+            for journal in StatisticJournal.at_interval(s, self._date, self._schedule,
+                                                        # id of source field is constraint for summary
+                                                        SummaryStatistics, field.statistic_name.id,
+                                                        SummaryStatistics):
+                # todo - ordering?
+                if journal.type == field.type and field.type == StatisticJournalType.FLOAT:
+                    display = FloatSummary(self._log, journal,
+                                           *field.display_args, **field.display_kargs)
+                else:
+                    display = SUMMARY_FIELDS[journal.type](self._log, journal)
                 if width + display.width > PAGE_WIDTH:
                     yield Columns(columns)
                     columns, width = [], 0
-                columns.append((WEIGHT, display.width, f(display.bound_widget())))
+                columns.append((WEIGHT, display.width, f(display.widget())))
                 width += display.width
         if width:
             yield Columns(columns)

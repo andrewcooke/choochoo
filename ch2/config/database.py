@@ -50,7 +50,7 @@ def add(session, instance):
     Add an instance to the session (and so to the database), returning the instance.
     You likely don't need this - see the more specific helpers below.
 
-    The instance can of any class that subclasses the Base class from SQLAlchemy.
+    The instance can of any class that subclasses the Field class from SQLAlchemy.
     In practice, that means most classes in the ch2.squeal.tables mdoule.
     However, only some classes make sense in the context of a configuration, and
     more specific helpers probably already exist for those.
