@@ -62,12 +62,13 @@ def default(db):
         # a basic diary
 
         c = Counter()
-        diary = add_topic(s, 'Diary', c)
+        diary = add_topic(s, 'DailyDiary', c)
         add_topic_field(s, diary, 'Notes', c,
                         display_cls=Text)
-        add_topic_field(s, diary, 'Rest HR', c,
-                        units=BPM, summary='[avg]',
-                        display_cls=Integer, lo=25, hi=75)
+        # now provided via monitor
+        # add_topic_field(s, diary, 'Rest HR', c,
+        #                 units=BPM, summary='[avg]',
+        #                 display_cls=Integer, lo=25, hi=75)
         add_topic_field(s, diary, 'Weight', c,
                         units='kg', summary='[avg]',
                         display_cls=Float, lo=50, hi=100, dp=1)
@@ -77,9 +78,13 @@ def default(db):
         add_topic_field(s, diary, 'Mood', c,
                         summary='[avg]',
                         display_cls=Score)
-        add_topic_field(s, diary, 'Weather', c,
+        add_topic_field(s, diary, 'Nutrition', c,
+                        display_cls=Text)
+        add_topic_field(s, diary, 'Soreness', c,
                         display_cls=Text)
         add_topic_field(s, diary, 'Medication', c,
+                        display_cls=Text)
+        add_topic_field(s, diary, 'Weather', c,
                         display_cls=Text)
         add_topic_field(s, diary, 'Route', c,
                         display_cls=Text)

@@ -1,10 +1,17 @@
 
 import datetime as dt
 
+from ch2.stoats.calculate.summary import SummaryStatistics
+
+from ch2.squeal.tables.source import Interval
+
+from ch2.squeal.tables.statistic import StatisticJournal, StatisticName
+
+from ch2.lib.schedule import Schedule
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
-from .args import DATE
+from .args import DATE, SCHEDULE
 from ..lib.date import to_date, local_date_to_time
 from ..lib.io import tui
 from ..lib.utils import PALETTE_RAINBOW, em
@@ -32,7 +39,7 @@ The daily diary.  Enter information here.
 
 To exit, alt-q (or, without saving, alt-x).
     '''
-    date = args[DATE]
+    date, schedule = args[DATE], args[SCHEDULE]
     if not date:
         date = dt.date.today()
     else:
@@ -41,29 +48,24 @@ To exit, alt-q (or, without saving, alt-x).
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
     TopicJournal.check_tz(db)
-    MainLoop(Diary(log, db, date), palette=PALETTE_RAINBOW).run()
-
-
-# todo - change to date + tz
+    if schedule:
+        schedule = Schedule(schedule)
+        if schedule.start or schedule.finish:
+            raise Exception('Schedule must be open (no start or finish)')
+        MainLoop(ScheduleDiary(log, db, date, schedule), palette=PALETTE_RAINBOW).run()
+    else:
+        MainLoop(DailyDiary(log, db, date), palette=PALETTE_RAINBOW).run()
 
 
 class Diary(DateSwitcher):
-    '''
-    Render the diary at a given date.
-    '''
 
     def _build(self, s):
         self._log.debug('Building diary at %s' % self._date)
         body, f = [], Factory(TabList())
-        root_topics = [topic for topic in
-                       s.query(Topic).filter(Topic.parent == None,
-                                             or_(Topic.start <= self._date, Topic.start == None),
-                                             or_(Topic.finish >= self._date, Topic.finish == None)).
-                           order_by(Topic.sort).all()
-                       if topic.schedule.at_location(self._date)]
+        root_topics = list(self._topics(s))
         for topic in root_topics:
-            body.append(self.__topic(s, f, topic))
-        for extra in self.__pipeline(s, f):
+            body.append(self.__display_topic(s, f, topic))
+        for extra in self._display_pipeline(s, f):
             body.append(extra)
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([Text(self._date.strftime('%Y-%m-%d - %A')), Divider()]),
@@ -79,15 +81,15 @@ class Diary(DateSwitcher):
         footer += ['ctivity/', em('t'), 'oday']
         return footer
 
-    def __topic(self, s, f, topic):
+    def __display_topic(self, s, f, topic):
         self._log.debug('%s' % topic)
         body, title = [], None
         if topic.name:
             title = Text(topic.name)
         if topic.description:
             body.append(Text(topic.description))
-        body += list(self.__fields(s, f, topic))
-        body += list(self.__children(s, f, topic))
+        body += list(self._display_fields(s, f, topic))
+        body += list(self.__display_children(s, f, topic))
         if not body:
             return title
         body = Indent(Pile(body))
@@ -95,7 +97,28 @@ class Diary(DateSwitcher):
             body = Pile([title, body])
         return body
 
-    def __fields(self, s, f, topic):
+    def __display_children(self, s, f, topic):
+        for child in topic.children:
+            if child.schedule.at_location(self._date):
+                extra = self.__display_topic(s, f, child)
+                if extra:
+                    yield extra
+
+
+class DailyDiary(Diary):
+    '''
+    Render the diary at a given date.
+    '''
+
+    def _topics(self, s):
+        for topic in s.query(Topic).filter(Topic.parent == None,
+                                           or_(Topic.start <= self._date, Topic.start == None),
+                                           or_(Topic.finish >= self._date, Topic.finish == None)). \
+                order_by(Topic.sort).all():
+            if topic.schedule.at_location(self._date):
+                yield topic
+
+    def _display_fields(self, s, f, topic):
         columns, width = [], 0
         tjournal = self.__topic_journal(s, topic)
         tjournal.populate(self._log, s)
@@ -113,13 +136,6 @@ class Diary(DateSwitcher):
         if width:
             yield Columns(columns)
 
-    def __children(self, s, f, topic):
-        for child in topic.children:
-            if child.schedule.at_location(self._date):
-                extra = self.__topic(s, f, child)
-                if extra:
-                    yield extra
-
     def __topic_journal(self, s, topic):
         tjournal = s.query(TopicJournal). \
             filter(TopicJournal.topic == topic,
@@ -129,6 +145,51 @@ class Diary(DateSwitcher):
             s.add(tjournal)
         return tjournal
 
-    def __pipeline(self, s, f):
+    def _display_pipeline(self, s, f):
         yield from build_pipeline(self._log, s, PipelineType.DIARY, f, self._date)
+
+
+class ScheduleDiary(Diary):
+    '''
+    Display summary data for the given schedule.
+    '''
+
+    def __init__(self, log, db, date, schedule):
+        self._schedule = schedule
+        super().__init__(log, db, self._new_date(date))
+
+    def _new_date(self, date):
+        return self._schedule.start_of_frame(date)
+
+    def _topics(self, s):
+        finish = self._schedule.next_frame(self._date)
+        for topic in s.query(Topic).filter(Topic.parent == None,
+                                           or_(Topic.start < finish, Topic.start == None),
+                                           or_(Topic.finish >= self._date, Topic.finish == None)). \
+                order_by(Topic.sort).all():
+            if topic.schedule.in_range(self._date):
+                yield topic
+
+    def _display_fields(self, s, f, topic):
+        columns, width = [], 0
+        for field in topic.fields:
+            # todo - when this actually has some data, display it read-only
+            self._log.debug('******************************** %s' % field)
+            for journal in s.query(StatisticJournal).join(StatisticName, Interval). \
+                    filter(StatisticJournal.statistic_name == field.statistic_name,
+                           Interval.schedule == self._schedule,
+                           Interval.start == self._date,
+                           StatisticName.owner == SummaryStatistics).all():
+                display = field.display_cls(self._log, s, journal,
+                                            *field.display_args, **field.display_kargs)
+                if width + display.width > PAGE_WIDTH:
+                    yield Columns(columns)
+                    columns, width = [], 0
+                columns.append((WEIGHT, display.width, f(display.bound_widget())))
+                width += display.width
+        if width:
+            yield Columns(columns)
+
+    def _display_pipeline(self, s, f):
+        yield from build_pipeline(self._log, s, PipelineType.DIARY, f, self._date, schedule=self._schedule)
 

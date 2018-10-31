@@ -7,10 +7,10 @@ from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 
 
-def build_pipeline(log, session, type, factory, date):
+def build_pipeline(log, session, type, factory, date, schedule=None):
     for cls, args, kargs in Pipeline.all(log, session, type):
         log.info('Building %s (%s, %s)' % (cls, args, kargs))
-        yield from cls(log).build(session, factory, date, *args, **kargs)
+        yield from cls(log).build(session, factory, date, *args, schedule=schedule, **kargs)
 
 
 class Displayer:

@@ -20,7 +20,7 @@ HRZ_WIDTH = 30
 
 class ActivityDiary(Displayer):
 
-    def build(self, s, f, date):
+    def build(self, s, f, date, schedule=None):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
         for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():

@@ -30,7 +30,7 @@ def test_sources():
 
             # add a diary entry
 
-            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+            diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
             d = add(s, TopicJournal(topic=diary, date='2018-09-29',
                                     time=local_date_to_time(to_date('2018-09-29'))))
             d.populate(log, s)
@@ -47,7 +47,7 @@ def test_sources():
 
             # check the diary entry was persisted
 
-            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+            diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.date == '2018-09-29').one()
             d.populate(log, s)
@@ -68,7 +68,7 @@ def test_sources():
 
             # check the summary stats
 
-            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+            diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
             sleep = s.query(StatisticJournalInteger).join(StatisticName). \
                 filter(StatisticName.owner == diary, StatisticName.name == 'Rest HR').one()
             assert sleep.value == 60
@@ -95,7 +95,7 @@ def test_sources():
 
             # delete the diary entry
 
-            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+            diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.date == '2018-09-29').one()
             s.delete(d)

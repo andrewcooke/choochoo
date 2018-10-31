@@ -11,7 +11,7 @@ from ...uweird.tui.decorators import Indent
 
 class MonitorDiary(Displayer):
 
-    def build(self, s, f, date):
+    def build(self, s, f, date, schedule=None):
         date = to_date(date)
         columns = self.__fields(s, date)
         if columns:

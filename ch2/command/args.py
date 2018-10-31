@@ -50,6 +50,7 @@ M, MESSAGE = 'm', 'message'
 MATCH = 'match'
 MESSAGES = 'messages'
 MONITOR = 'monitor'
+MONTH = 'month'
 MONTHS = 'months'
 NAME = 'name'
 NOT = 'not'
@@ -69,6 +70,7 @@ V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
 W, WARN = 'w', 'warn'
+YEAR = 'year'
 
 
 def mm(name): return '--' + name
@@ -76,7 +78,7 @@ def m(name): return '-' + name
 
 
 VARIABLE = compile(r'(.*(?:[^$]|^))\${(\w+)\}(.*)')
-MEMORY  = ':memory:'
+MEMORY = ':memory:'
 
 
 class NamespaceWithVariables(Mapping):
@@ -166,6 +168,13 @@ def parser():
     diary = subparsers.add_parser(DIARY, help='daily diary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?', type=to_date,
                        help='an optional date to display (default is today)')
+    diary_summary = diary.add_mutually_exclusive_group()
+    diary_summary.add_argument(mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
+                               help='show monthly summary')
+    diary_summary.add_argument(mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
+                               help='show yearly summary')
+    diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
+                               help='show summary for given schedule')
     diary.set_defaults(command=DIARY)
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')

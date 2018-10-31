@@ -157,7 +157,7 @@ def add_topic(session, name, sort, description=None, schedule=None):
     They can also be associated with fields (and so with statistics).
 
     A root topic is usually used as a header to group related children.
-    For example, 'Diary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
+    For example, 'DailyDiary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
     '''
     return add(session, Topic(name=name, sort=sort, description=description, schedule=schedule))
 

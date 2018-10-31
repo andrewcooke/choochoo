@@ -92,17 +92,24 @@ class DateSwitcher(App):
             q = q.filter(ActivityJournal.time >= (time + dt.timedelta(days=1))).order_by(ActivityJournal.time)
         journal = q.limit(1).one_or_none()
         if journal:
-            self.__date = time_to_local_date(journal.time)
+            self.__date = self._new_date(time_to_local_date(journal.time))
             self.rebuild()
 
     def _change_date(self, c):
         if c == 't':
-            self.__date = dt.date.today()
+            date = dt.date.today()
         else:
             delta = (-1 if c == c.lower() else 1, c.lower())
             self.save()
-            self.__date = add_date(self.__date, delta)
+            date = add_date(self.__date, delta)
+        self.__date = self._new_date(date)
         self.rebuild()
+
+    def _new_date(self, date):
+        '''
+        Hook for subclasses
+        '''
+        return date
 
     @property
     def _date(self):

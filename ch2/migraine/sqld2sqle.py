@@ -31,7 +31,7 @@ assert_empty(StatisticJournal)
 assert_empty(TopicJournal)
 
 
-diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
 fields = dict((field.statistic_name.name, field.statistic_name) for field in diary.fields)
 notes = fields['Notes']
 mood = fields['Mood']
