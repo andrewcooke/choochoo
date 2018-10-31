@@ -18,7 +18,7 @@ def acooke(db):
         add_topic_field(s, ms, 'Notes', c,
                         display_cls=Text)
         add_child_topic(s, ms, 'Betaferon', c,
-                        schedule='2018-08-07/2d')  # reminder to take meds on alternate days
+                        schedule='2018-08-07/2d[1]')  # reminder to take meds on alternate days
 
         leg = add_child_topic(s, injuries, 'Broken Femur LHS', c,
                               schedule='2018-03-11-')
