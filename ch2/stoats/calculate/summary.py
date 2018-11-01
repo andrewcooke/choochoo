@@ -166,6 +166,12 @@ class SummaryStatistics:
                 else:
                     s.delete(interval)
 
+    @classmethod
+    def parse_name(cls, name):
+        left, right = name.split(' ', 1)
+        summary, period = left.split('/')
+        return summary, period, right
+
 
 def fuzz(n, q):
     i = (n-1) * q / 4

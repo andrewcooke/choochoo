@@ -1,7 +1,7 @@
 
 from .default import default
 from ..config.database import Counter, add_topic, add_child_topic, add_topic_field
-from ..uweird.fields import Text
+from ..uweird.fields.topic import Text
 
 
 def acooke(db):

@@ -1,5 +1,6 @@
 
 import datetime as dt
+from itertools import groupby
 
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
@@ -8,7 +9,7 @@ from .args import DATE, SCHEDULE
 from ..lib.date import to_date, local_date_to_time
 from ..lib.io import tui
 from ..lib.schedule import Schedule
-from ..lib.utils import PALETTE_RAINBOW, em
+from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
 from ..squeal.tables.pipeline import PipelineType
 from ..squeal.tables.statistic import StatisticJournal, StatisticJournalType
@@ -16,7 +17,7 @@ from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display import build_pipeline
 from ..uweird.fields import PAGE_WIDTH
-from ..uweird.summary import FloatSummary, SUMMARY_FIELDS
+from ..uweird.fields.summary import Float, SUMMARY_FIELDS
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
 from ..uweird.tui.tabs import TabList
@@ -168,25 +169,36 @@ class ScheduleDiary(Diary):
                 yield topic
 
     def _display_fields(self, s, f, topic):
-        columns, width = [], 0
+        columns = []
         for field in topic.fields:
-            self._log.debug('******************************** %s' % field)
-            for journal in StatisticJournal.at_interval(s, self._date, self._schedule,
-                                                        # id of source field is constraint for summary
-                                                        SummaryStatistics, field.statistic_name.id,
-                                                        SummaryStatistics):
-                # todo - ordering?
-                if journal.type == field.type and field.type == StatisticJournalType.FLOAT:
-                    display = FloatSummary(self._log, journal,
-                                           *field.display_args, **field.display_kargs)
-                else:
-                    display = SUMMARY_FIELDS[journal.type](self._log, journal)
-                if width + display.width > PAGE_WIDTH:
+            for journals in groupby(
+                    StatisticJournal.at_interval(s, self._date, self._schedule,
+                                                 # id of source field is constraint for summary
+                                                 SummaryStatistics, field.statistic_name.id,
+                                                 SummaryStatistics),
+                    key=lambda j: j.statistic_name.constraint):
+                journals = list(journals[1])  # drop keys and expand iterator
+                if len(journals) + 1 + len(columns) > PAGE_WIDTH:
+                    while len(columns) < PAGE_WIDTH:
+                        columns.append(Text(''))
                     yield Columns(columns)
-                    columns, width = [], 0
-                columns.append((WEIGHT, display.width, f(display.widget())))
-                width += display.width
-        if width:
+                    columns = []
+                for named, journal in enumerate(journals):
+                    summary, period, name = SummaryStatistics.parse_name(journal.statistic_name.name)
+                    if not named:
+                        columns.append(Text([name]))
+                    if journal.type == field.type and field.type == StatisticJournalType.FLOAT:
+                        display = Float(self._log, journal, *field.display_args,
+                                        summary=summary, **field.display_kargs)
+                    else:
+                        display = SUMMARY_FIELDS[journal.type](self._log, journal, summary=summary)
+                    columns.append((WEIGHT, 1, f(display.widget())))
+                    if len(columns) == PAGE_WIDTH:
+                        yield Columns(columns)
+                        columns = []
+        if columns:
+            while len(columns) < PAGE_WIDTH:
+                columns.append(Text(''))
             yield Columns(columns)
 
     def _display_pipeline(self, s, f):

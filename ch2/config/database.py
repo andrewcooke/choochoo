@@ -5,7 +5,7 @@ from ..squeal.tables.constant import Constant
 from ..squeal.tables.pipeline import Pipeline, PipelineType
 from ..squeal.tables.statistic import StatisticName, StatisticJournalType
 from ..squeal.tables.topic import Topic, TopicField
-from ..uweird.fields import Integer
+from ..uweird.fields.topic import Integer
 
 
 def config(*args):

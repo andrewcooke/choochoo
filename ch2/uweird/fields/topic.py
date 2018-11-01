@@ -3,10 +3,10 @@ from abc import abstractmethod
 
 from urwid import Edit, connect_signal
 
-from . import Field, PAGE_WIDTH
-from ..lib.utils import label
-from ..squeal.tables.statistic import StatisticJournalType
-from ..uweird.tui.widgets import Rating0, Rating1
+from . import PAGE_WIDTH, Field
+from ...lib.utils import label
+from ...squeal.tables.statistic import StatisticJournalType
+from ..tui.widgets import Rating0, Rating1
 
 
 class EditableField(Field):
@@ -48,7 +48,7 @@ class Integer(Field):
         return '%d' % value
 
     def _widget(self, journal):
-        from .tui.widgets import Integer
+        from ..tui.widgets import Integer
         return Integer(caption=label('%s: ' % journal.statistic_name.name), state=journal.value,
                        minimum=self._lo, maximum=self._hi, units=journal.statistic_name.units)
 
@@ -68,7 +68,7 @@ class Float(EditableField):
         return self._format % value
 
     def _widget(self, journal):
-        from .tui.widgets import Float
+        from ..tui.widgets import Float
         return Float(caption=label('%s: ' % journal.statistic_name.name), state=journal.value,
                      minimum=self._lo, maximum=self._hi, dp=self._dp, units=journal.statistic_name.units)
 

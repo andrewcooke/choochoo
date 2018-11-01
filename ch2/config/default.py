@@ -11,7 +11,7 @@ from ..stoats.display.activity import ActivityDiary
 from ..stoats.read.activity import ActivityImporter
 from ..stoats.read.monitor import MonitorImporter
 from ..stoats.names import BPM, FTHR
-from ..uweird.fields import Text, Float, Score, Integer
+from ..uweird.fields.topic import Text, Float, Score, Integer
 
 
 def default(db):
