@@ -7,12 +7,13 @@ from urwid import Text, Pile, Columns, Divider
 from . import Displayer
 from .heart_rate import build_zones
 from ..calculate.activity import ActivityStatistics
-from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_OVER_M_ANY
+from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_M_ANY
 from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import label
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
 from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
+from ...uweird.fields import summary_columns
 from ...uweird.tui.decorators import Indent
 
 HRZ_WIDTH = 30
@@ -21,6 +22,12 @@ HRZ_WIDTH = 30
 class ActivityDiary(Displayer):
 
     def build(self, s, f, date, schedule=None):
+        if schedule:
+            yield from self.__build_schedule(s, f, date, schedule)
+        else:
+            yield from self.__build_date(s, f, date)
+
+    def __build_date(self, s, f, date):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
         for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
@@ -40,7 +47,7 @@ class ActivityDiary(Displayer):
             Divider(),
             Indent(Columns([Pile(self.__template(s, ajournal, MEDIAN_KM_TIME_ANY,
                                                  'Median Time', r'(\d+km)', date)),
-                            Pile(self.__template(s, ajournal, MAX_MED_HR_OVER_M_ANY,
+                            Pile(self.__template(s, ajournal, MAX_MED_HR_M_ANY,
                                                  'Max Med HR', r'(\d+m)', date))]))
         ])
 
@@ -61,12 +68,20 @@ class ActivityDiary(Displayer):
                    StatisticName.owner == ActivityStatistics,
                    StatisticName.constraint == ajournal.activity_group.id).order_by(StatisticName.name).all()
         # extract
-        for sjournal in sorted(sjournals,
-                               # order by integer embedded in name
-                               key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic_name.name).group(1))):
+        for sjournal in self.__sort_journals(sjournals):
             body.append(Text([label(search(re, sjournal.statistic_name.name).group(1) + ': ')] +
                              self.__format_value(sjournal, date)))
         return body
+
+    def __sort_journals(self, sjournals):
+        return sorted(sjournals,
+                      # order by integer embedded in name
+                      key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic_name.name).group(1)))
+
+    def __sort_names(self, statistic_names):
+        return sorted(statistic_names,
+                      # order by integer embedded in name
+                      key=lambda statistic_name: int(search(r'(\d+)', statistic_name.name).group(1)))
 
     def __format_value(self, sjournal, date):
         words, first = ['%s ' % sjournal.formatted()], True
@@ -81,3 +96,28 @@ class ActivityDiary(Displayer):
                 words += [':', ('rank-%d' % measure.rank, '%d' % measure.rank)]
             words += ['/' + measure.source.schedule.describe(compact=True)]
         return words
+
+    def __build_schedule(self, s, f, date, schedule):
+        columns = list(self.__schedule_fields(s, f, date, schedule))
+        if columns:
+            yield Pile([Text('Activities'),
+                        Indent(Pile(columns))])
+
+    def __schedule_fields(self, s, f, date, schedule):
+        names = list(self.__names(s, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED))
+        yield from summary_columns(self._log, s, f, date, schedule, names)
+        names = self.__sort_names(self.__names_like(s, MEDIAN_KM_TIME_ANY))
+        yield from summary_columns(self._log, s, f, date, schedule, names)
+        names = self.__sort_names(self.__names_like(s, MAX_MED_HR_M_ANY))
+        yield from summary_columns(self._log, s, f, date, schedule, names)
+
+    def __names(self, s, *names):
+        for name in names:
+            yield s.query(StatisticName). \
+                filter(StatisticName.name == name,
+                       StatisticName.owner == ActivityStatistics).one()
+
+    def __names_like(self, s, name):
+        return s.query(StatisticName). \
+                filter(StatisticName.name.like(name),
+                       StatisticName.owner == ActivityStatistics).all()

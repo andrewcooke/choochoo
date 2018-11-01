@@ -8,8 +8,8 @@ MEDIAN_KM_TIME_ANY = 'Median % Time'
 PERCENT_IN_Z = 'Percent in Z%d'
 PERCENT_IN_Z_ANY = 'Percent in Z%'
 TIME_IN_Z = 'Time in Z%d'
-MAX_MED_HR_OVER_M = 'Max Med HR over %dm'
-MAX_MED_HR_OVER_M_ANY = 'Max Med HR over %'
+MAX_MED_HR_M = 'Max Med HR %dm'
+MAX_MED_HR_M_ANY = 'Max Med HR %'
 HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
 
 MAX = '[max]'

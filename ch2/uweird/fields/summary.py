@@ -17,6 +17,8 @@ class SummaryField(Field):
 
 class Float(SummaryField):
 
+    # todo - auto-detect units and format appropriately?  using existing code?
+
     def __init__(self, log, journal, lo=None, hi=None, dp=2, format='%f', summary=None, width=1):
         super().__init__(log, journal, summary=summary, width=width)
         self._lo = lo

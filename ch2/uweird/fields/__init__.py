@@ -1,4 +1,10 @@
+
 from abc import ABC, abstractmethod
+
+from urwid import Text, Columns, WEIGHT
+
+from ...squeal.tables.statistic import StatisticJournal, StatisticJournalType
+from ...stoats.calculate.summary import SummaryStatistics
 
 PAGE_WIDTH = 4
 
@@ -30,3 +36,38 @@ class Field(ABC):
     @abstractmethod
     def _widget(self):
         pass
+
+
+def summary_columns(log, s, f, date, schedule, names, fields=None):
+    from .summary import Float, SUMMARY_FIELDS
+    columns = []
+    if not fields:
+        fields = [None] * len(names)
+    fields_and_names = zip(fields, names)
+    for field, name in fields_and_names:
+        journals = StatisticJournal.at_interval(s, date, schedule,
+                                                # id of source field is constraint for summary
+                                                SummaryStatistics, name.id,
+                                                SummaryStatistics)
+        if columns and len(journals) + 1 + len(columns) > PAGE_WIDTH:
+            while len(columns) < PAGE_WIDTH:
+                columns.append(Text(''))
+            yield Columns(columns)
+            columns = []
+        for named, journal in enumerate(journals):
+            summary, period, name = SummaryStatistics.parse_name(journal.statistic_name.name)
+            if not named:
+                columns.append(Text([name]))
+            if field and journal.type == field.type and field.type == StatisticJournalType.FLOAT:
+                display = Float(log, journal, *field.display_args,
+                                summary=summary, **field.display_kargs)
+            else:
+                display = SUMMARY_FIELDS[journal.type](log, journal, summary=summary)
+            columns.append((WEIGHT, 1, f(display.widget())))
+            if len(columns) == PAGE_WIDTH:
+                yield Columns(columns)
+                columns = []
+    if columns:
+        while len(columns) < PAGE_WIDTH:
+            columns.append(Text(''))
+        yield Columns(columns)

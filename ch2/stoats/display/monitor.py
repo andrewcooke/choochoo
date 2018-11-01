@@ -6,7 +6,8 @@ from ..calculate.monitor import MonitorStatistics
 from ..names import STEPS, REST_HR
 from ...lib.date import to_date
 from ...lib.utils import label
-from ...squeal.tables.statistic import StatisticJournal
+from ...squeal.tables.statistic import StatisticJournal, StatisticName
+from ...uweird.fields import summary_columns
 from ...uweird.tui.decorators import Indent
 
 
@@ -15,7 +16,7 @@ class MonitorDiary(Displayer):
     def build(self, s, f, date, schedule=None):
         date = to_date(date)
         if schedule:
-            yield from self.__build_schedule(s, date, schedule)
+            yield from self.__build_schedule(s, f, date, schedule)
         else:
             yield from self.__build_date(s, date)
 
@@ -40,10 +41,18 @@ class MonitorDiary(Displayer):
         else:
             return None
 
-    def __build_schedule(self, s, date, schedule):
-        journals = self.__field_schedule(s, date, schedule, STEPS)
-        yield Text('TODO (%d journals)' % len(journals))
+    def __build_schedule(self, s, f, date, schedule):
+        columns = list(self.__schedule_fields(s, f, date, schedule))
+        if columns:
+            yield Pile([Text('Monitor'),
+                        Indent(Pile(columns))])
 
-    def __field_schedule(self, s, date, schedule, name):
-        # todo find id from name and use as constraint
-        return StatisticJournal.at_interval(s, date, schedule, MonitorStatistics, None, MonitorStatistics)
+    def __schedule_fields(self, s, f, date, schedule):
+        names = list(self.__names(s, STEPS, REST_HR))
+        yield from summary_columns(self._log, s, f, date, schedule, names)
+
+    def __names(self, s, *names):
+        for name in names:
+            yield s.query(StatisticName). \
+                filter(StatisticName.name == name,
+                       StatisticName.owner == MonitorStatistics).one()

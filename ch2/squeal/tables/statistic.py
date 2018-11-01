@@ -150,7 +150,7 @@ class StatisticJournal(Base):
                            Interval.owner == interval_owner,
                            StatisticName.owner == statistic_owner,
                            StatisticName.constraint == statistic_constraint). \
-                    order_by(StatisticName.constraint,  # order places summarystats from same source together
+                    order_by(StatisticName.constraint,  # order places summary stats from same source together
                              StatisticName.name).all()
 
 

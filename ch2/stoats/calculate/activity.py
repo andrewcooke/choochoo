@@ -6,7 +6,7 @@ from itertools import chain
 from sqlalchemy.sql.functions import count
 
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_OVER_M, BPM, MIN
+    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
 from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName
@@ -79,7 +79,7 @@ class ActivityStatistics:
             for target in HR_MINUTES:
                 heart_rates = sorted(MedianHRForTime(self._log, journal, target * 60).heart_rates(), reverse=True)
                 if heart_rates:
-                    self._add_float_stat(s, journal, activity_group, MAX_MED_HR_OVER_M % target, MAX, heart_rates[0], BPM)
+                    self._add_float_stat(s, journal, activity_group, MAX_MED_HR_M % target, MAX, heart_rates[0], BPM)
         else:
             self._log.warn('No HR zones defined for %s or before' % journal.time)
 
