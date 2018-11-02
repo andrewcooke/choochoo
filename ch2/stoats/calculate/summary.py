@@ -69,8 +69,6 @@ class SummaryStatistics:
         range = schedule.describe()
         type, units = input.type, input.statistic_name.units
         defined = [x for x in values if x is not None]
-        # if defined and input.statistic_name.name == 'Notes':
-        #     import pdb; pdb.set_trace()
         if process == 'min':
             return min(defined) if defined else None, 'Min/%s %%s' % range, type, units
         elif process == 'max':
@@ -110,7 +108,8 @@ class SummaryStatistics:
         if not statistic_name:
             statistic_name = add(s, StatisticName(name=name, owner=self, constraint=root.id, units=units))
         if statistic_name.units != units:
-            raise Exception('Units have changed for %s' % statistic_name)
+            self._log.warn('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
+            statistic_name.units = units
         return statistic_name
 
     def _create_value(self, s, interval, spec, statistic_name, process, data, values):
@@ -147,8 +146,6 @@ class SummaryStatistics:
                 interval = add(s, Interval(time=start_time, start=start, finish=finish, schedule=spec, owner=self))
                 have_data = False
                 for statistic_name in self._statistics_missing_summaries(s, start_time, finish_time):
-                    # if statistic_name.name == 'Notes':
-                    #     import pdb; pdb.set_trace()
                     data = [journal for journal in self._journal_data(s, statistic_name, start_time, finish_time)
                             if spec.at_location(time_to_local_date(journal.time))]
                     if data:

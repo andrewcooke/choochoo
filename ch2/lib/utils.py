@@ -70,3 +70,10 @@ def unique(elements, key=lambda x: x):
 
 def datetime_to_epoch(datetime):
     return t.mktime(datetime.timetuple())
+
+
+def interleave(sep, iter):
+    for started, value in enumerate(iter):
+        if started:
+            yield sep
+        yield value

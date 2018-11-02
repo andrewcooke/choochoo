@@ -5,9 +5,9 @@ from . import Displayer
 from ..calculate.monitor import MonitorStatistics
 from ..names import STEPS, REST_HR
 from ...lib.date import to_date
-from ...lib.utils import label
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
-from ...uweird.fields import summary_columns
+from ...uweird.fields import ReadOnlyField
+from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
 
 
@@ -37,7 +37,7 @@ class MonitorDiary(Displayer):
     def __field(self, s, date, name):
         sjournal = StatisticJournal.at_date(s, date, name, MonitorStatistics, None)
         if sjournal:
-            return Text([label(name + ': '), sjournal.formatted()])
+            return ReadOnlyField(self._log, sjournal, date=date).widget()
         else:
             return None
 

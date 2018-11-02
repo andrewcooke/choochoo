@@ -13,7 +13,7 @@ from ...lib.utils import label
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
 from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
-from ...uweird.fields import summary_columns
+from ch2.uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
 
 HRZ_WIDTH = 30
@@ -36,11 +36,11 @@ class ActivityDiary(Displayer):
                            ActivityJournal.time < finish,
                            ActivityJournal.activity_group == activity_group). \
                     order_by(ActivityJournal.time).all():
-                yield self.__journal_data(s, journal, date)
+                yield self.__journal_date(s, journal, date)
 
-    def __journal_data(self, s, ajournal, date):
+    def __journal_date(self, s, ajournal, date):
         zones = build_zones(s, ajournal, HRZ_WIDTH)
-        details = Pile(self.__active_data(s, ajournal, date))
+        details = Pile(self.__active_date(s, ajournal, date))
         return Pile([
             Text(ajournal.name),
             Indent(Columns([details, (HRZ_WIDTH + 2, zones)])),
@@ -51,7 +51,7 @@ class ActivityDiary(Displayer):
                                                  'Max Med HR', r'(\d+m)', date))]))
         ])
 
-    def __active_data(self, s, ajournal, date):
+    def __active_date(self, s, ajournal, date):
         body = [Divider()]
         body.append(Text('%s - %s  (%s)' % (ajournal.time.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
                                             format_seconds((ajournal.finish - ajournal.time).seconds))))
@@ -84,18 +84,7 @@ class ActivityDiary(Displayer):
                       key=lambda statistic_name: int(search(r'(\d+)', statistic_name.name).group(1)))
 
     def __format_value(self, sjournal, date):
-        words, first = ['%s ' % sjournal.formatted()], True
-        for measure in sorted(sjournal.measures,
-                              key=lambda measure: measure.source.schedule.frame_length_in_days(date)):
-            if not first:
-                words += [',']
-            first = False
-            quintile = 1 + min(4, measure.percentile / 20)
-            words += [('quintile-%d' % quintile, '%d%%' % int(measure.percentile))]
-            if measure.rank < 5:
-                words += [':', ('rank-%d' % measure.rank, '%d' % measure.rank)]
-            words += ['/' + measure.source.schedule.describe(compact=True)]
-        return words
+        return ['%s ' % sjournal.formatted()] + sjournal.measures_as_text(date)
 
     def __build_schedule(self, s, f, date, schedule):
         columns = list(self.__schedule_fields(s, f, date, schedule))

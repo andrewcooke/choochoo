@@ -1,7 +1,11 @@
 
+from urwid import Text, WEIGHT, Columns
+
+from ch2.squeal.tables.statistic import StatisticJournal
+from ch2.stoats.calculate.summary import SummaryStatistics
+from ch2.uweird.fields import PAGE_WIDTH
 from . import Field
 from ...lib.utils import label, em
-from ...squeal.tables.statistic import StatisticJournalType
 
 
 class SummaryField(Field):
@@ -26,5 +30,42 @@ class GenericField(SummaryField):
 
     def _widget(self):
         from urwid import Text
-        value = self._journal.formatted()
-        return Text([label('%s: ' % self._summary), em(value)])
+        return Text([label('%s: ' % self._summary), em(self._journal.formatted()), ' '])
+
+
+def summary_columns(log, s, f, date, schedule, names):
+
+    def fill(columns, width):
+        while width < PAGE_WIDTH:
+            columns.append(Text(''))
+            width += 1
+
+    def field_columns(name):
+        journals = StatisticJournal.at_interval(s, date, schedule,
+                                                # id of source field is constraint for summary
+                                                SummaryStatistics, name.id,
+                                                SummaryStatistics)
+        columns, width = [], 0
+        for named, journal in enumerate(journals):
+            summary, period, name = SummaryStatistics.parse_name(journal.statistic_name.name)
+            if not named:
+                columns.append(Text([name]))
+                width += 1
+            display = GenericField(log, journal, summary=summary)
+            columns.append((WEIGHT, display.width, f(display.widget())))
+            width += display.width
+        return columns, width
+
+    columns, width = [], 0
+    for name in names:
+        next_columns, next_width = field_columns(name)
+        if width + next_width > PAGE_WIDTH:
+            fill(columns, width)
+            yield Columns(columns)
+            columns, width = [], 0
+        columns += next_columns
+        width += next_width
+
+    if columns:
+        fill(columns, width)
+        yield Columns(columns)

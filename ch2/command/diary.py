@@ -14,7 +14,8 @@ from ..lib.widgets import DateSwitcher
 from ..squeal.tables.pipeline import PipelineType
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import build_pipeline
-from ..uweird.fields import PAGE_WIDTH, summary_columns
+from ..uweird.fields import PAGE_WIDTH
+from ch2.uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
 from ..uweird.tui.tabs import TabList
@@ -177,7 +178,7 @@ class ScheduleDiary(Diary):
 
     def _display_fields(self, s, f, topic):
         names = [field.statistic_name for field in topic.fields]
-        yield from summary_columns(self._log, s, f, self._date, self._schedule, names, topic.fields)
+        yield from summary_columns(self._log, s, f, self._date, self._schedule, names)
 
     def _display_pipeline(self, s, f):
         yield from build_pipeline(self._log, s, PipelineType.DIARY, f, self._date, schedule=self._schedule)

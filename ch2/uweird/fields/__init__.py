@@ -1,10 +1,9 @@
 
 from abc import ABC, abstractmethod
 
-from urwid import Text, Columns, WEIGHT
+from urwid import Text
 
-from ...squeal.tables.statistic import StatisticJournal
-from ...stoats.calculate.summary import SummaryStatistics
+from ...lib.utils import label, em
 
 PAGE_WIDTH = 4
 
@@ -38,32 +37,24 @@ class Field(ABC):
         pass
 
 
-def summary_columns(log, s, f, date, schedule, names, fields=None):
-    from .summary import GenericField
-    columns = []
-    if not fields:
-        fields = [None] * len(names)
-    fields_and_names = zip(fields, names)
-    for field, name in fields_and_names:
-        journals = StatisticJournal.at_interval(s, date, schedule,
-                                                # id of source field is constraint for summary
-                                                SummaryStatistics, name.id,
-                                                SummaryStatistics)
-        if columns and len(journals) + 1 + len(columns) > PAGE_WIDTH:
-            while len(columns) < PAGE_WIDTH:
-                columns.append(Text(''))
-            yield Columns(columns)
-            columns = []
-        for named, journal in enumerate(journals):
-            summary, period, name = SummaryStatistics.parse_name(journal.statistic_name.name)
-            if not named:
-                columns.append(Text([name]))
-            display = GenericField(log, journal, summary=summary)
-            columns.append((WEIGHT, 1, f(display.widget())))
-            if len(columns) == PAGE_WIDTH:
-                yield Columns(columns)
-                columns = []
-    if columns:
-        while len(columns) < PAGE_WIDTH:
-            columns.append(Text(''))
-        yield Columns(columns)
+class ReadOnlyField(Field):
+
+    def __init__(self, log, journal, width=1, date=None):
+        self._date = date
+        super().__init__(log, journal, width=width)
+
+    def _format_value(self, value):
+        return self._journal.formatted()
+
+    def _widget(self):
+        if self._date:
+            measures = self._journal.measures_as_text(self._date)
+        else:
+            measures = []
+        if measures:
+            self.width += 1
+        return Text([label('%s: ' % self._journal.statistic_name.name), em(self._journal.formatted()), ' ']
+                    + measures)
+
+
+

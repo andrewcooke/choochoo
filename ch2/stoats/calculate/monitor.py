@@ -65,7 +65,7 @@ class MonitorStatistics:
                    MonitorJournal.finish >= start_time,
                    MonitorSteps.time >= start_time,
                    MonitorSteps.time < finish_time).scalar()
-        self._add_integer_stat(s, interval, STEPS, '[sum],[avg],[cnt]', steps, None)
+        self._add_integer_stat(s, interval, STEPS, '[sum],[avg],[cnt]', steps, 'steps')
         self._log.debug('Added data for %s' % interval)
 
     def _add_integer_stat(self, s, journal, name, summary, value, units):

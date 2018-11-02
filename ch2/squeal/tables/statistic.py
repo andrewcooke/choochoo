@@ -119,8 +119,24 @@ class StatisticJournal(Base):
             return '%d %%' % self.value
         elif units == 'bpm':
             return '%d bpm' % self.value
+        elif units == 'steps':
+            return '%d steps' % self.value
         else:
             return '%d %s' % (self.value, units)
+
+    def measures_as_text(self, date):
+        words = []
+        if hasattr(self, 'measures'):
+            for measure in sorted(self.measures,
+                                  key=lambda measure: measure.source.schedule.frame_length_in_days(date)):
+                if words:
+                    words += [',']
+                quintile = 1 + min(4, measure.percentile / 20)
+                words += [('quintile-%d' % quintile, '%d%%' % int(measure.percentile))]
+                if measure.rank < 5:
+                    words += [':', ('rank-%d' % measure.rank, '%d' % measure.rank)]
+                words += ['/' + measure.source.schedule.describe(compact=True)]
+        return words
 
     @classmethod
     def at_date(cls, s, date, name, owner, constraint):
@@ -212,6 +228,8 @@ class StatisticJournalFloat(StatisticJournal):
             return '%.1f %%' % self.value
         elif units == 'bpm':
             return '%d bpm' % int(self.value)
+        elif units == 'steps':
+            return '%d steps' % int(self.value)
         elif units == 'kg':
             return '%.1f kg' % self.value
         else:

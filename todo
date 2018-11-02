@@ -58,9 +58,12 @@
 
 * XXX  Display monthly and weekly stats in summaries
   * XXX  Maybe ch2 diary --week
-  * Also accumulate text fields?  Activities?
+  * XXX (no - count instead)  Also accumulate text fields?  Activities?
   * XXX  Format times and distances better.
 
 * StatisticRanking data on monitor stats
 
-* What are max/min HR floats in activity summary?
+* XXX (medians)  What are max/min HR floats in activity summary?
+
+* Simplified config and startup instructions
+
