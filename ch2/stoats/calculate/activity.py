@@ -6,7 +6,7 @@ from itertools import chain
 from sqlalchemy.sql.functions import count
 
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN
+    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
 from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName
@@ -61,9 +61,12 @@ class ActivityStatistics:
 
     def _add_stats(self, s, journal, activity_group):
         totals = Totals(self._log, journal)
-        self._add_float_stat(s, journal, activity_group, ACTIVE_DISTANCE, MAX, totals.distance, M)
-        self._add_float_stat(s, journal, activity_group, ACTIVE_TIME, MAX, totals.time, S)
-        self._add_float_stat(s, journal, activity_group, ACTIVE_SPEED, MAX, totals.distance * 3.6 / totals.time, KMH)
+        self._add_float_stat(s, journal, activity_group, ACTIVE_DISTANCE, ','.join([MAX, CNT, SUM]),
+                             totals.distance, M)
+        self._add_float_stat(s, journal, activity_group, ACTIVE_TIME, ','.join([MAX, SUM]),
+                             totals.time, S)
+        self._add_float_stat(s, journal, activity_group, ACTIVE_SPEED, ','.join([MAX, AVG]),
+                             totals.distance * 3.6 / totals.time, KMH)
         for target in round_km():
             times = list(sorted(TimeForDistance(self._log, journal, target * 1000).times()))
             if not times:

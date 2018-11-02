@@ -108,19 +108,19 @@ class StatisticJournal(Base):
             return '%d' % self.value
         elif units == 'm':
             if self.value > 2000:
-                return '%dkm' % (self.value / 1000)
+                return '%d km' % (self.value / 1000)
             else:
-                return '%dm' % self.value
+                return '%d m' % self.value
         elif units == 's':
             return format_seconds(self.value)
-        elif units == 'km/h':
-            return '%dkm/h' % self.value
+        elif units == ' km/h':
+            return '%d km/h' % self.value
         elif units == '%':
-            return '%d%%' % self.value
+            return '%d %%' % self.value
         elif units == 'bpm':
-            return '%dbpm' % self.value
+            return '%d bpm' % self.value
         else:
-            return '%d%s' % (self.value, units)
+            return '%d %s' % (self.value, units)
 
     @classmethod
     def at_date(cls, s, date, name, owner, constraint):
@@ -197,19 +197,25 @@ class StatisticJournalFloat(StatisticJournal):
             return '%f' % self.value
         elif units == 'm':
             if self.value > 2000:
-                return '%.1fkm' % (self.value / 1000)
+                return '%.1f km' % (self.value / 1000)
             else:
-                return '%dm' % int(self.value)
+                return '%d m' % int(self.value)
         elif units == 's':
             return format_seconds(self.value)
+        elif units == 'm':
+            return format_seconds(self.value * 60)
+        elif units == 'h':
+            return format_seconds(self.value * 3600)
         elif units == 'km/h':
-            return '%.1fkm/h' % self.value
+            return '%.1f km/h' % self.value
         elif units == '%':
-            return '%.1f%%' % self.value
+            return '%.1f %%' % self.value
         elif units == 'bpm':
-            return '%dbpm' % int(self.value)
+            return '%d bpm' % int(self.value)
+        elif units == 'kg':
+            return '%.1f kg' % self.value
         else:
-            return '%s%s' % (self.value, units)
+            return '%s %s' % (self.value, units)
 
 
 class StatisticJournalText(StatisticJournal):

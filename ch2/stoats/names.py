@@ -14,12 +14,17 @@ HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
 
 MAX = '[max]'
 MIN = '[min]'
+CNT = '[cnt]'
+AVG = '[avg]'
+SUM = '[sum]'
 
 M = 'm'
 S = 's'
+H = 'h'
 KMH = 'km/h'
 PC = '%'
 BPM = 'bpm'
+KG = 'kg'
 
 
 def round_km():

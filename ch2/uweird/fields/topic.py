@@ -12,7 +12,7 @@ from ..tui.widgets import Rating0, Rating1
 class EditableField(Field):
 
     def widget(self):
-        widget = self._widget(self._journal)
+        widget = self._widget()
         connect_signal(widget, 'change', self.__on_change)
         return widget
 
@@ -31,8 +31,9 @@ class Text(EditableField):
     def _format_value(self, value):
         return repr(value)
 
-    def _widget(self, journal):
-        return Edit(caption=label('%s: ' % journal.statistic_name.name), edit_text=journal.value or '')
+    def _widget(self):
+        return Edit(caption=label('%s: ' % self._journal.statistic_name.name),
+                    edit_text=self._journal.value or '')
 
 
 class Integer(Field):
@@ -47,10 +48,10 @@ class Integer(Field):
     def _format_value(self, value):
         return '%d' % value
 
-    def _widget(self, journal):
+    def _widget(self):
         from ..tui.widgets import Integer
-        return Integer(caption=label('%s: ' % journal.statistic_name.name), state=journal.value,
-                       minimum=self._lo, maximum=self._hi, units=journal.statistic_name.units)
+        return Integer(caption=label('%s: ' % self._journal.statistic_name.name), state=self._journal.value,
+                       minimum=self._lo, maximum=self._hi, units=self._journal.statistic_name.units)
 
 
 class Float(EditableField):
@@ -67,10 +68,10 @@ class Float(EditableField):
     def _format_value(self, value):
         return self._format % value
 
-    def _widget(self, journal):
+    def _widget(self):
         from ..tui.widgets import Float
-        return Float(caption=label('%s: ' % journal.statistic_name.name), state=journal.value,
-                     minimum=self._lo, maximum=self._hi, dp=self._dp, units=journal.statistic_name.units)
+        return Float(caption=label('%s: ' % self._journal.statistic_name.name), state=self._journal.value,
+                     minimum=self._lo, maximum=self._hi, dp=self._dp, units=self._journal.statistic_name.units)
 
 
 class Score(EditableField):
@@ -83,8 +84,8 @@ class Score(EditableField):
     def _format_value(self, value):
         return '%d' % value
 
-    def _widget(self, journal):
-        return self._field_cls(caption=label('%s: ' % journal.statistic_name.name), state=journal.value)
+    def _widget(self):
+        return self._field_cls(caption=label('%s: ' % self._journal.statistic_name.name), state=self._journal.value)
 
     @property
     @abstractmethod

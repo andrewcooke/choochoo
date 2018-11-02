@@ -10,6 +10,8 @@ details.
 
 ![](docs/diary2.png)
 
+![](docs/diary3.png)
+
 ## Data
 
 ![](docs/statistics.png)

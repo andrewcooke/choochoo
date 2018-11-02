@@ -73,7 +73,7 @@ def default(db):
                         units='kg', summary='[avg]',
                         display_cls=Float, lo=50, hi=100, dp=1)
         add_topic_field(s, diary, 'Sleep', c,
-                        units='hr', summary='[avg]',
+                        units='h', summary='[avg]',
                         display_cls=Float, lo=0, hi=24, dp=1)
         add_topic_field(s, diary, 'Mood', c,
                         summary='[avg]',

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from urwid import Text, Columns, WEIGHT
 
-from ...squeal.tables.statistic import StatisticJournal, StatisticJournalType
+from ...squeal.tables.statistic import StatisticJournal
 from ...stoats.calculate.summary import SummaryStatistics
 
 PAGE_WIDTH = 4
@@ -39,7 +39,7 @@ class Field(ABC):
 
 
 def summary_columns(log, s, f, date, schedule, names, fields=None):
-    from .summary import Float, SUMMARY_FIELDS
+    from .summary import GenericField
     columns = []
     if not fields:
         fields = [None] * len(names)
@@ -58,11 +58,7 @@ def summary_columns(log, s, f, date, schedule, names, fields=None):
             summary, period, name = SummaryStatistics.parse_name(journal.statistic_name.name)
             if not named:
                 columns.append(Text([name]))
-            if field and journal.type == field.type and field.type == StatisticJournalType.FLOAT:
-                display = Float(log, journal, *field.display_args,
-                                summary=summary, **field.display_kargs)
-            else:
-                display = SUMMARY_FIELDS[journal.type](log, journal, summary=summary)
+            display = GenericField(log, journal, summary=summary)
             columns.append((WEIGHT, 1, f(display.widget())))
             if len(columns) == PAGE_WIDTH:
                 yield Columns(columns)

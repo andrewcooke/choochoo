@@ -45,7 +45,7 @@
 
 * bash completion script
 
-* Automate donload of data from Garmin
+* Automate download of data from Garmin
   * FIT file for activity
   * XXX  FIT file for monitor
 
@@ -56,8 +56,11 @@
 
 * Get rid of all those blank text fields...
 
-* Display monthly and weekly stats in summaries
-  * Maybe ch2 diary --week
+* XXX  Display monthly and weekly stats in summaries
+  * XXX  Maybe ch2 diary --week
   * Also accumulate text fields?  Activities?
+  * XXX  Format times and distances better.
 
 * StatisticRanking data on monitor stats
+
+* What are max/min HR floats in activity summary?
