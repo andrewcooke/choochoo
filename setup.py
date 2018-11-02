@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
-                 version='0.3.3',
+                 version='0.3.4',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
                  description='A Programmable Training DailyDiary',
