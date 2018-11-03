@@ -43,10 +43,10 @@ The combination of customizable diary fields and scheduling allows
 training plans to be entered and displayed.
 
 Customization (fields, training plans, etc) must be done via Python or
-SQL.  There is no graphical user interface.  This presents a steep
-learning curve but is ultimately very flexible - "any" training plan
-can be accomodated.  Python code for generating example plans is
-included (see package `ch2.config.plan`).
+SQL.  There is no graphical user interface for comnfiguration.  This
+presents a steep learning curve but is ultimately very flexible -
+"any" training plan can be accomodated.  Python code for generating
+example plans is included (see package `ch2.config.plan`).
 
 Data are processed via "pipelines".  These are Python classes whose
 class names are also configured in the database.  Existing pipelines
@@ -70,7 +70,8 @@ database files.
 *Choochoo collects and organises time-series data using
 athlete-appropriate interfaces.  It facilitates calculations of
 derived statistics and extraction of data for further analysis using
-Python's rich data science tools.*
+Python's rich data science tools.  Both data and code are open and
+extensible.*
 
 ## Latest Changes
 
