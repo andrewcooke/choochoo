@@ -1,9 +1,6 @@
 
 import setuptools
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
                  version='0.3.4',
@@ -11,7 +8,14 @@ setuptools.setup(name='choochoo',
                  author_email='andrew@acooke.org',
                  description='A Programmable Training DailyDiary',
                  url='https://github.com/andrewcooke/choochoo',
-                 long_description=long_description,
+                 long_description='''
+# choochoo (ch2)
+
+An **open**, **hackable** and **free** training diary.
+
+See [documentation](https://andrewcooke.github.io/choochoo/) for full
+details.
+'''
                  long_description_content_type='text/markdown',
                  include_package_data=True,
                  install_requires=[
