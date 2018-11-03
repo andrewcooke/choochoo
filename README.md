@@ -62,10 +62,14 @@ party tools, and easily backed-up (eg by copying the database file).
 When the database format changes scripts are provided to migrate
 existing data (see package `ch2.migraine`).
 
+Currently the program is single-user (ie the data in the database are
+not grouped by user).  Multiple users can co-exist using separate
+database files.
+
 *Choochoo collects and organises time-series data using
 athlete-appropriate interfaces.  It facilitates calculations of
 derived statistics and extraction of data for further analysis using
-Python's rich data science ability.*
+Python's rich data science tools.*
 
 ## Latest Changes
 
