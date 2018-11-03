@@ -45,7 +45,8 @@ training plans to be entered and displayed.
 Customization (fields, training plans, etc) must be done via Python or
 SQL.  There is no graphical user interface.  This presents a steep
 learning curve but is ultimately very flexible - "any" training plan
-can be accomodated.
+can be accomodated.  Python code for generating example plans is
+included (see package `ch2.config.plan`).
 
 Data are processed via "pipelines".  These are Python classes whose
 class names are also configured in the database.  Existing pipelines
