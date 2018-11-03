@@ -57,6 +57,11 @@ analysis in Jupyter workbooks.  So general Python data science tools
 (Pandas, Numpy, etc) can be used to analyse the data.  Example
 workbooks are included in the source.
 
+*Choochoo collects and organises time-series data using
+athlete-appropriate interfaces.  It facilitates calculations of
+derived statistics and extraction of data for further analysis using
+Python's rich data science ability.*
+
 ## Latest Changes
 
 ### v0.3.0
