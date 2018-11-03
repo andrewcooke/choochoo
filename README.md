@@ -57,6 +57,11 @@ analysis in Jupyter workbooks.  So general Python data science tools
 (Pandas, Numpy, etc) can be used to analyse the data.  Example
 workbooks are included in the source.
 
+The data are in an "open" format, directly accessible by third party
+tools, and easily backed-up (eg by copying the database file).  When
+the database format changes scripts are provided to migrate existing
+data (see package `ch2.migraine`).
+
 *Choochoo collects and organises time-series data using
 athlete-appropriate interfaces.  It facilitates calculations of
 derived statistics and extraction of data for further analysis using
