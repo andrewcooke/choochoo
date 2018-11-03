@@ -14,13 +14,13 @@ details.
 
 ### Diary
 
-![](docs/diary2.png)
+![](docs/diary.png)
 
-![](docs/diary3.png)
+![](docs/diary-year.png)
 
 ### Data
 
-![](docs/statistics.png)
+![](docs/jupyter.png)
 
 ### Plots
 
