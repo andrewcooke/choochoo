@@ -13,9 +13,9 @@ COMMAND = 'command'
 TOPIC = 'topic'
 
 ACTIVITIES = 'activities'
+BASIC_CONFIG = 'basic-config'
 CONSTANTS = 'constants'
 DIARY = 'diary'
-EXAMPLE_CONFIG = 'example-config'
 FIT = 'fit'
 GARMIN = 'garmin'
 H, HELP = 'h', 'help'
@@ -155,6 +155,11 @@ def parser():
                             help='path to fit file(s)')
     activities.set_defaults(command=ACTIVITIES)
 
+    basic_config = subparsers.add_parser(BASIC_CONFIG,
+                                         help='configure the default database ' +
+                                              '(see docs for full configuration instructions)')
+    basic_config.set_defaults(command=BASIC_CONFIG)
+
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_flags = constant.add_mutually_exclusive_group()
     constant_flags.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
@@ -165,7 +170,7 @@ def parser():
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
     constant.set_defaults(command=CONSTANTS)
 
-    diary = subparsers.add_parser(DIARY, help='daily diary')
+    diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?', type=to_date,
                        help='an optional date to display (default is today)')
     diary_summary = diary.add_mutually_exclusive_group()
@@ -243,12 +248,6 @@ def parser():
     statistics.add_argument(mm(LIKE), action='store', metavar='PATTERN',
                             help='run only matching pipeline classes')
     statistics.set_defaults(command=STATISTICS)
-
-    example_config = subparsers.add_parser(EXAMPLE_CONFIG,
-                                           help='configure the default database ' +
-                                                '(see docs for full configuration instructions)')
-    example_config.add_argument(mm(PLAN), action='store_true', help='OMIT plan')
-    example_config.set_defaults(command=EXAMPLE_CONFIG)
 
     noop = subparsers.add_parser(NO_OP,
                                  help='used within jupyter (no-op from cmd line)')

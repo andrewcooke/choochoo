@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from sys import stdout
 
-from .args import TOPIC, HELP, PROGNAME, m, H, EXAMPLE_CONFIG
+from .args import TOPIC, HELP, PROGNAME, m, H, BASIC_CONFIG
 from ..lib.io import terminal_width
 
 
@@ -116,7 +116,7 @@ To generate an example configuration use the command
 
 NOTE: The example configuration is only an example.  It is not intended for
 general use.  It is important to configure your own system as you personally
-want it to be.''' % (PROGNAME, EXAMPLE_CONFIG))
+want it to be.''' % (PROGNAME, BASIC_CONFIG))
     elif args[TOPIC] in COMMANDS:
         LengthFmt().print_all(COMMANDS[args[TOPIC]].__doc__)
     else:
