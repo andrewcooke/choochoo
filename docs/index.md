@@ -4,7 +4,7 @@
 Choochoo helps you plan, collect, process and analyse training data.
 
 Data can be entered by hand, in the "diary", or read from FIT files.
-It includes support for downloading FIT files from Garmin Connect.
+Downloading FIT files from Garmin Connect is supported.
 
 The choice of what data to track is up to you.  A default
 configuration is provided, but this can be modified.  You can add and
@@ -19,17 +19,16 @@ to automate the creation of these entries (in Python) - examples are
 provided.  In this way you can programaticaly generate training
 schedules.
 
-Further "derived" data can be calculated from the raw data you
-provide.  A simple example would be rankings (eg per month).  A more
-complex example (not yet implemented) would be Training Stress Score
-(TSS).
+"Derived" data can be calculated from the raw data you provide.  A
+simple example would be rankings (eg per month).  A more complex
+example (not yet implemented) would be Training Stress Score (TSS).
 
 If you develop your own calculations (as Python code) then these can
 be added to the "pipeline" and run automatically on new data.
 
-All these data are stored in an SQLite database, in a single file.
-This is easy to copy to safe storage and allows you to read and
-process the data with your own programs.
+All your data (raw and derived) are stored in an SQLite database, in a
+single file.  This is easy to copy to safe storage and allows you to
+read and process the data with your own programs.
 
 The data can also be extracted as Panda DataFrames.  Typically this is
 done in the Jupyter environment, where you can interactively analyse
