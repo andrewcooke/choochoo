@@ -5,6 +5,9 @@
   * [Source](#source)
   * [Package](#package)
   * [Further Reading](#further-reading)
+* [Configuration](#configuration)
+  * [Basic Config](#basic-config)
+  * [Going Deeper](#going-deeper)
 
 ## Install
 
@@ -17,7 +20,7 @@ On the other hand, installing a package is slightly easier and you can
 switch to using the source later, if necessary.
 
 In both cases you need **Python 3.7**.  So you may need to get the
-latets Python version from
+latest Python version from
 [python.org](https://www.python.org/downloads/).
 
 To check your Python version:
@@ -65,10 +68,30 @@ the latest release from Pypi.  It's still worth using a virtualenv:
   general intro to git and github.  You do *not* need to create a
   github account or repository to use Choochoo.
 
-* virtualenv](https://realpython.com/python-virtual-environments-a-primer/)
-  - a virtualenv lets you install a Python program (like Choochoo)
+* [virtualenv](https://realpython.com/python-virtual-environments-a-primer/) -
+  a virtualenv lets you install a Python program (like Choochoo)
   without it affecting any other Python programs you use.
 
 ## Configuration
 
-Once installed the system must be [configured](configure).
+### Basic Config
+
+Once installed the system must be configured.
+
+A basic configuration can be generated with the `basic-config`
+command:
+
+    > ch2 basic-config
+
+(if you are using source you may need to type `dev/ch2` instead of
+`ch2` - I'll assume that's obvious from now on).
+
+You can see what that implies by starting the diary:
+
+    > ch2 diary
+
+which will display today's entry.  To quite the diary, type `alt-Q`.
+To quit without saving changes, type `alt-X`.
+
+### Going Deeper
+
