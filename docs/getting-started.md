@@ -6,7 +6,7 @@
   * [Package](#package)
   * [Further Reading](#further-reading)
 * [Configuration](#configuration)
-  * [Basic Config](#basic-config)
+  * [Default Config](#default-config)
   * [Going Deeper](#going-deeper)
 
 ## Install
@@ -74,14 +74,14 @@ the latest release from Pypi.  It's still worth using a virtualenv:
 
 ## Configuration
 
-### Basic Config
+### Default Config
 
 Once installed the system must be configured.
 
-A basic configuration can be generated with the `basic-config`
+A basic configuration can be generated with the `default-config`
 command:
 
-    > ch2 basic-config
+    > ch2 default-config
 
 (if you are using source you may need to type `dev/ch2` instead of
 `ch2` - I'll assume that's obvious from now on).
@@ -95,3 +95,23 @@ To quit without saving changes, type `alt-X`.
 
 ### Going Deeper
 
+Choochoo is very flexible.  You can configure it however you want.
+Unfortunately, the process for doing this is rather low-level and
+difficult to document precisely.  You can get started with the
+following resources:
+
+* [Configuration] - this describes how to get started changing the
+  configuration using Python and SQL.
+
+* Read the source:
+
+  * [My own configuration](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/personal.py)
+
+  * [The default configuration](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/default.py)
+
+  * [Available Python functions](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/database.py)
+
+* [Data Model](data-model) - this describes how the basic concepts in
+  Choocho (things like statistics, topics, journals) are represented
+  in the database.  Once you understand the details here the links
+  above may appear less like "magic" and more like logical procedures.

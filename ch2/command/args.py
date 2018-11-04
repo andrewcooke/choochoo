@@ -13,8 +13,8 @@ COMMAND = 'command'
 TOPIC = 'topic'
 
 ACTIVITIES = 'activities'
-BASIC_CONFIG = 'basic-config'
 CONSTANTS = 'constants'
+DEFAULT_CONFIG = 'default-config'
 DIARY = 'diary'
 FIT = 'fit'
 GARMIN = 'garmin'
@@ -155,11 +155,6 @@ def parser():
                             help='path to fit file(s)')
     activities.set_defaults(command=ACTIVITIES)
 
-    basic_config = subparsers.add_parser(BASIC_CONFIG,
-                                         help='configure the default database ' +
-                                              '(see docs for full configuration instructions)')
-    basic_config.set_defaults(command=BASIC_CONFIG)
-
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_flags = constant.add_mutually_exclusive_group()
     constant_flags.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
@@ -169,6 +164,11 @@ def parser():
     constant.add_argument(DATE, action='store', nargs='?', metavar='DATE', help='date when measured')
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
     constant.set_defaults(command=CONSTANTS)
+
+    basic_config = subparsers.add_parser(DEFAULT_CONFIG,
+                                         help='configure the default database ' +
+                                              '(see docs for full configuration instructions)')
+    basic_config.set_defaults(command=DEFAULT_CONFIG)
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?', type=to_date,
