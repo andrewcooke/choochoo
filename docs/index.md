@@ -39,6 +39,8 @@ support for power meters.
 
 * [Getting Started](getting-started)
 
+* [Configuration](configuration)
+
 * [Install](install) - installing Choochoo.
 * [Configure](configure) - configuring the system.
 * [The Diary](diary) - entering daily data.

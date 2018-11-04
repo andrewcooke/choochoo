@@ -100,18 +100,18 @@ Unfortunately, the process for doing this is rather low-level and
 difficult to document precisely.  You can get started with the
 following resources:
 
-* [Configuration] - this describes how to get started changing the
-  configuration using Python and SQL.
+* [Configuration](configuration) - this describes how to get started
+  changing the configuration using Python and SQL.
 
 * Read the source:
-
   * [My own configuration](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/personal.py)
-
   * [The default configuration](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/default.py)
-
   * [Available Python functions](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/database.py)
 
 * [Data Model](data-model) - this describes how the basic concepts in
   Choocho (things like statistics, topics, journals) are represented
   in the database.  Once you understand the details here the links
   above may appear less like "magic" and more like logical procedures.
+
+* [Training Plans](training-plans) - these are added in the same way
+  as other diary fields.
