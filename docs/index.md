@@ -1,6 +1,4 @@
 
-# Introduction
-
 Choochoo helps you plan, collect, process and analyse training data.
 
 Data can be entered by hand, in the "diary", or read from FIT files.

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 rm -fr env
-virtualenv env -p python3.7
+python3.7 -m env
 source env/bin/activate
 pip install --upgrade pip
 pip install urwid
