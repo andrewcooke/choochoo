@@ -1,6 +1,60 @@
 
 # Configure
 
+* [Safety First](#safety-first)
+  * [Backups](#backups)
+  * [SQL Consistency](@sql-consistency)
+  
+
+## Safety First
+
+### Backups
+
+All Choochoo's data - both configuration and training statistics - are
+stored in a single database file.  The exact name of this file depends
+on the program version and is displayed if you run the `ch2` command.
+
+For example:
+
+    > ch2
+    INFO: Using database at /home/andrew/.ch2/database.sqlj
+    ...
+
+You should make a copy of this file before changing the configuration
+so that if you make a mistake you can copy the backup back and return
+to your previous state.
+
+### SQL Consistency
+
+When altering the database you should be concerned about consistency -
+you do not want to introduce any errors or lose any data.
+
+The database has various rules to help avoid errors but,
+unfortunately, these are disabled by default.  So whenever you are
+using SQL directly (ie using the `sqlite3` command) enable the rules
+with `pragma foreign_keys = on`:
+
+    > sqlite3 /home/andrew/.ch2/database.sqlj
+    SQLite version 3.23.1 2018-04-10 17:39:29
+    Enter ".help" for usage hints.
+    sqlite> pragma foreign_keys = on
+    sqlite>
+
+In general, with these rules enabled, adding new information is safe.
+Deleting information from the database, however, may delete more than
+you intend as the database will delete information to preserve
+consistency.  In particular, if you delete a an entry from
+`statistic_name` then you will lose all the values associated with
+that statistic.
+
+### Best Practice
+
+Putting the two sections above together:
+* Make a copy of the database before changing anything
+* Enable foreign keys if using `sqlite3` directly.
+* After making the changes, run the diary and check things look OK.  If
+  not, revert back to the copy you made earlier and try again.
+
 ## Introduction
 
 Choochoo is configured via the database.  This is most easily done by

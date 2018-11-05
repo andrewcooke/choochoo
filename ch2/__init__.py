@@ -27,8 +27,8 @@ at the command line.
 
 
 COMMANDS = {ACTIVITIES: activities,
-            DEFAULT_CONFIG: default_config,
             CONSTANTS: constants,
+            DEFAULT_CONFIG: default_config,
             DIARY: diary,
             FIT: fit,
             GARMIN: garmin,
@@ -62,6 +62,6 @@ def main():
     except Exception as e:
         log.critical(e)
         log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
-        log.info('Docs at http://andrewcooke.github.io/choochoo/index')
+        log.info('Docs at http://andrewcooke.github.io/choochoo')
         if not args or args[DEV]:
             raise
