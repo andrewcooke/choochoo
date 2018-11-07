@@ -8,10 +8,10 @@ from ..stoats.calculate.clean import CleanUnusedStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
+from ..stoats.names import BPM, FTHR
 from ..stoats.read.activity import ActivityImporter
 from ..stoats.read.monitor import MonitorImporter
-from ..stoats.names import BPM, FTHR
-from ..uweird.fields.topic import Text, Float, Score, Integer
+from ..uweird.fields.topic import Text, Float, Score0
 
 
 def default(db):
@@ -62,7 +62,7 @@ def default(db):
         # a basic diary
 
         c = Counter()
-        diary = add_topic(s, 'DailyDiary', c)
+        diary = add_topic(s, 'Diary', c)
         add_topic_field(s, diary, 'Notes', c,
                         display_cls=Text)
         # now provided via monitor
@@ -77,7 +77,7 @@ def default(db):
                         display_cls=Float, lo=0, hi=24, dp=1)
         add_topic_field(s, diary, 'Mood', c,
                         summary='[avg]',
-                        display_cls=Score)
+                        display_cls=Score0)
         add_topic_field(s, diary, 'Nutrition', c,
                         summary='[cnt]',
                         display_cls=Text)

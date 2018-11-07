@@ -7,7 +7,7 @@ from .command.diary import diary
 from .command.default_config import default_config
 from .command.fit import fit
 from .command.garmin import garmin
-from .command.help import help
+from .command.help import help, LengthFmt
 from .command.monitor import monitor
 from .command.package_fit_profile import package_fit_profile
 from .command.statistics import statistics
@@ -50,7 +50,9 @@ def main():
     log = make_log(args, tui=tui)
     db = Database(args, log)
     try:
-        if command:
+        if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
+            request_config()
+        elif command:
             command(args, log, db)
         else:
             log.debug('If you are seeing the "No command given" error during development ' +
@@ -65,3 +67,19 @@ def main():
         log.info('Docs at http://andrewcooke.github.io/choochoo')
         if not args or args[DEV]:
             raise
+
+
+def request_config():
+    LengthFmt().print_all('''
+Welcome to Choochoo.
+
+Before using the ch2 command you must configure the system.
+
+Please see the documentation at http://andrewcooke.github.io/choochoo
+
+To generate a default configuration use the command
+
+    %s %s
+
+NOTE: The default configuration is only an example.  Please see the docs
+for more details.''' % (PROGNAME, DEFAULT_CONFIG))

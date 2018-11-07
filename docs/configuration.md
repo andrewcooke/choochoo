@@ -129,11 +129,31 @@ activity is, now is the time to study the [data model](data-model).
 
 #### Topics and Statistics
 
+If we start the diary with the default config
+
     > ch2 diary
 
-TODO
+we see something like
 
-## Adding A Field
+![](diary-config-example.png)
+
+These fields correspond to the calls to `add_topic_field()` made near
+the bottom of
+[default()](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/default.py),
+
+In addition, we can see how these are connected to statistic
+definitions in the database:
+
+    > sqlite3 /home/andrew/.ch2/database.sqlj "select * from topic_field join statistic_name on statistic_name_id = statistic_name.id where statistic_name.name == 'Medication'"
+    7|1|3|80|9|ch2.uweird.fields.topic.Text|[]|{}||9|Medication|||[cnt]|7403|1
+
+Some of the numerical values may be different, but this shows how the
+`topic_field` table refers to `statistic_name`.  If you look at the
+definition of `add_topic_field()` in
+[ch2.config.database](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/database.py)
+you can see the code that does this.
+
+### Adding A Field
 
 Here's an example where I add a field to an existing configuration.
 

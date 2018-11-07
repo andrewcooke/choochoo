@@ -102,22 +102,7 @@ Displays this information.
 Lists available topics.
     '''
     from .. import COMMANDS
-    if db.is_empty():
-        LengthFmt().print_all('''
-Welcome to Choochoo.
-
-Before using the ch2 command you must configure the system.
-
-Please see the documentation at http://andrewcooke.github.io/choochoo/index
-
-To generate an example configuration use the command
-
-    %s %s
-
-NOTE: The example configuration is only an example.  It is not intended for
-general use.  It is important to configure your own system as you personally
-want it to be.''' % (PROGNAME, DEFAULT_CONFIG))
-    elif args[TOPIC] in COMMANDS:
+    if args[TOPIC] in COMMANDS:
         LengthFmt().print_all(COMMANDS[args[TOPIC]].__doc__)
     else:
         LengthFmt().print_all(commands(COMMANDS))

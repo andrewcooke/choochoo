@@ -175,9 +175,9 @@ class Number(MutableStatefulText):
 
     def _state_as_text(self):
         if self.state is None:
-            return [self._caption, '_']
+            return [self._caption, '_', ' ', label(self._units)]
         else:
-            return [self._caption, self._string, label(self._units)]
+            return [self._caption, self._string, ' ', label(self._units)]
 
     def _update_string(self, key):
         used = False
