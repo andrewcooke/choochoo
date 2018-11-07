@@ -169,8 +169,8 @@ Then add the field:
     from ch2.uweird.fields import Text
     log, db = config('-v 5')
     with db.session_context() as s:
-	diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-	add_topic_field(s, diary, 'Route', 90, display_cls=Text)
+        diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+        add_topic_field(s, diary, 'Route', 90, display_cls=Text)
     EOF
 
 ## Configuring with SQL
