@@ -1,6 +1,13 @@
 
 # Configure
 
+Detailed configuration is very powerful, but also complex.  All I can
+do here is give some guidelines and examples.  Hopefully as you
+explore the system you will understand it better.
+
+Additional statistics can be added after the system is in use.  There
+is no need to do all configuration "up front".
+
   * [Safety First](#safety-first)
     * [Backups](#backups)
     * [SQL Consistency](#sql-consistency)
@@ -11,6 +18,7 @@
     * [The Default Configuration](#the-default-configuration)
       * [Constants](#constants)
       * [Topics and Statistics](#topics-and-statistics)
+    * [My Personal Configuration](#my-personal-configuration)
     * [Adding a Field](#adding-a-field)
   * [Configuring with SQL](#configuring-with-sql)
 
@@ -152,6 +160,12 @@ Some of the numerical values may be different, but this shows how the
 definition of `add_topic_field()` in
 [ch2.config.database](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/database.py)
 you can see the code that does this.
+
+### My Personal Configuration
+
+The code for the configuration that I use (at least, roughly) is
+visible
+[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/personal.py).
 
 ### Adding A Field
 
