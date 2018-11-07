@@ -4,7 +4,11 @@
 * [Safety First](#safety-first)
   * [Backups](#backups)
   * [SQL Consistency](@sql-consistency)
-  
+* [Configuring with Python](#configuring-with-python)
+  * [Connecting to the Database](#connecting-to-the-database)
+  * [The Default Configuration](#the-default-configuration)
+    * [Constants](#constants)
+    * [Topics and Statistics](#topics-and-statistics)
 
 ## Safety First
 
@@ -55,22 +59,9 @@ Putting the two sections above together:
 * After making the changes, run the diary and check things look OK.  If
   not, revert back to the copy you made earlier and try again.
 
-## Introduction
+## Configuring with Python
 
-Choochoo is configured via the database.  This is most easily done by
-running Python commands, either via a script or at the command line.
-
-The price of a flexible system is complexity.  To understand things
-completely you will need to understand the [data model](data-model),
-but I've also tried to provide some simplified short-cuts and defaults
-that should ease the pain.
-
-In the examples that follow I will use the Python command line
-directly.  Using a script is similar and, because you can delete the
-database and re-run the script until debugged, more useful in
-practice.
-
-## Connecting to the Database
+### Connecting to the Database
 
     > python                               
     Python 3.7.0 (default, Aug 20 2018, 18:32:46)
@@ -86,18 +77,19 @@ The `config()` command above takes command line arguments similar to
 the standard python logging library; more useful in scripts) and a
 database connection.
 
-## The Default Configuration
+### The Default Configuration
 
-A default is pre-packaged and easy to apply:
+This has the same effect (on an empty database) as the `ch2
+default-config` command:
 
     >>> default(db)
     >>>
 
-It is worth comparing the [source for the
+In the next few sections I will compare the [source for the
 default](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/default.py)
-with the results:
+with the results.
 
-### Constants
+#### Constants
 
     > ch2 constant
     INFO: Using database at ...
@@ -117,7 +109,7 @@ with `add_activity_constant()`.  This takes a reference to an
 activity, defined with `add_activity()`.  If you are unsure what an
 activity is, now is the time to study the [data model](data-model).
 
-### Topics and Statistics
+#### Topics and Statistics
 
     > ch2 diary
 

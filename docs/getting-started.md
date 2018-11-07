@@ -90,7 +90,7 @@ You can see what that implies by starting the diary:
 
     > ch2 diary
 
-which will display today's entry.  To quite the diary, type `alt-Q`.
+which will display today's entry.  To quit the diary, type `alt-Q`.
 To quit without saving changes, type `alt-X`.
 
 ### Going Deeper
