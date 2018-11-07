@@ -1,3 +1,2 @@
-theme: minima
-#remote_theme: poole/lanyon
+theme: jekyll-theme-minimal 
 
