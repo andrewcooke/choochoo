@@ -3,7 +3,9 @@
 
 * [Safety First](#safety-first)
   * [Backups](#backups)
-  * [SQL Consistency](@sql-consistency)
+  * [SQL Consistency](#sql-consistency)
+  * [Best Practice](#best-practice)
+* [Reset]
 * [Configuring with Python](#configuring-with-python)
   * [Connecting to the Database](#connecting-to-the-database)
   * [The Default Configuration](#the-default-configuration)
@@ -59,7 +61,21 @@ Putting the two sections above together:
 * After making the changes, run the diary and check things look OK.  If
   not, revert back to the copy you made earlier and try again.
 
+## Reset
+
+If you want to reset your configuration, simply delete the database.
+But remember that **this will also delete all your data**.
+
+Changing configuration but keeping data is difficult, but for examples
+of how to approach the problem see the migration scripts (used when
+the database schema changes) in `ch2.migraine`.
+
 ## Configuring with Python
+
+In the examples that follow I will use the Python command line
+directly.  Using a script is similar and, because you can delete the
+database and re-run the script until debugged, more useful in
+practice.
 
 ### Connecting to the Database
 
