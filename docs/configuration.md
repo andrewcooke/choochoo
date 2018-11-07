@@ -1,20 +1,18 @@
 
 # Configure
 
-* [Safety First](#safety-first)
-  * [Backups](#backups)
-  * [SQL Consistency](#sql-consistency)
-  * [Best Practice](#best-practice)
-* [Reset](#reset)
-
-* [Configuring with Python](#configuring-with-python)
-  * [Connecting to the Database](#connecting-to-the-database)
-  * [The Default Configuration](#the-default-configuration)
-    * [Constants](#constants)
-    * [Topics and Statistics](#topics-and-statistics)
-  * [Adding a Field](#adding-a-field)
-
-* [Configuring with SQL](#configuring-with-sql)
+    * [Safety First](#safety-first)
+	* [Backups](#backups)
+	* [SQL Consistency](#sql-consistency)
+	* [Best Practice](#best-practice)
+    * [Reset](#reset)
+    * [Configuring with Python](#configuring-with-python)
+	* [Connecting to the Database](#connecting-to-the-database)
+	* [The Default Configuration](#the-default-configuration)
+	    * [Constants](#constants)
+	    * [Topics and Statistics](#topics-and-statistics)
+	* [Adding a Field](#adding-a-field)
+    * [Configuring with SQL](#configuring-with-sql)
 
 ## Safety First
 
