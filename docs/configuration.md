@@ -5,7 +5,7 @@
   * [Backups](#backups)
   * [SQL Consistency](#sql-consistency)
   * [Best Practice](#best-practice)
-* [Reset]
+* [Reset](#reset)
 * [Configuring with Python](#configuring-with-python)
   * [Connecting to the Database](#connecting-to-the-database)
   * [The Default Configuration](#the-default-configuration)
@@ -131,14 +131,15 @@ activity is, now is the time to study the [data model](data-model).
 
 TODO
 
-## Later Modifications
+## Adding A Field
 
-Remember that it's easy to create a backup just by copying your
-database file.
+Here's an example where I add a field to an existing configuration.
 
-### Adding A Field
+First, get an idea of what is already defined:
 
     > sqlite3 ~/.ch2/database.sqlj 'select * from topic_field join statistic_name on statistic_name_id = statistic_name.id'
+
+Then add the field:
 
     > python <<EOF
     from ch2.config.database import config, add_topic_field
@@ -150,9 +151,18 @@ database file.
 	add_topic_field(s, diary, 'Route', 90, display_cls=Text)
     EOF
 
-### Changing Field Order
+## Configuring with SQL
+
+Here I swap the `sort` value so that two files are displayed in a
+different order.
+
+First, to see how topics and staitsics are associated (so I know which
+topic to change for a give statistic ):
 
     > sqlite3 ~/.ch2/database.sqlj 'select * from topic_field join statistic_name on statistic_name_id = statistic_name.id'
+
+Next, swap the values.
+
     > sqlite3 ~/.ch2/database.sqlj 'update topic_field set sort=-1 where sort=70'
     > sqlite3 ~/.ch2/database.sqlj 'update topic_field set sort=70 where sort=80'
     > sqlite3 ~/.ch2/database.sqlj 'update topic_field set sort=80 where sort=-1'
