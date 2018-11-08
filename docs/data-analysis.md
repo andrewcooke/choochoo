@@ -1,21 +1,23 @@
 
-# Analysis
+# Data Analysis
 
 ## Introduction
 
-This documentation focuses on simple, direct (but also limited) data access 
-via [pandas](https://pandas.pydata.org/) and [Jupyter](http://jupyter.org/) - 
-this will let you read, manipulate and plot data within your web browser.
+Below I focus on simple, direct (but also limited) data access via
+[pandas](https://pandas.pydata.org/) and
+[Jupyter](http://jupyter.org/) - this will let you read, manipulate
+and plot data within your web browser.
 
-Plotting packages in Python - especially for maps - seem to be unreliable,
-so the emphasis here is on providing the data in an agnostic way.  Hopefully
-you can then display that data with whatever you find works for you.
-Current examples use [Bokeh](https://bokeh.pydata.org/) and
+Plotting packages in Python - especially for maps - seem to be
+unreliable, so the emphasis here is on providing the data in a
+standard format.  Hopefully you can then display that data with
+whatever you find works for you.  Current examples use
+[Bokeh](https://bokeh.pydata.org/) and
 [Matplotlib](https://matplotlib.org/).
 
-All Choochoo's data (all *your* data) are stored in an SQLite3 file at 
+All Choochoo's data (all *your* data) are stored in an SQLite3 file at
 `~/.ch2/database.sql?` (the final character changes with database
-schema version).  So you can also use any programming language with an 
+schema version).  So you can also use any programming language with an
 SQLite binding (for Python the `ch2.squeal.tables` package contains a
 [SQLAchemy](https://www.sqlalchemy.org/) ORM mapping).
 
@@ -28,14 +30,15 @@ SQLite binding (for Python the `ch2.squeal.tables` package contains a
 
 ## Starting Jupyter
 
-We use Jupyter as the environment, because it's pretty and little extra work
-over pure python.  All that is necessary, assuming that Choochoo is installed,
-is typing
+I use Jupyter as the environment, because it's pretty and little extra
+work over pure python.  All that is necessary, assuming that Choochoo
+is installed (and you have activated the virtualenv, if necessary), is
+typing
 
     jupyter notebook
     
 which should display a window in your web browser.  There you can load the
-examples from `ch2/data/notebooks`.
+examples from `ch2.data.notebooks`.
 
 ## Accessing Data
 
