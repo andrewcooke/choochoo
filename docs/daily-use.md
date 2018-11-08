@@ -12,6 +12,7 @@
 * [Activities](#activities)
   * [Download from Device](#download-from-device)
   * [Activity Entry](#activity-entry)
+  * [FTHR](#fthr)
 
 ## Organisation
 
@@ -144,4 +145,27 @@ then the command might look like:
 
 This will load data and re-calculate appropriate statistics.
 
+### FTHR
 
+Some of the statistics require heart rate zones.  These are based on
+the FTHR which you can define as a contants.
+
+To list all available constants:
+
+    > ch2 constants
+
+For the default configuration this should include `FTHR.Bike` which is
+the FTHR used for the `Bike` activity group.
+
+To set a glibal value use:
+
+    > ch2 constants --set FTHR.Bike 154
+
+You can also set a value from a particular date, list and delete
+values.  See `ch2 constants -h` and `ch2 help constants` for more
+details.
+
+A possible estimator for your FTHR is the "Max med HR 30m" statistic.
+This is the maximum value found for the median heart rate over 30
+minutes in ride (so the heart rate for the entire ride is median
+filtered with a 30 minute window and then the maximum value taken).
