@@ -61,12 +61,6 @@ def exponential_time(name, repeat, time, percent, start, duration):
     A time interval that increases steadily by a given percentage.
     Takes 6 arguments: name, repeat spec, initial time, percent increase,
                        start date, duration
-    Example:
-
-      ch2 add-plan percent-time Run 'w[mon,wed,fri]' 20m 10 2018-07-20 1M
-
-      where 20m is the 20 minute initial time, 1M generates plans over a
-      month, and w[mon,wed,fri] indicates which days of each week.
     """
     time_s = parse_time(time)
     ratio = 1 + float(percent) / 100.0
@@ -84,12 +78,6 @@ def exponential_distance(name, repeat, distance, percent, start, duration):
     A distance that increases steadily by a given percentage.
     Takes 6 arguments: name, repeat spec, initial distance, percent increase,
                        start date, duration
-    Example:
-
-      ch2 add-plan percent-distance Ride 'w[mon,wed,fri]' 20km 10 2018-07-20 1M
-
-      where 20km is the 20 km initial distance, 1M generates plans over a
-      month, and w[mon,wed,fri] indicates which days of each week.
     """
     match = compile(r'(\d+)(\D*)').match(distance)
     dist, unit = float(match.group(1)), match.group(2)
