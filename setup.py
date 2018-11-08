@@ -16,7 +16,7 @@ An **open**, **hackable** and **free** training diary.
 See [documentation](https://andrewcooke.github.io/choochoo/) for full
 details.
 
-Source and screenshots on [github](https://github.com/andrewcooke/choochoo),
+Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                  ''',
                  long_description_content_type='text/markdown',
                  include_package_data=True,

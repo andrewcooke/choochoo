@@ -3,6 +3,9 @@
 
 * [Organisation](#organisation)
 * [Diary](#diary)
+  * [Daily](#daily)
+  * [Re-calculating Statistics](#re-calculating-statistics)
+  * [Summaries](#summaries)
 * [Monitoring](#monitoring)
   * [Download from Garmin Connect](#download-from-garmin-connect)
   * [Monitor Entry](#monitor-entry)
@@ -30,6 +33,8 @@ Choochoo database).
 
 ## Diary
 
+### Daily
+
 Starting the diary with
 
     > ch2 diary
@@ -44,6 +49,29 @@ year.  To move forwards hold down `shift` too.  To move to the last
 activity use `alt-A`.
 
 See [configuration](configuration) for how to add additional fields.
+
+### Re-calculating Statistics
+
+Summary statistics (top values per month etc) are calculated when
+monitor data and activities are entered (see below).  But these are
+automatically erased whenever you enter data (for the appropriate
+intervals, because they may no longer be correct).
+
+To re-calculate missing values simply run:
+
+    > ch2 statistics
+
+To re-calculate all statistics (ie delete all existing values first):
+
+    > ch2 statistics --force
+
+### Summaries
+
+To see the monthly and yearly statistics use:
+
+    > ch2 diary --month
+
+    > ch2 diary --year
 
 ## Monitoring
 
