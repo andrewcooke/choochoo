@@ -13,9 +13,10 @@
 ## Organisation
 
 It makes a lot of sense to keep *all* your FIT data on disk somewhere.
-This way, if something changes in Choochoo and the database becomes
-invalid / needs chancging, you can re-load the data rather than trying
-to port the old database.
+If something changes in Choochoo and the database becomes invalid /
+needs changing, you can re-load the data rather than trying to port
+the old database (you still need to port diary entries, but that is
+usually simpler and less volume).
 
 Also, keeping your FIT data means you're not tied to using Choochoo in
 the future.
@@ -23,7 +24,7 @@ the future.
 The program has been designed with this in mind - it will re-scan
 directories containing FIT data and only processs data that are new.
 
-So before starting, choose where you will store FIT data (and maybe
+So before starting choose where you will store FIT data (and maybe
 make backup copies of this data on a regular basis, along with the
 Choochoo database).
 
@@ -34,19 +35,19 @@ Starting the diary with
     > ch2 diary
 
 will display the configured topic fields for data entry (for today).
-When you are done, type `alt-Q` to save and quite (`alt-X` to quite
+When you are done, type `alt-Q` to save and quit (`alt-X` to quit
 without saving).
 
 You can choose alternative dates by specifying a date on the command
-line or by `alt-D/W/M/Y` to move (backwards) by a day / week / month
-/year.  To move forwards hold down `shift` too.  To move to the last
+line or by `alt-D/W/M/Y` to move (backwards) by a day / week / month /
+year.  To move forwards hold down `shift` too.  To move to the last
 activity use `alt-A`.
 
-See [configuration(configuration) for how to add additional fields.
+See [configuration](configuration) for how to add additional fields.
 
 ## Monitoring
 
-Monitoring refers to "lifetyle" data collected by Garmin (or
+Monitoring refers to "lifestyle" data collected by Garmin (or
 compatible) watches.  In particular, heart rate and steps walked are
 recorded.
 
@@ -66,7 +67,7 @@ and download all the data.  Unpack this into a suitable directory so
 that the FIT files are visible.
 
 Subsequent times you download data, you probably only have a day or
-two of data to download.  In this case use the command
+two of data to download.  In that case use the command
 
     > ch2 garmin --user USER --pass PWD PATH/TO/DIR
 
@@ -96,8 +97,8 @@ by 'activity groups' which are part of the
 After an activity I connect my watch to the computer using USB and
 download the FIT file with data to disk.
 
-(In future it should also be possible to download from Garmin Connect
-- I haven't needed this yet, so haven't written the code).
+(In future it should also be possible to download from Garmin Connect,
+but I haven't needed this yet, so haven't written the code).
 
 Data from previous activities may be avaialble to download in bulk
 from Starava, Garmin, etc.
