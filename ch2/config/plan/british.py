@@ -6,9 +6,6 @@ def twelve_week_improver(date):
     """
     The twelve-week plan described at https://www.britishcycling.org.uk.
     Takes a single argument: the start date.
-    Example:
-
-      ch2 add-plan british-cycling-12-week-improver 2018-07-20
     """
 
     return Week(name='British Cycling 12 Week improver',
