@@ -1,15 +1,11 @@
 
 # Data Model
 
-## Introduction
-
 Choochoo is all about the data - getting statistics that you can
 analyze and use to improve performance.  The data model is a key part
 of this: we need a model that is flexible enough to capture anything
 that might be important, simple enough that analysis doesn't have many
 special cases, and reliable enough to avoid errors.
-
-## Contents
 
 * [Concepts](#concepts)
   * [Statistics](#statistics)

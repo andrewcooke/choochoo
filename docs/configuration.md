@@ -1,5 +1,5 @@
 
-# Configure
+# Configuration
 
 Detailed configuration is very powerful, but also complex.  All I can
 do here is give some guidelines and examples.  Hopefully as you

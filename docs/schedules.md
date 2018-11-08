@@ -1,8 +1,6 @@
 
 # Schedules
 
-## Introduction
-
 Schedules are used to specify ranges of dates, typically involving
 some kind of repetition.  They are very flexible, but I've tried to
 make the simple cases easy to write and understand.  Before getting
@@ -55,8 +53,6 @@ into any details it's best to look at some examples:
   Every Sunday, every month.  Also, the 5th and 10th of the month.
 
 Hopefully that gives the idea.  
-
-## Contents
 
 * [Introduction](#introduction)
 * [Structure](#structure)

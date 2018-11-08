@@ -1,8 +1,6 @@
 
 # Data Analysis
 
-## Introduction
-
 Below I focus on simple, direct (but also limited) data access via
 [pandas](https://pandas.pydata.org/) and
 [Jupyter](http://jupyter.org/) - this will let you read, manipulate
@@ -20,8 +18,6 @@ All Choochoo's data (all *your* data) are stored in an SQLite3 file at
 schema version).  So you can also use any programming language with an
 SQLite binding (for Python the `ch2.squeal.tables` package contains a
 [SQLAchemy](https://www.sqlalchemy.org/) ORM mapping).
-
-## Contents
 
 * [Starting Jupyter](starting-jupyter)
 * [Accessing Data](accessing-data)

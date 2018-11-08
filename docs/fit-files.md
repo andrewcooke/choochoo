@@ -1,8 +1,6 @@
 
 # FIT Files
 
-## Introduction
-
 The FIT format is used by ANT+ hardware (bike computers, smart
 watches, sensors) to transmit and store data.  If you are curious
 about the technical details, see the
@@ -13,9 +11,7 @@ data.  This can be used by third parties (see the API docs below), but
 is intended mainly to allow data to be imported into the ch2 diary.
 
 (For information on importing FIT data into Choochoo, see 
-[Activities](activities))
-
-## Contents
+[Daily Use](daily-use))
 
 * [Displaying FIT data](#displaying-fit-data)
 

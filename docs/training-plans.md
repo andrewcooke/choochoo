@@ -1,19 +1,18 @@
 
 # Training Plans
 
-## Introduction
-
-This is where making Choochoo programmable by end users really comes into its own.
-Take a look at [this code](https://github.com/andrewcooke/choochoo/blob/master/ch2/plan/british.py)
-defining a training plan taken from British Cycling.  It's simple, declarative code.
-You can add your own.
+This is where making Choochoo programmable by end users really comes
+into its own.  Take a look at [this
+code](https://github.com/andrewcooke/choochoo/blob/master/ch2/plan/british.py)
+defining a training plan taken from British Cycling.  It's simple,
+declarative code.  You can add your own.
 
 There are also some simple built-in plans available.
 
-## Contents
-
 * [Existing Plans](#existing-plans)
 * [Adding Your Own](#adding-your-own)
+
+TODO - data below incorrect
 
 ## Existing Plans
 
