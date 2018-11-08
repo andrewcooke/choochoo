@@ -6,11 +6,11 @@ from ..stoats.calculate import run_pipeline_paths, run_pipeline_after
 
 def monitor(args, log, db):
     '''
-# monitor
+## monitor
 
-    ch2 monitor PATH [PATH ...]
+    > ch2 monitor PATH [PATH ...]
 
-Read monitor data from fit files.
+Read monitor data from FIT files.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''

@@ -6,13 +6,13 @@ from ..stoats.calculate import run_pipeline_after
 
 def statistics(args, log, db):
     '''
-# statistics
+## statistics
 
-    ch2 statistics
+    > ch2 statistics
 
 Generate any missing statistics.
 
-    ch2 statistics --force [date]
+    > ch2 statistics --force [DATE]
 
 Delete statistics after the date (or all, if omitted) and then generate new values.
     '''

@@ -5,9 +5,9 @@ from ..fit.profile.profile import pickle_profile
 
 def package_fit_profile(args, log, db):
     '''
-# package-fit-profile
+## package-fit-profile
 
-    ch2 package-fit-profile data/sdk/Profile.xlsx
+    > ch2 package-fit-profile data/sdk/Profile.xlsx
 
 Parse the global profile and save the structures containing types and messages
 to a pickle file that is distributed with this package.

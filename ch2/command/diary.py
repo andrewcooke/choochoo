@@ -25,15 +25,19 @@ from ..uweird.tui.widgets import DividedPile
 @tui
 def diary(args, log, db):
     '''
-# diary
+## diary
 
-    ch2 diary [date]
+    > ch2 diary [DATE]
 
 The date can be an absolute day or the number of days previous.  So `ch2 diary 1` selects yesterday.
 
-The daily diary.  Enter information here.
+Display the daily diary.  Enter information here.
 
 To exit, alt-q (or, without saving, alt-x).
+
+    > ch2 diary (--month | --year | --schedule SCHEDULE) [DATE}
+
+Display a summary for the month / year / schedule.
     '''
     date, schedule = args[DATE], args[SCHEDULE]
     if not date:

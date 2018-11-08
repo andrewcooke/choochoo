@@ -4,9 +4,9 @@ from ..config import default
 
 def default_config(args, log, db):
     '''
-# default-config
+## default-config
 
-    ch2 default-config
+    > ch2 default-config
 
 Generate a simple initial configuration.
 

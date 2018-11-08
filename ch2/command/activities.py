@@ -6,11 +6,11 @@ from ..stoats.calculate import run_pipeline_after, run_pipeline_paths
 
 def activities(args, log, db):
     '''
-# activities
+## activities
 
-    ch2 activities PATH [PATH ...]
+    > ch2 activities PATH [PATH ...]
 
-Read activities data from fit files.
+Read activities data from FIT files.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''

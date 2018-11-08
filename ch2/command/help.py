@@ -85,19 +85,19 @@ Docs at http://andrewcooke.github.io/choochoo/index''' % (
 
 def help(args, logs, db):
     '''
-# help
+## help
 
-    ch2 help [topic]
+    > ch2 help [topic]
 
 Displays help for a particular topic.
 
-## Examples
+### Examples
 
-    ch2 help help
+    > ch2 help help
 
 Displays this information.
 
-    ch2 help
+    > ch2 help
 
 Lists available topics.
     '''

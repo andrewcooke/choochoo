@@ -7,17 +7,17 @@ from ..squeal.tables.statistic import StatisticJournal, StatisticName, STATISTIC
 
 def constants(args, log, db):
     '''
-# constant
+## constants
 
-    ch2 constants [NAME [DATE]]
+    > ch2 constants [NAME [DATE]]
 
 Lists constants to stdout.
 
-    ch2 constants --set NAME [DATE] VALUE
+    > ch2 constants --set NAME [DATE] VALUE
 
 Defines a new entry.  If date is omitted a single value is used for all time.
 
-    ch2 constants --delete NAME [DATE]
+    > ch2 constants --delete NAME [DATE]
 
 Deletes an entry.
 

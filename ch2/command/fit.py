@@ -5,25 +5,29 @@ from ..fit.summary import summarize
 
 def fit(args, log, db):
     '''
-# fit
+## fit
 
-    ch2 fit PATH [PATH ...]
+    > ch2 fit PATH [PATH ...]
 
 Print the contents of fit files.
 
 The format and details displayed can be selected with --records,
---tables, --messages, --fields, and --csv.
+--tables, --grep, --messages, --fields, and --csv.
 
 For full options see `ch2 fit -h`.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
 
-## Example
+### Examples
 
-    ch2 -v 0 dump-fit ride.fit
+    > ch2 -v 0 fit --records ride.fit
 
 Will print the contents of the file to stdout (use `-v 0` to suppress logging
 or redirect stderr elsewhere).
+
+    > ch2 -v 0 --grep '.*:sport=cycling' --match 0 --name directory/**/*.fit
+
+Will list file names that contain cycling data.
     '''
     for file_path in args[PATH]:
         # there's a change of nomenclature here from message to record that is too much trouble to fix

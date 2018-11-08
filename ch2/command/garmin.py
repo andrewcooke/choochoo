@@ -8,13 +8,13 @@ from ..stoats.read.monitor import missing_dates
 
 def garmin(args, log, db):
     '''
-# garmin
+## garmin
 
-    ch2 garmin --user USER --pass PASSWORD DIR
+    > ch2 garmin --user USER --pass PASSWORD DIR
 
 Download recent monitor data to the given directory.
 
-    ch2 garmin --user USER --pass PASSWORD --date DATE DIR
+    > ch2 garmin --user USER --pass PASSWORD --date DATE DIR
 
 Download monitor data for the given date.
 

@@ -12,6 +12,19 @@ INDENT = '   '
 
 
 def test_schedule(args, log, db):
+    '''
+## test-schedule
+
+    > ch2 test-schedule SCHEDULE
+
+Print a calendar showing how the given schedule is interpreted.
+
+### Example
+
+    > ch2 test-schedule 2w[1mon,2sun]
+
+(Try it and see)
+    '''
     schedule, start, months = Schedule(args[SCHEDULE]), to_date(args[START], none=True), args[MONTHS]
     if not start:
         start = dt.date.today()

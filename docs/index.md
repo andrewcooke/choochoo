@@ -41,6 +41,8 @@ support for power meters.
 * [Daily Use](daily-use)
 * [Data Analysis](data-analysis)
 
+* [Command Summmary](command-summary)
+
 * Reference
   * [Data Model](data-model)
   * [Schedules](schedules)
