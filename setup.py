@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
-                 version='0.4.0',
+                 version='0.4.1',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
                  description='A Programmable Training DailyDiary',
@@ -15,6 +15,8 @@ An **open**, **hackable** and **free** training diary.
 
 See [documentation](https://andrewcooke.github.io/choochoo/) for full
 details.
+
+Source and screenshots on [github](https://github.com/andrewcooke/choochoo),
                  ''',
                  long_description_content_type='text/markdown',
                  include_package_data=True,
