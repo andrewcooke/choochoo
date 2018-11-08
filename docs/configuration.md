@@ -167,6 +167,8 @@ The code for the configuration that I use (at least, roughly) is
 visible
 [here](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/personal.py).
 
+It builds on the default, adding support for some medical issues.
+
 ### Adding A Field
 
 Here's an example where I add a field to an existing configuration.

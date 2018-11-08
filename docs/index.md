@@ -38,15 +38,13 @@ support for power meters.
 # Contents
 
 * [Getting Started](getting-started)
+* [Daily Use](daily-use)
+* [Data Analysis](data-analysis)
 
-* [Configuration](configuration)
-
-* [Install](install) - installing Choochoo.
-* [Configure](configure) - configuring the system.
-* [The Diary](diary) - entering daily data.
-* [Activities](activities) - import and organise activity data.
-* [Scheduling](scheduling) - defining regular events.
-* [Training Plans](training-plans) - in-built and custom plans.
-* [Analysis](analysis) - explore data in Jupyter notebooks. 
-* [FIT Files](fit-files) - display FIT format data.
+* Reference
+  * [Data Model](data-model)
+  * [Schedules](schedules)
+  * [Configuration](configuration)
+  * [FIT Files](fit-files)
+  * [Training Plans](training-plans)
 
