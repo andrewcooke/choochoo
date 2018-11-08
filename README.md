@@ -76,6 +76,11 @@ extensible.*
 
 ## Latest Changes
 
+### v0.4.0
+
+Tidies lots of rough corners, improved docs, added examples, download
+from Garmin Connect.  This could probably be used by 3d parties.
+
 ### v0.3.0
 
 Diary now uses dates (rather than datetimes) and is timezone aware
