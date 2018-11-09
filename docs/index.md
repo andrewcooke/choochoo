@@ -40,7 +40,6 @@ support for power meters.
 * [Getting Started](getting-started)
 * [Daily Use](daily-use)
 * [Data Analysis](data-analysis)
-
 * [Command Summmary](command-summary)
 
 * Reference
