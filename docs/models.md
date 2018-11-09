@@ -9,7 +9,7 @@ this can be added to Choochoo.
 * [Components](#components)
   * [Impulse Calculations](#impulse-calculations)
   * [Response Calculations](#response-calculations)
-  * [Variable Fitting)(#variable-fitting)
+  * [Variable Fitting](#variable-fitting)
 * [Conclusions](#conclusions)
 
 ## Scope
