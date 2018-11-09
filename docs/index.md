@@ -49,3 +49,6 @@ support for power meters.
   * [FIT Files](fit-files)
   * [Training Plans](training-plans)
 
+* Development
+  * [Models](models)
+  

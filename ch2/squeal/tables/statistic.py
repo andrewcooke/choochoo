@@ -284,5 +284,3 @@ STATISTIC_JOURNAL_CLASSES = {
     StatisticJournalType.FLOAT: StatisticJournalFloat,
     StatisticJournalType.TEXT: StatisticJournalText
 }
-
-
