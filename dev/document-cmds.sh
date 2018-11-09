@@ -2,7 +2,7 @@
 
 rm -f docs/command-summary.md
 
-echo > docs/command-summary.md <<EOF
+cat > docs/command-summary.md <<EOF
 
 # Command Summary
 
@@ -17,6 +17,6 @@ done
 for cmd in $COMMANDS; do
     echo $cmd
     echo >> docs/command-summary.md
-    dev/ch2 help $cmd | cut -c 1- >> docs/command-summary.md
+    dev/ch2 help $cmd | cut -c 2- >> docs/command-summary.md
 done
 
