@@ -26,9 +26,7 @@ A practical FF Model (or system of models) requires the following
 separable components:
 
 1. Calculation of the impulse
-
 2. Calculation of the respone
-
 3. Variable fitting
 
 My (uninformed) understanding of Training Peaks is that it ignores the
