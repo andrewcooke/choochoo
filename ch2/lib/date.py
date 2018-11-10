@@ -91,11 +91,33 @@ def format_seconds(seconds):
 
 
 def local_date_to_time(date):
+    date = to_date(date)
     ptime = p.DateTime(year=date.year, month=date.month, day=date.day,
                        tzinfo=p.tz.get_local_timezone()).in_timezone(dt.timezone.utc)
     return dt.datetime(*ptime.timetuple()[:6], tzinfo=dt.timezone.utc)
 
 
 def time_to_local_date(time):
+    time = to_time(time)
     ptime = p.DateTime(*time.timetuple()[:6], tzinfo=dt.timezone.utc).in_timezone(p.tz.get_local_timezone())
     return dt.date(year=ptime.year, month=ptime.month, day=ptime.day)
+
+
+def min_time(a, b):
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return min(a, b)
+
+
+def max_time(a, b):
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return max(a, b)
+
+
+def extend_range(start, finish, time):
+    return min_time(start, time), max_time(finish, time)

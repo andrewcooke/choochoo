@@ -131,7 +131,8 @@ def add_activities(session, cls, sort, **kargs):
     return add(session, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
 
 
-def add_activity_constant(session, activity_group, name, description=None, units=None, type=StatisticJournalType.INTEGER):
+def add_activity_constant(session, activity_group, name, description=None, units=None,
+                          statistic_journal_type=StatisticJournalType.INTEGER):
     '''
     Add a constant associated with an activity.
 
@@ -144,8 +145,8 @@ def add_activity_constant(session, activity_group, name, description=None, units
         session.flush()
     statistic_name = add(session, StatisticName(name=name, owner=Constant, constraint=activity_group.id, units=units,
                                                 description=description))
-    constant = add(session, Constant(type=type, name='%s.%s' % (name, activity_group.name),
-                                     statistic_name=statistic_name))
+    constant = add(session, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
+                                     name='%s.%s' % (name, activity_group.name)))
 
 
 def add_topic(session, name, sort, description=None, schedule=None):

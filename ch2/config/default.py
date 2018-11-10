@@ -54,10 +54,10 @@ def default(db):
 
         add_activity_constant(s, bike, FTHR,
                               description='Heart rate at functional threshold (cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0',
-                              units=BPM, type=StatisticJournalType.INTEGER)
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_activity_constant(s, run, FTHR,
                               description='Heart rate at functional threshold (running).',
-                              units=BPM, type=StatisticJournalType.INTEGER)
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
 
         # a basic diary
 

@@ -7,9 +7,12 @@ from sqlalchemy.sql.functions import count
 
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup, ActivityJournal
-from ..squeal.tables.monitor import MonitorJournal, MonitorHeartRate, MonitorSteps
+from ..squeal.tables.monitor import MonitorJournal
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticMeasure
+
+# todo
+MonitorSteps = None
 
 
 def extract(data, instance, *attributes):

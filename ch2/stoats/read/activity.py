@@ -7,8 +7,12 @@ from ...fit.format.records import fix_degrees
 from ...lib.date import to_time
 from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
-from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan, ActivityWaypoint
+from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...stoats.read import Importer
+
+
+# todo
+ActivityWaypoint = None
 
 
 class ActivityImporter(Importer):

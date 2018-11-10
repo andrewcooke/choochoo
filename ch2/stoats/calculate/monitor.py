@@ -5,9 +5,14 @@ from ..names import STEPS, REST_HR
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
-from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
+from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalInteger
+
+
+# todo
+MonitorSteps = None
+MonitorHeartRate = None
 
 
 class MonitorStatistics:

@@ -9,13 +9,18 @@ from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, unpack_single_bytes
 from ...lib.date import to_time, time_to_local_date
 from ...squeal.database import add
-from ...squeal.tables.monitor import MonitorJournal, MonitorSteps, MonitorHeartRate
+from ...squeal.tables.monitor import MonitorJournal
 
 ACTIVITY_TYPE = 'activity_type'
 HEART_RATE = 'heart_rate'
 MONITORING = 'monitoring'
 MONITORING_INFO = 'monitoring_info'
 STEPS = 'steps'
+
+
+# todo
+MonitorSteps = None
+MonitorHeartRate = None
 
 
 class MonitorImporter(Importer):

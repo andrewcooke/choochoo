@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source, Interval
 from ..support import Base
-from ..types import Owner
+from ..types import Owner, Time
 from ...lib.date import format_seconds, local_date_to_time
 
 
@@ -50,10 +50,8 @@ class StatisticJournal(Base):
     statistic_name = relationship('StatisticName')
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
-    # this is just for finding bugs
-    # in fact (statistic_id, time) should be unique but that's across inheritance tables
-    # the source_id field is only for delete on cascade. it's not an 'owner' as for statistics
-    UniqueConstraint(statistic_name_id, source_id)
+    time = Column(Time, nullable=False)
+    UniqueConstraint(statistic_name_id, time)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.STATISTIC,
@@ -66,12 +64,8 @@ class StatisticJournal(Base):
         except AttributeError:
             return 'Field Journal'
 
-    @property
-    def time(self):
-        return self.source.time
-
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, type):
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, type):
         statistic_name = s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
@@ -88,7 +82,7 @@ class StatisticJournal(Base):
                 statistic_name.summary = summary
         journal = s.query(StatisticJournal).join(Source). \
             filter(StatisticJournal.statistic_name == statistic_name,
-                   Source.time == source.time).one_or_none()
+                   StatisticJournal.time == time).one_or_none()
         if not journal:
             journal = STATISTIC_JOURNAL_CLASSES[type](
                 statistic_name=statistic_name, source=source, value=value)
@@ -184,8 +178,9 @@ class StatisticJournalInteger(StatisticJournal):
     }
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.INTEGER)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+                           StatisticJournalType.INTEGER)
 
 
 class StatisticJournalFloat(StatisticJournal):
@@ -198,8 +193,9 @@ class StatisticJournalFloat(StatisticJournal):
     parse = float
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.FLOAT)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+                           StatisticJournalType.FLOAT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.FLOAT
@@ -246,8 +242,9 @@ class StatisticJournalText(StatisticJournal):
     parse = str
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.TEXT)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+                           StatisticJournalType.TEXT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.TEXT
