@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
 from ch2.lib.data import assert_attr
-from .source import SourceType, Source
+from .source import SourceType, Source, Interval
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES, StatisticName
 from ..support import Base
 from ..types import Date, Cls, Json, Sched, Sort
@@ -121,7 +121,7 @@ class TopicJournal(Source):
         return 'TopicJournal from %s' % self.date
 
     @classmethod
-    def check_tz(cls, db):
+    def check_tz(cls, log, db):
         from ...squeal.database import add
         with db.session_context() as s:
             tz = get_local_timezone()
@@ -129,10 +129,14 @@ class TopicJournal(Source):
             if not db_tz:
                 db_tz = add(s, SystemConstant(name=TIMEZONE, value=''))
             if db_tz.value != tz.name:
-                cls.__reset_timezone(s)
+                cls.__reset_timezone(log, s)
                 db_tz.value = tz.name
 
     @classmethod
-    def __reset_timezone(cls, s):
+    def __reset_timezone(cls, log, s):
+        log.warn('Timezone has changed')
+        log.warn('Recalculating times for TopicJournal entries')
         for tj in s.query(TopicJournal).all():
             tj.time = local_date_to_time(tj.date)
+        Interval.delete_all(log, s)
+

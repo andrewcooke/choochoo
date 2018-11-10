@@ -1,10 +1,11 @@
 
 # Expressions
 
-Drive by [physiological models](models) it would be nice to have some
+Driven by [physiological models](models) it would be nice to have some
 way of generating dervied statistics from arbitrary expressions.  Here
 I explore how this would work.
 
+* [Explotaion](#exploration)
 
 ## Exploration
 
@@ -59,4 +60,28 @@ Why isn't `a` a statistic here?
     let a = sin(Foo); "New Statistic" = 3 * a
 
     $a = sin(Foo); "New Statistic" = 3 * $a
+
+How general do we want this to be?  Is it going to be a separate
+library?  Or tied to Choochoo?
+
+    Statistic = FTHR * 3
+
+If `FTHR` is a constant, what does this mean?  Constants are
+statistics.  So maybe...
+
+    Statistic = FTHR[<]
+
+where `[<]` means preceding value?  And `[2018-01-01]` would be for a
+specific date?  And `[-1m<]` would be latest value older than a month?
+
+Does `[-1d]` mean exactly one day ago?  Anything within the last day?
+The last 36 hours?  Do we want `[-1]` to just mean "whatever came
+before"?
+
+[https://pythonhosted.org/dynts/dsl/index.html](https://pythonhosted.org/dynts/dsl/index.html)
+is a DSL for time series.
+
+What about integration?  Seems like might be useful for FF models?
+Should the time of values be more explicit?  So `Statistic[-1m:]` is
+all values in the last month?
 

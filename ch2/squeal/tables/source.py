@@ -169,3 +169,9 @@ class Interval(Source):
         starts, overall_finish = cls._missing_interval_starts(log, s, schedule, owner)
         for block_start in starts:
             yield from cls._missing_intervals_from(log, s, schedule, owner, block_start, overall_finish)
+
+    @classmethod
+    def delete_all(cls, log, s):
+        log.warning('Deleting all Intervals')
+        # this uses the on delete cascade between source and interval
+        s.query(Source).filter(Source.type == SourceType.INTERVAL).delete()

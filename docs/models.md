@@ -35,6 +35,9 @@ Choochoo could do significantly better.  For example, can we use the
 same approach to model recovery to injury?  Does step data predice how
 the pain in my leg evolves?
 
+More info from Training Peaks
+[here](https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/).
+
 In addition, we require some way of displaying data.  I will rely on
 the standard Choochoo solutions for this (showing values in the diary
 and plotting data via Jupyter notebooks).  The plotting may require
@@ -60,6 +63,17 @@ Maybe we need a more general abstraction that can dervive one
 statistic from another?  This could then be applied to Steps to give,
 say, "Step Impulse", while Activity import calculates "HR Impulse"?
 
+Or maybe the problem is that various values associated with activities
+should already be statistics?  Then HR wouldn't need to be integrated
+and carried across to statistics - each measurement would be a
+"mini-impulse".  What would be the time delta (this is a problem
+whether or not we carry across to statistics)?
+
+This (more statistics) would require that StatisticJournal have a
+time, since the source time for an activity is a single value.  Either
+that or there's a separate time table (which would allow values from
+the same timestamped entry in a FIT file to be grouped).
+
 ### Response Calculations
 
 We need to do this for each component.  This could also be a more
@@ -74,5 +88,9 @@ This is still unclear to me.  Need to digest more papers.
 ## Conclusions
 
 * A more general 'programmable' pipeline for generating new statistics?
+
+* Or placing more data directly in statistics journals?  AFter all,
+  isn't this exactly why we're using a denormalized approach - so
+  "anything" can be used in calculations?
 
 * A better understanding of variable fitting.

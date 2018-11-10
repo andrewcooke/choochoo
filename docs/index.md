@@ -51,5 +51,5 @@ support for power meters.
 
 * Development
   * [Models](models)
-  * [Expressions](expression)
+  * [Expressions](expressions)
   

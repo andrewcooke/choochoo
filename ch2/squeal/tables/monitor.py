@@ -57,4 +57,4 @@ class MonitorSteps(MonitorIntegerMixin, Base):
                                                    passive_deletes=True,
                                                    order_by='MonitorSteps.time'))
     delta = Column(Integer, nullable=False)
-    activity = Column(Text, nullable=False)  # un0normalized text from FIT file
+    activity = Column(Text, nullable=False)  # un-normalized text from FIT file
