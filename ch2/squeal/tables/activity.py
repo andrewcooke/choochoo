@@ -30,6 +30,7 @@ class ActivityJournal(Source):
     activity_group = relationship('ActivityGroup')
     name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
+    start = Column(Time, nullable=False, index=True)
     finish = Column(Time, nullable=False)
 
     __mapper_args__ = {
@@ -37,7 +38,8 @@ class ActivityJournal(Source):
     }
 
     def __str__(self):
-        return 'ActivityJournal from %s' % format_time(self.time)
+        return 'ActivityJournal %s %s to %s' % (self.activity_group.name,
+                                                format_time(self.start), format_time(self.finish))
 
 
 class ActivityTimespan(Base):

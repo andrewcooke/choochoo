@@ -66,6 +66,23 @@ class StatisticJournal(Base):
 
     @classmethod
     def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, type):
+        statistic_name = cls.add_name(log, s, name, units, summary, owner, constraint)
+        journal = s.query(StatisticJournal).join(Source). \
+            filter(StatisticJournal.statistic_name == statistic_name,
+                   StatisticJournal.time == time).one_or_none()
+        if not journal:
+            journal = STATISTIC_JOURNAL_CLASSES[type](
+                statistic_name=statistic_name, source=source, value=value, time=time)
+            s.add(journal)
+        else:
+            if journal.type != type:
+                raise Exception('Inconsistent StatisticJournal type (%d != %d)' %
+                                (journal.type, journal))
+            journal.value = value
+        return journal
+
+    @classmethod
+    def add_name(cls, log, s, name, units, summary, owner, constraint):
         statistic_name = s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
@@ -80,19 +97,7 @@ class StatisticJournal(Base):
             if statistic_name.summary != summary:
                 log.warn('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
                 statistic_name.summary = summary
-        journal = s.query(StatisticJournal).join(Source). \
-            filter(StatisticJournal.statistic_name == statistic_name,
-                   StatisticJournal.time == time).one_or_none()
-        if not journal:
-            journal = STATISTIC_JOURNAL_CLASSES[type](
-                statistic_name=statistic_name, source=source, value=value)
-            s.add(journal)
-        else:
-            if journal.type != type:
-                raise Exception('Inconsistent StatisticJournal type (%d != %d)' %
-                                (journal.type, journal))
-            journal.value = value
-        return journal
+        return statistic_name
 
     def formatted(self):
         if self.value is None:

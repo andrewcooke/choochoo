@@ -111,11 +111,9 @@ class Interval(Source):
 
     @classmethod
     def _raw_statistics_time_range(cls, s):
-        from .statistic import StatisticJournal, StatisticName
-        start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
-            outerjoin(StatisticJournal). \
-            filter(StatisticName.id != None,
-                   Source.time > to_time(0.0)).one()
+        from .statistic import StatisticJournal
+        start, finish = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
+            filter(StatisticJournal.time > to_time(0.0)).one()
         if start and finish:
             return start, finish
         else:

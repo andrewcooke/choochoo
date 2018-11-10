@@ -24,11 +24,12 @@ class ActivityStatistics:
             for activity_group in s.query(ActivityGroup).all():
                 self._log.debug('Checking statistics for activity %s' % activity_group.name)
                 if force:
-                    self._delete_activity(s, activity_group, after=after)
+                    self._delete_statistics(s, activity_group, after=after)
                 self._run_activity(s, activity_group)
 
-    def _delete_activity(self, s, activity_group, after=None):
-        # we can't delete the source because that's the activity journal.
+    def _delete_statistics(self, s, activity_group, after=None):
+        # we can't delete the source because that's the activity journal
+        # (and we're calculating here, not importing)
         # so instead we wipe all statistics that are owned by us.
         # we do this in SQL for speed, but are careful to use the parent node.
         for repeat in range(2):
@@ -40,7 +41,7 @@ class ActivityStatistics:
                 filter(StatisticName.owner == self,
                        ActivityJournal.activity_group == activity_group)
             if after:
-                q = q.filter(Source.time >= after)
+                q = q.filter(StatisticJournal.time >= after)
             if repeat:
                 for journal in q.all():
                     self._log.debug('Deleting %s (%s)' % (journal, journal.statistic_name))
