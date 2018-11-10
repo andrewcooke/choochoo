@@ -51,10 +51,11 @@ class SummaryStatistics:
 
     def _statistics_missing_summaries(self, s, start, finish):
         statistics_with_data_but_no_summary = s.query(StatisticName.id). \
-            join(StatisticJournal, Source). \
-            filter(Source.time >= start,
-                   Source.time < finish,
+            join(StatisticJournal). \
+            filter(StatisticJournal.time >= start,
+                   StatisticJournal.time < finish,
                    StatisticName.summary != None)
+        # avoid duplicates
         return s.query(StatisticName). \
             filter(StatisticName.id.in_(statistics_with_data_but_no_summary)). \
             all()
@@ -143,7 +144,7 @@ class SummaryStatistics:
         with self._db.session_context() as s:
             for start, finish in Interval.missing(self._log, s, spec, self):
                 start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
-                interval = add(s, Interval(time=start_time, start=start, finish=finish, schedule=spec, owner=self))
+                interval = add(s, Interval(start=start, finish=finish, schedule=spec, owner=self))
                 have_data = False
                 for statistic_name in self._statistics_missing_summaries(s, start_time, finish_time):
                     data = [journal for journal in self._journal_data(s, statistic_name, start_time, finish_time)

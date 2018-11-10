@@ -1,18 +1,17 @@
-
+from ch2.stoats.read.monitor import MonitorImporter
 from sqlalchemy.sql.functions import count, min, sum
 
-from ..names import STEPS, REST_HR
+from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.source import Interval
-from ...squeal.tables.statistic import StatisticJournalInteger
+from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
 
 
-# todo
-MonitorSteps = None
-MonitorHeartRate = None
+# this is really just a daily interval - maybe it should be implemented as such?
+# but it would be very inefficient for most stats.  should intervals be improved somehow?
 
 
 class MonitorStatistics:
@@ -56,21 +55,27 @@ class MonitorStatistics:
 
     def _add_stats(self, s, start, finish):
         start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
-        interval = add(s, Interval(schedule='d', owner=self, time=start_time,
+        interval = add(s, Interval(schedule='d', owner=self,
                                    start=start, finish=finish))
-        rest_heart_rate = s.query(min(MonitorHeartRate.value)).join(MonitorJournal). \
-            filter(MonitorJournal.time < finish_time,
-                   MonitorJournal.finish >= start_time,
-                   MonitorHeartRate.time >= start_time,
-                   MonitorHeartRate.time < finish_time,
-                   MonitorHeartRate.value > 0).scalar()
-        self._add_integer_stat(s, interval, REST_HR, '[min],[avg],[cnt]', rest_heart_rate, 'bpm')
-        steps = s.query(sum(MonitorSteps.delta)).join(MonitorJournal). \
-            filter(MonitorJournal.time < finish_time,
-                   MonitorJournal.finish >= start_time,
-                   MonitorSteps.time >= start_time,
-                   MonitorSteps.time < finish_time).scalar()
-        self._add_integer_stat(s, interval, STEPS, '[sum],[avg],[cnt]', steps, 'steps')
+        heart_rate_name = s.query(StatisticName). \
+            filter(StatisticName.name == HEART_RATE,
+                   StatisticName.owner == MonitorImporter).one_or_none()
+        if heart_rate_name:
+            rest_heart_rate = s.query(min(StatisticJournalInteger.value)). \
+                filter(StatisticJournalInteger.statistic_name == heart_rate_name,
+                       StatisticJournalInteger.time < finish_time,
+                       StatisticJournalInteger.time >= start_time,
+                       StatisticJournalInteger.value > 0).scalar()
+            self._add_integer_stat(s, interval, REST_HR, '[min],[avg],[cnt]', rest_heart_rate, BPM)
+        steps_name = s.query(StatisticName). \
+            filter(StatisticName.name == STEPS,
+                   StatisticName.owner == MonitorImporter).one_or_none()
+        if steps_name:
+            daily_steps = s.query(sum(StatisticJournalInteger.value)). \
+                filter(StatisticJournalInteger.statistic_name == steps_name,
+                       StatisticJournalInteger.time < finish_time,
+                       StatisticJournalInteger.time >= start_time).scalar()
+            self._add_integer_stat(s, interval, DAILY_STEPS, '[sum],[avg],[cnt]', daily_steps, STEPS)
         self._log.debug('Added data for %s' % interval)
 
     def _add_integer_stat(self, s, journal, name, summary, value, units):

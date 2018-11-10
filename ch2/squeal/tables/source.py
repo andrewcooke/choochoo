@@ -113,7 +113,7 @@ class Interval(Source):
     def _raw_statistics_time_range(cls, s):
         from .statistic import StatisticJournal
         start, finish = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
-            filter(StatisticJournal.time > to_time(0.0)).one()
+            filter(StatisticJournal.time > to_time(24 * 60 * 60.0)).one()   # skip entire first day because tz
         if start and finish:
             return start, finish
         else:
