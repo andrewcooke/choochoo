@@ -2,6 +2,7 @@
 ACTIVE_DISTANCE = 'Active Distance'
 ACTIVE_TIME = 'Active Time'
 ACTIVE_SPEED = 'Active Speed'
+ACTIVITY = 'Activity'
 DAILY_STEPS = 'Daily Steps'
 DISTANCE = 'Distance'
 FTHR = 'FTHR'
@@ -34,6 +35,7 @@ KMH = 'km/h'
 PC = '%'
 BPM = 'bpm'
 KG = 'kg'
+STEPS_UNITS = 'steps'
 
 
 def round_km():

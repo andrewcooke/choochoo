@@ -7,7 +7,7 @@ from ch2 import monitor
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.config.default import default
 from ch2.lib.date import to_time, to_date, local_date_to_time
-from ch2.squeal.tables.monitor import MonitorJournal, MonitorSteps
+from ch2.squeal.tables.monitor import MonitorJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.source import Source, SourceType, Interval
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticName

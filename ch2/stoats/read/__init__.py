@@ -1,7 +1,9 @@
 
 from abc import abstractmethod
 
-from ch2.lib.io import for_modified_files
+from ...lib.io import for_modified_files
+from ...squeal.database import add
+from ...squeal.tables.statistic import StatisticJournal
 
 
 class AbortImport(Exception):
@@ -17,6 +19,7 @@ class Importer:
     def __init__(self, log, db):
         self._log = log
         self._db = db
+        self.__statistics_cache = {}
 
     def _first(self, path, records, *names):
         try:
@@ -54,3 +57,11 @@ class Importer:
     @abstractmethod
     def _import(self, s, path, **kargs):
         pass
+
+    def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
+        # cache statistic_name instances for speed (avoid flush on each query)
+        if name not in self.__statistics_cache:
+            self.__statistics_cache[name] = \
+                StatisticJournal.add_name(self._log, s, name, units, summary, owner, constraint)
+        statistic_name = self.__statistics_cache[name]
+        add(s, type(statistic_name=statistic_name, source=source, value=value, time=time))

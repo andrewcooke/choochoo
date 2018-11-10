@@ -8,19 +8,12 @@ from ...lib.date import to_time
 from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
-from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger, StatisticJournal, \
-    STATISTIC_JOURNAL_CLASSES
+from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger
 from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M
 from ...stoats.read import Importer
 
-ActivityWaypoint = None
-
 
 class ActivityImporter(Importer):
-
-    def __init__(self, log, db):
-        super().__init__(log, db)
-        self.__statistics_cache = {}
 
     def run(self, paths, force=False, sport_to_activity=None):
         if sport_to_activity is None:
@@ -102,17 +95,4 @@ class ActivityImporter(Importer):
                 if record.name == 'record':
                     self._log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                    (path, record.timestamp))
-            # except (AttributeError, TypeError) as e:
-            #     if warned < 10:
-            #         self._log.warn('Error while reading %s - some data may be missing (%s)' % (path, e))
-            #     elif warned == 10:
-            #         self._log.warn('No more warnings will be given for %s' % path)
-            #     warned += 1
 
-    def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
-        # cache statistic_name instances for speed (avoid flush on each query)
-        if name not in self.__statistics_cache:
-            self.__statistics_cache[name] = \
-                StatisticJournal.add_name(self._log, s, name, units, summary, owner, constraint)
-        statistic_name = self.__statistics_cache[name]
-        add(s, type(statistic_name=statistic_name, source=source, value=value, time=time))
