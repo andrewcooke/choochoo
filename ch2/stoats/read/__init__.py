@@ -58,11 +58,14 @@ class Importer:
     def _import(self, s, path, **kargs):
         pass
 
-    def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
+    def _create(self, s, name, units, summary, owner, constraint, source, value, time, type):
         # cache statistic_name instances for speed (avoid flush on each query)
         key = (name, constraint)
         if key not in self.__statistics_cache:
             self.__statistics_cache[key] = \
                 StatisticJournal.add_name(self._log, s, name, units, summary, owner, constraint)
         statistic_name = self.__statistics_cache[key]
-        return add(s, type(statistic_name=statistic_name, source=source, value=value, time=time))
+        return type(statistic_name=statistic_name, source=source, value=value, time=time)
+
+    def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
+        add(s, self._create(s, name, units, summary, owner, constraint, source, value, time, type))

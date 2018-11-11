@@ -86,40 +86,10 @@ def test_values():
             assert summary.value == 42, summary.value
 
 
-def test_bug():
-
-     with NamedTemporaryFile() as f:
-
-        args, log, db = bootstrap_file(f, m(V), '5')
-
-        bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-
-        for file in ('25505915679', '25519562859', '25519565531', '25532154264', '25539076032', '25542112328'):
-            args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                           'monitor', mm(FAST), 'data/test/personal/andrew@acooke.org_%s.fit' % file)
-            monitor(args, log, db)
-
-        # run('sqlite3 %s ".dump"' % f.name, shell=True)
-
-        run_pipeline_after(log, db, PipelineType.STATISTIC, force=True, after='2018-01-01')
-
-        # run('sqlite3 %s ".dump"' % f.name, shell=True)
-
-        with db.session_context() as s:
-
-            # steps
-
-            summary = s.query(StatisticJournal).join(StatisticName, Interval). \
-                filter(Interval.start == '2018-10-07',
-                       Interval.schedule == 'd',
-                       StatisticName.owner == MonitorStatistics,
-                       StatisticName.name == DAILY_STEPS).one()
-
-            # connect has 3031 for this date.
-            assert summary.value == 3031, summary.value
+FILES = ('25505915679', '25519562859', '25519565531', '25532154264', '25539076032', '25542112328')
 
 
-def test_bug_reversed():
+def generic_bug(files):
 
     with NamedTemporaryFile() as f:
 
@@ -127,8 +97,7 @@ def test_bug_reversed():
 
         bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-        for file in sorted(['25505915679', '25519562859', '25519565531', '25532154264', '25539076032', '25542112328'],
-                           reverse=True):
+        for file in files:
             args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                            'monitor', mm(FAST), 'data/test/personal/andrew@acooke.org_%s.fit' % file)
             monitor(args, log, db)
@@ -151,3 +120,11 @@ def test_bug_reversed():
 
             # connect has 3031 for this date.
             assert summary.value == 3031, summary.value
+
+
+def test_bug():
+    generic_bug(sorted(FILES))
+
+
+def test_bug_reversed():
+    generic_bug(sorted(FILES, reverse=True))
