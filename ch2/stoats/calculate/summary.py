@@ -61,10 +61,10 @@ class SummaryStatistics:
             all()
 
     def _journal_data(self, s, statistic_name, start, finish):
-        return s.query(StatisticJournal).join(Source). \
+        return s.query(StatisticJournal). \
             filter(StatisticJournal.statistic_name == statistic_name,
-                   Source.time >= start,
-                   Source.time < finish).all()
+                   StatisticJournal.time >= start,
+                   StatisticJournal.time < finish).all()
 
     def _calculate_value(self, process, values, schedule, input):
         range = schedule.describe()
@@ -113,13 +113,13 @@ class SummaryStatistics:
             statistic_name.units = units
         return statistic_name
 
-    def _create_value(self, s, interval, spec, statistic_name, process, data, values):
+    def _create_value(self, s, interval, spec, statistic_name, process, data, values, time):
         value, template, type, units = self._calculate_value(process, values, spec, data[0])
         if value is not None:
             name = template % statistic_name.name
             new_name = self._get_statistic_name(s, statistic_name, name, units)
             journal = add(s, STATISTIC_JOURNAL_CLASSES[type](
-                statistic_name=new_name, source=interval, value=value))
+                statistic_name=new_name, source=interval, value=value, time=time))
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic_name))
 
     def _create_ranks(self, s, interval, spec, statistic, data):
@@ -154,7 +154,8 @@ class SummaryStatistics:
                         if processes:
                             values = [x.value for x in data]
                             for process in processes:
-                                self._create_value(s, interval, spec, statistic_name, process.lower(), data, values)
+                                self._create_value(s, interval, spec, statistic_name, process.lower(), data, values,
+                                                   start_time)
                         else:
                             self._log.warn('Invalid summary for %s ("%s")' % (statistic_name, statistic_name.summary))
                         self._create_ranks(s, interval, spec, statistic_name, data)

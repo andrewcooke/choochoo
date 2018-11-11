@@ -20,4 +20,4 @@ class MonitorJournal(Source):
     }
 
     def __str__(self):
-        return 'Monitor Journal from %s' % format_time(self.time)
+        return 'Monitor Journal %s to %s' % (format_time(self.start), format_time(self.finish))

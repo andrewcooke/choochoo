@@ -1,7 +1,7 @@
 #!/bin/bash
 
 rm -fr env
-python3.7 -m env
+python3.7 -m venv env
 source env/bin/activate
 pip install --upgrade pip
 pip install urwid
@@ -10,7 +10,7 @@ pip install nose
 pip install robotframework
 pip install openpyxl
 pip install numpy
-opip install pandas
+pip install pandas
 pip install pyGeoTile
 pip install colorama
 pip install pendulum

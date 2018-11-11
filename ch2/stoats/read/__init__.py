@@ -60,8 +60,9 @@ class Importer:
 
     def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
         # cache statistic_name instances for speed (avoid flush on each query)
-        if name not in self.__statistics_cache:
-            self.__statistics_cache[name] = \
+        key = (name, constraint)
+        if key not in self.__statistics_cache:
+            self.__statistics_cache[key] = \
                 StatisticJournal.add_name(self._log, s, name, units, summary, owner, constraint)
-        statistic_name = self.__statistics_cache[name]
-        add(s, type(statistic_name=statistic_name, source=source, value=value, time=time))
+        statistic_name = self.__statistics_cache[key]
+        return add(s, type(statistic_name=statistic_name, source=source, value=value, time=time))

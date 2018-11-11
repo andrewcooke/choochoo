@@ -95,6 +95,16 @@ class Json(TypeDecorator):
 HASH_CACHE = {}
 
 
+def hash16(text):
+    if text not in HASH_CACHE:
+        hash = md5()
+        hash.update(text.encode('utf8'))
+        # 16 bits is more than enough - only expect to have a handful of distinct values
+        # signed value because that presumably fits into sqlite signed integer
+        HASH_CACHE[text] = unpack('h', hash.digest()[:2])[0]
+    return HASH_CACHE[text]
+
+
 class Owner(TypeDecorator):
     '''
     The 'owner' of some data - typically the creating class.
@@ -111,13 +121,7 @@ class Owner(TypeDecorator):
             cls = type(cls)
         if isinstance(cls, type):
             cls = cls.__module__ + '.' + cls.__name__
-        if cls not in HASH_CACHE:
-            hash = md5()
-            hash.update(cls.encode('utf8'))
-            # 16 bits is more than enough - only expect to have a handful of distinct values
-            # signed value because that presumably fits into sqlite signed integer
-            HASH_CACHE[cls] = unpack('h', hash.digest()[:2])[0]
-        return HASH_CACHE[cls]
+        return hash16(cls)
 
     process_bind_param = process_literal_param
 
