@@ -63,7 +63,7 @@ class ActivityImporter(Importer):
                                          fit_file=path, name=splitext(basename(path))[0]))
 
         timespan, warned, latest = None, 0, to_time(0.0)
-        self._log.info('Loading data for activity')
+        self._log.info('Importing activity data from %s' % path)
         for record in records:
             if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
                 if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':

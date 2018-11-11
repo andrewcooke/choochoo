@@ -53,17 +53,17 @@ class ActivityDiary(Displayer):
 
     def __active_date(self, s, ajournal, date):
         body = [Divider()]
-        body.append(Text('%s - %s  (%s)' % (ajournal.time.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
-                                            format_seconds((ajournal.finish - ajournal.time).seconds))))
+        body.append(Text('%s - %s  (%s)' % (ajournal.start.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
+                                            format_seconds((ajournal.finish - ajournal.start).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
-            sjournal = StatisticJournal.at(s, ajournal.time, name, ActivityStatistics, ajournal.activity_group.id)
+            sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityStatistics, ajournal.activity_group.id)
             body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         return body
 
     def __template(self, s, ajournal, template, title, re, date):
         body = [Text(title)]
         sjournals = s.query(StatisticJournal).join(StatisticName). \
-            filter(StatisticJournal.time == ajournal.time,
+            filter(StatisticJournal.time == ajournal.start,
                    StatisticName.name.like(template),
                    StatisticName.owner == ActivityStatistics,
                    StatisticName.constraint == ajournal.activity_group.id).order_by(StatisticName.name).all()

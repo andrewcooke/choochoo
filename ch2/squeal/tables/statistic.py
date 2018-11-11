@@ -279,7 +279,7 @@ class StatisticJournalText(StatisticJournal):
         if not self.units:
             return '%s' % self.value
         else:
-            return '%s%s' % (self.value, self.units)
+            return '%s %s' % (self.value, self.units)
 
 
 class StatisticMeasure(Base):

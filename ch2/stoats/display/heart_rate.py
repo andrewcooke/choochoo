@@ -9,8 +9,8 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName
 
 def build_zones(s, ajournal, width):
     body = []
-    percent_times = s.query(StatisticJournal).join(StatisticName, Source). \
-        filter(Source.time == ajournal.time,
+    percent_times = s.query(StatisticJournal).join(StatisticName). \
+        filter(StatisticJournal.time == ajournal.start,
                StatisticName.name.like(PERCENT_IN_Z_ANY),
                StatisticName.owner == ActivityStatistics,
                StatisticName.constraint == ajournal.activity_group.id) \

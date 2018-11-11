@@ -36,6 +36,6 @@ class Pipeline(Base):
         if not pipelines:
             msg = 'No pipelines configured for type %s' % PipelineType(type).name
             if like:
-                msg += (' like %' % like)
+                msg += (' like %s' % like)
             raise Exception(msg)
         yield from ((pipeline.cls, pipeline.args, pipeline.kargs) for pipeline in pipelines)
