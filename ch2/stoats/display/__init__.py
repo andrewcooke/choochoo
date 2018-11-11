@@ -1,3 +1,4 @@
+from abc import abstractmethod
 
 from ...squeal.tables.pipeline import Pipeline
 
@@ -13,3 +14,6 @@ class Displayer:
     def __init__(self, log):
         self._log = log
 
+    @abstractmethod
+    def build(self, s, f, date, **kargs):
+        raise NotImplemented()

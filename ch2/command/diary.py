@@ -6,16 +6,17 @@ from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
 
 from .args import DATE, SCHEDULE
-from ..lib.date import to_date, local_date_to_time
+from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em
 from ..lib.widgets import DateSwitcher
+from ..squeal.database import add
 from ..squeal.tables.pipeline import PipelineType
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import build_pipeline
 from ..uweird.fields import PAGE_WIDTH
-from ch2.uweird.fields.summary import summary_columns
+from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
 from ..uweird.tui.tabs import TabList
@@ -148,8 +149,7 @@ class DailyDiary(Diary):
             filter(TopicJournal.topic == topic,
                    TopicJournal.date == self._date).one_or_none()
         if not tjournal:
-            tjournal = TopicJournal(topic=topic, date=self._date, time=local_date_to_time(self._date))
-            s.add(tjournal)
+            tjournal = add(s, TopicJournal(topic=topic, date=self._date))
         return tjournal
 
     def _display_pipeline(self, s, f):

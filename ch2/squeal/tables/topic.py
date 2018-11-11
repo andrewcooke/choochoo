@@ -132,5 +132,5 @@ class TopicJournal(Source):
         Interval.delete_all(log, s)
 
     def time_range(self, s):
-        start = dt.datetime(*self.date.timetuple()[:3], tzinfo=dt.timezone.utc)
+        start = local_date_to_time(self.date)
         return start, start + dt.timedelta(days=1)

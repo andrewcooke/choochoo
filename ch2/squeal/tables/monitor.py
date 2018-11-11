@@ -3,7 +3,7 @@ from sqlalchemy import Column, Text, Integer, ForeignKey
 
 from .source import Source, SourceType
 from ..types import Time
-from ...lib.date import format_time
+from ...lib.date import format_time, local_date_to_time
 
 
 class MonitorJournal(Source):
@@ -21,3 +21,6 @@ class MonitorJournal(Source):
 
     def __str__(self):
         return 'Monitor Journal %s to %s' % (format_time(self.start), format_time(self.finish))
+
+    def time_range(self, s):
+        return self.start, self.finish

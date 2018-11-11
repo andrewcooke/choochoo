@@ -32,10 +32,10 @@ class ActivityDiary(Displayer):
         finish = start + dt.timedelta(days=1)
         for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
             for journal in s.query(ActivityJournal). \
-                    filter(ActivityJournal.time >= start,
-                           ActivityJournal.time < finish,
+                    filter(ActivityJournal.finish >= start,
+                           ActivityJournal.start < finish,
                            ActivityJournal.activity_group == activity_group). \
-                    order_by(ActivityJournal.time).all():
+                    order_by(ActivityJournal.start).all():
                 yield self.__journal_date(s, journal, date)
 
     def __journal_date(self, s, ajournal, date):
@@ -62,8 +62,8 @@ class ActivityDiary(Displayer):
 
     def __template(self, s, ajournal, template, title, re, date):
         body = [Text(title)]
-        sjournals = s.query(StatisticJournal).join(StatisticName, Source). \
-            filter(Source.time == ajournal.time,
+        sjournals = s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticJournal.time == ajournal.time,
                    StatisticName.name.like(template),
                    StatisticName.owner == ActivityStatistics,
                    StatisticName.constraint == ajournal.activity_group.id).order_by(StatisticName.name).all()

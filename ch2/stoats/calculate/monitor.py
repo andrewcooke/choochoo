@@ -1,11 +1,11 @@
-from ch2.stoats.read.monitor import MonitorImporter
+
 from sqlalchemy.sql.functions import count, min, sum
 
+from ch2.stoats.read.monitor import MonitorImporter
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
-from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
 
@@ -69,7 +69,7 @@ class MonitorStatistics:
                    StatisticJournalInteger.time < finish_time,
                    StatisticJournalInteger.time >= start_time).scalar()
         self._add_integer_stat(s, interval, DAILY_STEPS, '[sum],[avg],[cnt]', daily_steps, STEPS_UNITS,
-                                   start_time)
+                               start_time)
         self._log.debug('Added data for %s' % interval)
 
     def _add_integer_stat(self, s, journal, name, summary, value, units, time):

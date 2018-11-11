@@ -5,7 +5,7 @@ from collections import defaultdict
 from sqlalchemy import desc, asc
 
 from ch2.squeal.types import hash16
-from ..read import Importer
+from ..read import Importer, AbortImportButMarkScanned, AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, unpack_single_bytes
 from ...lib.date import to_time, time_to_local_date, format_time
@@ -31,6 +31,33 @@ class MonitorImporter(Importer):
 
     def run(self, paths, force=False):
         self._run(paths, force=force)
+
+    def _check_contains(self, s, start, finish, path):
+        for mjournal in s.query(MonitorJournal). \
+                filter(MonitorJournal.start >= start,
+                       MonitorJournal.finish <= finish).all():
+            self._log.warn('Replacing %s with data from %s for %s - %s' % (mjournal, path, start, finish))
+            s.delete(mjournal)
+
+    def _check_inside(self, s, start, finish, path):
+        for mjournal in s.query(MonitorJournal). \
+                filter(MonitorJournal.start <= start,
+                       MonitorJournal.finish >= finish).all():
+            self._log.warn('%s already includes data from %s for %s - %s' % (mjournal, path, start, finish))
+            raise AbortImportButMarkScanned()
+
+    def _check_overlap(self, s, start, finish, path):
+        for mjournal in s.query(MonitorJournal). \
+                filter(MonitorJournal.start < finish,
+                       MonitorJournal.finish > start).all():
+            self._log.warn('%s overlaps data from %s for %s - %s' % (mjournal, path, start, finish))
+            self._log.error('Conflict between %s and %s' % (path, mjournal.fit_file))
+            raise AbortImport()
+
+    def _check_previous(self, s, start, finish, path):
+        self._check_contains(s, start, finish, path)
+        self._check_inside(s, start, finish, path)
+        self._check_overlap(s, start, finish, path)
 
     def _delete_journals(self, s, first_timestamp, path):
         # key only on time so that repeated files don't affect things
@@ -138,8 +165,23 @@ class MonitorImporter(Importer):
         self._log.debug('Found %d steps and %d heart rate values' % (n_heart_rate, n_steps))
         return steps_journals
 
+    def _merge_boundary(self, s, steps_journals, time):
+        if time in steps_journals:
+            for activity in list(steps_journals[time].keys()):
+                sjournal = StatisticJournal.at(s, time, STEPS, self, activity)
+                if sjournal:
+                    if sjournal.value == steps_journals[time][activity].value:
+                        self._log.debug('Matching data at %s' % format_time(time))
+                    else:
+                        # we have a contradiction, so simply use the latest
+                        # could maybe use max() instead?
+                        self._log.warn('Replacing %s data at %s (%s replaced by %s)' %
+                                       (STEPS, format_time(time), sjournal.value,
+                                        steps_journals[time][activity].value))
+                        sjournal.value = steps_journals[time][activity].value
+                    del steps_journals[time][activity]
+
     def _import(self, s, path):
-        self._log.info('Importing monitor data from %s' % path)
 
         data, types, messages, records = filtered_records(self._log, path)
         records = [record.force(fix_degrees, unpack_single_bytes)
@@ -147,8 +189,13 @@ class MonitorImporter(Importer):
 
         first_timestamp = self._first(path, records, MONITORING_INFO_ATTR).timestamp
         last_timestamp = self._last(path, records, MONITORING_ATTR).timestamp
-        self._log.info('Monitor data for %s to %s' % (format_time(first_timestamp), format_time(last_timestamp)))
-        self._delete_journals(s, first_timestamp, path)
+        if first_timestamp == last_timestamp:
+            self._log.debug('File %s is empty (no timespan)' % path)
+            raise AbortImportButMarkScanned()
+
+        self._log.info('Importing monitor data from %s for %s - %s' %
+                       (path, format_time(first_timestamp), format_time(last_timestamp)))
+        self._check_previous(s, first_timestamp, last_timestamp, path)
         mjournal = add(s, MonitorJournal(start=first_timestamp, fit_file=path, finish=last_timestamp))
 
         cumulative = defaultdict(lambda: 0)
@@ -161,6 +208,9 @@ class MonitorImporter(Importer):
         self._save_cumulative(s, last_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_FINISH)
         self._update_next(s, last_timestamp, cumulative)
         self._update_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START, saved_activities)
+
+        self._merge_boundary(s, steps_journals, first_timestamp)
+        self._merge_boundary(s, steps_journals, last_timestamp)
 
         # write steps at end, when adjoining data have been fixed
         self._log.debug('Adding %s to database' % STEPS)

@@ -25,7 +25,7 @@ class Importer:
         try:
             return next(iter(record for record in records if record.name in names))
         except StopIteration:
-            self._log.warn('No %s entry(s) in %s' % (str(names), path))
+            self._log.debug('No %s entry(s) in %s' % (str(names), path))
             raise AbortImportButMarkScanned()
 
     def _last(self, path, records, *names):
@@ -34,7 +34,7 @@ class Importer:
             if record.name in names:
                 save = record
         if not save:
-            self._log.warn('No %s entry(s) in %s' % (str(names), path))
+            self._log.debug('No %s entry(s) in %s' % (str(names), path))
             raise AbortImportButMarkScanned()
         return save
 
@@ -44,7 +44,7 @@ class Importer:
 
     def _callback(self, kargs):
         def callback(file):
-            self._log.info('Scanning %s' % file)
+            self._log.debug('Scanning %s' % file)
             with self._db.session_context() as s:
                 try:
                     self._import(s, file, **kargs)

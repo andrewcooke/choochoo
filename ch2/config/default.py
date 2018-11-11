@@ -4,10 +4,10 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
 from ..stoats.calculate.activity import ActivityStatistics
-from ..stoats.calculate.clean import CleanUnusedStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
+from ..stoats.display.monitor import MonitorDiary
 from ..stoats.names import BPM, FTHR
 from ..stoats.read.activity import ActivityImporter
 from ..stoats.read.monitor import MonitorImporter
@@ -30,11 +30,11 @@ def default(db):
         # but part of a kargs JSON blob.
         add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('m'))
         add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('y'))
-        add_statistics(s, CleanUnusedStatistics, c)
 
         # diary pipeline (called to display data in the diary)
 
         c = Counter()
+        add_diary(s, MonitorDiary, c)
         add_diary(s, ActivityDiary, c)
 
         # monitor pipeline

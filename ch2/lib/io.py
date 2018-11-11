@@ -68,7 +68,7 @@ def for_modified_files(log, session, paths, callback, owner, force=False):
                        FileScan.owner == owner).\
                 order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
             if hash_scan.path != path_scan.path:
-                log.warn('Two files have the same hash (details in debug log)')
+                log.warn('Ignoring duplicate file (details in debug log)')
                 log.debug('%s' % file_path)
                 log.debug('%s' % hash_scan.path)
                 # update the path to avoid triggering in future
