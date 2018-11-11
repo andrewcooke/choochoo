@@ -2,7 +2,7 @@
 import datetime as dt
 from enum import IntEnum
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc
 from sqlalchemy.orm import relationship, backref
 
 from .source import Source, Interval
@@ -141,20 +141,38 @@ class StatisticJournal(Base):
     def at_date(cls, s, date, name, owner, constraint):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+        return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
-                   Source.time >= start,
-                   Source.time < finish,
+                   StatisticJournal.time >= start,
+                   StatisticJournal.time < finish,
                    StatisticName.owner == owner,
                    StatisticName.constraint == constraint).one_or_none()
 
     @classmethod
-    def at_time(cls, s, time, name, owner, constraint):
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+    def at(cls, s, time, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
-                   Source.time == time,
+                   StatisticJournal.time == time,
                    StatisticName.owner == owner,
                    StatisticName.constraint == constraint).one_or_none()
+
+    @classmethod
+    def before(cls, s, time, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticJournal.time <= time,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint). \
+            order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
+
+    @classmethod
+    def after(cls, s, time, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticJournal.time >= time,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint). \
+            order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
     def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner):

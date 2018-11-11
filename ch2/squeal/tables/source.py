@@ -36,7 +36,7 @@ class Source(Base):
 
     @abstractmethod
     def time_range(self, s):
-        raise NotImplementedError()
+        raise NotImplementedError('time_range for %s' % self)
 
     @classmethod
     def before_flush(cls, s):

@@ -1,4 +1,5 @@
 
+import datetime as dt
 from json import dumps
 
 from pendulum.tz import get_local_timezone
@@ -50,14 +51,6 @@ class Topic(Base):
     def __str__(self):
         return 'Topic "%s" (%s)' % (self.name, self.schedule)
 
-    def populate(self, s, date):
-        self.journal = s.query(TopicJournal). \
-            filter(TopicJournal.topic == self,
-                   TopicJournal.time == date).one_or_none()
-        if not self.journal:
-            self.journal = TopicJournal(topic=self, time=date)
-            s.add(self.journal)
-
 
 class TopicField(Base):
 
@@ -98,22 +91,20 @@ class TopicJournal(Source):
     def populate(self, log, s):
         if hasattr(self, 'statistics'):
             return
-        assert_attr(self, 'time', 'date')
+        assert_attr(self, 'date')
         if self.id is None:
             s.flush()
-        log.debug('Populating journal for topic %s at %s' % (self.topic.name, self.time))
+        log.debug('Populating journal for topic %s at %s' % (self.topic.name, self.date))
         self.statistics = {}
         for field in self.topic.fields:
             assert_attr(field, 'schedule')
             if field.schedule.at_location(self.date):
                 log.debug('Finding StatisticJournal for field %s' % field.statistic_name.name)
-                journal = s.query(StatisticJournal).join(StatisticName, Source). \
-                    filter(StatisticJournal.statistic_name == field.statistic_name,
-                           Source.time == self.time,
-                           StatisticName.owner == self.topic,
-                           StatisticName.constraint == self.topic.id).one_or_none()
+                journal = StatisticJournal.at_date(s, self.date, field.statistic_name.name,
+                                                   field.statistic_name.owner, self.topic_id)
                 if not journal:
-                    journal = STATISTIC_JOURNAL_CLASSES[field.type](statistic_name=field.statistic_name, source=self)
+                    journal = STATISTIC_JOURNAL_CLASSES[field.type](
+                        statistic_name=field.statistic_name, source=self, time=local_date_to_time(self.date))
                     s.add(journal)
                 self.statistics[field] = journal
 
@@ -140,3 +131,6 @@ class TopicJournal(Source):
             tj.time = local_date_to_time(tj.date)
         Interval.delete_all(log, s)
 
+    def time_range(self, s):
+        start = dt.datetime(*self.date.timetuple()[:3], tzinfo=dt.timezone.utc)
+        return start, start + dt.timedelta(days=1)

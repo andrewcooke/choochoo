@@ -21,6 +21,9 @@ class Constant(Source):
         'polymorphic_identity': SourceType.CONSTANT
     }
 
+    def __str__(self):
+        return 'Constant "%s"' % self.name
+
 
 class SystemConstant(Base):
 

@@ -11,7 +11,7 @@ from ...fit.format.records import fix_degrees, unpack_single_bytes
 from ...lib.date import to_time, time_to_local_date, format_time
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal
-from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName
+from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
 from ...stoats.names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
     CUMULATIVE_STEPS_FINISH
 
@@ -68,6 +68,7 @@ class MonitorImporter(Importer):
             self._save_cumulative(s, time, cumulative, mjournal, name)
 
     def _read_cumulative(self, s, time, cumulative, name):
+        # no constraint, so all activities
         for journal in s.query(StatisticJournalInteger).join(StatisticName). \
                 filter(StatisticJournalInteger.time == time,
                        StatisticName.name == name,
@@ -90,6 +91,7 @@ class MonitorImporter(Importer):
             order_by(MonitorJournal.start).limit(1).one_or_none()
         if next:
             self._log.debug('Found file at %s - fixing up' % format_time(next.start))
+            # no constraint, so all activities
             for cumulative_journal in s.query(StatisticJournalInteger).join(StatisticName). \
                     filter(StatisticJournalInteger.time == next.start,
                            StatisticName.name == CUMULATIVE_STEPS_START,
@@ -98,12 +100,7 @@ class MonitorImporter(Importer):
                 if activity in cumulative and cumulative[activity] != cumulative_journal.value:
                     self._log.debug('Found %s with inconsistent value (%s != %s)' %
                                     (CUMULATIVE_STEPS_START, cumulative_journal.value, cumulative[activity]))
-                    steps_journal = s.query(StatisticJournalInteger).join(StatisticName). \
-                        filter(StatisticJournalInteger.time >= next.start,
-                               StatisticName.name == STEPS,
-                               StatisticName.owner == self,
-                               StatisticName.constraint == activity). \
-                        order_by(asc(StatisticJournalInteger.time)).limit(1).one()
+                    steps_journal = StatisticJournal.after(s, next.start, STEPS, self, activity)
                     self._log.debug('Found %s with value %s' % (STEPS, steps_journal.value))
                     # only fix up if the cumulative value didn't reset
                     if steps_journal.value + cumulative_journal.value >= cumulative[activity]:
@@ -112,11 +109,7 @@ class MonitorImporter(Importer):
                                         (STEPS, format_time(last_timestamp), steps_journal.value))
                         cumulative_journal.value = cumulative[activity]
                         if steps_journal.value == 0:
-                            activity_journal = s.query(StatisticJournalText).join(StatisticName). \
-                                filter(StatisticJournalInteger.time == steps_journal.time,
-                                       StatisticName.name == ACTIVITY,
-                                       StatisticName.owner == self,
-                                       StatisticName.constraint == activity).one()
+                            activity_journal = StatisticJournal.at(s, steps_journal.time, ACTIVITY, self, activity)
                             s.delete(steps_journal)
                             s.delete(activity_journal)
                             self._log.debug('Deleted %s and %s' % (STEPS, ACTIVITY))
