@@ -16,7 +16,7 @@ class StatisticName(Base):
     __tablename__ = 'statistic_name'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)  # simple, displayable name
+    name = Column(Text, nullable=False, index=True)  # simple, displayable name
     description = Column(Text)
     units = Column(Text)
     summary = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
@@ -46,11 +46,12 @@ class StatisticJournal(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False)
-    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
+    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'),
+                               nullable=False, index=True)
     statistic_name = relationship('StatisticName')
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
-    time = Column(Time, nullable=False)
+    time = Column(Time, nullable=False, index=True)
     UniqueConstraint(statistic_name_id, time)
 
     __mapper_args__ = {

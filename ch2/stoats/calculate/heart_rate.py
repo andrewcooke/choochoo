@@ -1,10 +1,11 @@
 
 from ..names import FTHR
 from ...squeal.tables.constant import Constant
+from ...squeal.tables.statistic import StatisticJournal
 
 
 def hr_zones(log, s, activity_group, time):
-    fthr = Constant.lookup_statistic_journal(log, s, FTHR, activity_group.id, time)
+    fthr = StatisticJournal.before(s, time, FTHR, Constant, activity_group.id)
     if fthr:
         # values from british cycling online calculator
         # these are upper limits

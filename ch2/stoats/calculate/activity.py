@@ -1,12 +1,14 @@
 
 import datetime as dt
-from collections import deque, Counter
+from collections import deque, Counter, namedtuple
 from itertools import chain
 
 from sqlalchemy.sql.functions import count
 
+from ch2.stoats.read.activity import ActivityImporter
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG
+    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, LATITUDE, HEART_RATE, LONGITUDE, \
+    SPEED, DISTANCE
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
 from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName
@@ -54,47 +56,92 @@ class ActivityStatistics:
                     self._log.warn('No statistics to delete for %s' % activity_group)
 
     def _run_activity(self, s, activity_group):
-        for journal in s.query(ActivityJournal).outerjoin(ActivityGroup, StatisticJournal). \
-                filter(ActivityGroup.id == activity_group.id,
-                       StatisticJournal.source == None).all():
-            self._log.info('Adding statistics for %s' % journal)
-            self._add_stats(s, journal, activity_group)
+        statistics = s.query(StatisticJournal.source_id).join(StatisticName). \
+            filter(StatisticName.name == ACTIVE_TIME).cte()
+        for ajournal in s.query(ActivityJournal).outerjoin(statistics). \
+                filter(statistics.c.source_id == None).all():
+            self._log.info('Adding statistics for %s' % ajournal)
+            self._add_stats(s, ajournal)
 
-    def _add_stats(self, s, journal, activity_group):
-        totals = Totals(self._log, journal)
-        self._add_float_stat(s, journal, activity_group, ACTIVE_DISTANCE, ','.join([MAX, CNT, SUM]),
-                             totals.distance, M)
-        self._add_float_stat(s, journal, activity_group, ACTIVE_TIME, ','.join([MAX, SUM]),
-                             totals.time, S)
-        self._add_float_stat(s, journal, activity_group, ACTIVE_SPEED, ','.join([MAX, AVG]),
-                             totals.distance * 3.6 / totals.time, KMH)
+    def _add_stats(self, s, ajournal):
+        waypoints = list(self._waypoints(s, ajournal))
+        totals = Totals(self._log, waypoints)
+        self._add_float_stat(s, ajournal,  ACTIVE_DISTANCE, ','.join([MAX, CNT, SUM]), totals.distance, M)
+        self._add_float_stat(s, ajournal, ACTIVE_TIME, ','.join([MAX, SUM]), totals.time, S)
+        self._add_float_stat(s, ajournal, ACTIVE_SPEED, ','.join([MAX, AVG]), totals.distance * 3.6 / totals.time, KMH)
         for target in round_km():
-            times = list(sorted(TimeForDistance(self._log, journal, target * 1000).times()))
+            times = list(sorted(TimeForDistance(self._log, waypoints, target * 1000).times()))
             if not times:
                 break
             median = len(times) // 2
-            self._add_float_stat(s, journal, activity_group, MEDIAN_KM_TIME % target, MIN, times[median], S)
-        zones = hr_zones(self._log, s, activity_group, journal.time)
+            self._add_float_stat(s, ajournal, MEDIAN_KM_TIME % target, MIN, times[median], S)
+        zones = hr_zones(self._log, s, ajournal.activity_group, ajournal.start)
         if zones:
-            for (zone, frac) in Zones(self._log, journal, zones).zones:
-                self._add_float_stat(s, journal, activity_group, PERCENT_IN_Z % zone, None, 100 * frac, PC)
-            for (zone, frac) in Zones(self._log, journal, zones).zones:
-                self._add_float_stat(s, journal, activity_group, TIME_IN_Z % zone, None, frac * totals.time, S)
+            for (zone, frac) in Zones(self._log, waypoints, zones).zones:
+                self._add_float_stat(s, ajournal, PERCENT_IN_Z % zone, None, 100 * frac, PC)
+            for (zone, frac) in Zones(self._log, waypoints, zones).zones:
+                self._add_float_stat(s, ajournal, TIME_IN_Z % zone, None, frac * totals.time, S)
             for target in HR_MINUTES:
-                heart_rates = sorted(MedianHRForTime(self._log, journal, target * 60).heart_rates(), reverse=True)
+                heart_rates = sorted(MedianHRForTime(self._log, waypoints, target * 60).heart_rates(), reverse=True)
                 if heart_rates:
-                    self._add_float_stat(s, journal, activity_group, MAX_MED_HR_M % target, MAX, heart_rates[0], BPM)
+                    self._add_float_stat(s, ajournal, MAX_MED_HR_M % target, MAX, heart_rates[0], BPM)
         else:
-            self._log.warn('No HR zones defined for %s or before' % journal.time)
+            self._log.warn('No HR zones defined for %s or before' % ajournal.start)
 
-    def _add_float_stat(self, s, journal, activity_group, name, summary, value, units):
-        StatisticJournalFloat.add(self._log, s, name, units, summary, self, activity_group.id, journal, value)
+    def _add_float_stat(self, s, ajournal, name, summary, value, units):
+        StatisticJournalFloat.add(self._log, s, name, units, summary, self, ajournal.activity_group.id,
+                                  ajournal, value, ajournal.start)
+
+    def _waypoints(self, s, ajournal):
+        id_map = self._id_map(s, ajournal)
+        for timespan in ajournal.timespans:
+            self._log.debug('%s' % timespan)
+            kargs = {'timespan': timespan}
+            for sjournal in s.query(StatisticJournal). \
+                    filter(StatisticJournal.source == ajournal,
+                           StatisticJournal.time >= timespan.start,
+                           StatisticJournal.time <= timespan.finish).order_by(StatisticJournal.time).all():
+                if 'time' not in kargs:
+                    kargs['time'] = sjournal.time
+                elif kargs['time'] != sjournal.time:
+                    yield Waypoint(**kargs)
+                    kargs = {'timespan': timespan}
+                kargs[id_map[sjournal.statistic_name_id]] = sjournal.value
+        self._log.debug('Waypoints generated')
+
+    def _id_map(self, s, ajournal):
+        return {self._id(s, ajournal, LATITUDE): 'latitude',
+                self._id(s, ajournal, LONGITUDE): 'longitude',
+                self._id(s, ajournal, HEART_RATE): 'heart_rate',
+                self._id(s, ajournal, SPEED): 'speed',
+                self._id(s, ajournal, DISTANCE): 'distance'}
+
+    def _id(self, s, ajournal, name):
+        return s.query(StatisticName.id). \
+            filter(StatisticName.name == name,
+                   StatisticName.owner == ActivityImporter,
+                   StatisticName.constraint == ajournal.activity_group_id).scalar()
+
+
+
+Waypoint = namedtuple('Waypoint', 'timespan, time, latitude, longitude, heart_rate, speed, distance')
+'''
+This no longer appears as an explicit structure in the database.
+It corresponds to a record in the FIT file and is a collection of values from the activity
+at a particular time.
+'''
 
 
 class Chunk:
+    '''
+    A collection of data points in time order, associated with a single timespan.
+
+    In most of the uses below the contents are slowly incremented over time (and
+    values popped off the front) as various statistics are calculated.
+    '''
 
     def __init__(self, waypoint):
-        self.__timespan = waypoint.activity_timespan
+        self.__timespan = waypoint.timespan
         self.__waypoints = deque([waypoint])
 
     def append(self, waypoint):
@@ -136,28 +183,27 @@ class Chunk:
 
 class Chunks:
 
-    def __init__(self, log, journal):
+    def __init__(self, log, waypoints):
         self._log = log
-        self.__journal = journal
+        self._waypoints = waypoints
 
     def chunks(self):
         chunks, chunk_index = deque(), {}
-        for waypoint in self.__journal.waypoints:
-            timespan = waypoint.activity_timespan
-            if timespan:
-                if timespan in chunk_index:
-                    chunk_index[timespan].append(waypoint)
-                else:
-                    chunk = Chunk(waypoint)
-                    chunk_index[timespan] = chunk
-                    chunks.append(chunk)
-                yield chunks
+        for waypoint in self._waypoints:
+            timespan = waypoint.timespan
+            if timespan in chunk_index:
+                chunk_index[timespan].append(waypoint)
+            else:
+                chunk = Chunk(waypoint)
+                chunk_index[timespan] = chunk
+                chunks.append(chunk)
+            yield chunks
 
 
 class TimeForDistance(Chunks):
 
-    def __init__(self, log, journal, distance):
-        super().__init__(log, journal)
+    def __init__(self, log, waypoints, distance):
+        super().__init__(log, waypoints)
         self.__distance = distance
 
     def times(self):
@@ -175,14 +221,14 @@ class TimeForDistance(Chunks):
 
 class MedianHRForTime(Chunks):
 
-    def __init__(self, log, journal, time, max_gap=None):
-        super().__init__(log, journal)
+    def __init__(self, log, waypoints, time, max_gap=None):
+        super().__init__(log, waypoints)
         self.__time = time
         self.__max_gap = 0.01 * time if max_gap is None else max_gap
         log.debug('Will reject gaps > %ds' % int(self.__max_gap))
 
     def _max_gap(self, chunks):
-        return max(c1[0].activity_timespan.start - c2[0].activity_timespan.finish
+        return max(c1[0].timespan.start - c2[0].timespan.finish
                    for c1, c2 in zip(list(chunks)[1:], chunks)).total_seconds()
 
     def heart_rates(self):
@@ -205,8 +251,8 @@ class MedianHRForTime(Chunks):
 
 class Totals(Chunks):
 
-    def __init__(self, log, journal):
-        super().__init__(log, journal)
+    def __init__(self, log, waypoints):
+        super().__init__(log, waypoints)
         chunks = list(self.chunks())[-1]
         self.distance = sum(chunk.distance() for chunk in chunks)
         self.time = sum(chunk.time() for chunk in chunks)
@@ -214,8 +260,8 @@ class Totals(Chunks):
 
 class Zones(Chunks):
 
-    def __init__(self, log, journal, zones):
-        super().__init__(log, journal)
+    def __init__(self, log, waypoints, zones):
+        super().__init__(log, waypoints)
         # this assumes record data are evenly distributed
         self.zones = []
         chunks = list(self.chunks())[-1]

@@ -41,6 +41,9 @@ class ActivityJournal(Source):
         return 'ActivityJournal %s %s to %s' % (self.activity_group.name,
                                                 format_time(self.start), format_time(self.finish))
 
+    def time_range(self, s):
+        return self.start, self.finish
+
 
 class ActivityTimespan(Base):
 
@@ -56,3 +59,6 @@ class ActivityTimespan(Base):
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
     UniqueConstraint('activity_journal_id', 'start')
+
+    def __str__(self):
+        return 'ActivityTimespan from %s - %s' % (format_time(self.start), format_time(self.finish))

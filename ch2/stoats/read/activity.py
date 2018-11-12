@@ -58,34 +58,38 @@ class ActivityImporter(Importer):
         sport = self._first(path, records, 'sport').value.sport.lower()
         activity_group = self._activity_group(s, path, sport, sport_to_activity)
         self._delete_journals(s, activity_group, first_timestamp)
-        journal = add(s, ActivityJournal(activity_group=activity_group,
-                                         start=first_timestamp, finish=first_timestamp,  # will be over-written later
-                                         fit_file=path, name=splitext(basename(path))[0]))
+        ajournal = add(s, ActivityJournal(activity_group=activity_group,
+                                          start=first_timestamp, finish=first_timestamp,  # will be over-written later
+                                          fit_file=path, name=splitext(basename(path))[0]))
 
         timespan, warned, latest = None, 0, to_time(0.0)
         self._log.info('Importing activity data from %s' % path)
         for record in records:
             if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
                 if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
-                    timespan = add(s, ActivityTimespan(activity_journal=journal,
-                                                       start=record.value.timestamp, finish=record.value.timestamp))
+                    if timespan:
+                        self._log.warn('Ignoring start with no corresponding stop (possible lost data?)')
+                    else:
+                        timespan = add(s, ActivityTimespan(activity_journal=ajournal,
+                                                           start=record.value.timestamp,
+                                                           finish=record.value.timestamp))
                 if record.name == 'record':
-                    self._add(s, LATITUDE, DEG, None, self, activity_group.id, journal,
+                    self._add(s, LATITUDE, DEG, None, self, activity_group.id, ajournal,
                               record.none.position_lat, record.value.timestamp, StatisticJournalFloat)
-                    self._add(s, LONGITUDE, DEG, None, self, activity_group.id, journal,
+                    self._add(s, LONGITUDE, DEG, None, self, activity_group.id, ajournal,
                               record.none.position_long, record.value.timestamp,
                               StatisticJournalFloat)
-                    self._add(s, HEART_RATE, BPM, None, self, activity_group.id, journal,
+                    self._add(s, HEART_RATE, BPM, None, self, activity_group.id, ajournal,
                               record.none.heart_rate, record.value.timestamp, StatisticJournalInteger)
-                    self._add(s, DISTANCE, M, None, self, activity_group.id, journal,
+                    self._add(s, DISTANCE, M, None, self, activity_group.id, ajournal,
                               record.none.distance, record.value.timestamp, StatisticJournalFloat)
-                    self._add(s, SPEED, KMH, None, self, activity_group.id, journal,
+                    self._add(s, SPEED, KMH, None, self, activity_group.id, ajournal,
                               record.none.enhanced_speed, record.value.timestamp, StatisticJournalFloat)
                 if record.name == 'event' and record.value.event == 'timer' \
                         and record.value.event_type == 'stop_all':
                     if timespan:
-                        timespan.finish = datetime_to_epoch(record.value.timestamp)
-                        journal.finish = record.value.timestamp
+                        timespan.finish = record.value.timestamp
+                        ajournal.finish = record.value.timestamp
                         timespan = None
                     else:
                         self._log.warn('Ignoring stop with no corresponding start (possible lost data?)')
