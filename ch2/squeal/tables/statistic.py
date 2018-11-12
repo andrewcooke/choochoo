@@ -5,6 +5,7 @@ from enum import IntEnum
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc
 from sqlalchemy.orm import relationship, backref
 
+from .constant import intern
 from .source import Source, Interval
 from ..support import Base
 from ..types import Owner, Time
@@ -26,6 +27,7 @@ class StatisticName(Base):
     # (eg activity_group.id so that the same statistic can be used across different activities)
     owner = Column(Owner, nullable=False)
     constraint = Column(Integer)
+    constraint_hint = Column(Text, nullable=False)
     UniqueConstraint(name, owner, constraint)
 
     def __str__(self):
@@ -66,8 +68,8 @@ class StatisticJournal(Base):
             return 'Field Journal'
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, type):
-        statistic_name = cls.add_name(log, s, name, units, summary, owner, constraint)
+    def add(cls, log, s, name, units, summary, owner, constraint, constraint_hint, source, value, time, type):
+        statistic_name = cls.add_name(log, s, name, units, summary, owner, constraint, constraint_hint)
         journal = s.query(StatisticJournal).join(Source). \
             filter(StatisticJournal.statistic_name == statistic_name,
                    StatisticJournal.time == time).one_or_none()
@@ -83,13 +85,15 @@ class StatisticJournal(Base):
         return journal
 
     @classmethod
-    def add_name(cls, log, s, name, units, summary, owner, constraint):
+    def add_name(cls, log, s, name, units, summary, owner, constraint, constraint_hint):
+        owner = intern(s, owner)
         statistic_name = s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
                    StatisticName.constraint == constraint).one_or_none()
         if not statistic_name:
-            statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner, constraint=constraint)
+            statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner,
+                                           constraint=constraint, constraint_hint=constraint_hint)
             s.add(statistic_name)
         else:
             if statistic_name.units != units:
@@ -146,7 +150,7 @@ class StatisticJournal(Base):
             filter(StatisticName.name == name,
                    StatisticJournal.time >= start,
                    StatisticJournal.time < finish,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == intern(s, owner),
                    StatisticName.constraint == constraint).one_or_none()
 
     @classmethod
@@ -154,7 +158,7 @@ class StatisticJournal(Base):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time == time,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == intern(s, owner),
                    StatisticName.constraint == constraint).one_or_none()
 
     @classmethod
@@ -162,7 +166,7 @@ class StatisticJournal(Base):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time <= time,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == intern(s, owner),
                    StatisticName.constraint == constraint). \
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
@@ -171,7 +175,7 @@ class StatisticJournal(Base):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= time,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == intern(s, owner),
                    StatisticName.constraint == constraint). \
             order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
@@ -181,8 +185,8 @@ class StatisticJournal(Base):
                     filter(StatisticJournal.statistic_name_id == StatisticName.id,
                            Interval.schedule == schedule,
                            Interval.start == start,
-                           Interval.owner == interval_owner,
-                           StatisticName.owner == statistic_owner,
+                           Interval.owner == intern(s, interval_owner),
+                           StatisticName.owner == intern(s, statistic_owner),
                            StatisticName.constraint == statistic_constraint). \
                     order_by(StatisticName.constraint,  # order places summary stats from same source together
                              StatisticName.name).all()
@@ -202,8 +206,8 @@ class StatisticJournalInteger(StatisticJournal):
     }
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+    def add(cls, log, s, name, units, summary, owner, constraint, constraint_hint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, constraint_hint, source, value, time,
                            StatisticJournalType.INTEGER)
 
 
@@ -217,8 +221,8 @@ class StatisticJournalFloat(StatisticJournal):
     parse = float
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+    def add(cls, log, s, name, units, summary, owner, constraint, constraint_hint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, constraint_hint, source, value, time,
                            StatisticJournalType.FLOAT)
 
     __mapper_args__ = {
@@ -266,8 +270,8 @@ class StatisticJournalText(StatisticJournal):
     parse = str
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+    def add(cls, log, s, name, units, summary, owner, constraint, constraint_hint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, constraint_hint, source, value, time,
                            StatisticJournalType.TEXT)
 
     __mapper_args__ = {

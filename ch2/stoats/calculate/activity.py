@@ -5,14 +5,15 @@ from itertools import chain
 
 from sqlalchemy.sql.functions import count
 
-from ch2.stoats.read.activity import ActivityImporter
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, LATITUDE, HEART_RATE, LONGITUDE, \
     SPEED, DISTANCE
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
+from ...squeal.tables.constant import intern
 from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName
 from ...stoats.calculate.heart_rate import hr_zones
+from ...stoats.read.activity import ActivityImporter
 
 
 class ActivityStatistics:
@@ -40,7 +41,7 @@ class ActivityStatistics:
             else:
                 q = s.query(count(StatisticJournal.id))
             q = q.join(StatisticName, Source, ActivityJournal). \
-                filter(StatisticName.owner == self,
+                filter(StatisticName.owner == intern(s, self),
                        ActivityJournal.activity_group == activity_group)
             if after:
                 q = q.filter(StatisticJournal.time >= after)
@@ -55,7 +56,7 @@ class ActivityStatistics:
                 else:
                     self._log.warn('No statistics to delete for %s' % activity_group)
 
-    def _run_activity(self, s, activity_group):
+    def _run_activity(self, s, activity_group):  # todo - should be using group
         statistics = s.query(StatisticJournal.source_id).join(StatisticName). \
             filter(StatisticName.name == ACTIVE_TIME).cte()
         for ajournal in s.query(ActivityJournal).outerjoin(statistics). \
@@ -89,7 +90,8 @@ class ActivityStatistics:
             self._log.warn('No HR zones defined for %s or before' % ajournal.start)
 
     def _add_float_stat(self, s, ajournal, name, summary, value, units):
-        StatisticJournalFloat.add(self._log, s, name, units, summary, self, ajournal.activity_group.id,
+        StatisticJournalFloat.add(self._log, s, name, units, summary, intern(s, self),
+                                  ajournal.activity_group.id, 'ActivityGroup',
                                   ajournal, value, ajournal.start)
 
     def _waypoints(self, s, ajournal):
@@ -119,7 +121,7 @@ class ActivityStatistics:
     def _id(self, s, ajournal, name):
         return s.query(StatisticName.id). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == ActivityImporter,
+                   StatisticName.owner == intern(s, ActivityImporter),
                    StatisticName.constraint == ajournal.activity_group_id).scalar()
 
 

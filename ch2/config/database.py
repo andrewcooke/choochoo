@@ -1,7 +1,7 @@
 
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup
-from ..squeal.tables.constant import Constant
+from ..squeal.tables.constant import Constant, intern
 from ..squeal.tables.pipeline import Pipeline, PipelineType
 from ..squeal.tables.statistic import StatisticName, StatisticJournalType
 from ..squeal.tables.topic import Topic, TopicField
@@ -45,7 +45,7 @@ class Counter:
         return self.__previous
 
 
-def add(session, instance):
+def add(s, instance):
     '''
     Add an instance to the session (and so to the database), returning the instance.
     You likely don't need this - see the more specific helpers below.
@@ -55,11 +55,11 @@ def add(session, instance):
     However, only some classes make sense in the context of a configuration, and
     more specific helpers probably already exist for those.
     '''
-    session.add(instance)
+    s.add(instance)
     return instance
 
 
-def add_statistics(session, cls, sort, **kargs):
+def add_statistics(s, cls, sort, **kargs):
     '''
     Add a class to the statistics pipeline.
 
@@ -72,10 +72,10 @@ def add_statistics(session, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    return add(session, Pipeline(cls=cls, type=PipelineType.STATISTIC, sort=sort, kargs=kargs))
+    return add(s, Pipeline(cls=cls, type=PipelineType.STATISTIC, sort=sort, kargs=kargs))
 
 
-def add_diary(session, cls, sort, **kargs):
+def add_diary(s, cls, sort, **kargs):
     '''
     Add a class to the diary pipeline.
 
@@ -88,10 +88,10 @@ def add_diary(session, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    return add(session, Pipeline(cls=cls, type=PipelineType.DIARY, sort=sort, kargs=kargs))
+    return add(s, Pipeline(cls=cls, type=PipelineType.DIARY, sort=sort, kargs=kargs))
 
 
-def add_monitor(session, cls, sort, **kargs):
+def add_monitor(s, cls, sort, **kargs):
     '''
     Add a class to the monitor pipeline.
 
@@ -103,20 +103,20 @@ def add_monitor(session, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    return add(session, Pipeline(cls=cls, type=PipelineType.MONITOR, sort=sort, kargs=kargs))
+    return add(s, Pipeline(cls=cls, type=PipelineType.MONITOR, sort=sort, kargs=kargs))
 
 
-def add_activity_group(session, name, sort, description=None):
+def add_activity_group(s, name, sort, description=None):
     '''
     Add an activity type to the configuration.
 
     These are used to group activities (and related statistics).
     So typical entries might be for cycling, running, etc.
     '''
-    return add(session, ActivityGroup(name=name, sort=sort, description=description))
+    return add(s, ActivityGroup(name=name, sort=sort, description=description))
 
 
-def add_activities(session, cls, sort, **kargs):
+def add_activities(s, cls, sort, **kargs):
     '''
     Add a class to the activities pipeline.
 
@@ -128,10 +128,10 @@ def add_activities(session, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    return add(session, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
+    return add(s, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
 
 
-def add_activity_constant(session, activity_group, name, description=None, units=None,
+def add_activity_constant(s, activity_group, name, description=None, units=None,
                           statistic_journal_type=StatisticJournalType.INTEGER):
     '''
     Add a constant associated with an activity.
@@ -142,14 +142,15 @@ def add_activity_constant(session, activity_group, name, description=None, units
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
     if activity_group.id is None:
-        session.flush()
-    statistic_name = add(session, StatisticName(name=name, owner=Constant, constraint=activity_group.id, units=units,
-                                                description=description))
-    constant = add(session, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
-                                     name='%s.%s' % (name, activity_group.name)))
+        s.flush()
+    statistic_name = add(s, StatisticName(name=name, owner=intern(s, Constant),
+                                          constraint=activity_group.id, constraint_hint='ActivityGroup',
+                                          units=units, description=description))
+    constant = add(s, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
+                               name='%s.%s' % (name, activity_group.name)))
 
 
-def add_topic(session, name, sort, description=None, schedule=None):
+def add_topic(s, name, sort, description=None, schedule=None):
     '''
     Add a root topic.
 
@@ -160,10 +161,10 @@ def add_topic(session, name, sort, description=None, schedule=None):
     A root topic is usually used as a header to group related children.
     For example, 'DailyDiary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
     '''
-    return add(session, Topic(name=name, sort=sort, description=description, schedule=schedule))
+    return add(s, Topic(name=name, sort=sort, description=description, schedule=schedule))
 
 
-def add_child_topic(session, parent, name, sort, description=None, schedule=None):
+def add_child_topic(s, parent, name, sort, description=None, schedule=None):
     '''
     Add a child topic.
 
@@ -175,10 +176,10 @@ def add_child_topic(session, parent, name, sort, description=None, schedule=None
     For example, the parent topic might be "injuries" and permanent, while children are defined for
     specific injuries with a schedule that gives start and end dates.
     '''
-    return add(session, Topic(parent=parent, name=name, sort=sort, description=description, schedule=schedule))
+    return add(s, Topic(parent=parent, name=name, sort=sort, description=description, schedule=schedule))
 
 
-def add_topic_field(session, topic, name, sort, description=None, units=None, summary=None,
+def add_topic_field(s, topic, name, sort, description=None, units=None, summary=None,
                     display_cls=Integer, **display_kargs):
     '''
     Add a field and associated statistic to a topic entry.
@@ -188,9 +189,10 @@ def add_topic_field(session, topic, name, sort, description=None, units=None, su
     The statistic describes how the values are stored in the database.
     '''
     if topic.id is None:
-        session.flush()
-    statistic_name = add(session, StatisticName(name=name, owner=topic, constraint=topic.id,
-                                                description=description, units=units, summary=summary))
-    field = add(session, TopicField(topic=topic, sort=sort, type=display_cls.statistic_journal_type,
-                                    display_cls=display_cls, display_kargs=display_kargs,
-                                    statistic_name=statistic_name))
+        s.flush()
+    statistic_name = add(s, StatisticName(name=name, owner=intern(s, topic),
+                                          constraint=topic.id, constraint_hint='Topic',
+                                          description=description, units=units, summary=summary))
+    field = add(s, TopicField(topic=topic, sort=sort, type=display_cls.statistic_journal_type,
+                              display_cls=display_cls, display_kargs=display_kargs,
+                              statistic_name=statistic_name))

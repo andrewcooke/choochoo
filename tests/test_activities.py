@@ -39,7 +39,7 @@ def test_activities():
 
         with db.session_context() as s:
             n = s.query(count(StatisticJournal.id)).scalar()
-            assert n == 10497, n
+            assert n == 10530, n
             journal = s.query(ActivityJournal).one()
             assert journal.start != journal.finish
 

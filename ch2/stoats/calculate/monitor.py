@@ -1,13 +1,14 @@
 
 from sqlalchemy.sql.functions import count, min, sum
 
-from ch2.stoats.read.monitor import MonitorImporter
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
+from ...squeal.tables.constant import intern
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
+from ...stoats.read.monitor import MonitorImporter
 
 
 # this is really just a daily interval - maybe it should be implemented as such?
@@ -33,7 +34,7 @@ class MonitorStatistics:
                     q = s.query(Interval)
                 else:
                     q = s.query(count(Interval.id))
-                q = q.filter(Interval.owner == self)
+                q = q.filter(Interval.owner == intern(s, self))
                 if after:
                     q = q.filter(Interval.finish > after)
                 if repeat:
@@ -55,17 +56,17 @@ class MonitorStatistics:
 
     def _add_stats(self, s, start, finish):
         start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
-        interval = add(s, Interval(schedule='d', owner=self, start=start, finish=finish))
+        interval = add(s, Interval(schedule='d', owner=intern(s, self), start=start, finish=finish))
         rest_heart_rate = s.query(min(StatisticJournalInteger.value)).join(StatisticName). \
             filter(StatisticName.name == HEART_RATE,
-                   StatisticName.owner == MonitorImporter,
+                   StatisticName.owner == intern(s, MonitorImporter),
                    StatisticJournalInteger.time < finish_time,
                    StatisticJournalInteger.time >= start_time,
                    StatisticJournalInteger.value > 0).scalar()
         self._add_integer_stat(s, interval, REST_HR, '[min],[avg],[cnt]', rest_heart_rate, BPM, start_time)
         daily_steps = s.query(sum(StatisticJournalInteger.value)).join(StatisticName). \
             filter(StatisticName.name == STEPS,
-                   StatisticName.owner == MonitorImporter,
+                   StatisticName.owner == intern(s, MonitorImporter),
                    StatisticJournalInteger.time < finish_time,
                    StatisticJournalInteger.time >= start_time).scalar()
         self._add_integer_stat(s, interval, DAILY_STEPS, '[sum],[avg],[cnt]', daily_steps, STEPS_UNITS,
@@ -74,4 +75,5 @@ class MonitorStatistics:
 
     def _add_integer_stat(self, s, journal, name, summary, value, units, time):
         if value is not None:
-            StatisticJournalInteger.add(self._log, s, name, units, summary, self, None, journal, value, time)
+            StatisticJournalInteger.add(self._log, s, name, units, summary, self,
+                                        None, 'None', journal, value, time)

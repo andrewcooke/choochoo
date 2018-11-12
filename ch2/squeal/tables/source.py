@@ -1,9 +1,8 @@
 
-import datetime as dt
 from abc import abstractmethod
 from enum import IntEnum
 
-from sqlalchemy import ForeignKey, Column, Integer, func, and_, distinct
+from sqlalchemy import ForeignKey, Column, Integer, func, and_
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, aliased
 
@@ -121,6 +120,7 @@ class Interval(Source):
 
     @classmethod
     def _open_intervals(cls, s, schedule, owner):
+        from .constant import intern
         close = aliased(Interval)
         return [result[0] for result in s.query(Interval.finish). \
             outerjoin(close,
@@ -128,16 +128,17 @@ class Interval(Source):
                            Interval.owner == close.owner,
                            Interval.schedule == close.schedule)). \
             filter(close.start == None,
-                   Interval.owner == owner,
+                   Interval.owner == intern(s, owner),
                    Interval.schedule == schedule). \
             order_by(Interval.finish).all()]
 
     @classmethod
     def _get_interval(cls, s, schedule, owner, start):
+        from .constant import intern
         return s.query(Interval). \
             filter(Interval.start == start,
                    Interval.schedule == schedule,
-                   Interval.owner == owner).one_or_none()
+                   Interval.owner == intern(s, owner)).one_or_none()
 
     @classmethod
     def _missing_intervals_from(cls, log, s, schedule, owner, start, finish):

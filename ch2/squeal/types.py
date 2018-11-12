@@ -92,19 +92,6 @@ class Json(TypeDecorator):
         return loads(value)
 
 
-HASH_CACHE = {}
-
-
-def hash16(text):
-    if text not in HASH_CACHE:
-        hash = md5()
-        hash.update(text.encode('utf8'))
-        # 16 bits is more than enough - only expect to have a handful of distinct values
-        # signed value because that presumably fits into sqlite signed integer
-        HASH_CACHE[text] = unpack('h', hash.digest()[:2])[0]
-    return HASH_CACHE[text]
-
-
 class Owner(TypeDecorator):
     '''
     The 'owner' of some data - typically the creating class.
@@ -117,11 +104,7 @@ class Owner(TypeDecorator):
     def process_literal_param(self, cls, dialect):
         if cls is None or isinstance(cls, int):
             return cls
-        if not isinstance(cls, str) and not isinstance(cls, type):
-            cls = type(cls)
-        if isinstance(cls, type):
-            cls = cls.__module__ + '.' + cls.__name__
-        return hash16(cls)
+        raise Exception('Use intern(...) for Owner')
 
     process_bind_param = process_literal_param
 

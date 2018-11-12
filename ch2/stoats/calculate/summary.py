@@ -7,7 +7,8 @@ from sqlalchemy.sql.functions import count
 from ...lib.date import local_date_to_time, time_to_local_date
 from ...lib.schedule import Schedule
 from ...squeal.database import add
-from ...squeal.tables.source import Interval, Source
+from ...squeal.tables.constant import intern
+from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
     StatisticJournalType
 
@@ -35,7 +36,7 @@ class SummaryStatistics:
                 else:
                     q = s.query(count(Interval.id))
                 q = q.filter(Interval.schedule == spec,
-                             Interval.owner == self)
+                             Interval.owner == intern(s, self))
                 if after:
                     q = q.filter(Interval.finish > after)
                 if repeat:
@@ -104,10 +105,12 @@ class SummaryStatistics:
         # statistics with the same name, but different owners and constraints.
         statistic_name = s.query(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == self,
+                   StatisticName.owner == intern(s, self),
                    StatisticName.constraint == root.id).one_or_none()
         if not statistic_name:
-            statistic_name = add(s, StatisticName(name=name, owner=self, constraint=root.id, units=units))
+            statistic_name = add(s, StatisticName(name=name, owner=intern(s, self),
+                                                  constraint=root.id, constraint_hint='StatisticName',
+                                                  units=units))
         if statistic_name.units != units:
             self._log.warn('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
             statistic_name.units = units
@@ -144,7 +147,7 @@ class SummaryStatistics:
         with self._db.session_context() as s:
             for start, finish in Interval.missing(self._log, s, spec, self):
                 start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
-                interval = add(s, Interval(start=start, finish=finish, schedule=spec, owner=self))
+                interval = add(s, Interval(start=start, finish=finish, schedule=spec, owner=intern(s, self)))
                 have_data = False
                 for statistic_name in self._statistics_missing_summaries(s, start_time, finish_time):
                     data = [journal for journal in self._journal_data(s, statistic_name, start_time, finish_time)
