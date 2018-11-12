@@ -3,14 +3,16 @@ import datetime as dt
 from collections import deque, Counter, namedtuple
 from itertools import chain
 
-from sqlalchemy.sql.functions import count
+from sqlalchemy import inspect, select, and_
+from sqlalchemy.sql.functions import count, coalesce
 
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, LATITUDE, HEART_RATE, LONGITUDE, \
     SPEED, DISTANCE
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
-from ...squeal.tables.source import Source
-from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName
+from ...squeal.tables.source import Source, SourceType
+from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName, StatisticJournalInteger, \
+    StatisticJournalType
 from ...stoats.calculate.heart_rate import hr_zones
 from ...stoats.read.activity import ActivityImporter
 
@@ -93,20 +95,30 @@ class ActivityStatistics:
                                   ajournal.activity_group, ajournal, value, ajournal.start)
 
     def _waypoints(self, s, ajournal):
+
+        sn = inspect(StatisticName).local_table
+        sj = inspect(StatisticJournal).local_table
+        sji = inspect(StatisticJournalInteger).local_table
+        sjf = inspect(StatisticJournalFloat).local_table
+
         id_map = self._id_map(s, ajournal)
         for timespan in ajournal.timespans:
             self._log.debug('%s' % timespan)
             kargs = {'timespan': timespan}
-            for sjournal in s.query(StatisticJournal). \
-                    filter(StatisticJournal.source == ajournal,
-                           StatisticJournal.time >= timespan.start,
-                           StatisticJournal.time <= timespan.finish).order_by(StatisticJournal.time).all():
+            stmt = select([sn.c.id, sj.c.time, coalesce(sjf.c.value, sji.c.value)]) \
+                .select_from(sj.join(sn).outerjoin(sjf).outerjoin(sji)) \
+                .where(and_(sj.c.source_id == ajournal.id,
+                            sj.c.time >= timespan.start,
+                            sj.c.time <= timespan.finish)) \
+                .order_by(sj.c.time)
+            self._log.debug(stmt)
+            for id, time, value in s.connection().execute(stmt):
                 if 'time' not in kargs:
-                    kargs['time'] = sjournal.time
-                elif kargs['time'] != sjournal.time:
+                    kargs['time'] = time
+                elif kargs['time'] != time:
                     yield Waypoint(**kargs)
                     kargs = {'timespan': timespan}
-                kargs[id_map[sjournal.statistic_name_id]] = sjournal.value
+                kargs[id_map[id]] = value
         self._log.debug('Waypoints generated')
 
     def _id_map(self, s, ajournal):
