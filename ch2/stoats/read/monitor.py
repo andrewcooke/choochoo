@@ -9,7 +9,6 @@ from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, unpack_single_bytes
 from ...lib.date import to_time, time_to_local_date, format_time
 from ...squeal.database import add
-from ...squeal.tables.constant import intern, unintern
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
 from ...stoats.names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
@@ -81,7 +80,7 @@ class MonitorImporter(Importer):
     def _save_cumulative(self, s, time, cumulative, mjournal, name):
         self._log.debug('Adding %s at time %s' % (name, format_time(time)))
         for activity in cumulative:
-            self._add(s, name, STEPS_UNITS, None, self, activity, 'intern(%s)' % activity,
+            self._add(s, name, STEPS_UNITS, None, self, activity,
                       mjournal, cumulative[activity], time, StatisticJournalInteger)
         self._log.debug('Added: %s' % ', '.join('%s:%s' % item for item in cumulative.items()))
 
@@ -99,8 +98,8 @@ class MonitorImporter(Importer):
         for journal in s.query(StatisticJournalInteger).join(StatisticName). \
                 filter(StatisticJournalInteger.time == time,
                        StatisticName.name == name,
-                       StatisticName.owner == intern(s, self)).all():
-            cumulative[unintern(s, journal.statistic_name.constraint)] = journal.value
+                       StatisticName.owner == self).all():
+            cumulative[journal.statistic_name.constraint] = journal.value
         self._log.debug('Read %s at %s' % (name, format_time(time)))
         self._log.debug('Read: %s' % ', '.join('%s:%s' % item for item in cumulative.items()))
 
@@ -122,7 +121,7 @@ class MonitorImporter(Importer):
             for cumulative_journal in s.query(StatisticJournalInteger).join(StatisticName). \
                     filter(StatisticJournalInteger.time == next.start,
                            StatisticName.name == CUMULATIVE_STEPS_START,
-                           StatisticName.owner == intern(s, self)).all():
+                           StatisticName.owner == self).all():
                 activity = cumulative_journal.statistic_name.constraint
                 if activity in cumulative and cumulative[activity] != cumulative_journal.value:
                     self._log.debug('Found %s with inconsistent value (%s != %s)' %
@@ -145,7 +144,7 @@ class MonitorImporter(Importer):
         n_heart_rate, n_steps, steps_journals = 0, 0, defaultdict(lambda: {})
         for record in records:
             if HEART_RATE_ATTR in record.data:
-                self._add(s, HEART_RATE, BPM, None, self, None, 'None', mjournal, record.data[HEART_RATE_ATTR][0],
+                self._add(s, HEART_RATE, BPM, None, self, None, mjournal, record.data[HEART_RATE_ATTR][0],
                           record.timestamp, StatisticJournalInteger)
                 n_heart_rate += 1
             if STEPS_ATTR in record.data:
@@ -158,7 +157,7 @@ class MonitorImporter(Importer):
                         else:
                             steps_journals[record.timestamp][activity] = \
                                 self._create(s, STEPS, STEPS_UNITS, None, self, activity,
-                                             'intern(%s)' % activity, mjournal, steps, record.timestamp,
+                                             mjournal, steps, record.timestamp,
                                              StatisticJournalInteger)
                         n_steps += 1
         self._log.debug('Found %d steps and %d heart rate values' % (n_heart_rate, n_steps))
@@ -216,7 +215,7 @@ class MonitorImporter(Importer):
         for timestamp in steps_journals:
             for activity in steps_journals[timestamp]:
                 add(s, steps_journals[timestamp][activity])
-                self._add(s, ACTIVITY, None, None, self, activity, 'intern(%s)' % activity, mjournal,
+                self._add(s, ACTIVITY, None, None, self, activity, mjournal,
                           activity, timestamp, StatisticJournalText)
 
 

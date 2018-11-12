@@ -1,7 +1,7 @@
 
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup
-from ..squeal.tables.constant import Constant, intern
+from ..squeal.tables.constant import Constant
 from ..squeal.tables.pipeline import Pipeline, PipelineType
 from ..squeal.tables.statistic import StatisticName, StatisticJournalType
 from ..squeal.tables.topic import Topic, TopicField
@@ -143,8 +143,7 @@ def add_activity_constant(s, activity_group, name, description=None, units=None,
     '''
     if activity_group.id is None:
         s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=intern(s, Constant),
-                                          constraint=activity_group.id, constraint_hint='ActivityGroup',
+    statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=activity_group,
                                           units=units, description=description))
     constant = add(s, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
                                name='%s.%s' % (name, activity_group.name)))
@@ -190,8 +189,7 @@ def add_topic_field(s, topic, name, sort, description=None, units=None, summary=
     '''
     if topic.id is None:
         s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=intern(s, topic),
-                                          constraint=topic.id, constraint_hint='Topic',
+    statistic_name = add(s, StatisticName(name=name, owner=topic, constraint=topic,
                                           description=description, units=units, summary=summary))
     field = add(s, TopicField(topic=topic, sort=sort, type=display_cls.statistic_journal_type,
                               display_cls=display_cls, display_kargs=display_kargs,

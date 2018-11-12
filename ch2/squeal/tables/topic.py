@@ -101,7 +101,7 @@ class TopicJournal(Source):
             if field.schedule.at_location(self.date):
                 log.debug('Finding StatisticJournal for field %s' % field.statistic_name.name)
                 journal = StatisticJournal.at_date(s, self.date, field.statistic_name.name,
-                                                   field.statistic_name.owner, self.topic_id)
+                                                   field.statistic_name.owner, self.topic)
                 if not journal:
                     journal = STATISTIC_JOURNAL_CLASSES[field.type](
                         statistic_name=field.statistic_name, source=self, time=local_date_to_time(self.date))

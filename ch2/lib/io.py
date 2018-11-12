@@ -7,7 +7,6 @@ from sqlalchemy import desc
 
 from .date import to_time
 from ..squeal.database import add
-from ..squeal.tables.constant import intern
 from ..squeal.tables.fit import FileScan
 
 
@@ -44,7 +43,6 @@ def for_modified_files(log, s, paths, callback, owner, force=False):
 
     for file_path in paths:
 
-        owner = intern(s, owner)
         last_modified = to_time(stat(file_path).st_mtime)
         hash = md5_hash(file_path)
         path_scan = s.query(FileScan). \

@@ -3,7 +3,6 @@ from abc import abstractmethod
 
 from ...lib.io import for_modified_files
 from ...squeal.database import add
-from ...squeal.tables.constant import intern
 from ...squeal.tables.statistic import StatisticJournal
 
 
@@ -59,14 +58,14 @@ class Importer:
     def _import(self, s, path, **kargs):
         pass
 
-    def _create(self, s, name, units, summary, owner, constraint, constraint_hint, source, value, time, type):
+    def _create(self, s, name, units, summary, owner, constraint, source, value, time, type):
         # cache statistic_name instances for speed (avoid flush on each query)
-        key = (name, intern(s, constraint))
+        key = (name, constraint)
         if key not in self.__statistics_cache:
             self.__statistics_cache[key] = \
-                StatisticJournal.add_name(self._log, s, name, units, summary, owner, constraint, constraint_hint)
+                StatisticJournal.add_name(self._log, s, name, units, summary, owner, constraint)
         statistic_name = self.__statistics_cache[key]
         return type(statistic_name=statistic_name, source=source, value=value, time=time)
 
-    def _add(self, s, name, units, summary, owner, constraint, constraint_hint, source, value, time, type):
-        add(s, self._create(s, name, units, summary, owner, constraint, constraint_hint, source, value, time, type))
+    def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
+        add(s, self._create(s, name, units, summary, owner, constraint, source, value, time, type))

@@ -7,7 +7,7 @@ from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
-from ..types import OpenSched, Owner, Date
+from ..types import OpenSched, Date, Cls, ShortCls
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 
 
@@ -84,7 +84,7 @@ class Interval(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False, index=True)
     # disambiguate creator so each can wipe only its own data on force
-    owner = Column(Owner, nullable=False)
+    owner = Column(ShortCls, nullable=False)
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
@@ -94,8 +94,7 @@ class Interval(Source):
     }
 
     def __str__(self):
-        return 'Interval "%s from %s" (owner %d)' % \
-               (self.schedule, self.start, Owner().process_literal_param(self.owner, None))
+        return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, self.owner)
 
     @classmethod
     def _missing_interval_starts(cls, log, s, schedule, owner):
@@ -120,7 +119,6 @@ class Interval(Source):
 
     @classmethod
     def _open_intervals(cls, s, schedule, owner):
-        from .constant import intern
         close = aliased(Interval)
         return [result[0] for result in s.query(Interval.finish). \
             outerjoin(close,
@@ -128,17 +126,16 @@ class Interval(Source):
                            Interval.owner == close.owner,
                            Interval.schedule == close.schedule)). \
             filter(close.start == None,
-                   Interval.owner == intern(s, owner),
+                   Interval.owner == owner,
                    Interval.schedule == schedule). \
             order_by(Interval.finish).all()]
 
     @classmethod
     def _get_interval(cls, s, schedule, owner, start):
-        from .constant import intern
         return s.query(Interval). \
             filter(Interval.start == start,
                    Interval.schedule == schedule,
-                   Interval.owner == intern(s, owner)).one_or_none()
+                   Interval.owner == owner).one_or_none()
 
     @classmethod
     def _missing_intervals_from(cls, log, s, schedule, owner, start, finish):

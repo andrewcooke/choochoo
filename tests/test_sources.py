@@ -49,6 +49,7 @@ def test_sources():
             diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.date == '2018-09-29').one()
+            s.flush()
             d.populate(log, s)
             assert len(d.topic.fields) == 9, list(enumerate(map(str, d.topic.fields)))
             assert d.topic.fields[0].statistic_name.name == 'Notes'

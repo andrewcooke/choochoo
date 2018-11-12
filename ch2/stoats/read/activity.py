@@ -74,16 +74,16 @@ class ActivityImporter(Importer):
                                                            start=record.value.timestamp,
                                                            finish=record.value.timestamp))
                 if record.name == 'record':
-                    self._add(s, LATITUDE, DEG, None, self, activity_group.id, 'ActivityGroup', ajournal,
+                    self._add(s, LATITUDE, DEG, None, self, activity_group, ajournal,
                               record.none.position_lat, record.value.timestamp, StatisticJournalFloat)
-                    self._add(s, LONGITUDE, DEG, None, self, activity_group.id, 'ActivityGroup', ajournal,
+                    self._add(s, LONGITUDE, DEG, None, self, activity_group, ajournal,
                               record.none.position_long, record.value.timestamp,
                               StatisticJournalFloat)
-                    self._add(s, HEART_RATE, BPM, None, self, activity_group.id, 'ActivityGroup', ajournal,
+                    self._add(s, HEART_RATE, BPM, None, self, activity_group, ajournal,
                               record.none.heart_rate, record.value.timestamp, StatisticJournalInteger)
-                    self._add(s, DISTANCE, M, None, self, activity_group.id, 'ActivityGroup', ajournal,
+                    self._add(s, DISTANCE, M, None, self, activity_group, ajournal,
                               record.none.distance, record.value.timestamp, StatisticJournalFloat)
-                    self._add(s, SPEED, KMH, None, self, activity_group.id, 'ActivityGroup', ajournal,
+                    self._add(s, SPEED, KMH, None, self, activity_group, ajournal,
                               record.none.enhanced_speed, record.value.timestamp, StatisticJournalFloat)
                 if record.name == 'event' and record.value.event == 'timer' \
                         and record.value.event_type == 'stop_all':

@@ -9,7 +9,6 @@ from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, 
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, LATITUDE, HEART_RATE, LONGITUDE, \
     SPEED, DISTANCE
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
-from ...squeal.tables.constant import intern
 from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName
 from ...stoats.calculate.heart_rate import hr_zones
@@ -41,7 +40,7 @@ class ActivityStatistics:
             else:
                 q = s.query(count(StatisticJournal.id))
             q = q.join(StatisticName, Source, ActivityJournal). \
-                filter(StatisticName.owner == intern(s, self),
+                filter(StatisticName.owner == self,
                        ActivityJournal.activity_group == activity_group)
             if after:
                 q = q.filter(StatisticJournal.time >= after)
@@ -90,9 +89,8 @@ class ActivityStatistics:
             self._log.warn('No HR zones defined for %s or before' % ajournal.start)
 
     def _add_float_stat(self, s, ajournal, name, summary, value, units):
-        StatisticJournalFloat.add(self._log, s, name, units, summary, intern(s, self),
-                                  ajournal.activity_group.id, 'ActivityGroup',
-                                  ajournal, value, ajournal.start)
+        StatisticJournalFloat.add(self._log, s, name, units, summary, self,
+                                  ajournal.activity_group, ajournal, value, ajournal.start)
 
     def _waypoints(self, s, ajournal):
         id_map = self._id_map(s, ajournal)
@@ -121,9 +119,8 @@ class ActivityStatistics:
     def _id(self, s, ajournal, name):
         return s.query(StatisticName.id). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == intern(s, ActivityImporter),
-                   StatisticName.constraint == ajournal.activity_group_id).scalar()
-
+                   StatisticName.owner == ActivityImporter,
+                   StatisticName.constraint == ajournal.activity_group).scalar()
 
 
 Waypoint = namedtuple('Waypoint', 'timespan, time, latitude, longitude, heart_rate, speed, distance')

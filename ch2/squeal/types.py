@@ -79,6 +79,36 @@ class Cls(TypeDecorator):
         return CLS_CACHE[value]
 
 
+class ShortCls(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, cls, dialect):
+        if cls is None:
+            return cls
+        if not isinstance(cls, str) and not isinstance(cls, type):
+            cls = type(cls)
+        if isinstance(cls, type):
+            cls = cls.__name__
+        return cls
+
+    process_bind_param = process_literal_param
+
+
+class Str(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, value, dialect):
+        if value is None:
+            return value
+        if isinstance(value, int):
+            raise Exception('Passing primary key instead of class?')
+        return str(value)
+
+    process_bind_param = process_literal_param
+
+
 class Json(TypeDecorator):
 
     impl = Text
@@ -90,23 +120,6 @@ class Json(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         return loads(value)
-
-
-class Owner(TypeDecorator):
-    '''
-    The 'owner' of some data - typically the creating class.
-    We used to store the whole class name, but that was long text and seemed ot be a
-    waste of space.  Since it's an opaque value we now use a 32bit hash.
-    '''
-
-    impl = Integer
-
-    def process_literal_param(self, cls, dialect):
-        if cls is None or isinstance(cls, int):
-            return cls
-        raise Exception('Use intern(...) for Owner')
-
-    process_bind_param = process_literal_param
 
 
 class Sched(TypeDecorator):
