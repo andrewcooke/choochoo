@@ -66,7 +66,7 @@ class ActivityDiary(Displayer):
             filter(StatisticJournal.time == ajournal.start,
                    StatisticName.name.like(template),
                    StatisticName.owner == ActivityStatistics,
-                   StatisticName.constraint == ajournal.activity_group.id).order_by(StatisticName.name).all()
+                   StatisticName.constraint == ajournal.activity_group).order_by(StatisticName.name).all()
         # extract
         for sjournal in self.__sort_journals(sjournals):
             body.append(Text([label(search(re, sjournal.statistic_name.name).group(1) + ': ')] +

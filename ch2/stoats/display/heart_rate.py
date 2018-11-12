@@ -13,7 +13,7 @@ def build_zones(s, ajournal, width):
         filter(StatisticJournal.time == ajournal.start,
                StatisticName.name.like(PERCENT_IN_Z_ANY),
                StatisticName.owner == ActivityStatistics,
-               StatisticName.constraint == ajournal.activity_group.id) \
+               StatisticName.constraint == ajournal.activity_group) \
         .order_by(StatisticName.name).all()
     for zone, percent_time in reversed(list(enumerate(percent_times, start=1))):
         text = ('%d:' + ' ' * (width - 6) + '%3d%%') % (zone, int(0.5 + percent_time.value))
