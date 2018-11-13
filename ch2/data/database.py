@@ -47,10 +47,10 @@ class Data:
         data, times = defaultdict(list), []
         q = self._session.query(ActivityJournal).join(ActivityGroup).filter(ActivityGroup.name == activity)
         if start:
-            q = q.filter(ActivityJournal.time >= start)
+            q = q.filter(ActivityJournal.finish >= start)
         if finish:
-            q = q.filter(ActivityJournal.time <= finish)
-        for journal in q.order_by(ActivityJournal.time).all():
+            q = q.filter(ActivityJournal.start <= finish)
+        for journal in q.order_by(ActivityJournal.start).all():
             times.append(journal.time)
             extract(data, journal, 'name', 'fit_file', 'finish')
         return DataFrame(data, index=times)

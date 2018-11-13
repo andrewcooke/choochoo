@@ -102,12 +102,15 @@ class ActivityStatistics:
         sjf = inspect(StatisticJournalFloat).local_table
 
         id_map = self._id_map(s, ajournal)
+        ids = list(id_map.keys())
+
         for timespan in ajournal.timespans:
             self._log.debug('%s' % timespan)
             kargs = {'timespan': timespan}
             stmt = select([sn.c.id, sj.c.time, coalesce(sjf.c.value, sji.c.value)]) \
                 .select_from(sj.join(sn).outerjoin(sjf).outerjoin(sji)) \
                 .where(and_(sj.c.source_id == ajournal.id,
+                            sn.c.id.in_(ids),
                             sj.c.time >= timespan.start,
                             sj.c.time <= timespan.finish)) \
                 .order_by(sj.c.time)
@@ -122,10 +125,7 @@ class ActivityStatistics:
         self._log.debug('Waypoints generated')
 
     def _id_map(self, s, ajournal):
-        return {self._id(s, ajournal, LATITUDE): 'latitude',
-                self._id(s, ajournal, LONGITUDE): 'longitude',
-                self._id(s, ajournal, HEART_RATE): 'heart_rate',
-                self._id(s, ajournal, SPEED): 'speed',
+        return {self._id(s, ajournal, HEART_RATE): 'heart_rate',
                 self._id(s, ajournal, DISTANCE): 'distance'}
 
     def _id(self, s, ajournal, name):
@@ -135,7 +135,7 @@ class ActivityStatistics:
                    StatisticName.constraint == ajournal.activity_group).scalar()
 
 
-Waypoint = namedtuple('Waypoint', 'timespan, time, latitude, longitude, heart_rate, speed, distance')
+Waypoint = namedtuple('Waypoint', 'timespan, time, heart_rate, distance')
 '''
 This no longer appears as an explicit structure in the database.
 It corresponds to a record in the FIT file and is a collection of values from the activity

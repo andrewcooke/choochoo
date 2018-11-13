@@ -1,6 +1,8 @@
 
 from os.path import splitext, basename
 
+from pygeotile.point import Point
+
 from ..read import AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
@@ -9,7 +11,8 @@ from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger
-from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M
+from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
+    SPHERICAL_MERCATOR_Y
 from ...stoats.read import Importer
 
 
@@ -79,6 +82,13 @@ class ActivityImporter(Importer):
                     self._add(s, LONGITUDE, DEG, None, self, activity_group, ajournal,
                               record.none.position_long, record.value.timestamp,
                               StatisticJournalFloat)
+                    if record.none.position_lat and record.none.position_long:
+                        p = Point.from_latitude_longitude(record.none.position_lat, record.none.position_long)
+                        x, y = p.meters
+                        self._add(s, SPHERICAL_MERCATOR_X, M, None, self, activity_group, ajournal,
+                                  x, record.value.timestamp, StatisticJournalFloat)
+                        self._add(s, SPHERICAL_MERCATOR_Y, M, None, self, activity_group, ajournal,
+                                  y, record.value.timestamp, StatisticJournalFloat)
                     self._add(s, HEART_RATE, BPM, None, self, activity_group, ajournal,
                               record.none.heart_rate, record.value.timestamp, StatisticJournalInteger)
                     self._add(s, DISTANCE, M, None, self, activity_group, ajournal,
