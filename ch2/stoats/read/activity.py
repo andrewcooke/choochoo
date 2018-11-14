@@ -2,6 +2,7 @@
 from collections import defaultdict
 from os.path import splitext, basename
 
+from sqlalchemy import func
 from pygeotile.point import Point
 
 from ..read import AbortImport
@@ -10,7 +11,7 @@ from ...fit.format.records import fix_degrees
 from ...lib.date import to_time
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
-from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger, StatisticJournal
+from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger, StatisticJournal, StatisticName
 from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y
 from ...stoats.read import Importer
@@ -20,7 +21,7 @@ class ActivityImporter(Importer):
 
     def __init__(self, log, db):
         super().__init__(log, db)
-        self._staging = defaultdict(lambda: [])
+        self.__staging = defaultdict(lambda: [])
 
     def run(self, paths, force=False, sport_to_activity=None):
         if sport_to_activity is None:
@@ -114,3 +115,31 @@ class ActivityImporter(Importer):
                     self._log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                    (path, record.timestamp))
 
+        self._load(s, ajournal)
+
+    def _load(self, s, ajournal):
+
+        s.flush()
+        s.commit()
+
+        names = dict((name, s.query(StatisticName.id).
+                      filter(StatisticName.name == name,
+                             StatisticName.owner == self).scalar())
+                     for name in (LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
+                                  HEART_RATE, DISTANCE, SPEED))
+
+        rowid = s.query(func.max(StatisticJournal.id)).scalar() + 1
+
+        for type in self.__staging:
+            for sjournal in self.__staging[type]:
+                sjournal.id = rowid
+                name = sjournal.statistic_name.name
+                sjournal.statistic_name = None
+                sjournal.statistic_name_id = names[name]
+                sjournal.source = None
+                sjournal.source_id = ajournal.id
+                rowid += 1
+            s.bulk_save_objects(self.__staging[type])
+
+    def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
+        self.__staging[type].append(self._create(s, name, units, summary, owner, constraint, source, value, time, type))

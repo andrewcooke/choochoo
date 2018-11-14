@@ -68,4 +68,4 @@ class Importer:
         return type(statistic_name=statistic_name, source=source, value=value, time=time)
 
     def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
-        add(s, self._create(s, name, units, summary, owner, constraint, source, value, time, type))
+        return add(s, self._create(s, name, units, summary, owner, constraint, source, value, time, type))
