@@ -5,7 +5,7 @@ from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
-from ...squeal.tables.source import Interval
+from ...squeal.tables.source import Interval, NoStatistics
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
 from ...stoats.read.monitor import MonitorImporter
 
@@ -23,7 +23,7 @@ class MonitorStatistics:
     def run(self, force=False, after=None):
         if force:
             self._delete(after=after)
-        self._run()
+        self._run_monitor()
 
     def _delete(self, after=None):
         # we delete the intervals that all summary statistics depend on and they will cascade
@@ -47,11 +47,15 @@ class MonitorStatistics:
                     else:
                         self._log.warn('No intervals to delete')
 
-    def _run(self):
+    def _run_monitor(self):
         with self._db.session_context() as s:
-            for start, finish in Interval.missing(self._log, s, Schedule('d'), self):
-                self._log.info('Processing monitor data from %s to %s' % (start, finish))
-                self._add_stats(s, start, finish)
+            try:
+                for start, finish in Interval.missing(self._log, s, Schedule('d'), self, MonitorImporter):
+                    self._log.info('Processing monitor data from %s to %s' % (start, finish))
+                    self._add_stats(s, start, finish)
+            except NoStatistics:
+                self._log.info('No monitor data to process')
+
 
     def _add_stats(self, s, start, finish):
         start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)

@@ -77,6 +77,10 @@ def before_flush(session, context, instances):
     Source.before_flush(session)
 
 
+class NoStatistics(Exception):
+    pass
+
+
 class Interval(Source):
 
     __tablename__ = 'interval'
@@ -97,25 +101,28 @@ class Interval(Source):
         return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, self.owner)
 
     @classmethod
-    def _missing_interval_starts(cls, log, s, schedule, owner):
-        stats_start, stats_finish = cls._raw_statistics_time_range(s)
+    def _missing_interval_starts(cls, log, s, schedule, interval_owner, statistic_owner=None):
+        stats_start, stats_finish = cls._raw_statistics_time_range(s, statistic_owner)
         log.debug('Statistics exist %s - %s' % (stats_start, stats_finish))
-        starts = cls._open_intervals(s, schedule, owner)
+        starts = cls._open_intervals(s, schedule, interval_owner)
         stats_start_date = time_to_local_date(stats_start)
-        if not cls._get_interval(s, schedule, owner, stats_start_date):
+        if not cls._get_interval(s, schedule, interval_owner, stats_start_date):
             starts = [schedule.start_of_frame(stats_start_date)] + starts
         log.debug('Have %d open blocks finishing at %s' % (len(starts), stats_finish))
         return starts, stats_finish
 
     @classmethod
-    def _raw_statistics_time_range(cls, s):
-        from .statistic import StatisticJournal
-        start, finish = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
-            filter(StatisticJournal.time > to_time(24 * 60 * 60.0)).one()   # skip entire first day because tz
+    def _raw_statistics_time_range(cls, s, statistics_owner=None):
+        from .statistic import StatisticJournal, StatisticName
+        q = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
+            filter(StatisticJournal.time > to_time(24 * 60 * 60.0))
+        if statistics_owner:
+            q = q.join(StatisticName).filter(StatisticName.owner == statistics_owner)
+        start, finish = q.one()   # skip entire first day because tz
         if start and finish:
             return start, finish
         else:
-            raise Exception('No statistics are currently defined')
+            raise NoStatistics('No statistics are currently defined')
 
     @classmethod
     def _open_intervals(cls, s, schedule, owner):
@@ -148,10 +155,10 @@ class Interval(Source):
                 return
 
     @classmethod
-    def missing(cls, log, s, schedule, owner):
-        starts, overall_finish = cls._missing_interval_starts(log, s, schedule, owner)
+    def missing(cls, log, s, schedule, interval_owner, statistic_owner=None):
+        starts, overall_finish = cls._missing_interval_starts(log, s, schedule, interval_owner, statistic_owner)
         for block_start in starts:
-            yield from cls._missing_intervals_from(log, s, schedule, owner, block_start, overall_finish)
+            yield from cls._missing_intervals_from(log, s, schedule, interval_owner, block_start, overall_finish)
 
     @classmethod
     def delete_all(cls, log, s):

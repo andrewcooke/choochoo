@@ -23,9 +23,9 @@ STEPS_ATTR = 'steps'
 
 class MonitorImporter(Importer):
 
-    # the monitor data are cumulative, but we want inrcremental.
+    # the monitor steps data are cumulative, but we want incremental.
     # that's easy to do within a single file, but to be correct across files we also
-    # store the cumulative value at the start and end,  we use thsee to "patch things up"
+    # store the cumulative value at the start and end,  we use these to "patch things up"
     # is we read a missing file.
 
     def run(self, paths, force=False):

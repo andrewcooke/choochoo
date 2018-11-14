@@ -1,4 +1,5 @@
 
+from collections import defaultdict
 from os.path import splitext, basename
 
 from pygeotile.point import Point
@@ -7,16 +8,19 @@ from ..read import AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
 from ...lib.date import to_time
-from ...lib.utils import datetime_to_epoch
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
-from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger
+from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger, StatisticJournal
 from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y
 from ...stoats.read import Importer
 
 
 class ActivityImporter(Importer):
+
+    def __init__(self, log, db):
+        super().__init__(log, db)
+        self._staging = defaultdict(lambda: [])
 
     def run(self, paths, force=False, sport_to_activity=None):
         if sport_to_activity is None:

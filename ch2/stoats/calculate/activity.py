@@ -57,11 +57,13 @@ class ActivityStatistics:
                 else:
                     self._log.warn('No statistics to delete for %s' % activity_group)
 
-    def _run_activity(self, s, activity_group):  # todo - should be using group
+    def _run_activity(self, s, activity_group):
+        # which activity journals don't have data?
         statistics = s.query(StatisticJournal.source_id).join(StatisticName). \
             filter(StatisticName.name == ACTIVE_TIME).cte()
         for ajournal in s.query(ActivityJournal).outerjoin(statistics). \
-                filter(statistics.c.source_id == None).all():
+                filter(ActivityJournal.activity_group == activity_group,
+                       statistics.c.source_id == None).all():
             self._log.info('Adding statistics for %s' % ajournal)
             self._add_stats(s, ajournal)
 
