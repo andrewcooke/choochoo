@@ -63,12 +63,16 @@ class ActivityStatistics:
             filter(StatisticName.name == ACTIVE_TIME).cte()
         for ajournal in s.query(ActivityJournal).outerjoin(statistics). \
                 filter(ActivityJournal.activity_group == activity_group,
-                       statistics.c.source_id == None).all():
+                       statistics.c.source_id == None). \
+                order_by(ActivityJournal.start).all():
             self._log.info('Adding statistics for %s' % ajournal)
             self._add_stats(s, ajournal)
 
     def _add_stats(self, s, ajournal):
         waypoints = list(self._waypoints(s, ajournal))
+        if not waypoints:
+            self._log.warn('No statistcs for %s' % ajournal)
+            return
         totals = Totals(self._log, waypoints)
         self._add_float_stat(s, ajournal,  ACTIVE_DISTANCE, ','.join([MAX, CNT, SUM]), totals.distance, M)
         self._add_float_stat(s, ajournal, ACTIVE_TIME, ','.join([MAX, SUM]), totals.time, S)
