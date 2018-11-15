@@ -64,8 +64,9 @@ class Importer:
         if key not in self.__statistics_cache:
             self.__statistics_cache[key] = \
                 StatisticJournal.add_name(self._log, s, name, units, summary, owner, constraint)
-        statistic_name = self.__statistics_cache[key]
-        return type(statistic_name=statistic_name, source=source, value=value, time=time)
+        if key not in self.__statistics_cache or not self.__statistics_cache[key]:
+            raise Exception('Failed to get StatisticName for %s' % key)
+        return type(statistic_name=self.__statistics_cache[key], source=source, value=value, time=time)
 
     def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
         return add(s, self._create(s, name, units, summary, owner, constraint, source, value, time, type))

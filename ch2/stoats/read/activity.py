@@ -19,10 +19,6 @@ from ...stoats.read import Importer
 
 class ActivityImporter(Importer):
 
-    def __init__(self, log, db):
-        super().__init__(log, db)
-        self.__staging = defaultdict(lambda: [])
-
     def run(self, paths, force=False, sport_to_activity=None):
         if sport_to_activity is None:
             raise Exception('No map from sport to activity')
@@ -57,6 +53,8 @@ class ActivityImporter(Importer):
         s.flush()
 
     def _import(self, s, path, sport_to_activity):
+
+        self.__staging = defaultdict(lambda: [])
 
         data, types, messages, records = filtered_records(self._log, path)
         records = [record.force(fix_degrees)
@@ -118,10 +116,7 @@ class ActivityImporter(Importer):
         self._load(s, ajournal)
 
     def _load(self, s, ajournal):
-
         s.flush()
-        s.commit()
-
         names = dict((name, s.query(StatisticName.id).
                       filter(StatisticName.name == name,
                              StatisticName.owner == self).scalar())
@@ -131,6 +126,7 @@ class ActivityImporter(Importer):
         rowid = s.query(func.max(StatisticJournal.id)).scalar() + 1
 
         for type in self.__staging:
+            self._log.debug('Loading type %s' % type)
             for sjournal in self.__staging[type]:
                 sjournal.id = rowid
                 name = sjournal.statistic_name.name
