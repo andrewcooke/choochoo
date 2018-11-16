@@ -10,7 +10,7 @@ from .support import NullableLog
 from .types import Types
 
 PROFILE_NAME = 'global-profile.pkl'
-PROFILE = None
+PROFILE = []
 
 
 def read_profile(log, path, warn=False):
@@ -25,9 +25,9 @@ def load_profile(log):
     if not PROFILE:
         log.debug('Unpickling profile')
         input = resource_stream(__name__, PROFILE_NAME)
-        PROFILE = load(input)
-        PROFILE[0].set_log(log)
-    return PROFILE[1:2]
+        PROFILE.append(load(input))
+        PROFILE[0][0].set_log(log)
+    return PROFILE[0][1:]
 
 
 def load_fit(log, fit_path, warn=False, profile_path=None):
