@@ -49,7 +49,8 @@ class StatisticJournal(Base):
     statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'),
                                nullable=False, index=True)
     statistic_name = relationship('StatisticName')
-    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
+    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
+                       nullable=False, index=True)
     source = relationship('Source')
     time = Column(Time, nullable=False, index=True)
     UniqueConstraint(statistic_name_id, time)
@@ -289,12 +290,14 @@ class StatisticMeasure(Base):
     __tablename__ = 'statistic_measure'
 
     id = Column(Integer, primary_key=True)
-    statistic_journal_id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), nullable=False)
+    statistic_journal_id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'),
+                                  nullable=False, index=True)
     statistic_journal = relationship('StatisticJournal',
                                      backref=backref('measures', cascade='all, delete-orphan',
                                                      passive_deletes=True,
                                                      order_by='desc(StatisticMeasure.rank)'))
-    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)  # must be an interval
+    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
+                       nullable=False, index=True)  # must be an interval
     source = relationship('Source')
     rank = Column(Integer, nullable=False)  # 1 is best [1..n]
     percentile = Column(Float, nullable=False)  # 100 is best [0..100]

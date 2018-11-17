@@ -71,6 +71,6 @@
 
 * Set tz at start so we don't delete data on first diary
 
-* Why is deleting intervals so slow?  Missing index?
+* XXX  Why is deleting intervals so slow?  Missing index?
   https://stackoverflow.com/questions/24259265/sqlite-bad-performance-with-on-delete-cascade
   

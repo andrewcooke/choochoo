@@ -51,7 +51,7 @@ class ActivityTimespan(Base):
 
     id = Column(Integer, primary_key=True)
     activity_journal_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
-                                 nullable=False)
+                                 nullable=False, index=True)
     activity_journal = relationship('ActivityJournal',
                                     backref=backref('timespans', cascade='all, delete-orphan',
                                                     passive_deletes=True,
