@@ -2,12 +2,12 @@
 import datetime as dt
 from enum import IntEnum
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc
 from sqlalchemy.orm import relationship, backref
 
 from .source import Source, Interval
 from ..support import Base
-from ..types import Owner
+from ..types import Time, ShortCls, Str
 from ...lib.date import format_seconds, local_date_to_time
 
 
@@ -16,7 +16,7 @@ class StatisticName(Base):
     __tablename__ = 'statistic_name'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False)  # simple, displayable name
+    name = Column(Text, nullable=False, index=True)  # simple, displayable name
     description = Column(Text)
     units = Column(Text)
     summary = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
@@ -24,12 +24,12 @@ class StatisticName(Base):
     # this is done by (1) "owner" (typically the source of the data) and
     # (2) by some additional (optional) constraint used by the owner (typically)
     # (eg activity_group.id so that the same statistic can be used across different activities)
-    owner = Column(Owner, nullable=False)
-    constraint = Column(Integer)
+    owner = Column(ShortCls, nullable=False)
+    constraint = Column(Str)
     UniqueConstraint(name, owner, constraint)
 
     def __str__(self):
-        return 'StatisticName "%s"' % self.name
+        return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
 
 
 class StatisticJournalType(IntEnum):
@@ -46,14 +46,13 @@ class StatisticJournal(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False)
-    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
+    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'),
+                               nullable=False, index=True)
     statistic_name = relationship('StatisticName')
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     source = relationship('Source')
-    # this is just for finding bugs
-    # in fact (statistic_id, time) should be unique but that's across inheritance tables
-    # the source_id field is only for delete on cascade. it's not an 'owner' as for statistics
-    UniqueConstraint(statistic_name_id, source_id)
+    time = Column(Time, nullable=False, index=True)
+    UniqueConstraint(statistic_name_id, time)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.STATISTIC,
@@ -66,18 +65,32 @@ class StatisticJournal(Base):
         except AttributeError:
             return 'Field Journal'
 
-    @property
-    def time(self):
-        return self.source.time
+    @classmethod
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, type):
+        statistic_name = cls.add_name(log, s, name, units, summary, owner, constraint)
+        journal = s.query(StatisticJournal).join(Source). \
+            filter(StatisticJournal.statistic_name == statistic_name,
+                   StatisticJournal.time == time).one_or_none()
+        if not journal:
+            journal = STATISTIC_JOURNAL_CLASSES[type](
+                statistic_name=statistic_name, source=source, value=value, time=time)
+            s.add(journal)
+        else:
+            if journal.type != type:
+                raise Exception('Inconsistent StatisticJournal type (%d != %d)' %
+                                (journal.type, journal))
+            journal.value = value
+        return journal
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, type):
+    def add_name(cls, log, s, name, units, summary, owner, constraint):
         statistic_name = s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
                    StatisticName.constraint == constraint).one_or_none()
         if not statistic_name:
-            statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner, constraint=constraint)
+            statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner,
+                                           constraint=constraint)
             s.add(statistic_name)
         else:
             if statistic_name.units != units:
@@ -86,19 +99,7 @@ class StatisticJournal(Base):
             if statistic_name.summary != summary:
                 log.warn('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
                 statistic_name.summary = summary
-        journal = s.query(StatisticJournal).join(Source). \
-            filter(StatisticJournal.statistic_name == statistic_name,
-                   Source.time == source.time).one_or_none()
-        if not journal:
-            journal = STATISTIC_JOURNAL_CLASSES[type](
-                statistic_name=statistic_name, source=source, value=value)
-            s.add(journal)
-        else:
-            if journal.type != type:
-                raise Exception('Inconsistent StatisticJournal type (%d != %d)' %
-                                (journal.type, journal))
-            journal.value = value
-        return journal
+        return statistic_name
 
     def formatted(self):
         if self.value is None:
@@ -142,20 +143,38 @@ class StatisticJournal(Base):
     def at_date(cls, s, date, name, owner, constraint):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+        return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
-                   Source.time >= start,
-                   Source.time < finish,
+                   StatisticJournal.time >= start,
+                   StatisticJournal.time < finish,
                    StatisticName.owner == owner,
                    StatisticName.constraint == constraint).one_or_none()
 
     @classmethod
-    def at_time(cls, s, time, name, owner, constraint):
-        return s.query(StatisticJournal).join(StatisticName, Source). \
+    def at(cls, s, time, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
-                   Source.time == time,
+                   StatisticJournal.time == time,
                    StatisticName.owner == owner,
                    StatisticName.constraint == constraint).one_or_none()
+
+    @classmethod
+    def before(cls, s, time, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticJournal.time <= time,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint). \
+            order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
+
+    @classmethod
+    def after(cls, s, time, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticJournal.time >= time,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint). \
+            order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
     def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner):
@@ -184,8 +203,9 @@ class StatisticJournalInteger(StatisticJournal):
     }
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.INTEGER)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+                           StatisticJournalType.INTEGER)
 
 
 class StatisticJournalFloat(StatisticJournal):
@@ -198,8 +218,9 @@ class StatisticJournalFloat(StatisticJournal):
     parse = float
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.FLOAT)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+                           StatisticJournalType.FLOAT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.FLOAT
@@ -246,8 +267,9 @@ class StatisticJournalText(StatisticJournal):
     parse = str
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, StatisticJournalType.TEXT)
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+                           StatisticJournalType.TEXT)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.TEXT
@@ -259,7 +281,7 @@ class StatisticJournalText(StatisticJournal):
         if not self.units:
             return '%s' % self.value
         else:
-            return '%s%s' % (self.value, self.units)
+            return '%s %s' % (self.value, self.units)
 
 
 class StatisticMeasure(Base):

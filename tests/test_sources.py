@@ -30,33 +30,33 @@ def test_sources():
 
             # add a diary entry
 
-            diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
-            d = add(s, TopicJournal(topic=diary, date='2018-09-29',
-                                    time=local_date_to_time(to_date('2018-09-29'))))
+            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+            d = add(s, TopicJournal(topic=diary, date='2018-09-29'))
             d.populate(log, s)
-            assert len(d.topic.fields) == 8, d.topic.fields
+            assert len(d.topic.fields) == 9, list(enumerate(map(str, d.topic.fields)))
             assert d.topic.fields[0].statistic_name.name == 'Notes'
-            assert d.topic.fields[1].statistic_name.name == 'Rest HR'
+            assert d.topic.fields[1].statistic_name.name == 'Weight', str(d.topic.fields[1])
             for field in d.topic.fields:
                 if field in d.statistics:
                     assert d.statistics[field].value is None, field
             d.statistics[d.topic.fields[0]].value = 'hello world'
-            d.statistics[d.topic.fields[1]].value = 60
+            d.statistics[d.topic.fields[1]].value = 64.5
 
         with db.session_context() as s:
 
             # check the diary entry was persisted
 
-            diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
+            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.date == '2018-09-29').one()
+            s.flush()
             d.populate(log, s)
-            assert len(d.topic.fields) == 8
+            assert len(d.topic.fields) == 9, list(enumerate(map(str, d.topic.fields)))
             assert d.topic.fields[0].statistic_name.name == 'Notes'
             assert d.statistics[d.topic.fields[0]].value == 'hello world'
-            assert d.topic.fields[1].statistic_name.name == 'Rest HR'
-            assert d.statistics[d.topic.fields[1]].value == 60
-            assert d.statistics[d.topic.fields[1]].type == StatisticJournalType.INTEGER
+            assert d.topic.fields[1].statistic_name.name == 'Weight'
+            assert d.statistics[d.topic.fields[1]].value == 64.5
+            assert d.statistics[d.topic.fields[1]].type == StatisticJournalType.FLOAT
 
         # generate summary stats
 
@@ -68,26 +68,24 @@ def test_sources():
 
             # check the summary stats
 
-            diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
-            sleep = s.query(StatisticJournalInteger).join(StatisticName). \
-                filter(StatisticName.owner == diary, StatisticName.name == 'Rest HR').one()
-            assert sleep.value == 60
-            assert len(sleep.measures) == 2
-            assert sleep.measures[0].rank == 1
-            assert sleep.measures[0].percentile == 100, sleep.measures[0].percentile
+            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+            weight = s.query(StatisticJournal).join(StatisticName). \
+                filter(StatisticName.owner == diary, StatisticName.name == 'Weight').one()
+            assert weight.value == 64.5
+            assert len(weight.measures) == 2
+            assert weight.measures[0].rank == 1
+            assert weight.measures[0].percentile == 100, weight.measures[0].percentile
             n = s.query(count(StatisticJournalFloat.id)).scalar()
             assert n == 4, n
             n = s.query(count(StatisticJournalInteger.id)).scalar()
-            assert n == 2, n
+            assert n == 11, n
             m_avg = s.query(StatisticJournalFloat).join(StatisticName). \
-                filter(StatisticName.name == 'Avg/Month Rest HR').one()
-            assert m_avg.value == 60
-            # note this is float even though Rest HR is int
+                filter(StatisticName.name == 'Avg/Month Weight').one()
+            assert m_avg.value == 64.5
             y_avg = s.query(StatisticJournalFloat).join(StatisticName). \
-                filter(StatisticName.name == 'Avg/Year Rest HR').one()
-            assert y_avg.value == 60
+                filter(StatisticName.name == 'Avg/Year Weight').one()
+            assert y_avg.value == 64.5
             month = s.query(Interval).filter(Interval.schedule == 'm').one()
-            assert month.time == local_date_to_time(to_date('2018-09-01')), month.time
             assert month.start == to_date('2018-09-01'), month.start
             assert month.finish == to_date('2018-10-01'), month.finish
 
@@ -95,7 +93,7 @@ def test_sources():
 
             # delete the diary entry
 
-            diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
+            diary = s.query(Topic).filter(Topic.name == 'Diary').one()
             d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                              TopicJournal.date == '2018-09-29').one()
             s.delete(d)
@@ -112,6 +110,6 @@ def test_sources():
                 print(source)
             for journal in s.query(StatisticJournal).all():
                 print(journal)
-            assert s.query(count(Source.id)).scalar() == 0, s.query(count(Source.id)).scalar()
+            assert s.query(count(Source.id)).scalar() == 2, list(map(str, s.query(Source).all()))  # constants
             assert s.query(count(StatisticJournalText.id)).scalar() == 0, s.query(count(StatisticJournalText.id)).scalar()
             assert s.query(count(StatisticJournal.id)).scalar() == 0, s.query(count(StatisticJournal.id)).scalar()

@@ -1,7 +1,8 @@
 
+from ..lib.date import local_date_to_time
 from ..command.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET
 from ..squeal.database import add
-from ..squeal.tables.constant import Constant, ConstantJournal
+from ..squeal.tables.constant import Constant
 from ..squeal.tables.statistic import StatisticJournal, StatisticName, STATISTIC_JOURNAL_CLASSES
 
 
@@ -15,7 +16,8 @@ Lists constants to stdout.
 
     > ch2 constants --set NAME [DATE] VALUE
 
-Defines a new entry.  If date is omitted a single value is used for all time.
+Defines a new entry.  If date is omitted a single value is used for all time
+(so any previously defined values are deleted)
 
     > ch2 constants --delete NAME [DATE]
 
@@ -54,17 +56,17 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
 
 
 def constants_like(log, s, name):
-    constant = s.query(Constant).filter(Constant.name.like(name)).order_by(Constant.name).all()
-    if not constant:
-        constants = s.query(Constant).all()
-        if constants:
+    constants = s.query(Constant).filter(Constant.name.like(name)).order_by(Constant.name).all()
+    if not constants:
+        all_constants = s.query(Constant).all()
+        if all_constants:
             log.info('Available constants:')
-            for constant in constants:
-                log.info('%s - %s' % (constant.statistic_name.name, constant.statistic_name.description))
+            for constants in all_constants:
+                log.info('%s - %s' % (constants.statistic_name.name, constants.statistic_name.description))
         else:
             log.error('No constants defined - configure system correctly')
         raise Exception('Constant "%s" is not defined' % name)
-    return constant
+    return constants
 
 
 def set_constants(log, s, constants, date, value, force):
@@ -72,7 +74,7 @@ def set_constants(log, s, constants, date, value, force):
         log.info('Checking any previous values')
         journals = []
         for constant in constants:
-            journals += s.query(ConstantJournal).join(StatisticJournal, StatisticName, Constant). \
+            journals += s.query(StatisticJournal).join(StatisticName, Constant). \
                 filter(Constant.id == constant.id).all()
         if journals:
             log.info('Need to delete %d ConstantJournal entries' % len(journals))
@@ -82,9 +84,9 @@ def set_constants(log, s, constants, date, value, force):
                 s.delete(journal)
         date = '1970-01-01'
     for constant in constants:
-        cjournal = add(s, ConstantJournal(time=date))
-        add(s, STATISTIC_JOURNAL_CLASSES[constant.type](
-            statistic_name=constant.statistic_name, source=cjournal, value=value))
+        add(s, STATISTIC_JOURNAL_CLASSES[constant.statistic_journal_type](
+            statistic_name=constant.statistic_name, source=constant, value=value,
+            time=local_date_to_time(date)))
         log.info('Added value %s at %s for %s' % (value, date, constant.name))
     log.warn('You may want to (re-)calculate statistics')
 
@@ -93,9 +95,9 @@ def delete_constants(log, s, constants, date):
     if date:
         for constant in constants:
             for repeat in range(2):
-                journal = s.query(ConstantJournal).join(StatisticJournal, StatisticName, Constant). \
+                journal = s.query(StatisticJournal).join(StatisticName, Constant). \
                     filter(Constant.id == constant.id,
-                           ConstantJournal.time == date).one_or_none()
+                           StatisticJournal.time == date).one_or_none()
                 if repeat:
                     log.info('Deleting %s on %s' % (constant.name, journal.time))
                     s.delete(journal)
@@ -104,8 +106,8 @@ def delete_constants(log, s, constants, date):
                         raise Exception('No entry for %s on %s' % (constant.name, date))
     else:
         for constant in constants:
-            for journal in s.query(ConstantJournal).join(StatisticJournal, StatisticName, Constant). \
-                    filter(Constant.id == constant.id).order_by(ConstantJournal.time).all():
+            for journal in s.query(StatisticJournal).join(StatisticName, Constant). \
+                    filter(Constant.id == constant.id).order_by(StatisticJournal.time).all():
                 log.info('Deleting %s on %s' % (constant.name, journal.time))
                 s.delete(journal)
 
@@ -123,16 +125,17 @@ def print_constants(log, s, constants, name, date):
                               if constant.statistic_name.description else '[no description]'))
             if name:  # only print values if we're not listing all
                 found = False
-                for journal in s.query(StatisticJournal).join(ConstantJournal, StatisticName, Constant). \
-                        filter(Constant.id == constant.id).order_by(ConstantJournal.time).all():
+                for journal in s.query(StatisticJournal).join(StatisticName, Constant). \
+                        filter(Constant.id == constant.id).order_by(StatisticJournal.time).all():
                     print('%s: %s' % (journal.time, journal.value))
                     found = True
                 if not found:
                     log.warn('No values found for %s' % constant.name)
             print()
         else:
-            journal = ConstantJournal.lookup_statistic_journal(log, s, constant.name,
-                                                               constant.statistic_name.constraint, date)
+            statistic_name = constant.statistic_name
+            journal = StatisticJournal.at_date(s, date, statistic_name.name, statistic_name.owner,
+                                               statistic_name.constraint)
             if journal:
                 print('%s %s %s' % (constant.name, journal.source.time, journal.value))
             else:

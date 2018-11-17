@@ -1,7 +1,9 @@
 
 from abc import abstractmethod
 
-from ch2.lib.io import for_modified_files
+from ...lib.io import for_modified_files
+from ...squeal.database import add
+from ...squeal.tables.statistic import StatisticJournal
 
 
 class AbortImport(Exception):
@@ -17,12 +19,13 @@ class Importer:
     def __init__(self, log, db):
         self._log = log
         self._db = db
+        self.__statistics_cache = {}
 
     def _first(self, path, records, *names):
         try:
             return next(iter(record for record in records if record.name in names))
         except StopIteration:
-            self._log.warn('No %s entry(s) in %s' % (str(names), path))
+            self._log.debug('No %s entry(s) in %s' % (str(names), path))
             raise AbortImportButMarkScanned()
 
     def _last(self, path, records, *names):
@@ -31,7 +34,7 @@ class Importer:
             if record.name in names:
                 save = record
         if not save:
-            self._log.warn('No %s entry(s) in %s' % (str(names), path))
+            self._log.debug('No %s entry(s) in %s' % (str(names), path))
             raise AbortImportButMarkScanned()
         return save
 
@@ -41,7 +44,7 @@ class Importer:
 
     def _callback(self, kargs):
         def callback(file):
-            self._log.info('Scanning %s' % file)
+            self._log.debug('Scanning %s' % file)
             with self._db.session_context() as s:
                 try:
                     self._import(s, file, **kargs)
@@ -54,3 +57,16 @@ class Importer:
     @abstractmethod
     def _import(self, s, path, **kargs):
         pass
+
+    def _create(self, s, name, units, summary, owner, constraint, source, value, time, type):
+        # cache statistic_name instances for speed (avoid flush on each query)
+        key = (name, constraint)
+        if key not in self.__statistics_cache:
+            self.__statistics_cache[key] = \
+                StatisticJournal.add_name(self._log, s, name, units, summary, owner, constraint)
+        if key not in self.__statistics_cache or not self.__statistics_cache[key]:
+            raise Exception('Failed to get StatisticName for %s' % key)
+        return type(statistic_name=self.__statistics_cache[key], source=source, value=value, time=time)
+
+    def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
+        return add(s, self._create(s, name, units, summary, owner, constraint, source, value, time, type))

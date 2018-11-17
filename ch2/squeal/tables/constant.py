@@ -2,39 +2,27 @@
 from sqlalchemy import Column, Integer, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
-from .statistic import StatisticName, StatisticJournal
 from .source import Source, SourceType
 from ..support import Base
 
 
-class Constant(Base):
+class Constant(Source):
 
     __tablename__ = 'constant'
 
-    id = Column(Integer, primary_key=True)
-    type = Column(Integer, nullable=False)  # StatisticJournalType
-    name = Column(Text, nullable=False)
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
+    statistic_journal_type = Column(Integer, nullable=False)
+    # this could be the statistic_name or it could contain more info related to constraint
+    name = Column(Text, nullable=False, index=True)
     statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
     statistic_name = relationship('StatisticName')
-
-
-class ConstantJournal(Source):
-
-    __tablename__ = 'constant_journal'
-
-    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-
-    @staticmethod
-    def lookup_statistic_journal(log, s, name, constraint, time):
-        # order important in join here
-        return s.query(StatisticJournal).join(ConstantJournal, StatisticName, Constant). \
-            filter(StatisticName.constraint == constraint,
-                   StatisticName.name == name,
-                   ConstantJournal.time <= time).one_or_none()
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.CONSTANT
     }
+
+    def __str__(self):
+        return 'Constant "%s"' % self.name
 
 
 class SystemConstant(Base):

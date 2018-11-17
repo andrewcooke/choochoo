@@ -5,9 +5,9 @@ from shutil import get_terminal_size
 
 from sqlalchemy import desc
 
-from ch2.squeal.tables.fit import FileScan
 from .date import to_time
 from ..squeal.database import add
+from ..squeal.tables.fit import FileScan
 
 
 def terminal_width(width=None):
@@ -31,7 +31,7 @@ def md5_hash(file_path):
     return hash.hexdigest()
 
 
-def for_modified_files(log, session, paths, callback, owner, force=False):
+def for_modified_files(log, s, paths, callback, owner, force=False):
     '''
     This takes a callback because we need to know whether to mark the file as read or not
     after processing.  The callback should return True on success.
@@ -45,10 +45,11 @@ def for_modified_files(log, session, paths, callback, owner, force=False):
 
         last_modified = to_time(stat(file_path).st_mtime)
         hash = md5_hash(file_path)
-
-        path_scan = session.query(FileScan). \
+        path_scan = s.query(FileScan). \
             filter(FileScan.path == file_path,
                    FileScan.owner == owner).one_or_none()
+
+        # get last scan and make sure it's up-to-date
         if path_scan:
             if hash != path_scan.md5_hash:
                 log.warn('File at %s appears to have changed since last read on %s')
@@ -56,30 +57,30 @@ def for_modified_files(log, session, paths, callback, owner, force=False):
                 path_scan.last_scan = 0.0
         else:
             # need to_time here because it's not roundtripped via the database to convert for use below
-            path_scan = add(session, FileScan(path=file_path, owner=owner,
-                                              md5_hash=hash, last_scan=to_time(0.0)))
-            session.flush()
+            path_scan = add(s, FileScan(path=file_path, owner=owner,
+                                        md5_hash=hash, last_scan=to_time(0.0)))
+            s.flush()  # want this to appear in queries below
 
         # only look at hash if we are going to process anyway
         if force or last_modified > path_scan.last_scan:
 
-            hash_scan = session.query(FileScan). \
+            hash_scan = s.query(FileScan). \
                 filter(FileScan.md5_hash == hash,
                        FileScan.owner == owner).\
                 order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
             if hash_scan.path != path_scan.path:
-                log.warn('Two files have the same hash (details in debug log)')
+                log.warn('Ignoring duplicate file (details in debug log)')
                 log.debug('%s' % file_path)
                 log.debug('%s' % hash_scan.path)
                 # update the path to avoid triggering in future
                 path_scan.last_scan = hash_scan.last_scan
 
-            session.commit()
+            s.commit()
 
             if force or last_modified > hash_scan.last_scan:
                 if callback(file_path):
                     log.debug('Marking %s as scanned' % file_path)
-                    path_scan.last_scan = last_modified
-                    session.commit()
+                    path_scan.last_scan = last_modified  # maybe use now?
+                    s.commit()
                 else:
                     log.debug('Not marking %s as scanned' % file_path)

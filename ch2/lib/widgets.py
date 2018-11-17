@@ -87,12 +87,12 @@ class DateSwitcher(App):
         q = s.query(ActivityJournal)
         time = local_date_to_time(self._date)
         if c == 'a':
-            q = q.filter(ActivityJournal.time < time).order_by(desc(ActivityJournal.time))
+            q = q.filter(ActivityJournal.start < time).order_by(desc(ActivityJournal.start))
         else:
-            q = q.filter(ActivityJournal.time >= (time + dt.timedelta(days=1))).order_by(ActivityJournal.time)
+            q = q.filter(ActivityJournal.start >= (time + dt.timedelta(days=1))).order_by(ActivityJournal.start)
         journal = q.limit(1).one_or_none()
         if journal:
-            self.__date = self._new_date(time_to_local_date(journal.time))
+            self.__date = self._new_date(time_to_local_date(journal.start))
             self.rebuild()
 
     def _change_date(self, c):

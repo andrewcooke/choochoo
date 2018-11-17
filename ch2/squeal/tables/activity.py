@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, Text, Integer, ForeignKey, Float, UniqueConstraint
+from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
@@ -30,6 +30,7 @@ class ActivityJournal(Source):
     activity_group = relationship('ActivityGroup')
     name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
+    start = Column(Time, nullable=False, index=True)
     finish = Column(Time, nullable=False)
 
     __mapper_args__ = {
@@ -37,7 +38,11 @@ class ActivityJournal(Source):
     }
 
     def __str__(self):
-        return 'ActivityJournal from %s' % format_time(self.time)
+        return 'ActivityJournal %s %s to %s' % (self.activity_group.name,
+                                                format_time(self.start), format_time(self.finish))
+
+    def time_range(self, s):
+        return self.start, self.finish
 
 
 class ActivityTimespan(Base):
@@ -55,24 +60,5 @@ class ActivityTimespan(Base):
     finish = Column(Time, nullable=False)
     UniqueConstraint('activity_journal_id', 'start')
 
-
-class ActivityWaypoint(Base):
-
-    __tablename__ = 'activity_waypoint'
-
-    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
-                                 nullable=False, primary_key=True)
-    activity_journal = relationship('ActivityJournal',
-                                    backref=backref('waypoints', cascade='all, delete-orphan',
-                                                    passive_deletes=True,
-                                                    order_by='ActivityWaypoint.time'))
-    activity_timespan_id = Column(Integer, ForeignKey('activity_timespan.id'))
-    activity_timespan = relationship('ActivityTimespan',
-                                     backref=backref('waypoints',
-                                                     order_by='ActivityWaypoint.time'))
-    time = Column(Time, primary_key=True)
-    latitude = Column(Float)
-    longitude = Column(Float)
-    heart_rate = Column(Integer)
-    distance = Column(Float)
-    speed = Column(Float)
+    def __str__(self):
+        return 'ActivityTimespan from %s - %s' % (format_time(self.start), format_time(self.finish))

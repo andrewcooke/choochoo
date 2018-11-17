@@ -32,10 +32,10 @@ class ActivityDiary(Displayer):
         finish = start + dt.timedelta(days=1)
         for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
             for journal in s.query(ActivityJournal). \
-                    filter(ActivityJournal.time >= start,
-                           ActivityJournal.time < finish,
+                    filter(ActivityJournal.finish >= start,
+                           ActivityJournal.start < finish,
                            ActivityJournal.activity_group == activity_group). \
-                    order_by(ActivityJournal.time).all():
+                    order_by(ActivityJournal.start).all():
                 yield self.__journal_date(s, journal, date)
 
     def __journal_date(self, s, ajournal, date):
@@ -53,20 +53,20 @@ class ActivityDiary(Displayer):
 
     def __active_date(self, s, ajournal, date):
         body = [Divider()]
-        body.append(Text('%s - %s  (%s)' % (ajournal.time.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
-                                            format_seconds((ajournal.finish - ajournal.time).seconds))))
+        body.append(Text('%s - %s  (%s)' % (ajournal.start.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
+                                            format_seconds((ajournal.finish - ajournal.start).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
-            sjournal = StatisticJournal.at_time(s, ajournal.time, name, ActivityStatistics, ajournal.activity_group.id)
+            sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityStatistics, ajournal.activity_group)
             body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         return body
 
     def __template(self, s, ajournal, template, title, re, date):
         body = [Text(title)]
-        sjournals = s.query(StatisticJournal).join(StatisticName, Source). \
-            filter(Source.time == ajournal.time,
+        sjournals = s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticJournal.time == ajournal.start,
                    StatisticName.name.like(template),
                    StatisticName.owner == ActivityStatistics,
-                   StatisticName.constraint == ajournal.activity_group.id).order_by(StatisticName.name).all()
+                   StatisticName.constraint == ajournal.activity_group).order_by(StatisticName.name).all()
         # extract
         for sjournal in self.__sort_journals(sjournals):
             body.append(Text([label(search(re, sjournal.statistic_name.name).group(1) + ': ')] +

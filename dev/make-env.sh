@@ -10,7 +10,7 @@ pip install nose
 pip install robotframework
 pip install openpyxl
 pip install numpy
-opip install pandas
+pip install pandas
 pip install pyGeoTile
 pip install colorama
 pip install pendulum

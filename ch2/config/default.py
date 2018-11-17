@@ -4,10 +4,10 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
 from ..stoats.calculate.activity import ActivityStatistics
-from ..stoats.calculate.clean import CleanUnusedStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
+from ..stoats.display.monitor import MonitorDiary
 from ..stoats.names import BPM, FTHR
 from ..stoats.read.activity import ActivityImporter
 from ..stoats.read.monitor import MonitorImporter
@@ -30,11 +30,11 @@ def default(db):
         # but part of a kargs JSON blob.
         add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('m'))
         add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('y'))
-        add_statistics(s, CleanUnusedStatistics, c)
 
         # diary pipeline (called to display data in the diary)
 
         c = Counter()
+        add_diary(s, MonitorDiary, c)
         add_diary(s, ActivityDiary, c)
 
         # monitor pipeline
@@ -54,10 +54,10 @@ def default(db):
 
         add_activity_constant(s, bike, FTHR,
                               description='Heart rate at functional threshold (cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0',
-                              units=BPM, type=StatisticJournalType.INTEGER)
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_activity_constant(s, run, FTHR,
                               description='Heart rate at functional threshold (running).',
-                              units=BPM, type=StatisticJournalType.INTEGER)
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
 
         # a basic diary
 

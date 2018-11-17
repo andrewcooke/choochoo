@@ -7,9 +7,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
 
 from .support import Base
-from .tables.activity import ActivityWaypoint, ActivityGroup, ActivityTimespan, ActivityJournal
-from .tables.constant import SystemConstant, Constant, ConstantJournal
-from .tables.monitor import MonitorHeartRate, MonitorSteps, MonitorJournal
+from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal
+from .tables.constant import SystemConstant, Constant
+from .tables.monitor import MonitorJournal
 from .tables.pipeline import Pipeline
 from .tables.source import Source, Interval
 from .tables.statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
@@ -20,12 +20,12 @@ from ..lib.log import make_log
 
 # import these so they are "created"
 Source,  Interval,
-ActivityGroup, ActivityJournal, ActivityTimespan, ActivityWaypoint,
+ActivityGroup, ActivityJournal, ActivityTimespan,
 Topic, TopicJournal,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText,
 Pipeline
-MonitorJournal, MonitorSteps, MonitorHeartRate
-Constant, ConstantJournal, SystemConstant
+MonitorJournal
+Constant, SystemConstant
 
 
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf

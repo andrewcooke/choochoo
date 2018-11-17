@@ -1,13 +1,14 @@
 
+from abc import abstractmethod
 from enum import IntEnum
 
-from sqlalchemy import ForeignKey, Column, Integer, func, and_, distinct
-from sqlalchemy.event import listens_for, remove
+from sqlalchemy import ForeignKey, Column, Integer, func, and_
+from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
-from ..types import Time, OpenSched, Owner, Date
-from ...lib.date import to_time, time_to_local_date
+from ..types import OpenSched, Date, Cls, ShortCls
+from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 
 
 class SourceType(IntEnum):
@@ -26,69 +27,59 @@ class Source(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False)
-    time = Column(Time, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.SOURCE,
         'polymorphic_on': type
     }
 
-    @classmethod
-    def before_flush(cls, session):
-        cls.__clean_dirty_intervals(session)
+    @abstractmethod
+    def time_range(self, s):
+        raise NotImplementedError('time_range for %s' % self)
 
     @classmethod
-    def __clean_dirty_intervals(cls, session):
+    def before_flush(cls, s):
+        cls.__clean_dirty_intervals(s)
+
+    @classmethod
+    def __clean_dirty_intervals(cls, s):
         from .statistic import StatisticJournal
-        from .topic import TopicJournal
-        times = set()
-        # all sources except intervals that are being deleted
-        times |= set(instance.time for instance in session.deleted
-                     if isinstance(instance, Source) and not isinstance(instance, Interval) and instance.time)
-        # all modified sources except intervals
-        times |= set(instance.time for instance in session.dirty
-                     if isinstance(instance, Source) and not isinstance(instance, Interval)
-                     and session.is_modified(instance) and instance.time)
-        # if any modified statistic journals are associated with an existing topic journal, include that
-        # this handles the case where a user edits something in the diaty
-        for instance in session.dirty:
-            # is it a subclass of StatisticJournal?
-            if isinstance(instance, StatisticJournal) and type(instance) != StatisticJournal:
-                if session.is_modified(instance) and isinstance(instance.source, TopicJournal):
-                    times.add(instance.source.time)
-        # all new sources except intervals and topic journals (the latter are handled below)
-        times |= set(instance.time for instance in session.new
-                     if isinstance(instance, Source) and not isinstance(instance, Interval)
-                     and not isinstance(instance, TopicJournal) and instance.time)
-        # include new topic journals only if they have non-null data
-        # this handles the case where an empty diary entry is viewed
-        for instance in session.new:
-            # is it a subclass of StatisticJournal?
-            if isinstance(instance, StatisticJournal) and type(instance) != StatisticJournal:
-                if instance.value is not None:
-                    if instance.source and isinstance(instance.source, TopicJournal) and instance.source.time:
-                        times.add(instance.source.time)
-        if times:
-            cls.clean_times(session, times)
+        # sessions are generally restricted to one time region, so we'll bracket that rather
+        # than list all times
+        start, finish = None, None
+        # all sources except intervals that are being deleted (need to catch on cascade to statistics)
+        for instance in s.deleted:
+            if isinstance(instance, Source) and not isinstance(instance, Interval):
+                a, b = instance.time_range(s)
+                start, finish = min_time(a, start), max_time(b, finish)
+        # all modified statistics
+        for instance in s.dirty:
+            if isinstance(instance, StatisticJournal) and s.is_modified(instance):
+                start, finish = extend_range(start, finish, instance.time)
+        # all new statistics that aren't associated with intervals and have non-null data
+        # (avoid triggering on empty diary entries)
+        for instance in s.new:
+            if isinstance(instance, StatisticJournal) and not isinstance(instance.source, Interval) \
+                    and instance.value is not None:
+                start, finish = extend_range(start, finish, instance.time)
+        if start is not None:
+            cls.clean_times(s, start, finish)
 
     @classmethod
-    def clean_times(cls, session, times):
-        schedules = [schedule[0] for schedule in session.query(distinct(Interval.schedule)).all()]
-        for time in times:
-            date = time_to_local_date(to_time(time))
-            for schedule in schedules:
-                start = schedule.start_of_frame(date)
-                finish = schedule.next_frame(date)
-                for interval in session.query(Interval). \
-                        filter(Interval.finish >= start,
-                               Interval.start < finish,
-                               Interval.schedule == schedule).all():
-                    session.delete(interval)
+    def clean_times(cls, s, start, finish):
+        start, finish = time_to_local_date(start), time_to_local_date(finish)
+        for interval in s.query(Interval).filter(Interval.start < finish, Interval.finish >= start).all():
+            print('XXXXXXXXXXXXXXXXXX %s' % interval)
+            s.delete(interval)
 
 
 @listens_for(Session, 'before_flush')
 def before_flush(session, context, instances):
     Source.before_flush(session)
+
+
+class NoStatistics(Exception):
+    pass
 
 
 class Interval(Source):
@@ -98,7 +89,7 @@ class Interval(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False, index=True)
     # disambiguate creator so each can wipe only its own data on force
-    owner = Column(Owner, nullable=False)
+    owner = Column(ShortCls, nullable=False)
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
@@ -108,31 +99,31 @@ class Interval(Source):
     }
 
     def __str__(self):
-        return 'Interval "%s from %s" (owner %d)' % \
-               (self.schedule, self.start, Owner().process_literal_param(self.owner, None))
+        return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, self.owner)
 
     @classmethod
-    def _missing_interval_starts(cls, log, s, schedule, owner):
-        stats_start, stats_finish = cls._raw_statistics_time_range(s)
+    def _missing_interval_starts(cls, log, s, schedule, interval_owner, statistic_owner=None):
+        stats_start, stats_finish = cls._raw_statistics_time_range(s, statistic_owner)
         log.debug('Statistics exist %s - %s' % (stats_start, stats_finish))
-        starts = cls._open_intervals(s, schedule, owner)
+        starts = cls._open_intervals(s, schedule, interval_owner)
         stats_start_date = time_to_local_date(stats_start)
-        if not cls._get_interval(s, schedule, owner, stats_start_date):
+        if not cls._get_interval(s, schedule, interval_owner, stats_start_date):
             starts = [schedule.start_of_frame(stats_start_date)] + starts
         log.debug('Have %d open blocks finishing at %s' % (len(starts), stats_finish))
         return starts, stats_finish
 
     @classmethod
-    def _raw_statistics_time_range(cls, s):
+    def _raw_statistics_time_range(cls, s, statistics_owner=None):
         from .statistic import StatisticJournal, StatisticName
-        start, finish = s.query(func.min(Source.time), func.max(Source.time)). \
-            outerjoin(StatisticJournal). \
-            filter(StatisticName.id != None,
-                   Source.time > to_time(0.0)).one()
+        q = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
+            filter(StatisticJournal.time > to_time(24 * 60 * 60.0))
+        if statistics_owner:
+            q = q.join(StatisticName).filter(StatisticName.owner == statistics_owner)
+        start, finish = q.one()   # skip entire first day because tz
         if start and finish:
             return start, finish
         else:
-            raise Exception('No statistics are currently defined')
+            raise NoStatistics('No statistics are currently defined')
 
     @classmethod
     def _open_intervals(cls, s, schedule, owner):
@@ -165,10 +156,10 @@ class Interval(Source):
                 return
 
     @classmethod
-    def missing(cls, log, s, schedule, owner):
-        starts, overall_finish = cls._missing_interval_starts(log, s, schedule, owner)
+    def missing(cls, log, s, schedule, interval_owner, statistic_owner=None):
+        starts, overall_finish = cls._missing_interval_starts(log, s, schedule, interval_owner, statistic_owner)
         for block_start in starts:
-            yield from cls._missing_intervals_from(log, s, schedule, owner, block_start, overall_finish)
+            yield from cls._missing_intervals_from(log, s, schedule, interval_owner, block_start, overall_finish)
 
     @classmethod
     def delete_all(cls, log, s):
