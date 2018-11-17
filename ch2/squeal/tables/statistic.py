@@ -45,7 +45,7 @@ class StatisticJournal(Base):
     __tablename__ = 'statistic_journal'
 
     id = Column(Integer, primary_key=True)
-    type = Column(Integer, nullable=False)
+    type = Column(Integer, nullable=False, index=True)  # index needed for fast delete of subtypes
     statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'),
                                nullable=False, index=True)
     statistic_name = relationship('StatisticName')

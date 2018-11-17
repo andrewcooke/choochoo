@@ -26,7 +26,7 @@ class Source(Base):
     __tablename__ = 'source'
 
     id = Column(Integer, primary_key=True)
-    type = Column(Integer, nullable=False)
+    type = Column(Integer, nullable=False, index=True)  # index needed for fast deletes of subtypes
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.SOURCE,

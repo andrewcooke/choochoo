@@ -48,7 +48,7 @@ class MonitorDiary(Displayer):
                         Indent(Pile(columns))])
 
     def __schedule_fields(self, s, f, date, schedule):
-        names = list(self.__names(s, STEPS, REST_HR))
+        names = list(self.__names(s, DAILY_STEPS, REST_HR))
         yield from summary_columns(self._log, s, f, date, schedule, names)
 
     def __names(self, s, *names):

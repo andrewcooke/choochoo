@@ -42,8 +42,7 @@ def summary_columns(log, s, f, date, schedule, names):
 
     def field_columns(name):
         journals = StatisticJournal.at_interval(s, date, schedule,
-                                                # id of source field is constraint for summary
-                                                SummaryStatistics, name.id,
+                                                SummaryStatistics, name,
                                                 SummaryStatistics)
         columns, width = [], 0
         for named, journal in enumerate(journals):

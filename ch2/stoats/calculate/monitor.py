@@ -72,7 +72,7 @@ class MonitorStatistics:
                    StatisticName.owner == MonitorImporter,
                    StatisticJournalInteger.time < finish_time,
                    StatisticJournalInteger.time >= start_time).scalar()
-        self._add_integer_stat(s, interval, DAILY_STEPS, '[sum],[avg],[cnt]', daily_steps, STEPS_UNITS,
+        self._add_integer_stat(s, interval, DAILY_STEPS, '[sum],[avg],[cnt],[min],[max]', daily_steps, STEPS_UNITS,
                                start_time)
         self._log.debug('Added data for %s' % interval)
 
