@@ -231,8 +231,8 @@ def missing_dates(log, s):
         return
     # find the mid-point to avoid any problems with timezones and edge cases
     # (these files don't span more than a day)
-    seconds = (latest.finish - latest.time).total_seconds() / 2
-    start = time_to_local_date(latest.time + dt.timedelta(seconds=seconds) + dt.timedelta(days=1))
+    seconds = (latest.finish - latest.start).total_seconds() / 2
+    start = time_to_local_date(latest.start + dt.timedelta(seconds=seconds) + dt.timedelta(days=1))
     finish = dt.date.today()
     days = (finish - start).days
     if days > 10:

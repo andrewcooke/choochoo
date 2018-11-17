@@ -76,6 +76,11 @@ extensible.*
 
 ## Latest Changes
 
+### v0.5.0
+
+More readable database (using text instead of opaque numerical hashes in
+a couple of places).  Faster database loading of activity and monitor data.
+
 ### v0.4.0
 
 Tidied lots of rough corners, improved docs, added examples, download

@@ -69,7 +69,6 @@ class Source(Base):
     def clean_times(cls, s, start, finish):
         start, finish = time_to_local_date(start), time_to_local_date(finish)
         for interval in s.query(Interval).filter(Interval.start < finish, Interval.finish >= start).all():
-            print('XXXXXXXXXXXXXXXXXX %s' % interval)
             s.delete(interval)
 
 
