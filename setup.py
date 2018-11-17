@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
-                 version='v0.5.0',
+                 version='0.5.1',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
                  description='A Programmable Training Diary',
