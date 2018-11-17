@@ -78,8 +78,11 @@ extensible.*
 
 ### v0.5.0
 
-More readable database (using text instead of opaque numerical hashes in
-a couple of places).  Faster database loading of activity and monitor data.
+More readable database (using text instead of opaque numerical hashes
+in a couple of places).  Faster database loading of activity and
+monitor data.  Time is now directly present in the statistic journal
+table, along with all activity and monitor data (no separate data
+tables).  This enables TSS calculation (next version).
 
 ### v0.4.0
 
