@@ -29,7 +29,7 @@ class StatisticName(Base):
     UniqueConstraint(name, owner, constraint)
 
     def __str__(self):
-        return 'StatisticName "%s"' % self.name
+        return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
 
 
 class StatisticJournalType(IntEnum):

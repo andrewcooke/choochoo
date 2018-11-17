@@ -1,4 +1,5 @@
-from ch2.lib.date import local_date_to_time
+
+from ..lib.date import local_date_to_time
 from ..command.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET
 from ..squeal.database import add
 from ..squeal.tables.constant import Constant
@@ -55,17 +56,17 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
 
 
 def constants_like(log, s, name):
-    constant = s.query(Constant).filter(Constant.name.like(name)).order_by(Constant.name).all()
-    if not constant:
-        constants = s.query(Constant).all()
-        if constants:
+    constants = s.query(Constant).filter(Constant.name.like(name)).order_by(Constant.name).all()
+    if not constants:
+        all_constants = s.query(Constant).all()
+        if all_constants:
             log.info('Available constants:')
-            for constant in constants:
-                log.info('%s - %s' % (constant.statistic_name.name, constant.statistic_name.description))
+            for constants in all_constants:
+                log.info('%s - %s' % (constants.statistic_name.name, constants.statistic_name.description))
         else:
             log.error('No constants defined - configure system correctly')
         raise Exception('Constant "%s" is not defined' % name)
-    return constant
+    return constants
 
 
 def set_constants(log, s, constants, date, value, force):
