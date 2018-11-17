@@ -33,7 +33,8 @@ Lists constants to stdout.
 
     > ch2 constants --set NAME [DATE] VALUE
 
-Defines a new entry.  If date is omitted a single value is used for all time.
+Defines a new entry.  If date is omitted a single value is used for all time
+(so any previously defined values are deleted)
 
     > ch2 constants --delete NAME [DATE]
 
