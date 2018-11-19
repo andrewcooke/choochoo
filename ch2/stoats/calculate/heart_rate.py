@@ -31,7 +31,7 @@ class HeartRateStatistics(ActivityCalculator):
     def _filter_journals(self, q):
         return q.filter(StatisticName.name == HR_ZONE)
 
-    def _add_stats(self, s, ajournal, gamma=1.0):
+    def _add_stats(self, s, ajournal, gamma=1.0, lower=2):
 
         sjournals = []
         heart_rate_zone_name = StatisticJournal.add_name(self._log, s, HR_ZONE, BPM, '[max],[avg]', self,
@@ -62,7 +62,8 @@ class HeartRateStatistics(ActivityCalculator):
                                                            source_id=ajournal.id, time=time))
                     rowid += 1
                 if prev_heart_rate_zone is not None:
-                    heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, time - prev_time, gamma)
+                    heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, time - prev_time,
+                                                                 gamma, lower)
                     sjournals.append(StatisticJournalFloat(id=rowid, value=heart_rate_impulse,
                                                            statistic_name_id=heart_rate_impulse_name.id,
                                                            source_id=ajournal.id, time=prev_time))
@@ -73,8 +74,8 @@ class HeartRateStatistics(ActivityCalculator):
         s.commit()
         self._log.info('Added %d statistics' % len(sjournals))
 
-    def _calculate_impulse(self, heart_rate_zone, duration, gamma):
-        return duration.total_seconds() * ((heart_rate_zone - 1) / 5) ** gamma
+    def _calculate_impulse(self, heart_rate_zone, duration, gamma, lower):
+        return duration.total_seconds() * ((max(heart_rate_zone, lower) - lower) / (6 - lower)) ** gamma
 
     def _calculate_zone(self, s, heart_rate, time, activity_group):
         self._load_fthr_cache(s, activity_group)
