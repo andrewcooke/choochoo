@@ -2,7 +2,7 @@
 from sqlalchemy import desc, func, inspect, select, and_
 
 from . import ActivityCalculator
-from ..names import FTHR, HR_ZONE, HEART_RATE, BPM
+from ..names import FTHR, HR_ZONE, HEART_RATE, BPM, HR_IMPULSE
 from ..read.activity import ActivityImporter
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
@@ -31,10 +31,13 @@ class HeartRateStatistics(ActivityCalculator):
     def _filter_journals(self, q):
         return q.filter(StatisticName.name == HR_ZONE)
 
-    def _add_stats(self, s, ajournal):
+    def _add_stats(self, s, ajournal, gamma=1.0):
 
         sjournals = []
-        name = StatisticJournal.add_name(self._log, s, HR_ZONE, BPM, '[max],[avg]', self, ajournal.activity_group)
+        heart_rate_zone_name = StatisticJournal.add_name(self._log, s, HR_ZONE, BPM, '[max],[avg]', self,
+                                                         ajournal.activity_group)
+        heart_rate_impulse_name = StatisticJournal.add_name(self._log, s, HR_IMPULSE, BPM, '[max],[avg]', self,
+                                                            ajournal.activity_group)
         rowid = s.query(func.max(StatisticJournal.id)).scalar() + 1
 
         sn = inspect(StatisticName).local_table
@@ -45,35 +48,48 @@ class HeartRateStatistics(ActivityCalculator):
             select_from(sj.join(sn).join(sji)). \
             where(and_(sj.c.source_id == ajournal.id,
                        sn.c.owner == ActivityImporter,
-                       sn.c.name == HEART_RATE))
+                       sn.c.name == HEART_RATE)). \
+            order_by(sj.c.time)
         # self._log.debug(stmt)
 
+        prev_time, prev_heart_rate_zone = None, None
         for time, heart_rate in s.connection().execute(stmt):
             if heart_rate:
                 heart_rate_zone = self._calculate_zone(s, heart_rate, time, ajournal.activity_group)
                 if heart_rate_zone is not None:
                     sjournals.append(StatisticJournalFloat(id=rowid, value=heart_rate_zone,
-                                                           statistic_name_id=name.id,
+                                                           statistic_name_id=heart_rate_zone_name.id,
                                                            source_id=ajournal.id, time=time))
                     rowid += 1
+                if prev_heart_rate_zone is not None:
+                    heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, time - prev_time, gamma)
+                    sjournals.append(StatisticJournalFloat(id=rowid, value=heart_rate_impulse,
+                                                           statistic_name_id=heart_rate_impulse_name.id,
+                                                           source_id=ajournal.id, time=prev_time))
+                    rowid += 1
+                prev_time, prev_heart_rate_zone = time, heart_rate_zone
+
         s.bulk_save_objects(sjournals)
         s.commit()
-        self._log.debug('Added %d statistics' % len(sjournals))
+        self._log.info('Added %d statistics' % len(sjournals))
 
-    def _calculate_zone(self, s, hr, time, activity_group):
+    def _calculate_impulse(self, heart_rate_zone, duration, gamma):
+        return duration.total_seconds() * ((heart_rate_zone - 1) / 5) ** gamma
+
+    def _calculate_zone(self, s, heart_rate, time, activity_group):
         self._load_fthr_cache(s, activity_group)
         for fthr in self.__fthr_cache:
             if fthr.time <= time:
                 lower_limit, prev_delta = 0, None
                 zones = hr_zones(fthr.value)
                 for zone, upper_limit in enumerate(zones):
-                    if lower_limit <= hr < upper_limit:
+                    if lower_limit <= heart_rate < upper_limit:
                         if zone == 0:
                             return 1 + zone
                         elif zone == 5:
-                            return 1 + zone + (hr - lower_limit) / prev_delta
+                            return 1 + zone + (heart_rate - lower_limit) / prev_delta
                         else:
-                            return 1 + zone + (hr - lower_limit) / (upper_limit - lower_limit)
+                            return 1 + zone + (heart_rate - lower_limit) / (upper_limit - lower_limit)
                     prev_delta = upper_limit - lower_limit
                     lower_limit = upper_limit
 
