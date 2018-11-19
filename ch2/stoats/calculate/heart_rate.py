@@ -2,7 +2,7 @@
 from sqlalchemy import desc, func, inspect, select, and_
 
 from . import ActivityCalculator
-from ..names import FTHR, HR_ZONE, HEART_RATE, BPM, HR_IMPULSE
+from ..names import FTHR, HR_ZONE, HEART_RATE, BPM, HR_IMPULSE, MSR, AVG, MAX, summaries
 from ..read.activity import ActivityImporter
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
@@ -34,10 +34,10 @@ class HeartRateStatistics(ActivityCalculator):
     def _add_stats(self, s, ajournal, gamma=1.0, lower=2):
 
         sjournals = []
-        heart_rate_zone_name = StatisticJournal.add_name(self._log, s, HR_ZONE, BPM, '[max],[avg]', self,
-                                                         ajournal.activity_group)
-        heart_rate_impulse_name = StatisticJournal.add_name(self._log, s, HR_IMPULSE, BPM, '[max],[avg]', self,
-                                                            ajournal.activity_group)
+        heart_rate_zone_name = StatisticJournal.add_name(self._log, s, HR_ZONE, BPM,
+                                                         None, self, ajournal.activity_group)
+        heart_rate_impulse_name = StatisticJournal.add_name(self._log, s, HR_IMPULSE, BPM,
+                                                            None, self, ajournal.activity_group)
         rowid = s.query(func.max(StatisticJournal.id)).scalar() + 1
 
         sn = inspect(StatisticName).local_table

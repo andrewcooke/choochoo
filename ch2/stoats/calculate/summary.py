@@ -45,20 +45,20 @@ class SummaryStatistics(Calculator):
                    StatisticJournal.time >= start,
                    StatisticJournal.time < finish).all()
 
-    def _calculate_value(self, process, values, schedule, input):
+    def _calculate_value(self, summary, values, schedule, input):
         range = schedule.describe()
         type, units = input.type, input.statistic_name.units
         defined = [x for x in values if x is not None]
-        if process == 'min':
+        if summary == 'min':
             return min(defined) if defined else None, 'Min/%s %%s' % range, type, units
-        elif process == 'max':
+        elif summary == 'max':
             return max(defined) if defined else None, 'Max/%s %%s' % range, type, units
-        elif process == 'sum':
+        elif summary == 'sum':
             return sum(defined, 0), 'Total/%s %%s' % range, type, units
-        elif process == 'avg':
+        elif summary == 'avg':
             return (sum(defined) / len(defined) if defined else None, 'Avg/%s %%s' % range,
                     StatisticJournalType.FLOAT, units)
-        elif process == 'med':
+        elif summary == 'med':
             defined = sorted(defined)
             if len(defined):
                 if len(defined) % 2:
@@ -68,14 +68,16 @@ class SummaryStatistics(Calculator):
                            'Med/%s %%s' % range, StatisticJournalType.FLOAT, units
             else:
                 return None, 'Med/%s %%s' % range, StatisticJournalType.FLOAT, units
-        elif process == 'cnt':
+        elif summary == 'cnt':
             if type == StatisticJournalType.TEXT:
                 n = len([x for x in defined if x.strip()])
             else:
                 n = len(defined)
             return n, 'Cnt/%s %%s' % range, StatisticJournalType.INTEGER, 'entries'
+        elif summary == 'msr':  # measure handled separately
+            return None, None, None, None
         else:
-            self._log.warn('No algorithm for "%s"' % process)
+            self._log.warn('No algorithm for "%s"' % summary)
             return None, None, None, None
 
     def _get_statistic_name(self, s, root, name, units):
@@ -92,8 +94,8 @@ class SummaryStatistics(Calculator):
             statistic_name.units = units
         return statistic_name
 
-    def _create_value(self, s, interval, spec, statistic_name, process, data, values, time):
-        value, template, type, units = self._calculate_value(process, values, spec, data[0])
+    def _create_value(self, s, interval, spec, statistic_name, summary, data, values, time):
+        value, template, type, units = self._calculate_value(summary, values, spec, data[0])
         if value is not None:
             name = template % statistic_name.name
             new_name = self._get_statistic_name(s, statistic_name, name, units)
@@ -101,7 +103,7 @@ class SummaryStatistics(Calculator):
                 statistic_name=new_name, source=interval, value=value, time=time))
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic_name))
 
-    def _create_ranks(self, s, interval, spec, statistic, data):
+    def _create_measures(self, s, interval, spec, statistic, data):
         # we only rank non-NULL values
         ordered = sorted([journal for journal in data if journal.value is not None],
                          key=lambda journal: journal.value, reverse=True)
@@ -129,15 +131,16 @@ class SummaryStatistics(Calculator):
                     data = [journal for journal in self._journal_data(s, statistic_name, start_time, finish_time)
                             if spec.at_location(time_to_local_date(journal.time))]
                     if data:
-                        processes = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic_name.summary) if x]
-                        if processes:
+                        summaries = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic_name.summary) if x]
+                        if summaries:
                             values = [x.value for x in data]
-                            for process in processes:
-                                self._create_value(s, interval, spec, statistic_name, process.lower(), data, values,
+                            for summary in summaries:
+                                self._create_value(s, interval, spec, statistic_name, summary.lower(), data, values,
                                                    start_time)
                         else:
                             self._log.warn('Invalid summary for %s ("%s")' % (statistic_name, statistic_name.summary))
-                        self._create_ranks(s, interval, spec, statistic_name, data)
+                        if 'msr' in summaries:
+                            self._create_measures(s, interval, spec, statistic_name, data)
                         have_data = True
                 if have_data:
                     self._log.info('Added statistics for %s' % interval)

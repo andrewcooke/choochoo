@@ -33,6 +33,12 @@ MIN = '[min]'
 CNT = '[cnt]'
 AVG = '[avg]'
 SUM = '[sum]'
+MSR = '[msr]'   # measure (separate table, less efficient)
+
+
+def summaries(*args):
+    return ','.join(args)
+
 
 M = 'm'
 S = 's'

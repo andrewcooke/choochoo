@@ -2,7 +2,7 @@
 from sqlalchemy.sql.functions import min, sum
 
 from . import Calculator
-from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS
+from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
@@ -49,14 +49,14 @@ class MonitorStatistics(Calculator):
                    StatisticJournalInteger.time < finish_time,
                    StatisticJournalInteger.time >= start_time,
                    StatisticJournalInteger.value > 0).scalar()
-        self._add_integer_stat(s, interval, REST_HR, '[min],[avg],[cnt]', rest_heart_rate, BPM, start_time)
+        self._add_integer_stat(s, interval, REST_HR, summaries(AVG, CNT, MIN, MSR), rest_heart_rate, BPM, start_time)
         daily_steps = s.query(sum(StatisticJournalInteger.value)).join(StatisticName). \
             filter(StatisticName.name == STEPS,
                    StatisticName.owner == MonitorImporter,
                    StatisticJournalInteger.time < finish_time,
                    StatisticJournalInteger.time >= start_time).scalar()
-        self._add_integer_stat(s, interval, DAILY_STEPS, '[sum],[avg],[cnt],[min],[max]', daily_steps, STEPS_UNITS,
-                               start_time)
+        self._add_integer_stat(s, interval, DAILY_STEPS, summaries(SUM, AVG, CNT, MAX, MSR),
+                               daily_steps, STEPS_UNITS, start_time)
         self._log.debug('Added data for %s' % interval)
 
     def _add_integer_stat(self, s, journal, name, summary, value, units, time):

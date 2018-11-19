@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import coalesce
 
 from ch2.stoats.calculate import ActivityCalculator
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, HEART_RATE, DISTANCE
+    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, HEART_RATE, DISTANCE, MSR, summaries
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName, StatisticJournalInteger
 from ...stoats.calculate.heart_rate import hr_zones_from_database
 from ...stoats.read.activity import ActivityImporter
@@ -25,15 +25,15 @@ class ActivityStatistics(ActivityCalculator):
             self._log.warn('No statistcs for %s' % ajournal)
             return
         totals = Totals(self._log, waypoints)
-        self._add_float_stat(s, ajournal,  ACTIVE_DISTANCE, ','.join([MAX, CNT, SUM]), totals.distance, M)
-        self._add_float_stat(s, ajournal, ACTIVE_TIME, ','.join([MAX, SUM]), totals.time, S)
-        self._add_float_stat(s, ajournal, ACTIVE_SPEED, ','.join([MAX, AVG]), totals.distance * 3.6 / totals.time, KMH)
+        self._add_float_stat(s, ajournal,  ACTIVE_DISTANCE, summaries(MAX, CNT, SUM, MSR), totals.distance, M)
+        self._add_float_stat(s, ajournal, ACTIVE_TIME, summaries(MAX, SUM, MSR), totals.time, S)
+        self._add_float_stat(s, ajournal, ACTIVE_SPEED, summaries(MAX, AVG, MSR), totals.distance * 3.6 / totals.time, KMH)
         for target in round_km():
             times = list(sorted(TimeForDistance(self._log, waypoints, target * 1000).times()))
             if not times:
                 break
             median = len(times) // 2
-            self._add_float_stat(s, ajournal, MEDIAN_KM_TIME % target, MIN, times[median], S)
+            self._add_float_stat(s, ajournal, MEDIAN_KM_TIME % target, summaries(MIN, MSR), times[median], S)
         zones = hr_zones_from_database(self._log, s, ajournal.activity_group, ajournal.start)
         if zones:
             for (zone, frac) in Zones(self._log, waypoints, zones).zones:
@@ -43,7 +43,7 @@ class ActivityStatistics(ActivityCalculator):
             for target in HR_MINUTES:
                 heart_rates = sorted(MedianHRForTime(self._log, waypoints, target * 60).heart_rates(), reverse=True)
                 if heart_rates:
-                    self._add_float_stat(s, ajournal, MAX_MED_HR_M % target, MAX, heart_rates[0], BPM)
+                    self._add_float_stat(s, ajournal, MAX_MED_HR_M % target, summaries(MAX, MSR), heart_rates[0], BPM)
         else:
             self._log.warn('No HR zones defined for %s or before' % ajournal.start)
 
