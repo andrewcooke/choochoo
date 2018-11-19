@@ -4,6 +4,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
 from ..stoats.calculate.activity import ActivityStatistics
+from ..stoats.calculate.heart_rate import HeartRateStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
@@ -25,6 +26,7 @@ def default(db):
 
         c = Counter()
         add_statistics(s, ActivityStatistics, c)
+        add_statistics(s, HeartRateStatistics, c)
         add_statistics(s, MonitorStatistics, c)
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.

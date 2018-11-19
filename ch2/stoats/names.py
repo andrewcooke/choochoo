@@ -9,6 +9,7 @@ DAILY_STEPS = 'Daily Steps'
 DISTANCE = 'Distance'
 FTHR = 'FTHR'
 HEART_RATE = 'Heart Rate'
+HR_ZONE = 'HR Zone'
 LATITUDE = 'Latitude'
 LONGITUDE = 'Longitude'
 MEDIAN_KM_TIME = 'Median %dkm Time'
@@ -23,6 +24,7 @@ REST_HR = 'Rest HR'
 TIME_IN_Z = 'Time in Z%d'
 MAX_MED_HR_M = 'Max Med HR %dm'
 MAX_MED_HR_M_ANY = 'Max Med HR %'
+
 HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
 
 MAX = '[max]'

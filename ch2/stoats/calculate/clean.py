@@ -1,13 +1,10 @@
 
+from . import Calculator
 from ...command.args import FORCE, mm
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 
 
-class CleanUnusedStatistics:
-
-    def __init__(self, log, db):
-        self._log = log
-        self._db = db
+class CleanUnusedStatistics(Calculator):
 
     def run(self, force=False, after=None):
         if not force:

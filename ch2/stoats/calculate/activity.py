@@ -4,69 +4,20 @@ from collections import deque, Counter, namedtuple
 from itertools import chain
 
 from sqlalchemy import inspect, select, and_
-from sqlalchemy.sql.functions import count, coalesce
+from sqlalchemy.sql.functions import coalesce
 
+from ch2.stoats.calculate import ActivityCalculator
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, LATITUDE, HEART_RATE, LONGITUDE, \
-    SPEED, DISTANCE
-from ...squeal.tables.activity import ActivityGroup, ActivityJournal
-from ...squeal.tables.source import Source, SourceType
-from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName, StatisticJournalInteger, \
-    StatisticJournalType
-from ...stoats.calculate.heart_rate import hr_zones
+    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, HEART_RATE, DISTANCE
+from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName, StatisticJournalInteger
+from ...stoats.calculate.heart_rate import hr_zones_from_database
 from ...stoats.read.activity import ActivityImporter
 
 
-class ActivityStatistics:
+class ActivityStatistics(ActivityCalculator):
 
-    def __init__(self, log, db):
-        self._log = log
-        self._db = db
-
-    def run(self, force=False, after=None):
-        with self._db.session_context() as s:
-            for activity_group in s.query(ActivityGroup).all():
-                self._log.debug('Checking statistics for activity %s' % activity_group.name)
-                if force:
-                    self._delete_statistics(s, activity_group, after=after)
-                self._run_activity(s, activity_group)
-
-    def _delete_statistics(self, s, activity_group, after=None):
-        # we can't delete the source because that's the activity journal
-        # (and we're calculating here, not importing)
-        # so instead we wipe all statistics that are owned by us.
-        # we do this in SQL for speed, but are careful to use the parent node.
-        for repeat in range(2):
-            if repeat:
-                q = s.query(StatisticJournal)
-            else:
-                q = s.query(count(StatisticJournal.id))
-            q = q.join(StatisticName, Source, ActivityJournal). \
-                filter(StatisticName.owner == self,
-                       ActivityJournal.activity_group == activity_group)
-            if after:
-                q = q.filter(StatisticJournal.time >= after)
-            if repeat:
-                for journal in q.all():
-                    self._log.debug('Deleting %s (%s)' % (journal, journal.statistic_name))
-                    s.delete(journal)
-            else:
-                n = q.scalar()
-                if n:
-                    self._log.warn('Deleting %d statistics for %s' % (n, activity_group))
-                else:
-                    self._log.warn('No statistics to delete for %s' % activity_group)
-
-    def _run_activity(self, s, activity_group):
-        # which activity journals don't have data?
-        statistics = s.query(StatisticJournal.source_id).join(StatisticName). \
-            filter(StatisticName.name == ACTIVE_TIME).cte()
-        for ajournal in s.query(ActivityJournal).outerjoin(statistics). \
-                filter(ActivityJournal.activity_group == activity_group,
-                       statistics.c.source_id == None). \
-                order_by(ActivityJournal.start).all():
-            self._log.info('Adding statistics for %s' % ajournal)
-            self._add_stats(s, ajournal)
+    def _filter_journals(self, q):
+        return q.filter(StatisticName.name == ACTIVE_TIME)
 
     def _add_stats(self, s, ajournal):
         waypoints = list(self._waypoints(s, ajournal))
@@ -83,7 +34,7 @@ class ActivityStatistics:
                 break
             median = len(times) // 2
             self._add_float_stat(s, ajournal, MEDIAN_KM_TIME % target, MIN, times[median], S)
-        zones = hr_zones(self._log, s, ajournal.activity_group, ajournal.start)
+        zones = hr_zones_from_database(self._log, s, ajournal.activity_group, ajournal.start)
         if zones:
             for (zone, frac) in Zones(self._log, waypoints, zones).zones:
                 self._add_float_stat(s, ajournal, PERCENT_IN_Z % zone, None, 100 * frac, PC)
@@ -95,10 +46,6 @@ class ActivityStatistics:
                     self._add_float_stat(s, ajournal, MAX_MED_HR_M % target, MAX, heart_rates[0], BPM)
         else:
             self._log.warn('No HR zones defined for %s or before' % ajournal.start)
-
-    def _add_float_stat(self, s, ajournal, name, summary, value, units):
-        StatisticJournalFloat.add(self._log, s, name, units, summary, self,
-                                  ajournal.activity_group, ajournal, value, ajournal.start)
 
     def _waypoints(self, s, ajournal):
 
@@ -289,7 +236,7 @@ class Zones(Chunks):
                 for heart_rate in chunk.heart_rates():
                     if heart_rate is not None:
                         if lower_limit <= heart_rate < upper_limit:
-                            counts[zone] += 1
+                            counts[zone] += 1  # zero-based (incremented below)
             lower_limit = upper_limit
         total = sum(counts.values())
         if total:

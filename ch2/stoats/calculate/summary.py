@@ -2,8 +2,7 @@
 from random import choice
 from re import split
 
-from sqlalchemy.sql.functions import count
-
+from . import Calculator
 from ...lib.date import local_date_to_time, time_to_local_date
 from ...lib.schedule import Schedule
 from ...squeal.database import add
@@ -12,13 +11,9 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName, Statisti
     StatisticJournalType
 
 
-class SummaryStatistics:
+class SummaryStatistics(Calculator):
 
-    def __init__(self, log, db):
-        self._log = log
-        self._db = db
-
-    def run(self, schedule=None, force=False, after=None):
+    def run(self, force=False, after=None, schedule=None):
         if not schedule:
             raise Exception('schedule=... karg required')
         schedule = Schedule(schedule)
@@ -27,27 +22,11 @@ class SummaryStatistics:
         self._create_values(schedule)
 
     def _delete(self, spec, after=None):
-        # we delete the intervals that summary statistics depend on and they will cascade
-        with self._db.session_context() as s:
-            for repeat in range(2):
-                if repeat:
-                    q = s.query(Interval)
-                else:
-                    q = s.query(count(Interval.id))
-                q = q.filter(Interval.schedule == spec,
-                             Interval.owner == self)
-                if after:
-                    q = q.filter(Interval.finish > after)
-                if repeat:
-                    for interval in q.all():
-                        self._log.debug('Deleting %s' % interval)
-                        s.delete(interval)
-                else:
-                    n = q.scalar()
-                    if n:
-                        self._log.info('Deleting %d intervals' % n)
-                    else:
-                        self._log.warn('No intervals to delete')
+        self._delete_intervals(after, spec=spec)
+
+    def _filter_intervals(self, q, spec=None):
+        return q.filter(Interval.schedule == spec,
+                        Interval.owner == self)
 
     def _statistics_missing_summaries(self, s, start, finish):
         statistics_with_data_but_no_summary = s.query(StatisticName.id). \
