@@ -50,6 +50,10 @@
   * XXX  FIT file for monitor
 
 * TSS but HR zones
+  * XXX  HR Impulses
+  * Exponential decayse
+  * Plotting
+  * Fitting
 
 * Allow activity headings to be edited
   * Worry about migrations (and --force)
@@ -73,4 +77,6 @@
 
 * XXX  Why is deleting intervals so slow?  Missing index?
   https://stackoverflow.com/questions/24259265/sqlite-bad-performance-with-on-delete-cascade
-  
+
+* Measures (rank, percentage) should be aware of min/max summaries and change
+  direction accordingly.
