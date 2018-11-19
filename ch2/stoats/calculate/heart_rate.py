@@ -72,7 +72,7 @@ class HeartRateStatistics(ActivityCalculator):
 
         s.bulk_save_objects(sjournals)
         s.commit()
-        self._log.info('Added %d statistics' % len(sjournals))
+        self._log.debug('Added %d statistics' % len(sjournals))
 
     def _calculate_impulse(self, heart_rate_zone, duration, gamma, lower):
         return duration.total_seconds() * ((max(heart_rate_zone, lower) - lower) / (6 - lower)) ** gamma

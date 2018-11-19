@@ -8,10 +8,11 @@ from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.source import Interval, NoStatistics
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
+from ...stoats.calculate.summary import SummaryStatistics
 from ...stoats.read.monitor import MonitorImporter
 
 
-# this is really just a daily interval - maybe it should be implemented as such?
+# this is really just a daily summary - maybe it should be implemented as such?
 # but it would be very inefficient for most stats.  should intervals be improved somehow?
 
 
@@ -31,9 +32,11 @@ class MonitorStatistics(Calculator):
     def _run_monitor(self):
         with self._db.session_context() as s:
             try:
-                for start, finish in Interval.missing(self._log, s, Schedule('d'), self, MonitorImporter):
+                for start, finish in Interval.missing_dates(self._log, s, Schedule('d'), self, MonitorImporter):
                     self._log.info('Processing monitor data from %s to %s' % (start, finish))
                     self._add_stats(s, start, finish)
+                    # stealth load so clean out summary manually
+                    Interval.clean_dates(s, start, finish, owner=SummaryStatistics)
             except NoStatistics:
                 self._log.info('No monitor data to process')
 

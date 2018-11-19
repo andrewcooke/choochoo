@@ -2,8 +2,8 @@
 from collections import defaultdict
 from os.path import splitext, basename
 
-from sqlalchemy import func
 from pygeotile.point import Point
+from sqlalchemy import func
 
 from ..read import AbortImport
 from ...fit.format.read import filtered_records
@@ -11,6 +11,7 @@ from ...fit.format.records import fix_degrees
 from ...lib.date import to_time
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
+from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger, StatisticJournal, StatisticName
 from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y
@@ -68,10 +69,10 @@ class ActivityImporter(Importer):
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
                                           fit_file=path, name=splitext(basename(path))[0]))
 
-        timespan, warned, latest = None, 0, to_time(0.0)
+        timespan, warned, last_timestamp = None, 0, to_time(0.0)
         self._log.info('Importing activity data from %s' % path)
         for record in records:
-            if record.name == 'event' or (record.name == 'record' and record.timestamp > latest):
+            if record.name == 'event' or (record.name == 'record' and record.timestamp > last_timestamp):
                 if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
                     if timespan:
                         self._log.warn('Ignoring start with no corresponding stop (possible lost data?)')
@@ -107,13 +108,15 @@ class ActivityImporter(Importer):
                     else:
                         self._log.warn('Ignoring stop with no corresponding start (possible lost data?)')
                 if record.name == 'record':
-                    latest = record.timestamp
+                    last_timestamp = record.timestamp
             else:
                 if record.name == 'record':
                     self._log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                    (path, record.timestamp))
 
         self._load(s, ajournal)
+        # manually clean out intervals because we're doing a stealth load
+        Source.clean_times(s, first_timestamp, last_timestamp)
 
     def _load(self, s, ajournal):
         s.flush()

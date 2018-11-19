@@ -121,7 +121,7 @@ class SummaryStatistics(Calculator):
 
     def _create_values(self, spec):
         with self._db.session_context() as s:
-            for start, finish in Interval.missing(self._log, s, spec, self):
+            for start, finish in Interval.missing_dates(self._log, s, spec, self):
                 start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
                 interval = add(s, Interval(start=start, finish=finish, schedule=spec, owner=self))
                 have_data = False
