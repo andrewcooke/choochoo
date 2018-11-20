@@ -29,11 +29,25 @@ class Calculator:
         self._log = log
         self._db = db
 
+
+class IntervalCalculator(Calculator):
+    '''
+    Support for calculations associated with intervals.
+    '''
+
+    def run(self, force=False, after=None, **init_kargs):
+        if force:
+            self._delete(after=after, **init_kargs)
+        self._run_calculations(**init_kargs)
+
     @abstractmethod
-    def run(self, force=False, after=None, **kargs):
+    def _run_calculations(self, **init_kargs):
         raise NotImplementedError()
 
-    def _delete_intervals(self, after=None, **filter_kargs):
+    def _delete(self, after=None, **init_kargs):
+        self._delete_intervals(after, **init_kargs)
+
+    def _delete_intervals(self, after=None, **init_kargs):
         # we delete the intervals that all summary statistics depend on and they will cascade
         with self._db.session_context() as s:
             for repeat in range(2):
@@ -41,7 +55,7 @@ class Calculator:
                     q = s.query(Interval)
                 else:
                     q = s.query(count(Interval.id))
-                q = self._filter_intervals(q, **filter_kargs)
+                q = self._filter_intervals(q, **init_kargs)
                 if after:
                     q = q.filter(Interval.finish > after)
                 if repeat:
@@ -55,11 +69,14 @@ class Calculator:
                     else:
                         self._log.warn('No intervals to delete')
 
-    def _filter_intervals(self, q, **filter_kargs):
-        raise NotImplementedError()
+    def _filter_intervals(self, q, **init_kargs):
+        return q.filter(Interval.owner == self)
 
 
 class ActivityCalculator(Calculator):
+    '''
+    Support for calculations associated with activity journals.
+    '''
 
     def run(self, force=False, after=None, **kargs):
         with self._db.session_context() as s:
@@ -71,7 +88,10 @@ class ActivityCalculator(Calculator):
 
     def _run_activity(self, s, activity_group, **kargs):
         # which activity journals don't have data?
-        q = s.query(StatisticJournal.source_id).join(StatisticName);
+        q = s.query(StatisticJournal.source_id). \
+            join(StatisticName). \
+            filter(StatisticName.owner == self,
+                   StatisticName.constraint == activity_group)
         q = self._filter_journals(q)
         statistics = q.cte()
         for ajournal in s.query(ActivityJournal).outerjoin(statistics). \

@@ -1,7 +1,7 @@
 
 from sqlalchemy.sql.functions import min, sum
 
-from . import Calculator
+from . import IntervalCalculator
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
@@ -16,20 +16,9 @@ from ...stoats.read.monitor import MonitorImporter
 # but it would be very inefficient for most stats.  should intervals be improved somehow?
 
 
-class MonitorStatistics(Calculator):
+class MonitorStatistics(IntervalCalculator):
 
-    def run(self, force=False, after=None):
-        if force:
-            self._delete(after=after)
-        self._run_monitor()
-
-    def _delete(self, after=None):
-        self._delete_intervals(after)
-
-    def _filter_intervals(self, q):
-        return q.filter(Interval.owner == self)
-
-    def _run_monitor(self):
+    def _run_calculations(self):
         with self._db.session_context() as s:
             try:
                 for start, finish in Interval.missing_dates(self._log, s, Schedule('d'), self, MonitorImporter):

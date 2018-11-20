@@ -1,15 +1,19 @@
 
+import datetime as dt
+
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
+from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.heart_rate import HeartRateStatistics
+from ..stoats.calculate.impulse import ImpulseStatistics, Response, Impulse
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
 from ..stoats.display.monitor import MonitorDiary
-from ..stoats.names import BPM, FTHR
+from ..stoats.names import BPM, FTHR, HR_IMPULSE
 from ..stoats.read.activity import ActivityImporter
 from ..stoats.read.monitor import MonitorImporter
 from ..uweird.fields.topic import Text, Float, Score0
@@ -22,12 +26,30 @@ def default(db):
         # the following users heleper functions (add_...) but you can also
         # execute arbitrary python code, use the session, etc.
 
+        # basic activities
+
+        bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
+        run = add_activity_group(s, 'Run', c, description='All running activities')
+        # sport_to_activity maps from the FIT sport field to the activity defined above
+        add_activities(s, ActivityImporter, c, sport_to_activity={'cycling': bike.name,
+                                                                  'running': run.name})
+        s.flush()  # set IDs because these are used below
+
         # statistics pipeline (called to calculate missing statistics)
 
         c = Counter()
         add_statistics(s, ActivityStatistics, c)
         add_statistics(s, HeartRateStatistics, c)
         add_statistics(s, MonitorStatistics, c)
+        add_statistics(s, ImpulseStatistics, 99,
+                       responses=(
+                           Response(name='Fitness', tau=dt.timedelta(days=20).total_seconds(),
+                                    scale=1, start=0)._asdict(),
+                           Response(name='Fatigue', tau=dt.timedelta(days=10).total_seconds(),
+                                    scale=1, start=0)._asdict()),
+                       impulse=Impulse(name=HR_IMPULSE, owner=short_cls(HeartRateStatistics),
+                                       constraint=str(bike))._asdict()
+                       )
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.
         add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('m'))
@@ -42,15 +64,6 @@ def default(db):
         # monitor pipeline
 
         add_monitor(s, MonitorImporter, c)
-
-        # basic activities
-
-        bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
-        run = add_activity_group(s, 'Run', c, description='All running activities')
-        # sport_to_activity maps from the FIT sport field to the activity defined above
-        add_activities(s, ActivityImporter, c, sport_to_activity={'cycling': bike.name,
-                                                                  'running': run.name})
-        s.flush()  # set IDs because these are used below
 
         # constants used by statistics
 

@@ -2,7 +2,7 @@
 from random import choice
 from re import split
 
-from . import Calculator
+from . import IntervalCalculator
 from ...lib.date import local_date_to_time, time_to_local_date
 from ...lib.schedule import Schedule
 from ...squeal.database import add
@@ -11,21 +11,16 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName, Statisti
     StatisticJournalType
 
 
-class SummaryStatistics(Calculator):
+class SummaryStatistics(IntervalCalculator):
 
     def run(self, force=False, after=None, schedule=None):
         if not schedule:
             raise Exception('schedule=... karg required')
         schedule = Schedule(schedule)
-        if force:
-            self._delete(schedule, after)
-        self._create_values(schedule)
+        super().run(force=force, after=after, schedule=schedule)
 
-    def _delete(self, spec, after=None):
-        self._delete_intervals(after, spec=spec)
-
-    def _filter_intervals(self, q, spec=None):
-        return q.filter(Interval.schedule == spec,
+    def _filter_intervals(self, q, schedule=None):
+        return q.filter(Interval.schedule == schedule,
                         Interval.owner == self)
 
     def _statistics_missing_summaries(self, s, start, finish):
@@ -121,26 +116,26 @@ class SummaryStatistics(Calculator):
                 measures[fuzz(n, q)].quartile = q
         self._log.debug('Ranked %s' % statistic)
 
-    def _create_values(self, spec):
+    def _run_calculations(self, schedule):
         with self._db.session_context() as s:
-            for start, finish in Interval.missing_dates(self._log, s, spec, self):
+            for start, finish in Interval.missing_dates(self._log, s, schedule, self):
                 start_time, finish_time = local_date_to_time(start), local_date_to_time(finish)
-                interval = add(s, Interval(start=start, finish=finish, schedule=spec, owner=self))
+                interval = add(s, Interval(start=start, finish=finish, schedule=schedule, owner=self))
                 have_data = False
                 for statistic_name in self._statistics_missing_summaries(s, start_time, finish_time):
                     data = [journal for journal in self._journal_data(s, statistic_name, start_time, finish_time)
-                            if spec.at_location(time_to_local_date(journal.time))]
+                            if schedule.at_location(time_to_local_date(journal.time))]
                     if data:
                         summaries = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic_name.summary) if x]
                         if summaries:
                             values = [x.value for x in data]
                             for summary in summaries:
-                                self._create_value(s, interval, spec, statistic_name, summary.lower(), data, values,
+                                self._create_value(s, interval, schedule, statistic_name, summary.lower(), data, values,
                                                    start_time)
                         else:
                             self._log.warn('Invalid summary for %s ("%s")' % (statistic_name, statistic_name.summary))
                         if 'msr' in summaries:
-                            self._create_measures(s, interval, spec, statistic_name, data)
+                            self._create_measures(s, interval, schedule, statistic_name, data)
                         have_data = True
                 if have_data:
                     self._log.info('Added statistics for %s' % interval)

@@ -84,15 +84,19 @@ class ShortCls(TypeDecorator):
     impl = Text
 
     def process_literal_param(self, cls, dialect):
-        if cls is None:
-            return cls
-        if not isinstance(cls, str) and not isinstance(cls, type):
-            cls = type(cls)
-        if isinstance(cls, type):
-            cls = cls.__name__
-        return cls
+        return short_cls(cls)
 
     process_bind_param = process_literal_param
+
+
+def short_cls(cls):
+    if cls is None:
+        return cls
+    if not isinstance(cls, str) and not isinstance(cls, type):
+        cls = type(cls)
+    if isinstance(cls, type):
+        cls = cls.__name__
+    return cls
 
 
 class Str(TypeDecorator):

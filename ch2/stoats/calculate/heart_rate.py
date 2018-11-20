@@ -2,7 +2,7 @@
 from sqlalchemy import desc, func, inspect, select, and_
 
 from . import ActivityCalculator
-from ..names import FTHR, HR_ZONE, HEART_RATE, BPM, HR_IMPULSE, MSR, AVG, MAX, summaries
+from ..names import FTHR, HR_ZONE, HEART_RATE, BPM, HR_IMPULSE
 from ..read.activity import ActivityImporter
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
@@ -48,6 +48,7 @@ class HeartRateStatistics(ActivityCalculator):
             select_from(sj.join(sn).join(sji)). \
             where(and_(sj.c.source_id == ajournal.id,
                        sn.c.owner == ActivityImporter,
+                       sn.c.constraint == ajournal.activity_group,
                        sn.c.name == HEART_RATE)). \
             order_by(sj.c.time)
         # self._log.debug(stmt)
@@ -61,14 +62,22 @@ class HeartRateStatistics(ActivityCalculator):
                                                            statistic_name_id=heart_rate_zone_name.id,
                                                            source_id=ajournal.id, time=time))
                     rowid += 1
-                if prev_heart_rate_zone is not None:
-                    heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, time - prev_time,
-                                                                 gamma, lower)
-                    sjournals.append(StatisticJournalFloat(id=rowid, value=heart_rate_impulse,
-                                                           statistic_name_id=heart_rate_impulse_name.id,
-                                                           source_id=ajournal.id, time=prev_time))
-                    rowid += 1
-                prev_time, prev_heart_rate_zone = time, heart_rate_zone
+            else:
+                heart_rate_zone = None
+            if prev_heart_rate_zone is not None:
+                heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, time - prev_time,
+                                                             gamma, lower)
+                sjournals.append(StatisticJournalFloat(id=rowid, value=heart_rate_impulse,
+                                                       statistic_name_id=heart_rate_impulse_name.id,
+                                                       source_id=ajournal.id, time=prev_time))
+                rowid += 1
+            prev_time, prev_heart_rate_zone = time, heart_rate_zone
+
+        # if there are no values, add a single null so we don't re-process
+        if not sjournals:
+            sjournals = [StatisticJournalFloat(id=rowid, value=None,
+                                               statistic_name_id=heart_rate_zone_name.id,
+                                               source_id=ajournal.id, time=ajournal.start)]
 
         s.bulk_save_objects(sjournals)
         s.commit()
@@ -102,5 +111,3 @@ class HeartRateStatistics(ActivityCalculator):
                                             StatisticName.constraint == activity_group).
                                      order_by(desc(StatisticJournal.time)).all())
 
-    # todo - faster deletion
-    # todo - impulse with gamma, min, max and scale
