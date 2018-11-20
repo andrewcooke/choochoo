@@ -51,7 +51,12 @@
 
 * TSS but HR zones
   * XXX  HR Impulses
-  * Exponential decayse
+  * Exponential decays
+    * Two variables - one hourly for plotting, the other at impulses
+    * Time and scaling as constants
+    * Gamma and start as constants
+    * Constants that can't vary over time
+    * Improved config
   * Plotting
   * Fitting
 
