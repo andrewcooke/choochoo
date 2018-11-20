@@ -14,6 +14,11 @@ from ...stoats.calculate.heart_rate import hr_zones_from_database
 from ...stoats.read.activity import ActivityImporter
 
 
+# i assume (haven't measured) that this process is slow because of the calculation
+# process - it has to run sequentially through the data multiple times.
+# i don't think writing the data - a relatively small amount for each activity - is significant.
+# (reading data is already efficient).
+
 class ActivityStatistics(ActivityCalculator):
 
     def _filter_journals(self, q):

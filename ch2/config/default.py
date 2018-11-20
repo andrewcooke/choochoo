@@ -5,7 +5,6 @@ from .impulse import add_impulse
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
 from ..stoats.calculate.activity import ActivityStatistics
-from ..stoats.calculate.heart_rate import HeartRateStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
@@ -16,7 +15,7 @@ from ..stoats.read.monitor import MonitorImporter
 from ..uweird.fields.topic import Text, Float, Score0
 
 
-def default(db):
+def default(db, no_diary=False):
 
     with db.session_context() as s:
 
@@ -36,7 +35,6 @@ def default(db):
 
         c = Counter()
         add_statistics(s, ActivityStatistics, c)
-        add_statistics(s, HeartRateStatistics, c)
         add_statistics(s, MonitorStatistics, c)
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
 
@@ -65,37 +63,39 @@ def default(db):
                               description='Heart rate at functional threshold (running).',
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
 
-        # a basic diary
+        if not no_diary:
 
-        c = Counter()
-        diary = add_topic(s, 'Diary', c)
-        add_topic_field(s, diary, 'Notes', c,
-                        display_cls=Text)
-        # now provided via monitor
-        # add_topic_field(s, diary, 'Rest HR', c,
-        #                 units=BPM, summary='[avg]',
-        #                 display_cls=Integer, lo=25, hi=75)
-        add_topic_field(s, diary, 'Weight', c,
-                        units='kg', summary='[avg]',
-                        display_cls=Float, lo=50, hi=100, dp=1)
-        add_topic_field(s, diary, 'Sleep', c,
-                        units='h', summary='[avg]',
-                        display_cls=Float, lo=0, hi=24, dp=1)
-        add_topic_field(s, diary, 'Mood', c,
-                        summary='[avg]',
-                        display_cls=Score0)
-        add_topic_field(s, diary, 'Nutrition', c,
-                        summary='[cnt]',
-                        display_cls=Text)
-        add_topic_field(s, diary, 'Soreness', c,
-                        summary='[cnt]',
-                        display_cls=Text)
-        add_topic_field(s, diary, 'Medication', c,
-                        summary='[cnt]',
-                        display_cls=Text)
-        add_topic_field(s, diary, 'Weather', c,
-                        summary='[cnt]',
-                        display_cls=Text)
-        add_topic_field(s, diary, 'Route', c,
-                        summary='[cnt]',
-                        display_cls=Text)
+            # a basic diary
+
+            c = Counter()
+            diary = add_topic(s, 'Diary', c)
+            add_topic_field(s, diary, 'Notes', c,
+                            display_cls=Text)
+            # now provided via monitor
+            # add_topic_field(s, diary, 'Rest HR', c,
+            #                 units=BPM, summary='[avg]',
+            #                 display_cls=Integer, lo=25, hi=75)
+            add_topic_field(s, diary, 'Weight', c,
+                            units='kg', summary='[avg]',
+                            display_cls=Float, lo=50, hi=100, dp=1)
+            add_topic_field(s, diary, 'Sleep', c,
+                            units='h', summary='[avg]',
+                            display_cls=Float, lo=0, hi=24, dp=1)
+            add_topic_field(s, diary, 'Mood', c,
+                            summary='[avg]',
+                            display_cls=Score0)
+            add_topic_field(s, diary, 'Nutrition', c,
+                            summary='[cnt]',
+                            display_cls=Text)
+            add_topic_field(s, diary, 'Soreness', c,
+                            summary='[cnt]',
+                            display_cls=Text)
+            add_topic_field(s, diary, 'Medication', c,
+                            summary='[cnt]',
+                            display_cls=Text)
+            add_topic_field(s, diary, 'Weather', c,
+                            summary='[cnt]',
+                            display_cls=Text)
+            add_topic_field(s, diary, 'Route', c,
+                            summary='[cnt]',
+                            display_cls=Text)

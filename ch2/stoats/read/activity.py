@@ -11,7 +11,7 @@ from ...fit.format.records import fix_degrees
 from ...lib.date import to_time
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
-from ...squeal.tables.source import Source
+from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger, StatisticJournal, StatisticName
 from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y
@@ -116,7 +116,7 @@ class ActivityImporter(Importer):
 
         self._load(s, ajournal)
         # manually clean out intervals because we're doing a stealth load
-        Source.clean_times(s, first_timestamp, last_timestamp)
+        Interval.clean_times(s, first_timestamp, last_timestamp)
 
     def _load(self, s, ajournal):
         s.flush()

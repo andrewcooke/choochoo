@@ -53,6 +53,7 @@ MONITOR = 'monitor'
 MONTH = 'month'
 MONTHS = 'months'
 NAME = 'name'
+NO_DIARY = 'no-diary'
 NOT = 'not'
 PASS = 'pass'
 PATH = 'path'
@@ -165,10 +166,11 @@ def parser():
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
     constant.set_defaults(command=CONSTANTS)
 
-    basic_config = subparsers.add_parser(DEFAULT_CONFIG,
-                                         help='configure the default database ' +
-                                              '(see docs for full configuration instructions)')
-    basic_config.set_defaults(command=DEFAULT_CONFIG)
+    default_config = subparsers.add_parser(DEFAULT_CONFIG,
+                                           help='configure the default database ' +
+                                                '(see docs for full configuration instructions)')
+    default_config.add_argument(mm(NO_DIARY), action='store_true', help='skip diary creation (for migration)')
+    default_config.set_defaults(command=DEFAULT_CONFIG)
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?', type=to_date,

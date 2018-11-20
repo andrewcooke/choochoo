@@ -1,4 +1,5 @@
 
+from .args import NO_DIARY
 from ..config import default
 
 
@@ -12,4 +13,4 @@ Generate a simple initial configuration.
 
 Please see the documentation at http://andrewcooke.github.io/choochoo
     '''
-    default(db)
+    default(db, no_diary=args[NO_DIARY])
