@@ -1,7 +1,9 @@
+from json import dumps
 
+from ch2.squeal.types import long_cls
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup
-from ..squeal.tables.constant import Constant
+from ..squeal.tables.constant import Constant, ValidateNamedTuple
 from ..squeal.tables.pipeline import Pipeline, PipelineType
 from ..squeal.tables.statistic import StatisticName, StatisticJournalType
 from ..squeal.tables.topic import Topic, TopicField
@@ -131,7 +133,7 @@ def add_activities(s, cls, sort, **kargs):
     return add(s, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
 
 
-def add_activity_constant(s, activity_group, name, description=None, units=None,
+def add_activity_constant(s, activity_group, name, description=None, units=None, single=False,
                           statistic_journal_type=StatisticJournalType.INTEGER):
     '''
     Add a constant associated with an activity.
@@ -145,8 +147,27 @@ def add_activity_constant(s, activity_group, name, description=None, units=None,
         s.flush()
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=activity_group,
                                           units=units, description=description))
-    constant = add(s, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
-                               name='%s.%s' % (name, activity_group.name)))
+    return add(s, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
+                           name='%s.%s' % (name, activity_group.name), single=single))
+
+
+def add_enum_constant(s, name, enum, constraint=None, description=None, units=None, single=False):
+    '''
+    Add a constant that is a JSON encoded enum.  This is validated before saving.
+    '''
+    statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=constraint,
+                                          units=units, description=description))
+    return add(s, Constant(statistic_journal_type=StatisticJournalType.TEXT, statistic_name=statistic_name,
+                           name=name, single=single,
+                           validate_cls=ValidateNamedTuple,
+                           validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)}))
+
+
+def set_constant(s, constant, value, time=None, date=None):
+    '''
+    Set a constant value.
+    '''
+    constant.add_value(s, value, time=time, date=date)
 
 
 def add_topic(s, name, sort, description=None, schedule=None):

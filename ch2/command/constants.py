@@ -82,11 +82,8 @@ def set_constants(log, s, constants, date, value, force):
                 raise Exception('Use %s to confirm deletion of prior values' % mm(FORCE))
             for journal in journals:
                 s.delete(journal)
-        date = '1970-01-01'
     for constant in constants:
-        add(s, STATISTIC_JOURNAL_CLASSES[constant.statistic_journal_type](
-            statistic_name=constant.statistic_name, source=constant, value=value,
-            time=local_date_to_time(date)))
+        constant.add_value(s, value, date=date)
         log.info('Added value %s at %s for %s' % (value, date, constant.name))
     log.warn('You may want to (re-)calculate statistics')
 

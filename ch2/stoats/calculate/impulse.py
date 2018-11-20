@@ -14,9 +14,9 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName, Statisti
 
 SCHEDULE = Schedule('w')
 
-Response = namedtuple('Response', 'name, tau, scale, start')
-
-Impulse = namedtuple('Impulse', 'name, owner, constraint')
+# constraint comes from constant
+Response = namedtuple('Response', 'src_name, src_owner, dest_name, tau_days, scale, start')
+HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero')
 
 
 class ImpulseStatistics(IntervalCalculator):

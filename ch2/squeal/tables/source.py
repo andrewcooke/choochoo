@@ -54,13 +54,15 @@ class Source(Base):
                 start, finish = min_time(a, start), max_time(b, finish)
         # all modified statistics
         for instance in s.dirty:
-            if isinstance(instance, StatisticJournal) and s.is_modified(instance):
+            # ignore constants as time 0
+            if isinstance(instance, StatisticJournal) and s.is_modified(instance) and instance.time:
                 start, finish = extend_range(start, finish, instance.time)
         # all new statistics that aren't associated with intervals and have non-null data
         # (avoid triggering on empty diary entries)
         for instance in s.new:
+            # ignore constants as time 0
             if isinstance(instance, StatisticJournal) and not isinstance(instance.source, Interval) \
-                    and instance.value is not None:
+                    and instance.value is not None and instance.time:
                 start, finish = extend_range(start, finish, instance.time)
         if start is not None:
             Interval.clean_times(s, start, finish)
