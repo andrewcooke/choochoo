@@ -76,6 +76,10 @@ extensible.*
 
 ## Latest Changes
 
+### v0.6.0
+
+Impulse calculations.  Faster importing and statistics.
+
 ### v0.5.0
 
 More readable database (using text instead of opaque numerical hashes
