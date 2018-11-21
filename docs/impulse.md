@@ -1,6 +1,29 @@
 
 # Heart Rate Training Impulse
 
+## Introduction
+
+### Aims
+
+I'm writing this article for a couple of reasons.
+
+First, I want to explain and de-mystify the FF-Model.  I get the
+impression many people don't understand quite how *simple* it is.
+Following from that, maybe people aren't understanding exactly what it
+shows, or how it can or should be used.
+
+Second, I want to showcase Choochoo - a *hackable* training diary.
+Choochoo is written for people interested in sport *and* the computing
+/ maths / science involved.  People who want to experiment, get their
+hands dirty, and build their own, personal, customized approach.
+
+So I'm going to show how Choochoo implements the FF-Model.  How the
+calculations are made, what they mean, and how they might be tweaked.
+I'll end with some questions that people might want to explore -
+questions that I hope to explore using this software.
+
+
+
 ## Survey
 ### History
 ### Arbitrary Parameters
@@ -121,4 +144,99 @@ data.
 ## Future Work
 ### Fitting Parameters
 ### Multiple Components
+
 ## Appendix - Getting Started with Choochoo
+
+(This is all for Linux.  Something similar should work for OSX.  On
+Windows it shouldn't be *too* different...)
+
+### Install
+
+First, you need Python 3.7 installed.  Check your version:
+
+    > python --version
+    Python 3.7.0
+
+If necessary, you can get the latest version of Python
+[here](https://www.python.org/downloads/).
+
+Next, you need to create a "virtualenv".  This is a copy of Python
+where Choochoo will be installed (so it doesn't mess with anything
+else you might want to do in Python).
+
+    > python -m venv env
+
+Next enable that:
+
+    > souce env/bin/activate
+
+Your prompt should now show `(env)`.  When you see that you're using
+the local copy of Python.  You will need to do this whenevr you want
+to use Python and Choochoo.
+
+With all that preparation done, we can install Choochoo:
+
+    > pip install choochoo
+    [...]
+    
+That should display a lot of messages but, hopefully, no errors.
+
+Once done, you can run Choochoo:
+
+    > ch2
+	INFO: Using database at ...
+	INFO: Creating tables
+
+     Welcome to Choochoo.
+
+     Before using the ch2 command you must configure the system.
+
+     Please see the documentation at http://andrewcooke.github.io/choochoo
+
+     To generate a default configuration use the command
+
+	 ch2 default-config
+
+     NOTE: The default configuration is only an example.  Please see the docs for
+     more details.
+
+### Configure
+
+So create a default database:
+
+    > ch2 default-config
+    
+### Load Data
+
+Read your FIT files:
+
+    > ch2 activities /path/to/FIT/files/*.fit
+
+(This will take some time and, I'm afraid, might give errors.  As far
+as I know. I am the only user, so if you're following these
+instructions you're my first tester...  Please raise issues
+[here](https://github.com/andrewcooke/choochoo/issues) if something
+goes wrong.).
+
+### Plot Data
+
+If you've got this far, congratulations!  Now we can start Jupyter and
+plot the results in your browser:
+
+    > jupyter notebook
+
+This should open a new page in your browser.  Select
+ch2/data/notebooks and then click on TODO
+
+## Appendix - The Author
+
+I'm adding because I don't want to mislead.  I'm no expert on this
+stuff.  The details above come from papers I've found on-line.  I
+could have misunderstood.  So check things out for youself.  I've
+collected some of the papers
+[here](https://github.com/andrewcooke/choochoo/tree/master/data/training).
+
+If you came here actually expecting to find something out about me,
+well... way, way back in the day I got a PhD in Astronomy, but most of
+my working life has been spent programming computers.  I also like to
+ride my bike, when I'm not injured.
