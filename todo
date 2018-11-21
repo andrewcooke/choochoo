@@ -85,3 +85,5 @@
 
 * Measures (rank, percentage) should be aware of min/max summaries and change
   direction accordingly.
+
+* Database locking during bulk load

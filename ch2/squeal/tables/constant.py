@@ -1,12 +1,13 @@
 
+import datetime as dt
 from abc import ABC, abstractmethod
 from json import dumps, loads
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, ForeignKey, Text, Boolean, desc
 from sqlalchemy.orm import relationship
 
 from .source import Source, SourceType
-from .statistic import STATISTIC_JOURNAL_CLASSES
+from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
 from ..support import Base
 from ..types import Cls, Json, lookup_cls
 from ...lib.date import local_date_to_time, format_time
@@ -49,6 +50,23 @@ class Constant(Source):
         if self.validate_cls:
             self.validate(sjournal)
         return add(s, sjournal)
+
+    def at(self, s, time=None, date=None):
+        if time and date:
+            raise Exception('Specify one or none of time and date for %s' % self)
+        if date:
+            time = local_date_to_time(date)
+        if not time:
+            time = dt.datetime.now()
+        return s.query(StatisticJournal). \
+            filter(StatisticJournal.statistic_name == self.statistic_name,
+                   StatisticJournal.time <= time). \
+            order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
+
+    @classmethod
+    def get(cls, s, name):
+        return s.query(Constant).filter(Constant.name == name).one()
+
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.CONSTANT

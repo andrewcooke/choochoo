@@ -1,10 +1,9 @@
 
-from collections import defaultdict
 from os.path import splitext, basename
 
 from pygeotile.point import Point
-from sqlalchemy import func
 
+from ..load import Loader
 from ..read import AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
@@ -12,7 +11,7 @@ from ...lib.date import to_time
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.source import Interval
-from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger, StatisticJournal, StatisticName
+from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger
 from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y
 from ...stoats.read import Importer
@@ -55,7 +54,7 @@ class ActivityImporter(Importer):
 
     def _import(self, s, path, sport_to_activity):
 
-        self.__staging = defaultdict(lambda: [])
+        loader = Loader(self._log, s, self)
 
         data, types, messages, records = filtered_records(self._log, path)
         records = [record.force(fix_degrees)
@@ -81,23 +80,23 @@ class ActivityImporter(Importer):
                                                            start=record.value.timestamp,
                                                            finish=record.value.timestamp))
                 if record.name == 'record':
-                    self._add(s, LATITUDE, DEG, None, self, activity_group, ajournal,
+                    loader.add(LATITUDE, DEG, None, activity_group, ajournal,
                               record.none.position_lat, record.value.timestamp, StatisticJournalFloat)
-                    self._add(s, LONGITUDE, DEG, None, self, activity_group, ajournal,
+                    loader.add(LONGITUDE, DEG, None, activity_group, ajournal,
                               record.none.position_long, record.value.timestamp,
                               StatisticJournalFloat)
                     if record.none.position_lat and record.none.position_long:
                         p = Point.from_latitude_longitude(record.none.position_lat, record.none.position_long)
                         x, y = p.meters
-                        self._add(s, SPHERICAL_MERCATOR_X, M, None, self, activity_group, ajournal,
+                        loader.add(SPHERICAL_MERCATOR_X, M, None, activity_group, ajournal,
                                   x, record.value.timestamp, StatisticJournalFloat)
-                        self._add(s, SPHERICAL_MERCATOR_Y, M, None, self, activity_group, ajournal,
+                        loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal,
                                   y, record.value.timestamp, StatisticJournalFloat)
-                    self._add(s, HEART_RATE, BPM, None, self, activity_group, ajournal,
+                    loader.add(HEART_RATE, BPM, None, activity_group, ajournal,
                               record.none.heart_rate, record.value.timestamp, StatisticJournalInteger)
-                    self._add(s, DISTANCE, M, None, self, activity_group, ajournal,
+                    loader.add(DISTANCE, M, None, activity_group, ajournal,
                               record.none.distance, record.value.timestamp, StatisticJournalFloat)
-                    self._add(s, SPEED, KMH, None, self, activity_group, ajournal,
+                    loader.add(SPEED, KMH, None, activity_group, ajournal,
                               record.none.enhanced_speed, record.value.timestamp, StatisticJournalFloat)
                 if record.name == 'event' and record.value.event == 'timer' \
                         and record.value.event_type == 'stop_all':
@@ -114,31 +113,6 @@ class ActivityImporter(Importer):
                     self._log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                    (path, record.timestamp))
 
-        self._load(s, ajournal)
+        loader.load()
         # manually clean out intervals because we're doing a stealth load
         Interval.clean_times(s, first_timestamp, last_timestamp)
-
-    def _load(self, s, ajournal):
-        s.flush()
-        names = dict((name, s.query(StatisticName.id).
-                      filter(StatisticName.name == name,
-                             StatisticName.owner == self).scalar())
-                     for name in (LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                                  HEART_RATE, DISTANCE, SPEED))
-
-        rowid = s.query(func.max(StatisticJournal.id)).scalar() + 1
-
-        for type in self.__staging:
-            self._log.debug('Loading type %s' % type)
-            for sjournal in self.__staging[type]:
-                sjournal.id = rowid
-                name = sjournal.statistic_name.name
-                sjournal.statistic_name = None
-                sjournal.statistic_name_id = names[name]
-                sjournal.source = None
-                sjournal.source_id = ajournal.id
-                rowid += 1
-            s.bulk_save_objects(self.__staging[type])
-
-    def _add(self, s, name, units, summary, owner, constraint, source, value, time, type):
-        self.__staging[type].append(self._create(s, name, units, summary, owner, constraint, source, value, time, type))

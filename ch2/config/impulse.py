@@ -41,4 +41,4 @@ def add_impulse(s, c, activity_group):
                                     'dest_name': FATIGUE, 'tau_days': 20, 'scale': 1, 'start': 0}))
 
     add_statistics(s, HeartRateStatistics, c, impulse=hr_impulse_name)
-    add_statistics(s, ImpulseStatistics, c, responses=(fitness_name, fatigue_name))
+    add_statistics(s, ImpulseStatistics, c, responses=(fitness_name, fatigue_name), impulse=hr_impulse_name)

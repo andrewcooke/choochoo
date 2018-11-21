@@ -3,6 +3,7 @@ from abc import abstractmethod
 
 from sqlalchemy.sql.functions import count
 
+from ...squeal.types import short_cls
 from ...squeal.tables.activity import ActivityJournal, ActivityGroup
 from ...squeal.tables.pipeline import Pipeline
 from ...squeal.tables.source import Interval, Source
@@ -35,17 +36,17 @@ class IntervalCalculator(Calculator):
     Support for calculations associated with intervals.
     '''
 
-    def run(self, force=False, after=None, **init_kargs):
+    def run(self, force=False, after=None, **run_kargs):
         if force:
-            self._delete(after=after, **init_kargs)
-        self._run_calculations(**init_kargs)
+            self._delete(after=after, **run_kargs)
+        self._run_calculations(**run_kargs)
 
     @abstractmethod
-    def _run_calculations(self, **init_kargs):
+    def _run_calculations(self, **run_kargs):
         raise NotImplementedError()
 
-    def _delete(self, after=None, **init_kargs):
-        self._delete_intervals(after, **init_kargs)
+    def _delete(self, after=None, **run_kargs):
+        self._delete_intervals(after, **run_kargs)
 
     def _delete_intervals(self, after=None, **init_kargs):
         # we delete the intervals that all summary statistics depend on and they will cascade
@@ -78,28 +79,30 @@ class ActivityCalculator(Calculator):
     Support for calculations associated with activity journals.
     '''
 
-    def run(self, force=False, after=None, **kargs):
+    def run(self, force=False, after=None, **run_kargs):
         with self._db.session_context() as s:
             for activity_group in s.query(ActivityGroup).all():
                 self._log.debug('Checking statistics for activity %s' % activity_group.name)
                 if force:
-                    self._delete_my_statistics(s, activity_group, after=after)
-                self._run_activity(s, activity_group)
+                    self._delete_my_statistics(s, activity_group, after=after, **run_kargs)
+                self._run_activity(s, activity_group, **run_kargs)
 
-    def _run_activity(self, s, activity_group, **kargs):
+    def _run_activity(self, s, activity_group, **run_kargs):
         # which activity journals don't have data?
-        q = s.query(StatisticJournal.source_id). \
+        q1 = s.query(StatisticJournal.source_id). \
             join(StatisticName). \
             filter(StatisticName.owner == self,
                    StatisticName.constraint == activity_group)
-        q = self._filter_journals(q)
-        statistics = q.cte()
-        for ajournal in s.query(ActivityJournal).outerjoin(statistics). \
+        q1 = self._filter_journals(q1)
+        statistics = q1.cte()
+        q2 = s.query(ActivityJournal).outerjoin(statistics). \
                 filter(ActivityJournal.activity_group == activity_group,
                        statistics.c.source_id == None). \
-                order_by(ActivityJournal.start).all():
-            self._log.info('Adding statistics for %s' % ajournal)
-            self._add_stats(s, ajournal, **kargs)
+                order_by(ActivityJournal.start)
+        self._log.debug(q2)
+        for ajournal in q2.all():
+            self._log.info('Running %s for %s' % (short_cls(self), ajournal))
+            self._add_stats(s, ajournal, **run_kargs)
 
     @abstractmethod
     def _filter_journals(self, q):
@@ -115,7 +118,7 @@ class ActivityCalculator(Calculator):
         StatisticJournalFloat.add(self._log, s, name, units, summary, self,
                                   ajournal.activity_group, ajournal, value, time)
 
-    def _delete_my_statistics(self, s, activity_group, after=None):
+    def _delete_my_statistics(self, s, activity_group, after=None, **run_kargs):
         '''
         Delete all statistics owned by this class and in the activity group.
         Fast because in-SQL.
@@ -143,3 +146,4 @@ class ActivityCalculator(Calculator):
                     self._log.warn('Deleting %d statistics for %s' % (n, activity_group))
                 else:
                     self._log.warn('No statistics to delete for %s' % activity_group)
+        s.commit()

@@ -58,7 +58,7 @@ class ActivityTimespan(Base):
                                                     order_by='ActivityTimespan.start'))
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
-    UniqueConstraint('activity_journal_id', 'start')
+    UniqueConstraint(activity_journal_id, start)
 
     def __str__(self):
         return 'ActivityTimespan from %s - %s' % (format_time(self.start), format_time(self.finish))

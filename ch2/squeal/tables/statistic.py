@@ -31,6 +31,25 @@ class StatisticName(Base):
     def __str__(self):
         return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
 
+    @classmethod
+    def add_if_missing(cls, log, s, name, units, summary, owner, constraint):
+        statistic_name = s.query(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint).one_or_none()
+        if not statistic_name:
+            statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner,
+                                           constraint=constraint)
+            s.add(statistic_name)
+        else:
+            if statistic_name.units != units:
+                log.warn('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
+                statistic_name.units = units
+            if statistic_name.summary != summary:
+                log.warn('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
+                statistic_name.summary = summary
+        return statistic_name
+
 
 class StatisticJournalType(IntEnum):
 
@@ -68,7 +87,7 @@ class StatisticJournal(Base):
 
     @classmethod
     def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, type):
-        statistic_name = cls.add_name(log, s, name, units, summary, owner, constraint)
+        statistic_name = StatisticName.add_if_missing(log, s, name, units, summary, owner, constraint)
         journal = s.query(StatisticJournal).join(Source). \
             filter(StatisticJournal.statistic_name == statistic_name,
                    StatisticJournal.time == time).one_or_none()
@@ -82,25 +101,6 @@ class StatisticJournal(Base):
                                 (journal.type, journal))
             journal.value = value
         return journal
-
-    @classmethod
-    def add_name(cls, log, s, name, units, summary, owner, constraint):
-        statistic_name = s.query(StatisticName). \
-            filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
-                   StatisticName.constraint == constraint).one_or_none()
-        if not statistic_name:
-            statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner,
-                                           constraint=constraint)
-            s.add(statistic_name)
-        else:
-            if statistic_name.units != units:
-                log.warn('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
-                statistic_name.units = units
-            if statistic_name.summary != summary:
-                log.warn('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
-                statistic_name.summary = summary
-        return statistic_name
 
     def formatted(self):
         if self.value is None:

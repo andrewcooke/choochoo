@@ -1,11 +1,16 @@
+from json import loads
 
 from sqlalchemy import desc, func, inspect, select, and_
 
+from ch2.stoats.load import Loader
 from . import ActivityCalculator
-from ..names import FTHR, HR_ZONE, HEART_RATE, BPM, HR_IMPULSE
+from .impulse import HRImpulse
+from ..names import FTHR, HR_ZONE, HEART_RATE
 from ..read.activity import ActivityImporter
+from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
+from ...squeal.types import short_cls
 
 
 def hr_zones_from_database(log, s, activity_group, time):
@@ -26,19 +31,23 @@ class HeartRateStatistics(ActivityCalculator):
 
     def __init__(self, log, db):
         self.__fthr_cache = None
+        # must create the statistic(s) before finding out if it is missing...
+        with db.session_context() as s:
+            for agroup in s.query(ActivityGroup).all():
+                StatisticName.add_if_missing(log, s, HR_ZONE, None, None, self, agroup)
         super().__init__(log, db)
 
     def _filter_journals(self, q):
         return q.filter(StatisticName.name == HR_ZONE)
 
-    def _add_stats(self, s, ajournal, gamma=1.0, lower=2):
+    def _add_stats(self, s, ajournal, impulse=None):
 
-        sjournals = []
-        heart_rate_zone_name = StatisticJournal.add_name(self._log, s, HR_ZONE, BPM,
-                                                         None, self, ajournal.activity_group)
-        heart_rate_impulse_name = StatisticJournal.add_name(self._log, s, HR_IMPULSE, BPM,
-                                                            None, self, ajournal.activity_group)
-        rowid = s.query(func.max(StatisticJournal.id)).scalar() + 1
+        if not impulse:
+            raise Exception('Missing impulse karg for %s' % short_cls(self))
+        hr_impulse = HRImpulse(**loads(Constant.get(s, impulse).at(s).value))
+        self._log.debug('%s: %s' % (impulse, hr_impulse))
+
+        loader = Loader(self._log, s, self)
 
         sn = inspect(StatisticName).local_table
         sj = inspect(StatisticJournal).local_table
@@ -58,33 +67,28 @@ class HeartRateStatistics(ActivityCalculator):
             if heart_rate:
                 heart_rate_zone = self._calculate_zone(s, heart_rate, time, ajournal.activity_group)
                 if heart_rate_zone is not None:
-                    sjournals.append(StatisticJournalFloat(id=rowid, value=heart_rate_zone,
-                                                           statistic_name_id=heart_rate_zone_name.id,
-                                                           source_id=ajournal.id, time=time))
-                    rowid += 1
+                    loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, heart_rate_zone, time,
+                               StatisticJournalFloat)
             else:
                 heart_rate_zone = None
             if prev_heart_rate_zone is not None:
-                heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, time - prev_time,
-                                                             gamma, lower)
-                sjournals.append(StatisticJournalFloat(id=rowid, value=heart_rate_impulse,
-                                                       statistic_name_id=heart_rate_impulse_name.id,
-                                                       source_id=ajournal.id, time=prev_time))
-                rowid += 1
+                heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, time - prev_time, hr_impulse)
+                loader.add(hr_impulse.dest_name, None, None, ajournal.activity_group, ajournal, heart_rate_impulse,
+                           time, StatisticJournalFloat)
             prev_time, prev_heart_rate_zone = time, heart_rate_zone
 
         # if there are no values, add a single null so we don't re-process
-        if not sjournals:
-            sjournals = [StatisticJournalFloat(id=rowid, value=None,
-                                               statistic_name_id=heart_rate_zone_name.id,
-                                               source_id=ajournal.id, time=ajournal.start)]
+        if not loader:
+            loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,
+                       StatisticJournalFloat)
 
-        s.bulk_save_objects(sjournals)
+        loader.load()
         s.commit()
-        self._log.debug('Added %d statistics' % len(sjournals))
 
-    def _calculate_impulse(self, heart_rate_zone, duration, gamma, lower):
-        return duration.total_seconds() * ((max(heart_rate_zone, lower) - lower) / (6 - lower)) ** gamma
+    def _calculate_impulse(self, heart_rate_zone, duration, hr_impulse):
+        return duration.total_seconds() * \
+               ((max(heart_rate_zone, hr_impulse.zero) - hr_impulse.zero)
+                / (6 - hr_impulse.zero)) ** hr_impulse.gamma
 
     def _calculate_zone(self, s, heart_rate, time, activity_group):
         self._load_fthr_cache(s, activity_group)

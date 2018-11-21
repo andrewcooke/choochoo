@@ -130,9 +130,7 @@ def print_constants(log, s, constants, name, date):
                     log.warn('No values found for %s' % constant.name)
             print()
         else:
-            statistic_name = constant.statistic_name
-            journal = StatisticJournal.at_date(s, date, statistic_name.name, statistic_name.owner,
-                                               statistic_name.constraint)
+            journal = constant.at(s, date=date)
             if journal:
                 print('%s %s %s' % (constant.name, journal.source.time, journal.value))
             else:

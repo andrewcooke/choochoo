@@ -80,7 +80,7 @@ class MonitorImporter(Importer):
     def _save_cumulative(self, s, time, cumulative, mjournal, name):
         self._log.debug('Adding %s at time %s' % (name, format_time(time)))
         for activity in cumulative:
-            self._add(s, name, STEPS_UNITS, None, self, activity,
+            self._add(s, name, STEPS_UNITS, None, activity,
                       mjournal, cumulative[activity], time, StatisticJournalInteger)
         self._log.debug('Added: %s' % ', '.join('%s:%s' % item for item in cumulative.items()))
 
@@ -144,7 +144,7 @@ class MonitorImporter(Importer):
         n_heart_rate, n_steps, steps_journals = 0, 0, defaultdict(lambda: {})
         for record in records:
             if HEART_RATE_ATTR in record.data:
-                self._add(s, HEART_RATE, BPM, None, self, None, mjournal, record.data[HEART_RATE_ATTR][0],
+                self._add(s, HEART_RATE, BPM, None, None, mjournal, record.data[HEART_RATE_ATTR][0],
                           record.timestamp, StatisticJournalInteger)
                 n_heart_rate += 1
             if STEPS_ATTR in record.data:
@@ -156,7 +156,7 @@ class MonitorImporter(Importer):
                             steps_journals[record.timestamp][activity].value += steps
                         else:
                             steps_journals[record.timestamp][activity] = \
-                                self._create(s, STEPS, STEPS_UNITS, None, self, activity,
+                                self._create(s, STEPS, STEPS_UNITS, None, activity,
                                              mjournal, steps, record.timestamp,
                                              StatisticJournalInteger)
                         n_steps += 1
@@ -215,7 +215,7 @@ class MonitorImporter(Importer):
         for timestamp in steps_journals:
             for activity in steps_journals[timestamp]:
                 add(s, steps_journals[timestamp][activity])
-                self._add(s, ACTIVITY, None, None, self, activity, mjournal,
+                self._add(s, ACTIVITY, None, None, activity, mjournal,
                           activity, timestamp, StatisticJournalText)
 
 

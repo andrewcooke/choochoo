@@ -14,11 +14,6 @@ from ...stoats.calculate.heart_rate import hr_zones_from_database
 from ...stoats.read.activity import ActivityImporter
 
 
-# i assume (haven't measured) that this process is slow because of the calculation
-# process - it has to run sequentially through the data multiple times.
-# i don't think writing the data - a relatively small amount for each activity - is significant.
-# (reading data is already efficient).
-
 class ActivityStatistics(ActivityCalculator):
 
     def _filter_journals(self, q):
@@ -83,6 +78,7 @@ class ActivityStatistics(ActivityCalculator):
         self._log.debug('Waypoints generated')
 
     def _id_map(self, s, ajournal):
+        # need to convert from statistic_name_id to attribute name
         return {self._id(s, ajournal, HEART_RATE): 'heart_rate',
                 self._id(s, ajournal, DISTANCE): 'distance'}
 

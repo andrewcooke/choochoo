@@ -2,12 +2,12 @@
 from abc import abstractmethod
 from enum import IntEnum
 
-from sqlalchemy import ForeignKey, Column, Integer, func, and_
+from sqlalchemy import ForeignKey, Column, Integer, func, and_, UniqueConstraint
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, aliased
 
 from ..support import Base
-from ..types import OpenSched, Date, ShortCls
+from ..types import OpenSched, Date, ShortCls, short_cls
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 
 
@@ -88,13 +88,15 @@ class Interval(Source):
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
+    UniqueConstraint(schedule, owner, start)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL
     }
 
     def __str__(self):
-        return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, self.owner)
+        owner = self.owner if isinstance(self.owner, str) else short_cls(self.owner)
+        return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, owner)
 
     @classmethod
     def _missing_interval_start_dates(cls, log, s, schedule, interval_owner, statistic_owner=None):
