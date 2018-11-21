@@ -70,9 +70,9 @@ The HR Impulse is calculated in three steps:
     This is shown in Figure 1 (the `zero` parameter has the value 2)
 
     The transformation can be understood in three stages.  First,
-    values below a threshol (`zero`) are discarded.  Next, the range
-    from this threashold to zone 6 is normalized to the range 0-1.
-    Finally, this normalized value is raised to the power `gamma`.
+    values below a threshold (`zero`) are discarded.  Next, the range
+    to zone 6 is normalized to the range 0-1.  Finally, this
+    normalized value is raised to the power `gamma`.
 
     The "gamma correction" is a standard technique for parameterising
     uncertainty in the shape of a function.  A value of `gamma`
@@ -81,11 +81,11 @@ The HR Impulse is calculated in three steps:
     A value of `gamma` less than 1 will give a "comvex" curve -
     implying that low zones are similar in importance to high zones.
 
-    By default, the parameter is set to 1.
+    By default, the `gamma` parameter is set to 1 and `zero` to 2.
 
 3.  The impulse is calculated as:
 
-        impulse = zone` * delta_t
+        impulse = zone' * delta_t
 
     where `delta_t` is the time (in seconds) between this measurement
     and the next (in a typical FIT file this is XXX seconds).
@@ -93,12 +93,19 @@ The HR Impulse is calculated in three steps:
 The `gamma` and `zero` parameters allow us to encode beliefs about the
 physiological processes we are modelling.  For example, if we believe
 that only intensive exertion is effective, we can raise `zero` to 3 or
-4.  And if we feel that all exertion able that point should be
-weighted approximately equally then we can lower `gamma` to, say, 0.1,
+4.  And if we feel that all exertion above that point should be
+weighted roughly equally then we can lower `gamma` to, say, 0.1,
 giving a curve that approximates a "top hat" response.
 
-
 ### Response Calculation
+
+The response is calculated by integrating each impulse and then
+decaying with the appropriate time constant as time increases.  In
+addition, an arbitrary scale factor can be applied.
+
+By default, the time period (`tau_days`) is taken as 7 for Fatigue and
+42 for Fitness.  The `scale` factor is 1.
+
 ### Results
 ## Future Work
 ### Fitting Parameters
