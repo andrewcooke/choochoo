@@ -22,11 +22,64 @@ calculations are made, what they mean, and how they might be tweaked.
 I'll end with some questions that people might want to explore -
 questions that I hope to explore using this software.
 
-### The Theory
+### Theory
 
 #### Overview
 
+Imagine it's your job to model how an athlete gets better or worse
+over time.  What do you do?
 
+You know they get better of they train.  And - within reason - the
+more they train the better they get.  So a good first step would be to
+add up all the training.
+
+But that's just a number that keeps getting bigger and bigger.  You
+need to take into account that people get worse if they *stop*
+training.  So why not decrease the number by some fixed amount (10%
+say) each day they do nothing?
+
+Congratulations!  You just invented the FF-Model.
+
+All we need to do now is worry about the details...
+
+#### Adding Up Training
+
+What, exactly, do we add up?
+
+First, we need to gauge *intensity*, so we need something you can
+measure.  Power meters are the obvious example.  But there are other
+options, too.  Perceived exertion (ranked on a numeric scale - there
+are various standards) is not as sexy, but could work.  Heart rate is
+another option.
+
+Second, we need to measure time.  Presumably an hour's work at a given
+intensity is "worth" twice as much as 30mins (but this *is* just an
+assumption - maybe something we could check later).
+
+So mutliplying intensity (however we choose to define that) by time
+seems like a good candidate.
+
+Third, we need to decide on a weighting.  Harder workouts score more
+because they are more intense.  But maybe they should score *extra*?
+Maybe there's some threshold - no matter how long you do easy work,
+perhaps it just doesn't count?
+
+These are all valid questions.  Researchers simply picked some simple
+answers and ran with them.
+
+#### Exponential Decay
+
+How, exactly, do we decrease things over time?
+
+
+
+#### Fatigue
+
+#### Surely There's More
+
+### History
+
+### Other Software
 
 ## Survey
 ### History
