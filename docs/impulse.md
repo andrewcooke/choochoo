@@ -13,14 +13,18 @@ Following from that, maybe people aren't understanding exactly what it
 shows, or how it can or should be used.
 
 Second, I want to showcase Choochoo - a *hackable* training diary.
-Choochoo is written for people interested in sport *and* the computing
-/ maths / science involved.  People who want to experiment, get their
+Choochoo is written for people at the intersection between sport and
+computing / maths / science.  People who want to experiment, get their
 hands dirty, and build their own, personal, customized approach.
 
 So I'm going to show how Choochoo implements the FF-Model.  How the
 calculations are made, what they mean, and how they might be tweaked.
 I'll end with some questions that people might want to explore -
 questions that I hope to explore using this software.
+
+### The Theory
+
+#### Overview
 
 
 
