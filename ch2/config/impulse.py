@@ -3,8 +3,8 @@ from json import dumps
 
 from .database import add_statistics, add_enum_constant, set_constant
 from ..squeal.types import short_cls
-from ..stoats.calculate.heart_rate import HeartRateStatistics
-from ..stoats.calculate.impulse import HRImpulse, Response, ImpulseStatistics
+from ..stoats.calculate.heart_rate import HeartRateStatistics, HRImpulse
+from ..stoats.calculate.impulse import Response, ImpulseStatistics
 from ..stoats.names import HR_IMPULSE, FITNESS, FATIGUE
 
 
@@ -26,7 +26,7 @@ def add_impulse(s, c, activity_group):
     hr_impulse = add_enum_constant(s, hr_impulse_name, HRImpulse, single=True, constraint=activity_group_constraint,
                                    description='Data needed to calculate the FF-model impulse from HR zones - ' +
                                                'see HRImpulse enum')
-    set_constant(s, hr_impulse, dumps({'dest_name': HR_IMPULSE, 'gamma': 1.0, 'zero': 2}))
+    set_constant(s, hr_impulse, dumps({'dest_name': HR_IMPULSE, 'gamma': 1.0, 'zero': 2, 'max_secs': 60}))
 
     # 7 and 42 days as for training peaks
     # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
@@ -41,7 +41,7 @@ def add_impulse(s, c, activity_group):
     fatigue = add_enum_constant(s, fatigue_name, Response, single=True, constraint=activity_group_constraint,
                                 description='Data needed to calculate the FF-model fitness - see Response enum')
     set_constant(s, fatigue, dumps({'src_name': HR_IMPULSE, 'src_owner': short_cls(HeartRateStatistics),
-                                    'dest_name': FATIGUE, 'tau_days': 7, 'scale': 1, 'start': 0}))
+                                    'dest_name': FATIGUE, 'tau_days': 7, 'scale': 5, 'start': 0}))
 
     add_statistics(s, HeartRateStatistics, c, impulse=hr_impulse_name)
     add_statistics(s, ImpulseStatistics, c, responses=(fitness_name, fatigue_name), impulse=hr_impulse_name)

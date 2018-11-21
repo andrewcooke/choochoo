@@ -15,6 +15,7 @@ class Loader:
         self._owner = owner
         self.__statistic_name_cache = dict()
         self.__staging = defaultdict(lambda: [])
+        self.__latest = dict()
 
     def __bool__(self):
         return bool(self.__staging)
@@ -41,5 +42,19 @@ class Loader:
             self._s.flush()
             if not self.__statistic_name_cache[key].id:
                 raise Exception('Could not get StatisticName.id for %s' % key)
-        self.__staging[type].append(
-            type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source.id, value=value, time=time))
+        instance = type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source.id,
+                        value=value, time=time)
+        self.__staging[type].append(instance)
+        if key in self.__latest:
+            prev = self.__latest[key]
+            if instance.time > prev.time:
+                self.__latest[key] = instance
+        else:
+            self.__latest[key] = instance
+
+    def latest(self, name, constraint, instance=None):
+        latest = self.__latest.get((name, constraint))
+        if instance and instance.time > latest.time:
+            latest = instance
+        return latest
+

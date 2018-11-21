@@ -7,6 +7,7 @@ from math import exp
 from sqlalchemy import desc, inspect, select, and_
 
 from . import IntervalCalculator
+from .heart_rate import HRImpulse
 from ..load import Loader
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
@@ -20,7 +21,6 @@ SCHEDULE = Schedule('m')
 
 # constraint comes from constant
 Response = namedtuple('Response', 'src_name, src_owner, dest_name, tau_days, scale, start')
-HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero')
 
 
 class ImpulseStatistics(IntervalCalculator):
@@ -33,16 +33,11 @@ class ImpulseStatistics(IntervalCalculator):
         return q.filter(Interval.schedule == SCHEDULE,
                         Interval.owner == self)
 
-    def _previous(self, s, name, start):
-        prev = s.query(StatisticJournal). \
-            join(StatisticName). \
-            filter(StatisticName.name == name,
+    def _previous(self, s, dest, start):
+        return s.query(StatisticJournal). \
+            filter(StatisticJournal.statistic_name == dest,
                    StatisticJournal.time < local_date_to_time(start)). \
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
-        if prev:
-            return prev.time, prev.value
-        else:
-            return None
 
     def _impulses(self, s, source, interval):
 
@@ -68,8 +63,12 @@ class ImpulseStatistics(IntervalCalculator):
             yield local_date_to_time(day), None
             day += dt.timedelta(days=1)
 
-    def _add_response(self, loader, s, response, interval, source):
-        value = self._previous(s, response.dest_name, interval.start)
+    def _add_response(self, loader, s, response, interval, source, dest):
+        prev = loader.latest(response.dest_name, source.constraint, self._previous(s, dest, interval.start))
+        if prev:
+            value = (prev.time, prev.value)
+        else:
+            value = None
         impulses = list(self._impulses(s, source, interval))
         days = list(self._days(interval))
         for time, impulse in sorted(impulses + days, key=lambda x: x[0]):
@@ -79,6 +78,8 @@ class ImpulseStatistics(IntervalCalculator):
                 else:
                     value = self._decay(response, value, time)
                 value = (time, value[1] + response.scale * impulse)
+                loader.add(response.dest_name, None, None, source.constraint, interval, value[1], value[0],
+                           StatisticJournalFloat)
             else:
                 if value:
                     value = self._decay(response, value, time)
@@ -105,6 +106,8 @@ class ImpulseStatistics(IntervalCalculator):
                         filter(StatisticName.name == impulse.dest_name,
                                StatisticName.owner == HeartRateStatistics,
                                StatisticName.constraint == activity_group).one()
-                    self._add_response(loader, s, response, interval, source)
+                    dest = StatisticName.add_if_missing(self._log, s, response.dest_name, None, None,
+                                                        self, activity_group)
+                    self._add_response(loader, s, response, interval, source, dest)
 
             loader.load()

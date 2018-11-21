@@ -1,16 +1,20 @@
+
+from collections import namedtuple
 from json import loads
 
-from sqlalchemy import desc, func, inspect, select, and_
+from sqlalchemy import desc, inspect, select, and_
 
-from ch2.stoats.load import Loader
 from . import ActivityCalculator
-from .impulse import HRImpulse
-from ..names import FTHR, HR_ZONE, HEART_RATE
+from ..load import Loader
+from ..names import FTHR, HR_ZONE, HEART_RATE, S
 from ..read.activity import ActivityImporter
 from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
 from ...squeal.types import short_cls
+
+# constraint comes from constant
+HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, max_secs')
 
 
 def hr_zones_from_database(log, s, activity_group, time):
@@ -72,9 +76,13 @@ class HeartRateStatistics(ActivityCalculator):
             else:
                 heart_rate_zone = None
             if prev_heart_rate_zone is not None:
-                heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, time - prev_time, hr_impulse)
-                loader.add(hr_impulse.dest_name, None, None, ajournal.activity_group, ajournal, heart_rate_impulse,
-                           time, StatisticJournalFloat)
+                duration = (time - prev_time).total_seconds()
+                if duration <= hr_impulse.max_secs:
+                    heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, duration, hr_impulse)
+                    loader.add(hr_impulse.dest_name, None, None, ajournal.activity_group, ajournal, heart_rate_impulse,
+                               time, StatisticJournalFloat)
+                    loader.add('%s (duration)' % hr_impulse.dest_name, S, None, ajournal.activity_group, ajournal,
+                               duration, time, StatisticJournalFloat)
             prev_time, prev_heart_rate_zone = time, heart_rate_zone
 
         # if there are no values, add a single null so we don't re-process
@@ -86,9 +94,8 @@ class HeartRateStatistics(ActivityCalculator):
         s.commit()
 
     def _calculate_impulse(self, heart_rate_zone, duration, hr_impulse):
-        return duration.total_seconds() * \
-               ((max(heart_rate_zone, hr_impulse.zero) - hr_impulse.zero)
-                / (6 - hr_impulse.zero)) ** hr_impulse.gamma
+        return duration * ((max(heart_rate_zone, hr_impulse.zero) - hr_impulse.zero)
+                           / (6 - hr_impulse.zero)) ** hr_impulse.gamma
 
     def _calculate_zone(self, s, heart_rate, time, activity_group):
         self._load_fthr_cache(s, activity_group)

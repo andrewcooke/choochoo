@@ -88,7 +88,10 @@ The HR Impulse is calculated in three steps:
         impulse = zone' * delta_t
 
     where `delta_t` is the time (in seconds) between this measurement
-    and the next (in a typical FIT file this is XXX seconds).
+    and the next.  In a typical FIT file `delta` is around 10s; if it
+    exceeds a configurable cutoff (`max_secs`, default 60s) then no
+    impulse is calculated.  This avoids calculating incorrect, high
+    impulses when the data feed drops.
 
 The `gamma` and `zero` parameters allow us to encode beliefs about the
 physiological processes we are modelling.  For example, if we believe
@@ -99,12 +102,20 @@ giving a curve that approximates a "top hat" response.
 
 ### Response Calculation
 
+![Response Calculation](response.png)
+
 The response is calculated by integrating each impulse and then
 decaying with the appropriate time constant as time increases.  In
 addition, an arbitrary scale factor can be applied.
 
 By default, the time period (`tau_days`) is taken as 7 for Fatigue and
-42 for Fitness.  The `scale` factor is 1.
+42 for Fitness.  The `scale` factor is 5 for Fatigue and 1 for Fitness
+(chosen arbitrarily so that the two values cover similar ranges).
+
+In the figure Impulses are represented by area (so the y axis is
+Impulse / duration).  It is just possible to make out the increments
+in the Fatigue and Fitness responses as they integrate the Impulse
+data.
 
 ### Results
 ## Future Work
