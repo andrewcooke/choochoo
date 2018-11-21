@@ -28,17 +28,20 @@ def add_impulse(s, c, activity_group):
                                                'see HRImpulse enum')
     set_constant(s, hr_impulse, dumps({'dest_name': HR_IMPULSE, 'gamma': 1.0, 'zero': 2}))
 
+    # 7 and 42 days as for training peaks
+    # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
+
     fitness_name = 'Fitness.%s' % activity_group.name
     fitness = add_enum_constant(s, fitness_name, Response, single=True, constraint=activity_group_constraint,
                                 description='Data needed to calculate the FF-model fitness - see Response enum')
     set_constant(s, fitness, dumps({'src_name': HR_IMPULSE, 'src_owner': short_cls(HeartRateStatistics),
-                                    'dest_name': FITNESS, 'tau_days': 40, 'scale': 1, 'start': 0}))
+                                    'dest_name': FITNESS, 'tau_days': 42, 'scale': 1, 'start': 0}))
 
     fatigue_name = 'Fatigue.%s' % activity_group.name
     fatigue = add_enum_constant(s, fatigue_name, Response, single=True, constraint=activity_group_constraint,
                                 description='Data needed to calculate the FF-model fitness - see Response enum')
     set_constant(s, fatigue, dumps({'src_name': HR_IMPULSE, 'src_owner': short_cls(HeartRateStatistics),
-                                    'dest_name': FATIGUE, 'tau_days': 20, 'scale': 1, 'start': 0}))
+                                    'dest_name': FATIGUE, 'tau_days': 7, 'scale': 1, 'start': 0}))
 
     add_statistics(s, HeartRateStatistics, c, impulse=hr_impulse_name)
     add_statistics(s, ImpulseStatistics, c, responses=(fitness_name, fatigue_name), impulse=hr_impulse_name)

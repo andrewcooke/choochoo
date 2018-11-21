@@ -50,6 +50,5 @@ support for power meters.
   * [Training Plans](training-plans)
 
 * Development
-  * [Models](models)
-  * [Expressions](expressions)
+  * [Heart Rate Training Impulse](impulse)
   
