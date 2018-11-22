@@ -24,6 +24,7 @@
   * [Choochoo](#choochoo)
   * [Impulse Calculation](#impulse-calculation)
   * [Response Calculation](#response-calculation)
+  * [Architecture](#architecture)
   * [Results](#results)
 * [Discussion](#discussion)
   * [New Parameters](#new-parameters)
@@ -245,16 +246,15 @@ not necessarily inaccurate measurements.
 #### Arbitrary Form
 
 The [theory](#theory) section made clear just how arbitrary the
-FF-Model is.  Its success may be due to it being simple, and hard to
-test, rather than it being "right".
+FF-Model is.
 
 How can we make the model more flexible without adding so many
 parameters it becomes useless?
 
 For example, "sweet spot" training is currently popular.  Are its
 claimed advantages reflected in the FF-Model?  Or does the FF-Model by
-its very nature not care?  After all, high exertion for short time
-gives the same Impulse as low exertion for short times.
+its very nature not care?  After all, doesn't high exertion for short
+time gives the same Impulse as low exertion for long times?
 
 #### Parameter Fitting
 
@@ -385,6 +385,28 @@ Impulse / duration).  It is just possible to make out the increments
 in the Fatigue and Fitness responses as they sum the Impulse data.
 Fatigue is, as expected, increasing more quickly than the Fitness (but
 will also decay more quickly once the exercise stops).
+
+### Architecture
+
+Choochoo was extended with three new pipeline classes:
+
+* `HeartRateStatistics` - responsible for calculating the HR Impulse.
+
+* `ImpulseStatistics` - responsible for calculating the Fitness and
+  Fatigue responses.
+
+* `TODO` - responsible for displaying the responses in the diary.
+
+These can be configured in various ways.  For example, by adding
+additional instances of `HeartRateStatistics` to the statistics
+pipeline we can calculate different HR Impules (with different `gamma`
+and `zero` parameters).
+
+Similarly, we can configure additional responses.
+
+Choochoo manages activities by "activity group" (eg running, cycling).
+The statistics above are calculated for particular groups.  So we can
+have different paramaters for different activities.
 
 ### Results
 
