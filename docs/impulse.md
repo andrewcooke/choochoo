@@ -10,7 +10,11 @@
     * [Fatigue](#fatigue)
     * [Summary](#summary)
     * [Surely There's More?](#surely-theres-more)
-  * [History](#history)
+  * [Survey](#survey)
+    * [History](#history)
+    * [Software](#software)
+      * [Training Peaks](#training-peaks)
+      * [Golden Cheeta](#golden-cheetah)
 
 ## Introduction
 
@@ -152,7 +156,7 @@ does a decent job.
 
 The cynic in me suspects that part of the reason this works so well is
 that people are difficult to experiment on reliably.  I'll discuss
-this further below when looking at parameter estimation.
+this below when looking at parameter estimation.
 
 ## Survey
 
