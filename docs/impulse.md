@@ -1,5 +1,5 @@
 
-# Heart Rate Training Impulse
+# Simple Heart Rate Impulse Training (SHRIMP)
 
 * [Introduction](#introduction)
   * [Aims](#aims)
