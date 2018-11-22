@@ -16,7 +16,7 @@
   * [Software](#software)
     * [Training Peaks](#training-peaks)
     * [Golden Cheeta](#golden-cheetah)
-  * [Limitations](#limitations)
+  * [Open Questions](#open-questions)
     * [Heart Rate v Power](#heart-rate-v-power)
     * [Arbitrary Form](#arbitrary-form)
     * [Parameter Fitting](#parameter-fitting)
@@ -28,12 +28,14 @@
 * [Future Work](#future-work)
   * [Fitting Parameters](#fitting-parameters)
   * [Multiple Components](#multiple-components)
-* [Appendix - Getting Started with ChooChoo](#getting-started-with-choochoo)
+* [Appendix - Getting Started with ChooChoo](#appendix---getting-started-with-choochoo)
   * [Install](#install)
   * [Configure](#configure)
   * [Load Data](#load-data)
   * [Plot Data](#plot-data)
-* [Appendix - The Author](#appendix-the-author)
+  * [Modify Constants](#modify-constants)
+  * [Re-calculate](#re---calculate)
+* [Appendix - The Author](#appendix---the-author)
 
 ## Introduction
 
@@ -58,8 +60,8 @@ questions that I hope to explore using this software.
 
 ### Overview
 
-Imagine it's your job to model how an athlete gets better or worse
-over time.  To measure *Fitness*.  What do you do?
+Imagine it's your job to predict how an athlete gets better or worse
+over time.  To model *Fitness*.  What do you do?
 
 You know they get better if they train.  And - within reason - the
 more they train the better they get.  So a good first step would be to
@@ -163,13 +165,13 @@ add a factor so it grows more quickly when we do train, and tweak the
 numbers so it decays more quickly when we don't train.
 
 (By the way, if you hadn't guessed already, the "FF" in FF-Model
-stands for Fitness / Fatigue.).
+stands for Fitness / Fatigue.)
 
 ### Seriously?
 
-If that seems completely arbitrary, well, yeah.  But it seems to work.
-People dreamt this up and then went away and tested it, and found it
-does a decent job.
+If that seems completely arbitrary, well, yeah.  But it works.  People
+dreamt this up and then went away and tested it, and found it does a
+decent job.
 
 The cynic in me suspects this works because people are difficult to
 experiment on reliably.  I'll discuss this below when looking at
@@ -193,7 +195,10 @@ https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
 
 #### Golden Cheetah
 
-### Limitations
+### Open Questions
+
+If we look at the FF-Model, and current implementations, what problems
+can we see?  Where can we improve things?  What can go wrong?
 
 #### Heart Rate v Power
 
@@ -208,7 +213,8 @@ confuse "expensive" with "good".
 Measuring power has two clear advantages over heart rate:
 
 * Fast response.  If you increase effort the numbers respond
-  immediately.  In contrast, heart rate takes time to increase.
+  immediately.  In contrast, heart rate takes time to increase.  This
+  is called "lag".
 
 * Simple, direct interpretation.  It's meaningful to compare power
   output between two people.  Or to compare power output for the same
@@ -223,25 +229,38 @@ However, heart rate also has an advantage:
   effort on your part will be clear in the heart rate data.
 
 Since our model is based on the idea that physiological load is what
-makes you fitter it's unreasonable to think heart rate could provide
+makes you fitter it's reasonable to think heart rate could provide
 useful insights.
 
-Lagged data are frustrating when trying to judge effort in intervals.
-But that does have to imply that heart rate Impulse measurements are
-unreliable.  For a linear system (ie `gamma` = 1) what you miss in the
-slow pick-up is "paid for" later, when heart rate stays high after the
-exercise finishes.  Laggy measurements are not necessarily inaccurate
-measurements.
+Lagged data are frustrating when trying to judge effort doing
+intervals.  But that does not imply that heart rate Impulse
+measurements are unreliable.  For a linear system (ie `gamma` = 1)
+what you miss in the slow pick-up can be "paid for" later, when heart
+rate stays high after the exercise finishes.  Laggy measurements are
+not necessarily inaccurate measurements.
 
 #### Arbitrary Form
 
 The [theory](#theory) section made clear just how arbitrary the
-FF-Model is.  Its success may be due more to it being simple, and hard
-to test, than it being "right".
+FF-Model is.  Its success may be due to it being simple, and hard to
+test, rather than it being "right".
+
+How can we make the model more flexible without adding so many
+parameters it becomes useless?
+
+For example, "sweet spot" training is currently popular.  Are its
+claimed advantages reflected in the FF-Model?  Or does the FF-Model by
+its very nature not care?  After all, high exertion for short time
+gives the same Impulse as low exertion for short times.
 
 #### Parameter Fitting
 
+Do we need different parameters for different contexts?  Do we need
+different parameters for different sports?  Or different styles of
+training.
 
+Should we change training to reflect the need to measure parameters?
+What kind of measurements should we make?
 
 ## This Work
 
@@ -359,9 +378,9 @@ By default, the time-scale (`tau_days`) is taken as 7 for Fatigue and
 
 In the figure Impulses are represented by area (so the y axis is
 Impulse / duration).  It is just possible to make out the increments
-in the Fatigue and Fitness responses as they integrate the Impulse
-data.  Fatigue is, as expected, increasing more quickly than the
-Fitness (but will also decay more quickly once the exercise stops).
+in the Fatigue and Fitness responses as they sum the Impulse data.
+Fatigue is, as expected, increasing more quickly than the Fitness (but
+will also decay more quickly once the exercise stops).
 
 ### Results
 ## Future Work
@@ -389,12 +408,12 @@ else you might want to do in Python).
 
     > python -m venv env
 
-Next enable that:
+Enable that:
 
     > souce env/bin/activate
 
 Your prompt should now show `(env)`.  When you see that you're using
-the local copy of Python.  You will need to do this whenevr you want
+the local copy of Python.  You will need to do this whenever you want
 to use Python and Choochoo.
 
 With all that preparation done, we can install Choochoo:
@@ -451,10 +470,14 @@ plot the results in your browser:
 This should open a new page in your browser.  Select
 ch2/data/notebooks and then click on TODO
 
+### Modify Constants
+
+### Re-calculate
+
 ## Appendix - The Author
 
-I'm adding because I don't want to mislead.  I'm no expert on this
-stuff.  The details above come from papers I've found on-line.  I
+I'm adding this because I don't want to mislead.  I'm no expert on
+this stuff.  The details above come from papers I've found on-line.  I
 could have misunderstood.  So check things out for youself.  I've
 collected some of the papers
 [here](https://github.com/andrewcooke/choochoo/tree/master/data/training).
