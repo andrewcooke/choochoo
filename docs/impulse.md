@@ -61,7 +61,7 @@ First, we need to gauge *intensity*, so we need something you can
 measure.  Power meters are the obvious example.  But there are other
 options, too.  Perceived exertion (ranked on a numeric scale - there
 are various standards) is not as sexy, but could work.  Heart rate is
-another option.
+another possibility (one I'll return to later).
 
 Second, we need to measure time.  Presumably an hour's work at a given
 intensity is "worth" twice as much as 30mins (but this *is* just an
@@ -92,8 +92,7 @@ In the simplest case there are two options:
   subtracting 10%).
 
 The second of these tends to be more common in nature and leads to a
-common mathematical model..  That model is "exponential decay" (it's
-the same maths as radioactivity).
+common mathematical model..  That model is "exponential decay".
 
 I won't go into the details, but decreasing by a percentage (rather
 than a fixed amount) is equivalent to having a half-life - a time over
@@ -125,20 +124,18 @@ away.  That's easy to include in the model - we'll scale it by some
 number so it grows more quickly, and we'll give it a shorter
 time-scale, so it falls back down more quickly.
 
-With this we can model "being careful" - the idea is to do enough
-training that Fitness creeeps up gradually, but to avoid doing so much
-that Fatigue gets dangerously high.  Train, but keep an eye on Fatigue
-- it it's getting too bug, take a break.
+With this we explain "being careful" - the idea is to do enough
+training that Fitness creeps up gradually, but to avoid doing so much
+that Fatigue gets dangerously high.  Train, but keep an eye on
+Fatigue - if it's getting too big, take a break.
 
 #### Summary
 
-So what have we got?
-
 For both Fitness and Fatigue:
 
-* We add up the Impulse from training.
+* Add up the Impulse from training.
 
-* We decrease the numbers as time passes.
+* Decrease the numbers as time passes.
 
 The difference between the two is that Fatigue is "more noisy" - we
 add a factor so it grows more quickly when we do train, and tweak the
@@ -150,10 +147,22 @@ stands for Fitness / Fatigue.).
 #### Seriously?
 
 If that seems completely arbitrary, well, yeah.  But it seems to work.
-People dreamt this up and then went away and tested it, and it does a
-decent job.
+People dreamt this up and then went away and tested it, and found it
+does a decent job.
+
+The cynic in me suspects that part of the reason this works so well is
+that people are difficult to experiment on reliably.  I'll discuss
+this further below when looking at parameter estimation.
+
+## Survey
 
 ### History
+
+I can't access many of the original papers - they're either
+pre-Internet or behind paywalls - so what follows comes from reading
+the survey section of other papers.
+
+
 
 ### Other Software
 
