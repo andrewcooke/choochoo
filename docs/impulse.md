@@ -9,7 +9,7 @@
     * [Exponential Decay](#exponentia-decay)
     * [Fatigue](#fatigue)
     * [Summary](#summary)
-    * [Surely There's More?](#surely-theres-more)
+    * [Seriously?](#seriously)
   * [Survey](#survey)
     * [History](#history)
     * [Software](#software)
@@ -137,7 +137,7 @@ Fatigue - if it's getting too big, take a break.
 
 For both Fitness and Fatigue:
 
-* Add up the Impulse from training.
+* Add up the Impulses from training.
 
 * Decrease the numbers as time passes.
 
@@ -162,33 +162,79 @@ this below when looking at parameter estimation.
 
 ### History
 
-I can't access many of the original papers - they're either
-pre-Internet or behind paywalls - so what follows comes from reading
-the survey section of other papers.
+I can't access many of the original papers.  They are either
+pre-Internet or behind paywalls.  What follows comes from reading the
+survey section of other papers.
 
+### Literature
 
+### Software
 
-### Other Software
-
-## Survey
-### History
-### Arbitrary Parameters
-### Current Support
+#### Training Peaks
 
 https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
 
-Limitations.
+#### Golden Cheetah
 
-### Heart Rate v Power
+### Limitations
+
+#### Heart Rate v Power
+
+Discussion of Heart Rate v Power is usually polarized (at least in
+cycling communities).  Most people appear to believe that power is
+universally "better" than heart rate.
+
+Personally, I think both have their advantages.  I suspect heart rate
+is dismissed partly because it's less expensive.  People seem to
+confuse "expensive" with "good".
+
+Measuring power has two clear advantages over heart rate:
+
+* Fast response.  If you increase effort the numbers respond
+  immediately.  In contrast, heart rate takes time to increase.
+
+* Simple, direct interpretation.  It's meaningful to compare power
+  output between two people.  Or to compare power output for the same
+  person from different times.  The value has a clear relation to the
+  ability to win races.  In contrast, interpreting heart rate is much
+  more complex.
+
+However, heart rate also has an advantage:
+
+* It is a more direct measure of the physiological load.  Laying down
+  300W may almost kill you, while leaving Peter Sagan unruffled - that
+  effort on your part will be clear in the heart rate data.
+
+Since our model is based on the idea that physiological load is what
+makes you fitter it's unreasonable to think heart rate could provide
+useful insights.
+
+Lagged data are frustrating when trying to judge effort in intervals.
+But that does have to imply that heart rate Impulse measurements are
+unreliable.  For a linear system (ie `gamma` = 1) what you miss in the
+slow pick-up is "paid for" later, when heart rate stays high after the
+exercise finishes.  Laggy measurements are not necessarily inaccurate
+measurements.
+
+#### Arbitrary Form
+
+The [theory](#theory) section made clear just how arbitrary the
+FF-Model is.  Its success may be due more to it being simple, and hard
+to test, than it being "right".
+
+#### Parameter Fitting
+
+
 
 ## This Work
 
 ### Choochoo
 
-Choochoo is an free, hackable training diary, written in Python, that
-runs on a wide variety of computers.  It can import FIT files, process
-data with user-provided algorithms, and export results to Pandas and
-Jupyter for further analysis and display.
+[Choochoo](https://github.com/andrewcooke/choochoo) is a free,
+hackable training diary, written in Python, that runs on a wide
+variety of computers.  It can import FIT files, process data with
+user-provided algorithms, and export results to Pandas and Jupyter for
+further analysis and display.
 
 This work extended Choochoo as follows:
 
@@ -218,6 +264,11 @@ The HR Impulse is calculated in three steps:
 1.  Each Heart Rate measurement is converted to a HR Zone following the
     schema used by the [British Cycling
     calculator](https://www.britishcycling.org.uk/membership/article/20120925-Power-Calculator-0).
+
+    This step transforms arbitrary Heart Rate values onto a scale that
+    has some physiological basis.  Zones are relative to FTHR
+    (Functional Threshold Heart Rate).  The values are comparabale
+    between different people.
     
     The calculated zone is a floating point value, numerically equal
     to the zone number at the lower end of the zone, and linearly
@@ -250,6 +301,16 @@ The HR Impulse is calculated in three steps:
     A value of `gamma` less than 1 will give a "comvex" curve -
     implying that low zones are similar in importance to high zones.
 
+    This step accomodates different ideas about how the body responds
+    to exercise - whether all levels of exertion should be weighted
+    similarly, or whether harder efforts are "worth more" in some way.
+
+    For example, if we believe that only intensive exertion is
+    effective, we can raise `zero` to 3 or 4.  And if we feel that all
+    exertion above that point should be weighted roughly equally then
+    we can lower `gamma` to, say, 0.1, giving a curve that
+    approximates a "top hat" response.
+
     By default, the `gamma` parameter is set to 1 and `zero` to 2.
 
 3.  The impulse is calculated as:
@@ -262,29 +323,28 @@ The HR Impulse is calculated in three steps:
     impulse is calculated.  This avoids calculating incorrect, high
     impulses when the data feed drops.
 
-The `gamma` and `zero` parameters allow us to encode beliefs about the
-physiological processes we are modelling.  For example, if we believe
-that only intensive exertion is effective, we can raise `zero` to 3 or
-4.  And if we feel that all exertion above that point should be
-weighted roughly equally then we can lower `gamma` to, say, 0.1,
-giving a curve that approximates a "top hat" response.
+    This step takes account of how much time was spent on training at
+    this particular level of exercise.  As discussed earlier, we
+    assume that more time means more gains.
+
 
 ### Response Calculation
 
 ![Response Calculation](response.png)
 
-The response is calculated by integrating each impulse and then
-decaying with the appropriate time constant as time increases.  In
-addition, an arbitrary scale factor can be applied.
+The response is calculated by adding each impulse and decaying with
+the appropriate time constant as time increases.  In addition, an
+arbitrary scale factor can be applied.
 
-By default, the time period (`tau_days`) is taken as 7 for Fatigue and
+By default, the time-scale (`tau_days`) is taken as 7 for Fatigue and
 42 for Fitness.  The `scale` factor is 5 for Fatigue and 1 for Fitness
 (chosen arbitrarily so that the two values cover similar ranges).
 
 In the figure Impulses are represented by area (so the y axis is
 Impulse / duration).  It is just possible to make out the increments
 in the Fatigue and Fitness responses as they integrate the Impulse
-data.
+data.  Fatigue is, as expected, increasing more quickly than the
+Fitness (but will also decay more quickly once the exercise stops).
 
 ### Results
 ## Future Work
