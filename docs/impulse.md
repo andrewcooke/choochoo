@@ -1,5 +1,5 @@
 
-# Simple Heart Rate Impulse Training (SHRIMP)
+# Scaled Heart Rate Impulse Training (SHRIMP)
 
 * [Introduction](#introduction)
 
@@ -25,9 +25,10 @@
   * [Impulse Calculation](#impulse-calculation)
   * [Response Calculation](#response-calculation)
   * [Results](#results)
-* [Future Work](#future-work)
-  * [Fitting Parameters](#fitting-parameters)
-  * [Multiple Components](#multiple-components)
+* [Discussion](#discussion)
+  * [New Parameters](#new-parameters)
+  * [Training and Measurement](#training-and-measurement)
+  * [Multiple Models](#multiple-models)
 * [Appendix - Getting Started with ChooChoo](#appendix---getting-started-with-choochoo)
   * [Install](#install)
   * [Configure](#configure)
@@ -197,7 +198,7 @@ https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
 
 ### Open Questions
 
-If we look at the FF-Model, and current implementations, what problems
+If we look at the FF-Model and current implementations, what problems
 can we see?  Where can we improve things?  What can go wrong?
 
 #### Heart Rate v Power
@@ -310,7 +311,7 @@ The HR Impulse is calculated in three steps:
     to the zone number at the lower end of the zone, and linearly
     interpolated to the upper end.  So, for example, if zone 3
     extended from 130 to 150 bpm a value of 130 would be given a zone
-    value of 3.0 and a value of 140 a value of 3.5.
+    of 3.0 and a value of 140 a zone of 3.5.
 
     Values in zone 1, which has no lower boundary, are all set to 1.0
     (this does not affect the results as these are typically discarded
@@ -363,7 +364,6 @@ The HR Impulse is calculated in three steps:
     this particular level of exercise.  As discussed earlier, we
     assume that more time means more gains.
 
-
 ### Response Calculation
 
 ![Response Calculation](response.png)
@@ -383,9 +383,23 @@ Fatigue is, as expected, increasing more quickly than the Fitness (but
 will also decay more quickly once the exercise stops).
 
 ### Results
-## Future Work
-### Fitting Parameters
-### Multiple Components
+
+## Discussion
+
+### New Parameters
+
+The calculation of HR Impulse allows model parameters to be adjusted
+to more closely match how we expect the body to work (this is the
+"Scaled" in "SHRIMP").
+
+For example, "sweet spot" training implies that there is more
+adavantage in training at high exertion (but not too high).  By
+changing `gamma` and `zero` in the HR Impulse algorithm we can try to
+match that.
+
+### Training and Measurement
+
+### Multiple Models
 
 ## Appendix - Getting Started with Choochoo
 
