@@ -27,9 +27,9 @@ questions that I hope to explore using this software.
 #### Overview
 
 Imagine it's your job to model how an athlete gets better or worse
-over time.  What do you do?
+over time.  To measure *Fitness*.  What do you do?
 
-You know they get better of they train.  And - within reason - the
+You know they get better if they train.  And - within reason - the
 more they train the better they get.  So a good first step would be to
 add up all the training.
 
@@ -57,7 +57,7 @@ intensity is "worth" twice as much as 30mins (but this *is* just an
 assumption - maybe something we could check later).
 
 So mutliplying intensity (however we choose to define that) by time
-seems like a good candidate.
+seems like a good candidate.  This is called Impulse.
 
 Third, we need to decide on a weighting.  Harder workouts score more
 because they are more intense.  But maybe they should score *extra*?
@@ -71,11 +71,72 @@ answers and ran with them.
 
 How, exactly, do we decrease things over time?
 
+In the simplest case there are two options:
 
+* We subtract a fixed amount each day (or hour, or whatever) until
+  there's nothing left.
+
+* We remove a percentage each day (this is like multiplying by a
+  number smaller than 1 - multiplying by 0.9, say, is the same as
+  subtracting 10%).
+
+The second of these (1) tends to be more common in nature and (2)
+leads to a common mathematica shorthand.  This shorthand is
+"exponential decay" (it's the same maths as radioactivity).  
+
+I won't go into the details, but this second approach is equivalent to
+having a half-life - a time over which the initial value drops to
+half.  So we will treate fitness like radioactive decay - after some
+time it will drop to half, then halve again (to one quarter), etc.
+
+(In fact, instead of half-life we use a related number - "exponential
+time-scale" which is about 1.4 times as long as the half life.  But
+that's just a weird detail from the maths - it's not important
+conceptually.)
 
 #### Fatigue
 
-#### Surely There's More
+You may have noticed a problem with our theory so far: it predicts
+that the person who trains most is the fittest.  With no limit.  But
+we know that's not true.  People can over-train.  People can injure
+themselves if they push too hard.
+
+How do we include this?  We need to measure *Fatigue*.
+
+Well, we could add up the amount of training they do....  Wait,
+though.  Isn't that we just said we were going to do for Fitness?  OK,
+so what's the difference?  If both Fitness and Fatigue increase when
+we train then what makes them different?
+
+The difference is that Fatigue is quicker to build and quicker to fall
+away.  That's easy to include in the model - we'll scale it by some
+number so it grows more quickly, and we'll give it a shorter
+time-scale, so it decreases more quickly.
+
+#### Summary
+
+So what have we got?
+
+For both Fitness and Fatigue:
+
+* We add up the Impulse from training.
+
+* We decrease the numbers as time passes.
+
+The difference between the two is that Fatigue is "more noisy" - we
+add a factor so it grows more quickly when we do train, and tweak the
+numbers so it decays more quickly when we don't train.
+
+(By the way, if you hadn't guessed already, the FF in FF-Model stands
+for Fitness / Fatigue.).
+
+#### Surely There's More?
+
+If that seems completely arbitrary, well, yeah.  But it seems to work.
+People dreamt this up and then went away and tested it, and it does a
+decent job.
+
+So 
 
 ### History
 
