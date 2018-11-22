@@ -12,9 +12,28 @@
     * [Seriously?](#seriously)
   * [Survey](#survey)
     * [History](#history)
+    * [Literature](#literature)
     * [Software](#software)
       * [Training Peaks](#training-peaks)
       * [Golden Cheeta](#golden-cheetah)
+    * [Limitations](#limitations)
+      * [Heart Rate v Power](#heart-rate-v-power)
+      * [Arbitrary Form](#arbitrary-form)
+      * [Parameter Fitting](#parameter-fitting)
+* [This Work](#this-work)
+  * [Choochoo](#choochoo)
+  * [Impulse Calculation](#impulse-calculation)
+  * [Response Calculation](#response-calculation)
+  * [Results]
+* [Future Work](#future-work)
+  * [Fitting Parameters](#fitting-parameters)
+  * [Multiple Components](#multiple-components)
+* [Appendix - Getting Started with ChooChoo](#getting-started-with-choochoo)
+  * [Install](#install)
+  * [Configure](#configure)
+  * [Load Data](#load-data)
+  * [Plot Data](#plot-data)
+* [Appendix - The Author](#appendix-the-author)
 
 ## Introduction
 
