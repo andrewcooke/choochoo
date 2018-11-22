@@ -258,9 +258,11 @@ gives the same Impulse as low exertion for short times.
 
 #### Parameter Fitting
 
-Do we need different parameters for different contexts?  Do we need
-different parameters for different sports?  Or different styles of
-training.
+The model has a bunch of parameters.  What values should they have?
+
+Do we need different values for different contexts?  Do we need
+different values for different sports?  Or different styles of
+training?
 
 Should we change training to reflect the need to measure parameters?
 What kind of measurements should we make?
