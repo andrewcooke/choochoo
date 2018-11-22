@@ -1,5 +1,5 @@
 
-# Scaled Heart Rate Impulse Training (SHRIMP)
+# SHRIMP - Scaled Heart Rate Impulse Training
 
 * [Introduction](#introduction)
 
