@@ -1,7 +1,28 @@
 
 # SHRIMP - Scaled Heart Rate Impulse Training
 
-* [Introduction](#introduction)
+## Introduction
+
+I'm writing this article for a couple of reasons.
+
+First, I want to explain and de-mystify the FF-Model.  I get the
+impression many people don't understand quite how *simple* it is.
+Following from that, maybe people aren't understanding exactly what it
+shows, or how it can or should be used.
+
+Second, I want to showcase Choochoo - a *hackable* training diary.
+Choochoo is written for people at the intersection between sport and
+computing / maths / science.  People who want to experiment, get their
+hands dirty, and build their own, personal, customized approach.
+
+So I'm going to show how Choochoo implements the FF-Model.  How the
+calculations are made, what they mean, and how they might be tweaked.
+I'll end with some questions that people might want to explore -
+questions that I hope to explore using this software.
+
+(OK, there's a third reason. SHRIMP.  Cool name, huh?)
+
+## Contents
 
 * [Theory](#theory)
   * [Overview](#overview)
@@ -38,27 +59,6 @@
   * [Modify Constants](#modify-constants)
   * [Re-calculate](#re---calculate)
 * [Appendix - The Author](#appendix---the-author)
-
-## Introduction
-
-I'm writing this article for a couple of reasons.
-
-First, I want to explain and de-mystify the FF-Model.  I get the
-impression many people don't understand quite how *simple* it is.
-Following from that, maybe people aren't understanding exactly what it
-shows, or how it can or should be used.
-
-Second, I want to showcase Choochoo - a *hackable* training diary.
-Choochoo is written for people at the intersection between sport and
-computing / maths / science.  People who want to experiment, get their
-hands dirty, and build their own, personal, customized approach.
-
-So I'm going to show how Choochoo implements the FF-Model.  How the
-calculations are made, what they mean, and how they might be tweaked.
-I'll end with some questions that people might want to explore -
-questions that I hope to explore using this software.
-
-(OK, there's a third reason. SHRIMP.  Cool name, huh?)
 
 ## Theory
 
@@ -100,7 +100,7 @@ seems like a good candidate.  This is called Impulse.
 Third, we need to decide on a weighting.  Harder workouts
 automatically score more because they are more intense.  But maybe
 they should score *extra*?  Maybe there's some threshold - no matter
-how long you do easy work, perhaps it just doesn't count?
+how long you do easy work, it just doesn't count?
 
 These are all valid questions.  Researchers simply picked some simple
 answers and ran with them.
@@ -119,13 +119,12 @@ In the simplest case there are two options:
   subtracting 10%).
 
 The second of these tends to be more common in nature and leads to a
-common mathematical model..  That model is "exponential decay".
+common mathematical model called "exponential decay".
 
-I won't go into the details, but decreasing by a percentage (rather
-than a fixed amount) is equivalent to having a half-life - a time over
-which the initial value drops to half.  We treat fitness like
-radioactive decay - after some time it will drop to half, then to half
-of that (to one quarter), etc.
+I won't go into the details, but this is equivalent to having a
+half-life - a time over which the initial value drops to half.  We
+treat fitness like radioactive decay.  After some time it will drop to
+half, then to half of that (to one quarter), etc.
 
 (In practice, instead of half-life we use a related number -
 "exponential time-scale" which is about 1.4 times as long as the half
@@ -142,9 +141,9 @@ themselves if they push too hard.
 How do we include this?  We need to measure *Fatigue*.
 
 Well, we could add up the amount of training they do....  Wait,
-though.  Isn't that we just said we were going to do for Fitness?  OK,
-so what's the difference?  If both Fitness and Fatigue increase when
-we train then what makes them different?
+though.  Isn't that we just said we were going to do for Fitness?
+What's the difference?  If both Fitness and Fatigue increase when we
+train then what makes them different?
 
 The difference is that Fatigue is quicker to build and quicker to fall
 away.  That's easy to include in the model - we'll scale it by some
@@ -177,9 +176,9 @@ If that seems completely arbitrary, well, yeah.  But it works.  People
 dreamt this up and then went away and tested it, and found it does a
 decent job.
 
-The cynic in me suspects this works because people are difficult to
-experiment on reliably.  I'll discuss this below when looking at
-[parameter fitting](#parameter-fitting).
+The cynic in me suspects this is because people are difficult to
+experiment on.  I'll discuss this below when looking at [parameter
+fitting](#parameter-fitting).
 
 ## Survey
 
@@ -222,9 +221,9 @@ Measuring power has two clear advantages over heart rate:
 
 * Simple, direct interpretation.  It's meaningful to compare power
   output between two people.  Or to compare power output for the same
-  person from different times.  The value has a clear relation to the
-  ability to win races.  In contrast, interpreting heart rate is much
-  more complex.
+  person from two different times.  The value has a clear relation to
+  the ability to win races.  In contrast, interpreting heart rate is
+  much more complex.
 
 However, heart rate also has an advantage:
 
@@ -233,8 +232,8 @@ However, heart rate also has an advantage:
   effort on your part will be clear in the heart rate data.
 
 Since our model is based on the idea that physiological load is what
-makes you fitter it's reasonable to think heart rate could provide
-useful insights.
+makes you fitter it's reasonable that heart rate provides useful
+insights.
 
 Lagged data are frustrating when trying to judge effort doing
 intervals.  But that does not imply that heart rate Impulse
@@ -279,26 +278,15 @@ further analysis and display.
 
 This work extended Choochoo as follows:
 
-* A pipeline task to calculate "HR Impulse" values from Heart Rate
-  measurements during exercise.
+* A task to calculate "HR Impulse" values from Heart Rate measurements
+  during exercise.
 
-* A pipeline task to calculate Fitness and Fatigue responses from
-  these Impulses.
+* A task to calculate Fitness and Fatigue responses from these
+  Impulses.
 
-* A Jupyter notebook to display the results.
-
-Pipeline tasks are Choochoo's extension mechanism for calculating new
-statistics.  They integrate with internal book-keeping to re-calculate
-values when new data are available, or old data are modified.
-
-The tasks are parameterised using "constants" - parameters that
-Choochoo users can modify from the command line.  These allow, for
-example, the exponential decay time periods and the scaling factors in
-the models to be modified.
+* Support for displaying and analysing the results.
 
 ### Impulse Calculation
-
-![The Gamma Parameter](gamma.png)
 
 The HR Impulse is calculated in three steps:
 
@@ -329,6 +317,8 @@ The HR Impulse is calculated in three steps:
         zone' = (max(zone, zero) - zero / (6 - zero)) ** gamma
 
     This is shown in Figure 1 (the `zero` parameter has the value 2)
+
+    ![The Gamma Parameter](gamma.png)
 
     The transformation can be understood in three stages.  First,
     values below a threshold (`zero`) are discarded.  Next, the range
@@ -397,12 +387,21 @@ Choochoo was extended with three new pipeline classes:
 
 * `TODO` - responsible for displaying the responses in the diary.
 
-These can be configured in various ways.  For example, by adding
+Pipeline tasks are Choochoo's extension mechanism for calculating new
+statistics.  They integrate with internal book-keeping to re-calculate
+values when new data are available, or old data are modified.
+
+These can be arranged in various ways.  For example, by adding
 additional instances of `HeartRateStatistics` to the statistics
 pipeline we can calculate different HR Impules (with different `gamma`
 and `zero` parameters).
 
 Similarly, we can configure additional responses.
+
+The tasks are parameterised using "constants" - parameters that
+Choochoo users can modify from the command line.  These allow, for
+example, the exponential decay time periods and the scaling factors in
+the models to be modified.
 
 Choochoo manages activities by "activity group" (eg running, cycling).
 The statistics above are calculated for particular groups.  So we can
