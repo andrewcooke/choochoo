@@ -57,6 +57,8 @@ calculations are made, what they mean, and how they might be tweaked.
 I'll end with some questions that people might want to explore -
 questions that I hope to explore using this software.
 
+(OK, there's a third reason. SHRIMP.  Cool name, huh?)
+
 ## Theory
 
 ### Overview
