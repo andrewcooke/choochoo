@@ -2,7 +2,9 @@
 # Simple Heart Rate Impulse Training (SHRIMP)
 
 * [Introduction](#introduction)
+
   * [Aims](#aims)
+  
   * [Theory](#theory)
     * [Overview](#overview)
     * [Adding Up Training](#adding-up-training)
@@ -24,7 +26,7 @@
   * [Choochoo](#choochoo)
   * [Impulse Calculation](#impulse-calculation)
   * [Response Calculation](#response-calculation)
-  * [Results]
+  * [Results](#results)
 * [Future Work](#future-work)
   * [Fitting Parameters](#fitting-parameters)
   * [Multiple Components](#multiple-components)
