@@ -1,8 +1,6 @@
 
 # SHRIMP - Scaled Heart Rate Impulse Training
 
-## Introduction
-
 I'm writing this article for a couple of reasons.
 
 First, I want to explain and de-mystify the FF-Model.  I get the
@@ -316,7 +314,7 @@ The HR Impulse is calculated in three steps:
 
         zone' = (max(zone, zero) - zero / (6 - zero)) ** gamma
 
-    This is shown in Figure 1 (the `zero` parameter has the value 2)
+    This is shown below (the `zero` parameter has the value 2)
 
     ![The Gamma Parameter](gamma.png)
 
@@ -486,6 +484,12 @@ Once done, you can run Choochoo:
 So create a default database:
 
     > ch2 default-config
+
+You need to define your FTHR or the HR Zones can't be calculated:
+
+    > ch2 constants --set FTHR.Bike NNN
+
+(replace `NNN` with your FTHR in bpm).
     
 ### Load Data
 
