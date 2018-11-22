@@ -1,6 +1,17 @@
 
 # Heart Rate Training Impulse
 
+* [Introduction](#introduction)
+  * [Aims](#aims)
+  * [Theory](#theory)
+    * [Overview](#overview)
+    * [Adding Up Training](#adding-up-training)
+    * [Exponential Decay](#exponentia-decay)
+    * [Fatigue](#fatigue)
+    * [Summary](#summary)
+    * [Surely There's More?](#surely-theres-more)
+  * [History](#history)
+
 ## Introduction
 
 ### Aims
@@ -133,16 +144,14 @@ The difference between the two is that Fatigue is "more noisy" - we
 add a factor so it grows more quickly when we do train, and tweak the
 numbers so it decays more quickly when we don't train.
 
-(By the way, if you hadn't guessed already, the FF in FF-Model stands
-for Fitness / Fatigue.).
+(By the way, if you hadn't guessed already, the "FF" in FF-Model
+stands for Fitness / Fatigue.).
 
-#### Surely There's More?
+#### Seriously?
 
 If that seems completely arbitrary, well, yeah.  But it seems to work.
 People dreamt this up and then went away and tested it, and it does a
 decent job.
-
-So 
 
 ### History
 
