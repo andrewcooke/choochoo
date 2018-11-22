@@ -2,26 +2,23 @@
 # Simple Heart Rate Impulse Training (SHRIMP)
 
 * [Introduction](#introduction)
-
-  * [Aims](#aims)
-  
-  * [Theory](#theory)
-    * [Overview](#overview)
-    * [Adding Up Training](#adding-up-training)
-    * [Exponential Decay](#exponentia-decay)
-    * [Fatigue](#fatigue)
-    * [Summary](#summary)
-    * [Seriously?](#seriously)
-  * [Survey](#survey)
-    * [History](#history)
-    * [Literature](#literature)
-    * [Software](#software)
-      * [Training Peaks](#training-peaks)
-      * [Golden Cheeta](#golden-cheetah)
-    * [Limitations](#limitations)
-      * [Heart Rate v Power](#heart-rate-v-power)
-      * [Arbitrary Form](#arbitrary-form)
-      * [Parameter Fitting](#parameter-fitting)
+* [Theory](#theory)
+  * [Overview](#overview)
+  * [Adding Up Training](#adding-up-training)
+  * [Exponential Decay](#exponentia-decay)
+  * [Fatigue](#fatigue)
+  * [Summary](#summary)
+  * [Seriously?](#seriously)
+* [Survey](#survey)
+  * [History](#history)
+  * [Literature](#literature)
+  * [Software](#software)
+    * [Training Peaks](#training-peaks)
+    * [Golden Cheeta](#golden-cheetah)
+  * [Limitations](#limitations)
+    * [Heart Rate v Power](#heart-rate-v-power)
+    * [Arbitrary Form](#arbitrary-form)
+    * [Parameter Fitting](#parameter-fitting)
 * [This Work](#this-work)
   * [Choochoo](#choochoo)
   * [Impulse Calculation](#impulse-calculation)
@@ -38,8 +35,6 @@
 * [Appendix - The Author](#appendix-the-author)
 
 ## Introduction
-
-### Aims
 
 I'm writing this article for a couple of reasons.
 
@@ -58,9 +53,9 @@ calculations are made, what they mean, and how they might be tweaked.
 I'll end with some questions that people might want to explore -
 questions that I hope to explore using this software.
 
-### Theory
+## Theory
 
-#### Overview
+### Overview
 
 Imagine it's your job to model how an athlete gets better or worse
 over time.  To measure *Fitness*.  What do you do?
@@ -78,7 +73,7 @@ Congratulations!  You just invented the FF-Model.
 
 All we need to do now is worry about the details...
 
-#### Adding Up Training
+### Adding Up Training
 
 What, exactly, do we add up?
 
@@ -103,7 +98,7 @@ how long you do easy work, perhaps it just doesn't count?
 These are all valid questions.  Researchers simply picked some simple
 answers and ran with them.
 
-#### Exponential Decay
+### Exponential Decay
 
 How, exactly, do we decrease things over time?
 
@@ -130,7 +125,7 @@ of that (to one quarter), etc.
 life.  But that's just a weird detail from the maths - it's not
 important conceptually.)
 
-#### Fatigue
+### Fatigue
 
 You may have noticed a problem with our theory so far: it predicts
 that the person who trains most is the fittest.  With no limit.  But
@@ -154,7 +149,7 @@ training that Fitness creeps up gradually, but to avoid doing so much
 that Fatigue gets dangerously high.  Train, but keep an eye on
 Fatigue - if it's getting too big, take a break.
 
-#### Summary
+### Summary
 
 For both Fitness and Fatigue:
 
@@ -169,7 +164,7 @@ numbers so it decays more quickly when we don't train.
 (By the way, if you hadn't guessed already, the "FF" in FF-Model
 stands for Fitness / Fatigue.).
 
-#### Seriously?
+### Seriously?
 
 If that seems completely arbitrary, well, yeah.  But it seems to work.
 People dreamt this up and then went away and tested it, and found it
