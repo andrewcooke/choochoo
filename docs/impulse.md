@@ -2,6 +2,7 @@
 # Simple Heart Rate Impulse Training (SHRIMP)
 
 * [Introduction](#introduction)
+
 * [Theory](#theory)
   * [Overview](#overview)
   * [Adding Up Training](#adding-up-training)
@@ -128,8 +129,8 @@ important conceptually.)
 ### Fatigue
 
 You may have noticed a problem with our theory so far: it predicts
-that the person who trains most is the fittest.  With no limit.  But
-we know that's not true.  People can over-train.  People can injure
+that the person who trains most is the fittest.  With no limit.  We
+know that's not true.  People can over-train.  People can injure
 themselves if they push too hard.
 
 How do we include this?  We need to measure *Fatigue*.
@@ -144,10 +145,10 @@ away.  That's easy to include in the model - we'll scale it by some
 number so it grows more quickly, and we'll give it a shorter
 time-scale, so it falls back down more quickly.
 
-With this we explain "being careful" - the idea is to do enough
-training that Fitness creeps up gradually, but to avoid doing so much
-that Fatigue gets dangerously high.  Train, but keep an eye on
-Fatigue - if it's getting too big, take a break.
+We are modelling "being careful" - the idea is to do enough training
+that Fitness creeps up gradually, but to avoid doing so much that
+Fatigue gets dangerously high.  Train, but keep an eye on Fatigue.  If
+it's getting too high, take a break.
 
 ### Summary
 
@@ -170,9 +171,9 @@ If that seems completely arbitrary, well, yeah.  But it seems to work.
 People dreamt this up and then went away and tested it, and found it
 does a decent job.
 
-The cynic in me suspects that part of the reason this works so well is
-that people are difficult to experiment on reliably.  I'll discuss
-this below when looking at parameter estimation.
+The cynic in me suspects this works because people are difficult to
+experiment on reliably.  I'll discuss this below when looking at
+[parameter fitting](#parameter-fitting).
 
 ## Survey
 
