@@ -59,10 +59,10 @@ assumption - maybe something we could check later).
 So mutliplying intensity (however we choose to define that) by time
 seems like a good candidate.  This is called Impulse.
 
-Third, we need to decide on a weighting.  Harder workouts score more
-because they are more intense.  But maybe they should score *extra*?
-Maybe there's some threshold - no matter how long you do easy work,
-perhaps it just doesn't count?
+Third, we need to decide on a weighting.  Harder workouts
+automatically score more because they are more intense.  But maybe
+they should score *extra*?  Maybe there's some threshold - no matter
+how long you do easy work, perhaps it just doesn't count?
 
 These are all valid questions.  Researchers simply picked some simple
 answers and ran with them.
@@ -80,19 +80,20 @@ In the simplest case there are two options:
   number smaller than 1 - multiplying by 0.9, say, is the same as
   subtracting 10%).
 
-The second of these (1) tends to be more common in nature and (2)
-leads to a common mathematica shorthand.  This shorthand is
-"exponential decay" (it's the same maths as radioactivity).  
+The second of these tends to be more common in nature and leads to a
+common mathematical model..  That model is "exponential decay" (it's
+the same maths as radioactivity).
 
-I won't go into the details, but this second approach is equivalent to
-having a half-life - a time over which the initial value drops to
-half.  So we will treate fitness like radioactive decay - after some
-time it will drop to half, then halve again (to one quarter), etc.
+I won't go into the details, but decreasing by a percentage (rather
+than a fixed amount) is equivalent to having a half-life - a time over
+which the initial value drops to half.  We treat fitness like
+radioactive decay - after some time it will drop to half, then to half
+of that (to one quarter), etc.
 
-(In fact, instead of half-life we use a related number - "exponential
-time-scale" which is about 1.4 times as long as the half life.  But
-that's just a weird detail from the maths - it's not important
-conceptually.)
+(In practice, instead of half-life we use a related number -
+"exponential time-scale" which is about 1.4 times as long as the half
+life.  But that's just a weird detail from the maths - it's not
+important conceptually.)
 
 #### Fatigue
 
@@ -111,7 +112,12 @@ we train then what makes them different?
 The difference is that Fatigue is quicker to build and quicker to fall
 away.  That's easy to include in the model - we'll scale it by some
 number so it grows more quickly, and we'll give it a shorter
-time-scale, so it decreases more quickly.
+time-scale, so it falls back down more quickly.
+
+With this we can model "being careful" - the idea is to do enough
+training that Fitness creeeps up gradually, but to avoid doing so much
+that Fatigue gets dangerously high.  Train, but keep an eye on Fatigue
+- it it's getting too bug, take a break.
 
 #### Summary
 
