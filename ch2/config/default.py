@@ -4,6 +4,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
 from .impulse import add_impulse
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
+from ..squeal.tables.topic import TopicJournal
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.summary import SummaryStatistics
@@ -15,7 +16,7 @@ from ..stoats.read.monitor import MonitorImporter
 from ..uweird.fields.topic import Text, Float, Score0
 
 
-def default(db, no_diary=False):
+def default(log, db, no_diary=False):
 
     with db.session_context() as s:
 
@@ -99,3 +100,6 @@ def default(db, no_diary=False):
             add_topic_field(s, diary, 'Route', c,
                             summary='[cnt]',
                             display_cls=Text)
+
+        # finally, set the TZ so that first use of teh diary doesn't wipe all our intervals
+        TopicJournal.check_tz(log, s)

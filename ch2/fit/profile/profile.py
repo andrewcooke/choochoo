@@ -31,7 +31,6 @@ def load_profile(log):
 
 
 def load_fit(log, fit_path, warn=False, profile_path=None):
-    # todo separate? (this is called a lot on repeated reads)
     if profile_path:
         log.debug('Reading profile from %s' % profile_path)
         _nlog, types, messages = read_profile(log, profile_path, warn=warn)

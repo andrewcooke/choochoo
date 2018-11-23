@@ -5,11 +5,12 @@ from json import dumps, loads
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, Boolean, desc
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.functions import count
 
 from .source import Source, SourceType
 from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
 from ..support import Base
-from ..types import Cls, Json, lookup_cls
+from ..types import Cls, Json, lookup_cls, short_cls
 from ...lib.date import local_date_to_time, format_time
 
 
@@ -83,6 +84,40 @@ class SystemConstant(Base):
     name = Column(Text, primary_key=True)
     value = Column(Text, nullable=False)
 
+    TIMEZONE = 'timezone'
+    LOCK = 'lock'
+
+    @classmethod
+    def is_locked(cls, s):
+        s.commit()
+        return s.query(SystemConstant). \
+            filter(SystemConstant.name == SystemConstant.LOCK).one_or_none()
+
+    @classmethod
+    def assert_unlocked(cls, s, allow=None):
+        s.commit()
+        lock = cls.is_locked(s)
+        if lock and (not allow or lock.value != short_cls(allow)):
+            raise Exception('Database is locked.  See `ch2 help unlock`.')
+
+    @classmethod
+    def acquire_lock(cls, s, owner):
+        s.commit()
+        cls.assert_unlocked(s, allow=owner)
+        s.add(SystemConstant(name=SystemConstant.LOCK, value=short_cls(owner)))
+        s.commit()
+
+    @classmethod
+    def release_lock(cls, s, owner):
+        s.commit()
+        lock = s.query(SystemConstant). \
+            filter(SystemConstant.name == SystemConstant.LOCK,
+                   SystemConstant.value == short_cls(owner)).all()
+        if lock:
+            for l in lock:
+                s.delete(l)
+            s.commit()
+
 
 class Validate(ABC):
 
@@ -113,3 +148,5 @@ class ValidateNamedTuple(Validate):
         except Exception as e:
             raise ValidateError('Could not create %s from "%s" for "%s": %s' %
                                 (self.__tuple_cls, value, constant.name, e))
+
+

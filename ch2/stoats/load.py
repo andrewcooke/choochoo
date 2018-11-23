@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from sqlalchemy import func
 
+from ..squeal.tables.constant import SystemConstant
 from ..squeal.tables.statistic import StatisticJournal, StatisticName
 from ..squeal.types import short_cls
 
@@ -21,15 +22,17 @@ class Loader:
         return bool(self.__staging)
 
     def load(self):
-        # todo - database locking
-        self._s.commit()
-        rowid = self._s.query(func.max(StatisticJournal.id)).scalar() + 1
-        for type in self.__staging:
-            self._log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
-            for sjournal in self.__staging[type]:
-                sjournal.id = rowid
-                rowid += 1
-            self._s.bulk_save_objects(self.__staging[type])
+        SystemConstant.acquire_lock(self._s, self)  # includes flush so query below OK
+        try:
+            rowid = self._s.query(func.max(StatisticJournal.id)).scalar() + 1
+            for type in self.__staging:
+                self._log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
+                for sjournal in self.__staging[type]:
+                    sjournal.id = rowid
+                    rowid += 1
+                self._s.bulk_save_objects(self.__staging[type])
+        finally:
+            SystemConstant.release_lock(self._s, self)
 
     def add(self, name, units, summary, constraint, source, value, time, type):
         key = (name, constraint)

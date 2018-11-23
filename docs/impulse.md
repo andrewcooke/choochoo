@@ -1,5 +1,5 @@
 
-# SHRIMP - Scaled Heart Rate Impulse Training
+# Scaled Heart Rate Impulse- SHRIMP (and TRIMP, TSS, etc)
 
 I'm writing this article for a couple of reasons.
 
@@ -411,8 +411,10 @@ The HR Impulse is calculated in three steps:
 
 The figure above compares this model (SHRIMP `gamma`, `zero`) with
 curves from Edwards and Banister (TRIMP M/F) (see [Survey](#survey)).
-The SHRIMP data have been scaled to enable easy comparison (remember
-that overall scaling is arbitrary).
+Since the different Impulse models depend on heart rate parameters
+(rest, max, FTHR) in different ways I used my own values.  The SHRIMP
+data have been scaled to enable easy comparison (remember that overall
+scaling is arbitrary).
 
 A SHRIMP curve with `gamma` of 1 and `zero` of 0 is a reasonable
 match to Edwards (except that it is continuous rather than stepped).

@@ -6,6 +6,7 @@ from pendulum.tz import get_local_timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
+from .constant import SystemConstant
 from .source import SourceType, Source, Interval
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from ..support import Base
@@ -13,9 +14,6 @@ from ..types import Date, Cls, Json, Sched, Sort
 from ...lib.data import assert_attr
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
-from ...squeal.tables.constant import SystemConstant
-
-TIMEZONE = 'timezone'
 
 
 class Topic(Base):
@@ -112,16 +110,15 @@ class TopicJournal(Source):
         return 'TopicJournal from %s' % self.date
 
     @classmethod
-    def check_tz(cls, log, db):
-        from ...squeal.database import add
-        with db.session_context() as s:
-            tz = get_local_timezone()
-            db_tz = s.query(SystemConstant).filter(SystemConstant.name == TIMEZONE).one_or_none()
-            if not db_tz:
-                db_tz = add(s, SystemConstant(name=TIMEZONE, value=''))
-            if db_tz.value != tz.name:
-                cls.__reset_timezone(log, s)
-                db_tz.value = tz.name
+    def check_tz(cls, log, s):
+        from ..database import add
+        tz = get_local_timezone()
+        db_tz = s.query(SystemConstant).filter(SystemConstant.name == SystemConstant.TIMEZONE).one_or_none()
+        if not db_tz:
+            db_tz = add(s, SystemConstant(name=SystemConstant.TIMEZONE, value=''))
+        if db_tz.value != tz.name:
+            cls.__reset_timezone(log, s)
+            db_tz.value = tz.name
 
     @classmethod
     def __reset_timezone(cls, log, s):

@@ -1,4 +1,4 @@
-
+from ch2.squeal.tables.constant import SystemConstant
 from .command.activities import activities
 from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN
@@ -52,12 +52,15 @@ def main():
     try:
         if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
             request_config()
-        elif command:
-            command(args, log, db)
         else:
-            log.debug('If you are seeing the "No command given" error during development ' +
-                      'you may have forgotten to set the command name via `set_defaults()`.')
-            raise Exception('No command given (try `ch2 help`)')
+            with db.session_context() as s:
+                SystemConstant.assert_unlocked(s)
+            if command:
+                command(args, log, db)
+            else:
+                log.debug('If you are seeing the "No command given" error during development ' +
+                          'you may have forgotten to set the command name via `set_defaults()`.')
+                raise Exception('No command given (try `ch2 help`)')
     except KeyboardInterrupt:
         log.critical('User abort')
         pass

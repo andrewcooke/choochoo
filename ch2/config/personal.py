@@ -4,9 +4,9 @@ from ..config.database import Counter, add_topic, add_child_topic, add_topic_fie
 from ..uweird.fields.topic import Text
 
 
-def acooke(db):
+def acooke(log, db):
 
-    default(db)
+    default(log, db)
 
     with db.session_context() as s:
 

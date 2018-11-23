@@ -48,7 +48,8 @@ Display a summary for the month / year / schedule.
             date = to_date(date)
         except:
             date = dt.date.today() - dt.timedelta(days=int(date))
-    TopicJournal.check_tz(log, db)
+    with db.session_context() as s:
+        TopicJournal.check_tz(log, s)
     if schedule:
         schedule = Schedule(schedule)
         if schedule.start or schedule.finish:

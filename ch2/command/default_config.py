@@ -13,4 +13,4 @@ Generate a simple initial configuration.
 
 Please see the documentation at http://andrewcooke.github.io/choochoo
     '''
-    default(db, no_diary=args[NO_DIARY])
+    default(log, db, no_diary=args[NO_DIARY])
