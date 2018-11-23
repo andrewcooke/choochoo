@@ -30,7 +30,8 @@ questions that I hope to explore using this software.
   * [Seriously?](#seriously)
 * [Survey](#survey)
   * [History](#history)
-  * [Literature](#literature)
+  * [Academic Literature](#academic-literature)
+  * [Popular Literature](#popular-literature)
   * [Software](#software)
     * [Training Peaks](#training-peaks)
     * [Golden Cheeta](#golden-cheetah)
@@ -179,7 +180,7 @@ fitting](#parameter-fitting).
 
 ### History
 
-#### FF-Model
+#### Academic Literature
 
 I can't access many of the original papers.  They are either
 pre-Internet or behind paywalls.  What follows comes from reading the
@@ -210,14 +211,20 @@ mainly on heart rate) that lists:
 
 * Corrected Heart Rate Reserve x Duration.  (Fraction of) Heart Rate
   Reserve is a measure of Heart Rate which is 0 at rest and 1 at
-  maximum.  This is modified with a correction (depending on sex)
-  intended to give a value that correlates with blood lactose level.
-  This seems to be the "standard" TRIMP score that is mentioned
-  throughout the literature and credited most often to Banister.
+  maximum.  The heart rate is modified with a correction (depending on
+  sex) intended to give a value that correlates with blood lactose
+  level.  This seems to be the "standard" TRIMP score that is
+  mentioned throughout the literature and credited most often to
+  Banister.
 
-With the arrival of power meters, 
+With the arrival of power meters, Training Stresss Score (TSS) was
+introduced by Coogan.  This [appears to
+be](https://www.trainingpeaks.com/blog/normalized-power-intensity-factor-training-stress/)
+power levels, corrected to reflect physiological load (Normalised
+Power, NP), normalized to threshold power (Intensity Factor) and
+multiplied by duration.  The idea is to duplicate TRIMP.
 
-### Literature
+### Popular Literature
 
 Friel, in *The Cyclist's Training Bible* gives a clear explanation of
 Fitness and Fatigue (without getting into any theory at all) in
@@ -362,7 +369,7 @@ The HR Impulse is calculated in three steps:
 
         zone' = (max(zone, zero) - zero / (5 - zero)) ** gamma
 
-    This is shown below (the `zero` parameter has the value 2)
+    This is shown below (with `zero` set to 0).
 
     ![The Gamma Parameter](gamma.png)
 
@@ -413,11 +420,11 @@ Edwards and Banister (TRIMP) (see [Survey](#survey)).  The SHRIMP data
 have been scaled to enable easy comparison (remember that overall
 scaling is arbitrary).
 
-A SHRIMP curve with `gamma` of 1 and `zero` of 0 is a reaasonable
+A SHRIMP curve with `gamma` of 1 and `zero` of 0 is a reasonable
 match to Edwards (except that it is continuous rather than stepped).
 
 A SHRIMP curve with `gamma` of 2 and `zero` of 0 is a reasonable match
-to TRIMP (bpth male and female, depending on scale).
+to TRIMP / Banister (both male and female, depending on scale).
 
 A SHRIMP curve with `gamma` of 1 and `zero` of 2 is also a reasonable
 match to TRIMP at higher values.
@@ -427,8 +434,6 @@ within practical limits.
 
 ### Response Calculation
 
-![Response Calculation](response.png)
-
 The response is calculated by adding each impulse and decaying with
 the appropriate time constant as time increases.  In addition, an
 arbitrary scale factor can be applied.
@@ -436,6 +441,8 @@ arbitrary scale factor can be applied.
 By default, the time-scale (`tau_days`) is taken as 7 for Fatigue and
 42 for Fitness.  The `scale` factor is 5 for Fatigue and 1 for Fitness
 (chosen arbitrarily so that the two values cover similar ranges).
+
+![Response Calculation](response.png)
 
 In the figure Impulses are represented by area (so the y axis is
 Impulse / duration).  It is just possible to make out the increments
