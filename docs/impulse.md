@@ -206,21 +206,21 @@ mainly on heart rate) that lists:
 
 * Average Heart Rate x Duration.
 
-* Heart Rate Zone x Duration.
+* Heart Rate Zone x Duration.  Credited to Edwards.
 
 * Corrected Heart Rate Reserve x Duration.  (Fraction of) Heart Rate
   Reserve is a measure of Heart Rate which is 0 at rest and 1 at
   maximum.  This is modified with a correction (depending on sex)
   intended to give a value that correlates with blood lactose level.
   This seems to be the "standard" TRIMP score that is mentioned
-  throughout the literature.
+  throughout the literature and credited most often to Banister.
 
 With the arrival of power meters, 
 
 ### Literature
 
-Joe Friel, in *The Cyclist's Training Bible* gives a clear explanation
-of Fitness and Fatigue (without getting into any theory at all) in
+Friel, in *The Cyclist's Training Bible* gives a clear explanation of
+Fitness and Fatigue (without getting into any theory at all) in
 section 3 (Basic Training Concepts) on p34 of the 5th edn.  He also
 implies that Form is something like the difference between the two
 (this is a useful idea, but, since the two have arbitrary scales,
@@ -262,22 +262,31 @@ Measuring power has two clear advantages over heart rate:
   the ability to win races.  In contrast, interpreting heart rate is
   much more complex.
 
-However, heart rate also has an advantage:
+However, heart rate also has a possible advantage:
 
 * It is a more direct measure of the physiological load.  Laying down
   300W may almost kill you, while leaving Peter Sagan unruffled - that
   effort on your part will be clear in the heart rate data.
 
-Since our model is based on the idea that physiological load is what
-makes you fitter it's reasonable that heart rate provides useful
-insights.
+  This is something of a philosophical point.  What, exactly are we
+  trying to measure?  Fitness is nebulous; Fatigue is perhaps easier
+  to intuitively understand.  So what causes Fatigue?  It's not,
+  exactly, power output.  It's something "within" the body.  Some
+  "use" of the body, as system.  What most accurately measures that
+  something?  The output power?  What about if we are ill in some way?
+  If the body is not functioning so well?  Then it will be stressed
+  more for the same power output.  That stress, it seems to me, will
+  be visible in the Heart Rate.
 
-Lagged data are frustrating when trying to judge effort doing
-intervals.  But that does not imply that heart rate Impulse
-measurements are unreliable.  For a linear system (ie `gamma` = 1)
-what you miss in the slow pick-up can be "paid for" later, when heart
-rate stays high after the exercise finishes.  Laggy measurements are
-not necessarily inaccurate measurements.
+  I don't think there's an obviously correct answer here.  Arguments
+  I've read for power being the obviously correct answer seem to be
+  confusing the question of Fitness / Fatigue with other uses of power
+  meters - uses like comparing athletes, for example - where power
+  *is* clearly more objective.
+
+In short, since our model is based on the idea that physiological load
+is what makes you fitter, it's not unreasonable that heart rate
+provides useful insights.
 
 #### Arbitrary Form
 
@@ -395,7 +404,26 @@ The HR Impulse is calculated in three steps:
     this particular level of exercise.  As discussed earlier, we
     assume that more time means more gains.
 
-    ![Comparison With Other Impulse Models](impulse.png)
+### Other Impulse Models
+
+![Comparison With Other Impulse Models](impulse.png)
+
+The figure compares this model (labelled SHRIMP) with curves from
+Edwards and Banister (TRIMP) (see [Survey](#survey)).  The SHRIMP data
+have been scaled to enable easy comparison (remember that overall
+scaling is arbitrary).
+
+A SHRIMP curve with `gamma` of 1 and `zero` of 0 is a reaasonable
+match to Edwards (except that it is continuous rather than stepped).
+
+A SHRIMP curve with `gamma` of 2 and `zero` of 0 is a reasonable match
+to TRIMP (bpth male and female, depending on scale).
+
+A SHRIMP curve with `gamma` of 1 and `zero` of 2 is also a reasonable
+match to TRIMP at higher values.
+
+So SHRIMP can replicate existing Impulse models.  Not perfectly, but
+within practical limits.
 
 ### Response Calculation
 
