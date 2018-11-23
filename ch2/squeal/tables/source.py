@@ -109,10 +109,13 @@ class Interval(Source):
         log.debug('Statistics exist %s - %s' % (stats_start, stats_finish))
         starts = cls._open_interval_dates(s, schedule, interval_owner)
         stats_start_date = schedule.start_of_frame(time_to_local_date(stats_start))
-        if not starts or starts[0] != stats_start_date:
+        if not starts or starts[0] > stats_start_date:
             if not cls._existing_interval_at(s, schedule, interval_owner, stats_start_date):
-                starts = [schedule.start_of_frame(stats_start_date)] + starts
+                starts = [stats_start_date] + starts
         log.debug('Have %d open blocks finishing at %s' % (len(starts), stats_finish))
+        for i, start in enumerate(starts):
+            log.debug('Block %d starts at %s' % (i, start))
+        log.debug('')
         return starts, stats_finish
 
     @classmethod
@@ -173,6 +176,17 @@ class Interval(Source):
             start = next
             if cls._existing_interval_at(s, schedule, interval_owner, start):
                 return
+
+    @classmethod
+    def first_missing_date(cls, log, s, schedule, interval_owner, statistic_owner=None):
+        '''
+        For Impulse (and anything else that needs to delete forwards)
+        '''
+        starts, overall_finish = cls._missing_interval_start_dates(log, s, schedule, interval_owner, statistic_owner)
+        if starts:
+            return starts[0], time_to_local_date(overall_finish)
+        else:
+            return None, None
 
     @classmethod
     def missing_dates(cls, log, s, schedule, interval_owner, statistic_owner=None):

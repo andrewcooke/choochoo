@@ -25,8 +25,6 @@ Response = namedtuple('Response', 'src_name, src_owner, dest_name, tau_days, sca
 
 class ImpulseStatistics(IntervalCalculator):
 
-    # todo - NEED TO DELETE FORWARDS
-
     def _filter_intervals(self, q, responses=None, impulse=None):
         return q.filter(Interval.schedule == SCHEDULE,
                         Interval.owner == self)
@@ -90,22 +88,28 @@ class ImpulseStatistics(IntervalCalculator):
 
         with self._db.session_context() as s:
 
-            loader = StatisticJournalLoader(self._log, s, self)
             constants = [Constant.get(s, response) for response in responses]
             responses = [Response(**loads(constant.at(s).value)) for constant in constants]
             impulse = HRImpulse(**loads(Constant.get(s, impulse).at(s).value))
+            start, finish = Interval.first_missing_date(self._log, s, SCHEDULE, self)
 
-            for start, finish in Interval.missing_dates(self._log, s, SCHEDULE, self):
-                interval = add(s, Interval(start=start, finish=finish, schedule=SCHEDULE, owner=self))
-                self._log.info('Running %s for %s' % (short_cls(self), interval))
-                for response, constant in zip(responses, constants):
-                    activity_group = constant.statistic_name.constraint
-                    source = s.query(StatisticName). \
-                        filter(StatisticName.name == impulse.dest_name,
-                               StatisticName.owner == HeartRateStatistics,
-                               StatisticName.constraint == activity_group).one()
-                    dest = StatisticName.add_if_missing(self._log, s, response.dest_name, None, None,
-                                                        self, activity_group)
-                    self._add_response(loader, s, response, interval, source, dest)
-
-            loader.load()
+            if start:
+                loader = StatisticJournalLoader(self._log, s, self)
+                start = SCHEDULE.start_of_frame(start)
+                # delete forwards
+                Interval.clean_dates(s, start, finish, owner=self)
+                while start <= finish:
+                    interval = add(s, Interval(start=start, finish=SCHEDULE.next_frame(start),
+                                               schedule=SCHEDULE, owner=self))
+                    self._log.info('Running %s for %s' % (short_cls(self), interval))
+                    for response, constant in zip(responses, constants):
+                        activity_group = constant.statistic_name.constraint
+                        source = s.query(StatisticName). \
+                            filter(StatisticName.name == impulse.dest_name,
+                                   StatisticName.owner == HeartRateStatistics,
+                                   StatisticName.constraint == activity_group).one()
+                        dest = StatisticName.add_if_missing(self._log, s, response.dest_name, None, None,
+                                                            self, activity_group)
+                        self._add_response(loader, s, response, interval, source, dest)
+                    start = SCHEDULE.next_frame(start)
+                loader.load()

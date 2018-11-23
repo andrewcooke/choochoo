@@ -114,3 +114,6 @@ class ActivityImporter(Importer):
                                    (path, record.timestamp))
 
         loader.load()
+
+        # manually clean out intervals because we're doing a stealth load
+        Interval.clean_times(s, first_timestamp, last_timestamp)

@@ -15,7 +15,7 @@ The database is locked to allow fast loading of data which requires no other com
 Using this command removes the lock and so MAY CAUSE DATA CORRUPTION if the loading is still in progress.
 
 You should only use this command in the unlikely case that somehow the lock remained after the loading finished
-(ie. if the system has a bug).
+(eg. if the system crashed or was interrupted during loading).
     '''
     if not args[FORCE]:
         raise Exception('See `ch2 help unlock`')

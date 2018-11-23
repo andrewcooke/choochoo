@@ -57,8 +57,9 @@ def main():
         if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
             request_config()
         else:
-            with db.session_context() as s:
-                SystemConstant.assert_unlocked(s)
+            if not command_name or command_name != UNLOCK:
+                with db.session_context() as s:
+                    SystemConstant.assert_unlocked(s)
             if command:
                 command(args, log, db)
             else:
