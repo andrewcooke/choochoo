@@ -220,8 +220,8 @@ mainly on heart rate) that lists:
 With the arrival of power meters, Training Stresss Score (TSS) was
 introduced by Coogan.  This [appears to
 be](https://www.trainingpeaks.com/blog/normalized-power-intensity-factor-training-stress/)
-power levels, corrected to reflect physiological load (Normalised
-Power, NP), normalized to threshold power (Intensity Factor) and
+output power, corrected to reflect physiological load (Normalised
+Power, NP), normalized to threshold power (Intensity Factor), and
 multiplied by duration.  The idea is to duplicate TRIMP.
 
 ### Popular Literature
@@ -485,16 +485,7 @@ have different paramaters for different activities.
 
 ## Discussion
 
-### New Parameters
-
-The calculation of HR Impulse allows model parameters to be adjusted
-to more closely match how we expect the body to work (this is the
-"Scaled" in "SHRIMP").
-
-For example, "sweet spot" training implies that there is more
-adavantage in training at high exertion (but not too high).  By
-changing `gamma` and `zero` in the HR Impulse algorithm we can try to
-match that.
+### Flexible Impulse
 
 ### Training and Measurement
 
