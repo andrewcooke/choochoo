@@ -3,17 +3,17 @@
 
 I'm writing this article for a couple of reasons.
 
-First, I want to explain and de-mystify the FF-Model.  I get the
-impression many people don't understand quite how *simple* it is.
-Following from that, maybe people aren't understanding exactly what it
-shows, or how it can or should be used.
+First, I want to explain and de-mystify the FF-Model (TRIMP, TSS, etc
+etc).  I get the impression many people don't understand quite how
+*simple* it is.  Following from that, maybe people aren't
+understanding exactly what it shows, or how it can or should be used.
 
 Second, I want to showcase Choochoo - a *hackable* training diary.
 Choochoo is written for people at the intersection between sport and
 computing / maths / science.  People who want to experiment, get their
 hands dirty, and build their own, personal, customized approach.
 
-So I'm going to show how Choochoo implements the FF-Model.  How the
+I'm going to show how Choochoo implements the FF-Model.  How the
 calculations are made, what they mean, and how they might be tweaked.
 I'll end with some questions that people might want to explore -
 questions that I hope to explore using this software.
@@ -36,9 +36,9 @@ questions that I hope to explore using this software.
     * [Training Peaks](#training-peaks)
     * [Golden Cheeta](#golden-cheetah)
   * [Open Questions](#open-questions)
-    * [Heart Rate v Power](#heart-rate-v-power)
     * [Arbitrary Form](#arbitrary-form)
     * [Parameter Fitting](#parameter-fitting)
+    * [Heart Rate v Power](#heart-rate-v-power)
 * [This Work](#this-work)
   * [Choochoo](#choochoo)
   * [Impulse Calculation](#impulse-calculation)
@@ -90,16 +90,15 @@ Second, we need to measure time.  Presumably an hour's work at a given
 intensity is "worth" twice as much as 30mins (but this *is* just an
 assumption - maybe something we could check later).
 
-So mutliplying intensity (however we choose to define that) by time
-seems like a good candidate.  This is called Impulse.
-
 Third, we need to decide on a weighting.  Harder workouts
 automatically score more because they are more intense.  But maybe
 they should score *extra*?  Maybe there's some threshold - no matter
-how long you do easy work, it just doesn't count?
+how long you do easy work, it just doesn't count?  (These are all
+valid questions - various approaches have been tried, see
+[Survey](#survey) below).
 
-These are all valid questions.  Various approaches have been tried
-(see [Survey](#survey) below).
+Whatever weighting we choose, we multiply the calculated "intensity"
+by time.  This is called Impulse.
 
 ### Exponential Decay
 
@@ -118,14 +117,14 @@ The second of these tends to be more common in nature and leads to a
 common mathematical model called "exponential decay".
 
 I won't go into the details, but this is equivalent to having a
-half-life - a time over which the initial value drops to half.  We
+"half-life" - a time over which the initial value drops to half.  We
 treat fitness like radioactive decay.  After some time it will drop to
 half, then to half of that (to one quarter), etc.
 
 (In practice, instead of half-life we use a related number -
 "exponential time-scale" which is about 1.4 times as long as the half
-life.  But that's just a weird detail from the maths - it's not
-important conceptually.)
+life.  But that's just a detail from the maths - it's not important
+conceptually.)
 
 ### Fatigue
 
@@ -146,7 +145,7 @@ away.  That's easy to include in the model - we'll scale it by some
 number so it grows more quickly, and we'll give it a shorter
 time-scale, so it falls back down more quickly.
 
-We are modelling "being careful" - the idea is to do enough training
+We are modelling "being careful".  The idea is to do enough training
 that Fitness creeps up gradually, but to avoid doing so much that
 Fatigue gets dangerously high.  Train, but keep an eye on Fatigue.  If
 it's getting too high, take a break.
@@ -188,16 +187,15 @@ survey section of other papers.
 
 The general model (Impulse + Decay) seems to have been presented first
 in various(?) papers by Calvert, Banister and others, with titles like
-"SYstems Model" in the mid 70s.  None of these appear to be available
+"Systems Model" in the mid 70s.  None of these appear to be available
 online (for free).
 
 Originally it seems that the model had three components, but this was
-later reduced to two.
+later reduced to two (Fatigue and Fitness).
 
 Various ways of calculating the Impulse were suggested, changing to
 reflect the availability of new technology.
-[This](http://fellrnr.com/wiki/TRIMP) is a good summary (focussing
-mainly on heart rate) that lists:
+[This](http://fellrnr.com/wiki/TRIMP) is a good summary that lists:
 
 * Training Volume.  Not really Impulse as I described it, but total
   miles or hours.
@@ -217,7 +215,7 @@ mainly on heart rate) that lists:
   mentioned throughout the literature and credited most often to
   Banister.
 
-With the arrival of power meters, Training Stresss Score (TSS) was
+With the arrival of power meters, Training Stress Score (TSS) was
 introduced by Coogan.  This [appears to
 be](https://www.trainingpeaks.com/blog/normalized-power-intensity-factor-training-stress/)
 output power, corrected to reflect physiological load (Normalised
@@ -246,6 +244,26 @@ https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
 
 If we look at the FF-Model and current implementations, what problems
 can we see?  Where can we improve things?  What can go wrong?
+
+#### Arbitrary Form
+
+The [theory](#theory) section made clear just how arbitrary the
+FF-Model is.
+
+How can we make the model more flexible without adding so many
+parameters it becomes useless?  Can we replicate the different
+historical Impulse models by varying a model parameter?
+
+#### Parameter Fitting
+
+The model has a bunch of parameters.  What values should they have?
+
+Do we need different values for different contexts?  Do we need
+OAdifferent values for different sports?  Or different styles of
+training?
+
+Should we change training to reflect the need to measure parameters?
+What kind of measurements should we make?
 
 #### Heart Rate v Power
 
@@ -283,41 +301,17 @@ However, heart rate also has a possible advantage:
   something?  The output power?  What about if we are ill in some way?
   If the body is not functioning so well?  Then it will be stressed
   more for the same power output.  That stress, it seems to me, will
-  be visible in the Heart Rate.
+  still be visible in the Heart Rate.
 
-  I don't think there's an obviously correct answer here.  Arguments
-  I've read for power being the obviously correct answer seem to be
-  confusing the question of Fitness / Fatigue with other uses of power
-  meters - uses like comparing athletes, for example - where power
-  *is* clearly more objective.
+  But I don't think there's an obviously correct answer here.
+  Arguments I've read for power being the obviously correct answer
+  seem to be confusing the question of Fitness / Fatigue with other
+  uses of power meters.  Uses like comparing athletes, for example,
+  where power *is* clearly more objective.
 
 In short, since our model is based on the idea that physiological load
 is what makes you fitter, it's not unreasonable that heart rate
 provides useful insights.
-
-#### Arbitrary Form
-
-The [theory](#theory) section made clear just how arbitrary the
-FF-Model is.
-
-How can we make the model more flexible without adding so many
-parameters it becomes useless?
-
-For example, "sweet spot" training is currently popular.  Are its
-claimed advantages reflected in the FF-Model?  Or does the FF-Model by
-its very nature not care?  After all, doesn't high exertion for short
-time gives the same Impulse as low exertion for long times?
-
-#### Parameter Fitting
-
-The model has a bunch of parameters.  What values should they have?
-
-Do we need different values for different contexts?  Do we need
-different values for different sports?  Or different styles of
-training?
-
-Should we change training to reflect the need to measure parameters?
-What kind of measurements should we make?
 
 ## This Work
 
@@ -354,9 +348,9 @@ The HR Impulse is calculated in three steps:
     
     The calculated zone is a floating point value, numerically equal
     to the zone number at the lower end of the zone, and linearly
-    interpolated to the upper end.  So, for example, if zone 3
-    extended from 130 to 150 bpm a value of 130 would be given a zone
-    of 3.0 and a value of 140 a zone of 3.5.
+    interpolated to the upper end.  For example, if zone 3 extended
+    from 130 to 150 bpm a value of 130 would be given a zone of 3.0
+    and a value of 140 a zone of 3.5.
 
     Values in zone 1, which has no lower boundary, are all set to 1.0
     (this does not affect the results as these are typically discarded
@@ -402,8 +396,8 @@ The HR Impulse is calculated in three steps:
         impulse = zone' * delta_t
 
     where `delta_t` is the time (in seconds) between this measurement
-    and the next.  In a typical FIT file `delta` is around 10s; if it
-    exceeds a configurable cutoff (`max_secs`, default 60s) then no
+    and the next.  In a typical FIT file `delta_t` is around 10s; if
+    it exceeds a configurable cutoff (`max_secs`, default 60s) then no
     impulse is calculated.  This avoids calculating incorrect, high
     impulses when the data feed drops.
 
@@ -415,10 +409,10 @@ The HR Impulse is calculated in three steps:
 
 ![Comparison With Other Impulse Models](impulse.png)
 
-The figure compares this model (labelled SHRIMP) with curves from
-Edwards and Banister (TRIMP) (see [Survey](#survey)).  The SHRIMP data
-have been scaled to enable easy comparison (remember that overall
-scaling is arbitrary).
+The figure above compares this model (SHRIMP `gamma`, `zero`) with
+curves from Edwards and Banister (TRIMP M/F) (see [Survey](#survey)).
+The SHRIMP data have been scaled to enable easy comparison (remember
+that overall scaling is arbitrary).
 
 A SHRIMP curve with `gamma` of 1 and `zero` of 0 is a reasonable
 match to Edwards (except that it is continuous rather than stepped).
@@ -478,7 +472,7 @@ example, the exponential decay time periods and the scaling factors in
 the models to be modified.
 
 Choochoo manages activities by "activity group" (eg running, cycling).
-The statistics above are calculated for particular groups.  So we can
+The statistics above are calculated for particular groups.  We can
 have different paramaters for different activities.
 
 ### Results
@@ -548,7 +542,7 @@ Once done, you can run Choochoo:
 
 ### Configure
 
-So create a default database:
+Create a default database:
 
     > ch2 default-config
 
@@ -588,7 +582,7 @@ ch2/data/notebooks and then click on TODO
 
 I'm adding this because I don't want to mislead.  I'm no expert on
 this stuff.  The details above come from papers I've found on-line.  I
-could have misunderstood.  So check things out for youself.  I've
+could have misunderstood.  Check things out for youself.  I've
 collected some of the papers
 [here](https://github.com/andrewcooke/choochoo/tree/master/data/training).
 
