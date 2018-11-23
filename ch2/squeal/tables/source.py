@@ -2,6 +2,7 @@
 from abc import abstractmethod
 from enum import IntEnum
 
+from ch2.lib.schedule import Schedule
 from sqlalchemy import ForeignKey, Column, Integer, func, and_, UniqueConstraint
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, aliased
@@ -108,9 +109,10 @@ class Interval(Source):
         stats_start, stats_finish = cls._raw_statistics_time_range(s, statistic_owner)
         log.debug('Statistics exist %s - %s' % (stats_start, stats_finish))
         starts = cls._open_interval_dates(s, schedule, interval_owner)
-        stats_start_date = time_to_local_date(stats_start)
-        if not cls._get_interval(s, schedule, interval_owner, stats_start_date):
-            starts = [schedule.start_of_frame(stats_start_date)] + starts
+        stats_start_date = schedule.start_of_frame(time_to_local_date(stats_start))
+        if not starts or starts[0] != stats_start_date:
+            if not cls._existing_interval_at(s, schedule, interval_owner, stats_start_date):
+                starts = [schedule.start_of_frame(stats_start_date)] + starts
         log.debug('Have %d open blocks finishing at %s' % (len(starts), stats_finish))
         return starts, stats_finish
 
@@ -150,7 +152,7 @@ class Interval(Source):
             order_by(Interval.finish).all()]
 
     @classmethod
-    def _get_interval(cls, s, schedule, interval_owner, start):
+    def _existing_interval_at(cls, s, schedule, interval_owner, start):
         '''
         The existing interval for a given start, owner, schedule.
         '''
@@ -170,7 +172,7 @@ class Interval(Source):
             log.debug('Missing Interval %s - %s' % (start, next))
             yield start, next
             start = next
-            if cls._get_interval(s, schedule, interval_owner, start):
+            if cls._existing_interval_at(s, schedule, interval_owner, start):
                 return
 
     @classmethod

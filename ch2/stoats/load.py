@@ -54,7 +54,10 @@ class Loader:
 
     def latest(self, name, constraint, instance=None):
         latest = self.__latest.get((name, constraint))
-        if instance and instance.time > latest.time:
+        if latest:
+            if instance and instance.time > latest.time:
+                latest = instance
+        else:
             latest = instance
         return latest
 
