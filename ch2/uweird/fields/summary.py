@@ -1,11 +1,10 @@
 
 from urwid import Text, WEIGHT, Columns
 
-from ch2.squeal.tables.statistic import StatisticJournal
-from ch2.stoats.calculate.summary import SummaryStatistics
-from ch2.uweird.fields import PAGE_WIDTH
-from . import Field
+from . import Field, PAGE_WIDTH
 from ...lib.utils import label, em
+from ...squeal.tables.statistic import StatisticJournal
+from ...stoats.calculate.summary import SummaryStatistics
 
 
 class SummaryField(Field):

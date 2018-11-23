@@ -1,8 +1,7 @@
 
 from urwid import Text, Pile
 
-from ch2.squeal.tables.source import Source
-from ch2.stoats.calculate.activity import ActivityStatistics
+from ..calculate.activity import ActivityStatistics
 from ..names import PERCENT_IN_Z_ANY
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 

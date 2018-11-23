@@ -1,8 +1,8 @@
 
 from sqlalchemy import Column, Text
 
-from ch2.squeal.support import Base
-from ch2.squeal.types import Time, ShortCls
+from ..support import Base
+from ..types import Time, ShortCls
 
 
 class FileScan(Base):

@@ -1,12 +1,11 @@
-from json import dumps
 
-from ch2.squeal.types import long_cls
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup
 from ..squeal.tables.constant import Constant, ValidateNamedTuple
 from ..squeal.tables.pipeline import Pipeline, PipelineType
 from ..squeal.tables.statistic import StatisticName, StatisticJournalType
 from ..squeal.tables.topic import Topic, TopicField
+from ..squeal.types import long_cls
 from ..uweird.fields.topic import Integer
 
 

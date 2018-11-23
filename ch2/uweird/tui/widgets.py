@@ -1,10 +1,10 @@
 
 from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT, PACK
 
-from ch2.lib.utils import label
 from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
 from .state import MutableStatefulText
 from .tabs import TabNode
+from ...lib.utils import label
 
 
 class SquareButton(Button):

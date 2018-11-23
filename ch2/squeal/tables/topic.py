@@ -6,11 +6,11 @@ from pendulum.tz import get_local_timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from ch2.lib.data import assert_attr
 from .source import SourceType, Source, Interval
-from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES, StatisticName
+from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from ..support import Base
 from ..types import Date, Cls, Json, Sched, Sort
+from ...lib.data import assert_attr
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.tables.constant import SystemConstant

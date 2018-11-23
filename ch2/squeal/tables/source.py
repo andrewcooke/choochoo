@@ -2,7 +2,6 @@
 from abc import abstractmethod
 from enum import IntEnum
 
-from ch2.lib.schedule import Schedule
 from sqlalchemy import ForeignKey, Column, Integer, func, and_, UniqueConstraint
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, aliased

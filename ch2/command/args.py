@@ -6,7 +6,7 @@ from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
-from ch2.lib.date import to_date
+from ..lib.date import to_date
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
