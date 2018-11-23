@@ -5,7 +5,7 @@ from json import loads
 from sqlalchemy import desc, inspect, select, and_
 
 from . import ActivityCalculator
-from ..load import Loader
+from ..load import StatisticJournalLoader
 from ..names import FTHR, HR_ZONE, HEART_RATE, S
 from ..read.activity import ActivityImporter
 from ...squeal.tables.activity import ActivityGroup
@@ -53,7 +53,7 @@ class HeartRateStatistics(ActivityCalculator):
         hr_impulse = HRImpulse(**loads(Constant.get(s, impulse).at(s).value))
         self._log.debug('%s: %s' % (impulse, hr_impulse))
 
-        loader = Loader(self._log, s, self)
+        loader = StatisticJournalLoader(self._log, s, self)
 
         sn = inspect(StatisticName).local_table
         sj = inspect(StatisticJournal).local_table

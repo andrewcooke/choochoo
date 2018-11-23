@@ -8,7 +8,7 @@ from sqlalchemy import desc, inspect, select, and_
 
 from . import IntervalCalculator
 from .heart_rate import HRImpulse
-from ..load import Loader
+from ..load import StatisticJournalLoader
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
@@ -26,8 +26,6 @@ Response = namedtuple('Response', 'src_name, src_owner, dest_name, tau_days, sca
 class ImpulseStatistics(IntervalCalculator):
 
     # todo - NEED TO DELETE FORWARDS
-
-    # todo - delete intervals manually
 
     def _filter_intervals(self, q, responses=None, impulse=None):
         return q.filter(Interval.schedule == SCHEDULE,
@@ -92,7 +90,7 @@ class ImpulseStatistics(IntervalCalculator):
 
         with self._db.session_context() as s:
 
-            loader = Loader(self._log, s, self)
+            loader = StatisticJournalLoader(self._log, s, self)
             constants = [Constant.get(s, response) for response in responses]
             responses = [Response(**loads(constant.at(s).value)) for constant in constants]
             impulse = HRImpulse(**loads(Constant.get(s, impulse).at(s).value))

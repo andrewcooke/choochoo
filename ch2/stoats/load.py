@@ -4,11 +4,15 @@ from collections import defaultdict
 from sqlalchemy import func
 
 from ..squeal.tables.constant import SystemConstant
+from ..squeal.tables.source import Interval
 from ..squeal.tables.statistic import StatisticJournal, StatisticName
 from ..squeal.types import short_cls
 
 
-class Loader:
+class StatisticJournalLoader:
+    '''
+    Fast loading that requires locked access to the database (we pre-generate keys).
+    '''
 
     def __init__(self, log, s, owner):
         self._log = log
@@ -17,6 +21,8 @@ class Loader:
         self.__statistic_name_cache = dict()
         self.__staging = defaultdict(lambda: [])
         self.__latest = dict()
+        self.__start = None
+        self.__finish = None
 
     def __bool__(self):
         return bool(self.__staging)
@@ -33,6 +39,8 @@ class Loader:
                 self._s.bulk_save_objects(self.__staging[type])
         finally:
             SystemConstant.release_lock(self._s, self)
+        if self.__start is not None:
+            Interval.clean_times(self._s, self.__start, self.__finish)
 
     def add(self, name, units, summary, constraint, source, value, time, type):
         key = (name, constraint)
@@ -48,6 +56,11 @@ class Loader:
         instance = type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source.id,
                         value=value, time=time)
         self.__staging[type].append(instance)
+        if self.__start is None:
+            self.__start = self.__finish = instance.time
+        else:
+            self.__start = min(self.__start, instance.time)
+            self.__finish = max(self.__finish, instance.time)
         if key in self.__latest:
             prev = self.__latest[key]
             if instance.time > prev.time:

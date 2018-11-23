@@ -3,7 +3,7 @@ from os.path import splitext, basename
 
 from pygeotile.point import Point
 
-from ..load import Loader
+from ..load import StatisticJournalLoader
 from ..read import AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
@@ -54,7 +54,7 @@ class ActivityImporter(Importer):
 
     def _import(self, s, path, sport_to_activity):
 
-        loader = Loader(self._log, s, self)
+        loader = StatisticJournalLoader(self._log, s, self)
 
         data, types, messages, records = filtered_records(self._log, path)
         records = [record.force(fix_degrees)
@@ -114,5 +114,3 @@ class ActivityImporter(Importer):
                                    (path, record.timestamp))
 
         loader.load()
-        # manually clean out intervals because we're doing a stealth load
-        Interval.clean_times(s, first_timestamp, last_timestamp)
