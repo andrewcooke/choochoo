@@ -23,7 +23,6 @@ questions that I hope to explore using this software.
 ## Contents
 
 * [Theory](#theory)
-  * [Overview](#overview)
   * [Adding Up Training](#adding-up-training)
   * [Exponential Decay](#exponentia-decay)
   * [Fatigue](#fatigue)
@@ -60,8 +59,6 @@ questions that I hope to explore using this software.
 
 ## Theory
 
-### Overview
-
 Imagine it's your job to predict how an athlete gets better or worse
 over time.  To model *Fitness*.  What do you do?
 
@@ -86,7 +83,7 @@ First, we need to gauge *intensity*, so we need something you can
 measure.  Power meters are the obvious example.  But there are other
 options, too.  Perceived exertion (ranked on a numeric scale - there
 are various standards) is not as sexy, but could work.  Heart rate is
-another possibility (one I'll return to later).
+another possibility.
 
 Second, we need to measure time.  Presumably an hour's work at a given
 intensity is "worth" twice as much as 30mins (but this *is* just an
@@ -100,8 +97,8 @@ automatically score more because they are more intense.  But maybe
 they should score *extra*?  Maybe there's some threshold - no matter
 how long you do easy work, it just doesn't count?
 
-These are all valid questions.  Researchers simply picked some simple
-answers and ran with them.
+These are all valid questions.  Various approaches have been tried
+(see [Survey](#survey) below).
 
 ### Exponential Decay
 
@@ -182,11 +179,53 @@ fitting](#parameter-fitting).
 
 ### History
 
+#### FF-Model
+
 I can't access many of the original papers.  They are either
 pre-Internet or behind paywalls.  What follows comes from reading the
 survey section of other papers.
 
+The general model (Impulse + Decay) seems to have been presented first
+in various(?) papers by Calvert, Banister and others, with titles like
+"SYstems Model" in the mid 70s.  None of these appear to be available
+online (for free).
+
+Originally it seems that the model had three components, but this was
+later reduced to two.
+
+Various ways of calculating the Impulse were suggested, changing to
+reflect the availability of new technology.
+[This](http://fellrnr.com/wiki/TRIMP) is a good summary (focussing
+mainly on heart rate) that lists:
+
+* Training Volume.  Not really Impulse as I described it, but total
+  miles or hours.
+
+* Rating of Perceived Exertion (RPE) x Duration.  RPE describes "how
+  hard" a workout was on a numeric scale (eg 0 to 9).
+
+* Average Heart Rate x Duration.
+
+* Heart Rate Zone x Duration.
+
+* Corrected Heart Rate Reserve x Duration.  (Fraction of) Heart Rate
+  Reserve is a measure of Heart Rate which is 0 at rest and 1 at
+  maximum.  This is modified with a correction (depending on sex)
+  intended to give a value that correlates with blood lactose level.
+  This seems to be the "standard" TRIMP score that is mentioned
+  throughout the literature.
+
+With the arrival of power meters, 
+
 ### Literature
+
+Joe Friel, in *The Cyclist's Training Bible* gives a clear explanation
+of Fitness and Fatigue (without getting into any theory at all) in
+section 3 (Basic Training Concepts) on p34 of the 5th edn.  He also
+implies that Form is something like the difference between the two
+(this is a useful idea, but, since the two have arbitrary scales,
+isn't that useful in practice - whether the difference is positive or
+negative doesn't really *mean* anything, for example).
 
 ### Software
 
@@ -312,7 +351,7 @@ The HR Impulse is calculated in three steps:
 
 2.  The zone value above is transformed using the expression:
 
-        zone' = (max(zone, zero) - zero / (6 - zero)) ** gamma
+        zone' = (max(zone, zero) - zero / (5 - zero)) ** gamma
 
     This is shown below (the `zero` parameter has the value 2)
 
@@ -355,6 +394,8 @@ The HR Impulse is calculated in three steps:
     This step takes account of how much time was spent on training at
     this particular level of exercise.  As discussed earlier, we
     assume that more time means more gains.
+
+    ![Comparison With Other Impulse Models](impulse.png)
 
 ### Response Calculation
 

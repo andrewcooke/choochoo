@@ -37,18 +37,17 @@ support for power meters.
 
 # Contents
 
-* [Getting Started](getting-started)
-* [Daily Use](daily-use)
-* [Data Analysis](data-analysis)
-* [Command Summmary](command-summary)
-
+* Manual
+  * [Getting Started](getting-started)
+  * [Daily Use](daily-use)
+  * [Data Analysis](data-analysis)
+  * [Command Summmary](command-summary)
 * Reference
   * [Data Model](data-model)
   * [Schedules](schedules)
   * [Configuration](configuration)
   * [FIT Files](fit-files)
   * [Training Plans](training-plans)
-
 * Development
-  * [Heart Rate Training Impulse](impulse)
+  * [Scaled Heart Rate Impulse Training](impulse)
   

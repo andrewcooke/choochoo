@@ -16,6 +16,10 @@ from ...squeal.types import short_cls
 # constraint comes from constant
 HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, max_secs')
 
+# values from british cycling online calculator
+# these are upper limits
+BC_ZONES = (68, 83, 94, 105, 121, 999)
+
 
 def hr_zones_from_database(log, s, activity_group, time):
     fthr = StatisticJournal.before(s, time, FTHR, Constant, activity_group)
@@ -26,9 +30,7 @@ def hr_zones_from_database(log, s, activity_group, time):
 
 
 def hr_zones(fthr):
-    # values from british cycling online calculator
-    # these are upper limits
-    return [fthr * pc / 100.0 for pc in (68, 83, 94, 105, 121, 999)]
+    return [fthr * pc / 100.0 for pc in BC_ZONES]
 
 
 class HeartRateStatistics(ActivityCalculator):
