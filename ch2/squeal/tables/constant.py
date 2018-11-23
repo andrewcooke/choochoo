@@ -110,13 +110,15 @@ class SystemConstant(Base):
     @classmethod
     def release_lock(cls, s, owner):
         s.commit()
-        lock = s.query(SystemConstant). \
+        s.query(SystemConstant). \
             filter(SystemConstant.name == SystemConstant.LOCK,
-                   SystemConstant.value == short_cls(owner)).all()
-        if lock:
-            for l in lock:
-                s.delete(l)
-            s.commit()
+                   SystemConstant.value == short_cls(owner)).delete()
+
+    @classmethod
+    def reset_lock(cls, s):
+        s.commit()
+        s.query(SystemConstant). \
+            filter(SystemConstant.name == SystemConstant.LOCK).delete()
 
 
 class Validate(ABC):

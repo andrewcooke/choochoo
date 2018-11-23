@@ -66,6 +66,7 @@ SET = 'set'
 SCHEDULE = 'schedule'
 START = 'start'
 TABLES = 'tables'
+UNLOCK = 'unlock'
 USER = 'user'
 V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
@@ -271,6 +272,11 @@ def parser():
     test_schedule.add_argument(mm(MONTHS), action='store', metavar='N', type=int,
                                help='the number of months to display')
     test_schedule.set_defaults(command=TEST_SCHEDULE)
+
+    unlock = subparsers.add_parser(UNLOCK,
+                                   help='remove database locking (emergency only!)')
+    unlock.add_argument(mm(FORCE), action='store_true', help='confirm unlock')
+    unlock.set_defaults(command=UNLOCK)
 
     return parser
 

@@ -1,10 +1,11 @@
-from ch2.squeal.tables.constant import SystemConstant
+
 from .command.activities import activities
 from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
-    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN
+    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
+    UNLOCK
 from .command.constants import constants
-from .command.diary import diary
 from .command.default_config import default_config
+from .command.diary import diary
 from .command.fit import fit
 from .command.garmin import garmin
 from .command.help import help, LengthFmt
@@ -12,8 +13,10 @@ from .command.monitor import monitor
 from .command.package_fit_profile import package_fit_profile
 from .command.statistics import statistics
 from .command.test_schedule import test_schedule
+from .command.unlock import unlock
 from .lib.log import make_log
 from .squeal.database import Database
+from .squeal.tables.constant import SystemConstant
 
 
 def no_op(args, log, db):
@@ -38,6 +41,7 @@ COMMANDS = {ACTIVITIES: activities,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,
             TEST_SCHEDULE: test_schedule,
+            UNLOCK: unlock
             }
 
 

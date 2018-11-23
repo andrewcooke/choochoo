@@ -1,5 +1,5 @@
 
-# Scaled Heart Rate Impulse- SHRIMP (and TRIMP, TSS, etc)
+# Scaled Heart Rate Impulse - SHRIMP (and TRIMP, TSS, etc)
 
 I'm writing this article for a couple of reasons.
 
