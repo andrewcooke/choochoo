@@ -493,6 +493,12 @@ The user can see that fitness is increasing but also, in this case,
 that fatigue is higher than it's been for the last 3 months.  They may
 need to ease back.
 
+![Plot of Fitness/Fatigue v Ride Distance](impulse-plot.png)
+
+This plot shows all my available data (from when I first bought a
+Garmin watch), clearly showing the decline in fitness when I had to
+sop riding after an accident.
+
 ## Discussion
 
 ### Flexible Impulse
