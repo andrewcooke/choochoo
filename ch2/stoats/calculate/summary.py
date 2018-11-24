@@ -46,7 +46,7 @@ class SummaryStatistics(IntervalCalculator):
             filter(StatisticName.id.in_(statistics_with_data_but_no_summary)). \
             all()
 
-    def _calculate_value(self, s, statistic_name, summary, start_time, finish_time, schedule):
+    def _calculate_value(self, s, statistic_name, summary, pessimistic, start_time, finish_time, interval, schedule):
 
         range = schedule.describe()
         units = statistic_name.units
@@ -66,11 +66,12 @@ class SummaryStatistics(IntervalCalculator):
             result = func.sum(values)
         elif summary == CNT:
             result = func.count(values)
-            units = ENTRIES;
+            units = ENTRIES
         elif summary == AVG:
             result = func.avg(values)
         elif summary == MSR:
-            return None, None, None, None
+            self._calculate_measures(s, statistic_name, pessimistic, start_time, finish_time, interval)
+            return False
         else:
             raise Exception('Bad summary: %s' % summary)
 
@@ -81,28 +82,28 @@ class SummaryStatistics(IntervalCalculator):
                        sj.c.time < finish_time))
 
         value = next(s.connection().execute(stmt))[0]
-        title = summary[1:-1].capitalize()
-        return value, '%s/%s %%s' % (title, range), TYPE_TO_JOURNAL_TYPE[type(value)], units
 
-    def _create_value(self, s, statistic_name, summary, start_time, finish_time, interval, schedule):
-        value, template, type, units = self._calculate_value(s, statistic_name, summary, start_time, finish_time,
-                                                             schedule)
         if value is not None:
+
+            title = summary[1:-1].capitalize()   # see parse_name
+            template = '%s/%s %%s' % (title, range)
             name = template % statistic_name.name
+
+            jtype = STATISTIC_JOURNAL_CLASSES[TYPE_TO_JOURNAL_TYPE[type(value)]]
             new_name = StatisticName.add_if_missing(self._log, s, name, units, None, self, statistic_name)
-            journal = add(s, STATISTIC_JOURNAL_CLASSES[type](
-                statistic_name=new_name, source=interval, value=value, time=start_time))
+            journal = add(s, jtype(statistic_name=new_name, source=interval, value=value, time=start_time))
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic_name))
+
         return bool(value)
 
-    def _create_measures(self, s, statistic_name, start_time, finish_time, interval):
+    def _calculate_measures(self, s, statistic_name, pessimistic, start_time, finish_time, interval):
 
         data = sorted([x for x in
                        s.query(StatisticJournal).
                       filter(StatisticJournal.statistic_name == statistic_name,
                              StatisticJournal.time >= start_time,
                              StatisticJournal.time < finish_time).all()
-                       if x is not None], key=lambda x: x.value)
+                       if x is not None], key=lambda x: x.value, reverse=not pessimistic)
 
         # todo - asc/desc
 
@@ -129,11 +130,10 @@ class SummaryStatistics(IntervalCalculator):
                 for statistic_name in self._statistics_missing_summaries(s, start_time, finish_time):
                     self._log.debug(statistic_name)
                     summaries = [x.lower() for x in split(r'[\s,]*(\[[^\]]+\])[\s ]*', statistic_name.summary) if x]
+                    pessimistic = MIN in summaries
                     for summary in summaries:
-                        have_data |= self._create_value(s, statistic_name, summary, start_time, finish_time, interval,
-                                                        schedule)
-                    if MSR in summaries:
-                        self._create_measures(s, statistic_name, start_time, finish_time, interval)
+                        have_data |= self._calculate_value(s, statistic_name, summary, pessimistic,
+                                                           start_time, finish_time, interval, schedule)
                 if have_data:
                     self._log.info('Added statistics for %s' % interval)
                 else:
@@ -141,6 +141,7 @@ class SummaryStatistics(IntervalCalculator):
 
     @classmethod
     def parse_name(cls, name):
+        # this reverses the logic in the naming above
         left, right = name.split(' ', 1)
         summary, period = left.split('/')
         return summary, period, right
