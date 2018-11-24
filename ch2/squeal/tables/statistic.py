@@ -74,6 +74,8 @@ class StatisticJournal(Base):
     time = Column(Time, nullable=False, index=True)
     UniqueConstraint(statistic_name_id, time)
 
+    # todo - index on both name and time for summary stats?
+
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.STATISTIC,
         'polymorphic_on': 'type'

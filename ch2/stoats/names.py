@@ -51,6 +51,7 @@ PC = '%'
 BPM = 'bpm'
 KG = 'kg'
 STEPS_UNITS = 'steps'
+ENTRIES = 'entries'
 
 
 def round_km():

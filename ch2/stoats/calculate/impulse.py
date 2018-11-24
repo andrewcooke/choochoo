@@ -9,6 +9,7 @@ from sqlalchemy import desc, inspect, select, and_
 from . import IntervalCalculator
 from .heart_rate import HRImpulse
 from ..load import StatisticJournalLoader
+from ..names import MAX
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
@@ -31,7 +32,8 @@ class ImpulseStatistics(IntervalCalculator):
 
     def _previous(self, s, dest, start):
         return s.query(StatisticJournal). \
-            filter(StatisticJournal.statistic_name == dest,
+            join(StatisticName). \
+            filter(StatisticName.name == dest,
                    StatisticJournal.time < local_date_to_time(start)). \
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
@@ -59,8 +61,9 @@ class ImpulseStatistics(IntervalCalculator):
             yield local_date_to_time(day), None
             day += dt.timedelta(days=1)
 
-    def _add_response(self, loader, s, response, interval, source, dest):
-        prev = loader.latest(response.dest_name, source.constraint, self._previous(s, dest, interval.start))
+    def _add_response(self, loader, s, response, interval, source):
+        prev = loader.latest(response.dest_name, source.constraint,
+                             self._previous(s, response.dest_name, interval.start))
         if prev:
             value = (prev.time, prev.value)
         else:
@@ -74,12 +77,12 @@ class ImpulseStatistics(IntervalCalculator):
                 else:
                     value = self._decay(response, value, time)
                 value = (time, value[1] + response.scale * impulse)
-                loader.add(response.dest_name, None, None, source.constraint, interval, value[1], value[0],
+                loader.add(response.dest_name, None, MAX, source.constraint, interval, value[1], value[0],
                            StatisticJournalFloat)
             else:
                 if value:
                     value = self._decay(response, value, time)
-                    loader.add(response.dest_name, None, None, source.constraint, interval, value[1], value[0],
+                    loader.add(response.dest_name, None, MAX, source.constraint, interval, value[1], value[0],
                                StatisticJournalFloat)
 
     def _run_calculations(self, responses=None, impulse=None):
@@ -108,8 +111,6 @@ class ImpulseStatistics(IntervalCalculator):
                             filter(StatisticName.name == impulse.dest_name,
                                    StatisticName.owner == HeartRateStatistics,
                                    StatisticName.constraint == activity_group).one()
-                        dest = StatisticName.add_if_missing(self._log, s, response.dest_name, None, None,
-                                                            self, activity_group)
-                        self._add_response(loader, s, response, interval, source, dest)
+                        self._add_response(loader, s, response, interval, source)
                     start = SCHEDULE.next_frame(start)
                 loader.load()

@@ -2,13 +2,25 @@
 from random import choice
 from re import split
 
+from sqlalchemy import func, inspect, and_, select
+from sqlalchemy.sql.functions import coalesce
+
 from . import IntervalCalculator
-from ...lib.date import local_date_to_time, time_to_local_date
+from ..names import MAX, MIN, SUM, CNT, AVG, MSR, ENTRIES
+from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
-    StatisticJournalType
+    StatisticJournalType, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText
+
+
+TYPE_TO_JOURNAL_TYPE = {
+    int: StatisticJournalType.INTEGER,
+    float: StatisticJournalType.FLOAT,
+    str: StatisticJournalType.TEXT,
+    type(None): None
+}
 
 
 class SummaryStatistics(IntervalCalculator):
@@ -34,76 +46,68 @@ class SummaryStatistics(IntervalCalculator):
             filter(StatisticName.id.in_(statistics_with_data_but_no_summary)). \
             all()
 
-    def _journal_data(self, s, statistic_name, start, finish):
-        return s.query(StatisticJournal). \
-            filter(StatisticJournal.statistic_name == statistic_name,
-                   StatisticJournal.time >= start,
-                   StatisticJournal.time < finish).all()
+    def _calculate_value(self, s, statistic_name, summary, start_time, finish_time, schedule):
 
-    def _calculate_value(self, summary, values, schedule, input):
         range = schedule.describe()
-        type, units = input.type, input.statistic_name.units
-        defined = [x for x in values if x is not None]
-        if summary == 'min':
-            return min(defined) if defined else None, 'Min/%s %%s' % range, type, units
-        elif summary == 'max':
-            return max(defined) if defined else None, 'Max/%s %%s' % range, type, units
-        elif summary == 'sum':
-            return sum(defined, 0), 'Total/%s %%s' % range, type, units
-        elif summary == 'avg':
-            return (sum(defined) / len(defined) if defined else None, 'Avg/%s %%s' % range,
-                    StatisticJournalType.FLOAT, units)
-        elif summary == 'med':
-            defined = sorted(defined)
-            if len(defined):
-                if len(defined) % 2:
-                    return defined[len(defined) // 2], 'Med/%s %%s' % range, StatisticJournalType.FLOAT, units
-                else:
-                    return 0.5 * (defined[len(defined) // 2 - 1] + defined[len(defined) // 2]), \
-                           'Med/%s %%s' % range, StatisticJournalType.FLOAT, units
-            else:
-                return None, 'Med/%s %%s' % range, StatisticJournalType.FLOAT, units
-        elif summary == 'cnt':
-            if type == StatisticJournalType.TEXT:
-                n = len([x for x in defined if x.strip()])
-            else:
-                n = len(defined)
-            return n, 'Cnt/%s %%s' % range, StatisticJournalType.INTEGER, 'entries'
-        elif summary == 'msr':  # measure handled separately
+        units = statistic_name.units
+
+        sj = inspect(StatisticJournal).local_table
+        sji = inspect(StatisticJournalInteger).local_table
+        sjf = inspect(StatisticJournalFloat).local_table
+        sjt = inspect(StatisticJournalText).local_table
+
+        values = coalesce(sjf.c.value, sji.c.value, sjt.c.value)
+
+        if summary == MAX:
+            result = func.max(values)
+        elif summary == MIN:
+            result = func.min(values)
+        elif summary == SUM:
+            result = func.sum(values)
+        elif summary == CNT:
+            result = func.count(values)
+            units = ENTRIES;
+        elif summary == AVG:
+            result = func.avg(values)
+        elif summary == MSR:
             return None, None, None, None
         else:
-            self._log.warn('No algorithm for "%s"' % summary)
-            return None, None, None, None
+            raise Exception('Bad summary: %s' % summary)
 
-    def _get_statistic_name(self, s, root, name, units):
-        # we use the old statistic id as the constraint.  this lets us handle multiple
-        # statistics with the same name, but different owners and constraints.
-        statistic_name = s.query(StatisticName). \
-            filter(StatisticName.name == name,
-                   StatisticName.owner == self,
-                   StatisticName.constraint == root).one_or_none()
-        if not statistic_name:
-            statistic_name = add(s, StatisticName(name=name, owner=self, constraint=root, units=units))
-        if statistic_name.units != units:
-            self._log.warn('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
-            statistic_name.units = units
-        return statistic_name
+        stmt = select([result]). \
+            select_from(sj.outerjoin(sjf).outerjoin(sji).outerjoin(sjt)). \
+            where(and_(sj.c.statistic_name_id == statistic_name.id,
+                       sj.c.time >= start_time,
+                       sj.c.time < finish_time))
 
-    def _create_value(self, s, interval, spec, statistic_name, summary, data, values, time):
-        value, template, type, units = self._calculate_value(summary, values, spec, data[0])
+        value = next(s.connection().execute(stmt))[0]
+        title = summary[1:-1].capitalize()
+        return value, '%s/%s %%s' % (title, range), TYPE_TO_JOURNAL_TYPE[type(value)], units
+
+    def _create_value(self, s, statistic_name, summary, start_time, finish_time, interval, schedule):
+        value, template, type, units = self._calculate_value(s, statistic_name, summary, start_time, finish_time,
+                                                             schedule)
         if value is not None:
             name = template % statistic_name.name
-            new_name = self._get_statistic_name(s, statistic_name, name, units)
+            new_name = StatisticName.add_if_missing(self._log, s, name, units, None, self, statistic_name)
             journal = add(s, STATISTIC_JOURNAL_CLASSES[type](
-                statistic_name=new_name, source=interval, value=value, time=time))
+                statistic_name=new_name, source=interval, value=value, time=start_time))
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic_name))
+        return bool(value)
 
-    def _create_measures(self, s, interval, spec, statistic, data):
-        # we only rank non-NULL values
-        ordered = sorted([journal for journal in data if journal.value is not None],
-                         key=lambda journal: journal.value, reverse=True)
-        n, measures = len(ordered), []
-        for rank, journal in enumerate(ordered, start=1):
+    def _create_measures(self, s, statistic_name, start_time, finish_time, interval):
+
+        data = sorted([x for x in
+                       s.query(StatisticJournal).
+                      filter(StatisticJournal.statistic_name == statistic_name,
+                             StatisticJournal.time >= start_time,
+                             StatisticJournal.time < finish_time).all()
+                       if x is not None], key=lambda x: x.value)
+
+        # todo - asc/desc
+
+        n, measures = len(data), []
+        for rank, journal in enumerate(data, start=1):
             if n > 1:
                 percentile = (n - rank) / (n - 1) * 100
             else:
@@ -114,7 +118,7 @@ class SummaryStatistics(IntervalCalculator):
         if n > 8:  # avoid overlap in fuzzing (and also, plot individual points in this case)
             for q in range(5):
                 measures[fuzz(n, q)].quartile = q
-        self._log.debug('Ranked %s' % statistic)
+        self._log.debug('Ranked %s' % statistic_name)
 
     def _run_calculations(self, schedule):
         with self._db.session_context() as s:
@@ -123,20 +127,13 @@ class SummaryStatistics(IntervalCalculator):
                 interval = add(s, Interval(start=start, finish=finish, schedule=schedule, owner=self))
                 have_data = False
                 for statistic_name in self._statistics_missing_summaries(s, start_time, finish_time):
-                    data = [journal for journal in self._journal_data(s, statistic_name, start_time, finish_time)
-                            if schedule.at_location(time_to_local_date(journal.time))]
-                    if data:
-                        summaries = [x for x in split(r'[\s,]*\[([^\]]+)\][\s ]*', statistic_name.summary) if x]
-                        if summaries:
-                            values = [x.value for x in data]
-                            for summary in summaries:
-                                self._create_value(s, interval, schedule, statistic_name, summary.lower(), data, values,
-                                                   start_time)
-                        else:
-                            self._log.warn('Invalid summary for %s ("%s")' % (statistic_name, statistic_name.summary))
-                        if 'msr' in summaries:
-                            self._create_measures(s, interval, schedule, statistic_name, data)
-                        have_data = True
+                    self._log.debug(statistic_name)
+                    summaries = [x.lower() for x in split(r'[\s,]*(\[[^\]]+\])[\s ]*', statistic_name.summary) if x]
+                    for summary in summaries:
+                        have_data |= self._create_value(s, statistic_name, summary, start_time, finish_time, interval,
+                                                        schedule)
+                    if MSR in summaries:
+                        self._create_measures(s, statistic_name, start_time, finish_time, interval)
                 if have_data:
                     self._log.info('Added statistics for %s' % interval)
                 else:
