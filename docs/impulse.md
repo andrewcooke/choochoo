@@ -522,16 +522,22 @@ Science.  However, I do have some experience modelling and analysing
 numerical data.  And as I've explored this topic some details have
 made me uncomfortable:
 
-  * There's very little of the literature public.  This is a general
-    problem with *all* science.
+  * Very little of the literature is publicly available (for free).
+    This is a general problem with *all* science.
 
-  * The studies I could find tended to be very small.  Obviously it's
-    hard to do studies with large numbers of athletes, but it means
-    that any results are somewhat unreliable.
+  * The studies I could find are small.  Obviously it's hard to work
+    with large numbers of athletes, but this means that any results
+    are somewhat unreliable.
 
   * The studies don't seem to be reproduced.  Again, this is
     understandable - it's a small field - but, again, it means the
-    results are somewhat unreliable.
+    results are somewhat unreliable.  "Ancient" conclusions are
+    repeated, again and again.  Until they appear solid and reliable.
+
+  * Some emphasis seems, at best, misplaced.  At worst it feels like
+    deliberate obfuscation.  The entire framework is arbitrary, yet
+    people focus on small details (like adjusting Impulse scaling to
+    reflect lactate levels).
 
   * The people developing and promoting these metrics often have
     financial motivations.
@@ -545,6 +551,8 @@ made me uncomfortable:
 In this article I've tried to show how arbitrary these models are.
 They strike me as perfectly adequate "rough and ready" guides.  I am
 not sure there is strong evidence for anything better than that.
+
+But, as I keep saying, I may be wrong.  Think for yourself.
 
 ## Appendix - Getting Started with Choochoo
 
