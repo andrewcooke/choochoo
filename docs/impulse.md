@@ -29,7 +29,6 @@ questions that I hope to explore using this software.
   * [Summary](#summary)
   * [Seriously?](#seriously)
 * [Survey](#survey)
-  * [History](#history)
   * [Academic Literature](#academic-literature)
   * [Popular Literature](#popular-literature)
   * [Software](#software)
@@ -177,9 +176,7 @@ fitting](#parameter-fitting).
 
 ## Survey
 
-### History
-
-#### Academic Literature
+### Academic Literature
 
 I can't access many of the original papers.  They are either
 pre-Internet or behind paywalls.  What follows comes from reading the
@@ -507,11 +504,47 @@ serious accident.
 
 ## Discussion
 
+I hope reading this has helped you understand FF-Models.  I hope it's
+also given you some idea of what Choochoo can do.
+
 ### Flexible Impulse
+
+
 
 ### Training and Measurement
 
 ### Multiple Models
+
+### Questionable Science
+
+I think I've already explained that I am not an expert in Sports
+Science.  However, I do have some experience modelling and analysing
+numerical data.  And as I've explored this topic some details have
+made me uncomfortable:
+
+  * There's very little of the literature public.  This is a general
+    problem with *all* science.
+
+  * The studies I could find tended to be very small.  Obviously it's
+    hard to do studies with large numbers of athletes, but it means
+    that any results are somewhat unreliable.
+
+  * The studies don't seem to be reproduced.  Again, this is
+    understandable - it's a small field - but, again, it means the
+    results are somewhat unreliable.
+
+  * The people developing and promoting these metrics often have
+    financial motivations.
+
+    [Here](https://wattage.topica.narkive.com/WGWcDBXf/tss-vs-trimp-why-the-difference-is-important)
+    is an example.  It's an email from the scientist responsible for
+    TSS.  He's using a single, cherry-picked example to argue that
+    (power-meter based) TSS is significantly better than (heart-rate
+    based) TRIMP.  To promote software that he seems to gain from.
+
+In this article I've tried to show how arbitrary these models are.
+They strike me as perfectly adequate "rough and ready" guides.  I am
+not sure there is strong evidence for anything better than that.
 
 ## Appendix - Getting Started with Choochoo
 
