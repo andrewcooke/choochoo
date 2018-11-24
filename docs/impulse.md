@@ -48,6 +48,7 @@ questions that I hope to explore using this software.
   * [New Parameters](#new-parameters)
   * [Training and Measurement](#training-and-measurement)
   * [Multiple Models](#multiple-models)
+  & [Questionable Science](#questionable-science)
 * [Appendix - Getting Started with ChooChoo](#appendix---getting-started-with-choochoo)
   * [Install](#install)
   * [Configure](#configure)
