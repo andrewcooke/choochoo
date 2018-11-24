@@ -40,9 +40,7 @@ def summary_columns(log, s, f, date, schedule, names):
             width += 1
 
     def field_columns(name):
-        journals = StatisticJournal.at_interval(s, date, schedule,
-                                                SummaryStatistics, name,
-                                                SummaryStatistics)
+        journals = StatisticJournal.at_interval(s, date, schedule, SummaryStatistics, name, SummaryStatistics)
         columns, width = [], 0
         for named, journal in enumerate(journals):
             summary, period, name = SummaryStatistics.parse_name(journal.statistic_name.name)

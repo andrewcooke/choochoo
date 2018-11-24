@@ -12,15 +12,7 @@ from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
-    StatisticJournalType, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText
-
-
-TYPE_TO_JOURNAL_TYPE = {
-    int: StatisticJournalType.INTEGER,
-    float: StatisticJournalType.FLOAT,
-    str: StatisticJournalType.TEXT,
-    type(None): None
-}
+    StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
 
 
 class SummaryStatistics(IntervalCalculator):
@@ -48,14 +40,12 @@ class SummaryStatistics(IntervalCalculator):
 
     def _calculate_value(self, s, statistic_name, summary, pessimistic, start_time, finish_time, interval, schedule):
 
-        range = schedule.describe()
-        units = statistic_name.units
-
         sj = inspect(StatisticJournal).local_table
         sji = inspect(StatisticJournalInteger).local_table
         sjf = inspect(StatisticJournalFloat).local_table
         sjt = inspect(StatisticJournalText).local_table
 
+        units = statistic_name.units
         values = coalesce(sjf.c.value, sji.c.value, sjt.c.value)
 
         if summary == MAX:
@@ -84,12 +74,8 @@ class SummaryStatistics(IntervalCalculator):
         value = next(s.connection().execute(stmt))[0]
 
         if value is not None:
-
-            title = summary[1:-1].capitalize()   # see parse_name
-            template = '%s/%s %%s' % (title, range)
-            name = template % statistic_name.name
-
-            jtype = STATISTIC_JOURNAL_CLASSES[TYPE_TO_JOURNAL_TYPE[type(value)]]
+            name = self.fmt_name(statistic_name.name, summary, schedule)
+            jtype = TYPE_TO_JOURNAL_CLASS[type(value)]
             new_name = StatisticName.add_if_missing(self._log, s, name, units, None, self, statistic_name)
             journal = add(s, jtype(statistic_name=new_name, source=interval, value=value, time=start_time))
             self._log.debug('Created %s over %s for %s' % (journal, interval, statistic_name))
@@ -104,8 +90,6 @@ class SummaryStatistics(IntervalCalculator):
                              StatisticJournal.time >= start_time,
                              StatisticJournal.time < finish_time).all()
                        if x is not None], key=lambda x: x.value, reverse=not pessimistic)
-
-        # todo - asc/desc
 
         n, measures = len(data), []
         for rank, journal in enumerate(data, start=1):
@@ -141,10 +125,14 @@ class SummaryStatistics(IntervalCalculator):
 
     @classmethod
     def parse_name(cls, name):
-        # this reverses the logic in the naming above
         left, right = name.split(' ', 1)
         summary, period = left.split('/')
         return summary, period, right
+
+    @classmethod
+    def fmt_name(cls, name, summary, schedule):
+        title = summary[1:-1].capitalize()   # see parse_name
+        return '%s/%s %s' % (title, schedule.describe(), name)
 
 
 def fuzz(n, q):

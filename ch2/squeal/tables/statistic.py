@@ -311,3 +311,9 @@ STATISTIC_JOURNAL_CLASSES = {
     StatisticJournalType.FLOAT: StatisticJournalFloat,
     StatisticJournalType.TEXT: StatisticJournalText
 }
+
+TYPE_TO_JOURNAL_CLASS = {
+    int: StatisticJournalInteger,
+    float: StatisticJournalFloat,
+    str: StatisticJournalText
+}

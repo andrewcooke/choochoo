@@ -169,6 +169,14 @@ def set_constant(s, constant, value, time=None, date=None):
     constant.add_value(s, value, time=time, date=date)
 
 
+def name_constant(short_name, activity_group):
+    '''
+    Constants typically combine a name with an activity group (because they're specific to a
+    particular activity).
+    '''
+    return '%s.%s' % (short_name, activity_group.name)
+
+
 def add_topic(s, name, sort, description=None, schedule=None):
     '''
     Add a root topic.

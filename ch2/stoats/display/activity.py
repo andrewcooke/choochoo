@@ -21,13 +21,7 @@ HRZ_WIDTH = 30
 
 class ActivityDiary(Displayer):
 
-    def build(self, s, f, date, schedule=None):
-        if schedule:
-            yield from self.__build_schedule(s, f, date, schedule)
-        else:
-            yield from self.__build_date(s, f, date)
-
-    def __build_date(self, s, f, date):
+    def _build_date(self, s, f, date):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
         for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
@@ -86,7 +80,7 @@ class ActivityDiary(Displayer):
     def __format_value(self, sjournal, date):
         return ['%s ' % sjournal.formatted()] + sjournal.measures_as_text(date)
 
-    def __build_schedule(self, s, f, date, schedule):
+    def _build_schedule(self, s, f, date, schedule=None):
         columns = list(self.__schedule_fields(s, f, date, schedule))
         if columns:
             yield Pile([Text('Activities'),

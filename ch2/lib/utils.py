@@ -31,6 +31,10 @@ def em(text):
     return 'em', text
 
 
+def error(text):
+    return 'error', text
+
+
 def label(text):
     return 'label', text
 
