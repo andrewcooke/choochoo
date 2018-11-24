@@ -481,6 +481,18 @@ have different paramaters for different activities.
 
 ![Diary with SHRIMP Data](impulse-diary.png)
 
+The screenshot above shows the SHRIMP data within Choochoo's diary.
+The fitness and fatigue values are colour-coded by quintile over the
+last 90 days (using a scheme that's consistent across the interface),
+along with a small marker indicating with the daily change is positive
+or negative.
+
+A similar display summarises monthly and yearly variations.
+
+The user can see that fitness is increasing but also, in this case,
+that fatigue is higher than it's been for the last 3 months.  They may
+need to ease back.
+
 ## Discussion
 
 ### Flexible Impulse
