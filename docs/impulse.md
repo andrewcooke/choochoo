@@ -495,15 +495,15 @@ need to ease back.
 
 ![Plot of Fitness/Fatigue v Ride Distance](impulse-plot.png)
 
-The Fitness and Fatigue values are handled by Choochoo just like any
-other statistic.  This means that they are available for analysis and
-plotting Jupyter.
+Fitness and Fatigue values are managed by Choochoo in the same way as
+any other statistics.  This means that they can be exported to pandas
+DataFrames and analysed in Jupyter notebooks..
 
 This plot (from [this
 notebook](https://github.com/andrewcooke/choochoo/blob/master/notebooks/plot-ff-distance.ipynb))
 shows all my available data (from when I first bought a Garmin watch),
-illustrating the decline in fitness when I stopped riding after an
-accident.
+illustrating the decline in fitness when I stopped riding after a
+serious accident.
 
 ## Discussion
 
