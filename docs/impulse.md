@@ -135,15 +135,15 @@ themselves if they push too hard.
 
 How do we include this?  We need to measure *Fatigue*.
 
-Well, we could add up the amount of training they do....  Wait,
+To do this we could add up the amount of training they do....  Wait,
 though.  Isn't that we just said we were going to do for Fitness?
 What's the difference?  If both Fitness and Fatigue increase when we
 train then what makes them different?
 
 The difference is that Fatigue is quicker to build and quicker to fall
-away.  That's easy to include in the model - we'll scale it by some
-number so it grows more quickly, and we'll give it a shorter
-time-scale, so it falls back down more quickly.
+away.  That's easy to include in the model - we'll scale up the
+Impulses so it grows more quickly, and we'll give Fatigue a shorter
+time-scale, so it falls back more quickly.
 
 We are modelling "being careful".  The idea is to do enough training
 that Fitness creeps up gradually, but to avoid doing so much that
@@ -455,29 +455,31 @@ Choochoo was extended with three new pipeline classes:
 * `ImpulseStatistics` - responsible for calculating the Fitness and
   Fatigue responses.
 
-* `TODO` - responsible for displaying the responses in the diary.
+* `ImpulseDiary` - responsible for displaying the responses in the diary.
 
 Pipeline tasks are Choochoo's extension mechanism for calculating new
 statistics.  They integrate with internal book-keeping to re-calculate
 values when new data are available, or old data are modified.
 
-These can be arranged in various ways.  For example, by adding
+These can be configured in various ways.  For example, by adding
 additional instances of `HeartRateStatistics` to the statistics
 pipeline we can calculate different HR Impules (with different `gamma`
 and `zero` parameters).
 
 Similarly, we can configure additional responses.
 
-The tasks are parameterised using "constants" - parameters that
-Choochoo users can modify from the command line.  These allow, for
-example, the exponential decay time periods and the scaling factors in
-the models to be modified.
+The tasks are modified with "constants" - parameters that Choochoo
+users can modify from the command line.  These allow, for example, the
+exponential decay time periods and the scaling factors in the models
+to be modified.
 
 Choochoo manages activities by "activity group" (eg running, cycling).
 The statistics above are calculated for particular groups.  We can
 have different paramaters for different activities.
 
 ### Results
+
+![Diary with SHRIMP Data](impulse-diary.png)
 
 ## Discussion
 
