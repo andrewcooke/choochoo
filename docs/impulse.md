@@ -481,11 +481,11 @@ have different paramaters for different activities.
 
 ![Diary with SHRIMP Data](impulse-diary.png)
 
-The screenshot above shows the SHRIMP data within Choochoo's diary.
-The fitness and fatigue values are colour-coded by quintile over the
-last 90 days (using a scheme that's consistent across the interface),
-along with a small marker indicating with the daily change is positive
-or negative.
+The screenshot above shows the SHRIMP data within Choochoo's diary
+(mid-screen).  The Fitness and Fatigue values are colour-coded by
+quintile over the last 90 days (using a scheme that's consistent
+across the interface), along with a small marker indicating with the
+daily change is positive or negative.
 
 A similar display summarises monthly and yearly variations.
 
@@ -495,9 +495,15 @@ need to ease back.
 
 ![Plot of Fitness/Fatigue v Ride Distance](impulse-plot.png)
 
-This plot shows all my available data (from when I first bought a
-Garmin watch), clearly showing the decline in fitness when I had to
-sop riding after an accident.
+The Fitness and Fatigue values are handled by Choochoo just like any
+other statistic.  This means that they are available for analysis and
+plotting Jupyter.
+
+This plot (from [this
+notebook](https://github.com/andrewcooke/choochoo/blob/master/notebooks/plot-ff-distance.ipynb))
+shows all my available data (from when I first bought a Garmin watch),
+illustrating the decline in fitness when I stopped riding after an
+accident.
 
 ## Discussion
 
