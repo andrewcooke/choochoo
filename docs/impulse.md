@@ -549,8 +549,7 @@ made me uncomfortable:
     (power-meter based) TSS is significantly better than (heart-rate
     based) TRIMP.  To promote software that he seems to gain from.
 
-    Another example is the connection between Friel and Training
-    Peaks.
+    And Friel appears to be connected with Training Peaks.
 
     On the other hand, what's wrong with earning a living from the
     science you work on?  I realise these are complicated issues.
