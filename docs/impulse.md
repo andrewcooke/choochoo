@@ -535,18 +535,24 @@ made me uncomfortable:
     repeated, again and again.  Until they appear solid and reliable.
 
   * Some emphasis seems, at best, misplaced.  At worst it feels like
-    deliberate obfuscation.  The entire framework is arbitrary, yet
-    people focus on small details (like adjusting Impulse scaling to
-    reflect lactate levels).
+    obfuscation.  The entire framework is arbitrary, yet people focus
+    on small details (like adjusting Impulse scaling to reflect
+    lactate levels).
 
-  * The people developing and promoting these metrics often have
-    financial motivations.
-
+  * The people developing and promoting these metrics often appear to
+    have financial motivation.
+    
     [Here](https://wattage.topica.narkive.com/WGWcDBXf/tss-vs-trimp-why-the-difference-is-important)
     is an example.  It's an email from the scientist responsible for
     TSS.  He's using a single, cherry-picked example to argue that
     (power-meter based) TSS is significantly better than (heart-rate
     based) TRIMP.  To promote software that he seems to gain from.
+
+    Another example is the connection between Friel and Training
+    Peaks.
+
+    On the other hand, what's wrong with earning a living from the
+    science you work on?  I realise these are complicated issues.
 
 In this article I've tried to show how arbitrary these models are.
 They strike me as perfectly adequate "rough and ready" guides.  I am
