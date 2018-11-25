@@ -80,7 +80,9 @@ extensible.*
 
 ### v0.6.0
 
-Impulse calculations.  Faster importing and statistics.
+Impulse calculations.  Faster importing and statistics.  See [Scaled
+Heart Rate Impulse -
+SHRIMP](https://andrewcooke.github.io/choochoo/impulse)
 
 ### v0.5.0
 
