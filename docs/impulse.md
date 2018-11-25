@@ -3,10 +3,11 @@
 
 I'm writing this article for a couple of reasons.
 
-First, I want to explain and de-mystify the FF-Model (TRIMP, TSS, etc
-etc).  I get the impression many people don't understand quite how
-*simple* it is.  Following from that, maybe people aren't
-understanding exactly what it shows, or how it can or should be used.
+First, I want to explain and de-mystify the FF-Model (TRIMP, TSS, CTL,
+ATL, TSB, etc).  I get the impression many people don't understand
+quite how *simple* it all is.  Following from that, maybe people
+aren't understanding exactly what it shows, or how it can or should be
+used.
 
 Second, I want to showcase Choochoo - a *hackable* training diary.
 Choochoo is written for people at the intersection between sport and
@@ -37,7 +38,6 @@ questions that I hope to explore using this software.
   * [Open Questions](#open-questions)
     * [Arbitrary Form](#arbitrary-form)
     * [Parameter Fitting](#parameter-fitting)
-    * [Heart Rate v Power](#heart-rate-v-power)
 * [This Work](#this-work)
   * [Choochoo](#choochoo)
   * [Impulse Calculation](#impulse-calculation)
@@ -48,6 +48,7 @@ questions that I hope to explore using this software.
   * [New Parameters](#new-parameters)
   * [Training and Measurement](#training-and-measurement)
   * [Multiple Models](#multiple-models)
+  * [Heart Rate v Power](#heart-rate-v-power)
   * [Uncertain Science](#uncertain-science)
 * [Appendix - Getting Started with Choochoo](#appendix---getting-started-with-choochoo)
   * [Install](#install)
@@ -86,19 +87,17 @@ options, too.  Perceived exertion (ranked on a numeric scale - there
 are various standards) is not as sexy, but could work.  Heart rate is
 another possibility.
 
-Second, we need to measure time.  Presumably an hour's work at a given
-intensity is "worth" twice as much as 30mins (but this *is* just an
-assumption - maybe something we could check later).
-
-Third, we need to decide on a weighting.  Harder workouts
+Second, we need to decide on a weighting.  Harder workouts
 automatically score more because they are more intense.  But maybe
 they should score *extra*?  Maybe there's some threshold - no matter
 how long you do easy work, it just doesn't count?  (These are all
 valid questions - various approaches have been tried, see
 [Survey](#survey) below).
 
-Whatever weighting we choose, we multiply the calculated "intensity"
-by time.  This is called Impulse.
+Third, we need to measure time.  Presumably an hour's work at a given
+intensity is "worth" twice as much as 30mins (but this *is* just an
+assumption - maybe something we could check later).  So we multiply
+the weighted intensity by time.  The final result is called Impulse.
 
 ### Exponential Decay
 
@@ -171,9 +170,9 @@ If that seems completely arbitrary, well, yeah.  But it works.  People
 dreamt this up and then went away and tested it, and found it does a
 decent job.
 
-The cynic in me suspects this is because people are difficult to
-experiment on.  I'll discuss this below when looking at [parameter
-fitting](#parameter-fitting).
+The cynic in me suspects this is partly because people are difficult
+to experiment on.  I discuss this further in [Uncertain
+Science](#uncertain-science).
 
 ## Survey
 
@@ -281,7 +280,7 @@ Strava don't
 [document](https://support.strava.com/hc/en-us/articles/216918477-Fitness-Freshness-Summit-)
 their calculations in any detail, but it sounds like they're similar
 to Training Peaks (although also supporting Heart Rate - based
-impulses).
+Impulses).
 
 ### Open Questions
 
@@ -308,54 +307,6 @@ training?
 Should we change training to reflect the need to measure parameters?
 What kind of measurements should we make?
 
-#### Heart Rate v Power
-
-Discussion of Heart Rate v Power is usually polarized (at least in
-cycling communities).  Most people appear to believe that power is
-universally "better" than heart rate.
-
-Personally, I think both have their advantages.  I suspect heart rate
-is dismissed partly because it's less expensive.  People seem to
-confuse "expensive" with "good".
-
-Measuring power has two clear advantages over heart rate:
-
-  * Fast response.  If you increase effort the numbers respond
-    immediately.  In contrast, heart rate takes time to increase.  This
-    is called "lag".
-
-  * Simple, direct interpretation.  It's meaningful to compare power
-    output between two people.  Or to compare power output for the same
-    person from two different times.  The value has a clear relation to
-    the ability to win races.  In contrast, interpreting heart rate is
-    much more complex.
-
-However, heart rate also has a possible advantage:
-
-  * It is a more direct measure of the physiological load.  Laying down
-    300W may almost kill you, while leaving Peter Sagan unruffled - that
-    effort on your part will be clear in the heart rate data.
-
-    This is something of a philosophical point.  What, exactly are we
-    trying to measure?  Fitness is nebulous; Fatigue is perhaps easier
-    to intuitively understand.  So what causes Fatigue?  It's not,
-    exactly, power output.  It's something "within" the body.  Some
-    "use" of the body, as system.  What most accurately measures that
-    something?  The output power?  What about if we are ill in some way?
-    If the body is not functioning so well?  Then it will be stressed
-    more for the same power output.  That stress, it seems to me, will
-    still be visible in the Heart Rate.
-
-    But I don't think there's an obviously correct answer here.
-    Arguments I've read for power being the obviously correct answer
-    seem to be confusing the question of Fitness / Fatigue with other
-    uses of power meters.  Uses like comparing athletes, for example,
-    where power *is* clearly more objective.
-
-In short, since our model is based on the idea that physiological load
-is what makes you fitter, it's not unreasonable that heart rate
-provides useful insights.
-
 ## This Work
 
 ### Choochoo
@@ -369,7 +320,7 @@ further analysis and display.
 This work extended Choochoo with:
 
   * A task to calculate "HR Impulse" values from Heart Rate measurements
-    during exercise.
+OA    during exercise.
 
   * A task to calculate Fitness and Fatigue responses from these
     Impulses.
@@ -587,6 +538,54 @@ database.  This could be useful when comparing different parameters -
 perhaps during model exploration, or when comparing different values
 from the literature.
 
+### Heart Rate v Power
+
+Discussion of Heart Rate v Power is usually polarized (at least in
+cycling communities).  Most people appear to believe that power is
+universally "better" than heart rate.
+
+Personally, I think both have their advantages.  I suspect heart rate
+is dismissed partly because it's less expensive.  People seem to
+confuse "expensive" with "good".
+
+Measuring power has two clear advantages over heart rate:
+
+  * Fast response.  If you increase effort the numbers respond
+    immediately.  In contrast, heart rate takes time to increase.  This
+    is called "lag".
+
+  * Simple, direct interpretation.  It's meaningful to compare power
+    output between two people.  Or to compare power output for the same
+    person from two different times.  The value has a clear relation to
+    the ability to win races.  In contrast, interpreting heart rate is
+    much more complex.
+
+However, heart rate also has a possible advantage:
+
+  * It is a more direct measure of the physiological load.  Laying down
+    300W may almost kill you, while leaving Peter Sagan unruffled - that
+    effort on your part will be clear in the heart rate data.
+
+    This is something of a philosophical point.  What, exactly are we
+    trying to measure?  Fitness is nebulous; Fatigue is perhaps easier
+    to intuitively understand.  So what causes Fatigue?  It's not,
+    exactly, power output.  It's something "within" the body.  Some
+    "use" of the body, as system.  What most accurately measures that
+    something?  The output power?  What about if we are ill in some way?
+    If the body is not functioning so well?  Then it will be stressed
+    more for the same power output.  That stress, it seems to me, will
+    still be visible in the Heart Rate.
+
+    But I don't think there's an obviously correct answer here.
+    Arguments I've read for power being the obviously correct answer
+    seem to be confusing the question of Fitness / Fatigue with other
+    uses of power meters.  Uses like comparing athletes, for example,
+    where power *is* clearly more objective.
+
+In short, since our model is based on the idea that physiological load
+is what makes you fitter, it's not unreasonable that heart rate
+provides useful insights.
+
 ### Uncertain Science
 
 I think I've already explained that I am not an expert in Sports
@@ -634,11 +633,11 @@ issues:
     On the other hand, what's wrong with earning a living from the
     science you work on?  I understand these are complicated issues.
 
-In this article I've tried to show how arbitrary these models are.
-They strike me as perfectly adequate "rough and ready" guides.  I am
-not sure there is strong evidence for anything better than that.
+### Future Work
 
-But, as I keep saying, I may be wrong.  Think for yourself.
+The obvious next step is to try fitting parameters.  To do that I need
+to get back on the bike.  Hopefully early next year.  Starting with
+zero fitness will at least make it easier to measure change.
 
 ## Appendix - Getting Started with Choochoo
 
