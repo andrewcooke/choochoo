@@ -12,3 +12,6 @@ dist
 *.pkl
 /*.ipynb
 .ipynb_checkpoints
+*.lock
+*/_site
+*/.sass-cache
