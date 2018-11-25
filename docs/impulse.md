@@ -217,9 +217,10 @@ reflect the availability of new technology.
 With the arrival of power meters, Training Stress Score (TSS) was
 introduced by Coogan.  This [appears to
 be](https://www.trainingpeaks.com/blog/normalized-power-intensity-factor-training-stress/)
-output power, corrected to reflect physiological load (Normalised
-Power, NP), normalized to threshold power (Intensity Factor), and
-multiplied by duration.  The idea is to duplicate TRIMP.
+output power, corrected to reflect physiological load (called
+Normalised Power, NP), normalized to threshold power (called Intensity
+Factor), squared (similar to SHRIMP `gamma` of 2) and multiplied by
+duration.  The idea is to duplicate TRIMP.
 
 ### Popular Literature
 
@@ -247,11 +248,11 @@ Banister implies measuring performance every 4 days.  Since this is
 impractical they use unit scaling for both responses and fit only time
 periods.
 
-    Training Peaks Abbreviation     Description
+    Training Peaks                  Description
     -----------------------------   -------------------------
     Chronic Training Load (CTL)     Fitness (with unit scale)
     Acute Training Load (ATL)       Fatigue (with unit scale)
-    Training Stress Balance (TSB)   CTL - TSB
+    Training Stress Balance (TSB)   CTL - ATL
 
 [Note: There is a comment in the Training Peaks document that I do not
 understand.  They claim that eliminating the scaling makes the
@@ -259,7 +260,11 @@ processing significantly easier (replacing moving average with
 integral sums?).]
 
 The main effect of this unit scaling (apart from reducing fitting
-load) is that the shape of TSB changes.
+load) is that the shape of TSB changes (the minimum of CTL - ATL
+depends on the relative scaling of the two curves).
+
+In addition, the time scales are fixed at 7 (Fatigue / ATL) and 42
+(Fitness / CTL) days, although these can be modified by the user.
 
 #### Golden Cheetah
 
