@@ -520,9 +520,21 @@ parameters could be found experimentally.
 ### Training and Measurement
 
 Experimental bounds on model parameters require reliable, repeatable,
-evolving measurements of Fitness.  In my limited experience - timing
-myself up a local climb on a private road (no traffic) - such data are
-elusive.
+evolving measurements of Fitness.
+
+Over the last few years I used a local climb (on a private road with
+no cars) to measure my performance.  The data are poorly sampled and
+perhaps inaccurate, but it's interesting to compare them to the
+fitness model.
+
+![Fitness v Performance](fitness-v-performance.png)
+
+In the diagram, 'Speed' is simply `1/time_in_secs`.  There may be a
+correlation between the points and the curve.
+
+Going forwards - once I can ride again - it's clear that regular
+performance measurements will need to be part of my training.  Without
+them I have no hope of fitting model parameters.
 
 ### Multiple Models
 
