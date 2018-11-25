@@ -21,13 +21,13 @@
   * XXX Construct stats
   * XXX Display activity and stats
 
-* XXX  Command line addition of reminders (now via config
+* XXX  Command line addition of reminders (now via config)
 
 * Command line dumps of, eg, injury data
 
 * Plotting
   * XXX  Jupyter examples
-  * Steps example
+  * XXX  Steps example
 
 * XXX  Command line definition of traning plans
   * XXX  Examples from British Cycling
@@ -37,7 +37,7 @@
 * Docs, docs, docs
   * XXX  How to organise on github
   * XXX  Help command
-  * Update
+  * XXX  Update
   
 * Alarms based on stats (eg total distance)
   * Possibly means associating activities with bikes
@@ -49,15 +49,15 @@
   * FIT file for activity
   * XXX  FIT file for monitor
 
-* TSS but HR zones
+* XXX  TSS but HR zones
   * XXX  HR Impulses
-  * Exponential decays
-    * Two variables - one hourly for plotting, the other at impulses
-    * Time and scaling as constants
-    * Gamma and start as constants
-    * Constants that can't vary over time
-    * Improved config
-  * Plotting
+  * XXX  Exponential decays
+    * XXX  Two variables - one hourly for plotting, the other at impulses
+    * XXX  Time and scaling as constants
+    * XXX  Gamma and start as constants
+    * XXX  Constants that can't vary over time
+    * XXX  Improved config
+  * XXX  Plotting
   * Fitting
 
 * Allow activity headings to be edited
@@ -74,19 +74,20 @@
 
 * XXX (medians)  What are max/min HR floats in activity summary?
 
-* Simplified config and startup instructions
+* XXX  Simplified config and startup instructions
 
 * Block multiple default-config (currently multiplies entries!)
 
-* Set tz at start so we don't delete data on first diary
+* XXX  Set tz at start so we don't delete data on first diary
 
 * XXX  Why is deleting intervals so slow?  Missing index?
   https://stackoverflow.com/questions/24259265/sqlite-bad-performance-with-on-delete-cascade
 
-* Measures (rank, percentage) should be aware of min/max summaries and change
-  direction accordingly.
+* XXX  Measures (rank, percentage) should be aware of min/max summaries
+  and change direction accordingly.
 
-* Database locking during bulk load
+* XXX  Database locking during bulk load
 
 * Equipment tracking
 
+* Move this list to github issues?

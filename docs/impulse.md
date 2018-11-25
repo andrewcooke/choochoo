@@ -35,6 +35,7 @@ questions that I hope to explore using this software.
   * [Software](#software)
     * [Training Peaks](#training-peaks)
     * [Golden Cheetah](#golden-cheetah)
+    * [Strava](#strava)
   * [Open Questions](#open-questions)
     * [Arbitrary Form](#arbitrary-form)
     * [Parameter Fitting](#parameter-fitting)
@@ -45,18 +46,19 @@ questions that I hope to explore using this software.
   * [Architecture](#architecture)
   * [Results](#results)
 * [Discussion](#discussion)
-  * [New Parameters](#new-parameters)
+  * [Flexible Impulse](#flexible-impulse)
   * [Training and Measurement](#training-and-measurement)
   * [Multiple Models](#multiple-models)
   * [Heart Rate v Power](#heart-rate-v-power)
   * [Uncertain Science](#uncertain-science)
+  * [Future Work](#future-work)
 * [Appendix - Getting Started with Choochoo](#appendix---getting-started-with-choochoo)
   * [Install](#install)
   * [Configure](#configure)
   * [Load Data](#load-data)
   * [Plot Data](#plot-data)
   * [Modify Constants](#modify-constants)
-  * [Re-calculate](#re---calculate)
+  * [Re-calculate](#re-calculate)
 * [Appendix - The Author](#appendix---the-author)
 
 ## Theory
@@ -487,11 +489,11 @@ A similar display summarizes monthly and yearly variations.
 You can see that fitness is increasing but also, in this case, that
 fatigue is higher than it's been for the last 3 months.
 
-![Plot of Fitness/Fatigue v Ride Distance](impulse-plot.png)
-
 Fitness and Fatigue values are managed by Choochoo in the same way as
 any other statistic.  This means that they can be exported to Pandas
 DataFrames and analyzed in Jupyter notebooks.
+
+![Plot of Fitness/Fatigue v Ride Distance](impulse-plot.png)
 
 This plot (from [this
 notebook](https://github.com/andrewcooke/choochoo/blob/master/notebooks/plot-ff-distance.ipynb))
