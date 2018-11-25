@@ -27,6 +27,8 @@ contains only:
 
 ![](docs/steps.png)
 
+![](docs/impulse-plot.png)
+
 ## Technical Overview
 
 All data are stored in an SQLite database (SQLAlchemy ORM interface).
