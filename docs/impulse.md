@@ -262,7 +262,7 @@ periods.
 [Note: There is a comment in the Training Peaks document that I do not
 understand.  They claim that eliminating the scaling makes the
 processing significantly easier (replacing moving average with
-integral sums?).]
+integral sums?)]
 
 The main effect of this unit scaling (apart from reducing fitting
 load) is that the shape of TSB changes (the minimum of CTL - ATL
