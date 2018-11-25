@@ -677,7 +677,27 @@ ch2/data/notebooks and then click on TODO
 
 ### Modify Constants
 
+The constants used in the calculations can be viewed:
+
+    > ch2 constants
+
+gives a list of all names.  To see a particular value use, for example:
+
+    > ch2 constants Fatigue.Bike
+    Fatigue.Bike: Data needed to calculate the FF-model fitness - see Response enum
+    1970-01-01 00:00:00+00:00: {"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 5, "start": 0}
+
+This is a JSON-encoded value and a modified value can be entered
+directly.  For example, to change `scale`:
+
+    > ch2 constants --set Fatigue.Bike '{"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 7, "start": 0}'
+
 ### Re-calculate
+
+Changing the constants will not re-trigger calculation of the
+statistics.  This can be done with:
+
+    > ch2 statistics --force
 
 ## Appendix - The Author
 
