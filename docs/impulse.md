@@ -203,7 +203,8 @@ reflect the availability of new technology.
 
   * Average Heart Rate x Duration.
 
-  * Heart Rate Zone x Duration.  Credited to Edwards.
+  * Heart Rate Zone x Duration.  Attributed to
+    [Edwards](https://www.amazon.com/Heart-Rate-Monitor-Guidebook-Training/dp/0970013027).
 
   * Corrected Heart Rate Reserve x Duration.  (Fraction of) Heart Rate
     Reserve is a measure of Heart Rate which is 0 at rest and 1 at
@@ -217,7 +218,6 @@ With the arrival of power meters, Training Stress Score (TSS) was
 introduced by Coogan.  This [appears to
 be](https://www.trainingpeaks.com/blog/normalized-power-intensity-factor-training-stress/)
 output power, corrected to reflect physiological load (Normalised
-
 Power, NP), normalized to threshold power (Intensity Factor), and
 multiplied by duration.  The idea is to duplicate TRIMP.
 
@@ -226,16 +226,40 @@ multiplied by duration.  The idea is to duplicate TRIMP.
 Friel, in *The Cyclist's Training Bible* gives a clear explanation of
 Fitness and Fatigue (without getting into any theory at all) in
 section 3 (Basic Training Concepts) on p34 of the 5th edn.  He also
-implies that Form is something like the difference between the two
-(this is a useful idea, but, since the two have arbitrary scales,
-isn't that useful in practice - whether the difference is positive or
-negative doesn't really *mean* anything, for example).
+implies that Form is something like the difference between the two.
+This is a useful idea, but perhaps not to be taken literally.  The
+shape you will see when subtracting the two depends on their relative
+scale.  This is the problem Training Peaks have with TSB (see below)
+and requires that the parameters are fitted to the data.
 
 ### Software
 
 #### Training Peaks
 
-https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
+[Training
+Peaks](https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/)
+describe the FF-Model.  They use TSS as the Impulse and claim
+extensive evidence for the model (although when using TRIMP).
+
+They note that 50 or more measurements *per parameter* (four for their
+Fitness and Fatigue models) are required for good fitting and that
+Banister implies measuring performance every 4 days.  Since this is
+impractical they use unit scaling for both responses and fit only time
+periods.
+
+    Training Peaks Abbreviation     Description
+    -----------------------------   -------------------------
+    Chronic Training Load (CTL)     Fitness (with unit scale)
+    Acute Training Load (ATL)       Fatigue (with unit scale)
+    Training Stress Balance (TSB)   CTL - TSB
+
+[Note: There is a comment in the Training Peaks document that I do not
+understand.  They claim that eliminating the scaling makes the
+processing significantly easier (replacing moving average with
+integral sums?).]
+
+The main effect of this unit scaling (apart from reducing fitting
+load) is that the shape of TSB changes.
 
 #### Golden Cheetah
 
@@ -559,6 +583,10 @@ made me uncomfortable:
     understandable - it's a small field - but, again, it means the
     results are somewhat unreliable.  "Ancient" conclusions are
     repeated, again and again.  Until they appear set in stone.
+
+    On the other hand, as argued in the Training Peaks documentation
+    (above) studies from different sports apparently do support each
+    other (well, with qlauifications).
 
   * Some emphasis seems, at best, misplaced.  At worst it feels like
     obfuscation.  The entire framework is arbitrary, yet people focus
