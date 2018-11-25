@@ -48,7 +48,7 @@ questions that I hope to explore using this software.
   * [New Parameters](#new-parameters)
   * [Training and Measurement](#training-and-measurement)
   * [Multiple Models](#multiple-models)
-  & [Questionable Science](#questionable-science)
+  * [Uncertain Science](#uncertain-science)
 * [Appendix - Getting Started with Choochoo](#appendix---getting-started-with-choochoo)
   * [Install](#install)
   * [Configure](#configure)
@@ -106,12 +106,12 @@ How, exactly, do we decrease things over time?
 
 In the simplest case there are two options:
 
-* We subtract a fixed amount each day (or hour, or whatever) until
-  there's nothing left.
+  * We subtract a fixed amount each day (or hour, or whatever) until
+    there's nothing left.
 
-* We remove a percentage each day (this is like multiplying by a
-  number smaller than 1 - multiplying by 0.9, say, is the same as
-  subtracting 10%).
+  * We remove a percentage each day (this is like multiplying by a
+    number smaller than 1 - multiplying by 0.9, say, is the same as
+    subtracting 10%).
 
 The second of these tends to be more common in nature and leads to a
 common mathematical model called "exponential decay".
@@ -376,6 +376,8 @@ This work extended Choochoo with:
 
   * Support for displaying and analyzing the results.
 
+Fitting of model parameters is currently **not** supported.
+
 ### Impulse Calculation
 
 The HR Impulse is calculated in three steps:
@@ -399,7 +401,7 @@ The HR Impulse is calculated in three steps:
     extrapolated as though the zones had the same width as
     neighboring zones.
 
-2.  The zone value is transformed using the expression:
+ 2. The zone value is transformed using the expression:
 
         zone' = ((max(zone, zero) - zero) / (5 - zero)) ** gamma
 
@@ -431,7 +433,7 @@ The HR Impulse is calculated in three steps:
 
     By default, the `gamma` parameter is set to 2 and `zero` to 0.
 
-3.  The impulse is calculated as:
+ 3. The impulse is calculated as:
 
         impulse = zone' * delta_t
 
@@ -492,12 +494,12 @@ will also decay more quickly once the exercise stops).
 
 Choochoo was extended with three new pipeline classes:
 
-* `HeartRateStatistics` - responsible for calculating the HR Impulse.
+  * `HeartRateStatistics` - responsible for calculating the HR Impulse.
 
-* `ImpulseStatistics` - responsible for calculating the Fitness and
-  Fatigue responses.
+  * `ImpulseStatistics` - responsible for calculating the Fitness and
+    Fatigue responses.
 
-* `ImpulseDiary` - responsible for displaying the responses in the diary.
+  * `ImpulseDiary` - responsible for displaying the responses in the diary.
 
 Pipeline tasks are Choochoo's extension mechanism for calculating new
 statistics.  They integrate with internal book-keeping to re-calculate
@@ -580,8 +582,10 @@ them I have no hope of fitting model parameters.
 
 ### Multiple Models
 
-The architecture allows multiple models to be compared against the
-data.  This could be useful 
+The architecture allows multiple models to be co-exist in the
+database.  This could be useful when comparing different parameters -
+perhaps during model exploration, or when comparing different values
+from the literature.
 
 ### Uncertain Science
 
