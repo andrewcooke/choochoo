@@ -49,5 +49,5 @@ support for power meters.
   * [FIT Files](fit-files)
   * [Training Plans](training-plans)
 * Development
-  * [Scaled Heart Rate Impulse Training](impulse)
+  * [Scaled Heart Rate Impulse - SHRIMP](impulse)
   
