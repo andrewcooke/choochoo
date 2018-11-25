@@ -154,9 +154,9 @@ it's getting too high, take a break.
 
 For both Fitness and Fatigue:
 
-* Add up the Impulses from training.
+  * Add up the Impulses from training.
 
-* Decrease the numbers as time passes.
+  * Decrease the numbers as time passes.
 
 The difference between the two is that Fatigue is "more noisy" - we
 add a factor so it grows more quickly when we do train, and tweak the
@@ -195,28 +195,29 @@ Various ways of calculating the Impulse were suggested, changing to
 reflect the availability of new technology.
 [This](http://fellrnr.com/wiki/TRIMP) is a good summary that lists:
 
-* Training Volume.  Not really Impulse as I described it, but total
-  miles or hours.
+  * Training Volume.  Not really Impulse as I described it, but total
+    miles or hours.
 
-* Rating of Perceived Exertion (RPE) x Duration.  RPE describes "how
-  hard" a workout was on a numeric scale (eg 0 to 9).
+  * Rating of Perceived Exertion (RPE) x Duration.  RPE describes "how
+    hard" a workout was on a numeric scale (eg 0 to 9).
 
-* Average Heart Rate x Duration.
+  * Average Heart Rate x Duration.
 
-* Heart Rate Zone x Duration.  Credited to Edwards.
+  * Heart Rate Zone x Duration.  Credited to Edwards.
 
-* Corrected Heart Rate Reserve x Duration.  (Fraction of) Heart Rate
-  Reserve is a measure of Heart Rate which is 0 at rest and 1 at
-  maximum.  The heart rate is modified with a correction (depending on
-  sex) intended to give a value that correlates with blood lactose
-  level.  This seems to be the "standard" TRIMP score that is
-  mentioned throughout the literature and credited most often to
-  Banister.
+  * Corrected Heart Rate Reserve x Duration.  (Fraction of) Heart Rate
+    Reserve is a measure of Heart Rate which is 0 at rest and 1 at
+    maximum.  The heart rate is modified with a correction (depending on
+    sex) intended to give a value that correlates with blood lactose
+    level.  This seems to be the "standard" TRIMP score that is
+    mentioned throughout the literature and credited most often to
+    Banister.
 
 With the arrival of power meters, Training Stress Score (TSS) was
 introduced by Coogan.  This [appears to
 be](https://www.trainingpeaks.com/blog/normalized-power-intensity-factor-training-stress/)
 output power, corrected to reflect physiological load (Normalised
+
 Power, NP), normalized to threshold power (Intensity Factor), and
 multiplied by duration.  The idea is to duplicate TRIMP.
 
@@ -277,37 +278,37 @@ confuse "expensive" with "good".
 
 Measuring power has two clear advantages over heart rate:
 
-* Fast response.  If you increase effort the numbers respond
-  immediately.  In contrast, heart rate takes time to increase.  This
-  is called "lag".
+  * Fast response.  If you increase effort the numbers respond
+    immediately.  In contrast, heart rate takes time to increase.  This
+    is called "lag".
 
-* Simple, direct interpretation.  It's meaningful to compare power
-  output between two people.  Or to compare power output for the same
-  person from two different times.  The value has a clear relation to
-  the ability to win races.  In contrast, interpreting heart rate is
-  much more complex.
+  * Simple, direct interpretation.  It's meaningful to compare power
+    output between two people.  Or to compare power output for the same
+    person from two different times.  The value has a clear relation to
+    the ability to win races.  In contrast, interpreting heart rate is
+    much more complex.
 
 However, heart rate also has a possible advantage:
 
-* It is a more direct measure of the physiological load.  Laying down
-  300W may almost kill you, while leaving Peter Sagan unruffled - that
-  effort on your part will be clear in the heart rate data.
+  * It is a more direct measure of the physiological load.  Laying down
+    300W may almost kill you, while leaving Peter Sagan unruffled - that
+    effort on your part will be clear in the heart rate data.
 
-  This is something of a philosophical point.  What, exactly are we
-  trying to measure?  Fitness is nebulous; Fatigue is perhaps easier
-  to intuitively understand.  So what causes Fatigue?  It's not,
-  exactly, power output.  It's something "within" the body.  Some
-  "use" of the body, as system.  What most accurately measures that
-  something?  The output power?  What about if we are ill in some way?
-  If the body is not functioning so well?  Then it will be stressed
-  more for the same power output.  That stress, it seems to me, will
-  still be visible in the Heart Rate.
+    This is something of a philosophical point.  What, exactly are we
+    trying to measure?  Fitness is nebulous; Fatigue is perhaps easier
+    to intuitively understand.  So what causes Fatigue?  It's not,
+    exactly, power output.  It's something "within" the body.  Some
+    "use" of the body, as system.  What most accurately measures that
+    something?  The output power?  What about if we are ill in some way?
+    If the body is not functioning so well?  Then it will be stressed
+    more for the same power output.  That stress, it seems to me, will
+    still be visible in the Heart Rate.
 
-  But I don't think there's an obviously correct answer here.
-  Arguments I've read for power being the obviously correct answer
-  seem to be confusing the question of Fitness / Fatigue with other
-  uses of power meters.  Uses like comparing athletes, for example,
-  where power *is* clearly more objective.
+    But I don't think there's an obviously correct answer here.
+    Arguments I've read for power being the obviously correct answer
+    seem to be confusing the question of Fitness / Fatigue with other
+    uses of power meters.  Uses like comparing athletes, for example,
+    where power *is* clearly more objective.
 
 In short, since our model is based on the idea that physiological load
 is what makes you fitter, it's not unreasonable that heart rate
@@ -318,26 +319,26 @@ provides useful insights.
 ### Choochoo
 
 [Choochoo](https://github.com/andrewcooke/choochoo) is a free,
-hackable training diary, written in Python, that runs on a wide
+hackable training diary, written in Python, that should run on a wide
 variety of computers.  It can import FIT files, process data with
 user-provided algorithms, and export results to Pandas and Jupyter for
 further analysis and display.
 
-This work extended Choochoo as follows:
+This work extended Choochoo with:
 
-* A task to calculate "HR Impulse" values from Heart Rate measurements
-  during exercise.
+  * A task to calculate "HR Impulse" values from Heart Rate measurements
+    during exercise.
 
-* A task to calculate Fitness and Fatigue responses from these
-  Impulses.
+  * A task to calculate Fitness and Fatigue responses from these
+    Impulses.
 
-* Support for displaying and analysing the results.
+  * Support for displaying and analysing the results.
 
 ### Impulse Calculation
 
 The HR Impulse is calculated in three steps:
 
-1.  Each Heart Rate measurement is converted to a HR Zone following the
+ 1. Each Heart Rate measurement is converted to a HR Zone following the
     schema used by the [British Cycling
     calculator](https://www.britishcycling.org.uk/membership/article/20120925-Power-Calculator-0).
 
@@ -352,16 +353,13 @@ The HR Impulse is calculated in three steps:
     from 130 to 150 bpm a value of 130 would be given a zone of 3.0
     and a value of 140 a zone of 3.5.
 
-    Values in zone 1, which has no lower boundary, are all set to 1.0
-    (this does not affect the results as these are typically discarded
-    when calculating the Impulse - see next step).
+    Values in zone 1 and above zone 5, which are open intervals, are
+    extrapolated as though the zones had the same width as
+    neighbouring zones.
 
-    Values above zone 5 are extrapolated assuming that further zones
-    have the same width as zone 5.
+2.  The zone value is transformed using the expression:
 
-2.  The zone value above is transformed using the expression:
-
-        zone' = (max(zone, zero) - zero / (5 - zero)) ** gamma
+        zone' = ((max(zone, zero) - zero) / (5 - zero)) ** gamma
 
     This is shown below (with `zero` set to 0).
 
@@ -369,14 +367,14 @@ The HR Impulse is calculated in three steps:
 
     The transformation can be understood in three stages.  First,
     values below a threshold (`zero`) are discarded.  Next, the range
-    to zone 6 is normalized to the range 0-1.  Finally, this
+    to zone 5 is normalized to the range 0-1.  Finally, this
     normalized value is raised to the power `gamma`.
 
-    The "gamma correction" is a standard technique for parameterising
+    This "gamma correction" is a standard technique for parameterising
     uncertainty in the shape of a function.  A value of `gamma`
     greater than 1 will give a "concave" curve - in this case implying
     that high zones are significantly more important than low zones.
-    A value of `gamma` less than 1 will give a "comvex" curve -
+    A value of `gamma` less than 1 will give a "convex" curve -
     implying that low zones are similar in importance to high zones.
 
     This step accomodates different ideas about how the body responds
@@ -389,7 +387,7 @@ The HR Impulse is calculated in three steps:
     we can lower `gamma` to, say, 0.1, giving a curve that
     approximates a "top hat" response.
 
-    By default, the `gamma` parameter is set to 1 and `zero` to 2.
+    By default, the `gamma` parameter is set to 2 and `zero` to 0.
 
 3.  The impulse is calculated as:
 
@@ -402,8 +400,8 @@ The HR Impulse is calculated in three steps:
     impulses when the data feed drops.
 
     This step takes account of how much time was spent on training at
-    this particular level of exercise.  As discussed earlier, we
-    assume that more time means more gains.
+    a particular level of exercise.  As discussed earlier, we assume
+    that more time means more gains.
 
 ### Other Impulse Models
 
@@ -426,7 +424,7 @@ A SHRIMP curve with `gamma` of 1 and `zero` of 2 is also a reasonable
 match to TRIMP at higher values.
 
 So SHRIMP can replicate existing Impulse models.  Not perfectly, but
-within practical limits.
+within reasonable limits.
 
 ### Response Calculation
 
@@ -435,8 +433,10 @@ the appropriate time constant as time increases.  In addition, an
 arbitrary scale factor can be applied.
 
 By default, the time-scale (`tau_days`) is taken as 7 for Fatigue and
-42 for Fitness.  The `scale` factor is 5 for Fatigue and 1 for Fitness
-(chosen arbitrarily so that the two values cover similar ranges).
+42 for Fitness (this matches the values used on Training Peaks).  The
+`scale` factor is 5 for Fatigue and 1 for Fitness (chosen arbitrarily
+so that Fatigue rises faster that Fitness and the two values cover
+similar ranges).
 
 ![Response Calculation](response.png)
 
@@ -475,7 +475,7 @@ to be modified.
 
 Choochoo manages activities by "activity group" (eg running, cycling).
 The statistics above are calculated for particular groups.  We can
-have different paramaters for different activities.
+have different parameters for different activities.
 
 ### Results
 
@@ -489,14 +489,13 @@ daily change is positive or negative.
 
 A similar display summarises monthly and yearly variations.
 
-The user can see that fitness is increasing but also, in this case,
-that fatigue is higher than it's been for the last 3 months.  They may
-need to ease back.
+You can see that fitness is increasing but also, in this case, that
+fatigue is higher than it's been for the last 3 months.
 
 ![Plot of Fitness/Fatigue v Ride Distance](impulse-plot.png)
 
 Fitness and Fatigue values are managed by Choochoo in the same way as
-any other statistics.  This means that they can be exported to pandas
+any other statistic.  This means that they can be exported to Pandas
 DataFrames and analysed in Jupyter notebooks.
 
 This plot (from [this
