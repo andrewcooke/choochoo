@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# for this to work you must add ch2 to the python path in pythton
+# for this to work you must add ch2 to the python path in python
 # to do this create ~/.ipython/profile_default/ipython_config.py
 # and add lines like
 #
