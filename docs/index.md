@@ -19,7 +19,7 @@ schedules.
 
 "Derived" data can be calculated from the raw data you provide.  A
 simple example would be rankings (eg per month).  A more complex
-example (not yet implemented) would be Training Stress Score (TSS).
+example would be [Fitness / Fatigue models](impulse).
 
 If you develop your own calculations (as Python code) then these can
 be added to the "pipeline" and run automatically on new data.
