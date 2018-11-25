@@ -222,6 +222,11 @@ Normalised Power, NP), normalized to threshold power (called Intensity
 Factor), squared (similar to SHRIMP `gamma` of 2) and multiplied by
 duration.  The idea is to duplicate TRIMP.
 
+[Hellard et al](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1974899/)
+give a somewhat critical review of the FF-Model with an emphasis on
+the difficulty in fitting and the consequenct large uncertainties in
+parameters.
+
 ### Popular Literature
 
 Friel, in *The Cyclist's Training Bible* gives a clear explanation of
@@ -268,7 +273,17 @@ In addition, the time scales are fixed at 7 (Fatigue / ATL) and 42
 
 #### Golden Cheetah
 
+As far as I can tell (see
+[here](https://www.goldencheetah.org/#section-science)) Golden Cheetah
+replicates CTL, ATL and TSB from Training Peaks.  
+
 #### Strava
+
+Strava [don't
+document](https://support.strava.com/hc/en-us/articles/216918477-Fitness-Freshness-Summit-)
+exactly how they do their calculations, but it sounds like they're
+similar to Training Peaks (although also supporting Heart Rate - based
+impulses).
 
 ### Open Questions
 
@@ -591,13 +606,17 @@ made me uncomfortable:
 
     On the other hand, as argued in the Training Peaks documentation
     (above) studies from different sports apparently do support each
-    other (well, with qlauifications).
+    other (well, with qualifications).
 
   * Some emphasis seems, at best, misplaced.  At worst it feels like
     obfuscation.  The entire framework is arbitrary, yet people focus
     on small details (like adjusting Impulse scaling to reflect
     lactate levels).  Wouldn't it be better to use a simple parametric
     model (like SHRIMP's `gamma`) and then fit for the results?
+
+    In the "damned if you, damned if you don't" camp, the Training
+    Peaks documentation is laudably detailed, but so dense it makes
+    the modelling seem like rocket science.
 
   * The people developing and promoting these metrics often appear to
     have financial motivation.
@@ -611,7 +630,7 @@ made me uncomfortable:
     And Friel appears to be connected with Training Peaks.
 
     On the other hand, what's wrong with earning a living from the
-    science you work on?  I realise these are complicated issues.
+    science you work on?  I understand these are complicated issues.
 
 In this article I've tried to show how arbitrary these models are.
 They strike me as perfectly adequate "rough and ready" guides.  I am
