@@ -527,7 +527,7 @@ no cars) to measure my performance.  The data are poorly sampled and
 perhaps inaccurate, but it's interesting to compare them to the
 fitness model.
 
-![Fitness v Performance](fitness-v-performance.png)
+![Fitness v Performance](fitness-performance.png)
 
 In the diagram, 'Speed' is simply `1/time_in_secs`.  There may be a
 correlation between the points and the curve.
