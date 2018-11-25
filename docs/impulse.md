@@ -238,6 +238,8 @@ https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
 
 #### Golden Cheetah
 
+#### Strava
+
 ### Open Questions
 
 If we look at the FF-Model and current implementations, what problems
@@ -495,13 +497,15 @@ need to ease back.
 
 Fitness and Fatigue values are managed by Choochoo in the same way as
 any other statistics.  This means that they can be exported to pandas
-DataFrames and analysed in Jupyter notebooks..
+DataFrames and analysed in Jupyter notebooks.
 
 This plot (from [this
 notebook](https://github.com/andrewcooke/choochoo/blob/master/notebooks/plot-ff-distance.ipynb))
 shows all my available data (from when I first bought a Garmin watch),
 illustrating the decline in fitness when I stopped riding after a
-serious accident.
+serious accident.  Both responses respond to exercise (shown roughly
+by the ride distance and frequency) as expected.  Fatigue is "more
+noisy", as expected.
 
 ## Discussion
 
@@ -510,11 +514,21 @@ also given you some idea of what Choochoo can do.
 
 ### Flexible Impulse
 
-
+The `gamma` and `zero` parameters allows SHRIMP to match existing
+calculations.  It would be useful if the "correct" value of these
+parameters could be found experimentally.
 
 ### Training and Measurement
 
+Experimental bounds on model parameters require reliable, repeatable,
+evolving measurements of Fitness.  In my limited experience - timing
+myself up a local climb on a private road (no traffic) - such data are
+elusive.
+
 ### Multiple Models
+
+The architecture allows multiple models to be compared against the
+data.  This could be useful 
 
 ### Questionable Science
 
@@ -533,12 +547,13 @@ made me uncomfortable:
   * The studies don't seem to be reproduced.  Again, this is
     understandable - it's a small field - but, again, it means the
     results are somewhat unreliable.  "Ancient" conclusions are
-    repeated, again and again.  Until they appear solid and reliable.
+    repeated, again and again.  Until they appear set in stone.
 
   * Some emphasis seems, at best, misplaced.  At worst it feels like
     obfuscation.  The entire framework is arbitrary, yet people focus
     on small details (like adjusting Impulse scaling to reflect
-    lactate levels).
+    lactate levels).  Wouldn't it be better to use a simple parametric
+    model (like SHRIMP's `gamma`) and then fit for the results?
 
   * The people developing and promoting these metrics often appear to
     have financial motivation.
