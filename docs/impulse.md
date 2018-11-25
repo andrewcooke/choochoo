@@ -248,11 +248,11 @@ Banister implies measuring performance every 4 days.  Since this is
 impractical they use unit scaling for both responses and fit only time
 periods.
 
-    Training Peaks                  Description
-    -----------------------------   -------------------------
-    Chronic Training Load (CTL)     Fitness (with unit scale)
-    Acute Training Load (ATL)       Fatigue (with unit scale)
-    Training Stress Balance (TSB)   CTL - ATL
+Training Peaks                  Description
+-----------------------------   -------------------------
+Chronic Training Load (CTL)     Fitness (with unit scale)
+Acute Training Load (ATL)       Fatigue (with unit scale)
+Training Stress Balance (TSB)   CTL - ATL
 
 [Note: There is a comment in the Training Peaks document that I do not
 understand.  They claim that eliminating the scaling makes the
