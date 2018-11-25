@@ -529,7 +529,7 @@ fitness model.
 
 ![Fitness v Performance](fitness-performance.png)
 
-In the diagram, 'Speed' is simply `1/time_in_secs`.  There may be a
+In the diagram, "Speed" is simply 1 / time in seconds.  There may be a
 correlation between the points and the curve.
 
 Going forwards - once I can ride again - it's clear that regular
