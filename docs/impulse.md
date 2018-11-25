@@ -24,7 +24,7 @@ questions that I hope to explore using this software.
 
 * [Theory](#theory)
   * [Adding Up Training](#adding-up-training)
-  * [Exponential Decay](#exponentia-decay)
+  * [Exponential Decay](#exponential-decay)
   * [Fatigue](#fatigue)
   * [Summary](#summary)
   * [Seriously?](#seriously)
@@ -33,7 +33,7 @@ questions that I hope to explore using this software.
   * [Popular Literature](#popular-literature)
   * [Software](#software)
     * [Training Peaks](#training-peaks)
-    * [Golden Cheeta](#golden-cheetah)
+    * [Golden Cheetah](#golden-cheetah)
   * [Open Questions](#open-questions)
     * [Arbitrary Form](#arbitrary-form)
     * [Parameter Fitting](#parameter-fitting)
@@ -49,7 +49,7 @@ questions that I hope to explore using this software.
   * [Training and Measurement](#training-and-measurement)
   * [Multiple Models](#multiple-models)
   & [Questionable Science](#questionable-science)
-* [Appendix - Getting Started with ChooChoo](#appendix---getting-started-with-choochoo)
+* [Appendix - Getting Started with Choochoo](#appendix---getting-started-with-choochoo)
   * [Install](#install)
   * [Configure](#configure)
   * [Load Data](#load-data)
@@ -145,7 +145,7 @@ away.  That's easy to include in the model - we'll scale up the
 Impulses so it grows more quickly, and we'll give Fatigue a shorter
 time-scale, so it falls back more quickly.
 
-We are modelling "being careful".  The idea is to do enough training
+We are modeling "being careful".  The idea is to do enough training
 that Fitness creeps up gradually, but to avoid doing so much that
 Fatigue gets dangerously high.  Train, but keep an eye on Fatigue.  If
 it's getting too high, take a break.
@@ -185,8 +185,9 @@ survey section of other papers.
 
 The general model (Impulse + Decay) seems to have been presented first
 in various(?) papers by Calvert, Banister and others, with titles like
-"Systems Model" in the mid 70s.  None of these appear to be available
-online (for free).
+"Systems Model ..." in the mid 70s.  None of these appear to be
+available online (for free).  They are generally referred to as
+"Banister".
 
 Originally it seems that the model had three components, but this was
 later reduced to two (Fatigue and Fitness).
@@ -199,7 +200,7 @@ reflect the availability of new technology.
     miles or hours.
 
   * Rating of Perceived Exertion (RPE) x Duration.  RPE describes "how
-    hard" a workout was on a numeric scale (eg 0 to 9).
+    hard" a workout was on a numeric scale (eg. 0 to 9).
 
   * Average Heart Rate x Duration.
 
@@ -218,13 +219,13 @@ With the arrival of power meters, Training Stress Score (TSS) was
 introduced by Coogan.  This [appears to
 be](https://www.trainingpeaks.com/blog/normalized-power-intensity-factor-training-stress/)
 output power, corrected to reflect physiological load (called
-Normalised Power, NP), normalized to threshold power (called Intensity
+Normalized Power, NP), normalized to threshold power (called Intensity
 Factor), squared (similar to SHRIMP `gamma` of 2) and multiplied by
 duration.  The idea is to duplicate TRIMP.
 
-[Hellard et al](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1974899/)
+[Hellard et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1974899/)
 give a somewhat critical review of the FF-Model with an emphasis on
-the difficulty in fitting and the consequenct large uncertainties in
+the difficulty in fitting and the consequent large uncertainties in
 parameters.
 
 ### Popular Literature
@@ -242,16 +243,16 @@ and requires that the parameters are fitted to the data.
 
 #### Training Peaks
 
-[Training
-Peaks](https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/)
-describe the FF-Model.  They use TSS as the Impulse and claim
-extensive evidence for the model (although when using TRIMP).
+Training Peaks describe the FF-Model
+[here](https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/).
+They use TSS as the Impulse and claim extensive supporting evidence
+(although when using TRIMP).
 
 They note that 50 or more measurements *per parameter* (four for their
 Fitness and Fatigue models) are required for good fitting and that
 Banister implies measuring performance every 4 days.  Since this is
-impractical they use unit scaling for both responses and fit only time
-periods.
+impractical they use unit scaling for both responses and fix the time
+periods at 7 (Fatigue / ATL) and 42 (Fitness / CTL) days.
 
 | Training Peaks                | Description               |
 | ----------------------------- | ------------------------- |
@@ -264,12 +265,9 @@ understand.  They claim that eliminating the scaling makes the
 processing significantly easier (replacing moving average with
 integral sums?)]
 
-The main effect of this unit scaling (apart from reducing fitting
-load) is that the shape of TSB changes (the minimum of CTL - ATL
-depends on the relative scaling of the two curves).
-
-In addition, the time scales are fixed at 7 (Fatigue / ATL) and 42
-(Fitness / CTL) days, although these can be modified by the user.
+The main effect of this unit scaling is that the *shape* of TSB changes
+(the minimum of CTL - ATL depends on the relative scaling of the two
+curves).
 
 #### Golden Cheetah
 
@@ -279,10 +277,10 @@ replicates CTL, ATL and TSB from Training Peaks.
 
 #### Strava
 
-Strava [don't
-document](https://support.strava.com/hc/en-us/articles/216918477-Fitness-Freshness-Summit-)
-exactly how they do their calculations, but it sounds like they're
-similar to Training Peaks (although also supporting Heart Rate - based
+Strava don't
+[document](https://support.strava.com/hc/en-us/articles/216918477-Fitness-Freshness-Summit-)
+their calculations in any detail, but it sounds like they're similar
+to Training Peaks (although also supporting Heart Rate - based
 impulses).
 
 ### Open Questions
@@ -304,7 +302,7 @@ historical Impulse models by varying a model parameter?
 The model has a bunch of parameters.  What values should they have?
 
 Do we need different values for different contexts?  Do we need
-OAdifferent values for different sports?  Or different styles of
+different values for different sports?  Or different styles of
 training?
 
 Should we change training to reflect the need to measure parameters?
@@ -376,7 +374,7 @@ This work extended Choochoo with:
   * A task to calculate Fitness and Fatigue responses from these
     Impulses.
 
-  * Support for displaying and analysing the results.
+  * Support for displaying and analyzing the results.
 
 ### Impulse Calculation
 
@@ -388,7 +386,7 @@ The HR Impulse is calculated in three steps:
 
     This step transforms arbitrary Heart Rate values onto a scale that
     has some physiological basis.  Zones are relative to FTHR
-    (Functional Threshold Heart Rate).  The values are comparabale
+    (Functional Threshold Heart Rate).  The values are comparable
     between different people.
     
     The calculated zone is a floating point value, numerically equal
@@ -399,7 +397,7 @@ The HR Impulse is calculated in three steps:
 
     Values in zone 1 and above zone 5, which are open intervals, are
     extrapolated as though the zones had the same width as
-    neighbouring zones.
+    neighboring zones.
 
 2.  The zone value is transformed using the expression:
 
@@ -414,14 +412,14 @@ The HR Impulse is calculated in three steps:
     to zone 5 is normalized to the range 0-1.  Finally, this
     normalized value is raised to the power `gamma`.
 
-    This "gamma correction" is a standard technique for parameterising
+    This "gamma correction" is a standard technique for parameterizing
     uncertainty in the shape of a function.  A value of `gamma`
     greater than 1 will give a "concave" curve - in this case implying
     that high zones are significantly more important than low zones.
     A value of `gamma` less than 1 will give a "convex" curve -
     implying that low zones are similar in importance to high zones.
 
-    This step accomodates different ideas about how the body responds
+    This step accommodates different ideas about how the body responds
     to exercise - whether all levels of exertion should be weighted
     similarly, or whether harder efforts are "worth more" in some way.
 
@@ -507,7 +505,7 @@ values when new data are available, or old data are modified.
 
 These can be configured in various ways.  For example, by adding
 additional instances of `HeartRateStatistics` to the statistics
-pipeline we can calculate different HR Impules (with different `gamma`
+pipeline we can calculate different HR Impulse (with different `gamma`
 and `zero` parameters).
 
 Similarly, we can configure additional responses.
@@ -526,12 +524,12 @@ have different parameters for different activities.
 ![Diary with SHRIMP Data](impulse-diary.png)
 
 The screenshot above shows the SHRIMP data within Choochoo's diary
-(mid-screen).  The Fitness and Fatigue values are colour-coded by
+(mid-screen).  The Fitness and Fatigue values are color-coded by
 quintile over the last 90 days (using a scheme that's consistent
 across the interface), along with a small marker indicating with the
 daily change is positive or negative.
 
-A similar display summarises monthly and yearly variations.
+A similar display summarizes monthly and yearly variations.
 
 You can see that fitness is increasing but also, in this case, that
 fatigue is higher than it's been for the last 3 months.
@@ -540,7 +538,7 @@ fatigue is higher than it's been for the last 3 months.
 
 Fitness and Fatigue values are managed by Choochoo in the same way as
 any other statistic.  This means that they can be exported to Pandas
-DataFrames and analysed in Jupyter notebooks.
+DataFrames and analyzed in Jupyter notebooks.
 
 This plot (from [this
 notebook](https://github.com/andrewcooke/choochoo/blob/master/notebooks/plot-ff-distance.ipynb))
@@ -585,12 +583,12 @@ them I have no hope of fitting model parameters.
 The architecture allows multiple models to be compared against the
 data.  This could be useful 
 
-### Questionable Science
+### Uncertain Science
 
 I think I've already explained that I am not an expert in Sports
-Science.  However, I do have some experience modelling and analysing
-numerical data.  And as I've explored this topic some details have
-made me uncomfortable:
+Science.  However, I do have some experience modeling and analyzing
+numerical data.  And as I've explored this topic I've noticed some
+issues:
 
   * Very little of the literature is publicly available (for free).
     This is a general problem with *all* science.
@@ -616,7 +614,7 @@ made me uncomfortable:
 
     In the "damned if you, damned if you don't" camp, the Training
     Peaks documentation is laudably detailed, but so dense it makes
-    the modelling seem like rocket science.
+    the modeling seem like rocket science.
 
   * The people developing and promoting these metrics often appear to
     have financial motivation.
@@ -661,7 +659,7 @@ else you might want to do in Python).
 
 Enable that:
 
-    > souce env/bin/activate
+    > source env/bin/activate
 
 Your prompt should now show `(env)`.  When you see that you're using
 the local copy of Python.  You will need to do this whenever you want
@@ -740,8 +738,8 @@ gives a list of all names.  To see a particular value use, for example:
     Fatigue.Bike: Data needed to calculate the FF-model fitness - see Response enum
     1970-01-01 00:00:00+00:00: {"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 5, "start": 0}
 
-This is a JSON-encoded value and a modified value can be entered
-directly.  For example, to change `scale`:
+This is a JSON-encoded dict and a modified value can be entered
+directly.  For example, to change `scale` to `7`:
 
     > ch2 constants --set Fatigue.Bike '{"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 7, "start": 0}'
 
@@ -756,7 +754,7 @@ statistics.  This can be done with:
 
 I'm adding this because I don't want to mislead.  I'm no expert on
 this stuff.  The details above come from papers I've found on-line.  I
-could have misunderstood.  Check things out for youself.  I've
+could have misunderstood.  Check things out for yourself.  I've
 collected some of the papers
 [here](https://github.com/andrewcooke/choochoo/tree/master/data/training).
 
