@@ -672,8 +672,9 @@ plot the results in your browser:
 
     > jupyter notebook
 
-This should open a new page in your browser.  Select
-ch2/data/notebooks and then click on TODO
+This should open a new page in your browser.  Select `notebooks` and
+then `plot-ff-distance.pynb`, for example, to see the notebook that
+figure above of Fitness, Fatigue and Distance.
 
 ### Modify Constants
 
