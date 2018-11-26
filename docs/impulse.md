@@ -674,14 +674,14 @@ to use Python and Choochoo.
 
 With all that preparation done, we can install Choochoo:
 
-    > pip install choochoo
+    (env)> pip install choochoo
     [...]
     
 That should display a lot of messages but, hopefully, no errors.
 
 Once done, you can run Choochoo:
 
-    > ch2
+    (env)> ch2
 	INFO: Using database at ...
 	INFO: Creating tables
 
@@ -702,11 +702,11 @@ Once done, you can run Choochoo:
 
 Create a default database:
 
-    > ch2 default-config
+    (env)> ch2 default-config
 
 You need to define your FTHR or the HR Zones can't be calculated:
 
-    > ch2 constants --set FTHR.Bike NNN
+    (env)> ch2 constants --set FTHR.Bike NNN
 
 (replace `NNN` with your FTHR in bpm).
     
@@ -714,7 +714,7 @@ You need to define your FTHR or the HR Zones can't be calculated:
 
 Read your FIT files:
 
-    > ch2 activities /path/to/FIT/files/*.fit
+    (env)> ch2 activities /path/to/FIT/files/*.fit
 
 (This will take some time and, I'm afraid, might give errors.  As far
 as I know. I am the only user, so if you're following these
@@ -727,35 +727,49 @@ goes wrong.).
 If you've got this far, congratulations!  Now we can start Jupyter and
 plot the results in your browser:
 
-    > jupyter notebook
+    (env)> jupyter notebook
 
 This should open a new page in your browser.  Select `notebooks` and
 then `plot-ff-distance.pynb`, for example, to see the notebook that
 figure above of Fitness, Fatigue and Distance.
 
+More generally, to explore what statistics are available, within the
+notebook:
+
+    In[] > from ch2.data import data
+           d = data('-v 0')  # similar args to ch2 command line
+           print(d.statistic_names())
+
+And to load some statistics into a DataFrame:
+
+    In[] > stats = d.statistic_journals(name, ..., start=..., finish=...)
+
+As you start to use the system more you will probably need to
+understand the [data model](data-model).
+
 ### Modify Constants
 
 The constants used in the calculations can be viewed:
 
-    > ch2 constants
+    (env)> ch2 constants
 
 gives a list of all names.  To see a particular value use, for example:
 
-    > ch2 constants Fatigue.Bike
+    (env)> ch2 constants Fatigue.Bike
     Fatigue.Bike: Data needed to calculate the FF-model fitness - see Response enum
     1970-01-01 00:00:00+00:00: {"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 5, "start": 0}
 
 This is a JSON-encoded dict and a modified value can be entered
 directly.  For example, to change `scale` to `7`:
 
-    > ch2 constants --set Fatigue.Bike '{"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 7, "start": 0}'
+    (env)> ch2 constants --set Fatigue.Bike '{"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 7, "start": 0}'
 
 ### Re-calculate
 
 Changing the constants will not re-trigger calculation of the
 statistics.  This can be done with:
 
-    > ch2 statistics --force
+    (env)> ch2 statistics --force
 
 ## Appendix - The Author
 

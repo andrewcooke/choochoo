@@ -78,6 +78,9 @@ class Data:
 
     def _build_statistic_journal_query(self, statistic_ids, start, finish, owner, constraint, source_id, schedule):
 
+        # use more efficient expression interface and exploit the fact that
+        # alternative journal types will be null in an outer join.
+
         sj = inspect(StatisticJournal).local_table
         sn = inspect(StatisticName).local_table
         sji = inspect(StatisticJournalInteger).local_table
