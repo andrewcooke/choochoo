@@ -1,4 +1,6 @@
 
+25-11-2018
+
 # Scaled Heart Rate Impulse - SHRIMP (TRIMP, TSS, ...)
 
 I'm writing this article for a couple of reasons.
@@ -255,7 +257,7 @@ Banister implies measuring performance every 4 days.  Since this is
 impractical they use unit scaling for both responses and fix the time
 periods at 7 (Fatigue / ATL) and 42 (Fitness / CTL) days.
 
-| Training Peaks                | Description               |
+| Variable                      | Description               |
 | ----------------------------- | ------------------------- |
 | Chronic Training Load (CTL)   | Fitness (with unit scale) |
 | Acute Training Load (ATL)     | Fatigue (with unit scale) |
