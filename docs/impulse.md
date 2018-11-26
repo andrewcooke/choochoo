@@ -1,5 +1,5 @@
 
-25-11-2018
+2018-11-25
 
 # Scaled Heart Rate Impulse - SHRIMP (TRIMP, TSS, ...)
 
