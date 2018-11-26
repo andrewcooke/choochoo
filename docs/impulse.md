@@ -744,8 +744,8 @@ And to load some statistics into a DataFrame:
 
     In[] > stats = d.statistic_journals(name, ..., start=..., finish=...)
 
-As you start to use the system more you will probably need to
-understand the [data model](data-model).
+As you use the system more you will probably need to understand the
+[data model](data-model).
 
 ### Modify Constants
 
