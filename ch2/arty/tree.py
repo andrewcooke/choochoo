@@ -43,30 +43,32 @@ class BaseTree(ABC):
         self._max = max_entries
         self._min = min_entries
         self._root = None
+        self._size = 0
 
-    def get_point(self, x, y, match=MatchType.EQUAL):
-        yield from self._get_normalized_mbr((x, y, x, y), match)
+    def get_point(self, x, y, value=None, match=MatchType.EQUAL):
+        yield from self._get_normalized_mbr((x, y, x, y), value, match)
 
-    def get_box(self, x1, y1, x2, y2, match=MatchType.EQUAL):
-        yield from self._get_normalized_mbr(self._normalize_mbr(x1, y1, x2, y2), match)
+    def get_box(self, x1, y1, x2, y2, value=None, match=MatchType.EQUAL):
+        yield from self._get_normalized_mbr(self._normalize_mbr(x1, y1, x2, y2), value, match)
 
-    def _get_normalized_mbr(self, mbr, match):
+    def _get_normalized_mbr(self, mbr, value, match):
         if self._root:
-            yield from self._get_node(self._root, mbr, match)
+            yield from self._get_node(self._root, mbr, value, match)
 
-    def _get_node(self, node, mbr, match):
+    def _get_node(self, node, mbr, value, match):
         height, data = node
         for mbr_node, contents_node in data:
             if height:
-                if (match in MatchType.EQUAL. MatchType.CONTAINED and self._contains(mbr_node, mbr)) or \
-                        (match in MatchType.CONTAINS. MatchType.INTERSECT and self._intersect(mbr_node, mbr)):
-                    yield from self._get_node(contents_node, mbr)
+                if (match in (MatchType.EQUAL, MatchType.CONTAINED) and self._contains(mbr_node, mbr)) or \
+                        (match in (MatchType.CONTAINS, MatchType.INTERSECT) and self._intersect(mbr_node, mbr)):
+                    yield from self._get_node(contents_node, mbr, value, match)
             else:
-                if (match == MatchType.EQUAL and mbr == mbr_node) or \
-                        (match == MatchType.CONTAINED and self._contains(mbr_node, mbr)) or \
-                        (match == MatchType.CONTAINS and self._contains(mbr, mbr_node)) or \
-                        (match == MatchType.INTERSECT and self._intersect(mbr, mbr_node)):
-                    yield contents_node, mbr_node
+                if value is None or value == contents_node:
+                    if (match == MatchType.EQUAL and mbr == mbr_node) or \
+                            (match == MatchType.CONTAINED and self._contains(mbr_node, mbr)) or \
+                            (match == MatchType.CONTAINS and self._contains(mbr, mbr_node)) or \
+                            (match == MatchType.INTERSECT and self._intersect(mbr, mbr_node)):
+                        yield contents_node, mbr_node
 
     def add_point(self, value, x, y):
         '''
@@ -86,26 +88,34 @@ class BaseTree(ABC):
                 raise Exception('Cannot add node at height t%d in tree of height %d' % (target, self._root[0]))
             split = self._add_node(self._root, target, value, mbr)
             if split:
-                self._root = split
+                height = split[0][1][0] + 1
+                self._root = (height, split)
+            else:
+                pass
+                # todo - do we need to calculate a new mbr here?
         else:
             if target:
                 raise Exception('Cannot add node at height %d in empty tree' % target)
             self._root = (0, [(mbr, value)])
+        self._size += 1
 
     def _add_node(self, node, target, value, mbr):
         height, data = node
         if height != target:
-            i_best, area_best = self._best(data, mbr)
+            i_best, mbr_best = self._best(data, mbr)
             child = data[i_best][1]
-            data[i_best] = (area_best, child)
+            data[i_best] = (mbr_best, child)
             split = self._add_node(child, target, value, mbr)
             if split:
                 del data[i_best]
-                data.extend(split[1])
+                data.extend(split)
                 if len(data) <= self._max:
                     return None
                 else:
                     return self._split(height, data)
+            else:
+                pass
+                # todo - do we need to calculate a new mbr here?
         else:
             data.append((mbr, value))
             if len(data) <= self._max:
@@ -114,24 +124,30 @@ class BaseTree(ABC):
                 return self._split(height, data)
 
     def _best(self, data, mbr):
-        i_best, area_best, delta_area_best = None, None, None
+        i_best, mbr_best, area_best, delta_area_best = None, None, None, None
         for i_child, (mbr_child, _) in enumerate(data):
-            if self._intersect(mbr_child, mbr):
-                if i_best is None:
-                    i_best = i_child
-                else:
-                    if area_best is None:
-                        mbr_best = data[i_best][0]
-                        area_best = self._area(mbr_best)
-                        delta_area_best = self._area(self._merge(mbr_best, mbr)) - area_best
-                    area_child = self._area(mbr_child)
-                    delta_area_child = self._area(self._merge(mbr_child, mbr)) - area_child
-                    if delta_area_child < delta_area_best:
-                        i_best, area_best, delta_area_best = i_child, area_child, delta_area_child
-                    elif delta_area_child == delta_area_best:
-                        if area_child < area_best:
-                            i_best, area_best, delta_area_best = i_child, area_child, delta_area_child
-        return i_best, area_best
+            if i_best is None:
+                i_best = i_child
+                mbr_best = self._merge(mbr_child, mbr)
+                area_best = self._area(mbr_best)
+                delta_area_best = self._area(mbr_best) - self._area(mbr_child)
+            else:
+                mbr_merge = self._merge(mbr_child, mbr)
+                area_merge = self._area(mbr_merge)
+                delta_area_merge = area_merge - self._area(mbr_child)
+                if delta_area_merge < delta_area_best or \
+                        (delta_area_merge == delta_area_best and area_merge < area_best):
+                    i_best, mbr_best, area_best, delta_area_best = i_child, mbr_merge, area_merge, delta_area_merge
+        return i_best, mbr_best
+
+    def _merge_all(self, *nodes):
+        total = None
+        for mbr, _ in nodes:
+            if total is None:
+                total = mbr
+            else:
+                total = self._merge(total, mbr)
+        return total
 
     def delete_point(self, x, y, value=None, match=MatchType.EQUAL):
         return self._delete_normalized_mbr((x, y, x, y), value, match)
@@ -141,10 +157,9 @@ class BaseTree(ABC):
 
     def _delete_normalized_mbr(self, mbr, value, match):
         count = 0
-        for mbr in (mbr_found for (value_found, mbr_found) in self._get_normalized_mbr(mbr, match)
-                    if value is None or value == value_found):
+        for _, mbr in self._get_normalized_mbr(mbr, value, match):
             # root cannot be empty as it contains mbr
-            found = self._delete_node(self._root, mbr.pop(), value)
+            found = self._delete_node(self._root, mbr, value)
             if found:
                 delete, inserts = found
                 if delete:
@@ -152,10 +167,12 @@ class BaseTree(ABC):
                 for insert in inserts:
                     self._add_normalized_mbr(*insert)
                 count += 1
+                self._size -= 1
             else:
                 raise Exception('Failed to delete %s' % mbr)
             if len(self._root[1]) == 1:  # single child
                 self._root = self._root[1][0][1]  # contents of first child
+        return count
 
     def _delete_node(self, node, mbr, value):
         height, data = node
@@ -179,12 +196,15 @@ class BaseTree(ABC):
                                 if new_mbr is None:
                                     new_mbr = mbr_child
                                 else:
-                                    new_mbr = self._intersect(new_mbr, mbr_child)
+                                    new_mbr = self._merge(new_mbr, mbr_child)
                             data[i] = (new_mbr, (height_children, children))
                         return False, inserts
             else:
                 if mbr_node == mbr and (value is None or value == contents_node):
                     return True, []
+
+    def __len__(self):
+        return self._size
 
     # allow different coordinate systems
 
@@ -230,12 +250,12 @@ class CartesianMixin:
     def _intersect(self, mbr1, mbr2):
         x1, y1, x2, y2 = mbr1
         X1, Y1, X2, Y2 = mbr2
-        return x1 <= X2 and x2 >= X1 and y1 <= Y2  and y2 >= Y1
+        return x1 <= X2 and x2 >= X1 and y1 <= Y2 and y2 >= Y1
 
     def _contains(self, outer, inner):
         x1, y1, x2, y2 = outer
         X1, Y1, X2, Y2 = inner
-        return x1 <= X1 and x2 >= x2 and y1 <= Y1 and y2 >= Y2
+        return x1 <= X1 and x2 >= X2 and y1 <= Y1 and y2 >= Y2
 
     def _area(self, mbr):
         x1, y1, x2, y2 = mbr
@@ -251,7 +271,7 @@ class CartesianMixin:
         for i, (mbr, _) in enumerate(data):
             if not i:
                 index = [0, 0, 0 ,0]
-                extreme = mbr
+                extreme = list(mbr)
             else:
                 for j in range(2):
                     if mbr[j] < extreme[j]:
@@ -285,8 +305,8 @@ class LinearSplitMixin:
             a.append(data.pop())
             if data:
                 b.append(data.pop())
-        return height+1, (height, a), (height, b)
+        return [(self._merge_all(*a), (height, a)), (self._merge_all(*b), (height, b))]
 
 
-class CLRTree(BaseTree, LinearSplitMixin, CartesianMixin): pass
+class CLRTree(LinearSplitMixin, CartesianMixin, BaseTree): pass
 
