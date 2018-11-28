@@ -76,7 +76,7 @@
 
 * XXX  Simplified config and startup instructions
 
-* Block multiple default-config (currently multiplies entries!)
+* XXX  Block multiple default-config (currently multiplies entries!)
 
 * XXX  Set tz at start so we don't delete data on first diary
 
