@@ -32,14 +32,13 @@ class BaseTree(ABC):
     #   (even with equality matching, (key, value) isn't guaranteed unique)
     # in other words, if you want unique (key, value) or unique key you must enforce it yourself.
 
-    def __init__(self, log, max_entries=4, min_entries=None):
+    def __init__(self, max_entries=4, min_entries=None):
         if not min_entries:
             min_entries = max_entries / 2
         if min_entries > max_entries / 2:
             raise Exception('Min number of entries in a node is too high')
         if min_entries < 1:
             raise Exception('Min number of entries in a node is too low')
-        self._log = log
         self._max = max_entries
         self._min = min_entries
         self._root = None
@@ -90,9 +89,6 @@ class BaseTree(ABC):
             if split:
                 height = split[0][1][0] + 1
                 self._root = (height, split)
-            else:
-                pass
-                # todo - do we need to calculate a new mbr here?
         else:
             if target:
                 raise Exception('Cannot add node at height %d in empty tree' % target)
@@ -113,9 +109,6 @@ class BaseTree(ABC):
                     return None
                 else:
                     return self._split(height, data)
-            else:
-                pass
-                # todo - do we need to calculate a new mbr here?
         else:
             data.append((mbr, value))
             if len(data) <= self._max:
@@ -191,6 +184,7 @@ class BaseTree(ABC):
                         else:
                             # something under data[i] has been deleted so recalculate mbr
                             old_mbr, (height_children, children) = data[i]
+                            # todo call merge_all
                             new_mbr = None
                             for (mbr_child, content) in children:
                                 if new_mbr is None:
@@ -205,6 +199,51 @@ class BaseTree(ABC):
 
     def __len__(self):
         return self._size
+
+    # utilities for debugging
+
+    def dump(self):
+        if self._root:
+            height, data = self._root
+            yield height+1, self._merge_all(*data), None  # implied mbr on all nodes
+            yield from self._dump(self._root)
+
+    def _dump(self, node):
+        height, data = node
+        for mbr, value in data:
+            yield height, mbr, None if height else value
+            if height:
+                yield from self._dump(value)
+
+    def print(self):
+        for height, mbr, value in self.dump():
+            print('%2d %s (%4.2f, %4.2f, %4.2f, %4.2f) %s' %
+                  (height, ' ' * (10 - height), *mbr, '' if value is None else value))
+
+    def assert_consistent(self):
+        if self._size and not self._root:
+            raise Exception('Emtpy root')
+        size = self._assert_consistent(self._root)
+        if size != self._size:
+            raise Exception('Unexpected number of leaves (%d != %d)' % (size, self._size))
+
+    def _assert_consistent(self, node):
+        height, data = node
+        if len(data) < self._min:
+            raise Exception('Too few children at height %d' % height)
+        if len(data) > self._max:
+            raise Exception('Too many children at height %d' % height)
+        if height:
+            count = 0
+            for mbr, child in data:
+                (height_child, data_child) = child
+                mbr_check = self._merge_all(*data_child)
+                if mbr_check != mbr:
+                    raise Exception('Bad MBR at height %d %s / %s' % (height, mbr_check, mbr))
+                count += self._assert_consistent(child)
+            return count
+        else:
+            return len(data)
 
     # allow different coordinate systems
 
@@ -270,28 +309,30 @@ class CartesianMixin:
         index, extreme = None, None
         for i, (mbr, _) in enumerate(data):
             if not i:
-                index = [0, 0, 0 ,0]
+                index = [0, 0, 0, 0]
                 extreme = list(mbr)
             else:
                 for j in range(2):
-                    if mbr[j] < extreme[j]:
+                    if mbr[j] > extreme[j]:   # want max of lower left
                         extreme[j] = mbr[j]
                         index[j] = i
-                    if mbr[j+2] > extreme[j+2]:
+                    if mbr[j+2] < extreme[j+2]:  # and min of upper right
                         extreme[j+2] = mbr[j+2]
                         index[j+2] = i
         return index, extreme
 
     def _pick_linear_seeds(self, data):
-        _, extreme = self.__extremes(self._root[1])
-        norm_x, norm_y = extreme[2] - extreme[0], extreme[3] - extreme[1]
+        global_mbr = self._merge_all(*self._root[1])
+        norm_x, norm_y = global_mbr[2] - global_mbr[0], global_mbr[3] - global_mbr[1]
         norm = [norm_x, norm_y, norm_x, norm_y]
-        index, extreme = self.__extremes(data)
-        extreme = [x / n for x, n in zip(extreme, norm)]
-        if extreme[2] - extreme[0] > extreme[3] - extreme[1]:
+        index, extremes = self.__extremes(data)
+        extremes = [x / n for x, n in zip(extremes, norm)]
+        if extremes[2] - extremes[0] > extremes[3] - extremes[1] and index[0] != index[2]:
             return index[0], index[2]
-        else:
+        elif extremes[2] - extremes[0] < extremes[3] - extremes[1] and index[1] != index[3]:
             return index[1], index[3]
+        else:
+            return 0, 1  # degenerate case :(
 
 
 class LinearSplitMixin:
