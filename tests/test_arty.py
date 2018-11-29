@@ -1,6 +1,6 @@
 
 from math import sqrt
-from random import uniform, gauss, seed
+from random import uniform, gauss, seed, randrange
 
 from ch2.arty.tree import CLRTree, MatchType
 
@@ -61,3 +61,37 @@ def test_best_bug():
     for i, (value, box) in enumerate(gen_random(100)):
         tree.add_box(value % 10, *box)
         tree.assert_consistent()
+
+
+def test_stress():
+
+    for n_children in 3, 4, 10:
+        print('n_children %d' % n_children)
+
+        for n_data in 1, 2, 3, 100:
+            print('n_data %d' % n_data)
+
+            seed(1)
+            tree = CLRTree(n_children)
+            data = list(gen_random(n_data))
+
+            for value, box in data:
+                tree.add_box(value, *box)
+                tree.assert_consistent()
+
+            for i in range(1000):
+
+                n_delete = randrange(n_data)
+                for j in range(n_delete):
+                    if data:
+                        index = randrange(len(data))
+                        value, box = data[index]
+                        del data[index]
+                        tree.delete_box(*box, value=value)
+                        tree.assert_consistent()
+
+                while len(data) < n_children:
+                    value, box = next(gen_random(1))
+                    data.append((value, box))
+                    tree.add_box(value, *box)
+                    tree.assert_consistent()

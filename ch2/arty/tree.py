@@ -34,8 +34,8 @@ class BaseTree(ABC):
 
     def __init__(self, max_entries=4, min_entries=None):
         if not min_entries:
-            min_entries = max_entries / 2
-        if min_entries > max_entries / 2:
+            min_entries = max_entries // 2
+        if min_entries > max_entries // 2:
             raise Exception('Min number of entries in a node is too high')
         if min_entries < 1:
             raise Exception('Min number of entries in a node is too low')
@@ -73,18 +73,20 @@ class BaseTree(ABC):
         '''
         Add value at a single point.
         '''
-        self._add_normalized_mbr(0, value, (x, y, x, y))
+        self._add_normalized_mbr(0, (x, y, x, y), value)
+        self._size += 1  # not in _add_normalized_mbr to avoid counting reinserts
 
     def add_box(self, value, x1, y1, x2, y2):
         '''
         Add value in a box.
         '''
-        self._add_normalized_mbr(0, value, self._normalize_mbr(x1, y1, x2, y2))
+        self._add_normalized_mbr(0, self._normalize_mbr(x1, y1, x2, y2), value)
+        self._size += 1  # not in _add_normalized_mbr to avoid counting reinserts
 
-    def _add_normalized_mbr(self, target, value, mbr):
+    def _add_normalized_mbr(self, target, mbr ,value):
         if self._root:
             if target > self._root[0]:
-                raise Exception('Cannot add node at height t%d in tree of height %d' % (target, self._root[0]))
+                raise Exception('Cannot add node at height %d in tree of height %d' % (target, self._root[0]))
             split = self._add_node(self._root, target, value, mbr)
             if split:
                 height = split[0][1][0] + 1
@@ -93,7 +95,6 @@ class BaseTree(ABC):
             if target:
                 raise Exception('Cannot add node at height %d in empty tree' % target)
             self._root = (0, [(mbr, value)])
-        self._size += 1
 
     def _add_node(self, node, target, value, mbr):
         height, data = node
@@ -150,20 +151,19 @@ class BaseTree(ABC):
 
     def _delete_normalized_mbr(self, mbr, value, match):
         count = 0
-        for _, mbr in self._get_normalized_mbr(mbr, value, match):
+        for _, mbr_match in self._get_normalized_mbr(mbr, value, match):
             # root cannot be empty as it contains mbr
-            found = self._delete_node(self._root, mbr, value)
+            found = self._delete_node(self._root, mbr_match, value)
             if found:
                 delete, inserts = found
                 if delete:
                     self._root = None
-                for insert in inserts:
-                    self._add_normalized_mbr(*insert)
+                self._reinsert(inserts)
                 count += 1
                 self._size -= 1
             else:
-                raise Exception('Failed to delete %s' % mbr)
-            if len(self._root[1]) == 1:  # single child
+                raise Exception('Failed to delete %s' % mbr_match)
+            if self._root and len(self._root[1]) == 1 and self._root[0]:  # single child, not leaf
                 self._root = self._root[1][0][1]  # contents of first child
         return count
 
@@ -195,7 +195,31 @@ class BaseTree(ABC):
                         return False, inserts
             else:
                 if mbr_node == mbr and (value is None or value == contents_node):
-                    return True, []
+                    del data[i]
+                    if len(data) < self._min:
+                        return True, [(0, *node) for node in data]
+                    else:
+                        return False, []
+
+    def _leaves(self, node):
+        height, data = node
+        for mbr, child in data:
+            if height:
+                yield from self._leaves(child)
+            else:
+                yield mbr, child
+
+    def _reinsert(self, inserts):
+        if self._root:
+            max_height = self._root[0]
+        else:
+            max_height = 0
+        for insert in inserts:
+            if insert[0] > max_height:
+                for mbr, value in self._leaves(insert[2]):
+                    self._add_normalized_mbr(0, mbr, value)
+            else:
+                self._add_normalized_mbr(*insert)
 
     def __len__(self):
         return self._size
@@ -222,28 +246,31 @@ class BaseTree(ABC):
 
     def assert_consistent(self):
         if self._size and not self._root:
-            raise Exception('Emtpy root')
+            raise Exception('Emtpy root (and size %d)' % self._size)
         size = self._assert_consistent(self._root)
         if size != self._size:
             raise Exception('Unexpected number of leaves (%d != %d)' % (size, self._size))
 
     def _assert_consistent(self, node):
-        height, data = node
-        if len(data) < self._min:
-            raise Exception('Too few children at height %d' % height)
-        if len(data) > self._max:
-            raise Exception('Too many children at height %d' % height)
-        if height:
-            count = 0
-            for mbr, child in data:
-                (height_child, data_child) = child
-                mbr_check = self._merge_all(*data_child)
-                if mbr_check != mbr:
-                    raise Exception('Bad MBR at height %d %s / %s' % (height, mbr_check, mbr))
-                count += self._assert_consistent(child)
-            return count
+        if node:
+            height, data = node
+            if len(data) < self._min and node != self._root:
+                raise Exception('Too few children at height %d' % height)
+            if len(data) > self._max:
+                raise Exception('Too many children at height %d' % height)
+            if height:
+                count = 0
+                for mbr, child in data:
+                    (height_child, data_child) = child
+                    mbr_check = self._merge_all(*data_child)
+                    if mbr_check != mbr:
+                        raise Exception('Bad MBR at height %d %s / %s' % (height, mbr_check, mbr))
+                    count += self._assert_consistent(child)
+                return count
+            else:
+                return len(data)
         else:
-            return len(data)
+            return 0
 
     # allow different coordinate systems
 
