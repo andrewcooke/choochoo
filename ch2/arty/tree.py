@@ -602,11 +602,10 @@ class ExponentialMixin:
     def _split_recursive(self, mbr0, mbr1, nodes, path=(), best=None):
         '''
         On each call we place the next node in either branch.
-        To reduce memory usage we track only the path (successive indices) and MBR,
-        Note that we mutate best - the return is only for the initial caller.
+        To reduce memory usage we track only the path (successive indices) and MBR.
         '''
 
-        if best is None: best = [None, None]  # avoid mutable arg default
+        if best is None: best = (None, None)  # avoid mutable arg default
         depth = len(path)
 
         # prune if too many nodes on one side
@@ -621,12 +620,11 @@ class ExponentialMixin:
             # we're done, so store any improvement
             area = self._exact_area_sum(mbr0, mbr1)
             if best[1] is None or area < best[0]:
-                best[0] = area
-                best[1] = path
+                best = (area, path)
         else:
             mbr = nodes[depth][0]
-            self._split_recursive(self._merge(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), best)
-            self._split_recursive(mbr0, self._merge(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), best)
+            best = self._split_recursive(self._merge(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), best)
+            best = self._split_recursive(mbr0, self._merge(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), best)
         return best
 
     def _split(self, height, nodes):
