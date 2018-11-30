@@ -1,6 +1,7 @@
 
 from math import sqrt
 from random import uniform, gauss, seed, randrange
+from time import time
 
 from ch2.arty.tree import CLRTree, MatchType
 
@@ -46,13 +47,17 @@ def test_cl_known_regions():
     assert len(some) == 3, some
 
 
+def random_box(n, size):
+    x = uniform(0, size)
+    y = uniform(0, size)
+    dx = gauss(0, size/sqrt(n))
+    dy = gauss(0, size/sqrt(n))
+    return x, y, x + dx, y + dy
+
+
 def gen_random(n, size=100):
     for i in range(n):
-        x = uniform(0, size)
-        y = uniform(0, size)
-        dx = gauss(0, size/sqrt(n))
-        dy = gauss(0, size/sqrt(n))
-        yield i, (x, y, x+dx, y+dy)
+        yield i, random_box(n, size=size)
 
 
 def test_best_bug():
@@ -79,7 +84,7 @@ def test_stress():
                 tree.add_box(value, *box)
                 tree.assert_consistent()
 
-            for i in range(1000):
+            for i in range(100):
 
                 n_delete = randrange(n_data)
                 for j in range(n_delete):
@@ -90,8 +95,38 @@ def test_stress():
                         tree.delete_box(*box, value=value)
                         tree.assert_consistent()
 
-                while len(data) < n_children:
+                while len(data) < n_data:
                     value, box = next(gen_random(1))
                     data.append((value, box))
                     tree.add_box(value, *box)
                     tree.assert_consistent()
+
+
+def measure(tree, n_data, n_loops, n_read, size=100):
+    seed(1)
+    data = list(gen_random(n_data, size=size))
+
+    start = time()
+    for value, box in data:
+        tree.add_box(value, *box)
+    for i in range(n_loops):
+        n_delete = randrange(n_data)
+        for j in range(n_delete):
+            if data:
+                index = randrange(len(data))
+                value, box = data[index]
+                del data[index]
+                tree.delete_box(*box, value=value)
+        while len(data) < n_data:
+            value, box = next(gen_random(1))
+            data.append((value, box))
+            tree.add_box(value, *box)
+        for _ in range(n_read):
+            tree.get_box(*random_box(n_data, size=size))
+
+    return time() - start
+
+
+def measure_sizes():
+    for size in 2, 4, 8, 16, 32, 64, 128, 2:
+        print('%d %s' % (size, measure(CLRTree(size), 1000, 10, 1000)))
