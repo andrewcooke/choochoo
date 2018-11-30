@@ -223,8 +223,8 @@ introduced by Coogan.  This [appears to
 be](https://www.trainingpeaks.com/blog/normalized-power-intensity-factor-training-stress/)
 output power, corrected to reflect physiological load (called
 Normalized Power, NP), normalized to threshold power (called Intensity
-Factor), squared (similar to SHRIMP `gamma` of 2) and multiplied by
-duration.  The idea is to duplicate TRIMP.
+Factor), squared (similar to SHRIMP `gamma` of 2 - see below) and
+multiplied by duration.  The idea is to duplicate TRIMP.
 
 [Hellard et al.](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1974899/)
 give a somewhat critical review of the FF-Model with an emphasis on
@@ -324,7 +324,7 @@ further analysis and display.
 This work extended Choochoo with:
 
   * A task to calculate "HR Impulse" values from Heart Rate measurements
-OA    during exercise.
+    during exercise.
 
   * A task to calculate Fitness and Fatigue responses from these
     Impulses.
@@ -537,10 +537,10 @@ them I have no hope of fitting model parameters.
 
 ### Multiple Models
 
-The architecture allows multiple models to be co-exist in the
-database.  This could be useful when comparing different parameters -
-perhaps during model exploration, or when comparing different values
-from the literature.
+The architecture allows multiple models to co-exist in the database.
+This could be useful when comparing different parameters - perhaps
+during model exploration, or when comparing different values from the
+literature.
 
 ### Heart Rate v Power
 
@@ -619,7 +619,7 @@ issues:
     lactate levels).  Wouldn't it be better to use a simple parametric
     model (like SHRIMP's `gamma`) and then fit for the results?
 
-    In the "damned if you, damned if you don't" camp, the Training
+    In the "damned if you do, damned if you don't" camp, the Training
     Peaks documentation is laudably detailed, but so dense it makes
     the modeling seem like rocket science.
 
