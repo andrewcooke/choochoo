@@ -35,7 +35,7 @@ class BaseTree(ABC):
     #   (even with equality matching, (key, value) isn't guaranteed unique)
     # in other words, if you want unique (key, value) or unique key you must enforce it yourself.
 
-    def __init__(self, max_entries=8, min_entries=None):
+    def __init__(self, max_entries=4, min_entries=None):
         '''
         Create an empty tree.
 
@@ -528,6 +528,8 @@ class LinearMixin:
     Simple node selection.
     '''
 
+    # _pick_seeds is on CartesianMixin because it's not abstracted from the coord system.
+
     def _pick_next(self, pair, nodes):
         node = nodes.pop()
         return node, nodes
@@ -563,14 +565,22 @@ class QuadraticMixin:
 
 
 class ExponentialMixin:
+    '''
+    Pick nodes by making a complete comparison of all possibilities.
+    '''
 
     def _pick_next(self, pair, nodes):
-        pass  # to avoid ABC warning
+        # avoid ABC error
+        raise NotImplementedError()
 
     def _pick_seeds(self, nodes):
-        pass  # to avoid ABC warning
+        # avoid ABC error
+        raise NotImplementedError()
 
     def _exact_area_sum(self, mbr0, mbr1):
+        '''
+        Don't count the overlapping region twice.
+        '''
         if not mbr0:
             return self._area(mbr1)
         elif not mbr1:
@@ -589,41 +599,52 @@ class ExponentialMixin:
                 inner = 0
             return outer - inner
 
-    def _split_recursive(self, mbr0, mbr1, nodes, path, result):
+    def _split_recursive(self, mbr0, mbr1, nodes, path=(), best=None):
+        '''
+        On each call we place the next node in either branch.
+        To reduce memory usage we track only the path (successive indices) and MBR,
+        Note that we mutate best - the return is only for the initial caller.
+        '''
+
+        if best is None: best = [None, None]  # avoid mutable arg default
         depth = len(path)
 
         # prune if too many nodes on one side
         if path:
             remain = len(nodes) - depth
-            bias1 = sum(path)
-            bias0 = depth - bias1
-            if bias0 + remain < self._min or bias1 + remain < self._min:
-                return result
+            size1 = sum(path)
+            size0 = depth - size1
+            if size0 + remain < self._min or size1 + remain < self._min:
+                return best
 
         if depth == len(nodes):
-            result[self._exact_area_sum(mbr0, mbr1)] = path
+            # we're done, so store any improvement
+            area = self._exact_area_sum(mbr0, mbr1)
+            if best[1] is None or area < best[0]:
+                best[0] = area
+                best[1] = path
         else:
             mbr = nodes[depth][0]
-            self._split_recursive(self._merge(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), result)
-            self._split_recursive(mbr0, self._merge(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), result)
-        return result
+            self._split_recursive(self._merge(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), best)
+            self._split_recursive(mbr0, self._merge(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), best)
+        return best
 
     def _split(self, height, nodes):
         '''
         Divide the nodes into two,
         '''
-        result = self._split_recursive(None, None, nodes, (), {})
-        path = result[min(result.keys())]
+        _, path = self._split_recursive(None, None, nodes)
         mbrs_pair, nodes_pair = [None, None], [[], []]
-        for i, j in enumerate(path):
-            node = nodes[i]
-            mbr = mbrs_pair[j]
-            if mbr is None:
-                mbr = node[0]
+        for i_node, i_pair in enumerate(path):
+            node = nodes[i_node]
+            mbr_pair = mbrs_pair[i_pair]
+            mbr_node = node[0]
+            if mbr_pair is None:
+                mbr_pair = mbr_node
             else:
-                mbr = self._merge(mbr, node[0])
-            mbrs_pair[j] = mbr
-            nodes_pair[j].append(node)
+                mbr_pair = self._merge(mbr_pair, mbr_node)
+            mbrs_pair[i_pair] = mbr_pair
+            nodes_pair[i_pair].append(node)
         return [(mbrs_pair[0], (height, nodes_pair[0])), (mbrs_pair[1], (height, nodes_pair[1]))]
 
 
