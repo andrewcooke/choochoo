@@ -602,7 +602,7 @@ class ExponentialMixin:
     def _split_recursive(self, mbr0, mbr1, nodes, path=(), best=None):
         '''
         On each call we place the next node in either branch.
-        To reduce memory usage we track only the path (successive indices) and MBR.
+        To reduce memory usage we track only the path (successive indices) and best (lowest) area.
         '''
 
         if best is None: best = (None, None)  # avoid mutable arg default

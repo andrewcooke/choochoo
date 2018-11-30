@@ -4,7 +4,7 @@
 Choochoo includes a pure-Python RTree implementation ([Guttman
 1984](https://github.com/andrewcooke/choochoo/blob/master/data/dev/guttman-r-trees.pdf)).
 
-This can be used a stand-alone library:
+This can be used as a stand-alone library:
 
     from ch2.rtree import CLRTree, CQRTree, CERTree
 
