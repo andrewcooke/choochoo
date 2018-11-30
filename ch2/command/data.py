@@ -16,7 +16,7 @@ def data(args, log, db):
 Simple access to Pandas DataFrames - the same interface provided in Jupyter notebooks,
 but accessed from the command line.
 
-The format can be selected with --print (the default), --csv and --describe.
+The format can be selected with `--print` (the default), `--csv` and `--describe`.
 
 For full options see `ch2 data -h` and `ch2 data COMMAND -h`
 

@@ -1,8 +1,9 @@
 
 Choochoo helps you plan, collect, process and analyse training data.
 
-Data can be entered by hand, in the "diary", or read from FIT files.
-Downloading FIT files from Garmin Connect is supported.
+Data can be entered by hand, in the "diary", or read from [FIT
+files](fit-files).  Downloading FIT files from Garmin Connect is
+supported.
 
 The choice of what data to track is up to you.  A default
 configuration is provided, but this can be modified.  You can add and
@@ -29,8 +30,8 @@ single file.  This is easy to copy to safe storage and allows you to
 read and process the data with your own programs.
 
 The data can also be extracted as Panda DataFrames.  Typically this is
-done in the Jupyter environment, where you can interactively analyse
-and plot the information.
+done in the [Jupyter](data-analysis) environment, where you can
+interactively analyse and plot the information.
 
 One omission that may be important to some people is the lack of
 support for power meters.
