@@ -11,7 +11,7 @@ class MatchType(IntEnum):
     EQUAL = 0  # request exactly equal to node
     CONTAINED = 1  # request contained in node
     CONTAINS = 2  # request contains node
-    INTERSECT = 3  # request and node intersect
+    INTERSECTS = 3  # request and node intersect
 
 
 class BaseTree(ABC):
@@ -66,7 +66,7 @@ class BaseTree(ABC):
 
         Note that points are expanded to (zero-area) boxes internally and returned as such.
         '''
-        yield from self._get_normalized_box((x, y, x, y), value, match)
+        yield from self._get_normalized_box(self._normalize_mbr(x, y, x, y), value, match)
 
     def get_box(self, x1, y1, x2, y2, value=None, match=MatchType.EQUAL):
         '''
@@ -79,28 +79,29 @@ class BaseTree(ABC):
 
     def _get_normalized_box(self, mbr, value, match):
         if self._root:
-            yield from self._get_node(self._root, mbr, value, match)
+            for contents, mbr in self._get_node(self._root, mbr, value, match):
+                yield contents, self._denormalize_mbr(mbr)
 
     def _get_node(self, node, mbr, value, match):
         height, data = node
         for mbr_node, contents_node in data:
             if height:
                 if (match in (MatchType.EQUAL, MatchType.CONTAINED) and self._contains(mbr_node, mbr)) or \
-                        (match in (MatchType.CONTAINS, MatchType.INTERSECT) and self._intersect(mbr_node, mbr)):
+                        (match in (MatchType.CONTAINS, MatchType.INTERSECTS) and self._intersect(mbr_node, mbr)):
                     yield from self._get_node(contents_node, mbr, value, match)
             else:
                 if value is None or value == contents_node:
                     if (match == MatchType.EQUAL and mbr == mbr_node) or \
                             (match == MatchType.CONTAINED and self._contains(mbr_node, mbr)) or \
                             (match == MatchType.CONTAINS and self._contains(mbr, mbr_node)) or \
-                            (match == MatchType.INTERSECT and self._intersect(mbr, mbr_node)):
+                            (match == MatchType.INTERSECTS and self._intersect(mbr, mbr_node)):
                         yield contents_node, mbr_node
 
     def add_point(self, value, x, y):
         '''
         Add value at a single point.
         '''
-        self._add_normalized_mbr(0, (x, y, x, y), value)
+        self._add_normalized_mbr(0, self._normalize_mbr(x, y, x, y), value)
         self._size += 1  # not in _add_normalized_mbr to avoid counting reinserts
 
     def add_box(self, value, x1, y1, x2, y2):
@@ -385,6 +386,9 @@ class BaseTree(ABC):
     def _normalize_mbr(self, x1, y1, x2, y2):
         raise NotImplementedError()
 
+    def _denormalize_mbr(self, mbr):
+        return mbr
+
     @abstractmethod
     def _intersect(self, mbr1, mbr2):
         raise NotImplementedError()
@@ -490,6 +494,33 @@ class CartesianMixin:
             return index[1], index[3]
         else:
             return 0, 1  # degenerate case :(
+
+
+class LatLonMixin(CartesianMixin):
+
+    def __init__(self, *args, **kargs):
+        self.__zero_lon = None
+        super().__init__(*args, **kargs)
+
+    def _normalize(self, x):
+        while x <= -180:
+            x += 360
+        while x > 180:
+            x -= 360
+        return x
+
+    def _normalize_mbr(self, x1, y1, x2, y2):
+        if self.__zero_lon is None:
+            self.__zero_lon = x1
+        x1 = self._normalize(x1 - self.__zero_lon)
+        x2 = self._normalize(x2 - self.__zero_lon)
+        return super()._normalize_mbr(x1, y1, x2, y2)
+
+    def _denormalize_mbr(self, mbr):
+        x1, y1, x2, y2 = mbr
+        x1 = self._normalize(x1 + self.__zero_lon)
+        x2 = self._normalize(x2 + self.__zero_lon)
+        return x1, y1, x2, y2
 
 
 class LinearMixin:
@@ -603,3 +634,12 @@ class CQRTree(QuadraticMixin, CartesianMixin, BaseTree): pass
 
 
 class CERTree(ExponentialMixin, CartesianMixin, BaseTree): pass
+
+
+class LLRTree(LinearMixin, LatLonMixin, BaseTree): pass
+
+
+class LQRTree(QuadraticMixin, LatLonMixin, BaseTree): pass
+
+
+class LERTree(ExponentialMixin, LatLonMixin, BaseTree): pass

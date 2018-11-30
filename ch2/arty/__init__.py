@@ -1,2 +1,3 @@
 
-from .tree import CLRTree, CQRTree, CERTree
+from .tree import CLRTree, CQRTree, CERTree, LLRTree, LQRTree, LERTree, MatchType
+

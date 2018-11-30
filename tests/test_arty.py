@@ -3,7 +3,7 @@ from math import sqrt
 from random import uniform, gauss, seed, randrange
 from time import time
 
-from ch2.arty.tree import CLRTree, MatchType, CQRTree, CERTree
+from ch2.arty.tree import CLRTree, MatchType, CQRTree, CERTree, LQRTree
 
 
 def known_points(tree):
@@ -48,7 +48,7 @@ def known_boxes(tree):
     assert len(some) == 0, some
     some = list(tree.get_box(0, 0, 2, 1, match=MatchType.CONTAINS))
     assert len(some) == 1, some
-    some = list(tree.get_box(0, 0, 1, 1, match=MatchType.INTERSECT))
+    some = list(tree.get_box(0, 0, 1, 1, match=MatchType.INTERSECTS))
     assert len(some) == 3, some
 
 
@@ -125,6 +125,17 @@ def test_stress():
             for n_data in 1, 2, 3, 100:
                 print('n_data %d' % n_data)
                 stress(type, n_children, n_data)
+
+
+def test_latlon():
+    tree = LQRTree()
+    for lon in -180, 180:
+        tree.add_point(str(lon), lon, 0)
+    for lon in -180, 180:
+        found = list(tree.get_point(lon, 0))
+        assert len(found) == 2, found
+    area = tree._area(tree._normalize_mbr(-179, -1, 179, 1))
+    assert area == 4, area
 
 
 def measure(tree, n_data, n_loops, n_read, size=100):
