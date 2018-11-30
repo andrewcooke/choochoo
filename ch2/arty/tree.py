@@ -21,7 +21,7 @@ class BaseTree(ABC):
     #   data is [(mbr, value), (mbr, value), ...] for leaf nodes
     #   data is [(mbr, children), (mbr, children), ...] for internal nodes
     #     where children is [(height, data), (height, data), ...]
-    # the empty root is None
+    # the empty root is None and otherwise root is `data` (no height).
 
     # insertion/retrieval semantics are subtly different to a hash table:
     #   you can ask for matches that are exactly equal, overlap, contain or are contained by the box
@@ -41,7 +41,9 @@ class BaseTree(ABC):
 
         `max_entries` is the maximum number of children a node can have.
         This data structure was originally designed for mass storage, where such a parameter is important.
-        For in-memory use, it doesn't matter so much, but some quick tests suggest 8 is a reasonable choice.
+        For in-memory use, it doesn't matter so much except that larger values hit problems with quadratic
+        and exponential splitting.
+        Some quick tests suggest 4-8 is a reasonable choice.  You really don't want to go higher with exponential...
         '''
         if not min_entries:
             min_entries = max_entries // 2
@@ -280,6 +282,7 @@ class BaseTree(ABC):
             max_height = 0
         for insert in inserts:
             if insert[0] > max_height:
+                # can't add the entire tree, so re-add the leaves
                 for mbr, value in self._leaves(insert[2]):
                     self._add_normalized_mbr(0, mbr, value)
             else:
@@ -290,6 +293,28 @@ class BaseTree(ABC):
         Expose number of entries though usual Python API.
         '''
         return self._size
+
+    def _split(self, height, nodes):
+        '''
+        Divide the nodes into two,
+        '''
+        i, j = self._pick_seeds(nodes)
+        split = [(nodes[i][0], (height, [nodes[i]])), (nodes[j][0], (height, [nodes[j]]))]
+        del nodes[max(i, j)]
+        del nodes[min(i, j)]
+        # indexing ugliness below is rebuilding tuple with new mbr
+        while nodes:
+            if len(nodes) < self._min:
+                for index in 0, 1:
+                    if len(split[index][1][1]) + len(nodes) == self._min:
+                        split[index][1][1].extend(nodes)
+                        split[index] = (self._calculate_mbr(*split[index][1][1]), split[index][1])
+                        return split
+            node, nodes = self._pick_next(split, nodes)
+            index, mbr = self._best(split, node[0], height)
+            split[index] = (mbr, split[index][1])
+            split[index][1][1].append(node)
+        return split
 
     # utilities for debugging
 
@@ -379,11 +404,11 @@ class BaseTree(ABC):
     # allow different split algorithms
 
     @abstractmethod
-    def _pick_linear_seeds(self, data):
+    def _pick_seeds(self, nodes):
         raise NotImplementedError()
 
     @abstractmethod
-    def _split(self, height, data):
+    def _pick_next(self, pair, nodes):
         raise NotImplementedError()
 
 
@@ -448,7 +473,7 @@ class CartesianMixin:
                         index[j+2] = i
         return index, extreme
 
-    def _pick_linear_seeds(self, data):
+    def _pick_seeds(self, data):
         '''
         Choose the two MBRs that are most distance.
 
@@ -467,36 +492,114 @@ class CartesianMixin:
             return 0, 1  # degenerate case :(
 
 
-class LinearSplitMixin:
+class LinearMixin:
+    '''
+    Simple node selection.
+    '''
+
+    def _pick_next(self, pair, nodes):
+        node = nodes.pop()
+        return node, nodes
+
+
+class QuadraticMixin:
+    '''
+    This does a better job of grouping nodes (than linear) and is not measurably slower.
+    '''
+
+    def _pick_seeds(self, nodes):
+        n, area_delta_best, best = len(nodes), None, None
+        for i in range(n):
+            mbr_i = nodes[i][0]
+            for j in range(i):
+                mbr_j = nodes[j][0]
+                mbr_both = self._merge(mbr_i, mbr_j)
+                area_delta = self._area(mbr_both) - self._area(mbr_i) - self._area(mbr_j)
+                if area_delta_best is None or area_delta > area_delta_best:
+                    area_delta_best, best = area_delta, (i, j)
+        return best
+
+    def _pick_next(self, pair, nodes):
+        area_delta_best, best = None, None
+        for i in range(len(nodes)):
+            area_delta = abs((self._area(self._merge(nodes[i][0], pair[0][0])) - self._area(pair[0][0])) -
+                             (self._area(self._merge(nodes[i][0], pair[1][0])) - self._area(pair[1][0])))
+            if area_delta_best is None or area_delta > area_delta_best:
+                area_delta_best, best = area_delta, i
+        node = nodes[best]
+        del nodes[best]
+        return node, nodes
+
+
+class ExponentialMixin:
+
+    def _pick_next(self, pair, nodes):
+        pass  # to avoid ABC warning
+
+    def _pick_seeds(self, nodes):
+        pass  # to avoid ABC warning
+
+    def _exact_area_sum(self, mbr0, mbr1):
+        if not mbr0:
+            return self._area(mbr1)
+        elif not mbr1:
+            return self._area(mbr0)
+        else:
+            outer = self._area(mbr0) + self._area(mbr1)
+            x1, y1, x2, y2 = mbr0
+            X1, Y1, X2, Y2 = mbr1
+            xm1 = max(x1, X1)
+            xm2 = min(x2, X2)
+            ym1 = max(y1, Y1)
+            ym2 = min(y2, Y2)
+            if xm2 > xm1 and ym2 > ym1:
+                inner = (xm2 - xm1) * (ym2 - ym1)
+            else:
+                inner = 0
+            return outer - inner
+
+    def _split_recursive(self, mbr0, mbr1, nodes, path, result):
+        depth = len(path)
+
+        # prune if too many nodes on one side
+        if path:
+            remain = len(nodes) - depth
+            bias1 = sum(path)
+            bias0 = depth - bias1
+            if bias0 + remain < self._min or bias1 + remain < self._min:
+                return result
+
+        if depth == len(nodes):
+            result[self._exact_area_sum(mbr0, mbr1)] = path
+        else:
+            mbr = nodes[depth][0]
+            self._split_recursive(self._merge(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), result)
+            self._split_recursive(mbr0, self._merge(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), result)
+        return result
 
     def _split(self, height, nodes):
         '''
         Divide the nodes into two,
         '''
-        i, j = self._pick_linear_seeds(nodes)
-        split = [(nodes[i][0], (height, [nodes[i]])), (nodes[j][0], (height, [nodes[j]]))]
-        del nodes[max(i, j)]
-        del nodes[min(i, j)]
-        # ugliness below is rebuilding tuple with new mbr
-        while nodes:
-            if len(nodes) < self._min:
-                for index in 0, 1:
-                    if len(split[index][1][1]) + len(nodes) == self._min:
-                        split[index][1][1].extend(nodes)
-                        split[index] = (self._calculate_mbr(*split[index][1][1]), split[index][1])
-                        return split
-            node = nodes.pop()
-            index, mbr = self._best(split, node[0], height)
-            split[index] = (mbr, split[index][1])  # insert mbr, but it's a tuple, so need to rewrite
-            split[index][1][1].append(node)
-        return split
+        result = self._split_recursive(None, None, nodes, (), {})
+        path = result[min(result.keys())]
+        mbrs_pair, nodes_pair = [None, None], [[], []]
+        for i, j in enumerate(path):
+            node = nodes[i]
+            mbr = mbrs_pair[j]
+            if mbr is None:
+                mbr = node[0]
+            else:
+                mbr = self._merge(mbr, node[0])
+            mbrs_pair[j] = mbr
+            nodes_pair[j].append(node)
+        return [(mbrs_pair[0], (height, nodes_pair[0])), (mbrs_pair[1], (height, nodes_pair[1]))]
 
 
-class QuadraticSplitMixin:
-
-    def _split(self, height, data):
-        pass
+class CLRTree(LinearMixin, CartesianMixin, BaseTree): pass
 
 
-class CLRTree(LinearSplitMixin, CartesianMixin, BaseTree): pass
+class CQRTree(QuadraticMixin, CartesianMixin, BaseTree): pass
 
+
+class CERTree(ExponentialMixin, CartesianMixin, BaseTree): pass

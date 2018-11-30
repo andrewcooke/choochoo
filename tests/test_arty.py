@@ -3,12 +3,10 @@ from math import sqrt
 from random import uniform, gauss, seed, randrange
 from time import time
 
-from ch2.arty.tree import CLRTree, MatchType
+from ch2.arty.tree import CLRTree, MatchType, CQRTree, CERTree
 
 
-def test_cl_known_points():
-
-    tree = CLRTree(2)
+def known_points(tree):
     tree.add_point('0', 0, 0)
     tree.add_point('y', 0, 1)
     tree.add_point('x', 1, 0)
@@ -28,9 +26,16 @@ def test_cl_known_points():
     assert len(some) == 1, some
 
 
-def test_cl_known_regions():
+def test_known_points():
+    known_points(CLRTree(2))
+    known_points(CLRTree())
+    known_points(CQRTree(2))
+    known_points(CQRTree())
+    known_points(CERTree(2))
+    known_points(CERTree())
 
-    tree = CLRTree(2)
+
+def known_boxes(tree):
     tree.add_box('0', -0.1, -0.1, 0.1, 0.1)
     tree.add_box('1', 0.9, 0.9, 1.1, 1.1)
     tree.add_box('sq', 0, 0, 1, 1)
@@ -47,6 +52,15 @@ def test_cl_known_regions():
     assert len(some) == 3, some
 
 
+def test_known_boxes():
+    known_boxes(CLRTree(2))
+    known_boxes(CLRTree())
+    known_boxes(CQRTree(2))
+    known_boxes(CQRTree())
+    known_points(CERTree(2))
+    known_points(CERTree())
+
+
 def random_box(n, size):
     x = uniform(0, size)
     y = uniform(0, size)
@@ -60,46 +74,57 @@ def gen_random(n, size=100):
         yield i, random_box(n, size=size)
 
 
-def test_best_bug():
-    seed(4)  # 1:46 2:17 3:56 4:8 5:10 6:16 7:58 8:8
-    tree = CLRTree(2)
+def best_bug(tree):
     for i, (value, box) in enumerate(gen_random(100)):
         tree.add_box(value % 10, *box)
         tree.assert_consistent()
 
 
-def test_stress():
+def test_best_bug():
+    seed(4)  # 1:46 2:17 3:56 4:8 5:10 6:16 7:58 8:8
+    best_bug(CLRTree(2))
+    best_bug(CQRTree(2))
+    best_bug(CERTree(2))
 
-    for n_children in 3, 4, 10:
-        print('n_children %d' % n_children)
 
-        for n_data in 1, 2, 3, 100:
-            print('n_data %d' % n_data)
+def stress(type, n_children, n_data, check=True):
+    seed(1)
+    tree = type(n_children)
+    data = list(gen_random(n_data))
 
-            seed(1)
-            tree = CLRTree(n_children)
-            data = list(gen_random(n_data))
+    for value, box in data:
+        tree.add_box(value, *box)
+        if check:
+            tree.assert_consistent()
 
-            for value, box in data:
-                tree.add_box(value, *box)
+    for i in range(100):
+
+        n_delete = randrange(n_data)
+        for j in range(n_delete):
+            if data:
+                index = randrange(len(data))
+                value, box = data[index]
+                del data[index]
+                tree.delete_box(*box, value=value)
+                if check:
+                    tree.assert_consistent()
+
+        while len(data) < n_data:
+            value, box = next(gen_random(1))
+            data.append((value, box))
+            tree.add_box(value, *box)
+            if check:
                 tree.assert_consistent()
 
-            for i in range(100):
 
-                n_delete = randrange(n_data)
-                for j in range(n_delete):
-                    if data:
-                        index = randrange(len(data))
-                        value, box = data[index]
-                        del data[index]
-                        tree.delete_box(*box, value=value)
-                        tree.assert_consistent()
-
-                while len(data) < n_data:
-                    value, box = next(gen_random(1))
-                    data.append((value, box))
-                    tree.add_box(value, *box)
-                    tree.assert_consistent()
+def test_stress():
+    for type in CLRTree, CQRTree, CERTree:
+        print('type %s' % type)
+        for n_children in 3, 4, 10:
+            print('n_children %d' % n_children)
+            for n_data in 1, 2, 3, 100:
+                print('n_data %d' % n_data)
+                stress(type, n_children, n_data)
 
 
 def measure(tree, n_data, n_loops, n_read, size=100):
@@ -128,5 +153,16 @@ def measure(tree, n_data, n_loops, n_read, size=100):
 
 
 def measure_sizes():
-    for size in 2, 4, 8, 16, 32, 64, 128, 2:
-        print('%d %s' % (size, measure(CLRTree(size), 1000, 10, 1000)))
+    for type in CLRTree, CQRTree, CERTree:
+        print()
+        for size in 2, 4, 6, 8, 10, 16, 32, 64, 128:
+            t = measure(type(size), 1000, 1, 1000)
+            print('%s %d %s' % (type, size, t))
+            if t > 10 and size > 4:
+                print('abort')
+                break
+
+
+# for profiling
+if __name__ == '__main__':
+    stress(CQRTree, 8, 100, check=False)
