@@ -50,4 +50,5 @@ support for power meters.
   * [Training Plans](training-plans)
 * Development
   * [Scaled Heart Rate Impulse - SHRIMP](impulse)
+  * [Spatial Search](rtree)
   
