@@ -8,7 +8,7 @@ cat > docs/command-summary.md <<EOF
 
 EOF
 
-COMMANDS='activities constants default-config diary fit garmin help monitor statistics no-op package-fit-profile test-schedule unlock'
+COMMANDS='activities constants data default-config diary fit garmin help monitor statistics no-op package-fit-profile test-schedule unlock'
 
 for cmd in $COMMANDS; do
     echo "* [$cmd](#$cmd)" >> docs/command-summary.md

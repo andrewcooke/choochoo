@@ -41,9 +41,9 @@ class Data:
                                  filter(ActivityJournal.activity_group == activity_group).scalar())
         return DataFrame(data, index=ids)
 
-    def activity_journals(self, activity, start=None, finish=None):
+    def activity_journals(self, group, start=None, finish=None):
         data, times = defaultdict(list), []
-        q = self._s.query(ActivityJournal).join(ActivityGroup).filter(ActivityGroup.name == activity)
+        q = self._s.query(ActivityJournal).join(ActivityGroup).filter(ActivityGroup.name == group)
         if start:
             q = q.filter(ActivityJournal.finish >= start)
         if finish:
@@ -55,8 +55,8 @@ class Data:
         data['source_id'] = data['id']; del data['id']
         return DataFrame(data, index=times)
 
-    def statistic_names(self, *statistics):
-        statistic_names, statistic_ids = self._collect_statistics(statistics)
+    def statistic_names(self, *names):
+        statistic_names, statistic_ids = self._collect_statistics(names)
         data = defaultdict(list)
         for statistic in self._s.query(StatisticName). \
                 filter(StatisticName.id.in_(statistic_ids)).order_by(StatisticName.name):
@@ -65,11 +65,11 @@ class Data:
                                  filter(StatisticJournal.statistic_name == statistic).scalar())
         return DataFrame(data)
 
-    def _collect_statistics(self, statistics):
-        if not statistics:
-            statistics = ['%']
+    def _collect_statistics(self, names):
+        if not names:
+            names = ['%']
         statistic_ids, statistic_names = set(), set()
-        for statistic_name in statistics:
+        for statistic_name in names:
             for statistic_name in self._s.query(StatisticName). \
                     filter(StatisticName.name.like(statistic_name)).all():
                 statistic_ids.add(statistic_name.id)
@@ -107,7 +107,7 @@ class Data:
         return q
 
     def statistic_journals(self, *statistics,
-                           start=None, finish=None, owner=None, constraint=None, schedule=None, source_id=None):
+                           start=None, finish=None, owner=None, constraint=None, source_id=None, schedule=None):
         statistic_names, statistic_ids = self._collect_statistics(statistics)
         q = self._build_statistic_journal_query(statistic_ids, start, finish, owner, constraint, source_id, schedule)
         self._log.debug(q)
@@ -128,7 +128,8 @@ class Data:
             if not times or times[-1] != time:
                 times.append(time)
             if len(data[name]) >= len(times):
-                raise Exception('Duplicate data for %s at %s' % (name, time))
+                raise Exception('Duplicate data for %s at %s ' % (name, time) +
+                                '(you may need to specify more constraints to make the query unique)')
             data[name].append(value)
         pad()
         self._log.debug('Loaded %d distinct times' % len(times))

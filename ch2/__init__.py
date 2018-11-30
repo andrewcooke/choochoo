@@ -2,8 +2,9 @@
 from .command.activities import activities
 from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK
+    UNLOCK, DATA
 from .command.constants import constants
+from .command.data import data
 from .command.default_config import default_config
 from .command.diary import diary
 from .command.fit import fit
@@ -31,6 +32,7 @@ at the command line.
 
 COMMANDS = {ACTIVITIES: activities,
             CONSTANTS: constants,
+            DATA: data,
             DEFAULT_CONFIG: default_config,
             DIARY: diary,
             FIT: fit,

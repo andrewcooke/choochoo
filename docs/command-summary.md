@@ -3,6 +3,7 @@
 
 * [activities](#activities)
 * [constants](#constants)
+* [data](#data)
 * [default-config](#default-config)
 * [diary](#diary)
 * [fit](#fit)
@@ -44,6 +45,31 @@ Deletes an entry.
 ActivityGroup names can be matched by SQL patterns.  So FTHR.% matches both
 FTHR.Run and FTHR.Bike, for example. In such a case "entry" in the
 descriptions above may refer to multiple entries.    
+
+
+
+## data
+
+    > ch2 data COMMAND
+
+Simple access to Pandas DataFrames - the same interface provided in Jupyter
+notebooks, but accessed from the command line.
+
+The format can be selected with --print (the default), --csv and --describe.
+
+For full options see `ch2 data -h` and `ch2 data COMMAND -h`
+
+### Examples
+
+    > ch2 data --csv statistic-names
+
+Will print details on all statistic names in CSV format.
+
+    > ch2 data statistic-journals '%HR%' --constraint 'ActivityGroup "Bike"'
+    --start 2018-01-01
+
+Will print HR-related statistics from the start of 2018 for the given activity
+group.    
 
 
 

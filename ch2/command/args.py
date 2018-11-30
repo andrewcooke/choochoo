@@ -10,10 +10,12 @@ from ..lib.date import to_date
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
+SUB_COMMAND = 'sub_command'
 TOPIC = 'topic'
 
 ACTIVITIES = 'activities'
 CONSTANTS = 'constants'
+DATA = 'data'
 DEFAULT_CONFIG = 'default-config'
 DIARY = 'diary'
 FIT = 'fit'
@@ -25,13 +27,17 @@ STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
 
 ACTIVITY = 'activity'
+ACTIVITY_GROUPS = 'activity-groups'
+ACTIVITY_JOURNALS = 'activity-journals'
 AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
+CONSTRAINT = 'constraint'
 CSV = 'csv'
 DATABASE = 'database'
 DATE = 'date'
 DELETE = 'delete'
+DESCRIBE = 'describe'
 DEV = 'dev'
 DIR = 'dir'
 F = 'f'
@@ -42,29 +48,41 @@ FORMAT = 'format'
 FTHR = 'fthr'
 FORCE, F = 'force', 'f'
 GREP = 'grep'
+GROUP = 'group'
 LIKE = 'like'
 LIMIT = 'limit'
 LOGS = 'logs'
 LIST = 'list'
 M, MESSAGE = 'm', 'message'
 MATCH = 'match'
+MAX_COLUMNS = 'max-columns'
+MAX_COLWIDTH = 'max-colwidth'
+MAX_ROWS = 'max-rows'
 MESSAGES = 'messages'
 MONITOR = 'monitor'
+MONITOR_JOURNALS = 'monitor-journals'
 MONTH = 'month'
 MONTHS = 'months'
 NAME = 'name'
+NAMES = 'names'
 NO_DIARY = 'no-diary'
 NOT = 'not'
+OWNER = 'owner'
 PASS = 'pass'
 PATH = 'path'
 PLAN = 'plan'
+PRINT = 'print'
 PWD = 'pwd'
 RECORDS = 'records'
 ROOT = 'root'
 SERVICE = 'service'
 SET = 'set'
 SCHEDULE = 'schedule'
+SOURCE_ID = 'source-id'
 START = 'start'
+STATISTIC_NAMES = 'statistic-names'
+STATISTIC_JOURNALS = 'statistic-journals'
+STATISTIC_QUARTILES = 'statistic-quartiles'
 TABLES = 'tables'
 UNLOCK = 'unlock'
 USER = 'user'
@@ -72,6 +90,7 @@ V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
 W, WARN = 'w', 'warn'
+WIDTH = 'width'
 YEAR = 'year'
 
 
@@ -166,6 +185,56 @@ def parser():
     constant.add_argument(DATE, action='store', nargs='?', metavar='DATE', help='date when measured')
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
     constant.set_defaults(command=CONSTANTS)
+
+    data = subparsers.add_parser(DATA)
+    data_format = data.add_mutually_exclusive_group()
+    data_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
+    data_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV, help='CVS format')
+    data_format.add_argument(mm(DESCRIBE), action='store_const', dest=FORMAT, const=DESCRIBE, help='summary format')
+    data.add_argument(mm(MAX_COLUMNS), action='store', metavar='N', type=int, help='pandas max_columns attribute')
+    data.add_argument(mm(MAX_COLWIDTH), action='store', metavar='N', type=int, help='pandas max_colwidth attribute')
+    data.add_argument(mm(MAX_ROWS), action='store', metavar='N', type=int, help='pandas max_rows attribute')
+    data.add_argument(mm(WIDTH), action='store', metavar='N', type=int, help='pandas width attribute')
+    data_sub = data.add_subparsers()
+    data_activity_groups = data_sub.add_parser(ACTIVITY_GROUPS)
+    data_activity_groups.set_defaults(sub_command=ACTIVITY_GROUPS)
+    data_activity_journals = data_sub.add_parser(ACTIVITY_JOURNALS)
+    data_activity_journals.add_argument(GROUP, action='store', metavar='GROUP', help='activity group name')
+    data_activity_journals.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
+    data_activity_journals.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
+    data_activity_journals.set_defaults(sub_command=ACTIVITY_JOURNALS)
+    data_statistic_names = data_sub.add_parser(STATISTIC_NAMES)
+    data_statistic_names.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
+    data_statistic_names.set_defaults(sub_command=STATISTIC_NAMES)
+    data_statistic_journals = data_sub.add_parser(STATISTIC_JOURNALS)
+    data_statistic_journals.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
+    data_statistic_journals.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
+    data_statistic_journals.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
+    data_statistic_journals.add_argument(mm(OWNER), action='store', nargs='?', metavar='OWNER',
+                                         help='typically the class that created the data')
+    data_statistic_journals.add_argument(mm(CONSTRAINT), action='store', nargs='?', metavar='CONSTRAINT',
+                                         help='a value that makes the name unique (eg activity group)')
+    data_statistic_journals.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
+                                         help='the schedule on which some statistics are calculated')
+    data_statistic_journals.add_argument(mm(SOURCE_ID), action='store', nargs='?', metavar='ID',
+                                         help='the source ID for the statistic')
+    data_statistic_journals.set_defaults(sub_command=STATISTIC_JOURNALS)
+    data_statistic_quartiles = data_sub.add_parser(STATISTIC_QUARTILES)
+    data_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
+    data_statistic_quartiles.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
+    data_statistic_quartiles.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
+    data_statistic_quartiles.add_argument(mm(OWNER), action='store', nargs='?', metavar='OWNER',
+                                          help='typically the class that created the data')
+    data_statistic_quartiles.add_argument(mm(CONSTRAINT), action='store', nargs='?', metavar='CONSTRAINT',
+                                          help='a value that makes the name unique (eg activity group)')
+    data_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
+                                          help='the schedule on which some statistics are calculated')
+    data_statistic_quartiles.add_argument(mm(SOURCE_ID), action='store', nargs='?', metavar='ID',
+                                          help='the source ID for the statistic')
+    data_statistic_quartiles.set_defaults(sub_command=STATISTIC_QUARTILES)
+    data_monitor_journals = data_sub.add_parser(MONITOR_JOURNALS)
+    data_monitor_journals.set_defaults(sub_command=MONITOR_JOURNALS)
+    data.set_defaults(command=DATA, format=PRINT)
 
     default_config = subparsers.add_parser(DEFAULT_CONFIG,
                                            help='configure the default database ' +
