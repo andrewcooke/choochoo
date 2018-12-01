@@ -80,7 +80,7 @@ class BaseTree(ABC):
             if height:
                 if self.__descend(mbr, mbr_node, match):
                     yield from self.__get_node(contents_node, mbr, value, match)
-            elif self._match(mbr, mbr_node, value, contents_node, match):
+            elif self.__match(mbr, mbr_node, value, contents_node, match):
                 yield contents_node, mbr_node
 
     def __descend(self, mbr, mbr_node, match):
@@ -90,7 +90,7 @@ class BaseTree(ABC):
         return (match in (MatchType.EQUAL, MatchType.CONTAINED) and self._contains(mbr_node, mbr)) or \
                (match in (MatchType.CONTAINS, MatchType.INTERSECTS) and self._intersects(mbr_node, mbr))
 
-    def _match(self, mbr, mbr_node, value, value_node, match):
+    def __match(self, mbr, mbr_node, value, value_node, match):
         '''
         Match search?
         '''
@@ -152,6 +152,8 @@ class BaseTree(ABC):
     def _best(self, data, mbr, height):
         '''
         Given a list of nodes, find the node whose area increases least when the given MBR is added.
+
+        Not private because accessed by split mixins.
         '''
         i_best, mbr_best, area_best, delta_area_best, len_best = None, None, None, None, None
         for i_child, (mbr_child, data) in enumerate(data):
@@ -231,7 +233,7 @@ class BaseTree(ABC):
                             new_mbr = self._mbr_of_nodes(*children)
                             data[i] = (new_mbr, (height_children, children))
                         return False, inserts, mbr_found, value_found
-            elif self._match(mbr, mbr_node, value, contents_node, match):
+            elif self.__match(mbr, mbr_node, value, contents_node, match):
                 del data[i]
                 if len(data) < local_min:
                     return True, [(0, *node) for node in data], mbr_node, contents_node
@@ -271,7 +273,7 @@ class BaseTree(ABC):
             else:
                 self.__add_root(*insert)
 
-   # standard container API
+    # standard container API
 
     def __len__(self):
         '''
