@@ -47,8 +47,6 @@ In all cases, multiple results may be returned (as an iterator).
 Similarly, a single deletion may remove multiple (or no) entries (the
 number of deletions is returned).
 
-There are no restrictions on duplicate keys or values.
-
 ## Other API Details
 
 Any value can be stored.  Neither keys not values need be unique.
