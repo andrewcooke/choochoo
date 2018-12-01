@@ -213,11 +213,12 @@ def measure_sizes():
     for type in CLRTree, CQRTree, CERTree:
         print()
         for size in 2, 4, 6, 8, 10, 16, 32, 64, 128:
-            t = measure(type(size), 1000, 2)
-            print('%s %d %s' % (type, size, t))
-            if t > 5 and size > 4:
-                print('abort')
-                break
+            for subtrees in True, False:
+                t = measure(type(size, subtrees=subtrees), 1000, 2)
+                print('%s %d %s %s' % (type, size, subtrees, t))
+                if t > 5 and size > 4:
+                    print('abort')
+                    return
 
 
 # for profiling

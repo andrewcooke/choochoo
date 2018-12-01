@@ -35,7 +35,7 @@ class BaseTree(ABC):
     #   (even with equality matching, (key, value) isn't guaranteed unique)
     # in other words, if you want unique (key, value) or unique key you must enforce it yourself.
 
-    def __init__(self, max_entries=4, min_entries=None):
+    def __init__(self, max_entries=4, min_entries=None, subtrees=True):
         '''
         Create an empty tree.
 
@@ -43,7 +43,11 @@ class BaseTree(ABC):
         This data structure was originally designed for mass storage, where such a parameter is important.
         For in-memory use, it doesn't matter so much except that larger values hit problems with quadratic
         and exponential splitting.
-        Some quick tests suggest 4-8 is a reasonable choice.  You really don't want to go higher with exponential...
+        Some quick tests suggest 4-8 is a reasonable choice.
+        You really don't want to go higher with exponential...
+
+        `subtrees` enables insertion of entire subtrees (rather than leaves).
+        It seems to be what is described in the original paper and gives a small speedup in some cases.
         '''
         if not min_entries:
             min_entries = max_entries // 2
@@ -51,11 +55,24 @@ class BaseTree(ABC):
             raise Exception('Min number of entries in a node is too high')
         if min_entries < 1:
             raise Exception('Min number of entries in a node is too low')
-        self._max = max_entries
-        self._min = min_entries
-        self._root = (0, [])
+        self.__max_entries = max_entries
+        self.__min_entries = min_entries
+        self.__subtrees = subtrees
+        self.__root = (0, [])
         self.__size = 0
         self.__hash = 966038070
+
+    @property
+    def global_mbr(self):
+        return self._mbr_of_nodes(*self.__root[1])
+
+    @property
+    def min_entries(self):
+        return self.__min_entries
+
+    @property
+    def max_entries(self):
+        return self.__max_entries
 
     def get(self, points, value=None, match=MatchType.EQUAL):
         '''
@@ -65,7 +82,7 @@ class BaseTree(ABC):
         If `value` is given then only nodes with that value are found *and*
         the MBR (rather than node value) is returned.
         '''
-        for contents, mbr in self.__get_node(self._root, self._normalize_mbr(points), value, match):
+        for contents, mbr in self.__get_node(self.__root, self._normalize_mbr(points), value, match):
             if value is None:
                 yield contents
             else:
@@ -122,10 +139,10 @@ class BaseTree(ABC):
 
         `target` is the height for insertion.  This allows for subtrees to be re-inserted as a whole.
         '''
-        split = self.__add_node(self._root, target, value, mbr)
+        split = self.__add_node(self.__root, target, value, mbr)
         if split:
             height = split[0][1][0] + 1
-            self._root = (height, split)
+            self.__root = (height, split)
 
     def __add_node(self, node, target, value, mbr):
         '''
@@ -146,7 +163,7 @@ class BaseTree(ABC):
         else:
             data.append((mbr, value))
         # at this point parent mbr still correct (set on way down)
-        if len(data) > self._max:
+        if len(data) > self.__max_entries:
             return self._split(height, data)
 
     def _best(self, data, mbr, height):
@@ -199,14 +216,14 @@ class BaseTree(ABC):
         '''
         Internal deletion from root.
         '''
-        found = self.__delete_one_node(self._root, mbr, value, match, 2)
+        found = self.__delete_one_node(self.__root, mbr, value, match, 2)
         if found:
             delete, inserts, mbr_found, value_found = found
             if delete:
-                self._root = (0, [])
+                self.__root = (0, [])
             self.__reinsert(inserts)
-            if len(self._root[1]) == 1 and self._root[0]:  # single child, not leaf
-                self._root = self._root[1][0][1]  # contents of first child
+            if len(self.__root[1]) == 1 and self.__root[0]:  # single child, not leaf
+                self.__root = self.__root[1][0][1]  # contents of first child
             self.__update_state(-1, mbr_found, value_found)
         else:
             raise KeyError('Failed to delete %s%s' % (mbr, '' if value is None else ' (value %s)' % value))
@@ -219,7 +236,7 @@ class BaseTree(ABC):
         for i, (mbr_node, contents_node) in enumerate(data):
             if height:
                 if self.__descend(mbr, mbr_node, match):
-                    found = self.__delete_one_node(contents_node, mbr, value, match, self._min)
+                    found = self.__delete_one_node(contents_node, mbr, value, match, self.__min_entries)
                     if found:
                         delete, inserts, mbr_found, value_found = found
                         if delete:
@@ -258,16 +275,12 @@ class BaseTree(ABC):
         '''
         Reinsert sub-trees (including leaves) removed during re-arrangement on deletion.
 
-        We try to insert whole sub-trees, but this is not always possible (if the height has changed)
-        (this has a barely measurable effect on performance, but seems to be what the original paper expected).
+        We try to insert whole sub-trees, but this is not always possible (if the height has changed).
         '''
-        if self._root:
-            max_height = self._root[0]
-        else:
-            max_height = 0
+        max_height = self.__root[0]
         for insert in inserts:
-            if insert[0] > max_height:
-                # can't add the entire tree, so re-add the leaves
+            if insert[0] > max_height or (not self.__subtrees and insert[0]):
+                # can't (or won't) add the entire tree, so re-add the leaves
                 for mbr, value in self.__leaves(insert[2], False):
                     self.__add_root(0, mbr, value)
             else:
@@ -285,21 +298,21 @@ class BaseTree(ABC):
         '''
         All MBRs.
         '''
-        for mbr, _ in self.__leaves(self._root):
+        for mbr, _ in self.__leaves(self.__root):
             yield self._mbr_to_points(mbr)
 
     def values(self):
         '''
         All values.
         '''
-        for _, value in self.__leaves(self._root):
+        for _, value in self.__leaves(self.__root):
             yield value
 
     def items(self):
         '''
         All (MBR, value) pairs.
         '''
-        for mbr, value in self.__leaves(self._root):
+        for mbr, value in self.__leaves(self.__root):
             yield self._mbr_to_points(mbr), value
 
     def __contains__(self, points):
@@ -360,9 +373,9 @@ class BaseTree(ABC):
         '''
         An iterator over the tree structure.
         '''
-        height, data = self._root
+        height, data = self.__root
         yield height + 1, self._mbr_of_nodes(*data), None  # implied mbr on all nodes
-        yield from self._dump_node(self._root)
+        yield from self._dump_node(self.__root)
 
     def _dump_node(self, node):
         '''
@@ -386,9 +399,9 @@ class BaseTree(ABC):
         '''
         Make some basic tests of consistency.
         '''
-        if self.__size and not self._root:
+        if self.__size and not self.__root:
             raise Exception('Emtpy root (and size %d)' % self.__size)
-        size = self._assert_consistent(self._root)
+        size = self._assert_consistent(self.__root)
         if size != self.__size:
             raise Exception('Unexpected number of leaves (%d != %d)' % (size, self.__size))
 
@@ -398,9 +411,9 @@ class BaseTree(ABC):
         '''
         if node:
             height, data = node
-            if len(data) < self._min and node != self._root:
+            if len(data) < self.__min_entries and node != self.__root:
                 raise Exception('Too few children at height %d' % height)
-            if len(data) > self._max:
+            if len(data) > self.__max_entries:
                 raise Exception('Too many children at height %d' % height)
             if height:
                 count = 0
@@ -551,7 +564,7 @@ class CartesianMixin:
 
         Only called from LinearSplitMixin.
         '''
-        global_mbr = self._mbr_of_nodes(*self._root[1])
+        global_mbr = self.global_mbr
         norm_x, norm_y = global_mbr[2] - global_mbr[0], global_mbr[3] - global_mbr[1]
         norm = [norm_x, norm_y, norm_x, norm_y]
         index, extremes = self.__extremes(data)
@@ -638,10 +651,10 @@ class LinearMixin:
         del nodes[min(i, j)]
         # indexing ugliness below is rebuilding tuple with new mbr
         while nodes:
-            if len(nodes) < self._min:
+            if len(nodes) < self.min_entries:
                 for index in 0, 1:
                     split_nodes = split[index][1][1]
-                    if len(split_nodes) + len(nodes) == self._min:
+                    if len(split_nodes) + len(nodes) == self.min_entries:
                         split_nodes.extend(nodes)
                         split[index] = (self._mbr_of_nodes(*split_nodes), split[index][1])
                         return split
@@ -713,7 +726,7 @@ class ExponentialMixin:
             remain = len(nodes) - depth
             size1 = sum(path)
             size0 = depth - size1
-            if size0 + remain < self._min or size1 + remain < self._min:
+            if size0 + remain < self.min_entries or size1 + remain < self.min_entries:
                 return best
         if depth == len(nodes):
             # we're done, so assess any improvement
