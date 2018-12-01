@@ -14,9 +14,6 @@ class MatchType(IntEnum):
     INTERSECTS = 3  # request and node intersect
 
 
-# todo - detect mutation during iteration
-
-
 class BaseTree(ABC):
 
     # nodes in the tree are (height, data) where
@@ -240,12 +237,15 @@ class BaseTree(ABC):
                 else:
                     return False, [], mbr_node, contents_node
 
-    def _leaves(self, node):
+    def _leaves(self, node, canary=True):
         '''
         Iterator over the leaves in a node.
         '''
+        hash = self.__hash
         height, data = node
         for mbr, child in data:
+            if canary and hash != self.__hash:
+                raise RuntimeError('Tree was mutated while iterating over contents')
             if height:
                 yield from self._leaves(child)
             else:
@@ -265,7 +265,7 @@ class BaseTree(ABC):
         for insert in inserts:
             if insert[0] > max_height:
                 # can't add the entire tree, so re-add the leaves
-                for mbr, value in self._leaves(insert[2]):
+                for mbr, value in self._leaves(insert[2], False):
                     self._add_root(0, mbr, value)
             else:
                 self._add_root(*insert)
