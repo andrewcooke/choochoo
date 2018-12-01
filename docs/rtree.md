@@ -61,8 +61,8 @@ The structure can also be used to store regions.  If you specify
 
 The Python conventions for containers are followed where possible.
 
-Modifying the tree while iterating over contents is unsafe.  Currently
-this is *not* detected.
+Modifying the tree while iterating over contents is unsafe (and should
+trigger an error).
 
 ## Split Algorithm
 
