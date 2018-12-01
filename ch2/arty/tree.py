@@ -14,6 +14,10 @@ class MatchType(IntEnum):
     INTERSECTS = 3  # request and node intersect
 
 
+# todo - detect mutation during iteration
+# todo - empty root as (0, [])
+
+
 class BaseTree(ABC):
 
     # nodes in the tree are (height, data) where
@@ -21,7 +25,7 @@ class BaseTree(ABC):
     #   data is [(mbr, value), (mbr, value), ...] for leaf nodes
     #   data is [(mbr, children), (mbr, children), ...] for internal nodes
     #     where children is [(height, data), (height, data), ...]
-    # the empty root is None and otherwise root is `data` (no height).
+    # the empty root is None.
 
     # insertion/retrieval semantics are subtly different to a hash table:
     #   you can ask for matches that are exactly equal, overlap, contain or are contained by the box
@@ -54,9 +58,10 @@ class BaseTree(ABC):
         self._max = max_entries
         self._min = min_entries
         self._root = None
-        self._size = 0
+        self.__size = 0
+        self.__hash = 966038070
 
-    def get(self, *points, value=None, match=MatchType.EQUAL):
+    def get(self, points, value=None, match=MatchType.EQUAL):
         '''
         An iterator over values of nodes that match the MBR for the given points.
         The `match` describes the kind of matching done.
@@ -64,12 +69,11 @@ class BaseTree(ABC):
         If `value` is given then only nodes with that value are found *and*
         the MBR (rather than node value) is returned.
         '''
-        mbr = self._mbr_of_points(*(self._normalize_point(p) for p in points))
-        for contents_node, mbr_node in self._get_root(mbr, value, match):
+        for contents, mbr in self._get_root(self._normalize_mbr(points), value, match):
             if value is None:
-                yield contents_node
+                yield contents
             else:
-                yield self._mbr_to_points(mbr_node)
+                yield self._mbr_to_points(mbr)
 
     def _get_root(self, mbr, value, match):
         '''
@@ -85,24 +89,43 @@ class BaseTree(ABC):
         height, data = node
         for mbr_node, contents_node in data:
             if height:
-                if (match in (MatchType.EQUAL, MatchType.CONTAINED) and self._contains(mbr_node, mbr)) or \
-                        (match in (MatchType.CONTAINS, MatchType.INTERSECTS) and self._intersects(mbr_node, mbr)):
+                if self._descend(mbr, mbr_node, match):
                     yield from self._get_node(contents_node, mbr, value, match)
-            else:
-                if value is None or value == contents_node:
-                    if (match == MatchType.EQUAL and mbr == mbr_node) or \
-                            (match == MatchType.CONTAINED and self._contains(mbr_node, mbr)) or \
-                            (match == MatchType.CONTAINS and self._contains(mbr, mbr_node)) or \
-                            (match == MatchType.INTERSECTS and self._intersects(mbr, mbr_node)):
-                        yield contents_node, mbr_node
+            elif self._match(mbr, mbr_node, value, contents_node, match):
+                yield contents_node, mbr_node
 
-    def add(self, value, *points):
+    def _descend(self, mbr, mbr_node, match):
+        '''
+        Descend in search?
+        '''
+        return (match in (MatchType.EQUAL, MatchType.CONTAINED) and self._contains(mbr_node, mbr)) or \
+               (match in (MatchType.CONTAINS, MatchType.INTERSECTS) and self._intersects(mbr_node, mbr))
+
+    def _match(self, mbr, mbr_node, value, value_node, match):
+        '''
+        Match search?
+        '''
+        return (value is None or value == value_node) and (
+                (match == MatchType.EQUAL and mbr == mbr_node) or
+                (match == MatchType.CONTAINED and self._contains(mbr_node, mbr)) or
+                (match == MatchType.CONTAINS and self._contains(mbr, mbr_node)) or
+                (match == MatchType.INTERSECTS and self._intersects(mbr, mbr_node)))
+
+    def add(self, points, value):
         '''
         Add a value at the MBR of the given points.
         '''
-        mbr = self._mbr_of_points(*(self._normalize_point(p) for p in points))
+        mbr = self._normalize_mbr(points)
         self._add_root(0, mbr, value)
-        self._size += 1  # not in _add_root to avoid counting reinserts
+        self.__update_state(1, mbr, value)
+
+    def __update_state(self, delta, mbr, value):
+        '''
+        Update size and hash.
+        '''
+        self.__size += delta
+        # use product so that association matters (if we xored then you could rearrange values and mbrs)
+        self.__hash ^= hash(mbr) * hash(value)
 
     def _add_root(self, target, mbr, value):
         '''
@@ -167,80 +190,83 @@ class BaseTree(ABC):
                 if delta_area_merge < delta_area_best or \
                         (delta_area_merge == delta_area_best and area_merge < area_best) or \
                         (delta_area_merge == delta_area_best and area_merge == area_best and
-                        height and len(data) < len_best):
+                         height and len(data) < len_best):
                     i_best, mbr_best, area_best, delta_area_best, len_best = \
                         i_child, mbr_merge, area_merge, delta_area_merge, len(data)
         return i_best, mbr_best
 
-    def delete(self, *points, value=None, match=MatchType.EQUAL):
+    def delete(self, points, value=None, match=MatchType.EQUAL):
         '''
-        Remove all entries that match the MBR of the given points and optional value.
-
-        Returns the number of items deleted.
-        To preview which items are deleted, call `get()` with the same parameters,
+        Remove entries that match the MBR of the given points and optional value.
         '''
-        mbr = self._mbr_of_points(*(self._normalize_point(p) for p in points))
-        return self._delete_root(mbr, value, match)
+        mbr = self._normalize_mbr(points)
+        try:
+            while True:
+                self._delete_one_root(mbr, value, match)
+        except KeyError:
+            return
 
-    def _delete_root(self, mbr, value, match):
+    def delete_one(self, points, value=None, match=MatchType.EQUAL):
+        '''
+        Remove a single entry that match the MBR of the given points and optional value.
+
+        Raises `KeyError` if no entry exists.
+        '''
+        self._delete_one_root(self._normalize_mbr(points), value, match)
+
+    def _delete_one_root(self, mbr, value, match):
         '''
         Internal deletion from root.
         '''
-        count = 0
-        for _, mbr_match in self._get_root(mbr, value, match):
-            # root cannot be empty as it contains mbr
-            found = self._delete_node(self._root, mbr_match, value)
+        if self._root:
+            found = self._delete_one_node(self._root, mbr, value, match)
             if found:
-                delete, inserts = found
+                delete, inserts, mbr_found, value_found = found
                 if delete:
                     self._root = None
                 self._reinsert(inserts)
-                count += 1
-                self._size -= 1
-            else:
-                raise Exception('Failed to delete %s' % mbr_match)
-            if self._root and len(self._root[1]) == 1 and self._root[0]:  # single child, not leaf
-                self._root = self._root[1][0][1]  # contents of first child
-        return count
+                if self._root and len(self._root[1]) == 1 and self._root[0]:  # single child, not leaf
+                    self._root = self._root[1][0][1]  # contents of first child
+                self.__update_state(-1, mbr_found, value_found)
+                return
+        raise KeyError('Failed to delete %s%s' % (mbr, '' if value is None else ' (value %s)' % value))
 
-    def _delete_node(self, node, mbr, value):
+    def _delete_one_node(self, node, mbr, value, match):
         '''
         Internal deletion from node.
         '''
         height, data = node
         for i, (mbr_node, contents_node) in enumerate(data):
             if height:
-                if self._contains(mbr_node, mbr):
-                    found = self._delete_node(contents_node, mbr, value)
+                if self._descend(mbr, mbr_node, match):
+                    found = self._delete_one_node(contents_node, mbr, value, match)
                     if found:
-                        delete, inserts = found
+                        delete, inserts, mbr_found, value_found = found
                         if delete:
                             del data[i]
-                            if len(data) < self._min:
+                            if len(data) < self._min:  # todo - even at root? (currently works because deletes all?)
                                 for node in data:
                                     inserts.append((height, *node))
-                                return True, inserts
+                                return True, inserts, mbr_found, value_found
                         else:
                             # something under data[i] has been deleted so recalculate mbr
                             _, (height_children, children) = data[i]
                             new_mbr = self._mbr_of_nodes(*children)
                             data[i] = (new_mbr, (height_children, children))
-                        return False, inserts
-            else:
-                if mbr_node == mbr and (value is None or value == contents_node):
-                    del data[i]
-                    if len(data) < self._min:
-                        return True, [(0, *node) for node in data]
-                    else:
-                        return False, []
+                        return False, inserts, mbr_found, value_found
+            elif self._match(mbr, mbr_node, value, contents_node, match):
+                del data[i]
+                if len(data) < self._min:
+                    return True, [(0, *node) for node in data], mbr_node, contents_node
+                else:
+                    return False, [], mbr_node, contents_node
 
     def _leaves_root(self):
         '''
         All leaves
         '''
         if self._root:
-            for node in self._root:
-                yield from self._leaves_node(node)
+            yield from self._leaves_node(self._root)
 
     def _leaves_node(self, node):
         '''
@@ -301,7 +327,7 @@ class BaseTree(ABC):
         '''
         Expose number of entries though usual Python API.
         '''
-        return self._size
+        return self.__size
 
     def keys(self):
         '''
@@ -324,15 +350,48 @@ class BaseTree(ABC):
         for mbr, value in self._leaves_root():
             yield self._mbr_to_points(mbr), value
 
-    def __contains__(self, point):
+    def __contains__(self, points):
         '''
-        Test for point.  API prevents anything more complex (cannot use *points).
+        Equivalent to calling get() with the standard arguments and testing for result.
         '''
         try:
-            next(self.get(point))
+            next(self.get(points))
             return True
         except StopIteration:
             return False
+
+    def __hash__(self):
+        '''
+        Hash based only on contents.
+        '''
+        return self.__hash
+
+    def __eq__(self, other):
+        '''
+        Equality based only on contents.
+        '''
+        if other is self:
+            return True
+        # important to use hash(self) and not self.__hash because hash() truncates bits
+        if not isinstance(other, BaseTree) or self.__size != len(other) or hash(self) != hash(other):
+            return False
+        # todo - is it better to have something slower but memory efficient?
+        return sorted(list(self.items())) == sorted(list(other.items()))
+
+    def __iter__(self):
+        '''
+        Iterable over keys.
+        '''
+        return self.keys()
+
+    def __getitem__(self, points):
+        return self.get(points)
+
+    def __setitem__(self, points, value):
+        self.add(points, value)
+
+    def __delitem__(self, points):
+        self.delete(points)
 
     # utilities for debugging
 
@@ -367,11 +426,11 @@ class BaseTree(ABC):
         '''
         Make some basic tests of consistency.
         '''
-        if self._size and not self._root:
-            raise Exception('Emtpy root (and size %d)' % self._size)
+        if self.__size and not self._root:
+            raise Exception('Emtpy root (and size %d)' % self.__size)
         size = self._assert_consistent(self._root)
-        if size != self._size:
-            raise Exception('Unexpected number of leaves (%d != %d)' % (size, self._size))
+        if size != self.__size:
+            raise Exception('Unexpected number of leaves (%d != %d)' % (size, self.__size))
 
     def _assert_consistent(self, node):
         '''
@@ -399,6 +458,9 @@ class BaseTree(ABC):
 
     # allow different coordinate systems
     # nothing above should depend on the exact representation of point or mbr
+
+    def _normalize_mbr(self, points):
+        return self._mbr_of_points(*(self._normalize_point(p) for p in points))
 
     @abstractmethod
     def _normalize_point(self, point):

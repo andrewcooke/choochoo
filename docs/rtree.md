@@ -15,20 +15,25 @@ respectively).
 
 * [Regions](#regions)
 * [Match Type](#match-type)
+* [Other API Details](#other-api-details)
 * [Split Algorithm](#split-algorithm)
 * [Latitude / Longitude](#latitude--longitude)
 * [Extension](#extension)
 
 ## Regions
 
-The tree works with *boxes* in Cartesian coordinates:
+Internally, the tree works with "minimum bounding rectangles" (MBR) in
+Cartesian coordinates:
 
     (x_low_left, y_low_left, x_high_right, y_high_right)
 
-These are normalized on input (so any two opposite corners will work).
+But the API takes lists of `(x, y)` points and constructs the MBR
+internally.  So, for example, `add()` can be called with a single
+point `[(x, y)]`, a rectange `[(x1, y1), (x2, y2)]` or a polygon
+`[(x1, y1), (x2, y2), ...]`.
 
-In addition, *points* can be provided as input.  They are expanded
-internally (and returned) as zero-area boxes.
+Since the internal representation is an MBR, returned regions (eg when
+calling `get()` with `value`) is always a pair of points.
 
 ## Match Type
 
@@ -43,6 +48,21 @@ Similarly, a single deletion may remove multiple (or no) entries (the
 number of deletions is returned).
 
 There are no restrictions on duplicate keys or values.
+
+## Other API Details
+
+Any value can be stored.  Neither keys not values need be unique.
+
+Deletion may remove multiple entries (or none).  Use `delete_one()` to
+guarantee a single deletion (the first match found).
+
+The structure can also be used to store regions.  If you specify
+`value` when calling `get()` then matching keys are returned.
+
+The Python conventions for containers are followed where possible.
+
+Modifying the tree while iterating over contents is unsafe.  Currently
+this is *not* detected.
 
 ## Split Algorithm
 
