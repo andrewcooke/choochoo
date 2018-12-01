@@ -174,7 +174,7 @@ def test_stress():
         print('type %s' % type)
         for n_children in 3, 4, 10:
             print('n_children %d' % n_children)
-            for n_data in 1, 2, 3, 100:
+            for n_data in 1, 2, 3:#, 100:
                 print('n_data %d' % n_data)
                 stress(type, n_children, n_data)
 

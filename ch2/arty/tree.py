@@ -65,25 +65,25 @@ class BaseTree(ABC):
         If `value` is given then only nodes with that value are found *and*
         the MBR (rather than node value) is returned.
         '''
-        for contents, mbr in self._get_node(self._root, self._normalize_mbr(points), value, match):
+        for contents, mbr in self.__get_node(self._root, self._normalize_mbr(points), value, match):
             if value is None:
                 yield contents
             else:
                 yield self._mbr_to_points(mbr)
 
-    def _get_node(self, node, mbr, value, match):
+    def __get_node(self, node, mbr, value, match):
         '''
         Internal get from node.
         '''
         height, data = node
         for mbr_node, contents_node in data:
             if height:
-                if self._descend(mbr, mbr_node, match):
-                    yield from self._get_node(contents_node, mbr, value, match)
+                if self.__descend(mbr, mbr_node, match):
+                    yield from self.__get_node(contents_node, mbr, value, match)
             elif self._match(mbr, mbr_node, value, contents_node, match):
                 yield contents_node, mbr_node
 
-    def _descend(self, mbr, mbr_node, match):
+    def __descend(self, mbr, mbr_node, match):
         '''
         Descend in search?
         '''
@@ -105,7 +105,7 @@ class BaseTree(ABC):
         Add a value at the MBR of the given points.
         '''
         mbr = self._normalize_mbr(points)
-        self._add_root(0, mbr, value)
+        self.__add_root(0, mbr, value)
         self.__update_state(1, mbr, value)
 
     def __update_state(self, delta, mbr, value):
@@ -116,18 +116,18 @@ class BaseTree(ABC):
         # use product so that association matters (if we xored then you could rearrange values and mbrs)
         self.__hash ^= hash(mbr) * hash(value)
 
-    def _add_root(self, target, mbr, value):
+    def __add_root(self, target, mbr, value):
         '''
         Internal add at root.
 
         `target` is the height for insertion.  This allows for subtrees to be re-inserted as a whole.
         '''
-        split = self._add_node(self._root, target, value, mbr)
+        split = self.__add_node(self._root, target, value, mbr)
         if split:
             height = split[0][1][0] + 1
             self._root = (height, split)
 
-    def _add_node(self, node, target, value, mbr):
+    def __add_node(self, node, target, value, mbr):
         '''
         Internal add at node.
 
@@ -139,7 +139,7 @@ class BaseTree(ABC):
             child = data[i_best][1]
             # optimistically set mbr on way down; will be removed if split spills data over
             data[i_best] = (mbr_best, child)
-            split = self._add_node(child, target, value, mbr)
+            split = self.__add_node(child, target, value, mbr)
             if split:
                 del data[i_best]
                 data.extend(split)
@@ -180,7 +180,7 @@ class BaseTree(ABC):
         mbr = self._normalize_mbr(points)
         try:
             while True:
-                self._delete_one_root(mbr, value, match)
+                self.__delete_one_root(mbr, value, match)
         except KeyError:
             return
 
@@ -190,33 +190,33 @@ class BaseTree(ABC):
 
         Raises `KeyError` if no entry exists.
         '''
-        self._delete_one_root(self._normalize_mbr(points), value, match)
+        self.__delete_one_root(self._normalize_mbr(points), value, match)
 
-    def _delete_one_root(self, mbr, value, match):
+    def __delete_one_root(self, mbr, value, match):
         '''
         Internal deletion from root.
         '''
-        found = self._delete_one_node(self._root, mbr, value, match, 2)
+        found = self.__delete_one_node(self._root, mbr, value, match, 2)
         if found:
             delete, inserts, mbr_found, value_found = found
             if delete:
                 self._root = (0, [])
-            self._reinsert(inserts)
+            self.__reinsert(inserts)
             if len(self._root[1]) == 1 and self._root[0]:  # single child, not leaf
                 self._root = self._root[1][0][1]  # contents of first child
             self.__update_state(-1, mbr_found, value_found)
         else:
             raise KeyError('Failed to delete %s%s' % (mbr, '' if value is None else ' (value %s)' % value))
 
-    def _delete_one_node(self, node, mbr, value, match, local_min):
+    def __delete_one_node(self, node, mbr, value, match, local_min):
         '''
         Internal deletion from node.
         '''
         height, data = node
         for i, (mbr_node, contents_node) in enumerate(data):
             if height:
-                if self._descend(mbr, mbr_node, match):
-                    found = self._delete_one_node(contents_node, mbr, value, match, self._min)
+                if self.__descend(mbr, mbr_node, match):
+                    found = self.__delete_one_node(contents_node, mbr, value, match, self._min)
                     if found:
                         delete, inserts, mbr_found, value_found = found
                         if delete:
@@ -237,7 +237,7 @@ class BaseTree(ABC):
                 else:
                     return False, [], mbr_node, contents_node
 
-    def _leaves(self, node, canary=True):
+    def __leaves(self, node, canary=True):
         '''
         Iterator over the leaves in a node.
         '''
@@ -247,11 +247,11 @@ class BaseTree(ABC):
             if canary and hash != self.__hash:
                 raise RuntimeError('Tree was mutated while iterating over contents')
             if height:
-                yield from self._leaves(child)
+                yield from self.__leaves(child)
             else:
                 yield mbr, child
 
-    def _reinsert(self, inserts):
+    def __reinsert(self, inserts):
         '''
         Reinsert sub-trees (including leaves) removed during re-arrangement on deletion.
 
@@ -265,35 +265,12 @@ class BaseTree(ABC):
         for insert in inserts:
             if insert[0] > max_height:
                 # can't add the entire tree, so re-add the leaves
-                for mbr, value in self._leaves(insert[2], False):
-                    self._add_root(0, mbr, value)
+                for mbr, value in self.__leaves(insert[2], False):
+                    self.__add_root(0, mbr, value)
             else:
-                self._add_root(*insert)
+                self.__add_root(*insert)
 
-    def _split(self, height, nodes):
-        '''
-        Divide the nodes into two,
-        '''
-        i, j = self._pick_seeds(nodes)
-        split = [(nodes[i][0], (height, [nodes[i]])), (nodes[j][0], (height, [nodes[j]]))]
-        del nodes[max(i, j)]
-        del nodes[min(i, j)]
-        # indexing ugliness below is rebuilding tuple with new mbr
-        while nodes:
-            if len(nodes) < self._min:
-                for index in 0, 1:
-                    split_nodes = split[index][1][1]
-                    if len(split_nodes) + len(nodes) == self._min:
-                        split_nodes.extend(nodes)
-                        split[index] = (self._mbr_of_nodes(*split_nodes), split[index][1])
-                        return split
-            node, nodes = self._pick_next(split, nodes)
-            index, mbr = self._best(split, node[0], height)
-            split[index] = (mbr, split[index][1])
-            split[index][1][1].append(node)
-        return split
-
-    # standard container API
+   # standard container API
 
     def __len__(self):
         '''
@@ -305,21 +282,21 @@ class BaseTree(ABC):
         '''
         All MBRs.
         '''
-        for mbr, _ in self._leaves(self._root):
+        for mbr, _ in self.__leaves(self._root):
             yield self._mbr_to_points(mbr)
 
     def values(self):
         '''
         All values.
         '''
-        for _, value in self._leaves(self._root):
+        for _, value in self.__leaves(self._root):
             yield value
 
     def items(self):
         '''
         All (MBR, value) pairs.
         '''
-        for mbr, value in self._leaves(self._root):
+        for mbr, value in self.__leaves(self._root):
             yield self._mbr_to_points(mbr), value
 
     def __contains__(self, points):
@@ -480,6 +457,10 @@ class BaseTree(ABC):
     # allow different split algorithms
 
     @abstractmethod
+    def _split(self, height, nodes):
+        raise NotImplementedError()
+
+    @abstractmethod
     def _pick_seeds(self, nodes):
         raise NotImplementedError()
 
@@ -563,7 +544,7 @@ class CartesianMixin:
 
     def _pick_seeds(self, data):
         '''
-        Choose the two MBRs that are most distance.
+        Choose the two MBRs that are furthest apart.
 
         Only called from LinearSplitMixin.
         '''
@@ -644,6 +625,29 @@ class LinearMixin:
     Simple node selection.
     '''
 
+    def _split(self, height, nodes):
+        '''
+        Divide the nodes into two,
+        '''
+        i, j = self._pick_seeds(nodes)
+        split = [(nodes[i][0], (height, [nodes[i]])), (nodes[j][0], (height, [nodes[j]]))]
+        del nodes[max(i, j)]
+        del nodes[min(i, j)]
+        # indexing ugliness below is rebuilding tuple with new mbr
+        while nodes:
+            if len(nodes) < self._min:
+                for index in 0, 1:
+                    split_nodes = split[index][1][1]
+                    if len(split_nodes) + len(nodes) == self._min:
+                        split_nodes.extend(nodes)
+                        split[index] = (self._mbr_of_nodes(*split_nodes), split[index][1])
+                        return split
+            node, nodes = self._pick_next(split, nodes)
+            index, mbr = self._best(split, node[0], height)
+            split[index] = (mbr, split[index][1])
+            split[index][1][1].append(node)
+        return split
+
     # _pick_seeds is on CartesianMixin because it's not abstracted from the coord system.
 
     def _pick_next(self, pair, nodes):
@@ -651,7 +655,7 @@ class LinearMixin:
         return node, nodes
 
 
-class QuadraticMixin:
+class QuadraticMixin(LinearMixin):
     '''
     This does a better job of grouping nodes (than linear) and is not measurably slower.
     '''
@@ -695,7 +699,7 @@ class ExponentialMixin:
 
     # _exact_area_sum() is on CartesianMixin because it is not abstracted from the coordinate system.
 
-    def _split_recursive(self, mbr0, mbr1, nodes, path=(), best=(None, None)):
+    def __split_recursive(self, mbr0, mbr1, nodes, path=(), best=(None, None)):
         '''
         On each call we place the next node in either branch.
         To reduce memory usage we track only the path (successive indices) and best (lowest) area.
@@ -715,15 +719,15 @@ class ExponentialMixin:
                 best = (area, path)
         else:
             mbr = nodes[depth][0]
-            best = self._split_recursive(self._mbr_of_mbrs(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), best)
-            best = self._split_recursive(mbr0, self._mbr_of_mbrs(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), best)
+            best = self.__split_recursive(self._mbr_of_mbrs(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), best)
+            best = self.__split_recursive(mbr0, self._mbr_of_mbrs(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), best)
         return best
 
     def _split(self, height, nodes):
         '''
         Divide the nodes into two after considering all combinations.
         '''
-        _, path = self._split_recursive(None, None, nodes)
+        _, path = self.__split_recursive(None, None, nodes)
         mbrs_pair, nodes_pair = [None, None], [[], []]
         for i_node, i_pair in enumerate(path):
             node = nodes[i_node]
