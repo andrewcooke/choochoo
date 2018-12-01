@@ -18,6 +18,7 @@ respectively).
 * [Other API Details](#other-api-details)
 * [Split Algorithm](#split-algorithm)
 * [Latitude / Longitude](#latitude--longitude)
+* [Efficiency](#efficiency)
 * [Extension](#extension)
 
 ## Regions
@@ -68,9 +69,8 @@ trigger an error).
 ## Split Algorithm
 
 All three algorithms from the paper are implemented.  As can be seen
-from the figures below, quadratic gives results close to exponential.
-Timing measurements indicate quadratic has a similar speed to linear
-for node groups of size 4-8.
+from the figures below, quadratic gives results close to exponential
+and consistently better than linear.
 
 ![Linear packing](rtree-linear.png)
 ![Quadratic packing](rtree-quadratic.png)
@@ -95,6 +95,13 @@ overlapping the poles.
 
 This could also work with phase, or any other angular measure in
 degrees.
+
+## Efficiency
+
+Profiling suggests that most time is spent comparing MBRs (evaluating
+`max()` and `min()`).  This occurs on descent and argues for
+relatively small nodes.  This is supported by timing tests across
+different entry sizes - `max_entries` of 4 appears optimal.
 
 ## Extension
 

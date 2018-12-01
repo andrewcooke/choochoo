@@ -35,7 +35,7 @@ class BaseTree(ABC):
     #   (even with equality matching, (key, value) isn't guaranteed unique)
     # in other words, if you want unique (key, value) or unique key you must enforce it yourself.
 
-    def __init__(self, items=None, *, max_entries=4, min_entries=None, subtrees=True):
+    def __init__(self, items=None, *, max_entries=3, min_entries=None, subtrees=True):
         '''
         Create an empty tree.
 
@@ -44,10 +44,7 @@ class BaseTree(ABC):
 
         `max_entries` is the maximum number of children a node can have.
         This data structure was originally designed for mass storage, where such a parameter is important.
-        For in-memory use, it doesn't matter so much except that larger values hit problems with quadratic
-        and exponential splitting.
-        Some quick tests suggest 4-8 is a reasonable choice.
-        You really don't want to go higher with exponential...
+        For in-memory use, a smaller value gives more branching, reduced comparisons, and better performance.
 
         `subtrees` enables insertion of entire subtrees (rather than leaves) during internal balancing.
         It seems to be what is described in the original paper and gives a small speedup in some cases.
@@ -164,7 +161,7 @@ class BaseTree(ABC):
         if height != target:
             i_best, mbr_best = self._best(data, mbr, height)
             child = data[i_best][1]
-            # optimistically set mbr on way down; will be removed if split spills data over
+            # optimistically set mbr on way down (since we have the mbr); will be removed if split spills data over
             data[i_best] = (mbr_best, child)
             split = self.__add_node(child, target, value, mbr)
             if split:
@@ -751,14 +748,16 @@ class ExponentialMixin:
         On each call we place the next node in either branch.
         To reduce memory usage we track only the path (successive indices) and best (lowest) area.
         '''
-        depth = len(path)
+
         # prune if too many nodes on one side
+        depth = len(path)
         if path:
             remain = len(nodes) - depth
             size1 = sum(path)
             size0 = depth - size1
             if size0 + remain < self.min_entries or size1 + remain < self.min_entries:
                 return best
+
         if depth == len(nodes):
             # we're done, so assess any improvement
             area = self._exact_area_sum(mbr0, mbr1)

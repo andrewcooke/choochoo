@@ -152,7 +152,7 @@ def stress(type, n_children, n_data, check=True):
         if check:
             tree.assert_consistent()
 
-    for i in range(100):
+    for i in range(10):
 
         n_delete = randrange(int(1.1 * n_data))   # delete to empty 10% of time
         for j in range(n_delete):
@@ -173,13 +173,17 @@ def stress(type, n_children, n_data, check=True):
             if check:
                 tree.assert_consistent()
 
+        for j in range(n_data // 4):
+            for match in range(4):
+                list(tree.get(random_box(10, 100), match=MatchType(match)))
+
 
 def test_stress():
     for type in CLRTree, CQRTree, CERTree:
         print('type %s' % type)
         for n_children in 3, 4, 10:
             print('n_children %d' % n_children)
-            for n_data in 1, 2, 3:#, 100:
+            for n_data in 1, 2, 3, 100:
                 print('n_data %d' % n_data)
                 stress(type, n_children, n_data)
 
@@ -217,7 +221,7 @@ def measure(tree, n_data, n_loops, dim=100):
 def measure_sizes():
     for type in CLRTree, CQRTree, CERTree:
         print()
-        for size in 2, 4, 6, 8, 10, 16, 32, 64, 128:
+        for size in 2, 3, 4, 6, 8, 10, 16, 32, 64, 128:
             for subtrees in True, False:
                 t = measure(type(max_entries=size, subtrees=subtrees), 1000, 2)
                 print('%s %d %s %s' % (type, size, subtrees, t))
@@ -227,5 +231,6 @@ def measure_sizes():
 
 
 # for profiling
+# PYTHONPATH=. python -m cProfile -s tottime tests/test_arty.py
 if __name__ == '__main__':
-    stress(CQRTree, 8, 100, check=False)
+    stress(CQRTree, 4, 1000, check=False)
