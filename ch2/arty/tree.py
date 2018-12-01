@@ -56,64 +56,57 @@ class BaseTree(ABC):
         self._root = None
         self._size = 0
 
-    def get_point(self, x, y, value=None, match=MatchType.EQUAL):
+    def get(self, *points, value=None, match=MatchType.EQUAL):
         '''
-        An iterator over entries (value, box) of nodes that match the given point.
-
-        If `value` is given only entries with the same value are returned
-        (this allows for storing "types of points", for example).
+        An iterator over values of nodes that match the MBR for the given points.
         The `match` describes the kind of matching done.
 
-        Note that points are expanded to (zero-area) boxes internally and returned as such.
+        If `value` is given then only nodes with that value are found *and*
+        the MBR (rather than node value) is returned.
         '''
-        yield from self._get_normalized_box(self._normalize_mbr(x, y, x, y), value, match)
+        mbr = self._mbr_of_points(*(self._normalize_point(p) for p in points))
+        for contents_node, mbr_node in self._get_root(mbr, value, match):
+            if value is None:
+                yield contents_node
+            else:
+                yield self._mbr_to_points(mbr_node)
 
-    def get_box(self, x1, y1, x2, y2, value=None, match=MatchType.EQUAL):
+    def _get_root(self, mbr, value, match):
         '''
-        An iterator over entries (value, MBR) of nodes that match the given box.
-
-        If `value` is given only entries with the same value are returned,
-        The `match` describes the kind of matching done.
+        Internal get from root.
         '''
-        yield from self._get_normalized_box(self._normalize_mbr(x1, y1, x2, y2), value, match)
-
-    def _get_normalized_box(self, mbr, value, match):
         if self._root:
-            for contents, mbr in self._get_node(self._root, mbr, value, match):
-                yield contents, self._denormalize_mbr(mbr)
+            yield from self._get_node(self._root, mbr, value, match)
 
     def _get_node(self, node, mbr, value, match):
+        '''
+        Internal get from node.
+        '''
         height, data = node
         for mbr_node, contents_node in data:
             if height:
                 if (match in (MatchType.EQUAL, MatchType.CONTAINED) and self._contains(mbr_node, mbr)) or \
-                        (match in (MatchType.CONTAINS, MatchType.INTERSECTS) and self._intersect(mbr_node, mbr)):
+                        (match in (MatchType.CONTAINS, MatchType.INTERSECTS) and self._intersects(mbr_node, mbr)):
                     yield from self._get_node(contents_node, mbr, value, match)
             else:
                 if value is None or value == contents_node:
                     if (match == MatchType.EQUAL and mbr == mbr_node) or \
                             (match == MatchType.CONTAINED and self._contains(mbr_node, mbr)) or \
                             (match == MatchType.CONTAINS and self._contains(mbr, mbr_node)) or \
-                            (match == MatchType.INTERSECTS and self._intersect(mbr, mbr_node)):
+                            (match == MatchType.INTERSECTS and self._intersects(mbr, mbr_node)):
                         yield contents_node, mbr_node
 
-    def add_point(self, value, x, y):
+    def add(self, value, *points):
         '''
-        Add value at a single point.
+        Add a value at the MBR of the given points.
         '''
-        self._add_normalized_mbr(0, self._normalize_mbr(x, y, x, y), value)
-        self._size += 1  # not in _add_normalized_mbr to avoid counting reinserts
+        mbr = self._mbr_of_points(*(self._normalize_point(p) for p in points))
+        self._add_root(0, mbr, value)
+        self._size += 1  # not in _add_root to avoid counting reinserts
 
-    def add_box(self, value, x1, y1, x2, y2):
+    def _add_root(self, target, mbr, value):
         '''
-        Add value in a box.
-        '''
-        self._add_normalized_mbr(0, self._normalize_mbr(x1, y1, x2, y2), value)
-        self._size += 1  # not in _add_normalized_mbr to avoid counting reinserts
-
-    def _add_normalized_mbr(self, target, mbr, value):
-        '''
-        Internal insertion.
+        Internal add at root.
 
         `target` is the height for insertion.  This allows for subtrees to be re-inserted as a whole.
         '''
@@ -131,7 +124,9 @@ class BaseTree(ABC):
 
     def _add_node(self, node, target, value, mbr):
         '''
-        Internal insertion at or below a given node.
+        Internal add at node.
+
+        `target` is the height for insertion.  This allows for subtrees to be re-inserted as a whole.
         '''
         height, data = node
         if height != target:
@@ -161,12 +156,12 @@ class BaseTree(ABC):
         for i_child, (mbr_child, data) in enumerate(data):
             if i_best is None:
                 i_best = i_child
-                mbr_best = self._merge(mbr_child, mbr)
+                mbr_best = self._mbr_of_mbrs(mbr_child, mbr)
                 area_best = self._area(mbr_best)
                 delta_area_best = self._area(mbr_best) - self._area(mbr_child)
                 len_best = len(data)
             else:
-                mbr_merge = self._merge(mbr_child, mbr)
+                mbr_merge = self._mbr_of_mbrs(mbr_child, mbr)
                 area_merge = self._area(mbr_merge)
                 delta_area_merge = area_merge - self._area(mbr_child)
                 if delta_area_merge < delta_area_best or \
@@ -177,42 +172,22 @@ class BaseTree(ABC):
                         i_child, mbr_merge, area_merge, delta_area_merge, len(data)
         return i_best, mbr_best
 
-    def _calculate_mbr(self, *nodes):
+    def delete(self, *points, value=None, match=MatchType.EQUAL):
         '''
-        Calculate the MBR for a list of nodes.
-        '''
-        total = None
-        for mbr, _ in nodes:
-            if total is None:
-                total = mbr
-            else:
-                total = self._merge(total, mbr)
-        return total
-
-    def delete_point(self, x, y, value=None, match=MatchType.EQUAL):
-        '''
-        Remove all entries that match the given point and optional value.
+        Remove all entries that match the MBR of the given points and optional value.
 
         Returns the number of items deleted.
-        To preview which items are deleted, call `get_point()` with the same parameters,
+        To preview which items are deleted, call `get()` with the same parameters,
         '''
-        return self._delete_normalized_mbr((x, y, x, y), value, match)
+        mbr = self._mbr_of_points(*(self._normalize_point(p) for p in points))
+        return self._delete_root(mbr, value, match)
 
-    def delete_box(self, x1, y1, x2, y2, value=None, match=MatchType.EQUAL):
+    def _delete_root(self, mbr, value, match):
         '''
-        Remove all entries that match the given box and optional value.
-
-        Returns the number of items deleted.
-        To preview which items are deleted, call `get_point()` with the same parameters,
-        '''
-        return self._delete_normalized_mbr(self._normalize_mbr(x1, y1, x2, y2), value, match)
-
-    def _delete_normalized_mbr(self, mbr, value, match):
-        '''
-        Internal deletion.
+        Internal deletion from root.
         '''
         count = 0
-        for _, mbr_match in self._get_normalized_box(mbr, value, match):
+        for _, mbr_match in self._get_root(mbr, value, match):
             # root cannot be empty as it contains mbr
             found = self._delete_node(self._root, mbr_match, value)
             if found:
@@ -230,7 +205,7 @@ class BaseTree(ABC):
 
     def _delete_node(self, node, mbr, value):
         '''
-        Internal deletion from or below the given node.
+        Internal deletion from node.
         '''
         height, data = node
         for i, (mbr_node, contents_node) in enumerate(data):
@@ -247,8 +222,8 @@ class BaseTree(ABC):
                                 return True, inserts
                         else:
                             # something under data[i] has been deleted so recalculate mbr
-                            old_mbr, (height_children, children) = data[i]
-                            new_mbr = self._calculate_mbr(*children)
+                            _, (height_children, children) = data[i]
+                            new_mbr = self._mbr_of_nodes(*children)
                             data[i] = (new_mbr, (height_children, children))
                         return False, inserts
             else:
@@ -259,14 +234,22 @@ class BaseTree(ABC):
                     else:
                         return False, []
 
-    def _leaves(self, node):
+    def _leaves_root(self):
+        '''
+        All leaves
+        '''
+        if self._root:
+            for node in self._root:
+                yield from self._leaves_node(node)
+
+    def _leaves_node(self, node):
         '''
         Iterator over the leaves in a node.
         '''
         height, data = node
         for mbr, child in data:
             if height:
-                yield from self._leaves(child)
+                yield from self._leaves_node(child)
             else:
                 yield mbr, child
 
@@ -284,16 +267,10 @@ class BaseTree(ABC):
         for insert in inserts:
             if insert[0] > max_height:
                 # can't add the entire tree, so re-add the leaves
-                for mbr, value in self._leaves(insert[2]):
-                    self._add_normalized_mbr(0, mbr, value)
+                for mbr, value in self._leaves_node(insert[2]):
+                    self._add_root(0, mbr, value)
             else:
-                self._add_normalized_mbr(*insert)
-
-    def __len__(self):
-        '''
-        Expose number of entries though usual Python API.
-        '''
-        return self._size
+                self._add_root(*insert)
 
     def _split(self, height, nodes):
         '''
@@ -307,15 +284,55 @@ class BaseTree(ABC):
         while nodes:
             if len(nodes) < self._min:
                 for index in 0, 1:
-                    if len(split[index][1][1]) + len(nodes) == self._min:
-                        split[index][1][1].extend(nodes)
-                        split[index] = (self._calculate_mbr(*split[index][1][1]), split[index][1])
+                    split_nodes = split[index][1][1]
+                    if len(split_nodes) + len(nodes) == self._min:
+                        split_nodes.extend(nodes)
+                        split[index] = (self._mbr_of_nodes(*split_nodes), split[index][1])
                         return split
             node, nodes = self._pick_next(split, nodes)
             index, mbr = self._best(split, node[0], height)
             split[index] = (mbr, split[index][1])
             split[index][1][1].append(node)
         return split
+
+    # standard container API
+
+    def __len__(self):
+        '''
+        Expose number of entries though usual Python API.
+        '''
+        return self._size
+
+    def keys(self):
+        '''
+        All MBRs.
+        '''
+        for mbr, _ in self._leaves_root():
+            yield self._mbr_to_points(mbr)
+
+    def values(self):
+        '''
+        All values.
+        '''
+        for _, value in self._leaves_root():
+            yield value
+
+    def items(self):
+        '''
+        All (MBR, value) pairs.
+        '''
+        for mbr, value in self._leaves_root():
+            yield self._mbr_to_points(mbr), value
+
+    def __contains__(self, point):
+        '''
+        Test for point.  API prevents anything more complex (cannot use *points).
+        '''
+        try:
+            next(self.get(point))
+            return True
+        except StopIteration:
+            return False
 
     # utilities for debugging
 
@@ -325,7 +342,7 @@ class BaseTree(ABC):
         '''
         if self._root:
             height, data = self._root
-            yield height + 1, self._calculate_mbr(*data), None  # implied mbr on all nodes
+            yield height + 1, self._mbr_of_nodes(*data), None  # implied mbr on all nodes
             yield from self._dump(self._root)
 
     def _dump(self, node):
@@ -343,8 +360,8 @@ class BaseTree(ABC):
         Dump the tree structure to stdout for debugging.
         '''
         for height, mbr, value in self.dump():
-            print('%2d %s (%4.2f, %4.2f, %4.2f, %4.2f) %s' %
-                  (height, ' ' * (10 - height), *mbr, '' if value is None else value))
+            print('%2d %s %s %s' %
+                  (height, ' ' * (10 - height), mbr, '' if value is None else value))
 
     def assert_consistent(self):
         '''
@@ -370,7 +387,7 @@ class BaseTree(ABC):
                 count = 0
                 for mbr, child in data:
                     (height_child, data_child) = child
-                    mbr_check = self._calculate_mbr(*data_child)
+                    mbr_check = self._mbr_of_nodes(*data_child)
                     if mbr_check != mbr:
                         raise Exception('Bad MBR at height %d %s / %s' % (height, mbr_check, mbr))
                     count += self._assert_consistent(child)
@@ -381,16 +398,33 @@ class BaseTree(ABC):
             return 0
 
     # allow different coordinate systems
+    # nothing above should depend on the exact representation of point or mbr
 
     @abstractmethod
-    def _normalize_mbr(self, x1, y1, x2, y2):
+    def _normalize_point(self, point):
         raise NotImplementedError()
 
-    def _denormalize_mbr(self, mbr):
-        return mbr
+    @abstractmethod
+    def _mbr_of_points(self, *points):
+        raise NotImplementedError()
+
+    def _mbr_of_nodes(self, *nodes):
+        return self._mbr_of_mbrs(*(mbr for mbr, _ in nodes))
 
     @abstractmethod
-    def _intersect(self, mbr1, mbr2):
+    def _mbr_of_mbrs(self, *mbrs):
+        raise NotImplementedError()
+
+    def _mbr_to_points(self, mbr):
+        x1, y1, x2, y2 = mbr
+        return self._denormalize_point((x1, y1)), self._denormalize_point((x2, y2))
+
+    @abstractmethod
+    def _denormalize_point(self, point):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _intersects(self, mbr1, mbr2):
         raise NotImplementedError()
 
     @abstractmethod
@@ -399,10 +433,6 @@ class BaseTree(ABC):
 
     @abstractmethod
     def _area(self, mbr):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _merge(self, mbr1, mbr2):
         raise NotImplementedError()
 
     # allow different split algorithms
@@ -418,13 +448,33 @@ class BaseTree(ABC):
 
 class CartesianMixin:
 
-    def _normalize_mbr(self, x1, y1, x2, y2):
+    def _normalize_point(self, point):
         '''
-        Return xy_bottom_left, xy_top_right for cartesian coordinates.
+        No normalizetion by default.
         '''
-        return min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)
+        return point
 
-    def _intersect(self, mbr1, mbr2):
+    def _denormalize_point(self, point):
+        '''
+        No normalizetion by default.
+        '''
+        return point
+
+    def _mbr_of_points(self, *points):
+        '''
+        Find the MBR of a set of points,
+        '''
+        xs, ys = zip(*points)
+        return min(xs), min(ys), max(xs), max(ys)
+
+    def _mbr_of_mbrs(self, *mbrs):
+        '''
+        Find the MBR of a set of MBRs.
+        '''
+        x1s, y1s, x2s, y2s = zip(*mbrs)
+        return min(x1s), min(y1s), max(x2s), max(y2s)
+
+    def _intersects(self, mbr1, mbr2):
         '''
         Do the two MBR's intersect?
         '''
@@ -446,14 +496,6 @@ class CartesianMixin:
         '''
         x1, y1, x2, y2 = mbr
         return (x2 - x1) * (y2 - y1)
-
-    def _merge(self, mbr1, mbr2):
-        '''
-        Construct the MBR That contains both the given MBRs.
-        '''
-        x1, y1, x2, y2 = mbr1
-        X1, Y1, X2, Y2 = mbr2
-        return min(x1, X1), min(y1, Y1), max(x2, X2), max(y2, Y2)
 
     def __extremes(self, data):
         '''
@@ -483,7 +525,7 @@ class CartesianMixin:
 
         Only called from LinearSplitMixin.
         '''
-        global_mbr = self._calculate_mbr(*self._root[1])
+        global_mbr = self._mbr_of_nodes(*self._root[1])
         norm_x, norm_y = global_mbr[2] - global_mbr[0], global_mbr[3] - global_mbr[1]
         norm = [norm_x, norm_y, norm_x, norm_y]
         index, extremes = self.__extremes(data)
@@ -502,25 +544,33 @@ class LatLonMixin(CartesianMixin):
         self.__zero_lon = None
         super().__init__(*args, **kargs)
 
-    def _normalize(self, x):
+    def _normalize_angle(self, x):
+        '''
+        Reduce angle to (-180, 180]
+        '''
         while x <= -180:
             x += 360
         while x > 180:
             x -= 360
         return x
 
-    def _normalize_mbr(self, x1, y1, x2, y2):
+    def _normalize_point(self, point):
+        '''
+        Normalize to a Cartesian patch centred on first point found.
+        '''
+        lon, lat = point
         if self.__zero_lon is None:
-            self.__zero_lon = x1
-        x1 = self._normalize(x1 - self.__zero_lon)
-        x2 = self._normalize(x2 - self.__zero_lon)
-        return super()._normalize_mbr(x1, y1, x2, y2)
+            self.__zero_lon = lon
+        lon = self._normalize_angle(lon - self.__zero_lon)
+        return lon, lat
 
-    def _denormalize_mbr(self, mbr):
-        x1, y1, x2, y2 = mbr
-        x1 = self._normalize(x1 + self.__zero_lon)
-        x2 = self._normalize(x2 + self.__zero_lon)
-        return x1, y1, x2, y2
+    def _denormalize_point(self, point):
+        '''
+        Invert transform above.
+        '''
+        lon, lat = point
+        lon = self._normalize_angle(lon + self.__zero_lon)
+        return lon, lat
 
 
 class LinearMixin:
@@ -546,7 +596,7 @@ class QuadraticMixin:
             mbr_i = nodes[i][0]
             for j in range(i):
                 mbr_j = nodes[j][0]
-                mbr_both = self._merge(mbr_i, mbr_j)
+                mbr_both = self._mbr_of_mbrs(mbr_i, mbr_j)
                 area_delta = self._area(mbr_both) - self._area(mbr_i) - self._area(mbr_j)
                 if area_delta_best is None or area_delta > area_delta_best:
                     area_delta_best, best = area_delta, (i, j)
@@ -555,8 +605,8 @@ class QuadraticMixin:
     def _pick_next(self, pair, nodes):
         area_delta_best, best = None, None
         for i in range(len(nodes)):
-            area_delta = abs((self._area(self._merge(nodes[i][0], pair[0][0])) - self._area(pair[0][0])) -
-                             (self._area(self._merge(nodes[i][0], pair[1][0])) - self._area(pair[1][0])))
+            area_delta = abs((self._area(self._mbr_of_nodes(nodes[i], pair[0])) - self._area(pair[0][0])) -
+                             (self._area(self._mbr_of_nodes(nodes[i], pair[1])) - self._area(pair[1][0])))
             if area_delta_best is None or area_delta > area_delta_best:
                 area_delta_best, best = area_delta, i
         node = nodes[best]
@@ -599,15 +649,12 @@ class ExponentialMixin:
                 inner = 0
             return outer - inner
 
-    def _split_recursive(self, mbr0, mbr1, nodes, path=(), best=None):
+    def _split_recursive(self, mbr0, mbr1, nodes, path=(), best=(None, None)):
         '''
         On each call we place the next node in either branch.
         To reduce memory usage we track only the path (successive indices) and best (lowest) area.
         '''
-
-        if best is None: best = (None, None)  # avoid mutable arg default
         depth = len(path)
-
         # prune if too many nodes on one side
         if path:
             remain = len(nodes) - depth
@@ -615,21 +662,20 @@ class ExponentialMixin:
             size0 = depth - size1
             if size0 + remain < self._min or size1 + remain < self._min:
                 return best
-
         if depth == len(nodes):
-            # we're done, so store any improvement
+            # we're done, so assess any improvement
             area = self._exact_area_sum(mbr0, mbr1)
-            if best[1] is None or area < best[0]:
+            if best[0] is None or area < best[0]:
                 best = (area, path)
         else:
             mbr = nodes[depth][0]
-            best = self._split_recursive(self._merge(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), best)
-            best = self._split_recursive(mbr0, self._merge(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), best)
+            best = self._split_recursive(self._mbr_of_mbrs(mbr0, mbr) if mbr0 else mbr, mbr1, nodes, (*path, 0), best)
+            best = self._split_recursive(mbr0, self._mbr_of_mbrs(mbr1, mbr) if mbr1 else mbr, nodes, (*path, 1), best)
         return best
 
     def _split(self, height, nodes):
         '''
-        Divide the nodes into two,
+        Divide the nodes into two after considering all combinations.
         '''
         _, path = self._split_recursive(None, None, nodes)
         mbrs_pair, nodes_pair = [None, None], [[], []]
@@ -640,7 +686,7 @@ class ExponentialMixin:
             if mbr_pair is None:
                 mbr_pair = mbr_node
             else:
-                mbr_pair = self._merge(mbr_pair, mbr_node)
+                mbr_pair = self._mbr_of_mbrs(mbr_pair, mbr_node)
             mbrs_pair[i_pair] = mbr_pair
             nodes_pair[i_pair].append(node)
         return [(mbrs_pair[0], (height, nodes_pair[0])), (mbrs_pair[1], (height, nodes_pair[1]))]

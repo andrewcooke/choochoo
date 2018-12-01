@@ -7,22 +7,22 @@ from ch2.arty.tree import CLRTree, MatchType, CQRTree, CERTree, LQRTree
 
 
 def known_points(tree):
-    tree.add_point('0', 0, 0)
-    tree.add_point('y', 0, 1)
-    tree.add_point('x', 1, 0)
-    tree.add_point('1', 1, 1)
+    tree.add('0', (0, 0))
+    tree.add('y', (0, 1))
+    tree.add('x', (1, 0))
+    tree.add('1', (1, 1))
     assert len(tree) == 4, len(tree)
-    all = list(tree.get_box(0, 0, 1, 1, match=MatchType.CONTAINS))
+    all = list(tree.get((0, 0), (1, 1), match=MatchType.CONTAINS))
     assert len(all) == 4, all
-    some = list(tree.get_box(0, 0, 0, 1, match=MatchType.CONTAINS))
+    some = list(tree.get((0, 0), (0, 1), match=MatchType.CONTAINS))
     assert len(some) == 2, some
-    some = list(tree.get_box(0, 0, 0, 1, match=MatchType.CONTAINED))
+    some = list(tree.get((0, 0), (0, 1), match=MatchType.CONTAINED))
     assert len(some) == 0, some
-    some = list(tree.get_box(0, 0, 0, 1, match=MatchType.EQUAL))
+    some = list(tree.get((0, 0), (0, 1), match=MatchType.EQUAL))
     assert len(some) == 0, some
-    tree.delete_point(0, 0)
+    tree.delete((0, 0))
     assert len(tree) == 3, len(tree)
-    some = list(tree.get_box(0, 0, 0, 1, match=MatchType.CONTAINS))
+    some = list(tree.get((0, 0), (0, 1), match=MatchType.CONTAINS))
     assert len(some) == 1, some
 
 
@@ -36,19 +36,19 @@ def test_known_points():
 
 
 def known_boxes(tree):
-    tree.add_box('0', -0.1, -0.1, 0.1, 0.1)
-    tree.add_box('1', 0.9, 0.9, 1.1, 1.1)
-    tree.add_box('sq', 0, 0, 1, 1)
-    tree.add_box('x', 2, 2, 3, 3)
-    some = list(tree.get_box(0, 0, 1, 1, match=MatchType.CONTAINED))
+    tree.add('0', (-0.1, -0.1), (0.1, 0.1))
+    tree.add('1', (0.9, 0.9), (1.1, 1.1))
+    tree.add('sq', (0, 0), (1, 1))
+    tree.add('x', (2, 2), (3, 3))
+    some = list(tree.get((0, 0), (1, 1), match=MatchType.CONTAINED))
     assert len(some) == 1, some
-    some = list(tree.get_box(0, 0, 1, 1, match=MatchType.CONTAINS))
+    some = list(tree.get((0, 0), (1, 1), match=MatchType.CONTAINS))
     assert len(some) == 1, some
-    some = list(tree.get_box(0, 0, 2, 1, match=MatchType.CONTAINED))
+    some = list(tree.get((0, 0), (2, 1), match=MatchType.CONTAINED))
     assert len(some) == 0, some
-    some = list(tree.get_box(0, 0, 2, 1, match=MatchType.CONTAINS))
+    some = list(tree.get((0, 0), (2, 1), match=MatchType.CONTAINS))
     assert len(some) == 1, some
-    some = list(tree.get_box(0, 0, 1, 1, match=MatchType.INTERSECTS))
+    some = list(tree.get((0, 0), (1, 1), match=MatchType.INTERSECTS))
     assert len(some) == 3, some
 
 
@@ -66,7 +66,7 @@ def random_box(n, size):
     y = uniform(0, size)
     dx = gauss(0, size/sqrt(n))
     dy = gauss(0, size/sqrt(n))
-    return x, y, x + dx, y + dy
+    return (x, y), (x + dx, y + dy)
 
 
 def gen_random(n, size=100):
@@ -76,7 +76,7 @@ def gen_random(n, size=100):
 
 def best_bug(tree):
     for i, (value, box) in enumerate(gen_random(100)):
-        tree.add_box(value % 10, *box)
+        tree.add(value % 10, *box)
         tree.assert_consistent()
 
 
@@ -93,7 +93,7 @@ def stress(type, n_children, n_data, check=True):
     data = list(gen_random(n_data))
 
     for value, box in data:
-        tree.add_box(value, *box)
+        tree.add(value, *box)
         if check:
             tree.assert_consistent()
 
@@ -105,14 +105,14 @@ def stress(type, n_children, n_data, check=True):
                 index = randrange(len(data))
                 value, box = data[index]
                 del data[index]
-                tree.delete_box(*box, value=value)
+                tree.delete(*box, value=value)
                 if check:
                     tree.assert_consistent()
 
         while len(data) < n_data:
             value, box = next(gen_random(1))
             data.append((value, box))
-            tree.add_box(value, *box)
+            tree.add(value, *box)
             if check:
                 tree.assert_consistent()
 
@@ -130,11 +130,11 @@ def test_stress():
 def test_latlon():
     tree = LQRTree()
     for lon in -180, 180:
-        tree.add_point(str(lon), lon, 0)
+        tree.add(str(lon), (lon, 0))
     for lon in -180, 180:
-        found = list(tree.get_point(lon, 0))
+        found = list(tree.get((lon, 0)))
         assert len(found) == 2, found
-    area = tree._area(tree._normalize_mbr(-179, -1, 179, 1))
+    area = tree._area(tree._mbr_of_points(*(tree._normalize_point(p) for p in ((-179, -1), (179, 1)))))
     assert area == 4, area
 
 
@@ -144,7 +144,7 @@ def measure(tree, n_data, n_loops, n_read, size=100):
 
     start = time()
     for value, box in data:
-        tree.add_box(value, *box)
+        tree.add(value, *box)
     for i in range(n_loops):
         n_delete = randrange(n_data)
         for j in range(n_delete):
@@ -152,13 +152,13 @@ def measure(tree, n_data, n_loops, n_read, size=100):
                 index = randrange(len(data))
                 value, box = data[index]
                 del data[index]
-                tree.delete_box(*box, value=value)
+                tree.delete(*box, value=value)
         while len(data) < n_data:
             value, box = next(gen_random(1))
             data.append((value, box))
-            tree.add_box(value, *box)
+            tree.add(value, *box)
         for _ in range(n_read):
-            tree.get_box(*random_box(n_data, size=size))
+            tree.get(*random_box(n_data, size=size))
 
     return time() - start
 
