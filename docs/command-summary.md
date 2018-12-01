@@ -42,9 +42,9 @@ Defines a new entry.  If date is omitted a single value is used for all time
 
 Deletes an entry.
 
-ActivityGroup names can be matched by SQL patterns.  So FTHR.% matches both
-FTHR.Run and FTHR.Bike, for example. In such a case "entry" in the
-descriptions above may refer to multiple entries.    
+Names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and
+FTHR.Bike, for example. In such a case "entry" in the descriptions above may
+refer to multiple entries.    
 
 
 
@@ -55,7 +55,8 @@ descriptions above may refer to multiple entries.
 Simple access to Pandas DataFrames - the same interface provided in Jupyter
 notebooks, but accessed from the command line.
 
-The format can be selected with --print (the default), --csv and --describe.
+The format can be selected with `--print` (the default), `--csv` and
+`--describe`.
 
 For full options see `ch2 data -h` and `ch2 data COMMAND -h`
 
