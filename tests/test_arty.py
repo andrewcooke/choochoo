@@ -149,15 +149,17 @@ def stress(type, n_children, n_data, check=True):
 
     for i in range(100):
 
-        n_delete = randrange(n_data)
+        n_delete = randrange(int(1.1 * n_data))   # delete to empty 10% of time
         for j in range(n_delete):
             if data:
                 index = randrange(len(data))
                 value, box = data[index]
                 del data[index]
-                tree.delete(box, value=value)
+                tree.delete_one(box, value=value)
                 if check:
                     tree.assert_consistent()
+            else:
+                assert not tree, tree
 
         while len(data) < n_data:
             value, box = next(gen_random(1))
@@ -172,7 +174,7 @@ def test_stress():
         print('type %s' % type)
         for n_children in 3, 4, 10:
             print('n_children %d' % n_children)
-            for n_data in 1, 2, 3, 100:
+            for n_data in 1, 2, 3:#, 100:
                 print('n_data %d' % n_data)
                 stress(type, n_children, n_data)
 
@@ -188,27 +190,21 @@ def test_latlon():
     assert area == 4, area
 
 
-def measure(tree, n_data, n_loops, n_read, size=100):
+def measure(tree, n_data, n_loops, dim=100):
+
     seed(1)
-    data = list(gen_random(n_data, size=size))
+    data = list(gen_random(n_data, size=dim))
 
     start = time()
-    for value, box in data:
-        tree.add(value, *box)
     for i in range(n_loops):
-        n_delete = randrange(n_data)
-        for j in range(n_delete):
-            if data:
-                index = randrange(len(data))
-                value, box = data[index]
-                del data[index]
-                tree.delete(*box, value=value)
-        while len(data) < n_data:
-            value, box = next(gen_random(1))
-            data.append((value, box))
-            tree.add(value, *box)
-        for _ in range(n_read):
-            tree.get(*random_box(n_data, size=size))
+        for value, box in data:
+            tree[box] = value
+        assert len(tree) == len(data), len(tree)
+        for _, box in data:
+            list(tree[box])
+        for value, box in data:
+            del tree[box]
+        assert len(tree) == 0
 
     return time() - start
 
@@ -217,9 +213,9 @@ def measure_sizes():
     for type in CLRTree, CQRTree, CERTree:
         print()
         for size in 2, 4, 6, 8, 10, 16, 32, 64, 128:
-            t = measure(type(size), 1000, 1, 1000)
+            t = measure(type(size), 1000, 2)
             print('%s %d %s' % (type, size, t))
-            if t > 10 and size > 4:
+            if t > 5 and size > 4:
                 print('abort')
                 break
 

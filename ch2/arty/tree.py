@@ -15,7 +15,6 @@ class MatchType(IntEnum):
 
 
 # todo - detect mutation during iteration
-# todo - empty root as (0, [])
 
 
 class BaseTree(ABC):
@@ -25,7 +24,7 @@ class BaseTree(ABC):
     #   data is [(mbr, value), (mbr, value), ...] for leaf nodes
     #   data is [(mbr, children), (mbr, children), ...] for internal nodes
     #     where children is [(height, data), (height, data), ...]
-    # the empty root is None.
+    # the empty root is (0, [])
 
     # insertion/retrieval semantics are subtly different to a hash table:
     #   you can ask for matches that are exactly equal, overlap, contain or are contained by the box
@@ -57,7 +56,7 @@ class BaseTree(ABC):
             raise Exception('Min number of entries in a node is too low')
         self._max = max_entries
         self._min = min_entries
-        self._root = None
+        self._root = (0, [])
         self.__size = 0
         self.__hash = 966038070
 
@@ -69,18 +68,11 @@ class BaseTree(ABC):
         If `value` is given then only nodes with that value are found *and*
         the MBR (rather than node value) is returned.
         '''
-        for contents, mbr in self._get_root(self._normalize_mbr(points), value, match):
+        for contents, mbr in self._get_node(self._root, self._normalize_mbr(points), value, match):
             if value is None:
                 yield contents
             else:
                 yield self._mbr_to_points(mbr)
-
-    def _get_root(self, mbr, value, match):
-        '''
-        Internal get from root.
-        '''
-        if self._root:
-            yield from self._get_node(self._root, mbr, value, match)
 
     def _get_node(self, node, mbr, value, match):
         '''
@@ -133,17 +125,10 @@ class BaseTree(ABC):
 
         `target` is the height for insertion.  This allows for subtrees to be re-inserted as a whole.
         '''
-        if self._root:
-            if target > self._root[0]:
-                raise Exception('Cannot add node at height %d in tree of height %d' % (target, self._root[0]))
-            split = self._add_node(self._root, target, value, mbr)
-            if split:
-                height = split[0][1][0] + 1
-                self._root = (height, split)
-        else:
-            if target:
-                raise Exception('Cannot add node at height %d in empty tree' % target)
-            self._root = (0, [(mbr, value)])
+        split = self._add_node(self._root, target, value, mbr)
+        if split:
+            height = split[0][1][0] + 1
+            self._root = (height, split)
 
     def _add_node(self, node, target, value, mbr):
         '''
@@ -155,21 +140,17 @@ class BaseTree(ABC):
         if height != target:
             i_best, mbr_best = self._best(data, mbr, height)
             child = data[i_best][1]
+            # optimistically set mbr on way down; will be removed if split spills data over
             data[i_best] = (mbr_best, child)
             split = self._add_node(child, target, value, mbr)
             if split:
                 del data[i_best]
                 data.extend(split)
-                if len(data) <= self._max:
-                    return None
-                else:
-                    return self._split(height, data)
         else:
             data.append((mbr, value))
-            if len(data) <= self._max:
-                return None
-            else:
-                return self._split(height, data)
+        # at this point parent mbr still correct (set on way down)
+        if len(data) > self._max:
+            return self._split(height, data)
 
     def _best(self, data, mbr, height):
         '''
@@ -218,20 +199,19 @@ class BaseTree(ABC):
         '''
         Internal deletion from root.
         '''
-        if self._root:
-            found = self._delete_one_node(self._root, mbr, value, match)
-            if found:
-                delete, inserts, mbr_found, value_found = found
-                if delete:
-                    self._root = None
-                self._reinsert(inserts)
-                if self._root and len(self._root[1]) == 1 and self._root[0]:  # single child, not leaf
-                    self._root = self._root[1][0][1]  # contents of first child
-                self.__update_state(-1, mbr_found, value_found)
-                return
-        raise KeyError('Failed to delete %s%s' % (mbr, '' if value is None else ' (value %s)' % value))
+        found = self._delete_one_node(self._root, mbr, value, match, 2)
+        if found:
+            delete, inserts, mbr_found, value_found = found
+            if delete:
+                self._root = (0, [])
+            self._reinsert(inserts)
+            if len(self._root[1]) == 1 and self._root[0]:  # single child, not leaf
+                self._root = self._root[1][0][1]  # contents of first child
+            self.__update_state(-1, mbr_found, value_found)
+        else:
+            raise KeyError('Failed to delete %s%s' % (mbr, '' if value is None else ' (value %s)' % value))
 
-    def _delete_one_node(self, node, mbr, value, match):
+    def _delete_one_node(self, node, mbr, value, match, local_min):
         '''
         Internal deletion from node.
         '''
@@ -239,14 +219,13 @@ class BaseTree(ABC):
         for i, (mbr_node, contents_node) in enumerate(data):
             if height:
                 if self._descend(mbr, mbr_node, match):
-                    found = self._delete_one_node(contents_node, mbr, value, match)
+                    found = self._delete_one_node(contents_node, mbr, value, match, self._min)
                     if found:
                         delete, inserts, mbr_found, value_found = found
                         if delete:
                             del data[i]
-                            if len(data) < self._min:  # todo - even at root? (currently works because deletes all?)
-                                for node in data:
-                                    inserts.append((height, *node))
+                            if len(data) < local_min:
+                                inserts.extend((height, *node) for node in data)
                                 return True, inserts, mbr_found, value_found
                         else:
                             # something under data[i] has been deleted so recalculate mbr
@@ -256,26 +235,19 @@ class BaseTree(ABC):
                         return False, inserts, mbr_found, value_found
             elif self._match(mbr, mbr_node, value, contents_node, match):
                 del data[i]
-                if len(data) < self._min:
+                if len(data) < local_min:
                     return True, [(0, *node) for node in data], mbr_node, contents_node
                 else:
                     return False, [], mbr_node, contents_node
 
-    def _leaves_root(self):
-        '''
-        All leaves
-        '''
-        if self._root:
-            yield from self._leaves_node(self._root)
-
-    def _leaves_node(self, node):
+    def _leaves(self, node):
         '''
         Iterator over the leaves in a node.
         '''
         height, data = node
         for mbr, child in data:
             if height:
-                yield from self._leaves_node(child)
+                yield from self._leaves(child)
             else:
                 yield mbr, child
 
@@ -293,7 +265,7 @@ class BaseTree(ABC):
         for insert in inserts:
             if insert[0] > max_height:
                 # can't add the entire tree, so re-add the leaves
-                for mbr, value in self._leaves_node(insert[2]):
+                for mbr, value in self._leaves(insert[2]):
                     self._add_root(0, mbr, value)
             else:
                 self._add_root(*insert)
@@ -333,21 +305,21 @@ class BaseTree(ABC):
         '''
         All MBRs.
         '''
-        for mbr, _ in self._leaves_root():
+        for mbr, _ in self._leaves(self._root):
             yield self._mbr_to_points(mbr)
 
     def values(self):
         '''
         All values.
         '''
-        for _, value in self._leaves_root():
+        for _, value in self._leaves(self._root):
             yield value
 
     def items(self):
         '''
         All (MBR, value) pairs.
         '''
-        for mbr, value in self._leaves_root():
+        for mbr, value in self._leaves(self._root):
             yield self._mbr_to_points(mbr), value
 
     def __contains__(self, points):
@@ -385,12 +357,21 @@ class BaseTree(ABC):
         return self.keys()
 
     def __getitem__(self, points):
+        '''
+        Call get() with equality and no value..
+        '''
         return self.get(points)
 
     def __setitem__(self, points, value):
+        '''
+        Add a value at the MBR associated with the given points.
+        '''
         self.add(points, value)
 
     def __delitem__(self, points):
+        '''
+        Delete all entries that match the MBR associated with the given points.
+        '''
         self.delete(points)
 
     # utilities for debugging
@@ -399,12 +380,11 @@ class BaseTree(ABC):
         '''
         An iterator over the tree structure.
         '''
-        if self._root:
-            height, data = self._root
-            yield height + 1, self._mbr_of_nodes(*data), None  # implied mbr on all nodes
-            yield from self._dump(self._root)
+        height, data = self._root
+        yield height + 1, self._mbr_of_nodes(*data), None  # implied mbr on all nodes
+        yield from self._dump_node(self._root)
 
-    def _dump(self, node):
+    def _dump_node(self, node):
         '''
         Internal iterator over the tree structure.
         '''
@@ -412,7 +392,7 @@ class BaseTree(ABC):
         for mbr, value in data:
             yield height, mbr, None if height else value
             if height:
-                yield from self._dump(value)
+                yield from self._dump_node(value)
 
     def print(self):
         '''
