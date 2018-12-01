@@ -33,7 +33,7 @@ point `[(x, y)]`, a rectange `[(x1, y1), (x2, y2)]` or a polygon
 `[(x1, y1), (x2, y2), ...]`.
 
 Since the internal representation is an MBR, returned regions (eg when
-calling `get()` with `value`) is always a pair of points.
+calling `get()` with `value`) are always a pair of points.
 
 ## Match Type
 

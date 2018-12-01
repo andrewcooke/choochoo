@@ -579,6 +579,30 @@ class CartesianMixin:
         else:
             return 0, 1  # degenerate case :(
 
+    def _exact_area_sum(self, mbr0, mbr1):
+        '''
+        Don't count the overlapping region twice.
+
+        Only called from ExponentialSplitMixin.
+        '''
+        if not mbr0:
+            return self._area(mbr1)
+        elif not mbr1:
+            return self._area(mbr0)
+        else:
+            outer = self._area(mbr0) + self._area(mbr1)
+            x1, y1, x2, y2 = mbr0
+            X1, Y1, X2, Y2 = mbr1
+            xm1 = max(x1, X1)
+            xm2 = min(x2, X2)
+            ym1 = max(y1, Y1)
+            ym2 = min(y2, Y2)
+            if xm2 > xm1 and ym2 > ym1:
+                inner = (xm2 - xm1) * (ym2 - ym1)
+            else:
+                inner = 0
+            return outer - inner
+
 
 class LatLonMixin(CartesianMixin):
 
@@ -669,27 +693,7 @@ class ExponentialMixin:
         # avoid ABC error
         raise NotImplementedError()
 
-    def _exact_area_sum(self, mbr0, mbr1):
-        '''
-        Don't count the overlapping region twice.
-        '''
-        if not mbr0:
-            return self._area(mbr1)
-        elif not mbr1:
-            return self._area(mbr0)
-        else:
-            outer = self._area(mbr0) + self._area(mbr1)
-            x1, y1, x2, y2 = mbr0
-            X1, Y1, X2, Y2 = mbr1
-            xm1 = max(x1, X1)
-            xm2 = min(x2, X2)
-            ym1 = max(y1, Y1)
-            ym2 = min(y2, Y2)
-            if xm2 > xm1 and ym2 > ym1:
-                inner = (xm2 - xm1) * (ym2 - ym1)
-            else:
-                inner = 0
-            return outer - inner
+    # _exact_area_sum() is on CartesianMixin because it is not abstracted from the coordinate system.
 
     def _split_recursive(self, mbr0, mbr1, nodes, path=(), best=(None, None)):
         '''
