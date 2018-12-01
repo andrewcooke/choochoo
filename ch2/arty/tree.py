@@ -35,9 +35,12 @@ class BaseTree(ABC):
     #   (even with equality matching, (key, value) isn't guaranteed unique)
     # in other words, if you want unique (key, value) or unique key you must enforce it yourself.
 
-    def __init__(self, max_entries=4, min_entries=None, subtrees=True):
+    def __init__(self, items=None, *, max_entries=4, min_entries=None, subtrees=True):
         '''
         Create an empty tree.
+
+        `items` allows construction from an iterable of `(points, value)` pairs
+        (as returned by `.items()`),
 
         `max_entries` is the maximum number of children a node can have.
         This data structure was originally designed for mass storage, where such a parameter is important.
@@ -46,7 +49,7 @@ class BaseTree(ABC):
         Some quick tests suggest 4-8 is a reasonable choice.
         You really don't want to go higher with exponential...
 
-        `subtrees` enables insertion of entire subtrees (rather than leaves).
+        `subtrees` enables insertion of entire subtrees (rather than leaves) during internal balancing.
         It seems to be what is described in the original paper and gives a small speedup in some cases.
         '''
         if not min_entries:
@@ -61,6 +64,9 @@ class BaseTree(ABC):
         self.__root = (0, [])
         self.__size = 0
         self.__hash = 966038070
+        if items:
+            for mbr, value in items:
+                self[mbr] = value
 
     @property
     def global_mbr(self):
@@ -73,6 +79,10 @@ class BaseTree(ABC):
     @property
     def max_entries(self):
         return self.__max_entries
+
+    @property
+    def height(self):
+        return self.__root[0]
 
     def get(self, points, value=None, match=MatchType.EQUAL):
         '''
@@ -222,7 +232,7 @@ class BaseTree(ABC):
             if delete:
                 self.__root = (0, [])
             self.__reinsert(inserts)
-            if len(self.__root[1]) == 1 and self.__root[0]:  # single child, not leaf
+            if len(self.__root[1]) == 1 and self.height:  # single child, not leaf
                 self.__root = self.__root[1][0][1]  # contents of first child
             self.__update_state(-1, mbr_found, value_found)
         else:
@@ -277,7 +287,7 @@ class BaseTree(ABC):
 
         We try to insert whole sub-trees, but this is not always possible (if the height has changed).
         '''
-        max_height = self.__root[0]
+        max_height = self.height
         for insert in inserts:
             if insert[0] > max_height or (not self.__subtrees and insert[0]):
                 # can't (or won't) add the entire tree, so re-add the leaves
@@ -367,6 +377,10 @@ class BaseTree(ABC):
         '''
         self.delete(points)
 
+    def __str__(self):
+        return '%s RTree (%s leaves, %d height, %d-%d entries)' % \
+               (self.split_algorithm, len(self), self.height, self.min_entries, self.max_entries)
+
     # utilities for debugging
 
     def dump(self):
@@ -431,6 +445,11 @@ class BaseTree(ABC):
 
     # allow different coordinate systems
     # nothing above should depend on the exact representation of point or mbr
+
+    @property
+    @abstractmethod
+    def split_algorithm(self):
+        raise NotImplementedError()
 
     def _normalize_mbr(self, points):
         return self._mbr_of_points(*(self._normalize_point(p) for p in points))
@@ -641,6 +660,10 @@ class LinearMixin:
     Simple node selection.
     '''
 
+    @property
+    def split_algorithm(self):
+        return 'Linear'
+
     def _split(self, height, nodes):
         '''
         Divide the nodes into two,
@@ -676,6 +699,10 @@ class QuadraticMixin(LinearMixin):
     This does a better job of grouping nodes (than linear) and is not measurably slower.
     '''
 
+    @property
+    def split_algorithm(self):
+        return 'Quadratic'
+
     def _pick_seeds(self, nodes):
         n, area_delta_best, best = len(nodes), None, None
         for i in range(n):
@@ -704,6 +731,10 @@ class ExponentialMixin:
     '''
     Pick nodes by making a complete comparison of all possibilities.
     '''
+
+    @property
+    def split_algorithm(self):
+        return 'Exponential'
 
     def _pick_next(self, pair, nodes):
         # avoid ABC error

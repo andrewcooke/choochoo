@@ -28,11 +28,11 @@ def known_points(tree):
 
 
 def test_known_points():
-    known_points(CLRTree(2))
+    known_points(CLRTree(max_entries=2))
     known_points(CLRTree())
-    known_points(CQRTree(2))
+    known_points(CQRTree(max_entries=2))
     known_points(CQRTree())
-    known_points(CERTree(2))
+    known_points(CERTree(max_entries=2))
     known_points(CERTree())
 
 
@@ -54,11 +54,11 @@ def known_boxes(tree):
 
 
 def test_known_boxes():
-    known_boxes(CLRTree(2))
+    known_boxes(CLRTree(max_entries=2))
     known_boxes(CLRTree())
-    known_boxes(CQRTree(2))
+    known_boxes(CQRTree(max_entries=2))
     known_boxes(CQRTree())
-    known_points(CERTree(2))
+    known_points(CERTree(max_entries=2))
     known_points(CERTree())
 
 
@@ -67,7 +67,7 @@ def test_delete_points():
     for size in 2, 3, 4, 8:
 
         def new_tree():
-            tree = CQRTree(size)
+            tree = CQRTree(max_entries=size)
             for i in range(4):
                 for j in range(4):
                     tree.add([(i, j)], i+j)
@@ -104,10 +104,10 @@ def gen_random(n, size=100):
 
 def test_equals():
     for size in 2, 3, 4, 8:
-        tree1 = CQRTree(size)
+        tree1 = CQRTree(max_entries=size)
         for i, box in gen_random(10):
             tree1.add(box, i)
-        tree2 = CQRTree(size)
+        tree2 = CQRTree(max_entries=size)
         for k, v in tree1.items():
             tree2.add(k, v)
         assert tree1 == tree2
@@ -115,13 +115,18 @@ def test_equals():
 
 def test_underscores():
     for size in 2, 3, 4, 8:
-        tree1 = CQRTree(size)
+        seed(size)
+        tree1 = CQRTree(max_entries=size)
         for i, box in gen_random(10):
             tree1[box] = i
-        tree2 = CQRTree(size)
+        tree2 = CQRTree(max_entries=size)
         for k, v in tree1.items():
             tree2.add(k, v)
         assert tree1 == tree2
+        if size == 2:
+            assert str(tree1) == 'Quadratic RTree (10 leaves, 4 height, 1-2 entries)', str(tree1)
+        tree3 = CQRTree(tree1.items(), max_entries=size)
+        assert tree1 == tree3
 
 
 def best_bug(tree):
@@ -132,14 +137,14 @@ def best_bug(tree):
 
 def test_best_bug():
     seed(4)  # 1:46 2:17 3:56 4:8 5:10 6:16 7:58 8:8
-    best_bug(CLRTree(2))
-    best_bug(CQRTree(2))
-    best_bug(CERTree(2))
+    best_bug(CLRTree(max_entries=2))
+    best_bug(CQRTree(max_entries=2))
+    best_bug(CERTree(max_entries=2))
 
 
 def stress(type, n_children, n_data, check=True):
     seed(1)
-    tree = type(n_children)
+    tree = type(max_entries=n_children)
     data = list(gen_random(n_data))
 
     for value, box in data:
@@ -214,7 +219,7 @@ def measure_sizes():
         print()
         for size in 2, 4, 6, 8, 10, 16, 32, 64, 128:
             for subtrees in True, False:
-                t = measure(type(size, subtrees=subtrees), 1000, 2)
+                t = measure(type(max_entries=size, subtrees=subtrees), 1000, 2)
                 print('%s %d %s %s' % (type, size, subtrees, t))
                 if t > 5 and size > 4:
                     print('abort')
