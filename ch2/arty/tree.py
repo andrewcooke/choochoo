@@ -177,12 +177,13 @@ class BaseTree(ABC):
         '''
         Remove entries that match the MBR of the given points and optional value.
         '''
-        mbr = self._normalize_mbr(points)
+        mbr, count = self._normalize_mbr(points), 0
         try:
             while True:
                 self.__delete_one_root(mbr, value, match)
+                count += 1
         except KeyError:
-            return
+            return count
 
     def delete_one(self, points, value=None, match=MatchType.EQUAL):
         '''
