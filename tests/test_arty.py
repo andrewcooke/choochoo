@@ -114,6 +114,7 @@ def test_equals():
 
 
 def test_underscores():
+
     for size in 2, 3, 4, 8:
         seed(size)
         tree1 = CQRTree(max_entries=size)
@@ -127,6 +128,22 @@ def test_underscores():
             assert str(tree1) == 'Quadratic RTree (10 leaves, 4 height, 1-2 entries)', str(tree1)
         tree3 = CQRTree(tree1.items(), max_entries=size)
         assert tree1 == tree3
+
+    tree = CQRTree()
+    tree.add([(1, 1)], '1')
+    tree.add([(2, 2)], '2')
+    assert len(tree) == 2
+    assert [(1, 1)] in tree
+    assert not [(3, 3)] in tree
+    assert '1' in list(tree.values())
+    assert ((1, 1), (1, 1)) in list(tree.keys()), list(tree.keys())
+    assert (((1, 1), (1, 1)), '1') in list(tree.items())
+    del tree[[(1, 1)]]
+    assert len(tree) == 1
+    assert list(tree[[(2, 2)]])
+    assert list(tree.get([(2, 2)]))
+    assert list(tree.get([(2, 2)], value='2'))
+    assert not list(tree.get([(2, 2)], value='1'))
 
 
 def best_bug(tree):
