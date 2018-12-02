@@ -65,14 +65,14 @@ The result provides:
   * Extended retrieval based on MBRs (minimum bounding rectangles):
 
         > tree = CQRTree(default_match=MatchType.INTERSECTS)
-	> tree[square] = 'square'
+        > tree[square] = 'square'
         > list(tree[diagonal])
         ['square']
 
   * The possibility to retrieve points (keys) as well as values:
 
         > tree = CQRTree(default_match=MatchType.INTERSECTS)
-	> tree[square] = 'square'
+        > tree[square] = 'square'
         > list(tree.get_items(diagonal))
         [(((0,0),(0,1),(1,1),(1,0)), 'square')]
 
