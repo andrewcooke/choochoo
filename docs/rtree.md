@@ -15,6 +15,7 @@ respectively).
 
 * [Regions](#regions)
 * [Match Type](#match-type)
+* [Points as Data](#points-as-data)
 * [Other API Details](#other-api-details)
 * [Split Algorithm](#split-algorithm)
 * [Latitude / Longitude](#latitude--longitude)
