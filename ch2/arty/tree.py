@@ -36,7 +36,7 @@ class BaseTree(ABC):
     # in other words, if you want unique (key, value) or unique key you must enforce it yourself.
 
     def __init__(self, items=None, *, max_entries=3, min_entries=None,
-                 subtrees_flag=True, default_match=MatchType.EQUALS):
+                 subtrees_flag=True, default_match=MatchType.EQUALS, default_border=0):
         '''
         Create an empty tree.
 
@@ -60,6 +60,7 @@ class BaseTree(ABC):
         self.__min_entries = min_entries
         self.__subtrees_flag = subtrees_flag
         self.__default_match = default_match
+        self.__default_border = default_border
         self.__root = (0, [])
         self.__size = 0
         self.__hash = 966038070
@@ -84,7 +85,7 @@ class BaseTree(ABC):
     def size(self):
         return self.__size
 
-    def get(self, points, value=None, match=None, border=0):
+    def get(self, points, value=None, match=None, border=None):
         '''
         An iterator over values of nodes that match the MBR for the given points.
 
@@ -95,13 +96,14 @@ class BaseTree(ABC):
         `border` is added to the MBR (eg to account for errors).
         '''
         match = self.__default_match if match is None else match
+        border = self.__default_border if border is None else border
         points = self._normalize_points(points)
         mbr_request = self._mbr_of_points(points, border=border)
         content_request = (points, value)
         for points_entry, value_entry in self.__get_leaf_contents(self.__root, mbr_request, content_request, match):
             yield value_entry
 
-    def get_items(self, points, value=None, match=None, border=0):
+    def get_items(self, points, value=None, match=None, border=None):
         '''
         An iterator over (MBR, value) of nodes that match the MBR for the given points.
 
@@ -112,6 +114,7 @@ class BaseTree(ABC):
         `border` is added to the MBR (eg to account for errors).
         '''
         match = self.__default_match if match is None else match
+        border = self.__default_border if border is None else border
         points = self._normalize_points(points)
         mbr_request = self._mbr_of_points(points, border=border)
         content_request = (points, value)
@@ -149,19 +152,20 @@ class BaseTree(ABC):
                 (match == MatchType.CONTAINS and self._contains(mbr_request, mbr_entry)) or
                 (match == MatchType.INTERSECTS and self._intersects(mbr_request, mbr_entry)))
 
-    def add(self, points, value, border=0):
+    def add(self, points, value, border=None):
         '''
         Add a value at the MBR of the given points.
 
         `border` is added to the MBR (eg to account for errors).
         '''
+        border = self.__default_border if border is None else border
         points = self._normalize_points(points)
         mbr_addition = self._mbr_of_points(points, border=border)
         content = (points, value)
         self.__add_to_root(0, mbr_addition, content)
         self.__update_state(1, content)
 
-    def add_all(self, items, border=0):
+    def add_all(self, items, border=None):
         '''
         Add a sequence of (point, value) pairs.
 
@@ -238,13 +242,14 @@ class BaseTree(ABC):
                         len(content_entry[1]) if content_entry[0] else 0
         return i_best, mbr_best
 
-    def delete(self, points, value=None, match=None, border=0):
+    def delete(self, points, value=None, match=None, border=None):
         '''
         Remove entries that match the MBR of the given points and optional value.
 
         `border` is added to the MBR (eg to account for errors).
         '''
         match = self.__default_match if match is None else match
+        border = self.__default_border if border is None else border
         points = self._normalize_points(points)
         mbr_deletion = self._mbr_of_points(points, border=border)
         content_deletion = (points, value)
@@ -256,7 +261,7 @@ class BaseTree(ABC):
         except KeyError:
             return count
 
-    def delete_one(self, points, value=None, match=None, border=0):
+    def delete_one(self, points, value=None, match=None, border=None):
         '''
         Remove a single entry that match the MBR of the given points and optional value.
 
@@ -265,6 +270,7 @@ class BaseTree(ABC):
         `border` is added to the MBR (eg to account for errors).
         '''
         match = self.__default_match if match is None else match
+        border = self.__default_border if border is None else border
         points = self._normalize_points(points)
         mbr_deletion = self._mbr_of_points(points, border=border)
         content_deletion = (points, value)
