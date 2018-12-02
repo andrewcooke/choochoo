@@ -18,7 +18,7 @@ def known_points(tree):
     assert len(some) == 2, some
     some = list(tree.get([(0, 0), (0, 1)], match=MatchType.CONTAINED))
     assert len(some) == 0, some
-    some = list(tree.get([(0, 0), (0, 1)], match=MatchType.EQUAL))
+    some = list(tree.get([(0, 0), (0, 1)], match=MatchType.EQUALS))
     assert len(some) == 0, some
     assert len(tree) == 4, len(tree)
     tree.delete([(0, 0)])
@@ -136,14 +136,17 @@ def test_underscores():
     assert [(1, 1)] in tree
     assert not [(3, 3)] in tree
     assert '1' in list(tree.values())
-    assert ((1, 1), (1, 1)) in list(tree.keys()), list(tree.keys())
-    assert (((1, 1), (1, 1)), '1') in list(tree.items())
+    assert ((1, 1),) in list(tree.keys()), list(tree.keys())
+    assert (((1, 1),), '1') in list(tree.items())
     del tree[[(1, 1)]]
     assert len(tree) == 1
     assert list(tree[[(2, 2)]])
     assert list(tree.get([(2, 2)]))
     assert list(tree.get([(2, 2)], value='2'))
     assert not list(tree.get([(2, 2)], value='1'))
+    assert tree
+    del tree[[(2, 2)]]
+    assert not tree
 
 
 def best_bug(tree):
@@ -212,8 +215,48 @@ def test_latlon():
     for lon in -180, 180:
         found = list(tree.get([(lon, 0)]))
         assert len(found) == 2, found
-    area = tree._area(tree._normalize_mbr([(-179, -1), (179, 1)]))
+    area = tree._area_of_mbr(tree._mbr_of_points(tree._normalize_points([(-179, -1), (179, 1)])))
     assert area == 4, area
+
+
+def test_docs():
+
+    tree = CQRTree()
+    square = ((0,0),(0,1),(1,1),(1,0))
+    tree[square] = 'square'
+    assert list(tree[square]) == ['square']
+    assert square in tree
+    diagonal = ((0,0),(1,1))
+    assert list(tree[diagonal]) == []
+    assert not diagonal in tree
+    assert list(tree.keys()) == [((0,0),(0,1),(1,1),(1,0))]
+    assert list(tree.values()) == ['square']
+    assert list(tree.items()) == [(((0,0),(0,1),(1,1),(1,0)), 'square')]
+    assert len(tree) == 1
+    del tree[square]
+    assert len(tree) == 0
+
+    tree = CQRTree(default_match=MatchType.INTERSECTS)
+    tree[square] = 'square'
+    assert list(tree[diagonal]) == ['square']
+
+    tree = CQRTree(default_match=MatchType.INTERSECTS)
+    tree[square] = 'square'
+    assert list(tree.get_items(diagonal)) == [(((0,0),(0,1),(1,1),(1,0)), 'square')]
+
+
+def test_canary():
+    tree = CQRTree()
+    for i in range(5):
+        tree.add([(i, i)], i)
+    keys = tree.keys()
+    next(keys)
+    del tree[[(1, 1)]]
+    try:
+        next(keys)
+        assert False, 'expected error'
+    except RuntimeError as e:
+        assert 'mutated' in str(e), e
 
 
 def measure(tree, n_data, n_loops, dim=100):
@@ -240,7 +283,7 @@ def measure_sizes():
         print()
         for size in 2, 3, 4, 6, 8, 10, 16, 32, 64, 128:
             for subtrees in True, False:
-                t = measure(type(max_entries=size, subtrees=subtrees), 1000, 2)
+                t = measure(type(max_entries=size, subtrees_flag=subtrees), 1000, 2)
                 print('%s %d %s %s' % (type, size, subtrees, t))
                 if t > 5 and size > 4:
                     print('abort')
