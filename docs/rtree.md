@@ -118,7 +118,7 @@ degrees.
 
 Profiling suggests that most time is spent comparing MBRs (evaluating
 `max()` and `min()`).  This occurs on descent and argues for small
-(more discriminaatory) nodes.  This is supported by timing tests
+(more discriminatory) nodes.  This is supported by timing tests
 across different entry sizes - `max_entries` of 3 appears optimal.
 
 Exponential split is slower than quadratic or linear at any entry
