@@ -61,6 +61,8 @@ spatial datasets and given in the query:
     for point in dataset 2: tree.add(point, 2)
     # query for dataset_1 points in the given region
     tree.get_item(region, value=1, match=MatchType.CONTAINS)
+    # delete all dataset_2 points
+    tree.delete(tree.global_mbr, value=2, match=MatchType.CONTAINS)
     
 ## Other API Details
 
