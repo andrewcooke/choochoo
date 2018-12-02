@@ -60,7 +60,7 @@ spatial datasets and given in the query:
     for point in dataset_1: tree.add(point, 1)
     for point in dataset 2: tree.add(point, 2)
     # query for dataset_1 points in the given region
-    tree.get(region, value=1, match=MatchType.CONTAINS)
+    tree.get_item(region, value=1, match=MatchType.CONTAINS)
     
 ## Other API Details
 
