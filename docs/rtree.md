@@ -139,6 +139,10 @@ may change when data are added or removed.
 Modifying the tree while iterating over contents is unsafe (and should
 trigger an error).
 
+The `border` parameter, which can also be set as a global default on
+the constructor, extends MBRs (on addition *and* query if set
+globally).  This might be useful for approximate matching.
+
 In the final API, MBRs are never visible to the caller.
 
 ## Split Algorithm
