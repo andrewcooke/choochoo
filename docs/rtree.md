@@ -11,6 +11,9 @@ This can be used as a stand-alone library:
 (for Cartesian points, linear, quadratic and exponential split,
 respectively).
 
+If it would be useful I can separate this code into it's own package -
+please contact me.
+
 ## Contents
 
 * [Design](#design)
