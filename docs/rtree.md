@@ -63,7 +63,10 @@ spatial datasets and given in the query:
     tree.get_item(region, value=1, match=MatchType.CONTAINS)
     # delete all dataset_2 points
     tree.delete(tree.global_mbr, value=2, match=MatchType.CONTAINS)
-    
+
+(but note that the deletion may be less efficient than filtering
+`.items()` and rebuilding the tree).
+
 ## Other API Details
 
 The constructor (and `add_all()`) can take an iterable of `(points,
