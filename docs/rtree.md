@@ -49,7 +49,7 @@ The result provides:
         > list(tree[diagonal])
         []
         > diagonal in tree
-	False
+        False
         > list(tree.keys())
         [((0,0),(0,1),(1,1),(1,0))]
         > list(tree.values())
