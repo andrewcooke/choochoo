@@ -61,9 +61,7 @@ class BaseTree(ABC):
         self.__root = (0, [])
         self.__size = 0
         self.__hash = 966038070
-        if items:
-            for mbr, value in items:
-                self[mbr] = value
+        self.add_all(items)
 
     @property
     def global_mbr(self):
@@ -84,16 +82,24 @@ class BaseTree(ABC):
     def get(self, points, value=None, match=MatchType.EQUAL):
         '''
         An iterator over values of nodes that match the MBR for the given points.
+
         The `match` describes the kind of matching done.
 
-        If `value` is given then only nodes with that value are found *and*
-        the MBR (rather than node value) is returned.
+        If `value` is given then only nodes with that value are found.
         '''
-        for contents, mbr in self.__get_node(self.__root, self._normalize_mbr(points), value, match):
-            if value is None:
-                yield contents
-            else:
-                yield self._mbr_to_points(mbr)
+        for _, contents in self.__get_node(self.__root, self._normalize_mbr(points), value, match):
+            yield contents
+
+    def get_item(self, points, value=None, match=MatchType.EQUAL):
+        '''
+        An iterator over (MBR, value) of nodes that match the MBR for the given points.
+
+        The `match` describes the kind of matching done.
+
+        If `value` is given then only nodes with that value are found.
+        '''
+        for mbr, contents in self.__get_node(self.__root, self._normalize_mbr(points), value, match):
+            yield self._mbr_to_points(mbr), contents
 
     def __get_node(self, node, mbr, value, match):
         '''
@@ -105,7 +111,7 @@ class BaseTree(ABC):
                 if self.__descend(mbr, mbr_node, match):
                     yield from self.__get_node(contents_node, mbr, value, match)
             elif self.__match(mbr, mbr_node, value, contents_node, match):
-                yield contents_node, mbr_node
+                yield mbr_node, contents_node
 
     def __descend(self, mbr, mbr_node, match):
         '''
@@ -131,6 +137,14 @@ class BaseTree(ABC):
         mbr = self._normalize_mbr(points)
         self.__add_root(0, mbr, value)
         self.__update_state(1, mbr, value)
+
+    def add_all(self, items):
+        '''
+        Add a sequence of (point, value) pairs.
+        '''
+        if items:
+            for mbr, value in items:
+                self[mbr] = value
 
     def __update_state(self, delta, mbr, value):
         '''
