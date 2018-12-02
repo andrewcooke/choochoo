@@ -218,6 +218,10 @@ def test_latlon():
     area = tree._area_of_mbr(tree._mbr_of_points(tree._normalize_points([(-179, -1), (179, 1)])))
     assert area == 4, area
 
+    tree = LQRTree()
+    tree.add([(180, 0)], None)
+    assert ((180, 0),) in list(tree.keys()), list(tree.keys())
+
 
 def test_docs():
 

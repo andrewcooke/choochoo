@@ -115,7 +115,8 @@ class BaseTree(ABC):
         points = self._normalize_points(points)
         mbr_request = self._mbr_of_points(points, border=border)
         content_request = (points, value)
-        yield from self.__get_leaf_contents(self.__root, mbr_request, content_request, match)
+        for points_entry, value_entry in self.__get_leaf_contents(self.__root, mbr_request, content_request, match):
+            yield self._denormalize_points(points_entry), value_entry
 
     def __get_leaf_contents(self, node, mbr_request, content_request, match):
         '''
@@ -359,7 +360,7 @@ class BaseTree(ABC):
         All MBRs.
         '''
         for mbr, (points, value) in self.__leaves(self.__root):
-            yield points
+            yield self._denormalize_points(points)
 
     def values(self):
         '''
@@ -509,6 +510,12 @@ class BaseTree(ABC):
     @abstractmethod
     def _normalize_point(self, point):
         raise NotImplementedError()
+
+    def _denormalize_points(self, points):
+        return tuple(self._denormalize_point(p) for p in points)
+
+    def _denormalize_point(self, point):
+        return point
 
     @abstractmethod
     def _mbr_of_points(self, points, border=0):
@@ -682,6 +689,14 @@ class LatLonMixin(CartesianMixin):
         if self.__zero_lon is None:
             self.__zero_lon = lon
         lon = self._normalize_angle(lon - self.__zero_lon)
+        return lon, lat
+
+    def _denormalize_point(self, point):
+        '''
+        Revert the normalization above.
+        '''
+        lon, lat = point
+        lon = self._normalize_angle(lon + self.__zero_lon)
         return lon, lat
 
 
