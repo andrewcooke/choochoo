@@ -15,11 +15,13 @@ from .command.package_fit_profile import package_fit_profile
 from .command.statistics import statistics
 from .command.test_schedule import test_schedule
 from .command.unlock import unlock
+from .lib.io import tui
 from .lib.log import make_log
 from .squeal.database import Database
 from .squeal.tables.constant import SystemConstant
 
 
+@tui
 def no_op(args, log, db):
     '''
 ## no-op
