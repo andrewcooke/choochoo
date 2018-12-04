@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-:<<XXX
 rm -f /tmp/copy.sqll
 cp ~/.ch2/database.sqll /tmp/copy.sqll
 
@@ -14,7 +13,7 @@ delete from statistic_name where id in (
    where statistic_journal.id is null
 );
 EOF
-XXX
+
 rm -f /tmp/dump-l.sql
 sqlite3 /tmp/copy.sqll <<EOF
 .output /tmp/dump-l.sql

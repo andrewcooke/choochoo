@@ -3,11 +3,12 @@ from abc import abstractmethod
 
 from sqlalchemy.sql.functions import count
 
-from ...squeal.types import short_cls
+from .waypoint import WaypointReader
 from ...squeal.tables.activity import ActivityJournal, ActivityGroup
 from ...squeal.tables.pipeline import Pipeline
-from ...squeal.tables.source import Interval, Source
+from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat
+from ...squeal.types import short_cls
 
 
 def run_pipeline_after(log, db, type, after=None, force=False, like=None):
@@ -147,3 +148,13 @@ class ActivityCalculator(Calculator):
                 else:
                     self._log.warn('No statistics to delete for %s' % activity_group)
         s.commit()
+
+
+class WaypointCalculator(ActivityCalculator):
+
+    def _add_stats(self, s, ajournal):
+        waypoints = list(WaypointReader(self._log).read(s, ajournal))
+        if waypoints:
+            self._add_stats_from_waypoints(ajournal, waypoints)
+        else:
+            self._log.warn('No statistics for %s' % ajournal)

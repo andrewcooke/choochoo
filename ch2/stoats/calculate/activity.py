@@ -1,29 +1,21 @@
 
-import datetime as dt
-from collections import deque, Counter, namedtuple
+from collections import Counter
 from itertools import chain
 
-from sqlalchemy import inspect, select, and_
-from sqlalchemy.sql.functions import coalesce
-
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, HEART_RATE, DISTANCE, MSR, summaries
-from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournal, StatisticName, StatisticJournalInteger
-from ...stoats.calculate import ActivityCalculator
+    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries
+from ...squeal.tables.statistic import StatisticName
+from ...stoats.calculate import WaypointCalculator
 from ...stoats.calculate.heart_rate import hr_zones_from_database
-from ...stoats.read.activity import ActivityImporter
+from ...stoats.calculate.waypoint import WaypointReader, Chunks
 
 
-class ActivityStatistics(ActivityCalculator):
+class ActivityStatistics(WaypointCalculator):
 
     def _filter_journals(self, q):
         return q.filter(StatisticName.name == ACTIVE_TIME)
 
-    def _add_stats(self, s, ajournal):
-        waypoints = list(self._waypoints(s, ajournal))
-        if not waypoints:
-            self._log.warn('No statistcs for %s' % ajournal)
-            return
+    def _add_stats_from_waypoints(self, s, ajournal, waypoints):
         totals = Totals(self._log, waypoints)
         self._add_float_stat(s, ajournal,  ACTIVE_DISTANCE, summaries(MAX, CNT, SUM, MSR), totals.distance, M)
         self._add_float_stat(s, ajournal, ACTIVE_TIME, summaries(MAX, SUM, MSR), totals.time, S)
@@ -47,123 +39,6 @@ class ActivityStatistics(ActivityCalculator):
         else:
             self._log.warn('No HR zones defined for %s or before' % ajournal.start)
 
-    def _waypoints(self, s, ajournal):
-
-        sn = inspect(StatisticName).local_table
-        sj = inspect(StatisticJournal).local_table
-        sji = inspect(StatisticJournalInteger).local_table
-        sjf = inspect(StatisticJournalFloat).local_table
-
-        id_map = self._id_map(s, ajournal)
-        ids = list(id_map.keys())
-
-        for timespan in ajournal.timespans:
-            self._log.debug('%s' % timespan)
-            kargs = {'timespan': timespan}
-            stmt = select([sn.c.id, sj.c.time, coalesce(sjf.c.value, sji.c.value)]) \
-                .select_from(sj.join(sn).outerjoin(sjf).outerjoin(sji)) \
-                .where(and_(sj.c.source_id == ajournal.id,
-                            sn.c.id.in_(ids),
-                            sj.c.time >= timespan.start,
-                            sj.c.time <= timespan.finish)) \
-                .order_by(sj.c.time)
-            self._log.debug(stmt)
-            for id, time, value in s.connection().execute(stmt):
-                if 'time' not in kargs:
-                    kargs['time'] = time
-                elif kargs['time'] != time:
-                    yield Waypoint(**kargs)
-                    kargs = {'timespan': timespan}
-                kargs[id_map[id]] = value
-        self._log.debug('Waypoints generated')
-
-    def _id_map(self, s, ajournal):
-        # need to convert from statistic_name_id to attribute name
-        return {self._id(s, ajournal, HEART_RATE): 'heart_rate',
-                self._id(s, ajournal, DISTANCE): 'distance'}
-
-    def _id(self, s, ajournal, name):
-        return s.query(StatisticName.id). \
-            filter(StatisticName.name == name,
-                   StatisticName.owner == ActivityImporter,
-                   StatisticName.constraint == ajournal.activity_group).scalar()
-
-
-Waypoint = namedtuple('Waypoint', 'timespan, time, heart_rate, distance')
-'''
-This no longer appears as an explicit structure in the database.
-It corresponds to a record in the FIT file and is a collection of values from the activity
-at a particular time.
-'''
-
-
-class Chunk:
-    '''
-    A collection of data points in time order, associated with a single timespan.
-
-    In most of the uses below the contents are slowly incremented over time (and
-    values popped off the front) as various statistics are calculated.
-    '''
-
-    def __init__(self, waypoint):
-        self.__timespan = waypoint.timespan
-        self.__waypoints = deque([waypoint])
-
-    def append(self, waypoint):
-        self.__waypoints.append(waypoint)
-
-    def popleft(self):
-        return self.__waypoints.popleft()
-
-    def __diff(self, index, attr, zero=0):
-        if len(self.__waypoints) > 1:
-            return attr(self.__waypoints[index]) - attr(self.__waypoints[0])
-        else:
-            return zero
-
-    def distance(self):
-        return self.__diff(-1, lambda w: w.distance)
-
-    def distance_delta(self):
-        return self.__diff(1, lambda w: w.distance)
-
-    def time(self):
-        return self.__diff(-1, lambda w: w.time, dt.timedelta(0)).total_seconds()
-
-    def time_delta(self):
-        return self.__diff(1, lambda w: w.time, dt.timedelta(0)).total_seconds()
-
-    def heart_rates(self):
-        return (waypoint.heart_rate for waypoint in self.__waypoints if waypoint.heart_rate is not None)
-
-    def __len__(self):
-        return len(self.__waypoints)
-
-    def __getitem__(self, item):
-        return self.__waypoints[item]
-
-    def __bool__(self):
-        return self.distance_delta() > 0
-
-
-class Chunks:
-
-    def __init__(self, log, waypoints):
-        self._log = log
-        self._waypoints = waypoints
-
-    def chunks(self):
-        chunks, chunk_index = deque(), {}
-        for waypoint in self._waypoints:
-            timespan = waypoint.timespan
-            if timespan in chunk_index:
-                chunk_index[timespan].append(waypoint)
-            else:
-                chunk = Chunk(waypoint)
-                chunk_index[timespan] = chunk
-                chunks.append(chunk)
-            yield chunks
-
 
 class TimeForDistance(Chunks):
 
@@ -177,9 +52,7 @@ class TimeForDistance(Chunks):
             if distance > self.__distance:
                 while chunks and distance - chunks[0].distance_delta() > self.__distance:
                     distance -= chunks[0].distance_delta()
-                    chunks[0].popleft()
-                    if not chunks[0]:
-                        chunks.popleft()
+                    self.drop_first(chunks)
                 time = sum(chunk.time() for chunk in chunks)
                 yield time * self.__distance / distance
 
@@ -205,9 +78,7 @@ class MedianHRForTime(Chunks):
             if time > self.__time:
                 while chunks and time - chunks[0].time_delta() > self.__time:
                     time -= chunks[0].time_delta()
-                    chunks[0].popleft()
-                    while chunks and not chunks[0]:
-                        chunks.popleft()
+                    self.drop_first(chunks)
                 heart_rates = list(sorted(chain(*(chunk.heart_rates() for chunk in chunks))))
                 if heart_rates:
                     median = len(heart_rates) // 2
@@ -218,9 +89,9 @@ class Totals(Chunks):
 
     def __init__(self, log, waypoints):
         super().__init__(log, waypoints)
-        chunks = list(self.chunks())[-1]
-        self.distance = sum(chunk.distance() for chunk in chunks)
-        self.time = sum(chunk.time() for chunk in chunks)
+        all_chunks = self.complete()
+        self.distance = sum(chunk.distance() for chunk in all_chunks)
+        self.time = sum(chunk.time() for chunk in all_chunks)
 
 
 class Zones(Chunks):
@@ -229,11 +100,11 @@ class Zones(Chunks):
         super().__init__(log, waypoints)
         # this assumes record data are evenly distributed
         self.zones = []
-        chunks = list(self.chunks())[-1]
+        all_chunks = self.complete()
         counts = Counter()
         lower_limit = 0
         for zone, upper_limit in enumerate(zones):
-            for chunk in chunks:
+            for chunk in all_chunks:
                 for heart_rate in chunk.heart_rates():
                     if heart_rate is not None:
                         if lower_limit <= heart_rate < upper_limit:
@@ -243,5 +114,3 @@ class Zones(Chunks):
         if total:
             for zone in range(len(zones)):
                 self.zones.append((zone + 1, counts[zone] / total))
-
-

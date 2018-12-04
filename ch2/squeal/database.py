@@ -7,7 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
 
 from .support import Base
-from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal, SegmentJournal, Segment
+from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal
+from ch2.squeal.tables.segment import Segment, SegmentJournal
 from .tables.constant import SystemConstant, Constant
 from .tables.monitor import MonitorJournal
 from .tables.pipeline import Pipeline
@@ -23,7 +24,7 @@ Source,  Interval,
 ActivityGroup, ActivityJournal, ActivityTimespan,
 Topic, TopicJournal,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText,
-SegmentJournal, Segment
+Segment, SegmentJournal
 Pipeline
 MonitorJournal
 Constant, SystemConstant
