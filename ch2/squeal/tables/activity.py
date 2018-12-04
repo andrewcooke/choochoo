@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, Float
 from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
@@ -62,3 +62,30 @@ class ActivityTimespan(Base):
 
     def __str__(self):
         return 'ActivityTimespan from %s - %s' % (format_time(self.start), format_time(self.finish))
+
+
+class SegmentJournal(Base):
+
+    __tablename__ = 'segment_journal'
+
+    id = Column(Integer, primary_key=True)
+    segment_id = Column(Integer, ForeignKey('segment.id', ondelete='cascade'),
+                        nullable=False, index=True)
+    statistic_journal_id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'),
+                                  nullable=False, index=True)
+
+
+class Segment(Base):
+
+    __tablename__ = 'segment'
+
+    id = Column(Integer, primary_key=True)
+    start_lat = Column(Float, nullable=False)
+    start_lon = Column(Float, nullable=False)
+    finish_lat = Column(Float, nullable=False)
+    finish_lon = Column(Float, nullable=False)
+    border = Column(Float, nullable=False)
+    distance = Column(Float, nullable=False)
+    name = Column(Text, nullable=False, index=True)
+    description = Column(Text)
+    journals = relationship('StatisticJournal', secondary='segment_journal')
