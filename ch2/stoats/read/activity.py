@@ -36,11 +36,11 @@ class ActivityImporter(Importer):
         if not activity_group:
             activities = s.query(ActivityGroup).all()
             if activities:
-                self._log.info('Available activities:')
+                self._log.info('Available activity group:')
                 for activity_group in activities:
                     self._log.info('%s - %s' % (activity_group.name, activity_group.description))
             else:
-                self._log.error('No activities defined - configure system correctly')
+                self._log.error('No activity groups defined - configure system correctly')
             raise Exception('ActivityGroup "%s" is not defined' % name)
         return activity_group
 
@@ -117,3 +117,6 @@ class ActivityImporter(Importer):
 
         # manually clean out intervals because we're doing a stealth load
         Interval.clean_times(s, first_timestamp, last_timestamp)
+
+        # used by subclasses
+        return ajournal
