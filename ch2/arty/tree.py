@@ -68,7 +68,13 @@ class BaseTree(ABC):
 
     @property
     def global_mbr(self):
-        return self._mbr_of_entries(*self.__root[1])
+        if self.__size:
+            x1, y1, x2, y2 = self._mbr_of_entries(*self.__root[1])
+            x1, y1 = self._denormalize_point((x1, y1))
+            x2, y2 = self._denormalize_point((x2, y2))
+            return x1, y1, x2, y2
+        else:
+            return None
 
     @property
     def min_entries(self):
@@ -85,6 +91,13 @@ class BaseTree(ABC):
     def size(self):
         return self.__size
 
+    def _check_points(self, points):
+        try:
+            _ = points[0][0]
+        except Exception:
+            raise Exception('The `points` argument is a sequence of (x, y) points. ' +
+                            'You may have entered a single (x, y) point.')
+
     def get(self, points, value=None, match=None, border=None):
         '''
         An iterator over values of nodes that match the MBR for the given points.
@@ -95,9 +108,12 @@ class BaseTree(ABC):
 
         `border` is added to the MBR (eg to account for errors).
         '''
+        self._check_points(points)
         match = self.__default_match if match is None else match
         border = self.__default_border if border is None else border
+        print(points)
         points = self._normalize_points(points)
+        print(points)
         mbr_request = self._mbr_of_points(points, border=border)
         content_request = (points, value)
         for points_entry, value_entry in self.__get_leaf_contents(self.__root, mbr_request, content_request, match):
@@ -113,6 +129,7 @@ class BaseTree(ABC):
 
         `border` is added to the MBR (eg to account for errors).
         '''
+        self._check_points(points)
         match = self.__default_match if match is None else match
         border = self.__default_border if border is None else border
         points = self._normalize_points(points)
@@ -158,6 +175,7 @@ class BaseTree(ABC):
 
         `border` is added to the MBR (eg to account for errors).
         '''
+        self._check_points(points)
         border = self.__default_border if border is None else border
         points = self._normalize_points(points)
         mbr_addition = self._mbr_of_points(points, border=border)
@@ -248,6 +266,7 @@ class BaseTree(ABC):
 
         `border` is added to the MBR (eg to account for errors).
         '''
+        self._check_points(points)
         match = self.__default_match if match is None else match
         border = self.__default_border if border is None else border
         points = self._normalize_points(points)
@@ -269,6 +288,7 @@ class BaseTree(ABC):
 
         `border` is added to the MBR (eg to account for errors).
         '''
+        self._check_points(points)
         match = self.__default_match if match is None else match
         border = self.__default_border if border is None else border
         points = self._normalize_points(points)

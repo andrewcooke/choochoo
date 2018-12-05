@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 from pandas import DataFrame
-from sqlalchemy import inspect, select, and_
+from sqlalchemy import inspect, select
 from sqlalchemy.sql.functions import count, coalesce
 
 from ..squeal.database import connect

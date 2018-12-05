@@ -1,7 +1,7 @@
 
 from math import pi, cos
 
-from .tree import LinearMixin, BaseTree, QuadraticMixin, ExponentialMixin
+from .tree import LinearMixin, BaseTree, QuadraticMixin, ExponentialMixin, CartesianMixin
 
 RADIUS = 6371000
 RADIAN = pi / 180
@@ -19,7 +19,7 @@ class LocalTangent:
         if self.__zero is None:
             self.__zero = point
         zx, zy = self.__zero
-        lon, lat = point[0] - zx, point[1] - zx
+        lon, lat = point[0] - zx, point[1] - zy
         while lon > 180: lon -= 360
         while lon <= -180: lon += 360
         return RADIUS * RADIAN * lon * cos(self.__zero[1]), RADIUS * RADIAN * lat
@@ -30,7 +30,7 @@ class LocalTangent:
         return zx + x / (RADIUS * RADIAN * cos(self.__zero[1])), zy + y / (RADIUS * RADIAN)
 
 
-class SphericalMixin:
+class SphericalMixin(CartesianMixin):
 
     def __init__(self, *args, **kargs):
         self.__plane = LocalTangent()

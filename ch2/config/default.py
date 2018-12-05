@@ -7,6 +7,7 @@ from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
+from ..stoats.calculate.segment import SegmentStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
 from ..stoats.display.impulse import ImpulseDiary
@@ -37,6 +38,7 @@ def default(log, db, no_diary=False):
 
         c = Counter()
         add_statistics(s, ActivityStatistics, c)
+        add_statistics(s, SegmentStatistics, c)
         add_statistics(s, MonitorStatistics, c)
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
 

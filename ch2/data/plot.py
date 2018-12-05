@@ -2,8 +2,8 @@
 import datetime as dt
 
 from bokeh.io import show, output_notebook
-from bokeh.layouts import column, row
-from bokeh.models.widgets import Dropdown, Button
+from bokeh.layouts import column
+from bokeh.models.widgets import Dropdown
 from bokeh.plotting import figure
 
 

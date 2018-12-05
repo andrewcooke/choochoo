@@ -4,6 +4,7 @@ from abc import abstractmethod
 from sqlalchemy.sql.functions import count
 
 from .waypoint import WaypointReader
+from ...lib.date import to_time
 from ...squeal.tables.activity import ActivityJournal, ActivityGroup
 from ...squeal.tables.pipeline import Pipeline
 from ...squeal.tables.source import Interval
@@ -98,6 +99,7 @@ class ActivityCalculator(Calculator):
         statistics = q1.cte()
         q2 = s.query(ActivityJournal).outerjoin(statistics). \
                 filter(ActivityJournal.activity_group == activity_group,
+                       ActivityJournal.start == to_time('2017-01-18 10:39:33'),
                        statistics.c.source_id == None). \
                 order_by(ActivityJournal.start)
         self._log.debug(q2)

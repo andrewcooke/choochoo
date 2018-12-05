@@ -145,6 +145,10 @@ globally).  This might be useful for approximate matching.
 
 In the final API, MBRs are never visible to the caller.
 
+**IMPORTANT** - if you are using this for approximate retrieval don't
+forget to st `default_match` in the constructor.  The default is for
+*exact* matching.
+
 ## Split Algorithm
 
 All three algorithms from the paper are implemented.  As can be seen
