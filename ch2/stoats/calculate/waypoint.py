@@ -1,32 +1,33 @@
 
+import datetime as dt
 from collections import namedtuple, deque
 
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
 from ..read.activity import ActivityImporter
-from ..names import HEART_RATE, DISTANCE
+from ...lib.data import AttrDict
 from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat
 
 
 class WaypointReader:
 
-    def __init__(self, s, log):
+    def __init__(self, log):
         self._log = log
 
-    def read(self, s, ajournal):
+    def read(self, s, ajournal, names):
 
         sn = inspect(StatisticName).local_table
         sj = inspect(StatisticJournal).local_table
         sji = inspect(StatisticJournalInteger).local_table
         sjf = inspect(StatisticJournalFloat).local_table
 
-        id_map = self._id_map(s, ajournal)
+        id_map = self._id_map(s, ajournal, names)
         ids = list(id_map.keys())
 
         for timespan in ajournal.timespans:
             self._log.debug('%s' % timespan)
-            kargs = {'timespan': timespan}
+            waypoint = None
             stmt = select([sn.c.id, sj.c.time, coalesce(sjf.c.value, sji.c.value)]) \
                 .select_from(sj.join(sn).outerjoin(sjf).outerjoin(sji)) \
                 .where(and_(sj.c.source_id == ajournal.id,
@@ -36,18 +37,17 @@ class WaypointReader:
                 .order_by(sj.c.time)
             self._log.debug(stmt)
             for id, time, value in s.connection().execute(stmt):
-                if 'time' not in kargs:
-                    kargs['time'] = time
-                elif kargs['time'] != time:
-                    yield Waypoint(**kargs)
-                    kargs = {'timespan': timespan}
-                kargs[id_map[id]] = value
+                if waypoint and waypoint['time'] != time:
+                    yield waypoint
+                    waypoint = None
+                if not waypoint:
+                    waypoint = AttrDict({'timespan': timespan, 'time': time})
+                waypoint[id_map[id]] = value
         self._log.debug('Waypoints generated')
 
-    def _id_map(self, s, ajournal):
+    def _id_map(self, s, ajournal, names):
         # need to convert from statistic_name_id to attribute name
-        return {self._id(s, ajournal, HEART_RATE): 'heart_rate',
-                self._id(s, ajournal, DISTANCE): 'distance'}
+        return dict((self._id(s, ajournal, key), value) for key, value in names.items())
 
     def _id(self, s, ajournal, name):
         return s.query(StatisticName.id). \

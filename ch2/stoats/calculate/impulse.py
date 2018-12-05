@@ -110,7 +110,8 @@ class ImpulseStatistics(IntervalCalculator):
                         source = s.query(StatisticName). \
                             filter(StatisticName.name == impulse.dest_name,
                                    StatisticName.owner == HeartRateStatistics,
-                                   StatisticName.constraint == activity_group).one()
-                        self._add_response(loader, s, response, interval, source)
+                                   StatisticName.constraint == activity_group).one_or_none()
+                        if source:  # None if no data loaded
+                            self._add_response(loader, s, response, interval, source)
                     start = SCHEDULE.next_frame(start)
                 loader.load()

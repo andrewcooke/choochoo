@@ -3,7 +3,7 @@ from collections import Counter
 from itertools import chain
 
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries
+    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, DISTANCE
 from ...squeal.tables.statistic import StatisticName
 from ...stoats.calculate import WaypointCalculator
 from ...stoats.calculate.heart_rate import hr_zones_from_database
@@ -14,6 +14,10 @@ class ActivityStatistics(WaypointCalculator):
 
     def _filter_journals(self, q):
         return q.filter(StatisticName.name == ACTIVE_TIME)
+
+    def _names(self):
+        return {HEART_RATE: 'heart_rate',
+                DISTANCE: 'distance'}
 
     def _add_stats_from_waypoints(self, s, ajournal, waypoints):
         totals = Totals(self._log, waypoints)

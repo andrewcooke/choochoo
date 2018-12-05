@@ -42,3 +42,18 @@ def assert_attr(instance, *attrs):
     for attr in attrs:
         if getattr(instance, attr) is None:
             raise Exception('No %s defined' % attr)
+
+
+class AttrDict(dict):
+
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            return super().__getattr__(name)
+        else:
+            return self[name]
+
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            super().__setattr__(name, value)
+        else:
+            self[name] = value

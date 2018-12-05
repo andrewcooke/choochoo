@@ -153,8 +153,17 @@ class ActivityCalculator(Calculator):
 class WaypointCalculator(ActivityCalculator):
 
     def _add_stats(self, s, ajournal):
-        waypoints = list(WaypointReader(self._log).read(s, ajournal))
+        waypoints = list(WaypointReader(self._log).read(s, ajournal, self._names()))
         if waypoints:
-            self._add_stats_from_waypoints(ajournal, waypoints)
+            self._add_stats_from_waypoints(s, ajournal, waypoints)
         else:
             self._log.warn('No statistics for %s' % ajournal)
+
+    @abstractmethod
+    def _add_stats_from_waypoints(self, s, ajournal, waypoints):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _names(self):
+        raise NotImplementedError()
+

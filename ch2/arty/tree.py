@@ -562,6 +562,9 @@ class BaseTree(ABC):
 
 
 class CartesianMixin:
+    '''
+    Basic support for (x,y) points..
+    '''
 
     def _normalize_point(self, point):
         '''
@@ -672,6 +675,9 @@ class CartesianMixin:
 
 
 class LatLonMixin(CartesianMixin):
+    '''
+    Normalize (lon, lat) so that "wrapping" in longitude is not possible unless it varies by 180 degrees.
+    '''
 
     def __init__(self, *args, **kargs):
         self.__zero_lon = None
@@ -858,3 +864,5 @@ class LQRTree(QuadraticMixin, LatLonMixin, BaseTree): pass
 
 
 class LERTree(ExponentialMixin, LatLonMixin, BaseTree): pass
+
+

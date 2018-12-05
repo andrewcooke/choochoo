@@ -12,8 +12,10 @@ class SegmentJournal(Base):
     id = Column(Integer, primary_key=True)
     segment_id = Column(Integer, ForeignKey('segment.id', ondelete='cascade'),
                         nullable=False, index=True)
+    segment = relationship('Segment')
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
                                  nullable=False, index=True)
+    activity_journal = relationship('ActivityJournal')
 
 
 class Segment(Base):
@@ -25,11 +27,9 @@ class Segment(Base):
     start_lon = Column(Float, nullable=False)
     finish_lat = Column(Float, nullable=False)
     finish_lon = Column(Float, nullable=False)
-    border = Column(Float, nullable=False)
     distance = Column(Float, nullable=False)
     name = Column(Text, nullable=False, index=True)
     description = Column(Text)
-    journals = relationship('ActivityJournal', secondary='segment_journal')
 
     @property
     def start(self):
@@ -46,3 +46,9 @@ class Segment(Base):
     @finish.setter
     def finish(self, lon_lat):
         self.finish_lon, self.finish_lat = lon_lat
+
+    def coords(self, start):
+        if start:
+            return self.start
+        else:
+            return self.finish
