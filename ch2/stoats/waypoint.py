@@ -1,13 +1,13 @@
 
 import datetime as dt
-from collections import namedtuple, deque
+from collections import deque
 
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
-from ..read.activity import ActivityImporter
-from ...lib.data import AttrDict
-from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat
+from .read.activity import ActivityImporter
+from ..lib.data import AttrDict
+from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat
 
 
 class WaypointReader:
@@ -54,14 +54,6 @@ class WaypointReader:
             filter(StatisticName.name == name,
                    StatisticName.owner == ActivityImporter,
                    StatisticName.constraint == ajournal.activity_group).scalar()
-
-
-Waypoint = namedtuple('Waypoint', 'timespan, time, heart_rate, distance')
-'''
-This no longer appears as an explicit structure in the database.
-It corresponds to a record in the FIT file and is a collection of values from the activity
-at a particular time.
-'''
 
 
 class Chunk:

@@ -111,9 +111,7 @@ class BaseTree(ABC):
         self._check_points(points)
         match = self.__default_match if match is None else match
         border = self.__default_border if border is None else border
-        print(points)
         points = self._normalize_points(points)
-        print(points)
         mbr_request = self._mbr_of_points(points, border=border)
         content_request = (points, value)
         for points_entry, value_entry in self.__get_leaf_contents(self.__root, mbr_request, content_request, match):

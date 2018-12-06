@@ -3,8 +3,7 @@ from urwid import Text, Columns, Pile
 
 from . import Displayer
 from ..calculate.monitor import MonitorStatistics
-from ..names import STEPS, REST_HR, DAILY_STEPS
-from ...lib.date import to_date
+from ..names import REST_HR, DAILY_STEPS
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields import ReadOnlyField
 from ...uweird.fields.summary import summary_columns

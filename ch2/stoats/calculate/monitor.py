@@ -2,14 +2,14 @@
 from sqlalchemy.sql.functions import min, sum
 
 from . import IntervalCalculator
+from .summary import SummaryStatistics
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
+from ..read.monitor import MonitorImporter
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.source import Interval, NoStatistics
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
-from ...stoats.calculate.summary import SummaryStatistics
-from ...stoats.read.monitor import MonitorImporter
 
 
 # this is really just a daily summary - maybe it should be implemented as such?

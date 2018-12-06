@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from sqlalchemy import func
 
+from ..lib.data import AttrDict
 from ..squeal.tables.constant import SystemConstant
 from ..squeal.tables.statistic import StatisticJournal, StatisticName
 from ..squeal.types import short_cls
@@ -67,3 +68,13 @@ class StatisticJournalLoader:
             latest = instance
         return latest
 
+    def as_waypoints(self, names):
+        time_to_waypoint = defaultdict(AttrDict)
+        statistic_ids = dict((name.id, name) for name in self.__statistic_name_cache.values())
+        for type in self.__staging:
+            for sjournal in self.__staging[type]:
+                name = statistic_ids[sjournal.statistic_name_id].name
+                if name in names:
+                    time_to_waypoint[sjournal.time]['time'] = sjournal.time
+                    time_to_waypoint[sjournal.time][names[name]] = sjournal.value
+        return [time_to_waypoint[time] for time in sorted(time_to_waypoint.keys())]

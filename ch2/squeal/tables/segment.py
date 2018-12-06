@@ -1,8 +1,9 @@
 
-from sqlalchemy import Column, Integer, ForeignKey, Float, Text
+from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from ..support import Base
+from ..types import Time
 
 
 class SegmentJournal(Base):
@@ -16,6 +17,11 @@ class SegmentJournal(Base):
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
                                  nullable=False, index=True)
     activity_journal = relationship('ActivityJournal')
+    start_time = Column(Time, nullable=False)
+    start_weight = Column(Float, nullable=False)
+    finish_time = Column(Time, nullable=False)
+    finish_weight = Column(Float, nullable=False)
+    UniqueConstraint(segment_id, activity_journal_id, start_time, finish_time)
 
 
 class Segment(Base):

@@ -4,7 +4,9 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 
 from ..load import StatisticJournalLoader
-from ..read import AbortImport
+from ..names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
+    SPHERICAL_MERCATOR_Y
+from ..read import AbortImport, Importer
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees
 from ...lib.date import to_time
@@ -12,9 +14,6 @@ from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger
-from ...stoats.names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
-    SPHERICAL_MERCATOR_Y
-from ...stoats.read import Importer
 
 
 class ActivityImporter(Importer):
@@ -119,4 +118,5 @@ class ActivityImporter(Importer):
         Interval.clean_times(s, first_timestamp, last_timestamp)
 
         # used by subclasses
-        return ajournal
+        return ajournal, loader
+

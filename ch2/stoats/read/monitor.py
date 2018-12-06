@@ -4,6 +4,8 @@ from collections import defaultdict
 
 from sqlalchemy import desc
 
+from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
+    CUMULATIVE_STEPS_FINISH
 from ..read import Importer, AbortImportButMarkScanned, AbortImport
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, unpack_single_bytes
@@ -11,8 +13,6 @@ from ...lib.date import to_time, time_to_local_date, format_time
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
-from ...stoats.names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
-    CUMULATIVE_STEPS_FINISH
 
 ACTIVITY_TYPE_ATTR = 'activity_type'
 HEART_RATE_ATTR = 'heart_rate'

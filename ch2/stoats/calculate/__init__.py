@@ -3,7 +3,7 @@ from abc import abstractmethod
 
 from sqlalchemy.sql.functions import count
 
-from .waypoint import WaypointReader
+from ch2.stoats.waypoint import WaypointReader
 from ...lib.date import to_time
 from ...squeal.tables.activity import ActivityJournal, ActivityGroup
 from ...squeal.tables.pipeline import Pipeline

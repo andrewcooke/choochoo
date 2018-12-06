@@ -11,9 +11,8 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_A
 from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import label
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal
-from ...squeal.tables.source import Source
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
-from ch2.uweird.fields.summary import summary_columns
+from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
 
 HRZ_WIDTH = 30
