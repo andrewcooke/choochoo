@@ -10,13 +10,13 @@ from ...squeal.tables.segment import SegmentJournal, Segment
 
 class SegmentImporter(ActivityImporter):
 
-    def __init__(self, log, db):
-        super().__init__(log, db)
+    def _on_init(self, *args, **kargs):
+        super()._on_init(*args, **kargs)
         with self._db.session_context() as s:
             self.__segments = self._read_segments(s)
 
-    def _import(self, s, path, **kargs):
-        ajournal, loader = super()._import(s, path, **kargs)
+    def _import(self, s, path):
+        ajournal, loader = super()._import(s, path)
         self._find_segments(s, ajournal,
                             loader.as_waypoints({'Latitude': 'lat',
                                                  'Longitude': 'lon',
@@ -53,7 +53,7 @@ class SegmentImporter(ActivityImporter):
             xs, ys = plane.normalize(segment.coords(start))
 
             def neighbours():
-                # need to scana  large number of points to avoid being caught at one end
+                # need to scan a large number of points to avoid being caught at one end
                 # by any candidate - but could cause issues for intervals on short circuits
                 for j in range(max(0, i-20), min(len(waypoints), i+20)):
                     xw, yw = plane.normalize((waypoints[j].lon, waypoints[j].lat))
@@ -84,8 +84,8 @@ class SegmentImporter(ActivityImporter):
                     yield i, start, segment
 
     def _read_segments(self, s):
-        segments = GlobalLongitude(tree=lambda: SQRTree(default_border=25, default_match=MatchType.INTERSECTS))
-        # segments = SQRTree(default_border=25, default_match=MatchType.INTERSECTS)
+        match_bounday = self._assert_karg('match_boundary', 10)
+        segments = GlobalLongitude(tree=lambda: SQRTree(default_border=match_bounday, default_match=MatchType.INTERSECTS))
         for segment in s.query(Segment).all():
             segments[[segment.start]] = (True, segment.id)
             segments[[segment.finish]] = (False, segment.id)

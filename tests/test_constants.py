@@ -30,4 +30,3 @@ def test_activities():
             n = s.query(count(Constant.id)).scalar()
             assert n == 5, n
             # todo - maybe test for value?
-        

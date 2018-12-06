@@ -18,10 +18,10 @@ from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalIn
 
 class ActivityImporter(Importer):
 
-    def run(self, paths, force=False, sport_to_activity=None):
-        if sport_to_activity is None:
+    def run(self, paths, force=False):
+        if 'sport_to_activity' not in self._kargs:
             raise Exception('No map from sport to activity')
-        self._run(paths, force=force, sport_to_activity=sport_to_activity)
+        self._run(paths, force=force)
 
     def _activity_group(self, s, path, sport, sport_to_activity):
         if sport in sport_to_activity:
@@ -51,8 +51,9 @@ class ActivityImporter(Importer):
             s.delete(journal)
         s.flush()
 
-    def _import(self, s, path, sport_to_activity):
+    def _import(self, s, path):
 
+        sport_to_activity = self._assert_karg('sport_to_activity')
         loader = StatisticJournalLoader(self._log, s, self)
 
         data, types, messages, records = filtered_records(self._log, path)

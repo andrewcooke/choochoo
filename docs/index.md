@@ -52,4 +52,5 @@ support for power meters.
 * Development
   * [Scaled Heart Rate Impulse - SHRIMP](impulse)
   * [Spatial Search](rtree)
+  * [Segments](segments)
   

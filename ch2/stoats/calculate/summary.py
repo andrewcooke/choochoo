@@ -8,20 +8,13 @@ from sqlalchemy.sql.functions import coalesce
 from . import IntervalCalculator
 from ..names import MAX, MIN, SUM, CNT, AVG, MSR, ENTRIES
 from ...lib.date import local_date_to_time
-from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.source import Interval
-from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, STATISTIC_JOURNAL_CLASSES, \
-    StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
+from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
+    StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
 
 
 class SummaryStatistics(IntervalCalculator):
-
-    def run(self, force=False, after=None, schedule=None):
-        if not schedule:
-            raise Exception('schedule=... karg required')
-        schedule = Schedule(schedule)
-        super().run(force=force, after=after, schedule=schedule)
 
     def _filter_intervals(self, q, schedule=None):
         return q.filter(Interval.schedule == schedule,

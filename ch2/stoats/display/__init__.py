@@ -5,6 +5,8 @@ from ...lib.date import to_date
 from ...squeal.tables.pipeline import Pipeline
 
 
+# todo - change do BasePipeline, move kargs to cosntructor, get values using _assert_karg()
+
 def build_pipeline(log, session, type, factory, date, schedule=None):
     date = to_date(date)   # why is this needed?
     for cls, args, kargs in Pipeline.all(log, session, type):

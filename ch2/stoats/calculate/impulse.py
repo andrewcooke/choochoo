@@ -85,9 +85,12 @@ class ImpulseStatistics(IntervalCalculator):
                     loader.add(response.dest_name, None, MAX, source.constraint, interval, value[1], value[0],
                                StatisticJournalFloat)
 
-    def _run_calculations(self, responses=None, impulse=None):
+    def _run_calculations(self, schedule):
 
         from .heart_rate import HeartRateStatistics
+
+        impulse = self._assert_karg('impulse')
+        responses = self._assert_karg('responses')
 
         with self._db.session_context() as s:
 

@@ -5,7 +5,6 @@ from collections import deque
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
-from .read.activity import ActivityImporter
 from ..lib.data import AttrDict
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat
 
@@ -15,14 +14,14 @@ class WaypointReader:
     def __init__(self, log):
         self._log = log
 
-    def read(self, s, ajournal, names):
+    def read(self, s, ajournal, names, owner):
 
         sn = inspect(StatisticName).local_table
         sj = inspect(StatisticJournal).local_table
         sji = inspect(StatisticJournalInteger).local_table
         sjf = inspect(StatisticJournalFloat).local_table
 
-        id_map = self._id_map(s, ajournal, names)
+        id_map = self._id_map(s, ajournal, names, owner)
         ids = list(id_map.keys())
 
         for timespan in ajournal.timespans:
@@ -45,14 +44,14 @@ class WaypointReader:
                 waypoint[id_map[id]] = value
         self._log.debug('Waypoints generated')
 
-    def _id_map(self, s, ajournal, names):
+    def _id_map(self, s, ajournal, names, owner):
         # need to convert from statistic_name_id to attribute name
-        return dict((self._id(s, ajournal, key), value) for key, value in names.items())
+        return dict((self._id(s, ajournal, key, owner), value) for key, value in names.items())
 
-    def _id(self, s, ajournal, name):
+    def _id(self, s, ajournal, name, owner):
         return s.query(StatisticName.id). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == ActivityImporter,
+                   StatisticName.owner == owner,
                    StatisticName.constraint == ajournal.activity_group).scalar()
 
 

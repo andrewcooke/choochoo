@@ -17,6 +17,9 @@ class SegmentJournal(Base):
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
                                  nullable=False, index=True)
     activity_journal = relationship('ActivityJournal')
+    # we don't use statistic_journal_id here because there isn't a single entry (it's a waypoint)
+    # we also label the "inner" points and give the weight for those points.
+    # the weights for the "outer" points are 1-weight.
     start_time = Column(Time, nullable=False)
     start_weight = Column(Float, nullable=False)
     finish_time = Column(Time, nullable=False)

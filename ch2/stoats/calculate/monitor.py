@@ -18,7 +18,7 @@ from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
 
 class MonitorStatistics(IntervalCalculator):
 
-    def _run_calculations(self):
+    def _run_calculations(self, schedule):
         with self._db.session_context() as s:
             try:
                 for start, finish in Interval.missing_dates(self._log, s, Schedule('d'), self, MonitorImporter):

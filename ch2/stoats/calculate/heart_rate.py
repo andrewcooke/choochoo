@@ -43,13 +43,12 @@ class HeartRateStatistics(ActivityCalculator):
                 StatisticName.add_if_missing(log, s, HR_ZONE, None, None, self, agroup)
         super().__init__(log, db)
 
-    def _filter_journals(self, q):
+    def _filter_statistic_journals(self, q):
         return q.filter(StatisticName.name == HR_ZONE)
 
-    def _add_stats(self, s, ajournal, impulse=None):
+    def _add_stats(self, s, ajournal):
 
-        if not impulse:
-            raise Exception('Missing impulse karg for %s' % short_cls(self))
+        impulse = self._assert_karg('impulse')
         hr_impulse = HRImpulse(**loads(Constant.get(s, impulse).at(s).value))
         self._log.debug('%s: %s' % (impulse, hr_impulse))
 

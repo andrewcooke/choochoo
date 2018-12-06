@@ -12,7 +12,7 @@ from ...squeal.tables.statistic import StatisticName
 
 class ActivityStatistics(WaypointCalculator):
 
-    def _filter_journals(self, q):
+    def _filter_statistic_journals(self, q):
         return q.filter(StatisticName.name == ACTIVE_TIME)
 
     def _names(self):
