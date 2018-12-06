@@ -36,7 +36,7 @@ def test_monitor():
 
         with db.session_context() as s:
             n = s.query(func.count(StatisticJournal.id)).scalar()
-            assert n == 110, n
+            assert n == 115, n
             mjournal = s.query(MonitorJournal).one()
             assert mjournal.start != mjournal.finish
 

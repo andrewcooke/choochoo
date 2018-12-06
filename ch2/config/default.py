@@ -84,7 +84,7 @@ def default(log, db, no_diary=False):
             #                 units=BPM, summary='[avg]',
             #                 display_cls=Integer, lo=25, hi=75)
             add_topic_field(s, diary, 'Weight', c,
-                            units='kg', summary='[avg]',
+                            units='kg', summary='[avg],[msr]',
                             display_cls=Float, lo=50, hi=100, dp=1)
             add_topic_field(s, diary, 'Sleep', c,
                             units='h', summary='[avg]',

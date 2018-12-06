@@ -72,7 +72,7 @@ def test_sources():
             weight = s.query(StatisticJournal).join(StatisticName). \
                 filter(StatisticName.owner == diary, StatisticName.name == 'Weight').one()
             assert weight.value == 64.5
-            assert len(weight.measures) == 2
+            assert len(weight.measures) == 2, weight.measures
             assert weight.measures[0].rank == 1
             assert weight.measures[0].percentile == 100, weight.measures[0].percentile
             n = s.query(count(StatisticJournalFloat.id)).scalar()
@@ -110,6 +110,7 @@ def test_sources():
                 print(source)
             for journal in s.query(StatisticJournal).all():
                 print(journal)
-            assert s.query(count(Source.id)).scalar() == 2, list(map(str, s.query(Source).all()))  # constants
-            assert s.query(count(StatisticJournalText.id)).scalar() == 0, s.query(count(StatisticJournalText.id)).scalar()
-            assert s.query(count(StatisticJournal.id)).scalar() == 0, s.query(count(StatisticJournal.id)).scalar()
+            assert s.query(count(Source.id)).scalar() == 5, list(map(str, s.query(Source).all()))  # constants
+            # 3 JSON entries for impulse
+            assert s.query(count(StatisticJournalText.id)).scalar() == 3, s.query(count(StatisticJournalText.id)).scalar()
+            assert s.query(count(StatisticJournal.id)).scalar() == 3, s.query(count(StatisticJournal.id)).scalar()

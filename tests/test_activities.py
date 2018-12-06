@@ -40,7 +40,8 @@ def test_activities():
 
         with db.session_context() as s:
             n = s.query(count(StatisticJournal.id)).scalar()
-            assert n == 10530, n
+            # assert n == 10530, n
+            assert n == 14698, n
             journal = s.query(ActivityJournal).one()
             assert journal.start != journal.finish
 
@@ -59,10 +60,10 @@ def test_activity():
         import_activity(f)
         # there's a bokeh version of this in the notebooks
         d = data(m(V), '0', mm(DEV), m(F), f.name)
-        activities = d.activities()
-        print(activities)
-        statistics = d.statistics()
-        print(statistics)
+        activity_groups = d.activity_groups()
+        print(activity_groups)
+        statistic_names = d.statistic_names()
+        print(statistic_names)
         journals = d.statistic_journals('Active %')
         print(journals)
         # run('sqlite3 %s ".dump"' % f.name, shell=True)

@@ -20,7 +20,7 @@ def test_activities():
         with db.session_context() as s:
 
             n = s.query(count(Constant.id)).scalar()
-            assert n == 2, n
+            assert n == 5, n
 
         args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
         constants(args, log, db)
@@ -28,4 +28,6 @@ def test_activities():
         with db.session_context() as s:
 
             n = s.query(count(Constant.id)).scalar()
-            assert n == 2, n
+            assert n == 5, n
+            # todo - maybe test for value?
+        

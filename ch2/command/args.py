@@ -359,7 +359,7 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
     args = [mm(DATABASE), file.name] + list(args)
     if configurator:
         log, db = config(*args)
-        configurator(db)
+        configurator(log, db)
     args += post_config if post_config else []
     args = NamespaceWithVariables(parser().parse_args(args))
     log = make_log(args)
