@@ -101,7 +101,7 @@ class Data:
             q = q.where(sn.c.owner == owner)
         if constraint:
             q = q.where(sn.c.constraint == constraint)
-        if source_ids is not None:
+        if source_ids is not None:  # avoid testing DataFrame sequences as bools
             q = q.where(sj.c.source_id.in_(source_ids))
         if schedule:
             q = q.join(inv).where(inv.c.schedule == schedule)
@@ -168,7 +168,7 @@ class Data:
             q = q.filter(StatisticName.owner == owner)
         if constraint:
             q = q.filter(StatisticName.constraint == constraint)
-        if source_ids:
+        if source_ids is not None:
             q = q.filter(StatisticJournal.source_id.in_(source_ids))
         if schedule:
             q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \
