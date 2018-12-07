@@ -146,5 +146,5 @@ class Chunks:
 
 
 def filter_none(names, waypoints):
-    # +1 because time
-    return [w for w in waypoints if len(w) == len(names) + 1 and all(v is not None for v in w.values())]
+    names = list(names)
+    return [w for w in waypoints if all(n in w and w[n] is not None for n in names)]

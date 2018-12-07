@@ -2,24 +2,36 @@
 from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
+from .source import SourceType, Source
 from ..support import Base
 from ..types import Time
+from ...lib.date import format_time
 
 
-class SegmentJournal(Base):
+class SegmentJournal(Source):
 
     __tablename__ = 'segment_journal'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     segment_id = Column(Integer, ForeignKey('segment.id', ondelete='cascade'),
                         nullable=False, index=True)
     segment = relationship('Segment')
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
                                  nullable=False, index=True)
-    activity_journal = relationship('ActivityJournal')
-    start_time = Column(Time, nullable=False)
-    finish_time = Column(Time, nullable=False)
-    UniqueConstraint(segment_id, activity_journal_id, start_time, finish_time)
+    activity_journal = relationship('ActivityJournal', foreign_keys=[activity_journal_id])
+    start = Column(Time, nullable=False)
+    finish = Column(Time, nullable=False)
+    UniqueConstraint(segment_id, activity_journal_id, start, finish)
+
+    __mapper_args__ = {
+        'polymorphic_identity': SourceType.SEGMENT
+    }
+
+    def __str__(self):
+        return 'Segment Journal %s to %s' % (format_time(self.start), format_time(self.finish))
+
+    def time_range(self, s):
+        return self.start, self.finish
 
 
 class Segment(Base):

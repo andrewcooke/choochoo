@@ -28,7 +28,7 @@ class SegmentImporter(ActivityImporter):
 
     def _import(self, s, path):
         ajournal, loader = super()._import(s, path)
-        self._find_segments(s, ajournal, filter_none(NAMES, loader.as_waypoints(NAMES)))
+        self._find_segments(s, ajournal, filter_none(NAMES.values(), loader.as_waypoints(NAMES)))
 
     def _find_segments(self, s, ajournal, waypoints):
         matches = self._initial_matches(s, waypoints)
@@ -55,7 +55,7 @@ class SegmentImporter(ActivityImporter):
             start_time = self._end_point(start, waypoints, segment.start, inner, outer, -delta)
             finish_time = self._end_point(finish, waypoints, segment.finish, inner, outer, delta)
             add(s, SegmentJournal(segment_id=segment.id, activity_journal=ajournal,
-                                  start_time=start_time, finish_time=finish_time))
+                                  start=start_time, finish=finish_time))
             self._log.info('Added %s for %s - %s' %
                            (segment.name, format_time(start_time), format_time(finish_time)))
             return True
@@ -95,15 +95,18 @@ class SegmentImporter(ActivityImporter):
                 return i
 
     def _next_local_minimum(self, metric, p, waypoints, i, furthest, delta):
-        prev = None
+        prev, decreased = None, False
         while sign(i - furthest) != sign(delta):
             i += delta
             d = self._dfrac(metric, p, waypoints, i, delta)
-            if prev and prev[1] < d:
-                return prev
-            else:
-                prev = i, d
-
+            if prev:
+                # to have a miniumum we must be facing an uphill and have previously had a downhill
+                if prev[1] < d:
+                    if decreased:
+                        return prev
+                else:
+                    decreased = True
+            prev = i, d
         raise CalcFailed('No minimum found')
 
     def _dfrac(self, metric, p, waypoints, i, delta):
@@ -189,4 +192,6 @@ class SegmentImporter(ActivityImporter):
         for segment in s.query(Segment).all():
             segments[[segment.start]] = (True, segment.id)
             segments[[segment.finish]] = (False, segment.id)
+        if not segments:
+            self._log.warn('No segments defined in database')
         return segments

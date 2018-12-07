@@ -6,7 +6,7 @@ from ..squeal.types import short_cls
 from ..stoats.calculate.heart_rate import HeartRateStatistics, HRImpulse
 from ..stoats.calculate.impulse import Response, ImpulseStatistics
 from ..stoats.names import HR_IMPULSE, FITNESS, FATIGUE
-
+from ..stoats.read.segment import SegmentImporter
 
 FITNESS_CNAME = 'Fitness'
 FATIGUE_CNAME = 'Fatigue'
@@ -47,7 +47,7 @@ def add_impulse(s, c, activity_group):
     set_constant(s, fatigue, dumps({'src_name': HR_IMPULSE, 'src_owner': short_cls(HeartRateStatistics),
                                     'dest_name': FATIGUE, 'tau_days': 7, 'scale': 5, 'start': 0}))
 
-    add_statistics(s, HeartRateStatistics, c, impulse=hr_impulse_name)
+    add_statistics(s, HeartRateStatistics, c, owner=short_cls(SegmentImporter), impulse=hr_impulse_name)
     add_statistics(s, ImpulseStatistics, c, responses=(fitness_name, fatigue_name), impulse=hr_impulse_name)
 
 

@@ -123,3 +123,6 @@ class GlobalLongitude:
 
     def __delitem__(self, points):
         self.delete(points)
+
+    def __bool__(self):
+        return any(bool(t) for t in self.__trees)

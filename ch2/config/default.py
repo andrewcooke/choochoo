@@ -1,10 +1,11 @@
-from ch2.squeal.types import short_cls
+
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
+from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.segment import SegmentStatistics

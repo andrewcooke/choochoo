@@ -6,7 +6,6 @@ from .summary import SummaryStatistics
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ..read.monitor import MonitorImporter
 from ...lib.date import local_date_to_time
-from ...lib.schedule import Schedule
 from ...squeal.database import add
 from ...squeal.tables.source import Interval, NoStatistics
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
@@ -18,10 +17,14 @@ from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
 
 class MonitorStatistics(IntervalCalculator):
 
+    def _on_init(self, *args, **kargs):
+        kargs['schedule'] = 'd'
+        super()._on_init(*args, **kargs)
+
     def _run_calculations(self, schedule):
         with self._db.session_context() as s:
             try:
-                for start, finish in Interval.missing_dates(self._log, s, Schedule('d'), self, MonitorImporter):
+                for start, finish in Interval.missing_dates(self._log, s, schedule, self, MonitorImporter):
                     self._log.info('Processing monitor data from %s to %s' % (start, finish))
                     self._add_stats(s, start, finish)
                     # stealth load so clean out summary manually

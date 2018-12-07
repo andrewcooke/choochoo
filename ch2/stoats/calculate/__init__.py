@@ -95,10 +95,11 @@ class ActivityCalculator(DbPipeline):
                    StatisticName.constraint == activity_group)
         q1 = self._filter_statistic_journals(q1)
         statistics = q1.cte()
-        q2 = s.query(ActivityJournal).outerjoin(statistics). \
+        q2 = s.query(ActivityJournal)
+        q2 = self._filter_activity_journals(q2)
+        q2 = q2.outerjoin(statistics). \
             filter(ActivityJournal.activity_group == activity_group,
                    statistics.c.source_id == None)
-        q2 = self._filter_activity_journals(q2)
         for ajournal in q2.order_by(ActivityJournal.start).all():
             self._log.info('Running %s for %s' % (short_cls(self), ajournal))
             self._add_stats(s, ajournal)

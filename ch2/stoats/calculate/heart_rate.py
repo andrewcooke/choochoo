@@ -11,7 +11,6 @@ from ..read.activity import ActivityImporter
 from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
-from ...squeal.types import short_cls
 
 # constraint comes from constant
 HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, max_secs')
@@ -35,13 +34,13 @@ def hr_zones(fthr):
 
 class HeartRateStatistics(ActivityCalculator):
 
-    def __init__(self, log, db):
+    def __init__(self, log, db, *args, **kargs):
         self.__fthr_cache = None
         # must create the statistic(s) before finding out if it is missing...
         with db.session_context() as s:
             for agroup in s.query(ActivityGroup).all():
                 StatisticName.add_if_missing(log, s, HR_ZONE, None, None, self, agroup)
-        super().__init__(log, db)
+        super().__init__(log, db, *args, **kargs)
 
     def _filter_statistic_journals(self, q):
         return q.filter(StatisticName.name == HR_ZONE)
@@ -61,7 +60,7 @@ class HeartRateStatistics(ActivityCalculator):
         stmt = select([sj.c.time, sji.c.value]). \
             select_from(sj.join(sn).join(sji)). \
             where(and_(sj.c.source_id == ajournal.id,
-                       sn.c.owner == ActivityImporter,
+                       sn.c.owner == self._assert_karg('owner'),
                        sn.c.constraint == ajournal.activity_group,
                        sn.c.name == HEART_RATE)). \
             order_by(sj.c.time)
@@ -80,8 +79,8 @@ class HeartRateStatistics(ActivityCalculator):
                 duration = (time - prev_time).total_seconds()
                 if duration <= hr_impulse.max_secs:
                     heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, duration, hr_impulse)
-                    loader.add(hr_impulse.dest_name, None, None, ajournal.activity_group, ajournal, heart_rate_impulse,
-                               time, StatisticJournalFloat)
+                    loader.add(hr_impulse.dest_name, None, None, ajournal.activity_group, ajournal,
+                               heart_rate_impulse, time, StatisticJournalFloat)
                     loader.add('%s (duration)' % hr_impulse.dest_name, S, None, ajournal.activity_group, ajournal,
                                duration, time, StatisticJournalFloat)
             prev_time, prev_heart_rate_zone = time, heart_rate_zone

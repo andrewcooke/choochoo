@@ -19,6 +19,7 @@ class SourceType(IntEnum):
     TOPIC = 3
     CONSTANT = 4
     MONITOR = 5
+    SEGMENT = 6
 
 
 class Source(Base):

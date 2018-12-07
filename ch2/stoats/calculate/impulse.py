@@ -18,16 +18,18 @@ from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat
 from ...squeal.types import short_cls
 
-SCHEDULE = Schedule('m')
-
 # constraint comes from constant
 Response = namedtuple('Response', 'src_name, src_owner, dest_name, tau_days, scale, start')
 
 
 class ImpulseStatistics(IntervalCalculator):
 
-    def _filter_intervals(self, q, responses=None, impulse=None):
-        return q.filter(Interval.schedule == SCHEDULE,
+    def _on_init(self, *args, **kargs):
+        kargs['schedule'] = 'm'
+        super()._on_init(*args, **kargs)
+
+    def _filter_intervals(self, q):
+        return q.filter(Interval.schedule == self._kargs.schedule,
                         Interval.owner == self)
 
     def _previous(self, s, dest, start):
@@ -91,22 +93,23 @@ class ImpulseStatistics(IntervalCalculator):
 
         impulse = self._assert_karg('impulse')
         responses = self._assert_karg('responses')
+        schedule = Schedule(self._kargs.schedule)
 
         with self._db.session_context() as s:
 
             constants = [Constant.get(s, response) for response in responses]
             responses = [Response(**loads(constant.at(s).value)) for constant in constants]
             impulse = HRImpulse(**loads(Constant.get(s, impulse).at(s).value))
-            start, finish = Interval.first_missing_date(self._log, s, SCHEDULE, self)
+            start, finish = Interval.first_missing_date(self._log, s, schedule, self)
 
             if start:
                 loader = StatisticJournalLoader(self._log, s, self)
-                start = SCHEDULE.start_of_frame(start)
+                start = schedule.start_of_frame(start)
                 # delete forwards
                 Interval.clean_dates(s, start, finish, owner=self)
                 while start <= finish:
-                    interval = add(s, Interval(start=start, finish=SCHEDULE.next_frame(start),
-                                               schedule=SCHEDULE, owner=self))
+                    interval = add(s, Interval(start=start, finish=schedule.next_frame(start),
+                                               schedule=schedule, owner=self))
                     self._log.info('Running %s for %s' % (short_cls(self), interval))
                     for response, constant in zip(responses, constants):
                         activity_group = constant.statistic_name.constraint
@@ -116,5 +119,7 @@ class ImpulseStatistics(IntervalCalculator):
                                    StatisticName.constraint == activity_group).one_or_none()
                         if source:  # None if no data loaded
                             self._add_response(loader, s, response, interval, source)
-                    start = SCHEDULE.next_frame(start)
+                        else:
+                            self._log.warn('No values for %s' % impulse.dest_name)
+                    start = schedule.next_frame(start)
                 loader.load()
