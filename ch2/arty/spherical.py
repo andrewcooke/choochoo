@@ -18,8 +18,10 @@ class LocalTangent:
     Assume a spherical earth and local linear approximations to convert from (lon, lat) to (x, y) in m.
     '''
 
-    def __init__(self):
+    def __init__(self, point=None):
         self.__zero = None
+        if point is not None:
+            self.normalize(point)
 
     def normalize(self, point):
         if self.__zero is None:

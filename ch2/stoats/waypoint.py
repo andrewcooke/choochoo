@@ -144,3 +144,7 @@ class Chunks:
         while chunks and not chunks[0]:
             chunks.popleft()
 
+
+def filter_none(names, waypoints):
+    # +1 because time
+    return [w for w in waypoints if len(w) == len(names) + 1 and all(v is not None for v in w.values())]
