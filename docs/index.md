@@ -49,8 +49,8 @@ support for power meters.
   * [Configuration](configuration)
   * [FIT Files](fit-files)
   * [Training Plans](training-plans)
-* Development
   * [Scaled Heart Rate Impulse - SHRIMP](impulse)
-  * [Spatial Search](rtree)
   * [Segments](segments)
+* Development
+  * [Spatial Search](rtree)
   
