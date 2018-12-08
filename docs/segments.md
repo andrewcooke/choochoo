@@ -15,6 +15,9 @@ ride and generate the required statistic(s).
    * [Data Model](#data-model)
    * [Detection](#detection)
    * [Processing Order](#processing-order)
+* [Testing](#testing)
+   * [Varying `_bound` Parameters](#varying-_bound-parameters)
+   * [Varying `delta`](#varying-delta)
 * [Use](#use)
    * [Definition](#definition)
    * [Statistics](#statistics)
@@ -91,8 +94,8 @@ Segment detection is implemented as follows:
   * For each segment:
 
       * Possible pairs of start and finish candidates are considered:
-	start candidates are considered in reverse order for the
-	activity; finish candidates in normal order (this favours
+        start candidates are considered in reverse order for the
+        activity; finish candidates in normal order (this favours
         shorter times for a single segment).
 
       * Finish candidates earlier than start candidates are discarded.
@@ -157,18 +160,31 @@ in-order).
     2017-02-09; 2017-05-05; 2017-07-12; 2017-07-14; 2017-08-08;
     2017-08-10; 2017-08-12; 2017-10-04
 
-### varying `delta`
+### Varying `delta`
 
   * Has little effect on running time.
 
   * Looking at Segment Time, results for `delta` of 0.001 and 0.01 are
     comparable, while 0.1 is sometimes a few seconds different.
 
+There is no real need for `delta`.  The calculation could be exact.
+
 ## Use
 
 ### Definition
 
-Picture of Jupyter here.
+It is possible to define a new segment using [this
+notebook](https://github.com/andrewcooke/choochoo/tree/master/notebooks/plot-segment.ipynb).
+Once the initial commands are altered to load for from your own
+database use the sliders to isolate the segment.
+
+![](segment-defn.png)
+
+The latitude, longitude and distance for the selected points are
+displayed above the plot and can be copied into the codew below to
+create an entry in the Segment table.
+
+![](segment-defn-2.png)
 
 ### Statistics
 
@@ -186,5 +202,29 @@ Two statistics are current calculated by `StatisticCalculator`:
 
 ### Examples
 
+The statistics can be accessed in the usual ways:
 
+    > dev/ch2 data statistic-journals 'Segment Time' 'Segment Heart Rate'
+        INFO: Using database at /home/andrew/.ch2/database.sqlm
+     WARNING: Missing Segment Heart Rate at 2016-12-27 10:36:39.930000+00:00 (only warning for this name)
+                                      Segment Time  Segment Heart Rate
+    2016-07-27 11:52:28+00:00              1280.14          146.734558
+    2016-08-25 16:12:51.450000+00:00       1080.55          135.119048
+    2016-09-07 10:32:20.800000+00:00       1566.20          132.219614
+    2016-09-09 10:42:04.600000+00:00       1137.40          154.327160
+    2016-12-27 10:36:39.930000+00:00       1147.50                 NaN
+    2017-01-18 10:54:52.040000+00:00       1057.60          143.578846     
+    2017-02-09 10:55:21.420000+00:00        971.88          151.478844
+    2017-05-05 10:19:38.460000+00:00       1068.39          154.182160
+    2017-07-12 11:52:21.520000+00:00       1042.16          145.000000
+    2017-07-14 14:10:32.840000+00:00       1011.98          148.304563
+    2017-08-08 12:26:04.250000+00:00        978.25          149.809939
+    2017-08-10 13:59:56.190000+00:00        944.13                 NaN
+    2017-08-12 11:48:34.250000+00:00       1000.70          148.204225
+    2017-10-04 11:24:15.940000+00:00        917.01          150.808534
+    2018-01-12 10:26:23.760000+00:00        933.77          152.388829
+    2018-01-26 10:47:52.470000+00:00        925.68          153.887866
 
+![](fitness-performance-2.png)
+
+The image shows 'Segment Time' overplotted on FF-Model Fitness.
