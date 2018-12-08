@@ -43,8 +43,11 @@ class SegmentStatistics(WaypointCalculator):
             # weight by time gap so we don't bias towards more sampled times
             gaps = [(w1.time - w0.time, 0.5 * (w0.hr + w1.hr))
                     for w0, w1 in zip(waypoints, waypoints[1:])]
-            weighted = sum(dt.total_seconds() * hr for dt, hr in gaps)
-            average = weighted / sum(dt.total_seconds() for dt, _ in gaps)
-            StatisticJournal.add(self._log, s, SEGMENT_HEART_RATE, BPM, summaries(MAX, CNT, MSR), self,
-                                 ajournal.activity_group, sjournal, average,
-                                 sjournal.start, StatisticJournalType.FLOAT)
+            if gaps:
+                weighted = sum(dt.total_seconds() * hr for dt, hr in gaps)
+                average = weighted / sum(dt.total_seconds() for dt, _ in gaps)
+                StatisticJournal.add(self._log, s, SEGMENT_HEART_RATE, BPM, summaries(MAX, CNT, MSR), self,
+                                     ajournal.activity_group, sjournal, average,
+                                     sjournal.start, StatisticJournalType.FLOAT)
+            else:
+                self._log.warn('No Heart Rate data')

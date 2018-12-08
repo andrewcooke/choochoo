@@ -47,8 +47,8 @@ class SegmentImporter(ActivityImporter):
     def _try_segment(self, s, start, finish, waypoints, segment, ajournal):
         try:
             inner = self._assert_karg('inner_bound', 5)
-            outer = self._assert_karg('outer_bound', 15)
-            delta = self._assert_karg('delta', 0.1)
+            outer = self._assert_karg('outer_bound', 50)
+            delta = self._assert_karg('delta', 0.01)
             d = waypoints[finish].distance - waypoints[start].distance
             if abs(d - segment.distance) / segment.distance > 0.1:
                 raise CalcFailed('Distance between start and finish doesn\'t match segment')
@@ -177,17 +177,20 @@ class SegmentImporter(ActivityImporter):
         '''
         Check each waypoint against the r-tree and return all matches.
         '''
+        found = set()
         for i, waypoint in enumerate(waypoints):
             for start, id in self.__segments[[(waypoint.lon, waypoint.lat)]]:
                 segment = s.query(Segment).filter(Segment.id == id).one()
-                self._log.debug('Candidate segment "%s"' % segment.name)
+                if segment not in found:
+                    self._log.info('Candidate segment "%s"' % segment.name)
+                    found.add(segment)
                 yield i, start, segment
 
     def _read_segments(self, s):
         '''
         Read segment endpoints into a global R-tree so we can detect when waypoints pass nearby.
         '''
-        match_bound = self._assert_karg('match_bound', 10)
+        match_bound = self._assert_karg('match_bound', 25)
         segments = GlobalLongitude(tree=lambda: SQRTree(default_border=match_bound, default_match=MatchType.INTERSECTS))
         for segment in s.query(Segment).all():
             segments[[segment.start]] = (True, segment.id)

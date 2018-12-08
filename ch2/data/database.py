@@ -5,10 +5,10 @@ from pandas import DataFrame
 from sqlalchemy import inspect, select
 from sqlalchemy.sql.functions import count, coalesce
 
-from ch2.squeal.tables.segment import Segment, SegmentJournal
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup, ActivityJournal
 from ..squeal.tables.monitor import MonitorJournal
+from ..squeal.tables.segment import Segment, SegmentJournal
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticMeasure, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText

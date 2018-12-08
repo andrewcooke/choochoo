@@ -75,10 +75,12 @@ PRINT = 'print'
 PWD = 'pwd'
 RECORDS = 'records'
 ROOT = 'root'
+SEGMENT_JOURNALS = 'segment-journals'
+SEGMENTS = 'segments'
 SERVICE = 'service'
 SET = 'set'
 SCHEDULE = 'schedule'
-SOURCE_ID = 'source-id'
+SOURCE_IDS = 'source-ids'
 START = 'start'
 STATISTIC_NAMES = 'statistic-names'
 STATISTIC_JOURNALS = 'statistic-journals'
@@ -203,6 +205,10 @@ def parser():
     data_activity_journals.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
     data_activity_journals.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
     data_activity_journals.set_defaults(sub_command=ACTIVITY_JOURNALS)
+    data_segment_journals = data_sub.add_parser(SEGMENT_JOURNALS)
+    data_segment_journals.set_defaults(sub_command=SEGMENT_JOURNALS)
+    data_segments = data_sub.add_parser(SEGMENTS)
+    data_segments.set_defaults(sub_command=SEGMENTS)
     data_statistic_names = data_sub.add_parser(STATISTIC_NAMES)
     data_statistic_names.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
     data_statistic_names.set_defaults(sub_command=STATISTIC_NAMES)
@@ -216,8 +222,8 @@ def parser():
                                          help='a value that makes the name unique (eg activity group)')
     data_statistic_journals.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
                                          help='the schedule on which some statistics are calculated')
-    data_statistic_journals.add_argument(mm(SOURCE_ID), action='store', nargs='?', metavar='ID',
-                                         help='the source ID for the statistic')
+    data_statistic_journals.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID',
+                                         help='the source IDs for the statistic')
     data_statistic_journals.set_defaults(sub_command=STATISTIC_JOURNALS)
     data_statistic_quartiles = data_sub.add_parser(STATISTIC_QUARTILES)
     data_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
@@ -229,8 +235,8 @@ def parser():
                                           help='a value that makes the name unique (eg activity group)')
     data_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
                                           help='the schedule on which some statistics are calculated')
-    data_statistic_quartiles.add_argument(mm(SOURCE_ID), action='store', nargs='?', metavar='ID',
-                                          help='the source ID for the statistic')
+    data_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID',
+                                          help='the source IDs for the statistic')
     data_statistic_quartiles.set_defaults(sub_command=STATISTIC_QUARTILES)
     data_monitor_journals = data_sub.add_parser(MONITOR_JOURNALS)
     data_monitor_journals.set_defaults(sub_command=MONITOR_JOURNALS)

@@ -7,6 +7,7 @@ class BasePipeline:
 
     def __init__(self, log, *args, **kargs):
         self._log = log
+        self.__read = set()
         self._on_init(*args, **kargs)
 
     def _on_init(self, *args, **kargs):
@@ -20,7 +21,11 @@ class BasePipeline:
             else:
                 self._log.warn('Using default for %s=%s' % (name, default))
                 self._kargs[name] = default
-        return self._kargs[name]
+        value = self._kargs[name]
+        if name not in self.__read:
+            self._log.info('%s=%s' % (name, value))
+            self.__read.add(name)
+        return value
 
 
 class DbPipeline(BasePipeline):
