@@ -59,8 +59,8 @@ supports easy upgrades while keeping the Segment definitions.
 ### Detection
 
 The uncertainty and noise in GPS measurements, the sparse and uneven
-sampling of GPS points, and the complex topologoy of possible routes
-combine to make reliable segment detetcion difficult.
+sampling of GPS points, and the complex topology of possible routes
+combine to make reliable segment detection difficult.
 
 The current algorithm has four parameters, which can be set in the
 pipeline configuration (all distances in m):
@@ -95,7 +95,7 @@ Segment detection is implemented as follows:
 
       * Possible pairs of start and finish candidates are considered:
         start candidates are considered in reverse order for the
-        activity; finish candidates in normal order (this favours
+        activity; finish candidates in normal order (this favors
         shorter times for a single segment).
 
       * Finish candidates earlier than start candidates are discarded.
@@ -111,7 +111,7 @@ Segment detection is implemented as follows:
           * Starting from the GPS point that implies the shortest
             segment, move away (ie to longer segment distances) in
             `delta` steps, interpolating linearly to subsequent GPS
-            points, until at a local miniumum in distance from the
+            points, until at a local minimum in distance from the
             endpoint (or moving outside `outer_bound`).
 
           * If this distance is within `inner_bound`, use the
@@ -181,7 +181,7 @@ database use the sliders to isolate the segment.
 ![](segment-defn.png)
 
 The latitude, longitude and distance for the selected points are
-displayed above the plot and can be copied into the codew below to
+displayed above the plot and can be copied into the code below to
 create an entry in the Segment table.
 
 ![](segment-defn-2.png)
