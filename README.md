@@ -7,27 +7,8 @@ Please see the [full
 documentation](https://andrewcooke.github.io/choochoo/).  This page
 contains only:
 
-* [Screenshots](#screenshots)
 * [Technical Overview](#technical-overview)
 * [Latest Changes](#latest-changes)
-
-## Screenshots
-
-### Diary
-
-![](docs/diary.png)
-
-![](docs/diary-year.png)
-
-### Data
-
-![](docs/jupyter.png)
-
-### Plots
-
-![](docs/steps.png)
-
-![](docs/impulse-plot.png)
 
 ## Technical Overview
 
@@ -77,6 +58,10 @@ Python's rich data science tools.  Both data and code are open and
 extensible.*
 
 ## Latest Changes
+
+### v0.7.0
+
+[Segments](https://andrewcooke.github.io/choochoo/segments).
 
 ### v0.6.0
 
