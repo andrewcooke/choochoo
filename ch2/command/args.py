@@ -166,7 +166,7 @@ def parser():
                         help='the root directory for the default configuration')
     parser.add_argument(m(V), mm(VERBOSITY), action='store', nargs=1, default=None, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
-    parser.add_argument(m(V.upper()), mm(VERSION), action='version', version='0.7.0',
+    parser.add_argument(m(V.upper()), mm(VERSION), action='version', version='0.7.1',
                         help='display version and exit')
 
     subparsers = parser.add_subparsers()
