@@ -40,16 +40,18 @@ class SegmentImporter(ActivityImporter):
                 copy = list(finishes)  # work forwards through finishes
                 while copy:
                     finish = copy.pop(0)
-                    if finish > start:
+                    if finish[0] > start[0]:
                         if self._try_segment(s, start, finish, waypoints, segment, ajournal):
                             finishes = finishes[:-len(copy)]  # drop this finish and later
 
     def _try_segment(self, s, starts, finishes, waypoints, segment, ajournal):
         try:
+            self._log.info('Trying segment %s-%s for %s' % (starts, finishes, segment.name))
             inner = self._assert_karg('inner_bound', 5)
             d = waypoints[self._mid(finishes)].distance - waypoints[self._mid(starts)].distance
-            if abs(d - segment.distance) / segment.distance > 0.1:
-                raise CalcFailed('Distance between start and finish doesn\'t match segment')
+            if abs(d - segment.distance) / segment.distance > 0.2:
+                raise CalcFailed('Distance between start and finish (%.1fkm) doesn\'t match segment (%.1fkm)' %
+                                 (d / 1000, segment.distance / 1000))
             start_time = self._end_point(starts, waypoints, segment.start, inner, True)
             finish_time = self._end_point(finishes, waypoints, segment.finish, inner, False)
             add(s, SegmentJournal(segment_id=segment.id, activity_journal=ajournal,

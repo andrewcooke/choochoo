@@ -16,8 +16,6 @@ ride and generate the required statistic(s).
    * [Detection](#detection)
    * [Processing Order](#processing-order)
 * [Testing](#testing)
-   * [Varying `_bound` Parameters](#varying-_bound-parameters)
-   * [Varying `delta`](#varying-delta)
 * [Use](#use)
    * [Definition](#definition)
    * [Statistics](#statistics)
@@ -62,22 +60,15 @@ The uncertainty and noise in GPS measurements, the sparse and uneven
 sampling of GPS points, and the complex topology of possible routes
 combine to make reliable segment detection difficult.
 
-The current algorithm has four parameters, which can be set in the
+The current algorithm has two parameters, which can be set in the
 pipeline configuration (all distances in m):
 
   * `match_bound` - the size of the region used to make an initial
     detection of activities passing near an endpoint.  Default 25m.
 
-  * `outer_bound` - the maximum distance acceptable for a "single"
-    pass near an endpoint.  Default 50m.
-
   * `inner_bound` - the threshold for the closest distance between
     route and endpoint for the pass to be considered to actually pass
     through the endpoint.  Default 5m.
-
-  * `delta` - the fractional increment when interpolating between GPS
-    positions.  Default 0.01 (so ~100 interpolations made between
-    positions).
 
 Segment detection is implemented as follows:
 
@@ -87,7 +78,8 @@ Segment detection is implemented as follows:
     segment endpoint).
 
   * Contiguous candidates for the same start or finish position are
-    combined.
+    combined into a pair of coordinates (isolated candaidates are a
+    duplicate).
 
   * Start and finish candidates are separated, and grouped by segment.
 
@@ -100,19 +92,18 @@ Segment detection is implemented as follows:
 
       * Finish candidates earlier than start candidates are discarded.
 
-      * Finish candidates not within 10% of the segment distance are
+      * Pairs of candidates not within 10% of the segment distance are
         discarded.
 
       * Start and finish positions are refined:
 
-          * GPS points within the activity to either side of the
-            candidate position are included to within `outer_bound`.
+	  * The coordinate pair is expanded so that distance from the
+	    end point increase in both directions.
 
           * Starting from the GPS point that implies the shortest
-            segment, move away (ie to longer segment distances) in
-            `delta` steps, interpolating linearly to subsequent GPS
-            points, until at a local minimum in distance from the
-            endpoint (or moving outside `outer_bound`).
+            segment, move away (ie to longer segment distances) until
+            at a local minimum in distance from the endpoint (or
+            moving outside `outer_bound`).
 
           * If this distance is within `inner_bound`, use the
             interpolated time as the refined candidate.
@@ -135,39 +126,14 @@ in-order).
 
 ## Testing
 
-### Varying `_bound` Parameters
+Testing a previous version of the algorithm (see git archives of this
+document) led to a reduction in the number of parameters.  The new,
+simplified approach reproduces the results from earlier but has little
+to tweak.
 
-  * `inner_bound` of 2 is too small, but 5 or 10 is fine.
+If `inner_bound` is decreased below 5 some routes are missed.
 
-  * A `match_bound` of 5 or 10 seems fine, except for the next point.
-
-  * A `match_bound` 10 combined with an `outer_bound` of 25 matches
-    one additional file.
-
-    The "extra" segment comes from 2017-08-10.  Seems that the larger
-    `match_bound` found a valid point that then needed a
-    correspondingly large `outer_bound` to correctly find the minimum.
-
-    In other words, `match_bound` and `outer_bound` naturally should
-    be increased together.  Maybe they can be replaced by a single
-    value?
-
-  * A large `match_bound` (going from 10 to 25) messed things up.
-    Seems that the `outer_bound` (then < 25) was then too small (see
-    above).
-
-  * See matches from a total of 9 files in 2017: 2017-01-18;
-    2017-02-09; 2017-05-05; 2017-07-12; 2017-07-14; 2017-08-08;
-    2017-08-10; 2017-08-12; 2017-10-04
-
-### Varying `delta`
-
-  * Has little effect on running time.
-
-  * Looking at Segment Time, results for `delta` of 0.001 and 0.01 are
-    comparable, while 0.1 is sometimes a few seconds different.
-
-There is no real need for `delta`.  The calculation could be exact.
+Increasing either parameter past the current values has little effect.
 
 ## Use
 
