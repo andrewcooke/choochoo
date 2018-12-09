@@ -2,6 +2,8 @@
 from itertools import groupby
 from math import sqrt, ceil
 
+from pygeotile.point import Point
+
 from .activity import ActivityImporter
 from ..waypoint import filter_none
 from ...arty import MatchType
@@ -82,33 +84,60 @@ class SegmentImporter(ActivityImporter):
         else:
             start, finish = lo, hi
         minimum = self._minimum(metric, waypoints, start, finish, p, inner)
-        return self._to_time(waypoints, minimum)
+        # interpolate to fractional index
+        i0, i1 = int(minimum), int(minimum) + 1
+        k = (minimum - i0) / (i1 - i0)
+        t0, t1 = waypoints[i0].time.timestamp(), waypoints[i1].time.timestamp()
+        return to_time(t0 * (1 - k) + t1 * k)
 
-    def _to_time(self, waypoints, i):
-        i0, i1, k = self._bounds(i)
-        return to_time(self._interpolate(waypoints[i0].time.timestamp(), waypoints[i1].time.timestamp(), k))
+    def _plot(self, p):
+        '''
+        Plot points for debugging
+        '''
+        lon, lat = p
+        print('PLOT: %s' % (Point.from_latitude_longitude(lat, lon).meters, ))
+
+    def _plotw(self, metric, waypoints, i, d):
+        '''
+        Plot points for debugging
+        '''
+        i1, i2 = int(i), int(i) + 1
+        x1, y1 = metric.normalize((waypoints[i1].lon, waypoints[i1].lat))
+        x2, y2 = metric.normalize((waypoints[i2].lon, waypoints[i2].lat))
+        k = i - i1
+        xk = x1 * (1 - k) + x2 * k
+        yk = y1 * (1 - k) + y2 * k
+        lon, lat = metric.denormalize((xk, yk))
+        print('PLOT: %s %.1f' % (Point.from_latitude_longitude(lat, lon).meters, d))
 
     def _minimum(self, metric, waypoints, start, finish, p, inner):
         '''
-        Find the minimum within the two limits.
+        Find the (fractional) index of the point with minimum distance to the endpoint within the two limits.
         '''
+        # self._plot(p)
         i = start
         while True:
             i, min_d = self._next_local_minimum(metric, p, waypoints, i, start, finish)
             self._log.info('Local minimum %.1f: %f (< %.1f?)' % (i, min_d, inner))
+            # self._plotw(metric, waypoints, i, min_d)
             if min_d < inner:
                 return i
+            # move to next segment
             if start < finish:
                 i = int(i + 1)
             else:
                 i = ceil(i - 1)
 
     def _next_local_minimum(self, metric, p, waypoints, i, start, finish):
-        # import pdb; pdb.set_trace()
-        # this from basic algebra (too long for a comment)
+        '''
+        Find the next point with a minimum distance to p, along the waypoints (interpolated),
+        starting from i and between start and finish (moving towards finish).
+        '''
+        # this from basic algebra (derivation too long for a comment but pretty simple)
         # p0 is the point we want to minimize distance to
         # pi and pj are the end points of a nearby line segment
         # k is the fractional distance between pi and pj for the point nearest to p0
+        # p1 is the point at k if it is between pi and pj
         # things are complicated by the need to return pj if it's the nearest point (discontinuity)
         p0 = metric.normalize(p)
         pi = metric.normalize((waypoints[i].lon, waypoints[i].lat))
@@ -133,23 +162,11 @@ class SegmentImporter(ActivityImporter):
             i, pi = j, pj
         raise CalcFailed('No minimum found')
 
-    def _dfrac(self, metric, p, waypoints, i, delta):
-        i0, i1, k = self._bounds(i, delta)
-        x0, y0 = metric.normalize((waypoints[i0].lon, waypoints[i0].lat))
-        x1, y1 = metric.normalize((waypoints[i1].lon, waypoints[i1].lat))
-        xk, yk = self._interpolate(x0, x1, k), self._interpolate(y0, y1, k)
-        xp, yp = metric.normalize(p)
-        return sqrt((xk - xp)**2 + (yk - yp)**2)
-
-    def _bounds(self, i):
-        i0, i1 = int(i), int(i) + 1
-        k = (i - i0) / (i1 - i0)
-        return i0, i1, k
-
-    def _interpolate(self, a0, a1, k):
-        return a0 * (1 - k) + a1 * k
-
     def _limits(self, metric, waypoints, indices, p):
+        '''
+        Given a pair of indices, move them apart so that the distance from the endpoint has increased
+        in both directions (ie they bracket the endpoint in some sense).
+        '''
         lo, hi = indices
         if lo == hi:
             lo, hi = lo-1, hi+1
@@ -164,12 +181,18 @@ class SegmentImporter(ActivityImporter):
         return lo, hi
 
     def _inc_limit(self, metric, waypoints, p, da, db, a, inc):
+        '''
+        Move one index.
+        '''
         while da < db and ((inc > 0 and a < len(waypoints) - 1) or (inc < 0 and a > 0)):
             a += inc
             da = self._dw(metric, p, waypoints, a)
         return a, da
 
     def _dw(self, metric, p, waypoints, i):
+        '''
+        Distance between an waypoint and the endpoint.
+        '''
         return self._d(metric, p, (waypoints[i].lon, waypoints[i].lat))
 
     def _d(self, metric, p1, p2):
