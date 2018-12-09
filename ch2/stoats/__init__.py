@@ -21,6 +21,7 @@ class BasePipeline:
             else:
                 self._log.warn('Using default for %s=%s' % (name, default))
                 self._kargs[name] = default
+                self.__read.add(name)  # avoid double logging
         value = self._kargs[name]
         if name not in self.__read:
             self._log.info('%s=%s' % (name, value))

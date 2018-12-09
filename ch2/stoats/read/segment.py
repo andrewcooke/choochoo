@@ -44,16 +44,14 @@ class SegmentImporter(ActivityImporter):
                         if self._try_segment(s, start, finish, waypoints, segment, ajournal):
                             finishes = finishes[:-len(copy)]  # drop this finish and later
 
-    def _try_segment(self, s, start, finish, waypoints, segment, ajournal):
+    def _try_segment(self, s, starts, finishes, waypoints, segment, ajournal):
         try:
             inner = self._assert_karg('inner_bound', 5)
-            outer = self._assert_karg('outer_bound', 50)
-            delta = self._assert_karg('delta', 0.01)
-            d = waypoints[finish].distance - waypoints[start].distance
+            d = waypoints[self._mid(finishes)].distance - waypoints[self._mid(starts)].distance
             if abs(d - segment.distance) / segment.distance > 0.1:
                 raise CalcFailed('Distance between start and finish doesn\'t match segment')
-            start_time = self._end_point(start, waypoints, segment.start, inner, outer, -delta)
-            finish_time = self._end_point(finish, waypoints, segment.finish, inner, outer, delta)
+            start_time = self._end_point(starts, waypoints, segment.start, inner, True)
+            finish_time = self._end_point(finishes, waypoints, segment.finish, inner, False)
             add(s, SegmentJournal(segment_id=segment.id, activity_journal=ajournal,
                                   start=start_time, finish=finish_time))
             self._log.info('Added %s for %s - %s' %
@@ -63,50 +61,74 @@ class SegmentImporter(ActivityImporter):
             self._log.warn(str(e))
             return False
 
-    def _end_point(self, i, waypoints, p, inner, outer, delta):
+    def _mid(self, indices):
+        n = len(indices)
+        return indices[n // 2]
+
+    def _end_point(self, indices, waypoints, p, inner, hi_to_lo):
         '''
         Find the time of the point that makes the segment shortest while also being at a local
         minimum in distance from the start/finish point that is within inner m.
         '''
         metric = LocalTangent(p)
-        nearest = self._limit(metric, waypoints, i, p, outer, -sign(delta))
-        furthest = self._limit(metric, waypoints, i, p, outer, sign(delta))
-        self._log.info('Finding closest point to %s' % (p,))
-        self._log.info('Rough approx - %d: %f, %d: %f, %d: %f' %
-                       (nearest, self._dw(metric, p, waypoints, nearest),
-                        i, self._dw(metric, p, waypoints, i),
-                        furthest, self._dw(metric, p, waypoints, furthest)))
-        minimum = self._minimum(metric, waypoints, nearest, furthest, delta, p, inner)
-        return self._to_time(waypoints, minimum, delta)
+        lo, hi = self._limits(metric, waypoints, indices, p)
+        self._log.info('Finding closest point to %s within %d: %f, %d: %f' %
+                       (p, lo, self._dw(metric, p, waypoints, lo),
+                        hi, self._dw(metric, p, waypoints, hi)))
+        if hi_to_lo:
+            start, finish = hi, lo
+        else:
+            start, finish = lo, hi
+        minimum = self._minimum(metric, waypoints, start, finish, p, inner)
+        return self._to_time(waypoints, minimum)
 
-    def _to_time(self, waypoints, i, delta):
-        i0, i1, k = self._bounds(i, delta)
+    def _to_time(self, waypoints, i):
+        i0, i1, k = self._bounds(i)
         return to_time(self._interpolate(waypoints[i0].time.timestamp(), waypoints[i1].time.timestamp(), k))
 
-    def _minimum(self, metric, waypoints, nearest, furthest, delta, p, inner):
+    def _minimum(self, metric, waypoints, start, finish, p, inner):
         '''
         Find the minimum within the two limits.
         '''
-        i = nearest
+        i = start
         while True:
-            i, min_d = self._next_local_minimum(metric, p, waypoints, i + delta, furthest, delta)
+            i, min_d = self._next_local_minimum(metric, p, waypoints, i, start, finish)
             self._log.info('Local minimum %.1f: %f (< %.1f?)' % (i, min_d, inner))
             if min_d < inner:
                 return i
+            if start < finish:
+                i = int(i + 1)
+            else:
+                i = ceil(i - 1)
 
-    def _next_local_minimum(self, metric, p, waypoints, i, furthest, delta):
-        prev, decreased = None, False
-        while sign(i - furthest) != sign(delta):
-            i += delta
-            d = self._dfrac(metric, p, waypoints, i, delta)
-            if prev:
-                # to have a miniumum we must be facing an uphill and have previously had a downhill
-                if prev[1] < d:
-                    if decreased:
-                        return prev
-                else:
-                    decreased = True
-            prev = i, d
+    def _next_local_minimum(self, metric, p, waypoints, i, start, finish):
+        # import pdb; pdb.set_trace()
+        # this from basic algebra (too long for a comment)
+        # p0 is the point we want to minimize distance to
+        # pi and pj are the end points of a nearby line segment
+        # k is the fractional distance between pi and pj for the point nearest to p0
+        # things are complicated by the need to return pj if it's the nearest point (discontinuity)
+        p0 = metric.normalize(p)
+        pi = metric.normalize((waypoints[i].lon, waypoints[i].lat))
+        prev_discontinuity = None
+        while start <= i < finish or start >= i > finish:
+            j = i + sign(finish - start)
+            pj = metric.normalize((waypoints[j].lon, waypoints[j].lat))
+            dxji, dyji = pj[0] - pi[0], pj[1] - pi[1]
+            dx0i, dy0i = p0[0] - pi[0], p0[1] - pi[1]
+            k = (dxji * dx0i + dyji * dy0i) / (dxji**2 + dyji**2)
+            if 0 < k < 1:  # we have a solution within the segment
+                p1 = (pi[0] + k * (pj[0] - pi[0]), pi[1] + k * (pj[1] - pi[1]))
+                return i + k * sign(finish - start), sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
+            # are we moving towards the target?
+            if k > 1:
+                # if so, save this endpoint as a possible minimum
+                prev_discontinuity = (j, self._dw(metric, p, waypoints, j))
+            else:
+                # if not, then if we were before it was a minimum
+                if prev_discontinuity:
+                    return prev_discontinuity
+            i, pi = j, pj
         raise CalcFailed('No minimum found')
 
     def _dfrac(self, metric, p, waypoints, i, delta):
@@ -117,24 +139,33 @@ class SegmentImporter(ActivityImporter):
         xp, yp = metric.normalize(p)
         return sqrt((xk - xp)**2 + (yk - yp)**2)
 
-    def _bounds(self, i, delta):
-        if delta > 0:
-            i0, i1 = int(i), int(i) + 1
-        else:
-            i0, i1 = ceil(i), ceil(i) - 1
+    def _bounds(self, i):
+        i0, i1 = int(i), int(i) + 1
         k = (i - i0) / (i1 - i0)
         return i0, i1, k
 
-    def _interpolate(self, a, b, k):
-        return a * (1-k) + b * k
+    def _interpolate(self, a0, a1, k):
+        return a0 * (1 - k) + a1 * k
 
-    def _limit(self, metric, waypoints, i, p, outer, delta):
-        '''
-        Extend i until it is more than outer away from the point.
-        '''
-        while self._dw(metric, p, waypoints, i) < outer:
-            i += delta
-        return i
+    def _limits(self, metric, waypoints, indices, p):
+        lo, hi = indices
+        if lo == hi:
+            lo, hi = lo-1, hi+1
+        dl, dh = self._dw(metric, p, waypoints, lo), self._dw(metric, p, waypoints, hi)
+        if dl < dh:
+            lo, dl = self._inc_limit(metric, waypoints, p, dl, dh, lo, -1)
+            hi, dh = self._inc_limit(metric, waypoints, p, dh, dl, hi, 1)
+        else:
+            hi, dh = self._inc_limit(metric, waypoints, p, dh, dl, hi, 1)
+            lo, dl = self._inc_limit(metric, waypoints, p, dl, dh, lo, -1)
+        self._log.info('Expanded %s to %s' % (indices, (lo, hi)))
+        return lo, hi
+
+    def _inc_limit(self, metric, waypoints, p, da, db, a, inc):
+        while da < db and ((inc > 0 and a < len(waypoints) - 1) or (inc < 0 and a > 0)):
+            a += inc
+            da = self._dw(metric, p, waypoints, a)
+        return a, da
 
     def _dw(self, metric, p, waypoints, i):
         return self._d(metric, p, (waypoints[i].lon, waypoints[i].lat))
@@ -161,17 +192,17 @@ class SegmentImporter(ActivityImporter):
 
     def _coallesce(self, ordered_sm):
         '''
-        Combine neighbouring waypoints into a single waypoint in the middle of the black found.
+        Replace contiguous ranges of waypoints with a pair (min, max)
         '''
         prev, first = None, None
         for match in ordered_sm:
             if prev and (prev[1:2] != match[1:2] or prev[0]+1 != match[0]):
-                yield (first + prev[0]) // 2, prev[1], prev[2]
+                yield (first, prev[0]), prev[1], prev[2]
                 prev, first = None, None
             if first is None:
                 first = match[0]
             prev = match
-        yield (first + prev[0]) // 2, prev[1], prev[2]
+        yield (first, prev[0]) , prev[1], prev[2]
 
     def _initial_matches(self, s, waypoints):
         '''
