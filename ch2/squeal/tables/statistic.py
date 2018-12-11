@@ -143,15 +143,18 @@ class StatisticJournal(Base):
         return words
 
     @classmethod
-    def at_date(cls, s, date, name, owner, constraint):
+    def at_date(cls, s, date, name, owner, constraint, source_id=None):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
-        return s.query(StatisticJournal).join(StatisticName). \
+        q = s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= start,
                    StatisticJournal.time < finish,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint).one_or_none()
+                   StatisticName.constraint == constraint)
+        if source_id is not None:
+            q = q.filter(StatisticJournal.source_id == source_id)
+        return q.one_or_none()
 
     @classmethod
     def at(cls, s, time, name, owner, constraint):

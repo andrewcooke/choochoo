@@ -120,9 +120,13 @@ give reliable results.
 Segments are detected on import in `SegmentImporter` which sub-classes
 `ActivityImporter`.  The in-memory waypoints created when the activity
 is imported are used for segment detection.  This gives faster
-importer and removes complications about dependencies between
+processing and removes complications about dependencies between
 activities and segments (separate importers would need to be run
 in-order).
+
+Once consequence of this is that `ActivityImporter` as an "owner" of
+statistics in the database may change to `SegmentImporter`.  Various
+classes now take this name as a configuration parameter.
 
 ## Testing
 

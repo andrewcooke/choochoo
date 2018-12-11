@@ -13,6 +13,7 @@ from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
 from ..stoats.display.impulse import ImpulseDiary
 from ..stoats.display.monitor import MonitorDiary
+from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR
 from ..stoats.read.monitor import MonitorImporter
 from ..stoats.read.segment import SegmentImporter
@@ -58,6 +59,7 @@ def default(log, db, no_diary=False):
                   fitness=name_constant(FITNESS_CNAME, bike),
                   fatigue=name_constant(FATIGUE_CNAME, bike))
         add_diary(s, ActivityDiary, c)
+        add_diary(s, SegmentDiary, c)
 
         # monitor pipeline
 
