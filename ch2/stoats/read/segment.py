@@ -11,6 +11,7 @@ from ...arty.spherical import LocalTangent, SQRTree, GlobalLongitude
 from ...lib.date import to_time, format_time
 from ...lib.utils import sign
 from ...squeal.database import add
+from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.segment import Segment, SegmentJournal
 
 NAMES = {'Latitude': 'lat',
@@ -25,15 +26,17 @@ class SegmentImporter(ActivityImporter):
 
     def _on_init(self, *args, **kargs):
         super()._on_init(*args, **kargs)
+        self.__segments = {}
         with self._db.session_context() as s:
-            self.__segments = self._read_segments(s)
+            for agroup in s.query(ActivityGroup).all():
+                self.__segments[agroup.id] = self._read_segments(s, agroup)
 
     def _import(self, s, path):
         ajournal, loader = super()._import(s, path)
         self._find_segments(s, ajournal, filter_none(NAMES.values(), loader.as_waypoints(NAMES)))
 
     def _find_segments(self, s, ajournal, waypoints):
-        matches = self._initial_matches(s, waypoints)
+        matches = self._initial_matches(s, ajournal.activity_group_id, waypoints)
         for _, segment_matches in groupby(matches, key=lambda m: m[2]):
             ordered = sorted(segment_matches, key=lambda m: m[0])
             coallesced = list(self._coallesce(ordered))
@@ -229,28 +232,28 @@ class SegmentImporter(ActivityImporter):
             prev = match
         yield (first, prev[0]) , prev[1], prev[2]
 
-    def _initial_matches(self, s, waypoints):
+    def _initial_matches(self, s, agroup_id, waypoints):
         '''
         Check each waypoint against the r-tree and return all matches.
         '''
         found = set()
         for i, waypoint in enumerate(waypoints):
-            for start, id in self.__segments[[(waypoint.lon, waypoint.lat)]]:
+            for start, id in self.__segments[agroup_id][[(waypoint.lon, waypoint.lat)]]:
                 segment = s.query(Segment).filter(Segment.id == id).one()
                 if segment not in found:
                     self._log.info('Candidate segment "%s"' % segment.name)
                     found.add(segment)
                 yield i, start, segment
 
-    def _read_segments(self, s):
+    def _read_segments(self, s, agroup):
         '''
         Read segment endpoints into a global R-tree so we can detect when waypoints pass nearby.
         '''
         match_bound = self._assert_karg('match_bound', 25)
         segments = GlobalLongitude(tree=lambda: SQRTree(default_border=match_bound, default_match=MatchType.INTERSECTS))
-        for segment in s.query(Segment).all():
+        for segment in s.query(Segment).filter(Segment.activity_group == agroup).all():
             segments[[segment.start]] = (True, segment.id)
             segments[[segment.finish]] = (False, segment.id)
         if not segments:
-            self._log.warn('No segments defined in database')
+            self._log.warn('No segments defined in database for %s' % agroup)
         return segments

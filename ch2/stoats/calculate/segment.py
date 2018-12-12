@@ -35,7 +35,7 @@ class SegmentStatistics(WaypointCalculator):
         for sjournal in s.query(SegmentJournal). \
                 filter(SegmentJournal.activity_journal == ajournal).all():
             StatisticJournal.add(self._log, s, SEGMENT_TIME, S, summaries(MIN, CNT, MSR), self,
-                                 ajournal.activity_group, sjournal,
+                                 sjournal.segment, sjournal,
                                  (sjournal.finish - sjournal.start).total_seconds(),
                                  sjournal.start, StatisticJournalType.FLOAT)
             waypoints = [w for w in filter_none(self._names().values(), waypoints)
@@ -47,7 +47,7 @@ class SegmentStatistics(WaypointCalculator):
                 weighted = sum(dt.total_seconds() * hr for dt, hr in gaps)
                 average = weighted / sum(dt.total_seconds() for dt, _ in gaps)
                 StatisticJournal.add(self._log, s, SEGMENT_HEART_RATE, BPM, summaries(MAX, CNT, MSR), self,
-                                     ajournal.activity_group, sjournal, average,
+                                     sjournal.segment, sjournal, average,
                                      sjournal.start, StatisticJournalType.FLOAT)
             else:
                 self._log.warn('No Heart Rate data')

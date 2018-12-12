@@ -183,7 +183,8 @@ class StatisticJournal(Base):
             order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner):
+    def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner,
+                    source_id=None):
         return s.query(StatisticJournal).join(StatisticName, Interval). \
                     filter(StatisticJournal.statistic_name_id == StatisticName.id,
                            Interval.schedule == schedule,

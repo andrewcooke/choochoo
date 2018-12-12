@@ -45,6 +45,8 @@ class MonitorDiary(Displayer):
 
     def __names(self, s, *names):
         for name in names:
-            yield s.query(StatisticName). \
+            sname = s.query(StatisticName). \
                 filter(StatisticName.name == name,
-                       StatisticName.owner == MonitorStatistics).one()
+                       StatisticName.owner == MonitorStatistics).one_or_none()
+            if sname:
+                yield sname

@@ -23,7 +23,7 @@ class SummaryField(Field):
         return Text([label('%s: ' % self._summary), em(self._journal.formatted()), ' '])
 
 
-def summary_columns(log, s, f, date, schedule, names):
+def summary_columns(log, s, f, date, schedule, names, format_name=lambda n: n):
 
     def fill(columns, width):
         while width < PAGE_WIDTH:
@@ -35,7 +35,7 @@ def summary_columns(log, s, f, date, schedule, names):
         for named, journal in enumerate(journals):
             summary, period, name = SummaryStatistics.parse_name(journal.statistic_name.name)
             if not named:
-                yield Text([name]), 1
+                yield Text([format_name(name)]), 1
             display = SummaryField(log, journal, summary=summary)
             yield (WEIGHT, display.width, f(display.widget())), display.width,
 

@@ -48,7 +48,7 @@ class ImpulseDiary(Displayer):
             yield [Text(response.dest_name),
                    Text([label('Frm: '), (style, '%d' % int(start.value))]),
                    Text([label('To:  '), (style, '%d' % int(finish.value))]),
-                   Text(em('+ve') if start.value < finish.value else error('-ve'))]
+                   Text(em('increase') if start.value < finish.value else error('decrease'))]
             if display_range:
                 yield [Text([label('Range over 90 days: %5d - %5d' % (int(lo.value), int(hi.value)))])]
 

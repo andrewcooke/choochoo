@@ -9,9 +9,10 @@ from ..calculate.segment import SegmentStatistics
 from ..names import SEGMENT_TIME, SEGMENT_HEART_RATE
 from ...lib.date import local_date_to_time
 from ...squeal.tables.activity import ActivityGroup
-from ...squeal.tables.segment import SegmentJournal
-from ...squeal.tables.statistic import StatisticJournal
+from ...squeal.tables.segment import SegmentJournal, Segment
+from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields import ReadOnlyField
+from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
 
 
@@ -53,20 +54,33 @@ class SegmentDiary(Displayer):
             return None
 
     def _build_schedule(self, s, f, date, schedule=None):
-        if False:
-            yield None
-        return
-    #     columns = list(self.__schedule_fields(s, f, date, schedule))
-    #     if columns:
-    #         yield Pile([Text('Monitor'),
-    #                     Indent(Pile(columns))])
-    #
-    # def __schedule_fields(self, s, f, date, schedule):
-    #     names = list(self.__names(s, DAILY_STEPS, REST_HR))
-    #     yield from summary_columns(self._log, s, f, date, schedule, names)
-    #
-    # def __names(self, s, *names):
-    #     for name in names:
-    #         yield s.query(StatisticName). \
-    #             filter(StatisticName.name == name,
-    #                    StatisticName.owner == MonitorStatistics).one()
+        rows = []
+        for agroup in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
+            group_rows = []
+            for segment in s.query(Segment).filter(Segment.activity_group == agroup).all():
+                segment_rows = list(self.__schedule_fields(s, f, date, segment, schedule))
+                if segment_rows:
+                    segment_rows = Pile([Text(segment.name),
+                                         Indent(Pile(segment_rows))])
+                    group_rows.append(segment_rows)
+            if group_rows:
+                group_rows = Pile([Text(agroup.name),
+                                   Indent(Pile(group_rows))])
+                rows.append(group_rows)
+        if rows:
+            yield Pile([Text('Segments'),
+                        Indent(Pile(rows))])
+
+    def __schedule_fields(self, s, f, date, segment, schedule):
+        names = list(self.__names(s, segment, SEGMENT_TIME, SEGMENT_HEART_RATE))
+        yield from summary_columns(self._log, s, f, date, schedule, names,
+                                   format_name=lambda n: sub(r'^Segment ', '', n))
+
+    def __names(self, s, segment, *names):
+        for name in names:
+            sname = s.query(StatisticName). \
+                filter(StatisticName.name == name,
+                       StatisticName.constraint == segment,
+                       StatisticName.owner == SegmentStatistics).one_or_none()
+            if sname:
+                yield sname

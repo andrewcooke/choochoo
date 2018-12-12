@@ -39,6 +39,10 @@ class Segment(Base):
     __tablename__ = 'segment'
 
     id = Column(Integer, primary_key=True)
+    # need this because (1) segments do depend on activity group and (2) we want separate stats
+    # depending on segment/group so need this as a constraint.
+    activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=False)
+    activity_group = relationship('ActivityGroup')
     start_lat = Column(Float, nullable=False)
     start_lon = Column(Float, nullable=False)
     finish_lat = Column(Float, nullable=False)
@@ -68,3 +72,6 @@ class Segment(Base):
             return self.start
         else:
             return self.finish
+
+    def __str__(self):
+        return 'Segment "%s/%s"' % (self.name, self.activity_group.name)
