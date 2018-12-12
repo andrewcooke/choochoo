@@ -52,7 +52,10 @@ class SegmentDiary(Displayer):
         else:
             return None
 
-    # def _build_schedule(self, s, f, date, schedule=None):
+    def _build_schedule(self, s, f, date, schedule=None):
+        if False:
+            yield None
+        return
     #     columns = list(self.__schedule_fields(s, f, date, schedule))
     #     if columns:
     #         yield Pile([Text('Monitor'),

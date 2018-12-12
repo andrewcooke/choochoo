@@ -105,10 +105,13 @@ class Diary(DateSwitcher):
 
     def __display_children(self, s, f, topic):
         for child in topic.children:
-            if child.schedule.at_location(self._date):
+            if self._filter_child(child):
                 extra = self.__display_topic(s, f, child)
                 if extra:
                     yield extra
+
+    def _filter_child(self, child):
+        return child.schedule.at_location(self._date)
 
 
 class DailyDiary(Diary):
@@ -174,12 +177,14 @@ class ScheduleDiary(Diary):
 
     def _topics(self, s):
         finish = self._schedule.next_frame(self._date)
-        for topic in s.query(Topic).filter(Topic.parent == None,
-                                           or_(Topic.start < finish, Topic.start == None),
-                                           or_(Topic.finish >= self._date, Topic.finish == None)). \
-                order_by(Topic.sort).all():
-            if topic.schedule.in_range(self._date):
-                yield topic
+        return s.query(Topic).filter(Topic.parent == None,
+                                     or_(Topic.start < finish, Topic.start == None),
+                                     or_(Topic.finish >= self._date, Topic.finish == None)). \
+            order_by(Topic.sort).all()
+
+    def _filter_child(self, child):
+        finish = self._schedule.next_frame(self._date)
+        return (child.start is None or child.start < finish) and (child.finish is None or child.finish > self._date)
 
     def _display_fields(self, s, f, topic):
         names = [field.statistic_name for field in topic.fields]

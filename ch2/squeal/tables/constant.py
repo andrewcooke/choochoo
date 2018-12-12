@@ -5,6 +5,7 @@ from json import dumps, loads
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, Boolean, desc
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Source, SourceType
 from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
@@ -65,7 +66,10 @@ class Constant(Source):
 
     @classmethod
     def get(cls, s, name):
-        return s.query(Constant).filter(Constant.name == name).one()
+        try:
+            return s.query(Constant).filter(Constant.name == name).one()
+        except NoResultFound:
+            raise Exception('Could not find Constant for %s' % name)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.CONSTANT
