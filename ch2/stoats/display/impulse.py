@@ -1,6 +1,7 @@
 
 import datetime as dt
 from json import loads
+from re import sub
 
 from sqlalchemy import asc, desc
 from urwid import Pile, Text, Columns
@@ -25,13 +26,10 @@ class ImpulseDiary(Displayer):
         fitness = self._assert_karg('fitness')
         fatigue = self._assert_karg('fatigue')
         rows = []
-
-        def append(cols):
-            if cols:
-                rows.append(Columns(cols))
-
-        append(list(self._single_response(s, f, date, schedule, fitness, schedule.frame_type == 'd')))
-        append(list(self._single_response(s, f, date, schedule, fatigue, schedule.frame_type == 'd')))
+        for cols in self._single_response(s, f, date, schedule, fitness, schedule.frame_type == 'd'):
+            rows.append(Columns(cols))
+        for cols in self._single_response(s, f, date, schedule, fatigue, schedule.frame_type == 'd'):
+            rows.append(Columns(cols))
         if rows:
             yield Pile([Text('SHRIMP'), Indent(Pile(rows))])
 
@@ -46,12 +44,13 @@ class ImpulseDiary(Displayer):
             if display_range:
                 style = 'quintile-%d' % min(5, 1 + int(5 * (finish.value - lo.value) / (hi.value - lo.value)))
             else:
-                style = 'label'
-            yield Text([label('%s/%s: ' % (response.dest_name, schedule.describe())),
-                       (style, '%5d - %5d ' % (int(start.value), int(finish.value))),
-                       em('+ve') if start.value < finish.value else error('-ve')])
+                style = 'em'
+            yield [Text(response.dest_name),
+                   Text([label('Frm: '), (style, '%d' % int(start.value))]),
+                   Text([label('To:  '), (style, '%d' % int(finish.value))]),
+                   Text(em('+ve') if start.value < finish.value else error('-ve'))]
             if display_range:
-                yield Text([label('Range over 90 days: %5d - %5d' % (int(lo.value), int(hi.value)))])
+                yield [Text([label('Range over 90 days: %5d - %5d' % (int(lo.value), int(hi.value)))])]
 
     def _read(self, s, name, start_time, finish_time, direcn):
         return s.query(StatisticJournal). \
