@@ -51,6 +51,11 @@ activity use `alt-A`.
 
 See [configuration](configuration) for how to add additional fields.
 
+![](diary.png)
+
+Above, a typical diary entry, showing notes and HR zones for an
+activity.
+
 ### Re-calculating Statistics
 
 Summary statistics (top values per month etc) are calculated when
@@ -73,6 +78,11 @@ To see the monthly and yearly statistics use:
     > ch2 diary --month
 
     > ch2 diary --year
+
+![](diary-year.png)
+
+Above, a yearly summary, showing a severe decline in fitness due to
+injury.
 
 ## Monitoring
 
