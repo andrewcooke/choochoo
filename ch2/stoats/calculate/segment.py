@@ -51,3 +51,29 @@ class SegmentStatistics(WaypointCalculator):
                                      sjournal.start, StatisticJournalType.FLOAT)
             else:
                 self._log.warn('No Heart Rate data')
+
+    def _delete_my_statistics(self, s, activity_group, after=None):
+        s.commit()   # so that we don't have any risk of having something in the session that can be deleted
+        statistic_name_ids = s.query(StatisticName.id). \
+            filter(StatisticName.owner == self).cte()
+        segment_journal_ids = s.query(SegmentJournal.id).join(Segment). \
+            filter(Segment.activity_group == activity_group).cte()
+        for repeat in range(2):
+            if repeat:
+                q = s.query(StatisticJournal)
+            else:
+                q = s.query(count(StatisticJournal.id))
+            q = q.filter(StatisticJournal.statistic_name_id.in_(statistic_name_ids),
+                         StatisticJournal.source_id.in_(segment_journal_ids))
+            if after:
+                q = q.filter(StatisticJournal.time >= after)
+            self._log.debug(q)
+            if repeat:
+                q.delete(synchronize_session=False)
+            else:
+                n = q.scalar()
+                if n:
+                    self._log.warn('Deleting %d statistics for %s' % (n, activity_group))
+                else:
+                    self._log.warn('No statistics to delete for %s' % activity_group)
+        s.commit()
