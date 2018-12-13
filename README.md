@@ -34,13 +34,13 @@ example plans is included (see package `ch2.config.plan`).
 
 Data are processed via "pipelines".  These are Python classes whose
 class names are also configured in the database.  Existing pipelines
-calculate statistics from FIT file data and summaries based on
-existing data and schedules (eg monthly averages).
+calculate statistics from FIT file data, recognise segments from GPS
+endpoints, and generate summaries (eg monthly averages).
 
 A Python interface allows data to be extracted as DataFrames for
-analysis in Jupyter workbooks.  So general Python data science tools
-(Pandas, Numpy, etc) can be used to analyze the data.  Example
-workbooks are included in the source.
+analysis in Jupyter workbooks (or dumping to stdout).  So general
+Python data science tools (Pandas, Numpy, etc) can be used to analyze
+the data.  Example workbooks are included in the source.
 
 The data are stored in an "open" format, directly accessible by third
 party tools, and easily backed-up (eg by copying the database file).
