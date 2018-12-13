@@ -24,7 +24,7 @@ class StatisticName(Base):
     # this is done by (1) "owner" (typically the source of the data) and
     # (2) by some additional (optional) constraint used by the owner (typically)
     # (eg activity_group.id so that the same statistic can be used across different activities)
-    owner = Column(ShortCls, nullable=False)
+    owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
     constraint = Column(Str)
     UniqueConstraint(name, owner, constraint)
 

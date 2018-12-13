@@ -50,7 +50,10 @@ class ImpulseDiary(Displayer):
                    Text([label('To:  '), (style, '%d' % int(finish.value))]),
                    Text(em('increase') if start.value < finish.value else error('decrease'))]
             if display_range:
-                yield [Text([label('Range over 90 days: %5d - %5d' % (int(lo.value), int(hi.value)))])]
+                yield [Text([label('Over 90 days')]),
+                       Text([label('Lo:  '), '%d' % int(lo.value)]),
+                       Text([label('Hi:  '), '%d' % int(hi.value)]),
+                       Text('')]
 
     def _read(self, s, name, start_time, finish_time, direcn):
         return s.query(StatisticJournal). \

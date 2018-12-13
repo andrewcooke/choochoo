@@ -19,16 +19,19 @@ from ...uweird.tui.decorators import Indent
 class SegmentDiary(Displayer):
 
     def _build_date(self, s, f, date):
+        # import pdb; pdb.set_trace()
         tomorrow = local_date_to_time(date + dt.timedelta(days=1))
         today = local_date_to_time(date)
         pile = []
-        for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
+        for agroup in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
             segment_pile = []
             for sjournal in s.query(SegmentJournal). \
+                    join(Segment). \
                     filter(SegmentJournal.start >= today,
-                           SegmentJournal.start < tomorrow). \
+                           SegmentJournal.start < tomorrow,
+                           Segment.activity_group == agroup). \
                     order_by(SegmentJournal.start).all():
-                columns = self.__fields(s, date, sjournal, activity_group)
+                columns = self.__fields(s, date, sjournal)
                 if columns:
                     segment_pile.append(Columns(columns))
             if segment_pile:
@@ -37,16 +40,17 @@ class SegmentDiary(Displayer):
             yield Pile([Text('Segments'),
                         Indent(Pile(pile))])
 
-    def __fields(self, s, date, sjournal, activity_group):
-        time = self.__field(s, date, sjournal, activity_group, SEGMENT_TIME)
-        hr = self.__field(s, date, sjournal, activity_group, SEGMENT_HEART_RATE)
+    def __fields(self, s, date, sjournal):
+        time = self.__field(s, date, sjournal, SEGMENT_TIME)
+        hr = self.__field(s, date, sjournal, SEGMENT_HEART_RATE)
         if time or hr:
             return [time if time else Text(''), hr if hr else Text('')]
         else:
             return None
 
-    def __field(self, s, date, sjournal, activity_group, name):
-        sjournal = StatisticJournal.at_date(s, date, name, SegmentStatistics, activity_group, source_id=sjournal.id)
+    def __field(self, s, date, sjournal, name):
+        sjournal = StatisticJournal.at_date(s, date, name, SegmentStatistics, sjournal.segment,
+                                            source_id=sjournal.id)
         if sjournal:
             return ReadOnlyField(self._log, sjournal, date=date,
                                  format_name=lambda n: sub(r'^Segment ', '', n)).widget()

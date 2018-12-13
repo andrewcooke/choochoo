@@ -8,22 +8,39 @@ from ..waypoint import filter_none
 from ...squeal.tables.activity import ActivityJournal
 from ...squeal.tables.segment import SegmentJournal, Segment
 from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalType
+from ...squeal.types import short_cls
 
 
 class SegmentStatistics(WaypointCalculator):
 
     def run(self, force=False, after=None):
         with self._db.session_context() as s:
+            SegmentJournal.clean(s)
             if 0 == s.query(count(Segment.id)).scalar():
                 self._log.warn('No segments defined in database')
                 return
         super().run(force=force, after=after)
 
-    def _filter_statistic_journals(self, q):
-        return q.filter(StatisticName.name == SEGMENT_TIME)
+    def _run_activity(self, s, activity_group):
+        q1 = s.query(StatisticJournal.source_id). \
+            join(StatisticName). \
+            filter(StatisticName.owner == self,
+                   StatisticName.name == SEGMENT_TIME)
+        statistics = q1.cte()
+        q2 = s.query(ActivityJournal). \
+            join(SegmentJournal, SegmentJournal.activity_journal_id == ActivityJournal.id). \
+            join(Segment). \
+            filter(Segment.activity_group == activity_group). \
+            outerjoin(statistics,
+                      SegmentJournal.id == statistics.c.source_id). \
+            filter(statistics.c.source_id == None)
+        for ajournal in q2.order_by(ActivityJournal.start).all():
+            self._log.info('Running %s for %s' % (short_cls(self), ajournal))
+            self._add_stats(s, ajournal)
 
-    def _filter_activity_journals(self, q):
-        return q.join(SegmentJournal, SegmentJournal.activity_journal_id == ActivityJournal.id)
+    def _constrain_group(self, q, agroup):
+        return q.join(SegmentJournal, Segment). \
+            filter(Segment.activity_group == agroup)
 
     def _names(self):
         return {LATITUDE: 'lat',
@@ -38,6 +55,7 @@ class SegmentStatistics(WaypointCalculator):
                                  sjournal.segment, sjournal,
                                  (sjournal.finish - sjournal.start).total_seconds(),
                                  sjournal.start, StatisticJournalType.FLOAT)
+            self._log.info('ADDED')
             waypoints = [w for w in filter_none(self._names().values(), waypoints)
                          if sjournal.start <= w.time <= sjournal.finish]
             # weight by time gap so we don't bias towards more sampled times

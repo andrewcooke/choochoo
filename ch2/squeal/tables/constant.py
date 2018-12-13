@@ -22,6 +22,8 @@ class Constant(Source):
     statistic_journal_type = Column(Integer, nullable=False)
     # this could be the statistic_name or it could contain more info related to constraint
     name = Column(Text, nullable=False, index=True)
+    # todo - this ondelete cascade could cause problems with orphaned sources
+    # don't think it's needed anyway, since statistic_name entries are not deleted?
     statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
     statistic_name = relationship('StatisticName')
     single = Column(Boolean, nullable=False, server_default='0')

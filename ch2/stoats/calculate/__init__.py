@@ -95,9 +95,8 @@ class ActivityCalculator(DbPipeline):
                    StatisticName.constraint == activity_group)
         q1 = self._filter_statistic_journals(q1)
         statistics = q1.cte()
-        q2 = s.query(ActivityJournal)
-        q2 = self._filter_activity_journals(q2)
-        q2 = q2.outerjoin(statistics). \
+        q2 = s.query(ActivityJournal). \
+            outerjoin(statistics). \
             filter(ActivityJournal.activity_group == activity_group,
                    statistics.c.source_id == None)
         for ajournal in q2.order_by(ActivityJournal.start).all():
@@ -107,9 +106,6 @@ class ActivityCalculator(DbPipeline):
     @abstractmethod
     def _filter_statistic_journals(self, q):
         raise NotImplementedError()
-
-    def _filter_activity_journals(self, q):
-        return q
 
     @abstractmethod
     def _add_stats(self, s, ajournal):
@@ -121,35 +117,32 @@ class ActivityCalculator(DbPipeline):
         StatisticJournalFloat.add(self._log, s, name, units, summary, self,
                                   ajournal.activity_group, ajournal, value, time)
 
-    def _delete_my_statistics(self, s, activity_group, after=None):
+    def _delete_my_statistics(self, s, agroup, after=None):
         '''
         Delete all statistics owned by this class and in the activity group.
         Fast because in-SQL.
         '''
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
-        statistic_name_ids = s.query(StatisticName.id). \
-            filter(StatisticName.owner == self).cte()
-        activity_journal_ids = s.query(ActivityJournal.id). \
-            filter(ActivityJournal.activity_group == activity_group).cte()
         for repeat in range(2):
-            if repeat:
-                q = s.query(StatisticJournal)
-            else:
-                q = s.query(count(StatisticJournal.id))
-            q = q.filter(StatisticJournal.statistic_name_id.in_(statistic_name_ids),
-                         StatisticJournal.source_id.in_(activity_journal_ids))
+            q = s.query(StatisticJournal). \
+                join(StatisticName). \
+                filter(StatisticName.owner == self)
             if after:
                 q = q.filter(StatisticJournal.time >= after)
-            self._log.debug(q)
+            q = self._constrain_group(q, agroup)
             if repeat:
                 q.delete(synchronize_session=False)
             else:
                 n = q.scalar()
                 if n:
-                    self._log.warn('Deleting %d statistics for %s' % (n, activity_group))
+                    self._log.warn('Deleting %d statistics for %s' % (n, agroup))
                 else:
-                    self._log.warn('No statistics to delete for %s' % activity_group)
+                    self._log.warn('No statistics to delete for %s' % agroup)
         s.commit()
+
+    def _constrain_group(self, q, agroup):
+        return q.join(ActivityJournal). \
+            filter(ActivityJournal.activity_group == agroup)
 
 
 class WaypointCalculator(ActivityCalculator):

@@ -60,7 +60,7 @@ class ReadOnlyField(Field):
             measures = []
         if measures:
             self.width += 1
-        return Text([label('%s: ' % self._format_name()), em(self._journal.formatted()), ' ']
+        return Text([label('%s: ' % self._format_name()), self._journal.formatted(), ' ']
                     + measures)
 
 

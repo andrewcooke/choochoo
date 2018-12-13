@@ -28,6 +28,7 @@ class SegmentImporter(ActivityImporter):
         super()._on_init(*args, **kargs)
         self.__segments = {}
         with self._db.session_context() as s:
+            SegmentJournal.clean(s)
             for agroup in s.query(ActivityGroup).all():
                 self.__segments[agroup.id] = self._read_segments(s, agroup)
 

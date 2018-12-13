@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint
+from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint, or_
 from sqlalchemy.orm import relationship
 
 from .source import SourceType, Source
@@ -13,11 +13,13 @@ class SegmentJournal(Source):
     __tablename__ = 'segment_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    segment_id = Column(Integer, ForeignKey('segment.id', ondelete='cascade'),
-                        nullable=False, index=True)
+    # do not use on delete cascade here since it leaves source entries without children
+    # instead, to guarantee consistency, call clean()
+    segment_id = Column(Integer, ForeignKey('segment.id', ondelete='set null'), index=True)
     segment = relationship('Segment')
-    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'),
-                                 nullable=False, index=True)
+    # do not use on delete cascade here since it leaves source entries without children
+    # instead, to guarantee consistency, call clean()
+    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='set null'), index=True)
     activity_journal = relationship('ActivityJournal', foreign_keys=[activity_journal_id])
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
@@ -32,6 +34,13 @@ class SegmentJournal(Source):
 
     def time_range(self, s):
         return self.start, self.finish
+
+    @classmethod
+    def clean(cls, s):
+        q1 = s.query(SegmentJournal.id). \
+                filter(or_(SegmentJournal.segment_id == None,
+                           SegmentJournal.activity_journal_id == None)).cte()
+        s.query(Source).filter(Source.id.in_(q1)).delete(synchronize_session=False)
 
 
 class Segment(Base):
