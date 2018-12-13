@@ -21,15 +21,15 @@ The "diary" view, where the user enters data, is itself generated from
 the database.  So the fields displayed (and the statistics collected)
 can be customized.  This configuration can include "schedules" which
 control when information is displayed (eg: weekdays only; every other
-day; second sunday in the month).
+day; second Sunday in the month).
 
 The combination of customizable diary fields and scheduling allows
 training plans to be entered and displayed.
 
 Customization (fields, training plans, etc) must be done via Python or
-SQL.  There is no graphical user interface for comnfiguration.  This
+SQL.  There is no graphical user interface for configuration.  This
 presents a steep learning curve but is ultimately very flexible -
-"any" training plan can be accomodated.  Python code for generating
+"any" training plan can be accommodated.  Python code for generating
 example plans is included (see package `ch2.config.plan`).
 
 Data are processed via "pipelines".  These are Python classes whose
@@ -39,7 +39,7 @@ existing data and schedules (eg monthly averages).
 
 A Python interface allows data to be extracted as DataFrames for
 analysis in Jupyter workbooks.  So general Python data science tools
-(Pandas, Numpy, etc) can be used to analyse the data.  Example
+(Pandas, Numpy, etc) can be used to analyze the data.  Example
 workbooks are included in the source.
 
 The data are stored in an "open" format, directly accessible by third
@@ -47,11 +47,13 @@ party tools, and easily backed-up (eg by copying the database file).
 When the database format changes scripts are provided to migrate
 existing data (see package `ch2.migraine`).
 
+Support libraries include FIT file parsing and spatial R-Trees.
+
 Currently the program is single-user (ie the data in the database are
 not grouped by user).  Multiple users can co-exist using separate
 database files.
 
-*Choochoo collects and organises time-series data using
+*Choochoo collects and organizes time-series data using
 athlete-appropriate interfaces.  It facilitates calculations of
 derived statistics and extraction of data for further analysis using
 Python's rich data science tools.  Both data and code are open and
