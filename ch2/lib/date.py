@@ -40,7 +40,7 @@ def to_time(value, none=False):
     else:
         for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
                        '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S',
-                       '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%Y-%m-%d'):
+                       '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%Y-%m-%d', '%Y'):
             try:
                 return dt.datetime.strptime(value, format).replace(tzinfo=dt.timezone.utc)
             except ValueError:

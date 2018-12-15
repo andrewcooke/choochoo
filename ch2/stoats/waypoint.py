@@ -11,8 +11,9 @@ from ..squeal.tables.statistic import StatisticName, StatisticJournal, Statistic
 
 class WaypointReader:
 
-    def __init__(self, log):
+    def __init__(self, log, with_timespan=True):
         self._log = log
+        self._with_timespan = with_timespan
 
     def read(self, s, ajournal, names, owner):
 
@@ -40,7 +41,9 @@ class WaypointReader:
                     yield waypoint
                     waypoint = None
                 if not waypoint:
-                    waypoint = AttrDict({'timespan': timespan, 'time': time})
+                    waypoint = AttrDict({'time': time})
+                    if self._with_timespan:
+                        waypoint['timespan'] = timespan
                 waypoint[id_map[id]] = value
         self._log.debug('Waypoints generated')
 

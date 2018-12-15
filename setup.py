@@ -6,10 +6,10 @@ setuptools.setup(name='choochoo',
                  version='0.7.4',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
-                 description='A Programmable Training Diary',
+                 description='Data Science for Training',
                  url='https://github.com/andrewcooke/choochoo',
                  long_description='''
-# choochoo (ch2)
+# Choochoo (ch2)
 
 An **open**, **hackable** and **free** training diary.
 

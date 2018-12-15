@@ -21,17 +21,20 @@ DIARY = 'diary'
 FIT = 'fit'
 GARMIN = 'garmin'
 H, HELP = 'h', 'help'
+NEARBY_STATS = 'nearby-stats'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
 
 ACTIVITY = 'activity'
+ACTIVITY_GROUP = 'activity-group'
 ACTIVITY_GROUPS = 'activity-groups'
 ACTIVITY_JOURNALS = 'activity-journals'
 AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
+BORDER = 'border'
 CONSTRAINT = 'constraint'
 CSV = 'csv'
 DATABASE = 'database'
@@ -49,9 +52,13 @@ FTHR = 'fthr'
 FORCE, F = 'force', 'f'
 GREP = 'grep'
 GROUP = 'group'
+HEIGHT = 'height'
+LABEL = 'label'
+LATITUDE = 'latitude'
 LIKE = 'like'
 LIMIT = 'limit'
 LOGS = 'logs'
+LONGITUDE = 'longitude'
 LIST = 'list'
 M, MESSAGE = 'm', 'message'
 MATCH = 'match'
@@ -318,6 +325,29 @@ def parser():
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file(s)')
     monitor.set_defaults(command=MONITOR)
+
+    nearby_stats = subparsers.add_parser(NEARBY_STATS, help='calculate route similarities')
+    nearby_stats.add_argument(mm(ACTIVITY_GROUP), action='store', metavar='NAME',
+                              help='activity group for location data')
+    nearby_stats.add_argument(mm(START), action='store', metavar='DATE',
+                              help='lower cut-off for location data')
+    nearby_stats.add_argument(mm(FINISH), action='store', metavar='DATE',
+                              help='upper cut-off for location data')
+    nearby_stats.add_argument(mm(LATITUDE), action='store', metavar='DEG', type=float,
+                              help='centre of location data')
+    nearby_stats.add_argument(mm(LONGITUDE), action='store', metavar='DEG', type=float,
+                              help='centre of location data')
+    nearby_stats.add_argument(mm(WIDTH), action='store', metavar='DEG', type=float,
+                              help='longitude range of location data')
+    nearby_stats.add_argument(mm(HEIGHT), action='store', metavar='DEG', type=float,
+                              help='latitude range of location data')
+    nearby_stats.add_argument(mm(BORDER), action='store', metavar='M', type=float,
+                              help='overlap border')
+    nearby_stats.add_argument(mm(FORCE), action='store_true',
+                              help='delete existing data')
+    nearby_stats.add_argument(LABEL, action='store', metavar='NAME',
+                              help='label data in database')
+    nearby_stats.set_defaults(command=NEARBY_STATS)
 
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
     statistics.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')

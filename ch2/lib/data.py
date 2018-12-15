@@ -50,7 +50,10 @@ class AttrDict(dict):
         if name.startswith('_'):
             return super().__getattr__(name)
         else:
-            return self[name]
+            try:
+                return self[name]
+            except KeyError:
+                raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name.startswith('_'):

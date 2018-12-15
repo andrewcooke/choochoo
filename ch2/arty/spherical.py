@@ -58,6 +58,8 @@ class SQRTree(QuadraticMixin, SphericalMixin, BaseTree): pass
 class SERTree(ExponentialMixin, SphericalMixin, BaseTree): pass
 
 
+# TODO - need to patch latitude too for tangent!!!
+
 class GlobalLongitude:
     '''
     Cover longitude in overlapping local trees then query both the central tree and those to either side.
@@ -74,7 +76,14 @@ class GlobalLongitude:
     def __delegate(self, i):
         if i >= self.__n: i -= self.__n
         if i < 0: i += self.__n
-        if self.__trees[i] is None: self.__trees[i] = self.__tree()
+        if self.__trees[i] is None:
+            tree = self.__tree()
+            # set the local tangent to the centre point  TODO - check
+            bin_width = 360 / self.__n
+            lon = (i + 0.5) * bin_width - 180
+            tree.add([(lon, 0)], None)
+            tree.delete([(lon, 0)])
+            self.__trees[i] = tree
         return self.__trees[i]
 
     def __delegates(self, points, read=True):

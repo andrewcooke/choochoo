@@ -2,7 +2,7 @@
 from .command.activities import activities
 from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DATA
+    UNLOCK, DATA, NEARBY_STATS
 from .command.constants import constants
 from .command.data import data
 from .command.default_config import default_config
@@ -11,6 +11,7 @@ from .command.fit import fit
 from .command.garmin import garmin
 from .command.help import help, LengthFmt
 from .command.monitor import monitor
+from .command.nearby_stats import nearby_stats
 from .command.package_fit_profile import package_fit_profile
 from .command.statistics import statistics
 from .command.test_schedule import test_schedule
@@ -41,6 +42,7 @@ COMMANDS = {ACTIVITIES: activities,
             GARMIN: garmin,
             HELP: help,
             MONITOR: monitor,
+            NEARBY_STATS: nearby_stats,
             STATISTICS: statistics,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,

@@ -7,7 +7,6 @@ from sqlalchemy import desc, inspect, select, and_
 from . import ActivityCalculator
 from ..load import StatisticJournalLoader
 from ..names import FTHR, HR_ZONE, HEART_RATE, S
-from ..read.activity import ActivityImporter
 from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger

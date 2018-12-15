@@ -2,16 +2,20 @@
 from collections import defaultdict
 
 from pandas import DataFrame
-from sqlalchemy import inspect, select
+from sqlalchemy import inspect, select, distinct, desc
 from sqlalchemy.sql.functions import count, coalesce
 
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup, ActivityJournal
 from ..squeal.tables.monitor import MonitorJournal
+from ..squeal.tables.nearby import NearbySimilarity
 from ..squeal.tables.segment import Segment, SegmentJournal
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticMeasure, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText
+from ..squeal.types import short_cls
+from ..stoats.read.segment import SegmentImporter
+from ..stoats.waypoint import WaypointReader
 
 
 def extract(data, instance, *attributes):
@@ -214,6 +218,25 @@ class Data:
         data['source_id'] = data['id']; del data['id']
         return DataFrame(data, index=times)
 
+    def nearby_similarity_labels(self):
+        labels = [x[0] for x in
+                  self._s.query(distinct(NearbySimilarity.label)).all()]
+        return DataFrame(labels)
+
+    def nearby_similarities(self, label, threshold=0.0):
+        data = defaultdict(list)
+        q = self._s.query(NearbySimilarity).filter(NearbySimilarity.label == label)
+        if threshold:
+            q = q.filter(NearbySimilarity.similarity >= threshold)
+        for nearby in q.order_by(desc(NearbySimilarity.similarity)).all():
+            extract(data, nearby, 'activity_journal_lo_id', 'activity_journal_hi_id', 'similarity')
+        return DataFrame(data)
+
+    def waypoints(self, activity_journal_id, *statistics, owner=short_cls(SegmentImporter)):
+        names = dict((statistic, statistic) for statistic in statistics)
+        ajournal = self._s.query(ActivityJournal).filter(ActivityJournal.id == activity_journal_id).one()
+        return DataFrame(WaypointReader(self._log, with_timespan=False).read(self._s, ajournal, names, owner))
+
 
 def data(*args):
     '''
@@ -226,3 +249,10 @@ def data(*args):
     '''
     ns, log, db = connect(args)
     return Data(log, db)
+
+
+if __name__ == '__main__':
+    ns, log, db = connect([])
+    d = Data(log, db)
+    import pdb; pdb.set_trace()
+    d.waypoints(35513, 'Spherical Mercator X', 'Spherical Mercator Y')

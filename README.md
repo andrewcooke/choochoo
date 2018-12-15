@@ -1,5 +1,5 @@
 
-# choochoo (ch2)
+# Choochoo (ch2)
 
 An **open**, **hackable** and **free** training diary.
 
