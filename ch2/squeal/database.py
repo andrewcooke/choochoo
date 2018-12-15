@@ -6,21 +6,12 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
 
+from . import *
 from .support import Base
-from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal
-from .tables.constant import SystemConstant, Constant
-from .tables.monitor import MonitorJournal
-from .tables.nearby import ActivitySimilarity, ActivityNearby
-from .tables.pipeline import Pipeline
-from .tables.segment import Segment, SegmentJournal
-from .tables.source import Source, Interval
-from .tables.statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
-    StatisticJournal
-from .tables.topic import TopicJournal, Topic
 from ..command.args import DATABASE, NamespaceWithVariables, NO_OP, parser
 from ..lib.log import make_log
 
-# import these so they are "created"
+# mention these so they are "created"
 Source,  Interval,
 ActivityGroup, ActivityJournal, ActivityTimespan,
 Topic, TopicJournal,

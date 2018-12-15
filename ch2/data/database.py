@@ -218,14 +218,14 @@ class Data:
         data['source_id'] = data['id']; del data['id']
         return DataFrame(data, index=times)
 
-    def nearby_similarity_labels(self):
-        labels = [x[0] for x in
+    def activity_similarity_constraints(self):
+        constraints = [x[0] for x in
                   self._s.query(distinct(ActivitySimilarity.constraint)).all()]
-        return DataFrame(labels)
+        return DataFrame(constraints)
 
-    def nearby_similarities(self, label, threshold=0.0):
+    def activity_similarities(self, constraint, threshold=0.0):
         data = defaultdict(list)
-        q = self._s.query(ActivitySimilarity).filter(ActivitySimilarity.constraint == label)
+        q = self._s.query(ActivitySimilarity).filter(ActivitySimilarity.constraint == constraint)
         if threshold:
             q = q.filter(ActivitySimilarity.similarity >= threshold)
         for nearby in q.order_by(desc(ActivitySimilarity.similarity)).all():
@@ -251,8 +251,3 @@ def data(*args):
     return Data(log, db)
 
 
-if __name__ == '__main__':
-    ns, log, db = connect([])
-    d = Data(log, db)
-    import pdb; pdb.set_trace()
-    d.waypoints(35513, 'Spherical Mercator X', 'Spherical Mercator Y')
