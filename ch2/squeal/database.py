@@ -10,7 +10,7 @@ from .support import Base
 from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal
 from .tables.constant import SystemConstant, Constant
 from .tables.monitor import MonitorJournal
-from .tables.nearby import NearbySimilarity
+from .tables.nearby import ActivitySimilarity, ActivityNearby
 from .tables.pipeline import Pipeline
 from .tables.segment import Segment, SegmentJournal
 from .tables.source import Source, Interval
@@ -29,7 +29,7 @@ Segment, SegmentJournal
 Pipeline
 MonitorJournal
 Constant, SystemConstant
-NearbySimilarity
+ActivitySimilarity, ActivityNearby
 
 
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf

@@ -1,6 +1,6 @@
 
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
-    add_diary, add_activities, add_monitor, name_constant
+    add_diary, add_activities, add_monitor, name_constant, add_nearby
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
@@ -49,6 +49,9 @@ def default(log, db, no_diary=False):
         # but part of a kargs JSON blob.
         add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('m'))
         add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('y'))
+
+        # obviously you need to edit these parameters - see `ch2 constants Nearby.Bike`
+        add_nearby(s, c, bike, 'Santiago', -33.4, -70.4)
 
         # diary pipeline (called to display data in the diary)
 

@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import count, coalesce
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup, ActivityJournal
 from ..squeal.tables.monitor import MonitorJournal
-from ..squeal.tables.nearby import NearbySimilarity
+from ..squeal.tables.nearby import ActivitySimilarity
 from ..squeal.tables.segment import Segment, SegmentJournal
 from ..squeal.tables.source import Interval, Source
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticMeasure, StatisticJournalInteger, \
@@ -220,15 +220,15 @@ class Data:
 
     def nearby_similarity_labels(self):
         labels = [x[0] for x in
-                  self._s.query(distinct(NearbySimilarity.label)).all()]
+                  self._s.query(distinct(ActivitySimilarity.constraint)).all()]
         return DataFrame(labels)
 
     def nearby_similarities(self, label, threshold=0.0):
         data = defaultdict(list)
-        q = self._s.query(NearbySimilarity).filter(NearbySimilarity.label == label)
+        q = self._s.query(ActivitySimilarity).filter(ActivitySimilarity.constraint == label)
         if threshold:
-            q = q.filter(NearbySimilarity.similarity >= threshold)
-        for nearby in q.order_by(desc(NearbySimilarity.similarity)).all():
+            q = q.filter(ActivitySimilarity.similarity >= threshold)
+        for nearby in q.order_by(desc(ActivitySimilarity.similarity)).all():
             extract(data, nearby, 'activity_journal_lo_id', 'activity_journal_hi_id', 'similarity')
         return DataFrame(data)
 

@@ -1,5 +1,6 @@
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+from json import loads
 from random import shuffle
 
 from sqlalchemy import inspect, select, alias, and_, distinct, func
@@ -12,55 +13,66 @@ from ...lib.date import to_time
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
 from ...squeal.tables.activity import ActivityJournal, ActivityGroup
-from ...squeal.tables.nearby import NearbySimilarity
+from ...squeal.tables.constant import Constant
+from ...squeal.tables.nearby import ActivitySimilarity, ActivityNearby
 from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalFloat
+
+Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish, '
+                    'latitude, longitude, height, width')
 
 
 class NearbySimilarityCalculator(DbPipeline):
 
+    def _on_init(self, *args, **kargs):
+        super()._on_init(*args, **kargs)
+        nearby = self._assert_karg('nearby')
+        with self._db.session_context() as s:
+            self._config = Nearby(**loads(Constant.get(s, nearby).at(s).value))
+        self._log.debug('%s: %s' % (nearby, self._config))
+
     def run(self, force=False, after=None):
-        label = self._assert_karg('label', 'default')
-        border = self._assert_karg('border', 3)
-        rtree = SQRTree(default_match=MatchType.INTERSECTS, default_border=border)
+
+        rtree = SQRTree(default_match=MatchType.INTERSECTS, default_border=self._config.border)
 
         with self._db.session_context() as s:
             if force:
-                self._delete(s, label)
+                self._delete(s)
             n_points = defaultdict(lambda: 0)
-            self._prepare(s, label, rtree, n_points, 10000)
+            self._prepare(s, rtree, n_points, 10000)
             n_intersects = defaultdict(lambda: defaultdict(lambda: 0))
-            new_ids = self._measure(s, label, rtree, n_points, n_intersects, 1000)
-            self._save(s, label, new_ids, n_points, n_intersects)
+            new_ids = self._measure(s, rtree, n_points, n_intersects, 1000)
+            self._save(s, new_ids, n_points, n_intersects, 10000)
 
-    def _delete(self, s, label):
-        self._log.warn('Deleting similarity data for %s' % label)
-        s.query(NearbySimilarity). \
-            filter(NearbySimilarity.label == label). \
+    def _delete(self, s):
+        self._log.warn('Deleting similarity data for %s' % self._config.constraint)
+        s.query(ActivitySimilarity). \
+            filter(ActivitySimilarity.constraint == self._config.constraint). \
             delete()
 
-    def _save(self, s, label, new_ids, n_points, n_intersects):
+    def _save(self, s, new_ids, n_points, n_intersects, delta):
         n, total = 0, (len(new_ids) * (len(new_ids) - 1)) / 2
         for lo in new_ids:
             for hi in filter(lambda hi: hi > lo, new_ids):
-                s.add(NearbySimilarity(label=label, activity_journal_lo_id=lo, activity_journal_hi_id=hi,
-                                       similarity=n_intersects[lo][hi] / (n_points[lo] + n_points[hi])))
+                s.add(ActivitySimilarity(constraint=self._config.constraint,
+                                         activity_journal_lo_id=lo, activity_journal_hi_id=hi,
+                                         similarity=n_intersects[lo][hi] / (n_points[lo] + n_points[hi])))
                 n += 1
-                if n % 100 == 0:
-                    self._log.info('Saved %d / %d' % (n, total))
+                if n % delta == 0:
+                    self._log.info('Saved %d / %d for %s' % (n, total, self._config.constraint))
 
-    def _prepare(self, s, label, rtree, n_points, delta):
+    def _prepare(self, s, rtree, n_points, delta):
         n = 0
-        for id_in, lon, lat in self._data(s, label, new=False):
+        for id_in, lon, lat in self._data(s, new=False):
             p = [(lon, lat)]
             rtree[p] = id_in
             n_points[id_in] += 1
             n += 1
             if n % delta == 0:
-                self._log.info('Loaded %s points' % n)
+                self._log.info('Loaded %s points for %s' % (n, self._config.constraint))
 
-    def _measure(self, s, label, rtree, n_points, n_intersects, delta):
+    def _measure(self, s, rtree, n_points, n_intersects, delta):
         new_ids, current_id, seen, n = [], None, None, 0
-        for id_in, lon, lat in self._data(s, label, new=True):
+        for id_in, lon, lat in self._data(s, new=True):
             if id_in != current_id:
                 current_id, seen = id_in, set()
                 new_ids.append(id_in)
@@ -75,34 +87,29 @@ class NearbySimilarityCalculator(DbPipeline):
             n_points[id_in] += 1
             n += 1
             if n % delta == 0:
-                self._log.info('Measured %s points' % n)
+                self._log.info('Measured %s points for %s' % (n, self._config.constraint))
         return new_ids
 
-    def _data(self, s, label, new=True):
+    def _data(self, s, new=True):
 
-        activity_group = self._assert_karg('activity_group', 'Bike')
-        start = to_time(self._assert_karg('start', '1970'))
-        finish = to_time(self._assert_karg('finish', '2999'))
-        latitude = self._assert_karg('latitude', -33)
-        longitude = self._assert_karg('longitude', -70)
-        height = self._assert_karg('height', 10)
-        width = self._assert_karg('width', 10)
+        start = to_time(self._config.start)
+        finish = to_time(self._config.finish)
 
         lat = s.query(StatisticName.id).filter(StatisticName.name == LATITUDE).scalar()
         lon = s.query(StatisticName.id).filter(StatisticName.name == LONGITUDE).scalar()
-        agroup = s.query(ActivityGroup.id).filter(ActivityGroup.name == activity_group).scalar()
+        agroup = s.query(ActivityGroup.id).filter(ActivityGroup.name == self._config.activity_group).scalar()
 
         sj_lat = inspect(StatisticJournal).local_table
         sj_lon = alias(inspect(StatisticJournal).local_table)
         sjf_lat = inspect(StatisticJournalFloat).local_table
         sjf_lon = alias(inspect(StatisticJournalFloat).local_table)
         aj = inspect(ActivityJournal).local_table
-        ns = inspect(NearbySimilarity).local_table
+        ns = inspect(ActivitySimilarity).local_table
 
         existing_lo = select([ns.c.activity_journal_lo_id]). \
-            where(ns.c.label == label)
+            where(ns.c.constraint == self._config.constraint)
         existing_hi = select([ns.c.activity_journal_hi_id]). \
-            where(ns.c.label == label)
+            where(ns.c.constraint == self._config.constraint)
         existing = existing_lo.union(existing_hi).cte()
 
         stmt = select([sj_lat.c.source_id, sjf_lon.c.value, sjf_lat.c.value]). \
@@ -117,10 +124,10 @@ class NearbySimilarityCalculator(DbPipeline):
                        sj_lon.c.statistic_name_id == lon,         # lon name
                        sj_lat.c.time >= start.timestamp(),        # time limits
                        sj_lat.c.time < finish.timestamp(),
-                       sjf_lat.c.value > latitude - height / 2,   # spatial limits
-                       sjf_lat.c.value < latitude + height / 2,
-                       sjf_lon.c.value > longitude - width / 2,
-                       sjf_lon.c.value < longitude + width / 2))
+                       sjf_lat.c.value > self._config.latitude - self._config.height / 2,
+                       sjf_lat.c.value < self._config.latitude + self._config.height / 2,
+                       sjf_lon.c.value > self._config.longitude - self._config.width / 2,
+                       sjf_lon.c.value < self._config.longitude + self._config.width / 2))
 
         if new:
             stmt = stmt.where(func.not_(sj_lat.c.source_id.in_(existing)))
@@ -132,44 +139,49 @@ class NearbySimilarityCalculator(DbPipeline):
 
 class NearbySimilarityDBSCAN(DBSCAN):
 
-    def __init__(self, log, s, label, epsilon, minpts):
+    def __init__(self, log, s, constraint, epsilon, minpts):
         super().__init__(log, epsilon, minpts)
         self.__s = s
-        self.__label = label
-        self.__max_similarity = self.__s.query(func.max(NearbySimilarity.similarity)). \
-            filter(NearbySimilarity.label == label).scalar()
+        self.__constraint = constraint
+        self.__max_similarity = self.__s.query(func.max(ActivitySimilarity.similarity)). \
+            filter(ActivitySimilarity.constraint == constraint).scalar()
         # self._log.info('Max similarity %.2f' % self.__max_similarity)
 
     def run(self):
         candidates = [x[0] for x in
-                      self.__s.query(distinct(NearbySimilarity.activity_journal_lo_id)).
-                          filter(NearbySimilarity.label == self.__label).all()]
+                      self.__s.query(distinct(ActivitySimilarity.activity_journal_lo_id)).
+                          filter(ActivitySimilarity.constraint == self.__constraint).all()]
         shuffle(candidates)
         return super().run(candidates)
 
     def neighbourhood(self, candidate, epsilon):
-        qlo = self.__s.query(NearbySimilarity.activity_journal_lo_id). \
-            filter(NearbySimilarity.label == self.__label,
-                   NearbySimilarity.activity_journal_hi_id == candidate,
-                   (self.__max_similarity - NearbySimilarity.similarity) / self.__max_similarity < epsilon)
-        qhi =  self.__s.query(NearbySimilarity.activity_journal_hi_id). \
-            filter(NearbySimilarity.label == self.__label,
-                   NearbySimilarity.activity_journal_lo_id == candidate,
-                   (self.__max_similarity - NearbySimilarity.similarity) / self.__max_similarity < epsilon)
+        qlo = self.__s.query(ActivitySimilarity.activity_journal_lo_id). \
+            filter(ActivitySimilarity.constraint == self.__constraint,
+                   ActivitySimilarity.activity_journal_hi_id == candidate,
+                   (self.__max_similarity - ActivitySimilarity.similarity) / self.__max_similarity < epsilon)
+        qhi =  self.__s.query(ActivitySimilarity.activity_journal_hi_id). \
+            filter(ActivitySimilarity.constraint == self.__constraint,
+                   ActivitySimilarity.activity_journal_lo_id == candidate,
+                   (self.__max_similarity - ActivitySimilarity.similarity) / self.__max_similarity < epsilon)
         return [x[0] for x in qlo.all()] + [x[0] for x in qhi.all()]
 
 
-if __name__ == '__main__':
+class NearbyStatistics(NearbySimilarityCalculator):
 
-    from ch2.squeal.database import connect
-    from ch2.data import Data
+    def run(self, force=False, after=None):
+        super().run(force=force, after=after)
+        with self._db.session_context() as s:
+            d_min, _ = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d)))
+            self.save(s, self.dbscan(s, d_min))
 
-    ns, log, db = connect(['-v', '5'])
-    data = Data(log, db)
-    label = 'test5'
+    def dbscan(self, s, d):
+        return NearbySimilarityDBSCAN(self._log, s, self._config.constraint, d, 3).run()
 
-    with db.session_context() as s:
-        d_min, _ = expand_max(0, 1, 5,
-                              lambda d: len(NearbySimilarityDBSCAN(log, s, label, d, 3).run()))
-        for group in NearbySimilarityDBSCAN(log, s, label, d_min, 3).run():
-            print(group)
+    def save(self, s, groups):
+        s.query(ActivityNearby). \
+            filter(ActivityNearby.constraint == self._config.constraint).delete()
+        for i, group in enumerate(groups):
+            self._log.info('Group %d has %d members' % (i, len(group)))
+            for activity_journal_id in group:
+                s.add(ActivityNearby(constraint=self._config.constraint, group=i,
+                                     activity_journal_id=activity_journal_id))

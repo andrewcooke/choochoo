@@ -1,4 +1,6 @@
+from json import dumps
 
+from ..stoats.calculate.nearby import Nearby, NearbyStatistics
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup
 from ..squeal.tables.constant import Constant, ValidateNamedTuple
@@ -7,6 +9,8 @@ from ..squeal.tables.statistic import StatisticName, StatisticJournalType
 from ..squeal.tables.topic import Topic, TopicField
 from ..squeal.types import long_cls
 from ..uweird.fields.topic import Integer
+
+NEARBY_CNAME = 'Nearby'
 
 
 def config(*args):
@@ -222,3 +226,17 @@ def add_topic_field(s, topic, name, sort, description=None, units=None, summary=
     field = add(s, TopicField(topic=topic, sort=sort, type=display_cls.statistic_journal_type,
                               display_cls=display_cls, display_kargs=display_kargs,
                               statistic_name=statistic_name))
+
+
+def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=3,
+               start='1970', finish='2999', height=10, width=10):
+    activity_group_constraint = str(activity_group)
+    nearby_name = name_constant(NEARBY_CNAME, activity_group)
+    nearby = add_enum_constant(s, nearby_name, Nearby, single=True, constraint=activity_group_constraint,
+                               description='Data needed to calculate nearby activities - see Nearby enum')
+    set_constant(s, nearby, dumps({'constraint': constraint, 'activity_group': activity_group.name,
+                                   'border': border, 'start': start, 'finish': finish,
+                                   'latitude': latitude, 'longitude': longitude,
+                                   'height': height, 'width': width}))
+    add_statistics(s, NearbyStatistics, sort, nearby=nearby_name)
+
