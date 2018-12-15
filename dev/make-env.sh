@@ -18,6 +18,8 @@ pip install requests
 
 pip install matplotlib
 pip install bokeh
+pip install colorcet
+pip install webcolors
 pip install jupyter
 
 pip install setuptools wheel twine

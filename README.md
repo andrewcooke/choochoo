@@ -61,6 +61,10 @@ extensible.*
 
 ## Latest Changes
 
+### v0.8.0 (in progress)
+
+Nearby activities and simplified / improved data access in Jupyter.
+
 ### v0.7.0
 
 [Segments](https://andrewcooke.github.io/choochoo/segments).

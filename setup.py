@@ -34,6 +34,8 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'requests',
                      'matplotlib',
                      'bokeh',
+                     'colorcet',
+                     'webcolors',
                      'jupyter'
                      ],
                  entry_points={

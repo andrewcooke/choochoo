@@ -1,10 +1,9 @@
 
 # Data Analysis
 
-Below I focus on simple, direct (but also limited) data access via
-[pandas](https://pandas.pydata.org/) and
-[Jupyter](http://jupyter.org/) - this will let you read, manipulate
-and plot data within your web browser.
+Below I focus on data access via [pandas](https://pandas.pydata.org/)
+and [Jupyter](http://jupyter.org/) - this will let you read,
+manipulate and plot data within your web browser.
 
 Plotting packages in Python - especially for maps - seem to be
 unreliable, so the emphasis here is on providing the data in a
@@ -19,10 +18,15 @@ schema version).  So you can also use any programming language with an
 SQLite binding (for Python the `ch2.squeal.tables` package contains a
 [SQLAchemy](https://www.sqlalchemy.org/) ORM mapping).
 
-* [Starting Jupyter](starting-jupyter)
-* [Accessing Data](accessing-data)
-* [Plotting Data](plotting-data)
-* [Examples](examples)
+  * [Starting Jupyter](#starting-jupyter)
+  * [Accessing Data](#accessing-data)
+    * [Session](#session)
+    * [SQLAlchemy ORM Query](#sqlalchemy-orm-query)
+    * [DataFrames](#dataframes)
+    * [Waypoints](#waypoints)
+  * [Plotting Data](#plotting-data)
+  * [Summary](#summary)
+  * [Examples](#examples)
 
 ## Starting Jupyter
 
@@ -34,12 +38,57 @@ typing
     jupyter notebook
     
 which should display a window in your web browser.  There you can load the
-examples from `ch2.data.notebooks`.
+examples from the `notebooks` directory.
 
 ## Accessing Data
 
-Data are accessed via the `ch2.data.data()` function, which returns a
-`ch2.data.database.Data` instance.
+Pandas works with `DataFrame` objects, while Choochoo stores data in
+an SQLite database with SQLALchemy ORM mapping.  Fortunately these
+technologies work well together.  The learning curve is fairly steep,
+but the result is very flexible access to the data.
+
+### Session
+
+To connect to the database we need a session:
+
+    In[] > from ch2.data import *
+           s = session('-v4')
+
+where the `session` function takes arguments similar to `ch2 no-op` on
+the command line.
+
+### SQLAlchemy ORM Query
+
+Using the session we can extract data from the database as Python
+objects.  In practice (see below) we will not use these objects
+directly.  Instead we will wrap the data in DataFrames.  But we will
+use the same SQLAlchemy queries.  This lets us use all the power of
+SQL to make conditional queries across multiple tables of data.
+
+Our basic tools are:
+
+  * The [Data Model](data-model), which is embodied in the [table
+    classes](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables)
+  * The [SQLAlchemy Query
+    API](http://docs.sqlalchemy.org/en/latest/orm/query.html)
+
+Using these we can, for example, see all **StatisticName** instances
+that have units of "bpm":
+
+    In[] > from ch2.squeal import *
+           names = s.query(StatisticName). \
+                     filter(StatisticName.units == 'bpm').all()
+           str(names[0])    
+    '"Rest HR" (Topic/Topic "Diary" (d))'
+
+### DataFrames
+
+The same data can be retrieved as a DataFrame using the `df` function:
+
+    In[] > names = df(s.query(StatisticName).
+                        filter(StatisticName.units == 'bpm'))
+           names
+    [...table of information...]
 
 For example, in a new Python 3 notebook:
 
@@ -53,63 +102,46 @@ You may want to revise the [data model](data-model) at this point.
 
 The `ch2.data.database.Data` instance provides access to:
 
-* **Statistics** - a list of all the available Statistics (ie a
-  description of what data are available).
+### Waypoints
 
-      d.statistics('%HR%')
+It is sometimes useful to access the sequence of data associated with
+an **ActivityJournal**.  This information is spread across multiple
+**StatisticJournal** entries, but can be extracted as a single
+DataFrame using the `waypoints` function:
 
-* **Statistic Journals** - time series values for particular
-  Statistics (ie the data themselves).
+    In[] > from ch2.lib.date import to_time
+           aj = s.query(ActivityJournal). \
+                  filter(ActivityJournal.start > to_time('2017-08-21'),
+                         ActivityJournal.finish < to_time('2017-08-22')).one()
+           w = waypoints(aj.id, 'Latitude', 'Longitude', Heart Rate')
 
-      d.statistic_journals('Rest HR')
-
-  Since Statistic names are not unique these can be qualified by the
-  `owner` aond `constraint` values that are provided by
-  `Data.statistics()`.
-
-* **Statistic Quartiles** - pre-calculated quartile data useful for
-  box plots.
-
-* **Activities** - a list of all the Activities (ie activity *types* -
-  eg Bike, Run, etc).
-
-      d.activities()
-
-* **Activity Journals** - entries for the activities themselves.
-
-      d.activity_journals('Bike')
-
-* **Activity Waypoints** - time series associated with a single
-  activity.
-
-      d.activity_waypoints('Bike', '2018-02-18 10:26:56')
-
-  The `x` and `y` values are in the co-ordinates used by web plotting
-  tools (derived from the `latitude` and `longitude`).
-
-* **Monitor Journals** - a list of the dates (files) with monitor data.
-  The dates are passed to the methods below.
-
-      d.monitor_journals()
-
-* **Monitor Steps** and **Monitor Heart Rate** - the raw step and heart rate
-  data. Honestly, it's unlikely that you need these.  Daily statistics are
-  calculated from these values and available via `Data.statistic_journals()`.
-
-      d.monitor_heart_rate('2018-10-02 10:12:00')
-
-The various methods above often take a list of names or SQL patterns.
-Returned DataFrames usually have the date / time information as index.
+The example above finds the **ActivityJournal** for a given day and
+then retrieves the associated GPS and HRM data in a time-indexed
+table.
 
 ## Plotting Data
 
 For examples of how to plot this data see:
 
-* The Jupyter notebooks in `ch2/data/notebooks` - these use Bokeh.
+* The Jupyter notebooks in the `notebooks` directory - these use Bokeh.
 * The code in `tests/test_data.py` - these use Matplotlib.
 
 A few helper routines are available in `ch2.data.plot` to help massage the
 data into the correct format.
+
+## Summary
+
+To analyse data you will probably work as follows:
+
+  * Find where the data are stored in the database.  To do this,
+    consult the [Data Model](data-model) document, examine the [table
+    classes](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables),
+    or look at similar wotk in the `notebooks` directory.
+  * Create a [session](#session) in [Jupyter](#starting-jupyter).
+  * Use a [SQLAlchemy ORM Query](#sqlalchemy-orm-query) to extract the
+    data from the database.
+  * Wrap the data in a DataFrame using `df`.
+  * Plot the data with Bokeh.
 
 ## Examples
 

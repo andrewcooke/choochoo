@@ -27,14 +27,14 @@ special cases, and reliable enough to avoid errors.
 
 ### Statistics
 
-A **Statistic** is a simple thing - a name with units.  For example,
-"Rest HR/bpm".  In practice it also has a description and some
-"metadata" for display, tracking who is responsible for creating new
-values, etc.
+A **StatisticName** is a simple thing - a name with units.  For
+example, "Rest HR/bpm".  In practice it also has a description and
+some "metadata" for display, tracking who is responsible for creating
+new values, etc.
 
-For a Statistic to be useful it must be associated with some values.
-More exactly, it must have entries in the **StatisticJournal** which
-associated values with **Source**s.
+For a StatisticName to be useful it must be associated with some
+values.  More exactly, it must have entries in the
+**StatisticJournal** which associated values with **Source**s.
 
 There are three types of StatisticJournal, for values that are
 integers, floats and text.
