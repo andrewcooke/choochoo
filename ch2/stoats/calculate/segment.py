@@ -38,9 +38,9 @@ class SegmentStatistics(WaypointCalculator):
             self._log.info('Running %s for %s' % (short_cls(self), ajournal))
             self._add_stats(s, ajournal)
 
-    def _constrain_group(self, q, agroup):
-        return q.join(SegmentJournal, Segment). \
-            filter(Segment.activity_group == agroup)
+    def _constrain_group(self,  s, q, agroup):
+        cte = s.query(SegmentJournal.id).join(Segment).filter(Segment.activity_group_id == agroup.id).cte()
+        return q.filter(StatisticJournal.source_id.in_(cte))
 
     def _names(self):
         return {LATITUDE: 'lat',

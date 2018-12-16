@@ -60,9 +60,8 @@ def test_sources():
 
         # generate summary stats
 
-        process = SummaryStatistics(log, db)
-        process.run(schedule='m')
-        process.run(schedule='y')
+        SummaryStatistics(log, db, schedule='m').run()
+        SummaryStatistics(log, db, schedule='y').run()
 
         with db.session_context() as s:
 
@@ -110,7 +109,7 @@ def test_sources():
                 print(source)
             for journal in s.query(StatisticJournal).all():
                 print(journal)
-            assert s.query(count(Source.id)).scalar() == 5, list(map(str, s.query(Source).all()))  # constants
-            # 3 JSON entries for impulse
-            assert s.query(count(StatisticJournalText.id)).scalar() == 3, s.query(count(StatisticJournalText.id)).scalar()
-            assert s.query(count(StatisticJournal.id)).scalar() == 3, s.query(count(StatisticJournal.id)).scalar()
+            assert s.query(count(Source.id)).scalar() == 6, list(map(str, s.query(Source).all()))  # constants
+            # 3 JSON entries for impulse + 1 for nearby
+            assert s.query(count(StatisticJournalText.id)).scalar() == 4, s.query(count(StatisticJournalText.id)).scalar()
+            assert s.query(count(StatisticJournal.id)).scalar() == 4, s.query(count(StatisticJournal.id)).scalar()

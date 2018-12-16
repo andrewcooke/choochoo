@@ -124,12 +124,12 @@ class ActivityCalculator(DbPipeline):
         '''
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
         for repeat in range(2):
+            cte = s.query(StatisticName.id).filter(StatisticName.owner == self)
             q = s.query(StatisticJournal). \
-                join(StatisticName). \
-                filter(StatisticName.owner == self)
+                filter(StatisticJournal.statistic_name_id.in_(cte.cte()))
+            q = self._constrain_group(s, q, agroup)
             if after:
                 q = q.filter(StatisticJournal.time >= after)
-            q = self._constrain_group(q, agroup)
             if repeat:
                 q.delete(synchronize_session=False)
             else:
@@ -140,9 +140,9 @@ class ActivityCalculator(DbPipeline):
                     self._log.warn('No statistics to delete for %s' % agroup)
         s.commit()
 
-    def _constrain_group(self, q, agroup):
-        return q.join(ActivityJournal). \
-            filter(ActivityJournal.activity_group == agroup)
+    def _constrain_group(self, s, q, agroup):
+        cte = s.query(ActivityJournal.id).filter(ActivityJournal.activity_group_id == agroup.id).cte()
+        return q.filter(StatisticJournal.source_id.in_(cte))
 
 
 class WaypointCalculator(ActivityCalculator):

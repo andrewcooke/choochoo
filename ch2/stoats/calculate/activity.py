@@ -7,7 +7,7 @@ from .heart_rate import hr_zones_from_database
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, DISTANCE
 from ..waypoint import Chunks
-from ...squeal.tables.statistic import StatisticName
+from ...squeal import StatisticName
 
 
 class ActivityStatistics(WaypointCalculator):

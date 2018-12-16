@@ -7,7 +7,6 @@ from ch2.command.activities import activities
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST, F
 from ch2.command.constants import constants
 from ch2.config.default import default
-from ch2.data import data
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.statistic import StatisticJournal
@@ -40,8 +39,8 @@ def test_activities():
 
         with db.session_context() as s:
             n = s.query(count(StatisticJournal.id)).scalar()
-            # assert n == 10530, n
-            assert n == 14698, n
+            # assert n == 14698, n
+            assert n == 25233, n
             journal = s.query(ActivityJournal).one()
             assert journal.start != journal.finish
 
@@ -54,57 +53,3 @@ def import_activity(f):
                                    'activities', 'data/test/personal/2018-08-27-rec.fit')
     activities(args, log, db)
 
-
-def test_activity():
-    with NamedTemporaryFile() as f:
-        import_activity(f)
-        # there's a bokeh version of this in the notebooks
-        d = data(m(V), '0', mm(DEV), m(F), f.name)
-        activity_groups = d.activity_groups()
-        print(activity_groups)
-        statistic_names = d.statistic_names()
-        print(statistic_names)
-        journals = d.statistic_journals('Active %')
-        print(journals)
-        # run('sqlite3 %s ".dump"' % f.name, shell=True)
-
-
-# below assumes data in the local DB
-
-# def test_activities():
-#     d = data()
-#     frame = d.statistic_journals('Active Distance')
-#     print(frame)
-#     fig, ax = plt.subplots()
-#     plt.scatter(x=frame.index, y=frame['Active Distance'] / 1000)
-#     plt.xlabel('Date')
-#     plt.ylabel('Distance / km')
-#     plt.title('Active Distance')
-#     fig.autofmt_xdate()
-#     plt.savefig('/tmp/distance.png')
-#
-#
-# def test_quartiles():
-#     # there's a bokeh version of this in the notebooks
-#     d = data('-v', '0')
-#     stats = d.statistics()
-#     print(stats)
-#     frame = d.statistic_quartiles('Max Med HR over 30m')
-#     print(frame)
-#     stats = col_to_boxstats(frame, 'Max Med HR over 30m')
-#     print(stats)
-#     # https://matplotlib.org/gallery/statistics/bxp.html
-#     fig, ax = plt.subplots()
-#     ax.bxp(stats, showfliers=False)
-#     fig.autofmt_xdate()
-#     plt.savefig('/tmp/summary.png')
-#
-#
-# def test_route():
-#     d = data('-v', '0')
-#     frames = d.activity_waypoints('Bike', '2018-09-06')
-#     print(frames)
-#     # can't find a good, portable solution past this point
-#     # within jupyter, bokeh works ok, but you can't save images without
-#     # getting into problems with node (javascript).  seems to be a general
-#     # problem of python map libraries.
