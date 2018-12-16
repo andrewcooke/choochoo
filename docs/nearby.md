@@ -7,8 +7,9 @@ We all have favourite routes when cycling.  But even when we repeat a
 ride we make small changes - ride a little further, take a short-cut
 home, explore a new diversion.
 
-It would be good if [Choochoo](index) could identify these related
-routes.
+This is how [Choochoo](index) identifies these related routes.
+
+![](nearby-santiago.png)
 
 ## Contents
 
@@ -155,11 +156,11 @@ because you are overwriting an existing value).  For example:
 
 ### Images
 
+![](nearby-santiago.png)
+
 Images are generated using a [Jupyter
 notebook](https://github.com/andrewcooke/choochoo/blob/master/notebooks/plot-groups.ipynb)
 with Bokeh.
-
-![](nearby-santiago.png)
 
 The image above shows all the groups identified in my current data.
 The number of rides in each group is given in the legend.
