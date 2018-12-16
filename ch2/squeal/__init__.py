@@ -7,6 +7,6 @@ from .tables.pipeline import Pipeline
 from .tables.segment import Segment, SegmentJournal
 from .tables.source import Source, Interval
 from .tables.statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
-    StatisticJournal
+    StatisticJournal, StatisticMeasure
 from .tables.topic import TopicJournal, Topic
 

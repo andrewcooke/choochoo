@@ -1,7 +1,6 @@
 
 from collections import defaultdict, namedtuple
 from json import loads
-from random import shuffle
 
 from sqlalchemy import inspect, select, alias, and_, distinct, func
 
@@ -18,7 +17,7 @@ from ...squeal.tables.nearby import ActivitySimilarity, ActivityNearby
 from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalFloat
 
 Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish, '
-                    'latitude, longitude, height, width')
+                              'latitude, longitude, height, width')
 
 
 class NearbySimilarityCalculator(DbPipeline):
@@ -28,7 +27,7 @@ class NearbySimilarityCalculator(DbPipeline):
         nearby = self._assert_karg('nearby')
         with self._db.session_context() as s:
             self._config = Nearby(**loads(Constant.get(s, nearby).at(s).value))
-        self._log.debug('%s: %s' % (nearby, self._config))
+        self._log.info('%s: %s' % (nearby, self._config))
 
     def run(self, force=False, after=None):
 
@@ -148,10 +147,14 @@ class NearbySimilarityDBSCAN(DBSCAN):
         # self._log.info('Max similarity %.2f' % self.__max_similarity)
 
     def run(self):
-        candidates = [x[0] for x in
-                      self.__s.query(distinct(ActivitySimilarity.activity_journal_lo_id)).
-                          filter(ActivitySimilarity.constraint == self.__constraint).all()]
-        shuffle(candidates)
+        candidates = set(x[0] for x in
+                         self.__s.query(distinct(ActivitySimilarity.activity_journal_lo_id)).
+                         filter(ActivitySimilarity.constraint == self.__constraint).all())
+        candidates.union(set(x[0] for x in
+                             self.__s.query(distinct(ActivitySimilarity.activity_journal_lo_id)).
+                             filter(ActivitySimilarity.constraint == self.__constraint).all()))
+        candidates = sorted(candidates)
+        # shuffle(candidates)  # skip for repeatability
         return super().run(candidates)
 
     def neighbourhood(self, candidate, epsilon):
@@ -159,7 +162,7 @@ class NearbySimilarityDBSCAN(DBSCAN):
             filter(ActivitySimilarity.constraint == self.__constraint,
                    ActivitySimilarity.activity_journal_hi_id == candidate,
                    (self.__max_similarity - ActivitySimilarity.similarity) / self.__max_similarity < epsilon)
-        qhi =  self.__s.query(ActivitySimilarity.activity_journal_hi_id). \
+        qhi = self.__s.query(ActivitySimilarity.activity_journal_hi_id). \
             filter(ActivitySimilarity.constraint == self.__constraint,
                    ActivitySimilarity.activity_journal_lo_id == candidate,
                    (self.__max_similarity - ActivitySimilarity.similarity) / self.__max_similarity < epsilon)
@@ -171,7 +174,7 @@ class NearbyStatistics(NearbySimilarityCalculator):
     def run(self, force=False, after=None):
         super().run(force=force, after=after)
         with self._db.session_context() as s:
-            d_min, _ = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d)))
+            d_min, _ = expand_max(self._log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
             self.save(s, self.dbscan(s, d_min))
 
     def dbscan(self, s, d):

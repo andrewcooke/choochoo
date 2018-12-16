@@ -229,9 +229,13 @@ def add_topic_field(s, topic, name, sort, description=None, units=None, summary=
 
 
 def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=3,
-               start='1970', finish='2999', height=10, width=10):
+               start='1970', finish='2999', height=10, width=10, constant=NEARBY_CNAME):
+    '''
+    Add a pipeline task (and related constant) to find nearby activities in a given geographic
+    region (specified by latitude, longitude, width and height, all in degrees).
+    '''
     activity_group_constraint = str(activity_group)
-    nearby_name = name_constant(NEARBY_CNAME, activity_group)
+    nearby_name = name_constant(constant, activity_group)
     nearby = add_enum_constant(s, nearby_name, Nearby, single=True, constraint=activity_group_constraint,
                                description='Data needed to calculate nearby activities - see Nearby enum')
     set_constant(s, nearby, dumps({'constraint': constraint, 'activity_group': activity_group.name,

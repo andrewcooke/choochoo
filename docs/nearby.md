@@ -1,5 +1,5 @@
 
-2018-12-15
+2018-12-16
 
 # Nearby Activities
 
@@ -7,7 +7,8 @@ We all have favourite routes when cycling.  But even when we repeat a
 ride we make small changes - ride a little further, take a short-cut
 home, explore a new diversion.
 
-It would be good if Choochoo could identify these related routes.
+It would be good if [Choochoo](index) could identify these related
+routes.
 
 ## Contents
 
@@ -17,6 +18,8 @@ It would be good if Choochoo could identify these related routes.
       * [Measure Similarities](#measure-similarities)
       * [Cluster Activities](#cluster-activities)
     * [Configuration](#configuration)
+      * [Pipeline](#pipeline)
+      * [Constants](#constants)
   * [Results](#results)
     * [Images](#images)
     * [Diary](#diary)
@@ -110,7 +113,43 @@ value is found using an adaptive grid search.
 
 ### Configuration
 
+#### Pipeline
 
+Data are processed in Choochoo using an extensible *pipeline* of
+tasks.  This work adds a new pipeline class, `NearbyStatistics`.
+
+The [default configuration](getting-started#default-config) includes
+one instance of this class, with parameters appropriate for Santiago,
+Chile (where I live).  The next section describes how to modify these
+parameters.
+
+To add further classes (for example, to add additional groups in
+separate locations), add further instances to the pipeline table in
+the database.  This is best done using the `add_nearby` helper
+function in
+[`ch2.config.database`](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/database.py).
+
+#### Constants
+
+The pipline task reads parameters from a JSON encoded "constant" that
+can be modified by the user.  In the default configuration this is
+called `Nearby.Bike`.
+
+The current value can be displayed with:
+
+    > ch2 constants Nearby.Bike
+    Nearby.Bike: Data needed to calculate nearby activities - see Nearby enum
+    1970-01-01 00:00:00+00:00: {"constraint": "Santiago", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": -33.4, "longitude": -70.4, "height": 10, "width": 10}
+
+A new value can be given using `--set --force` (force is needed
+because you are overwriting an existing value).  For example:
+
+    > ch2 constants --set --force Nearby.Bike '{"constraint": "London", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": 51.5, "longitude": 0.1, "height": 10, "width": 10}'
+    INFO: Using database at /home/andrew/.ch2/database.sqln
+    INFO: Checking any previous values
+    INFO: Need to delete 1 ConstantJournal entries
+    INFO: Added value {"constraint": "London", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": 51.5, "longitude": 0.1, "height": 10, "width": 10} at None for Nearby.Bike
+    WARNING: You may want to (re-)calculate statistics
 
 ## Results
 
@@ -130,9 +169,9 @@ In general the grouping makes intuitive sense, although some groups
 
 ![](nearby-sc.png)
 
-The largest group (San Cristobal) is shown above (pink detail, mid
-upper left in the first image).  These all involve the main path
-through the park (and climb) nearest my house.
+The largest group (San Cristobal) is shown above (mid upper left in
+the first image).  These all involve the main path through the park
+(and climb) nearest my house.
 
 Some of the routes in this park double back on themselves.  This
 doubling may explain why such diverse routes are grouped together (see
@@ -163,7 +202,7 @@ To generate similar plots for your own rides:
   * [Install](getting-started) Choochoo (the default config is
     sufficient).
 
-  * Update the [configuration](#configuration).
+  * Adjust the [configuration](#constants).
 
   * Load your FIT data:
 

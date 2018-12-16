@@ -12,7 +12,8 @@ class DBSCAN(ABC):
 
     def run(self, candidates):
         count, label = self.scan(candidates)
-        return self.prune(count, label)
+        return sorted(self.prune(count, label), reverse=True,
+                      key=lambda g: len(g) + (min(g) / max(g)))  # try to give repeatability
 
     def prune(self, count, label):
         index = defaultdict(list)

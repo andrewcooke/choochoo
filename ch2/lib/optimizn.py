@@ -1,9 +1,10 @@
 
+
 # http://acooke.org/cute/EfficientS2.html
-def expand_max(lo, hi, n, f):
+def expand_max(log, lo, hi, n, f):
     data = [(x, f(x)) for x in (lo + i * (hi - lo) / 4 for i in range(5))]
     for _ in range(n):
-        print(data)
+        log.info('%s' % data)
         while len(data) > 3:
             w = sum(x*fx for (i, (x, fx)) in enumerate(data)) / sum(fx for (x, fx) in data)
             m = sum(x for (x, fx) in data) / len(data)

@@ -21,9 +21,11 @@ SQLite binding (for Python the `ch2.squeal.tables` package contains a
   * [Starting Jupyter](#starting-jupyter)
   * [Accessing Data](#accessing-data)
     * [Session](#session)
+    * [Helpers](#helpers)
+      * [Statistics](#statistics)
+      * [Waypoints](#waypoints)
     * [SQLAlchemy ORM Query](#sqlalchemy-orm-query)
     * [DataFrames](#dataframes)
-    * [Waypoints](#waypoints)
   * [Plotting Data](#plotting-data)
   * [Summary](#summary)
   * [Examples](#examples)
@@ -56,6 +58,35 @@ To connect to the database we need a session:
 
 where the `session` function takes arguments similar to `ch2 no-op` on
 the command line.
+
+### Helpers
+
+The techniques below are needed to fully master the data, but two
+helper functions provide simplified access.
+
+#### Statistics
+
+The `statistics` function retrieves a DataFrame of the given statistic
+names, indexed by date:
+
+    In[] > s = statistics(s, 'Active Distance', 'Heart Rate')
+
+#### Waypoints
+
+It is sometimes useful to access the sequence of data associated with
+an **ActivityJournal**.  This information is spread across multiple
+**StatisticJournal** entries, but can be extracted as a single
+DataFrame using the `waypoints` function:
+
+    In[] > from ch2.lib.date import to_time
+           aj = s.query(ActivityJournal). \
+                  filter(ActivityJournal.start > to_time('2017-08-21'),
+                         ActivityJournal.finish < to_time('2017-08-22')).one()
+           w = waypoints(s, aj.id, 'Latitude', 'Longitude', Heart Rate')
+
+The example above finds the **ActivityJournal** for a given day and
+then retrieves the associated GPS and HRM data in a time-indexed
+table.
 
 ### SQLAlchemy ORM Query
 
@@ -102,23 +133,6 @@ You may want to revise the [data model](data-model) at this point.
 
 The `ch2.data.database.Data` instance provides access to:
 
-### Waypoints
-
-It is sometimes useful to access the sequence of data associated with
-an **ActivityJournal**.  This information is spread across multiple
-**StatisticJournal** entries, but can be extracted as a single
-DataFrame using the `waypoints` function:
-
-    In[] > from ch2.lib.date import to_time
-           aj = s.query(ActivityJournal). \
-                  filter(ActivityJournal.start > to_time('2017-08-21'),
-                         ActivityJournal.finish < to_time('2017-08-22')).one()
-           w = waypoints(aj.id, 'Latitude', 'Longitude', Heart Rate')
-
-The example above finds the **ActivityJournal** for a given day and
-then retrieves the associated GPS and HRM data in a time-indexed
-table.
-
 ## Plotting Data
 
 For examples of how to plot this data see:
@@ -131,16 +145,20 @@ data into the correct format.
 
 ## Summary
 
-To analyse data you will probably work as follows:
-
-  * Find where the data are stored in the database.  To do this,
-    consult the [Data Model](data-model) document, examine the [table
-    classes](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables),
-    or look at similar wotk in the `notebooks` directory.
+  * Find where the data are stored in the database:
+    * consult the [Data Model](data-model) document;
+    * examine the [table classes](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables);
+    * look at similar work in the `notebooks` directory;
+    * explore the database using the `sqlite` client.
+    
   * Create a [session](#session) in [Jupyter](#starting-jupyter).
-  * Use a [SQLAlchemy ORM Query](#sqlalchemy-orm-query) to extract the
-    data from the database.
+  
+  * Extract the data from the database:
+    * use a [helper function](#helpers);
+    * use a [SQLAlchemy ORM Query](#sqlalchemy-orm-query).
+
   * Wrap the data in a DataFrame using `df`.
+  
   * Plot the data with Bokeh.
 
 ## Examples
