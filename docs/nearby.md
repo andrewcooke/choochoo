@@ -146,6 +146,8 @@ the appropriate diary entry.
 
 ![](nearby-diary.png)
 
+See the near-last lines, "Nearby: Santiago".
+
 It might be possible to convert these to "hyperlinks" using Urwid in a
 later release.
 

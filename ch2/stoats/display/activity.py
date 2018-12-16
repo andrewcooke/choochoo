@@ -1,16 +1,14 @@
 
-import datetime as dt
 from re import search
 
 from urwid import Text, Pile, Columns, Divider
 
-from . import Displayer
+from . import JournalDiary
 from .heart_rate import build_zones
 from ..calculate.activity import ActivityStatistics
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_M_ANY
-from ...lib.date import format_seconds, local_date_to_time
+from ...lib.date import format_seconds
 from ...lib.utils import label
-from ...squeal.tables.activity import ActivityGroup, ActivityJournal
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
@@ -18,23 +16,12 @@ from ...uweird.tui.decorators import Indent
 HRZ_WIDTH = 30
 
 
-class ActivityDiary(Displayer):
+class ActivityDiary(JournalDiary):
 
-    def _build_date(self, s, f, date):
-        start = local_date_to_time(date)
-        finish = start + dt.timedelta(days=1)
-        for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
-            for journal in s.query(ActivityJournal). \
-                    filter(ActivityJournal.finish >= start,
-                           ActivityJournal.start < finish,
-                           ActivityJournal.activity_group == activity_group). \
-                    order_by(ActivityJournal.start).all():
-                yield self.__journal_date(s, journal, date)
-
-    def __journal_date(self, s, ajournal, date):
+    def _journal_date(self, s, ajournal, date):
         zones = build_zones(s, ajournal, HRZ_WIDTH)
         details = Pile(self.__active_date(s, ajournal, date))
-        return Pile([
+        yield Pile([
             Text(ajournal.name),
             Indent(Columns([details, (HRZ_WIDTH + 2, zones)])),
             Divider(),
