@@ -61,9 +61,10 @@ extensible.*
 
 ## Latest Changes
 
-### v0.8.0 (in progress)
+### v0.8.0
 
-Nearby activities and simplified / improved data access in Jupyter.
+[Nearby activities](https://andrewcooke.github.io/choochoo/nearby) and
+simplified / improved data access in Jupyter.
 
 ### v0.7.0
 
