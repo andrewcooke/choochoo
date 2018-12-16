@@ -30,6 +30,7 @@ ACTIVITY = 'activity'
 ACTIVITY_GROUP = 'activity-group'
 ACTIVITY_GROUPS = 'activity-groups'
 ACTIVITY_JOURNALS = 'activity-journals'
+ACTIVITY_JOURNAL_ID = 'activity-journal-id'
 AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
@@ -91,6 +92,7 @@ START = 'start'
 STATISTIC_NAMES = 'statistic-names'
 STATISTIC_JOURNALS = 'statistic-journals'
 STATISTIC_QUARTILES = 'statistic-quartiles'
+TABLE = 'table'
 TABLES = 'tables'
 UNLOCK = 'unlock'
 USER = 'user'
@@ -98,6 +100,7 @@ V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
 W, WARN = 'w', 'warn'
+WAYPOINTS = 'waypoints'
 WIDTH = 'width'
 YEAR = 'year'
 
@@ -172,7 +175,7 @@ def parser():
                         help='the root directory for the default configuration')
     parser.add_argument(m(V), mm(VERBOSITY), action='store', nargs=1, default=None, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
-    parser.add_argument(m(V.upper()), mm(VERSION), action='version', version='0.8.0',
+    parser.add_argument(m(V.upper()), mm(VERSION), action='version', version='0.8.1',
                         help='display version and exit')
 
     subparsers = parser.add_subparsers()
@@ -204,33 +207,19 @@ def parser():
     data.add_argument(mm(MAX_ROWS), action='store', metavar='N', type=int, help='pandas max_rows attribute')
     data.add_argument(mm(WIDTH), action='store', metavar='N', type=int, help='pandas width attribute')
     data_sub = data.add_subparsers()
-    data_activity_groups = data_sub.add_parser(ACTIVITY_GROUPS)
-    data_activity_groups.set_defaults(sub_command=ACTIVITY_GROUPS)
-    data_activity_journals = data_sub.add_parser(ACTIVITY_JOURNALS)
-    data_activity_journals.add_argument(GROUP, action='store', metavar='GROUP', help='activity group name')
-    data_activity_journals.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
-    data_activity_journals.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
-    data_activity_journals.set_defaults(sub_command=ACTIVITY_JOURNALS)
-    data_segment_journals = data_sub.add_parser(SEGMENT_JOURNALS)
-    data_segment_journals.set_defaults(sub_command=SEGMENT_JOURNALS)
-    data_segments = data_sub.add_parser(SEGMENTS)
-    data_segments.set_defaults(sub_command=SEGMENTS)
-    data_statistic_names = data_sub.add_parser(STATISTIC_NAMES)
-    data_statistic_names.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    data_statistic_names.set_defaults(sub_command=STATISTIC_NAMES)
-    data_statistic_journals = data_sub.add_parser(STATISTIC_JOURNALS)
-    data_statistic_journals.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    data_statistic_journals.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
-    data_statistic_journals.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
-    data_statistic_journals.add_argument(mm(OWNER), action='store', nargs='?', metavar='OWNER',
-                                         help='typically the class that created the data')
-    data_statistic_journals.add_argument(mm(CONSTRAINT), action='store', nargs='?', metavar='CONSTRAINT',
-                                         help='a value that makes the name unique (eg activity group)')
-    data_statistic_journals.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
-                                         help='the schedule on which some statistics are calculated')
-    data_statistic_journals.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID',
-                                         help='the source IDs for the statistic')
-    data_statistic_journals.set_defaults(sub_command=STATISTIC_JOURNALS)
+    data_statistics = data_sub.add_parser(STATISTICS)
+    data_statistics.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
+    data_statistics.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
+    data_statistics.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
+    data_statistics.add_argument(mm(OWNER), action='store', nargs='?', metavar='OWNER',
+                                 help='typically the class that created the data')
+    data_statistics.add_argument(mm(CONSTRAINT), action='store', nargs='?', metavar='CONSTRAINT',
+                                 help='a value that makes the name unique (eg activity group)')
+    data_statistics.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
+                                 help='the schedule on which some statistics are calculated')
+    data_statistics.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
+                                 help='the source IDs for the statistic')
+    data_statistics.set_defaults(sub_command=STATISTICS)
     data_statistic_quartiles = data_sub.add_parser(STATISTIC_QUARTILES)
     data_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
     data_statistic_quartiles.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
@@ -241,11 +230,15 @@ def parser():
                                           help='a value that makes the name unique (eg activity group)')
     data_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
                                           help='the schedule on which some statistics are calculated')
-    data_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID',
+    data_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
                                           help='the source IDs for the statistic')
     data_statistic_quartiles.set_defaults(sub_command=STATISTIC_QUARTILES)
-    data_monitor_journals = data_sub.add_parser(MONITOR_JOURNALS)
-    data_monitor_journals.set_defaults(sub_command=MONITOR_JOURNALS)
+    data_table = data_sub.add_parser(TABLE)
+    data_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
+    data_table.set_defaults(sub_command=TABLE)
+    data_waypoints = data_sub.add_parser(WAYPOINTS)
+    data_waypoints.add_argument(ACTIVITY_JOURNAL_ID, action='store', metavar='ID', help='activity journal id')
+    data_waypoints.set_defaults(sub_command=WAYPOINTS)
     data.set_defaults(command=DATA, format=PRINT)
 
     default_config = subparsers.add_parser(DEFAULT_CONFIG,
