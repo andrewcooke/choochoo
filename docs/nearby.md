@@ -3,7 +3,7 @@
 
 # Nearby Activities
 
-We all have favourite routes when cycling.  But even when we repeat a
+We all have favorite routes when cycling.  But even when we repeat a
 ride we make small changes - ride a little further, take a short-cut
 home, explore a new diversion.
 
@@ -81,7 +81,7 @@ Nearby points are found by extending the Minimum Bounding Rectangle
 checking for MBR overlap.
 
 The RTree returns both the matched MBR and the ActivityJournal ID
-associated with the point.  The MBR is stored so that mutiple matches
+associated with the point.  The MBR is stored so that multiple matches
 are counted just once.
 
 No account is taken of ride direction.  Segments of travel that are
@@ -132,7 +132,7 @@ function in
 
 #### Constants
 
-The pipline task reads parameters from a JSON encoded "constant" that
+The pipeline task reads parameters from a JSON encoded "constant" that
 can be modified by the user.  In the default configuration this is
 called `Nearby.Bike`.
 
