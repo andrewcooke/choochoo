@@ -84,6 +84,9 @@ def _build_statistic_journal_query(statistic_ids, start, finish, owner, constrai
     return q
 
 
+class MissingData(Exception): pass
+
+
 def statistics(s, *statistics,
                start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None):
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
@@ -91,12 +94,13 @@ def statistics(s, *statistics,
     data, times, err_cnt = defaultdict(list), [], defaultdict(lambda: 0)
 
     def pad():
+        nonlocal data, times
         n = len(times)
         for name in statistic_names:
             if len(data[name]) != n:
                 err_cnt[name] += 1
                 if err_cnt[name] <= 1:
-                    log().warn('Missing %s at %s (only warning for this name)' % (name, times[-1]))
+                    log().warn('Missing %s at %s (single warning)' % (name, times[-1]))
                 data[name].append(None)
 
     for name, time, value in s.connection().execute(q):
