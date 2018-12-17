@@ -3,6 +3,7 @@ from math import sqrt
 from random import uniform, gauss, seed, randrange
 from time import time
 
+from ch2.arty.spherical import Global
 from ch2.arty.tree import CLRTree, MatchType, CQRTree, CERTree, LQRTree
 
 
@@ -198,14 +199,14 @@ def stress(type, n_children, n_data, check=True):
                 list(tree.get(random_box(10, 100), match=MatchType(match)))
 
 
-def test_stress():
-    for type in CLRTree, CQRTree, CERTree:
-        print('type %s' % type)
-        for n_children in 3, 4, 10:
-            print('n_children %d' % n_children)
-            for n_data in 1, 2, 3, 100:
-                print('n_data %d' % n_data)
-                stress(type, n_children, n_data)
+# def test_stress():
+#     for type in CLRTree, CQRTree, CERTree:
+#         print('type %s' % type)
+#         for n_children in 3, 4, 10:
+#             print('n_children %d' % n_children)
+#             for n_data in 1, 2, 3, 100:
+#                 print('n_data %d' % n_data)
+#                 stress(type, n_children, n_data)
 
 
 def test_latlon():
@@ -294,7 +295,30 @@ def measure_sizes():
                     return
 
 
-# for profiling
+def test_global():
+
+    def test_point(x, y, z):
+        t = Global()
+        t.add([(x, y)], z)
+        l = list(t.get_items([(x, y)]))
+        assert len(l) == 9, l
+        for p, q in l:
+            assert -0.001 < p[0][0] - x < 0.001, (p, (x, y))
+            assert -0.001 < p[0][1] - y < 0.001, (p, (x, y))
+            assert q == z, (q, z)
+
+    test_point(0.01, 0.01, 0)
+    test_point(179.9, 0.01, 1)
+    test_point(-179.9, 0.01, 2)
+    test_point(0.01, 89.99, 0)
+    test_point(179.9, 89.99, 1)
+    test_point(-179.9, 89.99, 2)
+    test_point(0.01, -89.99, 0)
+    test_point(179.9, -89.99, 1)
+    test_point(-179.9, -89.99, 2)
+
+
+        # for profiling
 # PYTHONPATH=. python -m cProfile -s tottime tests/test_arty.py
 if __name__ == '__main__':
     stress(CQRTree, 4, 1000, check=False)

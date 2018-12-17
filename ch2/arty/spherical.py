@@ -33,7 +33,7 @@ class LocalTangent:
     def denormalize(self, point):
         zx, zy = self.__zero
         x, y = point
-        return zx + x / (RADIUS * RADIAN * cos(self.__zero[1])), zy + y / (RADIUS * RADIAN)
+        return norm180(zx + x / (RADIUS * RADIAN * cos(self.__zero[1]))), zy + y / (RADIUS * RADIAN)
 
 
 class SphericalMixin(CartesianMixin):
@@ -58,42 +58,41 @@ class SQRTree(QuadraticMixin, SphericalMixin, BaseTree): pass
 class SERTree(ExponentialMixin, SphericalMixin, BaseTree): pass
 
 
-# TODO - need to patch latitude too for tangent!!!
-
-class GlobalLongitude:
+class Global:
     '''
-    Cover longitude in overlapping local trees then query both the central tree and those to either side.
-
-    We can either store three times and retrieve once, or store once and retrieve three times.
+    Tile a globe.
     '''
 
     def __init__(self, tree=SQRTree, n=36, favour_read=True):
         self.__tree = tree
         self.__n = n
-        self.__trees = [None] * n
+        self.__trees = [[None] * n for _ in range(n)]
         self.__favour_read = favour_read
 
-    def __delegate(self, i):
-        if i >= self.__n: i -= self.__n
-        if i < 0: i += self.__n
-        if self.__trees[i] is None:
+    def __norm_n(self, i):
+        while i < 0: i += self.__n
+        while i >= self.__n: i -= self.__n
+        return i
+
+    def __delegate(self, i, j):
+        i, j = self.__norm_n(i), self.__norm_n(j)
+        if self.__trees[i][j] is None:
             tree = self.__tree()
-            # set the local tangent to the centre point  TODO - check
+            # set the local tangent to the centre point
             bin_width = 360 / self.__n
             lon = (i + 0.5) * bin_width - 180
-            tree.add([(lon, 0)], None)
-            tree.delete([(lon, 0)])
-            self.__trees[i] = tree
-        return self.__trees[i]
+            lat = (j + 0.5) * bin_width - 180
+            tree.add([(lon, lat)], None)
+            tree.delete([(lon, lat)])
+            self.__trees[i][j] = tree
+        return self.__trees[i][j]
 
     def __delegates(self, points, read=True):
-        lon = norm180(points[0][0])
-        bin_width = 360 / self.__n
-        i = int((lon + 180) // bin_width)
-        yield self.__delegate(i)
-        if self.__favour_read != read:
-            yield self.__delegate(i-1)
-            yield self.__delegate(i+1)
+        lon, lat = points[0]
+        i, j = int(self.__n * lon / 360), int(self.__n * lat / 180)
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                yield self.__delegate(i + di, j + dj)
 
     def get(self, points, value=None, match=None, border=None):
         for delegate in self.__delegates(points):

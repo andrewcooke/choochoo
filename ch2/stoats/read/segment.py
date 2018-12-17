@@ -7,7 +7,7 @@ from pygeotile.point import Point
 from .activity import ActivityImporter
 from ..waypoint import filter_none
 from ...arty import MatchType
-from ...arty.spherical import LocalTangent, SQRTree, GlobalLongitude
+from ...arty.spherical import LocalTangent, SQRTree, Global
 from ...lib.date import to_time, format_time
 from ...lib.utils import sign
 from ...squeal.database import add
@@ -251,7 +251,7 @@ class SegmentImporter(ActivityImporter):
         Read segment endpoints into a global R-tree so we can detect when waypoints pass nearby.
         '''
         match_bound = self._assert_karg('match_bound', 25)
-        segments = GlobalLongitude(tree=lambda: SQRTree(default_border=match_bound, default_match=MatchType.INTERSECTS))
+        segments = Global(tree=lambda: SQRTree(default_border=match_bound, default_match=MatchType.INTERSECTS))
         for segment in s.query(Segment).filter(Segment.activity_group == agroup).all():
             segments[[segment.start]] = (True, segment.id)
             segments[[segment.finish]] = (False, segment.id)
