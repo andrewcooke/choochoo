@@ -41,7 +41,7 @@ class TypedField(ScaledField):
         self.number = field_no
         if types.is_type(name):
             self.type = types.profile_to_type(name)
-            log.warn('Overriding type (%s) for predefined %s' % (field_type, name))
+            log.warning('Overriding type (%s) for predefined %s' % (field_type, name))
         else:
             self.type = types.profile_to_type(field_type)
 
@@ -154,7 +154,7 @@ class DynamicField(Zip, RowField):
                         data, count, endian, timestamp, references, accumulate, message, **options)
                     return
         if warn:
-            self._log.warn('Could not resolve dynamic field %s' % self.name)
+            self._log.warning('Could not resolve dynamic field %s' % self.name)
         yield from super().parse(data, count, endian, timestamp, references, accumulate, message, warn=warn, **options)
 
 
@@ -183,5 +183,5 @@ class Row(namedtuple('BaseRow',
         try:
             return None if value is None else int(value)
         except ValueError:
-            log.warn('Cannot parse "%s" as a single integer', value)
+            log.warning('Cannot parse "%s" as a single integer', value)
             return None

@@ -120,6 +120,6 @@ class ImpulseStatistics(IntervalCalculator):
                         if source:  # None if no data loaded
                             self._add_response(loader, s, response, interval, source)
                         else:
-                            self._log.warn('No values for %s' % impulse.dest_name)
+                            self._log.warning('No values for %s' % impulse.dest_name)
                     start = schedule.next_frame(start)
                 loader.load()

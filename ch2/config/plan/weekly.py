@@ -42,7 +42,7 @@ class Week(Assert, ORMUtils):
 
     def __create_parent(self, log, s, root, sort):
         if self.__start.weekday():
-            log.warn('The start day (%s) is not a Monday, so the days will be rotated appropriately',
+            log.warning('The start day (%s) is not a Monday, so the days will be rotated appropriately',
                      DOW[self.__start.weekday()])
         root = self._get_or_create(s, Topic, name=root)
         schedule = Schedule('')

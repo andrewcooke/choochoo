@@ -6,8 +6,7 @@ source env/bin/activate
 pip install --upgrade pip
 pip install urwid
 pip install sqlalchemy
-pip install nose
-pip install robotframework
+pip install pytest
 pip install openpyxl
 pip install numpy
 pip install pandas

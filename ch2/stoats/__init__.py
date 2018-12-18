@@ -19,7 +19,7 @@ class BasePipeline:
             if default is None:
                 raise Exception('Missing %s parameter for %s' % (name, short_cls(self)))
             else:
-                self._log.warn('Using default for %s=%s' % (name, default))
+                self._log.warning('Using default for %s=%s' % (name, default))
                 self._kargs[name] = default
                 self.__read.add(name)  # avoid double logging
         value = self._kargs[name]

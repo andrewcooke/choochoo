@@ -18,7 +18,7 @@ class CleanUnusedStatistics(Calculator):
                 s.delete(statistic)
                 n += 1
         if n:
-            self._log.warn('Deleted %d unused Statistics' % n)
+            self._log.warning('Deleted %d unused Statistics' % n)
 
 
 # todo - empty intervals?

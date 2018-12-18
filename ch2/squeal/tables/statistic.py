@@ -43,10 +43,10 @@ class StatisticName(Base):
             s.add(statistic_name)
         else:
             if statistic_name.units != units:
-                log.warn('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
+                log.warning('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
                 statistic_name.units = units
             if statistic_name.summary != summary:
-                log.warn('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
+                log.warning('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
                 statistic_name.summary = summary
         return statistic_name
 

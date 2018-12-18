@@ -17,7 +17,7 @@ class SegmentStatistics(WaypointCalculator):
         with self._db.session_context() as s:
             SegmentJournal.clean(s)
             if 0 == s.query(count(Segment.id)).scalar():
-                self._log.warn('No segments defined in database')
+                self._log.warning('No segments defined in database')
                 return
         super().run(force=force, after=after)
 
@@ -68,7 +68,7 @@ class SegmentStatistics(WaypointCalculator):
                                      sjournal.segment, sjournal, average,
                                      sjournal.start, StatisticJournalType.FLOAT)
             else:
-                self._log.warn('No Heart Rate data')
+                self._log.warning('No Heart Rate data')
 
     def _delete_my_statistics(self, s, activity_group, after=None):
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
@@ -91,7 +91,7 @@ class SegmentStatistics(WaypointCalculator):
             else:
                 n = q.scalar()
                 if n:
-                    self._log.warn('Deleting %d statistics for %s' % (n, activity_group))
+                    self._log.warning('Deleting %d statistics for %s' % (n, activity_group))
                 else:
-                    self._log.warn('No statistics to delete for %s' % activity_group)
+                    self._log.warning('No statistics to delete for %s' % activity_group)
         s.commit()

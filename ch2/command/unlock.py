@@ -19,7 +19,7 @@ You should only use this command in the unlikely case that somehow the lock rema
     '''
     if not args[FORCE]:
         raise Exception('See `ch2 help unlock`')
-    log.warn('Removing any database lock(s).  This may cause data corruption.  See `ch2 help unlock`')
+    log.warning('Removing any database lock(s).  This may cause data corruption.  See `ch2 help unlock`')
     with db.session_context() as s:
         SystemConstant.reset_lock(s)
         log.info('Lock reset')

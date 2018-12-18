@@ -14,7 +14,7 @@ class WarnDict(dict):
             return super().__getitem__(item)
         except KeyError:
             msg = self.__msg % (item,)
-            self.__log.warn(msg)
+            self.__log.warning(msg)
             raise KeyError(msg)
 
 
@@ -30,7 +30,7 @@ class WarnList(list):
             return super().__getitem__(item)
         except IndexError:
             msg = self.__msg % item
-            self.__log.warn(msg)
+            self.__log.warning(msg)
             raise IndexError(msg)
 
 

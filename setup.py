@@ -23,8 +23,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                  install_requires=[
                      'urwid',
                      'sqlalchemy',
-                     'nose',
-                     'robotframework',
+                     'pytest',
                      'openpyxl',
                      'numpy',
                      'pandas',

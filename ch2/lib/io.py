@@ -52,7 +52,7 @@ def for_modified_files(log, s, paths, callback, owner, force=False):
         # get last scan and make sure it's up-to-date
         if path_scan:
             if hash != path_scan.md5_hash:
-                log.warn('File at %s appears to have changed since last read on %s')
+                log.warning('File at %s appears to have changed since last read on %s')
                 path_scan.md5_hash = hash
                 path_scan.last_scan = 0.0
         else:
@@ -69,7 +69,7 @@ def for_modified_files(log, s, paths, callback, owner, force=False):
                        FileScan.owner == owner).\
                 order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
             if hash_scan.path != path_scan.path:
-                log.warn('Ignoring duplicate file (details in debug log)')
+                log.warning('Ignoring duplicate file (details in debug log)')
                 log.debug('%s' % file_path)
                 log.debug('%s' % hash_scan.path)
                 # update the path to avoid triggering in future

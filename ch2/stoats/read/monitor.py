@@ -35,21 +35,21 @@ class MonitorImporter(Importer):
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.start >= start,
                        MonitorJournal.finish <= finish).all():
-            self._log.warn('Replacing %s with data from %s for %s - %s' % (mjournal, path, start, finish))
+            self._log.warning('Replacing %s with data from %s for %s - %s' % (mjournal, path, start, finish))
             s.delete(mjournal)
 
     def _check_inside(self, s, start, finish, path):
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.start <= start,
                        MonitorJournal.finish >= finish).all():
-            self._log.warn('%s already includes data from %s for %s - %s' % (mjournal, path, start, finish))
+            self._log.warning('%s already includes data from %s for %s - %s' % (mjournal, path, start, finish))
             raise AbortImportButMarkScanned()
 
     def _check_overlap(self, s, start, finish, path):
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.start < finish,
                        MonitorJournal.finish > start).all():
-            self._log.warn('%s overlaps data from %s for %s - %s' % (mjournal, path, start, finish))
+            self._log.warning('%s overlaps data from %s for %s - %s' % (mjournal, path, start, finish))
             self._log.error('Conflict between %s and %s' % (path, mjournal.fit_file))
             raise AbortImport()
 
@@ -173,7 +173,7 @@ class MonitorImporter(Importer):
                     else:
                         # we have a contradiction, so simply use the latest
                         # could maybe use max() instead?
-                        self._log.warn('Replacing %s data at %s (%s replaced by %s)' %
+                        self._log.warning('Replacing %s data at %s (%s replaced by %s)' %
                                        (STEPS, format_time(time), sjournal.value,
                                         steps_journals[time][activity].value))
                         sjournal.value = steps_journals[time][activity].value
@@ -226,7 +226,7 @@ def missing_dates(log, s):
     # and as for timezones... we just assume garmin uses the local timezone.
     latest = s.query(MonitorJournal).order_by(desc(MonitorJournal.start)).limit(1).one_or_none()
     if latest is None:
-        log.warn('No existing monitor data - ' +
+        log.warning('No existing monitor data - ' +
                  'do a bulk download instead: https://www.garmin.com/en-US/account/datamanagement/')
         return
     # find the mid-point to avoid any problems with timezones and edge cases
@@ -244,4 +244,4 @@ def missing_dates(log, s):
             yield start
             start += dt.timedelta(days=1)
     else:
-        log.warn('No dates to download')
+        log.warning('No dates to download')

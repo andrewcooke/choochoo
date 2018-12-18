@@ -66,7 +66,7 @@ class SegmentImporter(ActivityImporter):
                            (segment.name, format_time(start_time), format_time(finish_time)))
             return True
         except CalcFailed as e:
-            self._log.warn(str(e))
+            self._log.warning(str(e))
             return False
 
     def _mid(self, indices):
@@ -256,5 +256,5 @@ class SegmentImporter(ActivityImporter):
             segments[[segment.start]] = (True, segment.id)
             segments[[segment.finish]] = (False, segment.id)
         if not segments:
-            self._log.warn('No segments defined in database for %s' % agroup)
+            self._log.warning('No segments defined in database for %s' % agroup)
         return segments

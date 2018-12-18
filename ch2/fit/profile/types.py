@@ -278,7 +278,7 @@ class Types:
         if type.name in self.__profile_to_type:
             duplicate = self.__profile_to_type[type.name]
             if duplicate.size == type.size:
-                self.__log.warn('Ignoring duplicate type for %r' % type.name)
+                self.__log.warning('Ignoring duplicate type for %r' % type.name)
             else:
                 raise Exception('Duplicate type for %r with differing size (%d  %d)' %
                                 (type.name, type.size, duplicate.size))
@@ -296,7 +296,7 @@ class Types:
                 for cls in (AutoFloat, AutoInteger):
                     match = cls.pattern.match(name)
                     if match:
-                        self.__log.warn('Auto-adding type %s for %r' % (cls.__name__, name))
+                        self.__log.warning('Auto-adding type %s for %r' % (cls.__name__, name))
                         self.__add_type(cls(self.__log, name))
                         return self.profile_to_type(name)
             raise

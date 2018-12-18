@@ -14,8 +14,8 @@ class NullableLog:
     def info(self, *args):
         self.__log.info(*args)
 
-    def warn(self, *args):
-        self.__log.warn(*args)
+    def warning(self, *args):
+        self.__log.warning(*args)
 
     def error(self, *args):
         self.__log.error(*args)

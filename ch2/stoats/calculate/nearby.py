@@ -43,7 +43,7 @@ class NearbySimilarityCalculator(DbPipeline):
             self._save(s, new_ids, n_points, n_intersects, 10000)
 
     def _delete(self, s):
-        self._log.warn('Deleting similarity data for %s' % self._config.constraint)
+        self._log.warning('Deleting similarity data for %s' % self._config.constraint)
         s.query(ActivitySimilarity). \
             filter(ActivitySimilarity.constraint == self._config.constraint). \
             delete()

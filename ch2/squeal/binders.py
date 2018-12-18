@@ -48,7 +48,7 @@ class Binder:
                                 break
                             widget = self._try_descend(column, value, widget)
                     except AttributeError as e:
-                        self.__log.warn('Cannot find %s member of %s (%s): %s' %
+                        self.__log.warning('Cannot find %s member of %s (%s): %s' %
                                         (name, self.__widget, dir(self.__widget), e))
         finally:
             self.__ignore_changes = save_ignore

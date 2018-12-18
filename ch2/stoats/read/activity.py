@@ -27,7 +27,7 @@ class ActivityImporter(Importer):
         if sport in sport_to_activity:
             return self._lookup_activity_group(s, sport_to_activity[sport])
         else:
-            self._log.warn('Unrecognised sport: "%s" in %s' % (sport, path))
+            self._log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
             raise AbortImport()
 
     def _lookup_activity_group(self, s, name):
@@ -74,7 +74,7 @@ class ActivityImporter(Importer):
             if record.name == 'event' or (record.name == 'record' and record.timestamp > last_timestamp):
                 if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
                     if timespan:
-                        self._log.warn('Ignoring start with no corresponding stop (possible lost data?)')
+                        self._log.warning('Ignoring start with no corresponding stop (possible lost data?)')
                     else:
                         timespan = add(s, ActivityTimespan(activity_journal=ajournal,
                                                            start=record.value.timestamp,
@@ -105,12 +105,12 @@ class ActivityImporter(Importer):
                         ajournal.finish = record.value.timestamp
                         timespan = None
                     else:
-                        self._log.warn('Ignoring stop with no corresponding start (possible lost data?)')
+                        self._log.warning('Ignoring stop with no corresponding start (possible lost data?)')
                 if record.name == 'record':
                     last_timestamp = record.timestamp
             else:
                 if record.name == 'record':
-                    self._log.warn('Ignoring duplicate record data for %s at %s - some data may be missing' %
+                    self._log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                    (path, record.timestamp))
 
         loader.load()

@@ -66,9 +66,9 @@ class IntervalCalculator(DbPipeline):
                 else:
                     n = q.scalar()
                     if n:
-                        self._log.warn('Deleting %d intervals' % n)
+                        self._log.warning('Deleting %d intervals' % n)
                     else:
-                        self._log.warn('No intervals to delete')
+                        self._log.warning('No intervals to delete')
 
     def _filter_intervals(self, q):
         return q.filter(Interval.owner == self)
@@ -135,9 +135,9 @@ class ActivityCalculator(DbPipeline):
             else:
                 n = q.scalar()
                 if n:
-                    self._log.warn('Deleting %d statistics for %s' % (n, agroup))
+                    self._log.warning('Deleting %d statistics for %s' % (n, agroup))
                 else:
-                    self._log.warn('No statistics to delete for %s' % agroup)
+                    self._log.warning('No statistics to delete for %s' % agroup)
         s.commit()
 
     def _constrain_group(self, s, q, agroup):
@@ -153,7 +153,7 @@ class WaypointCalculator(ActivityCalculator):
         if waypoints:
             self._add_stats_from_waypoints(s, ajournal, waypoints)
         else:
-            self._log.warn('No statistics for %s' % ajournal)
+            self._log.warning('No statistics for %s' % ajournal)
 
     @abstractmethod
     def _add_stats_from_waypoints(self, s, ajournal, waypoints):

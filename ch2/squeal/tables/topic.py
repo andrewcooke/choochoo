@@ -122,8 +122,8 @@ class TopicJournal(Source):
 
     @classmethod
     def __reset_timezone(cls, log, s):
-        log.warn('Timezone has changed')
-        log.warn('Recalculating times for TopicJournal entries')
+        log.warning('Timezone has changed')
+        log.warning('Recalculating times for TopicJournal entries')
         for tj in s.query(TopicJournal).all():
             tj.time = local_date_to_time(tj.date)
         Interval.delete_all(log, s)

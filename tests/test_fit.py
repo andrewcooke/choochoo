@@ -103,7 +103,7 @@ def compare_rows(log, us, them, name, skip):
     assert us[0:3] == them[0:3] or skip, "%s != %s for %s\n(%s\n%s)" % (us[0:3], them[0:3], name, us, them)
     excess = len(them) % 3
     if excess and not any(them[-excess:]):
-        log.warn('Discarding %d empty values from reference' % excess)
+        log.warning('Discarding %d empty values from reference' % excess)
         them = them[:-excess]
     while len(them) > len(us) + 2 and not any(them[-3:]):
         them = them[:-3]

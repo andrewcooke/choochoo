@@ -41,7 +41,7 @@ class ActivityStatistics(WaypointCalculator):
                 if heart_rates:
                     self._add_float_stat(s, ajournal, MAX_MED_HR_M % target, summaries(MAX, MSR), heart_rates[0], BPM)
         else:
-            self._log.warn('No HR zones defined for %s or before' % ajournal.start)
+            self._log.warning('No HR zones defined for %s or before' % ajournal.start)
 
 
 class TimeForDistance(Chunks):

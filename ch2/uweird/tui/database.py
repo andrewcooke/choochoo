@@ -245,7 +245,7 @@ class SingleTableStatic(Binder):
             if self._have_all_keys():
                 self._write_values_to_db()
             else:
-                self._log.warn('Not saving because missing key values (%s)' % list(self._dbview.keys()))
+                self._log.warning('Not saving because missing key values (%s)' % list(self._dbview.keys()))
 
     def read_row(self, row):
         self._clear_and_set_defaults()

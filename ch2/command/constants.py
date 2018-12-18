@@ -85,7 +85,7 @@ def set_constants(log, s, constants, date, value, force):
     for constant in constants:
         constant.add_value(s, value, date=date)
         log.info('Added value %s at %s for %s' % (value, date, constant.name))
-    log.warn('You may want to (re-)calculate statistics')
+    log.warning('You may want to (re-)calculate statistics')
 
 
 def delete_constants(log, s, constants, date):
@@ -127,12 +127,12 @@ def print_constants(log, s, constants, name, date):
                     print('%s: %s' % (journal.time, journal.value))
                     found = True
                 if not found:
-                    log.warn('No values found for %s' % constant.name)
+                    log.warning('No values found for %s' % constant.name)
             print()
         else:
             journal = constant.at(s, date=date)
             if journal:
                 print('%s %s %s' % (constant.name, journal.source.time, journal.value))
             else:
-                log.warn('No values found for %s' % constant.name)
+                log.warning('No values found for %s' % constant.name)
 

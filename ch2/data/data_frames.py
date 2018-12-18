@@ -100,7 +100,7 @@ def statistics(s, *statistics,
             if len(data[name]) != n:
                 err_cnt[name] += 1
                 if err_cnt[name] <= 1:
-                    log().warn('Missing %s at %s (single warning)' % (name, times[-1]))
+                    log().warning('Missing %s at %s (single warning)' % (name, times[-1]))
                 data[name].append(None)
 
     for name, time, value in s.connection().execute(q):

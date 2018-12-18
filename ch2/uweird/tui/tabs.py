@@ -257,7 +257,7 @@ class TabNode(FocusWrap):
 
         def unpack_decorator(widget):
             if hasattr(widget, '_wrapped_widget'):
-                self.__log.warn('Widget %s (type %s) doesn\'t expose contents' % (widget, type(widget)))
+                self.__log.warning('Widget %s (type %s) doesn\'t expose contents' % (widget, type(widget)))
             elif hasattr(widget, 'base_widget'):
                 if widget == widget.base_widget:
                     self.__log.debug('Widget with no focus: %s (type %s)' % (widget, type(widget)))
