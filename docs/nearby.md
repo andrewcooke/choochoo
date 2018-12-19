@@ -191,6 +191,9 @@ See the near-last lines, "Nearby: Santiago".
 It might be possible to convert these to "hyperlinks" using Urwid in a
 later release.
 
+*UPDATE:* It was more useful to provide a list of both "closest"
+matches and "most recent" matches, based on the similarity data.
+
 ## Appendix - DIY
 
 To generate similar plots for your own rides:
