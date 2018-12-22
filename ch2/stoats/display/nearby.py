@@ -33,32 +33,51 @@ class NearbyDiary(JournalDiary):
                             Indent(Pile(rows))])
 
     def _any_time(self, s, ajournal, constraint):
-        data = [aj.activity_journal_lo.start
-                if aj.activity_journal_lo != ajournal
-                else aj.activity_journal_hi.start
-                for aj in s.query(ActivitySimilarity).
-                    filter(or_(ActivitySimilarity.activity_journal_hi_id == ajournal.id,
-                               ActivitySimilarity.activity_journal_lo_id == ajournal.id),
-                           ActivitySimilarity.constraint == constraint,
-                           ActivitySimilarity.similarity > 0.05).
-                    order_by(desc(ActivitySimilarity.similarity)).limit(6).all()]
+        data = nearby_any_time(s, ajournal, constraint=constraint)
         if data:
-            yield Text([label('Any Time: '), ' '.join(fmt(d) for d in data)])
+            yield Text([label('Any Time: '), ' '.join(fmt(d.start) for d in data)])
 
     def _earlier(self, s, ajournal, constraint):
-        ajlo = aliased(ActivityJournal)
-        ajhi = aliased(ActivityJournal)
-        data = [x[0] for x in
-                s.query(min(ajlo.start, ajhi.start)).
-                    select_from(ActivitySimilarity).
-                    join(ajhi, ActivitySimilarity.activity_journal_hi_id == ajhi.id).
-                    join(ajlo, ActivitySimilarity.activity_journal_lo_id == ajlo.id).
-                    filter(or_(ActivitySimilarity.activity_journal_hi_id == ajournal.id,
-                               ActivitySimilarity.activity_journal_lo_id == ajournal.id),
-                           ActivitySimilarity.constraint == constraint,
-                           or_(ajhi.id == ajournal.id, ajhi.start < ajournal.start),
-                           or_(ajhi.id == ajournal.id, ajlo.start < ajournal.start),
-                           ActivitySimilarity.similarity > 0.05).
-                    order_by(desc(min(ajlo.start, ajhi.start))).limit(6).all()]
+        data = nearby_earlier(s, ajournal, constraint=constraint)
         if data:
-            yield Text([label('Recent: '), ' '.join(fmt(d) for d in data)])
+            yield Text([label('Recent: '), ' '.join(fmt(d.start) for d in data)])
+
+
+def single_constraint(s, ajournal):
+    return s.query(distinct(ActivitySimilarity.constraint)). \
+        filter(or_(ActivitySimilarity.activity_journal_lo_id == ajournal.id,
+                   ActivitySimilarity.activity_journal_hi_id == ajournal.id)).scalar()
+
+
+def nearby_earlier(s, ajournal, constraint=None, threshold=0.05):
+    if constraint is None:
+        constraint = single_constraint(s, ajournal)
+    ajlo = aliased(ActivityJournal)
+    ajhi = aliased(ActivityJournal)
+    return [asm.activity_journal_lo
+            if asm.activity_journal_lo != ajournal
+            else asm.activity_journal_hi
+            for asm in s.query(ActivitySimilarity).
+                join(ajhi, ActivitySimilarity.activity_journal_hi_id == ajhi.id).
+                join(ajlo, ActivitySimilarity.activity_journal_lo_id == ajlo.id).
+                filter(or_(ActivitySimilarity.activity_journal_hi_id == ajournal.id,
+                           ActivitySimilarity.activity_journal_lo_id == ajournal.id),
+                       ActivitySimilarity.constraint == constraint,
+                       or_(ajhi.id == ajournal.id, ajhi.start < ajournal.start),
+                       or_(ajhi.id == ajournal.id, ajlo.start < ajournal.start),
+                       ActivitySimilarity.similarity > threshold).
+                order_by(desc(min(ajlo.start, ajhi.start))).limit(6).all()]
+
+
+def nearby_any_time(s, ajournal, constraint=None, threshold=0.05):
+    if constraint is None:
+        constraint = single_constraint(s, ajournal)
+    return [asm.activity_journal_lo
+            if asm.activity_journal_lo != ajournal
+            else asm.activity_journal_hi
+            for asm in s.query(ActivitySimilarity).
+                filter(or_(ActivitySimilarity.activity_journal_hi_id == ajournal.id,
+                           ActivitySimilarity.activity_journal_lo_id == ajournal.id),
+                       ActivitySimilarity.constraint == constraint,
+                       ActivitySimilarity.similarity > threshold).
+                order_by(desc(ActivitySimilarity.similarity)).limit(6).all()]

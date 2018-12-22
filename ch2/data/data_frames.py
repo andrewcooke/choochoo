@@ -5,13 +5,9 @@ import pandas as pd
 from sqlalchemy import inspect, select
 from sqlalchemy.sql.functions import coalesce
 
-from ..squeal.database import connect
-from ..squeal import ActivityJournal, StatisticName, StatisticJournal, StatisticJournalInteger, \
+from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
-from ..squeal.types import short_cls
-from ..stoats.read.segment import SegmentImporter
-from ..stoats.waypoint import WaypointReader
-
+from ..squeal.database import connect
 
 LOG = [None]
 
@@ -31,13 +27,6 @@ def log():
     if not LOG[0]:
         raise Exception('Create session first')
     return LOG[0]
-
-
-def waypoints(s, activity_journal_id, *statistics, owner=short_cls(SegmentImporter)):
-    names = dict((statistic, statistic) for statistic in statistics)
-    # int() to convert numpy types
-    ajournal = s.query(ActivityJournal).filter(ActivityJournal.id == int(activity_journal_id)).one()
-    return pd.DataFrame(WaypointReader(log(), with_timespan=False).read(s, ajournal, names, owner))
 
 
 def _collect_statistics(s, names):

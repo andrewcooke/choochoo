@@ -125,8 +125,11 @@ class ActivityCalculator(DbPipeline):
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
         for repeat in range(2):
             cte = s.query(StatisticName.id).filter(StatisticName.owner == self)
-            q = s.query(StatisticJournal). \
-                filter(StatisticJournal.statistic_name_id.in_(cte.cte()))
+            if repeat:
+                q = s.query(StatisticJournal)
+            else:
+                q = s.query(count(StatisticJournal.id))
+            q = q.filter(StatisticJournal.statistic_name_id.in_(cte.cte()))
             q = self._constrain_group(s, q, agroup)
             if after:
                 q = q.filter(StatisticJournal.time >= after)

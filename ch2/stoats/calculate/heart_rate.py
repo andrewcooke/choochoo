@@ -1,4 +1,5 @@
 
+import datetime as dt
 from collections import namedtuple
 from json import loads
 
@@ -51,6 +52,7 @@ class HeartRateStatistics(ActivityCalculator):
         self._log.debug('%s: %s' % (impulse, hr_impulse))
 
         loader = StatisticJournalLoader(self._log, s, self)
+        impulses = []
 
         sn = inspect(StatisticName).local_table
         sj = inspect(StatisticJournal).local_table
@@ -78,11 +80,17 @@ class HeartRateStatistics(ActivityCalculator):
                 duration = (time - prev_time).total_seconds()
                 if duration <= hr_impulse.max_secs:
                     heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, duration, hr_impulse)
+                    impulses.append((heart_rate_impulse, time))
                     loader.add(hr_impulse.dest_name, None, None, ajournal.activity_group, ajournal,
                                heart_rate_impulse, time, StatisticJournalFloat)
                     loader.add('%s (duration)' % hr_impulse.dest_name, S, None, ajournal.activity_group, ajournal,
                                duration, time, StatisticJournalFloat)
+            elif not impulses:
+                impulses.append((0, time))
             prev_time, prev_heart_rate_zone = time, heart_rate_zone
+
+        if impulses:
+            self._interpolate(hr_impulse.dest_name, loader, impulses, 10, ajournal)
 
         # if there are no values, add a single null so we don't re-process
         if not loader:
@@ -121,3 +129,29 @@ class HeartRateStatistics(ActivityCalculator):
                                             StatisticName.constraint == activity_group).
                                      order_by(desc(StatisticJournal.time)).all())
 
+    def _interpolate(self, name, loader, impulses, seconds, ajournal):
+        # why interpolate just this one statistic?
+        # because it's not the same as others - it's already time-based
+        # so interpolating it later is more complex.
+        # but i may change my mind
+        full_name = '%s / %d%s' % (name, seconds, S)
+
+        integral, sum = [], 0
+        for impulse, time in impulses:
+            sum += impulse
+            integral.append((sum, time))
+
+        impulse_0, time_0 = integral.pop(0)
+        time, prev = time_0, 0
+        while integral:
+            impulse_1, time_1 = integral[0]
+            delta = (time_1 - time_0).total_seconds()
+            while time <= time_1:
+                interp = impulse_0 + (impulse_1 - impulse_0) * (time - time_0).total_seconds() / delta
+                diff = (interp - prev) / seconds
+                loader.add(full_name, None, None, ajournal.activity_group, ajournal, diff, time,
+                           StatisticJournalFloat)
+                time += dt.timedelta(seconds=seconds)
+                prev = interp
+            while integral and time > integral[0][1]:
+                impulse_0, time_0 = integral.pop(0)

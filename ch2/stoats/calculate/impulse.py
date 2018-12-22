@@ -57,10 +57,12 @@ class ImpulseStatistics(IntervalCalculator):
         dt = (time - value[0]).total_seconds()
         return time, value[1] * exp(-dt / (response.tau_days * 24 * 60 * 60))
 
-    def _days(self, interval):
+    def _hours(self, interval):
         day = interval.start
         while day < interval.finish:
-            yield local_date_to_time(day), None
+            start = local_date_to_time(day)
+            for hours in range(24):
+                yield start + dt.timedelta(hours=hours), None
             day += dt.timedelta(days=1)
 
     def _add_response(self, loader, s, response, interval, source):
@@ -71,21 +73,27 @@ class ImpulseStatistics(IntervalCalculator):
         else:
             value = None
         impulses = list(self._impulses(s, source, interval))
-        days = list(self._days(interval))
-        for time, impulse in sorted(impulses + days, key=lambda x: x[0]):
-            if impulse:
-                if not value:
-                    value = (time, response.start)
-                else:
-                    value = self._decay(response, value, time)
-                value = (time, value[1] + response.scale * impulse)
-                loader.add(response.dest_name, None, MAX, source.constraint, interval, value[1], value[0],
-                           StatisticJournalFloat)
-            else:
-                if value:
-                    value = self._decay(response, value, time)
+        days = list(self._hours(interval))
+        prev_time = None
+        # move hours very slightly later in sort so that we can de-duplicate times
+        for time, impulse in sorted(impulses + days,
+                                    key=lambda x: x[0] +
+                                                  (dt.timedelta(seconds=0.01) if x[1] is None else dt.timedelta())):
+            if prev_time is None or time != prev_time:
+                if impulse:
+                    if not value:
+                        value = (time, response.start)
+                    else:
+                        value = self._decay(response, value, time)
+                    value = (time, value[1] + response.scale * impulse)
                     loader.add(response.dest_name, None, MAX, source.constraint, interval, value[1], value[0],
                                StatisticJournalFloat)
+                else:
+                    if value:
+                        value = self._decay(response, value, time)
+                        loader.add(response.dest_name, None, MAX, source.constraint, interval, value[1], value[0],
+                                   StatisticJournalFloat)
+            prev_time = time
 
     def _run_calculations(self, schedule):
 

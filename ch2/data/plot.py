@@ -1,6 +1,8 @@
 
 import datetime as dt
 
+import pandas as pd
+
 
 def col_to_boxstats(frame, name):
     '''
@@ -33,3 +35,9 @@ def bokeh_boxplot(f, col):
     f.vbar(q[1].index, dt.timedelta(days=20), q[1], q[2], fill_alpha=0)
     f.vbar(q[2].index, dt.timedelta(days=20), q[2], q[3], fill_alpha=0)
     f.segment(q[3].index, q[3], q[4].index, q[4])
+
+
+def closed_patch(x, y, zero=0):
+    x2 = x.append(pd.Series([x[len(x)-1], x[0]]))
+    y2 = y.append(pd.Series([zero, zero]))
+    return x2, y2

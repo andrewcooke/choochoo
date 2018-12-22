@@ -1,13 +1,16 @@
 
 import pandas as pd
 
-from ch2.squeal.support import Base
 from .args import SUB_COMMAND, START, FINISH, NAMES, \
     OWNER, CONSTRAINT, SCHEDULE, SOURCE_IDS, STATISTIC_QUARTILES, PRINT, FORMAT, \
-    CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS, WAYPOINTS, ACTIVITY_JOURNAL_ID
-from ..data import df, statistics, statistic_quartiles, waypoints
+    CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS
+from ..data import df, statistics, statistic_quartiles
 from ..data.data_frames import LOG
-from ..squeal import *   # used for table names
+from ..squeal import *
+from ..squeal.support import Base
+
+# to stop the import * from being deleted
+StatisticName
 
 
 def data(args, log, db):
@@ -55,8 +58,6 @@ Will print HR-related statistics from the start of 2018 for the given activity g
             frame = statistic_quartiles(s, *args[NAMES], start=args[START], finish=args[FINISH],
                                         owner=args[OWNER], constraint=args[CONSTRAINT],
                                         schedule=args[SCHEDULE], source_ids=args[SOURCE_IDS])
-        elif args[SUB_COMMAND] == WAYPOINTS:
-            frame = waypoints(s, args[ACTIVITY_JOURNAL_ID], *args[NAMES])
         else:
             raise Exception('Unexpected %s: %s' % (SUB_COMMAND, args[SUB_COMMAND]))
 

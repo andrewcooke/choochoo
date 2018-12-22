@@ -236,9 +236,6 @@ def parser():
     data_table = data_sub.add_parser(TABLE)
     data_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
     data_table.set_defaults(sub_command=TABLE)
-    data_waypoints = data_sub.add_parser(WAYPOINTS)
-    data_waypoints.add_argument(ACTIVITY_JOURNAL_ID, action='store', metavar='ID', help='activity journal id')
-    data_waypoints.set_defaults(sub_command=WAYPOINTS)
     data.set_defaults(command=DATA, format=PRINT)
 
     default_config = subparsers.add_parser(DEFAULT_CONFIG,
