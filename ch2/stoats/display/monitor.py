@@ -12,7 +12,7 @@ from ...uweird.tui.decorators import Indent
 
 class MonitorDiary(Displayer):
 
-    def _build_date(self, s, f, date):
+    def _display_date(self, s, f, date):
         columns = self.__fields(s, date)
         if columns:
             yield Pile([Text('Monitor'),
@@ -33,7 +33,7 @@ class MonitorDiary(Displayer):
         else:
             return None
 
-    def _build_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule=None):
         columns = list(self.__schedule_fields(s, f, date, schedule))
         if columns:
             yield Pile([Text('Monitor'),

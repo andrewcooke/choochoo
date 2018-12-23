@@ -18,7 +18,7 @@ from ...uweird.tui.decorators import Indent
 
 class SegmentDiary(Displayer):
 
-    def _build_date(self, s, f, date):
+    def _display_date(self, s, f, date):
         # import pdb; pdb.set_trace()
         tomorrow = local_date_to_time(date + dt.timedelta(days=1))
         today = local_date_to_time(date)
@@ -57,7 +57,7 @@ class SegmentDiary(Displayer):
         else:
             return None
 
-    def _build_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule=None):
         rows = []
         for agroup in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
             group_rows = []

@@ -2,14 +2,15 @@
 from sqlalchemy import or_, desc, distinct
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import min
-from urwid import Pile, Text
+from urwid import Pile, Text, Columns
 
 from . import JournalDiary
-from ...lib.date import to_time
+from ...lib.date import to_time, time_to_local_date
 from ...lib.utils import label
 from ...squeal import ActivityJournal
 from ...squeal import ActivitySimilarity
 from ...uweird.tui.decorators import Indent
+from ...uweird.tui.widgets import SquareButton, ColSpace, ColText
 
 
 def fmt(time):
@@ -18,29 +19,34 @@ def fmt(time):
 
 class NearbyDiary(JournalDiary):
 
-    def _build_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule=None):
         yield from []
 
-    def _journal_date(self, s, ajournal, date):
+    def _journal_date(self, s, f, ajournal, date):
         for constraint in [c[0] for c in
                            s.query(distinct(ActivitySimilarity.constraint)).
                                    order_by(ActivitySimilarity.constraint).all()]:
             rows = []
-            rows += self._any_time(s, ajournal, constraint)
-            rows += self._earlier(s, ajournal, constraint)
+            rows += self._any_time(s, f, ajournal, constraint)
+            rows += self._earlier(s, f, ajournal, constraint)
             if rows:
                 yield Pile([Text(constraint),
                             Indent(Pile(rows))])
 
-    def _any_time(self, s, ajournal, constraint):
-        data = nearby_any_time(s, ajournal, constraint=constraint)
-        if data:
-            yield Text([label('Any Time: '), ' '.join(fmt(d.start) for d in data)])
+    def _on_press(self, w, time):
+        self._diary._change_date(time_to_local_date(time))
 
-    def _earlier(self, s, ajournal, constraint):
-        data = nearby_earlier(s, ajournal, constraint=constraint)
+    def _buttons(self, f, title, data):
         if data:
-            yield Text([label('Recent: '), ' '.join(fmt(d.start) for d in data)])
+            btns = [(len(fmt(d.start)) + 2,
+                     f(SquareButton(fmt(d.start), on_press=self._on_press, user_data=d.start))) for d in data]
+            yield Columns([ColText('%s: ' % title, label), *btns, ColSpace()])
+
+    def _any_time(self, s, f, ajournal, constraint):
+        yield from self._buttons(f, 'Any Time', nearby_any_time(s, ajournal, constraint=constraint))
+
+    def _earlier(self, s, f, ajournal, constraint):
+        yield from self._buttons(f, 'Earlier', nearby_earlier(s, ajournal, constraint=constraint))
 
 
 def single_constraint(s, ajournal):

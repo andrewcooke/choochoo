@@ -18,10 +18,10 @@ from ...uweird.tui.decorators import Indent
 
 class ImpulseDiary(Displayer):
 
-    def _build_date(self, s, f, date):
-        yield from self._build_schedule(s, f, date, schedule=Schedule('d'))
+    def _display_date(self, s, f, date):
+        yield from self._display_schedule(s, f, date, schedule=Schedule('d'))
 
-    def _build_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule=None):
 
         fitness = self._assert_karg('fitness')
         fatigue = self._assert_karg('fatigue')

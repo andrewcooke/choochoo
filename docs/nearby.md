@@ -180,19 +180,15 @@ comment on double-counting above).
 
 ### Diary
 
-Within Choochoo's diary the nearby activities are listed as dates.
-These are easily copied and pasted onto the command line, leading to
-the appropriate diary entry.
+Choochoo's diary displays both "closest" matches and "most recent"
+matches, based on the similarity data.  The grouping is not used here.
+Instead, similarity measures with a cut-off provides a more flexible
+set of references.
 
 ![](nearby-diary.png)
 
-See the near-last lines, "Nearby: Santiago".
-
-It might be possible to convert these to "hyperlinks" using Urwid in a
-later release.
-
-*UPDATE:* It was more useful to provide a list of both "closest"
-matches and "most recent" matches, based on the similarity data.
+See the near-last lines, under "Santiago".  These are "links" that
+display the appropriate diary page when selected.
 
 ## Appendix - DIY
 

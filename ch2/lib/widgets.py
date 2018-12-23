@@ -75,14 +75,14 @@ class DateSwitcher(App):
         if key.startswith('meta'):
             c = key[-1]
             if c.lower() in (DAY, WEEK, MONTH, YEAR, 't'):
-                self._change_date(c)
+                self._next_prev_date(c)
                 return
             if c.lower() == 'a':
-                self._change_activity(c)
+                self._next_prev_activity(c)
                 return
         return super().keypress(size, key)
 
-    def _change_activity(self, c):
+    def _next_prev_activity(self, c):
         s = self._session
         q = s.query(ActivityJournal)
         time = local_date_to_time(self._date)
@@ -92,20 +92,22 @@ class DateSwitcher(App):
             q = q.filter(ActivityJournal.start >= (time + dt.timedelta(days=1))).order_by(ActivityJournal.start)
         journal = q.limit(1).one_or_none()
         if journal:
-            self.__date = self._new_date(time_to_local_date(journal.start))
-            self.rebuild()
+            self._change_date(time_to_local_date(journal.start))
 
-    def _change_date(self, c):
+    def _next_prev_date(self, c):
         if c == 't':
             date = dt.date.today()
         else:
             delta = (-1 if c == c.lower() else 1, c.lower())
             self.save()
             date = add_date(self.__date, delta)
-        self.__date = self._new_date(date)
+        self._change_date(date)
+
+    def _change_date(self, date):
+        self.__date = self._refine_new_date(date)
         self.rebuild()
 
-    def _new_date(self, date):
+    def _refine_new_date(self, date):
         '''
         Hook for subclasses
         '''

@@ -14,7 +14,7 @@ from ..lib.widgets import DateSwitcher
 from ..squeal.database import add
 from ..squeal.tables.pipeline import PipelineType
 from ..squeal.tables.topic import Topic, TopicJournal
-from ..stoats.display import build_pipeline
+from ..stoats.display import display_pipeline
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
@@ -157,7 +157,7 @@ class DailyDiary(Diary):
         return tjournal
 
     def _display_pipeline(self, s, f):
-        yield from build_pipeline(self._log, s, PipelineType.DIARY, f, self._date)
+        yield from display_pipeline(self._log, s, f, self._date, self)
 
 
 class ScheduleDiary(Diary):
@@ -167,12 +167,12 @@ class ScheduleDiary(Diary):
 
     def __init__(self, log, db, date, schedule):
         self._schedule = schedule
-        super().__init__(log, db, self._new_date(date))
+        super().__init__(log, db, self._refine_new_date(date))
 
     def _header(self):
         return Text(self._date.strftime('%Y-%m-%d') + ' - Summary for %s' % self._schedule.describe())
 
-    def _new_date(self, date):
+    def _refine_new_date(self, date):
         return self._schedule.start_of_frame(date)
 
     def _topics(self, s):
@@ -191,5 +191,5 @@ class ScheduleDiary(Diary):
         yield from summary_columns(self._log, s, f, self._date, self._schedule, names)
 
     def _display_pipeline(self, s, f):
-        yield from build_pipeline(self._log, s, PipelineType.DIARY, f, self._date, schedule=self._schedule)
+        yield from display_pipeline(self._log, s, PipelineType.DIARY, f, self._date, self, schedule=self._schedule)
 

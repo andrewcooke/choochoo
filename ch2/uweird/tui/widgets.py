@@ -84,11 +84,14 @@ class Nullable(FocusWrap):
         emit_signal(self, 'change', self, value)
 
 
-def ColText(text):
+def ColText(text, format=None):
     """
     Shorthand for fixed width, literal column.
     """
-    return len(text), Text(text)
+    n = len(text)
+    if format:
+        text = [format(text)]
+    return n, Text(text)
 
 
 def ColSpace(weight=1):

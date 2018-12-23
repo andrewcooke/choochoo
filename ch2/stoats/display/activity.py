@@ -18,7 +18,7 @@ HRZ_WIDTH = 30
 
 class ActivityDiary(JournalDiary):
 
-    def _journal_date(self, s, ajournal, date):
+    def _journal_date(self, s, f, ajournal, date):
         zones = build_zones(s, ajournal, HRZ_WIDTH)
         details = Pile(self.__active_date(s, ajournal, date))
         yield Pile([
@@ -66,7 +66,7 @@ class ActivityDiary(JournalDiary):
     def __format_value(self, sjournal, date):
         return ['%s ' % sjournal.formatted()] + sjournal.measures_as_text(date)
 
-    def _build_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule=None):
         columns = list(self.__schedule_fields(s, f, date, schedule))
         if columns:
             yield Pile([Text('Activities'),
