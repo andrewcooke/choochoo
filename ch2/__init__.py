@@ -72,7 +72,6 @@ def main():
                 raise Exception('No command given (try `ch2 help`)')
     except KeyboardInterrupt:
         log.critical('User abort')
-        pass
     except Exception as e:
         log.critical(e)
         log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
