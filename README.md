@@ -53,7 +53,8 @@ the data.  Example workbooks are included in the source.
 The data are stored in an "open" format, directly accessible by third
 party tools, and easily backed-up (eg by copying the database file).
 When the database format changes scripts are provided to migrate
-existing data (see package `ch2.migraine`).
+existing data (see package `ch2.migraine`).  Data extracted from FIT
+files are *not* migrated - they must be re-imported.
 
 Support libraries include FIT file parsing and spatial R-Trees.
 
