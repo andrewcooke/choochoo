@@ -130,6 +130,9 @@ class HeartRateStatistics(ActivityCalculator):
                                      order_by(desc(StatisticJournal.time)).all())
 
     def _interpolate(self, name, loader, impulses, seconds, ajournal):
+
+        # IMPORTANT - display code assumes 'HR Impulse / 10s' exists
+
         # why interpolate just this one statistic?
         # because it's not the same as others - it's already time-based
         # so interpolating it later is more complex.
