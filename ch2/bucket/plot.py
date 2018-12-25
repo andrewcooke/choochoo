@@ -1,20 +1,28 @@
 
 import datetime as dt
 
+import pandas as pd
 from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis
+from bokeh.palettes import Inferno
 from bokeh.plotting import figure
 from bokeh.tile_providers import STAMEN_TERRAIN
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
-from ..stoats.names import TIME
+from ..stoats.names import TIME, HR_ZONE
 
 
-def dot_map(n, x, y, size):
+def dot_map(n, x1, y1, size, x2=None, y2=None):
+
     f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator')
-    f.circle(x=x, y=y, line_alpha=0, fill_color='red', size=size, fill_alpha=0.03)
-    f.line(x=x, y=y, line_color='black')
+    f.circle(x=x1, y=y1, line_alpha=0, fill_color='red', size=size, fill_alpha=0.03)
+    f.line(x=x1, y=y1, line_color='black')
+
+    if x2 is not None:
+        f.line(x=x2, y=y2, line_color='grey')
+
     f.add_tile(STAMEN_TERRAIN, alpha=0.1)
     f.axis.visible = False
+
     f.toolbar_location = None
     return f
 
@@ -54,7 +62,6 @@ def line_diff(nx, ny, xlabel, y1, y2=None):
             f.patch(x=y2.index, y=y2, color='red', alpha=0.1, y_range_name='delta')
 
     f.toolbar_location = None
-
     return f
 
 
@@ -84,7 +91,6 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
         f.patch(x=y2.index * sample, y=y2, color='red', alpha=0.1, y_range_name='delta')
 
     f.toolbar_location = None
-
     return f
 
 
@@ -111,7 +117,6 @@ def health(nx, ny, ftn, ftg, hr):
         f.line(x=hr.index, y=hr, color='red', line_alpha=0.4, y_range_name=hr.name)
 
     f.toolbar_location = None
-
     return f
 
 
@@ -136,5 +141,23 @@ def activity(nx, ny, st, at):
         f.yaxis[1].formatter = PrintfTickFormatter(format='')
 
     f.toolbar_location = None
-
     return f
+
+
+def heart_rate_zones(nx, ny, hrz):
+
+    max_z, n_sub = 5, 5
+
+    bins = pd.interval_range(start=1, end=max_z+1, periods=n_sub * max_z, closed='left')
+    c = [Inferno[6][int(b.left)-1] for b in bins]
+    hrz_categorized = pd.cut(hrz, bins)
+    counts = hrz_categorized.groupby(hrz_categorized).count()
+
+    f = figure(plot_width=nx, plot_height=ny, x_range=Range1d(start=1, end=max_z+1), x_axis_label=HR_ZONE)
+    f.quad(left=counts.index.categories.left, right=counts.index.categories.right, top=counts, bottom=0,
+           color=c, fill_alpha=0.2)
+    f.yaxis.visible = False
+
+    f.toolbar_location = None
+    return f
+

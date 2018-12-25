@@ -2,20 +2,19 @@
 import datetime as dt
 
 import numpy as np
-from bokeh.layouts import column, row, widgetbox
-from bokeh.models import Div
+from bokeh.layouts import column, row
 
 from ch2.squeal import ActivityGroup
 from .data_frame import interpolate_to
-from .plot import dot_map, line_diff, cumulative, health, activity
+from .plot import dot_map, line_diff, cumulative, health, activity, heart_rate_zones
 from .server import show
 from ..data import session, statistics, log
 from ..lib.date import local_date_to_time, format_time, format_seconds
 from ..squeal import ActivityJournal
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.display.nearby import nearby_any_time
-from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, REST_HR, \
-    DAILY_STEPS, ACTIVE_DISTANCE, ACTIVE_TIME
+from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
+    REST_HR, DAILY_STEPS, ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE
 
 DISTANCE_KM = '%s / km' % DISTANCE
 SPEED_KMH = '%s / kmh' % SPEED
@@ -24,10 +23,38 @@ HR_10 = 'HR Impulse / 10s'
 LOG_FITNESS = 'Log %s' % FITNESS
 LOG_FATIGUE = 'Log %s' % FATIGUE
 
+TEMPLATE = '''
+{% block css_resources %}
+  {{ super() }}
+  <style>
+body {
+  background-color: white;
+}
+.centre {
+  text-align: center
+}
+.centre > div {
+  display: inline-block;
+}
+table {
+  margin: 20px;
+  border-spacing: 10px;
+}
+  </style>
+{% endblock %}
+{% block inner_body %}
+  <div class='centre'>
+  <h1>{{ header }}</h1>
+  {{ super() }}
+  {{ caption }}
+  </div>
+{% endblock %}
+'''
+
 
 def comparison(log, s, group, aj1, aj2=None):
 
-    names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, SPEED, HR_10]
+    names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, SPEED, HR_ZONE, HR_10]
 
     st1 = statistics(s, *names, source_ids=[aj1.id])
     st1[DISTANCE_KM] = st1[DISTANCE]/1000
@@ -43,7 +70,12 @@ def comparison(log, s, group, aj1, aj2=None):
     side = 300
     mx, mn = st1_10[HR_10].max(), st1_10[HR_10].min()
     st1_10['size'] = side * ((st1_10[HR_10] - mn) / (mx - mn)) ** 3 / 10
-    map = dot_map(side, st1_10[SPHERICAL_MERCATOR_X], st1_10[SPHERICAL_MERCATOR_Y], st1_10['size'])
+    x1, y1 = st1_10[SPHERICAL_MERCATOR_X], st1_10[SPHERICAL_MERCATOR_Y]
+    if aj2:
+        x2, y2 = st2_10[SPHERICAL_MERCATOR_X], st2_10[SPHERICAL_MERCATOR_Y]
+    else:
+        x2, y2 = None, None
+    map = dot_map(side, x1, y1, st1_10['size'], x2, y2)
 
     y1 = st1_10[HR_10]
     y1.index = st1_10[DISTANCE_KM]  # could be left as time
@@ -55,6 +87,8 @@ def comparison(log, s, group, aj1, aj2=None):
     hr10_line = line_diff(700, 200, DISTANCE_KM, y1, y2)
     hr10_cumulative = cumulative(200, 200, y1, y2)
 
+    hrz_histogram = heart_rate_zones(200, 200, st1_10[HR_ZONE])
+
     y1 = st1_10[DISTANCE_KM]
     c1 = st1_10[SPEED_KMH]
     if aj2:
@@ -62,8 +96,8 @@ def comparison(log, s, group, aj1, aj2=None):
         c2 = st2_10[SPEED_KMH]
     else:
         c2 = None
-    dist_line = line_diff(450, 150, TIME, y1, y2)
-    dist_cumulative = cumulative(150, 150, c1, c2)
+    dist_line = line_diff(500, 200, TIME, y1, y2)
+    dist_cumulative = cumulative(200, 200, c1, c2)
 
     finish = aj1.finish + dt.timedelta(days=1)  # to show new level
     start = finish - dt.timedelta(days=365)
@@ -85,18 +119,32 @@ def comparison(log, s, group, aj1, aj2=None):
 
     activity_line = activity(600, 150, st_ff[DAILY_STEPS], st_ac[ACTIVE_TIME])  # last could be distance
 
-    at = st_ac.loc[st_ac.index == aj1.start][ACTIVE_TIME][0]
-    ad = st_ac.loc[st_ac.index == aj1.start][ACTIVE_DISTANCE][0] / 1000
-    comparison = ('<p>Compared to %s</p>' % format_time(aj2.start)) if aj2 else ''
-    text = widgetbox(Div(text=('<p>%s</p><p>%s: %s</p><p>%s: %.2fkm</p>' + comparison) %
-                              (format_time(aj1.start), ACTIVE_TIME, format_seconds(at), ACTIVE_DISTANCE, ad),
-                         width=300, height=150))
+    # at = st_ac.loc[st_ac.index == aj1.start][ACTIVE_TIME][0]
+    # ad = st_ac.loc[st_ac.index == aj1.start][ACTIVE_DISTANCE][0] / 1000
+    # comparison = ('<p>Compared to %s</p>' % format_time(aj2.start)) if aj2 else ''
+    # text = widgetbox(Div(text=('<p>%s</p><p>%s: %s</p><p>%s: %.2fkm</p>' + comparison) %
+    #                           (format_time(aj1.start), ACTIVE_TIME, format_seconds(at), ACTIVE_DISTANCE, ad),
+    #                      width=300, height=150))
+
+    caption = '<div><table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
+    st = st_ac.loc[st_ac.index == aj1.start]
+    caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
+               (aj1.name, format_time(aj1.start), format_seconds(st[ACTIVE_TIME][0]), st[ACTIVE_DISTANCE][0] / 1000)
+    if aj2:
+        st = st_ac.loc[st_ac.index == aj2.start]  # todo - may not always be present?
+        caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
+                   (aj2.name, format_time(aj2.start), format_seconds(st[ACTIVE_TIME][0]), st[ACTIVE_DISTANCE][0] / 1000)
+    caption += '</table></div>'
 
     show(log, column(row(hr10_line, hr10_cumulative),
-                     row(column(row(dist_line, dist_cumulative),
-                                health_line,
-                                activity_line),
-                         column(map, text))))
+                     row(dist_line, dist_cumulative, hrz_histogram),
+                     row(column(health_line, activity_line),
+                         map)),
+         template=TEMPLATE, title='choochoo',
+         template_vars={
+             'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else ''),
+             'caption': caption
+         })
 
 
 if __name__ == '__main__':

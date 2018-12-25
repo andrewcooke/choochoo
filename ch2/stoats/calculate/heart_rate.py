@@ -133,10 +133,12 @@ class HeartRateStatistics(ActivityCalculator):
 
         # IMPORTANT - display code assumes 'HR Impulse / 10s' exists
 
+        # we need evenly-sampled statistics so we can do distributions over time.
         # why interpolate just this one statistic?
         # because it's not the same as others - it's already time-based
         # so interpolating it later is more complex.
         # but i may change my mind
+
         full_name = '%s / %d%s' % (name, seconds, S)
 
         integral, sum = [], 0
