@@ -1,11 +1,13 @@
 
+import datetime as dt
+
 from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
 from ..types import Time, Sort
-from ...lib.date import format_time
+from ...lib.date import format_time, local_date_to_time
 
 
 class ActivityGroup(Base):
@@ -43,6 +45,12 @@ class ActivityJournal(Source):
 
     def time_range(self, s):
         return self.start, self.finish
+
+    @classmethod
+    def at_date(cls, s, date):
+        day = local_date_to_time(date)
+        return s.query(ActivityJournal).filter(ActivityJournal.start >= day,
+                                               ActivityJournal.start < day + dt.timedelta(days=1)).all()
 
 
 class ActivityTimespan(Base):

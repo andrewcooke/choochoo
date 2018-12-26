@@ -8,7 +8,7 @@ from ch2.squeal import ActivityGroup
 from .data_frame import interpolate_to
 from .plot import dot_map, line_diff, cumulative, health, activity, heart_rate_zones
 from .server import show
-from ..data import session, statistics, log
+from ..data import session, statistics, get_log
 from ..lib.date import local_date_to_time, format_time, format_seconds
 from ..squeal import ActivityJournal
 from ..stoats.calculate.monitor import MonitorStatistics
@@ -52,17 +52,17 @@ table {
 '''
 
 
-def comparison(log, s, group, aj1, aj2=None):
+def comparison(log, s, aj1, aj2=None):
 
     names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, SPEED, HR_ZONE, HR_10]
 
-    st1 = statistics(s, *names, source_ids=[aj1.id])
+    st1 = statistics(s, *names, source_ids=[aj1.id], log=log)
     st1[DISTANCE_KM] = st1[DISTANCE]/1000
     st1[SPEED_KMH] = st1[SPEED] * 3.6
     st1_10 = interpolate_to(st1, HR_10)
 
     if aj2:
-        st2 = statistics(s, *names, source_ids=[aj2.id])
+        st2 = statistics(s, *names, source_ids=[aj2.id], log=log)
         st2[DISTANCE_KM] = st2[DISTANCE]/1000
         st2[SPEED_KMH] = st2[SPEED] * 3.6
         st2_10 = interpolate_to(st2, HR_10)
@@ -102,8 +102,8 @@ def comparison(log, s, group, aj1, aj2=None):
     finish = aj1.finish + dt.timedelta(days=1)  # to show new level
     start = finish - dt.timedelta(days=365)
 
-    st_ff = statistics(s, FITNESS, FATIGUE, DAILY_STEPS, start=start, finish=finish)
-    st_hr = statistics(s, REST_HR, owner=MonitorStatistics, start=start, finish=finish)
+    st_ff = statistics(s, FITNESS, FATIGUE, DAILY_STEPS, start=start, finish=finish, log=log)
+    st_hr = statistics(s, REST_HR, owner=MonitorStatistics, start=start, finish=finish, log=log)
     st_ff[LOG_FITNESS] = np.log10(st_ff[FITNESS])
     st_ff[LOG_FATIGUE] = np.log10(st_ff[FATIGUE])
 
@@ -113,9 +113,9 @@ def comparison(log, s, group, aj1, aj2=None):
         join(ActivityGroup). \
         filter(ActivityJournal.start >= start,
                ActivityJournal.start < finish,
-               ActivityGroup.name == group
+               ActivityGroup.id == aj1.activity_group_id
                ).all()
-    st_ac = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=[aj.id for aj in ajs])
+    st_ac = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=[aj.id for aj in ajs], log=log)
 
     activity_line = activity(600, 150, st_ff[DAILY_STEPS], st_ac[ACTIVE_TIME])  # last could be distance
 
@@ -127,13 +127,17 @@ def comparison(log, s, group, aj1, aj2=None):
     #                      width=300, height=150))
 
     caption = '<div><table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
-    st = st_ac.loc[st_ac.index == aj1.start]
-    caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-               (aj1.name, format_time(aj1.start), format_seconds(st[ACTIVE_TIME][0]), st[ACTIVE_DISTANCE][0] / 1000)
+    source_ids = [aj1.id]
     if aj2:
-        st = st_ac.loc[st_ac.index == aj2.start]  # todo - may not always be present?
+        source_ids.append(aj2.id)
+    st = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=source_ids)
+    st_aj = st.loc[st.index == aj1.start]
+    caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
+               (aj1.name, format_time(aj1.start), format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
+    if aj2:
+        st_aj = st.loc[st.index == aj2.start]
         caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-                   (aj2.name, format_time(aj2.start), format_seconds(st[ACTIVE_TIME][0]), st[ACTIVE_DISTANCE][0] / 1000)
+                   (aj2.name, format_time(aj2.start), format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
     caption += '</table></div>'
 
     show(log, column(row(hr10_line, hr10_cumulative),
@@ -153,4 +157,4 @@ if __name__ == '__main__':
     aj1 = s.query(ActivityJournal).filter(ActivityJournal.start >= day,
                                           ActivityJournal.start < day + dt.timedelta(days=1)).one()
     aj2 = nearby_any_time(s, aj1)[0]
-    comparison(log(), s, 'Bike', aj1, aj2)
+    comparison(get_log(), s, aj1, None)

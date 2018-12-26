@@ -23,10 +23,12 @@ def session(*args):
     return db.session()
 
 
-def log():
-    if not LOG[0]:
-        raise Exception('Create session first')
-    return LOG[0]
+def get_log(log=None):
+    if not log:
+        if not LOG[0]:
+            raise Exception('Create session first')
+        log = LOG[0]
+    return log
 
 
 def _collect_statistics(s, names):
@@ -77,7 +79,7 @@ class MissingData(Exception): pass
 
 
 def statistics(s, *statistics,
-               start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None):
+               start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None, log=None):
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     q = _build_statistic_journal_query(statistic_ids, start, finish, owner, constraint, source_ids, schedule)
     data, times, err_cnt = defaultdict(list), [], defaultdict(lambda: 0)
@@ -89,7 +91,7 @@ def statistics(s, *statistics,
             if len(data[name]) != n:
                 err_cnt[name] += 1
                 if err_cnt[name] <= 1:
-                    log().warning('Missing %s at %s (single warning)' % (name, times[-1]))
+                    get_log(log).warning('Missing %s at %s (single warning)' % (name, times[-1]))
                 data[name].append(None)
 
     for name, time, value in s.connection().execute(q):
@@ -106,7 +108,7 @@ def statistics(s, *statistics,
 
 
 def statistic_quartiles(s, *statistics, schedule='m',
-                        start=None, finish=None, owner=None, constraint=None, source_ids=None):
+                        start=None, finish=None, owner=None, constraint=None, source_ids=None, log=None):
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     q = s.query(StatisticMeasure). \
         join(StatisticJournal, StatisticMeasure.statistic_journal_id == StatisticJournal.id). \
@@ -127,7 +129,7 @@ def statistic_quartiles(s, *statistics, schedule='m',
     if schedule:
         q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \
             filter(Interval.schedule == schedule)
-    log().debug(q)
+    get_log(log).debug(q)
     raw_data = defaultdict(lambda: defaultdict(lambda: [0] * 5))
     for measure in q.all():
         raw_data[measure.source.start][measure.statistic_journal.statistic_name.name][measure.quartile] = \

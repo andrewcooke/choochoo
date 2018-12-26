@@ -3,15 +3,17 @@ import datetime as dt
 from abc import abstractmethod
 
 from sqlalchemy import or_
-from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT
+from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal
 
+from ch2.bucket.diary import comparison
+from ch2.stoats.display.nearby import nearby_any_time
 from .args import DATE, SCHEDULE
 from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
-from ..lib.utils import PALETTE_RAINBOW, em
+from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
-from ..squeal.database import add
+from ..squeal.database import add, ActivityJournal
 from ..squeal.tables.pipeline import PipelineType
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import display_pipeline
@@ -20,7 +22,7 @@ from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
 from ..uweird.tui.tabs import TabList
-from ..uweird.tui.widgets import DividedPile
+from ..uweird.tui.widgets import DividedPile, ArrowMenu
 
 
 @tui
@@ -69,6 +71,8 @@ class Diary(DateSwitcher):
             body.append(self.__display_topic(s, f, topic))
         for extra in self._display_pipeline(s, f):
             body.append(extra)
+        for extra in self._display_gui(s, f):
+            body.append(extra)
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([self._header(), Divider()]),
                             footer=Pile([Divider(), Text(self.__footer(), align='center')])))
@@ -112,6 +116,9 @@ class Diary(DateSwitcher):
 
     def _filter_child(self, child):
         return child.schedule.at_location(self._date)
+
+    def _display_gui(self, s, f):
+        yield from []
 
 
 class DailyDiary(Diary):
@@ -158,6 +165,22 @@ class DailyDiary(Diary):
 
     def _display_pipeline(self, s, f):
         yield from display_pipeline(self._log, s, f, self._date, self)
+
+    def _display_gui(self, s, f):
+        menus = list(self.__gui_menus(s, f))
+        if menus:
+            yield Pile([Text('GUI'), Indent(Pile(menus))])
+
+    def __gui_menus(self, s, f):
+        for aj1 in ActivityJournal.at_date(s, self._date):
+            options = [(None, 'None')] + [(aj2, aj2.name) for aj2 in nearby_any_time(s, aj1)]
+            menu = ArrowMenu(label('%s v ' % aj1.name), dict(options))
+            connect_signal(menu, 'click', self.__show_gui, (s, aj1))
+            yield f(menu)
+
+    def __show_gui(self, w, args):
+        s, aj1 = args
+        comparison(self._log, s, aj1, w.state)
 
 
 class ScheduleDiary(Diary):

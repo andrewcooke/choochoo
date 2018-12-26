@@ -1,5 +1,5 @@
 
-from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT, PACK
+from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT, PACK, ACTIVATE
 
 from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
 from .state import MutableStatefulText
@@ -300,7 +300,7 @@ class DynamicContent(TabNode):
         self._log.debug('Rebuilt %s' % self)
 
 
-class Menu(MutableStatefulText):
+class KeyMenu(MutableStatefulText):
 
     def __init__(self, caption, options, state=None):
         self.__caption = caption
@@ -339,3 +339,34 @@ class Menu(MutableStatefulText):
             self.state = self.__keys[(self.__keys.index(self.state) + 1) % len(self.__keys)]
         else:
             return key
+
+
+class ArrowMenu(MutableStatefulText):
+
+    signals = ['change', 'postchange', 'click']
+
+    def __init__(self, caption, options, state=None):
+        self.__caption = caption
+        self.__options = options
+        states = list(options.keys())
+        self.__next = dict(zip(states, states[-1:] + states[:-1]))
+        self.__prev = dict(zip(states[-1:] + states[:-1], states))
+        if state is None:
+            state = states[0]
+        if state not in options:
+            raise Exception('Illegal state')
+        super().__init__(state)
+
+    def keypress(self, size, key):
+        if key == 'left':
+            self.state = self.__prev[self.state]
+        elif key == 'right':
+            self.state = self.__next[self.state]
+        elif self._command_map[key] == ACTIVATE:
+            self._emit('click')
+        else:
+            return key
+
+    def _state_as_text(self):
+        return [self.__caption, self.__options[self.state]]
+
