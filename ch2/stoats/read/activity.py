@@ -68,7 +68,7 @@ class ActivityImporter(Importer):
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
                                           fit_file=path, name=splitext(basename(path))[0]))
 
-        timespan, warned, last_timestamp = None, 0, to_time(0.0)
+        timespan, warned, last_timestamp, last_distance = None, 0, to_time(0.0), None
         self._log.info('Importing activity data from %s' % path)
         for record in records:
             if record.name == 'event' or (record.name == 'record' and record.timestamp > last_timestamp):
@@ -94,10 +94,17 @@ class ActivityImporter(Importer):
                                   y, record.value.timestamp, StatisticJournalFloat)
                     loader.add(HEART_RATE, BPM, None, activity_group, ajournal,
                               record.none.heart_rate, record.value.timestamp, StatisticJournalInteger)
+                    if last_distance and record.none.distance and last_timestamp and record.none.enhanced_speed:
+                        estimate = record.none.distance - last_distance / (record.value.timestamp - last_timestamp).total_seconds()
+                        if abs(estimate - record.none.enhanced_speed) < 10:
+                            loader.add(SPEED, KMH, None, activity_group, ajournal,
+                                      record.none.enhanced_speed, record.value.timestamp, StatisticJournalFloat)
+                        else:
+                            self._log.debug('Bad speed (%.2f v estimate of %.2f)' %
+                                            (record.none.enhanced_speed, estimate))
                     loader.add(DISTANCE, M, None, activity_group, ajournal,
-                              record.none.distance, record.value.timestamp, StatisticJournalFloat)
-                    loader.add(SPEED, KMH, None, activity_group, ajournal,
-                              record.none.enhanced_speed, record.value.timestamp, StatisticJournalFloat)
+                               record.none.distance, record.value.timestamp, StatisticJournalFloat)
+                    last_distance = record.none.distance
                 if record.name == 'event' and record.value.event == 'timer' \
                         and record.value.event_type == 'stop_all':
                     if timespan:
