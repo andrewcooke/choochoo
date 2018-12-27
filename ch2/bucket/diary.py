@@ -4,15 +4,13 @@ import datetime as dt
 import numpy as np
 from bokeh.layouts import column, row
 
-from ch2.squeal import ActivityGroup
 from .data_frame import interpolate_to
 from .plot import dot_map, line_diff, cumulative, health, activity, heart_rate_zones
 from .server import show
-from ..data import session, statistics, get_log
-from ..lib.date import local_date_to_time, format_time, format_seconds
-from ..squeal import ActivityJournal
+from ..data import statistics
+from ..lib.date import format_time, format_seconds
+from ..squeal import ActivityGroup, ActivityJournal
 from ..stoats.calculate.monitor import MonitorStatistics
-from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     REST_HR, DAILY_STEPS, ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE
 
@@ -119,13 +117,6 @@ def comparison(log, s, aj1, aj2=None):
 
     activity_line = activity(600, 150, st_ff[DAILY_STEPS], st_ac[ACTIVE_TIME])  # last could be distance
 
-    # at = st_ac.loc[st_ac.index == aj1.start][ACTIVE_TIME][0]
-    # ad = st_ac.loc[st_ac.index == aj1.start][ACTIVE_DISTANCE][0] / 1000
-    # comparison = ('<p>Compared to %s</p>' % format_time(aj2.start)) if aj2 else ''
-    # text = widgetbox(Div(text=('<p>%s</p><p>%s: %s</p><p>%s: %.2fkm</p>' + comparison) %
-    #                           (format_time(aj1.start), ACTIVE_TIME, format_seconds(at), ACTIVE_DISTANCE, ad),
-    #                      width=300, height=150))
-
     caption = '<div><table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
     source_ids = [aj1.id]
     if aj2:
@@ -133,11 +124,13 @@ def comparison(log, s, aj1, aj2=None):
     st = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=source_ids)
     st_aj = st.loc[st.index == aj1.start]
     caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-               (aj1.name, format_time(aj1.start), format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
+               (aj1.name, format_time(aj1.start),
+                format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
     if aj2:
         st_aj = st.loc[st.index == aj2.start]
         caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-                   (aj2.name, format_time(aj2.start), format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
+                   (aj2.name, format_time(aj2.start),
+                    format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
     caption += '</table></div>'
 
     show(log, column(row(hr10_line, hr10_cumulative),
@@ -149,12 +142,3 @@ def comparison(log, s, aj1, aj2=None):
              'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else ''),
              'caption': caption
          })
-
-
-if __name__ == '__main__':
-    s = session('-v 5')
-    day = local_date_to_time('2018-02-14')
-    aj1 = s.query(ActivityJournal).filter(ActivityJournal.start >= day,
-                                          ActivityJournal.start < day + dt.timedelta(days=1)).one()
-    aj2 = nearby_any_time(s, aj1)[0]
-    comparison(get_log(), s, aj1, None)

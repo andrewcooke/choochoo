@@ -22,13 +22,13 @@ def interpolate_to_index(reference, raw, method='linear'):
 
 
 def closed_patch(y, zero=0):
+    y = y.dropna()
     x = y.index
     return y.append(pd.Series([zero, zero], index=[x[len(x)-1], x[0]]))
 
 
 def _delta(z):
-    z = z.dropna()
-    if len(z):
+    if len(z.dropna()):
         return closed_patch(z)
     else:
         return None

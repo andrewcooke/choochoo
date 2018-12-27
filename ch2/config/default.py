@@ -15,7 +15,7 @@ from ..stoats.display.impulse import ImpulseDiary
 from ..stoats.display.monitor import MonitorDiary
 from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
-from ..stoats.names import BPM, FTHR
+from ..stoats.names import BPM, FTHR, MAX_HR, MAX_SPEED
 from ..stoats.read.monitor import MonitorImporter
 from ..stoats.read.segment import SegmentImporter
 from ..uweird.fields.topic import Text, Float, Score0

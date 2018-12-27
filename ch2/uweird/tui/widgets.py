@@ -368,5 +368,9 @@ class ArrowMenu(MutableStatefulText):
             return key
 
     def _state_as_text(self):
-        return [self.__caption, self.__options[self.state]]
+        if len(self.__next) > 1:
+            l, r = '<', '>'
+        else:
+            l, r = '[', ']'
+        return [self.__caption, l, self.__options[self.state], r]
 

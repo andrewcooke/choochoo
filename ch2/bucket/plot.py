@@ -114,7 +114,7 @@ def health(nx, ny, ftn, ftg, hr):
     if len(hr):
         f.extra_y_ranges = {hr.name: Range1d(start=25, end=70)}
         f.add_layout(LinearAxis(y_range_name=hr.name, axis_label=hr.name), 'right')
-        f.line(x=hr.index, y=hr, color='red', line_alpha=0.4, y_range_name=hr.name)
+        f.circle(x=hr.index, y=hr, color='red', alpha=0.2, y_range_name=hr.name)
 
     f.toolbar_location = None
     return f
