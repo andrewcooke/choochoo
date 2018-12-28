@@ -9,7 +9,7 @@
   * [Intensity Profile](#intensity-profile)
   * [Cumulative Intensity](#cumulative-intensity)
   * [Distance v Time](#distance-v-time)
-  * [Cumulative Speed](#cumualtive-speed)
+  * [Cumulative Speed](#cumulative-speed)
   * [Heart Rate Zones](#heart-rate-zones)
   * [Yearly Fitness / Fatigue](#yearly-fitness--fatigue)
   * [Yearly Activity](#yearly-activity)
