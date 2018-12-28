@@ -3,6 +3,18 @@
 
 ![](graphic-summary.png)
 
+* [Selection](#selection)
+* [Manual Duplication](#manual-duplication)
+* [Individual Graphics](#individual-graphics)
+  * [Intensity Profile](#intensity-profile)
+  * [Cumulative Intensity](#cumulative-intensity)
+  * [Distance v Time](#distance-v-time)
+  * [Cumulative Speed](#cumualtive-speed)
+  * [Heart Rate Zones](#heart-rate-zones)
+  * [Yearly Fitness / Fatigue](#yearly-fitness--fatigue)
+  * [Yearly Activity](#yearly-activity)
+  * [Route Map](#route-map)
+
 ## Selection
 
 This screen is pushed to the browser from the diary.  Open the daily
