@@ -70,6 +70,10 @@ extensible.*
 
 ## Latest Changes
 
+### v0.9.0
+
+Choochoo has a [GUI](https://andrewcooke.github.io/choochoo/summary)!!!
+
 ### v0.8.0
 
 [Nearby activities](https://andrewcooke.github.io/choochoo/nearby) and
