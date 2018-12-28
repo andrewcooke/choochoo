@@ -15,7 +15,7 @@ def interpolate_to_index(reference, raw, method='linear'):
     reference = pd.DataFrame(True, index=reference.index, columns=['keep'])
     raw = pd.DataFrame(raw, index=raw.index)
     both = reference.merge(raw, how='outer', left_index=True, right_index=True)
-    both['keep'].loc[pd.isna(both['keep'])] = False
+    both.loc[pd.isna(both['keep']), ['keep']] = False
     both.interpolate(method=method, inplace=True)
     both = both.loc[both['keep'] == True]
     return both.drop(columns=['keep']).dropna().iloc[:, 0]
