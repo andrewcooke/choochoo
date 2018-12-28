@@ -10,7 +10,7 @@ contains only:
 * [Technical Overview](#technical-overview)
 * [Latest Changes](#latest-changes)
 
-![](docs/graphic-summary.png.png)
+![](docs/graphic-summary.png)
 
 ![](docs/all-rides-hrz.png)
 
