@@ -3,9 +3,8 @@ import datetime as dt
 
 import pandas as pd
 from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis
-from bokeh.palettes import Inferno
+from bokeh import palettes, tile_providers
 from bokeh.plotting import figure
-from bokeh.tile_providers import STAMEN_TERRAIN
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
 from ..stoats.names import TIME, HR_ZONE
@@ -20,7 +19,7 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
     if x2 is not None:
         f.line(x=x2, y=y2, line_color='grey')
 
-    f.add_tile(STAMEN_TERRAIN, alpha=0.1)
+    f.add_tile(tile_providers.STAMEN_TERRAIN, alpha=0.1)
     f.axis.visible = False
 
     f.toolbar_location = None
@@ -149,7 +148,7 @@ def heart_rate_zones(nx, ny, hrz):
     max_z, n_sub = 5, 5
 
     bins = pd.interval_range(start=1, end=max_z+1, periods=n_sub * max_z, closed='left')
-    c = [Inferno[6][int(b.left)-1] for b in bins]
+    c = [palettes.Inferno[6][int(b.left)-1] for b in bins]
     hrz_categorized = pd.cut(hrz, bins)
     counts = hrz_categorized.groupby(hrz_categorized).count()
 

@@ -1,25 +1,32 @@
 
-from bokeh.application import Application
-from bokeh.application.handlers import FunctionHandler
 from bokeh.server.server import Server
 
 
-def show(log, plot, template=None, title=None, template_vars=None):
+class SingleShotServer:
 
-    template_vars = {} if template_vars is None else template_vars
+    def __init__(self, log, plot, template=None, title=None, template_vars=None):
+        self.__log = log
+        self.__plot = plot
+        self.__template = template
+        self.__title = title
+        self.__template_vars = {} if template_vars is None else template_vars
+        self.__server = Server(self.__modify_doc)
 
-    def modify_doc(doc):
-        doc.add_root(plot)
-        doc.title = title
+        self.__server.start()
+        self.__log.info('Opening Bokeh application on http://localhost:5006/')
+        self.__server.io_loop.add_callback(self.__server.show, "/")
+        self.__server.io_loop.call_later(5, self.__stop)
+        self.__server.io_loop.start()
+
+    def __modify_doc(self, doc):
+        doc.add_root(self.__plot)
+        doc.title = self.__title
         # this extends bokeh.core.templates.FILE - see code in bokeh.embed.elements
-        doc.template = template
-        doc.template_variables.update(template_vars)
+        doc.template = self.__template
+        doc.template_variables.update(self.__template_vars)
 
-    app = Application(FunctionHandler(modify_doc))
-
-    server = Server(app)
-    server.start()
-    log.info('Opening Bokeh application on http://localhost:5006/')
-    server.io_loop.add_callback(server.show, "/")
-    server.io_loop.call_later(5, server.io_loop.stop)
-    server.io_loop.start()
+    def __stop(self):
+        self.__log.info('Stopping server')
+        self.__server.io_loop.stop()
+        self.__server.stop()
+        self.__server.unlisten()

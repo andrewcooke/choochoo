@@ -52,6 +52,7 @@ support for power meters.
   * [Scaled Heart Rate Impulse - SHRIMP](impulse)
   * [Segments](segments)
   * [Nearby Activities](nearby)
+  * [Graphic Summary](summary)
 * Development
   * [Spatial Search](rtree)
   

@@ -4,11 +4,13 @@ import datetime as dt
 import numpy as np
 from bokeh.layouts import column, row
 
+from ch2.stoats.display.nearby import nearby_any_time
 from .data_frame import interpolate_to
 from .plot import dot_map, line_diff, cumulative, health, activity, heart_rate_zones
-from .server import show
+from .server import SingleShotServer
 from ..data import statistics
-from ..lib.date import format_time, format_seconds
+from ..data.data_frame import set_log, session, get_log
+from ..lib.date import format_time, format_seconds, local_date_to_time
 from ..squeal import ActivityGroup, ActivityJournal
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
@@ -52,15 +54,16 @@ table {
 
 def comparison(log, s, aj1, aj2=None):
 
+    set_log(log)
     names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, SPEED, HR_ZONE, HR_10]
 
-    st1 = statistics(s, *names, source_ids=[aj1.id], log=log)
+    st1 = statistics(s, *names, source_ids=[aj1.id])
     st1[DISTANCE_KM] = st1[DISTANCE]/1000
     st1[SPEED_KMH] = st1[SPEED] * 3.6
     st1_10 = interpolate_to(st1, HR_10)
 
     if aj2:
-        st2 = statistics(s, *names, source_ids=[aj2.id], log=log)
+        st2 = statistics(s, *names, source_ids=[aj2.id])
         st2[DISTANCE_KM] = st2[DISTANCE]/1000
         st2[SPEED_KMH] = st2[SPEED] * 3.6
         st2_10 = interpolate_to(st2, HR_10)
@@ -100,8 +103,8 @@ def comparison(log, s, aj1, aj2=None):
     finish = aj1.finish + dt.timedelta(days=1)  # to show new level
     start = finish - dt.timedelta(days=365)
 
-    st_ff = statistics(s, FITNESS, FATIGUE, DAILY_STEPS, start=start, finish=finish, log=log)
-    st_hr = statistics(s, REST_HR, owner=MonitorStatistics, start=start, finish=finish, log=log)
+    st_ff = statistics(s, FITNESS, FATIGUE, DAILY_STEPS, start=start, finish=finish)
+    st_hr = statistics(s, REST_HR, owner=MonitorStatistics, start=start, finish=finish)
     st_ff[LOG_FITNESS] = np.log10(st_ff[FITNESS])
     st_ff[LOG_FATIGUE] = np.log10(st_ff[FATIGUE])
 
@@ -113,7 +116,7 @@ def comparison(log, s, aj1, aj2=None):
                ActivityJournal.start < finish,
                ActivityGroup.id == aj1.activity_group_id
                ).all()
-    st_ac = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=[aj.id for aj in ajs], log=log)
+    st_ac = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=[aj.id for aj in ajs])
 
     activity_line = activity(600, 150, st_ff[DAILY_STEPS], st_ac[ACTIVE_TIME])  # last could be distance
 
@@ -133,12 +136,22 @@ def comparison(log, s, aj1, aj2=None):
                     format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
     caption += '</table></div>'
 
-    show(log, column(row(hr10_line, hr10_cumulative),
-                     row(dist_line, dist_cumulative, hrz_histogram),
-                     row(column(health_line, activity_line),
-                         map)),
-         template=TEMPLATE, title='choochoo',
-         template_vars={
-             'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else ''),
-             'caption': caption
-         })
+    SingleShotServer(log, column(row(hr10_line, hr10_cumulative),
+                                 row(dist_line, dist_cumulative, hrz_histogram),
+                                 row(column(health_line, activity_line),
+                                     map)),
+                     template=TEMPLATE, title='choochoo',
+                     template_vars={
+                         'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else ''),
+                         'caption': caption
+                     })
+
+
+if __name__ == '__main__':
+    s = session('-v 5')
+    day = local_date_to_time('2018-02-14')
+    aj1 = s.query(ActivityJournal).filter(ActivityJournal.start >= day,
+                                          ActivityJournal.start < day + dt.timedelta(days=1)).one()
+    aj2 = nearby_any_time(s, aj1)[0]
+    comparison(get_log(), s, aj1, aj2)
+    comparison(get_log(), s, aj1, aj2)

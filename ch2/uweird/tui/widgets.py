@@ -349,8 +349,8 @@ class ArrowMenu(MutableStatefulText):
         self.__caption = caption
         self.__options = options
         states = list(options.keys())
-        self.__next = dict(zip(states, states[-1:] + states[:-1]))
-        self.__prev = dict(zip(states[-1:] + states[:-1], states))
+        self.__next = dict(zip(states[-1:] + states[:-1], states))
+        self.__prev = dict(zip(states, states[-1:] + states[:-1]))
         if state is None:
             state = states[0]
         if state not in options:

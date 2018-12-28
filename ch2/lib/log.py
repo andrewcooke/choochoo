@@ -1,5 +1,5 @@
 
-from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler
+from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler, NullHandler
 from logging.handlers import RotatingFileHandler
 from os.path import join
 
@@ -32,6 +32,14 @@ def make_log(args, tui=False):
         mlog.setLevel(INFO)
         mlog.addHandler(file_handler)
 
+        blog = getLogger('bokeh')
+        blog.setLevel(INFO)
+        blog.addHandler(file_handler)
+
+        tlog = getLogger('tornado')
+        tlog.setLevel(INFO)
+        tlog.addHandler(file_handler)
+
         log = getLogger(name)
         log.setLevel(DEBUG)
         log.addHandler(file_handler)
@@ -44,6 +52,8 @@ def make_log(args, tui=False):
             log.addHandler(stderr_handler)
             # slog.addHandler(stderr_handler)
             # mlog.addHandler(stderr_handler)
+            # blog.addHandler(stderr_handler)
+            # tlog.addHandler(stderr_handler)
 
         CACHE.append(log)
 

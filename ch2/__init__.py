@@ -1,4 +1,9 @@
 
+from logging import getLogger, NullHandler
+
+getLogger('bokeh').addHandler(NullHandler())
+getLogger('tornado').addHandler(NullHandler())
+
 from .command.activities import activities
 from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \

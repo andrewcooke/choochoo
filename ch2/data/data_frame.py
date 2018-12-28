@@ -9,6 +9,8 @@ from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect
 
+# because this is intended to be called from jupyter we hide the log here
+# other callers can use these routines by calling set_log() first.
 LOG = [None]
 
 
@@ -19,16 +21,18 @@ def df(query):
 
 def session(*args):
     ns, log, db = connect(args)
-    LOG[0] = log
+    set_log(log)
     return db.session()
 
 
-def get_log(log=None):
-    if not log:
-        if not LOG[0]:
-            raise Exception('Create session first')
-        log = LOG[0]
-    return log
+def get_log():
+    if not LOG[0]:
+        raise Exception('Create session first (or call set_log from within python)')
+    return LOG[0]
+
+
+def set_log(log):
+    LOG[0] = log
 
 
 def _collect_statistics(s, names):
@@ -79,7 +83,7 @@ class MissingData(Exception): pass
 
 
 def statistics(s, *statistics,
-               start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None, log=None):
+               start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None,):
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     q = _build_statistic_journal_query(statistic_ids, start, finish, owner, constraint, source_ids, schedule)
     data, times, err_cnt = defaultdict(list), [], defaultdict(lambda: 0)
@@ -91,7 +95,7 @@ def statistics(s, *statistics,
             if len(data[name]) != n:
                 err_cnt[name] += 1
                 if err_cnt[name] <= 1:
-                    get_log(log).warning('Missing %s at %s (single warning)' % (name, times[-1]))
+                    get_log().warning('Missing %s at %s (single warning)' % (name, times[-1]))
                 data[name].append(None)
 
     for name, time, value in s.connection().execute(q):
@@ -108,7 +112,7 @@ def statistics(s, *statistics,
 
 
 def statistic_quartiles(s, *statistics, schedule='m',
-                        start=None, finish=None, owner=None, constraint=None, source_ids=None, log=None):
+                        start=None, finish=None, owner=None, constraint=None, source_ids=None):
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     q = s.query(StatisticMeasure). \
         join(StatisticJournal, StatisticMeasure.statistic_journal_id == StatisticJournal.id). \
@@ -129,7 +133,7 @@ def statistic_quartiles(s, *statistics, schedule='m',
     if schedule:
         q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \
             filter(Interval.schedule == schedule)
-    get_log(log).debug(q)
+    get_log().debug(q)
     raw_data = defaultdict(lambda: defaultdict(lambda: [0] * 5))
     for measure in q.all():
         raw_data[measure.source.start][measure.statistic_journal.statistic_name.name][measure.quartile] = \

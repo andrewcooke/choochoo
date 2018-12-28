@@ -47,7 +47,7 @@ without saving).
 You can choose alternative dates by specifying a date on the command
 line or by `alt-D/W/M/Y` to move (backwards) by a day / week / month /
 year.  To move forwards hold down `shift` too.  To move to the last
-activity use `alt-A`.
+activity use `alt-A`.  To return to todat, use `alt-T`.
 
 See [configuration](configuration) for how to add additional fields.
 
@@ -55,6 +55,13 @@ See [configuration](configuration) for how to add additional fields.
 
 Above, a typical diary entry, showing notes and HR zones for an
 activity.
+
+At the very bottom of the page is a menu/button that pushes a [graphic
+summary](summary) to your browser.  This can either be of the
+selected activity alone, or compared to some similar route (use
+left/right arrow keys to select comparison; enter to display).
+
+![](graphic-summary.png)
 
 ### Re-calculating Statistics
 
