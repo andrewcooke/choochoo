@@ -56,9 +56,9 @@ def apply_slices(log, data, slices):
     return result
 
 
-def offset_tokens(state, data, offset=0):
+def offset_tokens(state, data, offset=0, warn=False):
     '''
-    this yields the offsets *after* the tokens (unlike tokens() in the tokens module).
+    this yields the offsets *after* the tokens (unlike tokens() in the read module).
     '''
     if not offset:
         file_header = FileHeader(data)
@@ -66,6 +66,8 @@ def offset_tokens(state, data, offset=0):
         yield offset, file_header
     while len(data) - offset > 2:
         token = token_factory(data[offset:], state)
+        if token.is_user:
+            token.parse(warn=warn).force()
         offset += len(token)
         yield offset, token
     # todo - need to support missing checksums
@@ -81,15 +83,19 @@ def slurp(log, state, data, initial_offset, max_record_len=None):
     return offsets of valid tokens and a flag indicating if all data were read.
     '''
     offsets_and_states = []
+    offset = initial_offset
     try:
         for offset, token in offset_tokens(state, data, initial_offset):
             if max_record_len and len(token) > max_record_len:
                 log.info('Record too large (%d > %d) at offset %d' % (len(token), max_record_len, offset))
                 return offsets_and_states, False
             offsets_and_states.append((offset, state.copy()))
+        log.info('Read complete from %d' % initial_offset)
         return offsets_and_states, True
     except Exception as e:
-        log.debug('Reading from offset %s found %d tokens before "%s"' % (initial_offset, len(offsets_and_states), e))
+        log.warn('%s at %d' % (e, offset))
+        log.info('Reading from offset %s found %d tokens before %d' %
+                 (initial_offset, len(offsets_and_states), offset))
         return offsets_and_states, False
 
 
