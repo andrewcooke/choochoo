@@ -1,6 +1,9 @@
 
+from sys import stdout
+
+from ch2.fit.profile.profile import read_fit
 from .args import PATH, DROP, OUTPUT, SLICES, mm, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
-    MAX_FWD_LEN
+    MAX_FWD_LEN, DISCARD
 from ..fit.fix import fix
 
 
@@ -23,9 +26,24 @@ all the remaining data can be parsed.
 
 Will attempt to fix the given file (in the test data from git).
     '''
-    fix(log, args[PATH], args[OUTPUT], raw=args[RAW], drop=args[DROP], slices=parse_slices(args[SLICES]),
-        warn=args[WARN], min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
-        max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN])
+
+    data = fix(log, read_fit(log, args[PATH]), drop=args[DROP], slices=parse_slices(args[SLICES]),
+               warn=args[WARN], min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
+               max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN])
+
+    out_path = args[OUTPUT]
+    if out_path:
+        with open(out_path, 'wb') as out:
+            out.write(data)
+        log.info('Wrote data to %s' % out_path)
+    elif args[DISCARD]:
+        log.info('Discarded output')
+    elif args[RAW]:
+        stdout.buffer.write(data)
+        log.info('Wrote binary data to stdout')
+    else:
+        stdout.write(data.hex())
+        log.info('Wrote data to stdout')
 
 
 def parse_slices(slices):

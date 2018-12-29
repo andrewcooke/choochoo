@@ -93,11 +93,11 @@ class FileHeader(ValidateToken):
             self.data_type = FIT
             self.data[8:12] = pack('4c', self.data_type)
         if self.has_checksum:
-            checksum = Checksum.crc(data[0:12])
+            checksum = Checksum.crc(self.data[0:12])
             if checksum != self.checksum:
                 log.warn('Fixing header checksum: %04x -> %04x' % (self.checksum, checksum))
                 self.checksum = checksum
-                data[12:14] = pack('<H', checksum)
+                self.data[12:14] = pack('<H', checksum)
 
     def describe_fields(self, types):
         yield '%s - header' % tohex(self.data[0:1])

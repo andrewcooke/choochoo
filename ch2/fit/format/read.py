@@ -1,6 +1,6 @@
 
-from ..profile.profile import load_fit
 from .tokens import State, FileHeader, token_factory, Checksum
+from ..profile.profile import read_fit, read_profile
 
 
 def tokens(log, data, types, messages, no_header=False):
@@ -19,7 +19,9 @@ def tokens(log, data, types, messages, no_header=False):
 
 
 def filtered_tokens(log, fit_path, after=0, limit=-1, warn=False, no_header=False, profile_path=None):
-    data, types, messages = load_fit(log, fit_path, warn=warn, profile_path=profile_path)
+
+    types, messages = read_profile(log, warn=warn, profile_path=profile_path)
+    data = read_fit(log, fit_path)
 
     def generator():
         for i, (offset, token) in enumerate(tokens(log, data, types, messages, no_header=no_header)):
@@ -30,7 +32,9 @@ def filtered_tokens(log, fit_path, after=0, limit=-1, warn=False, no_header=Fals
 
 
 def filtered_records(log, fit_path, after=0, limit=-1, records=None, warn=False, no_header=False, profile_path=None):
-    data, types, messages = load_fit(log, fit_path, warn=warn, profile_path=profile_path)
+
+    types, messages = read_profile(log, warn=warn, profile_path=profile_path)
+    data = read_fit(log, fit_path)
 
     def generator():
         for i, (offset, token) in enumerate((offset, token)

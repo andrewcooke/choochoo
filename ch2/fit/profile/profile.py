@@ -13,7 +13,7 @@ PROFILE_NAME = 'global-profile.pkl'
 PROFILE = []
 
 
-def read_profile(log, path, warn=False):
+def read_external_profile(log, path, warn=False):
     nlog = NullableLog(log)
     wb = xls.load_workbook(path)
     types = Types(nlog, wb['Types'], warn=warn)
@@ -21,7 +21,7 @@ def read_profile(log, path, warn=False):
     return nlog, types, messages
 
 
-def load_profile(log):
+def read_internal_profile(log):
     if not PROFILE:
         log.debug('Unpickling profile')
         input = resource_stream(__name__, PROFILE_NAME)
@@ -30,21 +30,25 @@ def load_profile(log):
     return PROFILE[0][1:]
 
 
-def load_fit(log, fit_path, warn=False, profile_path=None):
+def read_profile(log, warn=False, profile_path=None):
     if profile_path:
         log.debug('Reading profile from %s' % profile_path)
-        _nlog, types, messages = read_profile(log, profile_path, warn=warn)
+        _nlog, types, messages = read_external_profile(log, profile_path, warn=warn)
     else:
-        types, messages = load_profile(log)
+        types, messages = read_internal_profile(log)
     log.debug('Read profile')
+    return types, messages
+
+
+def read_fit(log, fit_path):
+    log.debug('Reading fit file from %s' % fit_path)
     with open(fit_path, 'rb') as input:
-        data = input.read()
-    return data, types, messages
+        return input.read()
 
 
 def pickle_profile(log, in_path, warn=False):
     log.info('Reading from %s' % in_path)
-    nlog, types, messages = read_profile(log, in_path, warn=warn)
+    nlog, types, messages = read_external_profile(log, in_path, warn=warn)
     out_path = join(dirname(__file__), PROFILE_NAME)
     nlog.set_log(None)
     log.info('Writing to %s' % out_path)
@@ -52,4 +56,4 @@ def pickle_profile(log, in_path, warn=False):
         dump((nlog, types, messages), output)
     # test loading
     log.info('Test loading from %r' % PROFILE_NAME)
-    log.info('Loaded %s, %s' % load_profile(log))
+    log.info('Loaded %s, %s' % read_internal_profile(log))

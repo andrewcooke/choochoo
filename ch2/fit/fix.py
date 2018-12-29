@@ -1,14 +1,15 @@
 
-from sys import stdout
-
 from .format.tokens import FileHeader, token_factory, Checksum, State
-from .profile.profile import load_fit
+from .profile.profile import read_profile
 
 
-def fix(log, in_path, out_path, raw=False, drop=False, slices=None, warn=False, profile_path=None,
+def fix(log, data, drop=False, slices=None, warn=False, profile_path=None,
         min_sync_cnt=3, max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200):
+
     from ch2.command.fix_fit import format_slices
-    data, types, messages = load_fit(log, in_path, warn=warn, profile_path=profile_path)
+
+    types, messages = read_profile(log, warn=warn, profile_path=profile_path)
+
     log.info('Read %d bytes' % len(data))
     if drop:
         slices = advance(log, State(log, types, messages), data,
@@ -16,20 +17,11 @@ def fix(log, in_path, out_path, raw=False, drop=False, slices=None, warn=False, 
                          max_back_cnt=max_back_cnt, max_fwd_len=max_fwd_len)
         log.info('Dropped data to find slices: %s' % format_slices(slices))
     if slices:
-        data = apply_slices(data, slices)
+        data = apply_slices(log, data, slices)
         log.info('Have %d bytes after slicing' % len(data))
     data = fix_header(log, data)
     data = fix_checksum(log, data, State(log, types, messages))
-    if out_path:
-        with open(out_path, 'wb') as out:
-            out.write(data)
-        log.info('Wrote data to %s' % out_path)
-    elif raw:
-        stdout.buffer.write(data)
-        log.info('Wrote binary data to stdout')
-    else:
-        stdout.write(data.hex())
-        log.info('Wrote data to stdout')
+    return fix_header(log, data)  # if length changed with checksum
 
 
 def fix_header(log, data):
@@ -54,10 +46,13 @@ def fix_checksum(log, data, state):
     return data
 
 
-def apply_slices(data, slices):
+def apply_slices(log, data, slices):
     result = bytearray()
     for slice in slices:
         result += data[slice]
+    dropped = len(data) - len(result)
+    if dropped:
+        log.warn('Slicing decreased length by %d bytes' % dropped)
     return result
 
 
@@ -73,6 +68,7 @@ def offset_tokens(state, data, offset=0):
         token = token_factory(data[offset:], state)
         offset += len(token)
         yield offset, token
+    # todo - need to support missing checksums
     checksum = Checksum(data)
     offset += len(checksum)
     yield offset, checksum

@@ -44,6 +44,7 @@ DELETE = 'delete'
 DESCRIBE = 'describe'
 DEV = 'dev'
 DIR = 'dir'
+DISCARD = 'discard'
 DROP = 'drop'
 F = 'f'
 FAST = 'fast'
@@ -313,6 +314,8 @@ def parser():
     fix_fit_output = fix_fit.add_mutually_exclusive_group()
     fix_fit_output.add_argument(m(O), mm(OUTPUT), action='store',
                                 help='output file for fixed data (otherwise, stdout)')
+    fix_fit_output.add_argument(mm(DISCARD), action='store_true',
+                                help='discard output (otherwise, stdout)')
     fix_fit_output.add_argument(mm(RAW), action='store_true',
                                 help='raw binary to stdout (otherwise, hex encoded)')
     fix_fit_stage = fix_fit.add_mutually_exclusive_group()
@@ -320,15 +323,15 @@ def parser():
                                help='search for data that can be dropped to give a successful parse')
     fix_fit_stage.add_argument(mm(SLICES), action='store', metavar='A:B,C:D,...',
                                help='data slices to pick')
-    fix_fit.add_argument(mm(MIN_SYNC_CNT), action='store', type=int, metavar='N',
+    fix_fit.add_argument(mm(MIN_SYNC_CNT), action='store', type=int, metavar='N', default=3,
                          help='minimum number of records to read for synchronization')
-    fix_fit.add_argument(mm(MAX_RECORD_LEN), action='store', type=int, metavar='N',
+    fix_fit.add_argument(mm(MAX_RECORD_LEN), action='store', type=int, metavar='N', default=None,
                          help='maximum record length')
-    fix_fit.add_argument(mm(MAX_DROP_CNT), action='store', type=int, metavar='N',
+    fix_fit.add_argument(mm(MAX_DROP_CNT), action='store', type=int, metavar='N', default=1,
                          help='maximum number of gaps to drop')
-    fix_fit.add_argument(mm(MAX_BACK_CNT), action='store', type=int, metavar='N',
+    fix_fit.add_argument(mm(MAX_BACK_CNT), action='store', type=int, metavar='N', default=3,
                          help='maximum number of readable records to discard in a single gap')
-    fix_fit.add_argument(mm(MAX_FWD_LEN), action='store', type=int, metavar='N',
+    fix_fit.add_argument(mm(MAX_FWD_LEN), action='store', type=int, metavar='N', default=200,
                          help='maximum number of bytes to drop in a single gap')
     fix_fit.set_defaults(command=FIX_FIT)
 
