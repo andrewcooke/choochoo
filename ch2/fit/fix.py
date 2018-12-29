@@ -3,7 +3,7 @@ from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
 
 
-def fix(log, data, drop=False, slices=None, warn=False, profile_path=None,
+def fix(log, data, drop=False, slices=None, warn=False, force=True, profile_path=None,
         min_sync_cnt=3, max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200):
 
     from ch2.command.fix_fit import format_slices
@@ -12,7 +12,7 @@ def fix(log, data, drop=False, slices=None, warn=False, profile_path=None,
 
     log.info('Read %d bytes' % len(data))
     if drop:
-        slices = advance(log, State(log, types, messages), data,
+        slices = advance(log, State(log, types, messages), data, warn=warn, force=force,
                          min_sync_cnt=min_sync_cnt, max_record_len=max_record_len, max_drop_cnt=max_drop_cnt,
                          max_back_cnt=max_back_cnt, max_fwd_len=max_fwd_len)
         log.info('Dropped data to find slices: %s' % format_slices(slices))
@@ -31,13 +31,13 @@ def fix_header(log, data):
         data[:len(header)] = header.data
         return data
     except:
-        log.warn('Could not parse header so pre-pending new header')
+        log.error('Could not parse header so pre-pending new header')
         # todo - need protocol version etc
         raise NotImplementedError()
 
 
 def fix_checksum(log, data, state):
-    *_, (_, checksum) = offset_tokens(state.copy(), data)
+    *_, (_, checksum) = offset_tokens(state.copy(), data, warn=False, force=False)
     if not isinstance(checksum, Checksum):
         data += [0, 0]
         return fix_checksum(log, data, state)
@@ -56,7 +56,7 @@ def apply_slices(log, data, slices):
     return result
 
 
-def offset_tokens(state, data, offset=0, warn=False):
+def offset_tokens(state, data, offset=0, warn=False, force=True):
     '''
     this yields the offsets *after* the tokens (unlike tokens() in the read module).
     '''
@@ -67,7 +67,9 @@ def offset_tokens(state, data, offset=0, warn=False):
     while len(data) - offset > 2:
         token = token_factory(data[offset:], state)
         if token.is_user:
-            token.parse(warn=warn).force()
+            record = token.parse(warn=warn)
+            if force:
+                record.force()
         offset += len(token)
         yield offset, token
     # todo - need to support missing checksums
@@ -76,7 +78,7 @@ def offset_tokens(state, data, offset=0, warn=False):
     yield offset, checksum
 
 
-def slurp(log, state, data, initial_offset, max_record_len=None):
+def slurp(log, state, data, initial_offset, warn=False, force=True, max_record_len=None):
     '''
     read as much as possible starting at the given offset.
 
@@ -85,7 +87,7 @@ def slurp(log, state, data, initial_offset, max_record_len=None):
     offsets_and_states = []
     offset = initial_offset
     try:
-        for offset, token in offset_tokens(state, data, initial_offset):
+        for offset, token in offset_tokens(state, data, initial_offset, warn=warn, force=force):
             if max_record_len and len(token) > max_record_len:
                 log.info('Record too large (%d > %d) at offset %d' % (len(token), max_record_len, offset))
                 return offsets_and_states, False
@@ -93,16 +95,16 @@ def slurp(log, state, data, initial_offset, max_record_len=None):
         log.info('Read complete from %d' % initial_offset)
         return offsets_and_states, True
     except Exception as e:
-        log.warn('%s at %d' % (e, offset))
-        log.info('Reading from offset %s found %d tokens before %d' %
-                 (initial_offset, len(offsets_and_states), offset))
+        log.debug('%s at %d' % (e, offset))
+        log.debug('Reading from offset %s found %d tokens before %d' %
+                  (initial_offset, len(offsets_and_states), offset))
         return offsets_and_states, False
 
 
 class Backtrack(Exception): pass
 
 
-def advance(log, initial_state, data, drop_count=0, initial_offset=0,
+def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False, force=True,
             min_sync_cnt=3, max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200):
     '''
     try to synchronize on the stream and then read as much as possible.  if reading later fails,
@@ -113,7 +115,8 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0,
     "synchronize" means progressively discard data until some number of records smaller than
     some length can be read.
     '''
-    offsets_and_states, complete = slurp(log, initial_state, data, initial_offset, max_record_len=max_record_len)
+    offsets_and_states, complete = slurp(log, initial_state, data, initial_offset,
+                                         warn=warn, force=force, max_record_len=max_record_len)
     if offsets_and_states:
         log.debug('%d: Read %d records; offset %d to %d' %
                   (drop_count, len(offsets_and_states), initial_offset, offsets_and_states[-1][0]))
@@ -127,6 +130,7 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0,
         raise Backtrack('No more drops')
     for back_cnt in range(1, min(max_back_cnt + 1, len(offsets_and_states))):
         offset, state = offsets_and_states[-back_cnt]
+        log.info('Searching forwards from offset %d after dropping %d records' % (offset, back_cnt-1))
         for delta in range(1, max_fwd_len):
             try:
                 log.debug('%d: Retrying (drop %d, skip %d) at offset %d' %

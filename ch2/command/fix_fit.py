@@ -3,7 +3,7 @@ from sys import stdout
 
 from ch2.fit.profile.profile import read_fit
 from .args import PATH, DROP, OUTPUT, SLICES, mm, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
-    MAX_FWD_LEN, DISCARD
+    MAX_FWD_LEN, DISCARD, FORCE
 from ..fit.fix import fix
 
 
@@ -28,7 +28,7 @@ Will attempt to fix the given file (in the test data from git).
     '''
 
     data = fix(log, read_fit(log, args[PATH]), drop=args[DROP], slices=parse_slices(args[SLICES]),
-               warn=args[WARN], min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
+               warn=args[WARN], force=args[FORCE], min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
                max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN])
 
     out_path = args[OUTPUT]

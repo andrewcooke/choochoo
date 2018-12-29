@@ -51,6 +51,7 @@ FAST = 'fast'
 FIELDS = 'fields'
 FINISH = 'finish'
 FORMAT = 'format'
+FORCE = 'force'
 FTHR = 'fthr'
 FORCE, F = 'force', 'f'
 GREP = 'grep'
@@ -119,6 +120,7 @@ YEAR = 'year'
 
 def mm(name): return '--' + name
 def m(name): return '-' + name
+def no(name): return mm('no-%s' % name)
 
 
 VARIABLE = compile(r'(.*(?:[^$]|^))\${(\w+)\}(.*)')
@@ -311,6 +313,8 @@ def parser():
                          help='path to fit file')
     fix_fit.add_argument(m(W), mm(WARN), action='store_true',
                          help='additional warning messages')
+    fix_fit.add_argument(no(FORCE), action='store_false', dest=FORCE,
+                         help='don\'t parse record contents')
     fix_fit_output = fix_fit.add_mutually_exclusive_group()
     fix_fit_output.add_argument(m(O), mm(OUTPUT), action='store',
                                 help='output file for fixed data (otherwise, stdout)')
