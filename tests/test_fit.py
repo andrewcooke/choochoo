@@ -8,7 +8,7 @@ from sys import stdout
 from tempfile import TemporaryDirectory
 
 from ch2.command.args import FIELDS
-from ch2.fit.format.read import filtered_records
+from ch2.fit.format.read import filtered_records, filtered_tokens
 from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_profile
@@ -176,4 +176,3 @@ def test_timestamp_16():
     for record in records:
         if record.name == 'monitoring':
             print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
-

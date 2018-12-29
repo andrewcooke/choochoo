@@ -1,9 +1,11 @@
 
+import datetime as dt
+from abc import abstractmethod
 from collections import defaultdict, Counter
 from struct import unpack
 
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
-from ..profile.types import Date, timestamp_to_time
+from ..profile.types import timestamp_to_time, time_to_timestamp
 from ...lib.data import WarnDict, tohex
 
 
@@ -39,7 +41,20 @@ class Token:
         return len(self.data)
 
 
-class FileHeader(Token):
+class ValidateToken(Token):
+
+    @abstractmethod
+    def validate(self, data, log, quiet=False):
+        raise NotImplementedError()
+
+    def _error(self, msg, log, quiet):
+        if quiet:
+            log.warn(msg)
+        else:
+            raise Exception(msg)
+
+
+class FileHeader(ValidateToken):
 
     def __init__(self, data):
         super().__init__('HDR', False, data[:data[0]])
@@ -53,17 +68,23 @@ class FileHeader(Token):
         else:
             self.has_checksum = False
 
-    def validate(self, data):
+    def validate(self, data, log, quiet=False):
         if len(self) < 12:
-            raise Exception('Header too short (%d)' % len(self))
+            self._error('Header too short (%d)' % len(self), log, quiet)
         if len(data) != self.data_size + len(self) + 2:
-            raise Exception('Data length (%d/%d)' % (len(data), self.data_size + len(self) + 2))
+            self._error('Data length (%d/%d)' % (len(data), self.data_size + len(self) + 2), log, quiet)
         if self.data_type != b'.FIT':
-            raise Exception('Data type incorrect (%s)' % (self.data_type,))
+            self._error('Data type incorrect (%s)' % (self.data_type,), log, quiet)
         if self.has_checksum:
             checksum = Checksum.crc(data[0:12])
             if checksum != self.checksum:
-                raise Exception('Inconsistent checksum (%04x/%04x)' % (checksum, self.checksum))
+                self._error('Inconsistent checksum (%04x/%04x)' % (checksum, self.checksum), log, quiet)
+
+    def _error(self, msg, log, quiet):
+        if quiet:
+            log.warn(msg)
+        else:
+            raise Exception(msg)
 
     def describe_fields(self, types):
         yield '%s - header' % tohex(self.data[0:1])
@@ -146,8 +167,11 @@ class CompressedTimestamp(Defined):
 
     def __init__(self, data, state):
         offset = data[0] & 0x1f
-        rollover = offset < state.timestamp & 0x1f
-        state.timestamp = (state.timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0)
+        if not isinstance(state.timestamp, dt.datetime):
+            raise Exception('int timestamp')
+        timestamp = time_to_timestamp(state.timestamp)
+        rollover = offset < timestamp & 0x1f
+        state.timestamp = timestamp_to_time((timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0))
         super().__init__('TIM', data, state, data[0] & 0x60 >> 5)
 
 
@@ -279,7 +303,7 @@ class DeveloperDefinition(Definition):
             yield '  %s - dev fld %d/%d' % (tohex(field_data), fdn, ddi)
 
 
-class Checksum(Token):
+class Checksum(ValidateToken):
 
     @staticmethod
     def crc(data):
@@ -302,13 +326,13 @@ class Checksum(Token):
         self.all_data = data[:-2]
         self.checksum = unpack('<H', self.data)[0]
 
-    def validate(self, offset):
+    def validate(self, offset, log, quiet=False):
         # length already validated in header
         if len(self.all_data) != offset:
-            raise Exception('Did not consume all data (%d/%d)' % (len(self.all_data), offset))
+            self._error('Did not consume all data (%d/%d)' % (len(self.all_data), offset), log, quiet)
         checksum = self.crc(self.all_data)
         if checksum != self.checksum:
-            raise Exception('Bad checksum (%04x/%04x)' % (checksum, self.checksum))
+            self._error('Bad checksum (%04x/%04x)' % (checksum, self.checksum), log, quiet)
 
     def describe_fields(self, types):
         yield '%s - checksum' % tohex(self.data)

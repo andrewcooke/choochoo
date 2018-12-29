@@ -140,12 +140,11 @@ class Date(AliasInteger):
         super().__init__(log, name, 'uint32')
         self.__tzinfo = dt.timezone.utc if utc else None
 
-    @staticmethod
-    def convert(time, tzinfo=dt.timezone.utc):
+    def convert(self, time, tzinfo=dt.timezone.utc):
         if time is not None and time >= 0x10000000:
             return timestamp_to_time(time, tzinfo=tzinfo)
         else:
-            return time
+            raise Exception('Strange timestamp: %d' % time)
 
     def parse(self, data, count, endian, timestamp, raw_time=False, **options):
         times = super().parse(data, count, endian, timestamp, raw_time=raw_time, **options)
