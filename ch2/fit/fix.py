@@ -3,14 +3,13 @@ from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
 
 
-def fix(log, data, drop=False, slices=None, warn=False, force=True, profile_path=None,
+def fix(log, data, drop=False, slices=None, warn=False, force=True, validate=False, profile_path=None,
         min_sync_cnt=3, max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200):
 
     from ch2.command.fix_fit import format_slices
 
     types, messages = read_profile(log, warn=warn, profile_path=profile_path)
 
-    log.info('Read %d bytes' % len(data))
     if drop:
         slices = advance(log, State(log, types, messages), data, warn=warn, force=force,
                          min_sync_cnt=min_sync_cnt, max_record_len=max_record_len, max_drop_cnt=max_drop_cnt,
@@ -21,7 +20,10 @@ def fix(log, data, drop=False, slices=None, warn=False, force=True, profile_path
         log.info('Have %d bytes after slicing' % len(data))
     data = fix_header(log, data)
     data = fix_checksum(log, data, State(log, types, messages))
-    return fix_header(log, data)  # if length changed with checksum
+    data = fix_header(log, data)  # if length changed with checksum
+    if validate:
+        validate_data(log, data, State(log, types, messages), warn=warn, force=force)
+    return data
 
 
 def fix_header(log, data):
@@ -54,6 +56,22 @@ def apply_slices(log, data, slices):
     if dropped:
         log.warn('Slicing decreased length by %d bytes' % dropped)
     return result
+
+
+def validate_data(log, data, state, warn=False, force=True):
+    file_header = FileHeader(data)
+    file_header.validate(data, log)
+    offset = len(file_header)
+    while len(data) - offset > 2:
+        token = token_factory(data[offset:], state)
+        if token.is_user:
+            record = token.parse(warn=warn)
+            if force:
+                record.force()
+        offset += len(token)
+    checksum = Checksum(data)
+    checksum.validate(offset, log)
+    log.info('Validated')
 
 
 def offset_tokens(state, data, offset=0, warn=False, force=True):

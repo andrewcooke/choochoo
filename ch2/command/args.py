@@ -109,6 +109,7 @@ TABLE = 'table'
 TABLES = 'tables'
 UNLOCK = 'unlock'
 USER = 'user'
+VALIDATE = 'validate'
 V, VERBOSITY = 'v', 'verbosity'
 VALUE = 'value'
 VERSION = 'version'
@@ -315,6 +316,8 @@ def parser():
                          help='additional warning messages')
     fix_fit.add_argument(no(FORCE), action='store_false', dest=FORCE,
                          help='don\'t parse record contents')
+    fix_fit.add_argument(mm(VALIDATE), action='store_true',
+                         help='validate the final data')
     fix_fit_output = fix_fit.add_mutually_exclusive_group()
     fix_fit_output.add_argument(m(O), mm(OUTPUT), action='store',
                                 help='output file for fixed data (otherwise, stdout)')
