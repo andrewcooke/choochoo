@@ -38,7 +38,7 @@ def load_fit(log, fit_path, warn=False, profile_path=None):
         types, messages = load_profile(log)
     log.debug('Read profile')
     with open(fit_path, 'rb') as input:
-        data =input.read()
+        data = input.read()
     return data, types, messages
 
 

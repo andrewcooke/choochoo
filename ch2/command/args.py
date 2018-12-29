@@ -19,6 +19,7 @@ DATA = 'data'
 DEFAULT_CONFIG = 'default-config'
 DIARY = 'diary'
 FIT = 'fit'
+FIX_FIT = 'fix-fit'
 GARMIN = 'garmin'
 H, HELP = 'h', 'help'
 NO_OP = 'no-op'
@@ -43,6 +44,7 @@ DELETE = 'delete'
 DESCRIBE = 'describe'
 DEV = 'dev'
 DIR = 'dir'
+DROP = 'drop'
 F = 'f'
 FAST = 'fast'
 FIELDS = 'fields'
@@ -62,10 +64,15 @@ LONGITUDE = 'longitude'
 LIST = 'list'
 M, MESSAGE = 'm', 'message'
 MATCH = 'match'
+MAX_BACK_CNT = 'max-back-cnt'
 MAX_COLUMNS = 'max-columns'
 MAX_COLWIDTH = 'max-colwidth'
+MAX_DROP_CNT = 'max-drop-cnt'
+MAX_FWD_LEN = 'max-fwd-len'
 MAX_ROWS = 'max-rows'
+MAX_RECORD_LEN = 'max-record-len'
 MESSAGES = 'messages'
+MIN_SYNC_CNT = 'min-sync-cnt'
 MONITOR = 'monitor'
 MONITOR_JOURNALS = 'monitor-journals'
 MONTH = 'month'
@@ -75,12 +82,14 @@ NAMES = 'names'
 NO_HEADER = 'no-header'
 NO_DIARY = 'no-diary'
 NOT = 'not'
+O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
 PASS = 'pass'
 PATH = 'path'
 PLAN = 'plan'
 PRINT = 'print'
 PWD = 'pwd'
+RAW = 'raw'
 RECORDS = 'records'
 ROOT = 'root'
 SEGMENT_JOURNALS = 'segment-journals'
@@ -88,6 +97,7 @@ SEGMENTS = 'segments'
 SERVICE = 'service'
 SET = 'set'
 SCHEDULE = 'schedule'
+SLICES = 'slices'
 SOURCE_IDS = 'source-ids'
 START = 'start'
 STATISTIC_NAMES = 'statistic-names'
@@ -294,6 +304,33 @@ def parser():
     fit.add_argument(mm(MATCH), action='store', type=int, default=1,
                      help='number of matches to display (with --grep, default 1, -1 for all)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
+
+    fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')
+    fix_fit.add_argument(PATH, action='store', metavar='PATH',
+                         help='path to fit file')
+    fix_fit.add_argument(m(W), mm(WARN), action='store_true',
+                         help='additional warning messages')
+    fix_fit_output = fix_fit.add_mutually_exclusive_group()
+    fix_fit_output.add_argument(m(O), mm(OUTPUT), action='store',
+                                help='output file for fixed data (otherwise, stdout)')
+    fix_fit_output.add_argument(mm(RAW), action='store_true',
+                                help='raw binary to stdout (otherwise, hex encoded)')
+    fix_fit_stage = fix_fit.add_mutually_exclusive_group()
+    fix_fit_stage.add_argument(mm(DROP), action='store_true',
+                               help='search for data that can be dropped to give a successful parse')
+    fix_fit_stage.add_argument(mm(SLICES), action='store', metavar='A:B,C:D,...',
+                               help='data slices to pick')
+    fix_fit.add_argument(mm(MIN_SYNC_CNT), action='store', type=int, metavar='N',
+                         help='minimum number of records to read for synchronization')
+    fix_fit.add_argument(mm(MAX_RECORD_LEN), action='store', type=int, metavar='N',
+                         help='maximum record length')
+    fix_fit.add_argument(mm(MAX_DROP_CNT), action='store', type=int, metavar='N',
+                         help='maximum number of gaps to drop')
+    fix_fit.add_argument(mm(MAX_BACK_CNT), action='store', type=int, metavar='N',
+                         help='maximum number of readable records to discard in a single gap')
+    fix_fit.add_argument(mm(MAX_FWD_LEN), action='store', type=int, metavar='N',
+                         help='maximum number of bytes to drop in a single gap')
+    fix_fit.set_defaults(command=FIX_FIT)
 
     garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
     garmin.add_argument(DIR, action='store', metavar='DIR',

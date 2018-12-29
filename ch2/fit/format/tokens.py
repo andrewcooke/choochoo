@@ -2,7 +2,7 @@
 import datetime as dt
 from abc import abstractmethod
 from collections import defaultdict, Counter
-from struct import unpack
+from struct import unpack, pack
 
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
 from ..profile.types import timestamp_to_time, time_to_timestamp
@@ -54,6 +54,9 @@ class ValidateToken(Token):
             raise Exception(msg)
 
 
+FIT = b'.FIT'
+
+
 class FileHeader(ValidateToken):
 
     def __init__(self, data):
@@ -69,23 +72,32 @@ class FileHeader(ValidateToken):
             self.has_checksum = False
 
     def validate(self, data, log, quiet=False):
-        if len(self) < 12:
-            self._error('Header too short (%d)' % len(self), log, quiet)
         if len(data) != self.data_size + len(self) + 2:
             self._error('Data length (%d/%d+%d+2=%d)' % (len(data), self.data_size, len(self),
                                                          self.data_size + len(self) + 2), log, quiet)
-        if self.data_type != b'.FIT':
+        if self.data_type != FIT:
             self._error('Data type incorrect (%s)' % (self.data_type,), log, quiet)
         if self.has_checksum:
             checksum = Checksum.crc(data[0:12])
             if checksum != self.checksum:
                 self._error('Inconsistent checksum (%04x/%04x)' % (checksum, self.checksum), log, quiet)
 
-    def _error(self, msg, log, quiet):
-        if quiet:
-            log.warn(msg)
-        else:
-            raise Exception(msg)
+    def repair(self, data, log):
+        data_size = len(data) - len(self) - 2
+        if data_size != self.data_size:
+            log.warn('Fixing header data size: %d -> %d' % (self.data_size, data_size))
+            self.data_size = data_size
+            self.data[4:8] = pack('<I', self.data_size)
+        if self.data_type != FIT:
+            log.warn('Fixing header data type: %s -> %s' % (self.data_type, FIT))
+            self.data_type = FIT
+            self.data[8:12] = pack('4c', self.data_type)
+        if self.has_checksum:
+            checksum = Checksum.crc(data[0:12])
+            if checksum != self.checksum:
+                log.warn('Fixing header checksum: %04x -> %04x' % (self.checksum, checksum))
+                self.checksum = checksum
+                data[12:14] = pack('<H', checksum)
 
     def describe_fields(self, types):
         yield '%s - header' % tohex(self.data[0:1])
@@ -335,6 +347,13 @@ class Checksum(ValidateToken):
         if checksum != self.checksum:
             self._error('Bad checksum (%04x/%04x)' % (checksum, self.checksum), log, quiet)
 
+    def repair(self, data, log):
+        checksum = self.crc(data[:-2])
+        if checksum != self.checksum:
+            log.warn('Fixing final checksum: %04x -> %04x' % (self.checksum, checksum))
+            self.checksum = checksum
+            self.data = pack('<H', checksum)
+
     def describe_fields(self, types):
         yield '%s - checksum' % tohex(self.data)
 
@@ -364,4 +383,11 @@ class State:
         self.definition_counter = Counter()
         self.timestamp = None
 
+    def copy(self):
+        copy = State(self.log, self.types, self.messages)
+        copy.dev_fields.update(self.dev_fields)
+        copy.definitions.update(self.definitions)
+        copy.definition_counter.update(self.definition_counter)
+        copy.timestamp = self.timestamp
+        return copy
 
