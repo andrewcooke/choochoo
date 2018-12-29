@@ -82,7 +82,6 @@ PLAN = 'plan'
 PRINT = 'print'
 PWD = 'pwd'
 RECORDS = 'records'
-RESTART = 'restart'
 ROOT = 'root'
 SEGMENT_JOURNALS = 'segment-journals'
 SEGMENTS = 'segments'
@@ -288,8 +287,6 @@ def parser():
                      help='additional warning messages')
     fit.add_argument(mm(NO_HEADER), action='store_true',
                      help='ignore the header (checksum, length)')
-    fit.add_argument(mm(RESTART), action='store_true',
-                     help='on error try to restart reading later in stream')
     fit.add_argument(mm(NAME), action='store_true',
                      help='display file name')
     fit.add_argument(mm(NOT), action='store_true',

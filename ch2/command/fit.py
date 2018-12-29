@@ -1,6 +1,6 @@
 
 from .args import PATH, FORMAT, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, WARN, GREP, MESSAGE, NAME, NOT, MATCH, \
-    NO_HEADER, RESTART
+    NO_HEADER
 from ..fit.summary import summarize
 
 
@@ -35,4 +35,4 @@ Will list file names that contain cycling data.
         summarize(log, args[FORMAT], file_path, all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
                   after=args[AFTER], limit=args[LIMIT], records=args[MESSAGE], warn=args[WARN],
                   grep=args[GREP], name=args[NAME], invert=args[NOT], match=args[MATCH],
-                  no_header=args[NO_HEADER], restart=args[RESTART])
+                  no_header=args[NO_HEADER])

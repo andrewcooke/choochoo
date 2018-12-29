@@ -72,7 +72,8 @@ class FileHeader(ValidateToken):
         if len(self) < 12:
             self._error('Header too short (%d)' % len(self), log, quiet)
         if len(data) != self.data_size + len(self) + 2:
-            self._error('Data length (%d/%d)' % (len(data), self.data_size + len(self) + 2), log, quiet)
+            self._error('Data length (%d/%d+%d+2=%d)' % (len(data), self.data_size, len(self),
+                                                         self.data_size + len(self) + 2), log, quiet)
         if self.data_type != b'.FIT':
             self._error('Data type incorrect (%s)' % (self.data_type,), log, quiet)
         if self.has_checksum:
