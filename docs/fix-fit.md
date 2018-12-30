@@ -81,7 +81,8 @@ The `--header-size`, `--protocol-version` and `--profile-version`
 flags can be used to fine-tune the header.  Default values are taken
 from FR35 FIT files.  To see the defaults run the program without
 specifying the option and read the logs (`--discard` is useful here -
-see [Output](#output)).
+see [Output](#output)).  Values for the current (old) header are also
+logged.
 
 Note that adding the header increases the data size.  So if used with
 `--slices` you must take this into account (and add `--header-size` to

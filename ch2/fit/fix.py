@@ -87,12 +87,23 @@ def format_offset(offset):
 
 def prepend_header(log, data, header_size, protocol_version, profile_version):
     log.warning('Prepending file header of length %d' % header_size)
+    log_header_settings(log, data, header_size, protocol_version, profile_version)
     data = bytearray([0] * header_size) + data
     header = FileHeader(data)
     header.repair(data, log,
                   header_size=header_size, protocol_version=protocol_version, profile_version=profile_version)
     data[:len(header)] = header.data
     return data
+
+
+def log_header_settings(log, data, header_size, protocol_version, profile_version):
+    try:
+        header = FileHeader(data)
+        log.info('Header size (prev/new): %d/%d' % (header.header_size, header_size))
+        log.info('Protocol version (prev/new): %d/%d' % (header.protocol_version, protocol_version))
+        log.info('Profile version (prev/new): %d/%d' % (header.profile_version, profile_version))
+    except:
+        pass
 
 
 def fix_header(log, data):
