@@ -2,7 +2,10 @@
 # Repairing FIT Files
 
 Choochoo includes a tool that will attempt to repair FIT format files.
-It does this by trying to *discard* data until it finds a valid file.
+It does this by trying to *discard* data until it finds a valid file
+(this works because a FIT file is mainly a sequence of repeated
+records, one for each GPS point; if we remove a corrupt record we
+still have nearly all the data).
 
 ## For Dummies
 
