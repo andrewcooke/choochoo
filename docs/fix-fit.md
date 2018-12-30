@@ -36,7 +36,8 @@ The program runs a series of steps:
 
   * The data are validated.  See [Validation](#validation).
 
-  * The results are written to a file, stdout, or discarded.
+  * The results are written to a file, stdout, or discarded.  See
+    [Output](#output).
 
 Modifications made to the data should be logged at the "warning" level
 in the logs.
