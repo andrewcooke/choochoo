@@ -19,7 +19,7 @@ To run that you first need to [install Choochoo](getting-started).
 
 ## Overview
 
-The program runs a series of steps:
+The program runs in a series of steps:
 
   * If `--add-header` is given, a blank file header is prepended to
     the start of the data.  See [Add Header](#add-header).
