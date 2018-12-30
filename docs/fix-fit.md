@@ -169,6 +169,8 @@ parameters).
 
 ## Further Reading
 
+  * `ch2 fix-fit -h` and `ch2 help fix-fit` show options and use.
+
   * [The FIT library](fit-files) used by Choochoo.  This can be used
     to examine the contents of (valid) FIT files.
 
