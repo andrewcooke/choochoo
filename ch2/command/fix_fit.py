@@ -17,6 +17,8 @@ Try to fix a corrupted fit file.
 
 By default, the length and checksum are updated.
 
+If `--header` is specified then a new header is prepended at the start of the data.
+
 If `--slices` is specified then the given slices are taken from the data and used to construct a new file.
 
 If `--drop` is specified then the program tries to find appropriate slices by discarding data until all the
@@ -33,6 +35,10 @@ Will attempt to drop the first 1000 bytes from the given file.
     > ch2 fix-fit data/tests/personal/8CS90646.FIT --drop --discard
 
 Will attempt to fix the given file (in the test data from git).
+
+    > ch2 fix-fit FILE.FIT --add-header --header-size 14 --slices :14,28:
+
+Will prepend a new 14 byte header, drop the old 14 byte header, and fix the header values.
     '''
 
     data = read_fit(log, args[PATH])

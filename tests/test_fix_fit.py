@@ -16,17 +16,20 @@ class TestFixFit(TestCase):
 
     def test_null(self):
         good = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-08-27-rec.fit')
-        same = fix(self.log, good)
+        same = fix(self.log, bytearray(good))
+        self.assertTrue(good is not same)  # check making a copy
         self.assertEqual(good, same)
 
     def test_null_drop(self):
         good = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-08-27-rec.fit')
-        same = fix(self.log, good, drop=True)
+        same = fix(self.log, bytearray(good), drop=True)
+        self.assertTrue(good is not same)  # check making a copy
         self.assertEqual(good, same)
 
     def test_null_slices(self):
         good = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-08-27-rec.fit')
-        same = fix(self.log, good, slices=':')
+        same = fix(self.log, bytearray(good), slices=':')
+        self.assertTrue(good is not same)  # check making a copy
         self.assertEqual(good, same)
 
     def test_drop(self):
@@ -41,19 +44,22 @@ class TestFixFit(TestCase):
 
     def test_no_last_byte(self):
         good = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-08-27-rec.fit')
-        same = fix(self.log, good, drop=True)
+        same = fix(self.log, bytearray(good), drop=True)
         self.assertEqual(same, good)
-        fixed = fix(self.log, good[:-1], drop=True)
+        fixed = fix(self.log, bytearray(good)[:-1], drop=True)
         self.assertEqual(fixed, good)
-        fixed = fix(self.log, good[:-2], drop=True)
+        fixed = fix(self.log, bytearray(good)[:-2], drop=True)
         self.assertEqual(fixed, good)
 
     def test_no_header(self):
         good = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-08-27-rec.fit')
-        same = fix(self.log, good, drop=True)
+        same = fix(self.log, bytearray(good), drop=True)
+        self.assertTrue(good is not same)  # check making a copy
         self.assertEqual(same, good)
         header = FileHeader(good)
         with self.assertRaisesRegex(Exception, 'Cannot parse data'):
-            fix(self.log, good[len(header):])
-        fixed = fix(self.log, good[len(header):], add_header=True, drop=True)
+            fix(self.log, bytearray(good)[len(header):])
+        fixed = fix(self.log, bytearray(good)[len(header):], add_header=True, drop=True)
+        self.assertEqual(good, fixed)
+        fixed = fix(self.log, bytearray(good), add_header=True, slices=':14,28:')
         self.assertEqual(good, fixed)
