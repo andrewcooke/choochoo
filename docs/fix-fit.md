@@ -96,9 +96,9 @@ header:
 ## Drop Data
 
 This is the heart of the algorithm.  A depth first search is made to
-find discards that allow the remaining data to be parsed.  The details
-of this search can be inferred from the parameters below, but if you
-really, really want the details you will need to read the
+delete corrupt data, allowing the remaining data to be parsed.  The
+details of this search can be inferred from the parameters below, but
+if you really, really want to understand you will need to read the
 [source](https://github.com/andrewcooke/choochoo/blob/master/ch2/fit/fix.py).
 
 The following parameters influence the search:
@@ -134,7 +134,7 @@ The following parameters influence the search:
     
 The slices determined by the search are printed to the log like this:
 
-    INFO: Dropped data to find slices: :28020,28043:97437
+    INFO: Found slices :14,28:28034,28057:97451
 
 ## Slices
 

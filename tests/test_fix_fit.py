@@ -1,5 +1,5 @@
 
-from logging import basicConfig, DEBUG, getLogger
+from logging import basicConfig, getLogger, INFO
 from sys import stdout
 from unittest import TestCase
 
@@ -11,7 +11,7 @@ from ch2.fit.profile.profile import read_fit
 class TestFixFit(TestCase):
 
     def setUp(self):
-        basicConfig(stream=stdout, level=DEBUG)
+        basicConfig(stream=stdout, level=INFO)
         self.log = getLogger()
 
     def test_null(self):

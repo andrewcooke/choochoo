@@ -41,11 +41,10 @@ Will attempt to fix the given file (in the test data from git).
 Will prepend a new 14 byte header, drop the old 14 byte header, and fix the header values.
     '''
 
-    data = read_fit(log, args[PATH])
-    log.info('Read %d bytes' % len(data))
-
-    if not args[FORCE]:
-        log.warning('Records are not evaluated (%s)' % no(FORCE))
+    in_path = args[PATH]
+    log.info('Reading binary data from %s' % in_path)
+    data = read_fit(log, in_path)
+    log.debug('Read %d bytes' % len(data))
 
     data = fix(log, data, add_header=args[ADD_HEADER], drop=args[DROP], slices=args[SLICES],
                warn=args[WARN], force=args[FORCE], validate=args[VALIDATE],
@@ -53,18 +52,19 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
                min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
                max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN])
 
-    out_path = args[OUTPUT]
-    if out_path:
-        with open(out_path, 'wb') as out:
-            out.write(data)
-        log.info('Wrote data to %s' % out_path)
-    elif args[DISCARD]:
-        log.info('Discarded output')
-    elif args[RAW]:
-        log.info('Writing binary data to stdout')
-        stdout.buffer.write(data)
+    if args[DISCARD]:
+        log.warn('Discarded output')
     else:
-        log.info('Writing hex data to stdout')
-        stdout.write(data.hex())
-
+        out_path = args[OUTPUT]
+        if out_path:
+            log.info('Writing binary data to %s' % out_path)
+            with open(out_path, 'wb') as out:
+                out.write(data)
+        elif args[RAW]:
+            log.info('Writing binary data to stdout')
+            stdout.buffer.write(data)
+        else:
+            log.info('Writing hex data to stdout')
+            stdout.write(data.hex())
+        log.debug('Wrote %d bytes' % len(data))
 
