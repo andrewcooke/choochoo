@@ -102,12 +102,15 @@ class FileHeader(ValidateToken):
             self.header_size = header_size
             self.data = [0] * self.header_size
             self.data[0] = self.header_size
-        if protocol_version is not None and self.protocol_version != protocol_version:
-            log.warning('Changing protocol version: %d -> %d' % (self.protocol_version, protocol_version))
+        # next two are applied even if unchanged because resizing removes
+        if protocol_version is not None:
+            if protocol_version != self.protocol_version:
+                log.warning('Changing protocol version: %d -> %d' % (self.protocol_version, protocol_version))
             self.protocol_version = protocol_version
             self.data[1] = self.protocol_version
-        if profile_version is not None and self.profile_version != profile_version:
-            log.warning('Changing profile version: %d -> %d' % (self.profile_version, profile_version))
+        if profile_version is not None:
+            if profile_version != self.profile_version:
+                log.warning('Changing profile version: %d -> %d' % (self.profile_version, profile_version))
             self.profile_version = profile_version
             self.data[2:4] = pack('<H', self.profile_version)
         data_size = len(data) - len(self) - 2

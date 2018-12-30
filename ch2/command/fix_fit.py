@@ -2,7 +2,7 @@
 from sys import stdout
 
 from .args import PATH, DROP, OUTPUT, SLICES, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
-    MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, no, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION, mm
+    MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION
 from ..fit.fix import fix
 from ..fit.profile.profile import read_fit
 
@@ -42,6 +42,7 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
     '''
 
     in_path = args[PATH]
+    log.info('Input ----------')
     log.info('Reading binary data from %s' % in_path)
     data = read_fit(log, in_path)
     log.debug('Read %d bytes' % len(data))
@@ -52,6 +53,7 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
                min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
                max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN])
 
+    log.info('Output ----------')
     if args[DISCARD]:
         log.warn('Discarded output')
     else:

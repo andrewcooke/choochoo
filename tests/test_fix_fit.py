@@ -34,8 +34,8 @@ class TestFixFit(TestCase):
 
     def test_drop(self):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/8CS90646.FIT')
-        good = fix(self.log, bad, drop=True)
-        self.assertTrue(len(good) < len(bad))
+        fixed = fix(self.log, bad, drop=True)
+        self.assertTrue(len(fixed) < len(bad))
 
     def test_slices(self):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/8CS90646.FIT')
@@ -63,3 +63,12 @@ class TestFixFit(TestCase):
         self.assertEqual(good, fixed)
         fixed = fix(self.log, bytearray(good), add_header=True, slices=':14,28:')
         self.assertEqual(good, fixed)
+
+    def test_weird_header(self):
+        bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/8CS90646.FIT')
+        old_header = FileHeader(bad)
+        fixed = fix(self.log, bad, drop=True, header_size=27)
+        new_header = FileHeader(fixed)
+        self.assertEqual(new_header.header_size, 27)
+        self.assertEqual(new_header.protocol_version, old_header.protocol_version)
+        self.assertEqual(new_header.profile_version, old_header.profile_version)

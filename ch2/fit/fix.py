@@ -29,10 +29,8 @@ def fix(log, data, add_header=False, drop=False, slices=None, warn=False, force=
     if slices:
         data = apply_slices(log, data, slices)
 
-    log.info('Header and Checksums ----------')
-    data = fix_header(log, data)
-    data = fix_checksum(log, data)
-    data = fix_header(log, data)  # if length changed with checksum
+    data = header_and_checksums(log, data, header_size=header_size,
+                                protocol_version=protocol_version, profile_version=profile_version)
 
     if validate:
         validate_data(log, data, State(log, types, messages), warn=warn, force=force)
@@ -120,11 +118,29 @@ def set_default(log, name, value, deflt):
     return value
 
 
-def fix_header(log, data):
+def header_and_checksums(log, data, header_size=None, protocol_version=None, profile_version=None):
+    log.info('Header and Checksums ----------')
+    log_param(log, HEADER_SIZE, header_size)
+    log_param(log, PROTOCOL_VERSION, protocol_version)
+    log_param(log, PROFILE_VERSION, profile_version)
+    data = fix_header(log, data,
+                      header_size=header_size, protocol_version=protocol_version, profile_version=profile_version)
+    data = fix_checksum(log, data)
+    data = fix_header(log, data)  # if length changed with checksum
+    return data
+
+
+def fix_header(log, data, header_size=None, protocol_version=None, profile_version=None):
     try:
         header = FileHeader(data)
-        header.repair(data, log)
-        data[:len(header)] = header.data
+        # if these are undefined, use existing values (might be used if size changes)
+        if protocol_version is None:
+            protocol_version = header.protocol_version
+        if profile_version is None:
+            profile_version = header.profile_version
+        prev_len = len(header)
+        header.repair(data, log, header_size=header_size, protocol_version=protocol_version, profile_version=profile_version)
+        data[:prev_len] = header.data
         return data
     except Exception as e:
         log.error(e)

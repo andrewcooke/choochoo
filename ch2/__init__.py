@@ -7,7 +7,7 @@ getLogger('tornado').addHandler(NullHandler())
 from .command.activities import activities
 from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DATA, FIX_FIT
+    UNLOCK, DATA, FIX_FIT, CH2_VERSION
 from .command.constants import constants
 from .command.data import data
 from .command.default_config import default_config
@@ -63,6 +63,7 @@ def main():
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     tui = command and hasattr(command, 'tui') and command.tui
     log = make_log(args, tui=tui)
+    log.info('Version %s' % CH2_VERSION)
     db = Database(args, log)
     try:
         if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):

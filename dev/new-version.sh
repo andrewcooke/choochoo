@@ -14,7 +14,7 @@ VERSION=$1
 
 OLD_VERSION=`grep version= ch2/command/args.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
 echo "command/args.py: $OLD_VERSION -> $VERSION"
-sed -i ch2/command/args.py -e "s/\(.*version='\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
+sed -i ch2/command/args.py -e "s/\(.*CH2_VERSION = '\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
 
 OLD_VERSION=`grep version= setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
 echo "setup.py: $OLD_VERSION -> $VERSION"

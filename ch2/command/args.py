@@ -8,6 +8,8 @@ from typing import Mapping
 
 from ..lib.date import to_date
 
+CH2_VERSION = '0.10.4'
+
 PROGNAME = 'ch2'
 COMMAND = 'command'
 SUB_COMMAND = 'sub_command'
@@ -194,7 +196,7 @@ def parser():
                         help='the root directory for the default configuration')
     parser.add_argument(m(V), mm(VERBOSITY), action='store', nargs=1, default=None, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
-    parser.add_argument(m(V.upper()), mm(VERSION), action='version', version='0.10.4',
+    parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
 
     subparsers = parser.add_subparsers()
