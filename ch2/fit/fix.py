@@ -1,8 +1,8 @@
 
 from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
-from ..command.args import ADD_HEADER, mm, HEADER_SIZE, PROFILE_VERSION, PROTOCOL_VERSION, MIN_SYNC_CNT, MAX_RECORD_LEN, \
-    MAX_DROP_CNT, MAX_BACK_CNT, MAX_FWD_LEN, FORCE, no
+from ..command.args import ADD_HEADER, mm, HEADER_SIZE, PROFILE_VERSION, PROTOCOL_VERSION, MIN_SYNC_CNT, \
+    MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, MAX_FWD_LEN, FORCE, no
 
 
 def fix(log, data, add_header=False, drop=False, slices=None, warn=False, force=True, validate=True, profile_path=None,
