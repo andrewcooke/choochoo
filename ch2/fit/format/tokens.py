@@ -76,7 +76,7 @@ class FileHeader(ValidateToken):
         if self.header_size < 12:
             self._error('Header size too small (%d)' % self.header_size, log, quiet)
         if self.header_size not in (12, 14):
-            log.warning('Header size not standard (%d/12/14)' % self.header_size)
+            log.warning('Header size not standard (%d/12-14)' % self.header_size)
         if header_size is not None:
             if self.header_size != header_size:
                 self._error('Header size incorrect (%d/%d)' % (self.header_size, header_size), log, quiet)

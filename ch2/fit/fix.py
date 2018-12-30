@@ -99,7 +99,7 @@ def prepend_header(log, data, header_size, protocol_version, profile_version):
     protocol_version = set_default(log, PROTOCOL_VERSION, protocol_version, 0x10)  # from FR35
     profile_version = set_default(log, PROFILE_VERSION, profile_version, 0x07de)  # from FR35
 
-    data = bytearray([0] * header_size) + data
+    data = bytearray([header_size] + [0] * (header_size - 1)) + data
     header = FileHeader(data)
     header.repair(data, log,
                   header_size=header_size, protocol_version=protocol_version, profile_version=profile_version)
@@ -273,6 +273,7 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
     "synchronize" means progressively discard data until some number of records smaller than
     some length can be read.
     '''
+    initial_offsets_and_states = [(0, initial_state.copy())]
     offsets_and_states, complete = slurp(log, initial_state, data, initial_offset,
                                          warn=warn, force=force, max_record_len=max_record_len)
     if offsets_and_states:
@@ -280,7 +281,7 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
                   (drop_count, len(offsets_and_states), initial_offset, offsets_and_states[-1][0]))
     else:
         log.debug('%d: Did not read any records' % drop_count)
-    offsets_and_states = [(0, initial_state)] + offsets_and_states
+    offsets_and_states = initial_offsets_and_states + offsets_and_states
     if complete:
         # use explicit offset rather than open interval because need to drop final checksum
         return [slice(initial_offset, offsets_and_states[-1][0])]
