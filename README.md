@@ -70,6 +70,11 @@ extensible.*
 
 ## Latest Changes
 
+### v0.10.0
+
+Contains a tool to [fix corrupt FIT
+files](https://andrewcooke.github.io/choochoo/fix-fit).
+
 ### v0.9.0
 
 Choochoo has a [GUI](https://andrewcooke.github.io/choochoo/summary)!!!
