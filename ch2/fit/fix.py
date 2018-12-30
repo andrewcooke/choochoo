@@ -34,7 +34,7 @@ def fix(log, data, add_header=False, drop=False, slices=None, warn=False, force=
         log.warning('Appended blank checksum')
 
     data = fix_header(log, data)
-    data = fix_checksum(log, data, State(log, types, messages))
+    data = fix_checksum(log, data)
     data = fix_header(log, data)  # if length changed with checksum
 
     if validate:
@@ -106,17 +106,15 @@ def fix_header(log, data):
         raise Exception('Error fixing header - maybe try %s' % mm(ADD_HEADER))
 
 
-def fix_checksum(log, data, state):
+def fix_checksum(log, data):
     try:
-        # check that we have the correct length
-        deque(offset_tokens(state.copy(), data, warn=False, force=False), maxlen=0)
         checksum = Checksum(data[-2:])
         checksum.repair(data, log)
         data[-2:] = checksum.data
         return data
     except Exception as e:
         log.error(e)
-        raise Exception('Cannot parse data to fix checksum')
+        raise Exception('Error fixing checksum')
 
 
 def apply_slices(log, data, slices):

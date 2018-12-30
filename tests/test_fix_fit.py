@@ -39,7 +39,7 @@ class TestFixFit(TestCase):
 
     def test_slices(self):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/8CS90646.FIT')
-        with self.assertRaisesRegexp(Exception, 'Cannot parse data'):
+        with self.assertRaisesRegexp(Exception, 'unpack requires a buffer of 32 bytes'):
             fix(self.log, bad, slices=':1000')  # first 1k bytes only
 
     def test_no_last_byte(self):
@@ -57,7 +57,7 @@ class TestFixFit(TestCase):
         self.assertTrue(good is not same)  # check making a copy
         self.assertEqual(same, good)
         header = FileHeader(good)
-        with self.assertRaisesRegex(Exception, 'Cannot parse data'):
+        with self.assertRaisesRegex(Exception, 'Compressed timestamp with no preceding absolute timestamp'):
             fix(self.log, bytearray(good)[len(header):])
         fixed = fix(self.log, bytearray(good)[len(header):], add_header=True, drop=True)
         self.assertEqual(good, fixed)
