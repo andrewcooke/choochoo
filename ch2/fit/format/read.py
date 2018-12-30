@@ -13,9 +13,9 @@ def tokens(log, data, types, messages, no_header=False):
         token = token_factory(data[offset:], state)
         yield offset, token
         offset += len(token)
-    checksum = Checksum(data)
+    checksum = Checksum(data[offset:])
     yield offset, checksum
-    checksum.validate(offset, log, quiet=no_header)
+    checksum.validate(data, log, quiet=no_header)
 
 
 def filtered_tokens(log, fit_path, after=0, limit=-1, warn=False, no_header=False, profile_path=None):

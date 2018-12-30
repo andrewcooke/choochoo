@@ -26,6 +26,7 @@ def read_internal_profile(log):
         log.debug('Unpickling profile')
         input = resource_stream(__name__, PROFILE_NAME)
         PROFILE.append(load(input))
+        input.close()
         PROFILE[0][0].set_log(log)
     return PROFILE[0][1:]
 

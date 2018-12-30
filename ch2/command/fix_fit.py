@@ -2,7 +2,7 @@
 from sys import stdout
 
 from .args import PATH, DROP, OUTPUT, SLICES, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
-    MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, no
+    MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, no, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION, mm
 from ..fit.fix import fix
 from ..fit.profile.profile import read_fit
 
@@ -26,6 +26,10 @@ The length and checksums are updated as appropriate.
 
 ### Examples
 
+    > ch2 fix-fit FILE.FIT --slices 1000:
+
+Will attempt to drop the first 1000 bytes from the given file.
+
     > ch2 fix-fit data/tests/personal/8CS90646.FIT --drop --discard
 
 Will attempt to fix the given file (in the test data from git).
@@ -35,10 +39,11 @@ Will attempt to fix the given file (in the test data from git).
     log.info('Read %d bytes' % len(data))
 
     if not args[FORCE]:
-        log.warn('Records are not evaluated (%s)' % no(FORCE))
+        log.warning('Records are not evaluated (%s)' % no(FORCE))
 
-    data = fix(log, data, drop=args[DROP], slices=parse_slices(args[SLICES]),
+    data = fix(log, data, add_header=args[ADD_HEADER], drop=args[DROP], slices=args[SLICES],
                warn=args[WARN], force=args[FORCE], validate=args[VALIDATE],
+               header_size=args[HEADER_SIZE], protocol_version=args[PROTOCOL_VERSION], profile_version=args[PROFILE_VERSION],
                min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
                max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN])
 
@@ -57,31 +62,3 @@ Will attempt to fix the given file (in the test data from git).
         stdout.write(data.hex())
 
 
-def parse_slices(slices):
-    if not slices:
-        return None
-    return [parse_slice(slice) for slice in slices.split(',')]
-
-
-def parse_slice(slice):
-    start, stop = (parse_offset(offset) for offset in slice.split(':'))
-    return slice(start, stop)
-
-
-def parse_offset(offset):
-    if offset:
-        return int(offset)
-    else:
-        return None
-
-
-def format_slices(slices):
-    return ','.join(format_slice(slice) for slice in slices)
-
-
-def format_slice(slice):
-    return '%s:%s' % (format_offset(slice.start), format_offset(slice.stop))
-
-
-def format_offset(offset):
-    return '' if offset in (0, None) else str(offset)

@@ -32,6 +32,7 @@ ACTIVITY_GROUP = 'activity-group'
 ACTIVITY_GROUPS = 'activity-groups'
 ACTIVITY_JOURNALS = 'activity-journals'
 ACTIVITY_JOURNAL_ID = 'activity-journal-id'
+ADD_HEADER = 'add-header'
 AFTER = 'after'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
@@ -56,6 +57,7 @@ FTHR = 'fthr'
 FORCE, F = 'force', 'f'
 GREP = 'grep'
 GROUP = 'group'
+HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
 LABEL = 'label'
 LATITUDE = 'latitude'
@@ -90,6 +92,8 @@ PASS = 'pass'
 PATH = 'path'
 PLAN = 'plan'
 PRINT = 'print'
+PROFILE_VERSION = 'profile-version'
+PROTOCOL_VERSION = 'protocol-version'
 PWD = 'pwd'
 RAW = 'raw'
 RECORDS = 'records'
@@ -314,10 +318,6 @@ def parser():
                          help='path to fit file')
     fix_fit.add_argument(m(W), mm(WARN), action='store_true',
                          help='additional warning messages')
-    fix_fit.add_argument(no(FORCE), action='store_false', dest=FORCE,
-                         help='don\'t parse record contents')
-    fix_fit.add_argument(mm(VALIDATE), action='store_true',
-                         help='validate the final data')
     fix_fit_output = fix_fit.add_mutually_exclusive_group()
     fix_fit_output.add_argument(m(O), mm(OUTPUT), action='store',
                                 help='output file for fixed data (otherwise, stdout)')
@@ -325,11 +325,23 @@ def parser():
                                 help='discard output (otherwise, stdout)')
     fix_fit_output.add_argument(mm(RAW), action='store_true',
                                 help='raw binary to stdout (otherwise, hex encoded)')
+    fix_fit.add_argument(mm(ADD_HEADER), action='store_true',
+                         help='preprend a new header')
+    fix_fit.add_argument(mm(HEADER_SIZE), action='store', type=int,
+                         help='header size (validation and/or new header)')
+    fix_fit.add_argument(mm(PROTOCOL_VERSION), action='store', type=int,
+                         help='protocol version (validation and/or new header)')
+    fix_fit.add_argument(mm(PROFILE_VERSION), action='store', type=int,
+                         help='profile version (validation and/or new header)')
     fix_fit_stage = fix_fit.add_mutually_exclusive_group()
     fix_fit_stage.add_argument(mm(DROP), action='store_true',
                                help='search for data that can be dropped to give a successful parse')
     fix_fit_stage.add_argument(mm(SLICES), action='store', metavar='A:B,C:D,...',
                                help='data slices to pick')
+    fix_fit.add_argument(no(FORCE), action='store_false', dest=FORCE,
+                         help='don\'t parse record contents')
+    fix_fit.add_argument(no(VALIDATE), action='store_false', dest=VALIDATE,
+                         help='don\'t validate the final data')
     fix_fit.add_argument(mm(MIN_SYNC_CNT), action='store', type=int, metavar='N', default=3,
                          help='minimum number of records to read for synchronization')
     fix_fit.add_argument(mm(MAX_RECORD_LEN), action='store', type=int, metavar='N', default=None,

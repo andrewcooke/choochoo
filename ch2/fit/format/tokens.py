@@ -49,7 +49,7 @@ class ValidateToken(Token):
 
     def _error(self, msg, log, quiet):
         if quiet:
-            log.warn(msg)
+            log.warning(msg)
         else:
             raise Exception(msg)
 
@@ -61,6 +61,7 @@ class FileHeader(ValidateToken):
 
     def __init__(self, data):
         super().__init__('HDR', False, data[:data[0]])
+        self.header_size = data[0]
         self.protocol_version = data[1]
         self.profile_version = unpack('<H', data[2:4])[0]
         self.data_size = unpack('<I', data[4:8])[0]
@@ -71,33 +72,61 @@ class FileHeader(ValidateToken):
         else:
             self.has_checksum = False
 
-    def validate(self, data, log, quiet=False):
+    def validate(self, data, log, quiet=False, header_size=None, protocol_version=None, profile_version=None):
+        if self.header_size < 12:
+            self._error('Header size too small (%d)' % self.header_size, log, quiet)
+        if self.header_size not in (12, 14):
+            log.warning('Header size not standard (%d/12/14)' % self.header_size)
+        if header_size is not None:
+            if self.header_size != header_size:
+                self._error('Header size incorrect (%d/%d)' % (self.header_size, header_size), log, quiet)
+        if protocol_version is not None:
+            if self.profile_version != protocol_version:
+                self._error('Protocol version incorrect (%d%d)' % (self.protocol_version, protocol_version), log, quiet)
+        if profile_version is not None:
+            if self.profile_version != profile_version:
+                self._error('Profile version incorrect (%d%d)' % (self.profile_version, profile_version), log, quiet)
         if len(data) != self.data_size + len(self) + 2:
-            self._error('Data length (%d/%d+%d+2=%d)' % (len(data), self.data_size, len(self),
-                                                         self.data_size + len(self) + 2), log, quiet)
+            self._error('Data size incorrect (%d/%d+%d+2=%d)' % (len(data), self.data_size, len(self),
+                                                                 self.data_size + len(self) + 2), log, quiet)
         if self.data_type != FIT:
             self._error('Data type incorrect (%s)' % (self.data_type,), log, quiet)
         if self.has_checksum:
             checksum = Checksum.crc(data[0:12])
-            if checksum != self.checksum:
+            if checksum != self.checksum and self.checksum:
                 self._error('Inconsistent checksum (%04x/%04x)' % (checksum, self.checksum), log, quiet)
 
-    def repair(self, data, log):
+    def repair(self, data, log, header_size=None, protocol_version=None, profile_version=None):
+        if header_size is not None and self.header_size != header_size:
+            log.warning('Changing header size: %d -> %d' % (self.header_size, header_size))
+            self.header_size = header_size
+            self.data = [0] * self.header_size
+            self.data[0] = self.header_size
+        if protocol_version is not None and self.protocol_version != protocol_version:
+            log.warning('Changing protocol version: %d -> %d' % (self.protocol_version, protocol_version))
+            self.protocol_version = protocol_version
+            self.data[1] = self.protocol_version
+        if profile_version is not None and self.profile_version != profile_version:
+            log.warning('Changing profile version: %d -> %d' % (self.profile_version, profile_version))
+            self.profile_version = profile_version
+            self.data[2:4] = pack('<H', self.profile_version)
         data_size = len(data) - len(self) - 2
         if data_size != self.data_size:
-            log.warn('Fixing header data size: %d -> %d' % (self.data_size, data_size))
+            log.warning('Fixing header data size: %d -> %d' % (self.data_size, data_size))
             self.data_size = data_size
             self.data[4:8] = pack('<I', self.data_size)
         if self.data_type != FIT:
-            log.warn('Fixing header data type: %s -> %s' % (self.data_type, FIT))
+            log.warning('Fixing header data type: %s -> %s' % (self.data_type, FIT))
             self.data_type = FIT
-            self.data[8:12] = pack('4c', self.data_type)
-        if self.has_checksum:
+            self.data[8:12] = self.data_type
+        if self.header_size >= 14:
             checksum = Checksum.crc(self.data[0:12])
-            if checksum != self.checksum:
-                log.warn('Fixing header checksum: %04x -> %04x' % (self.checksum, checksum))
+            if not self.has_checksum or checksum != self.checksum:
+                log.warning('Fixing header checksum: %04x -> %04x' %
+                            (self.checksum if self.has_checksum else 0, checksum))
                 self.checksum = checksum
                 self.data[12:14] = pack('<H', checksum)
+                self.has_checksum = True
 
     def describe_fields(self, types):
         yield '%s - header' % tohex(self.data[0:1])
@@ -180,6 +209,8 @@ class CompressedTimestamp(Defined):
 
     def __init__(self, data, state):
         offset = data[0] & 0x1f
+        if not state.timestamp:
+            raise Exception('Compressed timestamp with no preceding absolute timestamp')
         if not isinstance(state.timestamp, dt.datetime):
             raise Exception('int timestamp')
         timestamp = time_to_timestamp(state.timestamp)
@@ -335,22 +366,18 @@ class Checksum(ValidateToken):
         return checksum
 
     def __init__(self, data):
-        super().__init__('CRC', False, data[-2:])
-        self.all_data = data[:-2]
+        super().__init__('CRC', False, data)
         self.checksum = unpack('<H', self.data)[0]
 
-    def validate(self, offset, log, quiet=False):
-        # length already validated in header
-        if len(self.all_data) != offset:
-            self._error('Did not consume all data (%d/%d)' % (len(self.all_data), offset), log, quiet)
-        checksum = self.crc(self.all_data)
+    def validate(self, all_data, log, quiet=False):
+        checksum = self.crc(all_data[:-2])
         if checksum != self.checksum:
             self._error('Bad checksum (%04x/%04x)' % (checksum, self.checksum), log, quiet)
 
     def repair(self, data, log):
         checksum = self.crc(data[:-2])
         if checksum != self.checksum:
-            log.warn('Fixing final checksum: %04x -> %04x' % (self.checksum, checksum))
+            log.warning('Fixing final checksum: %04x -> %04x' % (self.checksum, checksum))
             self.checksum = checksum
             self.data = pack('<H', checksum)
 
@@ -378,7 +405,7 @@ class State:
         self.log = log
         self.types = types
         self.messages = messages
-        self.dev_fields = defaultdict(dict)
+        self.dev_fields = defaultdict(lambda: WarnDict(log, 'No definition for developer field %s'))
         self.definitions = WarnDict(log, 'No definition for local message type %s')
         self.definition_counter = Counter()
         self.timestamp = None

@@ -8,10 +8,10 @@ from sys import stdout
 from tempfile import TemporaryDirectory
 
 from ch2.command.args import FIELDS
-from ch2.fit.format.read import filtered_records, filtered_tokens
+from ch2.fit.format.read import filtered_records
 from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from ch2.fit.profile.fields import DynamicField
-from ch2.fit.profile.profile import read_profile
+from ch2.fit.profile.profile import read_external_profile
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
 
 
@@ -19,7 +19,7 @@ def test_profile():
 
     basicConfig(stream=stdout, level=DEBUG)
     log = getLogger()
-    nlog, types, messages = read_profile(log, '/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+    nlog, types, messages = read_external_profile(log, '/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
 
     cen = types.profile_to_type('carry_exercise_name')
     assert cen.profile_to_internal('farmers_walk') == 1
