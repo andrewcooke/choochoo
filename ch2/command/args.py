@@ -8,7 +8,7 @@ from typing import Mapping
 
 from ..lib.date import to_date
 
-CH2_VERSION = '0.10.4'
+CH2_VERSION = '0.10.5'
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
