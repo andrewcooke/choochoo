@@ -3,6 +3,7 @@ from os.path import splitext, basename
 
 from pygeotile.point import Point
 
+from ch2.fit.profile.profile import read_fit
 from ..load import StatisticJournalLoader
 from ..names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y
@@ -56,7 +57,7 @@ class ActivityImporter(Importer):
         sport_to_activity = self._assert_karg('sport_to_activity')
         loader = StatisticJournalLoader(self._log, s, self)
 
-        data, types, messages, records = filtered_records(self._log, path)
+        types, messages, records = filtered_records(self._log, read_fit(self._log, path))
         records = [record.force(fix_degrees)
                    for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(0.0))]
 

@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from sqlalchemy import desc
 
+from ch2.fit.profile.profile import read_fit
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
     CUMULATIVE_STEPS_FINISH
 from ..read import Importer, AbortImportButMarkScanned, AbortImport
@@ -181,7 +182,7 @@ class MonitorImporter(Importer):
 
     def _import(self, s, path):
 
-        data, types, messages, records = filtered_records(self._log, path)
+        types, messages, records = filtered_records(self._log, read_fit(self._log, path))
         records = [record.force(fix_degrees, unpack_single_bytes)
                    for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(0.0))]
 

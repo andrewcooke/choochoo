@@ -305,8 +305,10 @@ def parser():
                      help='display only named high-level messages')
     fit.add_argument(m(W), mm(WARN), action='store_true',
                      help='additional warning messages')
+    fit.add_argument(mm(WIDTH), action='store', type=int,
+                     help='display width for some formats')
     fit.add_argument(mm(NO_HEADER), action='store_true',
-                     help='ignore the header (checksum, length)')
+                     help='do not validate the header (checksum, length)')
     fit.add_argument(mm(NAME), action='store_true',
                      help='display file name')
     fit.add_argument(mm(NOT), action='store_true',

@@ -4,12 +4,17 @@ from abc import abstractmethod
 from collections import defaultdict, Counter
 from struct import unpack, pack
 
+from .records import LazyRecord
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
 from ..profile.types import timestamp_to_time, time_to_timestamp
 from ...lib.data import WarnDict, tohex
 
 
 class Identity:
+    '''
+    A unique ID that identifies a particular message type (a combination of message name
+    and the particular definition used).
+    '''
 
     def __init__(self, name, counter):
         self.name = name
@@ -26,6 +31,13 @@ class Identity:
 
 
 class Token:
+    '''
+    A chunk of the file.  Subclasses into different token types below.
+
+    tag - a simple string describing the type of token (HDR etc)
+    is_user - does this contain user data? (alternatively, it;s internal data for parsing)
+    data - the bytes from the input file.
+    '''
 
     __slots__ = ('tag', 'is_user', 'data')
 
@@ -42,6 +54,9 @@ class Token:
 
 
 class ValidateToken(Token):
+    '''
+    A Token that can be validated.  Provides support for quiet or noisy validation.
+    '''
 
     @abstractmethod
     def validate(self, data, log, quiet=False):
@@ -58,6 +73,11 @@ FIT = b'.FIT'
 
 
 class FileHeader(ValidateToken):
+    '''
+    The (single) header Token that starts a file.
+
+    Contains extra functionality to allow modification when fixing FIT files.
+    '''
 
     def __init__(self, data):
         super().__init__('HDR', False, data[:data[0]])

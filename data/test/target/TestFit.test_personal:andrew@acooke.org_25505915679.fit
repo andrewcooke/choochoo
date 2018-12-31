@@ -1,0 +1,49 @@
+
+file_id
+  garmin_product: 2503,   manufacturer: garmin,   number: 4,
+  serial_number: 3968700466,  time_created: 2018-10-07 00:51:00+00:00,
+  type: monitoring_b
+
+device_info
+  garmin_product: 2503,   manufacturer: garmin,   serial_number: 3968700466,
+  software_version: 3.3,  timestamp: 2018-10-07 00:51:00+00:00s
+
+software
+  version: 3.6
+
+monitoring_info
+  activity_type: walking.running,
+  cycles_to_calories: 0.0422kcal/cycle.0.1328kcal/cycle,
+  cycles_to_distance: 1.5834m/cycle.2.375m/cycle,
+  local_timestamp: 2018-10-06 21:51:00s,
+  resting_metabolic_rate: 1814kcal / day,
+  timestamp: 2018-10-07 00:51:00+00:00s
+
+monitoring (defn 2/4)
+  timestamp: 2018-10-07 00:51:00+00:00s
+
+monitoring (defn 3/4)
+  heart_rate: 87bpm,  timestamp_16: 2018-10-07 00:52:00+00:00s
+
+monitoring (defn 3/4)
+  heart_rate: 79bpm,  timestamp_16: 2018-10-07 00:53:00+00:00s
+
+monitoring (defn 4/4)
+  activity_type: sedentary,   intensity: 4,
+  timestamp: 2018-10-07 00:53:00+00:00s
+
+monitoring (defn 2/4)
+  timestamp: 2018-10-07 00:53:00+00:00s
+
+monitoring (defn 1/4)
+  timestamp,                    active_calories,    active_time,
+    activity_type,  cycles,     distance,   duration_min
+  2018-10-07 00:51:00+00:00s,   37kcal,             553.0s,     
+    generic,        0.0cycles,  0.0m,       1311min     
+  2018-10-07 00:51:00+00:00s,   40kcal,             1160.0s,    
+    walking,        1372.04m,   1311min,    1733steps   
+  2018-10-07 00:53:00+00:00s,   37kcal,             553.0s,     
+    generic,        0.0cycles,  0.0m,       1313min     
+  2018-10-07 00:53:00+00:00s,   40kcal,             1160.0s,    
+    walking,        1372.04m,   1313min,    1733steps   
+

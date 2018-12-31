@@ -85,6 +85,8 @@ class Header(Message):
             self._add_field(TypedField(log, name, n, None, None, None, None, base_type, types))
 
     def _parse_field(self, field, data, count, endian, timestamp, references, accumulate, message):
+        import pdb; pdb.set_trace()  # todo - why isn't this triggering?
+        raise Exception('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
         if field.name == 'checksum' and references['header_size'] == 12:
             yield None, None
         else:

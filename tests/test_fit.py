@@ -3,7 +3,7 @@ from _csv import reader
 from glob import glob
 from itertools import zip_longest
 from logging import getLogger, basicConfig, DEBUG
-from os.path import splitext, split, join
+from os.path import splitext, split, join, basename
 from sys import stdout
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -12,11 +12,12 @@ from ch2.command.args import FIELDS
 from ch2.fit.format.read import filtered_records
 from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from ch2.fit.profile.fields import DynamicField
-from ch2.fit.profile.profile import read_external_profile
+from ch2.fit.profile.profile import read_external_profile, read_fit
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
+from ch2.lib.tests import OutputMixin, HEX_ADDRESS
 
 
-class TestFit(TestCase):
+class TestFit(TestCase, OutputMixin):
 
     def setUp(self):
         basicConfig(stream=stdout, level=DEBUG)
@@ -39,21 +40,33 @@ class TestFit(TestCase):
         self.assertEqual(fields, 'duration_type,target_type')
 
     def test_decode(self):
-        data, types, messages, records = \
-            filtered_records(self.log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
+        types, messages, records = \
+            filtered_records(self.log,
+                             read_fit(self.log,
+                                      '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit'),
                              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
-        for record in records:
-            print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
+        with self.assertFileMatch(
+                '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_decode',
+                filters=[HEX_ADDRESS]) as output:
+            for record in records:
+                print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)),
+                      file=output)
 
     def test_dump(self):
-        summarize(self.log, FIELDS,
-                  '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit',
-                  profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+        with self.assertFileMatch(
+                '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_dump') as output:
+            path = '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit'
+            summarize(self.log, FIELDS, read_fit(self.log, path),
+                      profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx',
+                      width=80, output=output)
 
     def test_developer(self):
-        summarize(self.log, FIELDS,
-                  '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit',
-                  profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+        with self.assertFileMatch(
+                '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_developer') as output:
+            path = '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit'
+            summarize(self.log, FIELDS, read_fit(self.log, path),
+                      profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx',
+                      width=80, output=output)
 
     def test_csv(self):
         with TemporaryDirectory() as dir:
@@ -70,27 +83,32 @@ class TestFit(TestCase):
             assert skip.skip == 0, 'Unused skipped tests'
 
     def test_personal(self):
-        with TemporaryDirectory() as dir:
-            skip = Skip(2)  # timer_trigger in ActivityGroup.fit
-            for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
-                print(fit_file)
-                summarize_tables(self.log, fit_file)
+        for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
+            file_name = basename(fit_file)
+            with self.assertFileMatch(
+                    '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_personal:' + file_name) as output:
+                summarize_tables(self.log, read_fit(self.log, fit_file), width=80, output=output)
 
     def test_timestamp_16(self):
-        data, types, messages, records = \
+        types, messages, records = \
             filtered_records(self.log,
-                             '/home/andrew/project/ch2/choochoo/data/test/personal/andrew@acooke.org_24755630065.fit',
+                             read_fit(self.log,
+                                      '/home/andrew/project/ch2/choochoo/data/test/personal/andrew@acooke.org_24755630065.fit'),
                              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
-        for record in records:
-            if record.name == 'monitoring':
-                print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
+        with self.assertFileMatch(
+                '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_tiemstamp_16',
+                filters=[HEX_ADDRESS]) as output:
+            for record in records:
+                if record.name == 'monitoring':
+                    print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)),
+                          file=output)
 
 
 def dump_csv(log, fit_file, csv_file):
     with open(csv_file, 'w') as output:
-        summarize_csv(log, fit_file,
+        summarize_csv(log, read_fit(log, fit_file),
                       profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx',
-                      out=output)
+                      output=output)
 
 
 # https://docs.python.org/3/library/itertools.html#itertools-recipes
