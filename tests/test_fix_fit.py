@@ -76,4 +76,5 @@ class TestFixFit(TestCase):
     def test_unknown_source(self):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-04-15-09-18-20.fit')
         fix(self.log, bytearray(bad), drop=True)
-
+        bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-02-24-10-04-10.fit')
+        fix(self.log, bytearray(bad), drop=True)
