@@ -1,5 +1,6 @@
 
 from tempfile import NamedTemporaryFile
+from unittest import TestCase
 
 from sqlalchemy.sql.functions import count
 
@@ -13,42 +14,34 @@ from ch2.squeal.tables.statistic import StatisticJournal
 from ch2.stoats.calculate import run_pipeline_after
 
 
-def test_activities():
+class TestActivities(TestCase):
 
-    with NamedTemporaryFile() as f:
+    def test_activities(self):
 
-        args, log, db = bootstrap_file(f, m(V), '5')
+        with NamedTemporaryFile() as f:
 
-        bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, log, db = bootstrap_file(f, m(V), '5')
 
-        args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
-        constants(args, log, db)
+            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-        args, log, db = bootstrap_file(f, m(V), '5', 'constants', 'FTHR.%')
-        constants(args, log, db)
+            args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
+            constants(args, log, db)
 
-        args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                       'activities', mm(FAST), 'data/test/personal/2018-08-27-rec.fit')
-        activities(args, log, db)
+            args, log, db = bootstrap_file(f, m(V), '5', 'constants', 'FTHR.%')
+            constants(args, log, db)
 
-        # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
+                                           'activities', mm(FAST), 'data/test/personal/2018-08-27-rec.fit')
+            activities(args, log, db)
 
-        run_pipeline_after(log, db, PipelineType.STATISTIC, force=True, after='2018-01-01')
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-        # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            run_pipeline_after(log, db, PipelineType.STATISTIC, force=True, after='2018-01-01')
 
-        with db.session_context() as s:
-            n = s.query(count(StatisticJournal.id)).scalar()
-            assert n == 25675, n
-            journal = s.query(ActivityJournal).one()
-            assert journal.start != journal.finish
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-
-def import_activity(f):
-    bootstrap_file(f, m(V), '0', mm(DEV), configurator=default)
-    args, log, db = bootstrap_file(f, m(V), '0', 'constants', '--set', 'FTHR.%', '154')
-    constants(args, log, db)
-    args, log, db = bootstrap_file(f, m(V), '0', mm(DEV),
-                                   'activities', 'data/test/personal/2018-08-27-rec.fit')
-    activities(args, log, db)
-
+            with db.session_context() as s:
+                n = s.query(count(StatisticJournal.id)).scalar()
+                self.assertEqual(n, 25675)
+                journal = s.query(ActivityJournal).one()
+                self.assertNotEqual(journal.start, journal.finish)

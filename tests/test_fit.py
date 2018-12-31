@@ -6,6 +6,7 @@ from logging import getLogger, basicConfig, DEBUG
 from os.path import splitext, split, join
 from sys import stdout
 from tempfile import TemporaryDirectory
+from unittest import TestCase
 
 from ch2.command.args import FIELDS
 from ch2.fit.format.read import filtered_records
@@ -15,55 +16,74 @@ from ch2.fit.profile.profile import read_external_profile
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
 
 
-def test_profile():
+class TestFit(TestCase):
 
-    basicConfig(stream=stdout, level=DEBUG)
-    log = getLogger()
-    nlog, types, messages = read_external_profile(log, '/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+    def setUp(self):
+        basicConfig(stream=stdout, level=DEBUG)
+        self.log = getLogger()
 
-    cen = types.profile_to_type('carry_exercise_name')
-    assert cen.profile_to_internal('farmers_walk') == 1
+    def test_profile(self):
+        nlog, types, messages = read_external_profile(self.log,
+                                                      '/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+        cen = types.profile_to_type('carry_exercise_name')
+        self.assertEqual(cen.profile_to_internal('farmers_walk'), 1)
+        session = messages.profile_to_message('session')
+        field = session.profile_to_field('total_cycles')
+        self.assertIsInstance(field, DynamicField)
+        for name in field.references:
+            self.assertEqual(name, 'sport')
+        workout_step = messages.profile_to_message('workout_step')
+        field = workout_step.number_to_field(4)
+        self.assertEqual(field.name, 'target_value')
+        fields = ','.join(sorted(field.references))
+        self.assertEqual(fields, 'duration_type,target_type')
 
-    session = messages.profile_to_message('session')
-    field = session.profile_to_field('total_cycles')
-    assert isinstance(field, DynamicField), type(field)
-    for name in field.references:
-        assert name == 'sport'
+    def test_decode(self):
+        data, types, messages, records = \
+            filtered_records(self.log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
+                             profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+        for record in records:
+            print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
 
-    workout_step = messages.profile_to_message('workout_step')
-    field = workout_step.number_to_field(4)
-    assert field.name == 'target_value', field.name
-    fields = ','.join(sorted(field.references))
-    assert fields == 'duration_type,target_type', fields
+    def test_dump(self):
+        summarize(self.log, FIELDS,
+                  '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit',
+                  profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
 
+    def test_developer(self):
+        summarize(self.log, FIELDS,
+                  '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit',
+                  profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
 
-def test_decode():
+    def test_csv(self):
+        with TemporaryDirectory() as dir:
+            skip = Skip(2)  # timer_trigger in ActivityGroup.fit
+            for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/sdk/*.fit'):
+                print(fit_file)
+                fit_dir, file = split(fit_file)
+                name = splitext(file)[0]
+                csv_name = '%s.%s' % (name, 'csv')
+                csv_us = join(dir, csv_name)
+                csv_them = join(fit_dir, csv_name)
+                dump_csv(self.log, fit_file, csv_us)
+                compare_csv(self.log, csv_us, csv_them, name, skip)
+            assert skip.skip == 0, 'Unused skipped tests'
 
-    basicConfig(stream=stdout, level=DEBUG)
-    log = getLogger()
-    data, types, messages, records = \
-        filtered_records(log, '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit',
-                         profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
-    for record in records:
-        print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
+    def test_personal(self):
+        with TemporaryDirectory() as dir:
+            skip = Skip(2)  # timer_trigger in ActivityGroup.fit
+            for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
+                print(fit_file)
+                summarize_tables(self.log, fit_file)
 
-
-def test_dump():
-
-    basicConfig(stream=stdout, level=DEBUG)
-    log = getLogger()
-    summarize(log, FIELDS,
-              '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit',
-              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
-
-
-def test_developer():
-
-    basicConfig(stream=stdout, level=DEBUG)
-    log = getLogger()
-    summarize(log, FIELDS,
-              '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit',
-              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+    def test_timestamp_16(self):
+        data, types, messages, records = \
+            filtered_records(self.log,
+                             '/home/andrew/project/ch2/choochoo/data/test/personal/andrew@acooke.org_24755630065.fit',
+                             profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+        for record in records:
+            if record.name == 'monitoring':
+                print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))
 
 
 def dump_csv(log, fit_file, csv_file):
@@ -133,46 +153,3 @@ def compare_csv(log, us, them, name, skip):
         next(them_reader)  # skip titles
         for us_row, them_row in zip_longest(us_reader, them_reader):
             compare_rows(log, us_row, them_row, name, skip)
-
-
-def test_csv():
-
-    basicConfig(stream=stdout, level=DEBUG)
-    log = getLogger()
-
-    with TemporaryDirectory() as dir:
-        skip = Skip(2)  # timer_trigger in ActivityGroup.fit
-        for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/sdk/*.fit'):
-            print(fit_file)
-            fit_dir, file = split(fit_file)
-            name = splitext(file)[0]
-            csv_name = '%s.%s' % (name, 'csv')
-            csv_us = join(dir, csv_name)
-            csv_them = join(fit_dir, csv_name)
-            dump_csv(log, fit_file, csv_us)
-            compare_csv(log, csv_us, csv_them, name, skip)
-        assert skip.skip == 0, 'Unused skipped tests'
-
-
-def test_personal():
-
-    basicConfig(stream=stdout, level=DEBUG)
-    log = getLogger()
-
-    with TemporaryDirectory() as dir:
-        skip = Skip(2)  # timer_trigger in ActivityGroup.fit
-        for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
-            print(fit_file)
-            summarize_tables(log, fit_file)
-
-
-def test_timestamp_16():
-
-    basicConfig(stream=stdout, level=DEBUG)
-    log = getLogger()
-    data, types, messages, records = \
-        filtered_records(log, '/home/andrew/project/ch2/choochoo/data/test/personal/andrew@acooke.org_24755630065.fit',
-                         profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
-    for record in records:
-        if record.name == 'monitoring':
-            print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)))

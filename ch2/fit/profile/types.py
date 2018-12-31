@@ -113,10 +113,7 @@ class AutoInteger(StructSupport):
             return int(cell, 0)
 
     def parse(self, data, count, endian, timestamp, **options):
-        result = self._unpack(data, self.formats, self.bad, count, endian)
-        if result is not None and self.size == 1:
-            result = bytes(result)
-        return result
+        return self._unpack(data, self.formats, self.bad, count, endian)
 
 
 class AliasInteger(AutoInteger):

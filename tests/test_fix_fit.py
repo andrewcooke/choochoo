@@ -67,8 +67,13 @@ class TestFixFit(TestCase):
     def test_weird_header(self):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/8CS90646.FIT')
         old_header = FileHeader(bad)
-        fixed = fix(self.log, bad, drop=True, header_size=27)
+        fixed = fix(self.log, bytearray(bad), drop=True, header_size=27)
         new_header = FileHeader(fixed)
         self.assertEqual(new_header.header_size, 27)
         self.assertEqual(new_header.protocol_version, old_header.protocol_version)
         self.assertEqual(new_header.profile_version, old_header.profile_version)
+
+    def test_unknown_source(self):
+        bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-04-15-09-18-20.fit')
+        fix(self.log, bytearray(bad), drop=True)
+

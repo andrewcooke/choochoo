@@ -2,6 +2,7 @@
 import datetime as dt
 from logging import getLogger, basicConfig, DEBUG, StreamHandler, Formatter
 from sys import stdout
+from unittest import TestCase
 
 import sqlalchemy as s
 from sqlalchemy.orm import sessionmaker
@@ -52,73 +53,72 @@ class DataWidget(WidgetWrap):
         super().__init__(Filler(Pile([self.integer, self.text]), valign='top'))
 
 
-def test_bind():
+class TestSqueal(TestCase):
 
-    db = Database()
-    session = db.session()
+    def test_bind(self):
 
-    data = Data(integer=42, text='abc')
-    session.add(data)
-    widget = DataWidget()
-    binder = Binder(log, session, widget, Data, defaults={'integer': 42})
+        db = Database()
+        session = db.session()
 
-    assert binder.instance.text == 'abc', binder.instance.text
-    assert widget.text.edit_text == 'abc', widget.text.edit_text
-    assert binder.instance.integer == 42, binder.instance.integer
-    assert widget.integer.state == 42, widget.integer.state
+        data = Data(integer=42, text='abc')
+        session.add(data)
+        widget = DataWidget()
+        binder = Binder(log, session, widget, Data, defaults={'integer': 42})
 
-    # edit the text
-    size = (10,)
-    for key in ('right', 'right', 'delete'):
-        widget.text.keypress(size, key)
-    assert widget.text.edit_text == 'ab', widget.text.edit_text
-    assert binder.instance.text == 'ab', binder.instance.text
-    assert binder.instance.integer == 42, binder.instance.integer
+        self.assertEqual(binder.instance.text, 'abc', binder.instance.text)
+        self.assertEqual(widget.text.edit_text, 'abc', widget.text.edit_text)
+        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
+        self.assertEqual(widget.integer.state, 42, widget.integer.state)
 
-    # modify the primary key
-    size = (10, 10)
-    for key in ('right', 'right'):
-        widget.integer.keypress(size, key)
-    try:
-        widget.integer.keypress(size, 'delete')
-        assert False, 'expected error because primary key'
-    except:
-        pass
+        # edit the text
+        size = (10,)
+        for key in ('right', 'right', 'delete'):
+            widget.text.keypress(size, key)
+        self.assertEqual(widget.text.edit_text, 'ab', widget.text.edit_text)
+        self.assertEqual(binder.instance.text, 'ab', binder.instance.text)
+        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
 
-    session.expunge_all()
-    # no need to add data - it was saved when the first binder above did a query
-    widget = DataWidget()
-    binder = Binder(log, session, widget, Data, multirow=True, defaults={'integer': 42})
+        # modify the primary key
+        size = (10, 10)
+        for key in ('right', 'right'):
+            widget.integer.keypress(size, key)
+        with self.assertRaises(Exception):
+            widget.integer.keypress(size, 'delete')
 
-    assert binder.instance.text == 'abc', binder.instance.text
-    assert widget.text.edit_text == 'abc', widget.text.edit_text
-    assert binder.instance.integer == 42, binder.instance.integer
-    assert widget.integer.state == 42, widget.integer.state
+        session.expunge_all()
+        # no need to add data - it was saved when the first binder above did a query
+        widget = DataWidget()
+        binder = Binder(log, session, widget, Data, multirow=True, defaults={'integer': 42})
 
-    # edit the text
-    size = (10,)
-    for key in ('home', 'right', 'right', 'delete'):
-        log.info('Keypress %s' % key)
-        widget.text.keypress(size, key)
-    assert widget.text.edit_text == 'ab', widget.text.edit_text
-    assert binder.instance.text == 'ab', binder.instance.text
-    assert binder.instance.integer == 42, binder.instance.integer
+        self.assertEqual(binder.instance.text, 'abc', binder.instance.text)
+        self.assertEqual(widget.text.edit_text, 'abc', widget.text.edit_text)
+        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
+        self.assertEqual(widget.integer.state, 42, widget.integer.state)
 
-    # modify the primary key
-    size = (10, 10)
-    for key in ('right', 'right', 'delete'):
-        widget.integer.keypress(size, key)
+        # edit the text
+        size = (10,)
+        for key in ('home', 'right', 'right', 'delete'):
+            log.info('Keypress %s' % key)
+            widget.text.keypress(size, key)
+        self.assertEqual(widget.text.edit_text, 'ab', widget.text.edit_text)
+        self.assertEqual(binder.instance.text, 'ab', binder.instance.text)
+        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
 
-    assert binder.instance.integer == 4, binder.instance.integer
-    assert binder.instance.text == '', binder.instance.text
+        # modify the primary key
+        size = (10, 10)
+        for key in ('right', 'right', 'delete'):
+            widget.integer.keypress(size, key)
 
-    # and back again
-    widget.integer.keypress(size, '2')
-    assert binder.instance.integer == 42, binder.instance.integer
-    assert binder.instance.text == 'ab', binder.instance.text
+        self.assertEqual(binder.instance.integer, 4, binder.instance.integer)
+        self.assertEqual(binder.instance.text, '', binder.instance.text)
 
-    # try setting date
-    binder.instance.date = dt.date(2018, 7, 1)
-    session.commit()
-    data = session.query(Data).filter(Data.integer == 42).one()
-    assert data.date == dt.date(2018, 7, 1)
+        # and back again
+        widget.integer.keypress(size, '2')
+        self.assertEqual(binder.instance.integer, 42, binder.instance.integer)
+        self.assertEqual(binder.instance.text, 'ab', binder.instance.text)
+
+        # try setting date
+        binder.instance.date = dt.date(2018, 7, 1)
+        session.commit()
+        data = session.query(Data).filter(Data.integer == 42).one()
+        self.assertEqual(data.date, dt.date(2018, 7, 1))

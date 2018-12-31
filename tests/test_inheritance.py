@@ -1,6 +1,7 @@
 
 from logging import getLogger, basicConfig, DEBUG, StreamHandler, Formatter
 from sys import stdout
+from unittest import TestCase
 
 from sqlalchemy import Column, Integer, ForeignKey, create_engine
 from sqlalchemy.event import listen
@@ -70,79 +71,60 @@ class Other(Base):
     id = Column(Integer, primary_key=True)
 
 
-def setup():
+class TestInheritance(TestCase):
 
-    db = Database()
-    s = db.session()
-    o1 = Other()
-    s.add(o1)
-    o2 = Other()
-    s.add(o2)
-    s.add(Child(parent_ref=o1, child_ref=o2))
-    s.commit()
-    return db
+    def database(self):
+        db = Database()
+        s = db.session()
+        o1 = Other()
+        s.add(o1)
+        o2 = Other()
+        s.add(o2)
+        s.add(Child(parent_ref=o1, child_ref=o2))
+        s.commit()
+        return db
 
+    def test_delete_child_instance(self):
+        s = self.database().session()
+        c = s.query(Child).one()
+        s.delete(c)
+        self.assertEqual(s.query(count(Parent.id)).scalar(), 0)
 
-def assert_eq(a, b):
-    assert a == b, '%s != %s' % (a, b)
+    def test_delete_child_sql(self):
+        s = self.database().session()
+        s.query(Child).delete()
+        # !!! this is because the ondelete cascade goes "the other way"
+        self.assertEqual(s.query(count(Parent.id)).scalar(), 1)
 
+    def test_delete_parent_instance(self):
+        s = self.database().session()
+        p = s.query(Parent).one()
+        s.delete(p)
+        self.assertEqual(s.query(count(Child.id)).scalar(), 0)
 
-def test_delete_child_instance():
+    def test_delete_parent_sql(self):
+        s = self.database().session()
+        s.query(Parent).delete()
+        self.assertEqual(s.query(count(Child.id)).scalar(), 0)
 
-    db = setup()
-    s = db.session()
-    c = s.query(Child).one()
-    s.delete(c)
-    assert_eq(s.query(count(Parent.id)).scalar(), 0)
+    def test_delete_child_ref_instance(self):
+        db = self.database()
+        s = db.session()
+        o = s.query(Child).one().child_ref
+        s.delete(o)
+        s.commit()
+        s = db.session()
+        # !!! this is because SQL deletes the child via cascade, but not the parent (see test_delete_child_sql)
+        # (we don't have a backref on Other, so SQLAlchemy isn't going to do anything - have no idea if it would)
+        self.assertEqual(s.query(count(Parent.id)).scalar(), 1)
+        self.assertEqual(s.query(count(Child.id)).scalar(), 0)
 
-
-def test_delete_child_sql():
-
-    db = setup()
-    s = db.session()
-    s.query(Child).delete()
-    # !!! this is because the ondelete cascade goes "the other way"
-    assert_eq(s.query(count(Parent.id)).scalar(), 1)
-
-
-def test_delete_parent_instance():
-
-    db = setup()
-    s = db.session()
-    p = s.query(Parent).one()
-    s.delete(p)
-    assert_eq(s.query(count(Child.id)).scalar(), 0)
-
-
-def test_delete_parent_sql():
-
-    db = setup()
-    s = db.session()
-    s.query(Parent).delete()
-    assert_eq(s.query(count(Child.id)).scalar(), 0)
-
-
-def test_delete_child_ref_instance():
-
-    db = setup()
-    s = db.session()
-    o = s.query(Child).one().child_ref
-    s.delete(o)
-    s.commit()
-    s = db.session()
-    # !!! this is because SQL deletes the child via cascade, but not the parent (see test_delete_child_sql)
-    # (we don't have a backref on Other, so SQLAlchemy isn't going to do anything - have no idea if it would)
-    assert_eq(s.query(count(Parent.id)).scalar(), 1)
-    assert_eq(s.query(count(Child.id)).scalar(), 0)
-
-
-def test_delete_parent_ref_instance():
-
-    db = setup()
-    s = db.session()
-    o = s.query(Child).one().parent_ref
-    s.delete(o)
-    s.commit()
-    s = db.session()
-    assert_eq(s.query(count(Parent.id)).scalar(), 0)
-    assert_eq(s.query(count(Child.id)).scalar(), 0)
+    def test_delete_parent_ref_instance(self):
+        db = self.database()
+        s = db.session()
+        o = s.query(Child).one().parent_ref
+        s.delete(o)
+        s.commit()
+        s = db.session()
+        self.assertEqual(s.query(count(Parent.id)).scalar(), 0)
+        self.assertEqual(s.query(count(Child.id)).scalar(), 0)

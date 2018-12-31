@@ -144,7 +144,7 @@ class MonitorImporter(Importer):
         n_heart_rate, n_steps, steps_journals = 0, 0, defaultdict(lambda: {})
         for record in records:
             if HEART_RATE_ATTR in record.data:
-                self._add(s, HEART_RATE, BPM, None, None, mjournal, record.data[HEART_RATE_ATTR][0],
+                self._add(s, HEART_RATE, BPM, None, None, mjournal, record.data[HEART_RATE_ATTR][0][0],
                           record.timestamp, StatisticJournalInteger)
                 n_heart_rate += 1
             if STEPS_ATTR in record.data:

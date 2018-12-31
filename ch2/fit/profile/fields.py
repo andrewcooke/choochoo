@@ -17,12 +17,19 @@ class ScaledField(Named):
         self._offset = 0 if offset is None else offset
         self._is_scaled = self._scale != 1 or self._offset != 0
         self._is_accumulate = accumulate
+        self._warned_bad_scale = False
 
     def _parse_and_scale(self, type, data, count, endian, timestamp, accumulate, **options):
         values = type.parse(data, count, endian, timestamp, **options)
         if values is not None:
             if self._is_scaled:
-                values = tuple(value / self._scale - self._offset for value in values)
+                scale = self._scale
+                if scale == 0:
+                    if not self._warned_bad_scale:
+                        self._log.warning('Ignoring zero scale')
+                        self._warned_bad_scale = True
+                    scale = 1
+                values = tuple(value / scale - self._offset for value in values)
             if self._is_accumulate:
                 values = accumulate(self, values)
         yield self.name, (values, self._units)
