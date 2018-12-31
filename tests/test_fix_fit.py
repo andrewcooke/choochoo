@@ -73,8 +73,14 @@ class TestFixFit(TestCase):
         self.assertEqual(new_header.protocol_version, old_header.protocol_version)
         self.assertEqual(new_header.profile_version, old_header.profile_version)
 
-    def test_unknown_source(self):
+    def test_unknown_bad(self):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-04-15-09-18-20.fit')
         fix(self.log, bytearray(bad), drop=True)
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-02-24-10-04-10.fit')
         fix(self.log, bytearray(bad), drop=True)
+
+    def test_unknown_good(self):
+        good = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/77F73023.FIT')
+        same = fix(self.log, bytearray(good))
+        self.assertEqual(good, same)
+        self.assertFalse(good is same)
