@@ -86,8 +86,13 @@ class Token:
         yield from self._describe_csv_data(record)
 
     def describe_fields(self, types):
-        for name, (values, units) in self.parse(raw=True).data:
-            yield '%s - %s' % (tohex(values[0]), sub('_', ' ', name))
+        for name, (values, units) in self.parse(raw_data=True).data:
+            if isinstance(values[0], bytes):
+                value = tohex(values[0])
+            else:
+                value = values[0]
+            yield '%s - %s' % (value, sub('_', ' ', name))
+
 
 
 class ValidateToken(Token):
@@ -188,15 +193,15 @@ class FileHeader(ValidateToken):
                 self.data[12:14] = pack('<H', checksum)
                 self.has_checksum = True
 
-    def parse(self, raw=False, **options):
-        kargs = {'header_size': self.data[0:1] if raw else self.header_size,
-                 'protocol_version': self.data[1:2] if raw else self.protocol_version,
-                 'profile_version': self.data[2:4] if raw else self.profile_version,
-                 'data_size': (self.data[4:8] if raw else self.data_size, 'bytes'),
-                 'data_type': self.data[8:12] if raw else self.data_type}
+    def parse(self, raw_data=False, **options):
+        data = {'header_size': self.data[0:1] if raw_data else self.header_size,
+                 'protocol_version': self.data[1:2] if raw_data else self.protocol_version,
+                 'profile_version': self.data[2:4] if raw_data else self.profile_version,
+                 'data_size': (self.data[4:8] if raw_data else self.data_size, 'bytes'),
+                 'data_type': self.data[8:12] if raw_data else self.data_type}
         if self.has_checksum:
-            kargs['checksum'] = self.data[12:14] if raw else self.checksum
-        return self._fake_record('file_header', **kargs)
+            data['checksum'] = self.data[12:14] if raw_data else self.checksum
+        return self._fake_record('file_header', **data)
 
 
 class Defined(Token):
@@ -351,18 +356,6 @@ class Definition(Token):
             self.__sums[field] = values
         return self.__sums[field][0:n]
 
-    def describe_fields(self, types):
-        yield '%s - header (msg %d)' % (tohex(self.data[0:1]), self.local_message_type)
-        yield '%s - reserved' % tohex(self.data[1:2])
-        yield '%s - architecture' % tohex(self.data[2:3])
-        yield '%s - msg no (%s)' % (tohex(self.data[3:5]), self.message.name)
-        yield '%s - no of fields' % tohex(self.data[5:6])
-        for i in range(self.data[5]):
-            data = self.data[6 + i*3:9 + i*3]
-            field = self.__field(data, self.message, types)
-            mult = '' if field.count == 1 else 'x%d' % field.count
-            yield '  %s - fld %d: %s (%s%s)' % (tohex(data), i, field.name, field.base_type.name, mult)
-
     def describe_csv(self):
         yield 'Definition'
         yield self.local_message_type
@@ -372,8 +365,31 @@ class Definition(Token):
             yield field.count
             yield ''
 
-    def parse(self, **options):
-        return self._fake_record('definition')
+    def describe_fields(self, types):
+        # something of a hack - we pack data in odd places below just to unpack here
+        for name, (values, units) in self.parse(raw_data=True).data:
+            if len(values) > 1:
+                (value, extra), padding = values, units
+                extra = ': ' + extra
+            else:
+                value, extra, padding = values[0], '', ''
+            value = tohex(value)
+            yield '%s%s - %s%s' % (padding, value, sub('_', ' ', name), extra)
+
+    def parse(self, raw_data=False, **options):
+        data = {'local_message_type': ((self.data[0:1], str(self.local_message_type)), '') if raw_data else self.local_message_type,
+                'reserved': self.data[1:2],
+                'architecture': self.data[2:3],
+                'message_number': ((self.data[3:5], self.message.name), '') if raw_data else self.global_message_no,
+                'no_of_fields': self.data[5:6] if raw_data else self.data[5]}
+        if not raw_data:
+            data['message_name'] = self.message.name
+        for i, field in enumerate(self.fields):
+            mult = '' if field.count == 1 else 'x%d' % field.count
+            desc = '%s (%s%s)' % (field.name, field.base_type.name, mult)
+            raw_data = self.data[6 + i*3:9 + i*3]
+            data['field_%d' % i] = ((raw_data, desc), '  ') if raw_data else desc
+        return self._fake_record('definition', **data)
 
 
 class DeveloperDefinition(Definition):
@@ -440,8 +456,8 @@ class Checksum(ValidateToken):
             self.checksum = checksum
             self.data = pack('<H', checksum)
 
-    def parse(self, raw=False, **options):
-        return self._fake_record('checksum', checksum=self.data[0:2] if raw else self.checksum)
+    def parse(self, raw_data=False, **options):
+        return self._fake_record('checksum', checksum=self.data[0:2] if raw_data else self.checksum)
 
 
 def token_factory(data, state):

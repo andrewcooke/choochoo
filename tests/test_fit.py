@@ -167,7 +167,7 @@ def compare_csv(log, us, them, name, skip):
                 print(sub('\0', 'NULL', line.strip()))
     def filter(us):
         for row in us:
-            if row[0] == 'FileHeader' or row[0] == 'Checksum':
+            if row[0] in ('FileHeader', 'Checksum'):
                 pass
             else:
                 yield row
