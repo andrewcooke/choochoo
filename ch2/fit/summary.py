@@ -11,7 +11,7 @@ from ..lib.io import terminal_width
 from ..lib.utils import unique
 
 
-def summarize(log, format, data, all_fields=False, all_messages=False, after=0, limit=-1,
+def summarize(log, format, data, all_fields=False, all_messages=False, internal=False, after=0, limit=-1,
               messages=None, warn=False, profile_path=None, grep=None, name_file=None, invert=False, match=1,
               no_validate=False, width=None, output=stdout):
     if name_file and format != GREP:
@@ -19,12 +19,12 @@ def summarize(log, format, data, all_fields=False, all_messages=False, after=0, 
         print(name_file)
     if format == RECORDS:
         summarize_records(log, data,
-                          all_fields=all_fields, all_messages=all_messages,
+                          all_fields=all_fields, all_messages=all_messages, internal=internal,
                           after=after, limit=limit, messages=messages, warn=warn, no_validate=no_validate,
                           profile_path=profile_path, width=width, output=output)
     elif format == TABLES:
         summarize_tables(log, data,
-                         all_fields=all_fields, all_messages=all_messages,
+                         all_fields=all_fields, all_messages=all_messages, internal=internal,
                          after=after, limit=limit, messages=messages, warn=warn, no_validate=no_validate,
                          profile_path=profile_path, width=width, output=output)
     elif format == GREP:
@@ -67,22 +67,22 @@ def summarize_fields(log, data, after=0, limit=-1, warn=False, no_validate=False
             print('  %s' % line, file=output)
 
 
-def summarize_records(log, data, all_fields=False, all_messages=False, after=0, limit=-1, messages=None,
+def summarize_records(log, data, all_fields=False, all_messages=False, internal=False, after=0, limit=-1, messages=None,
                       warn=False, no_validate=False, profile_path=None, width=None, output=stdout):
     types, messages, records = \
         filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
-                         no_validate=no_validate, profile_path=profile_path)
+                         no_validate=no_validate, internal=internal, profile_path=profile_path)
     records = list(records)
     width = width or terminal_width()
     print(file=output)
     pprint_as_dicts(records, all_fields, all_messages, width=width, output=output)
 
 
-def summarize_tables(log, data, all_fields=False, all_messages=False, after=0, limit=-1, messages=None,
+def summarize_tables(log, data, all_fields=False, all_messages=False, internal=False, after=0, limit=-1, messages=None,
                      warn=False, no_validate=False, profile_path=None, width=None, output=stdout):
     types, messages, records = \
         filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
-                         no_validate=no_validate, profile_path=profile_path)
+                         no_validate=no_validate, internal=internal, profile_path=profile_path)
     records = list(records)
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)

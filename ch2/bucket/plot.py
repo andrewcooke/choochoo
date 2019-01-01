@@ -111,7 +111,9 @@ def health(nx, ny, ftn, ftg, hr):
 
     hr = hr.dropna()
     if len(hr):
-        f.extra_y_ranges = {hr.name: Range1d(start=25, end=70)}
+        max_hr = hr.max() * 1.1
+        min_hr = hr.min() * 0.9
+        f.extra_y_ranges = {hr.name: Range1d(start=min_hr, end=max_hr)}
         f.add_layout(LinearAxis(y_range_name=hr.name, axis_label=hr.name), 'right')
         f.circle(x=hr.index, y=hr, color='red', alpha=0.2, y_range_name=hr.name)
 

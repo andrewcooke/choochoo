@@ -30,14 +30,15 @@ def filtered_tokens(log, data, after=0, limit=-1, warn=False, no_validate=False,
     return types, messages, generator()
 
 
-def filtered_records(log, data, after=0, limit=-1, record_names=None, warn=False, no_validate=False, profile_path=None):
+def filtered_records(log, data, after=0, limit=-1, record_names=None, warn=False, no_validate=False, internal=False,
+                     profile_path=None):
 
     types, messages, generator = filtered_tokens(log, data, after=after, limit=limit, warn=warn,
                                                  no_validate=no_validate, profile_path=profile_path)
 
     def filter():
         for i, offset, token in generator:
-            if token.is_user:
+            if internal or token.is_user:
                 record = token.parse(warn=warn)
                 if not record_names or record.name in record_names:
                     yield record

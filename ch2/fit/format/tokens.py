@@ -2,9 +2,11 @@
 import datetime as dt
 from abc import abstractmethod
 from collections import defaultdict, Counter
+from math import log2
+from re import sub
 from struct import unpack, pack
 
-from .records import LazyRecord
+from .records import LazyRecord, DictRecord
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
 from ..profile.types import timestamp_to_time, time_to_timestamp
 from ...lib.data import WarnDict, tohex
@@ -51,6 +53,41 @@ class Token:
 
     def __len__(self):
         return len(self.data)
+
+    def _fake_field(self, key, value):
+        if isinstance(value, tuple) or isinstance(value, list):
+            values, units = value
+            if not isinstance(values, tuple) and not isinstance(values, list):
+                values = (values,)
+        else:
+            values, units = (value,), None
+        return key, (values, units)
+
+    def _fake_record(self, name, **kargs):
+        return LazyRecord(name, None, Identity(name, Counter()), None,
+                          [self._fake_field(key, value) for key, value in kargs.items()])
+
+    @abstractmethod
+    def parse(self, **options):
+        raise NotImplementedError()
+
+    def _describe_csv_header(self, record):
+        yield self.__class__.__name__
+
+    def _describe_csv_data(self, record):
+        for name, (values, units) in record.data:
+            yield name
+            yield '' if values is None else '|'.join(str(value) for value in values)
+            yield '' if units is None else units
+
+    def describe_csv(self):
+        record = self.parse(map_values=False, raw_time=True, rtn_composite=True)
+        yield from self._describe_csv_header(record)
+        yield from self._describe_csv_data(record)
+
+    def describe_fields(self, types):
+        for name, (values, units) in self.parse(raw=True).data:
+            yield '%s - %s' % (tohex(values[0]), sub('_', ' ', name))
 
 
 class ValidateToken(Token):
@@ -151,14 +188,15 @@ class FileHeader(ValidateToken):
                 self.data[12:14] = pack('<H', checksum)
                 self.has_checksum = True
 
-    def describe_fields(self, types):
-        yield '%s - header' % tohex(self.data[0:1])
-        yield '%s - protocol version' % tohex(self.data[1:2])
-        yield '%s - profile version' % tohex(self.data[2:4])
-        yield '%s - data size' % tohex(self.data[4:8])
-        yield '%s - data type' % tohex(self.data[8:12])
+    def parse(self, raw=False, **options):
+        kargs = {'header_size': self.data[0:1] if raw else self.header_size,
+                 'protocol_version': self.data[1:2] if raw else self.protocol_version,
+                 'profile_version': self.data[2:4] if raw else self.profile_version,
+                 'data_size': (self.data[4:8] if raw else self.data_size, 'bytes'),
+                 'data_type': self.data[8:12] if raw else self.data_type}
         if self.has_checksum:
-            yield '%s - checksum' % tohex(self.data[12:14])
+            kargs['checksum'] = self.data[12:14] if raw else self.checksum
+        return self._fake_record('file_header', **kargs)
 
 
 class Defined(Token):
@@ -207,15 +245,10 @@ class Defined(Token):
             else:
                 yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
 
-    def describe_csv(self):
-        record = self.parse(map_values=False, raw_time=True, rtn_composite=True)
+    def _describe_csv_header(self, record):
         yield self.__class__.__name__
         yield self.definition.local_message_type
         yield record.name
-        for name, (values, units) in record.data:
-            yield name
-            yield '' if values is None else '|'.join(str(value) for value in values)
-            yield '' if units is None else units
 
 
 class Data(Defined):
@@ -339,6 +372,9 @@ class Definition(Token):
             yield field.count
             yield ''
 
+    def parse(self, **options):
+        return self._fake_record('definition')
+
 
 class DeveloperDefinition(Definition):
 
@@ -404,8 +440,8 @@ class Checksum(ValidateToken):
             self.checksum = checksum
             self.data = pack('<H', checksum)
 
-    def describe_fields(self, types):
-        yield '%s - checksum' % tohex(self.data)
+    def parse(self, raw=False, **options):
+        return self._fake_record('checksum', checksum=self.data[0:2] if raw else self.checksum)
 
 
 def token_factory(data, state):

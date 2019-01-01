@@ -141,7 +141,7 @@ def compare_rows(log, us, them, name, skip):
     assert us[0:3] == them[0:3] or skip, "%s != %s for %s\n(%s\n%s)" % (us[0:3], them[0:3], name, us, them)
     excess = len(them) % 3
     if excess and not any(them[-excess:]):
-        log.warning('Discarding %d empty values from reference' % excess)
+        log.debug('Discarding %d empty values from reference' % excess)
         them = them[:-excess]
     while len(them) > len(us) + 2 and not any(them[-3:]):
         them = them[:-3]
@@ -153,20 +153,26 @@ def compare_rows(log, us, them, name, skip):
 
 
 def compare_csv(log, us, them, name, skip):
-    # print(us)
-    # with open(us, 'r') as us_in:
-    #     for line in us_in.readlines():
-    #         print("%s" % line.strip())
-    #         if '\0' in line:
-    #             print(sub('\0', 'NULL', line.strip()))
-    # print(them)
-    # with open(them, 'r') as them_in:
-    #     for line in them_in.readlines():
-    #         print("%s" % line.strip())
-    #         if '\0' in line:
-    #             print(sub('\0', 'NULL', line.strip()))
+    print(us)
+    with open(us, 'r') as us_in:
+        for line in us_in.readlines():
+            print("%s" % line.strip())
+            if '\0' in line:
+                print(sub('\0', 'NULL', line.strip()))
+    print(them)
+    with open(them, 'r') as them_in:
+        for line in them_in.readlines():
+            print("%s" % line.strip())
+            if '\0' in line:
+                print(sub('\0', 'NULL', line.strip()))
+    def filter(us):
+        for row in us:
+            if row[0] == 'FileHeader' or row[0] == 'Checksum':
+                pass
+            else:
+                yield row
     with open(us, 'r') as us_in, open(them, 'r') as them_in:
-        us_reader = reader(us_in)
+        us_reader = filter(reader(us_in))
         them_reader = reader(them_in)
         next(them_reader)  # skip titles
         for us_row, them_row in zip_longest(us_reader, them_reader):

@@ -1,5 +1,5 @@
 000 00000 HDR 0e206806a20000002e464954bed0
-  0e - header
+  0e - header size
   20 - protocol version
   6806 - profile version
   a2000000 - data size

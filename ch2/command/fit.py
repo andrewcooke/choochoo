@@ -1,6 +1,6 @@
 
 from .args import PATH, FORMAT, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, WARN, GREP, MESSAGE, NAME, NOT, MATCH, \
-    WIDTH, NO_VALIDATE
+    WIDTH, NO_VALIDATE, INTERNAL
 from ..fit.profile.profile import read_fit
 from ..fit.summary import summarize
 
@@ -38,7 +38,7 @@ finish and paths start.
     '''
     for file_path in args[PATH]:
         summarize(log, args[FORMAT], read_fit(log, file_path),
-                  all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES],
+                  all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES], internal=args[INTERNAL],
                   after=args[AFTER], limit=args[LIMIT], messages=args[MESSAGE], warn=args[WARN],
                   grep=args[GREP], name_file=file_path if args[NAME] else None, invert=args[NOT], match=args[MATCH],
                   no_validate=args[NO_VALIDATE], width=args[WIDTH])

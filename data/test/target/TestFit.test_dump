@@ -1,5 +1,5 @@
 000 00000 HDR 0e10de07f61600002e464954d846
-  0e - header
+  0e - header size
   10 - protocol version
   de07 - profile version
   f6160000 - data size

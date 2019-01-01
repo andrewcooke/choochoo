@@ -5,6 +5,7 @@ from logging import getLogger
 from os import makedirs
 from os.path import exists, dirname
 from re import sub
+from tempfile import NamedTemporaryFile
 
 HEX_ADDRESS = lambda s: sub(r'0x[0-9a-f]{8,}', 'ADDRESS', s)
 
@@ -36,6 +37,13 @@ class ComparisonContext(BufferContext):
     def __exit__(self, exc_type, exc_val, exc_tb):
         with open(self._path, 'r') as input:
             target = input.read()
+            result = self._filter(self._buffer.getvalue())
+            if result != target:
+                with NamedTemporaryFile(delete=False) as f:
+                    f.write(result.encode())
+                    self._log.info('Wrote copy of result to %s' % f.name)
+                    self._log.info('Comparing with %s' % self._path)
+                    self._log.info('diff %s %s' % (f.name, self._path))
             self._test.assertEqual(target, self._filter(self._buffer.getvalue()))
 
 

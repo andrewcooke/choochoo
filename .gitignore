@@ -15,3 +15,4 @@ dist
 *.lock
 */_site
 */.sass-cache
+dev/update.sh
