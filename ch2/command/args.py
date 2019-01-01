@@ -77,7 +77,6 @@ MAX_DROP_CNT = 'max-drop-cnt'
 MAX_FWD_LEN = 'max-fwd-len'
 MAX_ROWS = 'max-rows'
 MAX_RECORD_LEN = 'max-record-len'
-MESSAGES = 'messages'
 MIN_SYNC_CNT = 'min-sync-cnt'
 MONITOR = 'monitor'
 MONITOR_JOURNALS = 'monitor-journals'
@@ -113,6 +112,7 @@ STATISTIC_JOURNALS = 'statistic-journals'
 STATISTIC_QUARTILES = 'statistic-quartiles'
 TABLE = 'table'
 TABLES = 'tables'
+TOKENS = 'tokens'
 UNLOCK = 'unlock'
 USER = 'user'
 VALIDATE = 'validate'
@@ -289,8 +289,8 @@ def parser():
                             help='show med-level matching entries')
     fit_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV,
                             help='show med-level structure in CSV format')
-    fit_format.add_argument(mm(MESSAGES), action='store_const', dest=FORMAT, const=MESSAGES,
-                            help='show low-level message structure')
+    fit_format.add_argument(mm(TOKENS), action='store_const', dest=FORMAT, const=TOKENS,
+                            help='show low-level token structure')
     fit_format.add_argument(mm(FIELDS), action='store_const', dest=FORMAT, const=FIELDS,
                             help='show low-level field structure (more details)')
     fit.add_argument(mm(AFTER), action='store', type=int, metavar='N', default=0,

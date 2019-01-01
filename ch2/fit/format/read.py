@@ -30,18 +30,16 @@ def filtered_tokens(log, data, after=0, limit=-1, warn=False, no_header=False, p
     return types, messages, generator()
 
 
-def filtered_records(log, data, after=0, limit=-1, records=None, warn=False, no_header=False, profile_path=None):
+def filtered_records(log, data, after=0, limit=-1, record_names=None, warn=False, no_header=False, profile_path=None):
 
-    types, messages = read_profile(log, warn=warn, profile_path=profile_path)
+    types, messages, generator = filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_header=no_header,
+                                                 profile_path=profile_path)
 
-    def generator():
-        for i, (offset, token) in enumerate((offset, token)
-                                            for (offset, token) in tokens(log, data, types, messages,
-                                                                          no_header=no_header)
-                                            if token.is_user):  # todo - can we have a flag that shows all tokens?
-            if i >= after and (limit < 0 or i - after < limit):
+    def filter():
+        for i, offset, token in generator:
+            if token.is_user:
                 record = token.parse(warn=warn)
-                if not records or record.name in records:
+                if not record_names or record.name in record_names:
                     yield record
 
-    return types, messages, generator()
+    return types, messages, filter()

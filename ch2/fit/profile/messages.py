@@ -5,17 +5,6 @@ from .support import Rows
 from ..format.records import LazyRecord
 from ...lib.data import WarnDict
 
-HEADER_GLOBAL_TYPE = -1
-
-HEADER_FIELDS = [
-    ('header_size', 1, 'uint8'),
-    ('protocol_version', 1, 'uint8'),
-    ('profile_version', 1, 'uint16'),
-    ('data_size', 1, 'uint32'),
-    ('fit_text', 4, 'string'),
-    ('checksum', 1, 'uint16')
-]
-
 
 class Message(Named):
 
@@ -77,22 +66,6 @@ class RowMessage(Message):
             self._add_field(MessageField(self._log, next(rows), rows, types))
 
 
-class Header(Message):
-
-    def __init__(self, log, types, warn=False):
-        super().__init__(log, 'HEADER', number=HEADER_GLOBAL_TYPE, warn=warn)
-        for n, (name, size, base_type) in enumerate(HEADER_FIELDS):
-            self._add_field(TypedField(log, name, n, None, None, None, None, base_type, types))
-
-    def _parse_field(self, field, data, count, endian, timestamp, references, accumulate, message):
-        import pdb; pdb.set_trace()  # todo - why isn't this triggering?
-        raise Exception('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-        if field.name == 'checksum' and references['header_size'] == 12:
-            yield None, None
-        else:
-            yield from super()._parse_field(field, data, count, endian, timestamp, references, accumulate, message)
-
-
 class Missing(Message):
 
     def __init__(self, log, number):
@@ -112,7 +85,6 @@ class Messages:
             elif row.msg_name:
                 # self.__log.info('Parsing message %s' % row.msg_name)
                 self.__add_message(RowMessage(self.__log, row, rows, types, warn=warn))
-        self.__add_message(Header(self.__log, types, warn=warn))
 
     def __add_message(self, message):
         self.__profile_to_message[message.name] = message

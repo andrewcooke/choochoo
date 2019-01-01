@@ -6,14 +6,13 @@ from sys import stdout
 from .format.read import filtered_records, filtered_tokens
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
     to_hex, no_filter
-from ..command.args import MESSAGES, RECORDS, FIELDS, CSV, \
-    TABLES, GREP
+from ..command.args import RECORDS, FIELDS, CSV, TABLES, GREP, TOKENS
 from ..lib.io import terminal_width
 from ..lib.utils import unique
 
 
 def summarize(log, format, data, all_fields=False, all_messages=False, after=0, limit=-1,
-              records=None, warn=False, profile_path=None, grep=None, name_file=None, invert=False, match=1,
+              messages=None, warn=False, profile_path=None, grep=None, name_file=None, invert=False, match=1,
               no_header=False, width=None, output=stdout):
     if name_file and format != GREP:
         print()
@@ -21,12 +20,12 @@ def summarize(log, format, data, all_fields=False, all_messages=False, after=0, 
     if format == RECORDS:
         summarize_records(log, data,
                           all_fields=all_fields, all_messages=all_messages,
-                          after=after, limit=limit, records=records, warn=warn, no_header=no_header,
+                          after=after, limit=limit, messages=messages, warn=warn, no_header=no_header,
                           profile_path=profile_path, width=width, output=output)
     elif format == TABLES:
         summarize_tables(log, data,
                          all_fields=all_fields, all_messages=all_messages,
-                         after=after, limit=limit, records=records, warn=warn, no_header=no_header,
+                         after=after, limit=limit, messages=messages, warn=warn, no_header=no_header,
                          profile_path=profile_path, width=width, output=output)
     elif format == GREP:
         summarize_grep(log, data, grep, name_file=name_file, match=match, invert=invert,
@@ -36,10 +35,10 @@ def summarize(log, format, data, all_fields=False, all_messages=False, after=0, 
         summarize_csv(log, data,
                       after=after, limit=limit, warn=warn, no_header=no_header,
                       profile_path=profile_path, output=output)
-    elif format == MESSAGES:
-        summarize_messages(log, data,
-                           after=after, limit=limit, warn=warn, no_header=no_header,
-                           profile_path=profile_path, output=output)
+    elif format == TOKENS:
+        summarize_tokens(log, data,
+                         after=after, limit=limit, warn=warn, no_header=no_header,
+                         profile_path=profile_path, output=output)
     elif format == FIELDS:
         summarize_fields(log, data,
                          after=after, limit=limit, warn=warn, no_header=no_header,
@@ -48,8 +47,8 @@ def summarize(log, format, data, all_fields=False, all_messages=False, after=0, 
         raise Exception('Bad format: %s' % format)
 
 
-def summarize_messages(log, data, after=0, limit=-1, warn=False, no_header=False,
-                       profile_path=None, output=stdout):
+def summarize_tokens(log, data, after=0, limit=-1, warn=False, no_header=False,
+                     profile_path=None, output=stdout):
     types, messages, tokens = \
         filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_header=no_header,
                         profile_path=profile_path)
@@ -68,10 +67,10 @@ def summarize_fields(log, data, after=0, limit=-1, warn=False, no_header=False,
             print('  %s' % line, file=output)
 
 
-def summarize_records(log, data, all_fields=False, all_messages=False, after=0, limit=-1, records=None,
+def summarize_records(log, data, all_fields=False, all_messages=False, after=0, limit=-1, messages=None,
                       warn=False, no_header=False, profile_path=None, width=None, output=stdout):
     types, messages, records = \
-        filtered_records(log, data, after=after, limit=limit, records=records, warn=warn,
+        filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
                          no_header=no_header, profile_path=profile_path)
     records = list(records)
     width = width or terminal_width()
@@ -79,10 +78,10 @@ def summarize_records(log, data, all_fields=False, all_messages=False, after=0, 
     pprint_as_dicts(records, all_fields, all_messages, width=width, output=output)
 
 
-def summarize_tables(log, data, all_fields=False, all_messages=False, after=0, limit=-1, records=None,
+def summarize_tables(log, data, all_fields=False, all_messages=False, after=0, limit=-1, messages=None,
                      warn=False, no_header=False, profile_path=None, width=None, output=stdout):
     types, messages, records = \
-        filtered_records(log, data, after=after, limit=limit, records=records, warn=warn,
+        filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
                          no_header=no_header, profile_path=profile_path)
     records = list(records)
     counts = Counter(record.identity for record in records)
