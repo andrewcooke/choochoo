@@ -61,6 +61,7 @@ GREP = 'grep'
 GROUP = 'group'
 HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
+INTERNAL = 'internal'
 LABEL = 'label'
 LATITUDE = 'latitude'
 LIKE = 'like'
@@ -84,8 +85,8 @@ MONTH = 'month'
 MONTHS = 'months'
 NAME = 'name'
 NAMES = 'names'
-NO_HEADER = 'no-header'
 NO_DIARY = 'no-diary'
+NO_VALIDATE = 'no-validate'
 NOT = 'not'
 O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
@@ -280,41 +281,43 @@ def parser():
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
     fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                      help='path to fit file')
-    fit_format = fit.add_mutually_exclusive_group(required=True)
+    fit_format = fit.add_argument_group(title='output format (one required)').add_mutually_exclusive_group(required=True)
+    fit_format.add_argument(mm(GREP), action='store', dest=GREP, nargs='+', metavar='MSG:FLD[=VAL]',
+                            help='show matching entries')
     fit_format.add_argument(mm(RECORDS), action='store_const', dest=FORMAT, const=RECORDS,
                             help='show high-level structure (ordered by time)')
     fit_format.add_argument(mm(TABLES), action='store_const', dest=FORMAT, const=TABLES,
                             help='show high-level structure (grouped in tables)')
-    fit_format.add_argument(mm(GREP), action='store', dest=GREP, nargs='+', metavar='MSG:FLD[=VAL]',
-                            help='show med-level matching entries')
     fit_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV,
-                            help='show med-level structure in CSV format')
+                            help='show high-level structure (in CSV format)')
     fit_format.add_argument(mm(TOKENS), action='store_const', dest=FORMAT, const=TOKENS,
-                            help='show low-level token structure')
+                            help='show low-level tokens')
     fit_format.add_argument(mm(FIELDS), action='store_const', dest=FORMAT, const=FIELDS,
-                            help='show low-level field structure (more details)')
+                            help='show low-level fields (within tokens)')
     fit.add_argument(mm(AFTER), action='store', type=int, metavar='N', default=0,
-                     help='skip initial messages')
+                     help='skip initial tokens')
     fit.add_argument(mm(LIMIT), action='store', type=int, metavar='N', default=-1,
-                     help='limit number of messages')
-    fit.add_argument(mm(ALL_FIELDS), action='store_true',
-                     help='display undocumented high-level fields')
+                     help='limit number of tokens')
+    fit.add_argument(mm(INTERNAL), action='store_true',
+                     help='display internal messages')
     fit.add_argument(mm(ALL_MESSAGES), action='store_true',
-                     help='display undocumented high-level messages')
+                     help='display undocumented messages')
+    fit.add_argument(mm(ALL_FIELDS), action='store_true',
+                     help='display undocumented fields')
     fit.add_argument(m(M), mm(MESSAGE), action='store', nargs='+', metavar='MSG',
-                     help='display only named high-level messages')
+                     help='display only named messages')
     fit.add_argument(m(W), mm(WARN), action='store_true',
-                     help='additional warning messages')
+                     help='log additional warnings')
     fit.add_argument(mm(WIDTH), action='store', type=int,
                      help='display width for some formats')
-    fit.add_argument(mm(NO_HEADER), action='store_true',
-                     help='do not validate the header (checksum, length)')
+    fit.add_argument(mm(NO_VALIDATE), action='store_true',
+                     help='do not validate checksum, length')
     fit.add_argument(mm(NAME), action='store_true',
-                     help='display file name')
+                     help='print file name')
     fit.add_argument(mm(NOT), action='store_true',
-                     help='display file names that don\'t match (with --grep --name)')
+                     help='print file names that don\'t match (--grep --name)')
     fit.add_argument(mm(MATCH), action='store', type=int, default=1,
-                     help='number of matches to display (with --grep, default 1, -1 for all)')
+                     help='max number of matches (--grep, default 1, -1 for all)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
     fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')

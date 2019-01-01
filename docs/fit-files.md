@@ -24,7 +24,7 @@ is intended mainly to allow data to be imported into the ch2 diary.
     file.  Because each entry is displayed separately this is more
     verbose than the `tables` format.
   
-  * [The `messages` format](#the-messages-format) - this displays the
+  * [The `tokens` format](#the-tokens-format) - this displays the
     low-level binary data and is mostly of use when debugging errors.
 
   * [The `fields` format](#the-fields-format) - a more detailed
@@ -418,13 +418,13 @@ Some fields could not be completely parsed.  This is not unusual with
 the FIT format, which is very extensible and incompletely documented.
 Such fields are marked by `-`.
 
-### The `messages` Format
+### The `tokens` Format
 
 #### Example Usage
 
-    ch2 -v 0 fit --messages FILE
+    ch2 -v 0 fit --tokens FILE
 
-    ch2 -v 0 fit --messages --after N1 --limit N2 FILE
+    ch2 -v 0 fit --tokens --after N1 --limit N2 FILE
 
 #### Format Description
 

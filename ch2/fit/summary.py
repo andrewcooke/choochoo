@@ -13,53 +13,53 @@ from ..lib.utils import unique
 
 def summarize(log, format, data, all_fields=False, all_messages=False, after=0, limit=-1,
               messages=None, warn=False, profile_path=None, grep=None, name_file=None, invert=False, match=1,
-              no_header=False, width=None, output=stdout):
+              no_validate=False, width=None, output=stdout):
     if name_file and format != GREP:
         print()
         print(name_file)
     if format == RECORDS:
         summarize_records(log, data,
                           all_fields=all_fields, all_messages=all_messages,
-                          after=after, limit=limit, messages=messages, warn=warn, no_header=no_header,
+                          after=after, limit=limit, messages=messages, warn=warn, no_validate=no_validate,
                           profile_path=profile_path, width=width, output=output)
     elif format == TABLES:
         summarize_tables(log, data,
                          all_fields=all_fields, all_messages=all_messages,
-                         after=after, limit=limit, messages=messages, warn=warn, no_header=no_header,
+                         after=after, limit=limit, messages=messages, warn=warn, no_validate=no_validate,
                          profile_path=profile_path, width=width, output=output)
     elif format == GREP:
         summarize_grep(log, data, grep, name_file=name_file, match=match, invert=invert,
-                       after=after, limit=limit, warn=warn, no_header=no_header,
+                       after=after, limit=limit, warn=warn, no_validate=no_validate,
                        profile_path=profile_path, output=output)
     elif format == CSV:
         summarize_csv(log, data,
-                      after=after, limit=limit, warn=warn, no_header=no_header,
+                      after=after, limit=limit, warn=warn, no_header=no_validate,
                       profile_path=profile_path, output=output)
     elif format == TOKENS:
         summarize_tokens(log, data,
-                         after=after, limit=limit, warn=warn, no_header=no_header,
+                         after=after, limit=limit, warn=warn, no_validate=no_validate,
                          profile_path=profile_path, output=output)
     elif format == FIELDS:
         summarize_fields(log, data,
-                         after=after, limit=limit, warn=warn, no_header=no_header,
+                         after=after, limit=limit, warn=warn, no_validate=no_validate,
                          profile_path=profile_path, output=output)
     else:
         raise Exception('Bad format: %s' % format)
 
 
-def summarize_tokens(log, data, after=0, limit=-1, warn=False, no_header=False,
+def summarize_tokens(log, data, after=0, limit=-1, warn=False, no_validate=False,
                      profile_path=None, output=stdout):
     types, messages, tokens = \
-        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_header=no_header,
+        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_validate=no_validate,
                         profile_path=profile_path)
     for index, offset, token in tokens:
         print('%03d %05d %s' % (index, offset, token), file=output)
 
 
-def summarize_fields(log, data, after=0, limit=-1, warn=False, no_header=False,
+def summarize_fields(log, data, after=0, limit=-1, warn=False, no_validate=False,
                      profile_path=None, output=stdout):
     types, messages, tokens = \
-        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_header=no_header,
+        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_validate=no_validate,
                         profile_path=profile_path)
     for index, offset, token in tokens:
         print('%03d %05d %s' % (index, offset, token), file=output)
@@ -68,10 +68,10 @@ def summarize_fields(log, data, after=0, limit=-1, warn=False, no_header=False,
 
 
 def summarize_records(log, data, all_fields=False, all_messages=False, after=0, limit=-1, messages=None,
-                      warn=False, no_header=False, profile_path=None, width=None, output=stdout):
+                      warn=False, no_validate=False, profile_path=None, width=None, output=stdout):
     types, messages, records = \
         filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
-                         no_header=no_header, profile_path=profile_path)
+                         no_validate=no_validate, profile_path=profile_path)
     records = list(records)
     width = width or terminal_width()
     print(file=output)
@@ -79,10 +79,10 @@ def summarize_records(log, data, all_fields=False, all_messages=False, after=0, 
 
 
 def summarize_tables(log, data, all_fields=False, all_messages=False, after=0, limit=-1, messages=None,
-                     warn=False, no_header=False, profile_path=None, width=None, output=stdout):
+                     warn=False, no_validate=False, profile_path=None, width=None, output=stdout):
     types, messages, records = \
         filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
-                         no_header=no_header, profile_path=profile_path)
+                         no_validate=no_validate, profile_path=profile_path)
     records = list(records)
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
@@ -96,10 +96,10 @@ class Done(Exception):
     pass
 
 
-def summarize_grep(log, fit_path, data, grep, name_file=None, match=1, invert=False, after=0, limit=-1,
-                   warn=False, no_header=False, profile_path=None, output=stdout):
+def summarize_grep(log, data, grep, name_file=None, match=1, invert=False, after=0, limit=-1,
+                   warn=False, no_validate=False, profile_path=None, output=stdout):
     types, messages, records = \
-        filtered_records(log, data, warn=warn, no_header=no_header, profile_path=profile_path)
+        filtered_records(log, data, warn=warn, no_validate=no_validate, profile_path=profile_path)
     matchers = [compile(pattern) for pattern in grep]
     counts = defaultdict(lambda: 0)
     first = True
@@ -134,7 +134,7 @@ def summarize_grep(log, fit_path, data, grep, name_file=None, match=1, invert=Fa
 def summarize_csv(log, data, after=0, limit=-1, warn=False, no_header=False, profile_path=None,
                   output=stdout):
     types, messages, tokens = \
-        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_header=no_header,
+        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_validate=no_header,
                         profile_path=profile_path)
     for index, offset, token in tokens:
         if hasattr(token, 'describe_csv'):
