@@ -5,6 +5,16 @@ from .support import Rows
 from ..format.records import LazyRecord
 from ...lib.data import WarnDict
 
+'''
+A message is a collection of fields, as defined in the Profile document.
+
+During parsing Definition instances are created which associated a Message with a subset of Fields.
+
+Then, when the Token associated with the Definition is read and needs to be parsed, the Token delegates
+the work to the Definition, which in turn delegates the work to the Message, which in turn delegates to 
+the Field(s).
+'''
+
 
 class Message(Named):
 

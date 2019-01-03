@@ -95,3 +95,7 @@ class TestFixFit(TestCase, OutputMixin):
         same = fix(self.log, bytearray(good))
         self.assertEqual(good, same)
         self.assertFalse(good is same)
+
+    def test_scaled(self):
+        bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/scale.fit')
+        summarize(self.log, RECORDS, bad, internal=True)

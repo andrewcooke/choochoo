@@ -19,7 +19,6 @@ from ...uweird.tui.decorators import Indent
 class SegmentDiary(Displayer):
 
     def _display_date(self, s, f, date):
-        # import pdb; pdb.set_trace()
         tomorrow = local_date_to_time(date + dt.timedelta(days=1))
         today = local_date_to_time(date)
         pile = []

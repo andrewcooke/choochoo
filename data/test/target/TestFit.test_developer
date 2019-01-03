@@ -44,7 +44,7 @@
     020102 - field 2: fit_base_type_id (uint8)
     031107 - field 3: field_name (stringx17)
     080a07 - field 4: units (stringx10)
-006 00093 DTA 00000001646f7567686e7574735f6561726e656400646f7567686e75747300
+006 00093 FLD 00000001646f7567686e7574735f6561726e656400646f7567686e75747300
   00 - header (msg 0 - field_description)
   00 - developer_data_index (uint8)
   00 - field_definition_number (uint8)

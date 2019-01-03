@@ -2,14 +2,16 @@
 import datetime as dt
 from abc import abstractmethod
 from collections import defaultdict, Counter
-from math import log2
 from re import sub
 from struct import unpack, pack
 
-from .records import LazyRecord, DictRecord
+from .records import LazyRecord
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
 from ..profile.types import timestamp_to_time, time_to_timestamp
 from ...lib.data import WarnDict, tohex
+
+
+FIELD_DESCRIPTION = 206
 
 
 class Identity:
@@ -205,6 +207,10 @@ class FileHeader(ValidateToken):
 
 
 class Defined(Token):
+    '''
+    A chunk of data from a FIT file that is associated with a single local message.  Bundled with
+    the Definition for that type, which itself contains a reference to the Message and Fields the data contain.
+    '''
 
     __slots__ = ('definition', 'timestamp')
 
@@ -214,28 +220,11 @@ class Defined(Token):
             self.__parse_timestamp(data, state)
         self.timestamp = state.timestamp
         super().__init__(tag, True, data[0:self.definition.size])
-        if self.definition.global_message_no == 206:
-            self.__parse_field_definition(state)
-            self.is_user = False
 
     def __parse_timestamp(self, data, state):
         field = self.definition.timestamp_field
         state.timestamp = field.field.type.parse(data[field.start:field.finish], 1,
                                                  self.definition.endian, state.timestamp)[0]
-
-    def __parse_field_definition(self, state):
-        record = self.parse().force()
-        developer_index = record.attr.developer_data_index[0][0]
-        number = record.attr.field_definition_number[0][0]
-        # todo - we don't really need to convert name to type just to extract name below
-        base_type = state.types.base_types[
-            state.types.profile_to_type('fit_base_type').profile_to_internal(
-                record.attr.fit_base_type_id[0][0])]
-        # todo - more fields (optional)
-        name = record.attr.field_name[0][0]
-        units = record.attr.units[0][0]
-        state.dev_fields[developer_index][number] = \
-            TypedField(state.log, name, number, units, None, None, None, base_type.name, state.types)
 
     def parse(self, **options):
         return self.definition.message.parse(self.data, self.definition, self.timestamp, **options)
@@ -254,6 +243,30 @@ class Defined(Token):
         yield self.__class__.__name__
         yield self.definition.local_message_type
         yield record.name
+
+
+class DeveloperField(Defined):
+
+    def __init__(self, data, state):
+        super().__init__('FLD', data, state, data[0] & 0x0f)
+        self.__parse_field_definition(state)
+        self.is_user = False
+
+    def __parse_field_definition(self, state):
+        record = self.parse().force()
+        developer_index = record.attr.developer_data_index[0][0]
+        number = record.attr.field_definition_number[0][0]
+        # todo - we don't really need to convert name to type just to extract name below
+        base_type = state.types.base_types[
+            state.types.profile_to_type('fit_base_type').profile_to_internal(
+                record.attr.fit_base_type_id[0][0])]
+        # todo - more fields (optional)
+        name = record.attr.field_name[0][0]
+        units = record.attr.units[0][0]
+        state.dev_fields[developer_index][number] = \
+            TypedField(state.log, name, number, units, None, None, None, base_type.name, state.types)
+
+    # todo - display differently?
 
 
 class Data(Defined):
@@ -296,6 +309,14 @@ class Field:
 
 
 class Definition(Token):
+
+    '''
+    Encapsulate the information from the FIT file that selects as Message and a subset of Fields and
+    associates them with a particular local_message_type.
+
+    This definition is stored in the state so that when that message type is found it can be used to
+    parse the data.
+    '''
 
     def __init__(self, data, state, overhead=6, tag='DFN'):
         self.local_message_type = data[0] & 0x0f
@@ -387,8 +408,8 @@ class Definition(Token):
         for i, field in enumerate(self.fields):
             mult = '' if field.count == 1 else 'x%d' % field.count
             desc = '%s (%s%s)' % (field.name, field.base_type.name, mult)
-            raw_data = self.data[6 + i*3:9 + i*3]
-            data['field_%d' % i] = ((raw_data, desc), '  ') if raw_data else desc
+            raw = self.data[6 + i*3:9 + i*3]
+            data['field_%d' % i] = ((raw, desc), '  ') if raw_data else desc
         return self._fake_record('definition', **data)
 
 
@@ -471,7 +492,11 @@ def token_factory(data, state):
             else:
                 return Definition(data, state)
         else:
-            return Data(data, state)
+            token = Data(data, state)
+            if token.definition.global_message_no == FIELD_DESCRIPTION:
+                return DeveloperField(data, state)
+            else:
+                return token
 
 
 class State:

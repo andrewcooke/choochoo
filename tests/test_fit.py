@@ -4,6 +4,7 @@ from glob import glob
 from itertools import zip_longest
 from logging import getLogger, basicConfig, DEBUG
 from os.path import splitext, split, join, basename
+from re import sub
 from sys import stdout
 from tempfile import TemporaryDirectory
 from unittest import TestCase
@@ -169,6 +170,8 @@ def compare_csv(log, us, them, name, skip):
         for row in us:
             if row[0] in ('FileHeader', 'Checksum'):
                 pass
+            elif row[0] == 'DeveloperField':
+                yield ['Data'] + row[1:]
             else:
                 yield row
     with open(us, 'r') as us_in, open(them, 'r') as them_in:
