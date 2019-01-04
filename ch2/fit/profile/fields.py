@@ -13,28 +13,30 @@ class ScaledField(Named):
     def __init__(self, log, name, units, scale, offset, accumulate):
         super().__init__(log, name)
         self._units = units
-        self._scale = 1 if scale is None else scale
-        self._offset = 0 if offset is None else offset
-        self._is_scaled = self._scale != 1 or self._offset != 0
-        self._is_accumulate = accumulate
-        if self._is_accumulate:
+        self._scale = scale
+        self._offset = offset
+        self._accumulate = accumulate
+        if accumulate:
             self._log.warning('Accumulation not supported for %s' % self.name)
         self._warned_bad_scale = False
 
-    def _parse_and_scale(self, type, data, count, endian, timestamp, **options):
+    def _parse_and_scale(self, type, data, count, endian, timestamp, scale=None, offset=None, **options):
         values = type.parse_type(data, count, endian, timestamp, **options)
-        if values is not None:
-            if self._is_scaled:
-                scale = self._scale
+        if scale is None: scale = self._scale
+        if offset is None: offset = self._offset
+        if scale is not None or offset is not None:
+            if values is not None:
+                if self._accumulate:
+                    raise Exception('Accumulation not supported for %s' % self.name)
+                if scale is None: scale = 1
+                if offset is None: offset = 0
                 if scale == 0:
                     if not self._warned_bad_scale:
                         self._log.warning('Ignoring zero scale in %s' % self.name)
                         self._warned_bad_scale = True
-                    scale = 1
-                values = tuple(value / scale - self._offset for value in values)
-            # todo - this isn't used anywhere (used to delegate to accumulate method in definition token)
-            if self._is_accumulate:
-                raise Exception('Accumulate unused / untested')
+                        scale = 1
+                if scale != 1 or offset != 0:  # keeps integer values integers
+                    values = tuple(value / scale - offset for value in values)
         yield self.name, (values, self._units)
 
     def post(self, message, types):
@@ -78,7 +80,7 @@ class DelegateField(ScaledField):
             # on dangerous ground here.  docs are unclear.  we'll do a complete delegation
             # unless this is scaled, in which case we don't know how to both scale and
             # delegate
-            if self._is_scaled:
+            if self._scale is not None:
                 raise Exception('Scaled component is not a simple field')
             else:
                 yield from delegate.parse_field(data, count, endian, timestamp, references, message, **options)
@@ -114,7 +116,7 @@ class CompositeField(Zip, TypedField):
                                       DelegateField(log, name, units,
                                                     None if scale is None else float(scale),
                                                     None if offset is None else float(offset),
-                                                    accumulate)))
+                                                    None if accumulate is None else int(accumulate))))
 
     def parse_field(self, data, count, endian, timestamp, references, message, rtn_composite=False, **options):
         if rtn_composite:
