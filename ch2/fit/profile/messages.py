@@ -38,7 +38,7 @@ class Message(Named):
         for field in self._number_to_field.values():
             field.post(self, types)
 
-    def parse(self, data, defn, timestamp, **options):
+    def parse_message(self, data, defn, timestamp, **options):
         return LazyRecord(self.name, self.number, defn.identity, timestamp,
                           self.__parse(data, defn, timestamp, **options))
 
@@ -56,12 +56,12 @@ class Message(Named):
                     yield name, value
             else:
                 name = '@%d:%d' % (field.start, field.finish)
-                value = (field.base_type.parse(bytes, field.count, defn.endian, timestamp), None)
+                value = (field.base_type.parse_type(bytes, field.count, defn.endian, timestamp), None)
                 yield name, value
 
     def _parse_field(self, field, bytes, count, endian, timestamp, references, accumulate, message, **options):
         # allow interception for optional field in header
-        yield from field.parse(bytes, count, endian, timestamp, references, accumulate, message, **options)
+        yield from field.parse_field(bytes, count, endian, timestamp, references, accumulate, message, **options)
 
 
 class RowMessage(Message):

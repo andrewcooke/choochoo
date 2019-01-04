@@ -96,7 +96,6 @@ class Token:
             yield '%s - %s' % (value, sub('_', ' ', name))
 
 
-
 class ValidateToken(Token):
     '''
     A Token that can be validated.  Provides support for quiet or noisy validation.
@@ -223,11 +222,11 @@ class Defined(Token):
 
     def __parse_timestamp(self, data, state):
         field = self.definition.timestamp_field
-        state.timestamp = field.field.type.parse(data[field.start:field.finish], 1,
-                                                 self.definition.endian, state.timestamp)[0]
+        state.timestamp = field.field.type.parse_type(data[field.start:field.finish], 1,
+                                                      self.definition.endian, state.timestamp)[0]
 
     def parse(self, **options):
-        return self.definition.message.parse(self.data, self.definition, self.timestamp, **options)
+        return self.definition.message.parse_message(self.data, self.definition, self.timestamp, **options)
 
     def describe_fields(self, types):
         yield '%s - header (msg %d - %s)' % \
@@ -517,4 +516,3 @@ class State:
         copy.definition_counter.update(self.definition_counter)
         copy.timestamp = self.timestamp
         return copy
-

@@ -12,6 +12,9 @@ LITTLE, BIG = 0, 1
 
 
 class AbstractType(Named):
+    '''
+    Root class for any kind of type in the system.
+    '''
 
     def __init__(self, log, name, size, base_type=None):
         super().__init__(log, name)
@@ -23,11 +26,14 @@ class AbstractType(Named):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
     @abstractmethod
-    def parse(self, bytes, count, endian, timestamp, **options):
+    def parse_type(self, bytes, count, endian, timestamp, **options):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
 
 
-class BaseType(AbstractType):
+class SimpleType(AbstractType):
+    '''
+    Value is extracted directly from the binary data.
+    '''
 
     def __init__(self, log, name, size, func):
         super().__init__(log, name, size)
@@ -37,7 +43,10 @@ class BaseType(AbstractType):
         return self.__func(cell_contents)
 
 
-class StructSupport(BaseType):
+class StructSupport(SimpleType):
+    '''
+    Most base types use stucts to unpack data.
+    '''
 
     def _pack_bad(self, value):
         bad = (bytearray(self.size), bytearray(self.size))
@@ -61,7 +70,7 @@ class StructSupport(BaseType):
             return unpack(formats[endian] % count, data[0:count * self.size])
 
 
-class String(BaseType):
+class String(SimpleType):
 
     # it may seem weird this returns a singleton tuple.  shouldn't it be treated like a
     # character field where count is the mutliplicity?  but dynamic fields treat it as
@@ -70,21 +79,24 @@ class String(BaseType):
     def __init__(self, log, name):
         super().__init__(log, name, 1, str)
 
-    def parse(self, bytes, count, endian, timestamp, **options):
+    def parse_type(self, bytes, count, endian, timestamp, **options):
         return (str(b''.join(byte for byte in unpack('%dc' % count, bytes) if byte != b'\0'),
                     encoding='utf-8'),)
 
 
-class Boolean(BaseType):
+class Boolean(SimpleType):
 
     def __init__(self, log, name):
         super().__init__(log, name, 1, bool)
 
-    def parse(self, bytes, count, endian, timestamp, **options):
+    def parse_type(self, bytes, count, endian, timestamp, **options):
         return tuple(bool(byte) for byte in bytes)
 
 
 class AutoInteger(StructSupport):
+    '''
+    A whole pile of different integer types can all be parameterised by sign and size.
+    '''
 
     pattern = compile(r'^([su]?)int(\d{1,2})(z?)$')
 
@@ -112,11 +124,14 @@ class AutoInteger(StructSupport):
         else:
             return int(cell, 0)
 
-    def parse(self, data, count, endian, timestamp, **options):
+    def parse_type(self, data, count, endian, timestamp, **options):
         return self._unpack(data, self.formats, self.bad, count, endian)
 
 
 class AliasInteger(AutoInteger):
+    '''
+    An integer with an alternative name.
+    '''
 
     def __init__(self, log, name, spec):
         super().__init__(log, spec)
@@ -143,8 +158,8 @@ class Date(AliasInteger):
         else:
             raise Exception('Strange timestamp: %d' % time)
 
-    def parse(self, data, count, endian, timestamp, raw_time=False, **options):
-        times = super().parse(data, count, endian, timestamp, raw_time=raw_time, **options)
+    def parse_type(self, data, count, endian, timestamp, raw_time=False, **options):
+        times = super().parse_type(data, count, endian, timestamp, raw_time=raw_time, **options)
         if not raw_time:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
         return times
@@ -163,8 +178,8 @@ class Date16(AliasInteger):
         current += (time - (current & 0xffff)) & 0xffff
         return timestamp_to_time(current, tzinfo=tzinfo)
 
-    def parse(self, data, count, endian, timestamp, raw_time=False, **options):
-        times = super().parse(data, count, endian, timestamp, raw_time=raw_time, **options)
+    def parse_type(self, data, count, endian, timestamp, raw_time=False, **options):
+        times = super().parse_type(data, count, endian, timestamp, raw_time=raw_time, **options)
         if not raw_time:
             times = tuple(self.convert(time, timestamp, tzinfo=self.__tzinfo) for time in times)
         return times
@@ -188,7 +203,7 @@ class AutoFloat(StructSupport):
         self.formats = ['<%d' + format, '>%d' + format]
         self.bad = self._pack_bad(2 ** bits - 1)
 
-    def parse(self, data, count, endian, timestamp, **options):
+    def parse_type(self, data, count, endian, timestamp, **options):
         return self._unpack(data, self.formats, self.bad, count, endian)
 
 
@@ -219,8 +234,8 @@ class Mapping(AbstractType):
         except KeyError:
             return value
 
-    def parse(self, bytes, size, endian, timestamp, map_values=True, **options):
-        values = self.base_type.parse(bytes, size, endian, timestamp, map_values=map_values, **options)
+    def parse_type(self, bytes, size, endian, timestamp, map_values=True, **options):
+        values = self.base_type.parse_type(bytes, size, endian, timestamp, map_values=map_values, **options)
         if map_values and values:
             values = tuple(self.safe_internal_to_profile(value) for value in values)
         return values
