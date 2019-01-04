@@ -49,8 +49,7 @@ class Message(Named):
             bytes = data[field.start:field.finish]
             if field.field:
                 for name, value in self._parse_field(
-                        field.field, bytes, field.count, defn.endian, timestamp, references,
-                        defn.accumulate, self, **options):
+                        field.field, bytes, field.count, defn.endian, timestamp, references, self, **options):
                     if name in defn.references and value[0] is not None:
                         references[name] = value
                     yield name, value
@@ -59,9 +58,9 @@ class Message(Named):
                 value = (field.base_type.parse_type(bytes, field.count, defn.endian, timestamp), None)
                 yield name, value
 
-    def _parse_field(self, field, bytes, count, endian, timestamp, references, accumulate, message, **options):
+    def _parse_field(self, field, bytes, count, endian, timestamp, references, message, **options):
         # allow interception for optional field in header
-        yield from field.parse_field(bytes, count, endian, timestamp, references, accumulate, message, **options)
+        yield from field.parse_field(bytes, count, endian, timestamp, references, message, **options)
 
 
 class RowMessage(Message):

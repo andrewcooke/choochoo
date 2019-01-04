@@ -361,21 +361,6 @@ class Definition(Token):
         self.size = offset
         return tuple(sorted(fields, key=lambda field: 1 if field.field and isinstance(field.field, DynamicField) else 0))
 
-    def accumulate(self, field, values):
-        # todo - need test for this (currently clearly broken)
-        n = len(values)
-        if field in self.__sums:
-            sum = self.__sums[field]
-            while len(sum) < n:
-                self.__sums += (0,)
-            while len(values) < len(sum):
-                values += (0,)
-            sum = tuple(s + v for s, v in zip(sum, values))
-            self.__sums[field] = sum
-        else:
-            self.__sums[field] = values
-        return self.__sums[field][0:n]
-
     def describe_csv(self):
         yield 'Definition'
         yield self.local_message_type

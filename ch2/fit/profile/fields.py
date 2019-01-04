@@ -19,19 +19,20 @@ class ScaledField(Named):
         self._is_accumulate = accumulate
         self._warned_bad_scale = False
 
-    def _parse_and_scale(self, type, data, count, endian, timestamp, accumulate, **options):
+    def _parse_and_scale(self, type, data, count, endian, timestamp, **options):
         values = type.parse_type(data, count, endian, timestamp, **options)
         if values is not None:
             if self._is_scaled:
                 scale = self._scale
                 if scale == 0:
                     if not self._warned_bad_scale:
-                        self._log.warning('Ignoring zero scale')
+                        self._log.warning('Ignoring zero scale in %s' % self.name)
                         self._warned_bad_scale = True
                     scale = 1
                 values = tuple(value / scale - self._offset for value in values)
+            # todo - this isn't used anywhere (used to delegate to accumulate method in definition token)
             if self._is_accumulate:
-                values = accumulate(self, values)
+                raise Exception('Accumulate unused / untested')
         yield self.name, (values, self._units)
 
     def post(self, message, types):
@@ -52,8 +53,8 @@ class TypedField(ScaledField):
         else:
             self.type = types.profile_to_type(field_type)
 
-    def parse_field(self, data, count, endian, timestamp, references, accumulate, message, **options):
-        yield from self._parse_and_scale(self.type, data, count, endian, timestamp, accumulate, **options)
+    def parse_field(self, data, count, endian, timestamp, references, message, **options):
+        yield from self._parse_and_scale(self.type, data, count, endian, timestamp, **options)
 
 
 class RowField(TypedField):
@@ -66,11 +67,11 @@ class RowField(TypedField):
 
 class DelegateField(ScaledField):
 
-    def parse_field(self, data, count, endian, timestamp, references, accumulate, message, **options):
+    def parse_field(self, data, count, endian, timestamp, references, message, **options):
         # todo - do we need to worry about padding data?
         delegate = message.profile_to_field(self.name)
         if isinstance(delegate, RowField):
-            yield from self._parse_and_scale(delegate.type, data, count, endian, timestamp, accumulate, **options)
+            yield from self._parse_and_scale(delegate.type, data, count, endian, timestamp, **options)
         else:
             # on dangerous ground here.  docs are unclear.  we'll do a complete delegation
             # unless this is scaled, in which case we don't know how to both scale and
@@ -78,7 +79,7 @@ class DelegateField(ScaledField):
             if self._is_scaled:
                 raise Exception('Scaled component is not a simple field')
             else:
-                yield from delegate.parse_field(data, count, endian, timestamp, references, accumulate, message, **options)
+                yield from delegate.parse_field(data, count, endian, timestamp, references, message, **options)
 
     def size(self, message):
         delegate = message.profile_to_field(self.name)
@@ -113,10 +114,7 @@ class CompositeField(Zip, TypedField):
                                                     None if offset is None else float(offset),
                                                     accumulate)))
 
-    def post(self, message, types):
-        pass
-
-    def parse_field(self, data, count, endian, timestamp, references, accumulate, message, rtn_composite=False, **options):
+    def parse_field(self, data, count, endian, timestamp, references, message, rtn_composite=False, **options):
         if rtn_composite:
             yield (self.name, (('COMPOSITE',), self._units))
         byteorder = ['little', 'big'][endian]
@@ -125,7 +123,7 @@ class CompositeField(Zip, TypedField):
             nbytes = max((nbits+7) // 8, field.size(message))
             data = (bits & ((1 << nbits) - 1)).to_bytes(nbytes, byteorder=byteorder)
             bits >>= nbits
-            yield from field.parse_field(data, 1, endian, timestamp, references, accumulate, message,
+            yield from field.parse_field(data, 1, endian, timestamp, references, message,
                                          rtn_composite=rtn_composite, **options)
 
 
@@ -152,17 +150,17 @@ class DynamicField(Zip, RowField):
             value = types.profile_to_type(message.profile_to_field(name).type.name).profile_to_internal(value)
             self.__dynamic_lookup[(name, value)] = field
 
-    def parse_field(self, data, count, endian, timestamp, references, accumulate, message, warn=False, **options):
+    def parse_field(self, data, count, endian, timestamp, references, message, warn=False, **options):
         for name in self.references:
             if name in references:
                 lookup = (name, references[name][0][0])  # drop units and take first value
                 if lookup in self.__dynamic_lookup:
                     yield from message.profile_to_field(self.__dynamic_lookup[lookup]).parse_field(
-                        data, count, endian, timestamp, references, accumulate, message, **options)
+                        data, count, endian, timestamp, references, message, **options)
                     return
         if warn:
             self._log.warning('Could not resolve dynamic field %s' % self.name)
-        yield from super().parse_field(data, count, endian, timestamp, references, accumulate, message, warn=warn, **options)
+        yield from super().parse_field(data, count, endian, timestamp, references, message, warn=warn, **options)
 
 
 def MessageField(log, row, rows, types):
