@@ -122,9 +122,15 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
 Will print the contents of the file to stdout (use `-v 0` to suppress logging
 or redirect stderr elsewhere).
 
-    > ch2 -v 0 --grep '.*:sport=cycling' --match 0 --name directory/**/*.fit
+    > ch2 -v 0 fit --grep '.*:sport=cycling' --match 0 --name
+    directory/**/*.fit
 
-Will list file names that contain cycling data.    
+Will list file names that contain cycling data.
+
+    > ch2 fit --grep PATTERN -- FILE
+
+You may need a `--` between patterns and file paths so that the argument
+parser can decide where patterns finish and paths start.    
 
 
 
