@@ -13,16 +13,15 @@ class ScaledField(Named):
     def __init__(self, log, name, units, scale, offset, accumulate):
         super().__init__(log, name)
         self._units = units
-        self._scale = scale
+        self._scale = scale if scale else None  # treat 0 as none
         self._offset = offset
         self._accumulate = accumulate
         if accumulate:
             self._log.warning('Accumulation not supported for %s' % self.name)
-        self._warned_bad_scale = False
 
     def _parse_and_scale(self, type, data, count, endian, timestamp, scale=None, offset=None, **options):
         values = type.parse_type(data, count, endian, timestamp, **options)
-        if scale is None: scale = self._scale
+        if scale is None: scale = self._scale if self._scale else None
         if offset is None: offset = self._offset
         if scale is not None or offset is not None:
             if values is not None:
@@ -30,13 +29,11 @@ class ScaledField(Named):
                     raise Exception('Accumulation not supported for %s' % self.name)
                 if scale is None: scale = 1
                 if offset is None: offset = 0
-                if scale == 0:
-                    if not self._warned_bad_scale:
-                        self._log.warning('Ignoring zero scale in %s' % self.name)
-                        self._warned_bad_scale = True
-                        scale = 1
                 if scale != 1 or offset != 0:  # keeps integer values integers
-                    values = tuple(value / scale - offset for value in values)
+                    try:
+                        values = tuple(value / scale - offset for value in values)
+                    except Exception as e:
+                        raise Exception('Error scaling %s: %s' % (self.name, e))
         yield self.name, (values, self._units)
 
     def post(self, message, types):
@@ -51,11 +48,15 @@ class TypedField(ScaledField):
     def __init__(self, log, name, field_no, units, scale, offset, accumulate, field_type, types):
         super().__init__(log, name, units, scale, offset, accumulate)
         self.number = field_no
-        if types.is_type(name):
-            self.type = types.profile_to_type(name)
-            log.warning('Overriding type (%s) for predefined %s' % (field_type, name))
-        else:
-            self.type = types.profile_to_type(field_type)
+        if name in types.overrides:
+            self._log.info('Overriding type for %s (not %s)' % (name, field_type))
+            field_type = name
+        self.type = types.profile_to_type(field_type)
+        # if types.is_type(name):
+        #     self.type = types.profile_to_type(name)
+        #     log.warning('Overriding type (%s) for predefined %s' % (field_type, name))
+        # else:
+        #     self.type = types.profile_to_type(field_type)
 
     def parse_field(self, data, count, endian, timestamp, references, message, **options):
         yield from self._parse_and_scale(self.type, data, count, endian, timestamp, **options)
@@ -74,16 +75,8 @@ class DelegateField(ScaledField):
     def parse_field(self, data, count, endian, timestamp, references, message, **options):
         # todo - do we need to worry about padding data?
         delegate = message.profile_to_field(self.name)
-        if isinstance(delegate, RowField):
-            yield from self._parse_and_scale(delegate.type, data, count, endian, timestamp, **options)
-        else:
-            # on dangerous ground here.  docs are unclear.  we'll do a complete delegation
-            # unless this is scaled, in which case we don't know how to both scale and
-            # delegate
-            if self._scale is not None:
-                raise Exception('Scaled component is not a simple field')
-            else:
-                yield from delegate.parse_field(data, count, endian, timestamp, references, message, **options)
+        yield from delegate.parse_field(data, count, endian, timestamp, references, message,
+                                        scale=self._scale, offset=self._offset, **options)
 
     def size(self, message):
         delegate = message.profile_to_field(self.name)
@@ -113,9 +106,11 @@ class CompositeField(Zip, TypedField):
         for (name, bits, units, scale, offset, accumulate) in \
                 self._zip(row.components, row.bits, row.units, row.scale, row.offset, row.accumulate):
             self.__components.append((int(bits),
+                                      # set scale / offset below because they seem to override delegate
+                                      # (see intensity in CSV examples in SDK inside current_activity_type_intensity)
                                       DelegateField(log, name, units,
-                                                    None if scale is None else float(scale),
-                                                    None if offset is None else float(offset),
+                                                    1 if scale is None else float(scale),
+                                                    0 if offset is None else float(offset),
                                                     None if accumulate is None else int(accumulate))))
 
     def parse_field(self, data, count, endian, timestamp, references, message, rtn_composite=False, **options):

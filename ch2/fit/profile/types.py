@@ -260,6 +260,7 @@ class Types:
         # these are not 'base types' in the same sense as types having base types.
         # rather, they are the 'base (integer) types' described in the docs
         self.base_types = WarnList(log, 'No base type for number %r')
+        self.overrides = set()
         self.__add_known_types()
         rows = Rows(sheet, wrapper=Row)
         for row in rows:
@@ -281,9 +282,13 @@ class Types:
         # this is in the spreadsheet, but not in the doc
         self.__add_type(Boolean(self.__log, 'bool'))
         # these are defined in the spreadsheet, but the interpretation is in comments
-        self.__add_type(Date(self.__log, 'date_time', utc=True))
-        self.__add_type(Date(self.__log, 'local_date_time', utc=False))
-        self.__add_type(Date16(self.__log, 'timestamp_16', utc=True))
+        self.__add_override(Date(self.__log, 'date_time', utc=True))
+        self.__add_override(Date(self.__log, 'local_date_time', utc=False))
+        self.__add_override(Date16(self.__log, 'timestamp_16', utc=True))
+
+    def __add_override(self, type):
+        self.overrides.add(type.name)
+        self.__add_type(type)
 
     def __add_type(self, type):
         if type.name in self.__profile_to_type:
@@ -307,7 +312,7 @@ class Types:
                 for cls in (AutoFloat, AutoInteger):
                     match = cls.pattern.match(name)
                     if match:
-                        self.__log.warning('Auto-adding type %s for %r' % (cls.__name__, name))
+                        self.__log.info('Auto-adding type %s for %r' % (cls.__name__, name))
                         self.__add_type(cls(self.__log, name))
                         return self.profile_to_type(name)
             raise

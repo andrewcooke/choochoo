@@ -12,9 +12,9 @@ software
   version: 3.6
 
 monitoring_info
-  activity_type: walking.running,
-  cycles_to_calories: 0.0422kcal/cycle.0.1328kcal/cycle,
-  cycles_to_distance: 1.5834m/cycle.2.375m/cycle,
+  activity_type: walking,running,
+  cycles_to_calories: 0.0422kcal/cycle,0.1328kcal/cycle,
+  cycles_to_distance: 1.5834m/cycle,2.375m/cycle,
   local_timestamp: 2018-10-06 21:51:00s,
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-10-07 00:51:00+00:00s

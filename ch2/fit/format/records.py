@@ -58,7 +58,7 @@ def append_units(data, separator=''):
             yield name, tuple(str(value) for value in values)
 
 
-def join_values(data, separator='.'):
+def join_values(data, separator=','):
     for name, values in data:
         if values is None:
             yield name, values

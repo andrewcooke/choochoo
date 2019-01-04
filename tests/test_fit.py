@@ -88,7 +88,8 @@ class TestFit(TestCase, OutputMixin):
             file_name = basename(fit_file)
             with self.assertFileMatch(
                     '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_personal:' + file_name) as output:
-                summarize_tables(self.log, read_fit(self.log, fit_file), width=80, output=output)
+                summarize_tables(self.log, read_fit(self.log, fit_file), width=80, output=output,
+                                 profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
 
     def test_timestamp_16(self):
         types, messages, records = \

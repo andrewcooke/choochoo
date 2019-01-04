@@ -12,9 +12,9 @@ software
   version: 3.6
 
 monitoring_info
-  activity_type: walking.running,
-  cycles_to_calories: 0.0422kcal/cycle.0.1328kcal/cycle,
-  cycles_to_distance: 1.5834m/cycle.2.375m/cycle,
+  activity_type: walking,running,
+  cycles_to_calories: 0.0422kcal/cycle,0.1328kcal/cycle,
+  cycles_to_distance: 1.5834m/cycle,2.375m/cycle,
   local_timestamp: 2018-09-29 21:35:00s,
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-09-30 00:35:00+00:00s
@@ -127,57 +127,57 @@ monitoring (defn 3/5)
 
 monitoring (defn 4/5)
   timestamp,                    activity_type,  intensity
-  2018-09-30 00:36:00+00:00s,   sedentary,      warmup   
-  2018-09-30 00:44:00+00:00s,   sedentary,      active   
-  2018-09-30 00:45:00+00:00s,   sedentary,      warmup   
-  2018-09-30 00:48:00+00:00s,   sedentary,      active   
-  2018-09-30 00:52:00+00:00s,   sedentary,      warmup   
-  2018-09-30 00:53:00+00:00s,   sedentary,      active   
+  2018-09-30 00:36:00+00:00s,   sedentary,      2        
+  2018-09-30 00:44:00+00:00s,   sedentary,      0        
+  2018-09-30 00:45:00+00:00s,   sedentary,      2        
+  2018-09-30 00:48:00+00:00s,   sedentary,      0        
+  2018-09-30 00:52:00+00:00s,   sedentary,      2        
+  2018-09-30 00:53:00+00:00s,   sedentary,      0        
   2018-09-30 00:55:00+00:00s,   sedentary,      4        
   2018-09-30 01:13:00+00:00s,   sedentary,      4        
-  2018-09-30 01:16:00+00:00s,   sedentary,      cooldown 
-  2018-09-30 01:17:00+00:00s,   sedentary,      active   
-  2018-09-30 01:31:00+00:00s,   sedentary,      warmup   
-  2018-09-30 01:44:00+00:00s,   sedentary,      cooldown 
-  2018-09-30 01:45:00+00:00s,   sedentary,      active   
-  2018-09-30 01:48:00+00:00s,   sedentary,      warmup   
-  2018-09-30 01:49:00+00:00s,   sedentary,      active   
-  2018-09-30 01:54:00+00:00s,   sedentary,      warmup   
-  2018-09-30 01:56:00+00:00s,   sedentary,      active   
-  2018-09-30 02:10:00+00:00s,   sedentary,      cooldown 
-  2018-09-30 02:21:00+00:00s,   sedentary,      active   
-  2018-09-30 02:22:00+00:00s,   sedentary,      warmup   
+  2018-09-30 01:16:00+00:00s,   sedentary,      3        
+  2018-09-30 01:17:00+00:00s,   sedentary,      0        
+  2018-09-30 01:31:00+00:00s,   sedentary,      2        
+  2018-09-30 01:44:00+00:00s,   sedentary,      3        
+  2018-09-30 01:45:00+00:00s,   sedentary,      0        
+  2018-09-30 01:48:00+00:00s,   sedentary,      2        
+  2018-09-30 01:49:00+00:00s,   sedentary,      0        
+  2018-09-30 01:54:00+00:00s,   sedentary,      2        
+  2018-09-30 01:56:00+00:00s,   sedentary,      0        
+  2018-09-30 02:10:00+00:00s,   sedentary,      3        
+  2018-09-30 02:21:00+00:00s,   sedentary,      0        
+  2018-09-30 02:22:00+00:00s,   sedentary,      2        
   2018-09-30 02:25:00+00:00s,   sedentary,      5        
-  2018-09-30 02:28:00+00:00s,   sedentary,      cooldown 
-  2018-09-30 02:31:00+00:00s,   sedentary,      rest     
-  2018-09-30 02:33:00+00:00s,   sedentary,      active   
-  2018-09-30 02:35:00+00:00s,   sedentary,      cooldown 
-  2018-09-30 02:47:00+00:00s,   sedentary,      active   
-  2018-09-30 02:48:00+00:00s,   sedentary,      cooldown 
-  2018-09-30 02:49:00+00:00s,   sedentary,      active   
-  2018-09-30 02:50:00+00:00s,   sedentary,      rest     
-  2018-09-30 02:52:00+00:00s,   sedentary,      active   
-  2018-09-30 02:53:00+00:00s,   sedentary,      warmup   
-  2018-09-30 02:54:00+00:00s,   sedentary,      active   
-  2018-09-30 02:55:00+00:00s,   sedentary,      warmup   
-  2018-09-30 02:56:00+00:00s,   sedentary,      active   
-  2018-09-30 02:57:00+00:00s,   sedentary,      cooldown 
-  2018-09-30 02:59:00+00:00s,   sedentary,      active   
-  2018-09-30 03:00:00+00:00s,   sedentary,      cooldown 
+  2018-09-30 02:28:00+00:00s,   sedentary,      3        
+  2018-09-30 02:31:00+00:00s,   sedentary,      1        
+  2018-09-30 02:33:00+00:00s,   sedentary,      0        
+  2018-09-30 02:35:00+00:00s,   sedentary,      3        
+  2018-09-30 02:47:00+00:00s,   sedentary,      0        
+  2018-09-30 02:48:00+00:00s,   sedentary,      3        
+  2018-09-30 02:49:00+00:00s,   sedentary,      0        
+  2018-09-30 02:50:00+00:00s,   sedentary,      1        
+  2018-09-30 02:52:00+00:00s,   sedentary,      0        
+  2018-09-30 02:53:00+00:00s,   sedentary,      2        
+  2018-09-30 02:54:00+00:00s,   sedentary,      0        
+  2018-09-30 02:55:00+00:00s,   sedentary,      2        
+  2018-09-30 02:56:00+00:00s,   sedentary,      0        
+  2018-09-30 02:57:00+00:00s,   sedentary,      3        
+  2018-09-30 02:59:00+00:00s,   sedentary,      0        
+  2018-09-30 03:00:00+00:00s,   sedentary,      3        
 
 monitoring (defn 5/5)
   timestamp,                    active_calories,    active_time,
     activity_type,  intensity,  steps,      timestamp_16              
   2018-09-30 00:56:00+00:00s,   49kcal,             860.0s,     
-    walking,        warmup,     1198steps,  2018-09-30 00:56:00+00:00s
+    walking,        2,          1198steps,  2018-09-30 00:56:00+00:00s
   2018-09-30 01:14:00+00:00s,   49kcal,             867.0s,     
-    walking,        warmup,     1215steps,  2018-09-30 01:14:00+00:00s
+    walking,        2,          1215steps,  2018-09-30 01:14:00+00:00s
   2018-09-30 01:35:00+00:00s,   49kcal,             901.0s,     
-    walking,        cooldown,   1310steps,  2018-09-30 01:35:00+00:00s
+    walking,        3,          1310steps,  2018-09-30 01:35:00+00:00s
   2018-09-30 02:24:00+00:00s,   50kcal,             913.0s,     
-    walking,        warmup,     1339steps,  2018-09-30 02:24:00+00:00s
+    walking,        2,          1339steps,  2018-09-30 02:24:00+00:00s
   2018-09-30 02:27:00+00:00s,   50kcal,             921.0s,     
-    walking,        cooldown,   1360steps,  2018-09-30 02:27:00+00:00s
+    walking,        3,          1360steps,  2018-09-30 02:27:00+00:00s
   2018-09-30 02:29:00+00:00s,   50kcal,             923.0s,     
-    walking,        warmup,     1369steps,  2018-09-30 02:29:00+00:00s
+    walking,        2,          1369steps,  2018-09-30 02:29:00+00:00s
 

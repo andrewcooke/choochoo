@@ -12,9 +12,9 @@ software
   version: 3.6
 
 monitoring_info
-  activity_type: walking.running,
-  cycles_to_calories: 0.0422kcal/cycle.0.1328kcal/cycle,
-  cycles_to_distance: 1.5834m/cycle.2.375m/cycle,
+  activity_type: walking,running,
+  cycles_to_calories: 0.0422kcal/cycle,0.1328kcal/cycle,
+  cycles_to_distance: 1.5834m/cycle,2.375m/cycle,
   local_timestamp: 2018-10-06 21:53:00s,
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-10-07 00:53:00+00:00s
@@ -120,35 +120,35 @@ monitoring (defn 3/5)
 
 monitoring (defn 4/5)
   timestamp,                    activity_type,  intensity
-  2018-10-07 01:04:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 01:06:00+00:00s,   sedentary,      active   
-  2018-10-07 01:07:00+00:00s,   sedentary,      warmup   
-  2018-10-07 01:08:00+00:00s,   sedentary,      active   
-  2018-10-07 01:09:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 01:11:00+00:00s,   sedentary,      active   
-  2018-10-07 01:12:00+00:00s,   sedentary,      warmup   
-  2018-10-07 01:14:00+00:00s,   sedentary,      active   
-  2018-10-07 01:15:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 01:16:00+00:00s,   sedentary,      active   
-  2018-10-07 01:23:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 01:24:00+00:00s,   sedentary,      active   
-  2018-10-07 01:25:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 01:27:00+00:00s,   sedentary,      active   
+  2018-10-07 01:04:00+00:00s,   sedentary,      3        
+  2018-10-07 01:06:00+00:00s,   sedentary,      0        
+  2018-10-07 01:07:00+00:00s,   sedentary,      2        
+  2018-10-07 01:08:00+00:00s,   sedentary,      0        
+  2018-10-07 01:09:00+00:00s,   sedentary,      3        
+  2018-10-07 01:11:00+00:00s,   sedentary,      0        
+  2018-10-07 01:12:00+00:00s,   sedentary,      2        
+  2018-10-07 01:14:00+00:00s,   sedentary,      0        
+  2018-10-07 01:15:00+00:00s,   sedentary,      3        
+  2018-10-07 01:16:00+00:00s,   sedentary,      0        
+  2018-10-07 01:23:00+00:00s,   sedentary,      3        
+  2018-10-07 01:24:00+00:00s,   sedentary,      0        
+  2018-10-07 01:25:00+00:00s,   sedentary,      3        
+  2018-10-07 01:27:00+00:00s,   sedentary,      0        
   2018-10-07 01:29:00+00:00s,   sedentary,      4        
   2018-10-07 01:36:00+00:00s,   sedentary,      7        
   2018-10-07 01:41:00+00:00s,   sedentary,      6        
-  2018-10-07 01:52:00+00:00s,   sedentary,      warmup   
-  2018-10-07 01:53:00+00:00s,   sedentary,      active   
-  2018-10-07 01:55:00+00:00s,   sedentary,      warmup   
-  2018-10-07 02:00:00+00:00s,   sedentary,      active   
-  2018-10-07 02:01:00+00:00s,   sedentary,      rest     
-  2018-10-07 02:14:00+00:00s,   sedentary,      active   
-  2018-10-07 02:15:00+00:00s,   sedentary,      rest     
-  2018-10-07 02:17:00+00:00s,   sedentary,      active   
+  2018-10-07 01:52:00+00:00s,   sedentary,      2        
+  2018-10-07 01:53:00+00:00s,   sedentary,      0        
+  2018-10-07 01:55:00+00:00s,   sedentary,      2        
+  2018-10-07 02:00:00+00:00s,   sedentary,      0        
+  2018-10-07 02:01:00+00:00s,   sedentary,      1        
+  2018-10-07 02:14:00+00:00s,   sedentary,      0        
+  2018-10-07 02:15:00+00:00s,   sedentary,      1        
+  2018-10-07 02:17:00+00:00s,   sedentary,      0        
   2018-10-07 02:21:00+00:00s,   sedentary,      4        
-  2018-10-07 02:24:00+00:00s,   sedentary,      active   
-  2018-10-07 02:25:00+00:00s,   sedentary,      rest     
-  2018-10-07 02:47:00+00:00s,   sedentary,      active   
+  2018-10-07 02:24:00+00:00s,   sedentary,      0        
+  2018-10-07 02:25:00+00:00s,   sedentary,      1        
+  2018-10-07 02:47:00+00:00s,   sedentary,      0        
   2018-10-07 02:50:00+00:00s,   sedentary,      4        
   2018-10-07 02:52:00+00:00s,   sedentary,      6        
   2018-10-07 03:00:00+00:00s,   sedentary,      4        
@@ -157,15 +157,15 @@ monitoring (defn 5/5)
   timestamp,                    active_calories,    active_time,
     activity_type,  intensity,  steps,      timestamp_16              
   2018-10-07 01:30:00+00:00s,   40kcal,             1168.0s,    
-    walking,        warmup,     1751steps,  2018-10-07 01:30:00+00:00s
+    walking,        2,          1751steps,  2018-10-07 01:30:00+00:00s
   2018-10-07 01:35:00+00:00s,   41kcal,             1207.0s,    
-    walking,        warmup,     1853steps,  2018-10-07 01:35:00+00:00s
+    walking,        2,          1853steps,  2018-10-07 01:35:00+00:00s
   2018-10-07 01:37:00+00:00s,   42kcal,             1239.0s,    
-    walking,        rest,       1880steps,  2018-10-07 01:37:00+00:00s
+    walking,        1,          1880steps,  2018-10-07 01:37:00+00:00s
   2018-10-07 01:43:00+00:00s,   43kcal,             1257.0s,    
-    walking,        warmup,     1929steps,  2018-10-07 01:43:00+00:00s
+    walking,        2,          1929steps,  2018-10-07 01:43:00+00:00s
   2018-10-07 02:51:00+00:00s,   43kcal,             1262.0s,    
-    walking,        warmup,     1944steps,  2018-10-07 02:51:00+00:00s
+    walking,        2,          1944steps,  2018-10-07 02:51:00+00:00s
   2018-10-07 02:53:00+00:00s,   43kcal,             1277.0s,    
-    walking,        cooldown,   1975steps,  2018-10-07 02:53:00+00:00s
+    walking,        3,          1975steps,  2018-10-07 02:53:00+00:00s
 

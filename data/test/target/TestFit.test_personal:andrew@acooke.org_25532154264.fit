@@ -12,9 +12,9 @@ software
   version: 3.6
 
 monitoring_info
-  activity_type: walking.running,
-  cycles_to_calories: 0.0422kcal/cycle.0.1328kcal/cycle,
-  cycles_to_distance: 1.5834m/cycle.2.375m/cycle,
+  activity_type: walking,running,
+  cycles_to_calories: 0.0422kcal/cycle,0.1328kcal/cycle,
+  cycles_to_distance: 1.5834m/cycle,2.375m/cycle,
   local_timestamp: 2018-10-07 08:15:00s,
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-10-07 11:15:00+00:00s
@@ -395,110 +395,110 @@ monitoring (defn 3/5)
 
 monitoring (defn 4/5)
   timestamp,                    activity_type,  intensity
-  2018-10-07 11:17:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 11:27:00+00:00s,   sedentary,      active   
+  2018-10-07 11:17:00+00:00s,   sedentary,      3        
+  2018-10-07 11:27:00+00:00s,   sedentary,      0        
   2018-10-07 11:29:00+00:00s,   sedentary,      6        
   2018-10-07 11:34:00+00:00s,   sedentary,      4        
   2018-10-07 11:36:00+00:00s,   sedentary,      4        
-  2018-10-07 11:37:00+00:00s,   sedentary,      active   
-  2018-10-07 11:38:00+00:00s,   sedentary,      warmup   
-  2018-10-07 11:39:00+00:00s,   sedentary,      active   
-  2018-10-07 11:41:00+00:00s,   sedentary,      warmup   
-  2018-10-07 11:42:00+00:00s,   sedentary,      active   
-  2018-10-07 11:45:00+00:00s,   sedentary,      warmup   
-  2018-10-07 11:46:00+00:00s,   sedentary,      active   
-  2018-10-07 11:47:00+00:00s,   sedentary,      warmup   
-  2018-10-07 11:50:00+00:00s,   sedentary,      active   
-  2018-10-07 11:51:00+00:00s,   sedentary,      rest     
-  2018-10-07 11:52:00+00:00s,   sedentary,      active   
-  2018-10-07 11:57:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 12:00:00+00:00s,   sedentary,      active   
-  2018-10-07 12:07:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 12:09:00+00:00s,   sedentary,      active   
+  2018-10-07 11:37:00+00:00s,   sedentary,      0        
+  2018-10-07 11:38:00+00:00s,   sedentary,      2        
+  2018-10-07 11:39:00+00:00s,   sedentary,      0        
+  2018-10-07 11:41:00+00:00s,   sedentary,      2        
+  2018-10-07 11:42:00+00:00s,   sedentary,      0        
+  2018-10-07 11:45:00+00:00s,   sedentary,      2        
+  2018-10-07 11:46:00+00:00s,   sedentary,      0        
+  2018-10-07 11:47:00+00:00s,   sedentary,      2        
+  2018-10-07 11:50:00+00:00s,   sedentary,      0        
+  2018-10-07 11:51:00+00:00s,   sedentary,      1        
+  2018-10-07 11:52:00+00:00s,   sedentary,      0        
+  2018-10-07 11:57:00+00:00s,   sedentary,      3        
+  2018-10-07 12:00:00+00:00s,   sedentary,      0        
+  2018-10-07 12:07:00+00:00s,   sedentary,      3        
+  2018-10-07 12:09:00+00:00s,   sedentary,      0        
   2018-10-07 12:19:00+00:00s,   sedentary,      5        
   2018-10-07 12:25:00+00:00s,   sedentary,      5        
   2018-10-07 13:00:00+00:00s,   sedentary,      4        
   2018-10-07 13:04:00+00:00s,   sedentary,      5        
   2018-10-07 13:20:00+00:00s,   sedentary,      4        
-  2018-10-07 13:21:00+00:00s,   sedentary,      active   
+  2018-10-07 13:21:00+00:00s,   sedentary,      0        
   2018-10-07 13:29:00+00:00s,   sedentary,      4        
-  2018-10-07 13:55:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 13:56:00+00:00s,   sedentary,      active   
+  2018-10-07 13:55:00+00:00s,   sedentary,      3        
+  2018-10-07 13:56:00+00:00s,   sedentary,      0        
   2018-10-07 14:12:00+00:00s,   sedentary,      4        
-  2018-10-07 14:14:00+00:00s,   sedentary,      active   
+  2018-10-07 14:14:00+00:00s,   sedentary,      0        
   2018-10-07 14:17:00+00:00s,   sedentary,      4        
-  2018-10-07 14:20:00+00:00s,   sedentary,      cooldown 
+  2018-10-07 14:20:00+00:00s,   sedentary,      3        
   2018-10-07 14:23:00+00:00s,   sedentary,      6        
   2018-10-07 14:32:00+00:00s,   sedentary,      6        
   2018-10-07 14:36:00+00:00s,   sedentary,      7        
-  2018-10-07 14:40:00+00:00s,   sedentary,      active   
+  2018-10-07 14:40:00+00:00s,   sedentary,      0        
   2018-10-07 14:41:00+00:00s,   sedentary,      5        
   2018-10-07 14:48:00+00:00s,   sedentary,      4        
-  2018-10-07 14:49:00+00:00s,   sedentary,      active   
-  2018-10-07 14:51:00+00:00s,   sedentary,      warmup   
-  2018-10-07 14:54:00+00:00s,   sedentary,      active   
-  2018-10-07 14:55:00+00:00s,   sedentary,      warmup   
-  2018-10-07 14:56:00+00:00s,   sedentary,      active   
-  2018-10-07 14:58:00+00:00s,   sedentary,      warmup   
+  2018-10-07 14:49:00+00:00s,   sedentary,      0        
+  2018-10-07 14:51:00+00:00s,   sedentary,      2        
+  2018-10-07 14:54:00+00:00s,   sedentary,      0        
+  2018-10-07 14:55:00+00:00s,   sedentary,      2        
+  2018-10-07 14:56:00+00:00s,   sedentary,      0        
+  2018-10-07 14:58:00+00:00s,   sedentary,      2        
   2018-10-07 15:11:00+00:00s,   sedentary,      4        
   2018-10-07 15:18:00+00:00s,   sedentary,      4        
   2018-10-07 15:24:00+00:00s,   sedentary,      4        
-  2018-10-07 15:26:00+00:00s,   sedentary,      active   
+  2018-10-07 15:26:00+00:00s,   sedentary,      0        
   2018-10-07 15:29:00+00:00s,   sedentary,      4        
-  2018-10-07 15:30:00+00:00s,   sedentary,      active   
+  2018-10-07 15:30:00+00:00s,   sedentary,      0        
   2018-10-07 15:31:00+00:00s,   sedentary,      5        
   2018-10-07 15:36:00+00:00s,   sedentary,      4        
   2018-10-07 15:42:00+00:00s,   sedentary,      4        
   2018-10-07 16:17:00+00:00s,   sedentary,      4        
-  2018-10-07 16:18:00+00:00s,   sedentary,      active   
+  2018-10-07 16:18:00+00:00s,   sedentary,      0        
   2018-10-07 16:46:00+00:00s,   sedentary,      4        
-  2018-10-07 16:47:00+00:00s,   sedentary,      active   
-  2018-10-07 16:54:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 16:55:00+00:00s,   sedentary,      active   
-  2018-10-07 17:03:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 17:05:00+00:00s,   sedentary,      warmup   
+  2018-10-07 16:47:00+00:00s,   sedentary,      0        
+  2018-10-07 16:54:00+00:00s,   sedentary,      3        
+  2018-10-07 16:55:00+00:00s,   sedentary,      0        
+  2018-10-07 17:03:00+00:00s,   sedentary,      3        
+  2018-10-07 17:05:00+00:00s,   sedentary,      2        
   2018-10-07 17:29:00+00:00s,   sedentary,      4        
   2018-10-07 17:33:00+00:00s,   sedentary,      5        
   2018-10-07 17:41:00+00:00s,   sedentary,      5        
   2018-10-07 17:56:00+00:00s,   sedentary,      4        
-  2018-10-07 18:06:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 18:09:00+00:00s,   sedentary,      active   
-  2018-10-07 18:12:00+00:00s,   sedentary,      cooldown 
-  2018-10-07 18:13:00+00:00s,   sedentary,      active   
-  2018-10-07 18:15:00+00:00s,   sedentary,      warmup   
-  2018-10-07 18:16:00+00:00s,   sedentary,      active   
-  2018-10-07 18:17:00+00:00s,   sedentary,      warmup   
-  2018-10-07 18:18:00+00:00s,   sedentary,      active   
-  2018-10-07 18:21:00+00:00s,   sedentary,      warmup   
-  2018-10-07 18:22:00+00:00s,   sedentary,      active   
+  2018-10-07 18:06:00+00:00s,   sedentary,      3        
+  2018-10-07 18:09:00+00:00s,   sedentary,      0        
+  2018-10-07 18:12:00+00:00s,   sedentary,      3        
+  2018-10-07 18:13:00+00:00s,   sedentary,      0        
+  2018-10-07 18:15:00+00:00s,   sedentary,      2        
+  2018-10-07 18:16:00+00:00s,   sedentary,      0        
+  2018-10-07 18:17:00+00:00s,   sedentary,      2        
+  2018-10-07 18:18:00+00:00s,   sedentary,      0        
+  2018-10-07 18:21:00+00:00s,   sedentary,      2        
+  2018-10-07 18:22:00+00:00s,   sedentary,      0        
 
 monitoring (defn 5/5)
   timestamp,                    active_calories,    active_time,
     activity_type,  intensity,  steps,      timestamp_16              
   2018-10-07 11:28:00+00:00s,   0kcal,              50.0s,      
-    walking,        active,     132steps,   2018-10-07 11:28:00+00:00s
+    walking,        0,          132steps,   2018-10-07 11:28:00+00:00s
   2018-10-07 11:30:00+00:00s,   0kcal,              56.0s,      
-    walking,        warmup,     148steps,   2018-10-07 11:30:00+00:00s
+    walking,        2,          148steps,   2018-10-07 11:30:00+00:00s
   2018-10-07 11:35:00+00:00s,   1kcal,              75.0s,      
-    walking,        rest,       183steps,   2018-10-07 11:35:00+00:00s
+    walking,        1,          183steps,   2018-10-07 11:35:00+00:00s
   2018-10-07 12:24:00+00:00s,   13kcal,             323.0s,     
-    walking,        rest,       432steps,   2018-10-07 12:24:00+00:00s
+    walking,        1,          432steps,   2018-10-07 12:24:00+00:00s
   2018-10-07 12:26:00+00:00s,   14kcal,             345.0s,     
-    walking,        warmup,     472steps,   2018-10-07 12:26:00+00:00s
+    walking,        2,          472steps,   2018-10-07 12:26:00+00:00s
   2018-10-07 12:28:00+00:00s,   14kcal,             120.0s,     
     generic,        0.0cycles,  4,          2018-10-07 12:28:00+00:00s
   2018-10-07 13:02:00+00:00s,   14kcal,             359.0s,     
-    walking,        warmup,     517steps,   2018-10-07 13:02:00+00:00s
+    walking,        2,          517steps,   2018-10-07 13:02:00+00:00s
   2018-10-07 13:07:00+00:00s,   15kcal,             366.0s,     
-    walking,        warmup,     545steps,   2018-10-07 13:07:00+00:00s
+    walking,        2,          545steps,   2018-10-07 13:07:00+00:00s
   2018-10-07 13:30:00+00:00s,   15kcal,             373.0s,     
-    walking,        cooldown,   564steps,   2018-10-07 13:30:00+00:00s
+    walking,        3,          564steps,   2018-10-07 13:30:00+00:00s
   2018-10-07 14:18:00+00:00s,   18kcal,             420.0s,     
-    walking,        rest,       605steps,   2018-10-07 14:18:00+00:00s
+    walking,        1,          605steps,   2018-10-07 14:18:00+00:00s
   2018-10-07 14:19:00+00:00s,   16kcal,             155.0s,     
-    generic,        0.0cycles,  cooldown,   2018-10-07 14:19:00+00:00s
+    generic,        0.0cycles,  3,          2018-10-07 14:19:00+00:00s
   2018-10-07 14:22:00+00:00s,   18kcal,             435.0s,     
-    walking,        cooldown,   640steps,   2018-10-07 14:22:00+00:00s
+    walking,        3,          640steps,   2018-10-07 14:22:00+00:00s
   2018-10-07 14:24:00+00:00s,   18kcal,             437.0s,     
     walking,        7,          655steps,   2018-10-07 14:24:00+00:00s
   2018-10-07 14:33:00+00:00s,   0kcal,              5.0s,       
@@ -506,45 +506,45 @@ monitoring (defn 5/5)
   2018-10-07 14:37:00+00:00s,   18kcal,             190.0s,     
     generic,        0.0cycles,  6,          2018-10-07 14:37:00+00:00s
   2018-10-07 14:38:00+00:00s,   23kcal,             250.0s,     
-    generic,        0.0cycles,  active,     2018-10-07 14:38:00+00:00s
+    generic,        0.0cycles,  0,          2018-10-07 14:38:00+00:00s
   2018-10-07 14:45:00+00:00s,   24kcal,             601.0s,     
-    walking,        warmup,     959steps,   2018-10-07 14:45:00+00:00s
+    walking,        2,          959steps,   2018-10-07 14:45:00+00:00s
   2018-10-07 14:47:00+00:00s,   29kcal,             721.0s,     
-    walking,        rest,       1120steps,  2018-10-07 14:47:00+00:00s
+    walking,        1,          1120steps,  2018-10-07 14:47:00+00:00s
   2018-10-07 14:59:00+00:00s,   29kcal,             728.0s,     
-    walking,        warmup,     1139steps,  2018-10-07 14:59:00+00:00s
+    walking,        2,          1139steps,  2018-10-07 14:59:00+00:00s
   2018-10-07 15:13:00+00:00s,   29kcal,             737.0s,     
-    walking,        warmup,     1163steps,  2018-10-07 15:13:00+00:00s
+    walking,        2,          1163steps,  2018-10-07 15:13:00+00:00s
   2018-10-07 15:19:00+00:00s,   31kcal,             773.0s,     
-    walking,        rest,       1186steps,  2018-10-07 15:19:00+00:00s
+    walking,        1,          1186steps,  2018-10-07 15:19:00+00:00s
   2018-10-07 15:27:00+00:00s,   31kcal,             795.0s,     
-    walking,        active,     1201steps,  2018-10-07 15:27:00+00:00s
+    walking,        0,          1201steps,  2018-10-07 15:27:00+00:00s
   2018-10-07 15:28:00+00:00s,   25kcal,             310.0s,     
     generic,        0.0cycles,  4,          2018-10-07 15:28:00+00:00s
   2018-10-07 15:32:00+00:00s,   33kcal,             842.0s,     
-    walking,        active,     1217steps,  2018-10-07 15:32:00+00:00s
+    walking,        0,          1217steps,  2018-10-07 15:32:00+00:00s
   2018-10-07 15:38:00+00:00s,   30kcal,             429.0s,     
     generic,        0.0cycles,  5,          2018-10-07 15:38:00+00:00s
   2018-10-07 15:43:00+00:00s,   35kcal,             871.0s,     
-    walking,        rest,       1249steps,  2018-10-07 15:43:00+00:00s
+    walking,        1,          1249steps,  2018-10-07 15:43:00+00:00s
   2018-10-07 15:44:00+00:00s,   33kcal,             489.0s,     
     generic,        0.0cycles,  4,          2018-10-07 15:44:00+00:00s
   2018-10-07 17:04:00+00:00s,   35kcal,             888.0s,     
-    walking,        warmup,     1284steps,  2018-10-07 17:04:00+00:00s
+    walking,        2,          1284steps,  2018-10-07 17:04:00+00:00s
   2018-10-07 17:11:00+00:00s,   45kcal,             1120.0s,    
-    walking,        rest,       1432steps,  2018-10-07 17:11:00+00:00s
+    walking,        1,          1432steps,  2018-10-07 17:11:00+00:00s
   2018-10-07 17:12:00+00:00s,   35kcal,             509.0s,     
-    generic,        0.0cycles,  cooldown,   2018-10-07 17:12:00+00:00s
+    generic,        0.0cycles,  3,          2018-10-07 17:12:00+00:00s
   2018-10-07 17:30:00+00:00s,   45kcal,             1126.0s,    
-    walking,        cooldown,   1450steps,  2018-10-07 17:30:00+00:00s
+    walking,        3,          1450steps,  2018-10-07 17:30:00+00:00s
   2018-10-07 17:31:00+00:00s,   45kcal,             1130.0s,    
-    walking,        cooldown,   1456steps,  2018-10-07 17:31:00+00:00s
+    walking,        3,          1456steps,  2018-10-07 17:31:00+00:00s
   2018-10-07 17:39:00+00:00s,   60kcal,             1441.0s,    
-    walking,        rest,       1785steps,  2018-10-07 17:39:00+00:00s
+    walking,        1,          1785steps,  2018-10-07 17:39:00+00:00s
   2018-10-07 17:43:00+00:00s,   62kcal,             1512.0s,    
-    walking,        rest,       1846steps,  2018-10-07 17:43:00+00:00s
+    walking,        1,          1846steps,  2018-10-07 17:43:00+00:00s
   2018-10-07 17:58:00+00:00s,   64kcal,             1558.0s,    
-    walking,        rest,       1878steps,  2018-10-07 17:58:00+00:00s
+    walking,        1,          1878steps,  2018-10-07 17:58:00+00:00s
 
 event
   timestamp,                    data,   event,  event_type

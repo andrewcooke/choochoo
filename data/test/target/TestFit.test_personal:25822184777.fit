@@ -12,9 +12,9 @@ software
   version: 3.6
 
 monitoring_info
-  activity_type: walking.running,
-  cycles_to_calories: 0.0422kcal/cycle.0.1328kcal/cycle,
-  cycles_to_distance: 1.5834m/cycle.2.375m/cycle,
+  activity_type: walking,running,
+  cycles_to_calories: 0.0422kcal/cycle,0.1328kcal/cycle,
+  cycles_to_distance: 1.5834m/cycle,2.375m/cycle,
   local_timestamp: 2018-10-16 00:00:00s,
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-10-16 03:00:00+00:00s
@@ -24,8 +24,7 @@ monitoring (defn 1/5)
 
 monitoring (defn 4/5)
   active_calories: 0kcal,     active_time: 4.0s,  activity_type: walking,
-  intensity: cooldown,    steps: 15steps,
-  timestamp_16: 2018-10-16 04:09:00+00:00s
+  intensity: 3,   steps: 15steps,     timestamp_16: 2018-10-16 04:09:00+00:00s
 
 monitoring (defn 4/5)
   active_calories: 0kcal,     active_time: 9.0s,  activity_type: walking,
@@ -33,8 +32,7 @@ monitoring (defn 4/5)
 
 monitoring (defn 4/5)
   active_calories: 0kcal,     active_time: 14.0s,     activity_type: walking,
-  intensity: warmup,  steps: 50steps,
-  timestamp_16: 2018-10-16 07:57:00+00:00s
+  intensity: 2,   steps: 50steps,     timestamp_16: 2018-10-16 07:57:00+00:00s
 
 monitoring (defn 5/5)
   active_calories: 0kcal,     active_time: 14.0s,     activity_type: walking,
@@ -46,49 +44,49 @@ monitoring (defn 1/5)
 
 monitoring (defn 2/5)
   timestamp,                    activity_type,  intensity
-  2018-10-16 03:02:00+00:00s,   sedentary,      active   
-  2018-10-16 03:04:00+00:00s,   sedentary,      warmup   
-  2018-10-16 03:31:00+00:00s,   sedentary,      active   
-  2018-10-16 03:33:00+00:00s,   sedentary,      cooldown 
-  2018-10-16 04:07:00+00:00s,   sedentary,      active   
+  2018-10-16 03:02:00+00:00s,   sedentary,      0        
+  2018-10-16 03:04:00+00:00s,   sedentary,      2        
+  2018-10-16 03:31:00+00:00s,   sedentary,      0        
+  2018-10-16 03:33:00+00:00s,   sedentary,      3        
+  2018-10-16 04:07:00+00:00s,   sedentary,      0        
   2018-10-16 04:08:00+00:00s,   sedentary,      5        
-  2018-10-16 04:45:00+00:00s,   sedentary,      active   
-  2018-10-16 04:46:00+00:00s,   sedentary,      cooldown 
-  2018-10-16 04:47:00+00:00s,   sedentary,      active   
-  2018-10-16 04:49:00+00:00s,   sedentary,      warmup   
-  2018-10-16 04:51:00+00:00s,   sedentary,      active   
+  2018-10-16 04:45:00+00:00s,   sedentary,      0        
+  2018-10-16 04:46:00+00:00s,   sedentary,      3        
+  2018-10-16 04:47:00+00:00s,   sedentary,      0        
+  2018-10-16 04:49:00+00:00s,   sedentary,      2        
+  2018-10-16 04:51:00+00:00s,   sedentary,      0        
   2018-10-16 04:57:00+00:00s,   sedentary,      4        
-  2018-10-16 05:55:00+00:00s,   sedentary,      active   
-  2018-10-16 05:56:00+00:00s,   sedentary,      rest     
-  2018-10-16 05:57:00+00:00s,   sedentary,      active   
+  2018-10-16 05:55:00+00:00s,   sedentary,      0        
+  2018-10-16 05:56:00+00:00s,   sedentary,      1        
+  2018-10-16 05:57:00+00:00s,   sedentary,      0        
   2018-10-16 06:00:00+00:00s,   sedentary,      4        
-  2018-10-16 06:12:00+00:00s,   sedentary,      active   
-  2018-10-16 06:13:00+00:00s,   sedentary,      rest     
-  2018-10-16 06:49:00+00:00s,   sedentary,      active   
-  2018-10-16 06:50:00+00:00s,   sedentary,      warmup   
-  2018-10-16 07:02:00+00:00s,   sedentary,      active   
-  2018-10-16 07:03:00+00:00s,   sedentary,      warmup   
-  2018-10-16 07:12:00+00:00s,   sedentary,      active   
-  2018-10-16 07:13:00+00:00s,   sedentary,      cooldown 
-  2018-10-16 07:23:00+00:00s,   sedentary,      active   
-  2018-10-16 07:25:00+00:00s,   sedentary,      warmup   
-  2018-10-16 07:29:00+00:00s,   sedentary,      active   
-  2018-10-16 07:31:00+00:00s,   sedentary,      warmup   
-  2018-10-16 07:50:00+00:00s,   sedentary,      active   
-  2018-10-16 07:51:00+00:00s,   sedentary,      rest     
-  2018-10-16 07:55:00+00:00s,   sedentary,      active   
+  2018-10-16 06:12:00+00:00s,   sedentary,      0        
+  2018-10-16 06:13:00+00:00s,   sedentary,      1        
+  2018-10-16 06:49:00+00:00s,   sedentary,      0        
+  2018-10-16 06:50:00+00:00s,   sedentary,      2        
+  2018-10-16 07:02:00+00:00s,   sedentary,      0        
+  2018-10-16 07:03:00+00:00s,   sedentary,      2        
+  2018-10-16 07:12:00+00:00s,   sedentary,      0        
+  2018-10-16 07:13:00+00:00s,   sedentary,      3        
+  2018-10-16 07:23:00+00:00s,   sedentary,      0        
+  2018-10-16 07:25:00+00:00s,   sedentary,      2        
+  2018-10-16 07:29:00+00:00s,   sedentary,      0        
+  2018-10-16 07:31:00+00:00s,   sedentary,      2        
+  2018-10-16 07:50:00+00:00s,   sedentary,      0        
+  2018-10-16 07:51:00+00:00s,   sedentary,      1        
+  2018-10-16 07:55:00+00:00s,   sedentary,      0        
   2018-10-16 07:56:00+00:00s,   sedentary,      6        
   2018-10-16 07:58:00+00:00s,   sedentary,      5        
-  2018-10-16 08:03:00+00:00s,   sedentary,      active   
-  2018-10-16 08:05:00+00:00s,   sedentary,      warmup   
-  2018-10-16 08:15:00+00:00s,   sedentary,      active   
-  2018-10-16 08:17:00+00:00s,   sedentary,      cooldown 
-  2018-10-16 08:19:00+00:00s,   sedentary,      active   
+  2018-10-16 08:03:00+00:00s,   sedentary,      0        
+  2018-10-16 08:05:00+00:00s,   sedentary,      2        
+  2018-10-16 08:15:00+00:00s,   sedentary,      0        
+  2018-10-16 08:17:00+00:00s,   sedentary,      3        
+  2018-10-16 08:19:00+00:00s,   sedentary,      0        
   2018-10-16 08:20:00+00:00s,   sedentary,      4        
-  2018-10-16 08:49:00+00:00s,   sedentary,      active   
+  2018-10-16 08:49:00+00:00s,   sedentary,      0        
   2018-10-16 08:50:00+00:00s,   sedentary,      4        
-  2018-10-16 08:53:00+00:00s,   sedentary,      active   
-  2018-10-16 08:55:00+00:00s,   sedentary,      cooldown 
+  2018-10-16 08:53:00+00:00s,   sedentary,      0        
+  2018-10-16 08:55:00+00:00s,   sedentary,      3        
 
 monitoring (defn 3/5)
   timestamp,                    heart_rate,     timestamp_16              
