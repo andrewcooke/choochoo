@@ -187,7 +187,7 @@ def validate_data(log, data, state, warn=False, force=True):
         while len(data) - offset > 2:
             token = token_factory(data[offset:], state)
             if token.is_user:
-                record = token.parse(warn=warn)
+                record = token.parse_token(warn=warn)
                 if force:
                     record.force()
             offset += len(token)
@@ -226,7 +226,7 @@ def offset_tokens(state, data, offset=0, warn=False, force=True):
     while len(data) - offset > 2:
         token = token_factory(data[offset:], state)
         if token.is_user:
-            record = token.parse(warn=warn)
+            record = token.parse_token(warn=warn)
             if force:
                 record.force()
         offset += len(token)

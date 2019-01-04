@@ -70,7 +70,7 @@ class Token:
                           [self._fake_field(key, value) for key, value in kargs.items()])
 
     @abstractmethod
-    def parse(self, **options):
+    def parse_token(self, **options):
         raise NotImplementedError()
 
     def _describe_csv_header(self, record):
@@ -83,12 +83,12 @@ class Token:
             yield '' if units is None else units
 
     def describe_csv(self):
-        record = self.parse(map_values=False, raw_time=True, rtn_composite=True)
+        record = self.parse_token(map_values=False, raw_time=True, rtn_composite=True)
         yield from self._describe_csv_header(record)
         yield from self._describe_csv_data(record)
 
     def describe_fields(self, types):
-        for name, (values, units) in self.parse(raw_data=True).data:
+        for name, (values, units) in self.parse_token(raw_data=True).data:
             if isinstance(values[0], bytes):
                 value = tohex(values[0])
             else:
@@ -194,7 +194,7 @@ class FileHeader(ValidateToken):
                 self.data[12:14] = pack('<H', checksum)
                 self.has_checksum = True
 
-    def parse(self, raw_data=False, **options):
+    def parse_token(self, raw_data=False, **options):
         data = {'header_size': self.data[0:1] if raw_data else self.header_size,
                  'protocol_version': self.data[1:2] if raw_data else self.protocol_version,
                  'profile_version': self.data[2:4] if raw_data else self.profile_version,
@@ -225,7 +225,7 @@ class Defined(Token):
         state.timestamp = field.field.type.parse_type(data[field.start:field.finish], 1,
                                                       self.definition.endian, state.timestamp)[0]
 
-    def parse(self, **options):
+    def parse_token(self, **options):
         return self.definition.message.parse_message(self.data, self.definition, self.timestamp, **options)
 
     def describe_fields(self, types):
@@ -252,7 +252,7 @@ class DeveloperField(Defined):
         self.is_user = False
 
     def __parse_field_definition(self, state):
-        record = self.parse().force()
+        record = self.parse_token().force()
         developer_index = record.attr.developer_data_index[0][0]
         number = record.attr.field_definition_number[0][0]
         # todo - we don't really need to convert name to type just to extract name below
@@ -387,7 +387,7 @@ class Definition(Token):
 
     def describe_fields(self, types):
         # something of a hack - we pack data in odd places below just to unpack here
-        for name, (values, units) in self.parse(raw_data=True).data:
+        for name, (values, units) in self.parse_token(raw_data=True).data:
             if len(values) > 1:
                 (value, extra), padding = values, units
                 extra = ': ' + extra
@@ -396,7 +396,7 @@ class Definition(Token):
             value = tohex(value)
             yield '%s%s - %s%s' % (padding, value, sub('_', ' ', name), extra)
 
-    def parse(self, raw_data=False, **options):
+    def parse_token(self, raw_data=False, **options):
         data = {'local_message_type': ((self.data[0:1], str(self.local_message_type)), '') if raw_data else self.local_message_type,
                 'reserved': self.data[1:2],
                 'architecture': self.data[2:3],
@@ -476,7 +476,7 @@ class Checksum(ValidateToken):
             self.checksum = checksum
             self.data = pack('<H', checksum)
 
-    def parse(self, raw_data=False, **options):
+    def parse_token(self, raw_data=False, **options):
         return self._fake_record('checksum', checksum=self.data[0:2] if raw_data else self.checksum)
 
 

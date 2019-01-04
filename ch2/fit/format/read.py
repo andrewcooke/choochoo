@@ -39,7 +39,7 @@ def filtered_records(log, data, after=0, limit=-1, record_names=None, warn=False
     def filter():
         for i, offset, token in generator:
             if internal or token.is_user:
-                record = token.parse(warn=warn)
+                record = token.parse_token(warn=warn)
                 if not record_names or record.name in record_names:
                     yield record
 
