@@ -3,7 +3,7 @@ from logging import basicConfig, getLogger, INFO
 from sys import stdout
 from unittest import TestCase
 
-from ch2.command.args import RECORDS
+from ch2.command.args import RECORDS, TABLES
 from ch2.fit.fix import fix
 from ch2.fit.format.tokens import FileHeader
 from ch2.fit.profile.profile import read_fit
@@ -97,5 +97,8 @@ class TestFixFit(TestCase, OutputMixin):
         self.assertFalse(good is same)
 
     def test_scaled(self):
-        bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/scale.fit')
-        summarize(self.log, RECORDS, bad, internal=True)
+        bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-05-30-22-00-44.fit')
+        fixed = fix(self.log, bytearray(bad), drop=True, max_drop_cnt=2)
+        with self.assertFileMatch(
+                '/home/andrew/project/ch2/choochoo/data/test/target/TestFixFit.test_scaled') as output:
+            summarize(self.log, TABLES, fixed, output=output)

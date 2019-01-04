@@ -72,7 +72,8 @@ class RowField(TypedField):
 
 class DelegateField(ScaledField):
 
-    def parse_field(self, data, count, endian, timestamp, references, message, **options):
+    def parse_field(self, data, count, endian, timestamp, references, message,
+                    scale=None, offset=None, **options):  # scale and offset are discarded and over-written
         # todo - do we need to worry about padding data?
         delegate = message.profile_to_field(self.name)
         yield from delegate.parse_field(data, count, endian, timestamp, references, message,
