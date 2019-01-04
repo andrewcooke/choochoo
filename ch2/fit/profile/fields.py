@@ -17,6 +17,8 @@ class ScaledField(Named):
         self._offset = 0 if offset is None else offset
         self._is_scaled = self._scale != 1 or self._offset != 0
         self._is_accumulate = accumulate
+        if self._is_accumulate:
+            self._log.warning('Accumulation not supported for %s' % self.name)
         self._warned_bad_scale = False
 
     def _parse_and_scale(self, type, data, count, endian, timestamp, **options):
