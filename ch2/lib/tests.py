@@ -40,6 +40,13 @@ def sub_extn(path, extn):
     return join(dir, '%s.%s' % (file.split('.')[0], extn))
 
 
+def sub_dir(path, new_dir, offset):
+    a, b = split(path)
+    if offset:
+        return join(sub_dir(a, new_dir, offset-1), b)
+    else:
+        return join(a, new_dir)
+
 
 class BufferContext(AbstractContextManager):
 
