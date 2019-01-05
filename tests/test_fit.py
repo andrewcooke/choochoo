@@ -15,7 +15,7 @@ from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_de
 from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_external_profile, read_fit
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
-from ch2.lib.tests import OutputMixin, HEX_ADDRESS
+from ch2.lib.tests import OutputMixin, HEX_ADDRESS, DROP_HDR_CHK, sub_extn, EXCLUDE
 
 
 class TestFit(TestCase, OutputMixin):
@@ -46,7 +46,7 @@ class TestFit(TestCase, OutputMixin):
                              read_fit(self.log,
                                       '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-26-rec.fit'),
                              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
-        with self.assertFileMatch(
+        with self.assertTextMatch(
                 '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_decode',
                 filters=[HEX_ADDRESS]) as output:
             for record in records:
@@ -54,7 +54,7 @@ class TestFit(TestCase, OutputMixin):
                       file=output)
 
     def test_dump(self):
-        with self.assertFileMatch(
+        with self.assertTextMatch(
                 '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_dump') as output:
             path = '/home/andrew/project/ch2/choochoo/data/test/personal/2018-07-30-rec.fit'
             summarize(self.log, FIELDS, read_fit(self.log, path),
@@ -62,7 +62,7 @@ class TestFit(TestCase, OutputMixin):
                       width=80, output=output)
 
     def test_developer(self):
-        with self.assertFileMatch(
+        with self.assertTextMatch(
                 '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_developer') as output:
             path = '/home/andrew/project/ch2/choochoo/data/test/sdk/DeveloperData.fit'
             summarize(self.log, FIELDS, read_fit(self.log, path),
@@ -70,23 +70,21 @@ class TestFit(TestCase, OutputMixin):
                       width=80, output=output)
 
     def test_csv(self):
-        with TemporaryDirectory() as dir:
-            skip = Skip(2)  # timer_trigger in ActivityGroup.fit
-            for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/sdk/*.fit'):
-                print(fit_file)
-                fit_dir, file = split(fit_file)
-                name = splitext(file)[0]
-                csv_name = '%s.%s' % (name, 'csv')
-                csv_us = join(dir, csv_name)
-                csv_them = join(fit_dir, csv_name)
-                dump_csv(self.log, fit_file, csv_us)
-                compare_csv(self.log, csv_us, csv_them, name, skip)
-            assert skip.skip == 0, 'Unused skipped tests'
+        for path in glob('/home/andrew/project/ch2/choochoo/data/test/sdk/*.fit'):
+            filters = [DROP_HDR_CHK]
+            if path.endswith('Activity.fit'):
+                # afaict it should be 0, which is mapped by the type.
+                # the value in the CSV makes no sense.
+                filters.append(EXCLUDE('timer_trigger'))
+            with self.assertCSVMatch(sub_extn(path, 'csv'), filters=filters) as output:
+                summarize_csv(self.log, read_fit(self.log, path),
+                              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx',
+                              warn=True, output=output)
 
     def test_personal(self):
         for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
             file_name = basename(fit_file)
-            with self.assertFileMatch(
+            with self.assertTextMatch(
                     '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_personal:' + file_name) as output:
                 summarize_tables(self.log, read_fit(self.log, fit_file), width=80, output=output,
                                  profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
@@ -97,87 +95,10 @@ class TestFit(TestCase, OutputMixin):
                              read_fit(self.log,
                                       '/home/andrew/project/ch2/choochoo/data/test/personal/andrew@acooke.org_24755630065.fit'),
                              profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
-        with self.assertFileMatch(
+        with self.assertTextMatch(
                 '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_tiemstamp_16',
                 filters=[HEX_ADDRESS]) as output:
             for record in records:
                 if record.name == 'monitoring':
                     print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)),
                           file=output)
-
-
-def dump_csv(log, fit_file, csv_file):
-    with open(csv_file, 'w') as output:
-        summarize_csv(log, read_fit(log, fit_file),
-                      profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx',
-                      output=output)
-
-
-# https://docs.python.org/3/library/itertools.html#itertools-recipes
-def grouper(iterable, n, fillvalue=None):
-    "Collect data into fixed-length chunks or blocks"
-    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
-
-
-class Skip:
-
-    def __init__(self, skip):
-        self.skip = skip
-
-    def __bool__(self):
-        try:
-            return bool(self.skip)
-        finally:
-            self.skip -= 1
-
-
-def cleaned(values):
-    # want a good example for scaling errors, not zero
-    # also, suspect some 0.0 might be 0.... (remove this later to check)
-    return (value[:-2] if value.endswith('.0') else value for value in values)
-
-
-def compare_rows(log, us, them, name, skip):
-    assert us[0:3] == them[0:3] or skip, "%s != %s for %s\n(%s\n%s)" % (us[0:3], them[0:3], name, us, them)
-    excess = len(them) % 3
-    if excess and not any(them[-excess:]):
-        log.debug('Discarding %d empty values from reference' % excess)
-        them = them[:-excess]
-    while len(them) > len(us) + 2 and not any(them[-3:]):
-        them = them[:-3]
-    # after first 3 entries need to sort to be sure order is correct
-    for us_nvu, them_nvu in zip_longest(sorted(grouper(cleaned(us[3:]), 3)),
-                                        sorted(grouper(cleaned(them[3:]), 3))):
-        if 'COMPOSITE' not in us_nvu[1]:
-            assert us_nvu == them_nvu or skip, "%s != %s for %s\n(%s\n%s)" % (us_nvu, them_nvu, name, us, them)
-
-
-def compare_csv(log, us, them, name, skip):
-    print(us)
-    with open(us, 'r') as us_in:
-        for line in us_in.readlines():
-            print("%s" % line.strip())
-            if '\0' in line:
-                print(sub('\0', 'NULL', line.strip()))
-    print(them)
-    with open(them, 'r') as them_in:
-        for line in them_in.readlines():
-            print("%s" % line.strip())
-            if '\0' in line:
-                print(sub('\0', 'NULL', line.strip()))
-    def filter(us):
-        for row in us:
-            if row[0] in ('FileHeader', 'Checksum'):
-                pass
-            elif row[0] == 'DeveloperField':
-                yield ['Data'] + row[1:]
-            else:
-                yield row
-    with open(us, 'r') as us_in, open(them, 'r') as them_in:
-        us_reader = filter(reader(us_in))
-        them_reader = reader(them_in)
-        next(them_reader)  # skip titles
-        for us_row, them_row in zip_longest(us_reader, them_reader):
-            compare_rows(log, us_row, them_row, name, skip)

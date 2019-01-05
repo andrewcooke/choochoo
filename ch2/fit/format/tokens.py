@@ -82,8 +82,8 @@ class Token:
             yield '' if values is None else '|'.join(str(value) for value in values)
             yield '' if units is None else units
 
-    def describe_csv(self):
-        record = self.parse_token(map_values=False, raw_time=True, rtn_composite=True)
+    def describe_csv(self, **options):
+        record = self.parse_token(map_values=False, raw_time=True, rtn_composite=True, **options)
         yield from self._describe_csv_header(record)
         yield from self._describe_csv_data(record)
 
@@ -361,7 +361,7 @@ class Definition(Token):
         self.size = offset
         return tuple(sorted(fields, key=lambda field: 1 if field.field and isinstance(field.field, DynamicField) else 0))
 
-    def describe_csv(self):
+    def describe_csv(self, **options):
         yield 'Definition'
         yield self.local_message_type
         yield self.message.name

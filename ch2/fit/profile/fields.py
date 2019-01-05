@@ -29,7 +29,7 @@ class ScaledField(Named):
                     raise Exception('Accumulation not supported for %s' % self.name)
                 if scale is None: scale = 1
                 if offset is None: offset = 0
-                if scale != 1 or offset != 0:  # keeps integer values integers
+                if scale != 1 or offset != 0:  # keeps integer values integers, avoids text
                     try:
                         values = tuple(value / scale - offset for value in values)
                     except Exception as e:
@@ -52,11 +52,6 @@ class TypedField(ScaledField):
             self._log.info('Overriding type for %s (not %s)' % (name, field_type))
             field_type = name
         self.type = types.profile_to_type(field_type)
-        # if types.is_type(name):
-        #     self.type = types.profile_to_type(name)
-        #     log.warning('Overriding type (%s) for predefined %s' % (field_type, name))
-        # else:
-        #     self.type = types.profile_to_type(field_type)
 
     def parse_field(self, data, count, endian, timestamp, references, message, **options):
         yield from self._parse_and_scale(self.type, data, count, endian, timestamp, **options)
@@ -156,7 +151,7 @@ class DynamicField(Zip, RowField):
                 lookup = (name, references[name][0][0])  # drop units and take first value
                 if lookup in self.__dynamic_lookup:
                     yield from message.profile_to_field(self.__dynamic_lookup[lookup]).parse_field(
-                        data, count, endian, timestamp, references, message, **options)
+                        data, count, endian, timestamp, references, message, warn=warn, **options)
                     return
         if warn:
             self._log.warning('Could not resolve dynamic field %s' % self.name)
@@ -169,7 +164,7 @@ def MessageField(log, row, rows, types):
         return CompositeField(log, row, types)
     else:
         peek = rows.peek()
-        if peek and peek.field_name and peek.field_no is None:
+        if row.field_no and peek and peek.field_name and peek.field_no is None:
             return DynamicField(log, row, rows, types)
         else:
             return RowField(log, row, types)

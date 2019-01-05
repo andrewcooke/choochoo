@@ -39,7 +39,7 @@ class TestFixFit(TestCase, OutputMixin):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/8CS90646.FIT')
         fixed = fix(self.log, bad, drop=True)
         self.assertTrue(len(fixed) < len(bad))
-        with self.assertFileMatch('/home/andrew/project/ch2/choochoo/data/test/target/TestFixFit.test_drop') as output:
+        with self.assertTextMatch('/home/andrew/project/ch2/choochoo/data/test/target/TestFixFit.test_drop') as output:
             summarize(self.log, RECORDS, fixed, output=output)
 
     def test_slices(self):
@@ -81,12 +81,12 @@ class TestFixFit(TestCase, OutputMixin):
     def test_unknown_bad(self):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-04-15-09-18-20.fit')
         fixed = fix(self.log, bytearray(bad), drop=True)
-        with self.assertFileMatch(
+        with self.assertTextMatch(
                 '/home/andrew/project/ch2/choochoo/data/test/target/TestFixFit.test_unknown_bad:1') as output:
             summarize(self.log, RECORDS, fixed, output=output)
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-02-24-10-04-10.fit')
         fixed = fix(self.log, bytearray(bad), drop=True)
-        with self.assertFileMatch(
+        with self.assertTextMatch(
                 '/home/andrew/project/ch2/choochoo/data/test/target/TestFixFit.test_unknown_bad:2') as output:
             summarize(self.log, RECORDS, fixed, output=output)
 
@@ -99,6 +99,6 @@ class TestFixFit(TestCase, OutputMixin):
     def test_scaled(self):
         bad = read_fit(self.log, '/home/andrew/project/ch2/choochoo/data/test/other/2018-05-30-22-00-44.fit')
         fixed = fix(self.log, bytearray(bad), drop=True, max_drop_cnt=2)
-        with self.assertFileMatch(
+        with self.assertTextMatch(
                 '/home/andrew/project/ch2/choochoo/data/test/target/TestFixFit.test_scaled') as output:
             summarize(self.log, TABLES, fixed, output=output)

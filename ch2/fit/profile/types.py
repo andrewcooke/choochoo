@@ -58,6 +58,7 @@ class StructSupport(SimpleType):
                 bytes >>= 8
         return bad
 
+    # todo - i doubt this is working right with compiste fields that are shorter than expected
     def _is_bad(self, data, bad):
         size = len(bad)
         count = len(data) // size

@@ -138,7 +138,7 @@ def summarize_csv(log, data, after=0, limit=-1, warn=False, no_header=False, pro
                         profile_path=profile_path)
     for index, offset, token in tokens:
         if hasattr(token, 'describe_csv'):
-            print(','.join(str(component) for component in token.describe_csv()), file=output)
+            print(','.join(str(component) for component in token.describe_csv(warn=warn)), file=output)
 
 
 def partition(records, counts, threshold=3):
