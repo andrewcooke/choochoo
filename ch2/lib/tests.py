@@ -58,7 +58,7 @@ def RNM_UNKNOWN(data):
 
 def sub_extn(path, extn):
     dir, file = split(path)
-    return join(dir, '%s.%s' % (file.split('.')[0], extn))
+    return join(dir, '%s.%s' % (file.rsplit('.', 1)[0], extn))
 
 
 def sub_dir(path, new_dir, offset):

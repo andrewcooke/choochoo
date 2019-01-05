@@ -5,7 +5,7 @@ from os.path import basename, join, exists
 from sys import stdout
 from unittest import TestCase
 
-from ch2.command.args import FIELDS
+from ch2.command.args import FIELDS, TABLES
 from ch2.fit.format.read import filtered_records
 from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from ch2.fit.profile.fields import DynamicField
@@ -82,8 +82,7 @@ class TestFit(TestCase, OutputMixin):
         if filters is None: filters = []
         if EXC_HDR_CHK not in filters: filters = [EXC_HDR_CHK] + filters
         with self.assertCSVMatch(csv_path, filters=filters) as output:
-            summarize_csv(self.log, read_fit(self.log, fit_path),
-                          profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx',
+            summarize_csv(self.log, read_fit(self.log, fit_path), profile_path=self.profile_path,
                           warn=True, output=output)
 
     def standard_csv_dir(self, dir, fit_pattern, exclude=None, filters=None):
@@ -100,6 +99,17 @@ class TestFit(TestCase, OutputMixin):
                 else:
                     self.log.warning('Could not find %s' % target_csv_path)
 
+    def standard_dmp(self, source, target, format, filters=None):
+        with self.assertTextMatch(target, filters=filters) as output:
+            summarize(self.log, format, read_fit(self.log, source),
+                      warn=True, profile_path=self.profile_path, output=output)
+
+    def standard_dmp_dir(self, dir, fit_pattern, format, exclude=None, filters=None):
+        for source_fit_path in glob(join(self.test_dir, 'source', dir, fit_pattern)):
+            if not exclude or basename(source_fit_path) not in exclude:
+                target_dmp_path = sub_extn(sub_dir(source_fit_path, 'target', 2), format[:3])
+                self.standard_dmp(source_fit_path, target_dmp_path, format, filters=filters)
+
     def test_sdk_csv(self):
         self.standard_csv_dir('sdk', '*.fit', exclude='Activity.fit')
         # afaict it should be 0, which is mapped by the type.  the value in the CSV makes no sense.
@@ -107,3 +117,7 @@ class TestFit(TestCase, OutputMixin):
 
     def test_personal_csv(self):
         self.standard_csv_dir('personal', '*.fit', filters=[RNM_UNKNOWN])
+
+    def test_personal_tab(self):
+        self.standard_dmp_dir('personal', '*.fit', TABLES)
+
