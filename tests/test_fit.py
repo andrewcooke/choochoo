@@ -11,7 +11,7 @@ from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_de
 from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_external_profile, read_fit
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
-from ch2.lib.tests import OutputMixin, HEX_ADDRESS, DROP_HDR_CHK, sub_extn, EXCLUDE, sub_dir
+from ch2.lib.tests import OutputMixin, HEX_ADDRESS, EXC_HDR_CHK, sub_extn, EXC_FLD, sub_dir, RNM_UNKNOWN
 
 
 class TestFit(TestCase, OutputMixin):
@@ -80,7 +80,7 @@ class TestFit(TestCase, OutputMixin):
 
     def standard_csv(self, fit_path, csv_path, filters=None):
         if filters is None: filters = []
-        if DROP_HDR_CHK not in filters: filters = [DROP_HDR_CHK] + filters
+        if EXC_HDR_CHK not in filters: filters = [EXC_HDR_CHK] + filters
         with self.assertCSVMatch(csv_path, filters=filters) as output:
             summarize_csv(self.log, read_fit(self.log, fit_path),
                           profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx',
@@ -103,4 +103,7 @@ class TestFit(TestCase, OutputMixin):
     def test_sdk_csv(self):
         self.standard_csv_dir('sdk', '*.fit', exclude='Activity.fit')
         # afaict it should be 0, which is mapped by the type.  the value in the CSV makes no sense.
-        self.standard_csv_dir('sdk', 'Activity.fit', filters=[EXCLUDE('timer_trigger')])
+        self.standard_csv_dir('sdk', 'Activity.fit', filters=[EXC_FLD('timer_trigger')])
+
+    def test_personal_csv(self):
+        self.standard_csv_dir('personal', '*.fit', filters=[RNM_UNKNOWN])

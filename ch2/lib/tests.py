@@ -12,8 +12,8 @@ from tempfile import NamedTemporaryFile
 HEX_ADDRESS = lambda s: sub(r'0x[0-9a-f]{8,}', 'ADDRESS', s)
 
 
-def DROP_HDR_CHK(us):
-    for row in us:
+def EXC_HDR_CHK(data):
+    for row in data:
         if row[0] in ('FileHeader', 'Checksum'):
             pass
         elif row[0] == 'DeveloperField':
@@ -22,7 +22,7 @@ def DROP_HDR_CHK(us):
             yield row
 
 
-def EXCLUDE(name):
+def EXC_FLD(name):
     def filter(data):
         for row in data:
             try:
@@ -33,6 +33,27 @@ def EXCLUDE(name):
                 pass
             yield row
     return filter
+
+
+def EXC_MSG(name):
+    def filter(data):
+        for row in data:
+            if row[0] == 'Data' and row[2] == name:
+                yield row[:3]
+            else:
+                yield row
+    return filter
+
+
+def RNM_UNKNOWN(data):
+    for row in data:
+        for i in range(0, len(row), 3):
+            if row[i].startswith('@'):
+                row[i] = 'unknown'
+        for i in range(2, len(row), 3):
+            if row[i].startswith('MESSAGE'):
+                row[i] = 'unknown'
+        yield row
 
 
 def sub_extn(path, extn):
@@ -104,23 +125,51 @@ class CSVContext(BufferContext):
         with open(self._path, 'r') as them_in:
             them_reader = self._filter(reader(them_in))
             next(them_reader)  # drop titles
-            us_reader = self._filter(reader(self._buffer.getvalue().splitlines()))
-            for us_row, them_row in zip_longest(us_reader, them_reader):
-                self.compare_rows(us_row, them_row)
+            us_data = self._buffer.getvalue()
+            us_reader = self._filter(reader(us_data.splitlines()))
+            for row, (us_row, them_row) in enumerate(zip_longest(us_reader, them_reader)):
+                self.compare_rows(row, us_row, them_row, us_data)
 
-    def compare_rows(self, us_row, them_row):
-        self._test.assertEqual(us_row[0:3], them_row[0:3])
-        excess = len(them_row) % 3
-        if excess and not any(them_row[-excess:]):
-            self._log.debug('Discarding %d empty values from reference' % excess)
-            them_row = them_row[:-excess]
-        while len(them_row) > len(us_row) + 2 and not any(them_row[-3:]):
-            them_row = them_row[:-3]
-        # after first 3 entries need to sort to be sure order is correct
-        for us_nvu, them_nvu in zip_longest(sorted(grouper(cleaned(us_row[3:]), 3)),
-                                            sorted(grouper(cleaned(them_row[3:]), 3))):
-            if 'COMPOSITE' not in us_nvu[1]:
-                self._test.assertEqual(us_nvu, them_nvu, self._path)
+    def build_dict(self, row):
+        return dict((name, (value, units)) for name, value, units in grouper(row, 3))
+
+    def compare_rows(self, row, us_row, them_row, us_data):
+        self._test.assertEqual(us_row[:3], them_row[:3], 'Row %d header' % row)
+        us_dict = self.build_dict(us_row[3:])
+        them_dict = self.build_dict(them_row[3:])
+        keys = set(us_dict.keys()).union(them_dict.keys())
+        for key in keys:
+            self.compare_key(key, us_dict, them_dict, row, us_data)
+
+    def compare_key(self, key, us_dict, them_dict, row, us_data):
+        if key and key != 'unknown':
+            us_value, us_units = us_dict.get(key, ('', ''))
+            them_value, them_units = them_dict.get(key, ('', ''))
+            try:
+                if us_value != 'COMPOSITE':
+                    self._test.assertEqual(self.fix_value(us_value), self.fix_value(them_value),
+                                           'Value for %s row %d' % (key, row))
+                if us_value or them_value:  # avoid too many errors
+                    self._test.assertEqual(us_units, them_units, 'Units for %s row %d' % (key, row))
+            except Exception:
+                self.dump(row, us_data)
+                raise
+
+    def fix_value(self, value):
+        if value:
+            if value.endswith('.0'): value = value[:-2]
+            if value == 'False': value = '0'
+            if value == 'True': value = '1'
+        return value
+
+    def dump(self, row, us_data):
+        with NamedTemporaryFile(delete=False) as f:
+            f.write(us_data.encode())
+            self._log.info('Wrote copy of CSV to %s' % f.name)
+            self._log.info('Comparing with %s' % self._path)
+            self._log.info('head -n %d %s | tail -n 1; head -n %d %s | tail -n 1' %
+                           (row+2, f.name, row+2, self._path))
+
 
 
 # https://docs.python.org/3/library/itertools.html#itertools-recipes
@@ -129,12 +178,6 @@ def grouper(iterable, n, fillvalue=None):
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
     args = [iter(iterable)] * n
     return zip_longest(*args, fillvalue=fillvalue)
-
-
-def cleaned(values):
-    # want a good example for scaling errors, not zero
-    # also, suspect some 0.0 might be 0.... (remove this later to check)
-    return (value[:-2] if value.endswith('.0') else value for value in values)
 
 
 class OutputMixin:
@@ -157,11 +200,10 @@ class OutputMixin:
             log.warning('File "%s" does not exist; will generate rather than check' % path)
             return DumpContext(log, path, filters)
 
-
     def assertCSVMatch(self, path, log=None, filters=None):
         log = self._resolve_log(log)
         if exists(path):
             return CSVContext(log, path, filters, self)
         else:
-            # the CSV file should have been generated using the SDK
+            # the CSV file should have been generated using the SDK (dev/build-csv.sh)
             raise Exception('Could not open %s' % path)
