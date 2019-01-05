@@ -31,7 +31,7 @@ class TestActivities(TestCase):
             constants(args, log, db)
 
             args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                           'activities', mm(FAST), 'data/test/personal/2018-08-27-rec.fit')
+                                           'activities', mm(FAST), 'data/test/source/personal/2018-08-27-rec.fit')
             activities(args, log, db)
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)

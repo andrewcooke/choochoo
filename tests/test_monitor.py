@@ -24,7 +24,7 @@ class TestMonitor(TestCase):
             args, log, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                           'monitor', mm(FAST), 'data/test/personal/25822184777.fit')
+                                           'monitor', mm(FAST), 'data/test/source/personal/25822184777.fit')
             monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline_after(log, db, PipelineType.STATISTIC, force=True, after='2018-01-01')
@@ -42,7 +42,7 @@ class TestMonitor(TestCase):
             for file in ('24696157869', '24696160481', '24696163486'):
                 args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                                'monitor', mm(FAST),
-                                               'data/test/personal/andrew@acooke.org_%s.fit' % file)
+                                               'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline_after(log, db, PipelineType.STATISTIC, force=True, after='2018-01-01')
@@ -75,7 +75,8 @@ class TestMonitor(TestCase):
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             for file in files:
                 args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                               'monitor', mm(FAST), 'data/test/personal/andrew@acooke.org_%s.fit' % file)
+                                               'monitor', mm(FAST),
+                                               'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline_after(log, db, PipelineType.STATISTIC, force=True, after='2018-01-01')

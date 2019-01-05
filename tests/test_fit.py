@@ -19,8 +19,8 @@ class TestFit(TestCase, OutputMixin):
     def setUp(self):
         basicConfig(stream=stdout, level=DEBUG)
         self.log = getLogger()
-        self.test_dir = '/home/andrew/project/ch2/choochoo/data/test'
-        self.profile_path = '/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx'
+        self.test_dir = 'data/test'
+        self.profile_path = 'data/sdk/Profile.xlsx'
 
     def test_profile(self):
         nlog, types, messages = read_external_profile(self.log, self.profile_path)
