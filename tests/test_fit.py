@@ -58,12 +58,12 @@ class TestFit(TestCase, OutputMixin):
                       profile_path=self.profile_path, width=80, output=output)
 
     def test_personal(self):
-        for fit_file in glob('/home/andrew/project/ch2/choochoo/data/test/personal/*.fit'):
+        for fit_file in glob(join(self.test_dir, 'source/personal/*.fit')):
             file_name = basename(fit_file)
             with self.assertTextMatch(
-                    '/home/andrew/project/ch2/choochoo/data/test/target/TestFit.test_personal:' + file_name) as output:
+                    join(self.test_dir, 'target/personal/TestFit.test_personal:' + file_name)) as output:
                 summarize_tables(self.log, read_fit(self.log, fit_file), width=80, output=output,
-                                 profile_path='/home/andrew/project/ch2/choochoo/data/sdk/Profile.xlsx')
+                                 profile_path=self.profile_path)
 
     def test_timestamp_16(self):
         types, messages, records = \
