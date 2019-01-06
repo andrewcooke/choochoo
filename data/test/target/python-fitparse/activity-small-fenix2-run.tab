@@ -13,8 +13,7 @@ device_info
 
 session
   avg_running_cadence: 81strides/min,     avg_stance_time: 252.0ms,
-  avg_vertical_oscillation: 106.2mm,  enhanced_avg_speed: 65.535m/s,
-  enhanced_max_speed: 65.535m/s,  event: session,     event_type: stop,
+  avg_vertical_oscillation: 106.2mm,  event: session,     event_type: stop,
   max_running_cadence: 96strides/min,     message_index: 0,   sport: running,
   start_position_lat: 58.95918281748891°,
   start_position_long: 5.728839039802551°,
@@ -11273,39 +11272,34 @@ record
 lap
   timestamp,                    avg_cadence,    avg_stance_time,
     avg_vertical_oscillation,   end_position_lat,       end_position_long, 
-    enhanced_avg_speed,     enhanced_max_speed,     event,  event_type,
-    max_cadence,    message_index,  start_position_lat, 
-    start_position_long,    start_time,                 total_ascent,
-    total_descent,  total_distance,     total_elapsed_time,
-    total_timer_time
+    enhanced_max_speed,     event,  event_type,     max_cadence,
+    message_index,  start_position_lat,     start_position_long,
+    start_time,                 total_ascent,   total_descent,  total_distance,
+    total_elapsed_time,     total_timer_time
   2015-08-15 14:49:39+00:00s,   81rpm,          253.0ms,        
     108.0mm,                    58.95844697020948°,     5.717411153018475°,
-    65.535m/s,              5.969m/s,               lap,    stop,      
-    87rpm,          0,              58.95917795598507°, 
-    5.728836441412568°,     2015-08-15 14:45:09+00:00,  2m,          
-    18m,            848.94m,            270.0s,            
-    270.0s          
+    5.969m/s,               lap,    stop,           87rpm,      
+    0,              58.95917795598507°,     5.728836441412568°, 
+    2015-08-15 14:45:09+00:00,  2m,             18m,            848.94m,       
+    270.0s,                 270.0s          
   2015-08-15 15:03:36+00:00s,   83rpm,          227.0ms,        
     114.7mm,                    58.95846784114838°,     5.717231445014477°,
-    65.535m/s,              4.145m/s,               lap,    stop,      
-    85rpm,          1,              58.95844697020948°, 
-    5.717411153018475°,     2015-08-15 14:49:40+00:00,  4m,          
-    7m,             2987.88m,           836.0s,            
-    836.0s          
+    4.145m/s,               lap,    stop,           85rpm,      
+    1,              58.95844697020948°,     5.717411153018475°, 
+    2015-08-15 14:49:40+00:00,  4m,             7m,             2987.88m,      
+    836.0s,                 836.0s          
   2015-08-15 15:16:15+00:00s,   84rpm,          218.0ms,        
     111.6mm,                    58.958336832001805°,    5.717222057282925°,
-    65.535m/s,              4.988m/s,               lap,    stop,      
-    86rpm,          2,              58.95846784114838°, 
-    5.717231445014477°,     2015-08-15 15:03:37+00:00,  6m,          
-    6m,             2978.79m,           758.0s,            
-    758.0s          
+    4.988m/s,               lap,    stop,           86rpm,      
+    2,              58.95846784114838°,     5.717231445014477°, 
+    2015-08-15 15:03:37+00:00,  6m,             6m,             2978.79m,      
+    758.0s,                 758.0s          
   2015-08-15 15:32:21+00:00s,   76rpm,          302.0ms,        
     94.1mm,                     58.95881451666355°,     5.729834055528045°,
-    65.535m/s,              5.139m/s,               lap,    stop,      
-    96rpm,          3,              58.958336832001805°,
-    5.717222057282925°,     2015-08-15 15:16:16+00:00,  50m,         
-    29m,            2192.61m,           965.0s,            
-    965.98s         
+    5.139m/s,               lap,    stop,           96rpm,      
+    3,              58.958336832001805°,    5.717222057282925°, 
+    2015-08-15 15:16:16+00:00,  50m,            29m,            2192.61m,      
+    965.0s,                 965.98s         
 
 event
   timestamp,                    event,  event_group,    event_type,

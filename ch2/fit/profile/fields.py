@@ -13,27 +13,18 @@ class ScaledField(Named):
     def __init__(self, log, name, units, scale, offset, accumulate):
         super().__init__(log, name)
         self._units = units
-        self._scale = scale if scale else None  # treat 0 as none
-        self._offset = offset
+        self._scale = scale if scale else 1  # treat 0 as 1
+        self._offset = offset if offset else 0
         self._accumulate = accumulate
         if accumulate:
             self._log.warning('Accumulation not supported for %s' % self.name)
 
     def _parse_and_scale(self, type, data, count, endian, timestamp, scale=None, offset=None, **options):
-        values = type.parse_type(data, count, endian, timestamp, **options)
-        if scale is None: scale = self._scale if self._scale else None
+        if scale is None: scale = self._scale if self._scale else 1
         if offset is None: offset = self._offset
-        if scale is not None or offset is not None:
-            if values is not None:
-                if self._accumulate:
-                    raise Exception('Accumulation not supported for %s' % self.name)
-                if scale is None: scale = 1
-                if offset is None: offset = 0
-                if scale != 1 or offset != 0:  # keeps integer values integers, avoids text
-                    try:
-                        values = tuple(value / scale - offset for value in values)
-                    except Exception as e:
-                        raise Exception('Error scaling %s: %s' % (self.name, e))
+        values = type.parse_type(data, count, endian, timestamp, scale=scale, offset=offset, **options)
+        if self._accumulate:
+            raise Exception('Accumulation not supported for %s' % self.name)
         yield self.name, (values, self._units)
 
     def post(self, message, types):

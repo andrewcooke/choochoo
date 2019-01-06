@@ -119,6 +119,7 @@ class TestFit(TestCase, OutputMixin):
     def test_personal_csv(self):
         self.standard_csv_dir('personal', '*.fit', filters=[RNM_UNKNOWN])
 
+    # these are tests only for consistency across releases, not correctness
     def test_personal_tab(self):
         self.standard_dmp_dir('personal', '*.fit', TABLES)
 
@@ -139,6 +140,7 @@ class TestFit(TestCase, OutputMixin):
                                        'compressed-speed-distance.fit',  # strange timestamp
                                        ])
 
+    # these are tests only for consistency across releases, not correctness
     def test_pyfitparse_fix_tab(self):
         self.standard_dmp_dir('python-fitparse-fix', '*.fit', TABLES)
 

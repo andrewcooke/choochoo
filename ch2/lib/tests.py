@@ -120,7 +120,7 @@ class TextEqualContext(TextBufferContext):
                         self._log.info('Wrote copy of result to %s' % f.name)
                         self._log.info('Comparing with %s' % self._path)
                         self._log.info('diff %s %s' % (f.name, self._path))
-                self._test.assertEqual(target, result)
+                self._test.assertEqual(result, target)
 
 
 class BinaryEqualContext(BinaryBufferContext):
@@ -140,7 +140,7 @@ class BinaryEqualContext(BinaryBufferContext):
                         self._log.info('Wrote copy of result to %s' % f.name)
                         self._log.info('Comparing with %s' % self._path)
                         self._log.info('cmp -l %s %s' % (f.name, self._path))
-                self._test.assertEqual(target, result)
+                self._test.assertEqual(result, target)
 
 
 class TextDumpContext(TextBufferContext):

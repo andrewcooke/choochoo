@@ -24,7 +24,7 @@ user_profile
   weight_setting: metric
 
 sport
-  name: Biker Tracka р,    sport: cycling,     sub_sport: generic
+  name: Bike,r Track,a ,,,р,   sport: cycling,     sub_sport: generic
 
 zones_target
   functional_threshold_power: 400,    hr_calc_type: percent_max_hr,

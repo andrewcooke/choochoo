@@ -61,14 +61,29 @@ class StructSupport(SimpleType):
                 bytes >>= 8
         return bad
 
-    def _is_bad(self, data, bad, count):
+    def _all_bad(self, data, bad, count):
         return all(bad == data[self.n_bytes*i:self.n_bytes*(i+1)] for i in range(count))
 
-    def _unpack(self, data, formats, bad, count, endian, check_bad=True):
-        if check_bad and self._is_bad(data, bad[endian], count):
+    # scale and offset have to be at this level because of how bad values wwhen count > 0 are handled
+    def _unpack(self, data, formats, bad, count, endian, scale=1, offset=0, check_bad=True, **options):
+        if check_bad and self._all_bad(data, bad[endian], count):
             return None
         else:
-            return unpack(formats[endian] % count, data[:self.n_bytes * count])
+            if scale == 1 and offset == 0:
+                return unpack(formats[endian] % count, data[:self.n_bytes * count])
+            elif count == 1:  # if no check, scale single bad values
+                return (unpack(formats[endian] % 1, data[:self.n_bytes])[0] / scale - offset,)
+            else:
+                return tuple(self.__unpack_scaled(data[self.n_bytes*i:self.n_bytes*(i+1)], formats[endian],
+                                                  bad[endian], scale, offset) for i in range(count))
+
+    def __unpack_scaled(self, data, format, bad, scale, offset):
+        value = unpack(format % 1, data)[0]
+        if data == bad or (scale == 1 and offset == 0):
+            # the java CSV program returns isolated bad values in multiples as unscaled
+            return value
+        else:
+            return value / scale - offset
 
 
 class String(SimpleType):
@@ -77,9 +92,15 @@ class String(SimpleType):
         super().__init__(log, name, 1, str)
 
     def parse_type(self, bytes, count, endian, timestamp, **options):
-        value = str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')
-        while value and value[-1] == '\u0000': value = value[:-1]
-        return value.split('\u0000')  # inferred from CSV handling of weird data in tests
+        try:
+            value = str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')
+            while value and value[-1] == '\u0000': value = value[:-1]
+            return value.split('\u0000')  # inferred from CSV handling of weird data in tests
+        except UnicodeDecodeError:
+            # this gets us close to what garmin generates in CSV files
+            bytes = bytearray(b % 0x7f for b in bytes)
+            while bytes and bytes[-1] == 0: bytes = bytes[:-1]
+            return tuple(b.decode('ascii') for b in bytes.split(b'\0'))
 
 
 class Boolean(SimpleType):
@@ -124,10 +145,10 @@ class AutoInteger(StructSupport):
             return int(cell, 0)
 
     def is_bad(self, bytes, count, endian):
-        return self._is_bad(bytes, self.__bad[endian], count)
+        return self._all_bad(bytes, self.__bad[endian], count)
 
     def parse_type(self, data, count, endian, timestamp, check_bad=True, **options):
-        return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad)
+        return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad, **options)
 
 
 class AliasInteger(AutoInteger):
@@ -206,10 +227,10 @@ class AutoFloat(StructSupport):
         self.__bad = self._pack_bad(2 ** n_bits - 1)
 
     def is_bad(self, bytes, count, endian):
-        return self._is_bad(bytes, self.__bad[endian], count)
+        return self._all_bad(bytes, self.__bad[endian], count)
 
     def parse_type(self, data, count, endian, timestamp, check_bad=True, **options):
-        return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad)
+        return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad, **options)
 
 
 class Mapping(AbstractType):
