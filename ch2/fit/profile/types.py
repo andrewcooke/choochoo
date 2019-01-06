@@ -48,36 +48,24 @@ class StructSupport(SimpleType):
     Most base types use stucts to unpack data.
     '''
 
-    def __init__(self, log, name, n_bytes, func, bad):
-        super().__init__(log, name, n_bytes, func)
-        self.__bad = bad
+    def _pack_bad(self, value):
+        bad = (bytearray(self.n_bytes), bytearray(self.n_bytes))
+        for endian in (LITTLE, BIG):
+            bytes = value
+            for i in range(self.n_bytes):
+                j = i if endian == LITTLE else self.n_bytes - i - 1
+                bad[endian][j] = bytes & 0xff
+                bytes >>= 8
+        return bad
 
-    def _is_bad(self, data, endian, count, n_bits):
-        total_bits = count * n_bits
-        n_bytes = total_bits // 8
-        bad = 255 if self.__bad else 0
-        remaining = total_bits % 8
-        if remaining:
-            mask = (1 << remaining) - 1
-            # endian matters here, because we need to know if the first or last byte is "incomplete"
-            if endian:
-                # big endian so most significant (and incomplete) byte at start
-                rest_bad = all(datum == bad for datum in data[1:n_bytes+1])
-                return rest_bad and (data[0] & mask) == (mask if self.__bad else 0)
-            else:
-                # small endian, so most significant (and incomplete) byte at end
-                rest_bad = all(datum == bad for datum in data[:n_bytes])
-                return rest_bad and (data[n_bytes] & mask) == (mask if self.__bad else 0)
-        else:
-            return all(datum == bad for datum in data[:n_bytes])
+    def _is_bad(self, data, bad, count):
+        return all(bad == data[self.n_bytes*i:self.n_bytes*(i+1)] for i in range(count))
 
-    def _unpack(self, data, formats, count, endian, n_bits, check_bad=True):
-        # bad is 0 or 1 - all bits are this value
-        if check_bad and self._is_bad(data, endian, count, n_bits):
+    def _unpack(self, data, formats, bad, count, endian, check_bad=True):
+        if check_bad and self._is_bad(data, bad[endian], count):
             return None
         else:
-            # n_bytes?  todo !!!!!!!!!!!
-            return unpack(formats[endian] % count, data[0:count * self.n_bytes])
+            return unpack(formats[endian] % count, data[:self.n_bytes * count])
 
 
 class String(SimpleType):
@@ -119,13 +107,14 @@ class AutoInteger(StructSupport):
         if n_bits % 8:
             raise Exception('Size of %r not a multiple of 8 bits' % name)
         bad = 0 if match.group(3) == 'z' else 1
-        super().__init__(log, name, n_bits // 8, self.int, bad)
+        super().__init__(log, name, n_bits // 8, self.int)
         if self.n_bytes not in self.size_to_format:
             raise Exception('Cannot unpack %d bytes as an integer' % self.n_bytes)
         format = self.size_to_format[self.n_bytes]
         if not self.signed:
             format = format.upper()
-        self.formats = ['<%d' + format, '>%d' + format]
+        self.__formats = ['<%d' + format, '>%d' + format]
+        self.__bad = self._pack_bad(0 if match.group(3) == 'z' else 2 ** (n_bits - (1 if self.signed else 0)) - 1)
 
     @staticmethod
     def int(cell):
@@ -134,9 +123,8 @@ class AutoInteger(StructSupport):
         else:
             return int(cell, 0)
 
-    def parse_type(self, data, count, endian, timestamp, n_bits=None, **options):
-        if n_bits is None: n_bits = self.n_bytes * 8
-        return self._unpack(data, self.formats, count, endian, n_bits)
+    def parse_type(self, data, count, endian, timestamp, check_bad=True, **options):
+        return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad)
 
 
 class AliasInteger(AutoInteger):
@@ -207,15 +195,15 @@ class AutoFloat(StructSupport):
         n_bits = int(match.group(1))
         if n_bits % 8:
             raise Exception('Size of %r not a multiple of 8 bits' % name)
-        super().__init__(log, name, n_bits // 8, float, 1)
+        super().__init__(log, name, n_bits // 8, float)
         if self.n_bytes not in self.size_to_format:
             raise Exception('Cannot unpack %d bytes as a float' % self.n_bytes)
         format = self.size_to_format[self.n_bytes]
-        self.formats = ['<%d' + format, '>%d' + format]
+        self.__formats = ['<%d' + format, '>%d' + format]
+        self.__bad = self._pack_bad(2 ** n_bits - 1)
 
-    def parse_type(self, data, count, endian, timestamp, n_bits=None, **options):
-        if n_bits is None: n_bits = self.n_bytes * 8
-        return self._unpack(data, self.formats, count, endian, n_bits)
+    def parse_type(self, data, count, endian, timestamp, check_bad=True, **options):
+        return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad)
 
 
 class Mapping(AbstractType):
@@ -245,8 +233,10 @@ class Mapping(AbstractType):
         except KeyError:
             return value
 
-    def parse_type(self, bytes, size, endian, timestamp, map_values=True, **options):
-        values = self.base_type.parse_type(bytes, size, endian, timestamp, check_bad=False, **options)
+    # default here for check_bad sets whether mappings can be considered bad or not
+    # tests against CSV suggest they can (battery_level)
+    def parse_type(self, bytes, size, endian, timestamp, map_values=True, check_bad=True, **options):
+        values = self.base_type.parse_type(bytes, size, endian, timestamp, check_bad=check_bad, **options)
         if map_values and values:
             values = tuple(self.safe_internal_to_profile(value) for value in values)
         return values

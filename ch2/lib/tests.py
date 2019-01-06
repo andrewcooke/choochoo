@@ -202,8 +202,8 @@ class CSVEqualContext(TextBufferContext):
                 if us_value != 'COMPOSITE':
                     self._test.assertEqual(self.fix_value(us_value), self.fix_value(them_value),
                                            'Value for %s row %d' % (key, row))
-                if us_value or them_value:  # avoid too many errors
-                    self._test.assertEqual(us_units, them_units, 'Units for %s row %d' % (key, row))
+                    if us_value:  # avoid too many errors
+                        self._test.assertEqual(us_units, them_units, 'Units for %s row %d' % (key, row))
             except Exception:
                 self.dump(row, us_data)
                 raise

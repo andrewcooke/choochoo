@@ -75,6 +75,7 @@ class DelegateField(ScaledField):
                                         scale=self._scale, offset=self._offset, **options)
 
     def size(self, message):
+        # this is needed because we delegate above
         delegate = message.profile_to_field(self.name)
         return delegate.type.n_bytes
 
@@ -109,17 +110,19 @@ class CompositeField(Zip, TypedField):
                                                     0 if offset is None else float(offset),
                                                     None if accumulate is None else int(accumulate))))
 
-    def parse_field(self, data, count, endian, timestamp, references, message, rtn_composite=False, **options):
+    def parse_field(self, data, count, endian, timestamp, references, message,
+                    rtn_composite=False, check_bad=False, **options):
         if rtn_composite:
             yield (self.name, (('COMPOSITE',), self._units))
         byteorder = ['little', 'big'][endian]
         bits = int.from_bytes(data, byteorder=byteorder)
         for n_bits, field in self.__components:
+            # todo - error if larger
             n_bytes = max((n_bits+7) // 8, field.size(message))
             data = (bits & ((1 << n_bits) - 1)).to_bytes(n_bytes, byteorder=byteorder)
             bits >>= n_bits
             yield from field.parse_field(data, 1, endian, timestamp, references, message,
-                                         rtn_composite=rtn_composite, n_bits=n_bits, **options)
+                                         rtn_composite=rtn_composite, check_bad=check_bad, **options)
 
 
 class DynamicField(Zip, RowField):
