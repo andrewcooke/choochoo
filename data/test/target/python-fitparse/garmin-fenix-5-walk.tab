@@ -1,0 +1,284 @@
+
+file_id
+  garmin_product: fenix5,     manufacturer: garmin,   serial_number: 3945849289,
+  time_created: 2017-06-11 14:32:51+00:00,    type: activity
+
+file_creator
+  software_version: 410
+
+device_settings
+  active_time_zone: 0,    activity_tracker_enabled: True,
+  auto_activity_detect: running,  autosync_min_steps: 100steps,
+  autosync_min_time: 15minutes,   backlight_mode: auto_brightness,
+  lactate_threshold_autodetect_enabled: True,     mounting_side: left,
+  move_alert_enabled: True,   time_mode: hour24,  time_offset: 4294942096s,
+  time_zone_offset: 0.0hr,    utc_offset: 0
+
+user_profile
+  activity_class: level_max,  dist_setting: metric,   elev_setting: metric,
+  gender: male,   height: 1.75m,  height_setting: metric,     hr_setting: max,
+  language: english,  position_setting: degree_minute_second,
+  resting_heart_rate: 47bpm,  sleep_time: 79200,  speed_setting: metric,
+  temperature_setting: metric,    user_running_step_length: 0.0m,
+  user_walking_step_length: 0.0m,     wake_time: 25200,   weight: 68.0kg,
+  weight_setting: metric
+
+sport
+  name: Walkrda р,     sport: walking,     sub_sport: generic
+
+zones_target
+  hr_calc_type: percent_max_hr
+
+lap
+  avg_cadence: 61rpm,     avg_fractional_cadence: 0.2265625rpm,
+  avg_heart_rate: 75bpm,  avg_stance_time: 474.1ms,
+  avg_stance_time_balance: 50.04percent,  avg_stance_time_percent: 48.81percent,
+  avg_step_length: 665.1mm,   avg_vertical_oscillation: 57.8mm,
+  avg_vertical_ratio: 8.52percent,    end_position_lat: 38.22993722744286°,
+  end_position_long: -122.63355757109821°,    enhanced_avg_speed: 1.495m/s,
+  enhanced_max_speed: 1.605m/s,   event: lap,     event_type: stop,
+  lap_trigger: session_end,   max_cadence: 74rpm,
+  max_fractional_cadence: 0.5rpm,     max_heart_rate: 82bpm,  message_index: 0,
+  sport: walking,     start_position_lat: 38.23051960207522°,
+  start_position_long: -122.63332187198102°,
+  start_time: 2017-06-11 14:32:51+00:00,  sub_sport: generic,
+  timestamp: 2017-06-11 14:33:42+00:00s,  total_ascent: 1m,
+  total_calories: 4kcal,  total_descent: 0m,  total_distance: 67.85m,
+  total_elapsed_time: 45.379s,    total_strides: 41strides,
+  total_timer_time: 45.379s
+
+session
+  avg_cadence: 61rpm,     avg_fractional_cadence: 0.2265625rpm,
+  avg_heart_rate: 75bpm,  avg_stance_time: 474.1ms,
+  avg_stance_time_balance: 50.04percent,  avg_stance_time_percent: 48.81percent,
+  avg_step_length: 665.1mm,   avg_vertical_oscillation: 57.8mm,
+  avg_vertical_ratio: 8.52percent,    enhanced_avg_speed: 1.495m/s,
+  enhanced_max_speed: 1.605m/s,   event: lap,     event_type: stop,
+  first_lap_index: 0,     max_cadence: 74rpm,
+  max_fractional_cadence: 0.5rpm,     max_heart_rate: 82bpm,  message_index: 0,
+  nec_lat: 38.23051960207522°,    nec_long: -122.63332187198102°,
+  num_laps: 1,    sport: walking,     start_position_lat: 38.23051960207522°,
+  start_position_long: -122.63332187198102°,
+  start_time: 2017-06-11 14:32:51+00:00,  sub_sport: generic,
+  swc_lat: 38.22993722744286°,    swc_long: -122.63355757109821°,
+  timestamp: 2017-06-11 14:33:42+00:00s,  total_anaerobic_training_effect: 0.0,
+  total_ascent: 1m,   total_calories: 4kcal,  total_descent: 0m,
+  total_distance: 67.85m,     total_elapsed_time: 45.379s,
+  total_strides: 41strides,   total_timer_time: 45.379s,
+  total_training_effect: 0.0,     trigger: activity_end
+
+activity
+  event: activity,    event_type: stop,   local_timestamp: 2017-06-11 07:33:42,
+  num_sessions: 1,    timestamp: 2017-06-11 14:33:42+00:00,
+  total_timer_time: 45.379s,  type: manual
+
+event
+  timestamp,                    event,  event_group,    event_type,
+    timer_trigger
+  2017-06-11 14:32:51+00:00s,   timer,  0,              start,     
+    manual       
+  2017-06-11 14:33:37+00:00s,   timer,  0,              stop_all,  
+    manual       
+  2017-06-11 14:33:41+00:00s,   5,      38,             -          
+    marker       
+  2017-06-11 14:33:41+00:00s,   400,    48,             1,         
+    marker       
+
+device_info
+  timestamp,                    ant_network,    battery_status,
+    battery_voltage,    cum_operating_time,     device_index,   device_type,
+    garmin_product,     hardware_version,   manufacturer,   serial_number,
+    software_version,   source_type
+  2017-06-11 14:32:51+00:00s,   -               -              
+    -                   -                       creator,        -           
+    fenix5,             -                   garmin,         3945849289,   
+    4.1,                local      
+  2017-06-11 14:32:51+00:00s,   -               -              
+    -                   -                       1,              4,          
+    fenix5,             -                   garmin,         -             
+    4.1,                local      
+  2017-06-11 14:32:51+00:00s,   -               -              
+    -                   -                       2,              0,          
+    1621,               -                   garmin,         -             
+    4.3,                local      
+  2017-06-11 14:32:51+00:00s,   antplus,        heart_rate,    
+    ok,                 2.94921875V,            4668784s,       3,          
+    hrm4_run,           5,                  garmin,         3944483460,   
+    34.0,               antplus    
+  2017-06-11 14:32:51+00:00s,   antplus,        30,            
+    ok,                 2.94921875V,            4668784s,       4,          
+    hrm4_run,           5,                  garmin,         3944483460,   
+    34.0,               antplus    
+  2017-06-11 14:32:51+00:00s,   -               -              
+    -                   -                       5,              3,          
+    -                   42768,              8195,           -             
+    -                   local      
+  2017-06-11 14:33:37+00:00s,   -               -              
+    -                   -                       creator,        -           
+    fenix5,             -                   garmin,         3945849289,   
+    4.1,                local      
+  2017-06-11 14:33:37+00:00s,   -               -              
+    -                   -                       1,              4,          
+    fenix5,             -                   garmin,         -             
+    4.1,                local      
+  2017-06-11 14:33:37+00:00s,   -               -              
+    -                   -                       2,              0,          
+    1621,               -                   garmin,         -             
+    4.3,                local      
+  2017-06-11 14:33:37+00:00s,   antplus,        heart_rate,    
+    ok,                 2.94921875V,            4668832s,       3,          
+    hrm4_run,           5,                  garmin,         3944483460,   
+    34.0,               antplus    
+  2017-06-11 14:33:37+00:00s,   antplus,        30,            
+    ok,                 2.94921875V,            4668816s,       4,          
+    hrm4_run,           5,                  garmin,         3944483460,   
+    34.0,               antplus    
+  2017-06-11 14:33:37+00:00s,   -               -              
+    -                   -                       5,              3,          
+    -                   42768,              8195,           -             
+    -                   local      
+
+record
+  timestamp,                    activity_type,  cadence,    distance,
+    enhanced_altitude,      enhanced_speed,     fractional_cadence,
+    heart_rate,     position_lat,           position_long,       
+    stance_time,    stance_time_balance,    stance_time_percent,
+    step_length,    temperature,    vertical_oscillation,   vertical_ratio
+  2017-06-11 14:32:51+00:00s,   walking,        53rpm,      0.0m,    
+    -0.8000000000000114m,   1.204m/s,           0.5rpm,            
+    71bpm,          38.23051960207522°,     -122.63332187198102°,
+    -               -                       -                   
+    651.0mm,        26C,            43.7mm,                 5.46percent   
+  2017-06-11 14:32:52+00:00s,   walking,        53rpm,      1.6m,    
+    -0.6000000000000227m,   1.409m/s,           0.0rpm,            
+    71bpm,          38.230505185201764°,    -122.6333263143897°, 
+    -               -                       -                   
+    641.0mm,        26C,            41.0mm,                 5.65percent   
+  2017-06-11 14:32:56+00:00s,   running,        56rpm,      5.8m,    
+    -0.6000000000000227m,   1.166m/s,           0.0rpm,            
+    69bpm,          38.23046746663749°,     -122.63333679176867°,
+    534.0ms,        49.56percent,           49.0percent,        
+    600.0mm,        26C,            65.2mm,                 8.96percent   
+  2017-06-11 14:32:58+00:00s,   running,        58rpm,      8.28m,   
+    -0.19999999999998863m,  1.054m/s,           0.0rpm,            
+    66bpm,          38.230445086956024°,    -122.63334165327251°,
+    510.0ms,        49.65percent,           48.5percent,        
+    595.0mm,        26C,            65.2mm,                 9.75percent   
+  2017-06-11 14:33:02+00:00s,   running,        63rpm,      14.19m,  
+    -0.19999999999998863m,  1.474m/s,           0.5rpm,            
+    72bpm,          38.23039311915636°,     -122.63335707597435°,
+    460.0ms,        50.0percent,            50.0percent,        
+    578.0mm,        26C,            52.5mm,                 9.75percent   
+  2017-06-11 14:33:04+00:00s,   walking,        62rpm,      16.95m,  
+    -0.19999999999998863m,  1.456m/s,           0.0rpm,            
+    76bpm,          38.23036948218942°,     -122.63336721807718°,
+    -               -                       -                   
+    668.0mm,        26C,            58.5mm,                 9.46percent   
+  2017-06-11 14:33:06+00:00s,   walking,        61rpm,      20.48m,  
+    0.0m,                   1.456m/s,           0.0rpm,            
+    80bpm,          38.23033939115703°,     -122.63338054530323°,
+    -               -                       -                   
+    674.0mm,        26C,            64.2mm,                 9.37percent   
+  2017-06-11 14:33:07+00:00s,   running,        61rpm,      22.29m,  
+    0.0m,                   1.502m/s,           0.0rpm,            
+    81bpm,          38.23032338172197°,     -122.63338406570256°,
+    477.0ms,        50.21percent,           48.0percent,        
+    674.0mm,        26C,            65.2mm,                 9.37percent   
+  2017-06-11 14:33:08+00:00s,   running,        68rpm,      23.99m,  
+    0.19999999999998863m,   1.521m/s,           0.5rpm,            
+    82bpm,          38.230308378115296°,    -122.63338800519705°,
+    461.0ms,        50.21percent,           50.0percent,        
+    674.0mm,        26C,            64.2mm,                 9.37percent   
+  2017-06-11 14:33:11+00:00s,   walking,        65rpm,      29.04m,  
+    0.6000000000000227m,    1.568m/s,           0.5rpm,            
+    80bpm,          38.23026563040912°,     -122.63340828940272°,
+    -               -                       -                   
+    706.0mm,        26C,            64.2mm,                 9.15percent   
+  2017-06-11 14:33:13+00:00s,   walking,        61rpm,      32.48m,  
+    0.6000000000000227m,    1.605m/s,           0.5rpm,            
+    77bpm,          38.23023587465286°,     -122.63341893441975°,
+    -               -                       -                   
+    759.0mm,        26C,            63.2mm,                 8.46percent   
+  2017-06-11 14:33:15+00:00s,   running,        60rpm,      35.34m,  
+    0.6000000000000227m,    1.596m/s,           0.5rpm,            
+    75bpm,          38.23021173477173°,     -122.6334304176271°, 
+    479.0ms,        50.09percent,           48.75percent,       
+    786.0mm,        26C,            60.5mm,                 8.0percent    
+  2017-06-11 14:33:16+00:00s,   walking,        61rpm,      36.99m,  
+    0.6000000000000227m,    1.558m/s,           0.5rpm,            
+    74bpm,          38.23019731789827°,     -122.6334351953119°, 
+    -               -                       -                   
+    779.0mm,        26C,            59.5mm,                 8.0percent    
+  2017-06-11 14:33:19+00:00s,   walking,        61rpm,      41.28m,  
+    0.8000000000000114m,    1.53m/s,            0.0rpm,            
+    77bpm,          38.23016236536205°,     -122.63345598243177°,
+    -               -                       -                   
+    751.0mm,        26C,            57.5mm,                 7.59percent   
+  2017-06-11 14:33:20+00:00s,   running,        61rpm,      42.56m,  
+    0.6000000000000227m,    1.512m/s,           0.0rpm,            
+    78bpm,          38.230151887983084°,    -122.63346201740205°,
+    483.0ms,        50.31percent,           49.25percent,       
+    745.0mm,        26C,            57.5mm,                 7.59percent   
+  2017-06-11 14:33:23+00:00s,   walking,        62rpm,      46.19m,  
+    0.6000000000000227m,    1.456m/s,           0.0rpm,            
+    77bpm,          38.23012104257941°,     -122.63347710482776°,
+    -               -                       -                   
+    622.0mm,        26C,            56.5mm,                 7.81percent   
+  2017-06-11 14:33:37+00:00s,   walking,        60rpm,      67.85m,  
+    0.8000000000000114m,    1.381m/s,           0.5rpm,            
+    75bpm,          38.22993722744286°,     -122.63355757109821°,
+    -               -                       -                   
+    667.0mm,        26C,            58.5mm,                 8.78percent   
+
+hrv
+  timestamp,                    time                                  
+  2017-06-11 14:32:52+00:00s,   0.824s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:32:52+00:00s,   0.834s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:32:52+00:00s,   0.859s,0.908s,65.535s,65.535s,65.535s 
+  2017-06-11 14:32:52+00:00s,   0.898s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:32:56+00:00s,   0.923s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:32:58+00:00s,   0.935s,0.925s,65.535s,65.535s,65.535s 
+  2017-06-11 14:32:58+00:00s,   0.907s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:32:58+00:00s,   0.864s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:32:58+00:00s,   0.845s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:02+00:00s,   0.807s,0.788s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:02+00:00s,   0.77s,65.535s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:04+00:00s,   0.755s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:04+00:00s,   0.738s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:06+00:00s,   0.741s,0.737s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:07+00:00s,   0.739s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:08+00:00s,   0.731s,0.732s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:08+00:00s,   0.746s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:08+00:00s,   0.748s,0.752s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:11+00:00s,   0.771s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:11+00:00s,   0.801s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:13+00:00s,   0.807s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:13+00:00s,   0.799s,0.816s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:15+00:00s,   0.812s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:16+00:00s,   0.802s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:16+00:00s,   0.798s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:16+00:00s,   0.786s,0.769s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:19+00:00s,   0.761s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:20+00:00s,   0.765s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:20+00:00s,   0.772s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:20+00:00s,   0.771s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.79s,0.786s,65.535s,65.535s,65.535s  
+  2017-06-11 14:33:23+00:00s,   0.809s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.796s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.792s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.779s,0.781s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:23+00:00s,   0.773s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.778s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.774s,0.771s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:23+00:00s,   0.771s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.807s,0.772s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:23+00:00s,   0.778s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.785s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.799s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:23+00:00s,   0.803s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:37+00:00s,   0.808s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:37+00:00s,   0.811s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:37+00:00s,   0.814s,0.817s,65.535s,65.535s,65.535s 
+  2017-06-11 14:33:37+00:00s,   0.826s,65.535s,65.535s,65.535s,65.535s
+  2017-06-11 14:33:37+00:00s,   0.836s,65.535s,65.535s,65.535s,65.535s
+

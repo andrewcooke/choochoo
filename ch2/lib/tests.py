@@ -94,25 +94,29 @@ class TextContext(BufferContext):
         self._test = test
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        with open(self._path, 'r') as input:
-            target = input.read()
-            result = self._filter(self._buffer.getvalue())
-            if result != target:
-                with NamedTemporaryFile(delete=False) as f:
-                    f.write(result.encode())
-                    self._log.info('Wrote copy of result to %s' % f.name)
-                    self._log.info('Comparing with %s' % self._path)
-                    self._log.info('diff %s %s' % (f.name, self._path))
-            self._test.assertEqual(target, self._filter(self._buffer.getvalue()))
+        if not exc_type:
+            with open(self._path, 'r') as input:
+                target = input.read()
+                result = self._filter(self._buffer.getvalue())
+                if result != target:
+                    with NamedTemporaryFile(delete=False) as f:
+                        f.write(result.encode())
+                        self._log.info('Wrote copy of result to %s' % f.name)
+                        self._log.info('Comparing with %s' % self._path)
+                        self._log.info('diff %s %s' % (f.name, self._path))
+                self._test.assertEqual(target, self._filter(self._buffer.getvalue()))
 
 
 class DumpContext(BufferContext):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        makedirs(dirname(self._path), exist_ok=True)
-        with open(self._path, 'w') as output:
-            output.write(self._filter(self._buffer.getvalue()))
-        self._log.info('Wrote data to "%s"' % self._path)
+        if exc_type:
+            self._log.warning('Error writing %s' % self._path)
+        else:
+            makedirs(dirname(self._path), exist_ok=True)
+            with open(self._path, 'w') as output:
+                output.write(self._filter(self._buffer.getvalue()))
+            self._log.info('Wrote data to "%s"' % self._path)
 
 
 class CSVContext(BufferContext):
@@ -122,13 +126,14 @@ class CSVContext(BufferContext):
         self._test = test
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        with open(self._path, 'r') as them_in:
-            them_reader = self._filter(reader(them_in))
-            next(them_reader)  # drop titles
-            us_data = self._buffer.getvalue()
-            us_reader = self._filter(reader(us_data.splitlines()))
-            for row, (us_row, them_row) in enumerate(zip_longest(us_reader, them_reader)):
-                self.compare_rows(row, us_row, them_row, us_data)
+        if not exc_type:
+            with open(self._path, 'r') as them_in:
+                them_reader = self._filter(reader(them_in))
+                next(them_reader)  # drop titles
+                us_data = self._buffer.getvalue()
+                us_reader = self._filter(reader(us_data.splitlines()))
+                for row, (us_row, them_row) in enumerate(zip_longest(us_reader, them_reader)):
+                    self.compare_rows(row, us_row, them_row, us_data)
 
     def build_dict(self, row):
         return dict((name, (value, units)) for name, value, units in grouper(row, 3))

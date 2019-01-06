@@ -121,3 +121,21 @@ class TestFit(TestCase, OutputMixin):
     def test_personal_tab(self):
         self.standard_dmp_dir('personal', '*.fit', TABLES)
 
+    def test_pyfitparse_tab(self):
+        self.standard_dmp_dir('python-fitparse', '*.fit', TABLES,
+                              exclude=['activity-unexpected-eof.fit',  # data size incorrect
+                                       'activity-settings-nodata.fit',   # data size incorrect
+                                       'elemnt-bolt-no-application-id-inside-developer-data-id.fit',  # no base type for 132
+                                       'activity-filecrc.fit',  # bad checksum
+                                       'null_compressed_speed_dist.fit',  # strange timestamp
+                                       'activity-activity-filecrc.fit',  # data size incorrect
+                                       'activity-settings-corruptheader.fit',  # data size incorrect
+                                       'event_timestamp.fit',  # data size incorrect
+                                       'activity-settings.fit',  # data size incorrect
+                                       '20170518-191602-1740899583.fit',  # no base type for 134
+                                       'antfs-dump.63.fit',  # strange timestamp
+                                       'developer-types-sample.fit',  # no base type for 132
+                                       'compressed-speed-distance.fit',  # strange timestamp
+                                       ])
+        
+

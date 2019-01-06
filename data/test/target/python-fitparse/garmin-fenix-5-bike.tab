@@ -1,0 +1,162 @@
+
+file_id
+  garmin_product: fenix5,     manufacturer: garmin,   serial_number: 3945849289,
+  time_created: 2017-06-12 16:09:22+00:00,    type: activity
+
+file_creator
+  software_version: 410
+
+device_settings
+  active_time_zone: 0,    activity_tracker_enabled: True,
+  auto_activity_detect: running,  autosync_min_steps: 100steps,
+  autosync_min_time: 15minutes,   backlight_mode: auto_brightness,
+  lactate_threshold_autodetect_enabled: True,     mounting_side: left,
+  move_alert_enabled: True,   time_mode: hour24,  time_offset: 4294942096s,
+  time_zone_offset: 0.0hr,    utc_offset: 0
+
+user_profile
+  activity_class: level_max,  dist_setting: metric,   elev_setting: metric,
+  gender: male,   height: 1.75m,  height_setting: metric,     hr_setting: max,
+  language: english,  position_setting: degree_minute_second,
+  resting_heart_rate: 48bpm,  sleep_time: 79200,  speed_setting: metric,
+  temperature_setting: metric,    user_running_step_length: 0.0m,
+  user_walking_step_length: 0.0m,     wake_time: 25200,   weight: 68.0kg,
+  weight_setting: metric
+
+sport
+  name: Biker Tracka р,    sport: cycling,     sub_sport: generic
+
+zones_target
+  functional_threshold_power: 400,    hr_calc_type: percent_max_hr,
+  max_heart_rate: 183,    pwr_calc_type: custom
+
+lap
+  avg_heart_rate: 101bpm,     end_position_lat: 37.415271224454045°,
+  end_position_long: -122.06885970197618°,    enhanced_avg_speed: 7.613m/s,
+  enhanced_max_speed: 8.65m/s,    event: lap,     event_type: stop,
+  lap_trigger: session_end,   max_heart_rate: 114bpm,     message_index: 0,
+  sport: cycling,     start_position_lat: 37.41115964949131°,
+  start_position_long: -122.06906740553677°,
+  start_time: 2017-06-12 16:09:22+00:00,  sub_sport: generic,
+  timestamp: 2017-06-12 16:10:55+00:00s,  total_ascent: 0m,
+  total_calories: 7kcal,  total_descent: 4m,  total_distance: 459.52m,
+  total_elapsed_time: 60.363s,    total_timer_time: 60.363s
+
+session
+  avg_heart_rate: 101bpm,     enhanced_avg_speed: 7.613m/s,
+  enhanced_max_speed: 8.65m/s,    event: lap,     event_type: stop,
+  first_lap_index: 0,     max_heart_rate: 114bpm,     message_index: 0,
+  nec_lat: 37.415271224454045°,   nec_long: -122.06885039806366°,
+  num_laps: 1,    sport: cycling,     start_position_lat: 37.41115964949131°,
+  start_position_long: -122.06906740553677°,
+  start_time: 2017-06-12 16:09:22+00:00,  sub_sport: generic,
+  swc_lat: 37.41115964949131°,    swc_long: -122.0691301021725°,
+  timestamp: 2017-06-12 16:10:55+00:00s,  total_anaerobic_training_effect: 0.0,
+  total_ascent: 0m,   total_calories: 7kcal,  total_descent: 4m,
+  total_distance: 459.52m,    total_elapsed_time: 60.363s,
+  total_timer_time: 60.363s,  total_training_effect: 0.0,
+  trigger: activity_end
+
+activity
+  event: activity,    event_type: stop,   local_timestamp: 2017-06-12 09:10:55,
+  num_sessions: 1,    timestamp: 2017-06-12 16:10:55+00:00,
+  total_timer_time: 60.363s,  type: manual
+
+event
+  timestamp,                    event,  event_group,    event_type,
+    timer_trigger
+  2017-06-12 16:09:22+00:00s,   timer,  0,              start,     
+    manual       
+  2017-06-12 16:10:23+00:00s,   timer,  0,              stop_all,  
+    manual       
+  2017-06-12 16:10:54+00:00s,   247,    38,             -          
+    marker       
+  2017-06-12 16:10:54+00:00s,   400,    48,             1,         
+    marker       
+
+device_info
+  timestamp,                    device_index,   device_type,    garmin_product,
+    manufacturer,   serial_number,  software_version,   source_type
+  2017-06-12 16:09:22+00:00s,   creator,        -               fenix5,        
+    garmin,         3945849289,     4.1,                local      
+  2017-06-12 16:09:22+00:00s,   1,              4,              fenix5,        
+    garmin,         -               4.1,                local      
+  2017-06-12 16:09:22+00:00s,   2,              0,              1621,          
+    garmin,         -               4.3,                local      
+  2017-06-12 16:09:22+00:00s,   3,              8,              0,             
+    garmin,         -               606.72,             local      
+  2017-06-12 16:09:22+00:00s,   4,              10,             -              
+    -               -               3.2,                local      
+  2017-06-12 16:10:23+00:00s,   creator,        -               fenix5,        
+    garmin,         3945849289,     4.1,                local      
+  2017-06-12 16:10:23+00:00s,   1,              4,              fenix5,        
+    garmin,         -               4.1,                local      
+  2017-06-12 16:10:23+00:00s,   2,              0,              1621,          
+    garmin,         -               4.3,                local      
+  2017-06-12 16:10:23+00:00s,   3,              8,              0,             
+    garmin,         -               606.72,             local      
+  2017-06-12 16:10:23+00:00s,   4,              10,             -              
+    -               -               3.2,                local      
+
+record
+  timestamp,                    distance,   enhanced_altitude,   
+    enhanced_speed,     heart_rate,     position_lat,       
+    position_long,          temperature
+  2017-06-12 16:09:22+00:00s,   0.0m,       0.0m,                
+    8.258m/s,           77bpm,          37.41115964949131°, 
+    -122.06906740553677°,   19C        
+  2017-06-12 16:09:23+00:00s,   16.15m,     -1.8000000000000114m,
+    8.024m/s,           83bpm,          37.41130490787327°, 
+    -122.06907888874412°,   19C        
+  2017-06-12 16:09:25+00:00s,   24.27m,     -2.8000000000000114m,
+    8.108m/s,           86bpm,          37.4113779142499°,  
+    -122.0690849237144°,    19C        
+  2017-06-12 16:09:26+00:00s,   32.32m,     -2.8000000000000114m,
+    7.894m/s,           88bpm,          37.411450082436204°,
+    -122.0690936408937°,    19C        
+  2017-06-12 16:09:28+00:00s,   48.37m,     -4.199999999999989m, 
+    7.931m/s,           90bpm,          37.41159416735172°, 
+    -122.06910973414779°,   19C        
+  2017-06-12 16:09:30+00:00s,   64.28m,     -3.8000000000000114m,
+    8.015m/s,           94bpm,          37.41173733025789°, 
+    -122.06911819986999°,   19C        
+  2017-06-12 16:09:33+00:00s,   89.5m,      -3.8000000000000114m,
+    7.847m/s,           98bpm,          37.41196456365287°, 
+    -122.06912004388869°,   19C        
+  2017-06-12 16:09:38+00:00s,   131.5m,     -4.0m,               
+    8.286m/s,           98bpm,          37.412342838943005°,
+    -122.06912993453443°,   19C        
+  2017-06-12 16:09:43+00:00s,   171.56m,    -4.399999999999977m, 
+    7.707m/s,           101bpm,         37.41269990801811°, 
+    -122.06906480714679°,   19C        
+  2017-06-12 16:09:49+00:00s,   216.12m,    -4.199999999999989m, 
+    7.586m/s,           104bpm,         37.4130889121443°,  
+    -122.06894050352275°,   19C        
+  2017-06-12 16:09:50+00:00s,   224.94m,    -4.399999999999977m, 
+    7.819m/s,           104bpm,         37.41316250525415°, 
+    -122.068901527673°,     19C        
+  2017-06-12 16:09:52+00:00s,   240.69m,    -4.600000000000023m, 
+    6.989m/s,           105bpm,         37.41330223158002°, 
+    -122.06886800006032°,   19C        
+  2017-06-12 16:10:01+00:00s,   305.71m,    -3.6000000000000227m,
+    7.651m/s,           106bpm,         37.41388628259301°, 
+    -122.0688985940069°,    19C        
+  2017-06-12 16:10:08+00:00s,   355.41m,    -4.199999999999989m, 
+    6.877m/s,           103bpm,         37.41433370858431°, 
+    -122.0688745379448°,    19C        
+  2017-06-12 16:10:11+00:00s,   375.67m,    -4.199999999999989m, 
+    6.83m/s,            100bpm,         37.414516266435385°,
+    -122.06887336447835°,   19C        
+  2017-06-12 16:10:17+00:00s,   418.02m,    -3.8000000000000114m,
+    6.606m/s,           103bpm,         37.41489764302969°, 
+    -122.06886179745197°,   19C        
+  2017-06-12 16:10:21+00:00s,   445.73m,    -4.199999999999989m, 
+    6.811m/s,           108bpm,         37.41514717228711°, 
+    -122.0688674133271°,    19C        
+  2017-06-12 16:10:22+00:00s,   452.59m,    -4.600000000000023m, 
+    6.578m/s,           111bpm,         37.41520903073251°, 
+    -122.06886598840356°,   19C        
+  2017-06-12 16:10:23+00:00s,   459.52m,    -4.600000000000023m, 
+    6.662m/s,           114bpm,         37.415271224454045°,
+    -122.06885970197618°,   19C        
+
