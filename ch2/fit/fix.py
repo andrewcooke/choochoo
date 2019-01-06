@@ -29,7 +29,7 @@ def fix(log, data, add_header=False, drop=False, slices=None, warn=False, force=
     if slices:
         data = apply_slices(log, data, slices)
 
-    data = header_and_checksums(log, data, header_size=header_size,
+    data = header_and_checksums(log, data, State(log, types, messages), header_size=header_size,
                                 protocol_version=protocol_version, profile_version=profile_version)
 
     if validate:
@@ -118,15 +118,16 @@ def set_default(log, name, value, deflt):
     return value
 
 
-def header_and_checksums(log, data, header_size=None, protocol_version=None, profile_version=None):
+def header_and_checksums(log, data, state, header_size=None, protocol_version=None, profile_version=None):
     log.info('Header and Checksums ----------')
     log_param(log, HEADER_SIZE, header_size)
     log_param(log, PROTOCOL_VERSION, protocol_version)
     log_param(log, PROFILE_VERSION, profile_version)
     data = fix_header(log, data,
                       header_size=header_size, protocol_version=protocol_version, profile_version=profile_version)
-    data = fix_checksum(log, data)
+    data = fix_checksum(log, data, state)
     data = fix_header(log, data)  # if length changed with checksum
+    data = fix_checksum(log, data, state)  # if length changed
     return data
 
 
@@ -147,9 +148,17 @@ def fix_header(log, data, header_size=None, protocol_version=None, profile_versi
         raise Exception('Error fixing header - maybe try %s' % mm(ADD_HEADER))
 
 
-def fix_checksum(log, data):
+def fix_checksum(log, data, state):
     try:
-        checksum = Checksum(data[-2:])
+        offset = len(FileHeader(data))
+        while len(data) - offset > 2:
+            token = token_factory(data[offset:], state)
+            offset += len(token)
+        if len(data) - offset < 2:
+            n = offset + 2 - len(data)
+            log.warning('Adding %d byte(s) for checksum' % n)
+            data += bytearray([0] * n)
+        checksum = Checksum(data[offset:])
         checksum.repair(data, log)
         data[-2:] = checksum.data
         return data
@@ -170,8 +179,6 @@ def apply_slices(log, data, slices):
     dropped = len(data) - len(result)
     if dropped:
         log.warning('Slicing decreased length by %d bytes' % dropped)
-    result += b'\0\0'
-    log.warning('Appended blank checksum')
 
     return result
 

@@ -218,6 +218,9 @@ class Defined(Token):
         if self.definition.timestamp_field:
             self.__parse_timestamp(data, state)
         self.timestamp = state.timestamp
+        if len(data) < self.definition.size:
+            raise Exception('Insufficient data for %s (%d/%d)' %
+                            (self.definition.identity, len(data), self.definition.size))
         super().__init__(tag, True, data[0:self.definition.size])
 
     def __parse_timestamp(self, data, state):

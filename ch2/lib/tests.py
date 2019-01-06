@@ -1,6 +1,6 @@
-
+from abc import abstractmethod
 from csv import reader
-from io import StringIO
+from io import StringIO, BytesIO
 from contextlib import AbstractContextManager
 from itertools import zip_longest
 from logging import getLogger
@@ -69,13 +69,17 @@ def sub_dir(path, new_dir, offset):
         return join(a, new_dir)
 
 
-class BufferContext(AbstractContextManager):
+class BaseBufferContext(AbstractContextManager):
 
     def __init__(self, log, path, filters):
         self._log = log
         self._path = path
         self._filters = filters
-        self._buffer = StringIO()
+        self._buffer = self._make_buffer()
+
+    @abstractmethod
+    def _make_buffer(self):
+        raise NotImplementedError()
 
     def __enter__(self):
         return self._buffer
@@ -87,7 +91,19 @@ class BufferContext(AbstractContextManager):
         return data
 
 
-class TextContext(BufferContext):
+class TextBufferContext(BaseBufferContext):
+
+    def _make_buffer(self):
+        return StringIO()
+
+
+class BinaryBufferContext(BaseBufferContext):
+
+    def _make_buffer(self):
+        return BytesIO()
+
+
+class TextEqualContext(TextBufferContext):
 
     def __init__(self, log, path, filters, test):
         super().__init__(log, path, filters)
@@ -104,10 +120,30 @@ class TextContext(BufferContext):
                         self._log.info('Wrote copy of result to %s' % f.name)
                         self._log.info('Comparing with %s' % self._path)
                         self._log.info('diff %s %s' % (f.name, self._path))
-                self._test.assertEqual(target, self._filter(self._buffer.getvalue()))
+                self._test.assertEqual(target, result)
 
 
-class DumpContext(BufferContext):
+class BinaryEqualContext(BinaryBufferContext):
+
+    def __init__(self, log, path, filters, test):
+        super().__init__(log, path, filters)
+        self._test = test
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not exc_type:
+            with open(self._path, 'rb') as input:
+                target = input.read()
+                result = self._filter(self._buffer.getvalue())
+                if result != target:
+                    with NamedTemporaryFile(delete=False) as f:
+                        f.write(result)
+                        self._log.info('Wrote copy of result to %s' % f.name)
+                        self._log.info('Comparing with %s' % self._path)
+                        self._log.info('cmp -l %s %s' % (f.name, self._path))
+                self._test.assertEqual(target, result)
+
+
+class TextDumpContext(TextBufferContext):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
@@ -119,7 +155,19 @@ class DumpContext(BufferContext):
             self._log.info('Wrote data to "%s"' % self._path)
 
 
-class CSVContext(BufferContext):
+class BinaryDumpContext(BinaryBufferContext):
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self._log.warning('Error writing %s' % self._path)
+        else:
+            makedirs(dirname(self._path), exist_ok=True)
+            with open(self._path, 'wb') as output:
+                output.write(self._buffer.getvalue())
+            self._log.info('Wrote data to "%s"' % self._path)
+
+
+class CSVEqualContext(TextBufferContext):
 
     def __init__(self, log, path, filters, test):
         super().__init__(log, path, filters)
@@ -200,15 +248,23 @@ class OutputMixin:
     def assertTextMatch(self, path, log=None, filters=None):
         log = self._resolve_log(log)
         if exists(path):
-            return TextContext(log, path, filters, self)
+            return TextEqualContext(log, path, filters, self)
         else:
             log.warning('File "%s" does not exist; will generate rather than check' % path)
-            return DumpContext(log, path, filters)
+            return TextDumpContext(log, path, filters)
+
+    def assertBinaryMatch(self, path, log=None, filters=None):
+        log = self._resolve_log(log)
+        if exists(path):
+            return BinaryEqualContext(log, path, filters, self)
+        else:
+            log.warning('File "%s" does not exist; will generate rather than check' % path)
+            return BinaryDumpContext(log, path, filters)
 
     def assertCSVMatch(self, path, log=None, filters=None):
         log = self._resolve_log(log)
         if exists(path):
-            return CSVContext(log, path, filters, self)
+            return CSVEqualContext(log, path, filters, self)
         else:
             # the CSV file should have been generated using the SDK (dev/build-csv.sh)
             raise Exception('Could not open %s' % path)

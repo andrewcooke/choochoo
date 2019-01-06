@@ -17,7 +17,8 @@ from ch2.lib.tests import OutputMixin, HEX_ADDRESS, EXC_HDR_CHK, sub_extn, EXC_F
 class TestFit(TestCase, OutputMixin):
 
     def setUp(self):
-        basicConfig(stream=stdout, level=DEBUG)
+        if not getLogger().handlers:
+            basicConfig(stream=stdout, level=DEBUG)
         self.log = getLogger()
         self.test_dir = 'data/test'
         self.profile_path = 'data/sdk/Profile.xlsx'
@@ -137,5 +138,3 @@ class TestFit(TestCase, OutputMixin):
                                        'developer-types-sample.fit',  # no base type for 132
                                        'compressed-speed-distance.fit',  # strange timestamp
                                        ])
-        
-
