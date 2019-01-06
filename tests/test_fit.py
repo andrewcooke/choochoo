@@ -138,3 +138,6 @@ class TestFit(TestCase, OutputMixin):
                                        'developer-types-sample.fit',  # no base type for 132
                                        'compressed-speed-distance.fit',  # strange timestamp
                                        ])
+
+    def test_pyfitparse_fix_tab(self):
+        self.standard_dmp_dir('python-fitparse-fix', '*.fit', TABLES)
