@@ -16,10 +16,10 @@ class AbstractType(Named):
     Root class for any kind of type in the system.
     '''
 
-    def __init__(self, log, name, size, base_type=None):
+    def __init__(self, log, name, n_bytes, base_type=None):
         super().__init__(log, name)
         self.base_type = base_type
-        self.size = size
+        self.n_bytes = n_bytes
 
     @abstractmethod
     def profile_to_internal(self, cell_contents):
@@ -35,8 +35,8 @@ class SimpleType(AbstractType):
     Value is extracted directly from the binary data.
     '''
 
-    def __init__(self, log, name, size, func):
-        super().__init__(log, name, size)
+    def __init__(self, log, name, n_bytes, func):
+        super().__init__(log, name, n_bytes)
         self.__func = func
 
     def profile_to_internal(self, cell_contents):
@@ -48,27 +48,36 @@ class StructSupport(SimpleType):
     Most base types use stucts to unpack data.
     '''
 
-    def _pack_bad(self, value):
-        bad = (bytearray(self.size), bytearray(self.size))
-        for endian in (LITTLE, BIG):
-            bytes = value
-            for i in range(self.size):
-                j = i if endian == LITTLE else self.size - i - 1
-                bad[endian][j] = bytes & 0xff
-                bytes >>= 8
-        return bad
+    def __init__(self, log, name, n_bytes, func, bad):
+        super().__init__(log, name, n_bytes, func)
+        self.__bad = bad
 
-    # todo - i doubt this is working right with compiste fields that are shorter than expected
-    def _is_bad(self, data, bad):
-        size = len(bad)
-        count = len(data) // size
-        return all(bad == data[size*i:size*(i+1)] for i in range(count))
+    def _is_bad(self, data, endian, count, n_bits):
+        total_bits = count * n_bits
+        n_bytes = total_bits // 8
+        bad = 255 if self.__bad else 0
+        remaining = total_bits % 8
+        if remaining:
+            mask = (1 << remaining) - 1
+            # endian matters here, because we need to know if the first or last byte is "incomplete"
+            if endian:
+                # big endian so most significant (and incomplete) byte at start
+                rest_bad = all(datum == bad for datum in data[1:n_bytes+1])
+                return rest_bad and (data[0] & mask) == (mask if self.__bad else 0)
+            else:
+                # small endian, so most significant (and incomplete) byte at end
+                rest_bad = all(datum == bad for datum in data[:n_bytes])
+                return rest_bad and (data[n_bytes] & mask) == (mask if self.__bad else 0)
+        else:
+            return all(datum == bad for datum in data[:n_bytes])
 
-    def _unpack(self, data, formats, bad, count, endian):
-        if self._is_bad(data, bad[endian]):
+    def _unpack(self, data, formats, count, endian, n_bits, check_bad=True):
+        # bad is 0 or 1 - all bits are this value
+        if check_bad and self._is_bad(data, endian, count, n_bits):
             return None
         else:
-            return unpack(formats[endian] % count, data[0:count * self.size])
+            # n_bytes?  todo !!!!!!!!!!!
+            return unpack(formats[endian] % count, data[0:count * self.n_bytes])
 
 
 class String(SimpleType):
@@ -106,17 +115,17 @@ class AutoInteger(StructSupport):
     def __init__(self, log, name):
         match = self.pattern.match(name)
         self.signed = match.group(1) != 'u'
-        bits = int(match.group(2))
-        if bits % 8:
+        n_bits = int(match.group(2))
+        if n_bits % 8:
             raise Exception('Size of %r not a multiple of 8 bits' % name)
-        super().__init__(log, name, bits // 8, self.int)
-        if self.size not in self.size_to_format:
-            raise Exception('Cannot unpack %d bytes as an integer' % self.size)
-        format = self.size_to_format[self.size]
+        bad = 0 if match.group(3) == 'z' else 1
+        super().__init__(log, name, n_bits // 8, self.int, bad)
+        if self.n_bytes not in self.size_to_format:
+            raise Exception('Cannot unpack %d bytes as an integer' % self.n_bytes)
+        format = self.size_to_format[self.n_bytes]
         if not self.signed:
             format = format.upper()
         self.formats = ['<%d' + format, '>%d' + format]
-        self.bad = self._pack_bad(0 if match.group(3) == 'z' else 2 ** (bits - (1 if self.signed else 0)) - 1)
 
     @staticmethod
     def int(cell):
@@ -125,8 +134,9 @@ class AutoInteger(StructSupport):
         else:
             return int(cell, 0)
 
-    def parse_type(self, data, count, endian, timestamp, **options):
-        return self._unpack(data, self.formats, self.bad, count, endian)
+    def parse_type(self, data, count, endian, timestamp, n_bits=None, **options):
+        if n_bits is None: n_bits = self.n_bytes * 8
+        return self._unpack(data, self.formats, count, endian, n_bits)
 
 
 class AliasInteger(AutoInteger):
@@ -194,18 +204,18 @@ class AutoFloat(StructSupport):
 
     def __init__(self, log, name):
         match = self.pattern.match(name)
-        bits = int(match.group(1))
-        if bits % 8:
+        n_bits = int(match.group(1))
+        if n_bits % 8:
             raise Exception('Size of %r not a multiple of 8 bits' % name)
-        super().__init__(log, name, bits // 8, float)
-        if self.size not in self.size_to_format:
-            raise Exception('Cannot unpack %d bytes as a float' % self.size)
-        format = self.size_to_format[self.size]
+        super().__init__(log, name, n_bits // 8, float, 1)
+        if self.n_bytes not in self.size_to_format:
+            raise Exception('Cannot unpack %d bytes as a float' % self.n_bytes)
+        format = self.size_to_format[self.n_bytes]
         self.formats = ['<%d' + format, '>%d' + format]
-        self.bad = self._pack_bad(2 ** bits - 1)
 
-    def parse_type(self, data, count, endian, timestamp, **options):
-        return self._unpack(data, self.formats, self.bad, count, endian)
+    def parse_type(self, data, count, endian, timestamp, n_bits=None, **options):
+        if n_bits is None: n_bits = self.n_bytes * 8
+        return self._unpack(data, self.formats, count, endian, n_bits)
 
 
 class Mapping(AbstractType):
@@ -214,7 +224,7 @@ class Mapping(AbstractType):
         name = row.type_name
         base_type_name = row.base_type
         base_type = types.profile_to_type(base_type_name, auto_create=True)
-        super().__init__(log, name, base_type.size, base_type=base_type)
+        super().__init__(log, name, base_type.n_bytes, base_type=base_type)
         self._profile_to_internal = WarnDict(log, 'No internal value for profile %r') if warn else dict()
         self._internal_to_profile = WarnDict(log, 'No profile value for internal %r') if warn else dict()
         while rows:
@@ -236,7 +246,7 @@ class Mapping(AbstractType):
             return value
 
     def parse_type(self, bytes, size, endian, timestamp, map_values=True, **options):
-        values = self.base_type.parse_type(bytes, size, endian, timestamp, map_values=map_values, **options)
+        values = self.base_type.parse_type(bytes, size, endian, timestamp, check_bad=False, **options)
         if map_values and values:
             values = tuple(self.safe_internal_to_profile(value) for value in values)
         return values
@@ -294,11 +304,11 @@ class Types:
     def __add_type(self, type):
         if type.name in self.__profile_to_type:
             duplicate = self.__profile_to_type[type.name]
-            if duplicate.size == type.size:
+            if duplicate.n_bytes == type.n_bytes:
                 self.__log.warning('Ignoring duplicate type for %r' % type.name)
             else:
                 raise Exception('Duplicate type for %r with differing size (%d  %d)' %
-                                (type.name, type.size, duplicate.size))
+                                (type.name, type.n_bytes, duplicate.n_bytes))
         else:
             self.__profile_to_type[type.name] = type
 

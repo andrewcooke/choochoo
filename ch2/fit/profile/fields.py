@@ -76,7 +76,7 @@ class DelegateField(ScaledField):
 
     def size(self, message):
         delegate = message.profile_to_field(self.name)
-        return delegate.type.size
+        return delegate.type.n_bytes
 
 
 class Zip:
@@ -114,12 +114,12 @@ class CompositeField(Zip, TypedField):
             yield (self.name, (('COMPOSITE',), self._units))
         byteorder = ['little', 'big'][endian]
         bits = int.from_bytes(data, byteorder=byteorder)
-        for nbits, field in self.__components:
-            nbytes = max((nbits+7) // 8, field.size(message))
-            data = (bits & ((1 << nbits) - 1)).to_bytes(nbytes, byteorder=byteorder)
-            bits >>= nbits
+        for n_bits, field in self.__components:
+            n_bytes = max((n_bits+7) // 8, field.size(message))
+            data = (bits & ((1 << n_bits) - 1)).to_bytes(n_bytes, byteorder=byteorder)
+            bits >>= n_bits
             yield from field.parse_field(data, 1, endian, timestamp, references, message,
-                                         rtn_composite=rtn_composite, **options)
+                                         rtn_composite=rtn_composite, n_bits=n_bits, **options)
 
 
 class DynamicField(Zip, RowField):

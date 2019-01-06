@@ -304,7 +304,7 @@ class Field:
         self.name = self.field.name if self.field else 'unknown'
         self.base_type = base_type
 
-        self.count = self.size // base_type.size
+        self.count = self.size // base_type.n_bytes
         # set by definition later
         self.start = 0
         self.finish = 0

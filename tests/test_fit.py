@@ -141,3 +141,6 @@ class TestFit(TestCase, OutputMixin):
 
     def test_pyfitparse_fix_tab(self):
         self.standard_dmp_dir('python-fitparse-fix', '*.fit', TABLES)
+
+    def test_pyfitparse_csv(self):
+        self.standard_csv_dir('python-fitparse', '*.fit', filters=[RNM_UNKNOWN])
