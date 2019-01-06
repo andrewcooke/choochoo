@@ -21,6 +21,9 @@ class AbstractType(Named):
         self.base_type = base_type
         self.n_bytes = n_bytes
 
+    def is_bad(self, bytes, count, endian):
+        return False
+
     @abstractmethod
     def profile_to_internal(self, cell_contents):
         raise NotImplementedError('%s: %s' % (self.__class__.__name__, self.name))
@@ -70,16 +73,13 @@ class StructSupport(SimpleType):
 
 class String(SimpleType):
 
-    # it may seem weird this returns a singleton tuple.  shouldn't it be treated like a
-    # character field where count is the mutliplicity?  but dynamic fields treat it as
-    # a single value...
-
     def __init__(self, log, name):
         super().__init__(log, name, 1, str)
 
     def parse_type(self, bytes, count, endian, timestamp, **options):
-        return (str(b''.join(byte for byte in unpack('%dc' % count, bytes) if byte != b'\0'),
-                    encoding='utf-8'),)
+        value = str(b''.join(unpack('%dc' % count, bytes)), encoding='utf-8')
+        while value and value[-1] == '\u0000': value = value[:-1]
+        return value.split('\u0000')  # inferred from CSV handling of weird data in tests
 
 
 class Boolean(SimpleType):
@@ -122,6 +122,9 @@ class AutoInteger(StructSupport):
             return cell
         else:
             return int(cell, 0)
+
+    def is_bad(self, bytes, count, endian):
+        return self._is_bad(bytes, self.__bad[endian], count)
 
     def parse_type(self, data, count, endian, timestamp, check_bad=True, **options):
         return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad)
@@ -201,6 +204,9 @@ class AutoFloat(StructSupport):
         format = self.size_to_format[self.n_bytes]
         self.__formats = ['<%d' + format, '>%d' + format]
         self.__bad = self._pack_bad(2 ** n_bits - 1)
+
+    def is_bad(self, bytes, count, endian):
+        return self._is_bad(bytes, self.__bad[endian], count)
 
     def parse_type(self, data, count, endian, timestamp, check_bad=True, **options):
         return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad)

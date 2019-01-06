@@ -69,7 +69,6 @@ class DelegateField(ScaledField):
 
     def parse_field(self, data, count, endian, timestamp, references, message,
                     scale=None, offset=None, **options):  # scale and offset are discarded and over-written
-        # todo - do we need to worry about padding data?
         delegate = message.profile_to_field(self.name)
         yield from delegate.parse_field(data, count, endian, timestamp, references, message,
                                         scale=self._scale, offset=self._offset, **options)
@@ -111,18 +110,21 @@ class CompositeField(Zip, TypedField):
                                                     None if accumulate is None else int(accumulate))))
 
     def parse_field(self, data, count, endian, timestamp, references, message,
-                    rtn_composite=False, check_bad=False, **options):
-        if rtn_composite:
-            yield (self.name, (('COMPOSITE',), self._units))
-        byteorder = ['little', 'big'][endian]
-        bits = int.from_bytes(data, byteorder=byteorder)
-        for n_bits, field in self.__components:
-            # todo - error if larger
-            n_bytes = max((n_bits+7) // 8, field.size(message))
-            data = (bits & ((1 << n_bits) - 1)).to_bytes(n_bytes, byteorder=byteorder)
-            bits >>= n_bits
-            yield from field.parse_field(data, 1, endian, timestamp, references, message,
-                                         rtn_composite=rtn_composite, check_bad=check_bad, **options)
+                    rtn_composite=False, check_bad=True, **options):
+        if check_bad and self.type.is_bad(data, count, endian):
+            yield self.name, (None, self._units)
+        else:
+            if rtn_composite:  # extra shit for CSV comparison
+                yield (self.name, (('COMPOSITE',), self._units))
+            byteorder = ['little', 'big'][endian]
+            bits = int.from_bytes(data, byteorder=byteorder)
+            for n_bits, field in self.__components:
+                # todo - error if larger
+                n_bytes = max((n_bits+7) // 8, field.size(message))
+                data = (bits & ((1 << n_bits) - 1)).to_bytes(n_bytes, byteorder=byteorder)
+                bits >>= n_bits
+                yield from field.parse_field(data, 1, endian, timestamp, references, message,
+                                             rtn_composite=rtn_composite, check_bad=False, **options)
 
 
 class DynamicField(Zip, RowField):
