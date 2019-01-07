@@ -6,7 +6,7 @@ from sys import stdout
 from unittest import TestCase
 
 from ch2.command.args import FIELDS, TABLES
-from ch2.fit.format.read import filtered_records
+from ch2.fit.format.read import filtered_records, filtered_tokens
 from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_external_profile, read_fit
@@ -129,15 +129,14 @@ class TestFit(TestCase, OutputMixin):
                                        'activity-settings-nodata.fit',   # data size incorrect
                                        'elemnt-bolt-no-application-id-inside-developer-data-id.fit',  # no base type for 132
                                        'activity-filecrc.fit',  # bad checksum
-                                       'null_compressed_speed_dist.fit',  # strange timestamp
                                        'activity-activity-filecrc.fit',  # data size incorrect
                                        'activity-settings-corruptheader.fit',  # data size incorrect
                                        'event_timestamp.fit',  # data size incorrect
                                        'activity-settings.fit',  # data size incorrect
                                        '20170518-191602-1740899583.fit',  # no base type for 134
-                                       'antfs-dump.63.fit',  # strange timestamp
+                                       'antfs-dump.63.fit',  # no defn local msg 2
                                        'developer-types-sample.fit',  # no base type for 132
-                                       'compressed-speed-distance.fit',  # strange timestamp
+                                       'compressed-speed-distance.fit',  # no defn local message 9
                                        ])
 
     # these are tests only for consistency across releases, not correctness
@@ -146,3 +145,10 @@ class TestFit(TestCase, OutputMixin):
 
     def test_pyfitparse_csv(self):
         self.standard_csv_dir('python-fitparse', '*.fit', filters=[RNM_UNKNOWN])
+
+    # def test_bad_parsing(self):
+    #     data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/compressed-speed-distance.fit'))
+    #     types, messages, tokens = filtered_tokens(self.log, data, profile_path=self.profile_path)
+    #     for token in tokens:
+    #         pass
+

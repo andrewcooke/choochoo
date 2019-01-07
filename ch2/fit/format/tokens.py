@@ -232,7 +232,7 @@ class Defined(Token):
         return self.definition.message.parse_message(self.data, self.definition, self.timestamp, **options)
 
     def describe_fields(self, types):
-        yield '%s - header (msg %d - %s)' % \
+        yield '%s - header (local message type %d - %s)' % \
               (tohex(self.data[0:1]), self.data[0] & 0x0f, self.definition.message.name)
         for field in sorted(self.definition.fields, key=lambda field: field.start):
             if field.name == 'timestamp':
@@ -287,12 +287,20 @@ class CompressedTimestamp(Defined):
         offset = data[0] & 0x1f
         if not state.timestamp:
             raise Exception('Compressed timestamp with no preceding absolute timestamp')
-        if not isinstance(state.timestamp, dt.datetime):
-            raise Exception('int timestamp')
         timestamp = time_to_timestamp(state.timestamp)
         rollover = offset < timestamp & 0x1f
         state.timestamp = timestamp_to_time((timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0))
-        super().__init__('TIM', data, state, data[0] & 0x60 >> 5)
+        super().__init__('DTT', data, state, (data[0] & 0x60) >> 5)
+
+    def describe_fields(self, types):
+        yield '%s - header (local message type %d - %s; time delta %d)' % \
+              (tohex(self.data[0:1]), (self.data[0] & 0x60) >> 5, self.definition.message.name, self.data[0] & 0x1f)
+        for field in sorted(self.definition.fields, key=lambda field: field.start):
+            if field.name == 'timestamp':
+                yield '%s - %s (%s) %s' % (tohex(self.data[field.start:field.finish]), field.name,
+                                           field.base_type.name, self.timestamp)
+            else:
+                yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
 
 
 class Field:
@@ -479,6 +487,8 @@ def token_factory(data, state):
             else:
                 return Definition(data, state)
         else:
+            if header & 0x10:
+                raise state.log.warning('Reserved bit set')
             token = Data(data, state)
             if token.definition.global_message_no == FIELD_DESCRIPTION:
                 return DeveloperField(data, state)
