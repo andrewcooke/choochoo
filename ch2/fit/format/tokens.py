@@ -7,7 +7,7 @@ from struct import unpack, pack
 
 from .records import LazyRecord
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
-from ..profile.types import timestamp_to_time, time_to_timestamp
+from ..profile.types import timestamp_to_time, time_to_timestamp, BadTimestamp
 from ...lib.data import WarnDict, tohex
 
 

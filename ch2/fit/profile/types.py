@@ -3,7 +3,7 @@ import datetime as dt
 from abc import abstractmethod
 from collections import namedtuple
 from re import compile
-from struct import unpack
+from struct import unpack, pack
 
 from .support import Named, Rows
 from ...lib.data import WarnDict, WarnList
@@ -169,6 +169,9 @@ def time_to_timestamp(time, tzinfo=dt.timezone.utc):
     return int((time - dt.datetime(1989, 12, 31, tzinfo=tzinfo)).total_seconds())
 
 
+class BadTimestamp(Exception): pass
+
+
 class Date(AliasInteger):
 
     def __init__(self, log, name, utc=True):
@@ -176,10 +179,8 @@ class Date(AliasInteger):
         self.__tzinfo = dt.timezone.utc if utc else None
 
     def convert(self, time, tzinfo=dt.timezone.utc):
-        if time is not None and time >= 0x10000000:
+        if time is not None:
             return timestamp_to_time(time, tzinfo=tzinfo)
-        else:
-            raise Exception('Strange timestamp: %d' % time)
 
     def parse_type(self, data, count, endian, timestamp, raw_time=False, **options):
         times = super().parse_type(data, count, endian, timestamp, raw_time=raw_time, **options)
@@ -194,8 +195,7 @@ class Date16(AliasInteger):
         super().__init__(log, name, 'uint16')
         self.__tzinfo = dt.timezone.utc if utc else None
 
-    @staticmethod
-    def convert(time, timestamp, tzinfo=dt.timezone.utc):
+    def convert(self, time, timestamp, tzinfo=dt.timezone.utc):
         # https://www.thisisant.com/forum/viewthread/6374
         current = time_to_timestamp(timestamp, tzinfo=tzinfo)
         current += (time - (current & 0xffff)) & 0xffff
