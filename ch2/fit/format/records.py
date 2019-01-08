@@ -3,6 +3,8 @@ import itertools as it
 from collections import namedtuple, OrderedDict
 
 
+# todo - remove 's' units from timestamps if they are datetime instances
+
 def no_filter(data):
     return data
 

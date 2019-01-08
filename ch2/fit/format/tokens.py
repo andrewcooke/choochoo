@@ -5,6 +5,7 @@ from collections import defaultdict, Counter
 from re import sub
 from struct import unpack, pack
 
+from ch2.stoats.names import S
 from .records import LazyRecord, merge_duplicates
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField, CompositeField
 from ..profile.types import timestamp_to_time, time_to_timestamp, BadTimestamp
@@ -292,6 +293,12 @@ class CompressedTimestamp(Defined):
         rollover = offset < timestamp & 0x1f
         state.timestamp = timestamp_to_time((timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0))
         super().__init__('DTT', data, state, (data[0] & 0x60) >> 5)
+
+    def parse_token(self, raw_time=False, **options):
+        timestamp = time_to_timestamp(self.timestamp) if raw_time else self.timestamp
+        extra = {'timestamp': ((timestamp,), S)}
+        return self.definition.message.parse_message(self.data, self.definition, self.timestamp,
+                                                     extra=extra, raw_time=raw_time, **options)
 
     def describe_fields(self, types):
         yield '%s - header (local message type %d - %s; time delta %d)' % \

@@ -38,13 +38,18 @@ class Message(Named):
         for field in self._number_to_field.values():
             field.post(self, types)
 
-    def parse_message(self, data, defn, timestamp, **options):
+    def parse_message(self, data, defn, timestamp, extra=None, **options):
         return LazyRecord(self.name, self.number, defn.identity, timestamp,
-                          self.__parse(data, defn, timestamp, **options))
+                          self.__parse(data, defn, timestamp, extra=extra, **options))
 
-    def __parse(self, data, defn, timestamp, **options):
+    def __parse(self, data, defn, timestamp, extra=None, **options):
         # this is the generator that lives inside a record and is evaluated on demand
+        if extra is None: extra = {}
         references = {}
+        for name, value in extra.items():
+            if name in defn.references and value[0] is not None:
+                        references[name] = value
+            yield name, value
         for field in defn.fields:
             bytes = data[field.start:field.finish]
             if field.field:

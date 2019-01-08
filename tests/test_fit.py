@@ -11,7 +11,7 @@ from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_de
 from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_external_profile, read_fit
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
-from ch2.lib.tests import OutputMixin, HEX_ADDRESS, EXC_HDR_CHK, sub_extn, EXC_FLD, sub_dir, RNM_UNKNOWN
+from ch2.lib.tests import OutputMixin, HEX_ADDRESS, EXC_HDR_CHK, sub_extn, EXC_FLD, sub_dir, RNM_UNKNOWN, ROUND_DISTANCE
 
 
 class TestFit(TestCase, OutputMixin):
@@ -142,13 +142,12 @@ class TestFit(TestCase, OutputMixin):
         self.standard_dmp_dir('python-fitparse-fix', '*.fit', TABLES)
 
     def test_pyfitparse_csv(self):
-        self.standard_csv_dir('python-fitparse', '*.fit', filters=[RNM_UNKNOWN])
+        self.standard_csv_dir('python-fitparse', '*.fit', filters=[RNM_UNKNOWN, ROUND_DISTANCE])
 
     def test_bad_parsing(self):
-        data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/null_compressed_speed_dist.fit'))
+        data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/compressed-speed-distance.fit'))
         types, messages, tokens = filtered_tokens(self.log, data, profile_path=self.profile_path)
         for i, offset, token in tokens:
             result = token.parse_token().force(merge_duplicates)
-            if i == 6:
+            if i == 55:
                 print()
-

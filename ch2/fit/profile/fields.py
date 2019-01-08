@@ -20,11 +20,11 @@ class ScaledField(Named):
             self._log.warning('Accumulation not supported for %s' % self.name)
 
     def _parse_and_scale(self, type, data, count, endian, timestamp, scale=None, offset=None, **options):
+        if self._accumulate:
+            raise Exception('Accumulation not supported for %s' % self.name)
         if scale is None: scale = self._scale if self._scale else 1
         if offset is None: offset = self._offset
         values = type.parse_type(data, count, endian, timestamp, scale=scale, offset=offset, **options)
-        if self._accumulate:
-            raise Exception('Accumulation not supported for %s' % self.name)
         yield self.name, (values, self._units)
 
     def post(self, message, types):
@@ -59,10 +59,12 @@ class RowField(TypedField):
 class DelegateField(ScaledField):
 
     def parse_field(self, data, count, endian, timestamp, references, message,
-                    scale=None, offset=None, **options):  # scale and offset are discarded and over-written
+                    scale=None, offset=None, **options):
+        scale = self._scale if scale is None else scale
+        offset = self._offset if offset is None else offset
         delegate = message.profile_to_field(self.name)
         yield from delegate.parse_field(data, count, endian, timestamp, references, message,
-                                        scale=self._scale, offset=self._offset, **options)
+                                        scale=scale, offset=offset, **options)
 
     def size(self, message):
         # this is needed because we delegate above
@@ -86,8 +88,8 @@ class Zip:
 class CompositeField(Zip, TypedField):
 
     def __init__(self, log, row, types):
-        super().__init__(log, row.field_name, row.single_int(log, row.field_no), row.units,
-                         None, None, None, row.field_type, types)
+        super().__init__(log, row.field_name, row.single_int(log, row.field_no),
+                         None, None, None, None, row.field_type, types)
         self.number = row.single_int(log, row.field_no)
         self.__components = []
         self.references = []

@@ -169,7 +169,7 @@ def sort_names(data):
 
 def pprint_as_tuples(records, all_fields, all_messages, width=80, output=stdout):
     records = [record.force(sort_names, merge_duplicates,
-                            timestamp=([record.timestamp], 's'))
+                            timestamp=((record.timestamp,), 's'))
                for record in records]
     titles = [record.as_names(no_filter if all_fields else no_unknown_fields)
               for record in unique(records, key=lambda x: x.identity)

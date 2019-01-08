@@ -56,6 +56,14 @@ def RNM_UNKNOWN(data):
         yield row
 
 
+def ROUND_DISTANCE(data):
+    for row in data:
+        for i in range(0, len(row), 3):
+            if row[i] == 'distance' and row[i+1] and '.' in row[i+1] and len(row[i+1].split('.')[1]) > 2:
+                row[i+1] = '%.2f' % (float(row[i+1]) + 0.0000001)  # round up
+        yield row
+
+
 def sub_extn(path, extn):
     dir, file = split(path)
     return join(dir, '%s.%s' % (file.rsplit('.', 1)[0], extn))
@@ -187,6 +195,7 @@ class CSVEqualContext(TextBufferContext):
         return dict((name, (value, units)) for name, value, units in grouper(row, 3))
 
     def compare_rows(self, row, us_row, them_row, us_data):
+        if us_row[0] == 'CompressedTimestamp': us_row[0] = 'Data'
         self._test.assertEqual(us_row[:3], them_row[:3], 'Row %d header' % row)
         us_dict = self.build_dict(us_row[3:])
         them_dict = self.build_dict(them_row[3:])
