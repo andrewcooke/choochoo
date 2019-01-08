@@ -64,12 +64,12 @@ class StructSupport(SimpleType):
     def _all_bad(self, data, bad, count):
         return all(bad == data[self.n_bytes*i:self.n_bytes*(i+1)] for i in range(count))
 
-    # scale and offset have to be at this level because of how bad values wwhen count > 0 are handled
+    # scale and offset have to be at this level because of how bad values when count > 0 are handled
     def _unpack(self, data, formats, bad, count, endian, scale=1, offset=0, check_bad=True, **options):
         if check_bad and self._all_bad(data, bad[endian], count):
             return None
         else:
-            if scale == 1 and offset == 0:
+            if (scale == 1 and offset == 0) or self.name == 'enum':   # enums are not scaled
                 return unpack(formats[endian] % count, data[:self.n_bytes * count])
             elif count == 1:  # if no check, scale single bad values
                 return (unpack(formats[endian] % 1, data[:self.n_bytes])[0] / scale - offset,)

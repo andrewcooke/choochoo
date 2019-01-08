@@ -9,7 +9,7 @@ from ..names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, 
     SPHERICAL_MERCATOR_Y
 from ..read import AbortImport, Importer
 from ...fit.format.read import filtered_records
-from ...fit.format.records import fix_degrees
+from ...fit.format.records import fix_degrees, merge_duplicates
 from ...lib.date import to_time
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
@@ -58,7 +58,7 @@ class ActivityImporter(Importer):
         loader = StatisticJournalLoader(self._log, s, self)
 
         types, messages, records = filtered_records(self._log, read_fit(self._log, path))
-        records = [record.force(fix_degrees)
+        records = [record.force(merge_duplicates, fix_degrees)
                    for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(0.0))]
 
         first_timestamp = self._first(path, records, 'event', 'record').value.timestamp

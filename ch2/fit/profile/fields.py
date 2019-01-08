@@ -90,6 +90,7 @@ class CompositeField(Zip, TypedField):
                          None, None, None, row.field_type, types)
         self.number = row.single_int(log, row.field_no)
         self.__components = []
+        self.references = []
         for (name, bits, units, scale, offset, accumulate) in \
                 self._zip(row.components, row.bits, row.units, row.scale, row.offset, row.accumulate):
             self.__components.append((int(bits),
@@ -99,6 +100,7 @@ class CompositeField(Zip, TypedField):
                                                     1 if scale is None else float(scale),
                                                     0 if offset is None else float(offset),
                                                     None if accumulate is None else int(accumulate))))
+            self.references.append(name)
 
     def parse_field(self, data, count, endian, timestamp, references, message,
                     rtn_composite=False, check_bad=True, **options):

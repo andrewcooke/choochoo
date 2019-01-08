@@ -5,8 +5,8 @@ from collections import defaultdict, Counter
 from re import sub
 from struct import unpack, pack
 
-from .records import LazyRecord
-from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField
+from .records import LazyRecord, merge_duplicates
+from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField, CompositeField
 from ..profile.types import timestamp_to_time, time_to_timestamp, BadTimestamp
 from ...lib.data import WarnDict, tohex
 
@@ -77,13 +77,14 @@ class Token:
         yield self.__class__.__name__
 
     def _describe_csv_data(self, record):
-        for name, (values, units) in record.data:
+        for name, (values, units) in record.data.items():
             yield name
             yield '' if values is None else '|'.join(str(value) for value in values)
             yield '' if units is None else units
 
     def describe_csv(self, **options):
-        record = self.parse_token(map_values=False, raw_time=True, rtn_composite=True, **options)
+        record = self.parse_token(map_values=False, raw_time=True, rtn_composite=True,
+                                  **options).force(merge_duplicates)
         yield from self._describe_csv_header(record)
         yield from self._describe_csv_data(record)
 
@@ -370,7 +371,26 @@ class Definition(Token):
             if field.field and isinstance(field.field, DynamicField):
                 self.references.update(field.field.references)
         self.size = offset
-        return tuple(sorted(fields, key=lambda field: 1 if field.field and isinstance(field.field, DynamicField) else 0))
+        return tuple(self.__sorted(fields))
+
+    def __sorted(self, fields):
+        by_name = dict((field.name, field) for field in fields)
+        names = list(field.name for field in fields)
+
+        def follow(name, chain=()):
+            if name in chain:
+                raise Exception('Circular dependency: %s/%s' % (chain, name))
+            chain = chain + (name,)
+            field = by_name[name]
+            if isinstance(field.field, DynamicField) or isinstance(field.field, CompositeField):
+                for dependency in field.field.references:
+                    if dependency in names:
+                        yield from follow(dependency, chain=chain)
+            names.remove(name)
+            yield field
+
+        while names:
+            yield from follow(names[0])
 
     def describe_csv(self, **options):
         yield 'Definition'

@@ -90,6 +90,18 @@ def unique_names(data):
         known.add(name)
 
 
+# this is intended for slurping to a dict - it does not (cannot) remove earlier entries,
+# but accumulates duplicates in later entries.
+def merge_duplicates(data):
+    known = {}
+    data = list(data)
+    for name, (values, units) in data:
+        if name in known and known[name][0] is not None:
+            values = known[name][0] + values
+        known[name] = (values, units)
+        yield name, known[name]
+
+
 def chain(*filters):
     def expand(data, filters=filters):
         if filters:

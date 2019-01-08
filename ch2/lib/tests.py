@@ -224,7 +224,6 @@ class CSVEqualContext(TextBufferContext):
                            (row+2, f.name, row+2, self._path))
 
 
-
 # https://docs.python.org/3/library/itertools.html#itertools-recipes
 def grouper(iterable, n, fillvalue=None):
     "Collect data into fixed-length chunks or blocks"

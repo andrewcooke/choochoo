@@ -9,7 +9,7 @@ from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_ST
     CUMULATIVE_STEPS_FINISH
 from ..read import Importer, AbortImportButMarkScanned, AbortImport
 from ...fit.format.read import filtered_records
-from ...fit.format.records import fix_degrees, unpack_single_bytes
+from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import to_time, time_to_local_date, format_time
 from ...squeal.database import add
 from ...squeal.tables.monitor import MonitorJournal
@@ -183,7 +183,7 @@ class MonitorImporter(Importer):
     def _import(self, s, path):
 
         types, messages, records = filtered_records(self._log, read_fit(self._log, path))
-        records = [record.force(fix_degrees, unpack_single_bytes)
+        records = [record.force(merge_duplicates, fix_degrees, unpack_single_bytes)
                    for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(0.0))]
 
         first_timestamp = self._first(path, records, MONITORING_INFO_ATTR).timestamp
