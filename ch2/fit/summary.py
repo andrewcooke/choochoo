@@ -4,7 +4,7 @@ from re import compile
 from sys import stdout
 
 from .format.read import filtered_records, filtered_tokens
-from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, unique_names, join_values, \
+from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, join_values, \
     to_hex, no_filter, merge_duplicates
 from ..command.args import RECORDS, FIELDS, CSV, TABLES, GREP, TOKENS
 from ..lib.io import terminal_width
@@ -71,7 +71,8 @@ def summarize_records(log, data, all_fields=False, all_messages=False, internal=
                       warn=False, no_validate=False, profile_path=None, width=None, output=stdout):
     types, messages, records = \
         filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
-                         no_validate=no_validate, internal=internal, profile_path=profile_path)
+                         no_validate=no_validate, internal=internal, profile_path=profile_path,
+                         pipeline=[merge_duplicates])
     records = list(records)
     width = width or terminal_width()
     print(file=output)
@@ -82,13 +83,14 @@ def summarize_tables(log, data, all_fields=False, all_messages=False, internal=F
                      warn=False, no_validate=False, profile_path=None, width=None, output=stdout):
     types, messages, records = \
         filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
-                         no_validate=no_validate, internal=internal, profile_path=profile_path)
-    records = list(records)
+                         no_validate=no_validate, internal=internal, profile_path=profile_path,
+                         pipeline=[merge_duplicates])
+    records = list(record[2] for record in records)
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
     width = width or terminal_width()
     print(file=output)
-    pprint_as_dicts(small, all_fields, all_messages, width=width, output=output)
+    pprint_as_dicts(small, all_fields, all_messages, width=width, output=output, full_name=False)
     pprint_as_tuples(large, all_fields, all_messages, width=width, output=output)
 
 
@@ -99,14 +101,15 @@ class Done(Exception):
 def summarize_grep(log, data, grep, name_file=None, match=1, invert=False, after=0, limit=-1,
                    warn=False, no_validate=False, profile_path=None, output=stdout):
     types, messages, records = \
-        filtered_records(log, data, warn=warn, no_validate=no_validate, profile_path=profile_path)
+        filtered_records(log, data, warn=warn, no_validate=no_validate, profile_path=profile_path,
+                         pipeline=[merge_duplicates])
     matchers = [compile(pattern) for pattern in grep]
     counts = defaultdict(lambda: 0)
     first = True
     try:
-        for n, record in enumerate(records):
-            if n >= after:
-                if n < after + limit or limit < 0:
+        for index, offset, record in records:
+            if index >= after:
+                if index < after + limit or limit < 0:
                     record = record.as_dict(join_values, append_units, to_hex, fix_degrees, no_bad_values)
                     for name, value in sorted(record.data.items()):
                         target_1 = '%s:%s' % (record.name, name)
@@ -151,13 +154,17 @@ def partition(records, counts, threshold=3):
     return small, large
 
 
-def pprint_as_dicts(records, all_fields, all_messages, width=80, output=stdout):
+def pprint_as_dicts(records, all_fields, all_messages, width=80, output=stdout, full_name=True):
     for record in records:
+        if full_name: index, offset, record = record
         if all_messages or record.is_known():
             record = record.as_dict(join_values, append_units, to_hex, fix_degrees,
                                     no_filter if all_fields else no_unknown_fields,
                                     no_bad_values)
-            print(record.identity, file=output)
+            if full_name:
+                print('%03d %05d %s' % (index, offset, record.identity), file=output)
+            else:
+                print(record.name, file=output)
             pprint_with_tabs(('%s: %s' % (name, value) for name, value in sorted(record.data.items())),
                              width=width, output=output)
             print(file=output)
@@ -168,8 +175,7 @@ def sort_names(data):
 
 
 def pprint_as_tuples(records, all_fields, all_messages, width=80, output=stdout):
-    records = [record.force(sort_names, merge_duplicates,
-                            timestamp=((record.timestamp,), 's'))
+    records = [record.as_dict(sort_names, timestamp=((record.timestamp,), 's'))
                for record in records]
     titles = [record.as_names(no_filter if all_fields else no_unknown_fields)
               for record in unique(records, key=lambda x: x.identity)

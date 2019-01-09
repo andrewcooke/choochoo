@@ -48,7 +48,7 @@ class Message(Named):
         references = {}
         for name, value in extra.items():
             if name in defn.references and value[0] is not None:
-                        references[name] = value
+                references[name] = value
             yield name, value
         for field in defn.fields:
             bytes = data[field.start:field.finish]

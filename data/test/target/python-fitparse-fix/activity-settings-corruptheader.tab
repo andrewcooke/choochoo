@@ -3,14 +3,14 @@ file_id
   garmin_product: hrm1,   manufacturer: dynastream,   serial_number: 2147483647,
   time_created: 2012-04-09 21:22:26+00:00,    type: activity
 
-file_creator (defn 2/2)
+file_creator
   software_version: 240
 
-event (defn 2/3)
+event
   event: timer,   event_group: 0,     event_type: start,  timer_trigger: manual,
   timestamp: 2012-04-09 21:22:26+00:00s
 
-event (defn 2/3)
+event
   event: timer,   event_group: 0,     event_type: stop_all,
   timer_trigger: manual,  timestamp: 2012-04-09 21:22:39+00:00s
 
@@ -26,7 +26,7 @@ lap
   total_distance: 5.73m,  total_elapsed_time: 13.749s,
   total_fat_calories: 0kcal,  total_timer_time: 13.749s
 
-event (defn 3/3)
+event
   data: 1,    event: session,     event_group: 1,
   event_type: stop_disable_all,   timestamp: 2012-04-09 21:24:51+00:00s
 
@@ -45,13 +45,6 @@ activity
   event: activity,    event_type: stop,   local_timestamp: 2012-04-09 17:24:51,
   num_sessions: 1,    timestamp: 2012-04-09 21:24:51+00:00,
   total_timer_time: 13.749s,  type: manual
-
-event (defn 3/3)
-  event: timer,   event_group: 71,    event_type: 46,     timer_trigger: manual,
-  timestamp: 2075-08-14 05:59:35+00:00s
-
-file_creator (defn 2/2)
-  software_version: 1025
 
 user_profile
   age: 28years,   gender: male,   height: 1.9m,   language: english,
@@ -91,6 +84,8 @@ record
     0.307m/s,           41.51393017731607°,     -73.14863453619182°
   2012-04-09 21:22:39+00:00s,   5.73m,          278.20000000000005m,
     0.368m/s,           41.51392372325063°,     -73.14863906241953°
+  2075-08-14 05:59:35+00:00s,   14134804.49m,   -500.0m,            
+    1.025m/s,           0.37353515625°,         0.2542151603847742°
   2060-03-06 09:10:28+00:00s,   170301.44m,     -403.6m,            
     16.386m/s,          4.24372673034668°,      1.40625°           
 

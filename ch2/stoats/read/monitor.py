@@ -183,8 +183,9 @@ class MonitorImporter(Importer):
     def _import(self, s, path):
 
         types, messages, records = filtered_records(self._log, read_fit(self._log, path))
-        records = [record.force(merge_duplicates, fix_degrees, unpack_single_bytes)
-                   for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(0.0))]
+        records = [record.as_dict(merge_duplicates, fix_degrees, unpack_single_bytes)
+                   for _, _, record in sorted(records,
+                                              key=lambda r: r[2].timestamp if r[2].timestamp else to_time(0.0))]
 
         first_timestamp = self._first(path, records, MONITORING_INFO_ATTR).timestamp
         last_timestamp = self._last(path, records, MONITORING_ATTR).timestamp

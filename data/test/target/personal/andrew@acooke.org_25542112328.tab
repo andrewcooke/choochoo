@@ -19,14 +19,14 @@ monitoring_info
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-10-07 23:16:00+00:00s
 
-monitoring (defn 2/5)
+monitoring
   timestamp: 2018-10-07 23:16:00+00:00s
 
 event
   data: 0,    event: 41,  event_type: marker,
   timestamp: 2018-10-08 00:00:00+00:00s
 
-monitoring (defn 2/5)
+monitoring
   timestamp: 2018-10-08 01:38:00+00:00s
 
 monitoring (defn 1/5)

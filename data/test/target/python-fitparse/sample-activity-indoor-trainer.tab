@@ -10,15 +10,15 @@ event
   event: timer,   event_group: 0,     event_type: start,  timer_trigger: manual,
   timestamp: 2011-11-02 12:54:19+00:00s
 
-record (defn 1/4)
+record
   cadence: 56rpm,     enhanced_altitude: 0.0m,    heart_rate: 81bpm,
   power: 102watts,    timestamp: 2011-11-02 12:54:19+00:00s
 
-record (defn 1/4)
+record
   cadence: 59rpm,     enhanced_altitude: 0.0m,    heart_rate: 81bpm,
   power: 85watts,     timestamp: 2011-11-02 12:54:20+00:00s
 
-record (defn 1/4)
+record
   cadence: 59rpm,     enhanced_altitude: 0.0m,    heart_rate: 81bpm,
   power: 85watts,     timestamp: 2011-11-02 12:54:21+00:00s
 

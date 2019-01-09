@@ -19,15 +19,15 @@ monitoring_info
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-10-07 03:00:00+00:00s
 
-monitoring (defn 1/5)
+monitoring
   timestamp: 2018-10-07 03:00:00+00:00s
 
-monitoring (defn 5/5)
+monitoring
   active_calories: 0kcal,     active_time: 48.0s,     activity_type: walking,
   distance: 98.97m,   duration_min: 495min,   steps: 125steps,
   timestamp: 2018-10-07 11:15:00+00:00s
 
-monitoring (defn 1/5)
+monitoring
   timestamp: 2018-10-07 11:15:00+00:00s
 
 monitoring (defn 2/5)

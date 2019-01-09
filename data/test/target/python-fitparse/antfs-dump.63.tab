@@ -25,7 +25,8 @@ event
   event: virtual_partner_pace,    event_group: 1,     event_type: start,
   timestamp: 1990-07-09 07:00:41+00:00s,  virtual_partner_speed: 2.899m/s
 
-record (defn 1/2)
+record
+  timestamp: 1990-07-09 07:00:42+00:00s
 
 event
   event: timer,   event_group: 0,     event_type: stop_all,

@@ -19,37 +19,37 @@ monitoring_info
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-09-06 03:00:00+00:00s
 
-monitoring (defn 1/10)
+monitoring
   timestamp: 2018-09-06 03:00:00+00:00s
 
-monitoring (defn 7/10)
+monitoring
   timestamp_16: 2018-09-06 13:14:00+00:00s,
   vigorous_activity_minutes: 1minutes
 
-monitoring (defn 8/10)
+monitoring
   moderate_activity_minutes: 1minutes,
   timestamp_16: 2018-09-06 13:26:00+00:00s
 
-monitoring (defn 7/10)
+monitoring
   timestamp_16: 2018-09-06 13:27:00+00:00s,
   vigorous_activity_minutes: 1minutes
 
-monitoring (defn 9/10)
+monitoring
   active_calories: 362kcal,   active_time: 3906.0s,   activity_type: generic,
   cycles: 0.0cycles,  distance: 17921.67m,    duration_min: 631min,
   timestamp: 2018-09-06 13:31:00+00:00s
 
-monitoring (defn 9/10)
+monitoring
   active_calories: 34kcal,    active_time: 863.0s,    activity_type: walking,
   distance: 1427.98m,     duration_min: 631min,   steps: 1336steps,
   timestamp: 2018-09-06 13:31:00+00:00s
 
-monitoring (defn 9/10)
+monitoring
   active_calories: 22kcal,    active_time: 302.0s,    activity_type: running,
   distance: 1738.35m,     duration_min: 631min,   steps: 355steps,
   timestamp: 2018-09-06 13:31:00+00:00s
 
-monitoring (defn 10/10)
+monitoring
   timestamp: 2018-09-06 13:31:00+00:00s
 
 monitoring (defn 2/10)

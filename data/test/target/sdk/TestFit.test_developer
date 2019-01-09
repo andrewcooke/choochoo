@@ -13,10 +13,10 @@
   04 - no of fields
     010284 - field 0: manufacturer (uint16)
     000100 - field 1: type (enum)
-    020284 - field 2: serial_number (uint32z)
-    03048c - field 3: product (uint16)
+    020284 - field 2: product (uint16)
+    03048c - field 3: serial_number (uint32z)
 002 00032 DTA 00000f042329000006a5
-  00 - header (msg 0 - file_id)
+  00 - header (local message type 0 - file_id)
   000f - manufacturer (uint16)
   04 - type (enum)
   2329 - product (uint16)
@@ -30,7 +30,7 @@
     01100d - field 0: application_id (bytex16)
     030102 - field 1: developer_data_index (uint8)
 004 00054 DTA 000101020305080d1522375990e97962db00
-  00 - header (msg 0 - developer_data_id)
+  00 - header (local message type 0 - developer_data_id)
   0101020305080d1522375990e97962db - application_id (byte)
   00 - developer_data_index (uint8)
 005 00072 DFN 40000100ce05000102010102020102031107080a07
@@ -45,7 +45,7 @@
     031107 - field 3: field_name (stringx17)
     080a07 - field 4: units (stringx10)
 006 00093 FLD 00000001646f7567686e7574735f6561726e656400646f7567686e75747300
-  00 - header (msg 0 - field_description)
+  00 - header (local message type 0 - field_description)
   00 - developer_data_index (uint8)
   00 - field_definition_number (uint8)
   01 - fit_base_type_id (uint8)
@@ -65,21 +65,21 @@
   01 - no of dev fields
     000100 - dev fld 0/0
 008 00146 DTA 008c580000c738b98001
-  00 - header (msg 0 - record)
+  00 - header (local message type 0 - record)
   8c - heart_rate (uint8)
   58 - cadence (uint8)
   0000c738 - distance (uint32)
   b980 - speed (uint16)
   01 - doughnuts_earned (sint8)
 009 00156 DTA 008f5a00032c808e4002
-  00 - header (msg 0 - record)
+  00 - header (local message type 0 - record)
   8f - heart_rate (uint8)
   5a - cadence (uint8)
   00032c80 - distance (uint32)
   8e40 - speed (uint16)
   02 - doughnuts_earned (sint8)
 010 00166 DTA 00905c0005a9388a1003
-  00 - header (msg 0 - record)
+  00 - header (local message type 0 - record)
   90 - heart_rate (uint8)
   5c - cadence (uint8)
   0005a938 - distance (uint32)

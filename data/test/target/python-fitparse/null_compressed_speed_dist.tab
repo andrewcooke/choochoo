@@ -10,12 +10,12 @@ device_info
   software_version: 5.62,     timestamp: 2015-01-06 22:08:25+00:00s
 
 event
-  data: 0,    event: timer,   event_group: 0,     event_type: start,
-  timer_trigger: manual,  timestamp: 2017-10-05 00:04:06+00:00s
+  event: timer,   event_group: 0,     event_type: start,
+  timer_trigger: manual,manual,   timestamp: 2017-10-05 00:04:06+00:00s
 
 event
-  data: 0,    event: timer,   event_group: 0,     event_type: stop_all,
-  timer_trigger: manual,  timestamp: 2017-10-05 00:34:49+00:00s
+  event: timer,   event_group: 0,     event_type: stop_all,
+  timer_trigger: manual,manual,   timestamp: 2017-10-05 00:34:49+00:00s
 
 lap
   avg_cadence: 84rpm,     avg_heart_rate: 0bpm,   avg_power: 123watts,

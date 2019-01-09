@@ -58,8 +58,9 @@ class ActivityImporter(Importer):
         loader = StatisticJournalLoader(self._log, s, self)
 
         types, messages, records = filtered_records(self._log, read_fit(self._log, path))
-        records = [record.force(merge_duplicates, fix_degrees)
-                   for record in sorted(records, key=lambda r: r.timestamp if r.timestamp else to_time(0.0))]
+        records = [record.as_dict(merge_duplicates, fix_degrees)
+                   for _, _, record in sorted(records,
+                                              key=lambda r: r[2].timestamp if r[2].timestamp else to_time(0.0))]
 
         first_timestamp = self._first(path, records, 'event', 'record').value.timestamp
         sport = self._first(path, records, 'sport').value.sport.lower()

@@ -44,7 +44,7 @@ class TestFit(TestCase, OutputMixin):
                              profile_path=self.profile_path)
         with self.assertTextMatch(join(self.test_dir, 'target/personal/TestFit.test_decode'),
                                   filters=[HEX_ADDRESS]) as output:
-            for record in records:
+            for _, _, record in records:
                 print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)),
                       file=output)
 
@@ -74,7 +74,7 @@ class TestFit(TestCase, OutputMixin):
                              profile_path=self.profile_path)
         with self.assertTextMatch(join(self.test_dir, 'target/personal/TestFit.test_timestamp_16'),
                                   filters=[HEX_ADDRESS]) as output:
-            for record in records:
+            for _, _, record in records:
                 if record.name == 'monitoring':
                     print(record.into(tuple, filter=chain(no_names, append_units, no_bad_values, fix_degrees)),
                           file=output)
@@ -123,6 +123,7 @@ class TestFit(TestCase, OutputMixin):
     def test_personal_tab(self):
         self.standard_dmp_dir('personal', '*.fit', TABLES)
 
+    # these depend on the output from test_fix_fit, so will fail if those change
     def test_pyfitparse_tab(self):
         self.standard_dmp_dir('python-fitparse', '*.fit', TABLES,
                               exclude=['activity-unexpected-eof.fit',  # data size incorrect
@@ -144,10 +145,12 @@ class TestFit(TestCase, OutputMixin):
     def test_pyfitparse_csv(self):
         self.standard_csv_dir('python-fitparse', '*.fit', filters=[RNM_UNKNOWN, ROUND_DISTANCE])
 
-    def test_bad_parsing(self):
-        data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/compressed-speed-distance.fit'))
-        types, messages, tokens = filtered_tokens(self.log, data, profile_path=self.profile_path)
-        for i, offset, token in tokens:
-            result = token.parse_token().force(merge_duplicates)
-            if i == 55:
-                print()
+    # def test_bad_parsing(self):
+    #     # data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/compressed-speed-distance.fit'))
+    #     # data = read_fit(self.log, join('/home/andrew', 'archive/fit/monitor/28694037944.fit'))
+    #     data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse-fix/activity-activity-filecrc.fit'))
+    #     types, messages, tokens = filtered_tokens(self.log, data, profile_path=self.profile_path)
+    #     for i, offset, token in tokens:
+    #         result = token.parse_token().force(merge_duplicates)
+    #         if i == 32:
+    #             print()

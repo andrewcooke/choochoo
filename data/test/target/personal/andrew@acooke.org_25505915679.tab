@@ -19,20 +19,20 @@ monitoring_info
   resting_metabolic_rate: 1814kcal / day,
   timestamp: 2018-10-07 00:51:00+00:00s
 
-monitoring (defn 2/4)
+monitoring
   timestamp: 2018-10-07 00:51:00+00:00s
 
-monitoring (defn 3/4)
+monitoring
   heart_rate: 87bpm,  timestamp_16: 2018-10-07 00:52:00+00:00s
 
-monitoring (defn 3/4)
+monitoring
   heart_rate: 79bpm,  timestamp_16: 2018-10-07 00:53:00+00:00s
 
-monitoring (defn 4/4)
+monitoring
   activity_type: sedentary,   intensity: 4,
   timestamp: 2018-10-07 00:53:00+00:00s
 
-monitoring (defn 2/4)
+monitoring
   timestamp: 2018-10-07 00:53:00+00:00s
 
 monitoring (defn 1/4)

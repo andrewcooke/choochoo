@@ -213,13 +213,14 @@ class Defined(Token):
     the Definition for that type, which itself contains a reference to the Message and Fields the data contain.
     '''
 
-    __slots__ = ('definition', 'timestamp')
+    __slots__ = ('definition', 'timestamp', '_accumulators')
 
     def __init__(self, tag, data, state, local_message_type):
         self.definition = state.definitions[local_message_type]
         if self.definition.timestamp_field:
             self.__parse_timestamp(data, state)
         self.timestamp = state.timestamp
+        self._accumulators = state.accumulators
         if len(data) < self.definition.size:
             raise Exception('Insufficient data for %s (%d/%d)' %
                             (self.definition.identity, len(data), self.definition.size))
@@ -231,11 +232,12 @@ class Defined(Token):
                                                       self.definition.endian, state.timestamp)[0]
 
     def parse_token(self, **options):
-        return self.definition.message.parse_message(self.data, self.definition, self.timestamp, **options)
+        return self.definition.message.parse_message(self.data, self.definition, self.timestamp,
+                                                     accumulators=self._accumulators, **options)
 
     def describe_fields(self, types):
         yield '%s - header (local message type %d - %s)' % \
-              (tohex(self.data[0:1]), self.data[0] & 0x0f, self.definition.message.name)
+              (tohex(self.data[0:1]), self.data[0] & 0x0f, self.definition.identity)
         for field in sorted(self.definition.fields, key=lambda field: field.start):
             if field.name == 'timestamp':
                 yield '%s - %s (%s) %s' % (tohex(self.data[field.start:field.finish]), field.name,
@@ -291,14 +293,21 @@ class CompressedTimestamp(Defined):
             raise Exception('Compressed timestamp with no preceding absolute timestamp')
         timestamp = time_to_timestamp(state.timestamp)
         rollover = offset < timestamp & 0x1f
-        state.timestamp = timestamp_to_time((timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0))
+        a = timestamp & 0xffffffe0
+        b = a + offset + (0x20 if rollover else 0)
+        state.timestamp = timestamp_to_time(b)
+        # state.timestamp = timestamp_to_time((timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0))
         super().__init__('DTT', data, state, (data[0] & 0x60) >> 5)
 
     def parse_token(self, raw_time=False, **options):
         timestamp = time_to_timestamp(self.timestamp) if raw_time else self.timestamp
-        extra = {'timestamp': ((timestamp,), S)}
+        if self.definition.timestamp_field:
+            extra = {}
+        else:
+            extra = {'timestamp': ((timestamp,), S)}
         return self.definition.message.parse_message(self.data, self.definition, self.timestamp,
-                                                     extra=extra, raw_time=raw_time, **options)
+                                                     extra=extra, raw_time=raw_time,
+                                                     accumulators=self._accumulators, **options)
 
     def describe_fields(self, types):
         yield '%s - header (local message type %d - %s; time delta %d)' % \
@@ -345,7 +354,8 @@ class Definition(Token):
         self.global_message_no = unpack('<>'[self.endian]+'H', data[3:5])[0]
         self.message = state.messages.number_to_message(self.global_message_no)
         self.identity = Identity(self.message.name, state.definition_counter)
-        self.fields = self._process_fields(self._make_fields(data, state))
+        self.fields = self.__process_fields(self._make_fields(data, state), state)
+        self.accumulators = state.accumulators
         super().__init__(tag, False, data[0:overhead+3*len(self.fields)])
         state.definitions[self.local_message_type] = self
 
@@ -365,36 +375,49 @@ class Definition(Token):
         base_type = types.base_types[base & 0xf]
         return Field(size, field, base_type)
 
-    def _process_fields(self, fields):
+    def __process_fields(self, fields, state):
         offset = 1  # header
         fields = tuple(fields)
         for field in fields:
             field.start = offset
             offset += field.size
             field.finish = offset
-            if field.field and \
-                    (field.field.number == TIMESTAMP_GLOBAL_TYPE or field.field.name == 'timestamp_16'):
-                self.timestamp_field = field
-            if field.field and isinstance(field.field, DynamicField):
-                self.references.update(field.field.references)
+            if field.field:  # when is this not true?
+                field.field.register_accumulator(state.accumulators)
+                if field.field.number == TIMESTAMP_GLOBAL_TYPE or field.field.name == 'timestamp_16':
+                    self.timestamp_field = field
+                if isinstance(field.field, DynamicField):
+                    self.references.update(field.field.references)
         self.size = offset
         return tuple(self.__sorted(fields))
 
+    def __provided_by(self, field):
+        yield field.name
+        if isinstance(field.field, CompositeField):
+            for _, component in field.field._components:
+                yield component.name
+
     def __sorted(self, fields):
+
         by_name = dict((field.name, field) for field in fields)
         names = list(field.name for field in fields)
+        providers = defaultdict(list)
+        for field in fields:
+            for provided in self.__provided_by(field):
+                providers[provided].append(field.name)
+        references = dict((field.name, field.field.references)
+                          for field in fields if isinstance(field.field, DynamicField))
 
         def follow(name, chain=()):
             if name in chain:
                 raise Exception('Circular dependency: %s/%s' % (chain, name))
             chain = chain + (name,)
-            field = by_name[name]
-            if isinstance(field.field, DynamicField) or isinstance(field.field, CompositeField):
-                for dependency in field.field.references:
-                    if dependency in names:
-                        yield from follow(dependency, chain=chain)
+            for reference in references.get(name, []):
+                for provider in providers.get(reference, []):
+                    if provider in names:
+                        yield from follow(provider, chain=chain)
             names.remove(name)
-            yield field
+            yield by_name[name]
 
         while names:
             yield from follow(names[0])
@@ -420,7 +443,8 @@ class Definition(Token):
             yield '%s%s - %s%s' % (padding, value, sub('_', ' ', name), extra)
 
     def parse_token(self, raw_data=False, **options):
-        data = {'local_message_type': ((self.data[0:1], str(self.local_message_type)), '') if raw_data else self.local_message_type,
+        data = {'local_message_type': ((self.data[0:1],
+                                        str(self.local_message_type)), '') if raw_data else self.local_message_type,
                 'reserved': self.data[1:2],
                 'architecture': self.data[2:3],
                 'message_number': ((self.data[3:5], self.message.name), '') if raw_data else self.global_message_no,
@@ -515,7 +539,7 @@ def token_factory(data, state):
                 return Definition(data, state)
         else:
             if header & 0x10:
-                raise state.log.warning('Reserved bit set')
+                state.log.warning('Reserved bit set')
             token = Data(data, state)
             if token.definition.global_message_no == FIELD_DESCRIPTION:
                 return DeveloperField(data, state)
@@ -532,6 +556,7 @@ class State:
         self.dev_fields = defaultdict(lambda: WarnDict(log, 'No definition for developer field %s'))
         self.definitions = WarnDict(log, 'No definition for local message type %s')
         self.definition_counter = Counter()
+        self.accumulators = {}
         self.timestamp = None
 
     def copy(self):
@@ -539,5 +564,6 @@ class State:
         copy.dev_fields.update(self.dev_fields)
         copy.definitions.update(self.definitions)
         copy.definition_counter.update(self.definition_counter)
+        copy.accumulators.update(self.accumulators)
         copy.timestamp = self.timestamp
         return copy

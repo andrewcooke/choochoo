@@ -16,16 +16,18 @@ class ScaledField(Named):
         self._scale = scale if scale else 1  # treat 0 as 1
         self._offset = offset if offset else 0
         self._accumulate = accumulate
-        if accumulate:
-            self._log.warning('Accumulation not supported for %s' % self.name)
 
-    def _parse_and_scale(self, type, data, count, endian, timestamp, scale=None, offset=None, **options):
-        if self._accumulate:
-            raise Exception('Accumulation not supported for %s' % self.name)
+    def _parse_and_scale(self, type, data, count, endian, timestamp,
+                         scale=None, offset=None, accumulators=None, n_bits=None, **options):
         if scale is None: scale = self._scale if self._scale else 1
         if offset is None: offset = self._offset
-        values = type.parse_type(data, count, endian, timestamp, scale=scale, offset=offset, **options)
+        values = type.parse_type(data, count, endian, timestamp, scale=scale, offset=offset,
+                                 name=self.name, accumulators=accumulators, n_bits=n_bits, **options)
         yield self.name, (values, self._units)
+
+    def register_accumulator(self, accumulators):
+        if self._accumulate and self.name not in accumulators:
+            accumulators[self.name] = None
 
     def post(self, message, types):
         '''
@@ -91,21 +93,25 @@ class CompositeField(Zip, TypedField):
         super().__init__(log, row.field_name, row.single_int(log, row.field_no),
                          None, None, None, None, row.field_type, types)
         self.number = row.single_int(log, row.field_no)
-        self.__components = []
+        self._components = []
         self.references = []
         for (name, bits, units, scale, offset, accumulate) in \
                 self._zip(row.components, row.bits, row.units, row.scale, row.offset, row.accumulate):
-            self.__components.append((int(bits),
-                                      # set scale / offset below because they seem to override delegate
-                                      # (see intensity in CSV examples in SDK inside current_activity_type_intensity)
-                                      DelegateField(log, name, units,
+            self._components.append((int(bits),
+                                     # set scale / offset below because they seem to override delegate
+                                     # (see intensity in CSV examples in SDK inside current_activity_type_intensity)
+                                     DelegateField(log, name, units,
                                                     1 if scale is None else float(scale),
                                                     0 if offset is None else float(offset),
                                                     None if accumulate is None else int(accumulate))))
             self.references.append(name)
 
+    def register_accumulator(self, accumulators):
+        for _, field in self._components:
+            field.register_accumulator(accumulators)
+
     def parse_field(self, data, count, endian, timestamp, references, message,
-                    rtn_composite=False, check_bad=True, **options):
+                    rtn_composite=False, check_bad=True, n_bits=None, **options):
         if check_bad and self.type.is_bad(data, count, endian):
             yield self.name, (None, self._units)
         else:
@@ -113,13 +119,14 @@ class CompositeField(Zip, TypedField):
                 yield (self.name, (('COMPOSITE',), self._units))
             byteorder = ['little', 'big'][endian]
             bits = int.from_bytes(data, byteorder=byteorder)
-            for n_bits, field in self.__components:
+            for n_bits, field in self._components:
                 # todo - error if larger
                 n_bytes = max((n_bits+7) // 8, field.size(message))
                 data = (bits & ((1 << n_bits) - 1)).to_bytes(n_bytes, byteorder=byteorder)
                 bits >>= n_bits
                 yield from field.parse_field(data, 1, endian, timestamp, references, message,
-                                             rtn_composite=rtn_composite, check_bad=False, **options)
+                                             rtn_composite=rtn_composite, check_bad=False, n_bits=n_bits,
+                                             **options)
 
 
 class DynamicField(Zip, RowField):

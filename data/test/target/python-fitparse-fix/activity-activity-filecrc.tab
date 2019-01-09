@@ -3,18 +3,18 @@ file_id
   garmin_product: hrm1,   manufacturer: dynastream,   serial_number: 2147483647,
   time_created: 2012-04-09 21:22:26+00:00,    type: activity
 
-file_creator (defn 2/4)
+file_creator
   software_version: 240
 
-event (defn 2/6)
+event
   event: timer,   event_group: 0,     event_type: start,  timer_trigger: manual,
   timestamp: 2012-04-09 21:22:26+00:00s
 
-event (defn 2/6)
+event
   event: timer,   event_group: 0,     event_type: stop_all,
   timer_trigger: manual,  timestamp: 2012-04-09 21:22:39+00:00s
 
-lap (defn 1/2)
+lap
   end_position_lat: 41.51392372325063°,
   end_position_long: -73.14863906241953°,     enhanced_avg_speed: 0.417m/s,
   enhanced_max_speed: 0.368m/s,   event: lap,     event_type: stop,
@@ -26,11 +26,11 @@ lap (defn 1/2)
   total_distance: 5.73m,  total_elapsed_time: 13.749s,
   total_fat_calories: 0kcal,  total_timer_time: 13.749s
 
-event (defn 3/6)
+event
   data: 1,    event: session,     event_group: 1,
   event_type: stop_disable_all,   timestamp: 2012-04-09 21:24:51+00:00s
 
-session (defn 1/2)
+session
   enhanced_avg_speed: 0.417m/s,   enhanced_max_speed: 0.368m/s,   event: lap,
   event_type: stop,   first_lap_index: 0,     message_index: 0,   num_laps: 1,
   sport: running,     start_position_lat: 41.513926070183516°,
@@ -41,33 +41,26 @@ session (defn 1/2)
   total_elapsed_time: 13.749s,    total_fat_calories: 0kcal,
   total_timer_time: 13.749s,  trigger: activity_end
 
-activity (defn 1/2)
+activity
   event: activity,    event_type: stop,   local_timestamp: 2012-04-09 17:24:51,
   num_sessions: 1,    timestamp: 2012-04-09 21:24:51+00:00,
   total_timer_time: 13.749s,  type: manual
 
-event (defn 3/6)
-  event: timer,   event_group: 70,    event_type: 46,     timer_trigger: manual,
-  timestamp: 2075-08-14 06:00:04+00:00s
-
-file_creator (defn 2/4)
-  software_version: 1283
-
-file_creator (defn 2/4)
+file_creator
   software_version: 260
 
-file_creator (defn 4/4)
+file_creator
   software_version: 240
 
-event (defn 5/6)
+event
   event: timer,   event_group: 0,     event_type: start,  timer_trigger: manual,
   timestamp: 2012-04-09 21:22:26+00:00s
 
-event (defn 5/6)
+event
   event: timer,   event_group: 0,     event_type: stop_all,
   timer_trigger: manual,  timestamp: 2012-04-09 21:22:39+00:00s
 
-lap (defn 2/2)
+lap
   end_position_lat: 41.51392372325063°,
   end_position_long: -73.14863906241953°,     enhanced_avg_speed: 0.417m/s,
   enhanced_max_speed: 0.368m/s,   event: lap,     event_type: stop,
@@ -79,11 +72,11 @@ lap (defn 2/2)
   total_distance: 5.73m,  total_elapsed_time: 13.749s,
   total_fat_calories: 0kcal,  total_timer_time: 13.749s
 
-event (defn 6/6)
+event
   data: 1,    event: session,     event_group: 1,
   event_type: stop_disable_all,   timestamp: 2012-04-09 21:24:51+00:00s
 
-session (defn 2/2)
+session
   enhanced_avg_speed: 0.417m/s,   enhanced_max_speed: 0.368m/s,   event: lap,
   event_type: stop,   first_lap_index: 0,     message_index: 0,   num_laps: 1,
   sport: running,     start_position_lat: 41.513926070183516°,
@@ -94,42 +87,44 @@ session (defn 2/2)
   total_elapsed_time: 13.749s,    total_fat_calories: 0kcal,
   total_timer_time: 13.749s,  trigger: activity_end
 
-activity (defn 2/2)
+activity
   event: activity,    event_type: stop,   local_timestamp: 2012-04-09 17:24:51,
   num_sessions: 1,    timestamp: 2012-04-09 21:24:51+00:00,
   total_timer_time: 13.749s,  type: manual
 
 record (defn 1/2)
-  timestamp,                    distance,   enhanced_altitude,  
-    enhanced_speed,     position_lat,           position_long      
-  2012-04-09 21:22:26+00:00s,   0.02m,      278.20000000000005m,
-    0.0m/s,             41.513926070183516°,    -73.14859078265727°
-  2012-04-09 21:22:27+00:00s,   0.02m,      278.20000000000005m,
-    0.0m/s,             41.513926070183516°,    -73.14859069883823°
-  2012-04-09 21:22:28+00:00s,   0.02m,      278.20000000000005m,
-    0.0m/s,             41.513926070183516°,    -73.14859069883823°
-  2012-04-09 21:22:29+00:00s,   0.21m,      278.20000000000005m,
-    0.0m/s,             41.513926992192864°,    -73.14859254285693°
-  2012-04-09 21:22:30+00:00s,   0.28m,      278.20000000000005m,
-    0.0m/s,             41.513927578926086°,    -73.14859329722822°
-  2012-04-09 21:22:31+00:00s,   0.35m,      278.20000000000005m,
-    0.0m/s,             41.51392808184028°,     -73.14859388396144°
-  2012-04-09 21:22:32+00:00s,   0.41m,      278.20000000000005m,
-    0.0m/s,             41.513928417116404°,    -73.14859438687563°
-  2012-04-09 21:22:33+00:00s,   1.14m,      278.20000000000005m,
-    0.0m/s,             41.51393218897283°,     -73.14860176295042°
-  2012-04-09 21:22:34+00:00s,   1.85m,      278.20000000000005m,
-    0.092m/s,           41.51393403299153°,     -73.14860980957747°
-  2012-04-09 21:22:35+00:00s,   2.75m,      278.20000000000005m,
-    0.152m/s,           41.513936799019575°,    -73.14861986786127°
-  2012-04-09 21:22:36+00:00s,   3.51m,      278.20000000000005m,
-    0.209m/s,           41.51393931359053°,     -73.14862833358347°
-  2012-04-09 21:22:37+00:00s,   4.22m,      278.20000000000005m,
-    0.262m/s,           41.51393646374345°,     -73.14863621257246°
-  2012-04-09 21:22:38+00:00s,   4.93m,      278.20000000000005m,
-    0.307m/s,           41.51393017731607°,     -73.14863453619182°
-  2012-04-09 21:22:39+00:00s,   5.73m,      278.20000000000005m,
-    0.368m/s,           41.51392372325063°,     -73.14863906241953°
+  timestamp,                    distance,       enhanced_altitude,  
+    enhanced_speed,     position_lat,           position_long       
+  2012-04-09 21:22:26+00:00s,   0.02m,          278.20000000000005m,
+    0.0m/s,             41.513926070183516°,    -73.14859078265727° 
+  2012-04-09 21:22:27+00:00s,   0.02m,          278.20000000000005m,
+    0.0m/s,             41.513926070183516°,    -73.14859069883823° 
+  2012-04-09 21:22:28+00:00s,   0.02m,          278.20000000000005m,
+    0.0m/s,             41.513926070183516°,    -73.14859069883823° 
+  2012-04-09 21:22:29+00:00s,   0.21m,          278.20000000000005m,
+    0.0m/s,             41.513926992192864°,    -73.14859254285693° 
+  2012-04-09 21:22:30+00:00s,   0.28m,          278.20000000000005m,
+    0.0m/s,             41.513927578926086°,    -73.14859329722822° 
+  2012-04-09 21:22:31+00:00s,   0.35m,          278.20000000000005m,
+    0.0m/s,             41.51392808184028°,     -73.14859388396144° 
+  2012-04-09 21:22:32+00:00s,   0.41m,          278.20000000000005m,
+    0.0m/s,             41.513928417116404°,    -73.14859438687563° 
+  2012-04-09 21:22:33+00:00s,   1.14m,          278.20000000000005m,
+    0.0m/s,             41.51393218897283°,     -73.14860176295042° 
+  2012-04-09 21:22:34+00:00s,   1.85m,          278.20000000000005m,
+    0.092m/s,           41.51393403299153°,     -73.14860980957747° 
+  2012-04-09 21:22:35+00:00s,   2.75m,          278.20000000000005m,
+    0.152m/s,           41.513936799019575°,    -73.14861986786127° 
+  2012-04-09 21:22:36+00:00s,   3.51m,          278.20000000000005m,
+    0.209m/s,           41.51393931359053°,     -73.14862833358347° 
+  2012-04-09 21:22:37+00:00s,   4.22m,          278.20000000000005m,
+    0.262m/s,           41.51393646374345°,     -73.14863621257246° 
+  2012-04-09 21:22:38+00:00s,   4.93m,          278.20000000000005m,
+    0.307m/s,           41.51393017731607°,     -73.14863453619182° 
+  2012-04-09 21:22:39+00:00s,   5.73m,          278.20000000000005m,
+    0.368m/s,           41.51392372325063°,     -73.14863906241953° 
+  2075-08-14 06:00:04+00:00s,   14134804.49m,   -500.0m,            
+    1.283m/s,           1.3458681106567383°,    0.25419370271265507°
 
 record (defn 2/2)
   timestamp,                    distance,   enhanced_altitude,  

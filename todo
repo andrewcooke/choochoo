@@ -91,3 +91,10 @@
 * Equipment tracking
 
 * Move this list to github issues?
+
+* FITS fixes:
+  * Display identities, not names, in tokens (and elsewhere?)
+  * Display counts in records
+  * Change force() to delegate to as_dict if given filters
+  * Fix TODO tests
+  * Change fix-fit to be progressive

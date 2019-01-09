@@ -27,7 +27,7 @@ sport
 zones_target
   hr_calc_type: percent_max_hr
 
-record (defn 1/2)
+record
   distance: 0.0m,     timestamp: 2018-07-30 13:56:29+00:00s
 
 lap

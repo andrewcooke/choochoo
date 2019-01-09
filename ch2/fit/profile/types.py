@@ -3,7 +3,7 @@ import datetime as dt
 from abc import abstractmethod
 from collections import namedtuple
 from re import compile
-from struct import unpack, pack
+from struct import unpack
 
 from .support import Named, Rows
 from ...lib.data import WarnDict, WarnList
@@ -64,16 +64,23 @@ class StructSupport(SimpleType):
     def _all_bad(self, data, bad, count):
         return all(bad == data[self.n_bytes*i:self.n_bytes*(i+1)] for i in range(count))
 
-    # scale and offset have to be at this level because of how bad values when count > 0 are handled
-    def _unpack(self, data, formats, bad, count, endian, scale=1, offset=0, check_bad=True, **options):
+    # scale and offset have to be at this level because of how bad values when count > 1 are handled
+    def _unpack(self, data, formats, bad, count, endian, scale=1, offset=0, check_bad=True,
+                name=None, accumulators=None, n_bits=None, **options):
         if check_bad and self._all_bad(data, bad[endian], count):
             return None
+        elif accumulators and name in accumulators:
+            if count > 1:
+                raise Exception('Cannot accumulate multiple fields (%s: %d)' % (name, count))
+            return self.__unpack_acc(bytearray(data[:self.n_bytes]), formats[endian] % 1, scale, offset,
+                                     name, accumulators, n_bits, endian)
         else:
             if (scale == 1 and offset == 0) or self.name == 'enum':   # enums are not scaled
+                # fast and preserves integers
                 return unpack(formats[endian] % count, data[:self.n_bytes * count])
             elif count == 1:  # if no check, scale single bad values
                 return (unpack(formats[endian] % 1, data[:self.n_bytes])[0] / scale - offset,)
-            else:
+            else:  # match weird CSV behaviour
                 return tuple(self.__unpack_scaled(data[self.n_bytes*i:self.n_bytes*(i+1)], formats[endian],
                                                   bad[endian], scale, offset) for i in range(count))
 
@@ -84,6 +91,67 @@ class StructSupport(SimpleType):
             return value
         else:
             return value / scale - offset
+
+    def __unpack_acc(self, data, format, scale, offset, name, accumulators, n_bits, endian):
+        short = unpack(format, data)[0]
+        if accumulators[name] is not None:
+            prev_data, prev_long = accumulators[name]
+            if n_bits:
+                mask = (1 << n_bits) - 1
+                prev_short = prev_long & mask
+            elif short < prev_long:
+                raise Exception('Full accumulated field has decreased in value (%s: %d/%d)' %
+                                (name, short, prev_long))  # or n_bits was missing...
+            if short >= prev_long:  # initial phase of simple growth OR a full read
+                long = short
+            else:  # otherwise, need all bits
+                data = self.__merge_bytes(prev_data, data, n_bits, endian)
+                if short < prev_short:  # rollover?
+                    data = self.__add_bit(data, n_bits, endian)
+                long = unpack(format, data)[0]
+        else:
+            long = short
+        accumulators[name] = (data, long)
+        if scale == 1 and offset == 0:
+            return (long,)
+        else:
+            return (long / scale - offset,)
+
+    def __merge_bytes(self, prev_data, data, n_bits, endian, index=None):
+        now = min(8, n_bits)
+        later = max(0, n_bits - now)
+        if endian == LITTLE:
+            if index is None: index = 0
+            prev_data[index] = self.__merge_bits(prev_data[index], data[index], now)
+            if later:
+                self.__merge_bytes(prev_data, data, later, endian, index=index+1)
+        else:
+            if index is None: index = -1
+            prev_data[index] = self.__merge_bits(prev_data[index], data[index], now)
+            if later:
+                self.__merge_bytes(prev_data, data, later, endian, index=index-1)
+        return prev_data
+
+    def __merge_bits(self, prev_data, data, n_bits):
+        mask = (1 << n_bits) - 1
+        return (prev_data & ~mask) | (data & mask)
+
+    def __add_bit(self, data, n_bits, endian):
+        value = 1 << (n_bits % 8)
+        index = n_bits // 8
+        if endian == LITTLE:
+            while value and index < len(data):
+                value += data[index]
+                data[index] = value & 0xff
+                value = (value & 0x100) >> 8
+                index += 1
+        else:
+            while value and index >= 0:
+                value += data[index]
+                data[index] = value & 0xff
+                value = (value & 0x100) >> 8
+                index -= 1
+        return data
 
 
 class String(SimpleType):
@@ -184,7 +252,7 @@ class Date(AliasInteger):
 
     def parse_type(self, data, count, endian, timestamp, raw_time=False, **options):
         times = super().parse_type(data, count, endian, timestamp, raw_time=raw_time, **options)
-        if not raw_time:
+        if times and not raw_time:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
         return times
 
