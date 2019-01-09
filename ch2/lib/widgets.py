@@ -95,7 +95,7 @@ class DateSwitcher(App):
             self._change_date(time_to_local_date(journal.start))
 
     def _next_prev_date(self, c):
-        if c == 't':
+        if c.lower() == 't':
             date = dt.date.today()
         else:
             delta = (-1 if c == c.lower() else 1, c.lower())

@@ -73,7 +73,7 @@ class TestFixFit(TestCase, OutputMixin):
         fixed = fix(self.log, bytearray(good), add_header=True, slices=':14,28:')
         self.assertEqual(good, fixed)
 
-    def test_weird_header(self):
+    def test_other_header(self):
         bad = read_fit(self.log, join(self.test_dir, 'source/other/8CS90646.FIT'))
         old_header = FileHeader(bad)
         fixed = fix(self.log, bytearray(bad), drop=True, header_size=27)
@@ -82,7 +82,7 @@ class TestFixFit(TestCase, OutputMixin):
         self.assertEqual(new_header.protocol_version, old_header.protocol_version)
         self.assertEqual(new_header.profile_version, old_header.profile_version)
 
-    def test_unknown_bad(self):
+    def test_other_bad(self):
         bad = read_fit(self.log, join(self.test_dir, 'source/other/2018-04-15-09-18-20.fit'))
         fixed = fix(self.log, bytearray(bad), drop=True)
         with self.assertTextMatch(join(self.test_dir, 'target/other/TestFixFit.test_unknown_bad:1')) as output:
@@ -92,35 +92,34 @@ class TestFixFit(TestCase, OutputMixin):
         with self.assertTextMatch(join(self.test_dir, 'target/other/TestFixFit.test_unknown_bad:2')) as output:
             summarize(self.log, RECORDS, fixed, output=output)
 
-    def test_unknown_good(self):
+    def test_other_good(self):
         good = read_fit(self.log, join(self.test_dir, 'source/other/77F73023.FIT'))
         same = fix(self.log, bytearray(good))
         self.assertEqual(good, same)
         self.assertFalse(good is same)
 
-    # TODO - DOES NOT NEED FIX
-    # def test_scaled(self):
-    #     bad = read_fit(self.log, join(self.test_dir, 'source/other/2018-05-30-22-00-44.fit'))
-    #     fixed = fix(self.log, bytearray(bad), drop=True, max_drop_cnt=2)
-    #     with self.assertTextMatch(join(self.test_dir, 'target/other/TestFixFit.test_scaled')) as output:
-    #         summarize(self.log, TABLES, fixed, output=output)
-
     def test_pyfitparse_fix_header(self):
+        for file in ('activity-filecrc.fit',  # bad checksum
+                     'activity-activity-filecrc.fit',  # data size incorrect
+                     'activity-settings.fit',  # data size incorrect
+                     ):
+            bad = read_fit(self.log, join(self.test_dir, 'source/python-fitparse', file))
+            with self.assertBinaryMatch(join(self.test_dir, 'source/python-fitparse-fix', file)) as output:
+                output.write(fix(self.log, bad))
+
+    def test_pyfitparse_fix_drop(self):
         for file in ('activity-unexpected-eof.fit',  # data size incorrect
                      'activity-settings-nodata.fit',   # data size incorrect
-                     # 'activity-filecrc.fit',  # bad checksum  TODO - DOES NOT NEED DROP
-                     # 'activity-activity-filecrc.fit',  # data size incorrect  TODO - DOES NOT NEED DROP
                      'activity-settings-corruptheader.fit',  # data size incorrect
-                     # 'activity-settings.fit',  # data size incorrect  TODO - DOES NOT NEED DROP
                      ):
             bad = read_fit(self.log, join(self.test_dir, 'source/python-fitparse', file))
             with self.assertBinaryMatch(join(self.test_dir, 'source/python-fitparse-fix', file)) as output:
                 output.write(fix(self.log, bad, drop=True))
 
-    def test_pyfitparse_fix_header_2(self):
-        for file in (#'event_timestamp.fit',  # data size incorrect
-                     #'antfs-dump.63.fit',  # strange timestamp
-                     #'compressed-speed-distance.fit',  # strange timestamp
+    def test_pyfitparse_fix_drop_2(self):
+        for file in ('event_timestamp.fit',  # data size incorrect
+                     'antfs-dump.63.fit',  # strange timestamp
+                     'compressed-speed-distance.fit',  # strange timestamp
                      ):
             bad = read_fit(self.log, join(self.test_dir, 'source/python-fitparse', file))
             with self.assertBinaryMatch(join(self.test_dir, 'source/python-fitparse-fix', file)) as output:

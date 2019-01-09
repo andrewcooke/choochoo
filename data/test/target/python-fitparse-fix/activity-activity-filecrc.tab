@@ -46,11 +46,16 @@ activity
   num_sessions: 1,    timestamp: 2012-04-09 21:24:51+00:00,
   total_timer_time: 13.749s,  type: manual
 
-file_creator
-  software_version: 260
-
-file_creator
-  software_version: 240
+session
+  enhanced_avg_speed: 0.644m/s,   enhanced_max_speed: 0.257m/s,   event: 2,
+  event_type: 132,    first_lap_index: 49,    message_index: 1,   num_laps: 256,
+  sport: generic,     start_position_lat: 3.5375977400690317°,
+  start_position_long: 0.0027464982122182846°,
+  start_time: 1990-07-15 02:08:02+00:00,  sub_sport: generic,
+  timestamp: 2064-06-08 08:25:42+00:00s,  total_ascent: 576m,
+  total_calories: 49kcal,     total_descent: 1m,  total_distance: 666.24m,
+  total_elapsed_time: 4294912.486s,   total_fat_calories: 512kcal,
+  total_timer_time: 118620.175s,  trigger: 240
 
 event
   event: timer,   event_group: 0,     event_type: start,  timer_trigger: manual,

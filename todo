@@ -67,7 +67,7 @@
 
 * XXX  Display monthly and weekly stats in summaries
   * XXX  Maybe ch2 diary --week
-  * XXX (no - count instead)  Also accumulate text fields?  Activities?
+  * XXX  (no - count instead)  Also accumulate text fields?  Activities?
   * XXX  Format times and distances better.
 
 * XXX  StatisticRanking data on monitor stats
@@ -93,8 +93,9 @@
 * Move this list to github issues?
 
 * FITS fixes:
-  * Display identities, not names, in tokens (and elsewhere?)
-  * Display counts in records
-  * Change force() to delegate to as_dict if given filters
-  * Fix TODO tests
-  * Change fix-fit to be progressive
+  * XXX  Display identities, not names, in tokens (and elsewhere?)
+  * XXX  Display counts in records
+  * XXX  Change force() to delegate to as_dict if given filters
+  * XXX  Fix TODO tests
+  * XXX  Change fix-fit to be progressive
+

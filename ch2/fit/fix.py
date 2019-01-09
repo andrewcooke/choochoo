@@ -296,10 +296,10 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
         raise Backtrack('Failed to sync at offset %d' % initial_offset)
     if drop_count >= max_drop_cnt:
         raise Backtrack('No more drops')
-    for back_cnt in range(1, min(max_back_cnt + 1, len(offsets_and_states))):
-        offset, state = offsets_and_states[-back_cnt]
-        log.info('Searching forwards from offset %d after dropping %d records' % (offset, back_cnt-1))
-        for delta in range(1, max_fwd_len):
+    for delta in range(1, max_fwd_len):
+        for back_cnt in range(1, min(max_back_cnt + 1, len(offsets_and_states))):
+            offset, state = offsets_and_states[-back_cnt]
+            log.debug('Searching forwards from offset %d after dropping %d records' % (offset, back_cnt-1))
             if offset + delta >= len(data):  # > for when a delta of 0 would have done
                 log.info('Exhausted data')
                 return [slice(initial_offset, offset)]

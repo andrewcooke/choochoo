@@ -70,6 +70,11 @@ extensible.*
 
 ## Latest Changes
 
+### v0.11.0
+
+Parsing of "accumulated" fields in FIT files plus a bunch more fixes
+thanks to test data from python-fitparse.
+
 ### v0.10.0
 
 Contains a tool to [fix corrupt FIT

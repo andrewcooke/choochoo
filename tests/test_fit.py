@@ -145,6 +145,10 @@ class TestFit(TestCase, OutputMixin):
     def test_pyfitparse_csv(self):
         self.standard_csv_dir('python-fitparse', '*.fit', filters=[RNM_UNKNOWN, ROUND_DISTANCE])
 
+    def test_other_csv(self):
+        self.standard_csv_dir('other', '*.fit', filters=[RNM_UNKNOWN, ROUND_DISTANCE])
+
+
     # def test_bad_parsing(self):
     #     # data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/compressed-speed-distance.fit'))
     #     # data = read_fit(self.log, join('/home/andrew', 'archive/fit/monitor/28694037944.fit'))
