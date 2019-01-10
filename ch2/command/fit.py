@@ -1,6 +1,6 @@
 
-from .args import PATH, FORMAT, ALL_FIELDS, ALL_MESSAGES, AFTER, LIMIT, WARN, GREP, MESSAGE, NAME, NOT, MATCH, \
-    WIDTH, NO_VALIDATE, INTERNAL, MAX_DELTA_T
+from .args import PATH, FORMAT, ALL_FIELDS, ALL_MESSAGES, LIMIT_RECORDS, WARN, GREP, MESSAGE, NAME, NOT, MATCH, \
+    WIDTH, NO_VALIDATE, INTERNAL, MAX_DELTA_T, AFTER_BYTES, AFTER_RECORDS, CONTEXT
 from ..fit.profile.profile import read_fit
 from ..fit.summary import summarize
 
@@ -39,6 +39,8 @@ finish and paths start.
     for file_path in args[PATH]:
         summarize(log, args[FORMAT], read_fit(log, file_path),
                   all_fields=args[ALL_FIELDS], all_messages=args[ALL_MESSAGES], internal=args[INTERNAL],
-                  after=args[AFTER], limit=args[LIMIT], messages=args[MESSAGE], warn=args[WARN],
-                  grep=args[GREP], name_file=file_path if args[NAME] else None, invert=args[NOT], match=args[MATCH],
-                  no_validate=args[NO_VALIDATE], max_delta_t=args[MAX_DELTA_T], width=args[WIDTH])
+                  after_bytes=args[AFTER_BYTES], after_records=args[AFTER_RECORDS], limit_records=args[LIMIT_RECORDS],
+                  messages=args[MESSAGE], warn=args[WARN], grep=args[GREP],
+                  name_file=file_path if args[NAME] else None, invert=args[NOT], match=args[MATCH],
+                  context=args[CONTEXT], no_validate=args[NO_VALIDATE], max_delta_t=args[MAX_DELTA_T],
+                  width=args[WIDTH])

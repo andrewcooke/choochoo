@@ -49,6 +49,7 @@ support for power meters.
   * [Configuration](configuration)
   * [Reading FIT Files](fit-files)
   * [Repairing FIT Files](fix-fit)
+  * [FIT Cookbook](fit-cookbook)
   * [Training Plans](training-plans)
   * [Scaled Heart Rate Impulse - SHRIMP](impulse)
   * [Segments](segments)

@@ -56,7 +56,7 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
 
     log.info('Output ----------')
     if args[DISCARD]:
-        log.warn('Discarded output')
+        log.info('Discarded output')
     else:
         out_path = args[OUTPUT]
         if out_path:

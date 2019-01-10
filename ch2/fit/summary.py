@@ -1,5 +1,6 @@
 
 from collections import Counter, defaultdict
+from operator import eq, lt, gt
 from re import compile
 from sys import stdout
 
@@ -11,80 +12,89 @@ from ..lib.io import terminal_width
 from ..lib.utils import unique
 
 
-def summarize(log, format, data, all_fields=False, all_messages=False, internal=False, after=0, limit=-1,
-              messages=None, warn=False, profile_path=None, grep=None, name_file=None, invert=False, match=1,
-              no_validate=False, max_delta_t=None, width=None, output=stdout):
+def summarize(log, format, data, all_fields=False, all_messages=False, internal=False, after_bytes=0,
+              after_records=0, limit_records=-1, messages=None, warn=False, profile_path=None, grep=None,
+              name_file=None, invert=False, match=1, context=False, no_validate=False, max_delta_t=None, width=None,
+              output=stdout):
+
+    width = width or terminal_width()
+
     if name_file and format != GREP:
         print()
         print(name_file)
+
     if format == RECORDS:
         summarize_records(log, data,
                           all_fields=all_fields, all_messages=all_messages, internal=internal,
-                          after=after, limit=limit, messages=messages, warn=warn, no_validate=no_validate,
-                          max_delta_t=max_delta_t, profile_path=profile_path, width=width, output=output)
+                          after_bytes=after_bytes, after_records=after_records, limit_records=limit_records,
+                          messages=messages, warn=warn, no_validate=no_validate, max_delta_t=max_delta_t,
+                          profile_path=profile_path, width=width, output=output)
     elif format == TABLES:
         summarize_tables(log, data,
                          all_fields=all_fields, all_messages=all_messages, internal=internal,
-                         after=after, limit=limit, messages=messages, warn=warn, no_validate=no_validate,
-                         max_delta_t=max_delta_t, profile_path=profile_path, width=width, output=output)
+                         after_bytes=after_bytes, after_records=after_records, limit_records=limit_records,
+                         messages=messages, warn=warn, no_validate=no_validate, max_delta_t=max_delta_t,
+                         profile_path=profile_path, width=width, output=output)
     elif format == GREP:
-        summarize_grep(log, data, grep, name_file=name_file, match=match, invert=invert,
-                       after=after, limit=limit, warn=warn, no_validate=no_validate,
-                       max_delta_t=max_delta_t, profile_path=profile_path, output=output)
+        summarize_grep(log, data, grep, name_file=name_file, match=match, context=context, invert=invert,
+                       after_bytes=after_bytes, after_records=after_records, limit_records=limit_records, warn=warn,
+                       no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path, width=width,
+                       output=output)
     elif format == CSV:
         summarize_csv(log, data,
-                      after=after, limit=limit, warn=warn, no_header=no_validate,
-                      max_delta_t=max_delta_t, profile_path=profile_path, output=output)
+                      after_bytes=after_bytes, after_records=after_records, limit_records=limit_records, warn=warn,
+                      no_header=no_validate, max_delta_t=max_delta_t, profile_path=profile_path, output=output)
     elif format == TOKENS:
         summarize_tokens(log, data,
-                         after=after, limit=limit, warn=warn, no_validate=no_validate,
-                         max_delta_t=max_delta_t, profile_path=profile_path, output=output)
+                         after_bytes=after_bytes, after_records=after_records, limit_records=limit_records, warn=warn,
+                         no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path, output=output)
     elif format == FIELDS:
         summarize_fields(log, data,
-                         after=after, limit=limit, warn=warn, no_validate=no_validate,
-                         max_delta_t=max_delta_t, profile_path=profile_path, output=output)
+                         after_bytes=after_bytes, after_records=after_records, limit_records=limit_records, warn=warn,
+                         no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path, output=output)
     else:
         raise Exception('Bad format: %s' % format)
 
 
-def summarize_tokens(log, data, after=0, limit=-1, warn=False, no_validate=False,
+def summarize_tokens(log, data, after_bytes=0, after_records=0, limit_records=-1, warn=False, no_validate=False,
                      max_delta_t=None, profile_path=None, output=stdout):
     types, messages, tokens = \
-        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_validate=no_validate,
-                        max_delta_t=max_delta_t, profile_path=profile_path)
+        filtered_tokens(log, data, after_bytes=after_bytes, after_records=after_records, limit_records=limit_records,
+                        warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path)
     for index, offset, token in tokens:
         print('%03d %05d %s' % (index, offset, token), file=output)
 
 
-def summarize_fields(log, data, after=0, limit=-1, warn=False, no_validate=False,
+def summarize_fields(log, data, after_bytes=0, after_records=0, limit_records=-1, warn=False, no_validate=False,
                      max_delta_t=None, profile_path=None, output=stdout):
     types, messages, tokens = \
-        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_validate=no_validate,
-                        max_delta_t=max_delta_t, profile_path=profile_path)
+        filtered_tokens(log, data, after_bytes=after_bytes, after_records=after_records, limit_records=limit_records,
+                        warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path)
     for index, offset, token in tokens:
         print('%03d %05d %s' % (index, offset, token), file=output)
         for line in token.describe_fields(types):
             print('  %s' % line, file=output)
 
 
-def summarize_records(log, data, all_fields=False, all_messages=False, internal=False, after=0, limit=-1, messages=None,
-                      warn=False, no_validate=False, max_delta_t=None, profile_path=None, width=None, output=stdout):
+def summarize_records(log, data, all_fields=False, all_messages=False, internal=False, after_bytes=0, after_records=0,
+                      limit_records=-1, messages=None, warn=False, no_validate=False, max_delta_t=None,
+                      profile_path=None, width=None, output=stdout):
     types, messages, records = \
-        filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
-                         no_validate=no_validate, internal=internal, profile_path=profile_path,
-                         max_delta_t=max_delta_t, pipeline=[merge_duplicates])
+        filtered_records(log, data, after_bytes=after_bytes, after_records=after_records, limit_records=limit_records,
+                         record_names=messages, warn=warn, no_validate=no_validate, internal=internal,
+                         profile_path=profile_path, max_delta_t=max_delta_t, pipeline=[merge_duplicates])
     records = list(records)
-    width = width or terminal_width()
     print(file=output)
     pprint_as_dicts(records, all_fields, all_messages, width=width, output=output)
 
 
-def summarize_tables(log, data, all_fields=False, all_messages=False, internal=False, after=0, limit=-1, messages=None,
-                     warn=False, no_validate=False, max_delta_t=None, profile_path=None, width=None, output=stdout):
+def summarize_tables(log, data, all_fields=False, all_messages=False, internal=False, after_bytes=0, after_records=0,
+                     limit_records=-1, messages=None, warn=False, no_validate=False, max_delta_t=None,
+                     profile_path=None, width=None, output=stdout):
     types, messages, records = \
-        filtered_records(log, data, after=after, limit=limit, record_names=messages, warn=warn,
-                         no_validate=no_validate, internal=internal, profile_path=profile_path,
-                         max_delta_t=max_delta_t, pipeline=[merge_duplicates])
+        filtered_records(log, data, after_bytes=after_bytes, after_records=after_records, limit_records=limit_records,
+                         record_names=messages, warn=warn, no_validate=no_validate, internal=internal,
+                         profile_path=profile_path, max_delta_t=max_delta_t, pipeline=[merge_duplicates])
     records = list(record[2] for record in records)
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
@@ -94,37 +104,92 @@ def summarize_tables(log, data, all_fields=False, all_messages=False, internal=F
     pprint_as_tuples(large, all_fields, all_messages, width=width, output=output)
 
 
-class Done(Exception):
-    pass
+class Done(Exception): pass
 
 
-def summarize_grep(log, data, grep, name_file=None, match=1, invert=False, after=0, limit=-1,
-                   warn=False, no_validate=False, max_delta_t=None, profile_path=None, output=stdout):
+CMP = compile(r'([^=<>~]+)([=<>~])([^=<>~]+)')
+
+
+class Matcher:
+
+    def __init__(self, pattern):
+        if ':' in pattern:
+            record, pattern = pattern.split(':')
+            self.record = compile(record).match
+        else:
+            self.record = None
+        match = CMP.match(pattern)
+        if match:
+            self.field = compile(match.group(1)).match
+            if match.group(2) == '~':
+                self.value = compile(match.group(2)).match
+            else:
+                try:
+                    value = float(match.group(3))
+                    self.value = {'=': self.__build_compare(eq, value),
+                                  '<': self.__build_compare(lt, value),
+                                  '>': self.__build_compare(gt, value)}[match.group(2)]
+                except:
+                    if match.group(2) != '=':
+                        raise Exception('Comparison "%s" with non-numerica value "%s"' %
+                                        (match.group(2), match.group(3)))
+                    self.value = lambda v: v == match.group(3)
+        else:
+            self.field = pattern
+            self.value = None
+
+    def __build_compare(self, op, value):
+        def compare(v):
+            try:
+                v = float(v)
+                return op(v, value)
+            except:
+                return False
+        return compare
+
+    def match(self, record, field, value):
+        return (self.record is None or self.record(record)) and \
+               (self.field is None or self.field(field)) and \
+               (self.value is None or self.value(value))
+
+
+def summarize_grep(log, data, grep, name_file=None, match=1, context=False, invert=False,
+                   after_bytes=0, after_records=0, limit_records=-1, warn=False, no_validate=False, max_delta_t=None,
+                   profile_path=None, width=80, output=stdout):
+
     types, messages, records = \
         filtered_records(log, data, warn=warn, no_validate=no_validate, profile_path=profile_path,
                          max_delta_t=max_delta_t, pipeline=[merge_duplicates])
-    matchers = [compile(pattern) for pattern in grep]
+    matchers = [Matcher(pattern) for pattern in grep]
     counts = defaultdict(lambda: 0)
-    first = True
+    first, first_record = True, 0 if (after_records is None and after_bytes is None) else None
+
     try:
         for index, offset, record in records:
-            if index >= after:
-                if index < after + limit or limit < 0:
-                    record = record.as_dict(join_values, append_units, to_hex, fix_degrees, no_bad_values)
-                    for name, value in sorted(record.data.items()):
-                        target_1 = '%s:%s' % (record.name, name)
-                        target_2 = '%s:%s=%s' % (record.name, name, value)
-                        for matcher in matchers:
-                            if matcher.match(target_2 if '=' in matcher.pattern else target_1):
-                                counts[matcher] += 1
-                                if counts[matcher] <= match or match < 0:
-                                    if first:
-                                        print(file=output)
-                                        first = False
-                                    print('%s:%s=%s' % (record.name, name, value), file=output)
-                                # exit early if we've displayed/matched all we need to
-                                if match > -1 and all(counts[m] >= max(1, match) for m in matchers):
-                                    raise Done()
+            if first_record is None and ((after_records is not None and index >= after_records) or
+                                         (after_bytes is not None and offset >= after_bytes)):
+                first_record = index
+            if first_record is not None:
+                if index - first_record < limit_records or limit_records < 0:
+                    record = record.as_dict(fix_degrees)
+                    for name, values_units in sorted(record.data.items()):
+                        if values_units and values_units[0]:
+                            for value in values_units[0]:
+                                for matcher in matchers:
+                                    if matcher.match(record.name, name, value):
+                                        counts[matcher] += 1
+                                        if counts[matcher] <= match or match < 0:
+                                            if context:
+                                                if first:
+                                                    print(file=output)
+                                                    first=False
+                                                pprint_as_dicts([(index, offset, record)], True, True,
+                                                                width=width, output=output)
+                                            else:
+                                                print('%s:%s=%s' % (record.name, name, value), file=output)
+                                        # exit early if we've displayed/matched all we need to
+                                        if match > -1 and all(counts[m] >= max(1, match) for m in matchers):
+                                            raise Done()
                 else:
                     raise Done()
     except Done:
@@ -134,11 +199,11 @@ def summarize_grep(log, data, grep, name_file=None, match=1, invert=False, after
             print(name_file, file=output)
 
 
-def summarize_csv(log, data, after=0, limit=-1, warn=False, no_header=False, max_delta_t=None, profile_path=None,
-                  output=stdout):
+def summarize_csv(log, data, after_bytes=0, after_records=0, limit_records=-1, warn=False, no_header=False,
+                  max_delta_t=None, profile_path=None, output=stdout):
     types, messages, tokens = \
-        filtered_tokens(log, data, after=after, limit=limit, warn=warn, no_validate=no_header,
-                        max_delta_t=max_delta_t, profile_path=profile_path)
+        filtered_tokens(log, data, after_bytes=after_bytes, after_records=after_records, limit_records=limit_records,
+                        warn=warn, no_validate=no_header, max_delta_t=max_delta_t, profile_path=profile_path)
     for index, offset, token in tokens:
         if hasattr(token, 'describe_csv'):
             print(','.join(str(component) for component in token.describe_csv(warn=warn)), file=output)
@@ -156,7 +221,8 @@ def partition(records, counts, threshold=3):
 
 def pprint_as_dicts(records, all_fields, all_messages, width=80, output=stdout, full_name=True):
     for record in records:
-        if full_name: index, offset, record = record
+        if full_name:
+            index, offset, record = record
         if all_messages or record.is_known():
             record = record.as_dict(join_values, append_units, to_hex, fix_degrees,
                                     no_filter if all_fields else no_unknown_fields,

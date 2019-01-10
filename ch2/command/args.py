@@ -36,10 +36,13 @@ ACTIVITY_JOURNALS = 'activity-journals'
 ACTIVITY_JOURNAL_ID = 'activity-journal-id'
 ADD_HEADER = 'add-header'
 AFTER = 'after'
+AFTER_BYTES = 'after-bytes'
+AFTER_RECORDS = 'after-records'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 BORDER = 'border'
 CONSTRAINT = 'constraint'
+CONTEXT = 'context'
 CSV = 'csv'
 DATABASE = 'database'
 DATE = 'date'
@@ -65,7 +68,7 @@ INTERNAL = 'internal'
 LABEL = 'label'
 LATITUDE = 'latitude'
 LIKE = 'like'
-LIMIT = 'limit'
+LIMIT_RECORDS = 'limit-records'
 LOGS = 'logs'
 LONGITUDE = 'longitude'
 LIST = 'list'
@@ -295,10 +298,12 @@ def parser():
                             help='show low-level tokens')
     fit_format.add_argument(mm(FIELDS), action='store_const', dest=FORMAT, const=FIELDS,
                             help='show low-level fields (within tokens)')
-    fit.add_argument(mm(AFTER), action='store', type=int, metavar='N', default=0,
-                     help='skip initial tokens')
-    fit.add_argument(mm(LIMIT), action='store', type=int, metavar='N', default=-1,
-                     help='limit number of tokens')
+    fit.add_argument(mm(AFTER_BYTES), action='store', type=int, metavar='N', default=None,
+                     help='skip initial bytes')
+    fit.add_argument(mm(AFTER_RECORDS), action='store', type=int, metavar='N', default=None,
+                     help='skip initial records')
+    fit.add_argument(mm(LIMIT_RECORDS), action='store', type=int, metavar='N', default=-1,
+                     help='limit number of records displayed')
     fit.add_argument(mm(INTERNAL), action='store_true',
                      help='display internal messages')
     fit.add_argument(mm(ALL_MESSAGES), action='store_true',
@@ -319,8 +324,10 @@ def parser():
                      help='print file name')
     fit.add_argument(mm(NOT), action='store_true',
                      help='print file names that don\'t match (--grep --name)')
-    fit.add_argument(mm(MATCH), action='store', type=int, default=1,
-                     help='max number of matches (--grep, default 1, -1 for all)')
+    fit.add_argument(mm(MATCH), action='store', type=int, default=-1,
+                     help='max number of matches (--grep, default -1 for all)')
+    fit.add_argument(mm(CONTEXT), action='store_true',
+                     help='display entire record (--grep)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
     fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')

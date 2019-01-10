@@ -187,18 +187,23 @@ def apply_slices(log, data, slices):
 def validate_data(log, data, state, warn=False, force=True):
 
     log.info('Validation ----------')
+    log_param(log, MAX_DELTA_T, state.max_delta_t)
 
+    first_t = True
     try:
         file_header = FileHeader(data)
         file_header.validate(data, log)
         offset = len(file_header)
         while len(data) - offset > 2:
             token = token_factory(data[offset:], state)
-            if token.is_user:
-                record = token.parse_token(warn=warn)
-                if force:
-                    record.force()
+            if first_t and state.timestamp:
+                log.info('First timestamp: %s' % state.timestamp)
+                first_t = False
+            record = token.parse_token(warn=warn)
+            if force:
+                record.force()
             offset += len(token)
+        log.info('Last timestamp:  %s' % state.timestamp)
         checksum = Checksum(data[offset:])
         checksum.validate(data, log)
         log.info('OK')
@@ -281,7 +286,7 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
     "synchronize" means progressively discard data until some number of records smaller than
     some length can be read.
     '''
-    initial_offsets_and_states = [(0, initial_state.copy())]
+    initial_offsets_and_states = [(initial_offset, initial_state.copy())]
     offsets_and_states, complete = slurp(log, initial_state, data, initial_offset,
                                          warn=warn, force=force, max_record_len=max_record_len)
     if offsets_and_states:
@@ -292,7 +297,10 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
     offsets_and_states = initial_offsets_and_states + offsets_and_states
     if complete:
         # use explicit offset rather than open interval because need to drop final checksum
-        return [slice(initial_offset, offsets_and_states[-1][0])]
+        if len(offsets_and_states) > 1:
+            return [slice( offsets_and_states[0][0], offsets_and_states[-1][0])]
+        else:
+            return []
     if drop_count and len(offsets_and_states) < min_sync_cnt:  # failing to sync on first read is OK
         raise Backtrack('Failed to sync at offset %d' % initial_offset)
     if drop_count >= max_drop_cnt:
@@ -303,7 +311,7 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
             log.debug('Searching forwards from offset %d after dropping %d records' % (offset, back_cnt-1))
             if offset + delta >= len(data):  # > for when a delta of 0 would have done
                 log.info('Exhausted data')
-                return [slice(initial_offset, offset)]
+                return [slice(initial_offset, len(data)-2)]
             else:
                 try:
                     log.debug('%d: Retrying (drop %d, skip %d) at offset %d' %

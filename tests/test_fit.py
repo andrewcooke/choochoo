@@ -5,7 +5,7 @@ from os.path import basename, join, exists
 from sys import stdout
 from unittest import TestCase
 
-from ch2.command.args import FIELDS, TABLES
+from ch2.command.args import FIELDS, TABLES, GREP
 from ch2.fit.format.read import filtered_records, filtered_tokens
 from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain, merge_duplicates
 from ch2.fit.profile.fields import DynamicField
@@ -148,6 +148,9 @@ class TestFit(TestCase, OutputMixin):
     def test_other_csv(self):
         self.standard_csv_dir('other', '*.fit', filters=[RNM_UNKNOWN, ROUND_DISTANCE])
 
+    def test_grep(self):
+        data = read_fit(self.log, join(self.test_dir, 'source/personal/2018-07-26-rec.fit'))
+        summarize(self.log, GREP, data, grep=['.*:.*speed>10'])
 
     # def test_bad_parsing(self):
     #     # data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/compressed-speed-distance.fit'))

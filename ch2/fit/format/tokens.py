@@ -1,5 +1,4 @@
 
-import datetime as dt
 from abc import abstractmethod
 from collections import defaultdict, Counter
 from re import sub
@@ -8,9 +7,8 @@ from struct import unpack, pack
 from ch2.stoats.names import S
 from .records import LazyRecord, merge_duplicates
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField, CompositeField
-from ..profile.types import timestamp_to_time, time_to_timestamp, BadTimestamp
+from ..profile.types import timestamp_to_time, time_to_timestamp
 from ...lib.data import WarnDict, tohex
-
 
 FIELD_DESCRIPTION = 206
 
@@ -228,8 +226,12 @@ class Defined(Token):
 
     def __parse_timestamp(self, data, state):
         field = self.definition.timestamp_field
-        state.timestamp = field.field.type.parse_type(data[field.start:field.finish], 1,
-                                                      self.definition.endian, state.timestamp)[0]
+        times = field.field.type.parse_type(data[field.start:field.finish], 1, self.definition.endian, state.timestamp,
+                                            check_bad=False)
+        if times:
+            state.timestamp = times[0]
+        else:
+            raise Exception('Could not parse timestamp')
 
     def parse_token(self, **options):
         return self.definition.message.parse_message(self.data, self.definition, self.timestamp,
@@ -568,7 +570,7 @@ class State:
     def timestamp(self, timestamp):
         if self.max_delta_t and self.__timestamp:
             if (timestamp - self.__timestamp).total_seconds() > self.max_delta_t:
-                raise Exception('Too large shift in timestamp (%f: %s/%s' %
+                raise Exception('Too large shift in timestamp (%.1fs: %s/%s' %
                                 ((timestamp - self.timestamp).total_seconds(), self.__timestamp, timestamp))
             if timestamp < self.__timestamp:
                 raise Exception('Timestep decreased (%s/%s)' % (self.__timestamp, timestamp))

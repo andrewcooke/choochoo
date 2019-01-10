@@ -125,3 +125,6 @@ class TestFixFit(TestCase, OutputMixin):
             with self.assertBinaryMatch(join(self.test_dir, 'source/python-fitparse-fix', file)) as output:
                 output.write(fix(self.log, bad, drop=True, max_drop_cnt=2))
 
+    def test_drop_bug(self):
+        bad = read_fit(self.log, join(self.test_dir, 'source/personal/2018-07-26-rec.fit'))
+        fix(self.log, bad, drop=True, max_delta_t=60, max_fwd_len=500)
