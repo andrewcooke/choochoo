@@ -2,7 +2,7 @@
 from sys import stdout
 
 from .args import PATH, DROP, OUTPUT, SLICES, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
-    MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION
+    MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION, MAX_DELTA_T
 from ..fit.fix import fix
 from ..fit.profile.profile import read_fit
 
@@ -51,7 +51,8 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
                warn=args[WARN], force=args[FORCE], validate=args[VALIDATE],
                header_size=args[HEADER_SIZE], protocol_version=args[PROTOCOL_VERSION], profile_version=args[PROFILE_VERSION],
                min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
-               max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN])
+               max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN],
+               max_delta_t=args[MAX_DELTA_T])
 
     log.info('Output ----------')
     if args[DISCARD]:

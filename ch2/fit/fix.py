@@ -2,12 +2,12 @@
 from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
 from ..command.args import ADD_HEADER, mm, HEADER_SIZE, PROFILE_VERSION, PROTOCOL_VERSION, MIN_SYNC_CNT, \
-    MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, MAX_FWD_LEN, FORCE, no
+    MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, MAX_FWD_LEN, FORCE, no, MAX_DELTA_T
 
 
 def fix(log, data, add_header=False, drop=False, slices=None, warn=False, force=True, validate=True, profile_path=None,
         header_size=None, protocol_version=None, profile_version=None,
-        min_sync_cnt=3, max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200):
+        min_sync_cnt=3, max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200, max_delta_t=None):
 
     if not force:
         log.warn('%s means that data are not completely parsed' % no(FORCE))
@@ -22,18 +22,19 @@ def fix(log, data, add_header=False, drop=False, slices=None, warn=False, force=
         data = prepend_header(log, data, header_size, protocol_version, profile_version)
 
     if drop:
-        slices = drop_data(log, State(log, types, messages), data, warn=warn, force=force,
+        slices = drop_data(log, State(log, types, messages, max_delta_t=max_delta_t), data, warn=warn, force=force,
                            min_sync_cnt=min_sync_cnt, max_record_len=max_record_len, max_drop_cnt=max_drop_cnt,
                            max_back_cnt=max_back_cnt, max_fwd_len=max_fwd_len)
 
     if slices:
         data = apply_slices(log, data, slices)
 
-    data = header_and_checksums(log, data, State(log, types, messages), header_size=header_size,
-                                protocol_version=protocol_version, profile_version=profile_version)
+    data = header_and_checksums(log, data, State(log, types, messages, max_delta_t=max_delta_t),
+                                header_size=header_size, protocol_version=protocol_version,
+                                profile_version=profile_version)
 
     if validate:
-        validate_data(log, data, State(log, types, messages), warn=warn, force=force)
+        validate_data(log, data, State(log, types, messages, max_delta_t=max_delta_t), warn=warn, force=force)
 
     log_data(log, 'Final', data)
 
@@ -118,16 +119,16 @@ def set_default(log, name, value, deflt):
     return value
 
 
-def header_and_checksums(log, data, state, header_size=None, protocol_version=None, profile_version=None):
+def header_and_checksums(log, data, initial_state, header_size=None, protocol_version=None, profile_version=None):
     log.info('Header and Checksums ----------')
     log_param(log, HEADER_SIZE, header_size)
     log_param(log, PROTOCOL_VERSION, protocol_version)
     log_param(log, PROFILE_VERSION, profile_version)
     data = fix_header(log, data,
                       header_size=header_size, protocol_version=protocol_version, profile_version=profile_version)
-    data = fix_checksum(log, data, state)
+    data = fix_checksum(log, data, initial_state.copy())
     data = fix_header(log, data)  # if length changed with checksum
-    data = fix_checksum(log, data, state)  # if length changed
+    data = fix_checksum(log, data, initial_state.copy())  # if length changed
     return data
 
 
@@ -212,7 +213,8 @@ def drop_data(log, initial_state, data, warn=False, force=True,
 
     log.info('Drop Data ----------')
     for (name, value) in [(MIN_SYNC_CNT, min_sync_cnt), (MAX_RECORD_LEN, max_record_len),
-                          (MAX_DROP_CNT, max_drop_cnt), (MAX_BACK_CNT, max_back_cnt), (MAX_FWD_LEN, max_fwd_len)]:
+                          (MAX_DROP_CNT, max_drop_cnt), (MAX_BACK_CNT, max_back_cnt),
+                          (MAX_FWD_LEN, max_fwd_len), (MAX_DELTA_T, initial_state.max_delta_t)]:
         log_param(log, name, value)
 
     slices = advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=warn, force=force,
@@ -232,10 +234,9 @@ def offset_tokens(state, data, offset=0, warn=False, force=True):
         yield offset, file_header
     while len(data) - offset > 2:
         token = token_factory(data[offset:], state)
-        if token.is_user:
-            record = token.parse_token(warn=warn)
-            if force:
-                record.force()
+        record = token.parse_token(warn=warn)
+        if force:
+            record.force()
         offset += len(token)
         yield offset, token
     # if we're here then there are 2 or less bytes remaining

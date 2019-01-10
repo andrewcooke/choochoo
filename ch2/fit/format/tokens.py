@@ -539,7 +539,7 @@ def token_factory(data, state):
                 return Definition(data, state)
         else:
             if header & 0x10:
-                state.log.warning('Reserved bit set')
+                state.log.debug('Reserved bit set')
             token = Data(data, state)
             if token.definition.global_message_no == FIELD_DESCRIPTION:
                 return DeveloperField(data, state)
@@ -549,21 +549,37 @@ def token_factory(data, state):
 
 class State:
 
-    def __init__(self, log, types, messages):
+    def __init__(self, log, types, messages, max_delta_t=None):
         self.log = log
         self.types = types
         self.messages = messages
+        self.max_delta_t = max_delta_t
         self.dev_fields = defaultdict(lambda: WarnDict(log, 'No definition for developer field %s'))
         self.definitions = WarnDict(log, 'No definition for local message type %s')
         self.definition_counter = Counter()
         self.accumulators = {}
-        self.timestamp = None
+        self.__timestamp = None
+
+    @property
+    def timestamp(self):
+        return self.__timestamp
+
+    @timestamp.setter
+    def timestamp(self, timestamp):
+        if self.max_delta_t and self.__timestamp:
+            if (timestamp - self.__timestamp).total_seconds() > self.max_delta_t:
+                raise Exception('Too large shift in timestamp (%f: %s/%s' %
+                                ((timestamp - self.timestamp).total_seconds(), self.__timestamp, timestamp))
+            if timestamp < self.__timestamp:
+                raise Exception('Timestep decreased (%s/%s)' % (self.__timestamp, timestamp))
+        # print('%s -> %s' % (self.__timestamp, timestamp))
+        self.__timestamp = timestamp
 
     def copy(self):
-        copy = State(self.log, self.types, self.messages)
+        copy = State(self.log, self.types, self.messages, self.max_delta_t)
         copy.dev_fields.update(self.dev_fields)
         copy.definitions.update(self.definitions)
         copy.definition_counter.update(self.definition_counter)
         copy.accumulators.update(self.accumulators)
-        copy.timestamp = self.timestamp
+        copy.__timestamp = self.__timestamp
         return copy

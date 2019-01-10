@@ -75,6 +75,7 @@ MAX_BACK_CNT = 'max-back-cnt'
 MAX_COLUMNS = 'max-columns'
 MAX_COLWIDTH = 'max-colwidth'
 MAX_DROP_CNT = 'max-drop-cnt'
+MAX_DELTA_T = 'max-delta-t'
 MAX_FWD_LEN = 'max-fwd-len'
 MAX_ROWS = 'max-rows'
 MAX_RECORD_LEN = 'max-record-len'
@@ -312,6 +313,8 @@ def parser():
                      help='display width for some formats')
     fit.add_argument(mm(NO_VALIDATE), action='store_true',
                      help='do not validate checksum, length')
+    fit.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
+                     help='max number of seconds between timestamps')
     fit.add_argument(mm(NAME), action='store_true',
                      help='print file name')
     fit.add_argument(mm(NOT), action='store_true',
@@ -359,6 +362,8 @@ def parser():
                          help='maximum number of readable records to discard in a single gap')
     fix_fit.add_argument(mm(MAX_FWD_LEN), action='store', type=int, metavar='N', default=200,
                          help='maximum number of bytes to drop in a single gap')
+    fix_fit.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
+                         help='max number of seconds between timestamps')
     fix_fit.set_defaults(command=FIX_FIT)
 
     garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')

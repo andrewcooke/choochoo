@@ -1,11 +1,11 @@
-from ch2.fit.format.records import merge_duplicates
+
 from .tokens import State, FileHeader, token_factory, Checksum
 from ..profile.profile import read_profile
 
 
-def parse_data(log, data, types, messages, no_validate=False):
+def parse_data(log, data, types, messages, no_validate=False, max_delta_t=None):
 
-    state = State(log, types, messages)
+    state = State(log, types, messages, max_delta_t=max_delta_t)
 
     def generator():
         file_header = FileHeader(data)
@@ -23,10 +23,10 @@ def parse_data(log, data, types, messages, no_validate=False):
     return state, generator()
 
 
-def filtered_tokens(log, data, after=0, limit=-1, warn=False, no_validate=False, profile_path=None):
+def filtered_tokens(log, data, after=0, limit=-1, warn=False, no_validate=False, max_delta_t=None, profile_path=None):
 
     types, messages = read_profile(log, warn=warn, profile_path=profile_path)
-    state, tokens = parse_data(log, data, types, messages, no_validate=no_validate)
+    state, tokens = parse_data(log, data, types, messages, no_validate=no_validate, max_delta_t=max_delta_t)
 
     def generator():
         for i, (offset, token) in enumerate(tokens):
@@ -37,11 +37,11 @@ def filtered_tokens(log, data, after=0, limit=-1, warn=False, no_validate=False,
 
 
 def filtered_records(log, data, after=0, limit=-1, record_names=None, warn=False, no_validate=False, internal=False,
-                     profile_path=None, pipeline=None):
+                     max_delta_t=None, profile_path=None, pipeline=None):
 
     if pipeline is None: pipeline = []
     types, messages = read_profile(log, warn=warn, profile_path=profile_path)
-    state, tokens = parse_data(log, data, types, messages, no_validate=no_validate)
+    state, tokens = parse_data(log, data, types, messages, no_validate=no_validate, max_delta_t=max_delta_t)
 
     def generator():
         for i, (offset, token) in enumerate(tokens):
