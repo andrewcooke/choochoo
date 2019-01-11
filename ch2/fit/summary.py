@@ -12,8 +12,9 @@ from ..lib.io import terminal_width
 from ..lib.utils import unique
 
 
-def summarize(log, format, data, all_fields=False, all_messages=False, internal=False, after_bytes=0, limit_bytes=-1,
-              after_records=0, limit_records=-1, messages=None, warn=False, profile_path=None, grep=None,
+def summarize(log, format, data, all_fields=False, all_messages=False, internal=False,
+              after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
+              messages=None, warn=False, profile_path=None, grep=None,
               name_file=None, invert=False, match=1, context=False, no_validate=False, max_delta_t=None, width=None,
               output=stdout):
 
@@ -69,24 +70,28 @@ def summarize(log, format, data, all_fields=False, all_messages=False, internal=
         raise Exception('Bad format: %s' % format)
 
 
-def summarize_tokens(log, data, after_bytes=0, limit_bytes=-1, after_records=0, limit_records=-1,
+def summarize_tokens(log, data, after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                      warn=False, no_validate=False, max_delta_t=None, profile_path=None, output=stdout):
+
     types, messages, tokens = \
         filtered_tokens(log, data, 
                         after_bytes=after_bytes, limit_bytes=limit_bytes,
                         after_records=after_records, limit_records=limit_records,
                         warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path)
+
     for index, offset, token in tokens:
         print('%03d %05d %s' % (index, offset, token), file=output)
 
 
-def summarize_fields(log, data, after_bytes=0, limit_bytes=-1, after_records=0, limit_records=-1, 
+def summarize_fields(log, data, after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                      warn=False, no_validate=False, max_delta_t=None, profile_path=None, output=stdout):
+
     types, messages, tokens = \
         filtered_tokens(log, data, 
                         after_bytes=after_bytes, limit_bytes=limit_bytes, 
                         after_records=after_records, limit_records=limit_records,
                         warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path)
+
     for index, offset, token in tokens:
         print('%03d %05d %s' % (index, offset, token), file=output)
         for line in token.describe_fields(types):
@@ -94,30 +99,34 @@ def summarize_fields(log, data, after_bytes=0, limit_bytes=-1, after_records=0, 
 
 
 def summarize_records(log, data, all_fields=False, all_messages=False, internal=False, 
-                      after_bytes=0, limit_bytes=-1, after_records=0, limit_records=-1, 
+                      after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                       messages=None, warn=False, no_validate=False, max_delta_t=None, profile_path=None, 
                       width=None, output=stdout):
+
     types, messages, records = \
         filtered_records(log, data, 
                          after_bytes=after_bytes, limit_bytes=limit_bytes, 
                          after_records=after_records, limit_records=limit_records,
                          record_names=messages, warn=warn, no_validate=no_validate, internal=internal,
                          profile_path=profile_path, max_delta_t=max_delta_t, pipeline=[merge_duplicates])
+
     records = list(records)
     print(file=output)
     pprint_as_dicts(records, all_fields, all_messages, width=width, output=output)
 
 
 def summarize_tables(log, data, all_fields=False, all_messages=False, internal=False, 
-                     after_bytes=0, limit_bytes=-1, after_records=0, limit_records=-1, 
+                     after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                      messages=None, warn=False, no_validate=False, max_delta_t=None, profile_path=None, 
                      width=None, output=stdout):
+
     types, messages, records = \
         filtered_records(log, data, 
-                         after_bytes=after_bytes, limit_bytes=-limit_bytes, 
+                         after_bytes=after_bytes, limit_bytes=limit_bytes,
                          after_records=after_records, limit_records=limit_records,
                          record_names=messages, warn=warn, no_validate=no_validate, internal=internal,
                          profile_path=profile_path, max_delta_t=max_delta_t, pipeline=[merge_duplicates])
+
     records = list(record[2] for record in records)
     counts = Counter(record.identity for record in records)
     small, large = partition(records, counts)
@@ -177,7 +186,7 @@ class Matcher:
 
 
 def summarize_grep(log, data, grep, name_file=None, match=1, context=False, invert=False,
-                   after_bytes=0, limit_bytes=-1, after_records=0, limit_records=-1,
+                   after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                    warn=False, no_validate=False, max_delta_t=None, profile_path=None, width=80, output=stdout):
 
     types, messages, records = \
@@ -185,15 +194,19 @@ def summarize_grep(log, data, grep, name_file=None, match=1, context=False, inve
                          max_delta_t=max_delta_t, pipeline=[merge_duplicates])
     matchers = [Matcher(pattern) for pattern in grep]
     counts = defaultdict(lambda: 0)
-    first, first_record = True, 0 if (after_records is None and after_bytes is None) else None
+    first = True
+    first_record = 0 if (after_records is None) else None
+    first_bytes = 0 if (after_bytes is None) else None
 
     try:
         for index, offset, record in records:
-            if first_record is None and ((after_records is not None and index >= after_records) or
-                                         (after_bytes is not None and offset >= after_bytes)):
+            if (first_record is None and (after_records is not None and index >= after_records)) or \
+                    (first_bytes is None and (after_bytes is not None and offset >= after_bytes)):
                 first_record = index
-            if first_record is not None:
-                if index - first_record < limit_records or limit_records < 0:
+                first_bytes = offset
+            if first_record is not None or first_bytes is not None:
+                if (first_record is not None and (limit_records < 0 or i - first_record < limit_records)) and \
+                        (first_bytes is not None and (limit_bytes < 0 or offset - first_bytes < limit_bytes)):
                     record = record.as_dict(fix_degrees)
                     for name, values_units in sorted(record.data.items()):
                         if values_units and values_units[0]:

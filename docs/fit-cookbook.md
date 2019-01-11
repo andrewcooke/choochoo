@@ -64,8 +64,6 @@ problems.  Note that using `-v 2` reduces the logging to `ERROR` level
 only (with `-v 0` we would see no logging, just the file names).
 
     > ch2 -v 2 fix-fit --name-bad *.fit
-       ERROR: No base type for number 134
-    20170518-191602-1740899583.fit
        ERROR: Data size incorrect (1542/757+12+2=771)
     activity-activity-filecrc.fit
        ERROR: Bad checksum (a1d5/b1d5)
@@ -78,10 +76,6 @@ only (with `-v 0` we would see no logging, just the file names).
     activity-settings-nodata.fit
        ERROR: Data size incorrect (768/757+12+2=771)
     activity-unexpected-eof.fit
-       ERROR: No base type for number 132
-    developer-types-sample.fit
-       ERROR: No base type for number 133
-    elemnt-bolt-no-application-id-inside-developer-data-id.fit
        ERROR: Data size incorrect (88904/58949+14+2=58965)
     event_timestamp.fit
 

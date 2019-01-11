@@ -29,19 +29,19 @@ class TestFixFit(TestCase, OutputMixin):
 
     def test_null_drop(self):
         good = read_fit(self.log, join(self.test_dir, 'source/personal/2018-08-27-rec.fit'))
-        same = fix(self.log, bytearray(good), drop=True)
+        same = fix(self.log, bytearray(good), drop=True, fix_checksum=True, fix_header=True)
         self.assertTrue(good is not same)  # check making a copy
         self.assertEqual(good, same)
 
     def test_null_slices(self):
         good = read_fit(self.log, join(self.test_dir, 'source/personal/2018-08-27-rec.fit'))
-        same = fix(self.log, bytearray(good), slices=':')
+        same = fix(self.log, bytearray(good), slices=':', fix_checksum=True, fix_header=True)
         self.assertTrue(good is not same)  # check making a copy
         self.assertEqual(good, same)
 
     def test_drop(self):
         bad = read_fit(self.log, join(self.test_dir, 'source/other/8CS90646.FIT'))
-        fixed = fix(self.log, bad, drop=True)
+        fixed = fix(self.log, bad, drop=True, fix_checksum=True, fix_header=True)
         self.assertTrue(len(fixed) < len(bad))
         with self.assertTextMatch('data/test/target/other/TestFixFit.test_drop') as output:
             summarize(self.log, RECORDS, fixed, output=output)
@@ -49,34 +49,35 @@ class TestFixFit(TestCase, OutputMixin):
     def test_slices(self):
         bad = read_fit(self.log, join(self.test_dir, 'source/other/8CS90646.FIT'))
         with self.assertRaisesRegex(Exception, 'Error fixing checksum'):
-            fix(self.log, bad, slices=':1000')  # first 1k bytes only
+            fix(self.log, bad, slices=':1000', fix_checksum=True, fix_header=True)  # first 1k bytes only
 
     def test_no_last_byte(self):
         good = read_fit(self.log, join(self.test_dir, 'source/personal/2018-08-27-rec.fit'))
-        same = fix(self.log, bytearray(good), drop=True)
+        same = fix(self.log, bytearray(good), drop=True, fix_checksum=True, fix_header=True)
         self.assertEqual(same, good)
-        fixed = fix(self.log, bytearray(good)[:-1], drop=True)
+        fixed = fix(self.log, bytearray(good)[:-1], drop=True, fix_checksum=True, fix_header=True)
         self.assertEqual(fixed, good)
-        fixed = fix(self.log, bytearray(good)[:-2], drop=True)
+        fixed = fix(self.log, bytearray(good)[:-2], drop=True, fix_checksum=True, fix_header=True)
         self.assertEqual(fixed, good)
 
     def test_no_header(self):
         good = read_fit(self.log, join(self.test_dir, 'source/personal/2018-08-27-rec.fit'))
-        same = fix(self.log, bytearray(good), drop=True)
+        same = fix(self.log, bytearray(good), drop=True, fix_checksum=True)
         self.assertTrue(good is not same)  # check making a copy
         self.assertEqual(same, good)
         header = FileHeader(good)
         with self.assertRaisesRegex(Exception, 'Error fixing checksum'):
-            fix(self.log, bytearray(good)[len(header):])
-        fixed = fix(self.log, bytearray(good)[len(header):], add_header=True, drop=True)
+            fix(self.log, bytearray(good)[len(header):], fix_checksum=True, fix_header=True)
+        fixed = fix(self.log, bytearray(good)[len(header):],
+                    add_header=True, drop=True, fix_checksum=True, fix_header=True)
         self.assertEqual(good, fixed)
-        fixed = fix(self.log, bytearray(good), add_header=True, slices=':14,28:')
+        fixed = fix(self.log, bytearray(good), add_header=True, slices=':14,28:', fix_checksum=True, fix_header=True)
         self.assertEqual(good, fixed)
 
     def test_other_header(self):
         bad = read_fit(self.log, join(self.test_dir, 'source/other/8CS90646.FIT'))
         old_header = FileHeader(bad)
-        fixed = fix(self.log, bytearray(bad), drop=True, header_size=27)
+        fixed = fix(self.log, bytearray(bad), drop=True, header_size=27, fix_checksum=True, fix_header=True)
         new_header = FileHeader(fixed)
         self.assertEqual(new_header.header_size, 27)
         self.assertEqual(new_header.protocol_version, old_header.protocol_version)
@@ -84,11 +85,11 @@ class TestFixFit(TestCase, OutputMixin):
 
     def test_other_bad(self):
         bad = read_fit(self.log, join(self.test_dir, 'source/other/2018-04-15-09-18-20.fit'))
-        fixed = fix(self.log, bytearray(bad), drop=True)
+        fixed = fix(self.log, bytearray(bad), drop=True, fix_checksum=True, fix_header=True)
         with self.assertTextMatch(join(self.test_dir, 'target/other/TestFixFit.test_unknown_bad:1')) as output:
             summarize(self.log, RECORDS, fixed, output=output)
         bad = read_fit(self.log, join(self.test_dir, 'source/other/2018-02-24-10-04-10.fit'))
-        fixed = fix(self.log, bytearray(bad), drop=True)
+        fixed = fix(self.log, bytearray(bad), drop=True, fix_checksum=True, fix_header=True)
         with self.assertTextMatch(join(self.test_dir, 'target/other/TestFixFit.test_unknown_bad:2')) as output:
             summarize(self.log, RECORDS, fixed, output=output)
 
@@ -105,7 +106,7 @@ class TestFixFit(TestCase, OutputMixin):
                      ):
             bad = read_fit(self.log, join(self.test_dir, 'source/python-fitparse', file))
             with self.assertBinaryMatch(join(self.test_dir, 'source/python-fitparse-fix', file)) as output:
-                output.write(fix(self.log, bad))
+                output.write(fix(self.log, bad, fix_checksum=True, fix_header=True))
 
     def test_pyfitparse_fix_drop(self):
         for file in ('activity-unexpected-eof.fit',  # data size incorrect
@@ -114,7 +115,7 @@ class TestFixFit(TestCase, OutputMixin):
                      ):
             bad = read_fit(self.log, join(self.test_dir, 'source/python-fitparse', file))
             with self.assertBinaryMatch(join(self.test_dir, 'source/python-fitparse-fix', file)) as output:
-                output.write(fix(self.log, bad, drop=True))
+                output.write(fix(self.log, bad, drop=True, fix_checksum=True, fix_header=True))
 
     def test_pyfitparse_fix_drop_2(self):
         for file in ('event_timestamp.fit',  # data size incorrect
@@ -123,8 +124,8 @@ class TestFixFit(TestCase, OutputMixin):
                      ):
             bad = read_fit(self.log, join(self.test_dir, 'source/python-fitparse', file))
             with self.assertBinaryMatch(join(self.test_dir, 'source/python-fitparse-fix', file)) as output:
-                output.write(fix(self.log, bad, drop=True, max_drop_cnt=2))
+                output.write(fix(self.log, bad, drop=True, max_drop_cnt=2, fix_checksum=True, fix_header=True))
 
     def test_drop_bug(self):
         bad = read_fit(self.log, join(self.test_dir, 'source/personal/2018-07-26-rec.fit'))
-        fix(self.log, bad, drop=True, max_delta_t=60, max_fwd_len=500)
+        fix(self.log, bad, drop=True, fix_checksum=True, fix_header=True, max_delta_t=60, max_fwd_len=500)

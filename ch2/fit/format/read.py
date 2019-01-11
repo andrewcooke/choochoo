@@ -63,7 +63,7 @@ def filtered_tokens(log, data,
 
 
 def filtered_records(log, data,
-                     after_bytes=0, limit_bytes=-1, after_records=0, limit_records=-1,
+                     after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                      record_names=None, warn=False, no_validate=False, internal=False, max_delta_t=None,
                      profile_path=None, pipeline=None):
 

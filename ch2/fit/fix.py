@@ -276,7 +276,7 @@ def slurp(log, state, data, initial_offset, warn=False, force=True, max_record_l
         log.info('Read complete from %d' % initial_offset)
         return offsets_and_states, True
     except Exception as e:
-        log.debug('%s at %d' % (e, offset))
+        log.debug(e)
         log.debug('Reading from offset %s found %d tokens before %d' %
                   (initial_offset, len(offsets_and_states), offset))
         return offsets_and_states, False
@@ -321,7 +321,7 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
             log.debug('Searching forwards from offset %d after dropping %d records' % (offset, back_cnt-1))
             if offset + delta >= len(data):  # > for when a delta of 0 would have done
                 log.info('Exhausted data')
-                return [slice(initial_offset, len(data)-2)]
+                return [slice(initial_offset, offset)]
             else:
                 try:
                     log.debug('%d: Retrying (drop %d, skip %d) at offset %d' %
