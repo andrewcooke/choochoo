@@ -564,39 +564,38 @@ and type.
 
 #### Example Usage
 
-    ch2 -v 0 fit --grep '.*'
+    ch2 -v 0 fit --grep '.*' -- myfile.fit
 
 Prints `MSG:FLD=VAL` entries for every value in the file.
 
-    ch2 -v 0 ./**/*.fit --match 0 --grep '.*:sport=cycling' --name
+    ch2 -v 0 fit *.fit --match 0 --grep '.*:sport=cycling' --name
 
 List file names (`--name`) only (`--match 0` so 0 entries displayed)
 that contain a `sport` field with the value `cycling`.
 
-    ch2 -v 0 ./**/*.fit --match 0 --limit 10 --grep '.*:sport=cycling' --not
+    ch2 -v 0 fit *.fit --match 0 --limit-records 10 --grep '.*:sport=cycling' --not --name
 
 List files that *do not* contain a `cycling` value.  For efficiency
 (but at the possible risk of missing some matches) only the first 10
 records are examined.
 
-    ch2 fit --limit 10 --name --grep '.*:timestamp=2018-09-0[5-7]' \
-      -- ~/archive/fit/**/*.fit
+    ch2 fit --limit 10 --name --grep '.*:timestamp~2018-09-0[5-7]' -- *.fit
 
 Finds files that have timestamps between 2018-09-05 and 2018-09-07.
 
 #### Format Description
 
-The output format is verbose, so not useful for examining whole files,
-but the search (using regular expressions) allows you to check for
-specific values in a file, or to identify files that meet a certain
-criteria.
+The default output format is not compact enough for examining whole
+files, but the search (using regular expressions) allows you to check
+for specific values in a file, or to identify files that meet a
+certain criteria.
+
+An (even) more verbose option is available with `--context` which
+displays the entire record (same format as `--records`).
 
 Note that for this format the file name is printed *after* any
 matches.  Also, the file name is only printed if *all* matches have
-matched.  Finally, the `after`/`limit` counts and decision on whether
-all patterns have matched are based on the *patterns* and not the
-entries (a pattern may match multiple entries - each match is
-counted).
+matched.
 
 #### Example Output
 
@@ -605,15 +604,11 @@ counted).
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000953_tap-sync-31410-8dbc6f38af4ddbecede6e72cdd95f3cb.fit
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000098_tap-sync-31410-1721f3de088eae17e31d3cea3042f2c1.fit
 
-
     > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --name 
-
     sport:sport=cycling
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_6200097899_2016-08-20-mkt.fit
-
     lap:sport=cycling
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000953_tap-sync-31410-8dbc6f38af4ddbecede6e72cdd95f3cb.fit
-
     lap:sport=cycling
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000098_tap-sync-31410-1721f3de088eae17e31d3cea3042f2c1.fit
 
@@ -702,11 +697,6 @@ have to do the work of decoding all the other message types.
 The code is validated against the examples provided in the ANT SDK and
 has the following known limtations:
 
-* Accumulated fields are broken.
-
-* The code cannot reproduce the values for the `timer_trigger` fields
-  in the Activity example.
-
 * The order of fields (within a single message) returned is not
   guaranteed to match the order of fields in the raw data or the order
   used in the CSV examples.
@@ -723,4 +713,3 @@ has the following known limtations:
 * The CSV examples in the FIT SDK include a title row and empty fields
   as padding on some lines.  This is not duplicated by the CSV format
   output from this library.
-  

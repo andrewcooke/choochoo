@@ -135,7 +135,7 @@ class Matcher:
                                         (match.group(2), match.group(3)))
                     self.value = lambda v: v == match.group(3)
         else:
-            self.field = pattern
+            self.field = compile(pattern).match
             self.value = None
 
     def __build_compare(self, op, value):

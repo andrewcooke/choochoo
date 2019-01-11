@@ -192,7 +192,7 @@ the last of these is for regular expression matching on the value.
 
 ## Find FIT Files with Values
 
-This has got us curious.  Do we have any rides where we exceed 17m/s?
+This has made us curious.  Do we have any rides where we exceed 17m/s?
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
