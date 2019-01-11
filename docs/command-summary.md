@@ -140,8 +140,6 @@ parser can decide where patterns finish and paths start.
 
 Try to fix a corrupted fit file.
 
-By default, the length and checksum are updated.
-
 If `--header` is specified then a new header is prepended at the start of the
 data.
 
@@ -151,22 +149,26 @@ used to construct a new file.
 If `--drop` is specified then the program tries to find appropriate slices by
 discarding data until all the remaining data can be parsed.
 
-The length and checksums are updated as appropriate.
+If `--fix-header` is specified then the header is corercted.
+
+If `--fix-checksum` is specified then the checksum is corrected.
 
 ### Examples
 
-    > ch2 fix-fit FILE.FIT --slices 1000:
+    > ch2 fix-fit FILE.FIT --slices 1000: --fix-header --fix-checksum
 
 Will attempt to drop the first 1000 bytes from the given file.
 
-    > ch2 fix-fit data/tests/personal/8CS90646.FIT --drop --discard
+    > ch2 fix-fit data/tests/personal/8CS90646.FIT --drop --fix-header
+    --fix-checksum
 
 Will attempt to fix the given file (in the test data from git).
 
     > ch2 fix-fit FILE.FIT --add-header --header-size 14 --slices :14,28:
+    --fix-header --fix-checksum
 
 Will prepend a new 14 byte header, drop the old 14 byte header, and fix the
-header values.    
+header and checksum values.    
 
 
 
