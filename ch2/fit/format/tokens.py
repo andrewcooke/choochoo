@@ -264,10 +264,7 @@ class DeveloperField(Defined):
         record = self.parse_token().force()
         developer_index = record.attr.developer_data_index[0][0]
         number = record.attr.field_definition_number[0][0]
-        # todo - we don't really need to convert name to type just to extract name below
-        base_type = state.types.base_types[
-            state.types.profile_to_type('fit_base_type').profile_to_internal(
-                record.attr.fit_base_type_id[0][0])]
+        base_type = state.types.profile_to_type(record.attr.fit_base_type_id[0][0])
         # todo - more fields (optional)
         name = record.attr.field_name[0][0]
         units = record.attr.units[0][0]

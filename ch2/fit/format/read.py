@@ -1,4 +1,4 @@
-
+from ch2.lib.data import tohex
 from .tokens import State, FileHeader, token_factory, Checksum
 from ..profile.profile import read_profile
 
@@ -8,19 +8,36 @@ def parse_data(log, data, types, messages, no_validate=False, max_delta_t=None):
     state = State(log, types, messages, max_delta_t=max_delta_t)
 
     def generator():
-        file_header = FileHeader(data)
-        yield 0, file_header
-        offset = len(file_header)
-        file_header.validate(data, log, quiet=no_validate)
-        while len(data) - offset > 2:
-            token = token_factory(data[offset:], state)
-            yield offset, token
-            offset += len(token)
-        checksum = Checksum(data[offset:])
-        yield offset, checksum
-        checksum.validate(data, log, quiet=no_validate)
+        offset = 0
+        try:
+            file_header = FileHeader(data[offset:])
+            yield offset, file_header
+            offset = len(file_header)
+            file_header.validate(data, log, quiet=no_validate)
+            while len(data) - offset > 2:
+                token = token_factory(data[offset:], state)
+                yield offset, token
+                offset += len(token)
+            checksum = Checksum(data[offset:])
+            yield offset, checksum
+            checksum.validate(data, log, quiet=no_validate)
+        except Exception as e:
+            log.warning('"%s" at offset %d' % (e, offset))
+            dump(log, data, offset)
+            raise
 
     return state, generator()
+
+
+def dump(log, data, offset, rows=3, blocks=6, block=4):
+    for row in range(rows):
+        line = '%06d' % offset
+        for b in range(blocks):
+            line += ' '
+            line += tohex(data[offset:offset+block])
+            offset += block
+        log.info(line)
+        if offset >= len(data): return
 
 
 def filtered_tokens(log, data,

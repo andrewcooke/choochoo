@@ -156,6 +156,7 @@ def process_header(log, data, header_size=None, protocol_version=None, profile_v
 
 
 def process_checksum(log, data, state):
+    offset = 0
     try:
         offset = len(FileHeader(data))
         while len(data) - offset > 2:
@@ -171,7 +172,7 @@ def process_checksum(log, data, state):
         return data
     except Exception as e:
         log.error(e)
-        raise Exception('Error fixing checksum')
+        raise Exception('Error fixing checksum at offset %d' % offset)
 
 
 def apply_slices(log, data, slices):
@@ -239,20 +240,23 @@ def offset_tokens(state, data, offset=0, warn=False, force=True):
     '''
     this yields the offsets *after* the tokens (unlike tokens() in the read module).
     '''
-    if not offset:
-        file_header = FileHeader(data)
-        offset = len(file_header)
-        yield offset, file_header
-    while len(data) - offset > 2:
-        token = token_factory(data[offset:], state)
-        record = token.parse_token(warn=warn)
-        if force:
-            record.force()
-        offset += len(token)
-        yield offset, token
-    # if we're here then there are 2 or less bytes remaining
-    if len(data) - offset != 2:
-        raise Exception('Misaligned checksum')
+    try:
+        if not offset:
+            file_header = FileHeader(data[offset:])
+            offset = len(file_header)
+            yield offset, file_header
+        while len(data) - offset > 2:
+            token = token_factory(data[offset:], state)
+            record = token.parse_token(warn=warn)
+            if force:
+                record.force()
+            offset += len(token)
+            yield offset, token
+        # if we're here then there are 2 or less bytes remaining
+        if len(data) - offset != 2:
+            raise Exception('Misaligned checksum')
+    except Exception as e:
+        raise Exception('Error (%s) at offset %d' % (e, offset))
 
 
 def slurp(log, state, data, initial_offset, warn=False, force=True, max_record_len=None):

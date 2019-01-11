@@ -155,9 +155,10 @@ class TestFit(TestCase, OutputMixin):
     # def test_bad_parsing(self):
     #     # data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/compressed-speed-distance.fit'))
     #     # data = read_fit(self.log, join('/home/andrew', 'archive/fit/monitor/28694037944.fit'))
-    #     data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse-fix/activity-activity-filecrc.fit'))
+    #     # data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse-fix/activity-activity-filecrc.fit'))
+    #     data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/20170518-191602-1740899583.fit'))
     #     types, messages, tokens = filtered_tokens(self.log, data, profile_path=self.profile_path)
     #     for i, offset, token in tokens:
     #         result = token.parse_token().force(merge_duplicates)
-    #         if i == 32:
+    #         if i == 33:
     #             print()
