@@ -68,6 +68,7 @@ INTERNAL = 'internal'
 LABEL = 'label'
 LATITUDE = 'latitude'
 LIKE = 'like'
+LIMIT_BYTES = 'limit-bytes'
 LIMIT_RECORDS = 'limit-records'
 LOGS = 'logs'
 LONGITUDE = 'longitude'
@@ -298,12 +299,14 @@ def parser():
                             help='show low-level tokens')
     fit_format.add_argument(mm(FIELDS), action='store_const', dest=FORMAT, const=FIELDS,
                             help='show low-level fields (within tokens)')
-    fit.add_argument(mm(AFTER_BYTES), action='store', type=int, metavar='N', default=None,
-                     help='skip initial bytes')
     fit.add_argument(mm(AFTER_RECORDS), action='store', type=int, metavar='N', default=None,
                      help='skip initial records')
     fit.add_argument(mm(LIMIT_RECORDS), action='store', type=int, metavar='N', default=-1,
                      help='limit number of records displayed')
+    fit.add_argument(mm(AFTER_BYTES), action='store', type=int, metavar='N', default=None,
+                     help='skip initial bytes')
+    fit.add_argument(mm(LIMIT_BYTES), action='store', type=int, metavar='N', default=-1,
+                     help='limit number of bytes displayed')
     fit.add_argument(mm(INTERNAL), action='store_true',
                      help='display internal messages')
     fit.add_argument(mm(ALL_MESSAGES), action='store_true',
