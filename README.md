@@ -70,6 +70,13 @@ extensible.*
 
 ## Latest Changes
 
+### v0.12.0
+
+Extend `ch2 fix-fit` functionality (can scan a directory and print
+file names of god or bad files).  Required a change in parameters -
+now you must explicitly add `--fix-header` and `--fix-checksum` if you
+want to do that.
+
 ### v0.11.0
 
 Parsing of "accumulated" fields in FIT files plus a bunch more fixes
