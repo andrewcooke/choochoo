@@ -3,6 +3,7 @@
 
 * [Installing Choocoo](#installing-choochoo)
 * [Check a FIT File](#check-a-fit-file)
+* [Check Many FIT Files](#check-many-fit-files)
 * [Check Timestamps in a FIT File](#check-timestamps-in-a-fit-file)
 * [Remove a Bad Timestamp from a FIT File](#remove-a-bad-timestamp-from-a-fit-file)
 * [See What Data are Dropped](#see-what-data-are-dropped)
@@ -38,6 +39,20 @@ sed 's/^/    /' $out
 If there are no warnings or errors (as above) then the file is OK (as
 far as my code can tell - to check timestamps see the next recipe).
 
+## Check Many FIT Files
+
+Maybe we have a collection of files and we want to know which have
+problems.  Note that using `-v 2` reduces the logging to `ERROR` level
+only (with `-v 0` we would see no logging, just the file names).
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 -v 2 fix-fit --name-bad *.fit"
+dev/ch2 -v 2 fix-fit data/test/source/python-fitparse/*.fit --name-bad > $out 2>&1
+sed -i 's|data/test/source/python-fitparse/||g' $out
+sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
+sed 's/^/    /' $out
+
 ## Check Timestamps in a FIT File
 
 To check that the timestamp never increases by more than 60s between
@@ -51,7 +66,7 @@ sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed 's/^/    /' $out
 
-Here we can see that there was an jump of 273 seconds.
+Here we can see that there was a jump of 273 seconds.
 
 ## Remove a Bad Timestamp from a FIT File
 
@@ -67,8 +82,8 @@ The command to drop data is (see notes below):
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --max-fwd-len 500 -o fixed.fit"
-dev/ch2 fix-fit data/test/source/personal/2018-07-26-rec.fit --max-delta-t 60 --drop --max-fwd-len 500 -o /tmp/fixed.fit > $out 2>&1
+echo "    > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit"
+dev/ch2 fix-fit data/test/source/personal/2018-07-26-rec.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o /tmp/fixed.fit > $out 2>&1
 sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed -i 's|/tmp/fixed.fit|fixed.fit|g' $out
@@ -147,8 +162,8 @@ follows:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fix-fit myfile.fit --slices :05069,05317: -o sliced.fit"
-dev/ch2 fix-fit data/test/source/personal/2018-07-26-rec.fit --slices :05069,05317: -o /tmp/sliced.fit > $out 2>&1
+echo "    > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit"
+dev/ch2 fix-fit data/test/source/personal/2018-07-26-rec.fit --slices :05069,05317: --fix-header --fix-checksum -o /tmp/sliced.fit > $out 2>&1
 sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed -i 's|/tmp/sliced.fit|sliced.fit|g' $out

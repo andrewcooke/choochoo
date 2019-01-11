@@ -56,10 +56,12 @@ F = 'f'
 FAST = 'fast'
 FIELDS = 'fields'
 FINISH = 'finish'
+FIX_CHECKSUM = 'fix-checksum'
+FIX_HEADER = 'fix-header'
 FORMAT = 'format'
 FORCE = 'force'
-FTHR = 'fthr'
 FORCE, F = 'force', 'f'
+FTHR = 'fthr'
 GREP = 'grep'
 GROUP = 'group'
 HEADER_SIZE = 'header-size'
@@ -89,6 +91,8 @@ MONITOR_JOURNALS = 'monitor-journals'
 MONTH = 'month'
 MONTHS = 'months'
 NAME = 'name'
+NAME_BAD = 'name-bad'
+NAME_GOOD = 'name-good'
 NAMES = 'names'
 NO_DIARY = 'no-diary'
 NO_VALIDATE = 'no-validate'
@@ -334,46 +338,56 @@ def parser():
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
 
     fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')
-    fix_fit.add_argument(PATH, action='store', metavar='PATH',
+    fix_fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file')
     fix_fit.add_argument(m(W), mm(WARN), action='store_true',
                          help='additional warning messages')
-    fix_fit_output = fix_fit.add_mutually_exclusive_group()
+    fix_fit_output = fix_fit.add_argument_group(title='output (default hex to stdout)').add_mutually_exclusive_group()
     fix_fit_output.add_argument(m(O), mm(OUTPUT), action='store',
                                 help='output file for fixed data (otherwise, stdout)')
     fix_fit_output.add_argument(mm(DISCARD), action='store_true',
                                 help='discard output (otherwise, stdout)')
     fix_fit_output.add_argument(mm(RAW), action='store_true',
                                 help='raw binary to stdout (otherwise, hex encoded)')
-    fix_fit.add_argument(mm(ADD_HEADER), action='store_true',
-                         help='preprend a new header')
-    fix_fit.add_argument(mm(HEADER_SIZE), action='store', type=int,
-                         help='header size (validation and/or new header)')
-    fix_fit.add_argument(mm(PROTOCOL_VERSION), action='store', type=int,
-                         help='protocol version (validation and/or new header)')
-    fix_fit.add_argument(mm(PROFILE_VERSION), action='store', type=int,
-                         help='profile version (validation and/or new header)')
-    fix_fit_stage = fix_fit.add_mutually_exclusive_group()
+    fix_fit_output.add_argument(mm(NAME_BAD), action='store_false', dest=NAME, default=None,
+                                help='print file name if bad')
+    fix_fit_output.add_argument(mm(NAME_GOOD), action='store_true', dest=NAME, default=None,
+                                help='print file name if good')
+    fix_fit_process = fix_fit.add_argument_group(title='processing (default disabled)')
+    fix_fit_process.add_argument(mm(ADD_HEADER), action='store_true',
+                                 help='preprend a new header')
+    fix_fit_stage = fix_fit_process.add_mutually_exclusive_group()
     fix_fit_stage.add_argument(mm(DROP), action='store_true',
                                help='search for data that can be dropped to give a successful parse')
     fix_fit_stage.add_argument(mm(SLICES), action='store', metavar='A:B,C:D,...',
                                help='data slices to pick')
-    fix_fit.add_argument(no(FORCE), action='store_false', dest=FORCE,
-                         help='don\'t parse record contents')
-    fix_fit.add_argument(no(VALIDATE), action='store_false', dest=VALIDATE,
-                         help='don\'t validate the final data')
-    fix_fit.add_argument(mm(MIN_SYNC_CNT), action='store', type=int, metavar='N', default=3,
-                         help='minimum number of records to read for synchronization')
-    fix_fit.add_argument(mm(MAX_RECORD_LEN), action='store', type=int, metavar='N', default=None,
-                         help='maximum record length')
-    fix_fit.add_argument(mm(MAX_DROP_CNT), action='store', type=int, metavar='N', default=1,
-                         help='maximum number of gaps to drop')
-    fix_fit.add_argument(mm(MAX_BACK_CNT), action='store', type=int, metavar='N', default=3,
-                         help='maximum number of readable records to discard in a single gap')
-    fix_fit.add_argument(mm(MAX_FWD_LEN), action='store', type=int, metavar='N', default=200,
-                         help='maximum number of bytes to drop in a single gap')
-    fix_fit.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
-                         help='max number of seconds between timestamps')
+    fix_fit_process.add_argument(mm(FIX_HEADER), action='store_true',
+                                 help='modify the header')
+    fix_fit_process.add_argument(mm(FIX_CHECKSUM), action='store_true',
+                                 help='modify the checksum')
+    fix_fit_process.add_argument(no(FORCE), action='store_false', dest=FORCE,
+                                 help='don\'t parse record contents')
+    fix_fit_process.add_argument(no(VALIDATE), action='store_false', dest=VALIDATE,
+                                 help='don\'t validate the final data')
+    fix_fit_params = fix_fit.add_argument_group(title='parameters')
+    fix_fit_params.add_argument(mm(HEADER_SIZE), action='store', type=int, metavar='N',
+                                help='header size (validation and/or new header)')
+    fix_fit_params.add_argument(mm(PROTOCOL_VERSION), action='store', type=int, metavar='N',
+                                help='protocol version (validation and/or new header)')
+    fix_fit_params.add_argument(mm(PROFILE_VERSION), action='store', type=int, metavar='N',
+                                help='profile version (validation and/or new header)')
+    fix_fit_params.add_argument(mm(MIN_SYNC_CNT), action='store', type=int, metavar='N', default=3,
+                                help='minimum number of records to read for synchronization')
+    fix_fit_params.add_argument(mm(MAX_RECORD_LEN), action='store', type=int, metavar='N', default=None,
+                                help='maximum record length')
+    fix_fit_params.add_argument(mm(MAX_DROP_CNT), action='store', type=int, metavar='N', default=1,
+                                help='maximum number of gaps to drop')
+    fix_fit_params.add_argument(mm(MAX_BACK_CNT), action='store', type=int, metavar='N', default=3,
+                                help='maximum number of readable records to discard in a single gap')
+    fix_fit_params.add_argument(mm(MAX_FWD_LEN), action='store', type=int, metavar='N', default=200,
+                                help='maximum number of bytes to drop in a single gap')
+    fix_fit_params.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
+                                help='max number of seconds between timestamps')
     fix_fit.set_defaults(command=FIX_FIT)
 
     garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')

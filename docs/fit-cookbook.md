@@ -3,6 +3,7 @@
 
 * [Installing Choocoo](#installing-choochoo)
 * [Check a FIT File](#check-a-fit-file)
+* [Check Many FIT Files](#check-many-fit-files)
 * [Check Timestamps in a FIT File](#check-timestamps-in-a-fit-file)
 * [Remove a Bad Timestamp from a FIT File](#remove-a-bad-timestamp-from-a-fit-file)
 * [See What Data are Dropped](#see-what-data-are-dropped)
@@ -38,10 +39,6 @@ To check for errors in `myfile.fit`:
         INFO: Protocol version: 16
         INFO: Profile version: 2014
         INFO: Checksum: 37636 (0x9304)
-        INFO: Header and Checksums ----------
-        INFO: --header-size None
-        INFO: --protocol-version None
-        INFO: --profile-version None
         INFO: Validation ----------
         INFO: --max-delta-t None
         INFO: First timestamp: 2018-07-26 13:34:49+00:00
@@ -60,6 +57,35 @@ To check for errors in `myfile.fit`:
 If there are no warnings or errors (as above) then the file is OK (as
 far as my code can tell - to check timestamps see the next recipe).
 
+## Check Many FIT Files
+
+Maybe we have a collection of files and we want to know which have
+problems.  Note that using `-v 2` reduces the logging to `ERROR` level
+only (with `-v 0` we would see no logging, just the file names).
+
+    > ch2 -v 2 fix-fit --name-bad *.fit
+       ERROR: No base type for number 134
+    20170518-191602-1740899583.fit
+       ERROR: Data size incorrect (1542/757+12+2=771)
+    activity-activity-filecrc.fit
+       ERROR: Bad checksum (a1d5/b1d5)
+    activity-filecrc.fit
+       ERROR: Data size incorrect (854/757+12+2=771)
+    activity-settings-corruptheader.fit
+       ERROR: Data size incorrect (853/757+12+2=771)
+    activity-settings.fit
+       ERROR: Data size incorrect (786/757+12+2=771)
+    activity-settings-nodata.fit
+       ERROR: Data size incorrect (768/757+12+2=771)
+    activity-unexpected-eof.fit
+       ERROR: No base type for number 132
+    developer-types-sample.fit
+       ERROR: No base type for number 133
+    elemnt-bolt-no-application-id-inside-developer-data-id.fit
+       ERROR: Data size incorrect (88904/58949+14+2=58965)
+    event_timestamp.fit
+
+
 ## Check Timestamps in a FIT File
 
 To check that the timestamp never increases by more than 60s between
@@ -76,17 +102,17 @@ records:
         INFO: Protocol version: 16
         INFO: Profile version: 2014
         INFO: Checksum: 37636 (0x9304)
-        INFO: Header and Checksums ----------
-        INFO: --header-size None
-        INFO: --protocol-version None
-        INFO: --profile-version None
+        INFO: Validation ----------
+        INFO: --max-delta-t 60.0
+        INFO: First timestamp: 2018-07-26 13:34:49+00:00
        ERROR: Too large shift in timestamp (273.0s: 2018-07-26 13:54:45+00:00/2018-07-26 13:59:18+00:00
-    CRITICAL: Error fixing checksum
+        INFO: Validation failed
+    CRITICAL: Too large shift in timestamp (273.0s: 2018-07-26 13:54:45+00:00/2018-07-26 13:59:18+00:00
         INFO: See `ch2 help` for available commands.
         INFO: Docs at http://andrewcooke.github.io/choochoo
 
 
-Here we can see that there was an jump of 273 seconds.
+Here we can see that there was a jump of 273 seconds.
 
 ## Remove a Bad Timestamp from a FIT File
 
@@ -100,7 +126,7 @@ file (see below to understand what information is removed).
 
 The command to drop data is (see notes below):
 
-    > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --max-fwd-len 500 -o fixed.fit
+    > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit
         INFO: Version 0.11.1
         INFO: Using database at ...
         INFO: Input ----------
@@ -319,7 +345,7 @@ First, we note from the `tokens` dump that the data extend from offset
 `5317`).  We can remove that by taking the slices `:5069,5317:` as
 follows:
 
-    > ch2 fix-fit myfile.fit --slices :05069,05317: -o sliced.fit
+    > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit
         INFO: Version 0.11.1
         INFO: Using database at ...
         INFO: Input ----------

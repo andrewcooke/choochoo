@@ -1,8 +1,9 @@
 
-from sys import stdout
+from sys import stdout, stderr
 
 from .args import PATH, DROP, OUTPUT, SLICES, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
-    MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION, MAX_DELTA_T
+    MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION, MAX_DELTA_T, \
+    NAME, FIX_HEADER, FIX_CHECKSUM, NAME_BAD, NAME_GOOD, mm, no
 from ..fit.fix import fix
 from ..fit.profile.profile import read_fit
 
@@ -41,33 +42,61 @@ Will attempt to fix the given file (in the test data from git).
 Will prepend a new 14 byte header, drop the old 14 byte header, and fix the header values.
     '''
 
-    in_path = args[PATH]
-    log.info('Input ----------')
-    log.info('Reading binary data from %s' % in_path)
-    data = read_fit(log, in_path)
-    log.debug('Read %d bytes' % len(data))
+    check = args[NAME] is not None
+    if check:
+        name = NAME_GOOD if args[NAME] else NAME_BAD
+        if args[ADD_HEADER] or args[DROP] or args[SLICES] or args[FIX_HEADER] or args[FIX_CHECKSUM]:
+            raise Exception('Cannot check (%s) and modify at the same time' % mm(name))
+        if not args[VALIDATE]:
+            raise Exception('%s and %s makes no sense, numpty' % (mm(name), no(VALIDATE)))
+    if not args[FORCE]:
+        log.warn('%s means that data are not completely parsed' % no(FORCE))
 
-    data = fix(log, data, add_header=args[ADD_HEADER], drop=args[DROP], slices=args[SLICES],
-               warn=args[WARN], force=args[FORCE], validate=args[VALIDATE],
-               header_size=args[HEADER_SIZE], protocol_version=args[PROTOCOL_VERSION], profile_version=args[PROFILE_VERSION],
-               min_sync_cnt=args[MIN_SYNC_CNT], max_record_len=args[MAX_RECORD_LEN],
-               max_drop_cnt=args[MAX_DROP_CNT], max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN],
-               max_delta_t=args[MAX_DELTA_T])
+    for path in args[PATH]:
 
-    log.info('Output ----------')
-    if args[DISCARD]:
-        log.info('Discarded output')
-    else:
-        out_path = args[OUTPUT]
-        if out_path:
-            log.info('Writing binary data to %s' % out_path)
-            with open(out_path, 'wb') as out:
-                out.write(data)
-        elif args[RAW]:
-            log.info('Writing binary data to stdout')
-            stdout.buffer.write(data)
+        log.info('Input ----------')
+        log.info('Reading binary data from %s' % path)
+        data = read_fit(log, path)
+        log.debug('Read %d bytes' % len(data))
+
+        try:
+            data = fix(log, data,
+                       check=check, warn=args[WARN],
+                       add_header=args[ADD_HEADER], drop=args[DROP], slices=args[SLICES], fix_header=args[FIX_HEADER],
+                       fix_checksum=args[FIX_CHECKSUM], force=args[FORCE], validate=args[VALIDATE],
+                       header_size=args[HEADER_SIZE], protocol_version=args[PROTOCOL_VERSION],
+                       profile_version=args[PROFILE_VERSION], min_sync_cnt=args[MIN_SYNC_CNT],
+                       max_record_len=args[MAX_RECORD_LEN], max_drop_cnt=args[MAX_DROP_CNT],
+                       max_back_cnt=args[MAX_BACK_CNT], max_fwd_len=args[MAX_FWD_LEN], max_delta_t=args[MAX_DELTA_T])
+        except:
+            if check:
+                if not args[NAME]:
+                    print(path)
+            else:
+                raise
         else:
-            log.info('Writing hex data to stdout')
-            stdout.write(data.hex())
-        log.debug('Wrote %d bytes' % len(data))
+            if check and args[NAME]:
+                print(path)
+
+        if check:
+            # interleave logging and names
+            stderr.flush()
+            stdout.flush()
+        else:
+            log.info('Output ----------')
+            if args[DISCARD]:
+                log.info('Discarded output')
+            else:
+                out_path = args[OUTPUT]
+                if out_path:
+                    log.info('Writing binary data to %s' % out_path)
+                    with open(out_path, 'wb') as out:
+                        out.write(data)
+                elif args[RAW]:
+                    log.info('Writing binary data to stdout')
+                    stdout.buffer.write(data)
+                else:
+                    log.info('Writing hex data to stdout')
+                    stdout.write(data.hex())
+                log.debug('Wrote %d bytes' % len(data))
 
