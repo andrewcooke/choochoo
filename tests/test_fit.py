@@ -1,13 +1,13 @@
 
 from glob import glob
-from logging import getLogger, basicConfig, DEBUG
+from logging import getLogger, basicConfig, INFO
 from os.path import basename, join, exists
 from sys import stdout
 from unittest import TestCase
 
 from ch2.command.args import FIELDS, TABLES, GREP
-from ch2.fit.format.read import filtered_records, filtered_tokens
-from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain, merge_duplicates
+from ch2.fit.format.read import filtered_records
+from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_external_profile, read_fit
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
@@ -18,7 +18,7 @@ class TestFit(TestCase, OutputMixin):
 
     def setUp(self):
         if not getLogger().handlers:
-            basicConfig(stream=stdout, level=DEBUG)
+            basicConfig(stream=stdout, level=INFO)
         self.log = getLogger()
         self.test_dir = 'data/test'
         self.profile_path = 'data/sdk/Profile.xlsx'
@@ -128,14 +128,11 @@ class TestFit(TestCase, OutputMixin):
         self.standard_dmp_dir('python-fitparse', '*.fit', TABLES,
                               exclude=['activity-unexpected-eof.fit',  # data size incorrect
                                        'activity-settings-nodata.fit',   # data size incorrect
-                                       'elemnt-bolt-no-application-id-inside-developer-data-id.fit',  # no base type for 132
                                        'activity-filecrc.fit',  # bad checksum
                                        'activity-activity-filecrc.fit',  # data size incorrect
                                        'activity-settings-corruptheader.fit',  # data size incorrect
                                        'event_timestamp.fit',  # data size incorrect
                                        'activity-settings.fit',  # data size incorrect
-                                       '20170518-191602-1740899583.fit',  # no base type for 134
-                                       'developer-types-sample.fit',  # no base type for 132
                                        ])
 
     # these are tests only for consistency across releases, not correctness
