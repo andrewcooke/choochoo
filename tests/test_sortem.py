@@ -38,6 +38,7 @@ class TestSortem(TestCase):
                     d = int(oracle.elevation(lat, lon) / 10) % 10
                     line += ' .:-=+*#%@'[d]
                 image += line
+                print(line)
                 image += '\n'
         self.assertEqual(image, '''=-:. . @@%%##***++=====---------:::-----:.   @%%##**++====--
 *+==--:.@@%%#***+++++==---:::::.......... @@@%%%##**+++=====

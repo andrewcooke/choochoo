@@ -32,23 +32,14 @@ class ElevationOracle:
             x = (lon - floor(lon)) * (SAMPLES - 1)
             y = (lat - floor(lat)) * (SAMPLES - 1)  # -1 because weird inclusive-at-each-side tiling
             i, j = int(x), int(y)
-            if i == x:
-                if j == y:
-                    return h[j, i]
-                else:
-                    k = y - j
-                    return h[j, i] * (1-k) + h[j+1, i] * k
-            else:
-                if j == y:
-                    k = x - i
-                    return h[j, i] * (1-k) + h[j, i+1] * k
-                else:
-                    # bilinear, first in x
-                    k = y - j
-                    h0 = h[j, i] * (1-k) + h[j+1, i] * k
-                    h1 = h[j, i+1] * (1-k) + h[j+1, i+1] * k
-                    k = x - i
-                    return h0 * (1-k) + h1 * k
+            # bilinear
+            # it's ok to use +1 blindly here because we're never on the top/right cells or we'd be in
+            # a different tile.
+            k = y - j
+            h0 = h[j, i] * (1-k) + h[j+1, i] * k
+            h1 = h[j, i+1] * (1-k) + h[j+1, i+1] * k
+            k = x - i
+            return h0 * (1-k) + h1 * k
         else:
             raise Exception('No STRM1 data')
 
