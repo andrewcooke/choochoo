@@ -34,8 +34,9 @@ The program runs in a series of steps:
     above, but slices can also be specified at the command line with
     `--slices`.  See [Slices](#slices).
 
-  * The file header and final checksum are modified to reflect the new
-    data.  See [Header and Checksums](#header-and-checksums).
+  * If `--dix-header` is given the file header is modified to reflect
+    the new data.  Similarly, `--fix-checksum` adjusts the checksum.
+    See [Header and Checksums](#header-and-checksums).
 
   * The data are validated.  See [Validation](#validation).
 
@@ -155,9 +156,13 @@ Data](#drop-data)).
 
 ## Header and Checksums
 
-Once data have been modified the file header and checksum are updated
-appropriately.  If necessary, new values for `--protocol-version` and
-`--profile-version` can be specified on the command line.
+Once data have been modified the file header (for `--fix-header`) and
+checksum (for `--fix-checksum`) are updated appropriately.  If
+necessary, new values for `--protocol-version` and `--profile-version`
+can be specified on the command line.
+
+(These two operations are done "together" because one affects the
+other; in practice they are repeated as necessary until consistent.)
 
 ## Validation
 
@@ -172,6 +177,10 @@ binary format) using `-o` or `--output`.  Alternatively, the output
 can be discarded using `--discard` (this is useful when fine-tuning
 parameters).
 
+Alternatively, if `--name-bad` or `--name-good` is given, then the
+names (only) of good (or bad, respectively) files is printed to
+stdout.  Typically this is used with `-v 0` to suppress logging.
+
 ## Further Reading
 
   * `ch2 fix-fit -h` and `ch2 help fix-fit` show options and use.
@@ -181,4 +190,5 @@ parameters).
 
   * [The FIT SDK](https://www.thisisant.com/resources/fit/) includes
     documentation from Garmin.
-    
+
+  * [A cookbook](fit-cookbook) of examples.

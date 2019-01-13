@@ -312,7 +312,7 @@ present.  We can display those too:
     
 
 
-Hmm.  Some the message defintions and the checksum.  Nothing very
+Hmm.  Some message defintions and the checksum.  Nothing very
 exciting.
 
 We can also see the same data in binary form.  For example:

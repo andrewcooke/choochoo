@@ -1,6 +1,6 @@
-
+from ch2.sortem import SRTM1_DIR
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
-    add_diary, add_activities, add_monitor, name_constant, add_nearby
+    add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
 from ..lib.schedule import Schedule
 from ..squeal.tables.statistic import StatisticJournalType
@@ -79,6 +79,8 @@ def default(log, db, no_diary=False):
         add_activity_constant(s, run, FTHR,
                               description='Heart rate at functional threshold (running).',
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+        add_constant(s, SRTM1_DIR, description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
+                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
 
         if not no_diary:
 

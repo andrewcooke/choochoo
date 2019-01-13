@@ -136,6 +136,22 @@ def add_activities(s, cls, sort, **kargs):
     return add(s, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
 
 
+def add_constant(s, name, description=None, units=None, single=False,
+                 statistic_journal_type=StatisticJournalType.INTEGER):
+    '''
+    Add a constant (not associated with an activity).
+
+    Configuring a constant allows the user to supply a value later, using the `ch2 constant` command.
+    This can be useful for values that don't vary often, and so aren't worth adding to the diary.
+    An example is FTHR, which you will only measure occasionally, but which is needed when calculating
+    activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
+    '''
+    statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=None,
+                                          units=units, description=description))
+    return add(s, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
+                           name=name, single=single))
+
+
 def add_activity_constant(s, activity_group, name, description=None, units=None, single=False,
                           statistic_journal_type=StatisticJournalType.INTEGER):
     '''
