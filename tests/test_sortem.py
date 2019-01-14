@@ -6,7 +6,7 @@ from unittest import TestCase
 from ch2 import constants
 from ch2.command.args import bootstrap_file, V, m, DEV, mm
 from ch2.config import default
-from ch2.sortem import SRTM1_DIR, ElevationOracle
+from ch2.sortem import SRTM1_DIR, oracle_from_constant
 
 
 class TestSortem(TestCase):
@@ -18,7 +18,7 @@ class TestSortem(TestCase):
             args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', SRTM1_DIR, '/home/andrew/archive/srtm1')
             constants(args, log, db)
             with db.session_context() as s:
-                yield ElevationOracle(log, s)
+                yield oracle_from_constant(log, s)
 
     def test_read(self):
         with self.oracle() as oracle:

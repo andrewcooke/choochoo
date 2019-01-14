@@ -16,15 +16,20 @@ SAMPLES = 3601
 # (although that has bugs...)
 
 
+def oracle_from_constant(log, s, name=SRTM1_DIR):
+    try:
+        dir = Constant.get(s, name).at(s).value
+    except:
+        log.warn('No STRM1 data - define %s in constants for elevation data' % SRTM1_DIR)
+        dir = None
+    return ElevationOracle(log, dir)
+
+
 class ElevationOracle:
 
-    def __init__(self, log, s):
+    def __init__(self, log, dir):
         self._log = log
-        try:
-            self._dir = Constant.get(s, SRTM1_DIR).at(s).value
-        except:
-            self._log.warn('No STRM1 data - define %s in constants for elevation data' % SRTM1_DIR)
-            self._dir = None
+        self._dir = dir  # if None, will simply return None
 
     def elevation(self, lat, lon):
         if self._dir:
@@ -41,7 +46,7 @@ class ElevationOracle:
             k = x - i
             return h0 * (1-k) + h1 * k
         else:
-            raise Exception('No STRM1 data')
+            return None
 
     # https://wiki.openstreetmap.org/wiki/SRTM
     # The official 3-arc-second and 1-arc-second data for versions 2.1 and 3.0 are divided into 1°×1° data tiles.
