@@ -57,7 +57,6 @@ def cached_file_reader(dir, flat, flon):
     # The official 3-arc-second and 1-arc-second data for versions 2.1 and 3.0 are divided into 1°×1° data tiles.
     # The tiles are distributed as zip files containing HGT files labeled with the coordinate of the southwest cell.
     # For example, the file N20E100.hgt contains data from 20°N to 21°N and from 100°E to 101°E inclusive.
-    file = '%s%02d%s%03d.hgt' % \
-           ('S' if flat < 0 else 'N', abs(flat), 'W' if flon < 0 else 'E', abs(flon))
+    file = '%s%02d%s%03d.hgt' % ('S' if flat < 0 else 'N', abs(flat), 'W' if flon < 0 else 'E', abs(flon))
     with open(join(dir, file), 'rb') as data:
         return np.flip(np.fromfile(data, np.dtype('>i2'), SAMPLES * SAMPLES).reshape((SAMPLES, SAMPLES)), 0)
