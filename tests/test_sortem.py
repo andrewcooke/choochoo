@@ -34,7 +34,6 @@ class TestSortem(TestCase):
                 line = '\n'
                 for j in range(n*2):
                     x = lon + arcsec * j * step
-                    # factor of 10 here to get visibly nice contours
                     d = int(oracle.elevation(y, x) / scale) % 10
                     line += ' .:-=+*#%@'[d]
                 image += line
