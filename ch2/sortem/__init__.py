@@ -29,10 +29,22 @@ def oracle_from_constant(log, s, dir_name=SRTM1_DIR):
 
 
 class ElevationOracle:
+    '''
+    Provide elevation data from the files in `dir` which should be hgt files with standard naming,
+    either zipped or unzipped, downloaded from http://dwtkns.com/srtm30m/.
+
+    All coords are "GPS coords" afaict.
+
+    If dir is None then None will be return as elevation for all queries.
+
+    If dir is not None and a file is missing for a particular lat/lon then an exception is raised.
+
+    Elevations are bilinear interpolated from the surrounding arcsec grid.
+    '''
 
     def __init__(self, log, dir):
         self._log = log
-        self._dir = dir  # if None, will simply return None
+        self._dir = dir
 
     def elevation(self, lat, lon):
         if self._dir:
