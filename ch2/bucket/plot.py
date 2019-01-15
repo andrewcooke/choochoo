@@ -28,27 +28,30 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
 
 def line_diff(nx, ny, xlabel, y1, y2=None):
 
-    is_time = isinstance(y1.index[0], dt.datetime)
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_time else 'linear')
+    is_x_time = isinstance(y1.index[0], dt.datetime)
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear')
 
-    if is_time:
+    if is_x_time:
         f.xaxis.axis_label = 'Time'
         f.xaxis[0].formatter = NumeralTickFormatter(format='00:00:00')
         y1.index = (y1.index - y1.index[0]).total_seconds()
     else:
         f.xaxis.axis_label = xlabel
-        f.xaxis[0].formatter = PrintfTickFormatter(format='%.3f')
-
-    scale = y1.max()
-    if y2 is not None:
-        scale = max(scale, y2.max())
-
-    f.line(x=y1.index, y=y1, color='black')
-    f.y_range = Range1d(start=0, end=scale * 1.1)
+        f.xaxis[0].formatter = PrintfTickFormatter(format='%.2f')
     f.yaxis.axis_label = y1.name
 
+    y_max = y1.max()
+    y_min = y1.min()
     if y2 is not None:
-        if is_time:
+        y_max = max(y_max, y2.max())
+        y_min = min(y_min, y2.min())
+    dy = y_max - y_min
+
+    f.line(x=y1.index, y=y1, color='black')
+    f.y_range = Range1d(start=0 if y_min == 0 else y_min - 0.1 * dy, end=y_max + 0.1 * dy)
+
+    if y2 is not None:
+        if is_x_time:
             y2.index = (y2.index - y2.index[0]).total_seconds()
         y2 = interpolate_to_index(y1, y2)
         f.line(x=y2.index, y=y2, color='grey')
@@ -67,16 +70,19 @@ def line_diff(nx, ny, xlabel, y1, y2=None):
 def cumulative(nx, ny, y1, y2=None, sample=10):
 
     y1 = y1.sort_values(ascending=False).reset_index(drop=True)
-    scale = y1.max()
+    y_max = y1.max()
+    y_min = y1.min()
     if y2 is not None:
         y2 = y2.sort_values(ascending=False).reset_index(drop=True)
-        scale = max(scale, y2.max())
+        y_max = max(y_max, y2.max())
+        y_min = min(y_min, y2.min())
+    dy = y_max - y_min
 
     f = figure(plot_width=nx, plot_height=ny,
                x_range=Range1d(start=y1.index.max() * sample, end=0),
                x_axis_type='datetime',
                x_axis_label=TIME,
-               y_range=Range1d(start=0, end=scale * 1.1),
+               y_range=Range1d(start=0 if y_min == 0 else y_min - 0.1 * dy, end=y_max + 0.1 * dy),
                y_axis_location='right',
                y_axis_label=y1.name)
     f.xaxis[0].formatter = NumeralTickFormatter(format='00:00:00')

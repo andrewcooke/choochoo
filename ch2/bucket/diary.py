@@ -3,6 +3,7 @@ import datetime as dt
 
 import numpy as np
 from bokeh.layouts import column, row
+from bokeh.models import Div
 
 from ch2.stoats.display.nearby import nearby_any_time
 from .data_frame import interpolate_to
@@ -14,14 +15,20 @@ from ..lib.date import format_time, format_seconds, local_date_to_time
 from ..squeal import ActivityGroup, ActivityJournal
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
-    REST_HR, DAILY_STEPS, ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE
+    REST_HR, DAILY_STEPS, ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION
 
 DISTANCE_KM = '%s / km' % DISTANCE
-SPEED_KMH = '%s / kmh' % SPEED
+SPEED_KPH = '%s / kph' % SPEED
+ELEVATION_M = '%s / m' % ELEVATION
+CLIMB_MPS = 'Climb / mps'
+TIME = 'Time'
 HR_10 = 'HR Impulse / 10s'
 
 LOG_FITNESS = 'Log %s' % FITNESS
 LOG_FATIGUE = 'Log %s' % FATIGUE
+
+RIDE_PLOT_LEN = 700
+RIDE_PLOT_HGT = 200
 
 TEMPLATE = '''
 {% block css_resources %}
@@ -46,7 +53,6 @@ table {
   <div class='centre'>
   <h1>{{ header }}</h1>
   {{ super() }}
-  {{ caption }}
   </div>
 {% endblock %}
 '''
@@ -54,19 +60,51 @@ table {
 
 def comparison(log, s, aj1, aj2=None):
 
+    # ---- definitions
+
     set_log(log)
-    names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, SPEED, HR_ZONE, HR_10]
+    names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION, SPEED, HR_ZONE, HR_10]
 
-    st1 = statistics(s, *names, source_ids=[aj1.id])
-    st1[DISTANCE_KM] = st1[DISTANCE]/1000
-    st1[SPEED_KMH] = st1[SPEED] * 3.6
-    st1_10 = interpolate_to(st1, HR_10)
+    xaxis = TIME
+    # xaxis = DISTANCE_KM
 
-    if aj2:
-        st2 = statistics(s, *names, source_ids=[aj2.id])
-        st2[DISTANCE_KM] = st2[DISTANCE]/1000
-        st2[SPEED_KMH] = st2[SPEED] * 3.6
-        st2_10 = interpolate_to(st2, HR_10)
+    # ---- load data
+
+    def get_stats(aj):
+        st = statistics(s, *names, source_ids=[aj.id])
+        st[DISTANCE_KM] = st[DISTANCE]/1000
+        st[SPEED_KPH] = st[SPEED] * 3.6
+        st_10 = interpolate_to(st, HR_10)
+        st_10.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
+        st_10[CLIMB_MPS] = st_10[ELEVATION_M].diff() * 0.1
+        return st, st_10
+
+    st1, st1_10 = get_stats(aj1)
+    st2, st2_10 = get_stats(aj2) if aj2 else (None, None)
+
+    # ---- ride-specific plots
+
+    def ride_plots(y_axis, c=None):
+        y1 = st1_10[y_axis].copy()  # copy means we don't overwrite main index
+        if xaxis != TIME:
+            y1.index = st1_10[DISTANCE_KM]  # could be left as time
+        if aj2:
+            y2 = st2_10[y_axis].copy()
+            if xaxis != TIME:
+                y2.index = st2_10[DISTANCE_KM]
+        else:
+            y2 = None
+        if c is None:
+            c1, c2 = y1, y2
+        else:
+            c1 = st1_10[c].copy()
+            c2 = st2_10[c].copy() if aj2 else None
+        return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, xaxis, y1, y2), cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, c1, c2)
+
+    hr10_line, hr10_cumulative = ride_plots(HR_10)
+    elvn_line, elvn_cumulative = ride_plots(ELEVATION_M, CLIMB_MPS)
+    speed_line, speed_cumulative = ride_plots(SPEED_KPH)
+
 
     side = 300
     mx, mn = st1_10[HR_10].max(), st1_10[HR_10].min()
@@ -78,27 +116,24 @@ def comparison(log, s, aj1, aj2=None):
         x2, y2 = None, None
     map = dot_map(side, x1, y1, st1_10['size'], x2, y2)
 
-    y1 = st1_10[HR_10]
-    y1.index = st1_10[DISTANCE_KM]  # could be left as time
+    caption = '<table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
+    source_ids = [aj1.id]
     if aj2:
-        y2 = st2_10[HR_10]
-        y2.index = st2_10[DISTANCE_KM]
-    else:
-        y2 = None
-    hr10_line = line_diff(700, 200, DISTANCE_KM, y1, y2)
-    hr10_cumulative = cumulative(200, 200, y1, y2)
-
-    hrz_histogram = heart_rate_zones(200, 200, st1_10[HR_ZONE])
-
-    y1 = st1_10[DISTANCE_KM]
-    c1 = st1_10[SPEED_KMH]
+        source_ids.append(aj2.id)
+    st = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=source_ids)
+    st_aj = st.loc[st.index == aj1.start]
+    caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
+               (aj1.name, format_time(aj1.start),
+                format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
     if aj2:
-        y2 = st2_10[DISTANCE_KM]
-        c2 = st2_10[SPEED_KMH]
-    else:
-        c2 = None
-    dist_line = line_diff(500, 200, TIME, y1, y2)
-    dist_cumulative = cumulative(200, 200, c1, c2)
+        st_aj = st.loc[st.index == aj2.start]
+        caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
+                   (aj2.name, format_time(aj2.start),
+                    format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
+    caption = Div(text=caption + '</table>', width=RIDE_PLOT_LEN, height=RIDE_PLOT_HGT)
+    hrz_histogram = heart_rate_zones(RIDE_PLOT_HGT, RIDE_PLOT_HGT, st1_10[HR_ZONE])
+
+    # ---- health-specific plots
 
     finish = aj1.finish + dt.timedelta(days=1)  # to show new level
     start = finish - dt.timedelta(days=365)
@@ -120,30 +155,16 @@ def comparison(log, s, aj1, aj2=None):
 
     activity_line = activity(600, 150, st_ff[DAILY_STEPS], st_ac[ACTIVE_TIME])  # last could be distance
 
-    caption = '<div><table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
-    source_ids = [aj1.id]
-    if aj2:
-        source_ids.append(aj2.id)
-    st = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=source_ids)
-    st_aj = st.loc[st.index == aj1.start]
-    caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-               (aj1.name, format_time(aj1.start),
-                format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
-    if aj2:
-        st_aj = st.loc[st.index == aj2.start]
-        caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-                   (aj2.name, format_time(aj2.start),
-                    format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
-    caption += '</table></div>'
+    # ---- display
 
     SingleShotServer(log, column(row(hr10_line, hr10_cumulative),
-                                 row(dist_line, dist_cumulative, hrz_histogram),
-                                 row(column(health_line, activity_line),
-                                     map)),
+                                 row(elvn_line, elvn_cumulative),
+                                 row(speed_line, speed_cumulative),
+                                 row(caption, hrz_histogram),
+                                 row(column(health_line, activity_line), map)),
                      template=TEMPLATE, title='choochoo',
                      template_vars={
-                         'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else ''),
-                         'caption': caption
+                         'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else '')
                      })
 
 

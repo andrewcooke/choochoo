@@ -7,11 +7,12 @@ from sqlalchemy.sql.functions import count
 from ch2.command.activities import activities
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST, F
 from ch2.command.constants import constants
+from ch2.config import config
 from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.statistic import StatisticJournal
-from ch2.stoats.calculate import run_pipeline_after
+from ch2.stoats.calculate import run_pipeline_after, run_pipeline_paths
 
 
 class TestActivities(TestCase):
@@ -45,3 +46,8 @@ class TestActivities(TestCase):
                 self.assertEqual(n, 25675)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
+
+    def test_segment_bug(self):
+        log, db = config()
+        paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
+        run_pipeline_paths(log, db, PipelineType.ACTIVITY, paths, force=True)

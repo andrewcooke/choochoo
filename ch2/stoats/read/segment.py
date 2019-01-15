@@ -225,11 +225,12 @@ class SegmentImporter(ActivityImporter):
         '''
         prev, first = None, None
         for match in ordered_sm:
-            if prev and (prev[1:2] != match[1:2] or prev[0]+1 != match[0]):
-                yield (first, prev[0]), prev[1], prev[2]
-                prev, first = None, None
-            if first is None:
-                first = match[0]
+            if match != prev:  # skip duplicates
+                if prev and (prev[1:2] != match[1:2] or prev[0]+1 != match[0]):
+                    yield (first, prev[0]), prev[1], prev[2]
+                    prev, first = None, None
+                if first is None:
+                    first = match[0]
             prev = match
         yield (first, prev[0]) , prev[1], prev[2]
 

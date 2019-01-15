@@ -4,9 +4,10 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 
 from ch2.fit.profile.profile import read_fit
+from ch2.sortem import oracle_from_constant
 from ..load import StatisticJournalLoader
 from ..names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
-    SPHERICAL_MERCATOR_Y
+    SPHERICAL_MERCATOR_Y, ELEVATION
 from ..read import AbortImport, Importer
 from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, merge_duplicates
@@ -18,6 +19,11 @@ from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalIn
 
 
 class ActivityImporter(Importer):
+
+    def _on_init(self, *args, **kargs):
+        super()._on_init(*args, **kargs)
+        with self._db.session_context() as s:
+            self.__oracle =  oracle_from_constant(self._log, s)
 
     def run(self, paths, force=False):
         if 'sport_to_activity' not in self._kargs:
@@ -94,6 +100,10 @@ class ActivityImporter(Importer):
                                   x, record.value.timestamp, StatisticJournalFloat)
                         loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal,
                                   y, record.value.timestamp, StatisticJournalFloat)
+                        elevation = self.__oracle.elevation(record.none.position_lat, record.none.position_long)
+                        if elevation:
+                            loader.add(ELEVATION, M, None, activity_group, ajournal,
+                                       elevation, record.value.timestamp, StatisticJournalFloat)
                     loader.add(HEART_RATE, BPM, None, activity_group, ajournal,
                               record.none.heart_rate, record.value.timestamp, StatisticJournalInteger)
                     if last_distance and record.none.distance and last_timestamp and record.none.enhanced_speed:

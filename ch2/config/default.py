@@ -1,8 +1,9 @@
-from ch2.sortem import SRTM1_DIR
+
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
 from ..lib.schedule import Schedule
+from ..sortem import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
@@ -15,7 +16,7 @@ from ..stoats.display.impulse import ImpulseDiary
 from ..stoats.display.monitor import MonitorDiary
 from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
-from ..stoats.names import BPM, FTHR, MAX_HR, MAX_SPEED
+from ..stoats.names import BPM, FTHR
 from ..stoats.read.monitor import MonitorImporter
 from ..stoats.read.segment import SegmentImporter
 from ..uweird.fields.topic import Text, Float, Score0
