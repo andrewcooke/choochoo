@@ -1,5 +1,5 @@
 
-from collections import Counter, defaultdict
+from collections import Counter
 from operator import eq, lt, gt
 from re import compile
 from sys import stdout
@@ -15,8 +15,8 @@ from ..lib.utils import unique
 def summarize(log, format, data, all_fields=False, all_messages=False, internal=False,
               after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
               messages=None, warn=False, profile_path=None, grep=None,
-              name_file=None, invert=False, match=1, context=False, no_validate=False, max_delta_t=None, width=None,
-              output=stdout):
+              name_file=None, invert=False, match=1, compact=False, context=False, no_validate=False, max_delta_t=None,
+              width=None, output=stdout):
 
     width = width or terminal_width()
     
@@ -43,7 +43,7 @@ def summarize(log, format, data, all_fields=False, all_messages=False, internal=
                          profile_path=profile_path, width=width, output=output)
     elif format == GREP:
         summarize_grep(log, data, grep, 
-                       name_file=name_file, match=match, context=context, invert=invert,
+                       name_file=name_file, match=match, compact=compact, context=context, invert=invert,
                        after_bytes=after_bytes, limit_bytes=limit_bytes, 
                        after_records=after_records, limit_records=limit_records, 
                        warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path, 
@@ -144,9 +144,9 @@ CMP = compile(r'([^=<>~]+)([=<>~])([^=<>~]+)')
 
 class Matcher:
 
-    def __init__(self, pattern):
+    def __init__(self, log, pattern):
         if ':' in pattern:
-            record, pattern = pattern.split(':')
+            record, pattern = pattern.split(':', 1)
             self.record = compile(record).match
         else:
             self.record = None
@@ -157,26 +157,35 @@ class Matcher:
                 self.value = compile(match.group(2)).match
             else:
                 try:
-                    value = float(match.group(3))
+                    try:
+                        value = float(match.group(3))
+                        log.debug('Matching %f as a float' % value)
+                    except ValueError:
+                        value = match.group(3)
+                        log.debug('Matching %s as a string' % value)
                     self.value = {'=': self.__build_compare(eq, value),
                                   '<': self.__build_compare(lt, value),
                                   '>': self.__build_compare(gt, value)}[match.group(2)]
                 except:
                     if match.group(2) != '=':
-                        raise Exception('Comparison "%s" with non-numerica value "%s"' %
+                        raise Exception('Comparison "%s" with non-numerical value "%s"' %
                                         (match.group(2), match.group(3)))
                     self.value = lambda v: v == match.group(3)
+                    print('STRING', self.value)
         else:
             self.field = compile(pattern).match
             self.value = None
 
     def __build_compare(self, op, value):
         def compare(v):
-            try:
-                v = float(v)
-                return op(v, value)
-            except:
-                return False
+            if isinstance(value, float):
+                try:
+                    v = float(v)
+                    return op(v, value)
+                except:
+                    return False
+            else:
+                return op(str(v), value)
         return compare
 
     def match(self, record, field, value):
@@ -185,53 +194,57 @@ class Matcher:
                (self.value is None or self.value(value))
 
 
-def summarize_grep(log, data, grep, name_file=None, match=1, context=False, invert=False,
+def summarize_grep(log, data, grep, name_file=None, match=1, compact=False, context=False, invert=False,
                    after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                    warn=False, no_validate=False, max_delta_t=None, profile_path=None, width=80, output=stdout):
 
     types, messages, records = \
         filtered_records(log, data, warn=warn, no_validate=no_validate, profile_path=profile_path,
                          max_delta_t=max_delta_t, pipeline=[merge_duplicates])
-    matchers = [Matcher(pattern) for pattern in grep]
-    counts = defaultdict(lambda: 0)
-    first = True
+    matchers = [Matcher(log, pattern) for pattern in grep]
+    first, total_matches = True, 0
     first_record = 0 if (after_records is None) else None
     first_bytes = 0 if (after_bytes is None) else None
 
     try:
         for index, offset, record in records:
+            matched_matchers, matched_names_values, display = set(), set(), ''
             if (first_record is None and (after_records is not None and index >= after_records)) or \
                     (first_bytes is None and (after_bytes is not None and offset >= after_bytes)):
-                first_record = index
-                first_bytes = offset
+                first_record, first_bytes = index, offset
             if first_record is not None or first_bytes is not None:
                 if (first_record is not None and (limit_records < 0 or i - first_record < limit_records)) and \
                         (first_bytes is not None and (limit_bytes < 0 or offset - first_bytes < limit_bytes)):
-                    record = record.as_dict(fix_degrees)
+                    record = record.as_dict(fix_degrees, merge_duplicates)
                     for name, values_units in sorted(record.data.items()):
                         if values_units and values_units[0]:
                             for value in values_units[0]:
                                 for matcher in matchers:
                                     if matcher.match(record.name, name, value):
-                                        counts[matcher] += 1
-                                        if counts[matcher] <= match or match < 0:
-                                            if context:
-                                                if first:
-                                                    print(file=output)
-                                                    first=False
-                                                pprint_as_dicts([(index, offset, record)], True, True,
-                                                                width=width, output=output)
-                                            else:
-                                                print('%s:%s=%s' % (record.name, name, value), file=output)
-                                        # exit early if we've displayed/matched all we need to
-                                        if match > -1 and all(counts[m] >= max(1, match) for m in matchers):
-                                            raise Done()
+                                        matched_matchers.add(matcher)
+                                        if (name, value) not in matched_names_values:
+                                            display += '%s:%s=%s\n' % (record.name, name, value)
+                                            matched_names_values.add((name, value))
+                    if len(matched_matchers) == len(matchers):
+                        total_matches += 1
+                        if match:
+                            if first:
+                                if context or not compact:
+                                    print(file=output)
+                                first = False
+                            if context:
+                                pprint_as_dicts([(index, offset, record)], True, True,
+                                                width=width, output=output)
+                            else:
+                                print(display, file=output, end='' if compact else '\n')
+                        if match > -1 and total_matches > max(1, match):
+                            raise Done()
                 else:
                     raise Done()
     except Done:
         pass
     if name_file:
-        if (not all(counts[m] for m in matchers)) == invert:
+        if not total_matches == invert:
             print(name_file, file=output)
 
 

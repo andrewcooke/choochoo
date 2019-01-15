@@ -41,7 +41,7 @@ class WaypointReader:
                     yield waypoint
                     waypoint = None
                 if not waypoint:
-                    waypoint = AttrDict({'time': time})
+                    waypoint = AttrDict({'time': time}, none=True)
                     if self._with_timespan:
                         waypoint['timespan'] = timespan
                 waypoint[id_map[id]] = value

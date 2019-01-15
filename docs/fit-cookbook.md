@@ -12,6 +12,7 @@
 * [Search for Values in a FIT File](#search-for-values-in-a-fit-file)
 * [Search for Values in a FIT File with Context](#search-for-values-in-a-fit-file-with-context)
 * [Find FIT Files with Values](#find-fit-files-with-values)
+* [Restrict Displayed Dates](#restrict-displayed-dates)
 * [Read a FIT File in Python](#read-a-fit-file-in-python)
 
 ## Installing Choocoo
@@ -387,7 +388,7 @@ file (to the best of its ability).
 For some reason we want to know if a file contains any speed values
 over 7 m/s:
 
-    > ch2 fit --grep '.*speed>7' -- myfile.fit
+    > ch2 fit --grep '.*speed>7' --compact myfile.fit
         INFO: Version 0.12.2
         INFO: Using database at ...
     record:enhanced_speed=7.521
@@ -409,8 +410,6 @@ over 7 m/s:
     lap:enhanced_max_speed=7.838
     session:enhanced_max_speed=7.838
 
-
-Note that the `--` is needed to separate patterns from filenames.
 
 ## Search for Values in a FIT File with Context
 
@@ -470,6 +469,56 @@ This has made us curious.  Do we have any rides where we exceed 17m/s?
 
 The `--name` flag displays filenames on matching, while `--match 0`
 means that no matching data are displayed.
+
+## Restrict Displayed Dates
+
+The "usual" display options lets us restrict the range of records or
+bytes, but not timestamps (or any other field).  But we can work
+around this by using `--grep`:
+
+    > ch2 fit --grep --context '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit
+        INFO: Version 0.12.2
+        INFO: Using database at ...
+    
+    record:enhanced_speed=2.883
+    record:timestamp=2018-03-04 11:56:46+00:00
+    
+    record:enhanced_speed=2.902
+    record:timestamp=2018-03-04 11:57:07+00:00
+    
+    record:enhanced_speed=2.874
+    record:timestamp=2018-03-04 11:57:29+00:00
+    
+    record:enhanced_speed=2.762
+    record:timestamp=2018-03-04 11:57:51+00:00
+    
+    record:enhanced_speed=2.93
+    record:timestamp=2018-03-04 11:58:07+00:00
+    
+    record:enhanced_speed=2.79
+    record:timestamp=2018-03-04 11:58:29+00:00
+    
+    record:enhanced_speed=3.219
+    record:timestamp=2018-03-04 11:58:50+00:00
+    
+    record:enhanced_speed=3.172
+    record:timestamp=2018-03-04 11:59:06+00:00
+    
+    record:enhanced_speed=3.266
+    record:timestamp=2018-03-04 11:59:25+00:00
+    
+    record:enhanced_speed=3.2
+    record:timestamp=2018-03-04 11:59:44+00:00
+    
+
+
+Note that we needed to explicitly include a wildcard record for the
+timestamp because the timestamp value itself contains colons - without
+the leading `.*:` the left-most colon in the timestamp wiuld have been
+taken as the record separator.
+
+Also, it's worth understanding that comparisons with `--grep` are done
+via strings *unless* the given pattern can be parsed as a float.
 
 ## Read a FIT File in Python
 

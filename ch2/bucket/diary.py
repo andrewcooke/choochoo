@@ -5,7 +5,6 @@ import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import Div
 
-from ch2.stoats.display.nearby import nearby_any_time
 from .data_frame import interpolate_to
 from .plot import dot_map, line_diff, cumulative, health, activity, heart_rate_zones
 from .server import SingleShotServer
@@ -14,6 +13,7 @@ from ..data.data_frame import set_log, session, get_log
 from ..lib.date import format_time, format_seconds, local_date_to_time
 from ..squeal import ActivityGroup, ActivityJournal
 from ..stoats.calculate.monitor import MonitorStatistics
+from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     REST_HR, DAILY_STEPS, ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION
 
@@ -65,9 +65,6 @@ def comparison(log, s, aj1, aj2=None):
     set_log(log)
     names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION, SPEED, HR_ZONE, HR_10]
 
-    xaxis = TIME
-    # xaxis = DISTANCE_KM
-
     # ---- load data
 
     def get_stats(aj):
@@ -84,27 +81,29 @@ def comparison(log, s, aj1, aj2=None):
 
     # ---- ride-specific plots
 
-    def ride_plots(y_axis, c=None):
+    def ride_line(y_axis, x_axis=TIME):
         y1 = st1_10[y_axis].copy()  # copy means we don't overwrite main index
-        if xaxis != TIME:
-            y1.index = st1_10[DISTANCE_KM]  # could be left as time
+        if x_axis != TIME:
+            y1.index = st1_10[x_axis]  # could be left as time
         if aj2:
             y2 = st2_10[y_axis].copy()
-            if xaxis != TIME:
-                y2.index = st2_10[DISTANCE_KM]
+            if x_axis != TIME:
+                y2.index = st2_10[x_axis]
         else:
             y2 = None
-        if c is None:
-            c1, c2 = y1, y2
+        return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y1, y2)
+
+    def ride_cum(y_axis):
+        y1 = st1_10[y_axis].copy()  # copy means we don't overwrite main index
+        if aj2:
+            y2 = st2_10[y_axis].copy()
         else:
-            c1 = st1_10[c].copy()
-            c2 = st2_10[c].copy() if aj2 else None
-        return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, xaxis, y1, y2), cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, c1, c2)
+            y2 = None
+        return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
-    hr10_line, hr10_cumulative = ride_plots(HR_10)
-    elvn_line, elvn_cumulative = ride_plots(ELEVATION_M, CLIMB_MPS)
-    speed_line, speed_cumulative = ride_plots(SPEED_KPH)
-
+    hr10_line, hr10_cumulative = ride_line(HR_10), ride_cum(HR_10)
+    elvn_line, elvn_cumulative = ride_line(ELEVATION_M), ride_cum(CLIMB_MPS)
+    speed_line, speed_cumulative = ride_line(SPEED_KPH), ride_cum(SPEED_KPH)
 
     side = 300
     mx, mn = st1_10[HR_10].max(), st1_10[HR_10].min()
@@ -170,9 +169,8 @@ def comparison(log, s, aj1, aj2=None):
 
 if __name__ == '__main__':
     s = session('-v 5')
-    day = local_date_to_time('2018-02-14')
+    day = local_date_to_time('2018-03-04')
     aj1 = s.query(ActivityJournal).filter(ActivityJournal.start >= day,
                                           ActivityJournal.start < day + dt.timedelta(days=1)).one()
     aj2 = nearby_any_time(s, aj1)[0]
-    comparison(get_log(), s, aj1, aj2)
     comparison(get_log(), s, aj1, aj2)

@@ -12,6 +12,7 @@
 * [Search for Values in a FIT File](#search-for-values-in-a-fit-file)
 * [Search for Values in a FIT File with Context](#search-for-values-in-a-fit-file-with-context)
 * [Find FIT Files with Values](#find-fit-files-with-values)
+* [Restrict Displayed Dates](#restrict-displayed-dates)
 * [Read a FIT File in Python](#read-a-fit-file-in-python)
 
 ## Installing Choocoo
@@ -179,13 +180,11 @@ over 7 m/s:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fit --grep '.*speed>7' -- myfile.fit"
-dev/ch2 fit --grep '.*speed>7' -- data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
+echo "    > ch2 fit --grep '.*speed>7' --compact myfile.fit"
+dev/ch2 fit --grep '.*speed>7' --compact data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
 sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed 's/^/    /' $out
-
-Note that the `--` is needed to separate patterns from filenames.
 
 ## Search for Values in a FIT File with Context
 
@@ -219,6 +218,28 @@ sed 's/^/    /' $out
 
 The `--name` flag displays filenames on matching, while `--match 0`
 means that no matching data are displayed.
+
+## Restrict Displayed Dates
+
+The "usual" display options lets us restrict the range of records or
+bytes, but not timestamps (or any other field).  But we can work
+around this by using `--grep`:
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 fit --grep --context '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit"
+dev/ch2 fit --grep '.*speed' '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- ~/archive/fit/bike/2018-03-04-qdp.fit > $out 2>&1
+sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
+sed -i 's|~/archive/fit/bike/2018-03-04-qdp.fit|myfile.fit|g' $out
+sed 's/^/    /' $out
+
+Note that we needed to explicitly include a wildcard record for the
+timestamp because the timestamp value itself contains colons - without
+the leading `.*:` the left-most colon in the timestamp would have been
+taken as the record separator.
+
+Also, it's worth understanding that comparisons with `--grep` are done
+via strings *unless* the given pattern can be parsed as a float.
 
 ## Read a FIT File in Python
 

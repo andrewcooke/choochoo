@@ -46,6 +46,10 @@ def assert_attr(instance, *attrs):
 
 class AttrDict(dict):
 
+    def __init__(self, *args, none=False, **kargs):
+        self.__none = none
+        super().__init__(*args, **kargs)
+
     def __getattr__(self, name):
         if name.startswith('_'):
             return super().__getattr__(name)
@@ -53,7 +57,10 @@ class AttrDict(dict):
             try:
                 return self[name]
             except KeyError:
-                raise AttributeError(name)
+                if self.__none:
+                    return None
+                else:
+                    raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name.startswith('_'):

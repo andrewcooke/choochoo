@@ -34,7 +34,7 @@ class ActivityStatistics(WaypointCalculator):
         if zones:
             for (zone, frac) in Zones(self._log, waypoints, zones).zones:
                 self._add_float_stat(s, ajournal, PERCENT_IN_Z % zone, None, 100 * frac, PC)
-            for (zone, frac) in Zones(self._log, waypoints, zones).zones:
+            # for (zone, frac) in Zones(self._log, waypoints, zones).zones:
                 self._add_float_stat(s, ajournal, TIME_IN_Z % zone, None, frac * totals.time, S)
             for target in HR_MINUTES:
                 heart_rates = sorted(MedianHRForTime(self._log, waypoints, target * 60).heart_rates(), reverse=True)

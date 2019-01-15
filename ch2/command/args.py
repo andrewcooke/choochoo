@@ -41,6 +41,7 @@ AFTER_RECORDS = 'after-records'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 BORDER = 'border'
+COMPACT = 'compact'
 CONSTRAINT = 'constraint'
 CONTEXT = 'context'
 CSV = 'csv'
@@ -333,6 +334,8 @@ def parser():
                      help='print file names that don\'t match (--grep --name)')
     fit.add_argument(mm(MATCH), action='store', type=int, default=-1,
                      help='max number of matches (--grep, default -1 for all)')
+    fit.add_argument(mm(COMPACT), action='store_true',
+                     help='no space between records (--grep)')
     fit.add_argument(mm(CONTEXT), action='store_true',
                      help='display entire record (--grep)')
     fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used

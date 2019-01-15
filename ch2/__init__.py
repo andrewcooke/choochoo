@@ -69,7 +69,7 @@ def main():
         if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
             request_config()
         else:
-            if not command_name or command_name != UNLOCK:
+            if not command_name or command_name not in (UNLOCK, FIT, FIX_FIT, GARMIN, TEST_SCHEDULE):
                 with db.session_context() as s:
                     SystemConstant.assert_unlocked(s)
             if command:
