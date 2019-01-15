@@ -17,12 +17,16 @@ from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     REST_HR, DAILY_STEPS, ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION
 
+WINDOW = '60s'
+
 DISTANCE_KM = '%s / km' % DISTANCE
 SPEED_KPH = '%s / kph' % SPEED
+MED_SPEED_KPH = 'M(%s) %s / kph' % (WINDOW, SPEED)
 ELEVATION_M = '%s / m' % ELEVATION
 CLIMB_MPS = 'Climb / mps'
 TIME = 'Time'
 HR_10 = 'HR Impulse / 10s'
+MED_HR_10 = 'M(%s) HR Impulse / 10s' % WINDOW
 
 LOG_FITNESS = 'Log %s' % FITNESS
 LOG_FATIGUE = 'Log %s' % FATIGUE
@@ -71,6 +75,8 @@ def comparison(log, s, aj1, aj2=None):
         st = statistics(s, *names, source_ids=[aj.id])
         st[DISTANCE_KM] = st[DISTANCE]/1000
         st[SPEED_KPH] = st[SPEED] * 3.6
+        st[MED_SPEED_KPH] = st[SPEED].rolling(WINDOW, min_periods=1).median() * 3.6
+        st[MED_HR_10] = st[HR_10].rolling(WINDOW, min_periods=1).median()
         st_10 = interpolate_to(st, HR_10)
         st_10.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
         st_10[CLIMB_MPS] = st_10[ELEVATION_M].diff() * 0.1
@@ -101,9 +107,9 @@ def comparison(log, s, aj1, aj2=None):
             y2 = None
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
-    hr10_line, hr10_cumulative = ride_line(HR_10), ride_cum(HR_10)
+    hr10_line, hr10_cumulative = ride_line(MED_HR_10), ride_cum(HR_10)
     elvn_line, elvn_cumulative = ride_line(ELEVATION_M), ride_cum(CLIMB_MPS)
-    speed_line, speed_cumulative = ride_line(SPEED_KPH), ride_cum(SPEED_KPH)
+    speed_line, speed_cumulative = ride_line(MED_SPEED_KPH), ride_cum(SPEED_KPH)
 
     side = 300
     mx, mn = st1_10[HR_10].max(), st1_10[HR_10].min()
