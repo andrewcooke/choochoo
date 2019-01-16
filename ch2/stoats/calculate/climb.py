@@ -22,6 +22,8 @@ def climbs(waypoints):
     * Any climbs that survive this process and meet the requirements (length and gradient) are "counted".
 
     This is intended to find the "biggest" climbs that don't include large reversals, and without overlaps.
+
+    (Note that waypoints are in time order)
     '''
     if waypoints and (waypoints[-1].distance - waypoints[0].distance) >= MIN_CLIMB_DISTANCE_M:
         up, lo, hi = biggest_climb(waypoints, lt)
@@ -63,18 +65,25 @@ def sort(waypoints, reverse=False):
     return sorted(waypoints, key=lambda w: w.elevation, reverse=reverse)
 
 
+def first_or_none(generator):
+    try:
+        return next(generator)
+    except StopIteration:
+        return None
+
+
 def biggest_climb(waypoints, direction):
-    # this is O(n^2) so try and stuff as much as possible into high-level routines like sort
-    highest = sort(waypoints, reverse=True)
-    lowest = sort(waypoints)
     best = None, None, None
-    for hi in highest:
-        before_hi = sort(l for l in lowest if direction(l.time, hi.time))
-        if before_hi:
-            lo = before_hi[0]
-            climb = hi.elevation - lo.elevation
-            if best[0] is None or climb > best[0]:
-                best = (climb, lo, hi)
-        if best[0] and best[0] >= (hi.elevation - lowest[0].elevation):
-            break  # abort if there is no way to improve
+    if waypoints:
+        # this is O(n^2) so try and stuff as much as possible into high-level routines like sort
+        highest = sort(waypoints, reverse=True)
+        lowest = sort(waypoints)
+        for hi in highest:
+            lo = first_or_none(l for l in lowest if direction(l.time, hi.time))
+            if lo:
+                climb = hi.elevation - lo.elevation
+                if best[0] is None or climb > best[0]:
+                    best = (climb, lo, hi)
+            if best[0] and best[0] >= (hi.elevation - lowest[0].elevation):
+                break  # abort if there is no way to improve
     return best
