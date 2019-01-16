@@ -62,8 +62,8 @@ class Chunk:
     '''
     A collection of data points in time order, associated with a single timespan.
 
-    In most of the uses below the contents are slowly incremented over time (and
-    values popped off the front) as various statistics are calculated.
+    In most of uses the contents are slowly incremented over time (and values popped off the front)
+    as various statistics are calculated.
     '''
 
     def __init__(self, waypoint):

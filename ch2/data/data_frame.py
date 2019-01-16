@@ -201,7 +201,7 @@ def activity_statistics(s, *statistics,
         if not times or times[-1] != time:
             times.append(time)
             if with_timespan:
-                data['timespan_id'] = timespan
+                data['timespan_id'].append(timespan)
         if len(data[name]) >= len(times):
             raise Exception('Duplicate data for %s at %s ' % (name, time) +
                             '(you may need to specify more constraints to make the query unique)')

@@ -15,7 +15,7 @@ class SingleShotServer:
         self.__server.start()
         self.__log.info('Opening Bokeh application on http://localhost:5006/')
         self.__server.io_loop.add_callback(self.__server.show, "/")
-        self.__server.io_loop.call_later(5, self.__stop)
+        self.__server.io_loop.call_later(60, self.__stop)
         self.__server.io_loop.start()
 
     def __modify_doc(self, doc):

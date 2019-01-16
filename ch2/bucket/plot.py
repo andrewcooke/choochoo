@@ -60,11 +60,11 @@ def line_diff(nx, ny, xlabel, y1, y2=None):
             zero = min(y.index.min() for y in y2)
             for y in y2:
                 y.index = (y.index - zero).total_seconds()
-        y2 = [interpolate_to_index(ref, y) for ref, y in zip(y1, y2)]
         for y in y2:
             f.line(x=y.index, y=y, color='grey')
 
         y1, y2 = pd.concat(y1), pd.concat(y2)
+        y2 = interpolate_to_index(y1, y2)
         y1, y2, range = delta_patches(y1, y2)
         f.extra_y_ranges = {'delta': range}
         if y1 is not None:

@@ -91,44 +91,46 @@ def comparison(log, s, aj1=None, aj2=None):
     st1, st1_10 = get_stats(aj1)
     st2, st2_10 = get_stats(aj2) if aj2 else (None, None)
 
+    def all_frames(st, name):
+        return [df[name].copy() for df in st]
+
+    def set_axis(ys, st, name):
+        if name != TIME:
+            for y, df in zip(ys, st):
+                y.index = df[name].copy()
+
     # ---- ride-specific plots
 
     def ride_line(y_axis, x_axis=TIME):
-        y1 = [df[y_axis].copy() for df in st1_10]
-        if x_axis != TIME:
-            for y, df in zip(y1, st1_10):
-                y.index = df[x_axis]
+        y1 = all_frames(st1_10, y_axis)
+        set_axis(y1, st1_10, x_axis)
         if aj2:
-            y2 = [df[y_axis].copy() for df in st2_10]
-            if x_axis != TIME:
-                for y, df in zip(y2, st2_10):
-                    y.index = df[x_axis]
+            y2 = all_frames(st2_10, y_axis)
+            set_axis(y2, st2_10, x_axis)
         else:
             y2 = None
         return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y1, y2)
 
     def ride_cum(y_axis):
-        y1 = [df[y_axis].copy() for df in st1_10]
+        y1 = all_frames(st1_10, y_axis)
         if aj2:
-            y2 = [df[y_axis].copy() for df in st2_10]
+            y2 = all_frames(st2_10, y_axis)
         else:
             y2 = None
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
-    hr10_line, hr10_cumulative = ride_line(MED_HR_10), ride_cum(HR_10)
-    elvn_line, elvn_cumulative = ride_line(ELEVATION_M), ride_cum(CLIMB_MPS)
-    speed_line, speed_cumulative = ride_line(MED_SPEED_KPH), ride_cum(SPEED_KPH)
+    hr10_line, hr10_cumulative = ride_line(MED_HR_10, x_axis=DISTANCE_KM), ride_cum(HR_10)
+    elvn_line, elvn_cumulative = ride_line(ELEVATION_M, x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
+    speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 
     side = 300
     mx = max(df[HR_10].max() for df in st1_10)
     mn = min(df[HR_10].max() for df in st1_10)
     for df in st1_10:
         df['size'] = side * ((df[HR_10] - mn) / (mx - mn)) ** 3 / 10
-    x1 = [df[SPHERICAL_MERCATOR_X] for df in st1_10]
-    y1 = [df[SPHERICAL_MERCATOR_Y] for df in st1_10]
+    x1, y1 = all_frames(st1_10, SPHERICAL_MERCATOR_X), all_frames(st1_10, SPHERICAL_MERCATOR_Y)
     if aj2:
-        x2 = [df[SPHERICAL_MERCATOR_X] for df in st2_10]
-        y2 = [df[SPHERICAL_MERCATOR_Y] for df in st2_10]
+        x2, y2 = all_frames(st2_10, SPHERICAL_MERCATOR_X), all_frames(st2_10, SPHERICAL_MERCATOR_Y)
     else:
         x2, y2 = None, None
     map = dot_map(side, x1, y1, [df['size'] for df in st1_10], x2, y2)
