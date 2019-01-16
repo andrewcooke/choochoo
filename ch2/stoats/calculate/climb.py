@@ -63,19 +63,14 @@ def biggest_climb(waypoints, direction):
     # this is O(n^2) so try and stuff as much as possible into high-level routines like sort
     highest = sorted(waypoints, key=lambda w: w.elevation, reverse=True)
     lowest = sorted(waypoints, key=lambda w: w.elevation)
-    best = None
+    best = None, None, None
     for hi in highest:
-        available = sorted((l for l in lowest if direction(l.time, hi.time)), key=lambda w: w.elevation)
-        if available:
-            lo = available[0]
+        before_hi = sorted((l for l in lowest if direction(l.time, hi.time)), key=lambda w: w.elevation)
+        if before_hi:
+            lo = before_hi[0]
             climb = hi.elevation - lo.elevation
-            if best is None:
-                best = (climb, lo, hi)
-            elif climb > best[0]:
+            if best[0] is None or climb > best[0]:
                 best = (climb, lo, hi)
             elif best[0] > hi.elevation - lowest[0].elevation:
                 break  # abort if there is no way to improve
-    if best:  # don't check for distance here because this is also used for descents where we don't care
-        return best
-    else:
-        return None, None, None
+    return best
