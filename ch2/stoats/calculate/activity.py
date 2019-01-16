@@ -1,11 +1,13 @@
 
 from collections import Counter
 from itertools import chain
+from operator import lt, gt
 
 from . import WaypointCalculator
 from .heart_rate import hr_zones_from_database
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, DISTANCE
+    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, \
+    DISTANCE, ELEVATION
 from ..waypoint import Chunks
 from ...squeal import StatisticName
 
@@ -17,7 +19,8 @@ class ActivityStatistics(WaypointCalculator):
 
     def _names(self):
         return {HEART_RATE: 'heart_rate',
-                DISTANCE: 'distance'}
+                DISTANCE: 'distance',
+                ELEVATION: 'elevation'}
 
     def _add_stats_from_waypoints(self, s, ajournal, waypoints):
         totals = Totals(self._log, waypoints)
