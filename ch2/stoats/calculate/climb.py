@@ -25,8 +25,10 @@ def climbs(waypoints):
 
     (Note that waypoints are in time order)
     '''
+    waypoints = [w for w in waypoints if w.elevation is not None]
     if waypoints and (waypoints[-1].distance - waypoints[0].distance) >= MIN_CLIMB_DISTANCE_M:
-        up, lo, hi = biggest_climb(waypoints, lt)
+        _, lo, hi = biggest_climb(waypoints, lt)
+        up, lo, hi = trim(waypoints, lo, hi)
         if up:
             a, b, c = split(waypoints, lo, hi)
             yield from climbs(a)
@@ -44,6 +46,27 @@ def split(waypoints, lo, hi, inside=True):
     else:
         i += 1
     return waypoints[:i], waypoints[i:j], waypoints[j:]
+
+
+def trim(waypoints, lo, hi):
+    ilo, ihi = waypoints.index(lo), waypoints.index(hi)
+    start, i = ilo, ihi
+    while i > ilo:
+        gradient = (waypoints[i].elevation - lo.elevation) / (waypoints[i].distance - lo.distance)
+        if gradient < MIN_CLIMB_GRADIENT:
+            start = i
+            break
+        i -= 1
+    finish, i = ihi, ilo
+    while i < ihi:
+        gradient = (hi.elevation - waypoints[i].elevation) / (hi.distance - waypoints[i].distance)
+        if gradient < MIN_CLIMB_GRADIENT:
+            finish = i
+        i += 1
+    if (waypoints[finish].distance - waypoints[start].distance) >= MIN_CLIMB_DISTANCE_M:
+        return waypoints[finish].elevation - waypoints[start].elevation, waypoints[start], waypoints[finish]
+    else:
+        return None, None, None
 
 
 def contiguous(waypoints):
