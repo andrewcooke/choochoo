@@ -13,11 +13,13 @@ from ..stoats.names import TIME, HR_ZONE
 def dot_map(n, x1, y1, size, x2=None, y2=None):
 
     f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator')
-    f.circle(x=x1, y=y1, line_alpha=0, fill_color='red', size=size, fill_alpha=0.03)
-    f.line(x=x1, y=y1, line_color='black')
+    for x, y, s in zip(x1, y1, size):
+        f.circle(x=x, y=y, line_alpha=0, fill_color='red', size=s, fill_alpha=0.03)
+        f.line(x=x, y=y, line_color='black')
 
-    if x2 is not None:
-        f.line(x=x2, y=y2, line_color='grey')
+        if x2 is not None:
+            for x, y in zip(x2, y2):
+                f.line(x=x, y=y, line_color='grey')
 
     f.add_tile(tile_providers.STAMEN_TERRAIN, alpha=0.1)
     f.axis.visible = False
@@ -28,34 +30,41 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
 
 def line_diff(nx, ny, xlabel, y1, y2=None):
 
-    is_x_time = isinstance(y1.index[0], dt.datetime)
+    is_x_time = isinstance(y1[0].index[0], dt.datetime)
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear')
+
+    y_max = max(y.max() for y in y1)
+    y_min = min(y.min() for y in y1)
+    if y2:
+        y_max = max(y_max, max(y.max() for y in y2))
+        y_min = min(y_min, min(y.min() for y in y2))
+    dy = y_max - y_min
 
     if is_x_time:
         f.xaxis.axis_label = 'Time'
         f.xaxis[0].formatter = NumeralTickFormatter(format='00:00:00')
-        y1.index = (y1.index - y1.index[0]).total_seconds()
+        zero = min(y.index.min() for y in y1)
+        for y in y1:
+            y.index = (y.index - zero).total_seconds()
     else:
         f.xaxis.axis_label = xlabel
         f.xaxis[0].formatter = PrintfTickFormatter(format='%.2f')
-    f.yaxis.axis_label = y1.name
+    f.yaxis.axis_label = y1[0].name
 
-    y_max = y1.max()
-    y_min = y1.min()
-    if y2 is not None:
-        y_max = max(y_max, y2.max())
-        y_min = min(y_min, y2.min())
-    dy = y_max - y_min
-
-    f.line(x=y1.index, y=y1, color='black')
     f.y_range = Range1d(start=0 if y_min == 0 else y_min - 0.1 * dy, end=y_max + 0.1 * dy)
+    for y in y1:
+        f.line(x=y.index, y=y, color='black')
 
-    if y2 is not None:
+    if y2:
         if is_x_time:
-            y2.index = (y2.index - y2.index[0]).total_seconds()
-        y2 = interpolate_to_index(y1, y2)
-        f.line(x=y2.index, y=y2, color='grey')
+            zero = min(y.index.min() for y in y2)
+            for y in y2:
+                y.index = (y.index - zero).total_seconds()
+        y2 = [interpolate_to_index(ref, y) for ref, y in zip(y1, y2)]
+        for y in y2:
+            f.line(x=y.index, y=y, color='grey')
 
+        y1, y2 = pd.concat(y1), pd.concat(y2)
         y1, y2, range = delta_patches(y1, y2)
         f.extra_y_ranges = {'delta': range}
         if y1 is not None:
@@ -69,10 +78,12 @@ def line_diff(nx, ny, xlabel, y1, y2=None):
 
 def cumulative(nx, ny, y1, y2=None, sample=10):
 
+    y1 = pd.concat(y1)
     y1 = y1.sort_values(ascending=False).reset_index(drop=True)
     y_max = y1.max()
     y_min = y1.min()
     if y2 is not None:
+        y2 = pd.concat(y2)
         y2 = y2.sort_values(ascending=False).reset_index(drop=True)
         y_max = max(y_max, y2.max())
         y_min = min(y_min, y2.min())

@@ -2,12 +2,13 @@
 from collections import defaultdict
 
 import pandas as pd
-from sqlalchemy import inspect, select
+from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
+from ch2.squeal import ActivityJournal
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
-from ..squeal.database import connect
+from ..squeal.database import connect, ActivityTimespan
 
 # because this is intended to be called from jupyter we hide the log here
 # other callers can use these routines by calling set_log() first.
@@ -83,7 +84,7 @@ class MissingData(Exception): pass
 
 
 def statistics(s, *statistics,
-               start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None,):
+               start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None):
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     q = _build_statistic_journal_query(statistic_ids, start, finish, owner, constraint, source_ids, schedule)
     data, times, err_cnt = defaultdict(list), [], defaultdict(lambda: 0)
@@ -111,8 +112,8 @@ def statistics(s, *statistics,
     return pd.DataFrame(data, index=times)
 
 
-def statistic_quartiles(s, *statistics, schedule='m',
-                        start=None, finish=None, owner=None, constraint=None, source_ids=None):
+def statistic_quartiles(s, *statistics,
+                        start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None):
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     q = s.query(StatisticMeasure). \
         join(StatisticJournal, StatisticMeasure.statistic_journal_id == StatisticJournal.id). \
@@ -149,3 +150,67 @@ def statistic_quartiles(s, *statistics, schedule='m',
                 data[statistic].append(None)
     return pd.DataFrame(data, index=times)
 
+
+def activity_statistics(s, *statistics,
+                        time=None, activity_journal_id=None, with_timespan=False):
+
+    statistic_names, statistic_ids = _collect_statistics(s, statistics)
+    get_log().debug('Statistics IDs %s' % statistic_ids)
+
+    if activity_journal_id:
+        if time:
+            raise Exception('Specify activity_journal_id or time (not both)')
+    else:
+        if not time:
+            raise Exception('Specify activity_journal_id or time')
+        activity_journal_id = s.query(ActivityJournal.id). \
+            filter(ActivityJournal.start <= time,
+                   ActivityJournal.finish >= time).scalar()
+        get_log().info('Using activity_journal_id=%d' % activity_journal_id)
+
+    sj = inspect(StatisticJournal).local_table
+    sn = inspect(StatisticName).local_table
+    sji = inspect(StatisticJournalInteger).local_table
+    sjf = inspect(StatisticJournalFloat).local_table
+    sjt = inspect(StatisticJournalText).local_table
+    at = inspect(ActivityTimespan).local_table
+
+    q = select([sn.c.name, sj.c.time, coalesce(sjf.c.value, sji.c.value, sjt.c.value), at.c.id]). \
+        select_from(sj.join(sn).outerjoin(sjf).outerjoin(sji).outerjoin(sjt)). \
+        where(and_(sn.c.id.in_(statistic_ids), sj.c.source_id == activity_journal_id)). \
+        select_from(at). \
+        where(and_(at.c.start <= sj.c.time, at.c.finish >= sj.c.time,
+                   at.c.activity_journal_id == activity_journal_id)). \
+        order_by(sj.c.time)
+    get_log().debug(q)
+    data, times, err_cnt = defaultdict(list), [], defaultdict(lambda: 0)
+
+    def pad():
+        nonlocal data, times
+        n = len(times)
+        for name in statistic_names:
+            if len(data[name]) != n:
+                err_cnt[name] += 1
+                if err_cnt[name] <= 1:
+                    get_log().warning('Missing %s at %s (single warning)' % (name, times[-1]))
+                data[name].append(None)
+
+    for name, time, value, timespan in s.connection().execute(q):
+        if times and times[-1] != time:
+            pad()
+        if not times or times[-1] != time:
+            times.append(time)
+            if with_timespan:
+                data['timespan_id'] = timespan
+        if len(data[name]) >= len(times):
+            raise Exception('Duplicate data for %s at %s ' % (name, time) +
+                            '(you may need to specify more constraints to make the query unique)')
+        data[name].append(value)
+    pad()
+    return pd.DataFrame(data, index=times)
+
+
+if __name__ == '__main__':
+    s = session('-v 5')
+    df = activity_statistics(s, 'Speed', time='2019-01-05 14:40:00', with_timespan=True)
+    print(df.describe)

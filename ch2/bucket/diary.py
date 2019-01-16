@@ -2,29 +2,32 @@
 import datetime as dt
 
 import numpy as np
+import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import Div
 
+from ch2.squeal import ActivityGroup
+from ch2.stoats.calculate.monitor import MonitorStatistics
 from .data_frame import interpolate_to
-from .plot import dot_map, line_diff, cumulative, health, activity, heart_rate_zones
+from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, activity
 from .server import SingleShotServer
 from ..data import statistics
-from ..data.data_frame import set_log, session, get_log
+from ..data.data_frame import set_log, session, get_log, activity_statistics
 from ..lib.date import format_time, format_seconds, local_date_to_time
-from ..squeal import ActivityGroup, ActivityJournal
-from ..stoats.calculate.monitor import MonitorStatistics
+from ..squeal import ActivityJournal
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
-    REST_HR, DAILY_STEPS, ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION
+    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS
 
 WINDOW = '60s'
+#WINDOW = 10
+MIN_PERIODS = 1
 
 DISTANCE_KM = '%s / km' % DISTANCE
 SPEED_KPH = '%s / kph' % SPEED
 MED_SPEED_KPH = 'M(%s) %s / kph' % (WINDOW, SPEED)
 ELEVATION_M = '%s / m' % ELEVATION
 CLIMB_MPS = 'Climb / mps'
-TIME = 'Time'
 HR_10 = 'HR Impulse / 10s'
 MED_HR_10 = 'M(%s) HR Impulse / 10s' % WINDOW
 
@@ -62,7 +65,7 @@ table {
 '''
 
 
-def comparison(log, s, aj1, aj2=None):
+def comparison(log, s, aj1=None, aj2=None):
 
     # ---- definitions
 
@@ -72,14 +75,17 @@ def comparison(log, s, aj1, aj2=None):
     # ---- load data
 
     def get_stats(aj):
-        st = statistics(s, *names, source_ids=[aj.id])
-        st[DISTANCE_KM] = st[DISTANCE]/1000
-        st[SPEED_KPH] = st[SPEED] * 3.6
-        st[MED_SPEED_KPH] = st[SPEED].rolling(WINDOW, min_periods=1).median() * 3.6
-        st[MED_HR_10] = st[HR_10].rolling(WINDOW, min_periods=1).median()
-        st_10 = interpolate_to(st, HR_10)
-        st_10.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
-        st_10[CLIMB_MPS] = st_10[ELEVATION_M].diff() * 0.1
+        st = [df for id, df in
+              activity_statistics(s, *names, activity_journal_id=aj.id, with_timespan=True).groupby('timespan_id')]
+        for df in st:
+            df[DISTANCE_KM] = df[DISTANCE]/1000
+            df[SPEED_KPH] = df[SPEED] * 3.6
+            df[MED_SPEED_KPH] = df[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
+            df[MED_HR_10] = df[HR_10].rolling(WINDOW, min_periods=1).median()
+            df.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
+        st_10 = [interpolate_to(df, HR_10) for df in st]
+        for df in st_10:
+            df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
         return st, st_10
 
     st1, st1_10 = get_stats(aj1)
@@ -88,21 +94,23 @@ def comparison(log, s, aj1, aj2=None):
     # ---- ride-specific plots
 
     def ride_line(y_axis, x_axis=TIME):
-        y1 = st1_10[y_axis].copy()  # copy means we don't overwrite main index
+        y1 = [df[y_axis].copy() for df in st1_10]
         if x_axis != TIME:
-            y1.index = st1_10[x_axis]  # could be left as time
+            for y, df in zip(y1, st1_10):
+                y.index = df[x_axis]
         if aj2:
-            y2 = st2_10[y_axis].copy()
+            y2 = [df[y_axis].copy() for df in st2_10]
             if x_axis != TIME:
-                y2.index = st2_10[x_axis]
+                for y, df in zip(y2, st2_10):
+                    y.index = df[x_axis]
         else:
             y2 = None
         return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y1, y2)
 
     def ride_cum(y_axis):
-        y1 = st1_10[y_axis].copy()  # copy means we don't overwrite main index
+        y1 = [df[y_axis].copy() for df in st1_10]
         if aj2:
-            y2 = st2_10[y_axis].copy()
+            y2 = [df[y_axis].copy() for df in st2_10]
         else:
             y2 = None
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
@@ -112,14 +120,18 @@ def comparison(log, s, aj1, aj2=None):
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH), ride_cum(SPEED_KPH)
 
     side = 300
-    mx, mn = st1_10[HR_10].max(), st1_10[HR_10].min()
-    st1_10['size'] = side * ((st1_10[HR_10] - mn) / (mx - mn)) ** 3 / 10
-    x1, y1 = st1_10[SPHERICAL_MERCATOR_X], st1_10[SPHERICAL_MERCATOR_Y]
+    mx = max(df[HR_10].max() for df in st1_10)
+    mn = min(df[HR_10].max() for df in st1_10)
+    for df in st1_10:
+        df['size'] = side * ((df[HR_10] - mn) / (mx - mn)) ** 3 / 10
+    x1 = [df[SPHERICAL_MERCATOR_X] for df in st1_10]
+    y1 = [df[SPHERICAL_MERCATOR_Y] for df in st1_10]
     if aj2:
-        x2, y2 = st2_10[SPHERICAL_MERCATOR_X], st2_10[SPHERICAL_MERCATOR_Y]
+        x2 = [df[SPHERICAL_MERCATOR_X] for df in st2_10]
+        y2 = [df[SPHERICAL_MERCATOR_Y] for df in st2_10]
     else:
         x2, y2 = None, None
-    map = dot_map(side, x1, y1, st1_10['size'], x2, y2)
+    map = dot_map(side, x1, y1, [df['size'] for df in st1_10], x2, y2)
 
     caption = '<table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
     source_ids = [aj1.id]
@@ -136,7 +148,8 @@ def comparison(log, s, aj1, aj2=None):
                    (aj2.name, format_time(aj2.start),
                     format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
     caption = Div(text=caption + '</table>', width=RIDE_PLOT_LEN, height=RIDE_PLOT_HGT)
-    hrz_histogram = heart_rate_zones(RIDE_PLOT_HGT, RIDE_PLOT_HGT, st1_10[HR_ZONE])
+
+    hrz_histogram = heart_rate_zones(RIDE_PLOT_HGT, RIDE_PLOT_HGT, pd.concat([df[HR_ZONE] for df in st1_10]))
 
     # ---- health-specific plots
 
@@ -166,7 +179,8 @@ def comparison(log, s, aj1, aj2=None):
                                  row(elvn_line, elvn_cumulative),
                                  row(speed_line, speed_cumulative),
                                  row(caption, hrz_histogram),
-                                 row(column(health_line, activity_line), map)),
+                                 row(column(health_line, activity_line), map)
+                                 ),
                      template=TEMPLATE, title='choochoo',
                      template_vars={
                          'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else '')
@@ -175,6 +189,7 @@ def comparison(log, s, aj1, aj2=None):
 
 if __name__ == '__main__':
     s = session('-v 5')
+    # day = local_date_to_time('2019-01-15')
     day = local_date_to_time('2018-03-04')
     aj1 = s.query(ActivityJournal).filter(ActivityJournal.start >= day,
                                           ActivityJournal.start < day + dt.timedelta(days=1)).one()
