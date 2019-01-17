@@ -1,13 +1,13 @@
 
 from collections import Counter
 from itertools import chain
-from operator import lt, gt
 
 from . import WaypointCalculator
+from .climb import climbs
 from .heart_rate import hr_zones_from_database
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, \
-    DISTANCE, ELEVATION
+    DISTANCE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, CLIMB_GRADIENT
 from ..waypoint import Chunks
 from ...squeal import StatisticName
 
@@ -45,6 +45,14 @@ class ActivityStatistics(WaypointCalculator):
                     self._add_float_stat(s, ajournal, MAX_MED_HR_M % target, summaries(MAX, MSR), heart_rates[0], BPM)
         else:
             self._log.warning('No HR zones defined for %s or before' % ajournal.start)
+        for lo, hi in climbs(waypoints):
+            up = hi.elevation - lo.elevation
+            along = hi.distance - lo.distance
+            time = (hi.time - lo.time).total_seconds()
+            self._add_float_stat(s, ajournal, CLIMB_ELEVATION, summaries(MAX, SUM), up, M, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_DISTANCE, summaries(MAX, SUM), along, M, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_TIME, summaries(MAX, SUM), time, S, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_GRADIENT, summaries(MAX), up / along, None, time=hi.time)
 
 
 class TimeForDistance(Chunks):

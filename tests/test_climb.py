@@ -51,12 +51,12 @@ class TestClimb(TestCase):
             # print(waypoints)
             c = list(climbs(waypoints))
             self.assertEqual(len(c), 1)
-            self.assertAlmostEqual(c[0][0].time, 0, delta=1)
-            self.assertAlmostEqual(c[0][0].distance, 0, delta=10)
-            self.assertAlmostEqual(c[0][0].elevation, 0, delta=2)
-            self.assertAlmostEqual(c[0][1].time, 110, delta=1)
-            self.assertAlmostEqual(c[0][1].distance, 1100, delta=10)
-            self.assertAlmostEqual(c[0][1].elevation, 100, delta=2)
+            self.assertAlmostEqual(c[0][0].time, 0, delta=5)
+            self.assertAlmostEqual(c[0][0].distance, 0, delta=50)
+            self.assertAlmostEqual(c[0][0].elevation, 0, delta=5)
+            self.assertAlmostEqual(c[0][1].time, 110, delta=5)
+            self.assertAlmostEqual(c[0][1].distance, 1100, delta=50)
+            self.assertAlmostEqual(c[0][1].elevation, 100, delta=5)
 
     def test_multiple(self):
         waypoints = list(self.build_climb([(0, 0), (1100, 100), (1200, 90), (1500, 150)]))
