@@ -24,8 +24,7 @@ class ActivityDiary(JournalDiary):
         zones = build_zones(s, ajournal, HRZ_WIDTH)
         active_date = self.__active_date(s, ajournal, date)
         climbs = self.__climbs(s, ajournal, date)
-        details = Pile(([] if climbs else [Divider()]) + active_date +
-                       ([Text('Climbs')] if climbs else []) + climbs)
+        details = Pile(([] if climbs else [Divider()]) + active_date + climbs)
         yield Pile([
             Text(ajournal.name),
             Indent(Columns([details, (HRZ_WIDTH + 2, zones)])),
@@ -46,17 +45,21 @@ class ActivityDiary(JournalDiary):
         return body
 
     def __climbs(self, s, ajournal, date):
-        body = []
-        for climb in climbs_for_activity(s, ajournal):
-            body.append(Text(['%3sm/%.1fkm (%d%%)' %
-                              (int(climb[CLIMB_ELEVATION].value), # display int() with %s to get space padding
-                               climb[CLIMB_DISTANCE].value / 1000, climb[CLIMB_GRADIENT].value),
-                              label(' in '),
-                              format_seconds(climb[CLIMB_TIME].value),
-                              ' ',
-                              *climb[CLIMB_ELEVATION].measures_as_text(date),
-                              ]))
-        return body
+        total, climbs = climbs_for_activity(s, ajournal)
+        if total:
+            body = [Text(['Climbs ', label('Total: '), '%dm ' % total.value, *total.measures_as_text(date)])]
+            for climb in climbs:
+                body.append(Text(['%3sm/%.1fkm (%d%%)' %
+                                  (int(climb[CLIMB_ELEVATION].value), # display int() with %s to get space padding
+                                   climb[CLIMB_DISTANCE].value / 1000, climb[CLIMB_GRADIENT].value),
+                                  label(' in '),
+                                  format_seconds(climb[CLIMB_TIME].value),
+                                  ' ',
+                                  *climb[CLIMB_ELEVATION].measures_as_text(date),
+                                  ]))
+            return body
+        else:
+            return []
 
     def __template(self, s, ajournal, template, title, re, date):
         body = [Text(title)]

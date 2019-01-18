@@ -36,6 +36,7 @@ STEPS = 'Steps'
 REST_HR = 'Rest HR'
 TIME = 'Time'
 TIME_IN_Z = 'Time in Z%d'
+TOTAL_CLIMB = 'Total Climb'
 MAX_MED_HR_M = 'Max Med HR %dm'
 MAX_MED_HR_M_ANY = 'Max Med HR %'
 
