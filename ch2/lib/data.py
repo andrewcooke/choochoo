@@ -1,6 +1,7 @@
 
 from binascii import hexlify
 from collections import namedtuple
+from re import sub
 
 
 class WarnDict(dict):
@@ -45,7 +46,10 @@ def assert_attr(instance, *attrs):
             raise Exception('No %s defined' % attr)
 
 
-def dict_to_attr(**kargs):
+def dict_to_attr(_rename=False, **kargs):
+    if _rename:
+        kargs = dict((sub(r' ', '_', name), value) for name, value in kargs.items())
+    print(kargs)
     return namedtuple('Attr', kargs.keys())(**kargs)
 
 

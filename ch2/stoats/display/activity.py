@@ -4,9 +4,11 @@ from re import search
 from urwid import Text, Pile, Columns, Divider
 
 from . import JournalDiary
+from .climb import climbs_for_activity
 from .heart_rate import build_zones
 from ..calculate.activity import ActivityStatistics
-from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_M_ANY
+from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
+    CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME
 from ...lib.date import format_seconds
 from ...lib.utils import label
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
@@ -20,7 +22,10 @@ class ActivityDiary(JournalDiary):
 
     def _journal_date(self, s, f, ajournal, date):
         zones = build_zones(s, ajournal, HRZ_WIDTH)
-        details = Pile(self.__active_date(s, ajournal, date))
+        active_date = self.__active_date(s, ajournal, date)
+        climbs = self.__climbs(s, ajournal, date)
+        details = Pile(([] if climbs else [Divider()]) + active_date +
+                       ([Text('Climbs')] if climbs else []) + climbs)
         yield Pile([
             Text(ajournal.name),
             Indent(Columns([details, (HRZ_WIDTH + 2, zones)])),
@@ -32,12 +37,25 @@ class ActivityDiary(JournalDiary):
         ])
 
     def __active_date(self, s, ajournal, date):
-        body = [Divider()]
+        body = []
         body.append(Text('%s - %s  (%s)' % (ajournal.start.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
                                             format_seconds((ajournal.finish - ajournal.start).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
             sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityStatistics, ajournal.activity_group)
             body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
+        return body
+
+    def __climbs(self, s, ajournal, date):
+        body = []
+        for climb in climbs_for_activity(s, ajournal):
+            body.append(Text(['%3sm/%.1fkm (%d%%)' %
+                              (int(climb[CLIMB_ELEVATION].value), # display int() with %s to get space padding
+                               climb[CLIMB_DISTANCE].value / 1000, climb[CLIMB_GRADIENT].value),
+                              label(' in '),
+                              format_seconds(climb[CLIMB_TIME].value),
+                              ' ',
+                              *climb[CLIMB_ELEVATION].measures_as_text(date),
+                              ]))
         return body
 
     def __template(self, s, ajournal, template, title, re, date):
@@ -71,6 +89,7 @@ class ActivityDiary(JournalDiary):
         if columns:
             yield Pile([Text('Activities'),
                         Indent(Pile(columns))])
+        # todo - climbs?
 
     def __schedule_fields(self, s, f, date, schedule):
         names = list(self.__names(s, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED))
@@ -88,5 +107,5 @@ class ActivityDiary(JournalDiary):
 
     def __names_like(self, s, name):
         return s.query(StatisticName). \
-                filter(StatisticName.name.like(name),
-                       StatisticName.owner == ActivityStatistics).all()
+            filter(StatisticName.name.like(name),
+                   StatisticName.owner == ActivityStatistics).all()

@@ -54,10 +54,10 @@ class ActivityStatistics(WaypointCalculator):
             up = hi.elevation - lo.elevation
             along = hi.distance - lo.distance
             time = (hi.time - lo.time).total_seconds()
-            self._add_float_stat(s, ajournal, CLIMB_ELEVATION, summaries(MAX, SUM), up, M, time=hi.time)
-            self._add_float_stat(s, ajournal, CLIMB_DISTANCE, summaries(MAX, SUM), along, M, time=hi.time)
-            self._add_float_stat(s, ajournal, CLIMB_TIME, summaries(MAX, SUM), time, S, time=hi.time)
-            self._add_float_stat(s, ajournal, CLIMB_GRADIENT, summaries(MAX), 100 * up / along, None, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_ELEVATION, summaries(MAX, SUM, MSR), up, M, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_DISTANCE, summaries(MAX, SUM, MSR), along, M, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_TIME, summaries(MAX, SUM, MSR), time, S, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_GRADIENT, summaries(MAX, MSR), 100 * up / along, None, time=hi.time)
 
 
 class TimeForDistance(Chunks):
