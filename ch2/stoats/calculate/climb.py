@@ -92,9 +92,9 @@ def biggest_climb(waypoints, params=Climb(), grid=10):
         if found:
             i, j = waypoints.index(lo), waypoints.index(hi)
             if i + grid >= j - grid:
-                waypoints = waypoints[i-grid:j+grid]
+                waypoints = waypoints[max(i-grid, 0):j+grid]
             else:
-                waypoints = waypoints[i-grid:i+grid] + waypoints[j-grid:j+grid]
+                waypoints = waypoints[max(i-grid, 0):i+grid] + waypoints[max(j-grid, 0):j+grid]
         else:
             return None, None, None
     return search(waypoints, params=params)
