@@ -17,8 +17,7 @@ class ActivitySimilarity(Base):
     activity_journal_hi_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), index=True)
     activity_journal_hi = relationship('ActivityJournal', foreign_keys=[activity_journal_hi_id])
     similarity = Column(Float, nullable=False)
-    UniqueConstraint(constraint, activity_journal_lo_id)
-    UniqueConstraint(constraint, activity_journal_hi_id)
+    UniqueConstraint(constraint, activity_journal_lo_id, activity_journal_hi_id)
 
 
 class ActivityNearby(Base):

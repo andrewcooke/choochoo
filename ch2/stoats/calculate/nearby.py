@@ -1,5 +1,6 @@
 
 from collections import defaultdict, namedtuple
+from itertools import groupby
 from json import loads
 
 from sqlalchemy import inspect, select, alias, and_, distinct, func
@@ -39,7 +40,7 @@ class NearbySimilarityCalculator(DbPipeline):
             n_points = defaultdict(lambda: 0)
             self._prepare(s, rtree, n_points, 100000)
             n_intersects = defaultdict(lambda: defaultdict(lambda: 0))
-            new_ids = self._measure(s, rtree, n_points, n_intersects, 10000)
+            new_ids = self._count_overlaps(s, rtree, n_points, n_intersects, 10000)
             self._save(s, new_ids, n_points, n_intersects, 10000)
 
     def _delete(self, s):
@@ -61,35 +62,34 @@ class NearbySimilarityCalculator(DbPipeline):
 
     def _prepare(self, s, rtree, n_points, delta):
         n = 0
-        for id_in, lon, lat in self._data(s, new=False):
-            p = [(lon, lat)]
-            rtree[p] = id_in
-            n_points[id_in] += 1
+        for aj_id_in, lon, lat in self._aj_lon_lat(s, new=False):
+            posn = [(lon, lat)]
+            rtree[posn] = aj_id_in
+            n_points[aj_id_in] += 1
             n += 1
             if n % delta == 0:
                 self._log.info('Loaded %s points for %s' % (n, self._config.constraint))
 
-    def _measure(self, s, rtree, n_points, n_intersects, delta):
-        new_ids, current_id, seen, n = [], None, None, 0
-        for id_in, lon, lat in self._data(s, new=True):
-            if id_in != current_id:
-                current_id, seen = id_in, set()
-                new_ids.append(id_in)
-            p = [(lon, lat)]
-            for other_p, id_out in rtree.get_items(p):
-                if id_in != id_out:
-                    if other_p not in seen:
-                        lo, hi = min(id_in, id_out), max(id_in, id_out)
+    def _count_overlaps(self, s, rtree, n_points, n_intersects, delta):
+        new_aj_ids, n = [], 0
+        for aj_id_in, aj_lon_lats in groupby(self._aj_lon_lat(s, new=True), key=lambda aj_lon_lat: aj_lon_lat[0]):
+            seen_posns = set()
+            new_aj_ids.append(aj_id_in)
+            for _, lon, lat in aj_lon_lats:
+                posn = [(lon, lat)]
+                for other_posn, aj_id_out in rtree.get_items(posn):
+                    if aj_id_in != aj_id_out and other_posn not in seen_posns:
+                        lo, hi = min(aj_id_in, aj_id_out), max(aj_id_in, aj_id_out)  # ordered pair
                         n_intersects[lo][hi] += 1
-                        seen.add(other_p)
-            rtree[p] = id_in
-            n_points[id_in] += 1
-            n += 1
-            if n % delta == 0:
-                self._log.info('Measured %s points for %s' % (n, self._config.constraint))
-        return new_ids
+                        seen_posns.add(other_posn)
+                rtree[posn] = aj_id_in
+                n_points[aj_id_in] += 1
+                n += 1
+                if n % delta == 0:
+                    self._log.info('Measured %s points for %s' % (n, self._config.constraint))
+        return new_aj_ids
 
-    def _data(self, s, new=True):
+    def _aj_lon_lat(self, s, new=True):
 
         start = to_time(self._config.start)
         finish = to_time(self._config.finish)
