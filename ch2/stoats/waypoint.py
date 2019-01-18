@@ -1,12 +1,20 @@
 
 import datetime as dt
-from collections import deque
+from collections import deque, namedtuple
 
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
-from ..lib.data import AttrDict
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat
+
+
+def make_waypoint(names, extra=None):
+    names = list(names)
+    if extra:
+        names += [extra]
+    names = ['time'] + names
+    defaults = [None] * len(names)
+    return namedtuple('Waypoint', names, defaults=defaults)
 
 
 class WaypointReader:
@@ -25,6 +33,8 @@ class WaypointReader:
         id_map = self._id_map(s, ajournal, names, owner)
         ids = list(id_map.keys())
 
+        Waypoint = make_waypoint(names.values(), extra='timespan' if self._with_timespan else None)
+
         for timespan in ajournal.timespans:
             self._log.debug('%s' % timespan)
             waypoint = None
@@ -37,14 +47,14 @@ class WaypointReader:
                 .order_by(sj.c.time)
             self._log.debug(stmt)
             for id, time, value in s.connection().execute(stmt):
-                if waypoint and waypoint['time'] != time:
+                if waypoint and waypoint.time != time:
                     yield waypoint
                     waypoint = None
                 if not waypoint:
-                    waypoint = AttrDict({'time': time}, none=True)
+                    waypoint = Waypoint(time=time)
                     if self._with_timespan:
-                        waypoint['timespan'] = timespan
-                waypoint[id_map[id]] = value
+                        waypoint = waypoint._replace(timespan=timespan)
+                waypoint = waypoint._replace(**{id_map[id]: value})
         self._log.debug('Waypoints generated')
 
     def _id_map(self, s, ajournal, names, owner):

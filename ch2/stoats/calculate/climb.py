@@ -1,42 +1,36 @@
 
-from operator import lt, gt
+from collections import namedtuple
 
-MIN_CLIMB_DISTANCE_M = 1000
-MIN_CLIMB_GRADIENT = 0.03
+# a climb of 80m is roughly equivalent to a score of 8000 on strava's weird approach -
+# https://support.strava.com/hc/en-us/articles/216917057-How-are-Strava-climbs-categorized-For-Rides-
+
+MIN_CLIMB_ELEVATION = 80
+MIN_CLIMB_GRADIENT = 3
 MAX_CLIMB_REVERSAL = 0.1
 
+# trade-off between pure elevation (0) and pure gradient (1)
+CLIMB_PHI = 0.6
 
-def climbs(waypoints):
-    '''
-    Climbs are found (and defined) by the following process:
 
-    * The largest uphill segment (largest difference in elevation between two points that has a gradient
-      within limits) is found.
+class Climb(namedtuple('BaseClimb', 'phi, min_elevation, min_gradient, max_reversal')):
 
-    * That splits the waypoints into 3 - before climb, climb, after climb.  The start and end sections
-      are themselves checked (by starting from above with that segment).
+    def __new__(cls, phi=CLIMB_PHI,
+                min_elevation=MIN_CLIMB_ELEVATION, min_gradient=MIN_CLIMB_GRADIENT, max_reversal=MAX_CLIMB_REVERSAL):
+        return super().__new__(cls, phi=phi,
+                               min_elevation=min_elevation, min_gradient=min_gradient, max_reversal=max_reversal)
 
-    * For the climb, the largest descent (ie climb going backwards) is found.  If that is more than
-      MAX_CLIMB_REVERSAL of the climb (in elevation) then the climb is split into 3.  The start and
-      end climbs are themselves checked for reversals; the descent is checked for smaller climbs.
 
-    * Any climbs that survive this process are then trimmed, discarding inital and final sections where
-      the gradient is below the cut-off.
-
-    * Finally, surviving climbs that still meet all requirements are "returned".
-
-    This is intended to find the "biggest" climbs that don't include large reversals, and without overlaps.
-
-    (Note that waypoints are in time order)
-    '''
+def find_climbs(waypoints, params=Climb()):
     waypoints = [w for w in waypoints if w.elevation is not None]
-    if waypoints and (waypoints[-1].distance - waypoints[0].distance) >= MIN_CLIMB_DISTANCE_M:
-        up, lo, hi = biggest_climb(waypoints)
-        if up:
-            a, b, c = split(waypoints, lo, hi)
-            yield from climbs(a)
-            yield from contiguous(b)
-            yield from climbs(c)
+    if waypoints:
+        mn, mx = min(w.elevation for w in waypoints), max(w.elevation for w in waypoints)
+        if mx - mn > params.min_elevation:
+            score, lo, hi = biggest_climb(waypoints, params=params)
+            if score:
+                a, b, c = split(waypoints, lo, hi)
+                yield from find_climbs(a, params=params)
+                yield from contiguous(b, params=params)
+                yield from find_climbs(c, params=params)
 
 
 def split(waypoints, lo, hi, inside=True):
@@ -51,37 +45,17 @@ def split(waypoints, lo, hi, inside=True):
     return waypoints[:i], waypoints[i:j], waypoints[j:]
 
 
-def trim(waypoints):
-    start, i = 0, len(waypoints)-1
-    while i > 0 and waypoints[i].distance < waypoints[0].distance:
-        gradient = (waypoints[i].elevation - waypoints[0].elevation) / (waypoints[i].distance - waypoints[0].distance)
-        if gradient < MIN_CLIMB_GRADIENT:
-            start = i
-            break
-        i -= 1
-    finish, i = len(waypoints)-1, start
-    while i < len(waypoints)-1 and waypoints[i].distance < waypoints[-1].distance:
-        gradient = (waypoints[-1].elevation - waypoints[i].elevation) / (waypoints[-1].distance - waypoints[i].distance)
-        if gradient < MIN_CLIMB_GRADIENT:
-            finish = i
-        i += 1
-    if waypoints[finish].distance - waypoints[start].distance >= MIN_CLIMB_DISTANCE_M:
-        # gradient can only have improved, so no need to check again
-        yield waypoints[start], waypoints[finish]
-
-
-def contiguous(waypoints):
+def contiguous(waypoints, params=Climb()):
     up = waypoints[-1].elevation - waypoints[0].elevation
-    along = waypoints[-1].distance - waypoints[0].distance
-    if along >= MIN_CLIMB_DISTANCE_M:
-        down, lo, hi = biggest_climb(waypoints, reverse=True)
+    if up >= params.min_elevation:
+        down, lo, hi = biggest_reversal(waypoints)
         if down and down > MAX_CLIMB_REVERSAL * up:
             a, b, c = split(waypoints, lo, hi, inside=False)
-            yield from contiguous(a)
-            yield from climbs(b)
-            yield from contiguous(c)
+            yield from contiguous(a, params=params)
+            yield from find_climbs(b, params=params)
+            yield from contiguous(c, params=params)
         else:
-            yield from trim(waypoints)
+            yield waypoints[0], waypoints[-1]
 
 
 def sort(waypoints, reverse=False):
@@ -95,23 +69,52 @@ def first_or_none(generator):
         return None
 
 
-def biggest_climb(waypoints, reverse=False):
-    direction = gt if reverse else lt
+def biggest_reversal(waypoints):
     best = None, None, None
     if waypoints:
-        # this is O(n^2) so try and stuff as much as possible into high-level routines like sort
+        highest = sort(waypoints, reverse=True)
+        lowest = sort(waypoints)
+        for hi in highest:
+            lo = first_or_none(l for l in lowest if l.distance > hi.distance and l.elevation < hi.elevation)
+            if lo:
+                drop = hi.elevation - lo.elevation
+                # if not reverse: print(score, hi.elevation, lo.elevation)
+                if best[0] is None or drop > best[0]:
+                    best = (drop, lo, hi)
+            if best[0] and best[0] > hi.elevation - lowest[0].elevation:
+                break  # exit if there is no way to improve
+    return best
+
+
+def biggest_climb(waypoints, params=Climb(), grid=10):
+    if len(waypoints) > 100 * grid:
+        found, lo, hi = search(waypoints[::grid], params=params)
+        if found:
+            i, j = waypoints.index(lo), waypoints.index(hi)
+            if i + grid >= j - grid:
+                waypoints = waypoints[i-grid:j+grid]
+            else:
+                waypoints = waypoints[i-grid:i+grid] + waypoints[j-grid:j+grid]
+        else:
+            return None, None, None
+    return search(waypoints, params=params)
+
+
+def search(waypoints, params=Climb()):
+    best = None, None, None
+    if waypoints:
         highest = sort(waypoints, reverse=True)
         lowest = sort(waypoints)
         for hi in highest:
             # use distance rather than time to avoid division by zero with limited resolution distance
-            lo = first_or_none(l for l in lowest if direction(l.distance, hi.distance) and l.elevation < hi.elevation)
-            if lo:
-                climb = hi.elevation - lo.elevation
-                along = hi.distance - lo.distance
-                # need to check gradient going forwards because otherwise we could include too much lead-in/out
-                if reverse or climb / along >= MIN_CLIMB_GRADIENT:
-                    if best[0] is None or climb > best[0]:
-                        best = (climb, lo, hi)
-            if best[0] and best[0] >= (hi.elevation - lowest[0].elevation):
-                break  # abort if there is no way to improve
+            for lo in filter(lambda lo: lo.distance < hi.distance and
+                                        hi.elevation - lo.elevation > params.min_elevation and
+                                        100 * (hi.elevation - lo.elevation) / (hi.distance - lo.distance) >
+                                        params.min_gradient,
+                             lowest):
+                score = (hi.elevation - lo.elevation) / (hi.distance - lo.distance) ** params.phi
+                if best[0] is None or score > best[0]:
+                    best = (score, lo, hi)
+            if (hi.elevation - lowest[0].elevation) < params.min_elevation:
+                break  # abort if there is no valid future value
     return best

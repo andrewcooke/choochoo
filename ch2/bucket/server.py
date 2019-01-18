@@ -4,7 +4,7 @@ from bokeh.server.server import Server
 
 class SingleShotServer:
 
-    def __init__(self, log, plot, template=None, title=None, template_vars=None):
+    def __init__(self, log, plot, template=None, title=None, template_vars=None, pause=60):
         self.__log = log
         self.__plot = plot
         self.__template = template
@@ -15,7 +15,7 @@ class SingleShotServer:
         self.__server.start()
         self.__log.info('Opening Bokeh application on http://localhost:5006/')
         self.__server.io_loop.add_callback(self.__server.show, "/")
-        self.__server.io_loop.call_later(60, self.__stop)
+        self.__server.io_loop.call_later(pause, self.__stop)
         self.__server.io_loop.start()
 
     def __modify_doc(self, doc):

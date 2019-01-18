@@ -1,4 +1,5 @@
 
+from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
@@ -36,13 +37,15 @@ def default(log, db, no_diary=False):
         run = add_activity_group(s, 'Run', c, description='All running activities')
         # sport_to_activity maps from the FIT sport field to the activity defined above
         add_activities(s, SegmentImporter, c, sport_to_activity={'cycling': bike.name,
-                                                                  'running': run.name})
+                                                                 'running': run.name})
 
         # statistics pipeline (called to calculate missing statistics)
 
         c = Counter()
         # need to specify the owner so that we get load waypoints correctly
-        add_statistics(s, ActivityStatistics, c, owner=short_cls(SegmentImporter))
+        add_climb(s, bike)
+        add_statistics(s, ActivityStatistics, c, owner=short_cls(SegmentImporter),
+                       climb=name_constant(CLIMB_CNAME, bike))
         add_statistics(s, SegmentStatistics, c, owner=short_cls(SegmentImporter))
         add_statistics(s, MonitorStatistics, c)
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command

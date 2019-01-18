@@ -6,18 +6,18 @@ import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import Div
 
-from ch2.squeal import ActivityGroup
-from ch2.stoats.calculate.monitor import MonitorStatistics
 from .data_frame import interpolate_to
-from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, activity
+from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, activity, line_diff_elevation_climbs
 from .server import SingleShotServer
 from ..data import statistics
 from ..data.data_frame import set_log, session, get_log, activity_statistics
 from ..lib.date import format_time, format_seconds, local_date_to_time
+from ..squeal import ActivityGroup
 from ..squeal import ActivityJournal
+from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
-    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS
+    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS, CLIMB_ELEVATION, CLIMB_DISTANCE
 
 WINDOW = '60s'
 #WINDOW = 10
@@ -90,6 +90,7 @@ def comparison(log, s, aj1=None, aj2=None):
 
     st1, st1_10 = get_stats(aj1)
     st2, st2_10 = get_stats(aj2) if aj2 else (None, None)
+    climbs = activity_statistics(s, CLIMB_DISTANCE, CLIMB_ELEVATION, activity_journal_id=aj1.id)
 
     def all_frames(st, name):
         return [df[name].copy() for df in st]
@@ -101,7 +102,7 @@ def comparison(log, s, aj1=None, aj2=None):
 
     # ---- ride-specific plots
 
-    def ride_line(y_axis, x_axis=TIME):
+    def set_axes(y_axis, x_axis=TIME):
         y1 = all_frames(st1_10, y_axis)
         set_axis(y1, st1_10, x_axis)
         if aj2:
@@ -109,7 +110,15 @@ def comparison(log, s, aj1=None, aj2=None):
             set_axis(y2, st2_10, x_axis)
         else:
             y2 = None
+        return y1, y2
+
+    def ride_line(y_axis, x_axis=TIME):
+        y1, y2 = set_axes(y_axis, x_axis=x_axis)
         return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y1, y2)
+
+    def ride_elevn():
+        y1, y2 = set_axes(ELEVATION_M, x_axis=DISTANCE_KM)
+        return line_diff_elevation_climbs(RIDE_PLOT_LEN, RIDE_PLOT_HGT, y1, y2, climbs=climbs, st=st1)
 
     def ride_cum(y_axis):
         y1 = all_frames(st1_10, y_axis)
@@ -120,7 +129,7 @@ def comparison(log, s, aj1=None, aj2=None):
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
     hr10_line, hr10_cumulative = ride_line(MED_HR_10, x_axis=DISTANCE_KM), ride_cum(HR_10)
-    elvn_line, elvn_cumulative = ride_line(ELEVATION_M, x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
+    elvn_line, elvn_cumulative = ride_elevn(), ride_cum(CLIMB_MPS)
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 
     side = 300

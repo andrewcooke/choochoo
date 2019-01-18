@@ -1,5 +1,6 @@
 
 from binascii import hexlify
+from collections import namedtuple
 
 
 class WarnDict(dict):
@@ -44,6 +45,10 @@ def assert_attr(instance, *attrs):
             raise Exception('No %s defined' % attr)
 
 
+def dict_to_attr(**kargs):
+    return namedtuple('Attr', kargs.keys())(**kargs)
+
+
 class AttrDict(dict):
 
     def __init__(self, *args, none=False, **kargs):
@@ -67,3 +72,6 @@ class AttrDict(dict):
             super().__setattr__(name, value)
         else:
             self[name] = value
+
+    def _to_dict(self):
+        return self.__dict__

@@ -2,12 +2,12 @@
 import datetime as dt
 
 import pandas as pd
-from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis
 from bokeh import palettes, tile_providers
+from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis
 from bokeh.plotting import figure
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
-from ..stoats.names import TIME, HR_ZONE
+from ..stoats.names import TIME, HR_ZONE, CLIMB_DISTANCE, CLIMB_ELEVATION
 
 
 def dot_map(n, x1, y1, size, x2=None, y2=None):
@@ -25,6 +25,23 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
     f.axis.visible = False
 
     f.toolbar_location = None
+    return f
+
+
+def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None):
+    from .diary import DISTANCE_KM, ELEVATION_M
+    f = line_diff(nx, ny, DISTANCE_KM, y1, y2=y2)
+    if climbs is not None:
+        all = pd.concat(st)
+        for time, climb in climbs.iterrows():
+            i = all.index.get_loc(time, method='nearest')
+            x = all[DISTANCE_KM].iloc[i]
+            x = (x - climb[CLIMB_DISTANCE] / 1000, x)
+            y = all[ELEVATION_M].iloc[i]
+            y = (y - climb[CLIMB_ELEVATION], y)
+            f.line(x=x, y=y, color='red', line_width=5, alpha=0.2)
+            for xx, yy in zip(x, y):
+                f.circle(x=xx, y=yy, color='red', size=8, alpha=0.2)
     return f
 
 

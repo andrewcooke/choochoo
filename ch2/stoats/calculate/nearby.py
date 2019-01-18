@@ -39,7 +39,7 @@ class NearbySimilarityCalculator(DbPipeline):
             n_points = defaultdict(lambda: 0)
             self._prepare(s, rtree, n_points, 100000)
             n_intersects = defaultdict(lambda: defaultdict(lambda: 0))
-            new_ids = self._measure(s, rtree, n_points, n_intersects, 2000)
+            new_ids = self._measure(s, rtree, n_points, n_intersects, 10000)
             self._save(s, new_ids, n_points, n_intersects, 10000)
 
     def _delete(self, s):

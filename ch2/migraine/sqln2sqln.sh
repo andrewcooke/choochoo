@@ -47,3 +47,4 @@ sqlite3 ~/.ch2/database.sqln < /tmp/dump-n.sql
 
 dev/ch2 default-config --no-diary
 dev/ch2 constants --set FTHR.Bike 154
+dev/ch2 constants --set SRTM1.Dir /home/andrew/archive/srtm1

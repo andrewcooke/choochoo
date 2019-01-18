@@ -5,9 +5,8 @@ from unittest import TestCase
 from sqlalchemy.sql.functions import count
 
 from ch2.command.activities import activities
-from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST, F
+from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.command.constants import constants
-from ch2.config import config
 from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
@@ -48,6 +47,7 @@ class TestActivities(TestCase):
                 self.assertNotEqual(journal.start, journal.finish)
 
     def test_segment_bug(self):
-        log, db = config()
-        paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
-        run_pipeline_paths(log, db, PipelineType.ACTIVITY, paths, force=True)
+        with NamedTemporaryFile() as f:
+            rgs, log, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
+            run_pipeline_paths(log, db, PipelineType.ACTIVITY, paths, force=True)

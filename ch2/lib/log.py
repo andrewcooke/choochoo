@@ -52,8 +52,8 @@ def make_log(args, tui=False):
             log.addHandler(stderr_handler)
             # slog.addHandler(stderr_handler)
             # mlog.addHandler(stderr_handler)
-            # blog.addHandler(stderr_handler)
-            # tlog.addHandler(stderr_handler)
+            blog.addHandler(stderr_handler)
+            tlog.addHandler(stderr_handler)
 
         CACHE.append(log)
 

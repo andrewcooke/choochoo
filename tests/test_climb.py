@@ -2,8 +2,21 @@
 from random import uniform
 from unittest import TestCase
 
+import pandas as pd
+from bokeh.layouts import column, row
+from bokeh.models import Label
+
+from ch2.bucket.diary import DISTANCE_KM, ELEVATION_M, TEMPLATE
+from ch2.bucket.plot import line_diff_elevation_climbs
+from ch2.bucket.server import SingleShotServer
+from ch2.config import config
+from ch2.data.data_frame import _resolve_activity, set_log, activity_statistics
 from ch2.lib.data import AttrDict
-from ch2.stoats.calculate.climb import climbs
+from ch2.squeal import ActivityJournal
+from ch2.stoats.calculate.climb import find_climbs, Climb
+from ch2.stoats.names import DISTANCE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE
+from ch2.stoats.read.segment import SegmentImporter
+from ch2.stoats.waypoint import WaypointReader
 
 
 class TestClimb(TestCase):
@@ -35,7 +48,7 @@ class TestClimb(TestCase):
     def test_single(self):
         waypoints = list(self.build_climb([(0, 0), (1000, 100), (2000, 0)]))
         # print(waypoints)
-        c = list(climbs(waypoints))
+        c = list(find_climbs(waypoints))
         self.assertEqual(len(c), 1)
         self.assertEqual(c[0][0].time, 0)
         self.assertEqual(c[0][0].distance, 0)
@@ -49,7 +62,7 @@ class TestClimb(TestCase):
             # increase distance to peak to avoid cutoff at 1km
             waypoints = list(self.build_climb([(0, 0), (1100, 100), (2000, 0)], noise=1))
             # print(waypoints)
-            c = list(climbs(waypoints))
+            c = list(find_climbs(waypoints))
             self.assertEqual(len(c), 1)
             self.assertAlmostEqual(c[0][0].time, 0, delta=5)
             self.assertAlmostEqual(c[0][0].distance, 0, delta=50)
@@ -61,23 +74,23 @@ class TestClimb(TestCase):
     def test_multiple(self):
         waypoints = list(self.build_climb([(0, 0), (1100, 100), (1200, 90), (1500, 150)]))
         # print(waypoints)
-        c = list(climbs(waypoints))
+        c = list(find_climbs(waypoints))
         # print(c)
         self.assertEqual(len(c), 1)
         self.assertEqual(c[0][1].elevation - c[0][0].elevation, 150)
         waypoints = list(self.build_climb([(0, 0), (1100, 100), (1200, 80), (1500, 150)]))
         # print(waypoints)
-        c = list(climbs(waypoints))
+        c = list(find_climbs(waypoints))
         # print(c)
         self.assertEqual(len(c), 1)
         self.assertEqual(c[0][1].elevation - c[0][0].elevation, 100)
-        waypoints = list(self.build_climb([(0, 0), (1100, 100), (1200, 80), (2300, 150)]))
+        waypoints = list(self.build_climb([(0, 0), (1100, 100), (1200, 80), (1500, 170)]))
         # print(waypoints)
-        c = list(climbs(waypoints))
+        c = list(find_climbs(waypoints))
         # print(c)
         self.assertEqual(len(c), 2)
         self.assertEqual(c[0][1].elevation - c[0][0].elevation, 100)
-        self.assertEqual(c[1][1].elevation - c[1][0].elevation, 70)
+        self.assertEqual(c[1][1].elevation - c[1][0].elevation, 90)
 
 
     # def test_noisy_single_to_failure(self):
@@ -86,3 +99,46 @@ class TestClimb(TestCase):
     #         c = list(climbs(waypoints))
     #         if len(c) != 1:
     #             climbs(waypoints)  # debug breakpoint here
+
+
+
+def analyse_activity(log, s, id):
+    aj = s.query(ActivityJournal).filter(ActivityJournal.id == id).one()
+    waypoints = list(WaypointReader(log, with_timespan=False).read(s, aj, {DISTANCE: 'distance',
+                                                                           ELEVATION: 'elevation'},
+                                                                   SegmentImporter))
+    plots = []
+    for phi in (0.3, 0.4, 0.5, 0.6, 0.7, 1):
+        # this is mainly noise getting things into appropriate forms for plotting...
+        climbs = pd.DataFrame()
+        for lo, hi in find_climbs(waypoints, params=Climb(phi=phi)):
+            climbs = climbs.append(pd.Series({CLIMB_ELEVATION: hi.elevation - lo.elevation,
+                                              CLIMB_DISTANCE: hi.distance - lo.distance}, name=hi.time))
+        all = activity_statistics(s, DISTANCE, ELEVATION, activity_journal_id=id, with_timespan=True).dropna()
+        all[DISTANCE_KM] = all[DISTANCE] / 1000
+        all[ELEVATION_M] = all[ELEVATION]
+        st = [df for id, df in all.groupby('timespan_id')]
+        ys = [df[ELEVATION_M].copy() for df in st]
+        for y, df in zip(ys, st):
+            y.index = df[DISTANCE_KM].copy()
+        f = line_diff_elevation_climbs(400, 200, ys, climbs=climbs, st=st)
+        label = Label(x=220, y=100, x_units='screen', y_units='screen',
+                      text='phi=%.1f (%d)' % (phi, len(climbs)), render_mode='css',
+                      background_fill_color='white', background_fill_alpha=1.0)
+        f.add_layout(label)
+        plots.append(f)
+    SingleShotServer(log, column(row(*plots[:2]), row(*plots[2:4]), row(*plots[4:])),
+                     title='Climb Analysis', template=TEMPLATE, pause=5)
+
+
+def analyse():
+    log, db = config('-v 5')
+    set_log(log)
+    with db.session_context() as s:
+        analyse_activity(log, s, _resolve_activity(s, '2017-09-29 16:30:00', None))
+        analyse_activity(log, s, _resolve_activity(s, '2017-09-01 16:30:00', None))
+        analyse_activity(log, s, _resolve_activity(s, '2017-03-28 16:30:00', None))
+
+
+if __name__ == '__main__':
+    analyse()

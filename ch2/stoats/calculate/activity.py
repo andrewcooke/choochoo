@@ -1,18 +1,24 @@
 
 from collections import Counter
 from itertools import chain
+from json import loads
 
 from . import WaypointCalculator
-from .climb import climbs
+from .climb import find_climbs, Climb
 from .heart_rate import hr_zones_from_database
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, \
     DISTANCE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, CLIMB_GRADIENT
 from ..waypoint import Chunks
-from ...squeal import StatisticName
+from ...squeal import Constant, StatisticName
 
 
 class ActivityStatistics(WaypointCalculator):
+
+    def _run_activity(self, s, activity_group):
+        climb = self._assert_karg('climb')
+        self.__climb = Climb(**loads(Constant.get(s, climb).at(s).value))
+        return super()._run_activity(s, activity_group)
 
     def _filter_statistic_journals(self, q):
         return q.filter(StatisticName.name == ACTIVE_TIME)
@@ -37,7 +43,6 @@ class ActivityStatistics(WaypointCalculator):
         if zones:
             for (zone, frac) in Zones(self._log, waypoints, zones).zones:
                 self._add_float_stat(s, ajournal, PERCENT_IN_Z % zone, None, 100 * frac, PC)
-            # for (zone, frac) in Zones(self._log, waypoints, zones).zones:
                 self._add_float_stat(s, ajournal, TIME_IN_Z % zone, None, frac * totals.time, S)
             for target in HR_MINUTES:
                 heart_rates = sorted(MedianHRForTime(self._log, waypoints, target * 60).heart_rates(), reverse=True)
@@ -45,14 +50,14 @@ class ActivityStatistics(WaypointCalculator):
                     self._add_float_stat(s, ajournal, MAX_MED_HR_M % target, summaries(MAX, MSR), heart_rates[0], BPM)
         else:
             self._log.warning('No HR zones defined for %s or before' % ajournal.start)
-        for lo, hi in climbs(waypoints):
+        for lo, hi in find_climbs(waypoints, params=self.__climb):
             up = hi.elevation - lo.elevation
             along = hi.distance - lo.distance
             time = (hi.time - lo.time).total_seconds()
             self._add_float_stat(s, ajournal, CLIMB_ELEVATION, summaries(MAX, SUM), up, M, time=hi.time)
             self._add_float_stat(s, ajournal, CLIMB_DISTANCE, summaries(MAX, SUM), along, M, time=hi.time)
             self._add_float_stat(s, ajournal, CLIMB_TIME, summaries(MAX, SUM), time, S, time=hi.time)
-            self._add_float_stat(s, ajournal, CLIMB_GRADIENT, summaries(MAX), up / along, None, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_GRADIENT, summaries(MAX), 100 * up / along, None, time=hi.time)
 
 
 class TimeForDistance(Chunks):
