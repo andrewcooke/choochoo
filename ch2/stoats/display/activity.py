@@ -8,7 +8,7 @@ from .climb import climbs_for_activity
 from .heart_rate import build_zones
 from ..calculate.activity import ActivityStatistics
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
-    CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME
+    CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB
 from ...lib.date import format_seconds
 from ...lib.utils import label
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
@@ -92,10 +92,10 @@ class ActivityDiary(JournalDiary):
         if columns:
             yield Pile([Text('Activities'),
                         Indent(Pile(columns))])
-        # todo - climbs?
 
     def __schedule_fields(self, s, f, date, schedule):
-        names = list(self.__names(s, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED))
+        names = list(self.__names(s, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
+                                  TOTAL_CLIMB, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME))
         yield from summary_columns(self._log, s, f, date, schedule, names)
         names = self.__sort_names(self.__names_like(s, MEDIAN_KM_TIME_ANY))
         yield from summary_columns(self._log, s, f, date, schedule, names)

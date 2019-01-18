@@ -9,7 +9,7 @@ from ...lib.schedule import Schedule
 from ...squeal.tables.activity import ActivityJournal, ActivityGroup
 from ...squeal.tables.pipeline import Pipeline
 from ...squeal.tables.source import Interval
-from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat
+from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
 from ...squeal.types import short_cls
 
 
@@ -116,6 +116,12 @@ class ActivityCalculator(DbPipeline):
             time = ajournal.start
         StatisticJournalFloat.add(self._log, s, name, units, summary, self,
                                   ajournal.activity_group, ajournal, value, time)
+
+    def _add_int_stat(self, s, ajournal, name, summary, value, units, time=None):
+        if time is None:
+            time = ajournal.start
+        StatisticJournalInteger.add(self._log, s, name, units, summary, self,
+                                    ajournal.activity_group, ajournal, int(round(value)), time)
 
     def _delete_my_statistics(self, s, agroup, after=None):
         '''

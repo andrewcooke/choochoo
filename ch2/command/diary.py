@@ -214,5 +214,5 @@ class ScheduleDiary(Diary):
         yield from summary_columns(self._log, s, f, self._date, self._schedule, names)
 
     def _display_pipeline(self, s, f):
-        yield from display_pipeline(self._log, s, PipelineType.DIARY, f, self._date, self, schedule=self._schedule)
+        yield from display_pipeline(self._log, s, f, self._date, self, schedule=self._schedule)
 

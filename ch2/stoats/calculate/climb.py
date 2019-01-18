@@ -3,7 +3,6 @@ from collections import namedtuple
 
 # a climb of 80m is roughly equivalent to a score of 8000 on strava's weird approach -
 # https://support.strava.com/hc/en-us/articles/216917057-How-are-Strava-climbs-categorized-For-Rides-
-
 MIN_CLIMB_ELEVATION = 80
 MIN_CLIMB_GRADIENT = 3
 MAX_CLIMB_REVERSAL = 0.1
@@ -12,12 +11,8 @@ MAX_CLIMB_REVERSAL = 0.1
 CLIMB_PHI = 0.6
 
 
-class Climb(namedtuple('BaseClimb', 'phi, min_elevation, min_gradient, max_reversal')):
-
-    def __new__(cls, phi=CLIMB_PHI,
-                min_elevation=MIN_CLIMB_ELEVATION, min_gradient=MIN_CLIMB_GRADIENT, max_reversal=MAX_CLIMB_REVERSAL):
-        return super().__new__(cls, phi=phi,
-                               min_elevation=min_elevation, min_gradient=min_gradient, max_reversal=max_reversal)
+Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_reversal',
+                   defaults=(CLIMB_PHI, MIN_CLIMB_ELEVATION, MIN_CLIMB_GRADIENT, MAX_CLIMB_REVERSAL))
 
 
 def find_climbs(waypoints, params=Climb()):
@@ -49,7 +44,7 @@ def contiguous(waypoints, params=Climb()):
     up = waypoints[-1].elevation - waypoints[0].elevation
     if up >= params.min_elevation:
         down, lo, hi = biggest_reversal(waypoints)
-        if down and down > MAX_CLIMB_REVERSAL * up:
+        if down and down > params.max_reversal * up:
             a, b, c = split(waypoints, lo, hi, inside=False)
             yield from contiguous(a, params=params)
             yield from find_climbs(b, params=params)

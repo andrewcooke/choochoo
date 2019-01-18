@@ -55,6 +55,8 @@ support for power meters.
   * [Segments](segments)
   * [Nearby Activities](nearby)
   * [Graphic Summary](summary)
+  * [Setting Elevation](elevation)
+  * [Detecting Climbs](climbs)
 * Development
   * [Spatial Search](rtree)
   

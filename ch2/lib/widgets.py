@@ -59,7 +59,10 @@ class App(TabNode):
     def rebuild(self):
         widget, tabs = self._build(self.__new_session())
         self._w = widget
-        self.replace(tabs)
+        try:
+            self.replace(tabs)
+        except Exception as e:
+            self._log.warn('Could not replace tabs: %s' % e)
 
 
 class DateSwitcher(App):
