@@ -70,6 +70,12 @@ extensible.*
 
 ## Latest Changes
 
+### v0.13.0
+
+Automatic addition of
+[elevation](https://andrewcooke.github.io/choochoo/elevation) and
+detection of [climbs](https://andrewcooke.github.io/choochoo/docs).
+
 ### v0.12.0
 
 Extend `ch2 fix-fit` functionality (can scan a directory and print
