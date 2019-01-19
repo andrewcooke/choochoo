@@ -156,30 +156,14 @@ class LazyRecord(Record):
         return self.as_dict(*filters, **extras)
 
 
-# todo - as namedtuple?
-class Values:
-
-    def __init__(self, attr, or_none=False):
-        self.__attr = attr
-        self.__or_none = or_none
-
-    def __getattr__(self, name):
-        try:
-            (values, units) = getattr(self.__attr, name)
-            return values[0]
-        except:
-            if self.__or_none:
-                return None
-            else:
-                raise
-
-
 class DictRecord(Record):
 
     def __new__(cls, *args, **kargs):
         self = super().__new__(cls, *args, **kargs)
         self.attr = dict_to_attr(self.data)
-        self.value = Values(self.attr)
+        self.value = dict_to_attr(dict((name, values_and_units[0][0])
+                                       for (name, values_and_units) in self.data.items()
+                                       if values_and_units and values_and_units[0]))
         return self
 
     def data_with(self, **kargs):

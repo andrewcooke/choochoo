@@ -98,7 +98,7 @@ def line_diff(nx, ny, xlabel, y1, y2=None):
         for y in y2:
             f.line(x=y.index, y=y, color='grey')
 
-        y1, y2 = pd.concat(y1).dropna(), pd.concat(y2).dropna()
+        y1, y2 = pd.concat(y1), pd.concat(y2)
         y2 = interpolate_to_index(y1, y2)
         y1, y2, range = delta_patches(y1, y2)
         f.extra_y_ranges = {'delta': range}
