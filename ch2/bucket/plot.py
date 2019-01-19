@@ -1,6 +1,7 @@
 
 import datetime as dt
 
+import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis
@@ -8,6 +9,23 @@ from bokeh.plotting import figure
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
 from ..stoats.names import TIME, HR_ZONE, CLIMB_DISTANCE, CLIMB_ELEVATION
+
+
+def clean(s):
+    return s[~s.isin([np.nan, np.inf, -np.inf])]
+
+
+def clean_all(ss):
+    if ss is not None:
+        return [clean(s) for s in ss]
+
+
+def max_all(ss):
+    return max(s.max() for s in ss if len(s))
+
+
+def min_all(ss):
+    return min(s.min() for s in ss if len(s))
 
 
 def dot_map(n, x1, y1, size, x2=None, y2=None):
@@ -47,14 +65,14 @@ def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None):
 
 def line_diff(nx, ny, xlabel, y1, y2=None):
 
-    is_x_time = isinstance(y1[0].index[0], dt.datetime)
+    y1, y2 = clean_all(y1), clean_all(y2)
+    is_x_time = any(isinstance(s.index[0], dt.datetime) for s in y1 if len(s))
+
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear')
 
-    y_max = max(y.max() for y in y1)
-    y_min = min(y.min() for y in y1)
+    y_min, y_max = min_all(y1), max_all(y1)
     if y2:
-        y_max = max(y_max, max(y.max() for y in y2))
-        y_min = min(y_min, min(y.min() for y in y2))
+        y_min, y_max = min(y_min, min_all(y2)), max(y_max, max_all(y2))
     dy = y_max - y_min
 
     if is_x_time:
@@ -80,7 +98,7 @@ def line_diff(nx, ny, xlabel, y1, y2=None):
         for y in y2:
             f.line(x=y.index, y=y, color='grey')
 
-        y1, y2 = pd.concat(y1), pd.concat(y2)
+        y1, y2 = pd.concat(y1).dropna(), pd.concat(y2).dropna()
         y2 = interpolate_to_index(y1, y2)
         y1, y2, range = delta_patches(y1, y2)
         f.extra_y_ranges = {'delta': range}

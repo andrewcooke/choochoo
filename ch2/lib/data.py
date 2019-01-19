@@ -46,29 +46,28 @@ def assert_attr(instance, *attrs):
             raise Exception('No %s defined' % attr)
 
 
-def dict_to_attr(_rename=False, **kargs):
-    if _rename:
-        kargs = dict((sub(r' ', '_', name), value) for name, value in kargs.items())
-    return namedtuple('Attr', kargs.keys())(**kargs)
+def kargs_to_attr(**kargs):
+    return dict_to_attr(kargs)
 
 
-class AttrDict(dict):
+def dict_to_attr(kargs):
+    return namedtuple('Attr', kargs.keys(), rename=True)(*kargs.values())
+
+
+class MutableAttr(dict):
 
     def __init__(self, *args, none=False, **kargs):
         self.__none = none
         super().__init__(*args, **kargs)
 
     def __getattr__(self, name):
-        if name.startswith('_'):
-            return super().__getattr__(name)
-        else:
-            try:
-                return self[name]
-            except KeyError:
-                if self.__none:
-                    return None
-                else:
-                    raise AttributeError(name)
+        try:
+            return self[name]
+        except KeyError:
+            if self.__none:
+                return None
+            else:
+                raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name.startswith('_'):

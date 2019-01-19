@@ -1,6 +1,7 @@
-from ch2.lib.data import tohex
+
 from .tokens import State, FileHeader, token_factory, Checksum
 from ..profile.profile import read_profile
+from ...lib.data import tohex
 
 
 def parse_data(log, data, types, messages, no_validate=False, max_delta_t=None):

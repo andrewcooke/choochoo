@@ -17,7 +17,7 @@ from ..stoats.display.impulse import ImpulseDiary
 from ..stoats.display.monitor import MonitorDiary
 from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
-from ..stoats.names import BPM, FTHR
+from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M
 from ..stoats.read.monitor import MonitorImporter
 from ..stoats.read.segment import SegmentImporter
 from ..uweird.fields.topic import Text, Float, Score0
@@ -36,8 +36,14 @@ def default(log, db, no_diary=False):
         bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
         run = add_activity_group(s, 'Run', c, description='All running activities')
         # sport_to_activity maps from the FIT sport field to the activity defined above
-        add_activities(s, SegmentImporter, c, sport_to_activity={'cycling': bike.name,
-                                                                 'running': run.name})
+        add_activities(s, SegmentImporter, c,
+                       sport_to_activity={'cycling': bike.name, 'running': run.name},
+                       record_to_db={'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
+                                     'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
+                                     'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
+                                     'enhanced_speed': (SPEED, MS, StatisticJournalType.FLOAT),
+                                     'distance': (DISTANCE, M, StatisticJournalType.FLOAT),
+                                     'enhanced_altitude': (ALTITUDE, M, StatisticJournalType.FLOAT)})
 
         # statistics pipeline (called to calculate missing statistics)
 

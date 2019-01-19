@@ -4,6 +4,8 @@ from collections import namedtuple, OrderedDict
 
 
 # todo - remove 's' units from timestamps if they are datetime instances
+from ch2.lib.data import kargs_to_attr, dict_to_attr
+
 
 def no_filter(data):
     return data
@@ -154,13 +156,7 @@ class LazyRecord(Record):
         return self.as_dict(*filters, **extras)
 
 
-class Attributes(dict):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__dict__ = self
-
-
+# todo - as namedtuple?
 class Values:
 
     def __init__(self, attr, or_none=False):
@@ -182,9 +178,8 @@ class DictRecord(Record):
 
     def __new__(cls, *args, **kargs):
         self = super().__new__(cls, *args, **kargs)
-        self.attr = Attributes(self.data.items())
+        self.attr = dict_to_attr(self.data)
         self.value = Values(self.attr)
-        self.none = Values(self.attr, or_none=True)
         return self
 
     def data_with(self, **kargs):

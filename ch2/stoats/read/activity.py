@@ -3,19 +3,18 @@ from os.path import splitext, basename
 
 from pygeotile.point import Point
 
-from ch2.fit.profile.profile import read_fit
-from ch2.sortem import oracle_from_constant
 from ..load import StatisticJournalLoader
-from ..names import LATITUDE, DEG, LONGITUDE, HEART_RATE, DISTANCE, KMH, SPEED, BPM, M, SPHERICAL_MERCATOR_X, \
-    SPHERICAL_MERCATOR_Y, ELEVATION, MS
+from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION
 from ..read import AbortImport, Importer
 from ...fit.format.read import filtered_records
-from ...fit.format.records import fix_degrees, merge_duplicates
+from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
+from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
+from ...sortem import oracle_from_constant
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.source import Interval
-from ...squeal.tables.statistic import StatisticJournalFloat, StatisticJournalInteger
+from ...squeal.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES
 
 
 class ActivityImporter(Importer):
@@ -23,7 +22,7 @@ class ActivityImporter(Importer):
     def _on_init(self, *args, **kargs):
         super()._on_init(*args, **kargs)
         with self._db.session_context() as s:
-            self.__oracle =  oracle_from_constant(self._log, s)
+            self.__oracle = oracle_from_constant(self._log, s)
 
     def run(self, paths, force=False):
         if 'sport_to_activity' not in self._kargs:
@@ -61,10 +60,13 @@ class ActivityImporter(Importer):
     def _import(self, s, path):
 
         sport_to_activity = self._assert_karg('sport_to_activity')
+        record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
+                        for field, (name, units, type) in self._assert_karg('record_to_db')]
+        add_elevation = ELEVATION not in record_to_db.values()
         loader = StatisticJournalLoader(self._log, s, self)
 
         types, messages, records = filtered_records(self._log, read_fit(self._log, path))
-        records = [record.as_dict(merge_duplicates, fix_degrees)
+        records = [record.as_dict(merge_duplicates, fix_degrees, no_bad_values)
                    for _, _, record in sorted(records,
                                               key=lambda r: r[2].timestamp if r[2].timestamp else to_time(0.0))]
 
@@ -88,28 +90,29 @@ class ActivityImporter(Importer):
                                                            start=record.value.timestamp,
                                                            finish=record.value.timestamp))
                 if record.name == 'record':
-                    loader.add(LATITUDE, DEG, None, activity_group, ajournal,
-                              record.none.position_lat, record.value.timestamp, StatisticJournalFloat)
-                    loader.add(LONGITUDE, DEG, None, activity_group, ajournal,
-                              record.none.position_long, record.value.timestamp,
-                              StatisticJournalFloat)
-                    if record.none.position_lat and record.none.position_long:
-                        p = Point.from_latitude_longitude(record.none.position_lat, record.none.position_long)
-                        x, y = p.meters
-                        loader.add(SPHERICAL_MERCATOR_X, M, None, activity_group, ajournal,
-                                  x, record.value.timestamp, StatisticJournalFloat)
-                        loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal,
-                                  y, record.value.timestamp, StatisticJournalFloat)
-                        elevation = self.__oracle.elevation(record.none.position_lat, record.none.position_long)
-                        if elevation:
-                            loader.add(ELEVATION, M, None, activity_group, ajournal,
-                                       elevation, record.value.timestamp, StatisticJournalFloat)
-                        loader.add(HEART_RATE, BPM, None, activity_group, ajournal,
-                              record.none.heart_rate, record.value.timestamp, StatisticJournalInteger)
-                        loader.add(SPEED, MS, None, activity_group, ajournal,
-                                   record.none.enhanced_speed, record.value.timestamp, StatisticJournalFloat)
-                    loader.add(DISTANCE, M, None, activity_group, ajournal,
-                               record.none.distance, record.value.timestamp, StatisticJournalFloat)
+                    lat, lon, timestamp = None, None, record.value.timestamp
+                    # customizable loader
+                    for field, name, units, type in record_to_db:
+                        value = record.data.get(field, None)
+                        if value is not None:
+                            value = value[0][0]
+                            loader.add(name, units, None, activity_group, ajournal, value, timestamp, type)
+                            if name == LATITUDE:
+                                lat = value
+                            elif name == LONGITUDE:
+                                lon = value
+                    # values derived from lat/lon
+                    if lat is not None and lon is not None:
+                        x, y = Point.from_latitude_longitude(lat, lon).meters
+                        loader.add(SPHERICAL_MERCATOR_X, M, None, activity_group, ajournal, x, timestamp,
+                                   StatisticJournalFloat)
+                        loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal, y, timestamp,
+                                   StatisticJournalFloat)
+                        if add_elevation:
+                            elevation = self.__oracle.elevation(lat, lon)
+                            if elevation:
+                                loader.add(ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
+                                           StatisticJournalFloat)
                 if record.name == 'event' and record.value.event == 'timer' \
                         and record.value.event_type == 'stop_all':
                     if timespan:
@@ -117,7 +120,7 @@ class ActivityImporter(Importer):
                         ajournal.finish = record.value.timestamp
                         timespan = None
                     else:
-                        self._log.warning('Ignoring stop with no corresponding start (possible lost data?)')
+                        self._log.debug('Ignoring stop with no corresponding start (possible lost data?)')
                 if record.name == 'record':
                     last_timestamp = record.timestamp
             else:
@@ -127,7 +130,7 @@ class ActivityImporter(Importer):
 
         loader.load()
 
-        # manually clean out intervals because we're doing a stealth load
+        # manually clean out intervals because we're doing a fast load
         Interval.clean_times(s, first_timestamp, last_timestamp)
 
         # used by subclasses

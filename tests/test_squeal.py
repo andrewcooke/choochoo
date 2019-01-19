@@ -15,12 +15,13 @@ from ch2.uweird.tui.widgets import Integer
 
 basicConfig()
 log = getLogger()
-log.setLevel(DEBUG)
-handler = StreamHandler(stdout)
-handler.setLevel(DEBUG)
-formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-handler.setFormatter(formatter)
-log.addHandler(handler)
+if not log.handlers:
+    log.setLevel(DEBUG)
+    handler = StreamHandler(stdout)
+    handler.setLevel(DEBUG)
+    formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
 
 
 class Data(Base):

@@ -35,6 +35,7 @@ class SegmentImporter(ActivityImporter):
     def _import(self, s, path):
         ajournal, loader = super()._import(s, path)
         self._find_segments(s, ajournal, filter_none(NAMES.values(), loader.as_waypoints(NAMES)))
+        return ajournal, loader
 
     def _find_segments(self, s, ajournal, waypoints):
         matches = self._initial_matches(s, ajournal.activity_group_id, waypoints)

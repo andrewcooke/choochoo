@@ -1,5 +1,5 @@
 
-from ..lib.data import AttrDict
+from ..lib.data import MutableAttr
 from ..squeal.types import short_cls
 
 
@@ -12,7 +12,7 @@ class BasePipeline:
 
     def _on_init(self, *args, **kargs):
         self._args = args
-        self._kargs = AttrDict(kargs)
+        self._kargs = MutableAttr(kargs)
 
     def _assert_karg(self, name, default=None):
         if name not in self._kargs:

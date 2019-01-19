@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
-from ch2.lib.data import AttrDict, dict_to_attr
+from ch2.lib.data import MutableAttr, kargs_to_attr
 from ch2.squeal import ActivityJournal
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
@@ -50,13 +50,13 @@ def _collect_statistics(s, names):
 
 
 def _tables():
-    return dict_to_attr(sj=inspect(StatisticJournal).local_table,
-                        sn=inspect(StatisticName).local_table,
-                        sji=inspect(StatisticJournalInteger).local_table,
-                        sjf=inspect(StatisticJournalFloat).local_table,
-                        sjt=inspect(StatisticJournalText).local_table,
-                        inv=inspect(Interval).local_table,
-                        at=inspect(ActivityTimespan).local_table)
+    return kargs_to_attr(sj=inspect(StatisticJournal).local_table,
+                         sn=inspect(StatisticName).local_table,
+                         sji=inspect(StatisticJournalInteger).local_table,
+                         sjf=inspect(StatisticJournalFloat).local_table,
+                         sjt=inspect(StatisticJournalText).local_table,
+                         inv=inspect(Interval).local_table,
+                         at=inspect(ActivityTimespan).local_table)
 
 
 def _build_statistic_journal_query(statistic_ids, start, finish, owner, constraint, source_ids, schedule):

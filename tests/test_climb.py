@@ -11,7 +11,7 @@ from ch2.bucket.plot import line_diff_elevation_climbs
 from ch2.bucket.server import SingleShotServer
 from ch2.config import config
 from ch2.data.data_frame import _resolve_activity, set_log, activity_statistics
-from ch2.lib.data import AttrDict
+from ch2.lib.data import MutableAttr
 from ch2.squeal import ActivityJournal
 from ch2.stoats.calculate.climb import find_climbs, Climb
 from ch2.stoats.names import DISTANCE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE
@@ -30,7 +30,7 @@ class TestClimb(TestCase):
             while t <= t1:
                 x = x0 + (x1 - x0) * (t - t0) / (t1 - t0)
                 y = y0 + (y1 - y0) * (t - t0) / (t1 - t0)
-                yield AttrDict({'time': t, 'elevation': y + uniform(-noise, noise), 'distance': x})
+                yield MutableAttr({'time': t, 'elevation': y + uniform(-noise, noise), 'distance': x})
                 t += dt
             t0, x0, y0 = t1, x1, y1
 

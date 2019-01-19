@@ -190,9 +190,8 @@ def comparison(log, s, aj1=None, aj2=None):
                                  row(elvn_line, elvn_cumulative),
                                  row(speed_line, speed_cumulative),
                                  row(caption, hrz_histogram),
-                                 row(column(health_line, activity_line), map)
-                                 ),
-                     template=TEMPLATE, title='choochoo', pause=20,
+                                 row(column(health_line, activity_line), map)),
+                     template=TEMPLATE, title='choochoo', pause=60,
                      template_vars={
                          'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else '')
                      })

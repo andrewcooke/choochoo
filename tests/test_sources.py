@@ -111,7 +111,6 @@ class TestSources(TestCase):
                     print(source)
                 for journal in s.query(StatisticJournal).all():
                     print(journal)
-                self.assertEqual(s.query(count(Source.id)).scalar(), 6, list(map(str, s.query(Source).all())))  # constants
-                # 3 JSON entries for impulse + 1 for nearby
-                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 4, s.query(count(StatisticJournalText.id)).scalar())
-                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 4, s.query(count(StatisticJournal.id)).scalar())
+                self.assertEqual(s.query(count(Source.id)).scalar(), 8, list(map(str, s.query(Source).all())))  # constants
+                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 5, s.query(count(StatisticJournalText.id)).scalar())
+                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 5, s.query(count(StatisticJournal.id)).scalar())

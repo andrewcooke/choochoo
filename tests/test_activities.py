@@ -1,4 +1,4 @@
-
+from subprocess import run
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
@@ -42,7 +42,7 @@ class TestActivities(TestCase):
 
             with db.session_context() as s:
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 25675)
+                self.assertEqual(n, 25696)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 

@@ -1,5 +1,6 @@
 
 from logging import getLogger, NullHandler
+from sys import version_info
 
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
@@ -64,6 +65,8 @@ def main():
     tui = command and hasattr(command, 'tui') and command.tui
     log = make_log(args, tui=tui)
     log.info('Version %s' % CH2_VERSION)
+    if version_info < (3, 7):
+        raise Exception('Please user Python 3.7 or more recent')
     db = Database(args, log)
     try:
         if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
