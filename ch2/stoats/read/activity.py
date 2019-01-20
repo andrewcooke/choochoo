@@ -62,7 +62,7 @@ class ActivityImporter(Importer):
         sport_to_activity = self._assert_karg('sport_to_activity')
         record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
                         for field, (name, units, type) in self._assert_karg('record_to_db').items()]
-        add_elevation = any(name == ELEVATION for (field, name, units, type) in record_to_db)
+        add_elevation = not any(name == ELEVATION for (field, name, units, type) in record_to_db)
         loader = StatisticJournalLoader(self._log, s, self)
 
         types, messages, records = filtered_records(self._log, read_fit(self._log, path))

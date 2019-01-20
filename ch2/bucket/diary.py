@@ -17,7 +17,7 @@ from ..squeal import ActivityJournal
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
-    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS, CLIMB_ELEVATION, CLIMB_DISTANCE
+    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE
 
 WINDOW = '60s'
 #WINDOW = 10
@@ -65,12 +65,19 @@ table {
 '''
 
 
+def get(df, name):
+    if name in df:
+        return df[name]
+    else:
+        return None
+
+
 def comparison(log, s, aj1=None, aj2=None):
 
     # ---- definitions
 
     set_log(log)
-    names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION, SPEED, HR_ZONE, HR_10]
+    names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION, SPEED, HR_ZONE, HR_10, ALTITUDE]
 
     # ---- load data
 
@@ -116,9 +123,10 @@ def comparison(log, s, aj1=None, aj2=None):
         y1, y2 = set_axes(y_axis, x_axis=x_axis)
         return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y1, y2)
 
-    def ride_elevn():
-        y1, y2 = set_axes(ELEVATION_M, x_axis=DISTANCE_KM)
-        return line_diff_elevation_climbs(RIDE_PLOT_LEN, RIDE_PLOT_HGT, y1, y2, climbs=climbs, st=st1)
+    def ride_elevn(x_axis=TIME):
+        y1, y2 = set_axes(ELEVATION_M, x_axis=x_axis)
+        y3, _ = set_axes(ALTITUDE, x_axis=x_axis)
+        return line_diff_elevation_climbs(RIDE_PLOT_LEN, RIDE_PLOT_HGT, y1, y2, climbs=climbs, st=st1, y3=y3)
 
     def ride_cum(y_axis):
         y1 = all_frames(st1_10, y_axis)
@@ -129,7 +137,7 @@ def comparison(log, s, aj1=None, aj2=None):
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
     hr10_line, hr10_cumulative = ride_line(MED_HR_10, x_axis=DISTANCE_KM), ride_cum(HR_10)
-    elvn_line, elvn_cumulative = ride_elevn(), ride_cum(CLIMB_MPS)
+    elvn_line, elvn_cumulative = ride_elevn(x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 
     side = 300
@@ -182,7 +190,7 @@ def comparison(log, s, aj1=None, aj2=None):
                ).all()
     st_ac = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=[aj.id for aj in ajs])
 
-    activity_line = activity(600, 150, st_ff[DAILY_STEPS], st_ac[ACTIVE_TIME])  # last could be distance
+    activity_line = activity(600, 150, get(st_ff, DAILY_STEPS), st_ac[ACTIVE_TIME])  # last could be distance
 
     # ---- display
 

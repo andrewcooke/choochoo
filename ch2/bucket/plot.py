@@ -46,9 +46,12 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
     return f
 
 
-def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None):
+def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=None):
     from .diary import DISTANCE_KM, ELEVATION_M
     f = line_diff(nx, ny, DISTANCE_KM, y1, y2=y2)
+    if y3 is not None:
+        for y in y3:
+            f.line(x=y.index, y=y, color='black', alpha=0.1, line_width=2)
     if climbs is not None:
         all = pd.concat(st)
         for time, climb in climbs.iterrows():
@@ -178,16 +181,16 @@ def activity(nx, ny, st, at):
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime')
     f.xaxis.axis_label = 'Date'
 
-    st = st.dropna()
-    if len(st):
+    if st is not None and len(st):
+        st = st.dropna()
         f.y_range = Range1d(start=0, end=1.1 * st.max())
         f.yaxis.axis_label = st.name
         f.vbar(x=st.index, width=dt.timedelta(hours=20), top=st, fill_color='grey', fill_alpha=0.4, line_alpha=0)
     else:
         f.yaxis[0].visible = False
 
-    at = at.dropna()
-    if len(at):
+    if at is not None and len(at):
+        at = at.dropna()
         f.extra_y_ranges = {at.name: Range1d(start=0, end=at.max() * 1.1)}
         f.add_layout(LinearAxis(y_range_name=at.name, axis_label=at.name), 'right')
         f.circle(x=at.index, y=at, color='black', fill_alpha=0, y_range_name=at.name)
