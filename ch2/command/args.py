@@ -327,7 +327,7 @@ def parser():
     fit.add_argument(mm(NO_VALIDATE), action='store_true',
                      help='do not validate checksum, length')
     fit.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
-                     help='max number of seconds between timestamps')
+                     help='max seconds between timestamps (and non-decreasing)')
     fit.add_argument(mm(NAME), action='store_true',
                      help='print file name')
     fit.add_argument(mm(NOT), action='store_true',

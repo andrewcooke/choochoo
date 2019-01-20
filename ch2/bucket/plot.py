@@ -40,19 +40,21 @@ def tools(x=None, y=None):
 
 def dot_map(n, x1, y1, size, x2=None, y2=None):
 
-    f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator')
+    f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator',
+               tools=[PanTool(), ZoomInTool(), ZoomOutTool(), ResetTool()])
+    f.toolbar.logo = None
+
     for x, y, s in zip(x1, y1, size):
         f.circle(x=x, y=y, line_alpha=0, fill_color='red', size=s, fill_alpha=0.03)
         f.line(x=x, y=y, line_color='black')
 
-        if x2 is not None:
-            for x, y in zip(x2, y2):
-                f.line(x=x, y=y, line_color='grey')
+    if x2 is not None:
+        for x, y in zip(x2, y2):
+            f.line(x=x, y=y, line_color='grey')
 
     f.add_tile(tile_providers.STAMEN_TERRAIN, alpha=0.1)
     f.axis.visible = False
 
-    f.toolbar_location = None
     return f
 
 

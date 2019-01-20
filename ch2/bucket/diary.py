@@ -7,7 +7,8 @@ from bokeh.layouts import column, row
 from bokeh.models import Div
 
 from .data_frame import interpolate_to
-from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, activity, line_diff_elevation_climbs
+from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, activity, line_diff_elevation_climbs, \
+    max_all, min_all
 from .server import SingleShotServer
 from ..data import statistics
 from ..data.data_frame import set_log, session, get_log, activity_statistics
@@ -36,6 +37,9 @@ LOG_FATIGUE = 'Log %s' % FATIGUE
 
 RIDE_PLOT_LEN = 700
 RIDE_PLOT_HGT = 200
+HEALTH_PLT_LEN = 500
+HEALTH_PLOT_HGT = 200
+MAP_LEN = 400
 
 TEMPLATE = '''
 {% block css_resources %}
@@ -145,17 +149,15 @@ def comparison(log, s, aj1=None, aj2=None):
     elvn_line, elvn_cumulative = ride_elevn(x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 
-    side = 300
-    mx = max(df[HR_10].max() for df in st1_10)
-    mn = min(df[HR_10].max() for df in st1_10)
+    mx, mn = max_all(df[HR_10] for df in st1_10), min_all(df[HR_10] for df in st1_10),
     for df in st1_10:
-        df['size'] = side * ((df[HR_10] - mn) / (mx - mn)) ** 3 / 10
+        df['size'] = MAP_LEN * ((df[HR_10] - mn) / (mx - mn)) ** 3 / 10
     x1, y1 = all_frames(st1_10, SPHERICAL_MERCATOR_X), all_frames(st1_10, SPHERICAL_MERCATOR_Y)
     if aj2:
         x2, y2 = all_frames(st2_10, SPHERICAL_MERCATOR_X), all_frames(st2_10, SPHERICAL_MERCATOR_Y)
     else:
         x2, y2 = None, None
-    map = dot_map(side, x1, y1, [df['size'] for df in st1_10], x2, y2)
+    map = dot_map(MAP_LEN, x1, y1, [df['size'] for df in st1_10], x2, y2)
 
     caption = '<table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
     source_ids = [aj1.id]
@@ -185,7 +187,7 @@ def comparison(log, s, aj1=None, aj2=None):
     st_ff[LOG_FITNESS] = np.log10(st_ff[FITNESS])
     st_ff[LOG_FATIGUE] = np.log10(st_ff[FATIGUE])
 
-    health_line = health(600, 150, st_ff[LOG_FITNESS], st_ff[LOG_FATIGUE], st_hr[REST_HR])
+    health_line = health(HEALTH_PLT_LEN, HEALTH_PLOT_HGT, st_ff[LOG_FITNESS], st_ff[LOG_FATIGUE], st_hr[REST_HR])
 
     ajs = s.query(ActivityJournal). \
         join(ActivityGroup). \
@@ -195,11 +197,12 @@ def comparison(log, s, aj1=None, aj2=None):
                ).all()
     st_ac = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=[aj.id for aj in ajs])
 
-    activity_line = activity(600, 150, get(st_ff, DAILY_STEPS), st_ac[ACTIVE_TIME])  # last could be distance
+    activity_line = activity(HEALTH_PLT_LEN, HEALTH_PLOT_HGT, get(st_ff, DAILY_STEPS), st_ac[ACTIVE_TIME])  # last could be distance
 
     # ---- display
 
-    SingleShotServer(log, column(row(hr10_line, hr10_cumulative),
+    SingleShotServer(log,
+                     column(row(hr10_line, hr10_cumulative),
                                  row(elvn_line, elvn_cumulative),
                                  row(speed_line, speed_cumulative),
                                  row(caption, hrz_histogram),
@@ -212,7 +215,7 @@ def comparison(log, s, aj1=None, aj2=None):
 
 if __name__ == '__main__':
     s = session('-v 5')
-    day = local_date_to_time('2019-01-15')
+    day = local_date_to_time('2019-01-19')
     # day = local_date_to_time('2018-03-04')
     aj1 = s.query(ActivityJournal).filter(ActivityJournal.start >= day,
                                           ActivityJournal.start < day + dt.timedelta(days=1)).one()

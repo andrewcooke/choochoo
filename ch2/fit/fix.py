@@ -195,6 +195,8 @@ def validate_data(log, data, state, check=False, warn=False, force=True):
 
     log.info('Validation ----------')
     log_param(log, MAX_DELTA_T, state.max_delta_t)
+    if state.max_delta_t is None:
+        log.warn('Time-reversal is allowed unless %s is set' % MAX_DELTA_T)
 
     first_t = True
     try:
