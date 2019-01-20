@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis, PanTool, ZoomInTool, HoverTool, \
-    ZoomOutTool
+    ZoomOutTool, ResetTool
 from bokeh.plotting import figure
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
@@ -31,7 +31,8 @@ def min_all(ss):
 
 def tools(x=None, y=None):
     tools = [PanTool(dimensions='width'),
-             ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width')]
+             ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
+             ResetTool()]
     if x and y:
         tools.append(HoverTool(tooltips=[(x, '$x'), (y, '$y')]))
     return tools

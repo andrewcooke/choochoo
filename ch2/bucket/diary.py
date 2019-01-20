@@ -139,7 +139,9 @@ def comparison(log, s, aj1=None, aj2=None):
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
     hr10_line, hr10_cumulative = ride_line(MED_HR_10, x_axis=DISTANCE_KM), ride_cum(HR_10)
-    line_x_range = hr10_line.x_range
+    # this ties movements, but seems to be broken for large amounts of data
+    if sum(len(df) for df in st1_10) < 1000:
+        line_x_range = hr10_line.x_range
     elvn_line, elvn_cumulative = ride_elevn(x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 
@@ -210,8 +212,8 @@ def comparison(log, s, aj1=None, aj2=None):
 
 if __name__ == '__main__':
     s = session('-v 5')
-    # day = local_date_to_time('2019-01-15')
-    day = local_date_to_time('2018-03-04')
+    day = local_date_to_time('2019-01-15')
+    # day = local_date_to_time('2018-03-04')
     aj1 = s.query(ActivityJournal).filter(ActivityJournal.start >= day,
                                           ActivityJournal.start < day + dt.timedelta(days=1)).one()
     aj2 = nearby_any_time(s, aj1)[0]

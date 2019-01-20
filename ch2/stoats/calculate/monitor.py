@@ -47,13 +47,16 @@ class MonitorStatistics(IntervalCalculator):
                    StatisticJournalInteger.value > 0).scalar()
         self._log.debug('M0: %s' % m0)
         if m0 and abs(m0 - QUARTER_DAY) < 0.25 * QUARTER_DAY:  # not evenly sampled
-            rest_heart_rate = s.query(func.min(StatisticJournalInteger.value)).join(StatisticName). \
+            all_hr = [row[0] for row in s.query(StatisticJournalInteger.value).join(StatisticName). \
                 filter(StatisticName.name == HEART_RATE,
                        StatisticName.owner == MonitorImporter,
                        StatisticJournalInteger.time < finish_time,
                        StatisticJournalInteger.time >= start_time,
-                       StatisticJournalInteger.value > 0).scalar()
-            self._add_integer_stat(s, interval, REST_HR, summaries(AVG, CNT, MIN, MSR), rest_heart_rate, BPM, start_time)
+                       StatisticJournalInteger.value > 0).all()]
+            n = len(all_hr)
+            rest_heart_rate = sorted(all_hr)[n // 10]  # 10th percentile
+            self._add_integer_stat(s, interval, REST_HR, summaries(AVG, CNT, MIN, MSR), rest_heart_rate, BPM,
+                                   start_time)
         else:
             self._log.info('Insufficient coverage for %s' % REST_HR)
         daily_steps = s.query(func.sum(StatisticJournalInteger.value)).join(StatisticName). \
