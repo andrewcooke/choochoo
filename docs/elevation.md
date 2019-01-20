@@ -54,4 +54,11 @@ elevations:
 
 This plot shows ride elevation with [climbs](climbs) identified.
 
+![](altitude.png)
+
+A section of the same ride as above, showing the SRTM data (black) and
+GPS data from a FR230 watch (red).  There's a consistent offset that
+is likely due to different geodesics and slightly more noise in the
+GPS.  There are also a few systematic differences that I cannot
+explain and the *hint* of a delay in the GPS values.
 
