@@ -98,6 +98,7 @@ def comparison(log, s, aj1=None, aj2=None):
     st1, st1_10 = get_stats(aj1)
     st2, st2_10 = get_stats(aj2) if aj2 else (None, None)
     climbs = activity_statistics(s, CLIMB_DISTANCE, CLIMB_ELEVATION, activity_journal_id=aj1.id)
+    line_x_range = None
 
     def all_frames(st, name):
         return [df[name].copy() for df in st]
@@ -121,12 +122,13 @@ def comparison(log, s, aj1=None, aj2=None):
 
     def ride_line(y_axis, x_axis=TIME):
         y1, y2 = set_axes(y_axis, x_axis=x_axis)
-        return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y1, y2)
+        return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y1, y2, x_range=line_x_range)
 
     def ride_elevn(x_axis=TIME):
         y1, y2 = set_axes(ELEVATION_M, x_axis=x_axis)
         y3, _ = set_axes(ALTITUDE, x_axis=x_axis)
-        return line_diff_elevation_climbs(RIDE_PLOT_LEN, RIDE_PLOT_HGT, y1, y2, climbs=climbs, st=st1, y3=y3)
+        return line_diff_elevation_climbs(RIDE_PLOT_LEN, RIDE_PLOT_HGT, y1, y2, climbs=climbs, st=st1, y3=y3,
+                                          x_range=line_x_range)
 
     def ride_cum(y_axis):
         y1 = all_frames(st1_10, y_axis)
@@ -137,6 +139,7 @@ def comparison(log, s, aj1=None, aj2=None):
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
     hr10_line, hr10_cumulative = ride_line(MED_HR_10, x_axis=DISTANCE_KM), ride_cum(HR_10)
+    line_x_range = hr10_line.x_range
     elvn_line, elvn_cumulative = ride_elevn(x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 

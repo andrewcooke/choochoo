@@ -4,7 +4,8 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
-from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis
+from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis, PanTool, ZoomInTool, HoverTool, \
+    ZoomOutTool
 from bokeh.plotting import figure
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
@@ -28,6 +29,14 @@ def min_all(ss):
     return min(s.min() for s in ss if len(s))
 
 
+def tools(x=None, y=None):
+    tools = [PanTool(dimensions='width'),
+             ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width')]
+    if x and y:
+        tools.append(HoverTool(tooltips=[(x, '$x'), (y, '$y')]))
+    return tools
+
+
 def dot_map(n, x1, y1, size, x2=None, y2=None):
 
     f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator')
@@ -46,9 +55,9 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
     return f
 
 
-def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=None):
+def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=None, x_range=None):
     from .diary import DISTANCE_KM, ELEVATION_M
-    f = line_diff(nx, ny, DISTANCE_KM, y1, y2=y2)
+    f = line_diff(nx, ny, DISTANCE_KM, y1, y2=y2, x_range=x_range)
     if y3 is not None:
         for y in y3:
             f.line(x=y.index, y=y, color='black', alpha=0.1, line_width=2)
@@ -66,12 +75,14 @@ def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=Non
     return f
 
 
-def line_diff(nx, ny, xlabel, y1, y2=None):
+def line_diff(nx, ny, xlabel, y1, y2=None, x_range=None):
 
     y1, y2 = clean_all(y1), clean_all(y2)
     is_x_time = any(isinstance(s.index[0], dt.datetime) for s in y1 if len(s))
 
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear')
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear',
+               tools=tools(xlabel, y1[0].name))
+    f.toolbar.logo = None
 
     y_min, y_max = min_all(y1), max_all(y1)
     if y2:
@@ -110,7 +121,10 @@ def line_diff(nx, ny, xlabel, y1, y2=None):
         if y2 is not None:
             f.patch(x=y2.index, y=y2, color='red', alpha=0.1, y_range_name='delta')
 
-    f.toolbar_location = None
+    # f.toolbar_location = None
+    if x_range is not None:
+        f.x_range = x_range
+
     return f
 
 
@@ -150,7 +164,8 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
 
 def health(nx, ny, ftn, ftg, hr):
 
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime')
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools())
+    f.toolbar.logo = None
     f.xaxis.axis_label = 'Date'
 
     max_f = ftn.max() * 1.1
@@ -172,13 +187,14 @@ def health(nx, ny, ftn, ftg, hr):
         f.add_layout(LinearAxis(y_range_name=hr.name, axis_label=hr.name), 'right')
         f.circle(x=hr.index, y=hr, color='red', alpha=0.2, y_range_name=hr.name)
 
-    f.toolbar_location = None
+    # f.toolbar_location = None
     return f
 
 
 def activity(nx, ny, st, at):
 
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime')
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools())
+    f.toolbar.logo = None
     f.xaxis.axis_label = 'Date'
 
     if st is not None and len(st):
@@ -196,7 +212,7 @@ def activity(nx, ny, st, at):
         f.circle(x=at.index, y=at, color='black', fill_alpha=0, y_range_name=at.name)
         f.yaxis[1].formatter = PrintfTickFormatter(format='')
 
-    f.toolbar_location = None
+    # f.toolbar_location = None
     return f
 
 
