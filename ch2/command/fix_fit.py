@@ -60,8 +60,7 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
         log.debug('Read %d bytes' % len(data))
 
         try:
-            data = fix(log, data,
-                       check=check, warn=args[WARN],
+            data = fix(log, data, warn=args[WARN],
                        add_header=args[ADD_HEADER], drop=args[DROP], slices=args[SLICES], fix_header=args[FIX_HEADER],
                        fix_checksum=args[FIX_CHECKSUM], force=args[FORCE], validate=args[VALIDATE],
                        header_size=args[HEADER_SIZE], protocol_version=args[PROTOCOL_VERSION],

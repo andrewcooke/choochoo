@@ -1,12 +1,13 @@
 
+import datetime as dt
+
 from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
 from ..command.args import ADD_HEADER, mm, HEADER_SIZE, PROFILE_VERSION, PROTOCOL_VERSION, MIN_SYNC_CNT, \
     MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, MAX_FWD_LEN, MAX_DELTA_T
 
 
-def fix(log, data,
-        check=False, warn=False,
+def fix(log, data, warn=False,
         add_header=False, drop=False, slices=None, fix_header=False, fix_checksum=False, force=True, validate=True,
         header_size=None, protocol_version=None, profile_version=None, min_sync_cnt=3, max_record_len=None,
         max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200, max_delta_t=None, profile_path=None):
@@ -35,8 +36,7 @@ def fix(log, data,
                                     profile_version=profile_version)
 
     if validate:
-        validate_data(log, data, State(log, types, messages, max_delta_t=max_delta_t),
-                      check=check, warn=warn, force=force)
+        validate_data(log, data, State(log, types, messages, max_delta_t=max_delta_t), warn=warn, force=force)
 
     log_data(log, 'Final', data)
 
@@ -191,7 +191,7 @@ def apply_slices(log, data, slices):
     return result
 
 
-def validate_data(log, data, state, check=False, warn=False, force=True):
+def validate_data(log, data, state, warn=False, force=True):
 
     log.info('Validation ----------')
     log_param(log, MAX_DELTA_T, state.max_delta_t)
@@ -212,7 +212,9 @@ def validate_data(log, data, state, check=False, warn=False, force=True):
             if force:
                 record.force()
             offset += len(token)
-        if not check: log.info('Last timestamp:  %s' % state.timestamp)
+        log.info('Last timestamp:  %s' % state.timestamp)
+        if state.timestamp > dt.datetime.now(tz=dt.timezone.utc):
+            log.warn('Timestamp in future')
         checksum = Checksum(data[offset:])
         checksum.validate(data, log)
         log.info('OK')
