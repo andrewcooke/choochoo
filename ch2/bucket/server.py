@@ -1,11 +1,9 @@
 
 from abc import abstractmethod, ABC
-from signal import signal, SIGTERM, SIGINT
 from threading import Thread
 
 from bokeh.server.server import Server
 from tornado.ioloop import IOLoop
-
 
 SINGLETON = None
 

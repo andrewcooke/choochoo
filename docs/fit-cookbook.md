@@ -30,7 +30,7 @@ default configuration (`ch2 default-config`) is sufficient.
 To check for errors in `myfile.fit`:
 
     > ch2 fix-fit myfile.fit --discard
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
         INFO: Input ----------
         INFO: Reading binary data from myfile.fit
@@ -42,6 +42,7 @@ To check for errors in `myfile.fit`:
         INFO: Checksum: 37636 (0x9304)
         INFO: Validation ----------
         INFO: --max-delta-t None
+     WARNING: Time-reversal is allowed unless max-delta-t is set
         INFO: First timestamp: 2018-07-26 13:34:49+00:00
         INFO: Last timestamp:  2018-07-26 13:59:18+00:00
         INFO: OK
@@ -87,7 +88,7 @@ To check that the timestamp never increases by more than 60s between
 records:
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --discard
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
         INFO: Input ----------
         INFO: Reading binary data from myfile.fit
@@ -122,7 +123,7 @@ file (see below to understand what information is removed).
 The command to drop data is (see notes below):
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
         INFO: Input ----------
         INFO: Reading binary data from myfile.fit
@@ -188,7 +189,7 @@ In the recipe above data were dropped after the first 4975 bytes.  We
 can see what records that affected as follows:
 
     > ch2 fit myfile.fit --records --after-bytes 4975
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
     
     207 04975 lap
@@ -238,7 +239,7 @@ those are not consecutive there must be some internal messages also
 present.  We can display those too:
 
     > ch2 fit myfile.fit --records --after-bytes 4975 --internal
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
     
     207 04975 lap
@@ -319,7 +320,7 @@ exciting.
 We can also see the same data in binary form.  For example:
 
     > ch2 fit myfile.fit --tokens --after-bytes 4975 --internal
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
     207 04975 DTA 00b687bc35f981bc35b5a33ae82425cacdb0bc3ae8a234cacd8e1c120049270f009f730800ffffffff7dbd3ae84f37cecd964739e82425cacd0000b500c9159e1e4e003100ffffffffffffffff0901ffffffffff0702ff007f7fffffffff
     208 05069 DFN 41000012002cfd04860204860304850404850704860804860904860a04861d04851e04851f04852004854e04866e1007fe02840b02840e02840f02841602841702841902841a02845902845a02845b02840001000101000501000601001001021101021201021301021801021b01021c01003901013a01015101005c01025d01025e01026d01026f0102
@@ -341,7 +342,7 @@ First, we note from the `tokens` dump that the data extend from offset
 follows:
 
     > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
         INFO: Input ----------
         INFO: Reading binary data from myfile.fit
@@ -367,6 +368,7 @@ follows:
      WARNING: Fixing header checksum: ec8d -> 6c0d
         INFO: Validation ----------
         INFO: --max-delta-t None
+     WARNING: Time-reversal is allowed unless max-delta-t is set
         INFO: First timestamp: 2018-07-26 13:34:49+00:00
         INFO: Last timestamp:  2018-07-26 13:59:18+00:00
         INFO: OK
@@ -389,7 +391,7 @@ For some reason we want to know if a file contains any speed values
 over 7 m/s:
 
     > ch2 fit --grep '.*speed>7' --compact myfile.fit
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
     record:enhanced_speed=7.521
     record:enhanced_speed=7.241
@@ -417,7 +419,7 @@ Seeing the results above we'd like to know more about the records
 where we were over 7.5m/s:
 
     > ch2 fit --grep 'record:enhanced_speed>7' --context myfile.fit
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
     
     052 01697 record
@@ -457,7 +459,7 @@ the last of these is for regular expression matching on the value.
 This has made us curious.  Do we have any rides where we exceed 17m/s?
 
     > ch2 fit --grep 'record:enhanced_speed>17' --match 0 --name *.fit
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
     2017-01-31-lad.fit
     2017-06-11-sp2.fit
@@ -477,7 +479,7 @@ bytes, but not timestamps (or any other field).  But we can work
 around this by using `--grep`:
 
     > ch2 fit --grep --context '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit
-        INFO: Version 0.13.0
+        INFO: Version 0.14.0
         INFO: Using database at ...
     
     record:enhanced_speed=2.883

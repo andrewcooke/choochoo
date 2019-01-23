@@ -70,6 +70,10 @@ extensible.*
 
 ## Latest Changes
 
+### v0.14.0
+
+Zoom in summary plots (embedded Bokeh server while diary is used).
+
 ### v0.13.0
 
 Automatic addition of
