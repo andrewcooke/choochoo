@@ -7,7 +7,7 @@ from bokeh.server.server import Server
 from tornado.ioloop import IOLoop
 
 
-SERVER = None
+SINGLETON = None
 
 TEMPLATE = '''
 {% block css_resources %}
@@ -49,29 +49,24 @@ class ServerThread(Server):
         def callback():
             self._log.info('Shutting down server')
             self.io_loop.stop()
-            super().stop()
+            super(ServerThread, self).stop(wait=True)
             self.unlisten()
             self._log.debug('Server shut down')
 
         self.io_loop.add_callback(callback)
 
-    def handler(self, signal, frame):
-        self.stop()
-
 
 def singleton_server(log, app_map):
 
-    global SERVER
+    global SINGLETON
 
-    if SERVER is None:
+    if SINGLETON is None:
         log.info('Starting new server')
         # tornado is weird about ioloops and threads
         # https://github.com/universe-proton/universe-topology/issues/17
-        SERVER = ServerThread(log, app_map)
-        signal(SIGTERM, SERVER.handler)
-        signal(SIGINT, SERVER.handler)
+        SINGLETON = ServerThread(log, app_map)
 
-    return SERVER
+    return SINGLETON
 
 
 class Page(ABC):
