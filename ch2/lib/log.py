@@ -33,7 +33,7 @@ def make_log(args, tui=False):
         mlog.addHandler(file_handler)
 
         blog = getLogger('bokeh')
-        blog.setLevel(INFO)
+        blog.setLevel(DEBUG)
         blog.addHandler(file_handler)
 
         tlog = getLogger('tornado')

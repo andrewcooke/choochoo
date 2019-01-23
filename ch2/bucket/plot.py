@@ -194,7 +194,7 @@ def health(nx, ny, ftn, ftg, hr):
     return f
 
 
-def activity(nx, ny, st, at):
+def activities(nx, ny, st, at):
 
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools())
     f.toolbar.logo = None

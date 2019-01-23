@@ -7,16 +7,15 @@ from bokeh.layouts import column, row
 from bokeh.models import Div
 
 from .data_frame import interpolate_to
-from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, activity, line_diff_elevation_climbs, \
-    max_all, min_all
-from .server import SingleShotServer
+from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, line_diff_elevation_climbs, \
+    max_all, min_all, activities
+from .server import Page
 from ..data import statistics
-from ..data.data_frame import set_log, session, get_log, activity_statistics
-from ..lib.date import format_time, format_seconds, local_date_to_time
+from ..data.data_frame import set_log, activity_statistics
+from ..lib.date import format_time, format_seconds
 from ..squeal import ActivityGroup
 from ..squeal import ActivityJournal
 from ..stoats.calculate.monitor import MonitorStatistics
-from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE
 
@@ -41,33 +40,6 @@ HEALTH_PLT_LEN = 500
 HEALTH_PLOT_HGT = 200
 MAP_LEN = 400
 
-TEMPLATE = '''
-{% block css_resources %}
-  {{ super() }}
-  <style>
-body {
-  background-color: white;
-}
-.centre {
-  text-align: center
-}
-.centre > div {
-  display: inline-block;
-}
-table {
-  margin: 20px;
-  border-spacing: 10px;
-}
-  </style>
-{% endblock %}
-{% block inner_body %}
-  <div class='centre'>
-  <h1>{{ header }}</h1>
-  {{ super() }}
-  </div>
-{% endblock %}
-'''
-
 
 def get(df, name):
     if name in df:
@@ -76,7 +48,7 @@ def get(df, name):
         return None
 
 
-def comparison(log, s, aj1=None, aj2=None):
+def comparison(log, s, activity, compare=None):
 
     # ---- definitions
 
@@ -99,9 +71,9 @@ def comparison(log, s, aj1=None, aj2=None):
             df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
         return st, st_10
 
-    st1, st1_10 = get_stats(aj1)
-    st2, st2_10 = get_stats(aj2) if aj2 else (None, None)
-    climbs = activity_statistics(s, CLIMB_DISTANCE, CLIMB_ELEVATION, activity_journal_id=aj1.id)
+    st1, st1_10 = get_stats(activity)
+    st2, st2_10 = get_stats(compare) if compare else (None, None)
+    climbs = activity_statistics(s, CLIMB_DISTANCE, CLIMB_ELEVATION, activity_journal_id=activity.id)
     line_x_range = None
 
     def all_frames(st, name):
@@ -117,7 +89,7 @@ def comparison(log, s, aj1=None, aj2=None):
     def set_axes(y_axis, x_axis=TIME):
         y1 = all_frames(st1_10, y_axis)
         set_axis(y1, st1_10, x_axis)
-        if aj2:
+        if compare:
             y2 = all_frames(st2_10, y_axis)
             set_axis(y2, st2_10, x_axis)
         else:
@@ -136,16 +108,14 @@ def comparison(log, s, aj1=None, aj2=None):
 
     def ride_cum(y_axis):
         y1 = all_frames(st1_10, y_axis)
-        if aj2:
+        if compare:
             y2 = all_frames(st2_10, y_axis)
         else:
             y2 = None
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
     hr10_line, hr10_cumulative = ride_line(MED_HR_10, x_axis=DISTANCE_KM), ride_cum(HR_10)
-    # this ties movements, but seems to be broken for large amounts of data
-    if sum(len(df) for df in st1_10) < 1000:
-        line_x_range = hr10_line.x_range
+    line_x_range = hr10_line.x_range
     elvn_line, elvn_cumulative = ride_elevn(x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 
@@ -153,25 +123,25 @@ def comparison(log, s, aj1=None, aj2=None):
     for df in st1_10:
         df['size'] = MAP_LEN * ((df[HR_10] - mn) / (mx - mn)) ** 3 / 10
     x1, y1 = all_frames(st1_10, SPHERICAL_MERCATOR_X), all_frames(st1_10, SPHERICAL_MERCATOR_Y)
-    if aj2:
+    if compare:
         x2, y2 = all_frames(st2_10, SPHERICAL_MERCATOR_X), all_frames(st2_10, SPHERICAL_MERCATOR_Y)
     else:
         x2, y2 = None, None
     map = dot_map(MAP_LEN, x1, y1, [df['size'] for df in st1_10], x2, y2)
 
     caption = '<table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
-    source_ids = [aj1.id]
-    if aj2:
-        source_ids.append(aj2.id)
+    source_ids = [activity.id]
+    if compare:
+        source_ids.append(compare.id)
     st = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=source_ids)
-    st_aj = st.loc[st.index == aj1.start]
+    st_aj = st.loc[st.index == activity.start]
     caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-               (aj1.name, format_time(aj1.start),
+               (activity.name, format_time(activity.start),
                 format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
-    if aj2:
-        st_aj = st.loc[st.index == aj2.start]
+    if compare:
+        st_aj = st.loc[st.index == compare.start]
         caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-                   (aj2.name, format_time(aj2.start),
+                   (compare.name, format_time(compare.start),
                     format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
     caption = Div(text=caption + '</table>', width=RIDE_PLOT_LEN, height=RIDE_PLOT_HGT)
 
@@ -179,7 +149,7 @@ def comparison(log, s, aj1=None, aj2=None):
 
     # ---- health-specific plots
 
-    finish = aj1.finish + dt.timedelta(days=1)  # to show new level
+    finish = activity.finish + dt.timedelta(days=1)  # to show new level
     start = finish - dt.timedelta(days=365)
 
     st_ff = statistics(s, FITNESS, FATIGUE, DAILY_STEPS, start=start, finish=finish)
@@ -193,31 +163,31 @@ def comparison(log, s, aj1=None, aj2=None):
         join(ActivityGroup). \
         filter(ActivityJournal.start >= start,
                ActivityJournal.start < finish,
-               ActivityGroup.id == aj1.activity_group_id
+               ActivityGroup.id == activity.activity_group_id
                ).all()
     st_ac = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=[aj.id for aj in ajs])
 
-    activity_line = activity(HEALTH_PLT_LEN, HEALTH_PLOT_HGT, get(st_ff, DAILY_STEPS), st_ac[ACTIVE_TIME])  # last could be distance
+    activity_line = activities(HEALTH_PLT_LEN, HEALTH_PLOT_HGT, get(st_ff, DAILY_STEPS), st_ac[ACTIVE_TIME])  # last could be distance
 
-    # ---- display
+    # ---- the final mosaic of plots
 
-    SingleShotServer(log,
-                     column(row(hr10_line, hr10_cumulative),
-                                 row(elvn_line, elvn_cumulative),
-                                 row(speed_line, speed_cumulative),
-                                 row(caption, hrz_histogram),
-                                 row(column(health_line, activity_line), map)),
-                     template=TEMPLATE, title='choochoo', pause=60,
-                     template_vars={
-                         'header': ('%s' % aj1.name) + ((' v %s' % aj2.name) if aj2 else '')
-                     })
+    return column(row(hr10_line, hr10_cumulative),
+                  row(elvn_line, elvn_cumulative),
+                  row(speed_line, speed_cumulative),
+                  row(caption, hrz_histogram),
+                  row(column(health_line, activity_line), map))
 
 
-if __name__ == '__main__':
-    s = session('-v 5')
-    day = local_date_to_time('2019-01-19')
-    # day = local_date_to_time('2018-03-04')
-    aj1 = s.query(ActivityJournal).filter(ActivityJournal.start >= day,
-                                          ActivityJournal.start < day + dt.timedelta(days=1)).one()
-    aj2 = nearby_any_time(s, aj1)[0]
-    comparison(get_log(), s, aj1, aj2)
+class DiaryPage(Page):
+
+    def create(self, s, activity=None, compare=None, **kargs):
+        aj1 = s.query(ActivityJournal).filter(ActivityJournal.id ==
+                                              self.single_int_param('activity', activity)).one()
+        title = aj1.name
+        if compare:
+            aj2 = s.query(ActivityJournal).filter(ActivityJournal.id ==
+                                                  self.single_int_param('compare', compare)).one()
+            title += ' v ' + aj2.name
+        else:
+            aj2 = None
+        return {'header': title, 'title': title}, comparison(self._log, s, aj1, aj2)

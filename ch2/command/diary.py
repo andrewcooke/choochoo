@@ -5,18 +5,18 @@ from abc import abstractmethod
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal
 
-from ch2.bucket.diary import comparison
-from ch2.stoats.display.nearby import nearby_any_time
 from .args import DATE, SCHEDULE
+from ..bucket.diary import DiaryPage
+from ..bucket.server import start
 from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
 from ..squeal.database import add, ActivityJournal
-from ..squeal.tables.pipeline import PipelineType
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import display_pipeline
+from ..stoats.display.nearby import nearby_any_time
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
@@ -62,6 +62,10 @@ Display a summary for the month / year / schedule.
 
 
 class Diary(DateSwitcher):
+
+    def __init__(self, log, db, date):
+        super().__init__(log, db, date)
+        self._server = start(log, {'/diary': DiaryPage(log, db)})
 
     def _build(self, s):
         self._log.debug('Building diary at %s' % self._date)
@@ -175,12 +179,14 @@ class DailyDiary(Diary):
         for aj1 in ActivityJournal.at_date(s, self._date):
             options = [(None, 'None')] + [(aj2, aj2.name) for aj2 in nearby_any_time(s, aj1)]
             menu = ArrowMenu(label('%s v ' % aj1.name), dict(options))
-            connect_signal(menu, 'click', self.__show_gui, (s, aj1))
+            connect_signal(menu, 'click', self.__show_gui, aj1)
             yield f(menu)
 
-    def __show_gui(self, w, args):
-        s, aj1 = args
-        comparison(self._log, s, aj1, w.state)
+    def __show_gui(self, w, aj1):
+        path = '/diary?activity=%d' % aj1.id
+        if w.state:
+            path += '&compare=%d' % w.state.id
+        self._server.show(path)
 
 
 class ScheduleDiary(Diary):

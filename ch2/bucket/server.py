@@ -1,32 +1,87 @@
 
+from abc import abstractmethod, ABC
+from threading import Thread
+
 from bokeh.server.server import Server
+from tornado.ioloop import IOLoop
 
 
-class SingleShotServer:
+SERVER = None
 
-    def __init__(self, log, plot, template=None, title=None, template_vars=None, pause=60):
-        self.__log = log
-        self.__plot = plot
-        self.__template = template
-        self.__title = title
-        self.__template_vars = {} if template_vars is None else template_vars
-        self.__server = Server(self.__modify_doc)
+TEMPLATE = '''
+{% block css_resources %}
+  {{ super() }}
+  <style>
+body {
+  background-color: white;
+}
+.centre {
+  text-align: center
+}
+.centre > div {
+  display: inline-block;
+}
+table {
+  margin: 20px;
+  border-spacing: 10px;
+}
+  </style>
+{% endblock %}
+{% block inner_body %}
+  <div class='centre'>
+  <h1>{{ header }}</h1>
+  {{ super() }}
+  </div>
+{% endblock %}
+'''
 
-        self.__server.start()
-        self.__log.info('Opening Bokeh application on http://localhost:5006/')
-        self.__server.io_loop.add_callback(self.__server.show, "/")
-        self.__server.io_loop.call_later(pause, self.__stop)
-        self.__server.io_loop.start()
 
-    def __modify_doc(self, doc):
-        doc.add_root(self.__plot)
-        doc.title = self.__title
-        # this extends bokeh.core.templates.FILE - see code in bokeh.embed.elements
-        doc.template = self.__template
-        doc.template_variables.update(self.__template_vars)
+def start(log, app_map):
+    global SERVER
+    if SERVER is None:
+        log.info('Starting new server')
+        # tornado is weird about ioloops and threads
+        # https://github.com/universe-proton/universe-topology/issues/17
+        SERVER = Server(app_map, io_loop=IOLoop.instance())
+        SERVER.start()
+        Thread(target=SERVER.io_loop.start).start()
+    return SERVER
 
-    def __stop(self):
-        self.__log.info('Stopping server')
-        self.__server.io_loop.stop()
-        self.__server.stop()
-        self.__server.unlisten()
+
+class Page(ABC):
+
+    def __init__(self, log, db, template=TEMPLATE, **vars):
+        self._log = log
+        self._db = db
+        self._template = template
+        self._vars = vars
+
+    def __call__(self, doc):
+        self._log.debug('Page called with %s' % doc)
+        with self._db.session_context() as s:
+            params = doc.session_context.request.arguments
+            self._log.debug('Request params: %s' % params)
+            vars, root = self.create(s, **params)
+            vars = vars if vars is not None else {}
+            vars.update(self._vars)
+            doc.add_root(root)
+            doc.template = self._template
+            doc.template_variables.update(vars)
+            doc.title = vars['title'] if 'title' in vars else 'Choochoo'
+
+    __ERROR = object()
+
+    def single_int_param(self, name, values, deflt=__ERROR):
+        try:
+            return int(values[0])
+        except Exception as e:
+            msg = 'Could not parse "%s" for %s' % (values, name)
+            self._log.warn(msg)
+            if deflt != self.__ERROR:
+                return deflt
+            else:
+                raise Exception(msg)
+
+    @abstractmethod
+    def create(self, s, **kargs):
+        raise NotImplementedError()
