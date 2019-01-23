@@ -7,7 +7,7 @@ from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT,
 
 from .args import DATE, SCHEDULE
 from ..bucket.diary import DiaryPage
-from ..bucket.server import start
+from ..bucket.server import start, stop
 from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
@@ -52,13 +52,16 @@ Display a summary for the month / year / schedule.
             date = dt.date.today() - dt.timedelta(days=int(date))
     with db.session_context() as s:
         TopicJournal.check_tz(log, s)
-    if schedule:
-        schedule = Schedule(schedule)
-        if schedule.start or schedule.finish:
-            raise Exception('Schedule must be open (no start or finish)')
-        MainLoop(ScheduleDiary(log, db, date, schedule), palette=PALETTE_RAINBOW).run()
-    else:
-        MainLoop(DailyDiary(log, db, date), palette=PALETTE_RAINBOW).run()
+    try:
+        if schedule:
+            schedule = Schedule(schedule)
+            if schedule.start or schedule.finish:
+                raise Exception('Schedule must be open (no start or finish)')
+            MainLoop(ScheduleDiary(log, db, date, schedule), palette=PALETTE_RAINBOW).run()
+        else:
+            MainLoop(DailyDiary(log, db, date), palette=PALETTE_RAINBOW).run()
+    finally:
+        stop()
 
 
 class Diary(DateSwitcher):

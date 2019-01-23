@@ -1,12 +1,13 @@
 
 from abc import abstractmethod, ABC
+from signal import signal, SIGTERM, SIGINT
 from threading import Thread
 
 from bokeh.server.server import Server
 from tornado.ioloop import IOLoop
 
 
-SERVER = None
+SERVER_LOG = None
 
 TEMPLATE = '''
 {% block css_resources %}
@@ -37,15 +38,43 @@ table {
 
 
 def start(log, app_map):
-    global SERVER
-    if SERVER is None:
+
+    global SERVER_LOG
+
+    if SERVER_LOG is None:
         log.info('Starting new server')
         # tornado is weird about ioloops and threads
         # https://github.com/universe-proton/universe-topology/issues/17
-        SERVER = Server(app_map, io_loop=IOLoop.instance())
-        SERVER.start()
-        Thread(target=SERVER.io_loop.start).start()
-    return SERVER
+        server = Server(app_map, io_loop=IOLoop.instance())
+        SERVER_LOG = (server, log)
+        server.start()
+        Thread(target=server.io_loop.start).start()
+
+        def handler(signal, frame):
+            stop()
+
+        signal(SIGTERM, handler)
+        signal(SIGINT, handler)
+
+    return SERVER_LOG[0]
+
+
+def stop():
+
+    global SERVER_LOG
+
+    if SERVER_LOG:
+        server, log = SERVER_LOG
+        log.debug('Adding shutdown callback')
+
+        def callback():
+            log.info('Shutting down server')
+            server.io_loop.stop()
+            server.stop()
+            server.unlisten()
+            log.debug('Server shut down')
+
+        server.io_loop.add_callback(callback)
 
 
 class Page(ABC):

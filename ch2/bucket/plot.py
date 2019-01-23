@@ -194,25 +194,26 @@ def health(nx, ny, ftn, ftg, hr):
     return f
 
 
-def activities(nx, ny, st, at):
+def activities(nx, ny, steps, active_time):
 
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools())
     f.toolbar.logo = None
     f.xaxis.axis_label = 'Date'
 
-    if st is not None and len(st):
-        st = st.dropna()
-        f.y_range = Range1d(start=0, end=1.1 * st.max())
-        f.yaxis.axis_label = st.name
-        f.vbar(x=st.index, width=dt.timedelta(hours=20), top=st, fill_color='grey', fill_alpha=0.4, line_alpha=0)
+    steps = None if steps is None else steps.dropna()
+    active_time = None if active_time is None else active_time.dropna()
+
+    if steps is not None and len(steps):
+        f.y_range = Range1d(start=0, end=1.1 * steps.max())
+        f.yaxis.axis_label = steps.name
+        f.vbar(x=steps.index, width=dt.timedelta(hours=20), top=steps, fill_color='grey', fill_alpha=0.4, line_alpha=0)
     else:
         f.yaxis[0].visible = False
 
-    if at is not None and len(at):
-        at = at.dropna()
-        f.extra_y_ranges = {at.name: Range1d(start=0, end=at.max() * 1.1)}
-        f.add_layout(LinearAxis(y_range_name=at.name, axis_label=at.name), 'right')
-        f.circle(x=at.index, y=at, color='black', fill_alpha=0, y_range_name=at.name)
+    if active_time is not None and len(active_time):
+        f.extra_y_ranges = {active_time.name: Range1d(start=0, end=active_time.max() * 1.1)}
+        f.add_layout(LinearAxis(y_range_name=active_time.name, axis_label=active_time.name), 'right')
+        f.circle(x=active_time.index, y=active_time, color='black', fill_alpha=0, y_range_name=active_time.name)
         f.yaxis[1].formatter = PrintfTickFormatter(format='')
 
     # f.toolbar_location = None
