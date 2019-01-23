@@ -178,11 +178,11 @@ def comparison(log, s, activity, compare=None):
                   row(column(health_line, activity_line), map))
 
 
-class DiaryPage(Page):
+class ActivityJournalPage(Page):
 
-    def create(self, s, activity=None, compare=None, **kargs):
+    def create(self, s, id=None, compare=None, **kargs):
         aj1 = s.query(ActivityJournal).filter(ActivityJournal.id ==
-                                              self.single_int_param('activity', activity)).one()
+                                              self.single_int_param('id', id)).one()
         title = aj1.name
         if compare:
             aj2 = s.query(ActivityJournal).filter(ActivityJournal.id ==

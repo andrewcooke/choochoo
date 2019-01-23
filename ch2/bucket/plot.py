@@ -59,7 +59,7 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
 
 
 def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=None, x_range=None):
-    from .diary import DISTANCE_KM, ELEVATION_M
+    from .activity import DISTANCE_KM, ELEVATION_M
     f = line_diff(nx, ny, DISTANCE_KM, y1, y2=y2, x_range=x_range)
     if y3 is not None:
         for y in y3:

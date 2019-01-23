@@ -7,7 +7,7 @@ from bokeh.server.server import Server
 from tornado.ioloop import IOLoop
 
 
-SERVER_LOG = None
+SERVER = None
 
 TEMPLATE = '''
 {% block css_resources %}
@@ -37,44 +37,41 @@ table {
 '''
 
 
-def start(log, app_map):
+class ServerThread(Server):
 
-    global SERVER_LOG
+    def __init__(self, log, app_map):
+        self._log = log
+        super().__init__(app_map, io_loop=IOLoop.instance())
+        Thread(target=self.io_loop.start).start()
 
-    if SERVER_LOG is None:
+    def stop(self):
+
+        def callback():
+            self._log.info('Shutting down server')
+            self.io_loop.stop()
+            super().stop()
+            self.unlisten()
+            self._log.debug('Server shut down')
+
+        self.io_loop.add_callback(callback)
+
+    def handler(self, signal, frame):
+        self.stop()
+
+
+def singleton_server(log, app_map):
+
+    global SERVER
+
+    if SERVER is None:
         log.info('Starting new server')
         # tornado is weird about ioloops and threads
         # https://github.com/universe-proton/universe-topology/issues/17
-        server = Server(app_map, io_loop=IOLoop.instance())
-        SERVER_LOG = (server, log)
-        server.start()
-        Thread(target=server.io_loop.start).start()
+        SERVER = ServerThread(log, app_map)
+        signal(SIGTERM, SERVER.handler)
+        signal(SIGINT, SERVER.handler)
 
-        def handler(signal, frame):
-            stop()
-
-        signal(SIGTERM, handler)
-        signal(SIGINT, handler)
-
-    return SERVER_LOG[0]
-
-
-def stop():
-
-    global SERVER_LOG
-
-    if SERVER_LOG:
-        server, log = SERVER_LOG
-        log.debug('Adding shutdown callback')
-
-        def callback():
-            log.info('Shutting down server')
-            server.io_loop.stop()
-            server.stop()
-            server.unlisten()
-            log.debug('Server shut down')
-
-        server.io_loop.add_callback(callback)
+    return SERVER
 
 
 class Page(ABC):

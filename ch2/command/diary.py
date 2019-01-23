@@ -6,8 +6,8 @@ from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal
 
 from .args import DATE, SCHEDULE
-from ..bucket.diary import DiaryPage
-from ..bucket.server import start, stop
+from ..bucket.activity import ActivityJournalPage
+from ..bucket.server import singleton_server
 from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
@@ -52,6 +52,7 @@ Display a summary for the month / year / schedule.
             date = dt.date.today() - dt.timedelta(days=int(date))
     with db.session_context() as s:
         TopicJournal.check_tz(log, s)
+    server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db)})
     try:
         if schedule:
             schedule = Schedule(schedule)
@@ -59,16 +60,16 @@ Display a summary for the month / year / schedule.
                 raise Exception('Schedule must be open (no start or finish)')
             MainLoop(ScheduleDiary(log, db, date, schedule), palette=PALETTE_RAINBOW).run()
         else:
-            MainLoop(DailyDiary(log, db, date), palette=PALETTE_RAINBOW).run()
+            MainLoop(DailyDiary(log, db, date, server), palette=PALETTE_RAINBOW).run()
     finally:
-        stop()
+        server.stop()
 
 
 class Diary(DateSwitcher):
 
-    def __init__(self, log, db, date):
+    def __init__(self, log, db, date, server):
         super().__init__(log, db, date)
-        self._server = start(log, {'/diary': DiaryPage(log, db)})
+        self._server = server
 
     def _build(self, s):
         self._log.debug('Building diary at %s' % self._date)
@@ -186,7 +187,7 @@ class DailyDiary(Diary):
             yield f(menu)
 
     def __show_gui(self, w, aj1):
-        path = '/diary?activity=%d' % aj1.id
+        path = '/activity_journal?id=%d' % aj1.id
         if w.state:
             path += '&compare=%d' % w.state.id
         self._server.show(path)
