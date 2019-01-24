@@ -89,10 +89,7 @@ class Token:
 
     def describe_fields(self, types):
         for name, (values, units) in self.parse_token(raw_data=True).data:
-            if isinstance(values[0], bytes):
-                value = tohex(values[0])
-            else:
-                value = values[0]
+            value = tohex(values[0])
             yield '%s - %s' % (value, sub('_', ' ', name))
 
 
@@ -196,10 +193,10 @@ class FileHeader(ValidateToken):
 
     def parse_token(self, raw_data=False, **options):
         data = {'header_size': self.data[0:1] if raw_data else self.header_size,
-                 'protocol_version': self.data[1:2] if raw_data else self.protocol_version,
-                 'profile_version': self.data[2:4] if raw_data else self.profile_version,
-                 'data_size': (self.data[4:8] if raw_data else self.data_size, 'bytes'),
-                 'data_type': self.data[8:12] if raw_data else self.data_type}
+                'protocol_version': self.data[1:2] if raw_data else self.protocol_version,
+                'profile_version': self.data[2:4] if raw_data else self.profile_version,
+                'data_size': (self.data[4:8] if raw_data else self.data_size, 'bytes'),
+                'data_type': self.data[8:12] if raw_data else self.data_type}
         if self.has_checksum:
             data['checksum'] = self.data[12:14] if raw_data else self.checksum
         return self._fake_record('file_header', **data)
@@ -520,7 +517,7 @@ class Checksum(ValidateToken):
         if checksum != self.checksum:
             log.warning('Fixing final checksum: %04x -> %04x' % (self.checksum, checksum))
             self.checksum = checksum
-            self.data = pack('<H', checksum)
+            self.data[:2] = pack('<H', checksum)
 
     def parse_token(self, raw_data=False, **options):
         return self._fake_record('checksum', checksum=self.data[0:2] if raw_data else self.checksum)

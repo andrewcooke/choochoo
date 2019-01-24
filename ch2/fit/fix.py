@@ -140,15 +140,20 @@ def header_and_checksums(log, data, initial_state, fix_header=False, fix_checksu
 
 def process_header(log, data, header_size=None, protocol_version=None, profile_version=None):
     try:
-        header = FileHeader(data)
-        # if these are undefined, use existing values (might be used if size changes)
-        if protocol_version is None:
-            protocol_version = header.protocol_version
-        if profile_version is None:
-            profile_version = header.profile_version
-        prev_len = len(header)
-        header.repair(data, log, header_size=header_size, protocol_version=protocol_version, profile_version=profile_version)
-        data[:prev_len] = header.data
+        with memoryview(data) as view:
+            header = FileHeader(view)
+            old_size = header.header_size
+            # if these are undefined, use existing values (might be used if size changes)
+            if protocol_version is None:
+                protocol_version = header.protocol_version
+            if profile_version is None:
+                profile_version = header.profile_version
+            prev_len = len(header)
+            header.repair(data, log, header_size=header_size, protocol_version=protocol_version, profile_version=profile_version)
+            new_data = header.data
+        # need to mutate if length changed (in which case header.data is no longer a memoryview)
+        if header.header_size != old_size:
+            data[:prev_len] = new_data
         return data
     except Exception as e:
         log.error(e)
@@ -158,6 +163,7 @@ def process_header(log, data, header_size=None, protocol_version=None, profile_v
 def process_checksum(log, data, state):
     offset = 0
     try:
+        # don't use memoryview here as it gets spread into state and token
         offset = len(FileHeader(data))
         while len(data) - offset > 2:
             token = token_factory(data[offset:], state)
@@ -166,9 +172,9 @@ def process_checksum(log, data, state):
             n = offset + 2 - len(data)
             log.warning('Adding %d byte(s) for checksum' % n)
             data += bytearray([0] * n)
-        checksum = Checksum(data[offset:])
-        checksum.repair(data, log)
-        data[-2:] = checksum.data
+        with memoryview(data) as view:
+            checksum = Checksum(view[offset:])
+            checksum.repair(view, log)
         return data
     except Exception as e:
         log.error(e)
@@ -196,7 +202,7 @@ def validate_data(log, data, state, warn=False, force=True):
     log.info('Validation ----------')
     log_param(log, MAX_DELTA_T, state.max_delta_t)
     if state.max_delta_t is None:
-        log.warn('Time-reversal is allowed unless %s is set' % MAX_DELTA_T)
+        log.warning('Time-reversal is allowed unless %s is set' % MAX_DELTA_T)
 
     first_t = True
     try:
@@ -214,7 +220,7 @@ def validate_data(log, data, state, warn=False, force=True):
             offset += len(token)
         log.info('Last timestamp:  %s' % state.timestamp)
         if state.timestamp > dt.datetime.now(tz=dt.timezone.utc):
-            log.warn('Timestamp in future')
+            log.warning('Timestamp in future')
         checksum = Checksum(data[offset:])
         checksum.validate(data, log)
         log.info('OK')
@@ -233,9 +239,12 @@ def drop_data(log, initial_state, data, warn=False, force=True,
                           (MAX_FWD_LEN, max_fwd_len), (MAX_DELTA_T, initial_state.max_delta_t)]:
         log_param(log, name, value)
 
-    slices = advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=warn, force=force,
-                     min_sync_cnt=min_sync_cnt, max_record_len=max_record_len, max_drop_cnt=max_drop_cnt,
-                     max_back_cnt=max_back_cnt, max_fwd_len=max_fwd_len)
+    # use memoryview for efficient slicing (although it doesn't seem to help much)
+    with memoryview(data) as view:
+        slices = advance(log, initial_state, view,
+                         drop_count=0, initial_offset=0, warn=warn, force=force,
+                         min_sync_cnt=min_sync_cnt, max_record_len=max_record_len, max_drop_cnt=max_drop_cnt,
+                         max_back_cnt=max_back_cnt, max_fwd_len=max_fwd_len)
     log.info('Found slices %s' % format_slices(slices))
     return slices
 

@@ -50,7 +50,7 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
         if not args[VALIDATE]:
             raise Exception('%s and %s makes no sense, numpty' % (mm(name), no(VALIDATE)))
     if not args[FORCE]:
-        log.warn('%s means that data are not completely parsed' % no(FORCE))
+        log.warning('%s means that data are not completely parsed' % no(FORCE))
 
     for path in args[PATH]:
 

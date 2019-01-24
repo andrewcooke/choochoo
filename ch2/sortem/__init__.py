@@ -23,7 +23,7 @@ def oracle_from_constant(log, s, dir_name=SRTM1_DIR):
     try:
         dir = Constant.get(s, dir_name).at(s).value
     except:
-        log.warn('STRM1 config - define %s in constants for elevation data' % dir_name)
+        log.warning('STRM1 config - define %s in constants for elevation data' % dir_name)
         dir = None
     return ElevationOracle(log, dir)
 
@@ -90,6 +90,6 @@ def cached_file_reader(log, dir, flat, flon):
             data = zip.open(hgt_file).read()
     else:
         # i tried automating download, but couldn't get ouath2 to work
-        log.warn('Download %s' % BASE_URL + root + EXTN)
+        log.warning('Download %s' % BASE_URL + root + EXTN)
         raise Exception('Missing %s' % hgt_file)
     return np.flip(np.frombuffer(data, np.dtype('>i2'), SAMPLES * SAMPLES).reshape((SAMPLES, SAMPLES)), 0)

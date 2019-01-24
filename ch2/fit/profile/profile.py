@@ -30,10 +30,10 @@ def read_internal_profile(log):
             PROFILE.append(load(input))
             input.close()
         except FileNotFoundError:
-            log.warn('There was a problem reading the pickled profile.')
-            log.warn('If you installed via pip then please create an issue at')
-            log.warn('https://github.com/andrewcooke/choochoo for support.')
-            log.warn('If you installed via git please see `ch2 help %s`' % PACKAGE_FIT_PROFILE)
+            log.warning('There was a problem reading the pickled profile.')
+            log.warning('If you installed via pip then please create an issue at')
+            log.warning('https://github.com/andrewcooke/choochoo for support.')
+            log.warning('If you installed via git please see `ch2 help %s`' % PACKAGE_FIT_PROFILE)
             raise Exception('Could not read %s (see log for more details)' % PROFILE_NAME)
         PROFILE[0][0].set_log(log)
     return PROFILE[0][1:]

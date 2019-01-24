@@ -62,7 +62,7 @@ class App(TabNode):
         try:
             self.replace(tabs)
         except Exception as e:
-            self._log.warn('Could not replace tabs: %s' % e)
+            self._log.warning('Could not replace tabs: %s' % e)
 
 
 class DateSwitcher(App):

@@ -95,7 +95,7 @@ class Page(ABC):
             return int(values[0])
         except Exception as e:
             msg = 'Could not parse "%s" for %s' % (values, name)
-            self._log.warn(msg)
+            self._log.warning(msg)
             if deflt != self.__ERROR:
                 return deflt
             else:
