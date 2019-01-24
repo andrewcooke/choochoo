@@ -1,6 +1,7 @@
 
 import datetime as dt
 
+from ch2.lib.date import format_time, format_seconds
 from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
 from ..command.args import ADD_HEADER, mm, HEADER_SIZE, PROFILE_VERSION, PROTOCOL_VERSION, MIN_SYNC_CNT, \
@@ -8,9 +9,9 @@ from ..command.args import ADD_HEADER, mm, HEADER_SIZE, PROFILE_VERSION, PROTOCO
 
 
 def fix(log, data, warn=False,
-        add_header=False, drop=False, slices=None, fix_header=False, fix_checksum=False, force=True, validate=True,
-        header_size=None, protocol_version=None, profile_version=None, min_sync_cnt=3, max_record_len=None,
-        max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200, max_delta_t=None, profile_path=None):
+        add_header=False, drop=False, slices=None, start=None, fix_header=False, fix_checksum=False, force=True,
+        validate=True, header_size=None, protocol_version=None, profile_version=None, min_sync_cnt=3,
+        max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200, max_delta_t=None, profile_path=None):
 
     slices = parse_slices(log, slices)
     types, messages = read_profile(log, warn=warn, profile_path=profile_path)
@@ -28,6 +29,9 @@ def fix(log, data, warn=False,
 
     if slices:
         data = apply_slices(log, data, slices)
+
+    if start:
+        data = set_start(log, data, types, messages, start)
 
     if fix_header or fix_checksum:
         data = header_and_checksums(log, data, State(log, types, messages, max_delta_t=max_delta_t),
@@ -184,7 +188,7 @@ def process_checksum(log, data, state):
 def apply_slices(log, data, slices):
 
     log.info('Slice ----------')
-    log.info('Slices %s' % format_slices(slices))
+    log.info('Slices: %s' % format_slices(slices))
 
     result = bytearray()
     for slice in slices:
@@ -195,6 +199,41 @@ def apply_slices(log, data, slices):
         log.warning('Slicing decreased length by %d bytes' % dropped)
 
     return result
+
+
+class StartState(State):
+
+    def __init__(self, log, types, messages, start, max_delta_t=None):
+        super().__init__(log, types, messages, max_delta_t=max_delta_t)
+        self.__start = start
+        self.__delta = None
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, timestamp):
+        if self.__delta is None:
+            self.__delta = self.__start - timestamp
+            self.log.warning('Shifting timestamps by %s' % format_seconds(self.__delta.total_seconds()))
+        self._timestamp = self._validate_timestamp(timestamp + self.__delta)
+
+
+def set_start(log, data, types, messages, start):
+
+    log.info('Start ----------')
+    log.info('Start: %s' % format_time(start))
+
+    state = StartState(log, types, messages, start)
+    with memoryview(data) as view:
+        offset = len(FileHeader(view))
+        while len(view) - offset > 2:
+            token = token_factory(view[offset:], state)
+            token.repair_timestamp(state)
+            offset += len(token)
+
+    return data
 
 
 def validate_data(log, data, state, warn=False, force=True):

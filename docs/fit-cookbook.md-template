@@ -9,6 +9,7 @@
 * [See What Data are Dropped](#see-what-data-are-dropped)
 * [See What Data are Dropped in Detail](#see-what-data-are-dropped-in-detail)
 * [Remove Arbitrary Data from a FIT File](#remove-arbitrary-data-from-a-fit-file)
+* [Change the Times in a FIT File](#change-the-times-in-a-fit-file)
 * [Search for Values in a FIT File](#search-for-values-in-a-fit-file)
 * [Search for Values in a FIT File with Context](#search-for-values-in-a-fit-file-with-context)
 * [Find FIT Files with Values](#find-fit-files-with-values)
@@ -172,6 +173,20 @@ sed 's/^/    /' $out
 
 Note that `fix-fit` won't let you remove data that would corrupt the
 file (to the best of its ability).
+
+## Change the Times in a FIT File
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 fix-fit myfile.fit --start '2018-01-01 12:00:00' --fix-checksum -o fixed.fit"
+dev/ch2 fix-fit data/test/source/other/3316129931.fit --start '2018-01-01 12:00:00' --fix-checksum -o /tmp/fixed.fit > $out 2>&1
+sed -i 's|data/test/source/other/3316129931.fit|myfile|g' $out
+sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
+sed -i 's|/tmp/fixed.fit|fixed.fit|g' $out
+sed 's/^/    /' $out
+
+The `--start` value sets the first timestamp in the file.  Subsequent
+timestamps have the same relative increment as before.
 
 ## Search for Values in a FIT File
 

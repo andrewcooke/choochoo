@@ -3,7 +3,7 @@ from sys import stdout, stderr
 
 from .args import PATH, DROP, OUTPUT, SLICES, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
     MAX_FWD_LEN, DISCARD, FORCE, VALIDATE, ADD_HEADER, HEADER_SIZE, PROTOCOL_VERSION, PROFILE_VERSION, MAX_DELTA_T, \
-    NAME, FIX_HEADER, FIX_CHECKSUM, NAME_BAD, NAME_GOOD, mm, no
+    NAME, FIX_HEADER, FIX_CHECKSUM, NAME_BAD, NAME_GOOD, mm, no, START
 from ..fit.fix import fix
 from ..fit.profile.profile import read_fit
 
@@ -45,7 +45,7 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
     check = args[NAME] is not None
     if check:
         name = NAME_GOOD if args[NAME] else NAME_BAD
-        if args[ADD_HEADER] or args[DROP] or args[SLICES] or args[FIX_HEADER] or args[FIX_CHECKSUM]:
+        if args[ADD_HEADER] or args[DROP] or args[SLICES] or args[START] or args[FIX_HEADER] or args[FIX_CHECKSUM]:
             raise Exception('Cannot check (%s) and modify at the same time' % mm(name))
         if not args[VALIDATE]:
             raise Exception('%s and %s makes no sense, numpty' % (mm(name), no(VALIDATE)))
@@ -61,8 +61,9 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
 
         try:
             data = fix(log, data, warn=args[WARN],
-                       add_header=args[ADD_HEADER], drop=args[DROP], slices=args[SLICES], fix_header=args[FIX_HEADER],
-                       fix_checksum=args[FIX_CHECKSUM], force=args[FORCE], validate=args[VALIDATE],
+                       add_header=args[ADD_HEADER], drop=args[DROP], slices=args[SLICES], start=args[START],
+                       fix_header=args[FIX_HEADER], fix_checksum=args[FIX_CHECKSUM],
+                       force=args[FORCE], validate=args[VALIDATE],
                        header_size=args[HEADER_SIZE], protocol_version=args[PROTOCOL_VERSION],
                        profile_version=args[PROFILE_VERSION], min_sync_cnt=args[MIN_SYNC_CNT],
                        max_record_len=args[MAX_RECORD_LEN], max_drop_cnt=args[MAX_DROP_CNT],

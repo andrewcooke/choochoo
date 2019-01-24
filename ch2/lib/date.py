@@ -79,15 +79,20 @@ def add_date(date, duration):
 
 
 def format_seconds(seconds):
+    sign, seconds = '-' if seconds < 0 else '', abs(seconds)
     if seconds >= 60:
         minutes, seconds = seconds // 60, seconds % 60
         if minutes >= 60:
             hours, minutes = minutes // 60, minutes % 60
-            return '%dh%02dm%02ds' % (hours, minutes, seconds)
+            if hours >= 24:
+                days, hours = hours // 24, hours % 24
+                return '%s%ddays %dh%02dm%02ds' % (sign, days, hours, minutes, seconds)
+            else:
+                return '%s%dh%02dm%02ds' % (sign, hours, minutes, seconds)
         else:
-            return '%dm%02ds' % (minutes, seconds)
+            return '%s%dm%02ds' % (sign, minutes, seconds)
     else:
-        return '%ds' % seconds
+        return '%s%ds' % (sign, seconds)
 
 
 def local_date_to_time(date):

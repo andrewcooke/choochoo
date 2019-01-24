@@ -34,7 +34,10 @@ The program runs in a series of steps:
     above, but slices can also be specified at the command line with
     `--slices`.  See [Slices](#slices).
 
-  * If `--dix-header` is given the file header is modified to reflect
+  * If `--start` is given, the times are shifted so that they start
+    at the given time.  See [Timestamps](#timestamps).
+
+  * If `--fix-header` is given the file header is modified to reflect
     the new data.  Similarly, `--fix-checksum` adjusts the checksum.
     See [Header and Checksums](#header-and-checksums).
 
@@ -153,6 +156,15 @@ Most slices will result in data that cannot be parsed, and so will
 fail validation (see [Validation](#validation)).  This is why it is
 best to use the slices found by `--drop` (see [Drop
 Data](#drop-data)).
+
+## Timestamps
+
+If `--start` is given, a shift in time is calculated by comparing this
+with the first timestamp in the file.  This offset it then applied to
+all timestamps.
+
+Rewriting timestamps will require that the checksum is updated, so you
+should also use `--fix-checksum` (see below).
 
 ## Header and Checksums
 

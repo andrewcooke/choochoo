@@ -92,6 +92,9 @@ class Token:
             value = tohex(values[0])
             yield '%s - %s' % (value, sub('_', ' ', name))
 
+    def repair_timestamp(self, timestamp):
+        pass
+
 
 class ValidateToken(Token):
     '''
@@ -249,6 +252,12 @@ class Defined(Token):
         yield self.definition.local_message_type
         yield record.name
 
+    def repair_timestamp(self, state):
+        if self.definition.timestamp_field:
+            field = self.definition.timestamp_field
+            self.data[field.start:field.finish] = field.field.type.pack_type((state.timestamp,),
+                                                                             field.count, self.definition.endian)
+
 
 class DeveloperField(Defined):
 
@@ -289,10 +298,7 @@ class CompressedTimestamp(Defined):
             raise Exception('Compressed timestamp with no preceding absolute timestamp')
         timestamp = time_to_timestamp(state.timestamp)
         rollover = offset < timestamp & 0x1f
-        a = timestamp & 0xffffffe0
-        b = a + offset + (0x20 if rollover else 0)
-        state.timestamp = timestamp_to_time(b)
-        # state.timestamp = timestamp_to_time((timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0))
+        state.timestamp = timestamp_to_time((timestamp & 0xffffffe0) + offset + (0x20 if rollover else 0))
         super().__init__('DTT', data, state, (data[0] & 0x60) >> 5)
 
     def parse_token(self, raw_time=False, **options):
@@ -314,6 +320,11 @@ class CompressedTimestamp(Defined):
                                            field.base_type.name, self.timestamp)
             else:
                 yield '%s - %s (%s)' % (tohex(self.data[field.start:field.finish]), field.name, field.base_type.name)
+
+    def repair_timestamp(self, state):
+        timestamp = time_to_timestamp(state.timestamp)
+        self.data[0] = (self.data[0] & 0xe0) | (timestamp & 0x1f)
+        super().repair_timestamp(state)  # any fields too
 
 
 class Field:
@@ -554,22 +565,24 @@ class State:
         self.definitions = WarnDict(log, 'No definition for local message type %s')
         self.definition_counter = Counter()
         self.accumulators = {}
-        self.__timestamp = None
+        self._timestamp = None
 
     @property
     def timestamp(self):
-        return self.__timestamp
+        return self._timestamp
 
     @timestamp.setter
     def timestamp(self, timestamp):
-        if self.max_delta_t and self.__timestamp:
-            if (timestamp - self.__timestamp).total_seconds() > self.max_delta_t:
+        self._timestamp = self._validate_timestamp(timestamp)
+
+    def _validate_timestamp(self, timestamp):
+        if self.max_delta_t and self._timestamp:
+            if (timestamp - self._timestamp).total_seconds() > self.max_delta_t:
                 raise Exception('Too large shift in timestamp (%.1fs: %s/%s' %
-                                ((timestamp - self.timestamp).total_seconds(), self.__timestamp, timestamp))
-            if timestamp < self.__timestamp:
-                raise Exception('Timestep decreased (%s/%s)' % (self.__timestamp, timestamp))
-        # print('%s -> %s' % (self.__timestamp, timestamp))
-        self.__timestamp = timestamp
+                                ((timestamp - self.timestamp).total_seconds(), self._timestamp, timestamp))
+            if timestamp < self._timestamp:
+                raise Exception('Timestep decreased (%s/%s)' % (self._timestamp, timestamp))
+        return timestamp
 
     def copy(self):
         copy = State(self.log, self.types, self.messages, self.max_delta_t)
@@ -577,5 +590,5 @@ class State:
         copy.definitions.update(self.definitions)
         copy.definition_counter.update(self.definition_counter)
         copy.accumulators.update(self.accumulators)
-        copy.__timestamp = self.__timestamp
+        copy._timestamp = self._timestamp
         return copy

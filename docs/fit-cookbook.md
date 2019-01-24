@@ -9,6 +9,7 @@
 * [See What Data are Dropped](#see-what-data-are-dropped)
 * [See What Data are Dropped in Detail](#see-what-data-are-dropped-in-detail)
 * [Remove Arbitrary Data from a FIT File](#remove-arbitrary-data-from-a-fit-file)
+* [Change the Times in a FIT File](#change-the-times-in-a-fit-file)
 * [Search for Values in a FIT File](#search-for-values-in-a-fit-file)
 * [Search for Values in a FIT File with Context](#search-for-values-in-a-fit-file-with-context)
 * [Find FIT Files with Values](#find-fit-files-with-values)
@@ -143,7 +144,7 @@ The command to drop data is (see notes below):
         INFO: Read complete from 5366
         INFO: Found slices :4975
         INFO: Slice ----------
-        INFO: Slices :4975
+        INFO: Slices: :4975
         INFO: Have 4975 bytes after slicing
      WARNING: Slicing decreased length by 393 bytes
         INFO: Header and Checksums ----------
@@ -353,7 +354,7 @@ follows:
         INFO: Profile version: 2014
         INFO: Checksum: 37636 (0x9304)
         INFO: Slice ----------
-        INFO: Slices :5069,5317:-2
+        INFO: Slices: :5069,5317:-2
         INFO: Have 5118 bytes after slicing
      WARNING: Slicing decreased length by 250 bytes
         INFO: Header and Checksums ----------
@@ -384,6 +385,46 @@ follows:
 
 Note that `fix-fit` won't let you remove data that would corrupt the
 file (to the best of its ability).
+
+## Change the Times in a FIT File
+
+    > ch2 fix-fit myfile.fit --start '2018-01-01 12:00:00' --fix-checksum -o fixed.fit
+        INFO: Version 0.14.0
+        INFO: Using database at ...
+        INFO: Input ----------
+        INFO: Reading binary data from myfile
+        INFO: Initial Data ----------
+        INFO: Length: 557213 bytes
+        INFO: Header size: 14
+        INFO: Protocol version: 16
+        INFO: Profile version: 2044
+        INFO: Checksum: 36047 (0x8ccf)
+        INFO: Start ----------
+        INFO: Start: 2018-01-01 12:00:00
+     WARNING: Shifting timestamps by -460days 21h36m33s
+        INFO: Header and Checksums ----------
+        INFO: --header-size None
+        INFO: --protocol-version None
+        INFO: --profile-version None
+     WARNING: Fixing final checksum: 8ccf -> 2b06
+        INFO: Validation ----------
+        INFO: --max-delta-t None
+     WARNING: Time-reversal is allowed unless max-delta-t is set
+        INFO: First timestamp: 2018-01-01 12:00:00+00:00
+        INFO: Last timestamp:  2018-01-01 17:35:24+00:00
+        INFO: OK
+        INFO: Final Data ----------
+        INFO: Length: 557213 bytes
+        INFO: Header size: 14
+        INFO: Protocol version: 16
+        INFO: Profile version: 2044
+        INFO: Checksum: 11014 (0x2b06)
+        INFO: Output ----------
+        INFO: Writing binary data to fixed.fit
+
+
+The `--start` value sets the first timestamp in the file.  Subsequent
+timestamps have the same relative increment as before.
 
 ## Search for Values in a FIT File
 

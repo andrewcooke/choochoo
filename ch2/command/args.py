@@ -6,7 +6,7 @@ from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
-from ..lib.date import to_date
+from ..lib.date import to_date, to_time
 
 CH2_VERSION = '0.14.0'
 
@@ -364,6 +364,8 @@ def parser():
                                help='search for data that can be dropped to give a successful parse')
     fix_fit_stage.add_argument(mm(SLICES), action='store', metavar='A:B,C:D,...',
                                help='data slices to pick')
+    fix_fit_stage.add_argument(mm(START), action='store', type=to_time, metavar='TIME',
+                               help='change start time')
     fix_fit_process.add_argument(mm(FIX_HEADER), action='store_true',
                                  help='modify the header')
     fix_fit_process.add_argument(mm(FIX_CHECKSUM), action='store_true',

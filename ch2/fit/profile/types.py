@@ -3,7 +3,7 @@ import datetime as dt
 from abc import abstractmethod
 from collections import namedtuple
 from re import compile
-from struct import unpack
+from struct import unpack, pack
 
 from .support import Named, Rows
 from ...lib.data import WarnDict, WarnList
@@ -63,6 +63,10 @@ class StructSupport(SimpleType):
 
     def _all_bad(self, data, bad, count):
         return all(bad == data[self.n_bytes*i:self.n_bytes*(i+1)] for i in range(count))
+
+    # currently this ignores scale and offset!!!
+    def _pack(self, values, formats, count, endian):
+        return pack(formats[endian] % count, *values)
 
     # scale and offset have to be at this level because of how bad values when count > 1 are handled
     def _unpack(self, data, formats, bad, count, endian, scale=1, offset=0, check_bad=True,
@@ -218,6 +222,9 @@ class AutoInteger(StructSupport):
     def parse_type(self, data, count, endian, timestamp, check_bad=True, **options):
         return self._unpack(data, self.__formats, self.__bad, count, endian, check_bad=check_bad, **options)
 
+    def pack_type(self, values, count, endian):
+        return self._pack(values, self.__formats, count, endian)
+
 
 class AliasInteger(AutoInteger):
     '''
@@ -255,6 +262,9 @@ class Date(AliasInteger):
         if times and not raw_time:
             times = tuple(self.convert(time, tzinfo=self.__tzinfo) for time in times)
         return times
+
+    def pack_type(self, values, count, endian):
+        return super().pack_type([time_to_timestamp(value) for value in values], count, endian)
 
 
 class Date16(AliasInteger):
