@@ -160,4 +160,4 @@ class Chunks:
 
 def filter_none(names, waypoints):
     names = list(names)
-    return [w for w in waypoints if all(n in w and w[n] is not None for n in names)]
+    return [w for w in waypoints if all(n in w._fields and getattr(w, n) is not None for n in names)]

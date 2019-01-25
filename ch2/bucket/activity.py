@@ -17,6 +17,7 @@ from ..squeal import ActivityGroup, ActivityJournal, StatisticJournal
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.display.climb import climbs_for_activity
+from ..stoats.display.segment import segments_for_activity
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE, \
     CLIMB_TIME, CLIMB_GRADIENT
@@ -67,15 +68,17 @@ def caption(s, activity):
     total_climb, climbs = climbs_for_activity(s, activity)
     if total_time:
         extra = f'{int(total_climb.value):d}m:'
-        first = True
-        for climb in climbs:
-            if first:
-                first = False
-            else:
-                extra += ','
-            extra += f' {int(climb[CLIMB_ELEVATION].value)}m '\
-                f'in {format_seconds(climb[CLIMB_TIME].value)} '\
-                f'at {climb[CLIMB_GRADIENT].value:.1f}%'
+        extra += ','.join(f' {int(climb[CLIMB_ELEVATION].value)}m '
+                          f'in {format_seconds(climb[CLIMB_TIME].value)} '
+                          f'at {climb[CLIMB_GRADIENT].value:.1f}%'
+                          for climb in climbs)
+        text += '</br>' + extra
+
+    segments = segments_for_activity(s, activity)
+    if segments:
+        extra = ', '.join(f'{segment.segment.name} in '
+                          f'{format_seconds((segment.finish - segment.start).total_seconds())}'
+                          for segment in segments)
         text += '</br>' + extra
 
     return text

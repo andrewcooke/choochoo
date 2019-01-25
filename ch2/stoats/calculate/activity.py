@@ -58,7 +58,7 @@ class ActivityStatistics(WaypointCalculator):
             self._add_float_stat(s, ajournal, CLIMB_ELEVATION, summaries(MAX, SUM, MSR), up, M, time=hi.time)
             self._add_float_stat(s, ajournal, CLIMB_DISTANCE, summaries(MAX, SUM, MSR), along, M, time=hi.time)
             self._add_float_stat(s, ajournal, CLIMB_TIME, summaries(MAX, SUM, MSR), time, S, time=hi.time)
-            self._add_int_stat(s, ajournal, CLIMB_GRADIENT, summaries(MAX, MSR), 100 * up / along, PC, time=hi.time)
+            self._add_float_stat(s, ajournal, CLIMB_GRADIENT, summaries(MAX, MSR), 100 * up / along, PC, time=hi.time)
             total_elevation += up
         if total_elevation:
             self._add_float_stat(s, ajournal, TOTAL_CLIMB, summaries(MAX, MSR), total_elevation, M)

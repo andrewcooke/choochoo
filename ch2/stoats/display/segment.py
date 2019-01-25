@@ -16,12 +16,19 @@ from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
 
 
+def segments_for_activity(s, ajournal):
+    return s.query(SegmentJournal). \
+        filter(SegmentJournal.activity_journal == ajournal). \
+        order_by(SegmentJournal.start).all()
+
+
 class SegmentDiary(Displayer):
 
     def _display_date(self, s, f, date):
         tomorrow = local_date_to_time(date + dt.timedelta(days=1))
         today = local_date_to_time(date)
         pile = []
+        # todo - rewrite to use above
         for agroup in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
             segment_pile = []
             for sjournal in s.query(SegmentJournal). \
