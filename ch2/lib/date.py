@@ -102,6 +102,10 @@ def local_date_to_time(date):
     return dt.datetime(*ptime.timetuple()[:6], tzinfo=dt.timezone.utc)
 
 
+def time_to_local_time(time):
+    return time.astimezone(tz=None)
+
+
 def time_to_local_date(time):
     time = to_time(time)
     ptime = p.DateTime(*time.timetuple()[:6], tzinfo=dt.timezone.utc).in_timezone(p.tz.get_local_timezone())

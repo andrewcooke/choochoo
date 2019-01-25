@@ -12,12 +12,14 @@ from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, line
 from .server import Page
 from ..data import statistics
 from ..data.data_frame import set_log, activity_statistics
-from ..lib.date import format_time, format_seconds
-from ..squeal import ActivityGroup
-from ..squeal import ActivityJournal
+from ..lib.date import format_seconds, time_to_local_time
+from ..squeal import ActivityGroup, ActivityJournal, StatisticJournal
+from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
+from ..stoats.display.climb import climbs_for_activity
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
-    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE
+    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE, \
+    CLIMB_TIME, CLIMB_GRADIENT
 
 WINDOW = '60s'
 #WINDOW = 10
@@ -46,6 +48,38 @@ def get(df, name):
         return df[name]
     else:
         return None
+
+
+def caption(s, activity):
+
+    active_distance = StatisticJournal.for_source(s, activity.id, ACTIVE_DISTANCE,
+                                                  ActivityStatistics, activity.activity_group).value
+    active_time = StatisticJournal.for_source(s, activity.id, ACTIVE_TIME,
+                                              ActivityStatistics, activity.activity_group).value
+    total_time = (activity.finish - activity.start).total_seconds()
+    local_start = time_to_local_time(activity.start)
+    local_finish = time_to_local_time(activity.finish)
+    text = f'{local_start.strftime("%Y-%m-%d")}: ' \
+        f'{local_start.strftime("%H:%M:%S")}-{local_finish.strftime("%H:%M:%S")} ' \
+        f'{format_seconds(active_time)}/{format_seconds(total_time)} ' \
+        f'{active_distance/1000:.2f}km'
+
+    total_climb, climbs = climbs_for_activity(s, activity)
+    if total_time:
+        extra = f'{int(total_climb.value):d}m:'
+        first = True
+        for climb in climbs:
+            if first:
+                first = False
+            else:
+                extra += ','
+            extra += f' {int(climb[CLIMB_ELEVATION].value)}m '\
+                f'in {format_seconds(climb[CLIMB_TIME].value)} '\
+                f'at {climb[CLIMB_GRADIENT].value:.1f}%'
+        text += '</br>' + extra
+
+    return text
+
 
 
 def comparison(log, s, activity, compare=None):
@@ -129,21 +163,10 @@ def comparison(log, s, activity, compare=None):
         x2, y2 = None, None
     map = dot_map(MAP_LEN, x1, y1, [df['size'] for df in st1_10], x2, y2)
 
-    caption = '<table><tr><th>Name</th><th>Date</th><th>Duration</th><th>Distance</th></tr>'
-    source_ids = [activity.id]
+    p = '<p>%s</p>' % caption(s, activity)
     if compare:
-        source_ids.append(compare.id)
-    st = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=source_ids)
-    st_aj = st.loc[st.index == activity.start]
-    caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-               (activity.name, format_time(activity.start),
-                format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
-    if compare:
-        st_aj = st.loc[st.index == compare.start]
-        caption += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%.3f km</td></tr>' % \
-                   (compare.name, format_time(compare.start),
-                    format_seconds(st_aj[ACTIVE_TIME][0]), st_aj[ACTIVE_DISTANCE][0] / 1000)
-    caption = Div(text=caption + '</table>', width=RIDE_PLOT_LEN, height=RIDE_PLOT_HGT)
+        p += '<p>%s</p>' % caption(s, compare)
+    text = Div(text=p, width=RIDE_PLOT_LEN, height=RIDE_PLOT_HGT)
 
     hrz_histogram = heart_rate_zones(RIDE_PLOT_HGT, RIDE_PLOT_HGT, pd.concat([df[HR_ZONE] for df in st1_10]))
 
@@ -174,19 +197,19 @@ def comparison(log, s, activity, compare=None):
     return column(row(hr10_line, hr10_cumulative),
                   row(elvn_line, elvn_cumulative),
                   row(speed_line, speed_cumulative),
-                  row(caption, hrz_histogram),
+                  row(text, hrz_histogram),
                   row(column(health_line, activity_line), map))
 
 
 class ActivityJournalPage(Page):
 
     def create(self, s, id=None, compare=None, **kargs):
-        aj1 = s.query(ActivityJournal).filter(ActivityJournal.id ==
-                                              self.single_int_param('id', id)).one()
+        aj1 = s.query(ActivityJournal). \
+            filter(ActivityJournal.id == self.single_int_param('id', id)).one()
         title = aj1.name
         if compare:
-            aj2 = s.query(ActivityJournal).filter(ActivityJournal.id ==
-                                                  self.single_int_param('compare', compare)).one()
+            aj2 = s.query(ActivityJournal). \
+                filter(ActivityJournal.id == self.single_int_param('compare', compare)).one()
             title += ' v ' + aj2.name
         else:
             aj2 = None

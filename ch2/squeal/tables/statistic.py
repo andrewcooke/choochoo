@@ -5,6 +5,7 @@ from enum import IntEnum
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc
 from sqlalchemy.orm import relationship, backref
 
+from ch2.squeal import ActivityJournal
 from .source import Source, Interval
 from ..support import Base
 from ..types import Time, ShortCls, Str
@@ -183,8 +184,7 @@ class StatisticJournal(Base):
             order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner,
-                    source_id=None):
+    def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner):
         return s.query(StatisticJournal).join(StatisticName, Interval). \
                     filter(StatisticJournal.statistic_name_id == StatisticName.id,
                            Interval.schedule == schedule,
@@ -194,6 +194,14 @@ class StatisticJournal(Base):
                            StatisticName.constraint == statistic_constraint). \
                     order_by(StatisticName.constraint,  # order places summary stats from same source together
                              StatisticName.name).all()
+
+    @classmethod
+    def for_source(cls, s, source_id, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint,
+                   StatisticJournal.source_id == source_id).one_or_none()
 
 
 class StatisticJournalInteger(StatisticJournal):

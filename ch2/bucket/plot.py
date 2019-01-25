@@ -237,3 +237,4 @@ def heart_rate_zones(nx, ny, hrz):
     f.toolbar_location = None
     return f
 
+
