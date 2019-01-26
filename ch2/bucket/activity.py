@@ -163,11 +163,13 @@ def comparison(log, s, activity, compare=None):
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 
     hr10 = clean_all([df[HR_10] for df in st1_10])
-    mx, mn = range_all(hr10)
-    for df in st1_10:
-        if mx is not None and mn is not None:
-            df['size'] = MAP_LEN * ((df[HR_10] - mn) / (mx - mn)) ** 3 / 10
-        else:
+    if hr10:
+        hr10 = pd.concat(hr10)
+        mn, mx = hr10.quantile(0.1), hr10.quantile(0.95)
+        for df in st1_10:
+            df['size'] = MAP_LEN * ((df[HR_10] - mn) / (mx - mn)) ** 2 / 10
+    else:
+        for df in st1_10:
             df['size'] = df[HR_10] * 0
     x1, y1 = all_frames(st1_10, SPHERICAL_MERCATOR_X), all_frames(st1_10, SPHERICAL_MERCATOR_Y)
     if compare:
