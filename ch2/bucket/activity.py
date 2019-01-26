@@ -231,14 +231,12 @@ class ActivityJournalPage(Page):
 
 if __name__ == '__main__':
     log, db = config('-v 5')
-    time = to_time('2017-08-10 14:00')
     server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db)})
     try:
         with db.session_context() as s:
-            aj = s.query(ActivityJournal). \
-                filter(ActivityJournal.start <= time,
-                       ActivityJournal.finish >= time).one()
-            path = '/activity_journal?id=%d' % aj.id
+            aj1 = ActivityJournal.at_date(s, '2019-01-25')[0]
+            aj2 = ActivityJournal.at_date(s, '2019-01-23')[0]
+            path = '/activity_journal?id=%d&compare=%d' % (aj1.id, aj2.id)
             server.show(path)
         print('Crtl-C')
         while True:

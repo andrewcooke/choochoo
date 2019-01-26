@@ -20,7 +20,7 @@ def range_all(all_series, prev_min=None, prev_max=None):
     if all_series:
         mn, mx = min(s.min() for s in all_series), max(s.max() for s in all_series)
         mn = mn if prev_min is None else min(mn, prev_min)
-        mx = mx if prev_max is None else min(mn, prev_max)
+        mx = mx if prev_max is None else max(mn, prev_max)
         return mn, mx
     else:
         return prev_min, prev_max
@@ -155,10 +155,10 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
     f.xaxis[0].formatter = NumeralTickFormatter(format='00:00:00')
 
     f.line(x=y1.index * sample, y=y1, color='black')
-    if y2:
+    if len(y2):  # y2 was concated above
         f.line(x=y2.index * sample, y=y2, color='grey')
         y1, y2, range = delta_patches(y1, y2)
-        if y1 and y2:
+        if len(y1) and len(y2):
             f.extra_y_ranges = {'delta': range}
             f.patch(x=y1.index * sample, y=y1, color='green', alpha=0.1, y_range_name='delta')
             f.patch(x=y2.index * sample, y=y2, color='red', alpha=0.1, y_range_name='delta')

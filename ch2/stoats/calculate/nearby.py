@@ -40,8 +40,8 @@ class NearbySimilarityCalculator(DbPipeline):
             n_points = defaultdict(lambda: 0)
             self._prepare(s, rtree, n_points, 30000)
             n_intersects = defaultdict(lambda: defaultdict(lambda: 0))
-            new_ids = self._count_overlaps(s, rtree, n_points, n_intersects, 10000)
-            self._save(s, new_ids, n_points, n_intersects, 10000)
+            new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_intersects, 10000)
+            self._save(s, new_ids, affected_ids, n_points, n_intersects, 10000)
 
     def _delete(self, s):
         self._log.warning('Deleting similarity data for %s' % self._config.constraint)
@@ -49,16 +49,20 @@ class NearbySimilarityCalculator(DbPipeline):
             filter(ActivitySimilarity.constraint == self._config.constraint). \
             delete()
 
-    def _save(self, s, new_ids, n_points, n_intersects, delta):
+    def _save(self, s, new_ids, affected_ids, n_points, n_intersects, delta):
         n, total = 0, (len(new_ids) * (len(new_ids) - 1)) / 2
-        for lo in new_ids:
-            for hi in filter(lambda hi: hi > lo, new_ids):
-                s.add(ActivitySimilarity(constraint=self._config.constraint,
-                                         activity_journal_lo_id=lo, activity_journal_hi_id=hi,
-                                         similarity=n_intersects[lo][hi] / (n_points[lo] + n_points[hi])))
-                n += 1
-                if n % delta == 0:
-                    self._log.info('Saved %d / %d for %s' % (n, total, self._config.constraint))
+        for lo in affected_ids:
+            add_lo = lo in new_ids
+            for hi in (id for id in affected_ids if id > lo):
+                if add_lo or hi in new_ids:
+                    s.add(ActivitySimilarity(constraint=self._config.constraint,
+                                             activity_journal_lo_id=lo, activity_journal_hi_id=hi,
+                                             similarity=n_intersects[lo][hi] / (n_points[lo] + n_points[hi])))
+                    n += 1
+                    if n % delta == 0:
+                        self._log.info('Saved %d / %d for %s' % (n, total, self._config.constraint))
+        if n % delta:
+            self._log.info('Saved %d / %d for %s' % (n, total, self._config.constraint))
 
     def _prepare(self, s, rtree, n_points, delta):
         n = 0
@@ -69,17 +73,21 @@ class NearbySimilarityCalculator(DbPipeline):
             n += 1
             if n % delta == 0:
                 self._log.info('Loaded %s points for %s' % (n, self._config.constraint))
+        if n % delta:
+            self._log.info('Loaded %s points for %s' % (n, self._config.constraint))
 
     def _count_overlaps(self, s, rtree, n_points, n_intersects, delta):
-        new_aj_ids, n = [], 0
+        new_aj_ids, affected_aj_ids, n = [], set(), 0
         for aj_id_in, aj_lon_lats in groupby(self._aj_lon_lat(s, new=True), key=lambda aj_lon_lat: aj_lon_lat[0]):
             seen_posns = set()
             new_aj_ids.append(aj_id_in)
+            affected_aj_ids.add(aj_id_in)
             for _, lon, lat in aj_lon_lats:
                 posn = [(lon, lat)]
                 for other_posn, aj_id_out in rtree.get_items(posn):
                     if aj_id_in != aj_id_out and other_posn not in seen_posns:
                         lo, hi = min(aj_id_in, aj_id_out), max(aj_id_in, aj_id_out)  # ordered pair
+                        affected_aj_ids.add(aj_id_out)
                         n_intersects[lo][hi] += 1
                         seen_posns.add(other_posn)
                 rtree[posn] = aj_id_in
@@ -87,7 +95,9 @@ class NearbySimilarityCalculator(DbPipeline):
                 n += 1
                 if n % delta == 0:
                     self._log.info('Measured %s points for %s' % (n, self._config.constraint))
-        return new_aj_ids
+        if n % delta:
+            self._log.info('Measured %s points for %s' % (n, self._config.constraint))
+        return new_aj_ids, affected_aj_ids
 
     def _aj_lon_lat(self, s, new=True):
 
