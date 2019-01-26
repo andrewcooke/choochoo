@@ -15,7 +15,7 @@ def add_interpolation(name, df, deflt_name, delta=10):
         # now we need to combine without duplicating indices...
         even[name] = 1  # set to 1 on indices we want to interpolate on
         df[name] = np.nan  # add empty to original frame
-        df[name][df.index.isin(even.index)] = 1  # set to 1 on indices we want to interpolate on
+        df.loc[df.index.isin(even.index), name] = 1  # set to 1 on indices we want to interpolate on
         even = even.loc[~even.index.isin(df.index)]  # drop duplicates
         df2 = pd.concat([df, even], sort=False)
         df2 = df2.sort_index()
