@@ -1,32 +1,29 @@
 
 import datetime as dt
 
-import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis, PanTool, ZoomInTool, HoverTool, \
     ZoomOutTool, ResetTool
 from bokeh.plotting import figure
 
+from ch2.bucket.data_frame import clean
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
 from ..stoats.names import TIME, HR_ZONE, CLIMB_DISTANCE, CLIMB_ELEVATION
 
 
-def clean(s):
-    return s[~s.isin([np.nan, np.inf, -np.inf])]
+def clean_all(all_series):
+    return [c for c in (clean(s) for s in ([] if all_series is None else all_series)) if len(c)]
 
 
-def clean_all(ss):
-    if ss is not None:
-        return [clean(s) for s in ss]
-
-
-def max_all(ss):
-    return max(s.max() for s in ss if len(s))
-
-
-def min_all(ss):
-    return min(s.min() for s in ss if len(s))
+def range_all(all_series, prev_min=None, prev_max=None):
+    if all_series:
+        mn, mx = min(s.min() for s in all_series), max(s.max() for s in all_series)
+        mn = mn if prev_min is None else min(mn, prev_min)
+        mx = mx if prev_max is None else min(mn, prev_max)
+        return mn, mx
+    else:
+        return prev_min, prev_max
 
 
 def tools(x=None, y=None):
@@ -61,9 +58,8 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
 def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=None, x_range=None):
     from .activity import DISTANCE_KM, ELEVATION_M
     f = line_diff(nx, ny, DISTANCE_KM, y1, y2=y2, x_range=x_range)
-    if y3 is not None:
-        for y in y3:
-            f.line(x=y.index, y=y, color='black', alpha=0.1, line_width=2)
+    for y in clean_all(y3):
+        f.line(x=y.index, y=y, color='black', alpha=0.1, line_width=2)
     if climbs is not None:
         all = pd.concat(st)
         for time, climb in climbs.iterrows():
@@ -81,15 +77,16 @@ def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=Non
 def line_diff(nx, ny, xlabel, y1, y2=None, x_range=None):
 
     y1, y2 = clean_all(y1), clean_all(y2)
-    is_x_time = any(isinstance(s.index[0], dt.datetime) for s in y1 if len(s))
+    is_x_time = any(isinstance(y.index[0], dt.datetime) for y in y1)
 
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear',
-               tools=tools(xlabel, y1[0].name))
+               tools=(tools(xlabel, y1[0].name) if y1 else ""))
     f.toolbar.logo = None
 
-    y_min, y_max = min_all(y1), max_all(y1)
-    if y2:
-        y_min, y_max = min(y_min, min_all(y2)), max(y_max, max_all(y2))
+    y_min, y_max = range_all(y1)
+    if y_min is None:
+        return f  # bail if no data
+    y_min, y_max = range_all(y2, y_min, y_max)
     dy = y_max - y_min
 
     if is_x_time:
@@ -133,11 +130,15 @@ def line_diff(nx, ny, xlabel, y1, y2=None, x_range=None):
 
 def cumulative(nx, ny, y1, y2=None, sample=10):
 
+    y1, y2 = clean_all(y1), clean_all(y2)
+    if not y1:
+        return figure(plot_width=nx, plot_height=ny, tools="")
+
     y1 = pd.concat(y1)
     y1 = y1.sort_values(ascending=False).reset_index(drop=True)
     y_max = y1.max()
     y_min = y1.min()
-    if y2 is not None:
+    if y2:
         y2 = pd.concat(y2)
         y2 = y2.sort_values(ascending=False).reset_index(drop=True)
         y_max = max(y_max, y2.max())
@@ -154,12 +155,13 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
     f.xaxis[0].formatter = NumeralTickFormatter(format='00:00:00')
 
     f.line(x=y1.index * sample, y=y1, color='black')
-    if y2 is not None:
+    if y2:
         f.line(x=y2.index * sample, y=y2, color='grey')
         y1, y2, range = delta_patches(y1, y2)
-        f.extra_y_ranges = {'delta': range}
-        f.patch(x=y1.index * sample, y=y1, color='green', alpha=0.1, y_range_name='delta')
-        f.patch(x=y2.index * sample, y=y2, color='red', alpha=0.1, y_range_name='delta')
+        if y1 and y2:
+            f.extra_y_ranges = {'delta': range}
+            f.patch(x=y1.index * sample, y=y1, color='green', alpha=0.1, y_range_name='delta')
+            f.patch(x=y2.index * sample, y=y2, color='red', alpha=0.1, y_range_name='delta')
 
     f.toolbar_location = None
     return f

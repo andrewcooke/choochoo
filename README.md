@@ -56,7 +56,8 @@ When the database format changes scripts are provided to migrate
 existing data (see package `ch2.migraine`).  Data extracted from FIT
 files are *not* migrated - they must be re-imported.
 
-Support libraries include FIT file parsing and spatial R-Trees.
+Support libraries include FIT file parsing, spatial R-Trees, and
+reading elevation data from SRTM files.
 
 Currently the program is single-user (ie the data in the database are
 not grouped by user).  Multiple users can co-exist using separate

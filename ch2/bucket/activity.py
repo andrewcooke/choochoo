@@ -1,18 +1,20 @@
 
 import datetime as dt
+from time import sleep
 
 import numpy as np
 import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import Div
 
-from .data_frame import interpolate_to
+from .data_frame import interpolate_to, add_interpolation
 from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, line_diff_elevation_climbs, \
-    max_all, min_all, activities
-from .server import Page
+    range_all, activities, clean_all
+from .server import Page, singleton_server
+from ..config import config
 from ..data import statistics
 from ..data.data_frame import set_log, activity_statistics
-from ..lib.date import format_seconds, time_to_local_time
+from ..lib.date import format_seconds, time_to_local_time, to_time
 from ..squeal import ActivityGroup, ActivityJournal, StatisticJournal
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
@@ -26,6 +28,7 @@ WINDOW = '60s'
 #WINDOW = 10
 MIN_PERIODS = 1
 
+INTERPOLATION = 'interpolation'
 DISTANCE_KM = '%s / km' % DISTANCE
 SPEED_KPH = '%s / kph' % SPEED
 MED_SPEED_KPH = 'M(%s) %s / kph' % (WINDOW, SPEED)
@@ -66,7 +69,7 @@ def caption(s, activity):
         f'{active_distance/1000:.2f}km'
 
     total_climb, climbs = climbs_for_activity(s, activity)
-    if total_time:
+    if total_climb:
         extra = f'{int(total_climb.value):d}m:'
         extra += ','.join(f' {int(climb[CLIMB_ELEVATION].value)}m '
                           f'in {format_seconds(climb[CLIMB_TIME].value)} '
@@ -82,7 +85,6 @@ def caption(s, activity):
         text += '</br>' + extra
 
     return text
-
 
 
 def comparison(log, s, activity, compare=None):
@@ -103,7 +105,8 @@ def comparison(log, s, activity, compare=None):
             df[MED_SPEED_KPH] = df[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
             df[MED_HR_10] = df[HR_10].rolling(WINDOW, min_periods=1).median()
             df.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
-        st_10 = [interpolate_to(df, HR_10) for df in st]
+        st = [add_interpolation(INTERPOLATION, df, HR_10, 10) for df in st]
+        st_10 = [interpolate_to(df, INTERPOLATION) for df in st]
         for df in st_10:
             df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
         return st, st_10
@@ -152,13 +155,20 @@ def comparison(log, s, activity, compare=None):
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
 
     hr10_line, hr10_cumulative = ride_line(MED_HR_10, x_axis=DISTANCE_KM), ride_cum(HR_10)
-    line_x_range = hr10_line.x_range
+    if hr10_line.tools:  # avoid if HR not available
+        line_x_range = hr10_line.x_range
     elvn_line, elvn_cumulative = ride_elevn(x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
+    if line_x_range is None and elvn_line.tools:
+        line_x_range = elvn_line.x_range
     speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
 
-    mx, mn = max_all(df[HR_10] for df in st1_10), min_all(df[HR_10] for df in st1_10),
+    hr10 = clean_all([df[HR_10] for df in st1_10])
+    mx, mn = range_all(hr10)
     for df in st1_10:
-        df['size'] = MAP_LEN * ((df[HR_10] - mn) / (mx - mn)) ** 3 / 10
+        if mx is not None and mn is not None:
+            df['size'] = MAP_LEN * ((df[HR_10] - mn) / (mx - mn)) ** 3 / 10
+        else:
+            df['size'] = df[HR_10] * 0
     x1, y1 = all_frames(st1_10, SPHERICAL_MERCATOR_X), all_frames(st1_10, SPHERICAL_MERCATOR_Y)
     if compare:
         x2, y2 = all_frames(st2_10, SPHERICAL_MERCATOR_X), all_frames(st2_10, SPHERICAL_MERCATOR_Y)
@@ -217,3 +227,21 @@ class ActivityJournalPage(Page):
         else:
             aj2 = None
         return {'header': title, 'title': title}, comparison(self._log, s, aj1, aj2)
+
+
+if __name__ == '__main__':
+    log, db = config('-v 5')
+    time = to_time('2017-08-10 14:00')
+    server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db)})
+    try:
+        with db.session_context() as s:
+            aj = s.query(ActivityJournal). \
+                filter(ActivityJournal.start <= time,
+                       ActivityJournal.finish >= time).one()
+            path = '/activity_journal?id=%d' % aj.id
+            server.show(path)
+        print('Crtl-C')
+        while True:
+            sleep(1)
+    finally:
+        server.stop()
