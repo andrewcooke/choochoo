@@ -17,9 +17,12 @@ def add_interpolation(name, df, deflt_name, delta=10):
         df[name] = np.nan  # add empty to original frame
         df.loc[df.index.isin(even.index), name] = 1  # set to 1 on indices we want to interpolate on
         even = even.loc[~even.index.isin(df.index)]  # drop duplicates
-        df2 = pd.concat([df, even], sort=False)
-        df2 = df2.sort_index()
-        return df2
+        if len(even):
+            df2 = pd.concat([df, even], sort=False)
+            df2 = df2.sort_index()
+            return df2
+        else:
+            return df
 
 
 def interpolate_to(df, name):

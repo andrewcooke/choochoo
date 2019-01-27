@@ -7,47 +7,62 @@ from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, Lin
     ZoomOutTool, ResetTool
 from bokeh.plotting import figure
 
-from ch2.bucket.data_frame import clean
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
-from ..stoats.names import TIME, HR_ZONE, CLIMB_DISTANCE, CLIMB_ELEVATION
+from ..stoats.names import TIME, HR_ZONE, CLIMB_DISTANCE, CLIMB_ELEVATION, ALTITUDE, LOCAL_TIME, SPHERICAL_MERCATOR_X, \
+    SPHERICAL_MERCATOR_Y, FATIGUE, FITNESS, REST_HR
 
 
-def clean_all(all_series):
-    return [c for c in (clean(s) for s in ([] if all_series is None else all_series)) if len(c)]
+# def clean_all(all_series):
+#     return [c for c in (clean(s) for s in ([] if all_series is None else all_series)) if len(c)]
 
 
-def range_all(all_series, prev_min=None, prev_max=None):
-    if all_series:
-        mn, mx = min(s.min() for s in all_series), max(s.max() for s in all_series)
-        mn = mn if prev_min is None else min(mn, prev_min)
-        mx = mx if prev_max is None else max(mn, prev_max)
+def range_all(source, axis, prev_min=None, prev_max=None):
+    if source:
+        mn, mx = prev_min, prev_max
+        for df in source:
+            clean = df[axis].dropna()
+            if len(clean):
+                if mn is None:
+                    mn, mx = clean.min(), clean.max()
+                else:
+                    mn, mx = min(mn, clean.min()), max(mx, clean.max())
         return mn, mx
     else:
         return prev_min, prev_max
 
 
-def tools(x=None, y=None):
+def make_hover(*names):
+    labels = [(name, '@{%s}' % name) for name in names if name != TIME]
+    labels += [(TIME, '@{%s}' % LOCAL_TIME)]
+    return HoverTool(tooltips=labels)
+
+
+def make_tools(x=None, y=None):
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool()]
     if x and y:
-        tools.append(HoverTool(tooltips=[(x, '$x'), (y, '$y')]))
+        tools.append(make_hover(x, y))
     return tools
 
 
-def dot_map(n, x1, y1, size, x2=None, y2=None):
+def dot_map(n, xy1, xy2=None):
+    from .activity import DISTANCE_KM
 
+    hover = make_hover(DISTANCE_KM)
+    hover.renderers = []
     f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator',
-               tools=[PanTool(), ZoomInTool(), ZoomOutTool(), ResetTool()])
+               tools=[PanTool(), ZoomInTool(), ZoomOutTool(), ResetTool(), hover])
     f.toolbar.logo = None
 
-    for x, y, s in zip(x1, y1, size):
-        f.circle(x=x, y=y, line_alpha=0, fill_color='red', size=s, fill_alpha=0.03)
-        f.line(x=x, y=y, line_color='black')
+    for df in xy1:
+        f.circle(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, line_alpha=0, fill_color='red',
+                 size='size', fill_alpha=0.03, source=df)
+        hover.renderers.append(f.line(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=df, line_color='black'))
 
-    if x2 is not None:
-        for x, y in zip(x2, y2):
-            f.line(x=x, y=y, line_color='grey')
+    if xy2 is not None:
+        for df in xy2:
+            hover.renderers.append(f.line(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=df, line_color='grey'))
 
     f.add_tile(tile_providers.STAMEN_TERRAIN, alpha=0.1)
     f.axis.visible = False
@@ -55,11 +70,12 @@ def dot_map(n, x1, y1, size, x2=None, y2=None):
     return f
 
 
-def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=None, x_range=None):
+def line_diff_elevation_climbs(nx, ny, x_axis, y_axis, source1, source2=None, climbs=None, st=None, x_range=None):
     from .activity import DISTANCE_KM, ELEVATION_M
-    f = line_diff(nx, ny, DISTANCE_KM, y1, y2=y2, x_range=x_range)
-    for y in clean_all(y3):
-        f.line(x=y.index, y=y, color='black', alpha=0.1, line_width=2)
+    f = line_diff(nx, ny, x_axis, y_axis, source1, source2=source2, x_range=x_range)
+    for df in source1:
+        if ALTITUDE in df:
+            f.line(x=x_axis, y=ALTITUDE, source=df, color='black', alpha=0.1, line_width=2)
     if climbs is not None:
         all = pd.concat(st)
         for time, climb in climbs.iterrows():
@@ -74,45 +90,57 @@ def line_diff_elevation_climbs(nx, ny, y1, y2=None, climbs=None, st=None, y3=Non
     return f
 
 
-def line_diff(nx, ny, xlabel, y1, y2=None, x_range=None):
+def make_series(source, y_axis, x_axis):
+    all = []
+    for df in source:
+        s = df[y_axis]
+        s.index = df[x_axis]
+        all.append(s)
+    return pd.concat(all)
 
-    y1, y2 = clean_all(y1), clean_all(y2)
-    is_x_time = any(isinstance(y.index[0], dt.datetime) for y in y1)
 
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear',
-               tools=(tools(xlabel, y1[0].name) if y1 else ""))
+def line_diff(nx, ny, x_axis, y_axis, source1, source2=None, x_range=None):
+
+    is_x_time = x_axis == TIME
+
+    if source1:
+        tools = make_tools(x_axis, y_axis)
+        hover = tools[-1]
+        hover.renderers = []
+    else:
+        tools = ''
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear', tools=tools)
     f.toolbar.logo = None
 
-    y_min, y_max = range_all(y1)
+    y_min, y_max = range_all(source1, y_axis)
     if y_min is None:
         return f  # bail if no data
-    y_min, y_max = range_all(y2, y_min, y_max)
+    y_min, y_max = range_all(source2, y_axis, y_min, y_max)
     dy = y_max - y_min
 
     if is_x_time:
-        f.xaxis.axis_label = 'Time'
         f.xaxis[0].formatter = NumeralTickFormatter(format='00:00:00')
-        zero = min(y.index.min() for y in y1)
-        for y in y1:
-            y.index = (y.index - zero).total_seconds()
+        zero, _ = range_all(source1, y_axis)
+        for df in source1:
+            df[x_axis] = (df[x_axis] - zero).total_seconds()
     else:
-        f.xaxis.axis_label = xlabel
         f.xaxis[0].formatter = PrintfTickFormatter(format='%.2f')
-    f.yaxis.axis_label = y1[0].name
+    f.xaxis.axis_label = x_axis
+    f.yaxis.axis_label = y_axis
 
     f.y_range = Range1d(start=0 if y_min == 0 else y_min - 0.1 * dy, end=y_max + 0.1 * dy)
-    for y in y1:
-        f.line(x=y.index, y=y, color='black')
+    for df in source1:
+        hover.renderers.append(f.line(x=x_axis, y=y_axis, source=df, color='black'))
 
-    if y2:
+    if source2:
         if is_x_time:
-            zero = min(y.index.min() for y in y2)
-            for y in y2:
-                y.index = (y.index - zero).total_seconds()
-        for y in y2:
-            f.line(x=y.index, y=y, color='grey')
+            zero, _ = range_all(source2, x_axis)
+            for df in source2:
+                df[x_axis] = (df[x_axis] - zero).total_seconds()
+        for df in source2:
+            hover.renderers.append(f.line(x=x_axis, y=y_axis, source=df, color='grey'))
 
-        y1, y2 = pd.concat(y1), pd.concat(y2)
+        y1, y2 = make_series(source1, y_axis, x_axis), make_series(source2, y_axis, x_axis)
         y2 = interpolate_to_index(y1, y2)
         y1, y2, range = delta_patches(y1, y2)
         f.extra_y_ranges = {'delta': range}
@@ -130,16 +158,13 @@ def line_diff(nx, ny, xlabel, y1, y2=None, x_range=None):
 
 def cumulative(nx, ny, y1, y2=None, sample=10):
 
-    y1, y2 = clean_all(y1), clean_all(y2)
-    if not y1:
+    if not len(y1):
         return figure(plot_width=nx, plot_height=ny, tools="")
 
-    y1 = pd.concat(y1)
     y1 = y1.sort_values(ascending=False).reset_index(drop=True)
     y_max = y1.max()
     y_min = y1.min()
-    if y2:
-        y2 = pd.concat(y2)
+    if y2 is not None and len(y2):
         y2 = y2.sort_values(ascending=False).reset_index(drop=True)
         y_max = max(y_max, y2.max())
         y_min = min(y_min, y2.min())
@@ -147,15 +172,13 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
 
     f = figure(plot_width=nx, plot_height=ny,
                x_range=Range1d(start=y1.index.max() * sample, end=0),
-               x_axis_type='datetime',
-               x_axis_label=TIME,
                y_range=Range1d(start=0 if y_min == 0 else y_min - 0.1 * dy, end=y_max + 0.1 * dy),
                y_axis_location='right',
                y_axis_label=y1.name)
-    f.xaxis[0].formatter = NumeralTickFormatter(format='00:00:00')
+    f.xaxis.visible = False
 
     f.line(x=y1.index * sample, y=y1, color='black')
-    if len(y2):  # y2 was concated above
+    if y2 is not None and len(y2):
         f.line(x=y2.index * sample, y=y2, color='grey')
         y1, y2, range = delta_patches(y1, y2)
         if len(y1) and len(y2):
@@ -167,24 +190,29 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
     return f
 
 
-def health(nx, ny, ftn, ftg, hr):
+def health(nx, ny, ff, hr, x_range=None):
+    from .activity import LOG_FITNESS, LOG_FATIGUE
 
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools())
+    hover = make_hover(FITNESS, FATIGUE)
+    hover.renderers = []
+    tools = make_tools()
+    tools.append(hover)
+
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools)
     f.toolbar.logo = None
     f.xaxis.axis_label = 'Date'
 
-    max_f = ftn.max() * 1.1
-    min_f = ftn.min() * 0.9
-
+    max_f = ff[LOG_FITNESS].max() * 1.1
+    min_f = ff[LOG_FITNESS].min() * 0.9
     f.y_range = Range1d(start=min_f, end=max_f)
-    f.yaxis.axis_label = '%s, %s' % (ftn.name, ftg.name)
+    f.yaxis.axis_label = '%s, %s' % (LOG_FITNESS, LOG_FATIGUE)
     f.yaxis[0].formatter = PrintfTickFormatter(format='')
 
-    patch = closed_patch(ftg, zero=min_f)
+    patch = closed_patch(ff[LOG_FATIGUE], zero=min_f)
     f.patch(x=patch.index, y=patch, color='grey', alpha=0.2)
-    f.line(x=ftn.index, y=ftn, color='black')
+    hover.renderers.append(f.line(x=TIME, y=LOG_FITNESS, source=ff, color='black'))
 
-    hr = hr.dropna()
+    hr = hr[REST_HR].dropna()
     if len(hr):
         max_hr = hr.max() * 1.1
         min_hr = hr.min() * 0.9
@@ -193,12 +221,15 @@ def health(nx, ny, ftn, ftg, hr):
         f.circle(x=hr.index, y=hr, color='red', alpha=0.2, y_range_name=hr.name)
 
     # f.toolbar_location = None
+    if x_range is not None:
+        f.x_range = x_range
+
     return f
 
 
-def activities(nx, ny, steps, active_time):
+def activities(nx, ny, steps, active_time, x_range=None):
 
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools())
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=make_tools())
     f.toolbar.logo = None
     f.xaxis.axis_label = 'Date'
 
@@ -219,6 +250,9 @@ def activities(nx, ny, steps, active_time):
         f.yaxis[1].formatter = PrintfTickFormatter(format='')
 
     # f.toolbar_location = None
+    if x_range is not None:
+        f.x_range = x_range
+
     return f
 
 

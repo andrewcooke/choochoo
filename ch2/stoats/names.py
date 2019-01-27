@@ -20,6 +20,7 @@ HEART_RATE = 'Heart Rate'
 HR_IMPULSE = 'HR Impulse'
 HR_ZONE = 'HR Zone'
 LATITUDE = 'Latitude'
+LOCAL_TIME = 'Date'
 LONGITUDE = 'Longitude'
 MAX_HR = 'MaxHR'  # no spaces because constant name
 MAX_SPEED = 'MaxSpeed'  # no spaces because constant name

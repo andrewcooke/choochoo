@@ -8,27 +8,26 @@ from bokeh.layouts import column, row
 from bokeh.models import Div
 
 from .data_frame import interpolate_to, add_interpolation
-from .plot import dot_map, line_diff, cumulative, heart_rate_zones, health, line_diff_elevation_climbs, \
-    range_all, activities, clean_all
+from .plot import line_diff, cumulative, heart_rate_zones, line_diff_elevation_climbs, dot_map, activities, health
 from .server import Page, singleton_server
 from ..config import config
-from ..data import statistics
-from ..data.data_frame import set_log, activity_statistics
+from ..data.data_frame import set_log, activity_statistics, statistics
 from ..lib.date import format_seconds, time_to_local_time, to_time
-from ..squeal import ActivityGroup, ActivityJournal, StatisticJournal
+from ..squeal import ActivityJournal, StatisticJournal, ActivityGroup
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.display.climb import climbs_for_activity
 from ..stoats.display.segment import segments_for_activity
 from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
-    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, REST_HR, DAILY_STEPS, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE, \
-    CLIMB_TIME, CLIMB_GRADIENT
+    ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE, \
+    CLIMB_TIME, CLIMB_GRADIENT, LOCAL_TIME, DAILY_STEPS, REST_HR
 
 WINDOW = '60s'
 #WINDOW = 10
 MIN_PERIODS = 1
 
 INTERPOLATION = 'interpolation'
+
 DISTANCE_KM = '%s / km' % DISTANCE
 SPEED_KPH = '%s / kph' % SPEED
 MED_SPEED_KPH = 'M(%s) %s / kph' % (WINDOW, SPEED)
@@ -100,6 +99,9 @@ def comparison(log, s, activity, compare=None):
         st = [df for id, df in
               activity_statistics(s, *names, activity_journal_id=aj.id, with_timespan=True).groupby('timespan_id')]
         for df in st:
+            df[TIME] = df.index
+            # this seems to be a bug in pandas not supporting astimezone for some weird internal datetime
+            df[LOCAL_TIME] = df[TIME].apply(lambda x: time_to_local_time(to_time(x.timestamp())).strftime('%H:%M:%S'))
             df[DISTANCE_KM] = df[DISTANCE]/1000
             df[SPEED_KPH] = df[SPEED] * 3.6
             df[MED_SPEED_KPH] = df[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
@@ -116,67 +118,75 @@ def comparison(log, s, activity, compare=None):
     climbs = activity_statistics(s, CLIMB_DISTANCE, CLIMB_ELEVATION, activity_journal_id=activity.id)
     line_x_range = None
 
-    def all_frames(st, name):
-        return [df[name].copy() for df in st]
+    def build(st, *axes):
+        axes = list(axes) + [LOCAL_TIME]
+        return [df.loc[:, axes] for df in st]
 
-    def set_axis(ys, st, name):
-        if name != TIME:
-            for y, df in zip(ys, st):
-                y.index = df[name].copy()
+    def build_all(*axes):
+        source1 = build(st1_10, *axes)
+        source2 = build(st2_10, *axes) if compare else None
+        return source1, source2
+
+    # def all_frames(st, name):
+    #     return [df[name].copy() for df in st]
+    #
+    # def set_axis(ys, st, name):
+    #     if name != TIME:
+    #         for y, df in zip(ys, st):
+    #             y.index = df[name].copy()
 
     # ---- ride-specific plots
 
-    def set_axes(y_axis, x_axis=TIME):
-        y1 = all_frames(st1_10, y_axis)
-        set_axis(y1, st1_10, x_axis)
-        if compare:
-            y2 = all_frames(st2_10, y_axis)
-            set_axis(y2, st2_10, x_axis)
-        else:
-            y2 = None
-        return y1, y2
+    # def set_axes(y_axis, x_axis=TIME):
+    #     y1 = all_frames(st1_10, y_axis)
+    #     set_axis(y1, st1_10, x_axis)
+    #     if compare:
+    #         y2 = all_frames(st2_10, y_axis)
+    #         set_axis(y2, st2_10, x_axis)
+    #     else:
+    #         y2 = None
+    #     return y1, y2
 
     def ride_line(y_axis, x_axis=TIME):
-        y1, y2 = set_axes(y_axis, x_axis=x_axis)
-        return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y1, y2, x_range=line_x_range)
+        source1, source2, = build_all(x_axis, y_axis)
+        return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y_axis, source1, source2, x_range=line_x_range)
 
     def ride_elevn(x_axis=TIME):
-        y1, y2 = set_axes(ELEVATION_M, x_axis=x_axis)
-        y3, _ = set_axes(ALTITUDE, x_axis=x_axis)
-        return line_diff_elevation_climbs(RIDE_PLOT_LEN, RIDE_PLOT_HGT, y1, y2, climbs=climbs, st=st1, y3=y3,
-                                          x_range=line_x_range)
+        source1, source2, = build_all(x_axis, ELEVATION_M, ALTITUDE)
+        return line_diff_elevation_climbs(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, ELEVATION_M, source1, source2,
+                                          climbs=climbs, st=st1, x_range=line_x_range)
 
     def ride_cum(y_axis):
-        y1 = all_frames(st1_10, y_axis)
-        if compare:
-            y2 = all_frames(st2_10, y_axis)
-        else:
-            y2 = None
-        return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, y1, y2)
+        source1, source2 = build_all(y_axis)
+        return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, pd.concat(df[y_axis] for df in source1),
+                          pd.concat(df[y_axis] for df in source2) if compare else None)
 
-    hr10_line, hr10_cumulative = ride_line(MED_HR_10, x_axis=DISTANCE_KM), ride_cum(HR_10)
+    hr10_line = ride_line(MED_HR_10, x_axis=DISTANCE_KM)
+    hr10_cumulative = ride_cum(HR_10)
     if hr10_line.tools:  # avoid if HR not available
         line_x_range = hr10_line.x_range
-    elvn_line, elvn_cumulative = ride_elevn(x_axis=DISTANCE_KM), ride_cum(CLIMB_MPS)
+    elvn_line = ride_elevn(x_axis=DISTANCE_KM)
+    elvn_cumulative = ride_cum(CLIMB_MPS)
     if line_x_range is None and elvn_line.tools:
         line_x_range = elvn_line.x_range
-    speed_line, speed_cumulative = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM), ride_cum(SPEED_KPH)
+    speed_line = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM)
+    speed_cumulative = ride_cum(SPEED_KPH)
 
-    hr10 = clean_all([df[HR_10] for df in st1_10])
+    hr10 = build(st1_10, HR_10)
     if hr10:
         hr10 = pd.concat(hr10)
-        mn, mx = hr10.quantile(0.1), hr10.quantile(0.95)
+        mn, mx = hr10.quantile(0.1)[0], hr10.quantile(0.95)[0]
         for df in st1_10:
             df['size'] = MAP_LEN * ((df[HR_10] - mn) / (mx - mn)) ** 2 / 10
     else:
         for df in st1_10:
-            df['size'] = df[HR_10] * 0
-    x1, y1 = all_frames(st1_10, SPHERICAL_MERCATOR_X), all_frames(st1_10, SPHERICAL_MERCATOR_Y)
+            df['size'] = df[SPHERICAL_MERCATOR_X] * 0
+    xy1 = build(st1_10, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, 'size', DISTANCE_KM)
     if compare:
-        x2, y2 = all_frames(st2_10, SPHERICAL_MERCATOR_X), all_frames(st2_10, SPHERICAL_MERCATOR_Y)
+        xy2 = build(st2_10, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE_KM)
     else:
-        x2, y2 = None, None
-    map = dot_map(MAP_LEN, x1, y1, [df['size'] for df in st1_10], x2, y2)
+        xy2 = None
+    map = dot_map(MAP_LEN, xy1, xy2)
 
     p = '<p>%s</p>' % caption(s, activity)
     if compare:
@@ -189,13 +199,18 @@ def comparison(log, s, activity, compare=None):
 
     finish = activity.finish + dt.timedelta(days=1)  # to show new level
     start = finish - dt.timedelta(days=365)
+    line_x_range = None
 
     st_ff = statistics(s, FITNESS, FATIGUE, DAILY_STEPS, start=start, finish=finish)
+    st_ff[TIME] = st_ff.index
+    st_ff[LOCAL_TIME] = st_ff[TIME].apply(lambda x: time_to_local_time(to_time(x.timestamp())).strftime('%Y-%m-%d'))
     st_hr = statistics(s, REST_HR, owner=MonitorStatistics, start=start, finish=finish)
     st_ff[LOG_FITNESS] = np.log10(st_ff[FITNESS])
     st_ff[LOG_FATIGUE] = np.log10(st_ff[FATIGUE])
 
-    health_line = health(HEALTH_PLT_LEN, HEALTH_PLOT_HGT, st_ff[LOG_FITNESS], st_ff[LOG_FATIGUE], st_hr[REST_HR])
+    health_line = health(HEALTH_PLT_LEN, HEALTH_PLOT_HGT, st_ff, st_hr, x_range=line_x_range)
+    if health_line.tools:
+        line_x_range = health_line.x_range
 
     ajs = s.query(ActivityJournal). \
         join(ActivityGroup). \
@@ -205,7 +220,8 @@ def comparison(log, s, activity, compare=None):
                ).all()
     st_ac = statistics(s, ACTIVE_TIME, ACTIVE_DISTANCE, source_ids=[aj.id for aj in ajs])
 
-    activity_line = activities(HEALTH_PLT_LEN, HEALTH_PLOT_HGT, get(st_ff, DAILY_STEPS), st_ac[ACTIVE_TIME])
+    activity_line = activities(HEALTH_PLT_LEN, HEALTH_PLOT_HGT, get(st_ff, DAILY_STEPS), st_ac[ACTIVE_TIME],
+                               x_range=line_x_range)
 
     # ---- the final mosaic of plots
 
@@ -213,7 +229,8 @@ def comparison(log, s, activity, compare=None):
                   row(elvn_line, elvn_cumulative),
                   row(speed_line, speed_cumulative),
                   row(text, hrz_histogram),
-                  row(column(health_line, activity_line), map))
+                  row(column(health_line, activity_line), map)
+                  )
 
 
 class ActivityJournalPage(Page):
@@ -236,9 +253,11 @@ if __name__ == '__main__':
     server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db)})
     try:
         with db.session_context() as s:
-            aj1 = ActivityJournal.at_date(s, '2019-01-25')[0]
-            aj2 = ActivityJournal.at_date(s, '2019-01-23')[0]
-            path = '/activity_journal?id=%d&compare=%d' % (aj1.id, aj2.id)
+            # aj1 = ActivityJournal.at_date(s, '2019-01-25')[0]
+            # aj2 = ActivityJournal.at_date(s, '2019-01-23')[0]
+            # path = '/activity_journal?id=%d&compare=%d' % (aj1.id, aj2.id)
+            aj1 = ActivityJournal.at_date(s, '2018-03-04')[0]
+            path = '/activity_journal?id=%d' % aj1.id
             server.show(path)
         print('Crtl-C')
         while True:
