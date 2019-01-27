@@ -184,7 +184,8 @@ class NearbyStatistics(NearbySimilarityCalculator):
     def run(self, force=False, after=None):
         super().run(force=force, after=after)
         with self._db.session_context() as s:
-            d_min, _ = expand_max(self._log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
+            d_min, n = expand_max(self._log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
+            self._log.info('%d groups at d=%f' % (n, d_min))
             self.save(s, self.dbscan(s, d_min))
 
     def dbscan(self, s, d):

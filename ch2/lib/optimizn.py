@@ -22,16 +22,12 @@ def expand_max(log, lo, hi, n, f):
                     del data[0]
                 else:
                     del data[-1]
-            x = (data[0][0] + data[1][0]) / 2
-            fx = f(x)
-            if fx > fx_max:
-                x_max = x
-            data.insert(1, (x, fx))
-            x = (data[-2][0] + data[-1][0]) / 2
-            fx = f(x)
-            if fx > fx_max:
-                x_max = x
-            data.insert(-1, (x, fx))
+            for offset in 1, -1:
+                x = (data[offset-1][0] + data[offset][0]) / 2
+                fx = f(x)
+                if fx > fx_max:
+                    x_max, fx_max = x, fx
+                data.insert(offset, (x, fx))
     except ZeroDivisionError:
         pass
 
