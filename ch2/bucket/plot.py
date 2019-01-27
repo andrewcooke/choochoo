@@ -108,7 +108,7 @@ def line_diff(nx, ny, x_axis, y_axis, source1, source2=None, x_range=None):
     is_x_time = x_axis == TIME
 
     if source1:
-        tools = make_tools(x_axis, y_axis)
+        tools = make_tools(y_axis, x_axis)
         hover = tools[-1]
         hover.renderers = []
     else:

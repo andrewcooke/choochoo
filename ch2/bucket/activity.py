@@ -232,6 +232,9 @@ class ActivityJournalPage(Page):
 
 
 if __name__ == '__main__':
+    '''
+    for testing - can be run from within the IDE which makes it easier to display data, set breakpoints, etc.
+    '''
     log, db = config('-v 5')
     server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db)})
     try:
@@ -242,7 +245,7 @@ if __name__ == '__main__':
             aj1 = ActivityJournal.at_date(s, '2018-03-04')[0]
             path = '/activity_journal?id=%d' % aj1.id
             server.show(path)
-        print('Crtl-C')
+        log.info('Crtl-C to exit')
         while True:
             sleep(1)
     finally:

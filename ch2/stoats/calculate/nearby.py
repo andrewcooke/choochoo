@@ -50,7 +50,7 @@ class NearbySimilarityCalculator(DbPipeline):
             delete()
 
     def _save(self, s, new_ids, affected_ids, n_points, n_intersects, delta):
-        n, total = 0, (len(new_ids) * (len(new_ids) - 1)) / 2
+        n = 0
         for lo in affected_ids:
             add_lo = lo in new_ids
             for hi in (id for id in affected_ids if id > lo):
@@ -60,9 +60,9 @@ class NearbySimilarityCalculator(DbPipeline):
                                              similarity=n_intersects[lo][hi] / (n_points[lo] + n_points[hi])))
                     n += 1
                     if n % delta == 0:
-                        self._log.info('Saved %d / %d for %s' % (n, total, self._config.constraint))
+                        self._log.info('Saved %d for %s' % (n, self._config.constraint))
         if n % delta:
-            self._log.info('Saved %d / %d for %s' % (n, total, self._config.constraint))
+            self._log.info('Saved %d for %s' % (n, self._config.constraint))
 
     def _prepare(self, s, rtree, n_points, delta):
         n = 0
