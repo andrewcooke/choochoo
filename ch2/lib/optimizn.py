@@ -2,6 +2,7 @@
 
 class NoMaximum(Exception): pass
 
+
 # http://acooke.org/cute/EfficientS2.html
 def expand_max(log, lo, hi, n, f):
 
