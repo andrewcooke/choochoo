@@ -7,8 +7,7 @@ from urwid import Pile, Text, Columns
 from . import JournalDiary
 from ...lib.date import to_time, time_to_local_date
 from ...lib.utils import label
-from ...squeal import ActivityJournal
-from ...squeal import ActivitySimilarity
+from ...squeal import ActivityJournal, ActivitySimilarity, ActivityNearby
 from ...uweird.tui.decorators import Indent
 from ...uweird.tui.widgets import SquareButton, ColSpace, ColText
 
@@ -29,6 +28,7 @@ class NearbyDiary(JournalDiary):
             rows = []
             rows += self._any_time(s, f, ajournal, constraint)
             rows += self._earlier(s, f, ajournal, constraint)
+            rows += self._group(s, f, ajournal, constraint)
             if rows:
                 yield Pile([Text(constraint),
                             Indent(Pile(rows))])
@@ -47,6 +47,22 @@ class NearbyDiary(JournalDiary):
 
     def _earlier(self, s, f, ajournal, constraint):
         yield from self._buttons(f, 'Earlier', nearby_earlier(s, ajournal, constraint=constraint))
+
+    def _group(self, s, f, ajournal, constraint):
+        yield from self._buttons(f, 'Group', group(s, ajournal, constraint))
+
+
+def group(s, ajournal, constraint):
+    nb_us = aliased(ActivityNearby)
+    nb_them = aliased(ActivityNearby)
+    return [nb.activity_journal
+            for nb in s.query(nb_them).
+                join(nb_us, nb_us.group == nb_them.group).
+                join(ActivityJournal, ActivityJournal.id == nb_them.activity_journal_id).
+                filter(nb_us.constraint == constraint,
+                       nb_us.activity_journal == ajournal,
+                       nb_them.activity_journal != ajournal).
+                order_by(ActivityJournal.start)]
 
 
 def single_constraint(s, ajournal):
@@ -72,7 +88,7 @@ def nearby_earlier(s, ajournal, constraint=None, threshold=0.05):
                        or_(ajhi.id == ajournal.id, ajhi.start < ajournal.start),
                        or_(ajhi.id == ajournal.id, ajlo.start < ajournal.start),
                        ActivitySimilarity.similarity > threshold).
-                order_by(desc(min(ajlo.start, ajhi.start))).limit(6).all()]
+                order_by(desc(min(ajlo.start, ajhi.start))).all()]
 
 
 def nearby_any_time(s, ajournal, constraint=None, threshold=0.05):
@@ -86,4 +102,4 @@ def nearby_any_time(s, ajournal, constraint=None, threshold=0.05):
                            ActivitySimilarity.activity_journal_lo_id == ajournal.id),
                        ActivitySimilarity.constraint == constraint,
                        ActivitySimilarity.similarity > threshold).
-                order_by(desc(ActivitySimilarity.similarity)).limit(6).all()]
+                order_by(desc(ActivitySimilarity.similarity)).all()]
