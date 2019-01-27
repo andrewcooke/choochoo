@@ -3,8 +3,8 @@ import datetime as dt
 
 import pandas as pd
 from bokeh import palettes, tile_providers
-from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis, PanTool, ZoomInTool, HoverTool, \
-    ZoomOutTool, ResetTool
+from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis, PanTool, ZoomInTool, \
+    HoverTool, ZoomOutTool, ResetTool
 from bokeh.plotting import figure
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
@@ -12,8 +12,12 @@ from ..stoats.names import TIME, HR_ZONE, CLIMB_DISTANCE, CLIMB_ELEVATION, ALTIT
     SPHERICAL_MERCATOR_Y, FATIGUE, FITNESS, REST_HR
 
 
-# def clean_all(all_series):
-#     return [c for c in (clean(s) for s in ([] if all_series is None else all_series)) if len(c)]
+def disable_toolbar(f):
+    f.toolbar_location = None
+
+
+def disable_logo(f):
+    f.toolbar.logo = None
 
 
 def range_all(source, axis, prev_min=None, prev_max=None):
@@ -110,7 +114,7 @@ def line_diff(nx, ny, x_axis, y_axis, source1, source2=None, x_range=None):
     else:
         tools = ''
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if is_x_time else 'linear', tools=tools)
-    f.toolbar.logo = None
+    disable_logo(f)
 
     y_min, y_max = range_all(source1, y_axis)
     if y_min is None:
@@ -149,7 +153,6 @@ def line_diff(nx, ny, x_axis, y_axis, source1, source2=None, x_range=None):
         if y2 is not None:
             f.patch(x=y2.index, y=y2, color='red', alpha=0.1, y_range_name='delta')
 
-    # f.toolbar_location = None
     if x_range is not None:
         f.x_range = x_range
 
@@ -175,6 +178,7 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
                y_range=Range1d(start=0 if y_min == 0 else y_min - 0.1 * dy, end=y_max + 0.1 * dy),
                y_axis_location='right',
                y_axis_label=y1.name)
+    disable_toolbar(f)
     f.xaxis.visible = False
 
     f.line(x=y1.index * sample, y=y1, color='black')
@@ -186,7 +190,6 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
             f.patch(x=y1.index * sample, y=y1, color='green', alpha=0.1, y_range_name='delta')
             f.patch(x=y2.index * sample, y=y2, color='red', alpha=0.1, y_range_name='delta')
 
-    f.toolbar_location = None
     return f
 
 
@@ -199,7 +202,7 @@ def health(nx, ny, ff, hr, x_range=None):
     tools.append(hover)
 
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools)
-    f.toolbar.logo = None
+    disable_logo(f)
     f.xaxis.axis_label = 'Date'
 
     max_f = ff[LOG_FITNESS].max() * 1.1
@@ -220,7 +223,6 @@ def health(nx, ny, ff, hr, x_range=None):
         f.add_layout(LinearAxis(y_range_name=hr.name, axis_label=hr.name), 'right')
         f.circle(x=hr.index, y=hr, color='red', alpha=0.2, y_range_name=hr.name)
 
-    # f.toolbar_location = None
     if x_range is not None:
         f.x_range = x_range
 
@@ -230,7 +232,7 @@ def health(nx, ny, ff, hr, x_range=None):
 def activities(nx, ny, steps, active_time, x_range=None):
 
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=make_tools())
-    f.toolbar.logo = None
+    disable_logo(f)
     f.xaxis.axis_label = 'Date'
 
     steps = None if steps is None else steps.dropna()
@@ -249,7 +251,6 @@ def activities(nx, ny, steps, active_time, x_range=None):
         f.circle(x=active_time.index, y=active_time, color='black', fill_alpha=0, y_range_name=active_time.name)
         f.yaxis[1].formatter = PrintfTickFormatter(format='')
 
-    # f.toolbar_location = None
     if x_range is not None:
         f.x_range = x_range
 
@@ -266,11 +267,9 @@ def heart_rate_zones(nx, ny, hrz):
     counts = hrz_categorized.groupby(hrz_categorized).count()
 
     f = figure(plot_width=nx, plot_height=ny, x_range=Range1d(start=1, end=max_z+1), x_axis_label=HR_ZONE)
+    disable_toolbar(f)
     f.quad(left=counts.index.categories.left, right=counts.index.categories.right, top=counts, bottom=0,
            color=c, fill_alpha=0.2)
     f.yaxis.visible = False
 
-    f.toolbar_location = None
     return f
-
-

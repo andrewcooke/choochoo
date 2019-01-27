@@ -28,11 +28,12 @@ MIN_PERIODS = 1
 
 INTERPOLATION = 'interpolation'
 
+POW_MINUS_ONE = '\u207b\u00b9'
 DISTANCE_KM = '%s / km' % DISTANCE
-SPEED_KPH = '%s / kph' % SPEED
-MED_SPEED_KPH = 'M(%s) %s / kph' % (WINDOW, SPEED)
+SPEED_KPH = '%s / kmh%s' % (SPEED, POW_MINUS_ONE)
+MED_SPEED_KPH = 'M(%s) %s / kmh%s' % (WINDOW, SPEED, POW_MINUS_ONE)
 ELEVATION_M = '%s / m' % ELEVATION
-CLIMB_MPS = 'Climb / mps'
+CLIMB_MPS = 'Climb / ms%s' % POW_MINUS_ONE
 HR_10 = 'HR Impulse / 10s'
 MED_HR_10 = 'M(%s) HR Impulse / 10s' % WINDOW
 
@@ -127,25 +128,7 @@ def comparison(log, s, activity, compare=None):
         source2 = build(st2_10, *axes) if compare else None
         return source1, source2
 
-    # def all_frames(st, name):
-    #     return [df[name].copy() for df in st]
-    #
-    # def set_axis(ys, st, name):
-    #     if name != TIME:
-    #         for y, df in zip(ys, st):
-    #             y.index = df[name].copy()
-
     # ---- ride-specific plots
-
-    # def set_axes(y_axis, x_axis=TIME):
-    #     y1 = all_frames(st1_10, y_axis)
-    #     set_axis(y1, st1_10, x_axis)
-    #     if compare:
-    #         y2 = all_frames(st2_10, y_axis)
-    #         set_axis(y2, st2_10, x_axis)
-    #     else:
-    #         y2 = None
-    #     return y1, y2
 
     def ride_line(y_axis, x_axis=TIME):
         source1, source2, = build_all(x_axis, y_axis)
