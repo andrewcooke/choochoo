@@ -12,8 +12,12 @@ from ...uweird.tui.decorators import Indent
 from ...uweird.tui.widgets import SquareButton, ColSpace, ColText, ArrowMenu
 
 
-def fmt(time):
+def _fmt_time(time):
     return to_time(time).strftime('%Y-%m-%d')
+
+
+def fmt_nearby(aj, nb):
+    return to_time(aj.start).strftime('%y-%m-%d') + ' %d%%' % (nb.similarity * 200)
 
 
 class NearbyDiary(JournalDiary):
@@ -44,17 +48,17 @@ class NearbyDiary(JournalDiary):
 
     def _any_time(self, s, f, ajournal, constraint):
         yield from self.__button(f, 'Any Time: ',
-                                 dict((aj.start, fmt(aj.start)) for aj in
+                                 dict((aj.start, fmt_nearby(aj, nb)) for aj, nb in
                                       nearby_any_time(s, ajournal, constraint=constraint)))
 
     def _earlier(self, s, f, ajournal, constraint):
         yield from self.__button(f, 'Earlier: ',
-                                 dict((aj.start, fmt(aj.start)) for aj in
+                                 dict((aj.start, fmt_nearby(aj, nb)) for aj, nb in
                                       nearby_earlier(s, ajournal, constraint=constraint)))
 
     def _group(self, s, f, ajournal, constraint):
         yield from self.__button(f, 'Group: ',
-                                 dict((aj.start, fmt(aj.start)) for aj in group(s, ajournal, constraint)))
+                                 dict((aj.start, _fmt_time(aj.start)) for aj in group(s, ajournal, constraint)))
 
 
 def group(s, ajournal, constraint):
@@ -81,7 +85,7 @@ def nearby_earlier(s, ajournal, constraint=None, threshold=0.05):
         constraint = single_constraint(s, ajournal)
     ajlo = aliased(ActivityJournal)
     ajhi = aliased(ActivityJournal)
-    return [asm.activity_journal_lo
+    return [(asm.activity_journal_lo, asm)
             if asm.activity_journal_lo != ajournal
             else asm.activity_journal_hi
             for asm in s.query(ActivitySimilarity).
@@ -99,7 +103,7 @@ def nearby_earlier(s, ajournal, constraint=None, threshold=0.05):
 def nearby_any_time(s, ajournal, constraint=None, threshold=0.05):
     if constraint is None:
         constraint = single_constraint(s, ajournal)
-    return [asm.activity_journal_lo
+    return [(asm.activity_journal_lo, asm)
             if asm.activity_journal_lo != ajournal
             else asm.activity_journal_hi
             for asm in s.query(ActivitySimilarity).

@@ -16,7 +16,7 @@ from ..lib.widgets import DateSwitcher
 from ..squeal.database import add, ActivityJournal
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import display_pipeline
-from ..stoats.display.nearby import nearby_any_time
+from ..stoats.display.nearby import nearby_any_time, fmt_nearby
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
@@ -181,7 +181,7 @@ class DailyDiary(Diary):
 
     def __gui_menus(self, s, f):
         for aj1 in ActivityJournal.at_date(s, self._date):
-            options = [(None, 'None')] + [(aj2, aj2.name) for aj2 in nearby_any_time(s, aj1)]
+            options = [(None, 'None')] + [(aj2, fmt_nearby(aj2, nb)) for aj2, nb in nearby_any_time(s, aj1)]
             menu = ArrowMenu(label('%s v ' % aj1.name), dict(options))
             connect_signal(menu, 'click', self.__show_gui, aj1)
             yield f(menu)
