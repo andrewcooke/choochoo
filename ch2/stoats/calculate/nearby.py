@@ -57,7 +57,6 @@ class NearbySimilarityCalculator(DbPipeline):
                          filter(StatisticName.name == ACTIVE_DISTANCE,
                                 StatisticName.owner == ActivityStatistics).all())
         n = 0
-        import pdb; pdb.set_trace()
         for lo in affected_ids:
             add_lo, d_lo = lo in new_ids, distances.get(lo, None)
             if d_lo:
