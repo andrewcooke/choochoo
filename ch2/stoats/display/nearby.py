@@ -2,14 +2,14 @@
 from sqlalchemy import or_, desc, distinct
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import min
-from urwid import Pile, Text, Columns
+from urwid import Pile, Text, Columns, connect_signal
 
 from . import JournalDiary
 from ...lib.date import to_time, time_to_local_date
 from ...lib.utils import label
 from ...squeal import ActivityJournal, ActivitySimilarity, ActivityNearby
 from ...uweird.tui.decorators import Indent
-from ...uweird.tui.widgets import SquareButton, ColSpace, ColText
+from ...uweird.tui.widgets import SquareButton, ColSpace, ColText, ArrowMenu
 
 
 def fmt(time):
@@ -25,31 +25,36 @@ class NearbyDiary(JournalDiary):
         for constraint in [c[0] for c in
                            s.query(distinct(ActivitySimilarity.constraint)).
                                    order_by(ActivitySimilarity.constraint).all()]:
-            rows = []
-            rows += self._any_time(s, f, ajournal, constraint)
-            rows += self._earlier(s, f, ajournal, constraint)
-            rows += self._group(s, f, ajournal, constraint)
-            if rows:
+            row = []
+            row += self._any_time(s, f, ajournal, constraint)
+            row += self._earlier(s, f, ajournal, constraint)
+            row += self._group(s, f, ajournal, constraint)
+            if row:
                 yield Pile([Text(constraint),
-                            Indent(Pile(rows))])
+                            Indent(Columns(row))])
 
-    def _on_press(self, w, time):
-        self._diary._change_date(time_to_local_date(time))
+    def __change_date(self, w):
+        self._diary._change_date(time_to_local_date(w.state))
 
-    def _buttons(self, f, title, data):
-        if data:
-            btns = [(len(fmt(d.start)) + 2,
-                     f(SquareButton(fmt(d.start), on_press=self._on_press, user_data=d.start))) for d in data]
-            yield Columns([ColText('%s: ' % title, label), *btns, ColSpace()])
+    def __button(self, f, caption, options):
+        if options:
+            menu = ArrowMenu(label(caption), options)
+            connect_signal(menu, 'click', self.__change_date)
+            yield f(menu)
 
     def _any_time(self, s, f, ajournal, constraint):
-        yield from self._buttons(f, 'Any Time', nearby_any_time(s, ajournal, constraint=constraint))
+        yield from self.__button(f, 'Any Time: ',
+                                 dict((aj.start, fmt(aj.start)) for aj in
+                                      nearby_any_time(s, ajournal, constraint=constraint)))
 
     def _earlier(self, s, f, ajournal, constraint):
-        yield from self._buttons(f, 'Earlier', nearby_earlier(s, ajournal, constraint=constraint))
+        yield from self.__button(f, 'Earlier: ',
+                                 dict((aj.start, fmt(aj.start)) for aj in
+                                      nearby_earlier(s, ajournal, constraint=constraint)))
 
     def _group(self, s, f, ajournal, constraint):
-        yield from self._buttons(f, 'Group', group(s, ajournal, constraint))
+        yield from self.__button(f, 'Group: ',
+                                 dict((aj.start, fmt(aj.start)) for aj in group(s, ajournal, constraint)))
 
 
 def group(s, ajournal, constraint):
