@@ -12,6 +12,8 @@ contains only:
 
 ![](docs/graphic-summary.png)
 
+![](docs/graphic-similarity.png)
+
 ![](docs/all-rides-hrz.png)
 
 ![](docs/all-rides.png)
