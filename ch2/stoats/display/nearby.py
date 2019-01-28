@@ -9,7 +9,7 @@ from ...lib.date import to_time, time_to_local_date
 from ...lib.utils import label
 from ...squeal import ActivityJournal, ActivitySimilarity, ActivityNearby
 from ...uweird.tui.decorators import Indent
-from ...uweird.tui.widgets import SquareButton, ColSpace, ColText, ArrowMenu
+from ...uweird.tui.widgets import ArrowMenu
 
 
 def _fmt_time(time):
@@ -17,7 +17,7 @@ def _fmt_time(time):
 
 
 def fmt_nearby(aj, nb):
-    return to_time(aj.start).strftime('%y-%m-%d') + ' %d%%' % (nb.similarity * 200)
+    return to_time(aj.start).strftime('%y-%m-%d') + ' %d%%' % (nb.similarity * 100)
 
 
 class NearbyDiary(JournalDiary):
@@ -26,9 +26,7 @@ class NearbyDiary(JournalDiary):
         yield from []
 
     def _journal_date(self, s, f, ajournal, date):
-        for constraint in [c[0] for c in
-                           s.query(distinct(ActivitySimilarity.constraint)).
-                                   order_by(ActivitySimilarity.constraint).all()]:
+        for constraint in constraints(s):
             row = []
             row += self._any_time(s, f, ajournal, constraint)
             row += self._earlier(s, f, ajournal, constraint)
@@ -61,6 +59,12 @@ class NearbyDiary(JournalDiary):
                                  dict((aj.start, _fmt_time(aj.start)) for aj in group(s, ajournal, constraint)))
 
 
+def constraints(s):
+    yield from (c[0] for c in
+                s.query(distinct(ActivitySimilarity.constraint)).
+                    order_by(ActivitySimilarity.constraint).all())
+
+
 def group(s, ajournal, constraint):
     nb_us = aliased(ActivityNearby)
     nb_them = aliased(ActivityNearby)
@@ -80,14 +84,12 @@ def single_constraint(s, ajournal):
                    ActivitySimilarity.activity_journal_hi_id == ajournal.id)).scalar()
 
 
-def nearby_earlier(s, ajournal, constraint=None, threshold=0.05):
+def nearby_earlier(s, ajournal, constraint=None, threshold=0.5):
     if constraint is None:
         constraint = single_constraint(s, ajournal)
     ajlo = aliased(ActivityJournal)
     ajhi = aliased(ActivityJournal)
-    return [(asm.activity_journal_lo, asm)
-            if asm.activity_journal_lo != ajournal
-            else asm.activity_journal_hi
+    return [(asm.activity_journal_lo if asm.activity_journal_lo != ajournal else asm.activity_journal_hi, asm)
             for asm in s.query(ActivitySimilarity).
                 join(ajhi, ActivitySimilarity.activity_journal_hi_id == ajhi.id).
                 join(ajlo, ActivitySimilarity.activity_journal_lo_id == ajlo.id).
@@ -100,12 +102,10 @@ def nearby_earlier(s, ajournal, constraint=None, threshold=0.05):
                 order_by(desc(min(ajlo.start, ajhi.start))).all()]
 
 
-def nearby_any_time(s, ajournal, constraint=None, threshold=0.05):
+def nearby_any_time(s, ajournal, constraint=None, threshold=0.5):
     if constraint is None:
         constraint = single_constraint(s, ajournal)
-    return [(asm.activity_journal_lo, asm)
-            if asm.activity_journal_lo != ajournal
-            else asm.activity_journal_hi
+    return [(asm.activity_journal_lo if asm.activity_journal_lo != ajournal else asm.activity_journal_hi, asm)
             for asm in s.query(ActivitySimilarity).
                 filter(or_(ActivitySimilarity.activity_journal_hi_id == ajournal.id,
                            ActivitySimilarity.activity_journal_lo_id == ajournal.id),

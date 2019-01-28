@@ -7,18 +7,18 @@ import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import Div
 
-from .data_frame import interpolate_to, add_interpolation
-from .plot import line_diff, cumulative, heart_rate_zones, line_diff_elevation_climbs, dot_map, activities, health
-from .server import Page, singleton_server
-from ..config import config
-from ..data.data_frame import set_log, activity_statistics, statistics
-from ..lib.date import format_seconds, time_to_local_time, to_time
-from ..squeal import ActivityJournal, StatisticJournal, ActivityGroup
-from ..stoats.calculate.activity import ActivityStatistics
-from ..stoats.calculate.monitor import MonitorStatistics
-from ..stoats.display.climb import climbs_for_activity
-from ..stoats.display.segment import segments_for_activity
-from ..stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
+from ..data_frame import interpolate_to, add_interpolation
+from ..plot import line_diff, cumulative, heart_rate_zones, line_diff_elevation_climbs, dot_map, activities, health
+from ..server import Page, singleton_server
+from ...config import config
+from ...data.data_frame import set_log, activity_statistics, statistics
+from ...lib.date import format_seconds, time_to_local_time, to_time
+from ...squeal import ActivityJournal, StatisticJournal, ActivityGroup
+from ...stoats.calculate.activity import ActivityStatistics
+from ...stoats.calculate.monitor import MonitorStatistics
+from ...stoats.display.climb import climbs_for_activity
+from ...stoats.display.segment import segments_for_activity
+from ...stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE, \
     CLIMB_TIME, CLIMB_GRADIENT, LOCAL_TIME, DAILY_STEPS, REST_HR
 
@@ -83,6 +83,8 @@ def caption(s, activity):
                           f'{format_seconds((segment.finish - segment.start).total_seconds())}'
                           for segment in segments)
         text += '</br>' + extra
+
+    text += '<br/><a href="/activity_similarity?id=%d">similar</a>' % activity.id
 
     return text
 

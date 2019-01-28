@@ -6,7 +6,7 @@ import pandas as pd
 from bokeh.layouts import column, row
 from bokeh.models import Label
 
-from ch2.bucket.activity import DISTANCE_KM, ELEVATION_M, TEMPLATE
+from ch2.bucket.page.activity_journal import DISTANCE_KM, ELEVATION_M, TEMPLATE
 from ch2.bucket.plot import line_diff_elevation_climbs
 from ch2.bucket.server import SingleShotServer
 from ch2.config import config

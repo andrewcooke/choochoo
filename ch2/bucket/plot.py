@@ -50,23 +50,41 @@ def make_tools(x=None, y=None):
     return tools
 
 
-def dot_map(n, xy1, xy2=None):
-    from .activity import DISTANCE_KM
+def simple_map(n, xy1, xy2=None):
+    f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator')
+    disable_toolbar(f)
+    if xy2 is not None:
+        f.line(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=xy2,
+               line_width=4, line_color='black', line_alpha=0.1)
+    f.line(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=xy1, line_color='black')
+    f.axis.visible = False
+    return f
 
-    hover = make_hover(DISTANCE_KM)
-    hover.renderers = []
-    f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator',
-               tools=[PanTool(), ZoomInTool(), ZoomOutTool(), ResetTool(), hover])
-    f.toolbar.logo = None
+
+def dot_map(n, xy1, xy2=None, with_tools=True):
+    from ch2.bucket.page.activity_journal import DISTANCE_KM
+
+    if with_tools:
+        hover = make_hover(DISTANCE_KM)
+        hover.renderers = []
+        tools = [PanTool(), ZoomInTool(), ZoomOutTool(), ResetTool(), hover]
+    else:
+        tools = ''
+    f = figure(plot_width=n, plot_height=n, x_axis_type='mercator', y_axis_type='mercator', tools=tools)
+    disable_logo(f)
 
     for df in xy1:
         f.circle(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, line_alpha=0, fill_color='red',
                  size='size', fill_alpha=0.03, source=df)
-        hover.renderers.append(f.line(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=df, line_color='black'))
+        renderer = f.line(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=df, line_color='black')
+        if with_tools:
+            hover.renderers.append(renderer)
 
     if xy2 is not None:
         for df in xy2:
-            hover.renderers.append(f.line(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=df, line_color='grey'))
+            renderer = f.line(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=df, line_color='grey')
+            if with_tools:
+                hover.renderers.append(renderer)
 
     f.add_tile(tile_providers.STAMEN_TERRAIN, alpha=0.1)
     f.axis.visible = False
@@ -75,7 +93,7 @@ def dot_map(n, xy1, xy2=None):
 
 
 def line_diff_elevation_climbs(nx, ny, x_axis, y_axis, source1, source2=None, climbs=None, st=None, x_range=None):
-    from .activity import DISTANCE_KM, ELEVATION_M
+    from .page.activity_journal import DISTANCE_KM, ELEVATION_M
     f = line_diff(nx, ny, x_axis, y_axis, source1, source2=source2, x_range=x_range)
     for df in source1:
         if ALTITUDE in df:
@@ -194,7 +212,7 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
 
 
 def health(nx, ny, ff, hr, x_range=None):
-    from .activity import LOG_FITNESS, LOG_FATIGUE
+    from .page.activity_journal import LOG_FITNESS, LOG_FATIGUE
 
     hover = make_hover(FITNESS, FATIGUE)
     hover.renderers = []

@@ -20,6 +20,14 @@ body {
 .centre > div {
   display: inline-block;
 }
+a {
+  color: black;
+  text-decoration: none;
+  border-bottom: 1px dotted black;
+}
+a:hover {
+  border-bottom: 1px solid black;
+}
 table {
   margin: 20px;
   border-spacing: 10px;

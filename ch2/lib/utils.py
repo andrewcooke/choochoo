@@ -1,5 +1,6 @@
 
 import time as t
+from itertools import zip_longest
 
 PALETTE_RAINBOW = [
     ('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
@@ -65,3 +66,11 @@ def interleave(sep, iter):
         if started:
             yield sep
         yield value
+
+
+# https://docs.python.org/3/library/itertools.html#itertools-recipes
+def grouper(iterable, n, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)

@@ -5,9 +5,11 @@ from contextlib import AbstractContextManager
 from itertools import zip_longest
 from logging import getLogger
 from os import makedirs
-from os.path import exists, dirname, split, join, splitext
+from os.path import exists, dirname, split, join
 from re import sub
 from tempfile import NamedTemporaryFile
+
+from ch2.lib.utils import grouper
 
 HEX_ADDRESS = lambda s: sub(r'0x[0-9a-f]{8,}', 'ADDRESS', s)
 
@@ -231,14 +233,6 @@ class CSVEqualContext(TextBufferContext):
             self._log.info('Comparing with %s' % self._path)
             self._log.info('head -n %d %s | tail -n 1; head -n %d %s | tail -n 1' %
                            (row+2, f.name, row+2, self._path))
-
-
-# https://docs.python.org/3/library/itertools.html#itertools-recipes
-def grouper(iterable, n, fillvalue=None):
-    "Collect data into fixed-length chunks or blocks"
-    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
 
 
 class OutputMixin:

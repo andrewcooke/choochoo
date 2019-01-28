@@ -3,10 +3,12 @@ import datetime as dt
 from abc import abstractmethod
 
 from sqlalchemy import or_
-from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal
+from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
+from ch2.bucket.page.activity_similarity import ActivitySimilarityPage
+from ch2.uweird.tui.fixed import Fixed
 from .args import DATE, SCHEDULE
-from ..bucket.activity import ActivityJournalPage
+from ch2.bucket.page.activity_journal import ActivityJournalPage
 from ..bucket.server import singleton_server
 from ..lib.date import to_date
 from ..lib.io import tui
@@ -22,7 +24,7 @@ from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
 from ..uweird.tui.tabs import TabList
-from ..uweird.tui.widgets import DividedPile, ArrowMenu
+from ..uweird.tui.widgets import DividedPile, ArrowMenu, SquareButton
 
 
 @tui
@@ -52,7 +54,8 @@ Display a summary for the month / year / schedule.
             date = dt.date.today() - dt.timedelta(days=int(date))
     with db.session_context() as s:
         TopicJournal.check_tz(log, s)
-    server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db)})
+    server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db),
+                                    '/activity_similarity': ActivitySimilarityPage(log, db)})
     try:
         if schedule:
             schedule = Schedule(schedule)
@@ -184,13 +187,18 @@ class DailyDiary(Diary):
             options = [(None, 'None')] + [(aj2, fmt_nearby(aj2, nb)) for aj2, nb in nearby_any_time(s, aj1)]
             menu = ArrowMenu(label('%s v ' % aj1.name), dict(options))
             connect_signal(menu, 'click', self.__show_gui, aj1)
-            yield f(menu)
+            button = SquareButton('All Similar')
+            connect_signal(button, 'click', self.__show_similar, aj1)
+            yield Columns([f(menu), f(Padding(Fixed(button, 13), width='clip'))])
 
     def __show_gui(self, w, aj1):
         path = '/activity_journal?id=%d' % aj1.id
         if w.state:
             path += '&compare=%d' % w.state.id
         self._server.show(path)
+
+    def __show_similar(self, w, aj1):
+        self._server.show('/activity_similarity?id=%d' % aj1.id)
 
 
 class ScheduleDiary(Diary):

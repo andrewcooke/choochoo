@@ -34,10 +34,12 @@ def get_log():
 
 
 def set_log(log):
-    LOG[0] = log
+    if log:
+        LOG[0] = log
 
 
-def _collect_statistics(s, names):
+def _collect_statistics(s, names, log=None):
+    set_log(log)
     if not names:
         names = ['%']
     statistic_ids, statistic_names = set(), set()
@@ -106,7 +108,8 @@ def make_pad(data, times, statistic_names):
 
 
 def statistics(s, *statistics,
-               start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None):
+               start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None, log=None):
+    set_log(log)
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     q = _build_statistic_journal_query(statistic_ids, start, finish, owner, constraint, source_ids, schedule)
     data, times = defaultdict(list), []
@@ -139,8 +142,8 @@ def _resolve_activity(s, time, activity_journal_id):
     return activity_journal_id
 
 
-def activity_statistics(s, *statistics,
-                        time=None, activity_journal_id=None, with_timespan=False):
+def activity_statistics(s, *statistics, time=None, activity_journal_id=None, with_timespan=False, log=None):
+    set_log(log)
 
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     get_log().debug('Statistics IDs %s' % statistic_ids)
@@ -175,7 +178,8 @@ def activity_statistics(s, *statistics,
 
 
 def statistic_quartiles(s, *statistics,
-                        start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None):
+                        start=None, finish=None, owner=None, constraint=None, source_ids=None, schedule=None, log=None):
+    set_log(log)
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     q = s.query(StatisticMeasure). \
         join(StatisticJournal, StatisticMeasure.statistic_journal_id == StatisticJournal.id). \

@@ -6,7 +6,7 @@ from json import loads
 from sqlalchemy import inspect, select, alias, and_, distinct, func
 
 from .. import DbPipeline
-from ..names import LONGITUDE, LATITUDE
+from ..names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
 from ...arty import MatchType
 from ...arty.spherical import SQRTree
 from ...lib.date import to_time
@@ -16,6 +16,7 @@ from ...squeal.tables.activity import ActivityJournal, ActivityGroup
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.nearby import ActivitySimilarity, ActivityNearby
 from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalFloat
+from ...stoats.calculate.activity import ActivityStatistics
 
 Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish, '
                               'latitude, longitude, height, width')
@@ -50,17 +51,33 @@ class NearbySimilarityCalculator(DbPipeline):
             delete()
 
     def _save(self, s, new_ids, affected_ids, n_points, n_intersects, delta):
+        distances = dict((s.source.id, s.value)
+                         for s in s.query(StatisticJournalFloat).
+                         join(StatisticName).
+                         filter(StatisticName.name == ACTIVE_DISTANCE,
+                                StatisticName.owner == ActivityStatistics).all())
         n = 0
+        import pdb; pdb.set_trace()
         for lo in affected_ids:
-            add_lo = lo in new_ids
-            for hi in (id for id in affected_ids if id > lo):
-                if add_lo or hi in new_ids:
-                    s.add(ActivitySimilarity(constraint=self._config.constraint,
-                                             activity_journal_lo_id=lo, activity_journal_hi_id=hi,
-                                             similarity=n_intersects[lo][hi] / (n_points[lo] + n_points[hi])))
-                    n += 1
-                    if n % delta == 0:
-                        self._log.info('Saved %d for %s' % (n, self._config.constraint))
+            add_lo, d_lo = lo in new_ids, distances.get(lo, None)
+            if d_lo:
+                for hi in (id for id in affected_ids if id > lo):
+                    d_hi = distances.get(hi, None)
+                    if d_hi and (add_lo or hi in new_ids):
+                        if lo in new_ids and hi not in new_ids:
+                            # hi already existed so was added first
+                            n_max = n_points[hi]
+                            d_factor = d_hi / d_lo if d_hi < d_lo else 1
+                        else:
+                            # both new and ordered lo-hi, or hi new and last
+                            n_max = n_points[lo]
+                            d_factor = d_lo / d_hi if d_lo < d_hi else 1
+                        s.add(ActivitySimilarity(constraint=self._config.constraint,
+                                                 activity_journal_lo_id=lo, activity_journal_hi_id=hi,
+                                                 similarity=(n_intersects[lo][hi] / n_max) * d_factor))
+                        n += 1
+                        if n % delta == 0:
+                            self._log.info('Saved %d for %s' % (n, self._config.constraint))
         if n % delta:
             self._log.info('Saved %d for %s' % (n, self._config.constraint))
 
@@ -79,17 +96,20 @@ class NearbySimilarityCalculator(DbPipeline):
     def _count_overlaps(self, s, rtree, n_points, n_intersects, delta):
         new_aj_ids, affected_aj_ids, n = [], set(), 0
         for aj_id_in, aj_lon_lats in groupby(self._aj_lon_lat(s, new=True), key=lambda aj_lon_lat: aj_lon_lat[0]):
+            aj_lon_lats = list(aj_lon_lats)  # reuse below
             seen_posns = set()
             new_aj_ids.append(aj_id_in)
             affected_aj_ids.add(aj_id_in)
             for _, lon, lat in aj_lon_lats:
                 posn = [(lon, lat)]
                 for other_posn, aj_id_out in rtree.get_items(posn):
-                    if aj_id_in != aj_id_out and other_posn not in seen_posns:
+                    if other_posn not in seen_posns:
                         lo, hi = min(aj_id_in, aj_id_out), max(aj_id_in, aj_id_out)  # ordered pair
                         affected_aj_ids.add(aj_id_out)
                         n_intersects[lo][hi] += 1
                         seen_posns.add(other_posn)
+            for _, lon, lat in aj_lon_lats:  # adding after avoids matching ourselves
+                posn = [(lon, lat)]
                 rtree[posn] = aj_id_in
                 n_points[aj_id_in] += 1
                 n += 1
