@@ -251,7 +251,8 @@ if __name__ == '__main__':
             # path = '%s?id=%d&compare=%d' % (ActivityDetailsPage.PATH, aj1.id, aj2.id)
             # aj1 = ActivityJournal.at_date(s, '2018-03-04')[0]
             # aj1 = ActivityJournal.at_date(s, '2018-12-16')[0]
-            aj1 = ActivityJournal.at_date(s, '2018-03-11')[0]
+            # aj1 = ActivityJournal.at_date(s, '2018-03-11')[0]
+            aj1 = ActivityJournal.at_date(s, '2017-03-16')[0]
             path = '%s?id=%d' % (ActivityDetailsPage.PATH, aj1.id)
             server.show(path)
         log.info('Crtl-C to exit')

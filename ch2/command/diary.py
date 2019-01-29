@@ -5,11 +5,11 @@ from abc import abstractmethod
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
-from ch2.bucket.page.similar_activities import SimilarActivitiesPage
-from ch2.uweird.tui.fixed import Fixed
 from .args import DATE, SCHEDULE
-from ch2.bucket.page.activity_details import ActivityDetailsPage
-from ..bucket.server import singleton_server
+from ..bucket.page.activity_details import ActivityDetailsPage
+from ..bucket.page.duration_activities import DurationActivitiesPage
+from ..bucket.page.similar_activities import SimilarActivitiesPage
+from ..bucket.server import default_singleton_server
 from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
@@ -23,6 +23,7 @@ from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
 from ..uweird.tui.factory import Factory
+from ..uweird.tui.fixed import Fixed
 from ..uweird.tui.tabs import TabList
 from ..uweird.tui.widgets import DividedPile, ArrowMenu, SquareButton
 
@@ -54,14 +55,13 @@ Display a summary for the month / year / schedule.
             date = dt.date.today() - dt.timedelta(days=int(date))
     with db.session_context() as s:
         TopicJournal.check_tz(log, s)
-    server = singleton_server(log, {ActivityDetailsPage.PATH: ActivityDetailsPage(log, db),
-                                    SimilarActivitiesPage.PATH: SimilarActivitiesPage(log, db)})
+    server = default_singleton_server(log, db)
     try:
         if schedule:
             schedule = Schedule(schedule)
             if schedule.start or schedule.finish:
                 raise Exception('Schedule must be open (no start or finish)')
-            MainLoop(ScheduleDiary(log, db, date, schedule), palette=PALETTE_RAINBOW).run()
+            MainLoop(ScheduleDiary(log, db, date, schedule, server), palette=PALETTE_RAINBOW).run()
         else:
             MainLoop(DailyDiary(log, db, date, server), palette=PALETTE_RAINBOW).run()
     finally:
@@ -206,9 +206,9 @@ class ScheduleDiary(Diary):
     Display summary data for the given schedule.
     '''
 
-    def __init__(self, log, db, date, schedule):
+    def __init__(self, log, db, date, schedule, server):
         self._schedule = schedule
-        super().__init__(log, db, self._refine_new_date(date))
+        super().__init__(log, db, self._refine_new_date(date), server)
 
     def _header(self):
         return Text(self._date.strftime('%Y-%m-%d') + ' - Summary for %s' % self._schedule.describe())
@@ -234,3 +234,12 @@ class ScheduleDiary(Diary):
     def _display_pipeline(self, s, f):
         yield from display_pipeline(self._log, s, f, self._date, self, schedule=self._schedule)
 
+    def _display_gui(self, s, f):
+        button = SquareButton('All Activities')
+        connect_signal(button, 'click', self.__show_all)
+        yield Pile([Text('GUI'), Indent(f(Padding(Fixed(button, 16), width='clip')))])
+
+    def __show_all(self, w):
+        self._server.show('%s?start=%s&period=%d%s' %
+                          (DurationActivitiesPage.PATH, self._date.strftime('%Y-%m-%d'),
+                           self._schedule.repeat, self._schedule.frame_type))

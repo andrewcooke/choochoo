@@ -61,7 +61,7 @@ class ActivityStatistics(WaypointCalculator):
             self._add_float_stat(s, ajournal, CLIMB_GRADIENT, summaries(MAX, MSR), 100 * up / along, PC, time=hi.time)
             total_elevation += up
         if total_elevation:
-            self._add_float_stat(s, ajournal, TOTAL_CLIMB, summaries(MAX, MSR), total_elevation, M)
+            self._add_float_stat(s, ajournal, TOTAL_CLIMB, summaries(MAX, SUM, MSR), total_elevation, M)
 
 
 class TimeForDistance(Chunks):

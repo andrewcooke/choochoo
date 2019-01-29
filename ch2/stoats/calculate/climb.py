@@ -5,14 +5,16 @@ from collections import namedtuple
 # https://support.strava.com/hc/en-us/articles/216917057-How-are-Strava-climbs-categorized-For-Rides-
 MIN_CLIMB_ELEVATION = 80
 MIN_CLIMB_GRADIENT = 3
+MAX_CLIMB_GRADIENT = 40
 MAX_CLIMB_REVERSAL = 0.1
 
 # trade-off between pure elevation (0) and pure gradient (1)
 CLIMB_PHI = 0.6
 
 
-Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_reversal',
-                   defaults=(CLIMB_PHI, MIN_CLIMB_ELEVATION, MIN_CLIMB_GRADIENT, MAX_CLIMB_REVERSAL))
+Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_gradient, max_reversal',
+                   defaults=(CLIMB_PHI, MIN_CLIMB_ELEVATION, MIN_CLIMB_GRADIENT,
+                             MAX_CLIMB_GRADIENT, MAX_CLIMB_REVERSAL))
 
 
 def find_climbs(waypoints, params=Climb()):
@@ -50,7 +52,9 @@ def contiguous(waypoints, params=Climb()):
             yield from find_climbs(b, params=params)
             yield from contiguous(c, params=params)
         else:
-            yield waypoints[0], waypoints[-1]
+            along = waypoints[-1].distance - waypoints[0].distance
+            if along and 100 * up / along < params.max_gradient:
+                yield waypoints[0], waypoints[-1]
 
 
 def sort(waypoints, reverse=False):
