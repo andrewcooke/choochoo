@@ -9,7 +9,7 @@ from bokeh.models import Div
 
 from ..data_frame import interpolate_to, add_interpolation
 from ..plot import line_diff, cumulative, heart_rate_zones, line_diff_elevation_climbs, dot_map, activities, health
-from ..server import Page, singleton_server
+from ..server import Page, default_singleton_server
 from ...config import config
 from ...data.data_frame import set_log, activity_statistics, statistics
 from ...lib.date import format_seconds, time_to_local_time, to_time
@@ -56,6 +56,8 @@ def get(df, name):
 
 def caption(s, activity):
 
+    from .similar_activities import SimilarActivitiesPage
+
     active_distance = StatisticJournal.for_source(s, activity.id, ACTIVE_DISTANCE,
                                                   ActivityStatistics, activity.activity_group).value
     active_time = StatisticJournal.for_source(s, activity.id, ACTIVE_TIME,
@@ -84,7 +86,7 @@ def caption(s, activity):
                           for segment in segments)
         text += '</br>' + extra
 
-    text += '<br/><a href="/activity_similarity?id=%d">similar</a>' % activity.id
+    text += '<br/><a href="/%s?id=%d">similar</a>' % (SimilarActivitiesPage.PATH, activity.id)
 
     return text
 
@@ -112,8 +114,9 @@ def comparison(log, s, activity, compare=None):
             df.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
         st = [add_interpolation(INTERPOLATION, df, HR_10, 10) for df in st]
         st_10 = [interpolate_to(df, INTERPOLATION) for df in st]
-        for df in st_10:
-            df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
+        if all(len(df[ELEVATION_M].dropna()) for df in st_10):
+            for df in st_10:
+                df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
         return st, st_10
 
     st1, st1_10 = get_stats(activity)
@@ -218,7 +221,9 @@ def comparison(log, s, activity, compare=None):
                   )
 
 
-class ActivityJournalPage(Page):
+class ActivityDetailsPage(Page):
+
+    PATH = '/activity_details'
 
     def create(self, s, id=None, compare=None, **kargs):
         aj1 = s.query(ActivityJournal). \
@@ -238,14 +243,16 @@ if __name__ == '__main__':
     for testing - can be run from within the IDE which makes it easier to display data, set breakpoints, etc.
     '''
     log, db = config('-v 5')
-    server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db)})
+    server = default_singleton_server(log, db)
     try:
         with db.session_context() as s:
             # aj1 = ActivityJournal.at_date(s, '2019-01-25')[0]
             # aj2 = ActivityJournal.at_date(s, '2019-01-23')[0]
-            # path = '/activity_journal?id=%d&compare=%d' % (aj1.id, aj2.id)
-            aj1 = ActivityJournal.at_date(s, '2018-03-04')[0]
-            path = '/activity_journal?id=%d' % aj1.id
+            # path = '%s?id=%d&compare=%d' % (ActivityDetailsPage.PATH, aj1.id, aj2.id)
+            # aj1 = ActivityJournal.at_date(s, '2018-03-04')[0]
+            # aj1 = ActivityJournal.at_date(s, '2018-12-16')[0]
+            aj1 = ActivityJournal.at_date(s, '2018-03-11')[0]
+            path = '%s?id=%d' % (ActivityDetailsPage.PATH, aj1.id)
             server.show(path)
         log.info('Crtl-C to exit')
         while True:

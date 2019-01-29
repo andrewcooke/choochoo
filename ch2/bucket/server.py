@@ -5,6 +5,8 @@ from threading import Thread
 from bokeh.server.server import Server
 from tornado.ioloop import IOLoop
 
+from ..lib.date import to_time, to_date
+
 SINGLETON = None
 
 TEMPLATE = '''
@@ -62,6 +64,17 @@ class ServerThread(Server):
         self.io_loop.add_callback(callback)
 
 
+def default_singleton_server(log, db):
+
+    from .page.activity_details import ActivityDetailsPage
+    from .page.duration_activities import DurationActivitiesPage
+    from .page.similar_activities import SimilarActivitiesPage
+
+    return singleton_server(log, {SimilarActivitiesPage.PATH: SimilarActivitiesPage(log, db),
+                                  ActivityDetailsPage.PATH: ActivityDetailsPage(log, db),
+                                  DurationActivitiesPage.PATH: DurationActivitiesPage(log, db)})
+
+
 def singleton_server(log, app_map):
 
     global SINGLETON
@@ -98,16 +111,29 @@ class Page(ABC):
 
     __ERROR = object()
 
-    def single_int_param(self, name, values, deflt=__ERROR):
+    def _parse_error(self, name, values, deflt):
+        msg = 'Could not parse "%s" for %s' % (values, name)
+        self._log.warning(msg)
+        if deflt != self.__ERROR:
+            return deflt
+        else:
+            raise Exception(msg)
+
+    def _single_param(self, type, name, values, deflt=__ERROR):
         try:
-            return int(values[0])
+            return type(values[0].decode())
         except Exception as e:
-            msg = 'Could not parse "%s" for %s' % (values, name)
-            self._log.warning(msg)
-            if deflt != self.__ERROR:
-                return deflt
-            else:
-                raise Exception(msg)
+            self._log.warn(e)
+            return self._parse_error(name, values, deflt)
+
+    def single_int_param(self, name, values, deflt=__ERROR):
+        return self._single_param(int, name, values, deflt)
+
+    def single_time_param(self, name, values, deflt=__ERROR):
+        return self._single_param(to_time, name, values, deflt)
+
+    def single_date_param(self, name, values, deflt=__ERROR):
+        return self._single_param(to_date, name, values, deflt)
 
     @abstractmethod
     def create(self, s, **kargs):

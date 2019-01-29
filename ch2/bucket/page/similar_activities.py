@@ -4,13 +4,12 @@ from time import sleep
 from bokeh.layouts import column, row
 from bokeh.models import Div
 
+from ..data_frame import xy
 from ..plot import simple_map
 from ..server import Page, singleton_server
 from ...config import config
-from ...data import activity_statistics
 from ...squeal import ActivityJournal
 from ...stoats.display.nearby import nearby_any_time, constraints
-from ...stoats.names import SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y
 
 MAP_SIDE = 100
 MAPS_PER_ROW = 10
@@ -37,17 +36,15 @@ def tile(log, s, aj, compare, xy_compare, nb):
 
 
 def caption(aj, compare, nb):
-    return Div(text='<p><a href="activity_journal?id=%d&amp;compare=%d">%s %d%%</a></p>' %
-                    (aj.id, compare.id, aj.start.strftime('%y-%m-%d'), 100 * nb.similarity),
+    from .activity_details import ActivityDetailsPage
+    return Div(text='<p><a href="%s?id=%d&amp;compare=%d">%s %d%%</a></p>' %
+                    (ActivityDetailsPage.PATH, aj.id, compare.id, aj.start.strftime('%y-%m-%d'), 100 * nb.similarity),
                width=MAP_SIDE)
 
 
-def xy(log, s, aj, every=10):
-    return activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                               activity_journal_id=aj.id, log=log).iloc[::every, :]
+class SimilarActivitiesPage(Page):
 
-
-class ActivitySimilarityPage(Page):
+    PATH = '/similar_activities'
 
     def create(self, s, id=None, **kargs):
         aj1 = s.query(ActivityJournal). \
@@ -60,17 +57,17 @@ if __name__ == '__main__':
     '''
     for testing - can be run from within the IDE which makes it easier to display data, set breakpoints, etc.
     '''
-    from .activity_journal import ActivityJournalPage
+    from .activity_details import ActivityDetailsPage
     log, db = config('-v 5')
-    server = singleton_server(log, {'/activity_similarity': ActivitySimilarityPage(log, db),
-                                    '/activity_journal': ActivityJournalPage(log, db)})
+    server = singleton_server(log, {SimilarActivitiesPage.PATH: SimilarActivitiesPage(log, db),
+                                    ActivityDetailsPage.PATH: ActivityDetailsPage(log, db)})
     try:
         with db.session_context() as s:
             # aj1 = ActivityJournal.at_date(s, '2019-01-25')[0]
             # aj2 = ActivityJournal.at_date(s, '2019-01-23')[0]
-            # path = '/activity_journal?id=%d&compare=%d' % (aj1.id, aj2.id)
+            # path = '%s?id=%d&compare=%d' % (SimilarActivitiesPage, aj1.id, aj2.id)
             aj1 = ActivityJournal.at_date(s, '2019-01-27')[0]
-            path = '/activity_similarity?id=%d' % aj1.id
+            path = '%s?id=%d' % (SimilarActivitiesPage, aj1.id)
             server.show(path)
         log.info('Crtl-C to exit')
         while True:

@@ -5,10 +5,10 @@ from abc import abstractmethod
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
-from ch2.bucket.page.activity_similarity import ActivitySimilarityPage
+from ch2.bucket.page.similar_activities import SimilarActivitiesPage
 from ch2.uweird.tui.fixed import Fixed
 from .args import DATE, SCHEDULE
-from ch2.bucket.page.activity_journal import ActivityJournalPage
+from ch2.bucket.page.activity_details import ActivityDetailsPage
 from ..bucket.server import singleton_server
 from ..lib.date import to_date
 from ..lib.io import tui
@@ -54,8 +54,8 @@ Display a summary for the month / year / schedule.
             date = dt.date.today() - dt.timedelta(days=int(date))
     with db.session_context() as s:
         TopicJournal.check_tz(log, s)
-    server = singleton_server(log, {'/activity_journal': ActivityJournalPage(log, db),
-                                    '/activity_similarity': ActivitySimilarityPage(log, db)})
+    server = singleton_server(log, {ActivityDetailsPage.PATH: ActivityDetailsPage(log, db),
+                                    SimilarActivitiesPage.PATH: SimilarActivitiesPage(log, db)})
     try:
         if schedule:
             schedule = Schedule(schedule)
@@ -192,13 +192,13 @@ class DailyDiary(Diary):
             yield Columns([f(menu), f(Padding(Fixed(button, 13), width='clip'))])
 
     def __show_gui(self, w, aj1):
-        path = '/activity_journal?id=%d' % aj1.id
+        path = '%s?id=%d' % (ActivityDetailsPage.PATH, aj1.id)
         if w.state:
             path += '&compare=%d' % w.state.id
         self._server.show(path)
 
     def __show_similar(self, w, aj1):
-        self._server.show('/activity_similarity?id=%d' % aj1.id)
+        self._server.show('%s?id=%d' % (SimilarActivitiesPage.PATH, aj1.id))
 
 
 class ScheduleDiary(Diary):

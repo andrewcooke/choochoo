@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd
 from bokeh.models import Range1d
 
+from ..data import activity_statistics
+from ..stoats.names import SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y
+
 
 def add_interpolation(name, df, deflt_name, delta=10):
     deflt = df[deflt_name]
@@ -18,6 +21,8 @@ def add_interpolation(name, df, deflt_name, delta=10):
         df.loc[df.index.isin(even.index), name] = 1  # set to 1 on indices we want to interpolate on
         even = even.loc[~even.index.isin(df.index)]  # drop duplicates
         if len(even):
+            # this can fail (eg 2018-03-11) for no apparent reason
+            # pandas / numpy bug?
             df2 = pd.concat([df, even], sort=False)
             df2 = df2.sort_index()
             return df2
@@ -66,3 +71,10 @@ def delta_patches(y1, y2):
 
 def clean(series):
     return series[~series.isin([np.nan, np.inf, -np.inf, None])]
+
+
+def xy(log, s, aj, every=10):
+    return activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
+                               activity_journal_id=aj.id, log=log).iloc[::every, :]
+
+

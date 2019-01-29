@@ -4,7 +4,7 @@ import datetime as dt
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.models import NumeralTickFormatter, PrintfTickFormatter, Range1d, LinearAxis, PanTool, ZoomInTool, \
-    HoverTool, ZoomOutTool, ResetTool
+    HoverTool, ZoomOutTool, ResetTool, Spacer
 from bokeh.plotting import figure
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
@@ -62,7 +62,7 @@ def simple_map(n, xy1, xy2=None):
 
 
 def dot_map(n, xy1, xy2=None, with_tools=True):
-    from ch2.bucket.page.activity_journal import DISTANCE_KM
+    from ch2.bucket.page.activity_details import DISTANCE_KM
 
     if with_tools:
         hover = make_hover(DISTANCE_KM)
@@ -93,22 +93,27 @@ def dot_map(n, xy1, xy2=None, with_tools=True):
 
 
 def line_diff_elevation_climbs(nx, ny, x_axis, y_axis, source1, source2=None, climbs=None, st=None, x_range=None):
-    from .page.activity_journal import DISTANCE_KM, ELEVATION_M
+
+    from .page.activity_details import DISTANCE_KM, ELEVATION_M
+
     f = line_diff(nx, ny, x_axis, y_axis, source1, source2=source2, x_range=x_range)
+
     for df in source1:
-        if ALTITUDE in df:
+        if ALTITUDE in df and len(df[ALTITUDE].dropna()):
             f.line(x=x_axis, y=ALTITUDE, source=df, color='black', alpha=0.1, line_width=2)
+
     if climbs is not None:
-        all = pd.concat(st)
+        joined = pd.concat(st)
         for time, climb in climbs.iterrows():
-            i = all.index.get_loc(time, method='nearest')
-            x = all[DISTANCE_KM].iloc[i]
+            i = joined.index.get_loc(time, method='nearest')
+            x = joined[DISTANCE_KM].iloc[i]
             x = (x - climb[CLIMB_DISTANCE] / 1000, x)
-            y = all[ELEVATION_M].iloc[i]
+            y = joined[ELEVATION_M].iloc[i]
             y = (y - climb[CLIMB_ELEVATION], y)
             f.line(x=x, y=y, color='red', line_width=5, alpha=0.2)
             for xx, yy in zip(x, y):
                 f.circle(x=xx, y=yy, color='red', size=8, alpha=0.2)
+
     return f
 
 
@@ -185,6 +190,9 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
     y1 = y1.sort_values(ascending=False).reset_index(drop=True)
     y_max = y1.max()
     y_min = y1.min()
+    if pd.isna(y_min):
+        return Spacer()
+
     if y2 is not None and len(y2):
         y2 = y2.sort_values(ascending=False).reset_index(drop=True)
         y_max = max(y_max, y2.max())
@@ -212,7 +220,7 @@ def cumulative(nx, ny, y1, y2=None, sample=10):
 
 
 def health(nx, ny, ff, hr, x_range=None):
-    from .page.activity_journal import LOG_FITNESS, LOG_FATIGUE
+    from .page.activity_details import LOG_FITNESS, LOG_FATIGUE
 
     hover = make_hover(FITNESS, FATIGUE)
     hover.renderers = []
