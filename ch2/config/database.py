@@ -244,7 +244,7 @@ def add_topic_field(s, topic, name, sort, description=None, units=None, summary=
                               statistic_name=statistic_name))
 
 
-def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=3,
+def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=5,
                start='1970', finish='2999', height=10, width=10, constant=NEARBY_CNAME):
     '''
     Add a pipeline task (and related constant) to find nearby activities in a given geographic
