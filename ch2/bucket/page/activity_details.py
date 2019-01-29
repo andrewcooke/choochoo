@@ -126,7 +126,7 @@ def comparison(log, s, activity, compare=None):
 
     def build(st, *axes):
         axes = list(axes) + [LOCAL_TIME]
-        return [df.loc[:, axes] for df in st]
+        return [df.reindex(columns=axes) for df in st]
 
     def build_all(*axes):
         source1 = build(st1_10, *axes)
