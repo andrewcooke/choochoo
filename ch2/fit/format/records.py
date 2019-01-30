@@ -106,6 +106,14 @@ def merge_duplicates(data):
         yield name, known[name]
 
 
+def restrict_names(names):
+    def filter(data):
+        for name, values_or_pair in data:
+            if name in names:
+                yield name, values_or_pair
+    return filter
+
+
 def chain(*filters):
     def expand(data, filters=filters):
         if filters:

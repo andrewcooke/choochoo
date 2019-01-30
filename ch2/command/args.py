@@ -8,7 +8,7 @@ from typing import Mapping
 
 from ..lib.date import to_date, to_time
 
-CH2_VERSION = '0.14.5'
+CH2_VERSION = '0.14.6'
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
@@ -55,6 +55,7 @@ DISCARD = 'discard'
 DROP = 'drop'
 F = 'f'
 FAST = 'fast'
+FIELD = 'field'
 FIELDS = 'fields'
 FINISH = 'finish'
 FIX_CHECKSUM = 'fix-checksum'
@@ -277,7 +278,7 @@ def parser():
     default_config.set_defaults(command=DEFAULT_CONFIG)
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
-    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?', type=to_date,
+    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
                        help='an optional date to display (default is today)')
     diary_summary = diary.add_mutually_exclusive_group()
     diary_summary.add_argument(mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
@@ -319,7 +320,9 @@ def parser():
     fit.add_argument(mm(ALL_FIELDS), action='store_true',
                      help='display undocumented fields')
     fit.add_argument(m(M), mm(MESSAGE), action='store', nargs='+', metavar='MSG',
-                     help='display only named messages')
+                     help='display named messages (--grep, --records, --tables)')
+    fit.add_argument(m(F), mm(FIELD), action='store', nargs='+', metavar='FLD',
+                     help='display named fields (--grep, --records, --tables')
     fit.add_argument(m(W), mm(WARN), action='store_true',
                      help='log additional warnings')
     fit.add_argument(mm(WIDTH), action='store', type=int,

@@ -1,4 +1,5 @@
 
+from .records import restrict_names
 from .tokens import State, FileHeader, token_factory, Checksum
 from ..profile.profile import read_profile
 from ...lib.data import tohex
@@ -65,10 +66,12 @@ def filtered_tokens(log, data,
 
 def filtered_records(log, data,
                      after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
-                     record_names=None, warn=False, no_validate=False, internal=False, max_delta_t=None,
+                     record_names=None, field_names=None,
+                     warn=False, no_validate=False, internal=False, max_delta_t=None,
                      profile_path=None, pipeline=None):
 
     if pipeline is None: pipeline = []
+    if field_names: pipeline.append(restrict_names(field_names))
     types, messages = read_profile(log, warn=warn, profile_path=profile_path)
     state, tokens = parse_data(log, data, types, messages, no_validate=no_validate, max_delta_t=max_delta_t)
 

@@ -75,17 +75,19 @@ class Token:
     def _describe_csv_header(self, record):
         yield self.__class__.__name__
 
-    def _describe_csv_data(self, record):
+    def _describe_csv_data(self, record, field_names=None):
         for name, (values, units) in record.data.items():
-            yield name
-            yield '' if values is None else '|'.join(str(value) for value in values)
-            yield '' if units is None else units
+            if not field_names or name in field_names:
+                yield name
+                yield '' if values is None else '|'.join(str(value) for value in values)
+                yield '' if units is None else units
 
-    def describe_csv(self, **options):
+    def describe_csv(self, record_names=None, field_names=None, internal=False, **options):
         record = self.parse_token(map_values=False, raw_time=True, rtn_composite=True,
                                   **options).force(merge_duplicates)
-        yield from self._describe_csv_header(record)
-        yield from self._describe_csv_data(record)
+        if not record_names or record.name in record_names:
+            yield from self._describe_csv_header(record)
+            yield from self._describe_csv_data(record, field_names=field_names)
 
     def describe_fields(self, types):
         for name, (values, units) in self.parse_token(raw_data=True).data:
@@ -429,14 +431,16 @@ class Definition(Token):
         while names:
             yield from follow(names[0])
 
-    def describe_csv(self, **options):
-        yield 'Definition'
-        yield self.local_message_type
-        yield self.message.name
-        for field in self.fields:
-            yield field.name
-            yield field.count
-            yield ''
+    def describe_csv(self, record_names=None, field_names=None, internal=False, **options):
+        if internal and (not record_names or self.message.name in record_names):
+            yield 'Definition'
+            yield self.local_message_type
+            yield self.message.name
+            for field in self.fields:
+                if not field_names or field.name in field_names:
+                    yield field.name
+                    yield field.count
+                    yield ''
 
     def describe_fields(self, types):
         # something of a hack - we pack data in odd places below just to unpack here
