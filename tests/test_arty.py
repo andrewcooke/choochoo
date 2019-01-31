@@ -294,3 +294,34 @@ class TestArty(TestCase):
         test_point(0.01, -89.99, 0)
         test_point(179.9, -89.99, 1)
         test_point(-179.9, -89.99, 2)
+
+    def run_python(self, tree):
+        tree[[(0, 0)]] = 'alice'
+        tree[[(10, 10)]] = 'bob'
+        tree[[(10, 10)]] = 'charles'
+
+        def show(tree, x, y):
+            found = False
+            print()
+            for entry in tree[[(x, y)]]:
+                found = True
+                print('%s at (%g,%g)' % (entry, x, y))
+            if not found:
+                print('nobody at (%g,%g)' % (x, y))
+
+        show(tree, 0, 0)
+        show(tree, 5, 5)
+        show(tree, 10, 10)
+
+        return tree
+
+    def test_python(self):
+
+        # for other-projects.md
+        from ch2.arty import CQRTree, MatchType
+
+        tree = self.run_python(CQRTree())
+        self.assertEqual(list(tree[[(0, 0)]]), ['alice'])
+
+        self.run_python(CQRTree(default_match=MatchType.INTERSECTS, default_border=3))
+

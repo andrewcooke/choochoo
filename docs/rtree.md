@@ -14,8 +14,6 @@ respectively).
 If it would be useful I can separate this code into it's own package -
 please contact me.
 
-## Contents
-
 * [Design](#design)
 * [Minimum Bounding Rectangles](#minimum-bounding-rectangles)
 * [Points as Data](#points-as-data)

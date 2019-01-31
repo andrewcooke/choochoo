@@ -59,4 +59,5 @@ support for power meters.
   * [Detecting Climbs](climbs)
 * Development
   * [Spatial Search](rtree)
+  * [Other Projects](other-projects)
   

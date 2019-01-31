@@ -7,7 +7,7 @@ from unittest import TestCase
 
 from ch2.command.args import FIELDS, TABLES, GREP
 from ch2.fit.format.read import filtered_records
-from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
+from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain, no_units
 from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_external_profile, read_fit
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
@@ -149,13 +149,29 @@ class TestFit(TestCase, OutputMixin):
         data = read_fit(self.log, join(self.test_dir, 'source/personal/2018-07-26-rec.fit'))
         summarize(self.log, GREP, data, grep=['.*:.*speed>10'])
 
-    # def test_bad_parsing(self):
-    #     # data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/compressed-speed-distance.fit'))
-    #     # data = read_fit(self.log, join('/home/andrew', 'archive/fit/monitor/28694037944.fit'))
-    #     # data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse-fix/activity-activity-filecrc.fit'))
-    #     data = read_fit(self.log, join(self.test_dir, 'source/python-fitparse/20170518-191602-1740899583.fit'))
-    #     types, messages, tokens = filtered_tokens(self.log, data, profile_path=self.profile_path)
-    #     for i, offset, token in tokens:
-    #         result = token.parse_token().force(merge_duplicates)
-    #         if i == 33:
-    #             print()
+    def test_python(self):
+        # for other-projects.md
+        from logging import basicConfig, getLogger, INFO
+        from ch2.fit.profile.profile import read_fit, read_profile
+        from ch2.fit.format.records import fix_degrees, no_units
+        from ch2.fit.format.read import parse_data
+
+        basicConfig(level=INFO)
+        log = getLogger()
+
+        data = read_fit(log, 'data/test/source/personal/2018-07-26-rec.fit')
+        types, messages = read_profile(log)
+        state, tokens = parse_data(log, data, types, messages)
+
+        LAT, LONG = 'position_lat', 'position_long'
+        positions = []
+
+        for offset, token in tokens:
+            record = token.parse_token().as_dict(no_units, fix_degrees)
+            if record.name == 'record':
+                positions.append((record.data[LAT][0], record.data[LONG][0]))
+
+        print('Read %s positions' % len(positions))
+
+        self.assertAlmostEqual(positions[0][0], -33.42, places=1)
+        self.assertAlmostEqual(positions[0][1], -70.61, places=1)
