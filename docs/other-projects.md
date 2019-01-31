@@ -284,7 +284,7 @@ The first example matched points exactly, Instead, we can use the tree
 to find *nearby* points:
 
       from ch2.arty import CQRTree, MatchType
-      tree = CQRTree(default_match=MatchType.INTERSECTS, default_border=3)
+      tree = CQRTree(default_match=MatchType.OVERLAP, default_border=3)
       tree[[(0, 0)]] = 'alice'
       tree[[(10, 10)]] = 'bob'
       tree[[(10, 10)]] = 'charles'
@@ -315,8 +315,8 @@ Here is the output:
 
 The `default_border` adds an extra region to all points, so `(0, 0)`
 extends from `(-3, -3)` to `(3, 3)`, while `(5, 5)` extends from `(2,
-2)` to `(8, 8)`.  Because these overlap (or "intersect"), we find
-*everyone* at `(5, 5)`.
+2)` to `(8, 8)`.  Because these overlap we find *everyone* at `(5,
+5)`.
 
 ### Using Shapes (Lists of Points)
 

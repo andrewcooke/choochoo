@@ -9,7 +9,7 @@ from bokeh.models import Div
 
 from ..data_frame import interpolate_to, add_interpolation
 from ..plot import line_diff, cumulative, heart_rate_zones, line_diff_elevation_climbs, dot_map, activities, health
-from ..server import Page, default_singleton_server
+from ..server import Page, default_singleton_server, target_link
 from ...config import config
 from ...data.data_frame import set_log, activity_statistics, statistics
 from ...lib.date import format_seconds, time_to_local_time, to_time
@@ -86,7 +86,7 @@ def caption(s, activity):
                           for segment in segments)
         text += '</br>' + extra
 
-    text += '<br/><a href="/%s?id=%d">similar</a>' % (SimilarActivitiesPage.PATH, activity.id)
+    text += '<br/>' + target_link('%s?id=%d' % (SimilarActivitiesPage.PATH, activity.id), 'similar')
 
     return text
 

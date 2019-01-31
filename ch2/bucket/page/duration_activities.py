@@ -6,7 +6,7 @@ from bokeh.models import Div
 
 from ..data_frame import xy
 from ..plot import simple_map
-from ..server import Page, default_singleton_server
+from ..server import Page, default_singleton_server, target_link
 from ...config import config
 from ...lib.date import to_duration, add_date, local_date_to_time
 from ...squeal import ActivityJournal
@@ -37,8 +37,9 @@ def tile(log, s, aj):
 
 def caption(aj):
     from .activity_details import ActivityDetailsPage
-    return Div(text='<p><a href="%s?id=%d">%s</a></p>' %
-                    (ActivityDetailsPage.PATH, aj.id, aj.start.strftime('%Y-%m-%d')),
+    return Div(text='<p>' +
+                    target_link('%s?id=%d' % (ActivityDetailsPage.PATH, aj.id,), aj.start.strftime('%Y-%m-%d')) +
+                    '</p>',
                width=MAP_SIDE)
 
 

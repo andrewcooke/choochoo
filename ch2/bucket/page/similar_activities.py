@@ -6,7 +6,7 @@ from bokeh.models import Div
 
 from ..data_frame import xy
 from ..plot import simple_map
-from ..server import Page, singleton_server
+from ..server import Page, singleton_server, target_link
 from ...config import config
 from ...squeal import ActivityJournal
 from ...stoats.display.nearby import nearby_any_time, constraints
@@ -37,8 +37,10 @@ def tile(log, s, aj, compare, xy_compare, nb):
 
 def caption(aj, compare, nb):
     from .activity_details import ActivityDetailsPage
-    return Div(text='<p><a href="%s?id=%d&amp;compare=%d">%s %d%%</a></p>' %
-                    (ActivityDetailsPage.PATH, aj.id, compare.id, aj.start.strftime('%y-%m-%d'), 100 * nb.similarity),
+    return Div(text='<p>' +
+                    target_link('%s?id=%d&amp;compare=%d' % (ActivityDetailsPage.PATH, aj.id, compare.id),
+                                '%s %d%%' % (aj.start.strftime('%y-%m-%d'), 100 * nb.similarity)) +
+                    '</p>',
                width=MAP_SIDE)
 
 

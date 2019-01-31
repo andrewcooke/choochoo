@@ -33,16 +33,16 @@ class NearbySimilarityCalculator(DbPipeline):
 
     def run(self, force=False, after=None):
 
-        rtree = SQRTree(default_match=MatchType.INTERSECTS, default_border=self._config.border)
+        rtree = SQRTree(default_match=MatchType.OVERLAP, default_border=self._config.border)
 
         with self._db.session_context() as s:
             if force:
                 self._delete(s)
             n_points = defaultdict(lambda: 0)
             self._prepare(s, rtree, n_points, 30000)
-            n_intersects = defaultdict(lambda: defaultdict(lambda: 0))
-            new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_intersects, 10000)
-            self._save(s, new_ids, affected_ids, n_points, n_intersects, 10000)
+            n_overlaps = defaultdict(lambda: defaultdict(lambda: 0))
+            new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
+            self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
     def _delete(self, s):
         self._log.warning('Deleting similarity data for %s' % self._config.constraint)
@@ -50,7 +50,7 @@ class NearbySimilarityCalculator(DbPipeline):
             filter(ActivitySimilarity.constraint == self._config.constraint). \
             delete()
 
-    def _save(self, s, new_ids, affected_ids, n_points, n_intersects, delta):
+    def _save(self, s, new_ids, affected_ids, n_points, n_overlaps, delta):
         distances = dict((s.source.id, s.value)
                          for s in s.query(StatisticJournalFloat).
                          join(StatisticName).
@@ -73,7 +73,7 @@ class NearbySimilarityCalculator(DbPipeline):
                             d_factor = d_lo / d_hi if d_lo < d_hi else 1
                         s.add(ActivitySimilarity(constraint=self._config.constraint,
                                                  activity_journal_lo_id=lo, activity_journal_hi_id=hi,
-                                                 similarity=(n_intersects[lo][hi] / n_max) * d_factor))
+                                                 similarity=(n_overlaps[lo][hi] / n_max) * d_factor))
                         n += 1
                         if n % delta == 0:
                             self._log.info('Saved %d for %s' % (n, self._config.constraint))
@@ -92,7 +92,7 @@ class NearbySimilarityCalculator(DbPipeline):
         if n % delta:
             self._log.info('Loaded %s points for %s' % (n, self._config.constraint))
 
-    def _count_overlaps(self, s, rtree, n_points, n_intersects, delta):
+    def _count_overlaps(self, s, rtree, n_points, n_overlaps, delta):
         new_aj_ids, affected_aj_ids, n = [], set(), 0
         for aj_id_in, aj_lon_lats in groupby(self._aj_lon_lat(s, new=True), key=lambda aj_lon_lat: aj_lon_lat[0]):
             aj_lon_lats = list(aj_lon_lats)  # reuse below
@@ -105,7 +105,7 @@ class NearbySimilarityCalculator(DbPipeline):
                     if other_posn not in seen_posns:
                         lo, hi = min(aj_id_in, aj_id_out), max(aj_id_in, aj_id_out)  # ordered pair
                         affected_aj_ids.add(aj_id_out)
-                        n_intersects[lo][hi] += 1
+                        n_overlaps[lo][hi] += 1
                         seen_posns.add(other_posn)
             for _, lon, lat in aj_lon_lats:  # adding after avoids matching ourselves
                 posn = [(lon, lat)]

@@ -88,6 +88,10 @@ def singleton_server(log, app_map):
     return SINGLETON
 
 
+def target_link(url, text):
+    return '<a href="%s" target="%s">%s</a>' % (url, url, text)
+
+
 class Page(ABC):
 
     def __init__(self, log, db, template=TEMPLATE, **vars):

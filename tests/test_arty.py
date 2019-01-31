@@ -51,7 +51,7 @@ class TestArty(TestCase):
         self.assertEqual(len(some), 0)
         some = list(tree.get([(0, 0), (2, 1)], match=MatchType.CONTAINS))
         self.assertEqual(len(some), 1)
-        some = list(tree.get([(0, 0), (1, 1)], match=MatchType.INTERSECTS))
+        some = list(tree.get([(0, 0), (1, 1)], match=MatchType.OVERLAP))
         self.assertEqual(len(some), 3)
 
     def test_known_boxes(self):
@@ -229,11 +229,11 @@ class TestArty(TestCase):
         del tree[square]
         self.assertEqual(len(tree), 0)
 
-        tree = CQRTree(default_match=MatchType.INTERSECTS)
+        tree = CQRTree(default_match=MatchType.OVERLAP)
         tree[square] = 'square'
         self.assertEqual(list(tree[diagonal]), ['square'])
 
-        tree = CQRTree(default_match=MatchType.INTERSECTS)
+        tree = CQRTree(default_match=MatchType.OVERLAP)
         tree[square] = 'square'
         self.assertEqual(list(tree.get_items(diagonal)), [(((0,0),(0,1),(1,1),(1,0)), 'square')])
 
@@ -323,5 +323,5 @@ class TestArty(TestCase):
         tree = self.run_python(CQRTree())
         self.assertEqual(list(tree[[(0, 0)]]), ['alice'])
 
-        self.run_python(CQRTree(default_match=MatchType.INTERSECTS, default_border=3))
+        self.run_python(CQRTree(default_match=MatchType.OVERLAP, default_border=3))
 

@@ -11,7 +11,7 @@ class MatchType(IntEnum):
     EQUALS = 0  # request exactly equal to node
     CONTAINED = 1  # request contained in node
     CONTAINS = 2  # request contains node
-    INTERSECTS = 3  # request and node intersect
+    OVERLAP = 3  # request and node overlap
 
 
 class BaseTree(ABC):
@@ -153,7 +153,7 @@ class BaseTree(ABC):
         Descend in search?
         '''
         return (match in (MatchType.EQUALS, MatchType.CONTAINED) and self._contains(mbr_entry, mbr_request)) or \
-               (match in (MatchType.CONTAINS, MatchType.INTERSECTS) and self._intersects(mbr_entry, mbr_request))
+               (match in (MatchType.CONTAINS, MatchType.OVERLAP) and self._overlaps(mbr_entry, mbr_request))
 
     def __match(self, mbr_request, mbr_entry, content_request, content_entry, match):
         '''
@@ -165,7 +165,7 @@ class BaseTree(ABC):
                 (match == MatchType.EQUALS and points_request == points_node) or
                 (match == MatchType.CONTAINED and self._contains(mbr_entry, mbr_request)) or
                 (match == MatchType.CONTAINS and self._contains(mbr_request, mbr_entry)) or
-                (match == MatchType.INTERSECTS and self._intersects(mbr_request, mbr_entry)))
+                (match == MatchType.OVERLAP and self._overlaps(mbr_request, mbr_entry)))
 
     def add(self, points, value, border=None):
         '''
@@ -553,7 +553,7 @@ class BaseTree(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def _intersects(self, mbr1, mbr2):
+    def _overlaps(self, mbr1, mbr2):
         raise NotImplementedError()
 
     @abstractmethod
@@ -604,7 +604,7 @@ class CartesianMixin:
         x1s, y1s, x2s, y2s = zip(*mbrs)
         return min(x1s), min(y1s), max(x2s), max(y2s)
 
-    def _intersects(self, mbr1, mbr2):
+    def _overlaps(self, mbr1, mbr2):
         '''
         Do the two MBR's intersect?
         '''
