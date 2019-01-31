@@ -105,9 +105,9 @@ Here's some example code:
     positions = []
 
     for offset, token in tokens:
-	record = token.parse_token().as_dict(no_units, fix_degrees)
-	if record.name == 'record':
-	    positions.append((record.data[LAT][0], record.data[LONG][0]))
+        record = token.parse_token().as_dict(no_units, fix_degrees)
+        if record.name == 'record':
+            positions.append((record.data[LAT][0], record.data[LONG][0]))
 
     print('Read %s positions' % len(positions))
 
@@ -120,7 +120,7 @@ field has just one).
 The `no_units, fix_degrees` removes the units from the data and
 converts the strange "sermicircle" units to degrees (so the latitude
 and longitude are in degrees).
-	
+        
 ### More Information
 
 * The code for the library is
@@ -195,8 +195,8 @@ good tutotial on using Jupyter.
 
       >| from ch2.data import *
          s = session('-v 0')
-	 data = statistics(s, 'Latitude', 'Longitude')
-	 data.describe()
+         data = statistics(s, 'Latitude', 'Longitude')
+         data.describe()
 
   This will create a Pandas DataFrame (`data`) with the values for
   latitutde and longitude.
@@ -274,7 +274,7 @@ Here is the output:
 
       bob at (10,10)
       charles at (10,10)
-	
+        
 Note that reading from the tree can return multiple values (unlike a
 dict).
 
