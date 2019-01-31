@@ -65,7 +65,7 @@ class TestMonitor(TestCase):
                            Interval.schedule == 'd',
                            StatisticName.owner == MonitorStatistics,
                            StatisticName.name == REST_HR).one()
-                self.assertEqual(summary.value, 42)
+                self.assertEqual(summary.value, 45)
 
     FILES = ('25505915679', '25519562859', '25519565531', '25532154264', '25539076032', '25542112328')
 

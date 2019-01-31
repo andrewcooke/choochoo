@@ -84,7 +84,7 @@ class TestFit(TestCase, OutputMixin):
         if EXC_HDR_CHK not in filters: filters = [EXC_HDR_CHK] + filters
         with self.assertCSVMatch(csv_path, filters=filters) as output:
             summarize_csv(self.log, read_fit(self.log, fit_path), profile_path=self.profile_path,
-                          warn=True, output=output)
+                          warn=True, output=output, internal=True)
 
     def standard_csv_dir(self, dir, fit_pattern, exclude=None, filters=None):
         for source_fit_path in glob(join(self.test_dir, 'source', dir, fit_pattern)):
