@@ -10,7 +10,7 @@ from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
-from ...sortem import oracle_from_constant
+from ...sortem.bilinear import bilinear_elevation_from_constant
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.source import Interval
@@ -22,7 +22,7 @@ class ActivityImporter(Importer):
     def _on_init(self, *args, **kargs):
         super()._on_init(*args, **kargs)
         with self._db.session_context() as s:
-            self.__oracle = oracle_from_constant(self._log, s)
+            self.__oracle = bilinear_elevation_from_constant(self._log, s)
 
     def run(self, paths, force=False):
         if 'sport_to_activity' not in self._kargs:

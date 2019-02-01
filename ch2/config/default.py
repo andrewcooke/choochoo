@@ -4,7 +4,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
 from ..lib.schedule import Schedule
-from ..sortem import SRTM1_DIR
+from ..sortem.file import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
