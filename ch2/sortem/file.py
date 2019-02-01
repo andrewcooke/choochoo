@@ -21,7 +21,7 @@ EXTN = '.SRTMGL1.hgt.zip'
 # (although that has bugs...)
 
 
-@lru_cache(4)  # 4 means our tests are quick...
+@lru_cache(4)  # 4 means our tests are quick (and should tile a local patch)
 def cached_file_reader(log, dir, flat, flon):
     if not exists(dir):
         raise Exception('SRTM1 directory %s missing' % dir)

@@ -5,9 +5,8 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
-from ch2.lib.data import MutableAttr, kargs_to_attr
-from ch2.squeal import ActivityJournal
-from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, \
+from ..lib.data import kargs_to_attr
+from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan
 

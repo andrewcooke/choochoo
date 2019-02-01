@@ -20,7 +20,7 @@ from ...stoats.display.climb import climbs_for_activity
 from ...stoats.display.segment import segments_for_activity
 from ...stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE, \
-    CLIMB_TIME, CLIMB_GRADIENT, LOCAL_TIME, DAILY_STEPS, REST_HR
+    CLIMB_TIME, CLIMB_GRADIENT, LOCAL_TIME, DAILY_STEPS, REST_HR, LONGITUDE, LATITUDE
 
 WINDOW = '60s'
 #WINDOW = 10
@@ -96,7 +96,8 @@ def comparison(log, s, activity, compare=None):
     # ---- definitions
 
     set_log(log)
-    names = [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION, SPEED, HR_ZONE, HR_10, ALTITUDE]
+    names = [LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION, SPEED,
+             HR_ZONE, HR_10, ALTITUDE]
 
     # ---- load data
 
@@ -104,9 +105,6 @@ def comparison(log, s, activity, compare=None):
         st = [df for id, df in
               activity_statistics(s, *names, activity_journal_id=aj.id, with_timespan=True).groupby('timespan_id')]
         for df in st:
-            df[TIME] = df.index
-            # this seems to be a bug in pandas not supporting astimezone for some weird internal datetime
-            df[LOCAL_TIME] = df[TIME].apply(lambda x: time_to_local_time(to_time(x.timestamp())).strftime('%H:%M:%S'))
             df[DISTANCE_KM] = df[DISTANCE]/1000
             df[SPEED_KPH] = df[SPEED] * 3.6
             df[MED_SPEED_KPH] = df[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
@@ -117,6 +115,11 @@ def comparison(log, s, activity, compare=None):
         if all(len(df[ELEVATION_M].dropna()) for df in st_10):
             for df in st_10:
                 df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
+        for df in st_10:
+            df[TIME] = df.index
+            # this seems to be a bug in pandas not supporting astimezone for some weird internal datetime
+            df[LOCAL_TIME] = df[TIME].apply(lambda x: time_to_local_time(to_time(x.timestamp())).strftime('%H:%M:%S'))
+            # df[LOCAL_TIME] = df[TIME].apply(lambda x: time_to_local_time(x).strftime('%H:%M:%S'))
         return st, st_10
 
     st1, st1_10 = get_stats(activity)
@@ -169,9 +172,9 @@ def comparison(log, s, activity, compare=None):
     else:
         for df in st1_10:
             df['size'] = df[SPHERICAL_MERCATOR_X] * 0
-    xy1 = build(st1_10, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, 'size', DISTANCE_KM)
+    xy1 = build(st1_10, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, 'size', DISTANCE_KM)
     if compare:
-        xy2 = build(st2_10, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE_KM)
+        xy2 = build(st2_10, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE_KM)
     else:
         xy2 = None
     map = dot_map(MAP_LEN, xy1, xy2)

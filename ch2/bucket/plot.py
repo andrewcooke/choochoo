@@ -9,7 +9,7 @@ from bokeh.plotting import figure
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
 from ..stoats.names import TIME, HR_ZONE, CLIMB_DISTANCE, CLIMB_ELEVATION, ALTITUDE, LOCAL_TIME, SPHERICAL_MERCATOR_X, \
-    SPHERICAL_MERCATOR_Y, FATIGUE, FITNESS, REST_HR
+    SPHERICAL_MERCATOR_Y, FATIGUE, FITNESS, REST_HR, LONGITUDE, LATITUDE
 
 
 def disable_toolbar(f):
@@ -65,7 +65,7 @@ def dot_map(n, xy1, xy2=None, with_tools=True):
     from ch2.bucket.page.activity_details import DISTANCE_KM
 
     if with_tools:
-        hover = make_hover(DISTANCE_KM)
+        hover = make_hover(DISTANCE_KM, LATITUDE, LONGITUDE)
         hover.renderers = []
         tools = [PanTool(), ZoomInTool(), ZoomOutTool(), ResetTool(), hover]
     else:
