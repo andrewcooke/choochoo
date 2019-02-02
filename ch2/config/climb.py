@@ -8,7 +8,7 @@ from ..stoats.calculate.climb import Climb, MAX_CLIMB_GRADIENT, MIN_CLIMB_GRADIE
 CLIMB_CNAME = 'Climb'
 
 
-def add_climb(s, activity_group, phi=0.6):
+def add_climb(s, activity_group, phi=0.7):
     '''
     Add the constants necessary to auto-detect climbs.
     '''

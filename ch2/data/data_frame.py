@@ -127,7 +127,8 @@ def statistics(s, *statistics,
     return pd.DataFrame(data, index=times)
 
 
-def _resolve_activity(s, time, activity_journal_id):
+def _resolve_activity(s, time, activity_journal_id, log=None):
+    set_log(log)
     if activity_journal_id:
         if time:
             raise Exception('Specify activity_journal_id or time (not both)')

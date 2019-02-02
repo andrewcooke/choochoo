@@ -41,19 +41,20 @@ class ImpulseDiary(Displayer):
         finish = self._read(s, response.dest_name, start_time, finish_time, desc)
         if start and finish and start.value != finish.value:
             lo, hi = self._range(s, response.dest_name, start, finish_time, dt.timedelta(days=90))
-            if display_range:
-                style = 'quintile-%d' % min(5, 1 + int(5 * (finish.value - lo.value) / (hi.value - lo.value)))
-            else:
-                style = 'em'
-            yield [Text(response.dest_name),
-                   Text([label('Frm: '), (style, '%d' % int(start.value))]),
-                   Text([label('To:  '), (style, '%d' % int(finish.value))]),
-                   Text(em('increase') if start.value < finish.value else error('decrease'))]
-            if display_range:
-                yield [Text([label('Over 90 days')]),
-                       Text([label('Lo:  '), '%d' % int(lo.value)]),
-                       Text([label('Hi:  '), '%d' % int(hi.value)]),
-                       Text('')]
+            if lo is not None and hi is not None:
+                if display_range:
+                    style = 'quintile-%d' % min(5, 1 + int(5 * (finish.value - lo.value) / (hi.value - lo.value)))
+                else:
+                    style = 'em'
+                yield [Text(response.dest_name),
+                       Text([label('Frm: '), (style, '%d' % int(start.value))]),
+                       Text([label('To:  '), (style, '%d' % int(finish.value))]),
+                       Text(em('increase') if start.value < finish.value else error('decrease'))]
+                if display_range:
+                    yield [Text([label('Over 90 days')]),
+                           Text([label('Lo:  '), '%d' % int(lo.value)]),
+                           Text([label('Hi:  '), '%d' % int(hi.value)]),
+                           Text('')]
 
     def _read(self, s, name, start_time, finish_time, direcn):
         return s.query(StatisticJournal). \
@@ -74,5 +75,5 @@ class ImpulseDiary(Displayer):
                    StatisticName.owner == ImpulseStatistics,
                    jtype.time >= start_time,
                    jtype.time < finish_time)
-        return (q.order_by(asc(jtype.value)).limit(1).one(),
-                q.order_by(desc(jtype.value)).limit(1).one())
+        return (q.order_by(asc(jtype.value)).limit(1).one_or_none(),
+                q.order_by(desc(jtype.value)).limit(1).one_or_none())

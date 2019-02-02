@@ -112,14 +112,12 @@ def comparison(log, s, activity, compare=None):
             df.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
         st = [add_interpolation(INTERPOLATION, df, HR_10, 10) for df in st]
         st_10 = [interpolate_to(df, INTERPOLATION) for df in st]
-        if all(len(df[ELEVATION_M].dropna()) for df in st_10):
-            for df in st_10:
-                df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
         for df in st_10:
+            df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
             df[TIME] = df.index
+            # df[LOCAL_TIME] = df[TIME].apply(lambda x: time_to_local_time(x).strftime('%H:%M:%S'))
             # this seems to be a bug in pandas not supporting astimezone for some weird internal datetime
             df[LOCAL_TIME] = df[TIME].apply(lambda x: time_to_local_time(to_time(x.timestamp())).strftime('%H:%M:%S'))
-            # df[LOCAL_TIME] = df[TIME].apply(lambda x: time_to_local_time(x).strftime('%H:%M:%S'))
         return st, st_10
 
     st1, st1_10 = get_stats(activity)
@@ -136,6 +134,9 @@ def comparison(log, s, activity, compare=None):
         source2 = build(st2_10, *axes) if compare else None
         return source1, source2
 
+    def concat(all, axis):
+        return pd.concat(df[axis].dropna() for df in all if len(df[axis].dropna()))
+
     # ---- ride-specific plots
 
     def ride_line(y_axis, x_axis=TIME):
@@ -149,8 +150,8 @@ def comparison(log, s, activity, compare=None):
 
     def ride_cum(y_axis):
         source1, source2 = build_all(y_axis)
-        return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, pd.concat(df[y_axis] for df in source1),
-                          pd.concat(df[y_axis] for df in source2) if compare else None)
+        return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, concat(source1, y_axis),
+                          concat(source2, y_axis) if compare else None)
 
     hr10_line = ride_line(MED_HR_10, x_axis=DISTANCE_KM)
     hr10_cumulative = ride_cum(HR_10)
@@ -255,7 +256,8 @@ if __name__ == '__main__':
             # aj1 = ActivityJournal.at_date(s, '2018-03-04')[0]
             # aj1 = ActivityJournal.at_date(s, '2018-12-16')[0]
             # aj1 = ActivityJournal.at_date(s, '2018-03-11')[0]
-            aj1 = ActivityJournal.at_date(s, '2017-03-16')[0]
+            # aj1 = ActivityJournal.at_date(s, '2017-03-16')[0]
+            aj1 = ActivityJournal.at_date(s, '2017-09-27')[0]
             path = '%s?id=%d' % (ActivityDetailsPage.PATH, aj1.id)
             server.show(path)
         log.info('Crtl-C to exit')
