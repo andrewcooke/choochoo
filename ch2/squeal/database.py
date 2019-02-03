@@ -32,6 +32,7 @@ def fk_pragma_on_connect(dbapi_con, _con_record):
     cursor.execute("PRAGMA threads=4;")  # https://www.sqlite.org/pragma.html#pragma_threads
     cursor.execute("PRAGMA cache_size=-1000000;")  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
     cursor.execute("PRAGMA secure_delete=OFF;")  # https://www.sqlite.org/pragma.html#pragma_secure_delete
+    # cursor.execute("PRAGMA journal_mode=WAL;")  # https://www.sqlite.org/wal.html
     cursor.close()
 
 

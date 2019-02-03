@@ -80,6 +80,7 @@ class StatisticJournal(Base):
     serial = Column(Integer, server_default=text('NULL'))  # default needed for migration
     UniqueConstraint(time, statistic_name_id)
     UniqueConstraint(serial, source_id, statistic_name_id)
+    Index('from_activity_timespan', source_id, statistic_name_id, time)  # time last since inequality
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.STATISTIC,
