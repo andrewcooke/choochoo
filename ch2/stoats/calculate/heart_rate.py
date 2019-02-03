@@ -88,17 +88,19 @@ class HeartRateStatistics(ActivityCalculator):
             elif not impulses:
                 impulses.append((0, time))
             prev_time, prev_heart_rate_zone = time, heart_rate_zone
+        if loader:
+            loader.load()
+            s.commit()
 
         if impulses:
+            loader = StatisticJournalLoader(self._log, s, self)
             self._interpolate(hr_impulse.dest_name, loader, impulses, 10, ajournal)
-
-        # if there are no values, add a single null so we don't re-process
-        if not loader:
-            loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,
-                       StatisticJournalFloat)
-
-        loader.load()
-        s.commit()
+            # if there are no values, add a single null so we don't re-process
+            if not loader:
+                loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,
+                           StatisticJournalFloat)
+            loader.load()
+            s.commit()
 
     def _calculate_impulse(self, heart_rate_zone, duration, hr_impulse):
         return duration * ((max(heart_rate_zone, hr_impulse.zero) - hr_impulse.zero)

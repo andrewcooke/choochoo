@@ -73,6 +73,13 @@ extensible.*
 
 ## Latest Changes
 
+### v0.15.0
+
+Modified database schema (`serial` in statistic_journal which makes
+time-series logic simpler).  Migrate using existing databases using
+`migraine/sqln2sqlo.sh` (you will then need to reload data from FIT
+files).
+
 ### v0.14.0
 
 Zoom in summary plots (embedded Bokeh server while diary is used).

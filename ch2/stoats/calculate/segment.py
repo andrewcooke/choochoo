@@ -7,7 +7,7 @@ from ..names import SEGMENT_TIME, LATITUDE, LONGITUDE, DISTANCE, S, summaries, M
 from ..waypoint import filter_none
 from ...squeal.tables.activity import ActivityJournal
 from ...squeal.tables.segment import SegmentJournal, Segment
-from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalType
+from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalType, StatisticJournalFloat
 from ...squeal.types import short_cls
 
 
@@ -51,11 +51,9 @@ class SegmentStatistics(WaypointCalculator):
     def _add_stats_from_waypoints(self, s, ajournal, waypoints):
         for sjournal in s.query(SegmentJournal). \
                 filter(SegmentJournal.activity_journal == ajournal).all():
-            StatisticJournal.add(self._log, s, SEGMENT_TIME, S, summaries(MIN, CNT, MSR), self,
-                                 sjournal.segment, sjournal,
-                                 (sjournal.finish - sjournal.start).total_seconds(),
-                                 sjournal.start, StatisticJournalType.FLOAT)
-            self._log.info('ADDED')
+            StatisticJournalFloat.add(self._log, s, SEGMENT_TIME, S, summaries(MIN, CNT, MSR), self,
+                                      sjournal.segment, sjournal,
+                                      (sjournal.finish - sjournal.start).total_seconds(), sjournal.start)
             waypoints = [w for w in filter_none(self._names().values(), waypoints)
                          if sjournal.start <= w.time <= sjournal.finish]
             # weight by time gap so we don't bias towards more sampled times
@@ -64,9 +62,8 @@ class SegmentStatistics(WaypointCalculator):
             if gaps:
                 weighted = sum(dt.total_seconds() * hr for dt, hr in gaps)
                 average = weighted / sum(dt.total_seconds() for dt, _ in gaps)
-                StatisticJournal.add(self._log, s, SEGMENT_HEART_RATE, BPM, summaries(MAX, CNT, MSR), self,
-                                     sjournal.segment, sjournal, average,
-                                     sjournal.start, StatisticJournalType.FLOAT)
+                StatisticJournalFloat.add(self._log, s, SEGMENT_HEART_RATE, BPM, summaries(MAX, CNT, MSR), self,
+                                          sjournal.segment, sjournal, average, sjournal.start)
             else:
                 self._log.warning('No Heart Rate data')
 

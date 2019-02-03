@@ -1,4 +1,8 @@
 
+from sqlalchemy import inspect
+
+from ..lib.data import dict_to_attr
+
 
 class ORMUtils:
 
@@ -11,3 +15,7 @@ class ORMUtils:
             instance = cls(**kargs)
             session.add(instance)
         return instance
+
+
+def tables(*classes):
+    return dict_to_attr(dict((cls.__name__, inspect(cls).local_table) for cls in classes))

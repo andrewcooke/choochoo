@@ -2,7 +2,7 @@
 import datetime as dt
 from enum import IntEnum
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, text
 from sqlalchemy.orm import relationship, backref
 
 from ch2.squeal import ActivityJournal
@@ -72,8 +72,14 @@ class StatisticJournal(Base):
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
                        nullable=False, index=True)
     source = relationship('Source')
-    time = Column(Time, nullable=False, index=True)
-    UniqueConstraint(statistic_name_id, time)
+    # there's some denormalization here.
+    # we could have time in a separate table and use the id as serial (if we could force it to be contiguous)
+    # but that just seems overly pedantic.  time must be constant for all stats with a given serial.
+    # also, no need for indices because of the uniqueness constraints below.
+    time = Column(Time, nullable=False)
+    serial = Column(Integer, server_default=text('NULL'))  # default needed for migration
+    UniqueConstraint(time, statistic_name_id)
+    UniqueConstraint(serial, source_id, statistic_name_id)
 
     # todo - index on both name and time for summary stats?
 
@@ -89,20 +95,11 @@ class StatisticJournal(Base):
             return 'Field Journal'
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, type):
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial, type):
         statistic_name = StatisticName.add_if_missing(log, s, name, units, summary, owner, constraint)
-        journal = s.query(StatisticJournal).join(Source). \
-            filter(StatisticJournal.statistic_name == statistic_name,
-                   StatisticJournal.time == time).one_or_none()
-        if not journal:
-            journal = STATISTIC_JOURNAL_CLASSES[type](
-                statistic_name=statistic_name, source=source, value=value, time=time)
-            s.add(journal)
-        else:
-            if journal.type != type:
-                raise Exception('Inconsistent StatisticJournal type (%d != %d)' %
-                                (journal.type, journal))
-            journal.value = value
+        journal = STATISTIC_JOURNAL_CLASSES[type](
+                statistic_name=statistic_name, source=source, value=value, time=time, serial=serial)
+        s.add(journal)
         return journal
 
     def formatted(self):
@@ -218,8 +215,8 @@ class StatisticJournalInteger(StatisticJournal):
     }
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time, serial,
                            StatisticJournalType.INTEGER)
 
 
@@ -233,8 +230,8 @@ class StatisticJournalFloat(StatisticJournal):
     parse = float
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time, serial,
                            StatisticJournalType.FLOAT)
 
     __mapper_args__ = {
@@ -282,8 +279,8 @@ class StatisticJournalText(StatisticJournal):
     parse = str
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time,
+    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+        return super().add(log, s, name, units, summary, owner, constraint, source, value, time, serial,
                            StatisticJournalType.TEXT)
 
     __mapper_args__ = {

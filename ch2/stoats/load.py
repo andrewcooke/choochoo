@@ -14,13 +14,16 @@ class StatisticJournalLoader:
     Fast loading that requires locked access to the database (we pre-generate keys).
     '''
 
-    def __init__(self, log, s, owner):
+    def __init__(self, log, s, owner, add_serial=True):
         self._log = log
         self._s = s
         self._owner = owner
         self.__statistic_name_cache = dict()
         self.__staging = defaultdict(lambda: [])
         self.__latest = dict()
+        self.__add_serial = add_serial
+        self.__last_time = None
+        self.__serial = 0 if add_serial else None
 
     def __bool__(self):
         return bool(self.__staging)
@@ -39,18 +42,29 @@ class StatisticJournalLoader:
             SystemConstant.release_lock(self._s, self)
 
     def add(self, name, units, summary, constraint, source, value, time, type):
+
+        if self.__add_serial:
+            if self.__last_time is None:
+                self.__last_time = time
+            elif time > self.__last_time:
+                self.__last_time = time
+                self.__serial += 1
+            elif time < self.__last_time:
+                raise Exception('Time travel!')
+
         key = (name, constraint)
         if key not in self.__statistic_name_cache:
             self.__statistic_name_cache[key] = \
                 StatisticName.add_if_missing(self._log, self._s, name, units, summary, self._owner, constraint)
-        if key not in self.__statistic_name_cache or not self.__statistic_name_cache[key]:
+        if not self.__statistic_name_cache.get(key, None):
             raise Exception('Failed to get StatisticName for %s' % key)
         if not self.__statistic_name_cache[key].id:
             self._s.flush()
             if not self.__statistic_name_cache[key].id:
                 raise Exception('Could not get StatisticName.id for %s' % key)
+
         instance = type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source.id,
-                        value=value, time=time)
+                        value=value, time=time, serial=self.__serial)
         self.__staging[type].append(instance)
         if key in self.__latest:
             prev = self.__latest[key]

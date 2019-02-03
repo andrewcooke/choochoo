@@ -17,7 +17,8 @@ from ..stoats.display.impulse import ImpulseDiary
 from ..stoats.display.monitor import MonitorDiary
 from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
-from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M
+from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
+    RPM
 from ..stoats.read.monitor import MonitorImporter
 from ..stoats.read.segment import SegmentImporter
 from ..uweird.fields.topic import Text, Float, Score0
@@ -43,7 +44,8 @@ def default(log, db, no_diary=False):
                                      'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
                                      'enhanced_speed': (SPEED, MS, StatisticJournalType.FLOAT),
                                      'distance': (DISTANCE, M, StatisticJournalType.FLOAT),
-                                     'enhanced_altitude': (ALTITUDE, M, StatisticJournalType.FLOAT)})
+                                     'enhanced_altitude': (ALTITUDE, M, StatisticJournalType.FLOAT),
+                                     'cadence': (CADENCE, RPM, StatisticJournalType.INTEGER)})
 
         # statistics pipeline (called to calculate missing statistics)
 

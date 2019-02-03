@@ -9,7 +9,7 @@ from bokeh.plotting import figure
 
 from .data_frame import interpolate_to_index, delta_patches, closed_patch
 from ..stoats.names import TIME, HR_ZONE, CLIMB_DISTANCE, CLIMB_ELEVATION, ALTITUDE, LOCAL_TIME, SPHERICAL_MERCATOR_X, \
-    SPHERICAL_MERCATOR_Y, FATIGUE, FITNESS, REST_HR, LONGITUDE, LATITUDE
+    SPHERICAL_MERCATOR_Y, FATIGUE, FITNESS, REST_HR, LONGITUDE, LATITUDE, CADENCE
 
 
 def disable_toolbar(f):
@@ -24,12 +24,13 @@ def range_all(source, axis, prev_min=None, prev_max=None):
     if source:
         mn, mx = prev_min, prev_max
         for df in source:
-            clean = df[axis].dropna()
-            if len(clean):
-                if mn is None:
-                    mn, mx = clean.min(), clean.max()
-                else:
-                    mn, mx = min(mn, clean.min()), max(mx, clean.max())
+            if axis in df:
+                clean = df[axis].dropna()
+                if len(clean):
+                    if mn is None:
+                        mn, mx = clean.min(), clean.max()
+                    else:
+                        mn, mx = min(mn, clean.min()), max(mx, clean.max())
         return mn, mx
     else:
         return prev_min, prev_max
@@ -114,6 +115,19 @@ def line_diff_elevation_climbs(nx, ny, x_axis, y_axis, source1, source2=None, cl
             for xx, yy in zip(x, y):
                 f.circle(x=xx, y=yy, color='red', size=8, alpha=0.2)
 
+    return f
+
+
+def line_diff_speed_cadence(nx, ny, x_axis, y_axis, source1, source2=None, x_range=None):
+    f = line_diff(nx, ny, x_axis, y_axis, source1, source2=source2, x_range=x_range)
+    if source2 is None:
+        min_cd, max_cd = range_all(source1, CADENCE)
+        if min_cd is not None and max_cd is not None:
+            f.extra_y_ranges = {CADENCE: Range1d(start=min_cd * 0.9, end=max_cd * 1.1)}
+            f.add_layout(LinearAxis(y_range_name=CADENCE, axis_label=CADENCE), 'right')
+            for df in source1:
+                if CADENCE in df and len(df[CADENCE].dropna()):
+                    f.line(x=x_axis, y=CADENCE, source=df, line_dash='dotted', color='grey', y_range_name=CADENCE)
     return f
 
 

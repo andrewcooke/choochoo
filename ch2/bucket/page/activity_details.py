@@ -8,7 +8,8 @@ from bokeh.layouts import column, row
 from bokeh.models import Div
 
 from ..data_frame import interpolate_to, add_interpolation
-from ..plot import line_diff, cumulative, heart_rate_zones, line_diff_elevation_climbs, dot_map, activities, health
+from ..plot import line_diff, cumulative, heart_rate_zones, line_diff_elevation_climbs, dot_map, activities, health, \
+    line_diff_speed_cadence
 from ..server import Page, default_singleton_server, target_link
 from ...config import config
 from ...data.data_frame import set_log, activity_statistics, statistics
@@ -20,7 +21,7 @@ from ...stoats.display.climb import climbs_for_activity
 from ...stoats.display.segment import segments_for_activity
 from ...stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE, \
-    CLIMB_TIME, CLIMB_GRADIENT, LOCAL_TIME, DAILY_STEPS, REST_HR, LONGITUDE, LATITUDE
+    CLIMB_TIME, CLIMB_GRADIENT, LOCAL_TIME, DAILY_STEPS, REST_HR, LONGITUDE, LATITUDE, CADENCE
 
 WINDOW = '60s'
 #WINDOW = 10
@@ -97,7 +98,7 @@ def comparison(log, s, activity, compare=None):
 
     set_log(log)
     names = [LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION, SPEED,
-             HR_ZONE, HR_10, ALTITUDE]
+             HR_ZONE, HR_10, ALTITUDE, CADENCE]
 
     # ---- load data
 
@@ -143,6 +144,11 @@ def comparison(log, s, activity, compare=None):
         source1, source2, = build_all(x_axis, y_axis)
         return line_diff(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, y_axis, source1, source2, x_range=line_x_range)
 
+    def ride_speed(x_axis=TIME):
+        source1, source2, = build_all(x_axis, MED_SPEED_KPH, CADENCE)
+        return line_diff_speed_cadence(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, MED_SPEED_KPH, source1, source2,
+                                       x_range=line_x_range)
+
     def ride_elevn(x_axis=TIME):
         source1, source2, = build_all(x_axis, ELEVATION_M, ALTITUDE)
         return line_diff_elevation_climbs(RIDE_PLOT_LEN, RIDE_PLOT_HGT, x_axis, ELEVATION_M, source1, source2,
@@ -161,7 +167,7 @@ def comparison(log, s, activity, compare=None):
     elvn_cumulative = ride_cum(CLIMB_MPS)
     if line_x_range is None and elvn_line.tools:
         line_x_range = elvn_line.x_range
-    speed_line = ride_line(MED_SPEED_KPH, x_axis=DISTANCE_KM)
+    speed_line = ride_speed(x_axis=DISTANCE_KM)
     speed_cumulative = ride_cum(SPEED_KPH)
 
     hr10 = build(st1_10, HR_10)
@@ -257,7 +263,8 @@ if __name__ == '__main__':
             # aj1 = ActivityJournal.at_date(s, '2018-12-16')[0]
             # aj1 = ActivityJournal.at_date(s, '2018-03-11')[0]
             # aj1 = ActivityJournal.at_date(s, '2017-03-16')[0]
-            aj1 = ActivityJournal.at_date(s, '2017-09-27')[0]
+            # aj1 = ActivityJournal.at_date(s, '2017-09-27')[0]
+            aj1 = ActivityJournal.at_date(s, '2019-01-31')[0]
             path = '%s?id=%d' % (ActivityDetailsPage.PATH, aj1.id)
             server.show(path)
         log.info('Crtl-C to exit')
