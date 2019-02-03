@@ -27,7 +27,18 @@ ActivitySimilarity, ActivityNearby
 @event.listens_for(Engine, "connect")
 def fk_pragma_on_connect(dbapi_con, _con_record):
     cursor = dbapi_con.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.execute("PRAGMA foreign_keys=ON;")  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
+    cursor.execute("PRAGMA temp_store=MEMORY;")  # https://www.sqlite.org/pragma.html#pragma_temp_store
+    cursor.execute("PRAGMA threads=4;")  # https://www.sqlite.org/pragma.html#pragma_threads
+    cursor.execute("PRAGMA cache_size=-1000000;")  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
+    cursor.execute("PRAGMA secure_delete=OFF;")  # https://www.sqlite.org/pragma.html#pragma_secure_delete
+    cursor.close()
+
+
+@event.listens_for(Engine, 'close')
+def analyxe_pragma_on_close(dbapi_con, _con_record):
+    cursor = dbapi_con.cursor()
+    cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
     cursor.close()
 
 

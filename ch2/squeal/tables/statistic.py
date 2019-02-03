@@ -2,7 +2,7 @@
 import datetime as dt
 from enum import IntEnum
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, text
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, text, Index
 from sqlalchemy.orm import relationship, backref
 
 from ch2.squeal import ActivityJournal
@@ -80,8 +80,6 @@ class StatisticJournal(Base):
     serial = Column(Integer, server_default=text('NULL'))  # default needed for migration
     UniqueConstraint(time, statistic_name_id)
     UniqueConstraint(serial, source_id, statistic_name_id)
-
-    # todo - index on both name and time for summary stats?
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.STATISTIC,
@@ -207,6 +205,7 @@ class StatisticJournalInteger(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Integer)
+    # Index('cover_integer', id, value)  # experiment with covering index
 
     parse = int
 
@@ -226,6 +225,7 @@ class StatisticJournalFloat(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Float)
+    # Index('cover_float', id, value)
 
     parse = float
 
@@ -275,6 +275,7 @@ class StatisticJournalText(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Text)
+    # Index('cover_text', id, value)
 
     parse = str
 
