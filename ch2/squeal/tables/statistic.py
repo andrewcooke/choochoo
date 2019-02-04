@@ -78,7 +78,7 @@ class StatisticJournal(Base):
     # also, no need for indices because of the uniqueness constraints below.
     time = Column(Time, nullable=False)
     serial = Column(Integer, server_default=text('NULL'))  # default needed for migration
-    UniqueConstraint(time, statistic_name_id)
+    UniqueConstraint(statistic_name_id, time)
     UniqueConstraint(serial, source_id, statistic_name_id)
     Index('from_activity_timespan', source_id, statistic_name_id, time)  # time last since inequality
 
