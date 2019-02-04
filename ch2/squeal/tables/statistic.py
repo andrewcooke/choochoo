@@ -72,12 +72,11 @@ class StatisticJournal(Base):
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
                        nullable=False, index=True)
     source = relationship('Source')
-    # there's some denormalization here.
-    # we could have time in a separate table and use the id as serial (if we could force it to be contiguous)
-    # but that just seems overly pedantic.  time must be constant for all stats with a given serial.
-    # also, no need for indices because of the uniqueness constraints below.
+    # there's some denormalization / duplication here
+    # serial "counts" along values in the timeseries.  it's optional.  for garmin, all values appear each
+    # record, so all share the same serial.  but i guess that may not be universal.
     time = Column(Time, nullable=False)
-    serial = Column(Integer, server_default=text('NULL'))  # default needed for migration
+    serial = Column(Integer)
     UniqueConstraint(statistic_name_id, time)
     UniqueConstraint(serial, source_id, statistic_name_id)
     Index('from_activity_timespan', source_id, statistic_name_id, time)  # time last since inequality

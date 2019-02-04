@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
-from ..types import Time, Sort
+from ..types import Time, Sort, ShortCls, Str
 from ...lib.date import format_time, local_date_to_time
 
 
@@ -72,3 +72,19 @@ class ActivityTimespan(Base):
         return 'ActivityTimespan from %s - %s' % (format_time(self.start), format_time(self.finish))
 
 
+class ActivityBookmark(Base):
+
+    __tablename__ = 'activity_bookmark'
+
+    id = Column(Integer, primary_key=True)
+    activity_journal_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
+    activity_journal = relationship('ActivityJournal')
+
+    start = Column(Time, nullable=False)
+    finish = Column(Time, nullable=False)
+    owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
+    constraint = Column(Str)
+    UniqueConstraint(activity_journal_id, start)
+
+    def __str__(self):
+        return 'ActivityBookmark from %s - %s' % (format_time(self.start), format_time(self.finish))

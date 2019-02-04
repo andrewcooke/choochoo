@@ -6,6 +6,7 @@ from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat
+from ..squeal.utils import tables
 
 
 def make_waypoint(names, extra=None):
@@ -23,12 +24,9 @@ class WaypointReader:
         self._log = log
         self._with_timespan = with_timespan
 
-    def read(self, s, ajournal, names, owner):
+    def read(self, s, ajournal, names, owner, start=None, finish=None):
 
-        sn = inspect(StatisticName).local_table
-        sj = inspect(StatisticJournal).local_table
-        sji = inspect(StatisticJournalInteger).local_table
-        sjf = inspect(StatisticJournalFloat).local_table
+        t = tables(StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat)
 
         id_map = self._id_map(s, ajournal, names, owner)
         ids = list(id_map.keys())
@@ -38,13 +36,23 @@ class WaypointReader:
         for timespan in ajournal.timespans:
             self._log.debug('%s' % timespan)
             waypoint = None
-            stmt = select([sn.c.id, sj.c.time, coalesce(sjf.c.value, sji.c.value)]) \
-                .select_from(sj.join(sn).outerjoin(sjf).outerjoin(sji)) \
-                .where(and_(sj.c.source_id == ajournal.id,
-                            sn.c.id.in_(ids),
-                            sj.c.time >= timespan.start,
-                            sj.c.time <= timespan.finish)) \
-                .order_by(sj.c.time)
+            stmt = select([t.StatisticName.c.id,
+                           t.StatisticJournal.c.time,
+                           coalesce(t.StatisticJournalFloat.c.value,
+                                    t.StatisticJournalInteger.c.value)]) \
+                .select_from(t.StatisticJournal.
+                             join(t.StatisticName).
+                             outerjoin(t.StatisticJournalFloat).
+                             outerjoin(t.StatisticJournalInteger)) \
+                .where(and_(t.StatisticJournal.c.source_id == ajournal.id,
+                            t.StatisticName.c.id.in_(ids),
+                            t.StatisticJournal.c.time >= timespan.start,
+                            t.StatisticJournal.c.time <= timespan.finish)) \
+                .order_by(t.StatisticJournal.c.time)
+            if start:
+                stmt = stmt.where(t.StatisticJournal.c.time >= start)
+            if finish:
+                stmt = stmt.where(t.StatisticJournal.c.time <= finish)
             self._log.debug(stmt)
             for id, time, value in s.connection().execute(stmt):
                 if waypoint and waypoint.time != time:

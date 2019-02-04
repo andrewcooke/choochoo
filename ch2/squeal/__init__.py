@@ -1,5 +1,5 @@
 
-from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal
+from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal, ActivityBookmark
 from .tables.constant import SystemConstant, Constant
 from .tables.monitor import MonitorJournal
 from .tables.nearby import ActivitySimilarity, ActivityNearby

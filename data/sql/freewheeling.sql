@@ -670,31 +670,29 @@ select f.time - s.time as delta,
 PRAGMA automatic_index=OFF;
 
 0|0|0|SEARCH TABLE statistic_name AS c USING COVERING INDEX ix_statistic_name_name (name=?)
-0|1|2|SEARCH TABLE statistic_name AS v USING COVERING INDEX ix_statistic_name_name (name=?)
-0|2|12|SCAN TABLE activity_journal AS a USING COVERING INDEX sqlite_autoindex_activity_journal_1
-0|3|4|SEARCH TABLE statistic_journal AS s USING INDEX from_activity_timespan (source_id=? AND statistic_name_id=?)
-0|4|5|SEARCH TABLE statistic_journal_integer AS si USING INTEGER PRIMARY KEY (rowid=?)
-0|5|6|SEARCH TABLE statistic_journal AS ss USING COVERING INDEX sqlite_autoindex_statistic_journal_2 (serial=? AND source_id=? AND statistic_name_id=?)
-0|6|7|SEARCH TABLE statistic_journal_integer AS ssi USING INTEGER PRIMARY KEY (rowid=?)
-0|7|8|SEARCH TABLE statistic_journal AS f USING INDEX from_activity_timespan (source_id=? AND statistic_name_id=?)
+0|1|1|SEARCH TABLE statistic_name AS d USING COVERING INDEX ix_statistic_name_name (name=?)
+0|2|2|SEARCH TABLE statistic_name AS v USING COVERING INDEX ix_statistic_name_name (name=?)
+0|3|3|SCAN TABLE activity_timespan AS t
+0|4|4|SEARCH TABLE statistic_journal AS s USING INDEX from_activity_timespan (source_id=? AND statistic_name_id=? AND time>?)
+0|5|5|SEARCH TABLE statistic_journal_integer AS si USING INTEGER PRIMARY KEY (rowid=?)
+0|6|6|SEARCH TABLE statistic_journal AS ss USING COVERING INDEX sqlite_autoindex_statistic_journal_2 (serial=? AND source_id=? AND statistic_name_id=?)
+0|7|7|SEARCH TABLE statistic_journal_integer AS ssi USING INTEGER PRIMARY KEY (rowid=?)
+0|8|8|SEARCH TABLE statistic_journal AS f USING INDEX from_activity_timespan (source_id=? AND statistic_name_id=? AND time<?)
 0|0|0|EXECUTE CORRELATED SCALAR SUBQUERY 1
 1|0|1|SEARCH TABLE statistic_journal AS j USING INDEX from_activity_timespan (source_id=? AND statistic_name_id=?)
 1|1|0|SEARCH TABLE statistic_journal_integer AS ji USING INTEGER PRIMARY KEY (rowid=?)
 0|0|0|EXECUTE CORRELATED SCALAR SUBQUERY 2
-2|0|1|SEARCH TABLE statistic_journal AS j USING INDEX from_activity_timespan (source_id=? AND statistic_name_id=?)
-2|1|0|SEARCH TABLE statistic_journal_float AS jf USING INTEGER PRIMARY KEY (rowid=?)
-0|8|10|SEARCH TABLE statistic_journal AS ff USING COVERING INDEX sqlite_autoindex_statistic_journal_2 (serial=? AND source_id=? AND statistic_name_id=?)
-0|9|11|SEARCH TABLE statistic_journal_integer AS ffi USING INTEGER PRIMARY KEY (rowid=?)
-0|10|9|SEARCH TABLE statistic_journal_integer AS fi USING INTEGER PRIMARY KEY (rowid=?)
-0|11|1|SEARCH TABLE statistic_name AS d USING COVERING INDEX ix_statistic_name_name (name=?)
+2|0|2|SEARCH TABLE statistic_journal AS j1 USING COVERING INDEX sqlite_autoindex_statistic_journal_2 (serial=? AND source_id=? AND statistic_name_id=?)
+2|1|3|SEARCH TABLE statistic_journal AS j2 USING COVERING INDEX sqlite_autoindex_statistic_journal_2 (serial=? AND source_id=? AND statistic_name_id=?)
+2|2|0|SEARCH TABLE statistic_journal_float AS f1 USING INTEGER PRIMARY KEY (rowid=?)
+2|3|1|SEARCH TABLE statistic_journal_float AS f2 USING INTEGER PRIMARY KEY (rowid=?)
 0|0|0|EXECUTE CORRELATED SCALAR SUBQUERY 3
-3|0|2|SEARCH TABLE statistic_journal AS j1 USING COVERING INDEX sqlite_autoindex_statistic_journal_2 (serial=? AND source_id=? AND statistic_name_id=?)
-3|1|3|SEARCH TABLE statistic_journal AS j2 USING COVERING INDEX sqlite_autoindex_statistic_journal_2 (serial=? AND source_id=? AND statistic_name_id=?)
-3|2|0|SEARCH TABLE statistic_journal_float AS f1 USING INTEGER PRIMARY KEY (rowid=?)
-3|3|1|SEARCH TABLE statistic_journal_float AS f2 USING INTEGER PRIMARY KEY (rowid=?)
-0|12|3|SEARCH TABLE activity_timespan AS t USING INDEX sqlite_autoindex_activity_timespan_1 (activity_journal_id=? AND start<?)
-
-
+3|0|1|SEARCH TABLE statistic_journal AS j USING INDEX from_activity_timespan (source_id=? AND statistic_name_id=?)
+3|1|0|SEARCH TABLE statistic_journal_float AS jf USING INTEGER PRIMARY KEY (rowid=?)
+0|9|10|SEARCH TABLE statistic_journal AS ff USING COVERING INDEX sqlite_autoindex_statistic_journal_2 (serial=? AND source_id=? AND statistic_name_id=?)
+0|10|9|SEARCH TABLE statistic_journal_integer AS fi USING INTEGER PRIMARY KEY (rowid=?)
+0|11|11|SEARCH TABLE statistic_journal_integer AS ffi USING INTEGER PRIMARY KEY (rowid=?)
+0|12|12|SEARCH TABLE activity_journal AS a USING INTEGER PRIMARY KEY (rowid=?)
 
 PRAGMA automatic_index=OFF;
 
