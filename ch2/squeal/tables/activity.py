@@ -79,12 +79,11 @@ class ActivityBookmark(Base):
     id = Column(Integer, primary_key=True)
     activity_journal_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     activity_journal = relationship('ActivityJournal')
-
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
-    constraint = Column(Str)
-    UniqueConstraint(activity_journal_id, start)
+    constraint = Column(Str, index=True)
+    UniqueConstraint(activity_journal_id, start, finish, owner, constraint)
 
     def __str__(self):
         return 'ActivityBookmark from %s - %s' % (format_time(self.start), format_time(self.finish))

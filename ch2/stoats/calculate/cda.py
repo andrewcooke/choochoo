@@ -181,7 +181,8 @@ def accumulate_crr(m, d_h_s2_ke, g=9.8, p=1.225, cda=0.55):
 
 if __name__ == '__main__':
     ns, log, db = connect(['-v 4'])
-    CoastingBookmark(log, db).bookmark(60, 20, 3, constraint='60s')
-    with db.session_context() as s:
-        for d, h, s2, ke in expand_bookmarks(log, s, read_bookmarks(s, '60s')):
-            print(d, h, s2, ke)
+    CoastingBookmark(log, db).bookmark(60, 20, 3, constraint='60s/3ms')
+    CoastingBookmark(log, db).bookmark(60, 20, 0, constraint='60s/0ms')
+    # with db.session_context() as s:
+    #     for d, h, s2, ke in expand_bookmarks(log, s, read_bookmarks(s, '60s')):
+    #         print(d, h, s2, ke)
