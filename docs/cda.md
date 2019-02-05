@@ -168,3 +168,6 @@ a value of 0.5 for an MTB doesn't seem too surprising.
 
 And, more than that, to get an answer so "close" suggests the method
 is reasonable.
+
+The notebook used in the analysis is available
+[here](https://github.com/andrewcooke/choochoo/blob/master/notebooks/power/plot_cda_k.ipynb).
