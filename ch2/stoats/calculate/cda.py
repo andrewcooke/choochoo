@@ -7,10 +7,10 @@ from ..read.segment import SegmentImporter
 from ..waypoint import WaypointReader
 from ...lib.date import to_time
 from ...squeal import ActivityBookmark
-from ...squeal.database import connect, StatisticJournal, StatisticName, StatisticJournalInteger
+from ...squeal.database import connect, StatisticName, StatisticJournalInteger
 
 
-class FreewheelBookmark:
+class CoastingBookmark:
 
     def __init__(self, log, db):
         self._log = log
@@ -112,7 +112,7 @@ select a.id, s.time, f.time
         s.execute('PRAGMA automatic_index=ON;')
 
 
-def read_bookmarks(s, constraint, owner=FreewheelBookmark):
+def read_bookmarks(s, constraint, owner=CoastingBookmark):
     yield from s.query(ActivityBookmark). \
         filter(ActivityBookmark.owner == owner,
                ActivityBookmark.constraint == constraint).all()
@@ -150,27 +150,38 @@ def expand_bookmarks(log, s, bookmarks):
 
 
 # https://www.cyclingpowerlab.com/CyclingAerodynamics.aspx
-def accumulate_cda_k(m, d_h_s2_ke, g=9.8, p=1.225):
-    df = pd.DataFrame(columns=['CdA', 'k'])
+def accumulate_cda_crr(m, d_h_s2_ke, g=9.8, p=1.225):
+    df = pd.DataFrame(columns=['CdA', 'Crr'])
     for d, h, s2, ke in d_h_s2_ke:
-        # h and k2 are both (finish - start)
+        # h and ke are both (finish - start)
         # so on a drop, h is -ve.  the energy gained from gravity then is (-h g).
         # but this may have gone into an increase in kinetic energy
         # the increase in kinetic energy is (m ke / 2)
-        # so the net amount of energy spent on resistance in (-h g) - (m k2 / 2)
+        # so the net amount of energy spent on resistance in (-h g) - (m ke / 2)
         energy_spent = -m * (h * g + ke / 2)
-        # energy_spent = cda * p * d * s2 / 2 + k * d
-        # so cda = (energy_spent - k * d) / (p * s2 * d * 0.5)
-        # and k = (cda * s2 - energy_spent) / d
+        # energy_spent = cda * p * d * s2 / 2 + crr * d
+        # so cda = (energy_spent - crr * d) / (p * s2 * d * 0.5)
+        # and crr = (energy_spent - cda * p * d * s2 / 2) / d
         df = df.append({'CdA': (0, energy_spent / (p * s2 * d * 0.5)),
-                        'k': (energy_spent / d, 0)},
+                        'Crr': (energy_spent / d, 0)},
+                       ignore_index=True)
+    return df
+
+
+def accumulate_crr(m, d_h_s2_ke, g=9.8, p=1.225, cda=0.55):
+    df = pd.DataFrame(columns=['Crr'])
+    for d, h, s2, ke in d_h_s2_ke:
+        energy_spent = -m * (h * g + ke / 2)
+        # energy_spent = cda * p * d * s2 / 2 + crr * d
+        # and crr = (energy_spent - cda * p * d * s2 / 2) / d
+        df = df.append({'Crr': (energy_spent - cda * p * d * s2 / 2) / d},
                        ignore_index=True)
     return df
 
 
 if __name__ == '__main__':
-    ns, log, db = connect(['-v 3'])
-    # FreewheelBookmark(log, db).bookmark(60, 20, 3, constraint='60s')
+    ns, log, db = connect(['-v 4'])
+    CoastingBookmark(log, db).bookmark(60, 20, 3, constraint='60s')
     with db.session_context() as s:
-        for d, h, s2, ke in read_energy_observations(log, s, '60s'):
+        for d, h, s2, ke in expand_bookmarks(log, s, read_bookmarks(s, '60s')):
             print(d, h, s2, ke)

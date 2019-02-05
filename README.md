@@ -76,7 +76,7 @@ extensible.*
 ### v0.15.0
 
 Modified database schema (`serial` in statistic_journal which makes
-time-series logic simpler).  Migrate using existing databases using
+time-series logic simpler).  Migrate existing databases using
 `migraine/sqln2sqlo.sh` (you will then need to reload data from FIT
 files).
 

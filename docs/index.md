@@ -60,4 +60,4 @@ support for power meters.
 * Development
   * [Spatial Search](rtree)
   * [Other Projects](other-projects)
-  
+  * [Measuring CdA](cda)
