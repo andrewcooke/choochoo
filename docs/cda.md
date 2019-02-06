@@ -40,7 +40,7 @@ at two different points, and the distance between them, then:
 
   * The total energy "added" to the system is the gravitational
     potential energy from a drop in height (going downhill) *plus* any
-    extra work done pedalling.
+    extra work done pedaling.
 
   * The total energy "removed" from the system is via aerodynamic drag
     *plus* braking *plus* rolling resistance.
@@ -50,7 +50,7 @@ at two different points, and the distance between them, then:
 
 That's a fair number of variables, but we can simplify things by:
 
-  * Only using data where the ride is not pedalling (where cadence is
+  * Only using data where the ride is not pedaling (where cadence is
     low).
 
   * Assuming that there is no wind (which would affect aerodynamic
@@ -70,7 +70,7 @@ That's a fair number of variables, but we can simplify things by:
 ### Coasting
 
 First, we need to find sections of the ride where the rider is not
-pedalling.  For this we need the cadence sensor.
+pedaling.  For this we need the cadence sensor.
 
 The SQL query
 [here](https://github.com/andrewcooke/choochoo/blob/master/ch2/stoats/calculate/cda.py#L39)
@@ -100,16 +100,16 @@ the location, distance and speed (`v`), so we can calculate:
 
   * [Elevation](elevation) change, `h`.
 
-  * The distance travelled, `d`.
+  * The distance traveled, `d`.
 
   * The gravitational potential energy gained (or lost, if climbing).
     This is `m x g x h` where `m` is mass (rider and bike) and `g` is
-    gravittaional acceleration (9.8 m/s).
+    gravitational acceleration (9.8 m/s).
 
   * The kinetic energy before and after (`1/2 x m x v^2`).
 
   * The average of the squared speed `avg_v2`, assuming that speed
-    varies linearly (constant acceleration).  You ened to do a little
+    varies linearly (constant acceleration).  You need to do a little
     calculus for this, but it turns out that it's `v_a^2 + v_a x v_b +
     v_b^2` where `v_a` is the speed at the start and `v_b` the speed
     at the end.
@@ -145,8 +145,8 @@ certain value of `Crr` (ie more lines crossing at a certain y value)
 because the different dependency on speed for the two coefficients
 means that they should be distinguisable in observations made at
 different speeds.  But I think here we're just getting too much noise
-from braking (ehich we can't control for, and which appears as rolling
-reistance).
+from braking (which we can't control for, and which appears as rolling
+resistance).
 
 ### Final Measurement
 
@@ -169,5 +169,11 @@ a value of 0.5 for an MTB doesn't seem too surprising.
 And, more than that, to get an answer so "close" suggests the method
 is reasonable.
 
+The code to generate bookmarks is
+[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/stoats/calculate/cda.py)
+and can be run via:
+
+    > python -m ch2.stoats.calculate.cda
+
 The notebook used in the analysis is available
-[here](https://github.com/andrewcooke/choochoo/blob/master/notebooks/power/plot_cda_k.ipynb).
+[here](https://github.com/andrewcooke/choochoo/blob/master/notebooks/power/plot_cda_k.ipynb).  
