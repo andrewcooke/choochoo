@@ -49,10 +49,18 @@ Display a summary for the month / year / schedule.
     if not date:
         date = dt.date.today()
     else:
+        days = None
         try:
+            # try int first because we need to separate the case of days from years
+            days = int(date)
+            if days > 1000:
+                days = None
+        except ValueError:
+            pass
+        if days is None:
             date = to_date(date)
-        except:
-            date = dt.date.today() - dt.timedelta(days=int(date))
+        else:
+            date = dt.date.today() - dt.timedelta(days=days)
     with db.session_context() as s:
         TopicJournal.check_tz(log, s)
     server = default_singleton_server(log, db)

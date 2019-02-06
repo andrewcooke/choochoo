@@ -23,7 +23,12 @@ def to_date(value, none=False):
     elif isinstance(value, int):
         return dt.date.fromordinal(value)
     else:
-        return dt.date(*t.strptime(value, '%Y-%m-%d')[:3])
+        for format in ('%Y-%m-%d', '%Y-%m', '%Y'):
+            try:
+                return dt.date(*t.strptime(value, format)[:3])
+            except ValueError:
+                pass
+        raise ValueError('Cannot parse "%s" as a date' % value)
 
 
 def to_time(value, none=False):
