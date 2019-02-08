@@ -16,7 +16,7 @@ pip install requests
 pip install scipy
 
 pip install matplotlib
-pip install bokeh
+pip install bokeh==1.0.0
 pip install colorcet
 pip install webcolors
 pip install jupyter

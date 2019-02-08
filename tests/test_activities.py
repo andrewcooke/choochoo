@@ -10,8 +10,9 @@ from ch2.command.constants import constants
 from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
-from ch2.squeal.tables.statistic import StatisticJournal
+from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
 from ch2.stoats.calculate import run_pipeline_after, run_pipeline_paths
+from ch2.stoats.names import RAW_ELEVATION
 
 
 class TestActivities(TestCase):
@@ -41,8 +42,16 @@ class TestActivities(TestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
             with db.session_context() as s:
+                n_raw = s.query(count(StatisticJournalFloat.id)). \
+                    join(StatisticName). \
+                    filter(StatisticName.name == RAW_ELEVATION).scalar()
+                self.assertEqual(n_raw, 2099)
+                n_fix = s.query(count(StatisticJournalFloat.id)). \
+                    join(StatisticName). \
+                    filter(StatisticName.name == RAW_ELEVATION).scalar()
+                self.assertEqual(n_fix, n_raw)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 25696)
+                self.assertEqual(n, 25696 + n_fix)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 

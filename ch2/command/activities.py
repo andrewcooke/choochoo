@@ -17,4 +17,5 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
     force, fast, paths = args[FORCE], args[FAST], args[PATH]
     run_pipeline_paths(log, db, PipelineType.ACTIVITY, paths, force=force)
     if not fast:
-        run_pipeline_after(log, db, PipelineType.STATISTIC, force=force)
+        # don't force this - it auto-detects need
+        run_pipeline_after(log, db, PipelineType.STATISTIC)
