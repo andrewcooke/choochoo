@@ -11,7 +11,7 @@ from .heart_rate import hr_zones_from_database
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, \
     DISTANCE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, CLIMB_GRADIENT, TOTAL_CLIMB, RAW_ELEVATION
-from ..waypoint import Chunks, make_waypoint
+from ..waypoint import Chunks
 from ...squeal import Constant, StatisticName
 
 
@@ -26,10 +26,11 @@ class ActivityStatistics(WaypointCalculator):
         return q.filter(StatisticName.name == ACTIVE_TIME)
 
     def _names(self):
-        return {HEART_RATE: 'heart_rate',
-                DISTANCE: 'distance',
-                RAW_ELEVATION: 'raw_elevation',
-                ELEVATION: 'elevation'}
+        names = {HEART_RATE: 'heart_rate',
+                 DISTANCE: 'distance',
+                 RAW_ELEVATION: 'raw_elevation',
+                 ELEVATION: 'elevation'}
+        return names
 
     def _add_stats_from_waypoints(self, s, ajournal, waypoints):
         totals = self._add_totals(s, ajournal, waypoints)
@@ -40,7 +41,7 @@ class ActivityStatistics(WaypointCalculator):
 
     def _add_totals(self, s, ajournal, waypoints):
         totals = Totals(self._log, waypoints)
-        self._add_float_stat(s, ajournal,  ACTIVE_DISTANCE, summaries(MAX, CNT, SUM, MSR), totals.distance, M)
+        self._add_float_stat(s, ajournal, ACTIVE_DISTANCE, summaries(MAX, CNT, SUM, MSR), totals.distance, M)
         self._add_float_stat(s, ajournal, ACTIVE_TIME, summaries(MAX, SUM, MSR), totals.time, S)
         self._add_float_stat(s, ajournal, ACTIVE_SPEED, summaries(MAX, AVG, MSR), totals.distance * 3.6 / totals.time, KMH)
         return totals
@@ -66,32 +67,28 @@ class ActivityStatistics(WaypointCalculator):
         else:
             self._log.warning('No HR zones defined for %s or before' % ajournal.start)
 
-    def _fix_elevation(self, s, ajournal, waypoints, distance=300):
-        if waypoints and any(waypoint.raw_elevation for waypoint in waypoints):
+    def _fix_elevation(self, s, ajournal, waypoints, distance=1000):
+        with_elevations = [waypoint for waypoint in waypoints if waypoint.raw_elevation != None]
+        if with_elevations:
             fixed = []
+            x = [waypoint.distance for waypoint in with_elevations]
+            y = [waypoint.raw_elevation for waypoint in with_elevations]
             lo, hi = 0, 1
             while lo < hi:
                 n = hi - lo
-                if n % 2:
-                    midpoint = waypoints[lo + n//2]
-                    with_elevations = [waypoint for waypoint in waypoints[lo:hi-1]
-                                       if waypoint.raw_elevation != None]
-                    ne = len(with_elevations)
-                    if ne > 3:
-                        x = [waypoint.distance for waypoint in with_elevations]
-                        y = [waypoint.raw_elevation for waypoint in with_elevations]
-                        p = np.poly1d(np.polyfit(x, y, 2))
-                        elevation = p(midpoint.distance)
-                    elif ne > 0:
-                        elevation = sum(waypoint.raw_elevation for waypoint in with_elevations) / ne
+                if n % 2:  # if we have a midpoint to replace
+                    m = lo + n // 2
+                    if n > 3:
+                        elevation = np.poly1d(np.polyfit(x[lo:hi-1], y[lo:hi-1], 2))(x[m])
                     else:
-                        elevation = None
+                        elevation = sum(y[lo:hi-1]) / n
                     # todo - serial?
+                    midpoint = with_elevations[m]
                     self._add_float_stat(s, ajournal, ELEVATION, None, elevation, M, time=midpoint.time)
                     fixed.append(midpoint._replace(elevation=elevation))
-                if waypoints[hi-1].distance - waypoints[lo].distance > distance:
+                if x[hi-1] - x[lo] > distance:
                     lo += 1
-                elif hi < len(waypoints):
+                elif hi < len(with_elevations):
                     hi += 1
                 else:
                     lo += 1

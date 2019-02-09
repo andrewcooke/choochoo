@@ -3,7 +3,6 @@ from os.path import splitext, basename
 
 from pygeotile.point import Point
 
-from ch2.sortem.bilinear import bilinear_elevation_from_constant
 from ..load import StatisticJournalLoader
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
 from ..read import AbortImport, Importer
@@ -11,6 +10,8 @@ from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
+from ...sortem.bilinear import bilinear_elevation_from_constant
+from ...sortem.spline import spline_elevation_from_constant
 from ...squeal.database import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.source import Interval
@@ -22,9 +23,7 @@ class ActivityImporter(Importer):
     def _on_init(self, *args, **kargs):
         super()._on_init(*args, **kargs)
         with self._db.session_context() as s:
-            # self.__oracle = dict((smooth, spline_elevation_from_constant(self._log, s, smooth=smooth))
-            #                      for smooth in (0, 1, 3, 10))
-            self.__oracle = bilinear_elevation_from_constant(self._log, s)
+            self.__oracle = spline_elevation_from_constant(self._log, s, smooth=10)
 
     def run(self, paths, force=False):
         if 'sport_to_activity' not in self._kargs:
@@ -112,17 +111,9 @@ class ActivityImporter(Importer):
                                    StatisticJournalFloat)
                         if add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
-                            loader.add(RAW_ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
-                                       StatisticJournalFloat)
-                            # for smooth in self.__oracle.keys():
-                            #     elevation = self.__oracle[smooth].elevation(lat, lon)
-                            #     if elevation:
-                            #         name = '%s %d' % (ELEVATION, smooth)
-                            #         loader.add(name, M, None, activity_group, ajournal, elevation, timestamp,
-                            #                    StatisticJournalFloat)
-                            #         if smooth == 10:
-                            #             loader.add(ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
-                            #                        StatisticJournalFloat)
+                            if elevation:
+                                loader.add(RAW_ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
+                                           StatisticJournalFloat)
                 if record.name == 'event' and record.value.event == 'timer' \
                         and record.value.event_type == 'stop_all':
                     if timespan:
@@ -136,7 +127,7 @@ class ActivityImporter(Importer):
             else:
                 if record.name == 'record':
                     self._log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
-                                   (path, record.timestamp))
+                                      (path, record.timestamp))
 
         loader.load()
 

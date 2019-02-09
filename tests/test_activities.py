@@ -12,7 +12,7 @@ from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
 from ch2.stoats.calculate import run_pipeline_after, run_pipeline_paths
-from ch2.stoats.names import RAW_ELEVATION
+from ch2.stoats.names import RAW_ELEVATION, ELEVATION
 
 
 class TestActivities(TestCase):
@@ -29,6 +29,10 @@ class TestActivities(TestCase):
             constants(args, log, db)
 
             args, log, db = bootstrap_file(f, m(V), '5', 'constants', 'FTHR.%')
+            constants(args, log, db)
+
+            args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'SRTM1.dir',
+                                           '/home/andrew/archive/srtm1')
             constants(args, log, db)
 
             args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
@@ -48,7 +52,7 @@ class TestActivities(TestCase):
                 self.assertEqual(n_raw, 2099)
                 n_fix = s.query(count(StatisticJournalFloat.id)). \
                     join(StatisticName). \
-                    filter(StatisticName.name == RAW_ELEVATION).scalar()
+                    filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(n_fix, n_raw)
                 n = s.query(count(StatisticJournal.id)).scalar()
                 self.assertEqual(n, 25696 + n_fix)
