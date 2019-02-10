@@ -23,7 +23,8 @@ class ActivityImporter(Importer):
     def _on_init(self, *args, **kargs):
         super()._on_init(*args, **kargs)
         with self._db.session_context() as s:
-            self.__oracle = spline_elevation_from_constant(self._log, s, smooth=10)
+            # self.__oracle = spline_elevation_from_constant(self._log, s, smooth=10)
+            self.__oracle = bilinear_elevation_from_constant(self._log, s)
 
     def run(self, paths, force=False):
         if 'sport_to_activity' not in self._kargs:

@@ -3,16 +3,18 @@ from collections import Counter
 from itertools import chain
 from json import loads
 
-import numpy as np
+from scipy.interpolate import UnivariateSpline
 
 from . import WaypointCalculator
 from .climb import find_climbs, Climb
 from .heart_rate import hr_zones_from_database
+from ..load import StatisticJournalLoader
 from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, \
     DISTANCE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, CLIMB_GRADIENT, TOTAL_CLIMB, RAW_ELEVATION
 from ..waypoint import Chunks
 from ...squeal import Constant, StatisticName
+from ...squeal import StatisticJournalFloat
 
 
 class ActivityStatistics(WaypointCalculator):
@@ -67,31 +69,35 @@ class ActivityStatistics(WaypointCalculator):
         else:
             self._log.warning('No HR zones defined for %s or before' % ajournal.start)
 
-    def _fix_elevation(self, s, ajournal, waypoints, distance=1000):
+    def _fix_elevation(self, s, ajournal, waypoints):
         with_elevations = [waypoint for waypoint in waypoints if waypoint.raw_elevation != None]
-        if with_elevations:
+        if len(with_elevations) > 4:
             fixed = []
             x = [waypoint.distance for waypoint in with_elevations]
             y = [waypoint.raw_elevation for waypoint in with_elevations]
-            lo, hi = 0, 1
-            while lo < hi:
-                n = hi - lo
-                if n % 2:  # if we have a midpoint to replace
-                    m = lo + n // 2
-                    if n > 3:
-                        elevation = np.poly1d(np.polyfit(x[lo:hi-1], y[lo:hi-1], 2))(x[m])
-                    else:
-                        elevation = sum(y[lo:hi-1]) / n
-                    # todo - serial?
-                    midpoint = with_elevations[m]
-                    self._add_float_stat(s, ajournal, ELEVATION, None, elevation, M, time=midpoint.time)
-                    fixed.append(midpoint._replace(elevation=elevation))
-                if x[hi-1] - x[lo] > distance:
-                    lo += 1
-                elif hi < len(with_elevations):
-                    hi += 1
+            i = 1
+            while i < len(x):
+                if x[i-1] >= x[i]:
+                    del x[i-1], y[i-1]
                 else:
-                    lo += 1
+                    i += 1
+            loader = StatisticJournalLoader(self._log, s, self)
+            # the 7 here is from eyeballing various plots compared to other values
+            # it seems better to smooth along the route rather that smooth the terrain model since
+            # 1 - we expect the route to be smoother than the terrain in general (roads / tracks)
+            # 2 - smoothing the 2d terrain is difficult to control and can give spikes
+            # 3 - we better handle errors from mismatches between terrain model and position
+            #     (think hairpin bends going up a mountainside)
+            # the main drawbacks are
+            # 1 - speed on loading
+            # 2 - no guarantee of consistency between routes (or even on the same routine retracing a path)
+            spline = UnivariateSpline(x, y, s=len(with_elevations) * 7)
+            for waypoint in with_elevations:
+                elevation = spline(waypoint.distance)
+                loader.add(ELEVATION, M, None, ajournal.activity_group, ajournal,
+                           elevation, waypoint.time, StatisticJournalFloat)
+                fixed.append(waypoint._replace(elevation=elevation))
+            loader.load()
             return fixed
         else:
             return waypoints

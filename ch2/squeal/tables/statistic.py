@@ -72,10 +72,10 @@ class StatisticJournal(Base):
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
                        nullable=False, index=True)
     source = relationship('Source')
-    # there's some denormalization / duplication here
-    # serial "counts" along values in the timeseries.  it's optional.  for garmin, all values appear each
-    # record, so all share the same serial.  but i guess that may not be universal.
     time = Column(Time, nullable=False)
+    # serial "counts" along values in the timeseries.  it's optional.  for garmin, all values appear each
+    # record, so all imported values share the same serial.  but that's not true for the corrected elevation,
+    # for example.
     serial = Column(Integer)
     UniqueConstraint(statistic_name_id, time)
     UniqueConstraint(serial, source_id, statistic_name_id)

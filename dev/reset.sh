@@ -1,5 +1,7 @@
 #!/bin/bash
 
+shopt -s globstar
+
 #./ch2/migraine/sqln2sqlo.sh
 ./ch2/migraine/sqlo2sqlo.sh
 dev/ch2 --dev activities ~/archive/fit/bike/*.fit --fast
