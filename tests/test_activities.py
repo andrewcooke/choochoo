@@ -53,9 +53,9 @@ class TestActivities(TestCase):
                 n_fix = s.query(count(StatisticJournalFloat.id)). \
                     join(StatisticName). \
                     filter(StatisticName.name == ELEVATION).scalar()
-                self.assertEqual(n_fix, n_raw)
+                self.assertEqual(n_fix, 2079)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 25696 + n_fix)
+                self.assertEqual(n, 29875)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 
