@@ -13,7 +13,8 @@ from ch2.squeal.support import Base
 from ch2.squeal.types import Date
 from ch2.uweird.tui.widgets import Integer
 
-basicConfig()
+if not getLogger().handlers:
+    basicConfig(stream=stdout, level=INFO)
 log = getLogger()
 if not log.handlers:
     log.setLevel(DEBUG)

@@ -93,6 +93,7 @@ def default(log, db, no_diary=False):
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_constant(s, SRTM1_DIR, description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
+        add_constant()
 
         if not no_diary:
 

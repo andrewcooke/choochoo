@@ -7,7 +7,7 @@ from sqlalchemy import desc, inspect, select, and_
 
 from . import ActivityCalculator
 from ..load import StatisticJournalLoader
-from ..names import FTHR, HR_ZONE, HEART_RATE, S
+from ..names import FTHR, HR_ZONE, HEART_RATE, S, HR_IMPULSE_10
 from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.constant import Constant
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
@@ -94,7 +94,7 @@ class HeartRateStatistics(ActivityCalculator):
 
         if impulses:
             loader = StatisticJournalLoader(self._log, s, self)
-            self._interpolate(hr_impulse.dest_name, loader, impulses, 10, ajournal)
+            self._interpolate(hr_impulse.dest_name, loader, impulses, ajournal)
             # if there are no values, add a single null so we don't re-process
             if not loader:
                 loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,
@@ -131,17 +131,13 @@ class HeartRateStatistics(ActivityCalculator):
                                             StatisticName.constraint == activity_group).
                                      order_by(desc(StatisticJournal.time)).all())
 
-    def _interpolate(self, name, loader, impulses, seconds, ajournal):
-
-        # IMPORTANT - display code assumes 'HR Impulse / 10s' exists
+    def _interpolate(self, name, loader, impulses, ajournal):
 
         # we need evenly-sampled statistics so we can do distributions over time.
         # why interpolate just this one statistic?
         # because it's not the same as others - it's already time-based
         # so interpolating it later is more complex.
         # but i may change my mind
-
-        full_name = '%s / %d%s' % (name, seconds, S)
 
         integral, sum = [], 0
         for impulse, time in impulses:
@@ -155,10 +151,10 @@ class HeartRateStatistics(ActivityCalculator):
             delta = (time_1 - time_0).total_seconds()
             while time <= time_1:
                 interp = impulse_0 + (impulse_1 - impulse_0) * (time - time_0).total_seconds() / delta
-                diff = (interp - prev) / seconds
-                loader.add(full_name, None, None, ajournal.activity_group, ajournal, diff, time,
+                diff = (interp - prev) / 10
+                loader.add(HR_IMPULSE_10, None, None, ajournal.activity_group, ajournal, diff, time,
                            StatisticJournalFloat)
-                time += dt.timedelta(seconds=seconds)
+                time += dt.timedelta(seconds=10)
                 prev = interp
             while integral and time > integral[0][1]:
                 impulse_0, time_0 = integral.pop(0)

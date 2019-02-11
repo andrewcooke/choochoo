@@ -1,0 +1,13 @@
+
+from ...stoats.names import DISTANCE, SPEED, ELEVATION, HR_IMPULSE_10
+
+WINDOW = '60s'
+POW_MINUS_ONE = '\u207b\u00b9'
+MIN_PERIODS = 1
+
+DISTANCE_KM = '%s / km' % DISTANCE
+SPEED_KMH = '%s / kmh%s' % (SPEED, POW_MINUS_ONE)
+MED_SPEED_KMH = 'M(%s) %s / kmh%s' % (WINDOW, SPEED, POW_MINUS_ONE)
+ELEVATION_M = '%s / m' % ELEVATION
+CLIMB_MS = 'Climb / ms%s' % POW_MINUS_ONE
+MED_HR_IMPULSE_10 = 'M(%s) %s' % (WINDOW, HR_IMPULSE_10)

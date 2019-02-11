@@ -69,6 +69,7 @@ GROUP = 'group'
 HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
 INTERNAL = 'internal'
+JUPYTER = 'jupyter'
 LABEL = 'label'
 LATITUDE = 'latitude'
 LIKE = 'like'
@@ -201,6 +202,8 @@ def parser():
 
     parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlo', metavar='FILE',
                         help='the database file')
+    parser.add_argument(no(JUPYTER), action='store_false', dest=JUPYTER,
+                        help='don\'t start the Jupyter server')
     parser.add_argument(mm(DEV), action='store_true', help='enable development mode')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
                         help='the directory for logs')

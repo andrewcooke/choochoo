@@ -70,7 +70,7 @@ def main():
     db = Database(args, log)
     try:
         if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
-            request_config()
+            refuse_until_configured()
         else:
             if not command_name or command_name not in (UNLOCK, FIT, FIX_FIT, GARMIN, TEST_SCHEDULE):
                 with db.session_context() as s:
@@ -91,7 +91,7 @@ def main():
             raise
 
 
-def request_config():
+def refuse_until_configured():
     LengthFmt().print_all('''
 Welcome to Choochoo.
 

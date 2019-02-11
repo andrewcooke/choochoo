@@ -9,6 +9,7 @@ from ..lib.data import kargs_to_attr
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan
+from ..stoats.names import TIMESPAN_ID
 
 # because this is intended to be called from jupyter we hide the log here
 # other callers can use these routines by calling set_log() first.
@@ -168,7 +169,7 @@ def activity_statistics(s, *statistics, time=None, activity_journal_id=None, wit
         if not times or times[-1] != time:
             times.append(time)
             if with_timespan:
-                data['timespan_id'].append(timespan)
+                data[TIMESPAN_ID].append(timespan)
         if len(data[name]) >= len(times):
             raise Exception('Duplicate data for %s at %s ' % (name, time) +
                             '(you may need to specify more constraints to make the query unique)')

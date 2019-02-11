@@ -4,7 +4,8 @@ from os.path import join
 
 import nbformat as nb
 import nbformat.v4 as nbv
-from notebook.notebookapp import NotebookApp
+
+from ..server import jupyter_server
 
 
 class Notebook:
@@ -18,7 +19,7 @@ class Notebook:
         self._notebook['cells'].append(nbv.new_markdown_cell("# %s" % title))
 
     def display(self):
-        path = join(NotebookApp.instance().notebook_dir, self._filename)
+        path = join(jupyter_server().notebook_dir, self._filename)
         with open(path, 'w') as out:
             nb.write(self._notebook, out)
         wb.open('http://localhost:8888/tree/%s' % self._filename)

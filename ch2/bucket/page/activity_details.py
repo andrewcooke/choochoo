@@ -21,7 +21,8 @@ from ...stoats.display.climb import climbs_for_activity
 from ...stoats.display.segment import segments_for_activity
 from ...stoats.names import SPEED, DISTANCE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, TIME, FATIGUE, FITNESS, \
     ACTIVE_DISTANCE, ACTIVE_TIME, HR_ZONE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, ALTITUDE, \
-    CLIMB_TIME, CLIMB_GRADIENT, LOCAL_TIME, DAILY_STEPS, REST_HR, LONGITUDE, LATITUDE, CADENCE
+    CLIMB_TIME, CLIMB_GRADIENT, LOCAL_TIME, DAILY_STEPS, REST_HR, LONGITUDE, LATITUDE, CADENCE, HR_IMPULSE_10, \
+    TIMESPAN_ID
 
 WINDOW = '60s'
 #WINDOW = 10
@@ -35,8 +36,7 @@ SPEED_KPH = '%s / kmh%s' % (SPEED, POW_MINUS_ONE)
 MED_SPEED_KPH = 'M(%s) %s / kmh%s' % (WINDOW, SPEED, POW_MINUS_ONE)
 ELEVATION_M = '%s / m' % ELEVATION
 CLIMB_MPS = 'Climb / ms%s' % POW_MINUS_ONE
-HR_10 = 'HR Impulse / 10s'
-MED_HR_10 = 'M(%s) HR Impulse / 10s' % WINDOW
+MED_HR_IMPULSE_10 = 'M(%s) %s' % (WINDOW, HR_IMPULSE_10)
 
 LOG_FITNESS = 'Log %s' % FITNESS
 LOG_FATIGUE = 'Log %s' % FATIGUE
@@ -98,20 +98,20 @@ def comparison(log, s, activity, compare=None):
 
     set_log(log)
     names = [LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION, SPEED,
-             HR_ZONE, HR_10, ALTITUDE, CADENCE]
+             HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE]
 
     # ---- load data
 
     def get_stats(aj):
         st = [df for id, df in
-              activity_statistics(s, *names, activity_journal_id=aj.id, with_timespan=True).groupby('timespan_id')]
+              activity_statistics(s, *names, activity_journal_id=aj.id, with_timespan=True).groupby(TIMESPAN_ID)]
         for df in st:
             df[DISTANCE_KM] = df[DISTANCE]/1000
             df[SPEED_KPH] = df[SPEED] * 3.6
             df[MED_SPEED_KPH] = df[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
-            df[MED_HR_10] = df[HR_10].rolling(WINDOW, min_periods=1).median()
+            df[MED_HR_IMPULSE_10] = df[HR_IMPULSE_10].rolling(WINDOW, min_periods=1).median()
             df.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
-        st = [add_interpolation(INTERPOLATION, df, HR_10, 10) for df in st]
+        st = [add_interpolation(INTERPOLATION, df, HR_IMPULSE_10, 10) for df in st]
         st_10 = [interpolate_to(df, INTERPOLATION) for df in st]
         for df in st_10:
             df[CLIMB_MPS] = df[ELEVATION_M].diff() * 0.1
@@ -159,8 +159,8 @@ def comparison(log, s, activity, compare=None):
         return cumulative(RIDE_PLOT_HGT, RIDE_PLOT_HGT, concat(source1, y_axis),
                           concat(source2, y_axis) if compare else None)
 
-    hr10_line = ride_line(MED_HR_10, x_axis=DISTANCE_KM)
-    hr10_cumulative = ride_cum(HR_10)
+    hr10_line = ride_line(MED_HR_IMPULSE_10, x_axis=DISTANCE_KM)
+    hr10_cumulative = ride_cum(HR_IMPULSE_10)
     if hr10_line.tools:  # avoid if HR not available
         line_x_range = hr10_line.x_range
     elvn_line = ride_elevn(x_axis=DISTANCE_KM)
@@ -170,12 +170,12 @@ def comparison(log, s, activity, compare=None):
     speed_line = ride_speed(x_axis=DISTANCE_KM)
     speed_cumulative = ride_cum(SPEED_KPH)
 
-    hr10 = build(st1_10, HR_10)
+    hr10 = build(st1_10, HR_IMPULSE_10)
     if hr10:
         hr10 = pd.concat(hr10)
         mn, mx = hr10.quantile(0.1)[0], hr10.quantile(0.95)[0]
         for df in st1_10:
-            df['size'] = MAP_LEN * ((df[HR_10] - mn) / (mx - mn)) ** 2 / 10
+            df['size'] = MAP_LEN * ((df[HR_IMPULSE_10] - mn) / (mx - mn)) ** 2 / 10
     else:
         for df in st1_10:
             df['size'] = df[SPHERICAL_MERCATOR_X] * 0
