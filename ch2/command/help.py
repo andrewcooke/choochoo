@@ -17,7 +17,7 @@ class Fmt:
     def paras(self, text):
         para = ''
         for line in text.split('\n'):
-            if line.strip().startswith('*'):
+            if line._strip().startswith('*'):
                 if para:
                     yield para
                 para = line

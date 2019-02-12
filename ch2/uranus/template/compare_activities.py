@@ -9,8 +9,8 @@ from ch2.uranus.notebook.plot import *
 
 def template(activity_date, compare_date):
 
-    '''
-    # Compare Activities: 2018-03-01 v 2018-09-19
+    f'''
+    # Compare Activities: {activity_date.split()[0]} v {compare_date.split()[0]}
     '''
 
     '''
