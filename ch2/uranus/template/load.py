@@ -188,6 +188,5 @@ def load(name):
 if __name__ == '__main__':
     tokens = list(tokenize({'activity_date': '2018-03-01 16:00', 'compare_date': '2017-09-19 16:00'},
                            load('compare_activities')))
-    print(tokens)
     notebook = Token.to_notebook(tokens)
     nb.write(notebook, stdout)
