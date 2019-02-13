@@ -4,10 +4,11 @@ from inspect import getsource
 from re import compile
 from sys import stdout
 
-import nbformat as nb
 import nbformat.v4 as nbv
+import nbformat as nb
 
 QUOTES = "'''"
+FQUOTES = 'f' + QUOTES
 
 
 class Token(ABC):
@@ -68,12 +69,20 @@ class TextToken(Token):
 
 class Text(TextToken):
 
-    def __init__(self, vars, f, indent):
+    def __init__(self, vars, fmt, indent):
         super().__init__(vars, indent)
-        self._fmt = 'f' + QUOTES if f else QUOTES
+        self._fmt = fmt
+
+    @staticmethod
+    def _strip_right(text):
+        # markdown in jupyter splits lines ending in multiple spaces.
+        while text and text[-1] == ' ':
+            text = text[:-1]
+        return text
 
     def post_one(self):
         self._text = eval('%s%s%s' % (self._fmt, self._text, QUOTES), self._vars)
+        self._text = '\n'.join([self._strip_right(line) for line in self._text.splitlines()])
         self._text = self._strip(self._text)
 
     def post_all(self, tokens):
@@ -98,7 +107,7 @@ class Text(TextToken):
     @staticmethod
     def parse(vars, lines, f):
         text = Text(vars, f, 4)
-        while lines and lines[0].strip() != QUOTES:
+        while lines and lines[0].strip() not in (QUOTES, FQUOTES):
             text.append(lines.pop(0))
         if text:
             text.post_one()
@@ -109,13 +118,16 @@ class Text(TextToken):
 
 class Code(TextToken):
 
+    def post_one(self):
+        self._text = self._strip(self._text)
+
     def to_cell(self):
-        return nbv.new_code_cell(self._strip(self._text))
+        return nbv.new_code_cell(self._text)
 
     @staticmethod
     def parse(vars, lines):
         code = Code(vars, 4)
-        while lines and lines[0].strip() != QUOTES:
+        while lines and lines[0].strip() not in (QUOTES, FQUOTES):
             code.append(lines.pop(0))
         if code:
             code.post_one()
@@ -149,6 +161,7 @@ class Params(Code):
     def post_one(self):
         for param in self._params:
             self.append("%s = '%s'" % (param, self._vars[param]))
+        super().post_one()
 
     @staticmethod
     def parse(vars, lines):
@@ -168,10 +181,8 @@ class Params(Code):
         while lines and not lines[0].strip():
             lines.pop(0)
         if lines:
-            if lines[0].strip() == QUOTES:
-                yield from Text.parse(vars, lines[1:], False)
-            elif lines[0].strip() == 'f' + QUOTES:
-                yield from Text.parse(vars, lines[1:], True)
+            if lines[0].strip() in (QUOTES, FQUOTES):
+                yield from Text.parse(vars, lines[1:], lines[0].strip())
             else:
                 yield from Code.parse(vars, lines)
 
@@ -188,5 +199,6 @@ def load(name):
 if __name__ == '__main__':
     tokens = list(tokenize({'activity_date': '2018-03-01 16:00', 'compare_date': '2017-09-19 16:00'},
                            load('compare_activities')))
+    # print(tokens)
     notebook = Token.to_notebook(tokens)
     nb.write(notebook, stdout)

@@ -20,23 +20,24 @@ def template(activity_date, compare_date):
     '''
     ## Load Data
     
-    Import packages, open connection to database, and load the data we require.
+    Open a connection to the database and load the data we require.
     '''
 
     s = session('-v2')
 
     activity = std_activity_stats(s, time=activity_date)
     compare = std_activity_stats(s, time=compare_date)
-    climbs = activity_statistics(s, 'Climb %', time=activity_date)
+    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, time=activity_date)
     health = std_health_stats(s)
 
-    '''
+    f'''
     ## Activity Plots
     
-    The black line shows data from 2018-03-04, the grey line from 2017-09-19.  
+    The black line shows data from {activity_date.split()[0]}, 
+    the grey line from {compare_date.split()[0]}. 
     To the right of each plot of data against distance is a related plot of cumulative data
     (except the last, cadence, which isn't useful and so replaced by HR zones).
-    Green and red areas indicate differences between the two dates.  
+    Green and red areas indicate differences between the two dates. 
     Additional red lines on the altitude plot are auto-detected climbs.
     
     Plot tools support zoom, dragging, etc.
@@ -45,16 +46,19 @@ def template(activity_date, compare_date):
     output_notebook()
 
     el = comparison_line_plot(700, 200, DISTANCE_KM, ELEVATION_M, activity, other=compare)
-    add_climbs(el, climbs, activity)
-    el_c = cumulative_plot(150, 200, CLIMB_MS, activity, other=compare)
-
-    hr = comparison_line_plot(700, 200, DISTANCE_KM, MED_HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=el.x_range)
-    hr_c = cumulative_plot(150, 200, MED_HR_IMPULSE_10, activity, other=compare, ylo=0)
+    add_climbs(el, details, activity)
+    el_c = cumulative_plot(200, 200, CLIMB_MS, activity, other=compare)
 
     sp = comparison_line_plot(700, 200, DISTANCE_KM, MED_SPEED_KMH, activity, other=compare, ylo=0, x_range=el.x_range)
-    sp_c = cumulative_plot(150, 200, MED_SPEED_KMH, activity, other=compare, ylo=0)
+    sp_c = cumulative_plot(200, 200, MED_SPEED_KMH, activity, other=compare, ylo=0)
 
-    show(column(row(el, el_c), row(hr, hr_c), row(sp, sp_c)))
+    hr = comparison_line_plot(700, 200, DISTANCE_KM, MED_HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=el.x_range)
+    hr_c = cumulative_plot(200, 200, MED_HR_IMPULSE_10, activity, other=compare, ylo=0)
+
+    cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, other=compare, ylo=0, x_range=el.x_range)
+    hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
+
+    show(column(row(el, el_c), row(sp, sp_c), row(hr, hr_c), row(cd, hr_h)))
 
     '''
     ## Activity Maps
@@ -68,23 +72,30 @@ def template(activity_date, compare_date):
     show(row(map, column(row(m_el, m_sp), row(m_hr, m_cd))))
 
     '''
-    ## Activity Climbs
-    
-    These are auto-detected and shown only for the main activity.  They are included in the elevation plot above.
-    
-    todo - Details of how to change parameters?
+    ## Activity Statistics
     '''
 
-    print(climbs)
+    '''
+    Active time and distance exclude pauses.
+    '''
+
+    details[[ACTIVE_TIME, ACTIVE_DISTANCE]].dropna()
+
+    '''
+    Climbs are auto-detected and shown only for the main activity. They are included in the elevation plot above.
+    '''
+
+    details.filter(like='Climb').dropna()
 
     '''
     ## Health and Fitness
     '''
 
-
-
-    '''
-    ## todo
-    
-    Active distance, time, etc.  Change to using activity journal IDs?
-    '''
+    ff = multi_line_plot(900, 300, TIME, [FITNESS, FATIGUE], health, ['black', 'red'], alphas=[1, 0.3])
+    log_ff = multi_line_plot(900, 100, TIME, [LOG_FITNESS, LOG_FATIGUE], health, ['black', 'red'], alphas=[1, 0.5],
+                             x_range=ff.x_range, y_label='Log FF')
+    atd = multi_dot_plot(900, 200, TIME, [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM], health, ['black', 'grey'], alphas=[1, 0.5],
+                         x_range=ff.x_range, rescale=True)
+    shr = multi_plot(900, 200, TIME, [DAILY_STEPS, REST_HR], health, ['grey', 'red'], alphas=[1, 0.5],
+                     x_range=ff.x_range, rescale=True, plotters=[bar_plotter(dt.timedelta(hours=20)), dot_plotter()])
+    show(column(ff, log_ff, atd, shr))

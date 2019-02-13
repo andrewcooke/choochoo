@@ -1,4 +1,6 @@
 
+import datetime as dt
+
 import numpy as np
 import pandas as pd
 
@@ -39,9 +41,14 @@ def std_activity_stats(s, time=None, activity_journal_id=None):
 
 def std_health_stats(s):
 
+    # this assumes FF cover all the dates and HR/steps fit into them.  may not be true in all cases?
+    # also, we downsample the FF data to hourly intervals then shift daily data to match one of those times
+    # this avoids introducing gaps in the FF data when merging that mess up the continuity of the plots.
     stats_1 = statistics(s, FITNESS, FATIGUE).resample('1h').mean()
-    stats_2 = statistics(s, REST_HR, owner=MonitorStatistics)
-    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE)
+    stats_2 = statistics(s, REST_HR, owner=MonitorStatistics).reindex(stats_1.index, method='nearest',
+                                                                      tolerance=dt.timedelta(minutes=30))
+    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE).reindex(stats_1.index, method='nearest',
+                                                                               tolerance=dt.timedelta(minutes=30))
     stats = stats_1.merge(stats_2, how='outer', left_index=True, right_index=True)
     stats = stats.merge(stats_3, how='outer', left_index=True, right_index=True)
     stats[LOG_FITNESS] = np.log10(stats[FITNESS])
