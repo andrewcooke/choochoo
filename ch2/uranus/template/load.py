@@ -1,14 +1,19 @@
 
 from abc import abstractmethod, ABC
 from inspect import getsource
-from re import compile
+from os import unlink, makedirs
+from os.path import join, exists
+from re import compile, sub
 from sys import stdout
 
 import nbformat.v4 as nbv
 import nbformat as nb
 
+from ..server import JupyterServer
+
 QUOTES = "'''"
 FQUOTES = 'f' + QUOTES
+IPYNB = '.ipynb'
 
 
 class Token(ABC):
@@ -61,7 +66,7 @@ class TextToken(Token):
         return text
 
     def __repr__(self):
-        return "%s(%s\n%s\n%s)" % (self.__class__.__name__, QUOTES, self._text, QUOTES)
+        return f'{self.__class__.__name__}({QUOTES}\n{self._text}\n{QUOTES})'
 
     def to_cell(self):
         return nbv.new_markdown_cell(self._text)
@@ -101,7 +106,7 @@ class Text(TextToken):
                 for line in token._text.splitlines():
                     if line.startswith('## '):
                         title = line[3:].strip()
-                        sections.append('* [%s](%s)' % (title, title.replace(' ', '-')))
+                        sections.append(f'* [{title}](#{title.replace(" ", "-")})')
         return '\n'.join(sections)
 
     @staticmethod
@@ -160,7 +165,7 @@ class Params(Code):
 
     def post_one(self):
         for param in self._params:
-            self.append("%s = '%s'" % (param, self._vars[param]))
+            self.append(f'{param} = "{self._vars[param]}"')
         super().post_one()
 
     @staticmethod
@@ -173,7 +178,7 @@ class Params(Code):
             params.post_one()
             yield params
         elif not match:
-            raise Exception('Bad template def: %s' % line)
+            raise Exception(f'Bad template def: {line}')
         yield from Params.parse_text_or_code(vars, lines)
 
     @staticmethod
@@ -191,14 +196,37 @@ def tokenize(vars, text):
     yield from Import.parse(vars, list(text.splitlines()))
 
 
-def load(name):
-    template = getattr(__import__('ch2.uranus.template', fromlist=[name]), name)
-    return getsource(template)
+def load_raw(name):
+    return getsource(getattr(__import__('ch2.uranus.template', fromlist=[name]), name))
+
+
+def load_tokens(name, **kargs):
+    return tokenize(kargs, load_raw(name))
+
+
+def load_notebook(name, **kargs):
+    return Token.to_notebook(list(load_tokens(name, **kargs)))
+
+
+def create_notebook(log, template, **kargs):
+    args = ' '.join(str(kargs[key]) for key in sorted(kargs.keys()))
+    args = sub(r'\s+', '-', args)
+    name = args + IPYNB
+    base = join(JupyterServer.singleton().notebook_dir, template)
+    path = join(base, name)
+    makedirs(base)
+    log.info(f'Creating {template} with {kargs}')
+    notebook = load_notebook(template, **kargs)
+    if exists(path):
+        log.warn(f'Deleting old version of {path}')
+        unlink(path)
+    with open(path, 'w') as out:
+        log.info(f'Writing {template} to {path}')
+        nb.write(notebook, out)
+    return join(template, name)
 
 
 if __name__ == '__main__':
-    tokens = list(tokenize({'activity_date': '2018-03-01 16:00', 'compare_date': '2017-09-19 16:00'},
-                           load('compare_activities')))
     # print(tokens)
-    notebook = Token.to_notebook(tokens)
+    notebook = load_notebook('compare_activities', activity_date='2018-03-01 16:00', compare_date='2017-09-19 16:00')
     nb.write(notebook, stdout)
