@@ -20,7 +20,6 @@ def start_from_args(args, log):
 
         def start():
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
-            print('isdir? ', isdir(notebook_dir))
             JupyterServer.launch_instance(['--notebook-dir', notebook_dir], log=log)
 
         t = Thread(target=start)

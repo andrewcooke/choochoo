@@ -1,4 +1,5 @@
 
+import webbrowser as web
 from abc import abstractmethod, ABC
 from inspect import getsource
 from os import unlink, makedirs
@@ -8,6 +9,7 @@ from sys import stdout
 
 import nbformat.v4 as nbv
 import nbformat as nb
+from nbformat.sign import NotebookNotary
 
 from ..server import JupyterServer
 
@@ -217,6 +219,8 @@ def create_notebook(log, template, **kargs):
     makedirs(base)
     log.info(f'Creating {template} with {kargs}')
     notebook = load_notebook(template, **kargs)
+    # https://testnb.readthedocs.io/en/latest/security.html
+    NotebookNotary().sign(notebook)
     if exists(path):
         log.warn(f'Deleting old version of {path}')
         unlink(path)
@@ -224,6 +228,14 @@ def create_notebook(log, template, **kargs):
         log.info(f'Writing {template} to {path}')
         nb.write(notebook, out)
     return join(template, name)
+
+
+def display_notebook(log, template, **kargs):
+    name = create_notebook(log, template, **kargs)
+    connection = JupyterServer.singleton().connection_url
+    url = f'{connection}tree/{name}'
+    log.info(f'Displaying {url}')
+    web.open(url, autoraise=False)
 
 
 if __name__ == '__main__':
