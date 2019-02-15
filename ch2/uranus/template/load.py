@@ -146,6 +146,13 @@ class Code(TextToken):
 
 class Import(Code):
 
+    FILTER = ('decorator import template', '@template')
+
+    def post_one(self):
+        self._text = '\n'.join(line for line in self._text.splitlines()
+                               if all(filter not in line for filter in self.FILTER))
+        super().post_one()
+
     @staticmethod
     def parse(vars, lines):
         imports = Import(vars, 0)
@@ -195,6 +202,13 @@ class Params(Code):
                 yield from Code.parse(vars, lines)
 
 
+class Help(Text):
+
+    def __init__(self):
+        super().__init__({}, False, 0)
+        self.append('(Select "Run All" from "Cell" menu above to generate output)')
+
+
 def tokenize(vars, text):
     yield from Import.parse(vars, list(text.splitlines()))
 
@@ -208,7 +222,9 @@ def load_tokens(name, **kargs):
 
 
 def load_notebook(name, **kargs):
-    return Token.to_notebook(list(load_tokens(name, **kargs)))
+    tokens = list(load_tokens(name, **kargs))
+    tokens = [Help()] + tokens
+    return Token.to_notebook(tokens)
 
 
 def create_notebook(log, template, **kargs):

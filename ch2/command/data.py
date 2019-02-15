@@ -19,7 +19,7 @@ def data(args, log, db):
 
     > ch2 data COMMAND
 
-Simple access to the database - similar to the interface provided in Jupyter notebooks,
+Simple access to the database - similar to the interface provided in JupyterState notebooks,
 but accessed from the command line.
 
 The format can be selected with `--print` (the default), `--csv` and `--describe`.

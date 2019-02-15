@@ -34,7 +34,7 @@ def no_op(args, log, db):
     '''
 ## no-op
 
-This is used internally when accessing data in Jupyter or configuring the system
+This is used internally when accessing data in JupyterState or configuring the system
 at the command line.
     '''
     pass

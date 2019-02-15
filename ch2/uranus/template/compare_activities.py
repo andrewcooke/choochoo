@@ -5,8 +5,10 @@ from bokeh.plotting import output_notebook, show
 from ch2.data import *
 from ch2.uranus.notebook.data import *
 from ch2.uranus.notebook.plot import *
+from ch2.uranus.template.decorator import template
 
 
+@template
 def compare_activities(activity_date, compare_date):
 
     f'''
