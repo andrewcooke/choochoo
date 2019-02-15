@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import coalesce
 from ..lib.data import kargs_to_attr
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
-from ..squeal.database import connect, ActivityTimespan
+from ..squeal.database import connect, ActivityTimespan, ActivityGroup
 from ..stoats.names import TIMESPAN_ID
 
 # because this is intended to be called from jupyter we hide the log here
@@ -128,7 +128,7 @@ def statistics(s, *statistics,
     return pd.DataFrame(data, index=times)
 
 
-def _resolve_activity(s, time, activity_journal_id, log=None):
+def _resolve_activity(s, time, group, activity_journal_id, log=None):
     set_log(log)
     if activity_journal_id:
         if time:
@@ -137,18 +137,20 @@ def _resolve_activity(s, time, activity_journal_id, log=None):
         if not time:
             raise Exception('Specify activity_journal_id or time')
         activity_journal_id = s.query(ActivityJournal.id). \
+            join(ActivityGroup). \
             filter(ActivityJournal.start <= time,
-                   ActivityJournal.finish >= time).scalar()
+                   ActivityJournal.finish >= time,
+                   ActivityGroup.name == group).scalar()
         get_log().info('Using activity_journal_id=%d' % activity_journal_id)
     return activity_journal_id
 
 
-def activity_statistics(s, *statistics, time=None, activity_journal_id=None, with_timespan=False, log=None):
+def activity_statistics(s, *statistics, time=None, group=None, activity_journal_id=None, with_timespan=False, log=None):
     set_log(log)
 
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     get_log().debug('Statistics IDs %s' % statistic_ids)
-    activity_journal_id = _resolve_activity(s, time, activity_journal_id)
+    activity_journal_id = _resolve_activity(s, time, group, activity_journal_id)
 
     t = _tables()
     q = select([t.sn.c.name, t.sj.c.time, coalesce(t.sjf.c.value, t.sji.c.value, t.sjt.c.value), t.at.c.id]). \

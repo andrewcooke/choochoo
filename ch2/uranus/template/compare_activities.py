@@ -1,6 +1,7 @@
 
+from bokeh.io import output_file
 from bokeh.layouts import row, column
-from bokeh.plotting import output_notebook, show
+from bokeh.plotting import show
 
 from ch2.data import *
 from ch2.uranus.notebook.data import *
@@ -9,7 +10,7 @@ from ch2.uranus.template.decorator import template
 
 
 @template
-def compare_activities(activity_date, compare_date):
+def compare_activities(activity_date, compare_date, group):
 
     f'''
     # Compare Activities: {activity_date.split()[0]} v {compare_date.split()[0]}
@@ -27,9 +28,9 @@ def compare_activities(activity_date, compare_date):
 
     s = session('-v2')
 
-    activity = std_activity_stats(s, time=activity_date)
-    compare = std_activity_stats(s, time=compare_date)
-    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, time=activity_date)
+    activity = std_activity_stats(s, time=activity_date, group=group)
+    compare = std_activity_stats(s, time=compare_date, group=group)
+    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, time=activity_date, group=group)
     health = std_health_stats(s)
 
     f'''
@@ -45,7 +46,7 @@ def compare_activities(activity_date, compare_date):
     Plot tools support zoom, dragging, etc.
     '''
 
-    output_notebook()
+    output_file(filename='/dev/null')
 
     el = comparison_line_plot(700, 200, DISTANCE_KM, ELEVATION_M, activity, other=compare)
     add_climbs(el, details, activity)

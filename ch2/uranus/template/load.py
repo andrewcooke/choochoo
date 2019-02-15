@@ -127,6 +127,7 @@ class Text(TextToken):
 class Code(TextToken):
 
     def post_one(self):
+        self._text = sub(r'output_file\([^)]*\)', 'output_notebook()', self._text)
         self._text = self._strip(self._text)
 
     def to_cell(self):
@@ -151,6 +152,7 @@ class Import(Code):
     def post_one(self):
         self._text = '\n'.join(line for line in self._text.splitlines()
                                if all(filter not in line for filter in self.FILTER))
+        self._text = self._text.replace('output_file', 'output_notebook')
         super().post_one()
 
     @staticmethod
