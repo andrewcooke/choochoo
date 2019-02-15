@@ -19,6 +19,7 @@ from ..squeal.database import add, ActivityJournal
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
+from ..uranus.template.compare_activities import compare_activities
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
@@ -200,10 +201,11 @@ class DailyDiary(Diary):
             yield Columns([f(menu), f(Padding(Fixed(button, 13), width='clip'))])
 
     def __show_gui(self, w, aj1):
-        path = '%s?id=%d' % (ActivityDetailsPage.PATH, aj1.id)
         if w.state:
-            path += '&compare=%d' % w.state.id
-        self._server.show(path)
+            compare_activities(aj1.start, w.state.start, aj1.activity_group.name, log=self._log)
+        else:
+            path = '%s?id=%d' % (ActivityDetailsPage.PATH, aj1.id)
+            self._server.show(path)
 
     def __show_similar(self, w, aj1):
         self._server.show('%s?id=%d' % (SimilarActivitiesPage.PATH, aj1.id))

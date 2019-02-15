@@ -76,7 +76,7 @@ def main():
             if not command_name or command_name not in (UNLOCK, FIT, FIX_FIT, GARMIN, TEST_SCHEDULE):
                 with db.session_context() as s:
                     SystemConstant.assert_unlocked(s)
-            set_jupyter_args(args)
+            set_jupyter_args(log, args)
             try:
                 if command:
                     command(args, log, db)

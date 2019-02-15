@@ -1,7 +1,7 @@
 
 import asyncio
 from os import makedirs
-from os.path import join
+from os.path import join, expanduser
 from threading import Thread, Event
 from time import sleep
 
@@ -22,11 +22,12 @@ JUPYTER.NOTEBOOK_DIR = None
 __RUNNING = False
 
 
-def set_jupyter_args(args):
+def set_jupyter_args(log, args):
     global JUPYTER
     JUPYTER.ENABLED = args[J]
-    JUPYTER.NOTEBOOK_DIR = join(args[ROOT], 'notebooks')
-    makedirs(JUPYTER.NOTEBOOK_DIR)
+    JUPYTER.NOTEBOOK_DIR = expanduser(join(args[ROOT], 'notebooks'))
+    log.debug(f'Creating {JUPYTER.NOTEBOOK_DIR}')
+    makedirs(JUPYTER.NOTEBOOK_DIR, exist_ok=True)
 
 
 def start_jupyter(log):
@@ -35,7 +36,7 @@ def start_jupyter(log):
         started = Event()
 
         def start():
-            log.info('Starting JupyterState in separate thread')
+            log.info('Starting Jupyter server in separate thread')
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
             JupyterServer.launch_instance(['--notebook-dir', JUPYTER.NOTEBOOK_DIR], log=log, started=started)
 
@@ -52,11 +53,15 @@ def stop_jupyter(log):
     global __RUNNING
     if __RUNNING:
         try:
+            log.info('Stopping Jupyter server')
             JupyterServer._instance.stop()
+            log.debug('Jupyter server stopped')
         except Exception as e:
             log.warning(f'Error stopping JupyterState: {e}')
         finally:
             __RUNNING = False
+    else:
+        log.debug('Jupyter server not running')
 
 
 class JupyterServer(NotebookApp):

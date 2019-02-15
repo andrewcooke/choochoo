@@ -2,6 +2,7 @@
 import webbrowser as web
 from abc import abstractmethod, ABC
 from inspect import getsource
+from logging import getLogger
 from os import unlink, makedirs
 from os.path import join, exists
 from re import compile, sub
@@ -215,16 +216,18 @@ def tokenize(vars, text):
     yield from Import.parse(vars, list(text.splitlines()))
 
 
-def load_raw(name):
+def load_raw(log, name):
+    log.debug(f'Loading template {name}')
     return getsource(getattr(__import__('ch2.uranus.template', fromlist=[name]), name))
 
 
-def load_tokens(name, **kargs):
-    return tokenize(kargs, load_raw(name))
+def load_tokens(log, name, **kargs):
+    log.debug(f'Tokenizing {name}')
+    return tokenize(kargs, load_raw(log, name))
 
 
-def load_notebook(name, **kargs):
-    tokens = list(load_tokens(name, **kargs))
+def load_notebook(log, name, **kargs):
+    tokens = list(load_tokens(log, name, **kargs))
     tokens = [Help()] + tokens
     return Token.to_notebook(tokens)
 
@@ -235,9 +238,9 @@ def create_notebook(log, template, **kargs):
     name = args + IPYNB
     base = join(JUPYTER.NOTEBOOK_DIR, template)
     path = join(base, name)
-    makedirs(base)
+    makedirs(base, exist_ok=True)
     log.info(f'Creating {template} with {kargs}')
-    notebook = load_notebook(template, **kargs)
+    notebook = load_notebook(log, template, **kargs)
     # https://testnb.readthedocs.io/en/latest/security.html
     NotebookNotary().sign(notebook)
     if exists(path):
@@ -250,6 +253,7 @@ def create_notebook(log, template, **kargs):
 
 
 def display_notebook(log, template, **kargs):
+    log.debug(f'Displaying {template} with {kargs}')
     if isinstance(template, FunctionType):
         template = template.__name__
     if not JUPYTER.ENABLED:
@@ -260,9 +264,3 @@ def display_notebook(log, template, **kargs):
         url = f'{JUPYTER.CONNECTION_URL}tree/{name}'
         log.info(f'Displaying {url}')
         web.open(url, autoraise=False)
-
-
-if __name__ == '__main__':
-    # print(tokens)
-    notebook = load_notebook('compare_activities', activity_date='2018-03-01 16:00', compare_date='2017-09-19 16:00')
-    nb.write(notebook, stdout)

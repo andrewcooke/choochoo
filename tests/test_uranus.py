@@ -24,7 +24,7 @@ class TestUranus(TestCase):
         with TemporaryDirectory() as dir:
             try:
                 self._log.debug(f'Dir {dir}')
-                set_jupyter_args({JUPYTER: True, ROOT: dir})
+                set_jupyter_args(self._log, {JUPYTER: True, ROOT: dir})
                 compare_activities('2018-03-01 16:00', '2017-09-19 16:00', 'Bike', log=self._log)
                 sleep(5000)
             finally:
