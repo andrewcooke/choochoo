@@ -1,51 +1,74 @@
 
 import asyncio
 from os import makedirs
-from os.path import join, exists, isdir
+from os.path import join
 from threading import Thread, Event
+from time import sleep
 
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..command.args import JUPYTER, ROOT
-
-JUPYTER_DIR = 'Jupyter.Dir'
+from ..command.args import JUPYTER as J, ROOT
 
 
-def start_from_args(args, log):
-    if args[JUPYTER]:
-        JupyterServer.singleton(False, 'Jupyter already started')
-        notebook_dir = join(args[ROOT], 'notebooks')
-        makedirs(notebook_dir, exist_ok=True)
+class Jupyter: pass
+
+
+JUPYTER = Jupyter()
+JUPYTER.ENABLED = False
+JUPYTER.CONNECTION_URL = None
+JUPYTER.NOTEBOOK_DIR = None
+
+__RUNNING = False
+
+
+
+def set_jupyter_args(args):
+    global JUPYTER
+    JUPYTER.ENABLED = args[J]
+    JUPYTER.NOTEBOOK_DIR = join(args[ROOT], 'notebooks')
+    makedirs(JUPYTER.NOTEBOOK_DIR)
+
+
+def start_jupyter(log):
+    global __RUNNING, JUPYTER
+    if JUPYTER.ENABLED and not __RUNNING:
+        started = Event()
 
         def start():
+            log.info('Starting Jupyter in separate thread')
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
-            JupyterServer.launch_instance(['--notebook-dir', notebook_dir], log=log)
+            JupyterServer.launch_instance(['--notebook-dir', JUPYTER.NOTEBOOK_DIR], log=log, started=started)
 
         t = Thread(target=start)
         t.daemon = True
         t.start()
+        started.wait()
+        sleep(5)  # annoying, but we seem to need extra time or web.open() doesn't work
+        __RUNNING = True
+        JUPYTER.CONNECTION_URL = JupyterServer._instance.connection_url
 
 
-def stop():
-    if JupyterServer.singleton():
-        JupyterServer.singleton().stop()
+def stop_jupyter(log):
+    global __RUNNING
+    if __RUNNING:
+        try:
+            JupyterServer._instance.stop()
+        except Exception as e:
+            log.warning(f'Error stopping Jupyter: {e}')
+        __RUNNING = False
 
 
 class JupyterServer(NotebookApp):
 
-    def __init__(self, log=None, **kwargs):
-        if not log:
-            raise Exception('Who is creating this?')
+    def __init__(self, log=None, started=None, **kwargs):
         self._log = log
+        self._started = started
         super().__init__(**kwargs)
 
     def init_signal(self):
         self._log.debug('Skipping signal init')
 
-    @classmethod
-    def singleton(cls, exists=True, error='No Jupyter server running'):
-        if bool(cls._instance) == exists:
-            return cls._instance
-        else:
-            raise Exception(error)
+    def start(self):
+        self._started.set()
+        super().start()

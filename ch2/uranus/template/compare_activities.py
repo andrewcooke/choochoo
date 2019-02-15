@@ -7,7 +7,7 @@ from ch2.uranus.notebook.data import *
 from ch2.uranus.notebook.plot import *
 
 
-def template(activity_date, compare_date):
+def compare_activities(activity_date, compare_date):
 
     f'''
     # Compare Activities: {activity_date.split()[0]} v {compare_date.split()[0]}

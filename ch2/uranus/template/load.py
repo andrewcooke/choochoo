@@ -6,12 +6,13 @@ from os import unlink, makedirs
 from os.path import join, exists
 from re import compile, sub
 from sys import stdout
+from types import FunctionType
 
 import nbformat.v4 as nbv
 import nbformat as nb
 from nbformat.sign import NotebookNotary
 
-from ..server import JupyterServer
+from ..server import JUPYTER, start_jupyter
 
 QUOTES = "'''"
 FQUOTES = 'f' + QUOTES
@@ -173,9 +174,9 @@ class Params(Code):
     @staticmethod
     def parse(vars, lines):
         line = lines.pop(0)
-        template = compile(r'def template\(([^)]*)\):\s*')
+        template = compile(r'def [^(]+\(([^)]*)\):\s*')
         match = template.match(line)
-        if match.group(1):
+        if match and match.group(1):
             params = Params(vars, match.group(1).split(','))
             params.post_one()
             yield params
@@ -214,7 +215,7 @@ def create_notebook(log, template, **kargs):
     args = ' '.join(str(kargs[key]) for key in sorted(kargs.keys()))
     args = sub(r'\s+', '-', args)
     name = args + IPYNB
-    base = join(JupyterServer.singleton().notebook_dir, template)
+    base = join(JUPYTER.NOTEBOOK_DIR, template)
     path = join(base, name)
     makedirs(base)
     log.info(f'Creating {template} with {kargs}')
@@ -231,11 +232,16 @@ def create_notebook(log, template, **kargs):
 
 
 def display_notebook(log, template, **kargs):
-    name = create_notebook(log, template, **kargs)
-    connection = JupyterServer.singleton().connection_url
-    url = f'{connection}tree/{name}'
-    log.info(f'Displaying {url}')
-    web.open(url, autoraise=False)
+    if isinstance(template, FunctionType):
+        template = template.__name__
+    if not JUPYTER.ENABLED:
+        log.warning(f'Jupyter disabled; ignoring {template}')
+    else:
+        start_jupyter(log)
+        name = create_notebook(log, template, **kargs)
+        url = f'{JUPYTER.CONNECTION_URL}tree/{name}'
+        log.info(f'Displaying {url}')
+        web.open(url, autoraise=False)
 
 
 if __name__ == '__main__':

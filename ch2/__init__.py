@@ -26,6 +26,7 @@ from .lib.io import tui
 from .lib.log import make_log
 from .squeal.database import Database
 from .squeal.tables.constant import SystemConstant
+from .uranus.server import set_jupyter_args, stop_jupyter
 
 
 @tui
@@ -75,12 +76,16 @@ def main():
             if not command_name or command_name not in (UNLOCK, FIT, FIX_FIT, GARMIN, TEST_SCHEDULE):
                 with db.session_context() as s:
                     SystemConstant.assert_unlocked(s)
-            if command:
-                command(args, log, db)
-            else:
-                log.debug('If you are seeing the "No command given" error during development ' +
-                          'you may have forgotten to set the command name via `set_defaults()`.')
-                raise Exception('No command given (try `ch2 help`)')
+            set_jupyter_args(args)
+            try:
+                if command:
+                    command(args, log, db)
+                else:
+                    log.debug('If you are seeing the "No command given" error during development ' +
+                              'you may have forgotten to set the command name via `set_defaults()`.')
+                    raise Exception('No command given (try `ch2 help`)')
+            finally:
+                stop_jupyter(log)
     except KeyboardInterrupt:
         log.critical('User abort')
     except Exception as e:
