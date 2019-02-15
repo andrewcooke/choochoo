@@ -6,7 +6,6 @@ from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
 from .args import DATE, SCHEDULE
-from ..bucket.page.activity_details import ActivityDetailsPage
 from ..bucket.page.duration_activities import DurationActivitiesPage
 from ..bucket.page.similar_activities import SimilarActivitiesPage
 from ..bucket.server import default_singleton_server
@@ -19,6 +18,7 @@ from ..squeal.database import add, ActivityJournal
 from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
+from ..uranus.template.activity_details import activity_details
 from ..uranus.template.compare_activities import compare_activities
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
@@ -204,8 +204,7 @@ class DailyDiary(Diary):
         if w.state:
             compare_activities(aj1.start, w.state.start, aj1.activity_group.name, log=self._log)
         else:
-            path = '%s?id=%d' % (ActivityDetailsPage.PATH, aj1.id)
-            self._server.show(path)
+            activity_details(aj1.start, aj1.activity_group.name, log=self._log)
 
     def __show_similar(self, w, aj1):
         self._server.show('%s?id=%d' % (SimilarActivitiesPage.PATH, aj1.id))
