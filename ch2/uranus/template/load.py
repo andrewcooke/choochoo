@@ -1,7 +1,7 @@
 
 import webbrowser as web
 from abc import abstractmethod, ABC
-from inspect import getsource
+from inspect import getsource, getfullargspec
 from logging import getLogger
 from os import unlink, makedirs
 from os.path import join, exists
@@ -221,26 +221,36 @@ def load_raw(log, name):
     return getsource(getattr(__import__('ch2.uranus.template', fromlist=[name]), name))
 
 
-def load_tokens(log, name, **kargs):
+def load_tokens(log, name, vars):
     log.debug(f'Tokenizing {name}')
-    return tokenize(kargs, load_raw(log, name))
+    return tokenize(vars, load_raw(log, name))
 
 
-def load_notebook(log, name, **kargs):
-    tokens = list(load_tokens(log, name, **kargs))
+def load_notebook(log, name, vars):
+    tokens = list(load_tokens(log, name, vars))
     tokens = [Help()] + tokens
     return Token.to_notebook(tokens)
 
 
-def create_notebook(log, template, **kargs):
-    args = ' '.join(str(kargs[key]) for key in sorted(kargs.keys()))
-    args = sub(r'\s+', '-', args)
-    name = args + IPYNB
+def create_notebook(log, template, args, kargs):
+
+    all_args = ' '.join(args)
+    if all_args and kargs: all_args += ' '
+    all_args += ' '.join(kargs[key] for key in sorted(kargs.keys()))
+    all_args = sub(r'\s+', '-', all_args)
+
+    vars = dict(kargs)
+    for name, value in zip(getfullargspec(template).args, args):
+        vars[name] = value
+
+    template = template.__name__
     base = join(JUPYTER.NOTEBOOK_DIR, template)
+    name = all_args + IPYNB
     path = join(base, name)
     makedirs(base, exist_ok=True)
-    log.info(f'Creating {template} with {kargs}')
-    notebook = load_notebook(log, template, **kargs)
+
+    log.info(f'Creating {template} at {path} with {vars}')
+    notebook = load_notebook(log, template, vars)
     # https://testnb.readthedocs.io/en/latest/security.html
     NotebookNotary().sign(notebook)
     if exists(path):
@@ -252,15 +262,13 @@ def create_notebook(log, template, **kargs):
     return join(template, name)
 
 
-def display_notebook(log, template, **kargs):
-    log.debug(f'Displaying {template} with {kargs}')
-    if isinstance(template, FunctionType):
-        template = template.__name__
+def display_notebook(log, template, args, kargs):
+    log.debug(f'Displaying {template} with {args}, {kargs}')
     if not JUPYTER.ENABLED:
         log.warning(f'Jupyter disabled; ignoring {template}')
     else:
         start_jupyter(log)
-        name = create_notebook(log, template, **kargs)
+        name = create_notebook(log, template, args, kargs)
         url = f'{JUPYTER.CONNECTION_URL}tree/{name}'
         log.info(f'Displaying {url}')
         web.open(url, autoraise=False)

@@ -23,9 +23,7 @@ def template(func):
         if direct:
             return func(*args, **kargs)
         else:
-            all_args = dict(kargs)
-            for name, value in zip(getfullargspec(func).args, args):
-                all_args[name] = stringify(value)
-            display_notebook(log, func, **all_args)
-
+            sargs = [stringify(arg) for arg in args]
+            skargs = dict((name, stringify(value)) for name, value in kargs.items())
+            display_notebook(log, func, sargs, skargs)
     return wrapper
