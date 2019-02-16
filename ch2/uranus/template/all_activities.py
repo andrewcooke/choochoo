@@ -33,6 +33,7 @@ def all_activities(start, finish):
                              filter(ActivityJournal.start >= local_date_to_time(start),
                                     ActivityJournal.start < local_date_to_time(finish)).all())
             if len(data.dropna()) > 10]
+    print(f'Found {len(maps)} activities')
 
     '''
     ## Display Maps
