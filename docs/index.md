@@ -40,8 +40,8 @@ support for power meters.
 
 * Manual
   * [Getting Started](getting-started)
-  * [Daily Use](daily-use)
-  * [Data Analysis](data-analysis)
+  * [Daily Use](daily-use) (including [Basic Data Analysis](daily-use#data-analysis))
+  * [Advanced Data Analysis](data-analysis)
   * [Command Summmary](command-summary)
 * Reference
   * [Data Model](data-model)

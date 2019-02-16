@@ -6,7 +6,7 @@ import pandas as pd
 
 from .names import *
 from ...data import activity_statistics, statistics
-from ...lib.date import time_to_local_time, to_time
+from ...lib.date import time_to_local_time, to_time, HMS, YMD
 from ...stoats.calculate.monitor import MonitorStatistics
 from ...stoats.names import LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, CADENCE, \
     ALTITUDE, HR_IMPULSE_10, HR_ZONE, SPEED, ELEVATION, TIME, LOCAL_TIME, FITNESS, FATIGUE, DAILY_STEPS, REST_HR, \
@@ -33,9 +33,7 @@ def std_activity_stats(s, local_time=None, time=None, group=None, activity_journ
 
     stats[CLIMB_MS] = stats[ELEVATION_M].diff() * 0.1
     stats[TIME] = pd.to_datetime(stats.index)
-    # stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x).strftime('%H:%M:%S'))
-    # this seems to be a bug in pandas not supporting astimezone for some weird internal datetime
-    stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(to_time(x.timestamp())).strftime('%H:%M:%S'))
+    stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), HMS))
 
     return stats
 
@@ -57,6 +55,6 @@ def std_health_stats(s):
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
     stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
     stats[TIME] = pd.to_datetime(stats.index)
-    stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(to_time(x.timestamp())).strftime('%Y-%m-%d'))
+    stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     return stats

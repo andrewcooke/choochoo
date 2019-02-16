@@ -6,7 +6,8 @@ from calendar import monthrange
 
 
 YMD = '%Y-%m-%d'
-YMD_HMS = '%Y-%m-%d %H:%M:%S'
+HMS = '%H:%M:%S'
+YMD_HMS = YMD + ' ' + HMS
 
 
 def format_date(date):

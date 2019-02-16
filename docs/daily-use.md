@@ -13,6 +13,7 @@
   * [Download from Device](#download-from-device)
   * [Activity Entry](#activity-entry)
   * [FTHR](#fthr)
+* [Data Analysis](#data-analysis)
 
 ## Organisation
 
@@ -56,12 +57,8 @@ See [configuration](configuration) for how to add additional fields.
 Above, a typical diary entry, showing notes and HR zones for an
 activity.
 
-At the very bottom of the page is a menu/button that pushes a [graphic
-summary](summary) to your browser.  This can either be of the
-selected activity alone, or compared to some similar route (use
-left/right arrow keys to select comparison; enter to display).
-
-![](graphic-summary.png)
+Options under the heading "Jupyter" are explained
+[below](#data-alanylsis).
 
 ### Re-calculating Statistics
 
@@ -186,3 +183,24 @@ A possible estimator for your FTHR is the "Max med HR 30m" statistic.
 This is the maximum value found for the median heart rate over 30
 minutes in ride (so the heart rate for the entire ride is median
 filtered with a 30 minute window and then the maximum value taken).
+
+## Data Analysis
+
+For full details [go here](data-analysis), but Choochoo includes some
+basic data anlysis "built-in":
+
+  * At the bottom of a daily diary page that contains an activity you
+    will see a section labelled "Jupyter" with one or two menu
+    options.  Use "tab" to navigate to the menu, "left" and "right"
+    (arrows / cursor keys) to change, and "return" to select.
+
+  * At the bottom of the monthly / yearly diary page you will see a
+    section labelled "Jupyter".  Use "tab" to navigate to the "button"
+    and "return" to select.
+
+Selecting will start Jupyter and display a page in the browser.  You
+can edit this page and load data while the diary remains running.
+
+An example display for comparing activities is:
+
+![](graphic-summary.png)

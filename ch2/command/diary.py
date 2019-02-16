@@ -183,7 +183,7 @@ class DailyDiary(Diary):
     def _display_gui(self, s, f):
         menus = list(self.__gui_menus(s, f))
         if menus:
-            yield Pile([Text('GUI'), Indent(Pile(menus))])
+            yield Pile([Text('Jupyter'), Indent(Pile(menus))])
 
     def __gui_menus(self, s, f):
         for aj1 in ActivityJournal.at_date(s, self._date):
@@ -209,9 +209,9 @@ class ScheduleDiary(Diary):
     Display summary data for the given schedule.
     '''
 
-    def __init__(self, log, db, date, schedule, server):
+    def __init__(self, log, db, date, schedule):
         self._schedule = schedule
-        super().__init__(log, db, self._refine_new_date(date), server)
+        super().__init__(log, db, self._refine_new_date(date))
 
     def _header(self):
         return Text(self._date.strftime('%Y-%m-%d') + ' - Summary for %s' % self._schedule.describe())
@@ -240,7 +240,7 @@ class ScheduleDiary(Diary):
     def _display_gui(self, s, f):
         button = SquareButton('All Activities')
         connect_signal(button, 'click', self.__show_all)
-        yield Pile([Text('GUI'), Indent(f(Padding(Fixed(button, 16), width='clip')))])
+        yield Pile([Text('Jupyter'), Indent(f(Padding(Fixed(button, 16), width='clip')))])
 
     def __show_all(self, w):
         finish = self._schedule.next_frame(self._date)
