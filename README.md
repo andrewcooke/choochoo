@@ -73,6 +73,13 @@ extensible.*
 
 ## Latest Changes
 
+### v0.16.0
+
+Diary plots are generated via Jupyter (running an embedded Jupyter
+server, generating a notebook, and pushing it to the browser) rather
+than Bokeh.  This works round some Bokeh server bugs and serves as a
+nice intro to Jupyter.  Cleaned up a lot of the plotting code, too.
+
 ### v0.15.0
 
 Modified database schema (`serial` in statistic_journal which makes
