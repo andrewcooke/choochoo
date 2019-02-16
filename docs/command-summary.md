@@ -53,8 +53,8 @@ refer to multiple entries.
 
     > ch2 data COMMAND
 
-Simple access to the database - similar to the interface provided in Jupyter
-notebooks, but accessed from the command line.
+Simple access to the database - similar to the interface provided in
+JupyterState notebooks, but accessed from the command line.
 
 The format can be selected with `--print` (the default), `--csv` and
 `--describe`.
@@ -230,7 +230,7 @@ values.
 
 ## no-op
 
-This is used internally when accessing data in Jupyter or configuring the
+This is used internally when accessing data in JupyterState or configuring the
 system at the command line.    
 
 
