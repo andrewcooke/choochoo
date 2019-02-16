@@ -6,7 +6,7 @@ from ch2.data import *
 from ch2.lib.date import local_time_to_time
 from ch2.squeal import *
 from ch2.uranus.decorator import template
-from ch2.uranus.notebook.plot import *
+from ch2.uranus.notebook import *
 
 
 @template

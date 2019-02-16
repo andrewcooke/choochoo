@@ -71,6 +71,13 @@ class JupyterServer(NotebookApp):
         self._started = started
         super().__init__(**kwargs)
 
+    @property
+    def log_level(self):
+        # this silences jupyter's logging
+        # the existing mechanism only lets you set a value of 50, which means that "critical" messages
+        # are still logged, and the decidedly non-critical usage instructions are printed.
+        return 60
+
     def init_signal(self):
         self._log.debug('Skipping signal init')
 
