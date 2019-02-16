@@ -4,6 +4,7 @@ from math import sqrt
 
 import pandas as pd
 from bokeh import palettes, tile_providers
+from bokeh.layouts import column, row
 from bokeh.models import Range1d, PanTool, ZoomInTool, ResetTool, ZoomOutTool, HoverTool, LinearAxis
 from bokeh.plotting import figure
 
@@ -231,3 +232,7 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
     if ny < 300: f.toolbar_location = None
     if x_range: f.x_range = x_range
     return f
+
+
+def tile(maps, n):
+    return column([row(maps[i:i+n]) for i in range(0, len(maps), n)])

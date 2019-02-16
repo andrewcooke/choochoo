@@ -5,6 +5,7 @@ from abc import abstractmethod
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
+from ch2.uranus.template.similar_activities import similar_activities
 from .args import DATE, SCHEDULE
 from ..bucket.page.duration_activities import DurationActivitiesPage
 from ..bucket.page.similar_activities import SimilarActivitiesPage
@@ -208,7 +209,7 @@ class DailyDiary(Diary):
             activity_details(aj1.start, aj1.activity_group.name, log=self._log)
 
     def __show_similar(self, w, aj1):
-        self._server.show('%s?id=%d' % (SimilarActivitiesPage.PATH, aj1.id))
+        similar_activities(aj1.start, aj1.activity_group.name, log=self._log)
 
 
 class ScheduleDiary(Diary):

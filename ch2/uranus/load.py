@@ -13,7 +13,7 @@ import nbformat.v4 as nbv
 import nbformat as nb
 from nbformat.sign import NotebookNotary
 
-from ..server import JUPYTER, start_jupyter
+from ch2.uranus.server import JUPYTER, start_jupyter
 
 QUOTES = "'''"
 FQUOTES = 'f' + QUOTES

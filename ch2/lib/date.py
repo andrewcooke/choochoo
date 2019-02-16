@@ -5,12 +5,16 @@ import time as t
 from calendar import monthrange
 
 
+YMD = '%Y-%m-%d'
+YMD_HMS = '%Y-%m-%d %H:%M:%S'
+
+
 def format_date(date):
-    return date.strftime('%Y-%m-%d')
+    return date.strftime(YMD)
 
 
 def format_time(time):
-    return time.strftime('%Y-%m-%d %H:%M:%S')
+    return time.strftime(YMD_HMS)
 
 
 def to_date(value, none=False):
@@ -23,7 +27,7 @@ def to_date(value, none=False):
     elif isinstance(value, int):
         return dt.date.fromordinal(value)
     else:
-        for format in ('%Y-%m-%d', '%Y-%m', '%Y'):
+        for format in (YMD, '%Y-%m', '%Y'):
             try:
                 return dt.date(*t.strptime(value, format)[:3])
             except ValueError:
@@ -44,8 +48,8 @@ def to_time(value, none=False):
         return dt.datetime.fromtimestamp(value, dt.timezone.utc)
     else:
         for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
-                       '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S',
-                       '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', '%Y-%m-%d', '%Y'):
+                       '%Y-%m-%dT%H:%M:%S', YMD_HMS,
+                       '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', YMD, '%Y'):
             try:
                 return dt.datetime.strptime(value, format).replace(tzinfo=dt.timezone.utc)
             except ValueError:
@@ -104,6 +108,11 @@ def format_seconds(seconds):
         return '%s%ds' % (sign, seconds)
 
 
+# in general, dates are in the local timezone (because diary) while datetimes (referred to as "time")
+# are in utc (because database).  however, for display we sometimes need to use local datetimes.  these
+# are only exposed as strings.
+
+
 def local_date_to_time(date):
     date = to_date(date)
     ptime = p.DateTime(year=date.year, month=date.month, day=date.day,
@@ -111,8 +120,12 @@ def local_date_to_time(date):
     return dt.datetime(*ptime.timetuple()[:6], tzinfo=dt.timezone.utc)
 
 
-def time_to_local_time(time):
-    return time.astimezone(tz=None)
+def time_to_local_time(time, fmt=YMD_HMS):
+    return time.astimezone(tz=None).strftime(fmt)
+
+
+def local_time_to_time(time, fmt=YMD_HMS):
+    return dt.datetime.strptime(time, fmt).replace(tzinfo=p.tz.get_local_timezone()).astimezone(dt.timezone.utc)
 
 
 def time_to_local_date(time):

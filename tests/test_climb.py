@@ -143,9 +143,9 @@ def analyse():
     try:
         server.start()
         with db.session_context() as s:
-            server.show('%s?id=%d' % (ClimbPage.PATH, _resolve_activity(s, '2017-09-29 16:30:00', None, log=log)))
-            server.show('%s?id=%d' % (ClimbPage.PATH, _resolve_activity(s, '2017-09-01 16:30:00', None, log=log)))
-            server.show('%s?id=%d' % (ClimbPage.PATH, _resolve_activity(s, '2017-03-28 16:30:00', None, log=log)))
+            server.show('%s?id=%d' % (ClimbPage.PATH, _resolve_activity(s, None, '2017-09-29 16:30:00', None, log=log)))
+            server.show('%s?id=%d' % (ClimbPage.PATH, _resolve_activity(s, None, '2017-09-01 16:30:00', None, log=log)))
+            server.show('%s?id=%d' % (ClimbPage.PATH, _resolve_activity(s, None, '2017-03-28 16:30:00', None, log=log)))
         print('Ctrl-C')
         while True:
             sleep(1)

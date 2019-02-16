@@ -1,19 +1,18 @@
 
 from bokeh.io import output_file
-from bokeh.layouts import row, column
 from bokeh.plotting import show
 
 from ch2.data import *
+from ch2.uranus.decorator import template
 from ch2.uranus.notebook.data import *
 from ch2.uranus.notebook.plot import *
-from ch2.uranus.template.decorator import template
 
 
 @template
-def compare_activities(activity_date, compare_date, group):
+def compare_activities(activity_time, compare_time, group):
 
     f'''
-    # Compare Activities: {activity_date.split()[0]} v {compare_date.split()[0]}
+    # Compare Activities: {activity_time.split()[0]} v {compare_time.split()[0]}
     '''
 
     '''
@@ -28,16 +27,16 @@ def compare_activities(activity_date, compare_date, group):
 
     s = session('-v2')
 
-    activity = std_activity_stats(s, time=activity_date, group=group)
-    compare = std_activity_stats(s, time=compare_date, group=group)
-    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, time=activity_date, group=group)
+    activity = std_activity_stats(s, local_time=activity_time, group=group)
+    compare = std_activity_stats(s, local_time=compare_time, group=group)
+    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, local_time=activity_time, group=group)
     health = std_health_stats(s)
 
     f'''
     ## Activity Plots
     
-    The black line shows data from {activity_date.split()[0]}, 
-    the grey line from {compare_date.split()[0]}. 
+    The black line shows data from {activity_time.split()[0]}, 
+    the grey line from {compare_time.split()[0]}. 
     To the right of each plot of data against distance is a related plot of cumulative data
     (except the last, cadence, which isn't useful and so replaced by HR zones).
     Green and red areas indicate differences between the two dates. 

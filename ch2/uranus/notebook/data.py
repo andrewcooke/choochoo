@@ -13,11 +13,12 @@ from ...stoats.names import LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL
     ACTIVE_DISTANCE, ACTIVE_TIME
 
 
-def std_activity_stats(s, time=None, group=None, activity_journal_id=None):
+def std_activity_stats(s, local_time=None, time=None, group=None, activity_journal_id=None):
 
     stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
                                 ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE,
-                                time=time, group=group, activity_journal_id=activity_journal_id, with_timespan=True)
+                                local_time=local_time, time=time, group=group,
+                                activity_journal_id=activity_journal_id, with_timespan=True)
 
     stats[DISTANCE_KM] = stats[DISTANCE]/1000
     stats[SPEED_KMH] = stats[SPEED] * 3.6

@@ -6,6 +6,7 @@ from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
 from ..lib.data import kargs_to_attr
+from ..lib.date import local_time_to_time
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan, ActivityGroup
@@ -128,8 +129,10 @@ def statistics(s, *statistics,
     return pd.DataFrame(data, index=times)
 
 
-def _resolve_activity(s, time, group, activity_journal_id, log=None):
+def _resolve_activity(s, local_time, time, group, activity_journal_id, log=None):
     set_log(log)
+    if local_time:
+        time = local_time_to_time(local_time)
     if activity_journal_id:
         if time:
             raise Exception('Specify activity_journal_id or time (not both)')
@@ -145,12 +148,13 @@ def _resolve_activity(s, time, group, activity_journal_id, log=None):
     return activity_journal_id
 
 
-def activity_statistics(s, *statistics, time=None, group=None, activity_journal_id=None, with_timespan=False, log=None):
+def activity_statistics(s, *statistics, local_time=None, time=None, group=None,
+                        activity_journal_id=None, with_timespan=False, log=None):
     set_log(log)
 
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     get_log().debug('Statistics IDs %s' % statistic_ids)
-    activity_journal_id = _resolve_activity(s, time, group, activity_journal_id)
+    activity_journal_id = _resolve_activity(s, local_time, time, group, activity_journal_id)
 
     t = _tables()
     q = select([t.sn.c.name, t.sj.c.time, coalesce(t.sjf.c.value, t.sji.c.value, t.sjt.c.value), t.at.c.id]). \

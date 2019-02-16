@@ -4,16 +4,15 @@ from bokeh.layouts import row, column
 from bokeh.plotting import show
 
 from ch2.data import *
-from ch2.uranus.notebook.data import *
-from ch2.uranus.notebook.plot import *
-from ch2.uranus.template.decorator import template
+from ch2.uranus.notebook import *
+from ch2.uranus.decorator import template
 
 
 @template
-def activity_details(activity_date, group):
+def activity_details(activity_time, group):
 
     f'''
-    # Activity Details: {activity_date.split()[0]}
+    # Activity Details: {activity_time.split()[0]}
     '''
 
     '''
@@ -28,8 +27,8 @@ def activity_details(activity_date, group):
 
     s = session('-v2')
 
-    activity = std_activity_stats(s, time=activity_date, group=group)
-    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, time=activity_date, group=group)
+    activity = std_activity_stats(s, local_time=activity_time, group=group)
+    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, local_time=activity_time, group=group)
     health = std_health_stats(s)
 
     f'''

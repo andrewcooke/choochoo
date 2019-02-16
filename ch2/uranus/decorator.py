@@ -2,7 +2,7 @@
 import datetime as dt
 from inspect import getfullargspec
 
-from ch2.lib.date import format_time, format_date
+from ch2.lib.date import format_time, format_date, time_to_local_time
 from .load import display_notebook
 
 
@@ -10,7 +10,7 @@ def stringify(value):
     if isinstance(value, str):
         return value
     elif isinstance(value, dt.datetime):
-        return format_time(value)
+        return time_to_local_time(value)
     elif isinstance(value, dt.date):
         return format_date(value)
     else:
