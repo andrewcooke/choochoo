@@ -19,6 +19,7 @@ from ..squeal.tables.topic import Topic, TopicJournal
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
 from ..uranus.template.activity_details import activity_details
+from ..uranus.template.all_activities import all_activities
 from ..uranus.template.compare_activities import compare_activities
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
@@ -249,6 +250,5 @@ class ScheduleDiary(Diary):
         yield Pile([Text('GUI'), Indent(f(Padding(Fixed(button, 16), width='clip')))])
 
     def __show_all(self, w):
-        self._server.show('%s?start=%s&period=%d%s' %
-                          (DurationActivitiesPage.PATH, self._date.strftime('%Y-%m-%d'),
-                           self._schedule.repeat, self._schedule.frame_type))
+        finish = self._schedule.next_frame(self._date)
+        all_activities(self._date.strftime('%Y-%m-%d'), finish.strftime('%Y-%m-%d'), log=self._log)

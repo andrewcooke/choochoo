@@ -162,6 +162,15 @@ def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=
     return f
 
 
+def map_thumbnail(nx, ny, source, other=None):
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
+               title=source.index[0].strftime('%Y-%m-%d'))
+    add_route(f, source)
+    f.axis.visible = False
+    f.toolbar_location = None
+    return f
+
+
 def line_plotter():
     return lambda f, *args, **kargs: f.line(*args, **kargs)
 
