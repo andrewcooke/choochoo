@@ -1,11 +1,11 @@
 
 import datetime as dt
 
-from ch2.lib.date import format_time, format_seconds
 from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
 from ..command.args import ADD_HEADER, mm, HEADER_SIZE, PROFILE_VERSION, PROTOCOL_VERSION, MIN_SYNC_CNT, \
     MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, MAX_FWD_LEN, MAX_DELTA_T
+from ..lib.date import format_time, format_seconds
 
 
 def fix(log, data, warn=False,

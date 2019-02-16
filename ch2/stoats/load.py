@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from sqlalchemy import func
 
-from ch2.stoats.waypoint import make_waypoint
+from .waypoint import make_waypoint
 from ..squeal.tables.constant import SystemConstant
 from ..squeal.tables.statistic import StatisticJournal, StatisticName
 from ..squeal.types import short_cls

@@ -9,7 +9,7 @@ from os.path import exists, dirname, split, join
 from re import sub
 from tempfile import NamedTemporaryFile
 
-from ch2.lib.utils import grouper
+from .utils import grouper
 
 HEX_ADDRESS = lambda s: sub(r'0x[0-9a-f]{8,}', 'ADDRESS', s)
 

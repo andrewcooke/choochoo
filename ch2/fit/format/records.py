@@ -2,9 +2,8 @@
 import itertools as it
 from collections import namedtuple, OrderedDict
 
-
 # todo - remove 's' units from timestamps if they are datetime instances
-from ch2.lib.data import kargs_to_attr, dict_to_attr
+from ...lib.data import dict_to_attr
 
 
 def no_filter(data):

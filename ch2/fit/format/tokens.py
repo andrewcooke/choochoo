@@ -4,11 +4,11 @@ from collections import defaultdict, Counter
 from re import sub
 from struct import unpack, pack
 
-from ch2.stoats.names import S
 from .records import LazyRecord, merge_duplicates
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField, CompositeField
 from ..profile.types import timestamp_to_time, time_to_timestamp
 from ...lib.data import WarnDict, tohex
+from ...stoats.names import S
 
 FIELD_DESCRIPTION = 206
 

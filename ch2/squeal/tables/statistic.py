@@ -2,11 +2,10 @@
 import datetime as dt
 from enum import IntEnum
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, text, Index
+from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.orm import relationship, backref
 
-from ch2.squeal import ActivityJournal
-from .source import Source, Interval
+from .source import Interval
 from ..support import Base
 from ..types import Time, ShortCls, Str
 from ...lib.date import format_seconds, local_date_to_time

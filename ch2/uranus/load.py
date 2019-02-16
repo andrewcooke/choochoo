@@ -2,18 +2,15 @@
 import webbrowser as web
 from abc import abstractmethod, ABC
 from inspect import getsource, getfullargspec
-from logging import getLogger
 from os import unlink, makedirs
 from os.path import join, exists
 from re import compile, sub
-from sys import stdout
-from types import FunctionType
 
-import nbformat.v4 as nbv
 import nbformat as nb
+import nbformat.v4 as nbv
 from nbformat.sign import NotebookNotary
 
-from ch2.uranus.server import JUPYTER, start_jupyter
+from .server import JUPYTER, start_jupyter
 
 QUOTES = "'''"
 FQUOTES = 'f' + QUOTES

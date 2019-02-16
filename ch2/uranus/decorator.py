@@ -1,9 +1,8 @@
 
 import datetime as dt
-from inspect import getfullargspec
 
-from ch2.lib.date import format_time, format_date, time_to_local_time
 from .load import display_notebook
+from ..lib.date import format_date, time_to_local_time
 
 
 def stringify(value):
