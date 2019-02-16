@@ -5,11 +5,7 @@ from abc import abstractmethod
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
-from ch2.uranus.template.similar_activities import similar_activities
 from .args import DATE, SCHEDULE
-from ..bucket.page.duration_activities import DurationActivitiesPage
-from ..bucket.page.similar_activities import SimilarActivitiesPage
-from ..bucket.server import default_singleton_server
 from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
@@ -22,6 +18,7 @@ from ..stoats.display.nearby import nearby_any_time, fmt_nearby
 from ..uranus.template.activity_details import activity_details
 from ..uranus.template.all_activities import all_activities
 from ..uranus.template.compare_activities import compare_activities
+from ..uranus.template.similar_activities import similar_activities
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
 from ..uweird.tui.decorators import Border, Indent
@@ -66,24 +63,19 @@ Display a summary for the month / year / schedule.
             date = dt.date.today() - dt.timedelta(days=days)
     with db.session_context() as s:
         TopicJournal.check_tz(log, s)
-    server = default_singleton_server(log, db)
-    try:
-        if schedule:
-            schedule = Schedule(schedule)
-            if schedule.start or schedule.finish:
-                raise Exception('Schedule must be open (no start or finish)')
-            MainLoop(ScheduleDiary(log, db, date, schedule, server), palette=PALETTE_RAINBOW).run()
-        else:
-            MainLoop(DailyDiary(log, db, date, server), palette=PALETTE_RAINBOW).run()
-    finally:
-        server.stop()
+    if schedule:
+        schedule = Schedule(schedule)
+        if schedule.start or schedule.finish:
+            raise Exception('Schedule must be open (no start or finish)')
+        MainLoop(ScheduleDiary(log, db, date, schedule), palette=PALETTE_RAINBOW).run()
+    else:
+        MainLoop(DailyDiary(log, db, date), palette=PALETTE_RAINBOW).run()
 
 
 class Diary(DateSwitcher):
 
-    def __init__(self, log, db, date, server):
+    def __init__(self, log, db, date):
         super().__init__(log, db, date)
-        self._server = server
 
     def _build(self, s):
         self._log.debug('Building diary at %s' % self._date)
