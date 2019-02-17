@@ -12,6 +12,11 @@ fi
 
 VERSION=$1
 
+if [ `echo "$VERSION" | sed -e 's/[0-9]\+\.[\0-9]\+\.[0-9]\+//'` ]; then
+    echo "error: bad version format"
+    exit 2
+fi
+
 OLD_VERSION=`grep 'CH2_VERSION =' ch2/command/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
 echo "command/args.py: $OLD_VERSION -> $VERSION"
 sed -i ch2/command/args.py -e "s/\(.*CH2_VERSION = '\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
