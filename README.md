@@ -14,12 +14,6 @@ contains only:
 
 ![](docs/graphic-similarity.png)
 
-![](docs/all-rides-hrz.png)
-
-![](docs/all-rides.png)
-
-![](docs/nearby-santiago.png)
-
 ## Technical Overview
 
 All data are stored in an SQLite database (SQLAlchemy ORM interface).
