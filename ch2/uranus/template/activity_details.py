@@ -6,7 +6,6 @@ from bokeh.layouts import row, column
 from bokeh.plotting import show
 
 from ch2.data import *
-from ch2.uranus.notebook import *
 from ch2.uranus.decorator import template
 
 

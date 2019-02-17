@@ -14,12 +14,13 @@ pip install colorama
 pip install pendulum
 pip install requests
 pip install scipy
-
-pip install matplotlib
 pip install bokeh
-pip install colorcet
-pip install webcolors
 pip install jupyter
+
+pip install textblob
+#pip install matplotlib
+#pip install colorcet
+#pip install webcolors
 
 pip install setuptools wheel twine
 

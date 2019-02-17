@@ -1,16 +1,23 @@
 
+import datetime as dt
 from collections import defaultdict
 
+import numpy as np
 import pandas as pd
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
+from .names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, WINDOW, MIN_PERIODS, \
+    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM
 from ..lib.data import kargs_to_attr
-from ..lib.date import local_time_to_time
+from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan, ActivityGroup
-from ..stoats.names import TIMESPAN_ID
+from ..stoats.calculate.monitor import MonitorStatistics
+from ..stoats.names import TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
+    ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, FITNESS, FATIGUE, REST_HR, \
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE
 
 # because this is intended to be called from jupyter we hide the log here
 # other callers can use these routines by calling set_log() first.
@@ -226,7 +233,48 @@ def statistic_quartiles(s, *statistics,
     return pd.DataFrame(data, index=times)
 
 
-if __name__ == '__main__':
-    s = session('-v 5')
-    df = activity_statistics(s, 'Speed', time='2019-01-05 14:40:00', with_timespan=True)
-    print(df.describe)
+def std_activity_stats(s, local_time=None, time=None, group=None, activity_journal_id=None):
+
+    stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
+                                ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE,
+                                local_time=local_time, time=time, group=group,
+                                activity_journal_id=activity_journal_id, with_timespan=True)
+
+    stats[DISTANCE_KM] = stats[DISTANCE]/1000
+    stats[SPEED_KMH] = stats[SPEED] * 3.6
+    stats[MED_SPEED_KMH] = stats[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
+    stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(WINDOW, min_periods=MIN_PERIODS).median()
+    stats[MED_CADENCE] = stats[CADENCE].rolling(WINDOW, min_periods=MIN_PERIODS).median()
+    stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
+
+    stats['keep'] = pd.notna(stats[HR_IMPULSE_10])
+    stats.interpolate(method='time', inplace=True)
+    stats = stats.loc[stats['keep'] == True]
+
+    stats[CLIMB_MS] = stats[ELEVATION_M].diff() * 0.1
+    stats[TIME] = pd.to_datetime(stats.index)
+    stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), HMS))
+
+    return stats
+
+
+def std_health_stats(s, start=None, finish=None):
+
+    # this assumes FF cover all the dates and HR/steps fit into them.  may not be true in all cases?
+    # also, we downsample the FF data to hourly intervals then shift daily data to match one of those times
+    # this avoids introducing gaps in the FF data when merging that mess up the continuity of the plots.
+    stats_1 = statistics(s, FITNESS, FATIGUE, start=start, finish=finish).resample('1h').mean()
+    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorStatistics). \
+        reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
+    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, start=start, finish=finish). \
+        reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
+    stats = stats_1.merge(stats_2, how='outer', left_index=True, right_index=True)
+    stats = stats.merge(stats_3, how='outer', left_index=True, right_index=True)
+    stats[LOG_FITNESS] = np.log10(stats[FITNESS])
+    stats[LOG_FATIGUE] = np.log10(stats[FATIGUE])
+    stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
+    stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
+    stats[TIME] = pd.to_datetime(stats.index)
+    stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
+
+    return stats

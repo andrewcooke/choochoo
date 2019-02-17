@@ -1,5 +1,5 @@
 
-from ...stoats.names import DISTANCE, SPEED, ELEVATION, HR_IMPULSE_10, CADENCE, FITNESS, FATIGUE, ACTIVE_DISTANCE, \
+from ch2.stoats.names import DISTANCE, SPEED, ELEVATION, HR_IMPULSE_10, CADENCE, FITNESS, FATIGUE, ACTIVE_DISTANCE, \
     ACTIVE_TIME
 
 # additional names not used within the database, but used for display by the notetbook

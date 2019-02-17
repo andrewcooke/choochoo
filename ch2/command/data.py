@@ -5,7 +5,7 @@ from .args import SUB_COMMAND, START, FINISH, NAMES, \
     OWNER, CONSTRAINT, SCHEDULE, SOURCE_IDS, STATISTIC_QUARTILES, PRINT, FORMAT, \
     CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS
 from ..data import df, statistics, statistic_quartiles
-from ..data.data_frame import LOG
+from ..data.frame import LOG
 from ..squeal import *
 from ..squeal.support import Base
 

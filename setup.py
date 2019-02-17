@@ -30,10 +30,8 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'colorama',
                      'pendulum',
                      'requests',
-                     'matplotlib',
+                     'scipy',
                      'bokeh',
-                     'colorcet',
-                     'webcolors',
                      'jupyter'
                      ],
                  entry_points={

@@ -2,11 +2,11 @@
 import datetime as dt
 
 from bokeh.io import output_file
+from bokeh.layouts import column, row
 from bokeh.plotting import show
 
 from ch2.data import *
 from ch2.uranus.decorator import template
-from ch2.uranus.notebook import *
 
 
 @template
