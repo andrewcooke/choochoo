@@ -87,6 +87,7 @@ class Diary(DateSwitcher):
             body.append(extra)
         for extra in self._display_gui(s, f):
             body.append(extra)
+        self._check_body(body)
         body = Border(Frame(Filler(DividedPile(body), valign='top'),
                             header=Pile([self._header(), Divider()]),
                             footer=Pile([Divider(), Text(self.__footer(), align='center')])))
@@ -94,6 +95,9 @@ class Diary(DateSwitcher):
 
     @abstractmethod
     def _header(self):
+        pass
+
+    def _check_body(self, body):
         pass
 
     def __footer(self):
@@ -215,6 +219,12 @@ class ScheduleDiary(Diary):
 
     def _header(self):
         return Text(self._date.strftime('%Y-%m-%d') + ' - Summary for %s' % self._schedule.describe())
+
+    def _check_body(self, body):
+        if len(body) < 4:
+            body.append(Indent(Text('Updating the database automatically deletes summary statistics that cover '
+                                    + 'the modified data.  You probably need to re-generate the statistics by '
+                                    + 'running `ch2 statistics`.')))
 
     def _refine_new_date(self, date):
         return self._schedule.start_of_frame(date)
