@@ -52,6 +52,10 @@ class ActivityJournal(Source):
         return s.query(ActivityJournal).filter(ActivityJournal.start >= day,
                                                ActivityJournal.start < day + dt.timedelta(days=1)).all()
 
+    @classmethod
+    def from_id(cls, s, id):
+        return s.query(ActivityJournal).filter(ActivityJournal.id == id).one()
+
 
 class ActivityTimespan(Base):
 

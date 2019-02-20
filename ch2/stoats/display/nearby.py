@@ -78,37 +78,31 @@ def group(s, ajournal, constraint):
                 order_by(ActivityJournal.start)]
 
 
-def single_constraint(s, ajournal):
-    return s.query(distinct(ActivitySimilarity.constraint)). \
-        filter(or_(ActivitySimilarity.activity_journal_lo_id == ajournal.id,
-                   ActivitySimilarity.activity_journal_hi_id == ajournal.id)).scalar()
-
-
 def nearby_earlier(s, ajournal, constraint=None, threshold=0.5):
-    if constraint is None:
-        constraint = single_constraint(s, ajournal)
     ajlo = aliased(ActivityJournal)
     ajhi = aliased(ActivityJournal)
-    return [(asm.activity_journal_lo if asm.activity_journal_lo != ajournal else asm.activity_journal_hi, asm)
-            for asm in s.query(ActivitySimilarity).
-                join(ajhi, ActivitySimilarity.activity_journal_hi_id == ajhi.id).
-                join(ajlo, ActivitySimilarity.activity_journal_lo_id == ajlo.id).
+    q = s.query(ActivitySimilarity). \
+                join(ajhi, ActivitySimilarity.activity_journal_hi_id == ajhi.id). \
+                join(ajlo, ActivitySimilarity.activity_journal_lo_id == ajlo.id). \
                 filter(or_(ActivitySimilarity.activity_journal_hi_id == ajournal.id,
                            ActivitySimilarity.activity_journal_lo_id == ajournal.id),
-                       ActivitySimilarity.constraint == constraint,
                        or_(ajhi.id == ajournal.id, ajhi.start < ajournal.start),
                        or_(ajhi.id == ajournal.id, ajlo.start < ajournal.start),
-                       ActivitySimilarity.similarity > threshold).
-                order_by(desc(min(ajlo.start, ajhi.start))).all()]
+                       ActivitySimilarity.similarity > threshold). \
+                order_by(desc(min(ajlo.start, ajhi.start)))
+    if constraint:
+        q = q.filter(ActivitySimilarity.constraint == constraint)
+    return [(asm.activity_journal_lo if asm.activity_journal_lo != ajournal else asm.activity_journal_hi, asm)
+            for asm in q.all()]
 
 
 def nearby_any_time(s, ajournal, constraint=None, threshold=0.5):
-    if constraint is None:
-        constraint = single_constraint(s, ajournal)
-    return [(asm.activity_journal_lo if asm.activity_journal_lo != ajournal else asm.activity_journal_hi, asm)
-            for asm in s.query(ActivitySimilarity).
+    q = s.query(ActivitySimilarity). \
                 filter(or_(ActivitySimilarity.activity_journal_hi_id == ajournal.id,
                            ActivitySimilarity.activity_journal_lo_id == ajournal.id),
-                       ActivitySimilarity.constraint == constraint,
-                       ActivitySimilarity.similarity > threshold).
-                order_by(desc(ActivitySimilarity.similarity)).all()]
+                       ActivitySimilarity.similarity > threshold). \
+                order_by(desc(ActivitySimilarity.similarity))
+    if constraint:
+        q = q.filter(ActivitySimilarity.constraint == constraint)
+    return [(asm.activity_journal_lo if asm.activity_journal_lo != ajournal else asm.activity_journal_hi, asm)
+            for asm in q.all()]

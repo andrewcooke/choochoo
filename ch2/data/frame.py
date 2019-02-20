@@ -15,6 +15,7 @@ from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, A
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan, ActivityGroup
 from ..stoats.calculate.monitor import MonitorStatistics
+from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, FITNESS, FATIGUE, REST_HR, \
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE
@@ -136,22 +137,30 @@ def statistics(s, *statistics,
     return pd.DataFrame(data, index=times)
 
 
-def _resolve_activity(s, local_time, time, group, activity_journal_id, log=None):
+def resolve_activity(s, local_time=None, time=None, activity_journal_id=None,
+                     activity_group_name=None, activity_group_id=None, log=None):
+    '''
+    If activity_journal_id is given, it is returned.
+
+    Otherwise, specify one of (local_time, time) and one of (activity_group_name, activity_group_id).
+    '''
     set_log(log)
+
+    if activity_journal_id:
+        return activity_journal_id
     if local_time:
         time = local_time_to_time(local_time)
-    if activity_journal_id:
-        if time:
-            raise Exception('Specify activity_journal_id or time (not both)')
-    else:
-        if not time:
-            raise Exception('Specify activity_journal_id or time')
-        activity_journal_id = s.query(ActivityJournal.id). \
-            join(ActivityGroup). \
-            filter(ActivityJournal.start <= time,
-                   ActivityJournal.finish >= time,
-                   ActivityGroup.name == group).scalar()
-        get_log().info('Using activity_journal_id=%d' % activity_journal_id)
+    if not time:
+        raise Exception('Specify activity_journal_id or time')
+    if activity_group_name:
+        activity_group_id = s.query(ActivityGroup.id).filter(ActivityGroup.name == activity_group_name).scalar()
+    if not activity_group_id:
+        raise Exception('Specify activity_group_id or activity_group_name')
+    activity_journal_id = s.query(ActivityJournal.id). \
+        filter(ActivityJournal.start <= time,
+               ActivityJournal.finish >= time,
+               ActivityJournal.activity_group_id == activity_group_id).scalar()
+    get_log().info('Using activity_journal_id=%d' % activity_journal_id)
     return activity_journal_id
 
 
@@ -161,7 +170,7 @@ def activity_statistics(s, *statistics, local_time=None, time=None, group=None,
 
     statistic_names, statistic_ids = _collect_statistics(s, statistics)
     get_log().debug('Statistics IDs %s' % statistic_ids)
-    activity_journal_id = _resolve_activity(s, local_time, time, group, activity_journal_id)
+    activity_journal_id = resolve_activity(s, local_time, time, activity_journal_id, group)
 
     t = _tables()
     q = select([t.sn.c.name, t.sj.c.time, coalesce(t.sjf.c.value, t.sji.c.value, t.sjt.c.value), t.at.c.id]). \
@@ -278,3 +287,8 @@ def std_health_stats(s, start=None, finish=None):
     stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     return stats
+
+
+def nearby_activities(s, local_time=None, time=None, group=None, activity_journal_id=None):
+    activity_journal_id = resolve_activity(s, local_time, time, activity_journal_id, group)
+    return nearby_any_time(s, ActivityJournal.from_id(s, activity_journal_id))
