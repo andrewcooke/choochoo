@@ -45,7 +45,9 @@ class NearbySimilarityCalculator(DbPipeline):
             self._prepare(s, rtree, n_points, 30000)
             n_overlaps = defaultdict(lambda: defaultdict(lambda: 0))
             new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
-            with Timestamp(owner=self, constraint=self._config.constraint).on_success(s):
+            # this clears itself beforehand
+            # use explicit class to distinguish from subclasses (which compare against this)
+            with Timestamp(owner=NearbySimilarityCalculator, constraint=self._config.constraint).on_success(s):
                 self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
     def _delete(self, s):
@@ -54,11 +56,14 @@ class NearbySimilarityCalculator(DbPipeline):
             filter(ActivitySimilarity.constraint == self._config.constraint). \
             delete()
 
-    def _no_new_data(self, s):
-        prev = s.query(Timestamp). \
-            filter(Timestamp.owner == self,
+    def _latest_timestamp(self, s, owner):
+        return s.query(Timestamp). \
+            filter(Timestamp.owner == owner,
                    Timestamp.constraint == self._config.constraint,
                    Timestamp.key == None).one_or_none()
+
+    def _no_new_data(self, s):
+        prev = self._latest_timestamp(s, NearbySimilarityCalculator)
         if not prev:
             return False
         prev_ids = s.query(Timestamp.key). \
@@ -223,9 +228,13 @@ class NearbyStatistics(NearbySimilarityCalculator):
     def run(self, force=False, after=None):
         super().run(force=force, after=after)
         with self._db.session_context() as s:
-            d_min, n = expand_max(self._log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
-            self._log.info('%d groups at d=%f' % (n, d_min))
-            self.save(s, self.dbscan(s, d_min))
+            latest_groups = self._latest_timestamp(s, NearbyStatistics)
+            latest_similarity = self._latest_timestamp(s, NearbySimilarityCalculator)
+            if not latest_groups or latest_similarity.time > latest_groups.time:
+                with Timestamp(owner=NearbyStatistics, constraint=self._config.constraint).on_success(s):
+                    d_min, n = expand_max(self._log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
+                    self._log.info('%d groups at d=%f' % (n, d_min))
+                    self.save(s, self.dbscan(s, d_min))
 
     def dbscan(self, s, d):
         return NearbySimilarityDBSCAN(self._log, s, self._config.constraint, d, 3).run()

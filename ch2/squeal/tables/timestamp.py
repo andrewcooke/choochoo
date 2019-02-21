@@ -49,6 +49,15 @@ class Timestamp(Base):
         if exists:
             s.delete(exists)
 
+    @classmethod
+    def clear_after(cls, s, time, owner, constraint=None):
+        q = s.query(Timestamp). \
+            filter(Timestamp.owner == owner,
+                   Timestamp.constraint == constraint)
+        if time:
+            q = q.filter(Timestamp.time >= time)
+        q.delete()
+
     @contextmanager
     def on_success(self, s):
         self.clear(s, self.owner, constraint=self.constraint, key=self.key)

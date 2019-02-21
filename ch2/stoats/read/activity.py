@@ -23,6 +23,7 @@ class ActivityImporter(Importer):
     def _on_init(self, *args, **kargs):
         super()._on_init(*args, **kargs)
         with self._db.session_context() as s:
+            # we now do smoothing along the path
             # self.__oracle = spline_elevation_from_constant(self._log, s, smooth=10)
             self.__oracle = bilinear_elevation_from_constant(self._log, s)
 
@@ -56,6 +57,7 @@ class ActivityImporter(Importer):
         for journal in s.query(ActivityJournal). \
                 filter(ActivityJournal.activity_group == activity_group,
                        ActivityJournal.start == first_timestamp).all():
+            Timestamp.clear(s, owner=ActivityImporter, key=journal.id)
             s.delete(journal)
         s.flush()
 
@@ -136,6 +138,7 @@ class ActivityImporter(Importer):
         Interval.clean_times(self._log, s, first_timestamp, last_timestamp)
 
         # used by nearby calculations to avoid work
+        # no need for constraint because ajournal is per-group
         # use this class so import itself is always clearly understood, even if the subclass changes.
         Timestamp.set(s, ActivityImporter, key=ajournal.id)
 
