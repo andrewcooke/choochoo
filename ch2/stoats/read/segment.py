@@ -10,7 +10,7 @@ from ...arty import MatchType
 from ...arty.spherical import LocalTangent, SQRTree, Global
 from ...lib.date import to_time, format_time
 from ...lib.utils import sign
-from ...squeal.database import add
+from ...squeal.database import add, Timestamp
 from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.segment import Segment, SegmentJournal
 
@@ -61,10 +61,12 @@ class SegmentImporter(ActivityImporter):
                                  (d / 1000, segment.distance / 1000))
             start_time = self._end_point(starts, waypoints, segment.start, inner, True)
             finish_time = self._end_point(finishes, waypoints, segment.finish, inner, False)
-            add(s, SegmentJournal(segment_id=segment.id, activity_journal=ajournal,
-                                  start=start_time, finish=finish_time))
+            sjournal = add(s, SegmentJournal(segment_id=segment.id, activity_journal=ajournal,
+                                             start=start_time, finish=finish_time))
             self._log.info('Added %s for %s - %s' %
                            (segment.name, format_time(start_time), format_time(finish_time)))
+            s.commit()  # needed to get id on sjournal
+            Timestamp.set(s, self, constraint=segment, key=sjournal.id)
             return True
         except CalcFailed as e:
             self._log.warning(str(e))

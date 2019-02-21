@@ -11,7 +11,7 @@ from ...fit.format.read import filtered_records
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time, time_to_local_date, format_time
-from ...squeal.database import add
+from ...squeal.database import add, Timestamp
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
 
@@ -219,6 +219,8 @@ class MonitorImporter(Importer):
                 add(s, steps_journals[timestamp][activity])
                 self._add(s, ACTIVITY, None, None, activity, mjournal,
                           activity, timestamp, StatisticJournalText)
+
+        Timestamp.set(s, self, key=mjournal.id)
 
 
 def missing_dates(log, s):

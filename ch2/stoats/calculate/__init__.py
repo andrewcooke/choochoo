@@ -91,7 +91,8 @@ class ActivityCalculator(DbPipeline):
 
     def _run_activity(self, s, activity_group):
         for ajournal in self._activity_journals_with_missing_data(s, activity_group):
-            with Timestamp(owner=self, key=ajournal.id).on_success(s):
+            # set constraint so we can delete on force
+            with Timestamp(owner=self, constraint=activity_group, key=ajournal.id).on_success(s):
                 self._log.info('Running %s for %s' % (short_cls(self), ajournal))
                 self._add_stats(s, ajournal)
 
@@ -99,8 +100,7 @@ class ActivityCalculator(DbPipeline):
         existing_ids = s.query(Timestamp.key). \
             filter(Timestamp.owner == self,
                    # no need to check time as it will always be before now
-                   # no need for constraint because activity_journal is per-group
-                   Timestamp.constraint == None).cte()
+                   Timestamp.constraint == activity_group).cte()
         yield from s.query(ActivityJournal). \
             filter(not_(ActivityJournal.id.in_(existing_ids)),
                    ActivityJournal.activity_group == activity_group).all()
@@ -149,7 +149,7 @@ class ActivityCalculator(DbPipeline):
                     self._log.warning('Deleting %d statistics for %s' % (n, agroup))
                 else:
                     self._log.warning('No statistics to delete for %s' % agroup)
-        Timestamp.clear_after(s, after, self)
+        Timestamp.clear_after(s, after, self, constraint=agroup)
         s.commit()
 
     def _constrain_group(self, s, q, agroup):

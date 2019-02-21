@@ -67,6 +67,13 @@ extensible.*
 
 ## Latest Changes
 
+### v0.17.0
+
+Added `timestamp` to database which improves / extends logic to avoid
+un-needed work re-calcualting statistics.  Migrate existing databases
+using `migraine/sqlo2sqlp.sh` (edit the file, run, and then reload
+data from FIT files).
+
 ### v0.16.0
 
 Diary plots are generated via Jupyter (running an embedded Jupyter

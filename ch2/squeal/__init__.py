@@ -3,7 +3,7 @@ from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal, A
 from .tables.constant import SystemConstant, Constant
 from .tables.monitor import MonitorJournal
 from .tables.nearby import ActivitySimilarity, ActivityNearby
-from .tables.pipeline import Pipeline
+from .tables.pipeline import Pipeline, PipelineType
 from .tables.segment import Segment, SegmentJournal
 from .tables.source import Source, Interval, NoStatistics
 from .tables.statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \

@@ -24,7 +24,7 @@ class SegmentStatistics(WaypointCalculator):
         # extends superclass with restriction on activities that have a segment
         existing_ids = s.query(Timestamp.key). \
             filter(Timestamp.owner == self,
-                   Timestamp.constraint == None).cte()
+                   Timestamp.constraint == activity_group).cte()
         segment_ids = s.query(SegmentJournal.activity_journal_id). \
             join(Segment). \
             filter(Segment.activity_group == activity_group).cte()

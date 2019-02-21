@@ -283,6 +283,8 @@ def parser():
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
                        help='an optional date to display (default is today)')
+    diary.add_argument(mm(FAST), action='store_true',
+                       help='skip update of statistics on exit')
     diary_summary = diary.add_mutually_exclusive_group()
     diary_summary.add_argument(mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
                                help='show monthly summary')
