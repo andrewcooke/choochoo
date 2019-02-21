@@ -8,9 +8,7 @@ from sqlalchemy import desc, inspect, select, and_
 from . import ActivityCalculator
 from ..load import StatisticJournalLoader
 from ..names import FTHR, HR_ZONE, HEART_RATE, S, HR_IMPULSE_10
-from ...squeal.tables.activity import ActivityGroup
-from ...squeal.tables.constant import Constant
-from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
+from ...squeal import Constant, StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
 
 # constraint comes from constant
 HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, max_secs')
@@ -36,10 +34,10 @@ class HeartRateStatistics(ActivityCalculator):
 
     def __init__(self, log, db, *args, **kargs):
         self.__fthr_cache = None
-        # must create the statistic(s) before finding out if it is missing...
-        with db.session_context() as s:
-            for agroup in s.query(ActivityGroup).all():
-                StatisticName.add_if_missing(log, s, HR_ZONE, None, None, self, agroup)
+        # # must create the statistic(s) before finding out if it is missing...
+        # with db.session_context() as s:
+        #     for agroup in s.query(ActivityGroup).all():
+        #         StatisticName.add_if_missing(log, s, HR_ZONE, None, None, self, agroup)
         super().__init__(log, db, *args, **kargs)
 
     def _filter_statistic_journals(self, q):

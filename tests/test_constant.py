@@ -10,9 +10,9 @@ from ch2.config.default import default
 from ch2.squeal.tables.constant import Constant
 
 
-class TestConstants(TestCase):
+class TestConstant(TestCase):
 
-    def test_constants(self):
+    def test_constant(self):
         with NamedTemporaryFile() as f:
             args, log, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)

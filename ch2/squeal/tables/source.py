@@ -66,7 +66,8 @@ class Source(Base):
                     and instance.value is not None and instance.time:
                 start, finish = extend_range(start, finish, instance.time)
         if start is not None:
-            Interval.clean_times(s, start, finish)
+            # print(f'################ {start} {finish}')
+            Interval.clean_times(None, s, start, finish)
 
 
 @listens_for(Session, 'before_flush')
@@ -208,19 +209,21 @@ class Interval(Source):
         s.query(Source).filter(Source.type == SourceType.INTERVAL).delete()
 
     @classmethod
-    def clean_times(cls, s, start, finish, owner=None):
+    def clean_times(cls, log, s, start, finish, owner=None):
         '''
         Remove all intervals that include data in the given TIME range,
         '''
-        cls.clean_dates(s, time_to_local_date(start), time_to_local_date(finish), owner=owner)
+        cls.clean_dates(log, s, time_to_local_date(start), time_to_local_date(finish), owner=owner)
 
     @classmethod
-    def clean_dates(cls, s, start, finish, owner=None):
+    def clean_dates(cls, log, s, start, finish, owner=None):
         '''
         Remove all summary intervals (not monitor intervals) in the given DATE range.
         '''
-        q = s.query(Interval).filter(Interval.start < finish, Interval.finish >= start)
+        q = s.query(Interval).filter(Interval.start <= finish, Interval.finish > start)
         if owner:
             q = q.filter(Interval.owner == owner)
         for interval in q.all():
+            # log can be null if called during database handling
+            if log: log.info(f'Deleting {interval}')
             s.delete(interval)

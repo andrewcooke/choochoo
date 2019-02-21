@@ -12,10 +12,8 @@ from ..load import StatisticJournalLoader
 from ..names import MAX
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
+from ...squeal import Constant, Interval, StatisticJournal, StatisticName, StatisticJournalFloat
 from ...squeal.database import add
-from ...squeal.tables.constant import Constant
-from ...squeal.tables.source import Interval
-from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat
 from ...squeal.types import short_cls
 
 # constraint comes from constant
@@ -114,7 +112,7 @@ class ImpulseStatistics(IntervalCalculator):
                 loader = StatisticJournalLoader(self._log, s, self, add_serial=False)
                 start = schedule.start_of_frame(start)
                 # delete forwards
-                Interval.clean_dates(s, start, finish, owner=self)
+                Interval.clean_dates(self._log, s, start, finish, owner=self)
                 while start <= finish:
                     interval = add(s, Interval(start=start, finish=schedule.next_frame(start),
                                                schedule=schedule, owner=self))

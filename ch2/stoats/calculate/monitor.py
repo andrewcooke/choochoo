@@ -6,9 +6,8 @@ from .summary import SummaryStatistics
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ..read.monitor import MonitorImporter
 from ...lib.date import local_date_to_time
-from ...squeal.database import add, StatisticJournal
-from ...squeal.tables.source import Interval, NoStatistics
-from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName
+from ...squeal.database import add
+from ...squeal import Interval, StatisticJournalInteger, StatisticName, NoStatistics
 
 
 # this is really just a daily summary - maybe it should be implemented as such?
@@ -31,7 +30,7 @@ class MonitorStatistics(IntervalCalculator):
                     self._log.info('Processing monitor data from %s to %s' % (start, finish))
                     self._add_stats(s, start, finish)
                     # stealth load so clean out summary manually
-                    Interval.clean_dates(s, start, finish, owner=SummaryStatistics)
+                    Interval.clean_dates(self._log, s, start, finish, owner=SummaryStatistics)
             except NoStatistics:
                 self._log.info('No monitor data to process')
 

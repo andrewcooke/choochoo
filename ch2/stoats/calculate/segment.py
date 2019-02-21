@@ -1,14 +1,13 @@
 
+from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
 from . import WaypointCalculator
 from ..names import SEGMENT_TIME, LATITUDE, LONGITUDE, DISTANCE, S, summaries, MIN, MSR, CNT, HEART_RATE, \
     SEGMENT_HEART_RATE, BPM, MAX
 from ..waypoint import filter_none
-from ...squeal.tables.activity import ActivityJournal
-from ...squeal.tables.segment import SegmentJournal, Segment
-from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalType, StatisticJournalFloat
-from ...squeal.types import short_cls
+from ...squeal import ActivityJournal, SegmentJournal, Segment, StatisticName, StatisticJournal, \
+    StatisticJournalFloat, Timestamp
 
 
 class SegmentStatistics(WaypointCalculator):
@@ -21,22 +20,18 @@ class SegmentStatistics(WaypointCalculator):
                 return
         super().run(force=force, after=after)
 
-    def _run_activity(self, s, activity_group):
-        q1 = s.query(StatisticJournal.source_id). \
-            join(StatisticName). \
-            filter(StatisticName.owner == self,
-                   StatisticName.name == SEGMENT_TIME)
-        statistics = q1.cte()
-        q2 = s.query(ActivityJournal). \
-            join(SegmentJournal, SegmentJournal.activity_journal_id == ActivityJournal.id). \
+    def _activity_journals_with_missing_data(self, s, activity_group):
+        # extends superclass with restriction on activities that have a segment
+        existing_ids = s.query(Timestamp.key). \
+            filter(Timestamp.owner == self,
+                   Timestamp.constraint == None).cte()
+        segment_ids = s.query(SegmentJournal.activity_journal_id). \
             join(Segment). \
-            filter(Segment.activity_group == activity_group). \
-            outerjoin(statistics,
-                      SegmentJournal.id == statistics.c.source_id). \
-            filter(statistics.c.source_id == None)
-        for ajournal in q2.order_by(ActivityJournal.start).all():
-            self._log.info('Running %s for %s' % (short_cls(self), ajournal))
-            self._add_stats(s, ajournal)
+            filter(Segment.activity_group == activity_group).cte()
+        yield from s.query(ActivityJournal). \
+            filter(not_(ActivityJournal.id.in_(existing_ids)),
+                   ActivityJournal.id.in_(segment_ids),
+                   ActivityJournal.activity_group == activity_group).all()
 
     def _constrain_group(self,  s, q, agroup):
         cte = s.query(SegmentJournal.id).join(Segment).filter(Segment.activity_group_id == agroup.id).cte()

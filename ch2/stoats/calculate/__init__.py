@@ -1,8 +1,10 @@
 
 from abc import abstractmethod
 
+from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
+from ch2.squeal.tables.timestamp import Timestamp
 from .. import DbPipeline
 from ..waypoint import WaypointReader
 from ...lib.schedule import Schedule
@@ -85,23 +87,37 @@ class ActivityCalculator(DbPipeline):
                 self._log.debug('Checking statistics for activity %s' % activity_group.name)
                 if force:
                     self._delete_my_statistics(s, activity_group, after=after)
+                    # todo - delete timestamps
                 self._run_activity(s, activity_group)
 
     def _run_activity(self, s, activity_group):
-        # which activity journals don't have data?
-        q1 = s.query(StatisticJournal.source_id). \
-            join(StatisticName). \
-            filter(StatisticName.owner == self,
-                   StatisticName.constraint == activity_group)
-        q1 = self._filter_statistic_journals(q1)
-        statistics = q1.cte()
-        q2 = s.query(ActivityJournal). \
-            outerjoin(statistics). \
-            filter(ActivityJournal.activity_group == activity_group,
-                   statistics.c.source_id == None)
-        for ajournal in q2.order_by(ActivityJournal.start).all():
-            self._log.info('Running %s for %s' % (short_cls(self), ajournal))
-            self._add_stats(s, ajournal)
+        for ajournal in self._activity_journals_with_missing_data(s, activity_group):
+            with Timestamp(owner=self, key=ajournal.id).on_success(s):
+                self._log.info('Running %s for %s' % (short_cls(self), ajournal))
+                self._add_stats(s, ajournal)
+
+    def _activity_journals_with_missing_data(self, s, activity_group):
+        existing_ids = s.query(Timestamp.key). \
+            filter(Timestamp.owner == self,
+                   # no need to check time as it will always be before now
+                   # no need for constraint because activity_journal is per-group
+                   Timestamp.constraint == None).cte()
+        yield from s.query(ActivityJournal). \
+            filter(not_(ActivityJournal.id.in_(existing_ids)),
+                   ActivityJournal.activity_group == activity_group).all()
+
+    # def _activity_journals_with_missing_data(self, s, activity_group):
+    #     q1 = s.query(StatisticJournal.source_id). \
+    #         join(StatisticName). \
+    #         filter(StatisticName.owner == self,
+    #                StatisticName.constraint == activity_group)
+    #     q1 = self._filter_statistic_journals(q1)
+    #     statistics = q1.cte()
+    #     q2 = s.query(ActivityJournal). \
+    #         outerjoin(statistics). \
+    #         filter(ActivityJournal.activity_group == activity_group,
+    #                statistics.c.source_id == None)
+    #     yield from q2.order_by(ActivityJournal.start).all()
 
     @abstractmethod
     def _filter_statistic_journals(self, q):

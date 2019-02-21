@@ -3,20 +3,20 @@ from collections import defaultdict, namedtuple
 from itertools import groupby
 from json import loads
 
-from sqlalchemy import inspect, select, alias, and_, distinct, func
+from sqlalchemy import inspect, select, alias, and_, distinct, func, not_
+from sqlalchemy.sql.functions import count
 
+from .activity import ActivityStatistics
 from .. import DbPipeline
 from ..names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
+from ..read.activity import ActivityImporter
 from ...arty import MatchType
 from ...arty.spherical import SQRTree
 from ...lib.date import to_time
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
-from ...squeal.tables.activity import ActivityJournal, ActivityGroup
-from ...squeal.tables.constant import Constant
-from ...squeal.tables.nearby import ActivitySimilarity, ActivityNearby
-from ...squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalFloat
-from ...stoats.calculate.activity import ActivityStatistics
+from ...squeal import ActivityJournal, ActivityGroup, Constant, ActivitySimilarity, ActivityNearby, StatisticName, \
+    StatisticJournal, StatisticJournalFloat, Timestamp
 
 Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish, '
                               'latitude, longitude, height, width')
@@ -38,17 +38,37 @@ class NearbySimilarityCalculator(DbPipeline):
         with self._db.session_context() as s:
             if force:
                 self._delete(s)
+            else:
+                if self._no_new_data(s):
+                    return
             n_points = defaultdict(lambda: 0)
             self._prepare(s, rtree, n_points, 30000)
             n_overlaps = defaultdict(lambda: defaultdict(lambda: 0))
             new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
-            self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
+            with Timestamp(owner=self, constraint=self._config.constraint).on_success(s):
+                self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
     def _delete(self, s):
         self._log.warning('Deleting similarity data for %s' % self._config.constraint)
         s.query(ActivitySimilarity). \
             filter(ActivitySimilarity.constraint == self._config.constraint). \
             delete()
+
+    def _no_new_data(self, s):
+        prev = s.query(Timestamp). \
+            filter(Timestamp.owner == self,
+                   Timestamp.constraint == self._config.constraint,
+                   Timestamp.key == None).one_or_none()
+        if not prev:
+            return False
+        prev_ids = s.query(Timestamp.key). \
+            filter(Timestamp.owner == ActivityImporter,
+                   Timestamp.constraint == None,
+                   Timestamp.time < prev.time).cte()
+        return s.query(count(ActivityJournal.id)). \
+            join(ActivityGroup). \
+            filter(ActivityGroup.name == self._config.activity_group,
+                   not_(ActivityGroup.id.in_(prev_ids))).scalar()
 
     def _save(self, s, new_ids, affected_ids, n_points, n_overlaps, delta):
         distances = dict((s.source.id, s.value)

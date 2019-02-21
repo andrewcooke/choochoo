@@ -12,7 +12,7 @@ from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
 from ...sortem.bilinear import bilinear_elevation_from_constant
 from ...sortem.spline import spline_elevation_from_constant
-from ...squeal.database import add
+from ...squeal.database import add, Timestamp
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES
@@ -133,7 +133,11 @@ class ActivityImporter(Importer):
         loader.load()
 
         # manually clean out intervals because we're doing a fast load
-        Interval.clean_times(s, first_timestamp, last_timestamp)
+        Interval.clean_times(self._log, s, first_timestamp, last_timestamp)
+
+        # used by nearby calculations to avoid work
+        # use this class so import itself is always clearly understood, even if the subclass changes.
+        Timestamp.set(s, ActivityImporter, key=ajournal.id)
 
         # used by subclasses
         return ajournal, loader
