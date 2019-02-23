@@ -4,6 +4,7 @@ rm -fr env
 python3.7 -m venv env
 source env/bin/activate
 pip install --upgrade pip
+pip install cachetools
 pip install urwid
 pip install sqlalchemy
 pip install openpyxl

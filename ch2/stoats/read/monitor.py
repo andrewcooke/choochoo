@@ -2,15 +2,14 @@
 import datetime as dt
 from collections import defaultdict
 
+from cachetools import cached
 from sqlalchemy import desc
 
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
     CUMULATIVE_STEPS_FINISH
-from ..read import Importer, AbortImportButMarkScanned, AbortImport
-from ...fit.format.read import filtered_records
+from ..read import AbortImportButMarkScanned, AbortImport, FitFileImporter
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
-from ...fit.profile.profile import read_fit
-from ...lib.date import to_time, time_to_local_date, format_time
+from ...lib.date import time_to_local_date, format_time
 from ...squeal.database import add, Timestamp
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
@@ -22,15 +21,31 @@ MONITORING_INFO_ATTR = 'monitoring_info'
 STEPS_ATTR = 'steps'
 
 
-class MonitorImporter(Importer):
+class MonitorImporter(FitFileImporter):
 
     # the monitor steps data are cumulative, but we want incremental.
     # that's easy to do within a single file, but to be correct across files we also
     # store the cumulative value at the start and end,  we use these to "patch things up"
     # is we read a missing file.
 
+    def _on_init(self, *args, **kargs):
+        super()._on_init(*args, **kargs)
+
+        @cached(cache={}, key=lambda s, name, units, summary, constraint: (name, constraint))
+        def statistics_cache(s, name, units, summary, constraint):
+            return StatisticName.add_if_missing(self._log, s, name, units, summary, self, constraint)
+
+        self.__statistics_cache = statistics_cache
+
     def run(self, paths, force=False):
-        self._run(paths, force=force)
+        self._import_all(paths, force=force)
+
+    def _create(self, s, name, units, summary, constraint, source, value, time, type):
+        return type(statistic_name=self.__statistics_cache(s, name, units, summary, constraint),
+                    source=source, value=value, time=time)
+
+    def _add(self, s, name, units, summary, constraint, source, value, time, type):
+        return add(s, self._create(s, name, units, summary, constraint, source, value, time, type))
 
     def _check_contains(self, s, start, finish, path):
         for mjournal in s.query(MonitorJournal). \
@@ -180,12 +195,9 @@ class MonitorImporter(Importer):
                         sjournal.value = steps_journals[time][activity].value
                     del steps_journals[time][activity]
 
-    def _import(self, s, path):
+    def _import_path(self, s, path):
 
-        types, messages, records = filtered_records(self._log, read_fit(self._log, path))
-        records = [record.as_dict(merge_duplicates, fix_degrees, unpack_single_bytes)
-                   for _, _, record in sorted(records,
-                                              key=lambda r: r[2].timestamp if r[2].timestamp else to_time(0.0))]
+        records = self._load_fit_file(path, merge_duplicates, fix_degrees, unpack_single_bytes)
 
         first_timestamp = self._first(path, records, MONITORING_INFO_ATTR).timestamp
         last_timestamp = self._last(path, records, MONITORING_ATTR).timestamp

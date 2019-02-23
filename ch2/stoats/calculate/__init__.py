@@ -4,14 +4,11 @@ from abc import abstractmethod
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ch2.squeal.tables.timestamp import Timestamp
 from .. import DbPipeline
 from ..waypoint import WaypointReader
 from ...lib.schedule import Schedule
-from ...squeal.tables.activity import ActivityJournal, ActivityGroup
-from ...squeal.tables.pipeline import Pipeline
-from ...squeal.tables.source import Interval
-from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
+from ...squeal import ActivityJournal, ActivityGroup, Pipeline, Interval, Timestamp, StatisticJournal, \
+    StatisticName, StatisticJournalFloat, StatisticJournalInteger
 from ...squeal.types import short_cls
 
 
@@ -99,7 +96,6 @@ class ActivityCalculator(DbPipeline):
     def _activity_journals_with_missing_data(self, s, activity_group):
         existing_ids = s.query(Timestamp.key). \
             filter(Timestamp.owner == self,
-                   # no need to check time as it will always be before now
                    Timestamp.constraint == activity_group).cte()
         yield from s.query(ActivityJournal). \
             filter(not_(ActivityJournal.id.in_(existing_ids)),
@@ -174,4 +170,3 @@ class WaypointCalculator(ActivityCalculator):
     @abstractmethod
     def _names(self):
         raise NotImplementedError()
-
