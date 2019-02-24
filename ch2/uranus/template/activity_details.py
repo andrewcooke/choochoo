@@ -10,10 +10,10 @@ from ch2.uranus.decorator import template
 
 
 @template
-def activity_details(activity_time, group):
+def activity_details(local_time, activity_group_name):
 
     f'''
-    # Activity Details: {activity_time.split()[0]}
+    # Activity Details: {local_time.split()[0]}
     '''
 
     '''
@@ -28,9 +28,10 @@ def activity_details(activity_time, group):
 
     s = session('-v2')
 
-    activity = std_activity_stats(s, local_time=activity_time, group=group)
-    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, local_time=activity_time, group=group)
-    health = std_health_stats(s)
+    activity = std_activity_statistics(s, local_time=local_time, activity_group_name=activity_group_name)
+    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, local_time=local_time,
+                                  activity_group_name=activity_group_name)
+    health = std_health_statistics(s)
 
     f'''
     ## Activity Plots

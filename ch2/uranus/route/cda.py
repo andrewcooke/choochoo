@@ -2,12 +2,13 @@
 import pandas as pd
 from sqlalchemy import func
 
-from ..names import DISTANCE, SPEED, ELEVATION, CADENCE
-from ..read.segment import SegmentImporter
-from ..waypoint import WaypointReader
 from ...lib.date import to_time
-from ...squeal import ActivityBookmark
-from ...squeal.database import connect, StatisticName, StatisticJournalInteger
+from ...squeal import ActivityBookmark, StatisticName, StatisticJournalInteger
+from ...squeal.database import connect
+from ...stoats.calculate.activity import ActivityStatistics
+from ...stoats.names import DISTANCE, SPEED, ELEVATION, CADENCE
+from ...stoats.read.segment import SegmentImporter
+from ...stoats.waypoint import WaypointReader
 
 
 class CoastingBookmark:
@@ -16,7 +17,7 @@ class CoastingBookmark:
         self._log = log
         self._db = db
 
-    def bookmark(self, min_time, max_cadence, min_speed, constraint=None):
+    def run(self, min_time, max_cadence, min_speed, constraint=None):
         with self._db.session_context() as s:
             self.__delete_previous(s, constraint)
             for aj_id, start, finish in self.__find(s, min_time, max_cadence, min_speed):
@@ -29,7 +30,7 @@ class CoastingBookmark:
             delete()
 
     def __add(self, s, aj_id, start, finish, constraint):
-        log.info('%s-%s (%d)' % (to_time(start), to_time(finish), aj_id))
+        log.info('%s - %s (%d)' % (to_time(start), to_time(finish), aj_id))
         s.add(ActivityBookmark(activity_journal_id=aj_id, start=start, finish=finish,
                                owner=self, constraint=constraint))
 
@@ -130,13 +131,16 @@ def filter_bookmarks(s, max_cadence, bookmarks):
 
 
 def expand_bookmarks(log, s, bookmarks):
-    names = {DISTANCE: 'distance',
-             SPEED: 'speed',
-             ELEVATION: 'elevation'}
     reader = WaypointReader(log, with_timespan=False)
     for bookmark in bookmarks:
         prev_waypoint = None
-        for waypoint in reader.read(s, bookmark.activity_journal, names, SegmentImporter,
+        for waypoint in reader.read(s, bookmark.activity_journal,
+                                    names={DISTANCE: 'distance',
+                                           SPEED: 'speed',
+                                           ELEVATION: 'elevation'},
+                                    owner={DISTANCE: SegmentImporter,
+                                           SPEED: SegmentImporter,
+                                           ELEVATION: ActivityStatistics},
                                     start=bookmark.start, finish=bookmark.finish):
             if prev_waypoint:
                 d = waypoint.distance - prev_waypoint.distance
@@ -181,8 +185,11 @@ def accumulate_crr(m, d_h_s2_ke, g=9.8, p=1.225, cda=0.55):
 
 if __name__ == '__main__':
     ns, log, db = connect(['-v 4'])
-    # CoastingBookmark(log, db).bookmark(60, 20, 3, constraint='60s/3ms')
-    CoastingBookmark(log, db).bookmark(60, 20, 0, constraint='60s/0ms')
-    # with db.session_context() as s:
-    #     for d, h, s2, ke in expand_bookmarks(log, s, read_bookmarks(s, '60s')):
-    #         print(d, h, s2, ke)
+    # CoastingBookmark(log, db).run(60, 20, 0, constraint='60s/0ms')
+    with db.session_context() as s:
+        df = accumulate_cda_crr(64 + 12,
+                                expand_bookmarks(log, s,
+                                                 filter_bookmarks(s, 0,
+                                                                  read_bookmarks(s, '60s/0ms'))))
+    print(df.describe())
+

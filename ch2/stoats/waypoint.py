@@ -24,11 +24,11 @@ class WaypointReader:
         self._log = log
         self._with_timespan = with_timespan
 
-    def read(self, s, ajournal, names, owner, start=None, finish=None):
+    def read(self, s, ajournal, names, owner=None, start=None, finish=None):
 
         t = tables(StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat)
 
-        id_map = self._id_map(s, ajournal, names, owner)
+        id_map = self._id_map(s, ajournal, names, owner=owner)
         ids = list(id_map.keys())
 
         Waypoint = make_waypoint(names.values(), extra='timespan' if self._with_timespan else None)
@@ -69,11 +69,11 @@ class WaypointReader:
         # need to convert from statistic_name_id to attribute name
         return dict((self._id(s, ajournal, key, owner), value) for key, value in names.items())
 
-    def _id(self, s, ajournal, name, owner):
-        return s.query(StatisticName.id). \
-            filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
-                   StatisticName.constraint == ajournal.activity_group).scalar()
+    def _id(self, s, ajournal, name, owner=None):
+        from ..data.frame import _add_constraint
+        q = s.query(StatisticName.id). \
+            filter(StatisticName.name == name, StatisticName.constraint == ajournal.activity_group)
+        return _add_constraint(q, StatisticName.owner, owner, name).scalar()
 
 
 class Chunk:
