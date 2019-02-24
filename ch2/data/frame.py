@@ -68,7 +68,7 @@ def _collect_statistics(s, names, owner=None, constraint=None, log=None):
         names = ['%']
     statistic_ids, statistic_names = set(), set()
     for name in names:
-        q = s.s.query(StatisticName).filter(StatisticName.name.like(name))
+        q = s.query(StatisticName).filter(StatisticName.name.like(name))
         q = _add_constraint(q, StatisticName.owner, owner, name)
         q = _add_constraint(q, StatisticName.constraint, constraint, name)
         for statistic_name in q.all():
@@ -178,13 +178,35 @@ def resolve_activity(s, local_time=None, time=None, activity_journal_id=None,
     return activity_journal_id
 
 
-def activity_statistics(s, *statistics, local_time=None, time=None, activity_journal_id=None,
+def activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
+                        local_time=None, time=None, bookmarks=None, activity_journal_id=None,
                         activity_group_name=None, activity_group_id=None, with_timespan=False, log=None):
 
     set_log(log)
-    statistic_names, statistic_ids = _collect_statistics(s, statistics)
+    if bookmarks:
+        if start or finish or local_time or time or activity_journal_id:
+            raise Exception('Cannot use bookmarks with additional activity constraints')
+        return pd.concat(_activity_statistics(s, *statistics, owner=owner, constraint=constraint,
+                                              start=bookmark.start, finish=bookmark.finish,
+                                              activity_journal_id=bookmark.activity_journal_id,
+                                              activity_group_name=activity_group_name,
+                                              activity_group_id=activity_group_id, with_timespan=with_timespan)
+                         for bookmark in bookmarks)
+    else:
+        return _activity_statistics(s, *statistics, owner=owner, constraint=constraint, start=start, finish=finish,
+                                    local_time=local_time, time=time, activity_journal_id=activity_journal_id,
+                                    activity_group_name=activity_group_name, activity_group_id=activity_group_id,
+                                    with_timespan=with_timespan)
+
+
+def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
+                         local_time=None, time=None, activity_journal_id=None,
+                         activity_group_name=None, activity_group_id=None, with_timespan=False):
+
+    statistic_names, statistic_ids = _collect_statistics(s, statistics, owner=owner, constraint=constraint)
     get_log().debug('Statistics IDs %s' % statistic_ids)
-    activity_journal_id = resolve_activity(s, local_time, time, activity_journal_id,
+    activity_journal_id = resolve_activity(s, local_time=local_time, time=time,
+                                           activity_journal_id=activity_journal_id,
                                            activity_group_name=activity_group_name,
                                            activity_group_id=activity_group_id)
 
@@ -196,6 +218,10 @@ def activity_statistics(s, *statistics, local_time=None, time=None, activity_jou
         where(and_(t.at.c.start <= t.sj.c.time, t.at.c.finish >= t.sj.c.time,
                    t.at.c.activity_journal_id == activity_journal_id)). \
         order_by(t.sj.c.time)
+    if start:
+        q = q.where(t.sj.c.time >= start)
+    if finish:
+        q = q.where(t.sj.c.time < finish)
     get_log().debug(q)
 
     data, times = defaultdict(list), []
@@ -213,6 +239,7 @@ def activity_statistics(s, *statistics, local_time=None, time=None, activity_jou
                             '(you may need to specify more constraints to make the query unique)')
         data[name].append(value)
     pad()
+
     return pd.DataFrame(data, index=times)
 
 

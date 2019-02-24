@@ -2,9 +2,10 @@
 import pandas as pd
 from sqlalchemy import func
 
+from .read import std_route, AVG_SPEED_2
+from ...data import session
 from ...lib.date import to_time
 from ...squeal import ActivityBookmark, StatisticName, StatisticJournalInteger
-from ...squeal.database import connect
 from ...stoats.calculate.activity import ActivityStatistics
 from ...stoats.names import DISTANCE, SPEED, ELEVATION, CADENCE
 from ...stoats.read.segment import SegmentImporter
@@ -184,12 +185,17 @@ def accumulate_crr(m, d_h_s2_ke, g=9.8, p=1.225, cda=0.55):
 
 
 if __name__ == '__main__':
-    ns, log, db = connect(['-v 4'])
+    # ns, log, db = connect(['-v 4'])
     # CoastingBookmark(log, db).run(60, 20, 0, constraint='60s/0ms')
-    with db.session_context() as s:
-        df = accumulate_cda_crr(64 + 12,
-                                expand_bookmarks(log, s,
-                                                 filter_bookmarks(s, 0,
-                                                                  read_bookmarks(s, '60s/0ms'))))
-    print(df.describe())
-
+    # with db.session_context() as s:
+    #     df = accumulate_cda_crr(64 + 12,
+    #                             expand_bookmarks(log, s,
+    #                                              filter_bookmarks(s, 0,
+    #                                                               read_bookmarks(s, '60s/0ms'))))
+    # print(df.describe())
+    s = session('-v 0')
+    route = std_route(s, bookmarks=read_bookmarks(s, '60s/0ms'))
+    print(route.describe())
+    print(route.columns)
+    print(route[AVG_SPEED_2])
+    print(route)

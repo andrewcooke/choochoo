@@ -7,6 +7,7 @@ from ch2.stoats.names import DISTANCE, SPEED, ELEVATION, HR_IMPULSE_10, CADENCE,
 
 WINDOW = '60s'
 POW_MINUS_ONE = '\u207b\u00b9'
+POW_TWO = '\u00b2'
 MIN_PERIODS = 1
 
 DISTANCE_KM = '%s / km' % DISTANCE
