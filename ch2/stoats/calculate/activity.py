@@ -13,11 +13,12 @@ from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, 
     PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, \
     DISTANCE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, CLIMB_GRADIENT, TOTAL_CLIMB, RAW_ELEVATION
 from ..waypoint import Chunks
-from ...squeal import Constant, StatisticName
-from ...squeal import StatisticJournalFloat
+from ...squeal import Constant, StatisticName, StatisticJournalFloat, StatisticJournalInteger
 
 
 class ActivityStatistics(WaypointCalculator):
+
+    # for historical reasons, and because it adds few stats, this still doesn't use a loader.
 
     def _run_activity(self, s, activity_group):
         climb = self._assert_karg('climb')
@@ -33,6 +34,18 @@ class ActivityStatistics(WaypointCalculator):
                  RAW_ELEVATION: 'raw_elevation',
                  ELEVATION: 'elevation'}
         return names
+
+    def _add_float_stat(self, s, ajournal, name, summary, value, units, time=None):
+        if time is None:
+            time = ajournal.start
+        StatisticJournalFloat.add(self._log, s, name, units, summary, ActivityStatistics,
+                                  ajournal.activity_group, ajournal, value, time)
+
+    def _add_int_stat(self, s, ajournal, name, summary, value, units, time=None):
+        if time is None:
+            time = ajournal.start
+        StatisticJournalInteger.add(self._log, s, name, units, summary, ActivityStatistics,
+                                    ajournal.activity_group, ajournal, int(round(value)), time)
 
     def _add_stats_from_waypoints(self, s, ajournal, waypoints):
         totals = self._add_totals(s, ajournal, waypoints)

@@ -33,7 +33,7 @@ class SegmentStatistics(WaypointCalculator):
                    ActivityJournal.id.in_(segment_ids),
                    ActivityJournal.activity_group == activity_group).all()
 
-    def _constrain_group(self,  s, q, agroup):
+    def _constrain_source(self, s, q, agroup):
         cte = s.query(SegmentJournal.id).join(Segment).filter(Segment.activity_group_id == agroup.id).cte()
         return q.filter(StatisticJournal.source_id.in_(cte))
 

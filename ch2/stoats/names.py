@@ -30,6 +30,7 @@ MEDIAN_KM_TIME = 'Median %dkm Time'
 MEDIAN_KM_TIME_ANY = 'Median % Time'
 PERCENT_IN_Z = 'Percent in Z%d'
 PERCENT_IN_Z_ANY = 'Percent in Z%'
+POWER = 'Power'
 SEGMENT_TIME = 'Segment Time'
 SEGMENT_DISTANCE = 'Segment Distance'
 SEGMENT_HEART_RATE = 'Segment Heart Rate'
@@ -45,6 +46,7 @@ TIMESPAN_ID = 'Timespan ID'
 TOTAL_CLIMB = 'Total Climb'
 MAX_MED_HR_M = 'Max Med HR %dm'
 MAX_MED_HR_M_ANY = 'Max Med HR %'
+
 
 HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
 
@@ -70,6 +72,7 @@ PC = '%'
 BPM = 'bpm'
 RPM = 'rpm'
 KG = 'kg'
+W = 'W'
 STEPS_UNITS = 'steps'
 ENTRIES = 'entries'
 

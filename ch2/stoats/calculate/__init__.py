@@ -4,6 +4,7 @@ from abc import abstractmethod
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
+from ch2.stoats.load import StatisticJournalLoader
 from .. import DbPipeline
 from ..waypoint import WaypointReader
 from ...lib.schedule import Schedule
@@ -75,13 +76,13 @@ class IntervalCalculator(DbPipeline):
 
 class ActivityCalculator(DbPipeline):
     '''
-    Support for calculations associated with activity journals.
+    Support for calculations associated with activity journals (which is most).
     '''
 
     def run(self, force=False, after=None):
         with self._db.session_context() as s:
             for activity_group in s.query(ActivityGroup).all():
-                self._log.debug('Checking statistics for activity %s' % activity_group.name)
+                self._log.debug('Checking statistics for activity group %s' % activity_group.name)
                 if force:
                     self._delete_my_statistics(s, activity_group, after=after)
                 self._run_activity(s, activity_group)
@@ -99,7 +100,8 @@ class ActivityCalculator(DbPipeline):
                    Timestamp.constraint == activity_group).cte()
         yield from s.query(ActivityJournal). \
             filter(not_(ActivityJournal.id.in_(existing_ids)),
-                   ActivityJournal.activity_group == activity_group).all()
+                   ActivityJournal.activity_group == activity_group). \
+            order_by(ActivityJournal.start).all()
 
     @abstractmethod
     def _filter_statistic_journals(self, q):
@@ -108,18 +110,6 @@ class ActivityCalculator(DbPipeline):
     @abstractmethod
     def _add_stats(self, s, ajournal):
         raise NotImplementedError()
-
-    def _add_float_stat(self, s, ajournal, name, summary, value, units, time=None):
-        if time is None:
-            time = ajournal.start
-        StatisticJournalFloat.add(self._log, s, name, units, summary, self,
-                                  ajournal.activity_group, ajournal, value, time)
-
-    def _add_int_stat(self, s, ajournal, name, summary, value, units, time=None):
-        if time is None:
-            time = ajournal.start
-        StatisticJournalInteger.add(self._log, s, name, units, summary, self,
-                                    ajournal.activity_group, ajournal, int(round(value)), time)
 
     def _delete_my_statistics(self, s, agroup, after=None):
         '''
@@ -134,7 +124,7 @@ class ActivityCalculator(DbPipeline):
             else:
                 q = s.query(count(StatisticJournal.id))
             q = q.filter(StatisticJournal.statistic_name_id.in_(cte.cte()))
-            q = self._constrain_group(s, q, agroup)
+            q = self._constrain_source(s, q, agroup)
             if after:
                 q = q.filter(StatisticJournal.time >= after)
             if repeat:
@@ -148,12 +138,15 @@ class ActivityCalculator(DbPipeline):
         Timestamp.clear_after(s, after, self, constraint=agroup)
         s.commit()
 
-    def _constrain_group(self, s, q, agroup):
+    def _constrain_source(self, s, q, agroup):
         cte = s.query(ActivityJournal.id).filter(ActivityJournal.activity_group_id == agroup.id).cte()
         return q.filter(StatisticJournal.source_id.in_(cte))
 
 
 class WaypointCalculator(ActivityCalculator):
+    '''
+    Original calculator scheme, still used by most code.  Pure-python and SQLAlchemy,
+    '''
 
     def _add_stats(self, s, ajournal):
         owner = self._assert_karg('owner')
@@ -169,4 +162,32 @@ class WaypointCalculator(ActivityCalculator):
 
     @abstractmethod
     def _names(self):
+        raise NotImplementedError()
+
+
+class DataFrameCalculator(ActivityCalculator):
+    '''
+    New calculator scheme.  Uses data frames / shares code with analysis.
+    '''
+
+    def _add_stats(self, s, ajournal):
+        df = self._load_data(s, ajournal)
+        if df is not None and len(df):
+            df = self._extend_data(s, df)
+            loader = StatisticJournalLoader(self._log, s, self)
+            self._copy_results(s, ajournal, df, loader)
+            loader.load()
+        else:
+            self._log.warning('No statistics for %s' % ajournal)
+
+    @abstractmethod
+    def _load_data(self, s, ajournal):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _extend_data(self, s, df):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _copy_results(self, s, ajournal, df, loader):
         raise NotImplementedError()

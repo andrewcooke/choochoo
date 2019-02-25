@@ -3,6 +3,7 @@ from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
+from .power import add_power, POWER_CNAME
 from ..lib.schedule import Schedule
 from ..sortem.file import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
@@ -10,6 +11,7 @@ from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
+from ..stoats.calculate.power import PowerStatistics
 from ..stoats.calculate.segment import SegmentStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
@@ -19,6 +21,7 @@ from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
     RPM
+from ..stoats.read.activity import ActivityImporter
 from ..stoats.read.monitor import MonitorImporter
 from ..stoats.read.segment import SegmentImporter
 from ..uweird.fields.topic import Text, Float, Score0
@@ -50,13 +53,16 @@ def default(log, db, no_diary=False):
         # statistics pipeline (called to calculate missing statistics)
 
         c = Counter()
-        # need to specify the owner so that we get load waypoints correctly
+        # need to specify the owner so that we load waypoints correctly
         add_climb(s, bike)
-        add_statistics(s, ActivityStatistics, c, owner=short_cls(SegmentImporter),
+        add_statistics(s, ActivityStatistics, c, owner=short_cls(ActivityImporter),
                        climb=name_constant(CLIMB_CNAME, bike))
         add_statistics(s, SegmentStatistics, c, owner=short_cls(SegmentImporter))
         add_statistics(s, MonitorStatistics, c)
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
+        add_power(s, bike)
+        add_statistics(s, PowerStatistics, c, owner=short_cls(ActivityImporter),
+                       power=name_constant(POWER_CNAME, bike))
 
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.

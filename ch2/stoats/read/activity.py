@@ -34,7 +34,7 @@ class ActivityImporter(FitFileImporter):
         sport_to_activity, record_to_db, add_elevation = self._parse_pipeline_arguments()
         records = self._load_fit_file(path, merge_duplicates, fix_degrees, no_bad_values)
         ajournal, activity_group, first_timestamp = self._create_activity(s, path, records, sport_to_activity)
-        loader = StatisticJournalLoader(self._log, s, self)
+        loader = StatisticJournalLoader(self._log, s, ActivityImporter)
         timespan, warned, last_timestamp = None, 0, to_time(0.0)
 
         for record in records:

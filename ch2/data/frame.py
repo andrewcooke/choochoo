@@ -9,17 +9,18 @@ from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
 from .names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, WINDOW, MIN_PERIODS, \
-    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM
+    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
-from ..squeal.database import connect, ActivityTimespan, ActivityGroup
+from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, FITNESS, FATIGUE, REST_HR, \
-    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER
+from ch2.uranus.coasting import CoastingBookmark
 
 # because this is intended to be called from jupyter we hide the log here
 # other callers can use these routines by calling set_log() first.
@@ -113,7 +114,7 @@ def _build_statistic_journal_query(statistic_ids, start, finish, source_ids, sch
 class MissingData(Exception): pass
 
 
-def make_pad(data, times, statistic_names):
+def make_pad(data, times, statistic_names, quiet=False):
     err_cnt = defaultdict(lambda: 0)
 
     def pad():
@@ -122,7 +123,7 @@ def make_pad(data, times, statistic_names):
         for name in statistic_names:
             if len(data[name]) != n:
                 err_cnt[name] += 1
-                if err_cnt[name] <= 1:
+                if err_cnt[name] <= 1 and not quiet:
                     get_log().warning('Missing %s at %s (single warning)' % (name, times[-1]))
                 data[name].append(None)
 
@@ -130,13 +131,13 @@ def make_pad(data, times, statistic_names):
 
 
 def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, source_ids=None,
-               schedule=None, log=None):
+               schedule=None, quiet=False, log=None):
 
     set_log(log)
     statistic_names, statistic_ids = _collect_statistics(s, statistics, owner, constraint)
     q = _build_statistic_journal_query(statistic_ids, start, finish, source_ids, schedule)
     data, times = defaultdict(list), []
-    pad = make_pad(data, times, statistic_names)
+    pad = make_pad(data, times, statistic_names, quiet=quiet)
 
     for name, time, value in s.connection().execute(q):
         if times and times[-1] != time:
@@ -180,7 +181,8 @@ def resolve_activity(s, local_time=None, time=None, activity_journal_id=None,
 
 def activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
                         local_time=None, time=None, bookmarks=None, activity_journal_id=None,
-                        activity_group_name=None, activity_group_id=None, with_timespan=False, log=None):
+                        activity_group_name=None, activity_group_id=None, with_timespan=False,
+                        log=None, quiet=False):
 
     set_log(log)
     if bookmarks:
@@ -190,18 +192,20 @@ def activity_statistics(s, *statistics, owner=None, constraint=None, start=None,
                                               start=bookmark.start, finish=bookmark.finish,
                                               activity_journal_id=bookmark.activity_journal_id,
                                               activity_group_name=activity_group_name,
-                                              activity_group_id=activity_group_id, with_timespan=with_timespan)
+                                              activity_group_id=activity_group_id, with_timespan=with_timespan,
+                                              quiet=quiet)
                          for bookmark in bookmarks)
     else:
         return _activity_statistics(s, *statistics, owner=owner, constraint=constraint, start=start, finish=finish,
                                     local_time=local_time, time=time, activity_journal_id=activity_journal_id,
                                     activity_group_name=activity_group_name, activity_group_id=activity_group_id,
-                                    with_timespan=with_timespan)
+                                    with_timespan=with_timespan, quiet=quiet)
 
 
 def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
                          local_time=None, time=None, activity_journal_id=None,
-                         activity_group_name=None, activity_group_id=None, with_timespan=False):
+                         activity_group_name=None, activity_group_id=None, with_timespan=False,
+                         quiet=False):
 
     statistic_names, statistic_ids = _collect_statistics(s, statistics, owner=owner, constraint=constraint)
     get_log().debug('Statistics IDs %s' % statistic_ids)
@@ -225,7 +229,7 @@ def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None
     get_log().debug(q)
 
     data, times = defaultdict(list), []
-    pad = make_pad(data, times, statistic_names)
+    pad = make_pad(data, times, statistic_names, quiet=quiet)
 
     for name, time, value, timespan in s.connection().execute(q):
         if times and times[-1] != time:
@@ -287,7 +291,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal_id=N
 
     set_log(log)
     stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
-                                ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE,
+                                ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, POWER,
                                 local_time=local_time, time=time, activity_journal_id=activity_journal_id,
                                 activity_group_name=activity_group_name, activity_group_id=activity_group_id,
                                 with_timespan=True)
@@ -297,6 +301,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal_id=N
     stats[MED_SPEED_KMH] = stats[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
     stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(WINDOW, min_periods=MIN_PERIODS).median()
     stats[MED_CADENCE] = stats[CADENCE].rolling(WINDOW, min_periods=MIN_PERIODS).median()
+    stats[MED_POWER] = stats[POWER].rolling(WINDOW, min_periods=MIN_PERIODS).median()
     stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
 
     stats['keep'] = pd.notna(stats[HR_IMPULSE_10])
@@ -338,3 +343,11 @@ def nearby_activities(s, local_time=None, time=None, activity_journal_id=None,
                                            activity_group_name=activity_group_name,
                                            activity_group_id=activity_group_id)
     return nearby_any_time(s, ActivityJournal.from_id(s, activity_journal_id))
+
+
+def bookmarks(s, constraint, owner=CoastingBookmark):
+    yield from s.query(ActivityBookmark). \
+        filter(ActivityBookmark.owner == owner,
+               ActivityBookmark.constraint == constraint).all()
+
+
