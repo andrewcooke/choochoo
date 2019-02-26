@@ -9,7 +9,7 @@ from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
 from .names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, WINDOW, MIN_PERIODS, \
-    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER
+    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
@@ -301,7 +301,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal_id=N
     stats[MED_SPEED_KMH] = stats[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
     stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(WINDOW, min_periods=MIN_PERIODS).median()
     stats[MED_CADENCE] = stats[CADENCE].rolling(WINDOW, min_periods=MIN_PERIODS).median()
-    stats[MED_POWER] = stats[POWER].rolling(WINDOW, min_periods=MIN_PERIODS).median()
+    stats[MED_POWER_W] = stats[POWER].rolling(WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
     stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
 
     stats['keep'] = pd.notna(stats[HR_IMPULSE_10])

@@ -9,6 +9,10 @@ YMD = '%Y-%m-%d'
 HMS = '%H:%M:%S'
 YMD_HMS = YMD + ' ' + HMS
 
+ALL_DATE_FORMATS = ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
+                    '%Y-%m-%dT%H:%M:%S', YMD_HMS,
+                    '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', YMD, '%Y')
+
 
 def format_date(date):
     return date.strftime(YMD)
@@ -48,9 +52,7 @@ def to_time(value, none=False):
     elif isinstance(value, float):
         return dt.datetime.fromtimestamp(value, dt.timezone.utc)
     else:
-        for format in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
-                       '%Y-%m-%dT%H:%M:%S', YMD_HMS,
-                       '%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M', YMD, '%Y'):
+        for format in ALL_DATE_FORMATS:
             try:
                 return dt.datetime.strptime(value, format).replace(tzinfo=dt.timezone.utc)
             except ValueError:
@@ -125,8 +127,14 @@ def time_to_local_time(time, fmt=YMD_HMS):
     return time.astimezone(tz=None).strftime(fmt)
 
 
-def local_time_to_time(time, fmt=YMD_HMS):
-    return dt.datetime.strptime(time, fmt).replace(tzinfo=p.tz.get_local_timezone()).astimezone(dt.timezone.utc)
+def local_time_to_time(time):
+    for format in ALL_DATE_FORMATS:
+        try:
+            return dt.datetime.strptime(time, format).replace(
+                tzinfo=p.tz.get_local_timezone()).astimezone(dt.timezone.utc)
+        except ValueError:
+            pass
+    raise ValueError(f'Cannot parse "{time}" as a datetime')
 
 
 def time_to_local_date(time):

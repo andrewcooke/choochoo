@@ -37,7 +37,8 @@ class PowerStatistics(DataFrameCalculator):
 
     def _load_data(self, s, ajournal):
         try:
-            df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, activity_journal_id=ajournal.id, with_timespan=True,
+            df = activity_statistics(s, DISTANCE, ELEVATION, SPEED,
+                                     activity_journal_id=ajournal.id, with_timespan=True,
                                      log=self._log, quiet=True)
             return add_differentials(df)
         except Exception as e:

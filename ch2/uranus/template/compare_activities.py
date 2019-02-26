@@ -59,10 +59,13 @@ def compare_activities(local_time, compare_time, activity_group_name):
     hr = comparison_line_plot(700, 200, DISTANCE_KM, MED_HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=el.x_range)
     hr_c = cumulative_plot(200, 200, MED_HR_IMPULSE_10, activity, other=compare, ylo=0)
 
+    pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_W, activity, other=compare, ylo=0, x_range=el.x_range)
+    pw_c = cumulative_plot(200, 200, MED_POWER_W, activity, other=compare, ylo=0)
+
     cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, other=compare, ylo=0, x_range=el.x_range)
     hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
 
-    show(column(row(el, el_c), row(sp, sp_c), row(hr, hr_c), row(cd, hr_h)))
+    show(column(row(el, el_c), row(sp, sp_c), row(hr, hr_c), row(pw, pw_c), row(cd, hr_h)))
 
     '''
     ## Activity Maps
@@ -72,7 +75,7 @@ def compare_activities(local_time, compare_time, activity_group_name):
     m_el = map_intensity(200, 200, activity, ELEVATION_M, ranges=map)
     m_sp = map_intensity(200, 200, activity, SPEED_KMH, ranges=map)
     m_hr = map_intensity(200, 200, activity, HR_IMPULSE_10, ranges=map)
-    m_cd = map_intensity(200, 200, activity, CADENCE, ranges=map)
+    m_cd = map_intensity(200, 200, activity, MED_POWER_W, ranges=map)
     show(row(map, column(row(m_el, m_sp), row(m_hr, m_cd))))
 
     '''

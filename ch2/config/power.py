@@ -7,7 +7,7 @@ from . import name_constant, add_enum_constant, set_constant
 POWER_CNAME = 'Power'
 
 
-def add_power(s, activity_group, cda=4.5, crr=0, m=64+12, p=1.225, g=9.8):
+def add_power(s, activity_group, cda=0.44, crr=0, m=64+12, p=1.225, g=9.8):
     '''
     Add the constants necessary to estimate power output.
     '''
