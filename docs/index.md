@@ -57,7 +57,7 @@ support for power meters.
   * [Graphic Summary](summary)
   * [Elevation](elevation)
   * [Detecting Climbs](climbs)
+  * [Measuring Power and CdA](cda)
 * Development
   * [Spatial Search](rtree)
   * [Other Projects](other-projects)
-  * [Measuring CdA](cda)
