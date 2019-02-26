@@ -5,11 +5,12 @@ Many devices don't track elevation.  Choochoo can generate elevation
 data by cross-referencing the latitude and longitude from the GPS data
 against topographic information from NASA.
 
-  * [Design](#design)
+  * [SRTM Data](#srtm-data)
   * [Configuration](#configuration)
+  * [Smoothing](#smoothing)
   * [Results](#results)
 
-## Design
+## SRTM Data
 
 The [Shuttle Radar Tomography Mission
 (SRTM)](https://www2.jpl.nasa.gov/srtm/) was a project to measure the
@@ -48,17 +49,40 @@ elevations:
 
     > ch2 activities --force /PATH/TO/FIT/FILES
 
+## Smoothing
+
+The raw SRTM data appear to be noisy (within Santiago this may be
+because of confusion with buildings, but there also appeared to be
+noise on rides in open countryside).
+
+I experiemented with smoothing the data on initial interpolation (ie
+when generating the elevation for a particular GPS coordinate), but
+this (1) appeared to be unstable and (2) did not address "error
+amplification" with GPS location errors on steep slopes.
+
+Better results were obtained by extracting the data from the SRTM
+arrays using bilinear interpolation (ie no additional smoothing) and
+then spline-smoothing *along* the route.  This exploits the fact that
+the route ridden is likely to be smoother than the surrounding terrain
+(roads and trails naturally follow the smoothest path)
+
+The main disadvantage of this approach is that there is no external,
+fixed reference: two crossing routes don't have to share the same
+height where they meet.
+
 ## Results
 
 ![](elevation.png)
 
-This plot shows ride elevation with [climbs](climbs) identified.
-
 ![](altitude.png)
 
-A section of the same ride as above, showing the SRTM data (black) and
-GPS data from a FR230 watch (red).  There's a consistent offset that
-is likely due to different geodesics and slightly more noise in the
-GPS.  There are also a few systematic differences that I cannot
-explain and the *hint* of a delay in the GPS values.
+The two plots above show the same ride.  GPS altitude is shown in
+black; SRTM elevation in red; route-smoothed elevation in blue.
+
+There is a consistent offset between the GPS and SRTM data that I
+assume is due to differences in the reference altitude.
+
+To duplicate these results, use the notebook
+[here](https://github.com/andrewcooke/choochoo/blob/master/notebooks/elevation/compare-gps.ipynb)
+(adjusted for your own data).
 

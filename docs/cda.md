@@ -1,5 +1,5 @@
 
-# Measuring CdA
+# Measuring Power and CdA
 
 When you're cycling your energy is general spent either climbing hills
 or pushing air out of the way - those are the two big "sinks" of
@@ -10,15 +10,16 @@ hills - is easy [given elevation data](elevation).  The second depends
 on your speed (squared), the cross-section area you present (`A`), and
 a constant (`Cd`).  The area and constant together are known as `CdA`.
 
-Here I describe how to measure `CdA`.
-
 * [Previous Work](#previous-work)
-* [A Statistical Approach](#a-statistical-approach)
+* [A Statistical Approach to CdA](#a-statistical-approach-to-cda)
   * [Physics](#physics)
   * [Coasting](#coasting)
   * [Calculating CdA and Crr](#calculating-cda-and-crr)
   * [Data Exploration](#data-exploration)
   * [Final Measurement](#final-measurement)
+* [Power Estimates](#power-estimates)
+  * [Calculation](#calculation)
+  * [Results](#results)
 * [Summary](#summary)
 
 ## Previous Work
@@ -28,7 +29,7 @@ document](https://github.com/andrewcooke/choochoo/blob/master/data/dev/indirect-
 describes an approach to measure both `CdA` and `Crr` (rolling
 resistance) by making test rides.
 
-## A Statistical Approach
+## A Statistical Approach to CdA
 
 However, I'm stuck at home injured, so I want to derive `CdA` from
 "normal" ride data I already have, without a power meter.
@@ -46,7 +47,8 @@ at two different points, and the distance between them, then:
     *plus* braking *plus* rolling resistance.
 
   * The difference between energy input and output will be seen as a
-    difference in speed before and after (kinetic energy).
+    difference in speed before and after (kinetic energy), ignoring
+    losses due to braking.
 
 That's a fair number of variables, but we can simplify things by:
 
@@ -62,10 +64,10 @@ That's a fair number of variables, but we can simplify things by:
     but basically we can hope that braking will be seen as erroneous
     measurements that give high `CdA` values.
 
-    Another way of saying this is that we will divide the ride into
-    many small sections.  In some the rider will be braking, and those
-    will give bad results.  But hopefully there are enough sections
-    without braking that we can see some kind of consensus emerge.
+Another way of saying this is that we will divide the ride into many
+small sections.  In some the rider will be braking, and those will
+give bad results.  But hopefully there are enough sections without
+braking that we can see some kind of consensus emerge.
 
 ### Coasting
 
@@ -136,7 +138,7 @@ Zoomed in on the x-axis (`CdA`) we can see:
 
 ![](cda-crr-2.png)
 
-There's clearly a peak around a value of `CdA` at something like 0.6.
+There's clearly a peak around a value of `CdA` at something like 0.5.
 But there's no evidence of any kind of preferred value in the y
 direction.
 
@@ -158,22 +160,65 @@ axis in the plot above.  Viewed as a histogram:
 
 The curves are polynomials fit to the data - a way of smoothing the
 data to find the maximum.  From those, the maximum is somewhere around
-0.52 or 0.53.
+0.44.
+
+## Power Estimates
+
+### Calculation
+
+Given an estimate of CdA it's then possible, for any segment of a
+route, to calculate the overall energy balance.  If we continue to
+ignore braking then the sum of any (1) energy gained (indicated by
+increased speed or height) and (2) energy lost (via CdA) must be
+equal, numerically, to the average power multiplied by the time
+interval.
+
+This logic can be seen in the code
+[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/stoats/calculate/power.py).
+In particular,
+
+    df[POWER] = (df[DELTA_ENERGY] + df[LOSS]) / df[DELTA_TIME]
+
+### Results
+
+![](power-plot.png)
+
+The plot above shows a typical example taken from an [activity
+report](summary).  Values are calculated using the "natural" sampling
+of the GPS file - the energy balance is calculated at each GPS
+position.  The results are very noisy (even when, as here, median
+smoothed over 60s), but have fairly reasonable values.
+
+Limitations include:
+
+* Braking is ignored and effectively "uses up" some power, leading to
+  under-estimates.
+
+* I suspect [elevation](elevation) is over-smoothed, but I am unsure
+  how this would affect estimates.
+
+* "Negative" power is simply ignored (after smoothing).
+
+* Wind speed and direction is ignored.
+
+* `Crr` is ignored (and could be significant for MTB on rough ground).
+
+* I have no measured power data to calibrate.
+
+* The current implementation uses "constant" parameters for mass, etc.
+  Some of these could be taken from the database itself.
 
 ## Summary
 
-The data suggest that my `CdA` is around 0.52 or 0.53.  Searching the
-'net it seems typical values for a road bike are around 0.3 to 0.4, so
-a value of 0.5 for an MTB doesn't seem too surprising.
-
-And, more than that, to get an answer so "close" suggests the method
-is reasonable.
+The data suggest that my `CdA` is around 0.44, which appears to be
+roughly correct.   With this I can estimate power output.  Again, the
+values are ballpark correct.
 
 The code to generate bookmarks is
-[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/stoats/calculate/cda.py)
+[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/uranus/coasting.py)
 and can be run via:
 
-    > python -m ch2.stoats.calculate.cda
+    > python -m ch2.uranus.coasting
 
 The notebook used in the analysis is available
-[here](https://github.com/andrewcooke/choochoo/blob/master/notebooks/power/plot_cda_k.ipynb).  
+[here](https://github.com/andrewcooke/choochoo/blob/master/notebooks/power/plot_cda_via_route.ipynb).
