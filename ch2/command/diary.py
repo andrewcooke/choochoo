@@ -6,19 +6,20 @@ from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
 from .args import DATE, SCHEDULE, FAST
-from ..lib.date import to_date
+from ..lib.date import to_date, time_to_local_time, YMD
 from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
-from ..squeal.database import add, ActivityJournal
 from ..squeal import PipelineType, Topic, TopicJournal
+from ..squeal.database import add, ActivityJournal
 from ..stoats.calculate import run_pipeline_after
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
 from ..uranus.template.activity_details import activity_details
 from ..uranus.template.all_activities import all_activities
 from ..uranus.template.compare_activities import compare_activities
+from ..uranus.template.health import health
 from ..uranus.template.similar_activities import similar_activities
 from ..uweird.fields import PAGE_WIDTH
 from ..uweird.fields.summary import summary_columns
@@ -202,6 +203,9 @@ class DailyDiary(Diary):
             button = SquareButton('All Similar')
             connect_signal(button, 'click', self.__show_similar, aj1)
             yield Columns([f(menu), f(Padding(Fixed(button, 13), width='clip'))])
+        button = SquareButton('Health')
+        connect_signal(button, 'click', self.__show_health, self._date)
+        yield f(Padding(Fixed(button, 8), width='clip'))
 
     def __show_gui(self, w, aj1):
         if w.state:
@@ -211,6 +215,9 @@ class DailyDiary(Diary):
 
     def __show_similar(self, w, aj1):
         similar_activities(aj1.start, aj1.activity_group.name, log=self._log)
+
+    def __show_health(self, w, date):
+        health(date.strftime(YMD), log=self._log)
 
 
 class ScheduleDiary(Diary):
