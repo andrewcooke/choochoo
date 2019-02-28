@@ -1,6 +1,7 @@
 
 import datetime as dt
 from json import dumps
+from time import sleep
 
 from pendulum.tz import get_local_timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey
@@ -91,7 +92,7 @@ class TopicJournal(Source):
             return
         assert_attr(self, 'date')
         if self.id is None:
-            s.flush()
+            s.flush([self])
         log.debug('Populating journal for topic %s at %s' % (self.topic.name, self.date))
         self.statistics = {}
         for field in self.topic.fields:

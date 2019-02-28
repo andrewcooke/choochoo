@@ -50,8 +50,7 @@ class Constant(Source):
             raise Exception('%s was given time %s but is not time-variable' % (self, format_time(time)))
         sjournal = STATISTIC_JOURNAL_CLASSES[self.statistic_journal_type](
             statistic_name=self.statistic_name, source=self, value=value, time=time)
-        if self.validate_cls:
-            self.validate(sjournal)
+        self.validate(sjournal)
         return add(s, sjournal)
 
     def at(self, s, time=None, date=None):

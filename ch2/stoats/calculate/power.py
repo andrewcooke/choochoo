@@ -7,6 +7,7 @@ import pandas as pd
 
 from . import DataFrameCalculator
 from ...data import activity_statistics, DISTANCE, ELEVATION, SPEED, POW_TWO, TIME, TIMESPAN_ID, AVG, W, POWER
+from ...lib.data import reftuple
 from ...squeal import StatisticJournalFloat, Constant
 
 
@@ -30,7 +31,9 @@ DELTA_ELEVATION = d(ELEVATION)
 DELTA_SPEED = d(SPEED)
 DELTA_ENERGY = d(ENERGY)
 
-Power = namedtuple('Power', 'cda, crr, m, p, g')
+
+Power = reftuple('Power', 'bike, weight, p, g', defaults=(70, 1.225, 9.8))
+Bike = namedtuple('Bike', 'cda, crr, m')
 
 
 class PowerStatistics(DataFrameCalculator):
@@ -44,12 +47,14 @@ class PowerStatistics(DataFrameCalculator):
         except Exception as e:
             self._log.warning(f'Failed to generate statistics for power: {e}')
 
-    def _extend_data(self, s, df):
+    def _extend_data(self, s, ajournal, df):
         power_ref = self._assert_karg('power')
         power = Power(**loads(Constant.get(s, power_ref).at(s).value))
-        self._log.debug('%s: %s' % (power_ref, power))
-        df = add_energy_budget(df, power.m, power.g)
-        df = add_loss_estimate(df, power.cda, power.crr, power.p)
+        # default owner is constant since that's what users can tweak
+        power = power.expand(self._log, s, df[TIME].iloc[0], owner=Constant, constraint=ajournal.activity_group)
+        self._log.debug(f'{power_ref}: {power}')
+        df = add_energy_budget(df, power.bike['m'] + power.weight, power.g)
+        df = add_loss_estimate(df, power.bike['cda'], power.bike['crr'], power.p)
         df = add_power_estimate(df)
         return df
 

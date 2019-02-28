@@ -4,25 +4,29 @@ from abc import abstractmethod
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ch2.stoats.load import StatisticJournalLoader
 from .. import DbPipeline
 from ..waypoint import WaypointReader
 from ...lib.schedule import Schedule
 from ...squeal import ActivityJournal, ActivityGroup, Pipeline, Interval, Timestamp, StatisticJournal, \
-    StatisticName, StatisticJournalFloat, StatisticJournalInteger
+    StatisticName
 from ...squeal.types import short_cls
+from ...stoats.load import StatisticJournalLoader
 
 
-def run_pipeline_after(log, db, type, after=None, force=False, like=None):
+def run_pipeline_after(log, db, type, after=None, force=False, like=None, **extra_kargs):
     with db.session_context() as s:
         for cls, args, kargs in Pipeline.all(log, s, type, like=like):
+            kargs = dict(kargs)
+            kargs.update(extra_kargs)
             log.info('Running %s (%s, %s)' % (short_cls(cls), args, kargs))
             cls(log, db, *args, **kargs).run(force=force, after=after)
 
 
-def run_pipeline_paths(log, db, type, paths, force=False, like=None):
+def run_pipeline_paths(log, db, type, paths, force=False, like=None, **extra_kargs):
     with db.session_context() as s:
         for cls, args, kargs in Pipeline.all(log, s, type, like=like):
+            kargs = dict(kargs)
+            kargs.update(extra_kargs)
             log.info('Running %s (%s, %s)' % (short_cls(cls), args, kargs))
             cls(log, db, *args, **kargs).run(paths, force=force)
 
@@ -173,7 +177,7 @@ class DataFrameCalculator(ActivityCalculator):
     def _add_stats(self, s, ajournal):
         df = self._load_data(s, ajournal)
         if df is not None and len(df):
-            df = self._extend_data(s, df)
+            df = self._extend_data(s, ajournal, df)
             loader = StatisticJournalLoader(self._log, s, self)
             self._copy_results(s, ajournal, df, loader)
             loader.load()
@@ -185,7 +189,7 @@ class DataFrameCalculator(ActivityCalculator):
         raise NotImplementedError()
 
     @abstractmethod
-    def _extend_data(self, s, df):
+    def _extend_data(self, s, ajournal, df):
         raise NotImplementedError()
 
     @abstractmethod

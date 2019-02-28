@@ -43,8 +43,10 @@ ALL_FIELDS = 'all-fields'
 BORDER = 'border'
 COMPACT = 'compact'
 CONSTRAINT = 'constraint'
+CONSTANT = 'constant'
 CONTEXT = 'context'
 CSV = 'csv'
+D = 'd'
 DATABASE = 'database'
 DATE = 'date'
 DELETE = 'delete'
@@ -221,6 +223,8 @@ def parser():
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activities.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                             help='path to fit file(s)')
+    activities.add_argument(m(D.upper()), mm(CONSTANT), action='store', nargs='*', metavar='NAME=VALUE', dest=CONSTANTS,
+                            help='constant(s) to be stored with the activities')
     activities.set_defaults(command=ACTIVITIES)
 
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')

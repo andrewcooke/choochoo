@@ -22,10 +22,11 @@ class App(TabNode):
         super().__init__(log, *self._build(self.__new_session()))
 
     def __new_session(self):
+        self._log.info('NEW SESSION')
         if self.__session:
             self.save()
             self.__session.close()
-        self.__session = self.__db.session()
+        self.__session = self.__db.session(autoflush=False)
         return self.__session
 
     @property
@@ -102,7 +103,6 @@ class DateSwitcher(App):
             date = dt.date.today()
         else:
             delta = (-1 if c == c.lower() else 1, c.lower())
-            self.save()
             date = add_date(self.__date, delta)
         self._change_date(date)
 

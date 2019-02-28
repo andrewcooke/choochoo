@@ -1,14 +1,16 @@
 
 # Measuring Power and CdA
 
-When you're cycling your energy is general spent either climbing hills
-or pushing air out of the way - those are the two big "sinks" of
-energy.
+When you're cycling your energy is spent either climbing hills or
+pushing air out of the way - those are the two main "sinks" of energy.
 
-To estimate power we need to estimate these.  The first - climbing
-hills - is easy [given elevation data](elevation).  The second depends
-on your speed (squared), the cross-section area you present (`A`), and
-a constant (`Cd`).  The area and constant together are known as `CdA`.
+The first - climbing hills - is easy to calculate [given elevation
+data](elevation).  The second depends on your speed (squared), the
+cross-section area you present (`A`), and a constant (`Cd`).  The area
+and constant together are known as `CdA`.
+
+Here I measure `CdA` and use it, together with the elevation data, to
+estimate power output.
 
 * [Previous Work](#previous-work)
 * [A Statistical Approach to CdA](#a-statistical-approach-to-cda)
@@ -20,11 +22,16 @@ a constant (`Cd`).  The area and constant together are known as `CdA`.
 * [Power Estimates](#power-estimates)
   * [Calculation](#calculation)
   * [Results](#results)
+* [Configuration](#configuration)
+  * [Pipeline](#pipeline)
+  * [Power.Bike Constant](#powerbike-constant)
+  * [Cotic Soul Constant](#cotic-soul-constant)
+  * [Configuration Process](#configuration-process)
 * [Summary](#summary)
 
 ## Previous Work
 
-It turns out that I'm not the first to have thought of this.  [This
+I'm not the first to have thought of this.  [This
 document](https://github.com/andrewcooke/choochoo/blob/master/data/dev/indirect-cda.pdf)
 describes an approach to measure both `CdA` and `Crr` (rolling
 resistance) by making test rides.
@@ -207,6 +214,94 @@ Limitations include:
 
 * The current implementation uses "constant" parameters for mass, etc.
   Some of these could be taken from the database itself.
+
+## Configuration
+
+Configuring the power calculation is complex because the calculations
+cross-reference values from elsewhere in the database.
+
+### Pipeline
+
+By default the pipeline is configured as:
+
+    > sqlite3 ~/.ch2/database.sqlp "select * from pipeline where cls like '%Power%'"
+    7|0|ch2.stoats.calculate.power.PowerStatistics|[]|{"owner": "ActivityImporter", "power": "Power.Bike"}|60
+
+which shows that the `power` variable references the constant `Power.Bike`.
+
+### Power.Bike Constant
+
+    > ch2 constants Power.Bike               
+
+    Power.Bike: Data needed to estimate power - see Power enum                     1970-01-01 00:00:00+00:00: {"bike": "#$ActivityImporter:Bike", "weight": "$Topic:Weight:Topic \"Diary\" (d)", "p": 1.225, "g": 9.8}
+
+The constant referenced above contains the basic data used to
+calculate power.  These can be modified using the `ch2 constants`
+command.
+
+Two entries are particularly important here:
+
+  * `"weight": "$Topic:Weight:Topic \"Diary\"` - this defines a
+    `weight` attribute whose value will be the most recent value of
+    the `Weight` statistic (owner `Topic`, constaint `Topic "Diary"`.
+
+    In other words, the `weight` attribute will take the most recent
+    weight from the daily diary.
+
+  * `"bike": "#$ActivityImporter:Bike"` - this defines a `bike`
+    attribute that is JSON encoded (`#`) reference, named by the
+    variable `Bike` (owner `ActivityImporter`, constraint implicitly
+    activity group).
+
+    The `Bike` variable is set when the activity is loaded:
+
+        > ch2 activities -D 'Bike=Cotic Soul' ...
+
+    and is itself a constant (see below).
+
+    So this evaluates to the contents of the `Cotic Soul` constant, in
+    this particular case (a different bike name would evaluate
+    differently).
+
+### Cotic Soul Constant
+
+    > ch2 constants 'Cotic Soul'
+
+    Cotic Soul: [no description]                                                   1970-01-01 00:00:00+00:00: {"cda": 0.44, "crr": 0, "m": 12}
+
+This constant describes a particular bike.  The particular name / bike
+used is chosen when the `ch2 activities` command is run, via the
+`Bike` variable.
+
+### Configuration Process
+
+  * The pipeline is configured as part of the default configuration.
+
+  * The `Weight` variable in the diary is also part of the default
+    configuration.
+
+  * The `Power.Bike` constant is also part of the default configuration,
+    but will need to be modified with the correct value for `CdA`.
+
+  * The `Bike` variable is set during activities import.
+
+  * The `Cotic Soul` (or whatever name you use for *your* bike) constant
+    must be added by the user:
+
+        python <<EOF
+        from ch2.config import *
+        from ch2.config.database import add_enum_constant
+        from ch2.stoats.calculate.power import Bike
+
+        log, db = config('-v 5')
+        with db.session_context() as s:
+             add_enum_constant(s, 'Cotic Soul', Bike, constraint='ActivityGroup "Bike"')
+        EOF
+
+    and then defined correctly using the `ch2 constants` command.
+
+        dev/ch2 constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "m": 12}'
+
 
 ## Summary
 

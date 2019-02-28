@@ -12,7 +12,7 @@ from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
 from ..squeal import PipelineType, Topic, TopicJournal
-from ..squeal.database import add, ActivityJournal
+from ..squeal.database import add, ActivityJournal, StatisticJournal
 from ..stoats.calculate import run_pipeline_after
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
@@ -82,6 +82,25 @@ class Diary(DateSwitcher):
 
     def __init__(self, log, db, date):
         super().__init__(log, db, date)
+
+    def save(self):
+        s = self._session
+        self._log.info(f'{bool(s)}')
+        if s:
+            self.__clean(s, s.dirty, delete=True)
+            self.__clean(s, s.new, delete=False)
+        super().save()
+
+    def __clean(self, s, instances, delete=False):
+        self._log.debug(f'{len(instances)}')
+        for instance in instances:
+            if isinstance(instance, StatisticJournal):
+                if instance.value == None:
+                    self._log.debug(f'Discarding {instance}')
+                    if delete:
+                        s.delete(instance)
+                    else:
+                        s.expunge(instance)
 
     def _build(self, s):
         self._log.debug('Building diary at %s' % self._date)

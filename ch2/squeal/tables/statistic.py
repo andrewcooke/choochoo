@@ -50,6 +50,21 @@ class StatisticName(Base):
                 statistic_name.summary = summary
         return statistic_name
 
+    @classmethod
+    def parse(cls, name, default_owner=None, default_constraint=None):
+        parts, owner, constraint = name.split(':'), None, None
+        if len(parts) == 1:
+            name = parts[0]
+        elif len(parts) == 2:
+            owner, name = parts
+        else:
+            owner, name, constraint = parts
+        if not owner: owner = default_owner
+        if not owner:
+            raise Exception(f'Missing owner for {name}')
+        if not constraint: constraint = default_constraint
+        return owner, name, constraint
+
 
 class StatisticJournalType(IntEnum):
 

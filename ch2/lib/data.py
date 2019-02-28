@@ -1,7 +1,10 @@
 
 from binascii import hexlify
 from collections import namedtuple
-from re import sub
+from inspect import stack, getmodule
+from json import loads
+
+from ..squeal import StatisticJournal, StatisticName
 
 
 class WarnDict(dict):
@@ -77,3 +80,48 @@ class MutableAttr(dict):
 
     def _to_dict(self):
         return self.__dict__
+
+
+def reftuple(name, *args, **kargs):
+    '''
+    Like a namedtuple, but expands $ strings using a database session and date
+    (# is similar, but also does JSON parsing).
+    '''
+
+    class klass(namedtuple(name, *args, **kargs)):
+
+        def expand(self, log, s, time, owner=None, constraint=None):
+            instance = self
+            for name in self._fields:
+                value = getattr(instance, name)
+                if isinstance(value, str) and len(value) > 0 and value[0] in '$#':
+                    log.info(f'Expanding {value} for {name}')
+                    replacement = self._lookup(log, s, time, value[1:], value[0] == '#',
+                                               default_value=self._fields_defaults.get(name, None),
+                                               default_owner=owner, default_constraint=constraint)
+                    instance = instance._replace(**{name: replacement})
+            return instance
+
+        def _lookup(self, log, s, time, name, json,
+                    default_value=None, default_owner=None, default_constraint=None):
+            if isinstance(name, str) and len(name) > 0 and name[0] in '$#':
+                name = self._lookup(log, s, time, name[1:], name[0] == '#',
+                                    default_owner=default_owner, default_constraint=default_constraint)
+            owner, name, constraint = StatisticName.parse(name, default_owner=default_owner,
+                                                          default_constraint=default_constraint)
+            value = StatisticJournal.before(s, time, name, owner, constraint)
+            if value is None:
+                log.warning(f'No value found for {owner}:{name}:{constraint} (default {default_value})')
+                value = default_value
+            else:
+                value = value.value
+                if json:
+                    log.debug(f'Unpackaing JSON "{value}"')
+                    value = loads(value)
+                log.info(f'{name} -> {value}')
+            return value
+
+    klass.__name__ = name
+    caller = stack()[1]
+    klass.__module__ = getmodule(None, caller.filename).__name__
+    return klass

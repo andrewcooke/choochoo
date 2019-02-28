@@ -45,6 +45,18 @@ dev/ch2 no-op
 
 sqlite3 ~/.ch2/database.sqlp < /tmp/dump-p.sql
 
+source env/bin/activate
+python <<EOF
+from ch2.config import *
+from ch2.config.database import add_enum_constant
+from ch2.stoats.calculate.power import Bike
+
+log, db = config('-v 5')
+with db.session_context() as s:
+     add_enum_constant(s, 'Cotic Soul', Bike, constraint='ActivityGroup "Bike"')
+EOF
+
 dev/ch2 default-config --no-diary
 dev/ch2 constants --set FTHR.Bike 154
 dev/ch2 constants --set SRTM1.Dir /home/andrew/archive/srtm1
+dev/ch2 constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "m": 12}'
