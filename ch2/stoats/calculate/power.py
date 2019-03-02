@@ -1,12 +1,14 @@
 
 from collections import namedtuple
 from json import loads
+from math import atan2
 
 import numpy as np
 import pandas as pd
 
 from . import DataFrameCalculator
-from ...data import activity_statistics, DISTANCE, ELEVATION, SPEED, POW_TWO, TIME, TIMESPAN_ID, AVG, W, POWER
+from ...data import activity_statistics, DISTANCE, ELEVATION, SPEED, POW_TWO, TIME, TIMESPAN_ID, AVG, W, POWER, \
+    LONGITUDE, LATITUDE, DEG
 from ...lib.data import reftuple
 from ...squeal import StatisticJournalFloat, Constant
 
@@ -22,6 +24,7 @@ LOSS = 'Loss'
 SPEED_2 = f'{SPEED}{POW_TWO}'
 CDA = 'CdA'
 CRR = 'Crr'
+HEADING = 'Heading'
 
 AVG_SPEED_2 = avg(SPEED_2)
 DELTA_SPEED_2 = d(SPEED_2)
@@ -60,9 +63,10 @@ class PowerStatistics(DataFrameCalculator):
 
     def _copy_results(self, s, ajournal, df, loader):
         for time, row in df.iterrows():
-            if not pd.isnull(row[POWER]):
-                loader.add(POWER, W, AVG, ajournal.activity_group, ajournal, row[POWER], time,
-                           StatisticJournalFloat)
+            for name, units, summary in [(POWER, W, AVG), (HEADING, DEG, None)]:
+                if not pd.isnull(row[name]):
+                    loader.add(name, units, summary, ajournal.activity_group, ajournal, row[name], time,
+                               StatisticJournalFloat)
 
 
 def add_differentials(df):
@@ -72,8 +76,9 @@ def add_differentials(df):
         for _, span in df.groupby(TIMESPAN_ID):
             span = span.copy()
             span[TIME] = span.index
-            for col in TIME, DISTANCE, ELEVATION, SPEED, SPEED_2:
+            for col in TIME, DISTANCE, ELEVATION, SPEED, SPEED_2, LATITUDE, LONGITUDE:
                 span[d(col)] = span[col].diff()
+            span[HEADING] = np.arctan(span[d(LONGITUDE)], span[d(LATITUDE)])
             span[DELTA_TIME] = span[DELTA_TIME] / np.timedelta64(1, 's')
             avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(span[SPEED], span[SPEED][1:])]
             span[AVG_SPEED_2] = [np.nan] + avg_speed_2

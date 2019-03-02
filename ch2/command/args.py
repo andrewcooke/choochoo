@@ -6,7 +6,7 @@ from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
-from ..lib.date import to_date, to_time
+from ..lib.date import to_date, to_time, local_date_to_time
 
 CH2_VERSION = '0.17.2'
 
@@ -249,26 +249,26 @@ def parser():
     data_sub = data.add_subparsers()
     data_statistics = data_sub.add_parser(STATISTICS)
     data_statistics.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    data_statistics.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
-    data_statistics.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
-    data_statistics.add_argument(mm(OWNER), action='store', nargs='?', metavar='OWNER',
+    data_statistics.add_argument(mm(START), action='store', metavar='TIME', help='start time')
+    data_statistics.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
+    data_statistics.add_argument(mm(OWNER), action='store', metavar='OWNER',
                                  help='typically the class that created the data')
-    data_statistics.add_argument(mm(CONSTRAINT), action='store', nargs='?', metavar='CONSTRAINT',
+    data_statistics.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
                                  help='a value that makes the name unique (eg activity group)')
-    data_statistics.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
+    data_statistics.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
                                  help='the schedule on which some statistics are calculated')
     data_statistics.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
                                  help='the source IDs for the statistic')
     data_statistics.set_defaults(sub_command=STATISTICS)
     data_statistic_quartiles = data_sub.add_parser(STATISTIC_QUARTILES)
     data_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    data_statistic_quartiles.add_argument(mm(START), action='store', nargs='?', metavar='TIME', help='start time')
-    data_statistic_quartiles.add_argument(mm(FINISH), action='store', nargs='?', metavar='TIME', help='finish time')
-    data_statistic_quartiles.add_argument(mm(OWNER), action='store', nargs='?', metavar='OWNER',
+    data_statistic_quartiles.add_argument(mm(START), action='store', metavar='TIME', help='start time')
+    data_statistic_quartiles.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
+    data_statistic_quartiles.add_argument(mm(OWNER), action='store', metavar='OWNER',
                                           help='typically the class that created the data')
-    data_statistic_quartiles.add_argument(mm(CONSTRAINT), action='store', nargs='?', metavar='CONSTRAINT',
+    data_statistic_quartiles.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
                                           help='a value that makes the name unique (eg activity group)')
-    data_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', nargs='?', metavar='SCHEDULE',
+    data_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
                                           help='the schedule on which some statistics are calculated')
     data_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
                                           help='the source IDs for the statistic')
@@ -431,9 +431,8 @@ def parser():
     monitor.set_defaults(command=MONITOR)
 
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
-    statistics.add_argument(mm(FORCE), action='store_true', help='delete existing statistics')
-    statistics.add_argument(AFTER, action='store', nargs='?', metavar='DATE',
-                            help='date from which statistics are deleted')
+    statistics.add_argument(mm(FORCE), action='store', nargs='?', const='1970-01-01', metavar='DATE',
+                            help='delete existing statistics (after DATE if given)')
     statistics.add_argument(mm(LIKE), action='store', metavar='PATTERN',
                             help='run only matching pipeline classes')
     statistics.set_defaults(command=STATISTICS)

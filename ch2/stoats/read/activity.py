@@ -17,8 +17,8 @@ from ...squeal.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_
 
 class ActivityImporter(FitFileImporter):
 
-    def _on_init(self, *args, **kargs):
-        super()._on_init(*args, **kargs)
+    def _on_init(self, *args, constants=None, **kargs):
+        super()._on_init(*args, constants=constants, **kargs)
         with self._db.session_context() as s:
             self.__oracle = bilinear_elevation_from_constant(self._log, s)
 
@@ -146,6 +146,7 @@ class ActivityImporter(FitFileImporter):
         s.flush()
 
     def _load_constants(self, s, ajournal):
-        for name in self._kargs.constants.keys():
-            StatisticJournalText.add(self._log, s, name, None, None, ActivityImporter, ajournal.activity_group,
-                                     ajournal, self._kargs.constants[name], ajournal.start)
+        if self._kargs.constants:
+            for name in self._kargs.constants.keys():
+                StatisticJournalText.add(self._log, s, name, None, None, ActivityImporter, ajournal.activity_group,
+                                         ajournal, self._kargs.constants[name], ajournal.start)

@@ -12,13 +12,13 @@ from ...squeal import ActivityJournal, SegmentJournal, Segment, StatisticName, S
 
 class SegmentStatistics(WaypointCalculator):
 
-    def run(self, force=False, after=None):
+    def run(self, force_after=None):
         with self._db.session_context() as s:
             SegmentJournal.clean(s)
             if 0 == s.query(count(Segment.id)).scalar():
                 self._log.warning('No segments defined in database')
                 return
-        super().run(force=force, after=after)
+        super().run(force_after=force_after)
 
     def _activity_journals_with_missing_data(self, s, activity_group):
         # extends superclass with restriction on activities that have a segment

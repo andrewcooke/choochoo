@@ -6,6 +6,7 @@ from sqlalchemy.sql.functions import count
 
 from .. import DbPipeline
 from ..waypoint import WaypointReader
+from ...lib.date import to_date, local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal import ActivityJournal, ActivityGroup, Pipeline, Interval, Timestamp, StatisticJournal, \
     StatisticName
@@ -13,13 +14,15 @@ from ...squeal.types import short_cls
 from ...stoats.load import StatisticJournalLoader
 
 
-def run_pipeline_after(log, db, type, after=None, force=False, like=None, **extra_kargs):
+def run_pipeline_after(log, db, type, force_after=None, like=None, **extra_kargs):
+    # force_after should be a date, because it's public API not database
+    force_after = to_date(force_after, none=True)
     with db.session_context() as s:
         for cls, args, kargs in Pipeline.all(log, s, type, like=like):
             kargs = dict(kargs)
             kargs.update(extra_kargs)
             log.info('Running %s (%s, %s)' % (short_cls(cls), args, kargs))
-            cls(log, db, *args, **kargs).run(force=force, after=after)
+            cls(log, db, *args, **kargs).run(force_after=force_after)
 
 
 def run_pipeline_paths(log, db, type, paths, force=False, like=None, **extra_kargs):
@@ -36,13 +39,13 @@ class IntervalCalculator(DbPipeline):
     Support for calculations associated with intervals.
     '''
 
-    def run(self, force=False, after=None):
+    def run(self, force_after=None):
         schedule = Schedule(self._assert_karg('schedule'))
-        self.run_schedule(force=force, after=after, schedule=schedule)
+        self.run_schedule(force_after=force_after, schedule=schedule)
 
-    def run_schedule(self, force=False, after=None, schedule=None):
-        if force:
-            self._delete(after=after)
+    def run_schedule(self, force_after=None, schedule=None):
+        if force_after:
+            self._delete(after=force_after)
         self._run_calculations(schedule)
 
     @abstractmethod
@@ -83,12 +86,12 @@ class ActivityCalculator(DbPipeline):
     Support for calculations associated with activity journals (which is most).
     '''
 
-    def run(self, force=False, after=None):
+    def run(self, force_after=None):
         with self._db.session_context() as s:
             for activity_group in s.query(ActivityGroup).all():
                 self._log.debug('Checking statistics for activity group %s' % activity_group.name)
-                if force:
-                    self._delete_my_statistics(s, activity_group, after=after)
+                if force_after:
+                    self._delete_my_statistics(s, activity_group, after=force_after)
                 self._run_activity(s, activity_group)
 
     def _run_activity(self, s, activity_group):
@@ -121,6 +124,8 @@ class ActivityCalculator(DbPipeline):
         Fast because in-SQL.
         '''
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
+        if after:
+            after = local_date_to_time(after)
         for repeat in range(2):
             cte = s.query(StatisticName.id).filter(StatisticName.owner == self)
             if repeat:

@@ -3,7 +3,7 @@ from collections import defaultdict, namedtuple
 from itertools import groupby
 from json import loads
 
-from sqlalchemy import inspect, select, alias, and_, distinct, func, not_
+from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
 from .activity import ActivityStatistics
@@ -12,7 +12,7 @@ from ..names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
 from ..read.activity import ActivityImporter
 from ...arty import MatchType
 from ...arty.spherical import SQRTree
-from ...lib.date import to_time
+from ...lib.date import to_time, local_date_to_time
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
 from ...squeal import ActivityJournal, ActivityGroup, Constant, ActivitySimilarity, ActivityNearby, StatisticName, \
@@ -31,13 +31,13 @@ class NearbySimilarityCalculator(DbPipeline):
             self._config = Nearby(**loads(Constant.get(s, nearby).at(s).value))
         self._log.info('%s: %s' % (nearby, self._config))
 
-    def run(self, force=False, after=None):
+    def run(self, force_after=None):
 
         rtree = SQRTree(default_match=MatchType.OVERLAP, default_border=self._config.border)
 
         with self._db.session_context() as s:
-            if force:
-                self._delete(s)
+            if force_after:
+                self._delete(s, force_after)
             else:
                 if self._no_new_data(s):
                     return
@@ -50,11 +50,16 @@ class NearbySimilarityCalculator(DbPipeline):
             with Timestamp(owner=NearbySimilarityCalculator, constraint=self._config.constraint).on_success(s):
                 self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
-    def _delete(self, s):
-        self._log.warning('Deleting similarity data for %s' % self._config.constraint)
+    def _delete(self, s, date):
+        self._log.warning(f'Deleting similarity data for {self._config.constraint} after {date}')
+        activity_ids = s.query(ActivityJournal.id). \
+            filter(ActivityJournal.start >= local_date_to_time(date)).cte()
         s.query(ActivitySimilarity). \
-            filter(ActivitySimilarity.constraint == self._config.constraint). \
-            delete()
+            filter(ActivitySimilarity.constraint == self._config.constraint,
+                   or_(ActivitySimilarity.activity_journal_lo_id.in_(activity_ids),
+                       ActivitySimilarity.activity_journal_hi_id.in_(activity_ids))). \
+            delete(synchronize_session=False)
+        s.commit()  # session was new so above is not an issue (this just to be completely sure)
 
     def _latest_timestamp(self, s, owner):
         return s.query(Timestamp). \
@@ -225,8 +230,8 @@ class NearbySimilarityDBSCAN(DBSCAN):
 
 class NearbyStatistics(NearbySimilarityCalculator):
 
-    def run(self, force=False, after=None):
-        super().run(force=force, after=after)
+    def run(self, force_after=None):
+        super().run(force_after=force_after)
         with self._db.session_context() as s:
             latest_groups = self._latest_timestamp(s, NearbyStatistics)
             latest_similarity = self._latest_timestamp(s, NearbySimilarityCalculator)

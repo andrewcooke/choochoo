@@ -16,7 +16,5 @@ Generate any missing statistics.
 
 Delete statistics after the date (or all, if omitted) and then generate new values.
     '''
-    force, after, like = args[FORCE], args[AFTER], args[LIKE]
-    if after and not force:
-        raise Exception('Only give a date when using %s' % mm(FORCE))
-    run_pipeline_after(log, db, PipelineType.STATISTIC, after=after, force=force, like=like)
+    force, like = args[FORCE], args[LIKE]
+    run_pipeline_after(log, db, PipelineType.STATISTIC, force_after=force, like=like)

@@ -37,7 +37,7 @@ class TestData(TestCase):
                                          '{"mass": 42}', '1980-01-01')
                 StatisticJournalFloat.add(self.log, s, 'Weight', None, None, self, None, source,
                                           13, '1980-01-01')
-            p = power.expand(s, '1990-01-01', owner=self)
+            p = power.expand(self.log, s, '1990-01-01', owner=self)
             self.assertEqual(p.weight, 13)
             self.assertEqual(p.bike['mass'], 42)
 

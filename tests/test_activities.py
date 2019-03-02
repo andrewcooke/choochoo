@@ -1,5 +1,4 @@
 
-from subprocess import run
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
@@ -42,7 +41,7 @@ class TestActivities(TestCase):
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-            run_pipeline_after(log, db, PipelineType.STATISTIC, force=True, after='2018-01-01')
+            run_pipeline_after(log, db, PipelineType.STATISTIC, force_after='2018-01-01')
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
@@ -56,7 +55,7 @@ class TestActivities(TestCase):
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(n_fix, 2079)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 29875)
+                self.assertEqual(n, 29876)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 
