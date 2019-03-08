@@ -8,7 +8,7 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
-from .names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, WINDOW, MIN_PERIODS, \
+from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
     ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS

@@ -10,7 +10,7 @@ from ...lib.date import to_date, local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal import ActivityJournal, ActivityGroup, Pipeline, Interval, Timestamp, StatisticJournal, \
     StatisticName
-from ...squeal.types import short_cls
+from ...squeal.types import short_cls, long_cls
 from ...stoats.load import StatisticJournalLoader
 
 
@@ -86,10 +86,14 @@ class ActivityCalculator(DbPipeline):
     Support for calculations associated with activity journals (which is most).
     '''
 
+    def __init__(self, log, *args, **kargs):
+        self.owner = self  # default for loader, deletion
+        super().__init__(log, *args, **kargs)
+
     def run(self, force_after=None):
         with self._db.session_context() as s:
             for activity_group in s.query(ActivityGroup).all():
-                self._log.debug('Checking statistics for activity group %s' % activity_group.name)
+                self._log.debug(f'Checking statistics for activity group {activity_group.name}')
                 if force_after:
                     self._delete_my_statistics(s, activity_group, after=force_after)
                 self._run_activity(s, activity_group)
@@ -97,13 +101,13 @@ class ActivityCalculator(DbPipeline):
     def _run_activity(self, s, activity_group):
         for ajournal in self._activity_journals_with_missing_data(s, activity_group):
             # set constraint so we can delete on force
-            with Timestamp(owner=self, constraint=activity_group, key=ajournal.id).on_success(s):
+            with Timestamp(owner=self.owner, constraint=activity_group, key=ajournal.id).on_success(self._log, s):
                 self._log.info('Running %s for %s' % (short_cls(self), ajournal))
                 self._add_stats(s, ajournal)
 
     def _activity_journals_with_missing_data(self, s, activity_group):
         existing_ids = s.query(Timestamp.key). \
-            filter(Timestamp.owner == self,
+            filter(Timestamp.owner == self.owner,
                    Timestamp.constraint == activity_group).cte()
         yield from s.query(ActivityJournal). \
             filter(not_(ActivityJournal.id.in_(existing_ids)),
@@ -126,25 +130,27 @@ class ActivityCalculator(DbPipeline):
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
         if after:
             after = local_date_to_time(after)
+        names = s.query(StatisticName.id).filter(StatisticName.owner == self.owner)
+        journals = s.query(StatisticJournal.id). \
+            filter(StatisticJournal.statistic_name_id.in_(names.cte()))
+        journals = self._constrain_source(s, journals, agroup)
+        if after:
+            journals = journals.filter(StatisticJournal.time >= after)
         for repeat in range(2):
-            cte = s.query(StatisticName.id).filter(StatisticName.owner == self)
             if repeat:
-                q = s.query(StatisticJournal)
+                s.query(StatisticJournal).filter(StatisticJournal.id.in_(journals.cte())). \
+                    delete(synchronize_session=False)
+                Timestamp.clean_keys(self._log, s,
+                                     s.query(StatisticJournal.source_id).
+                                     filter(StatisticJournal.statistic_name_id.in_(names.cte())),
+                                     self.owner, constraint=agroup)
             else:
-                q = s.query(count(StatisticJournal.id))
-            q = q.filter(StatisticJournal.statistic_name_id.in_(cte.cte()))
-            q = self._constrain_source(s, q, agroup)
-            if after:
-                q = q.filter(StatisticJournal.time >= after)
-            if repeat:
-                q.delete(synchronize_session=False)
-            else:
-                n = q.scalar()
+                n = s.query(count(StatisticJournal.id)).filter(StatisticJournal.id.in_(journals.cte())).scalar()
                 if n:
-                    self._log.warning('Deleting %d statistics for %s' % (n, agroup))
+                    self._log.warning(f'Deleting {n} statistics for {long_cls(self.owner)} / {agroup}')
                 else:
-                    self._log.warning('No statistics to delete for %s' % agroup)
-        Timestamp.clear_after(s, after, self, constraint=agroup)
+                    self._log.warning(f'No statistics to delete for {long_cls(self.owner)} / {agroup}')
+                    self._log.debug(journals)
         s.commit()
 
     def _constrain_source(self, s, q, agroup):
@@ -182,9 +188,9 @@ class DataFrameCalculator(ActivityCalculator):
     def _add_stats(self, s, ajournal):
         df = self._load_data(s, ajournal)
         if df is not None and len(df):
-            df = self._extend_data(s, ajournal, df)
-            loader = StatisticJournalLoader(self._log, s, self)
-            self._copy_results(s, ajournal, df, loader)
+            stats = self._calculate_stats(s, ajournal, df)
+            loader = StatisticJournalLoader(self._log, s, self.owner)
+            self._copy_results(s, ajournal, loader, stats)
             loader.load()
         else:
             self._log.warning('No statistics for %s' % ajournal)
@@ -194,9 +200,9 @@ class DataFrameCalculator(ActivityCalculator):
         raise NotImplementedError()
 
     @abstractmethod
-    def _extend_data(self, s, ajournal, df):
+    def _calculate_stats(self, s, ajournal, df):
         raise NotImplementedError()
 
     @abstractmethod
-    def _copy_results(self, s, ajournal, df, loader):
+    def _copy_results(self, s, ajournal, loader, stats):
         raise NotImplementedError()

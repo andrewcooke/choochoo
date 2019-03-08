@@ -16,10 +16,12 @@ pip install pendulum
 pip install requests
 pip install scipy
 pip install bokeh
-pip install jupyter
+pip install tornado==5.1.1
+pip install ipython
+pip install notebook
 
 pip install textblob
-#pip install matplotlib
+pip install matplotlib
 #pip install colorcet
 #pip install webcolors
 

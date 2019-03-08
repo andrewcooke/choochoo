@@ -210,29 +210,29 @@ class MonitorImporter(FitFileImporter):
         self._check_previous(s, first_timestamp, last_timestamp, path)
         mjournal = add(s, MonitorJournal(start=first_timestamp, fit_file=path, finish=last_timestamp))
 
-        cumulative = defaultdict(lambda: 0)
-        self._read_previous(s, first_timestamp, cumulative)
-        self._save_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START)
-        saved_activities = list(cumulative.keys())
+        with Timestamp(owner=self, key=mjournal.id).on_success(self._log, s):
 
-        steps_journals = self._create_journals(s, records, cumulative, mjournal)
+            cumulative = defaultdict(lambda: 0)
+            self._read_previous(s, first_timestamp, cumulative)
+            self._save_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START)
+            saved_activities = list(cumulative.keys())
 
-        self._save_cumulative(s, last_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_FINISH)
-        self._update_next(s, last_timestamp, cumulative)
-        self._update_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START, saved_activities)
+            steps_journals = self._create_journals(s, records, cumulative, mjournal)
 
-        self._merge_boundary(s, steps_journals, first_timestamp)
-        self._merge_boundary(s, steps_journals, last_timestamp)
+            self._save_cumulative(s, last_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_FINISH)
+            self._update_next(s, last_timestamp, cumulative)
+            self._update_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START, saved_activities)
 
-        # write steps at end, when adjoining data have been fixed
-        self._log.debug('Adding %s to database' % STEPS)
-        for timestamp in steps_journals:
-            for activity in steps_journals[timestamp]:
-                add(s, steps_journals[timestamp][activity])
-                self._add(s, ACTIVITY, None, None, activity, mjournal,
-                          activity, timestamp, StatisticJournalText)
+            self._merge_boundary(s, steps_journals, first_timestamp)
+            self._merge_boundary(s, steps_journals, last_timestamp)
 
-        Timestamp.set(s, self, key=mjournal.id)
+            # write steps at end, when adjoining data have been fixed
+            self._log.debug('Adding %s to database' % STEPS)
+            for timestamp in steps_journals:
+                for activity in steps_journals[timestamp]:
+                    add(s, steps_journals[timestamp][activity])
+                    self._add(s, ACTIVITY, None, None, activity, mjournal,
+                              activity, timestamp, StatisticJournalText)
 
 
 def missing_dates(log, s):

@@ -66,7 +66,7 @@ class SegmentImporter(ActivityImporter):
             self._log.info('Added %s for %s - %s' %
                            (segment.name, format_time(start_time), format_time(finish_time)))
             s.commit()  # needed to get id on sjournal
-            Timestamp.set(s, self, constraint=segment, key=sjournal.id)
+            Timestamp.set(self._log, s, self, constraint=segment, key=sjournal.id)
             return True
         except CalcFailed as e:
             self._log.warning(str(e))

@@ -47,7 +47,8 @@ class NearbySimilarityCalculator(DbPipeline):
             new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
             # this clears itself beforehand
             # use explicit class to distinguish from subclasses (which compare against this)
-            with Timestamp(owner=NearbySimilarityCalculator, constraint=self._config.constraint).on_success(s):
+            with Timestamp(owner=NearbySimilarityCalculator, constraint=self._config.constraint). \
+                    on_success(self._log, s):
                 self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
     def _delete(self, s, date):
@@ -236,7 +237,7 @@ class NearbyStatistics(NearbySimilarityCalculator):
             latest_groups = self._latest_timestamp(s, NearbyStatistics)
             latest_similarity = self._latest_timestamp(s, NearbySimilarityCalculator)
             if not latest_groups or latest_similarity.time > latest_groups.time:
-                with Timestamp(owner=NearbyStatistics, constraint=self._config.constraint).on_success(s):
+                with Timestamp(owner=NearbyStatistics, constraint=self._config.constraint).on_success(self._log, s):
                     d_min, n = expand_max(self._log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
                     self._log.info('%d groups at d=%f' % (n, d_min))
                     self.save(s, self.dbscan(s, d_min))

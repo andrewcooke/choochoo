@@ -19,7 +19,7 @@ class TestTimestamp(TestCase):
             with db.session_context() as s:
                 n = s.query(count(Timestamp.id)).scalar()
                 self.assertEqual(n, 0)
-                Timestamp.set(s, TestTimestamp, None, 1)
+                Timestamp.set(log, s, TestTimestamp, None, 1)
                 n = s.query(count(Timestamp.id)).scalar()
                 self.assertEqual(n, 1)
                 t = s.query(Timestamp).filter(Timestamp.owner == TestTimestamp).one()
@@ -30,7 +30,7 @@ class TestTimestamp(TestCase):
             args, log, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
-                with Timestamp(owner=TestTimestamp).on_success(s):
+                with Timestamp(owner=TestTimestamp).on_success(self._log, s):
                     n = s.query(count(Timestamp.id)).scalar()
                     self.assertEqual(n, 0)
                 n = s.query(count(Timestamp.id)).scalar()
@@ -42,7 +42,7 @@ class TestTimestamp(TestCase):
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
                 try:
-                    with Timestamp(owner=TestTimestamp).on_success(s):
+                    with Timestamp(owner=TestTimestamp).on_success(self._log, s):
                         n = s.query(count(Timestamp.id)).scalar()
                         self.assertEqual(n, 0)
                         raise Exception('foo')

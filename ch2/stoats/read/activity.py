@@ -38,63 +38,63 @@ class ActivityImporter(FitFileImporter):
         loader = StatisticJournalLoader(self._log, s, ActivityImporter)
         timespan, warned, last_timestamp = None, 0, to_time(0.0)
 
-        for record in records:
-            if record.name == 'event' or (record.name == 'record' and record.timestamp > last_timestamp):
-                if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
-                    if timespan:
-                        self._log.warning('Ignoring start with no corresponding stop (possible lost data?)')
-                    else:
-                        timespan = add(s, ActivityTimespan(activity_journal=ajournal,
-                                                           start=record.value.timestamp,
-                                                           finish=record.value.timestamp))
-                if record.name == 'record':
-                    lat, lon, timestamp = None, None, record.value.timestamp
-                    # customizable loader
-                    for field, name, units, type in record_to_db:
-                        value = record.data.get(field, None)
-                        if value is not None:
-                            value = value[0][0]
-                            loader.add(name, units, None, activity_group, ajournal, value, timestamp, type)
-                            if name == LATITUDE:
-                                lat = value
-                            elif name == LONGITUDE:
-                                lon = value
-                    # values derived from lat/lon
-                    if lat is not None and lon is not None:
-                        x, y = Point.from_latitude_longitude(lat, lon).meters
-                        loader.add(SPHERICAL_MERCATOR_X, M, None, activity_group, ajournal, x, timestamp,
-                                   StatisticJournalFloat)
-                        loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal, y, timestamp,
-                                   StatisticJournalFloat)
-                        if add_elevation:
-                            elevation = self.__oracle.elevation(lat, lon)
-                            if elevation:
-                                loader.add(RAW_ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
-                                           StatisticJournalFloat)
-                if record.name == 'event' and record.value.event == 'timer' \
-                        and record.value.event_type == 'stop_all':
-                    if timespan:
-                        timespan.finish = record.value.timestamp
-                        ajournal.finish = record.value.timestamp
-                        timespan = None
-                    else:
-                        self._log.debug('Ignoring stop with no corresponding start (possible lost data?)')
-                if record.name == 'record':
-                    last_timestamp = record.timestamp
-            else:
-                if record.name == 'record':
-                    self._log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
-                                      (path, record.timestamp))
-
-        loader.load()
-
-        # manually clean out intervals because we're doing a fast load
-        Interval.clean_times(self._log, s, first_timestamp, last_timestamp)
-
         # used by nearby calculations to avoid work
         # no need for constraint because ajournal is per-group
         # use this class so import itself is always clearly understood, even if the subclass changes.
-        Timestamp.set(s, ActivityImporter, key=ajournal.id)
+        with Timestamp(owner=ActivityImporter, key=ajournal.id).on_success(self._log, s):
+
+            for record in records:
+                if record.name == 'event' or (record.name == 'record' and record.timestamp > last_timestamp):
+                    if record.name == 'event' and record.value.event == 'timer' and record.value.event_type == 'start':
+                        if timespan:
+                            self._log.warning('Ignoring start with no corresponding stop (possible lost data?)')
+                        else:
+                            timespan = add(s, ActivityTimespan(activity_journal=ajournal,
+                                                               start=record.value.timestamp,
+                                                               finish=record.value.timestamp))
+                    if record.name == 'record':
+                        lat, lon, timestamp = None, None, record.value.timestamp
+                        # customizable loader
+                        for field, name, units, type in record_to_db:
+                            value = record.data.get(field, None)
+                            if value is not None:
+                                value = value[0][0]
+                                loader.add(name, units, None, activity_group, ajournal, value, timestamp, type)
+                                if name == LATITUDE:
+                                    lat = value
+                                elif name == LONGITUDE:
+                                    lon = value
+                        # values derived from lat/lon
+                        if lat is not None and lon is not None:
+                            x, y = Point.from_latitude_longitude(lat, lon).meters
+                            loader.add(SPHERICAL_MERCATOR_X, M, None, activity_group, ajournal, x, timestamp,
+                                       StatisticJournalFloat)
+                            loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal, y, timestamp,
+                                       StatisticJournalFloat)
+                            if add_elevation:
+                                elevation = self.__oracle.elevation(lat, lon)
+                                if elevation:
+                                    loader.add(RAW_ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
+                                               StatisticJournalFloat)
+                    if record.name == 'event' and record.value.event == 'timer' \
+                            and record.value.event_type == 'stop_all':
+                        if timespan:
+                            timespan.finish = record.value.timestamp
+                            ajournal.finish = record.value.timestamp
+                            timespan = None
+                        else:
+                            self._log.debug('Ignoring stop with no corresponding start (possible lost data?)')
+                    if record.name == 'record':
+                        last_timestamp = record.timestamp
+                else:
+                    if record.name == 'record':
+                        self._log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
+                                          (path, record.timestamp))
+
+            loader.load()
+
+        # manually clean out intervals because we're doing a fast load
+        Interval.clean_times(self._log, s, first_timestamp, last_timestamp)
 
         # used by subclasses
         return ajournal, loader

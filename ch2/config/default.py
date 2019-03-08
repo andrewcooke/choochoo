@@ -11,7 +11,7 @@ from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
-from ..stoats.calculate.power import PowerStatistics
+from ..stoats.calculate.power import BasicPowerStatistics, ExtendedPowerStatistics
 from ..stoats.calculate.segment import SegmentStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
@@ -61,7 +61,7 @@ def default(log, db, no_diary=False):
         add_statistics(s, MonitorStatistics, c)
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
         add_power(s, bike)
-        add_statistics(s, PowerStatistics, c, owner=short_cls(ActivityImporter),
+        add_statistics(s, ExtendedPowerStatistics, c, owner=short_cls(ActivityImporter),
                        power=name_constant(POWER_CNAME, bike))
 
         # need to call normalize here because schedule isn't a schedule type column,

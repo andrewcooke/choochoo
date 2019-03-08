@@ -2,9 +2,10 @@
 from contextlib import contextmanager
 from time import time
 
-from sqlalchemy import Column, Integer, UniqueConstraint, func
+from sqlalchemy import Column, Integer, UniqueConstraint
+from sqlalchemy.sql.functions import count
 
-from ..types import Time, ShortCls, Str
+from ..types import Time, ShortCls, Str, short_cls
 from ..support import Base
 
 
@@ -36,9 +37,11 @@ class Timestamp(Base):
     UniqueConstraint(owner, constraint, key)
 
     @classmethod
-    def set(cls, s, owner, constraint=None, key=None):
+    def set(cls, log, s, owner, constraint=None, key=None):
         cls.clear(s, owner, constraint=constraint, key=key)
         s.add(Timestamp(owner=owner, constraint=constraint, key=key))
+        s.commit()
+        log.debug(f'Timestamp for {short_cls(owner)} / {key}')
 
     @classmethod
     def clear(cls, s, owner, constraint=None, key=None):
@@ -50,6 +53,19 @@ class Timestamp(Base):
             s.delete(exists)
 
     @classmethod
+    def clean_keys(cls, log, s, keep, owner, constraint=None):
+        s.commit()
+        for repeat in range(2):
+            q = s.query(Timestamp if repeat else count(Timestamp.id)). \
+                filter(~Timestamp.key.in_(keep),
+                       Timestamp.owner == owner,
+                       Timestamp.constraint == constraint)
+            if repeat:
+                q.delete(synchronize_session=False)
+            else:
+                log.debug(f'Clearing {q.scalar()} Timestamps for {short_cls(owner)} / {constraint}')
+
+    @classmethod
     def clear_after(cls, s, time, owner, constraint=None):
         q = s.query(Timestamp). \
             filter(Timestamp.owner == owner,
@@ -59,7 +75,8 @@ class Timestamp(Base):
         q.delete()
 
     @contextmanager
-    def on_success(self, s):
+    def on_success(self, log, s):
         self.clear(s, self.owner, constraint=self.constraint, key=self.key)
         yield None
-        self.set(s, self.owner, constraint=self.constraint, key=self.key)
+        self.set(log, s, self.owner, constraint=self.constraint, key=self.key)
+

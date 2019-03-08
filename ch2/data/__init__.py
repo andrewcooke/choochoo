@@ -1,6 +1,7 @@
 
 from .frame import df, session, get_log, statistics, statistic_quartiles, activity_statistics, std_activity_statistics, \
     std_health_statistics, nearby_activities, bookmarks
+from ch2.data.power import linear_resample
 from .heart_rate import *
 from .names import *
 from .plot import col_to_boxstats, box_plot, line_plotter, dot_plotter, bar_plotter, add_climbs, multi_plot, \

@@ -9,11 +9,18 @@ from . import WaypointCalculator
 from .climb import find_climbs, Climb
 from .heart_rate import hr_zones_from_database
 from ..load import StatisticJournalLoader
-from ..names import ACTIVE_DISTANCE, MAX, M, ACTIVE_TIME, S, ACTIVE_SPEED, KMH, round_km, MEDIAN_KM_TIME, \
-    PERCENT_IN_Z, PC, TIME_IN_Z, HR_MINUTES, MAX_MED_HR_M, BPM, MIN, CNT, SUM, AVG, MSR, summaries, HEART_RATE, \
-    DISTANCE, ELEVATION, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, CLIMB_GRADIENT, TOTAL_CLIMB, RAW_ELEVATION
+from ..names import *
 from ..waypoint import Chunks
 from ...squeal import Constant, StatisticName, StatisticJournalFloat, StatisticJournalInteger
+
+HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
+
+
+def round_km():
+    yield from range(5, 21, 5)
+    yield from range(25, 76, 25)
+    yield from range(100, 251, 50)
+    yield from range(300, 1001, 100)
 
 
 class ActivityStatistics(WaypointCalculator):
