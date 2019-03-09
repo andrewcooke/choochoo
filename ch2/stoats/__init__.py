@@ -1,6 +1,11 @@
 
+from ..command.args import START, FINISH, FORCE, mm
 from ..lib.data import MutableAttr
+from ..lib.utils import short_str
 from ..squeal.types import short_cls
+
+
+NONE = object()
 
 
 class BasePipeline:
@@ -14,17 +19,17 @@ class BasePipeline:
         self._args = args
         self._kargs = MutableAttr(kargs)
 
-    def _assert_karg(self, name, default=None):
+    def _assert_karg(self, name, default=NONE):
         if name not in self._kargs:
-            if default is None:
+            if default is NONE:
                 raise Exception('Missing %s parameter for %s' % (name, short_cls(self)))
             else:
-                self._log.warning('Using default for %s=%s' % (name, default))
+                self._log.debug(f'Using default for {name}={short_str(default)}')
                 self._kargs[name] = default
                 self.__read.add(name)  # avoid double logging
         value = self._kargs[name]
         if name not in self.__read:
-            self._log.info('%s=%s' % (name, value))
+            self._log.debug(f'{name}={short_str(value)}')
             self.__read.add(name)
         return value
 
@@ -34,3 +39,17 @@ class DbPipeline(BasePipeline):
     def __init__(self, log, db, *args, **kargs):
         self._db = db
         super().__init__(log, *args, **kargs)
+
+    def _start_finish(self, type=None):
+        start = self._assert_karg(START, default=None)
+        finish = self._assert_karg(FINISH, default=None)
+        if type:
+            if start: start = type(start)
+            if finish: finish = type(finish)
+        return start, finish
+
+    def _force(self):
+        force = self._assert_karg(FORCE, default=False)
+        if not force:  # todo - remove this restriction
+            if any(self._start_finish()):
+                raise Exception(f'Date range only used with {mm(FORCE)}')

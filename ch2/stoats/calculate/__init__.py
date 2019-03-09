@@ -6,32 +6,21 @@ from sqlalchemy.sql.functions import count
 
 from .. import DbPipeline
 from ..waypoint import WaypointReader
-from ...lib.date import to_date, local_date_to_time
+from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
+from ...lib.utils import short_str
 from ...squeal import ActivityJournal, ActivityGroup, Pipeline, Interval, Timestamp, StatisticJournal, \
     StatisticName
 from ...squeal.types import short_cls, long_cls
 from ...stoats.load import StatisticJournalLoader
 
 
-def run_pipeline_after(log, db, type, force_after=None, like=None, **extra_kargs):
-    # force_after should be a date, because it's public API not database
-    force_after = to_date(force_after, none=True)
+def run_pipeline(log, db, type, like=None, **extra_kargs):
     with db.session_context() as s:
         for cls, args, kargs in Pipeline.all(log, s, type, like=like):
-            kargs = dict(kargs)
             kargs.update(extra_kargs)
-            log.info('Running %s (%s, %s)' % (short_cls(cls), args, kargs))
-            cls(log, db, *args, **kargs).run(force_after=force_after)
-
-
-def run_pipeline_paths(log, db, type, paths, force=False, like=None, **extra_kargs):
-    with db.session_context() as s:
-        for cls, args, kargs in Pipeline.all(log, s, type, like=like):
-            kargs = dict(kargs)
-            kargs.update(extra_kargs)
-            log.info('Running %s (%s, %s)' % (short_cls(cls), args, kargs))
-            cls(log, db, *args, **kargs).run(paths, force=force)
+            log.info(f'Running {short_cls(cls)}({short_str(args)}, {short_str(kargs)}')
+            cls(log, db, *args, **kargs).run()
 
 
 class IntervalCalculator(DbPipeline):
@@ -39,23 +28,18 @@ class IntervalCalculator(DbPipeline):
     Support for calculations associated with intervals.
     '''
 
-    def run(self, force_after=None):
+    def run(self):
         schedule = Schedule(self._assert_karg('schedule'))
-        self.run_schedule(force_after=force_after, schedule=schedule)
-
-    def run_schedule(self, force_after=None, schedule=None):
-        if force_after:
-            self._delete(after=force_after)
+        if self._force():
+            self._delete()
         self._run_calculations(schedule)
 
     @abstractmethod
     def _run_calculations(self, schedule):
         raise NotImplementedError()
 
-    def _delete(self, after=None):
-        self._delete_intervals(after)
-
-    def _delete_intervals(self, after=None):
+    def _delete(self):
+        start, finish = self._start_finish()
         # we delete the intervals that all summary statistics depend on and they will cascade
         with self._db.session_context() as s:
             for repeat in range(2):
@@ -64,8 +48,10 @@ class IntervalCalculator(DbPipeline):
                 else:
                     q = s.query(count(Interval.id))
                 q = self._filter_intervals(q)
-                if after:
-                    q = q.filter(Interval.finish > after)
+                if start:
+                    q = q.filter(Interval.finish >= start)
+                if finish:
+                    q = q.filter(Interval.start < finish)
                 if repeat:
                     for interval in q.all():
                         self._log.debug('Deleting %s' % interval)
@@ -90,12 +76,12 @@ class ActivityCalculator(DbPipeline):
         self.owner = self  # default for loader, deletion
         super().__init__(log, *args, **kargs)
 
-    def run(self, force_after=None):
+    def run(self):
         with self._db.session_context() as s:
             for activity_group in s.query(ActivityGroup).all():
                 self._log.debug(f'Checking statistics for activity group {activity_group.name}')
-                if force_after:
-                    self._delete_my_statistics(s, activity_group, after=force_after)
+                if self._force():
+                    self._delete_my_statistics(s, activity_group)
                 self._run_activity(s, activity_group)
 
     def _run_activity(self, s, activity_group):
@@ -122,20 +108,21 @@ class ActivityCalculator(DbPipeline):
     def _add_stats(self, s, ajournal):
         raise NotImplementedError()
 
-    def _delete_my_statistics(self, s, agroup, after=None):
+    def _delete_my_statistics(self, s, agroup):
         '''
         Delete all statistics owned by this class and in the activity group.
         Fast because in-SQL.
         '''
+        start, finish = self._start_finish(local_date_to_time)
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
-        if after:
-            after = local_date_to_time(after)
         names = s.query(StatisticName.id).filter(StatisticName.owner == self.owner)
         journals = s.query(StatisticJournal.id). \
             filter(StatisticJournal.statistic_name_id.in_(names.cte()))
         journals = self._constrain_source(s, journals, agroup)
-        if after:
-            journals = journals.filter(StatisticJournal.time >= after)
+        if start:
+            journals = journals.filter(StatisticJournal.time >= start)
+        if finish:
+            journals = journals.filter(StatisticJournal.time < finish)
         for repeat in range(2):
             if repeat:
                 s.query(StatisticJournal).filter(StatisticJournal.id.in_(journals.cte())). \
@@ -147,9 +134,11 @@ class ActivityCalculator(DbPipeline):
             else:
                 n = s.query(count(StatisticJournal.id)).filter(StatisticJournal.id.in_(journals.cte())).scalar()
                 if n:
-                    self._log.warning(f'Deleting {n} statistics for {long_cls(self.owner)} / {agroup}')
+                    self._log.warning(f'Deleting {n} statistics for {long_cls(self.owner)} / {agroup} '
+                                      f'from {start} to {finish}')
                 else:
-                    self._log.warning(f'No statistics to delete for {long_cls(self.owner)} / {agroup}')
+                    self._log.warning(f'No statistics to delete for {long_cls(self.owner)} / {agroup} '
+                                      f'from {start} to {finish}')
                     self._log.debug(journals)
         s.commit()
 

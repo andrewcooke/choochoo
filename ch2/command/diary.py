@@ -6,14 +6,14 @@ from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
 from .args import DATE, SCHEDULE, FAST
-from ..lib.date import to_date, time_to_local_time, YMD
+from ..lib.date import to_date, YMD
 from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
 from ..squeal import PipelineType, Topic, TopicJournal
 from ..squeal.database import add, ActivityJournal, StatisticJournal
-from ..stoats.calculate import run_pipeline_after
+from ..stoats.calculate import run_pipeline
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
 from ..uranus.template.activity_details import activity_details
@@ -74,7 +74,7 @@ Display a summary for the month / year / schedule.
         MainLoop(DailyDiary(log, db, date), palette=PALETTE_RAINBOW).run()
         if not args[FAST]:
             print('\n  Please wait while statistics are updated...')
-            run_pipeline_after(log, db, PipelineType.STATISTIC)
+            run_pipeline(log, db, PipelineType.STATISTIC)
             print('  ...done (thanks!)\n')
 
 

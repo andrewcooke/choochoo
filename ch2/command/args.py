@@ -431,10 +431,14 @@ def parser():
     monitor.set_defaults(command=MONITOR)
 
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
-    statistics.add_argument(mm(FORCE), action='store', nargs='?', const='1970-01-01', metavar='DATE',
-                            help='delete existing statistics (after DATE if given)')
+    statistics.add_argument(mm(FORCE), action='store_true',
+                            help='delete existing statistics')
     statistics.add_argument(mm(LIKE), action='store', metavar='PATTERN',
                             help='run only matching pipeline classes')
+    statistics.add_argument(START, action='store', metavar='START', nargs='?',
+                            help='optional start date')
+    statistics.add_argument(FINISH, action='store', metavar='FINISH', nargs='?',
+                            help='optional finish date (if start also given)')
     statistics.set_defaults(command=STATISTICS)
 
     noop = subparsers.add_parser(NO_OP,

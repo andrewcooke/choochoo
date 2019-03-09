@@ -1,6 +1,7 @@
 
 import time as t
 from itertools import zip_longest
+from pprint import PrettyPrinter
 
 PALETTE_RAINBOW = [
     ('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
@@ -74,3 +75,15 @@ def grouper(iterable, n, fillvalue=None):
     # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
     args = [iter(iterable)] * n
     return zip_longest(*args, fillvalue=fillvalue)
+
+
+PP = PrettyPrinter(indent=0, depth=1, width=80, compact=True)
+
+
+def short_str(x):
+    text = PP.pformat(x)
+    lines = text.splitlines(False)
+    if len(lines) > 1:
+        return lines[0][:20] + '...' + lines[-1][-20:]
+    else:
+        return text

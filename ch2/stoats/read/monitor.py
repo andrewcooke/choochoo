@@ -37,8 +37,8 @@ class MonitorImporter(FitFileImporter):
 
         self.__statistics_cache = statistics_cache
 
-    def run(self, paths, force=False):
-        self._import_all(paths, force=force)
+    def run(self):
+        self._import_all()
 
     def _create(self, s, name, units, summary, constraint, source, value, time, type):
         return type(statistic_name=self.__statistics_cache(s, name, units, summary, constraint),
@@ -66,7 +66,6 @@ class MonitorImporter(FitFileImporter):
                 filter(MonitorJournal.start < finish,
                        MonitorJournal.finish > start).all():
             self._log.warning('%s overlaps data from %s for %s - %s' % (mjournal, path, start, finish))
-            self._log.error('Conflict between %s and %s' % (path, mjournal.fit_file))
             raise AbortImport()
 
     def _check_previous(self, s, start, finish, path):

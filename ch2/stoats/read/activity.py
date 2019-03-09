@@ -22,10 +22,9 @@ class ActivityImporter(FitFileImporter):
         with self._db.session_context() as s:
             self.__oracle = bilinear_elevation_from_constant(self._log, s)
 
-    def run(self, paths, force=False):
-        if 'sport_to_activity' not in self._kargs:
-            raise Exception('No map from sport to activity')
-        self._import_all(paths, force=force)
+    def run(self):
+        self._assert_karg('sport_to_activity')
+        self._import_all()
 
     def _import_path(self, s, path):
 

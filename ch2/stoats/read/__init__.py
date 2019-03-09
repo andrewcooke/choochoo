@@ -21,9 +21,12 @@ class FileImporter(DbPipeline):
     Base class for importing from a files that have been modified.
     '''
 
-    def _import_all(self, paths, force=False):
+    def _paths(self):
+        return self._assert_karg('paths', default=tuple())
+
+    def _import_all(self):
         with self._db.session_context() as s:
-            for_modified_files(self._log, s, paths, self._callback(), self, force=force)
+            for_modified_files(self._log, s, self._paths(), self._callback(), self, force=self._force())
 
     def _callback(self):
         def callback(file):

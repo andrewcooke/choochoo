@@ -1,7 +1,7 @@
 
 from ..command.args import PATH, FORCE, FAST, CONSTANTS
 from ..squeal import PipelineType
-from ..stoats.calculate import run_pipeline_after, run_pipeline_paths
+from ..stoats.calculate import run_pipeline
 
 
 def activities(args, log, db):
@@ -24,10 +24,10 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     constants = parse_constants(args[CONSTANTS]) if args[CONSTANTS] else {}
     force, fast, paths = args[FORCE], args[FAST], args[PATH]
-    run_pipeline_paths(log, db, PipelineType.ACTIVITY, paths, force=force, constants=constants)
+    run_pipeline(log, db, PipelineType.ACTIVITY, paths=paths, force=force, constants=constants)
     if not fast:
         # don't force this - it auto-detects need
-        run_pipeline_after(log, db, PipelineType.STATISTIC)
+        run_pipeline(log, db, PipelineType.STATISTIC)
 
 
 def parse_constants(clist):

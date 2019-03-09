@@ -7,14 +7,14 @@ import sqlalchemy.sql.functions as func
 from ch2 import monitor
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.config.default import default
-from ch2.lib.date import to_time, to_date, local_date_to_time
+from ch2.lib.date import to_time
 from ch2.squeal.tables.monitor import MonitorJournal
 from ch2.squeal.tables.pipeline import PipelineType
-from ch2.squeal.tables.source import Source, SourceType, Interval
+from ch2.squeal.tables.source import Interval
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticName
-from ch2.stoats.calculate import run_pipeline_after
+from ch2.stoats.calculate import run_pipeline
 from ch2.stoats.calculate.monitor import MonitorStatistics
-from ch2.stoats.names import STEPS, REST_HR, DAILY_STEPS
+from ch2.stoats.names import REST_HR, DAILY_STEPS
 
 
 class TestMonitor(TestCase):
@@ -27,7 +27,7 @@ class TestMonitor(TestCase):
                                            'monitor', mm(FAST), 'data/test/source/personal/25822184777.fit')
             monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline_after(log, db, PipelineType.STATISTIC, force_after='2018-01-01')
+            run_pipeline(log, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
@@ -45,7 +45,7 @@ class TestMonitor(TestCase):
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline_after(log, db, PipelineType.STATISTIC, force_after='2018-01-01')
+            run_pipeline(log, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
@@ -79,7 +79,7 @@ class TestMonitor(TestCase):
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline_after(log, db, PipelineType.STATISTIC, force_after='2018-01-01')
+            run_pipeline(log, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 # steps

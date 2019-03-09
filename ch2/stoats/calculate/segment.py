@@ -12,13 +12,13 @@ from ...squeal import ActivityJournal, SegmentJournal, Segment, StatisticName, S
 
 class SegmentStatistics(WaypointCalculator):
 
-    def run(self, force_after=None):
+    def run(self):
         with self._db.session_context() as s:
             SegmentJournal.clean(s)
             if 0 == s.query(count(Segment.id)).scalar():
                 self._log.warning('No segments defined in database')
                 return
-        super().run(force_after=force_after)
+        super().run()
 
     def _activity_journals_with_missing_data(self, s, activity_group):
         # extends superclass with restriction on activities that have a segment
@@ -62,7 +62,8 @@ class SegmentStatistics(WaypointCalculator):
             else:
                 self._log.warning('No Heart Rate data')
 
-    def _delete_my_statistics(self, s, activity_group, after=None):
+    def _delete_my_statistics(self, s, activity_group):
+        start, finish = self._start_finish()
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
         statistic_name_ids = s.query(StatisticName.id). \
             filter(StatisticName.owner == self).cte()
@@ -75,8 +76,10 @@ class SegmentStatistics(WaypointCalculator):
                 q = s.query(count(StatisticJournal.id))
             q = q.filter(StatisticJournal.statistic_name_id.in_(statistic_name_ids),
                          StatisticJournal.source_id.in_(segment_journal_ids))
-            if after:
-                q = q.filter(StatisticJournal.time >= after)
+            if start:
+                q = q.filter(StatisticJournal.time >= start)
+            if finish:
+                q = q.filter(StatisticJournal.time < finish)
             self._log.debug(q)
             if repeat:
                 q.delete(synchronize_session=False)

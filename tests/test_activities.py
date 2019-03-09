@@ -11,7 +11,7 @@ from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
-from ch2.stoats.calculate import run_pipeline_after, run_pipeline_paths
+from ch2.stoats.calculate import run_pipeline
 from ch2.stoats.names import RAW_ELEVATION, ELEVATION
 
 
@@ -41,7 +41,7 @@ class TestActivities(TestCase):
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-            run_pipeline_after(log, db, PipelineType.STATISTIC, force_after='2018-01-01')
+            run_pipeline(log, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
@@ -63,4 +63,4 @@ class TestActivities(TestCase):
         with NamedTemporaryFile() as f:
             rgs, log, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
-            run_pipeline_paths(log, db, PipelineType.ACTIVITY, paths, force=True)
+            run_pipeline(log, db, PipelineType.ACTIVITY, paths=paths, force=True)
