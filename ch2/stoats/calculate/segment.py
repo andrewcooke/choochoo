@@ -2,7 +2,7 @@
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from . import WaypointCalculator
+from . import WaypointStatistics
 from ..names import SEGMENT_TIME, LATITUDE, LONGITUDE, DISTANCE, S, summaries, MIN, MSR, CNT, HEART_RATE, \
     SEGMENT_HEART_RATE, BPM, MAX
 from ..waypoint import filter_none
@@ -10,7 +10,7 @@ from ...squeal import ActivityJournal, SegmentJournal, Segment, StatisticName, S
     StatisticJournalFloat, Timestamp
 
 
-class SegmentStatistics(WaypointCalculator):
+class SegmentStatistics(WaypointStatistics):
 
     def run(self):
         with self._db.session_context() as s:

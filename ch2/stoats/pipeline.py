@@ -20,7 +20,7 @@ class BasePipeline:
         self._args = args
         self._kargs = MutableAttr(kargs)
 
-    def _assert_karg(self, name, default=NONE):
+    def _karg(self, name, default=NONE):
         if name not in self._kargs:
             if default is NONE:
                 raise Exception('Missing %s parameter for %s' % (name, short_cls(self)))
@@ -35,14 +35,14 @@ class BasePipeline:
         return value
 
     def _force(self):
-        force = self._assert_karg(FORCE, default=False)
+        force = self._karg(FORCE, default=False)
         if not force:  # todo - remove this restriction
             if any(self._start_finish()):
                 raise Exception(f'Date range only used with {mm(FORCE)}')
 
     def _start_finish(self, type=None):
-        start = self._assert_karg(START, default=None)
-        finish = self._assert_karg(FINISH, default=None)
+        start = self._karg(START, default=None)
+        finish = self._karg(FINISH, default=None)
         if type:
             if start: start = type(start)
             if finish: finish = type(finish)

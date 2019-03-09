@@ -1,6 +1,7 @@
 
 from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal, ActivityBookmark
-from .tables.constant import SystemConstant, Constant
+from .tables.constant import Constant
+from ch2 import SystemConstant
 from .tables.monitor import MonitorJournal
 from .tables.nearby import ActivitySimilarity, ActivityNearby
 from .tables.pipeline import Pipeline, PipelineType

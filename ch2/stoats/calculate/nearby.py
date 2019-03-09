@@ -26,7 +26,7 @@ class SimilarityStatistics(Statistics):
 
     def _on_init(self, *args, **kargs):
         super()._on_init(*args, **kargs)
-        nearby = self._assert_karg('nearby')
+        nearby = self._karg('nearby')
         with self._db.session_context() as s:
             self._config = Nearby(**loads(Constant.get(s, nearby).at(s).value))
         self._log.info('%s: %s' % (nearby, self._config))

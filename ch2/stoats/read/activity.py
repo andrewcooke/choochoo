@@ -23,7 +23,7 @@ class ActivityImporter(FitImporter):
             self.__oracle = bilinear_elevation_from_constant(self._log, s)
 
     def run(self):
-        self._assert_karg('sport_to_activity')
+        self._karg('sport_to_activity')
         self._import_all()
 
     def _import_path(self, s, path):
@@ -99,9 +99,9 @@ class ActivityImporter(FitImporter):
         return ajournal, loader
 
     def _parse_pipeline_arguments(self):
-        sport_to_activity = self._assert_karg('sport_to_activity')
+        sport_to_activity = self._karg('sport_to_activity')
         record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
-                        for field, (name, units, type) in self._assert_karg('record_to_db').items()]
+                        for field, (name, units, type) in self._karg('record_to_db').items()]
         add_elevation = not any(name == ELEVATION for (field, name, units, type) in record_to_db)
         return sport_to_activity, record_to_db, add_elevation
 

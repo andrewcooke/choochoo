@@ -37,7 +37,7 @@ class PowerException(Exception): pass
 class BasicPowerStatistics(PowerStatistics):
 
     def _set_power(self, s, ajournal, df):
-        power_ref = self._assert_karg('power')
+        power_ref = self._karg('power')
         power = Power(**loads(Constant.get(s, power_ref).at(s).value))
         # default owner is constant since that's what users can tweak
         self.power = power.expand(self._log, s, df[TIME].iloc[0], owner=Constant, constraint=ajournal.activity_group)

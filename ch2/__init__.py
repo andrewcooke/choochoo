@@ -25,7 +25,7 @@ from .command.unlock import unlock
 from .lib.io import tui
 from .lib.log import make_log
 from .squeal.database import Database
-from .squeal.tables.constant import SystemConstant
+from ch2.squeal.tables.system import SystemConstant
 from .uranus.server import set_jupyter_args, stop_jupyter
 
 

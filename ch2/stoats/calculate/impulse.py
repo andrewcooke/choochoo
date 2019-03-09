@@ -97,8 +97,8 @@ class ImpulseStatistics(IntervalStatistics):
 
         from .heart_rate import HeartRateStatistics
 
-        impulse = self._assert_karg('impulse')
-        responses = self._assert_karg('responses')
+        impulse = self._karg('impulse')
+        responses = self._karg('responses')
         schedule = Schedule(self._kargs.schedule)
 
         with self._db.session_context() as s:

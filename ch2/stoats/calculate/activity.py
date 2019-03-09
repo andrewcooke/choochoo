@@ -5,7 +5,7 @@ from json import loads
 
 from scipy.interpolate import UnivariateSpline
 
-from . import WaypointCalculator
+from . import WaypointStatistics
 from .climb import find_climbs, Climb
 from .heart_rate import hr_zones_from_database
 from ..load import StatisticJournalLoader
@@ -23,12 +23,12 @@ def round_km():
     yield from range(300, 1001, 100)
 
 
-class ActivityStatistics(WaypointCalculator):
+class ActivityStatistics(WaypointStatistics):
 
     # for historical reasons, and because it adds few stats, this still doesn't use a loader.
 
     def _run_activity(self, s, activity_group):
-        climb = self._assert_karg('climb')
+        climb = self._karg('climb')
         self.__climb = Climb(**loads(Constant.get(s, climb).at(s).value))
         return super()._run_activity(s, activity_group)
 

@@ -4,7 +4,7 @@ from collections import defaultdict
 from sqlalchemy import func
 
 from .waypoint import make_waypoint
-from ..squeal.tables.constant import SystemConstant
+from ch2 import SystemConstant
 from ..squeal.tables.statistic import StatisticJournal, StatisticName
 from ..squeal.types import short_cls
 

@@ -54,7 +54,7 @@ class SegmentImporter(ActivityImporter):
     def _try_segment(self, s, starts, finishes, waypoints, segment, ajournal):
         try:
             self._log.info('Trying segment %s-%s for %s' % (starts, finishes, segment.name))
-            inner = self._assert_karg('inner_bound', 5)
+            inner = self._karg('inner_bound', 5)
             d = waypoints[self._mid(finishes)].distance - waypoints[self._mid(starts)].distance
             if abs(d - segment.distance) / segment.distance > 0.2:
                 raise CalcFailed('Distance between start and finish (%.1fkm) doesn\'t match segment (%.1fkm)' %
@@ -254,7 +254,7 @@ class SegmentImporter(ActivityImporter):
         '''
         Read segment endpoints into a global R-tree so we can detect when waypoints pass nearby.
         '''
-        match_bound = self._assert_karg('match_bound', 25)
+        match_bound = self._karg('match_bound', 25)
         segments = Global(tree=lambda: SQRTree(default_border=match_bound, default_match=MatchType.OVERLAP))
         for segment in s.query(Segment).filter(Segment.activity_group == agroup).all():
             segments[[segment.start]] = (True, segment.id)

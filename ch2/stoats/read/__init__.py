@@ -22,7 +22,7 @@ class Importer(DbPipeline):
     '''
 
     def _paths(self):
-        return self._assert_karg('paths', default=tuple())
+        return self._karg('paths', default=tuple())
 
     def _import_all(self):
         with self._db.session_context() as s:

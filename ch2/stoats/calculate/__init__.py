@@ -8,15 +8,12 @@ from ..pipeline import DbPipeline
 from ..waypoint import WaypointReader
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
-from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, \
-    StatisticName
+from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, StatisticName
 from ...squeal.types import short_cls, long_cls
 from ...stoats.load import StatisticJournalLoader
 
 
-class Statistics(DbPipeline):
-
-    pass
+class Statistics(DbPipeline): pass
 
 
 class IntervalStatistics(Statistics):
@@ -25,7 +22,7 @@ class IntervalStatistics(Statistics):
     '''
 
     def run(self):
-        schedule = Schedule(self._assert_karg('schedule'))
+        schedule = Schedule(self._karg('schedule'))
         if self._force():
             self._delete()
         self._run_calculations(schedule)
@@ -143,13 +140,13 @@ class ActivityStatistics(Statistics):
         return q.filter(StatisticJournal.source_id.in_(cte))
 
 
-class WaypointCalculator(ActivityStatistics):
+class WaypointStatistics(ActivityStatistics):
     '''
     Original calculator scheme, still used by most code.  Pure-python and SQLAlchemy,
     '''
 
     def _add_stats(self, s, ajournal):
-        owner = self._assert_karg('owner')
+        owner = self._karg('owner')
         waypoints = list(WaypointReader(self._log).read(s, ajournal, self._names(), owner))
         if waypoints:
             self._add_stats_from_waypoints(s, ajournal, waypoints)

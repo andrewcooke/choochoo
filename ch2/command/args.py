@@ -137,6 +137,7 @@ VERSION = 'version'
 W, WARN = 'w', 'warn'
 WAYPOINTS = 'waypoints'
 WIDTH = 'width'
+WORKER = 'worker'
 YEAR = 'year'
 
 
@@ -439,6 +440,8 @@ def parser():
                             help='optional start date')
     statistics.add_argument(FINISH, action='store', metavar='FINISH', nargs='?',
                             help='optional finish date (if start also given)')
+    statistics.add_argument(mm(WORKER), action='store_true',
+                            help='internal use only (identifies sub-process workers)')
     statistics.set_defaults(command=STATISTICS)
 
     noop = subparsers.add_parser(NO_OP,

@@ -7,7 +7,7 @@ from pendulum.tz import get_local_timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from .constant import SystemConstant
+from ch2 import SystemConstant
 from .source import SourceType, Source, Interval
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from ..support import Base

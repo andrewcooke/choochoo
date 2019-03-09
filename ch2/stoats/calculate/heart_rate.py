@@ -41,7 +41,7 @@ class HeartRateStatistics(ActivityStatistics):
 
     def _add_stats(self, s, ajournal):
 
-        impulse = self._assert_karg('impulse')
+        impulse = self._karg('impulse')
         hr_impulse = HRImpulse(**loads(Constant.get(s, impulse).at(s).value))
         self._log.debug('%s: %s' % (impulse, hr_impulse))
 
@@ -55,7 +55,7 @@ class HeartRateStatistics(ActivityStatistics):
         stmt = select([sj.c.time, sji.c.value]). \
             select_from(sj.join(sn).join(sji)). \
             where(and_(sj.c.source_id == ajournal.id,
-                       sn.c.owner == self._assert_karg('owner'),
+                       sn.c.owner == self._karg('owner'),
                        sn.c.constraint == ajournal.activity_group,
                        sn.c.name == HEART_RATE)). \
             order_by(sj.c.time)
