@@ -7,7 +7,7 @@ from sqlalchemy import desc
 
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
     CUMULATIVE_STEPS_FINISH
-from ..read import AbortImportButMarkScanned, AbortImport, FitFileImporter
+from ..read import AbortImportButMarkScanned, AbortImport, FitImporter
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
 from ...squeal.database import add, Timestamp
@@ -21,7 +21,7 @@ MONITORING_INFO_ATTR = 'monitoring_info'
 STEPS_ATTR = 'steps'
 
 
-class MonitorImporter(FitFileImporter):
+class MonitorImporter(FitImporter):
 
     # the monitor steps data are cumulative, but we want incremental.
     # that's easy to do within a single file, but to be correct across files we also

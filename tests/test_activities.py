@@ -7,11 +7,13 @@ from sqlalchemy.sql.functions import count
 from ch2.command.activities import activities
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.command.constants import constants
+from ch2.config import add_enum_constant
 from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
 from ch2.stoats.calculate import run_pipeline
+from ch2.stoats.calculate.power import Bike
 from ch2.stoats.names import RAW_ELEVATION, ELEVATION
 
 
@@ -49,13 +51,13 @@ class TestActivities(TestCase):
                 n_raw = s.query(count(StatisticJournalFloat.id)). \
                     join(StatisticName). \
                     filter(StatisticName.name == RAW_ELEVATION).scalar()
-                self.assertEqual(n_raw, 2099)
+                self.assertEqual(2099, n_raw)
                 n_fix = s.query(count(StatisticJournalFloat.id)). \
                     join(StatisticName). \
                     filter(StatisticName.name == ELEVATION).scalar()
-                self.assertEqual(n_fix, 2079)
+                self.assertEqual(2079, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 29876)
+                self.assertEqual(29876, n)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 

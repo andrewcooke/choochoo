@@ -5,7 +5,7 @@ from json import loads
 
 from sqlalchemy import desc, inspect, select, and_
 
-from . import ActivityCalculator
+from . import ActivityStatistics
 from ..load import StatisticJournalLoader
 from ..names import FTHR, HR_ZONE, HEART_RATE, S
 from ...squeal import Constant, StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
@@ -30,7 +30,7 @@ def hr_zones(fthr):
     return [fthr * pc / 100.0 for pc in BC_ZONES]
 
 
-class HeartRateStatistics(ActivityCalculator):
+class HeartRateStatistics(ActivityStatistics):
 
     def __init__(self, log, db, *args, **kargs):
         self.__fthr_cache = None

@@ -5,7 +5,7 @@ from re import split
 from sqlalchemy import func, inspect, and_, select
 from sqlalchemy.sql.functions import coalesce
 
-from . import IntervalCalculator
+from . import IntervalStatistics
 from ..names import MAX, MIN, SUM, CNT, AVG, MSR, ENTRIES
 from ...lib.date import local_date_to_time
 from ...squeal.database import add
@@ -14,7 +14,7 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName, Statisti
     StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
 
 
-class SummaryStatistics(IntervalCalculator):
+class SummaryStatistics(IntervalStatistics):
 
     def _filter_intervals(self, q, schedule=None):
         return q.filter(Interval.schedule == schedule,

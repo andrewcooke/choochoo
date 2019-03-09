@@ -1,6 +1,6 @@
 from json import dumps
 
-from ..stoats.calculate.nearby import Nearby, NearbyStatistics
+from ..stoats.calculate.nearby import Nearby, NearbyCalculator
 from ..squeal.database import connect
 from ..squeal.tables.activity import ActivityGroup
 from ..squeal.tables.constant import Constant, ValidateNamedTuple
@@ -258,5 +258,5 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
                                    'border': border, 'start': start, 'finish': finish,
                                    'latitude': latitude, 'longitude': longitude,
                                    'height': height, 'width': width}))
-    add_statistics(s, NearbyStatistics, sort, nearby=nearby_name)
+    add_statistics(s, NearbyCalculator, sort, nearby=nearby_name)
 

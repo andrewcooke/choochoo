@@ -7,12 +7,11 @@ from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
 from .activity import ActivityStatistics
-from .. import DbPipeline
+from ch2.stoats.calculate import Statistics
 from ..names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
 from ..read.activity import ActivityImporter
 from ...arty import MatchType
 from ...arty.spherical import SQRTree
-from ...command.args import FORCE, FINISH, START
 from ...lib.date import to_time, local_date_to_time
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
@@ -23,7 +22,7 @@ Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish
                               'latitude, longitude, height, width')
 
 
-class NearbySimilarityCalculator(DbPipeline):
+class SimilarityStatistics(Statistics):
 
     def _on_init(self, *args, **kargs):
         super()._on_init(*args, **kargs)
@@ -48,7 +47,7 @@ class NearbySimilarityCalculator(DbPipeline):
             new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
             # this clears itself beforehand
             # use explicit class to distinguish from subclasses (which compare against this)
-            with Timestamp(owner=NearbySimilarityCalculator, constraint=self._config.constraint). \
+            with Timestamp(owner=SimilarityStatistics, constraint=self._config.constraint). \
                     on_success(self._log, s):
                 self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
@@ -74,7 +73,7 @@ class NearbySimilarityCalculator(DbPipeline):
                    Timestamp.key == None).one_or_none()
 
     def _no_new_data(self, s):
-        prev = self._latest_timestamp(s, NearbySimilarityCalculator)
+        prev = self._latest_timestamp(s, SimilarityStatistics)
         if not prev:
             return False
         prev_ids = s.query(Timestamp.key). \
@@ -234,15 +233,15 @@ class NearbySimilarityDBSCAN(DBSCAN):
         return [x[0] for x in qlo.all()] + [x[0] for x in qhi.all()]
 
 
-class NearbyStatistics(NearbySimilarityCalculator):
+class NearbyCalculator(SimilarityStatistics):
 
     def run(self):
         super().run()
         with self._db.session_context() as s:
-            latest_groups = self._latest_timestamp(s, NearbyStatistics)
-            latest_similarity = self._latest_timestamp(s, NearbySimilarityCalculator)
+            latest_groups = self._latest_timestamp(s, NearbyCalculator)
+            latest_similarity = self._latest_timestamp(s, SimilarityStatistics)
             if not latest_groups or latest_similarity.time > latest_groups.time:
-                with Timestamp(owner=NearbyStatistics, constraint=self._config.constraint).on_success(self._log, s):
+                with Timestamp(owner=NearbyCalculator, constraint=self._config.constraint).on_success(self._log, s):
                     d_min, n = expand_max(self._log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
                     self._log.info('%d groups at d=%f' % (n, d_min))
                     self.save(s, self.dbscan(s, d_min))

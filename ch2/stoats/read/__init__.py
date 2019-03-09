@@ -1,7 +1,7 @@
 
 from abc import abstractmethod
 
-from .. import DbPipeline
+from ..pipeline import DbPipeline
 from ...fit.format.read import filtered_records
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
@@ -16,7 +16,7 @@ class AbortImportButMarkScanned(AbortImport):
     pass
 
 
-class FileImporter(DbPipeline):
+class Importer(DbPipeline):
     '''
     Base class for importing from a files that have been modified.
     '''
@@ -45,9 +45,9 @@ class FileImporter(DbPipeline):
         pass
 
 
-class FitFileImporter(FileImporter):
+class FitImporter(Importer):
     '''
-    Extend FileImporter with utility methods related to FIT files.
+    Extend Importer with utility methods related to FIT files.
     '''
 
     def _load_fit_file(self, path, *options):

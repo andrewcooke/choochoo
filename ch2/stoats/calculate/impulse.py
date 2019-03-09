@@ -6,7 +6,7 @@ from math import exp
 
 from sqlalchemy import desc, inspect, select, and_
 
-from . import IntervalCalculator
+from . import IntervalStatistics
 from .heart_rate import HRImpulse
 from ..load import StatisticJournalLoader
 from ..names import MAX
@@ -20,7 +20,7 @@ from ...squeal.types import short_cls
 Response = namedtuple('Response', 'src_name, src_owner, dest_name, tau_days, scale, start')
 
 
-class ImpulseStatistics(IntervalCalculator):
+class ImpulseStatistics(IntervalStatistics):
 
     def _on_init(self, *args, **kargs):
         kargs['schedule'] = 'm'

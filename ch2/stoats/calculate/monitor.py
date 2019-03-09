@@ -1,7 +1,7 @@
 
 from sqlalchemy.sql import func
 
-from . import IntervalCalculator
+from . import IntervalStatistics
 from .summary import SummaryStatistics
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ..read.monitor import MonitorImporter
@@ -17,7 +17,7 @@ from ...squeal import Interval, StatisticJournalInteger, StatisticName, NoStatis
 QUARTER_DAY = 6 * 60 * 60
 
 
-class MonitorStatistics(IntervalCalculator):
+class MonitorStatistics(IntervalStatistics):
 
     def _on_init(self, *args, **kargs):
         kargs['schedule'] = 'd'

@@ -2,7 +2,7 @@
 import datetime as dt
 from abc import abstractmethod
 
-from .. import BasePipeline
+from ch2.stoats.pipeline import BasePipeline
 from ...lib.date import local_date_to_time
 from ...lib.date import to_date
 from ...squeal import ActivityGroup, ActivityJournal

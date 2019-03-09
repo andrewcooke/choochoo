@@ -4,7 +4,7 @@ from abc import abstractmethod
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from .. import DbPipeline
+from ..pipeline import DbPipeline
 from ..waypoint import WaypointReader
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
@@ -23,7 +23,12 @@ def run_pipeline(log, db, type, like=None, **extra_kargs):
             cls(log, db, *args, **kargs).run()
 
 
-class IntervalCalculator(DbPipeline):
+class Statistics(DbPipeline):
+
+    pass
+
+
+class IntervalStatistics(Statistics):
     '''
     Support for calculations associated with intervals.
     '''
@@ -67,7 +72,7 @@ class IntervalCalculator(DbPipeline):
         return q.filter(Interval.owner == self)
 
 
-class ActivityCalculator(DbPipeline):
+class ActivityStatistics(Statistics):
     '''
     Support for calculations associated with activity journals (which is most).
     '''
@@ -147,7 +152,7 @@ class ActivityCalculator(DbPipeline):
         return q.filter(StatisticJournal.source_id.in_(cte))
 
 
-class WaypointCalculator(ActivityCalculator):
+class WaypointCalculator(ActivityStatistics):
     '''
     Original calculator scheme, still used by most code.  Pure-python and SQLAlchemy,
     '''
@@ -169,7 +174,7 @@ class WaypointCalculator(ActivityCalculator):
         raise NotImplementedError()
 
 
-class DataFrameCalculator(ActivityCalculator):
+class DataFrameStatistics(ActivityStatistics):
     '''
     New calculator scheme.  Uses data frames / shares code with analysis.
     '''

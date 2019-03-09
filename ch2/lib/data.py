@@ -82,6 +82,9 @@ class MutableAttr(dict):
         return self.__dict__
 
 
+class MissingReference(Exception): pass
+
+
 def reftuple(name, *args, **kargs):
     '''
     Like a namedtuple, but expands $ strings using a database session and date
@@ -111,8 +114,11 @@ def reftuple(name, *args, **kargs):
                                                           default_constraint=default_constraint)
             value = StatisticJournal.before(s, time, name, owner, constraint)
             if value is None:
-                log.warning(f'No value found for {owner}:{name}:{constraint} (default {default_value})')
-                value = default_value
+                if default_value:
+                    log.warning(f'No value found for {owner}:{name}:{constraint} (default {default_value})')
+                    value = default_value
+                else:
+                    raise MissingReference(f'No value found for {owner}:{name}:{constraint} (and no default)')
             else:
                 value = value.value
                 if json:

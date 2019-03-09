@@ -5,7 +5,7 @@ from pygeotile.point import Point
 
 from ..load import StatisticJournalLoader
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
-from ..read import AbortImport, FitFileImporter
+from ..read import AbortImport, FitImporter
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
 from ...sortem.bilinear import bilinear_elevation_from_constant
@@ -15,7 +15,7 @@ from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES
 
 
-class ActivityImporter(FitFileImporter):
+class ActivityImporter(FitImporter):
 
     def _on_init(self, *args, constants=None, **kargs):
         super()._on_init(*args, constants=constants, **kargs)
