@@ -6,7 +6,7 @@ from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
-from ..lib.date import to_date, to_time, local_date_to_time
+from ..lib.date import to_date, to_time
 
 CH2_VERSION = '0.17.2'
 
@@ -77,6 +77,7 @@ LATITUDE = 'latitude'
 LIKE = 'like'
 LIMIT_BYTES = 'limit-bytes'
 LIMIT_RECORDS = 'limit-records'
+L, LOG = 'l', 'log'
 LOGS = 'logs'
 LONGITUDE = 'longitude'
 LIST = 'list'
@@ -203,13 +204,15 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlp', metavar='FILE',
+    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlq', metavar='FILE',
                         help='the database file')
     parser.add_argument(no(JUPYTER), action='store_false', dest=JUPYTER,
-                        help='don\'t start the JupyterState server')
-    parser.add_argument(mm(DEV), action='store_true', help='enable development mode')
+                        help='don\'t start the Jupyter server')
+    parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
                         help='the directory for logs')
+    parser.add_argument(m(L), mm(LOG), action='store', default='log', metavar='FILE',
+                        help='the file for the log (command name by default)')
     parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
                         help='the root directory for the default configuration')
     parser.add_argument(m(V), mm(VERBOSITY), action='store', nargs=1, default=None, type=int, metavar='VERBOSITY',

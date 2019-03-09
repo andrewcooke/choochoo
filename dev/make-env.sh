@@ -19,6 +19,7 @@ pip install bokeh
 pip install tornado==5.1.1
 pip install ipython
 pip install notebook
+pip install psutil
 
 pip install textblob
 pip install matplotlib

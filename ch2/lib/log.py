@@ -3,8 +3,7 @@ from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler, NullHandle
 from logging.handlers import RotatingFileHandler
 from os.path import join
 
-from ..command.args import COMMAND, LOGS, PROGNAME, VERBOSITY
-
+from ..command.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG
 
 CACHE = []
 
@@ -18,7 +17,7 @@ def make_log(args, tui=False):
         level = 10 * (6 - level)
 
         file_formatter = Formatter('%(levelname)-8s %(asctime)s: %(message)s')
-        name = args[COMMAND] if COMMAND in args else PROGNAME
+        name = args[LOG] if LOG in args else (args[COMMAND] if COMMAND in args else PROGNAME)
         path = join(args.dir(LOGS), name + '.log')
         file_handler = RotatingFileHandler(path, maxBytes=1e6, backupCount=10)
         file_handler.setLevel(DEBUG)

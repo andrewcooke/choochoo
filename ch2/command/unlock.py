@@ -1,6 +1,6 @@
 
 from .args import FORCE
-from ch2 import SystemConstant
+from ..squeal import SystemConstant
 
 
 def unlock(args, log, db):

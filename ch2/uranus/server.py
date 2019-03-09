@@ -57,7 +57,7 @@ def stop_jupyter(log):
             JupyterServer._instance.stop()
             log.debug('Jupyter server stopped')
         except Exception as e:
-            log.warning(f'Error stopping JupyterState: {e}')
+            log.warning(f'Error stopping Jupyter: {e}')
         finally:
             __RUNNING = False
     else:

@@ -1,15 +1,14 @@
 
 import datetime as dt
 from json import dumps
-from time import sleep
 
 from pendulum.tz import get_local_timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship, backref
 
-from ch2 import SystemConstant
 from .source import SourceType, Source, Interval
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
+from .system import SystemConstant
 from ..support import Base
 from ..types import Date, Cls, Json, Sched, Sort
 from ...lib.data import assert_attr

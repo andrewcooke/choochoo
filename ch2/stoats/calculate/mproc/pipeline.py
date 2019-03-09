@@ -1,6 +1,7 @@
 
 from abc import abstractmethod
 
+from .worker import Workers
 from .. import Statistics
 from ....command.args import WORKER, FORCE
 from ....squeal.types import short_cls
@@ -85,11 +86,15 @@ class MultiProcStatistics(Statistics):
         # errors in our timing estimates
 
         n_missing = len(missing)
+        workers = Workers(self._log, self._db.session(), n_parallel, self)
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1
             finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
             if start > finish: raise Exception('Bad chunking logic')
-            self.__new_worker(missing[start], missing[finish], n_parallel)
-        self.__wait_for_completion()
+            self._new_worker(missing[start], missing[finish], workers)
+        workers.wait()
 
+    @abstractmethod
+    def _new_worker(self, start, finish, workers):
+        raise NotImplementedError()

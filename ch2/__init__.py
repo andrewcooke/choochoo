@@ -25,7 +25,7 @@ from .command.unlock import unlock
 from .lib.io import tui
 from .lib.log import make_log
 from .squeal.database import Database
-from ch2.squeal.tables.system import SystemConstant
+from .squeal import SystemConstant
 from .uranus.server import set_jupyter_args, stop_jupyter
 
 
@@ -34,7 +34,7 @@ def no_op(args, log, db):
     '''
 ## no-op
 
-This is used internally when accessing data in JupyterState or configuring the system
+This is used internally when accessing data in Jupyter or configuring the system
 at the command line.
     '''
     pass

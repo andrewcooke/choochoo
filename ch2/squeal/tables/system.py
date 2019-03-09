@@ -1,3 +1,4 @@
+from time import time
 
 from sqlalchemy import Column, Text, Integer
 
@@ -49,12 +50,13 @@ class SystemConstant(Base):
             filter(SystemConstant.name == SystemConstant.LOCK).delete()
 
 
-class SystemWorker(Base):
+class SystemProcess(Base):
 
-    __tablename__ = 'system_worker'
+    __tablename__ = 'system_process'
 
+    id = Column(Integer, primary_key=True)
     command = Column(Text, nullable=False)
-    start = Column(Time, nullable=False)
+    log = Column(Text, nullable=False)
+    start = Column(Time, nullable=False, default=time)
     owner = Column(ShortCls, nullable=False, index=True)
-    constraint = Column(Str, index=True)   # probably not used, but would allow multiple uses by single owner
     pid = Column(Integer, nullable=False, index=True)

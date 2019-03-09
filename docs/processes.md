@@ -16,3 +16,4 @@ need to run pipelines in parallel.
   * if database locked, retry
   * remove lock testing for --worker
   * add retry etc for acquire_lock
+  
