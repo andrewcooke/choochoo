@@ -2,7 +2,9 @@
 from ..command.args import FORCE, mm, START, FINISH
 from ..lib.data import MutableAttr
 from ..lib.utils import short_str
+from ..squeal import Pipeline
 from ..squeal.types import short_cls
+
 
 NONE = object()
 
@@ -52,3 +54,11 @@ class DbPipeline(BasePipeline):
     def __init__(self, log, db, *args, **kargs):
         self._db = db
         super().__init__(log, *args, **kargs)
+
+
+def run_pipeline(log, db, type, like=None, **extra_kargs):
+    with db.session_context() as s:
+        for cls, args, kargs in Pipeline.all(log, s, type, like=like):
+            kargs.update(extra_kargs)
+            log.info(f'Running {short_cls(cls)}({short_str(args)}, {short_str(kargs)}')
+            cls(log, db, *args, **kargs).run()

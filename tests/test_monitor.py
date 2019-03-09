@@ -12,7 +12,7 @@ from ch2.squeal.tables.monitor import MonitorJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.source import Interval
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticName
-from ch2.stoats.calculate import run_pipeline
+from ch2.stoats.pipeline import run_pipeline
 from ch2.stoats.calculate.monitor import MonitorStatistics
 from ch2.stoats.names import REST_HR, DAILY_STEPS
 

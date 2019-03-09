@@ -1,7 +1,7 @@
 
 from .args import FORCE, LIKE, FINISH, START
 from ..squeal.tables.pipeline import PipelineType
-from ..stoats.calculate import run_pipeline
+from ..stoats.pipeline import run_pipeline
 
 
 def statistics(args, log, db):

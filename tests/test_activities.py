@@ -7,13 +7,11 @@ from sqlalchemy.sql.functions import count
 from ch2.command.activities import activities
 from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.command.constants import constants
-from ch2.config import add_enum_constant
 from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
-from ch2.stoats.calculate import run_pipeline
-from ch2.stoats.calculate.power import Bike
+from ch2.stoats.pipeline import run_pipeline
 from ch2.stoats.names import RAW_ELEVATION, ELEVATION
 
 

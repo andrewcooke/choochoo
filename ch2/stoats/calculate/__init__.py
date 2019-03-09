@@ -8,19 +8,10 @@ from ..pipeline import DbPipeline
 from ..waypoint import WaypointReader
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
-from ...lib.utils import short_str
-from ...squeal import ActivityJournal, ActivityGroup, Pipeline, Interval, Timestamp, StatisticJournal, \
+from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, \
     StatisticName
 from ...squeal.types import short_cls, long_cls
 from ...stoats.load import StatisticJournalLoader
-
-
-def run_pipeline(log, db, type, like=None, **extra_kargs):
-    with db.session_context() as s:
-        for cls, args, kargs in Pipeline.all(log, s, type, like=like):
-            kargs.update(extra_kargs)
-            log.info(f'Running {short_cls(cls)}({short_str(args)}, {short_str(kargs)}')
-            cls(log, db, *args, **kargs).run()
 
 
 class Statistics(DbPipeline):

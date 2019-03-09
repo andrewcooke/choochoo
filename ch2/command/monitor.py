@@ -1,7 +1,7 @@
 
 from ..command.args import PATH, FORCE, FAST
 from ..squeal.tables.pipeline import PipelineType
-from ..stoats.calculate import run_pipeline
+from ..stoats.pipeline import run_pipeline
 
 
 def monitor(args, log, db):

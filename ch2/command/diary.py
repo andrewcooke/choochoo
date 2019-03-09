@@ -13,9 +13,9 @@ from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
 from ..squeal import PipelineType, Topic, TopicJournal
 from ..squeal.database import add, ActivityJournal, StatisticJournal
-from ..stoats.calculate import run_pipeline
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
+from ..stoats.pipeline import run_pipeline
 from ..uranus.template.activity_details import activity_details
 from ..uranus.template.all_activities import all_activities
 from ..uranus.template.compare_activities import compare_activities
