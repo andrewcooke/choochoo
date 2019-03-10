@@ -60,9 +60,7 @@ def default(log, db, no_diary=False):
         add_statistics(s, SegmentStatistics, c, owner=short_cls(SegmentImporter))
         add_statistics(s, MonitorStatistics, c)
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
-        add_power(s, bike)
-        add_statistics(s, ExtendedPowerStatistics, c, owner=short_cls(ActivityImporter),
-                       power=name_constant(POWER_CNAME, bike))
+        add_power(s, c, bike)
 
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.

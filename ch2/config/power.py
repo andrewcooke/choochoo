@@ -1,14 +1,15 @@
 
 from json import dumps
 
-from ..stoats.calculate.power import Power
-from . import name_constant, add_enum_constant, set_constant
+from . import name_constant, add_enum_constant, set_constant, add_statistics
+from ..stoats.calculate.power import Power, BasicPowerCalculator
+
 
 POWER_CNAME = 'Power'
 
 
-def add_power(s, activity_group, bike='#$ActivityImporter:Bike', weight='$Topic:Weight:Topic \"Diary\" (d)',
-              p=1.225, g=9.8):
+def add_power(s, c, activity_group,
+              bike='#$ActivityImporter:Bike', weight='$Topic:Weight:Topic \"Diary\" (d)', p=1.225, g=9.8):
     '''
     Add the constants necessary to estimate power output.
     '''
@@ -17,3 +18,4 @@ def add_power(s, activity_group, bike='#$ActivityImporter:Bike', weight='$Topic:
     power = add_enum_constant(s, power_name, Power, single=False, constraint=activity_group_constraint,
                               description='Data needed to estimate power - see Power enum')
     set_constant(s, power, dumps({'bike': bike, 'weight': weight, 'p': p, 'g': g}))
+    add_statistics(s, BasicPowerCalculator, c, power=name_constant(POWER_CNAME, bike))
