@@ -8,6 +8,7 @@ import pandas as pd
 import scipy as sp
 
 from . import DataFrameStatistics
+from .mproc.pipeline import DataFrameCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
 from ..names import _sqr, _d, _avg
@@ -28,6 +29,13 @@ class PowerStatistics(DataFrameStatistics):
     def __init__(self, log, *args, **kargs):
         super().__init__(log, *args, **kargs)
         self.owner = PowerStatistics  # fixed for subclasses
+        self.power = None
+
+
+class PowerCalculator(DataFrameCalculator):
+
+    def __init__(self, log, *args, **kargs):
+        super().__init__(log, *args, owner_out=MPowerStatistics, **kargs)
         self.power = None
 
 
@@ -68,6 +76,46 @@ class BasicPowerStatistics(PowerStatistics):
 
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():
+            for name, units, summary in [(POWER, W, AVG), (HEADING, DEG, None)]:
+                if not pd.isnull(row[name]):
+                    loader.add(name, units, summary, ajournal.activity_group, ajournal, row[name], time,
+                               StatisticJournalFloat)
+
+
+class BasicPowerCalculator(PowerCalculator):
+
+    def _set_power(self, s, ajournal, df):
+        power_ref = self._karg('power')
+        power = Power(**loads(Constant.get(s, power_ref).at(s).value))
+        # default owner is constant since that's what users can tweak
+        self.power = power.expand(self._log, s, df[TIME].iloc[0], owner=Constant, constraint=ajournal.activity_group)
+        self._log.debug(f'{power_ref}: {self.power}')
+
+    def _load_data(self, s, ajournal):
+        try:
+            df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, CADENCE, LATITUDE, LONGITUDE, HEART_RATE,
+                                     activity_journal_id=ajournal.id, with_timespan=True,
+                                     log=self._log, quiet=True)
+            _, df = linear_resample(df)
+            df = add_differentials(df)
+            self._set_power(s, ajournal, df)
+            return df
+        except PowerException as e:
+            self._log.warn(e)
+        except MissingReference as e:
+            self._log.warning(f'Power configuration incorrect ({e})')
+        except Exception as e:
+            self._log.warning(f'Failed to generate statistics for power: {e}')
+            raise
+
+    def _calculate_stats(self, s, ajournal, data):
+        data = add_energy_budget(data, self.power.bike['m'] + self.power.weight, self.power.g)
+        data = add_loss_estimate(data, self.power.bike['cda'], self.power.bike['crr'], self.power.p)
+        data = add_power_estimate(data)
+        return data
+
+    def _copy_results(self, s, ajournal, loader, data):
+        for time, row in data.iterrows():
             for name, units, summary in [(POWER, W, AVG), (HEADING, DEG, None)]:
                 if not pd.isnull(row[name]):
                     loader.add(name, units, summary, ajournal.activity_group, ajournal, row[name], time,

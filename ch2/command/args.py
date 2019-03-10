@@ -443,7 +443,7 @@ def parser():
                             help='optional start date')
     statistics.add_argument(FINISH, action='store', metavar='FINISH', nargs='?',
                             help='optional finish date (if start also given)')
-    statistics.add_argument(mm(WORKER), action='store_true',
+    statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
     statistics.set_defaults(command=STATISTICS)
 

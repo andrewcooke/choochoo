@@ -28,14 +28,18 @@ class Pipeline(Base):
     sort = Column(Sort)
 
     @classmethod
-    def all(cls, log, s, type, like=None):
+    def all(cls, s, type, like=None, id=None):
         q = s.query(Pipeline).filter(Pipeline.type == type)
         if like:
             q = q.filter(Pipeline.cls.like(like))
+        if id:
+            q = q.filter(Pipeline.id == id)
         pipelines = q.order_by(Pipeline.sort).all()
         if not pipelines:
             msg = 'No pipelines configured for type %s' % PipelineType(type).name
             if like:
-                msg += (' like %s' % like)
+                msg += f' like {like}'
+            if id:
+                msg += f' with ID={id}'
             raise Exception(msg)
-        yield from ((pipeline.cls, pipeline.args, pipeline.kargs) for pipeline in pipelines)
+        yield from pipelines

@@ -56,9 +56,10 @@ class DbPipeline(BasePipeline):
         super().__init__(log, *args, **kargs)
 
 
-def run_pipeline(log, db, type, like=None, **extra_kargs):
+def run_pipeline(log, db, type, like=None, id=None, **extra_kargs):
     with db.session_context() as s:
-        for cls, args, kargs in Pipeline.all(log, s, type, like=like):
+        for pipeline in Pipeline.all(log, s, type, like=like, id=id):
+            kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
-            log.info(f'Running {short_cls(cls)}({short_str(args)}, {short_str(kargs)}')
-            cls(log, db, *args, **kargs).run()
+            log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')
+            pipeline.cls(log, db, *pipeline.args, id=pipeline.id, **kargs).run()

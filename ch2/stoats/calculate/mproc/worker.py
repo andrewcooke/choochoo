@@ -15,11 +15,12 @@ LIKE = 'like'
 
 class Workers:
 
-    def __init__(self, log, s, n_parallel, owner):
+    def __init__(self, log, s, n_parallel, owner, cmd):
         self._log = log
         self._s = s
         self.n_parallel = n_parallel
         self.owner = owner
+        self.cms = cmd
         self.__workers = {}  # map from Popen to log index
         self.clear_all()
 
@@ -48,13 +49,14 @@ class Workers:
             filter(SystemProcess.owner == self.owner,
                    SystemProcess.pid == pid).one()
 
-    def run(self, cmd):
+    def run(self, args):
         self.wait(self.n_parallel - 1)
         log_index = self._free_log_index()
-        substitutions = self._substitutions(log_index)
-        cmd = cmd.format(**substitutions)
+        log = f'{short_cls(self.owner)}.{log_index}'
+        cmd = (self.cmd + ' ' + args).format(log=log)
         worker = Popen(args=cmd, shell=True)
-        self._s.add(SystemProcess(command=cmd, owner=self.owner, pid=worker.pid, log=substitutions[LOG]))
+        self._log.debug(f'Adding command "{cmd}"')
+        self._s.add(SystemProcess(command=cmd, owner=self.owner, pid=worker.pid, log=log))
         self.__workers[worker] = log_index
 
     def wait(self, n_workers=0):
