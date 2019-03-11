@@ -91,7 +91,6 @@ def connect(args):
     '''
     Bootstrap from commandline-like args.
     '''
-    p = parser()
     if len(args) == 1:
         args = args[0].split()
     elif args:
@@ -99,7 +98,7 @@ def connect(args):
     else:
         args = []
     args.append(NO_OP)
-    ns = NamespaceWithVariables(p.parse_args(args))
+    ns = NamespaceWithVariables(parser().parse_args(args))
     log = make_log(ns)
     db = Database(ns, log)
     return ns, log, db

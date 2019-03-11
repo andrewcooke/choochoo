@@ -59,8 +59,7 @@ COMMANDS = {ACTIVITIES: activities,
 
 
 def main():
-    p = parser()
-    args = NamespaceWithVariables(p.parse_args())
+    args = NamespaceWithVariables(parser().parse_args())
     command_name = args[COMMAND] if COMMAND in args else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     tui = command and hasattr(command, 'tui') and command.tui
@@ -88,12 +87,14 @@ def main():
                 stop_jupyter(log)
     except KeyboardInterrupt:
         log.critical('User abort')
+        exit(1)
     except Exception as e:
         log.critical(e)
         log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
         log.info('Docs at http://andrewcooke.github.io/choochoo')
         if not args or args[DEV]:
             raise
+        exit(2)
 
 
 def refuse_until_configured():

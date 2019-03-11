@@ -8,12 +8,14 @@ from sqlalchemy.sql.functions import count
 from .worker import Workers
 from .. import Statistics
 from ...load import StatisticJournalLoader
-from ....lib.date import to_time, time_to_local_time, local_time_to_time
+from ....command.args import STATISTICS, WORKER, mm
+from ....lib.date import time_to_local_time, local_time_to_time
 from ....squeal import Timestamp, ActivityJournal, StatisticName, StatisticJournal
 from ....squeal.types import short_cls, long_cls
 
 
 CPU_FRACTION = 0.9
+MAX_REPEAT = 3
 
 
 class MultiProcCalculator(Statistics):
@@ -28,7 +30,7 @@ class MultiProcCalculator(Statistics):
         self.overhead = overhead  # next three args are used to decide if workers are needed
         self.cost_calc = cost_calc  # see _cost_benefit for full details
         self.cost_write = cost_write  # defaults guarantee a single thread
-        self.n_cpu = cpu_count() if n_cpu is None else n_cpu  # number of cpus available
+        self.n_cpu = max(1, int(cpu_count() * CPU_FRACTION)) if n_cpu is None else n_cpu  # number of cpus available
         self.worker = worker  # if not-None, then we're in a sub-process (actually contains the same value as id)
         self.prog = prog  # the name of the ch2 program (to run sub-processes)
         self.id = id  # the id for the pipeline entry in the database (passed to sub-processes)
@@ -77,26 +79,29 @@ class MultiProcCalculator(Statistics):
         # in accessing the database.
         # let's say COST (for one missing time) is COST_WRITE + COST_CALC (ignoring units).
         # if we have N_MISSING tasks divided into N_TOTAL workloads amongst N_PARALLEL workers
-        # then we have these conditions:
-        # 1: N_PARALLEL * (COST_WRITES/ COST) <= 1 so that we avoid blocking completely on writes
-        # 2: (N_MISSING / N_TOTAL) * COST > OVERHEAD so we're not wasting our time
-        # 3: N_PARALLEL <= N_CPU
-        # 4: N_TOTAL <= N_MISSING
+        # then we have these conditions (in order):
+        #   N_PARALLEL * (COST_WRITES/ COST) <= 1 so that we avoid blocking completely on writes
+        #   N_PARALLEL <= N_CPU
+        #   N_TOTAL <= N_MISSING / N_PARALLEL
+        #   (N_MISSING / N_TOTAL) * COST > OVERHEAD so we're not wasting our time
+        #   N_TOTAL <= N_PARALLEL * MAX_REPEAT because we want large batches, but not too large
 
         self._log.debug(f'Batching for n_cpu={n_cpu}, overhead={self.overhead}, '
                         f'cost_writes={self.cost_write} cost_calc={self.cost_calc}')
         n_missing = len(missing)
         cost = self.cost_write + self.cost_calc
-        limit_1 = cost / self.cost_write
-        self._log.debug(f'Limit on parallel workers from database contention is {limit_1:3.1f}')
-        limit_2 = cost * n_missing / self.overhead
-        self._log.debug(f'Limit on total workers from overhead is {limit_2:3.1f}')
-        limit_3 = n_cpu
-        self._log.debug(f'Limit on parallel workers from CPU count is {limit_3:d}')
-        limit_4 = n_missing
-        self._log.debug(f'Limit on total workers from work available is {limit_4:d}')
-        n_total = int(min(limit_2, limit_4))
-        n_parallel = int(min(limit_1, limit_3))
+        limit = cost / self.cost_write
+        self._log.debug(f'Limit on parallel workers from database contention is {limit:3.1f}')
+        self._log.debug(f'Limit on parallel workers from CPU count is {n_cpu:d}')
+        n_parallel = int(min(limit, n_cpu))
+        n_total = int((n_missing + n_parallel - 1) / n_parallel)
+        self._log.debug(f'Limit on total workers from work available is {n_total:d}')
+        limit = cost * n_missing / self.overhead
+        self._log.debug(f'Limit on total workers from overhead is {limit:3.1f}')
+        n_total = min(n_total, int(limit))
+        limit = n_parallel * MAX_REPEAT
+        self._log.debug(f'Limit on total workers to boost batch size is {limit:d}')
+        n_total = min(n_total, limit)
         self._log.info(f'Threads: {n_total}/{n_parallel}')
         return n_total, n_parallel
 
@@ -107,13 +112,13 @@ class MultiProcCalculator(Statistics):
 
         n_missing = len(missing)
         workers = Workers(self._log, s, n_parallel, self.owner_out,
-                          f'{self.prog} -v0 -l {{log}} statistics --worker {self.id}')
+                          f'{{ch2}} -v0 -l {{log}} {STATISTICS} {mm(WORKER)} {self.id}')
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1
             finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
             if start > finish: raise Exception('Bad chunking logic')
-            args = f'{time_to_local_time(missing[start])} {time_to_local_time(missing[finish])}'
+            args = f'"{time_to_local_time(missing[start])}" "{time_to_local_time(missing[finish])}"'
             workers.run(args)
         workers.wait()
 

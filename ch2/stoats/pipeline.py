@@ -35,10 +35,7 @@ class BasePipeline:
         return value
 
     def _force(self):
-        force = self._karg(FORCE, default=False)
-        if not force:  # todo - remove this restriction
-            if any(self._start_finish()):
-                raise Exception(f'Date range only used with {mm(FORCE)}')
+        return self._karg(FORCE, default=False)
 
     def _start_finish(self, type=None):
         start = self._karg(START, default=None)
@@ -58,7 +55,7 @@ class DbPipeline(BasePipeline):
 
 def run_pipeline(log, db, type, like=None, id=None, **extra_kargs):
     with db.session_context() as s:
-        for pipeline in Pipeline.all(log, s, type, like=like, id=id):
+        for pipeline in Pipeline.all(s, type, like=like, id=id):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
             log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')

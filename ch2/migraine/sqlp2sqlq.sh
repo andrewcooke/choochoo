@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cat > /dev/null <<XXX
+
 rm -f /tmp/copy.sqlp
 cp ~/.ch2/database.sqlp /tmp/copy.sqlp
 
@@ -39,6 +41,8 @@ select * from topic_journal;
 select * from segment;
 EOF
 
+XXX
+
 rm -f ~/.ch2/database.sqlq
 dev/ch2 no-op
 
@@ -55,7 +59,7 @@ with db.session_context() as s:
      add_enum_constant(s, 'Cotic Soul', Bike, constraint='ActivityGroup "Bike"')
 EOF
 
-dev/ch2 default-config --no-diary
-dev/ch2 constants --set FTHR.Bike 154
-dev/ch2 constants --set SRTM1.Dir /home/andrew/archive/srtm1
-dev/ch2 constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "m": 12}'
+dev/ch2 --dev default-config --no-diary
+dev/ch2 --dev constants --set FTHR.Bike 154
+dev/ch2 --dev constants --set SRTM1.Dir /home/andrew/archive/srtm1
+dev/ch2 --dev constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "m": 12}'

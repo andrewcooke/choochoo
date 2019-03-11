@@ -8,7 +8,7 @@ import pandas as pd
 import scipy as sp
 
 from . import DataFrameStatistics
-from .mproc.pipeline import DataFrameCalculator
+from .mproc.pipeline import DataFrameCalculator, ActivityJournalCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
 from ..names import _sqr, _d, _avg
@@ -32,10 +32,10 @@ class PowerStatistics(DataFrameStatistics):
         self.power = None
 
 
-class PowerCalculator(DataFrameCalculator):
+class PowerCalculator(ActivityJournalCalculator):
 
     def __init__(self, log, *args, **kargs):
-        super().__init__(log, *args, owner_out=MPowerStatistics, **kargs)
+        super().__init__(log, *args, owner_out=PowerCalculator, **kargs)
         self.power = None
 
 
@@ -83,6 +83,9 @@ class BasicPowerStatistics(PowerStatistics):
 
 
 class BasicPowerCalculator(PowerCalculator):
+
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, cost_calc=2, cost_write=1, **kargs)
 
     def _set_power(self, s, ajournal, df):
         power_ref = self._karg('power')
