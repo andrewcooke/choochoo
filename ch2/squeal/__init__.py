@@ -6,8 +6,8 @@ from .tables.monitor import MonitorJournal
 from .tables.nearby import ActivitySimilarity, ActivityNearby
 from .tables.pipeline import Pipeline, PipelineType
 from .tables.segment import Segment, SegmentJournal
-from .tables.source import Source, Interval, NoStatistics
+from .tables.source import Source, Interval, NoStatistics, Dummy
 from .tables.statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
-    StatisticJournal, StatisticMeasure
-from .tables.topic import TopicJournal, Topic
+    StatisticJournal, StatisticMeasure, StatisticJournalType
+from .tables.topic import TopicJournal, Topic, TopicField
 from .tables.timestamp import Timestamp

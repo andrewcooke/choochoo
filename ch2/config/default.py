@@ -1,9 +1,9 @@
 
 from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
-    add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant
+    add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
-from .power import add_power, POWER_CNAME
+from .power import add_power
 from ..lib.schedule import Schedule
 from ..sortem.file import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
@@ -11,7 +11,6 @@ from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityStatistics
 from ..stoats.calculate.monitor import MonitorStatistics
-from ..stoats.calculate.power import BasicPowerStatistics, ExtendedPowerStatistics
 from ..stoats.calculate.segment import SegmentStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
@@ -33,6 +32,8 @@ def default(log, db, no_diary=False):
 
         # the following users helper functions (add_...) but you can also
         # execute arbitrary python code, use the session, etc.
+
+        add_loader_support(s)
 
         # basic activities
 
@@ -135,5 +136,5 @@ def default(log, db, no_diary=False):
                             summary='[cnt]',
                             display_cls=Text)
 
-        # finally, set the TZ so that first use of teh diary doesn't wipe all our intervals
+        # finally, set the TZ so that first use of the diary doesn't wipe all our intervals
         TopicJournal.check_tz(log, s)

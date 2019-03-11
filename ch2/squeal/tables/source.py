@@ -20,6 +20,7 @@ class SourceType(IntEnum):
     CONSTANT = 4
     MONITOR = 5
     SEGMENT = 6
+    DUMMY = 7
 
 
 class Source(Base):
@@ -63,7 +64,7 @@ class Source(Base):
         for instance in s.new:
             # ignore constants as time 0
             if isinstance(instance, StatisticJournal) and not isinstance(instance.source, Interval) \
-                    and instance.value is not None and instance.time:
+                    and not isinstance(instance.source, Dummy) and instance.value is not None and instance.time:
                 start, finish = extend_range(start, finish, instance.time)
         if start is not None:
             # print(f'################ {start} {finish}')
@@ -227,3 +228,24 @@ class Interval(Source):
             # log can be null if called during database handling
             if log: log.info(f'Deleting {interval}')
             s.delete(interval)
+
+
+class Dummy(Source):
+
+    __tablename__ = 'dummy_source'
+
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': SourceType.DUMMY
+    }
+
+    def time_range(self, s):
+        return None, None
+
+    @classmethod
+    def singletons(cls, s):
+        from .. import StatisticName
+        source = s.query(Dummy).one()
+        name = s.query(StatisticName).filter(StatisticName.owner == source).one()
+        return source, name

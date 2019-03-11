@@ -1,13 +1,12 @@
 from json import dumps
 
-from ..stoats.calculate.nearby import Nearby, NearbyCalculator
+from ..squeal import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
+    Topic, TopicField, Dummy
 from ..squeal.database import connect
-from ..squeal.tables.activity import ActivityGroup
-from ..squeal.tables.constant import Constant, ValidateNamedTuple
-from ..squeal.tables.pipeline import Pipeline, PipelineType
-from ..squeal.tables.statistic import StatisticName, StatisticJournalType
-from ..squeal.tables.topic import Topic, TopicField
+from ..squeal.tables.constant import ValidateNamedTuple
 from ..squeal.types import long_cls
+from ..stoats.calculate.nearby import Nearby, NearbyCalculator
+from ..stoats.names import DUMMY
 from ..uweird.fields.topic import Integer
 
 NEARBY_CNAME = 'Nearby'
@@ -260,3 +259,10 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
                                    'height': height, 'width': width}))
     add_statistics(s, NearbyCalculator, sort, nearby=nearby_name)
 
+
+def add_loader_support(s):
+    '''
+    Add 'dummy' values used by loader.
+    '''
+    dummy_source = add(s, Dummy())
+    dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source))

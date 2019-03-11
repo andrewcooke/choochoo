@@ -1,17 +1,26 @@
 
 from collections import defaultdict
-
-from sqlalchemy import func
+from time import time
 
 from .waypoint import make_waypoint
-from ..squeal import StatisticJournal, StatisticName, SystemConstant
+from ..squeal import StatisticJournal, StatisticName, Dummy
 from ..squeal.types import short_cls
 
 
 class StatisticJournalLoader:
-    '''
-    Fast loading that requires locked access to the database (we pre-generate keys).
-    '''
+
+    # we want to load multiple tables (because we're using inheritance) quickly and safely.
+    # to do this, we need to generate IDs ourselves (to avoid reading the ID for the base class)
+    # on sqlite we can do this by:
+    # - using a single transaction (disabling autoflush)
+    # - starting to write (a dummy StatisticJournal, which also gets us the last ID)
+    # - calculating IDs from the dummy ID
+    # - writing the data (still in the same transaction)
+    # - removing the dummy
+    # - committing
+    # afaict that would work on any SQL database with a reasonable level of isolation.
+    # what is special to sqlite is that the final commit will not fail, because there is only ever one
+    # process writing (this is true even when using multiple processes)
 
     def __init__(self, log, s, owner, add_serial=True):
         self._log = log
@@ -28,17 +37,23 @@ class StatisticJournalLoader:
         return bool(self.__staging)
 
     def load(self):
-        SystemConstant.acquire_lock(self._s, self)  # includes flush so query below OK
-        try:
-            rowid = self._s.query(func.max(StatisticJournal.id)).scalar() + 1
-            for type in self.__staging:
-                self._log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
-                for sjournal in self.__staging[type]:
-                    sjournal.id = rowid
-                    rowid += 1
-                self._s.bulk_save_objects(self.__staging[type])
-        finally:
-            SystemConstant.release_lock(self._s, self)
+        self._s.commit()
+        with self._s.no_autoflush:
+            dummy_source, dummy_name = Dummy.singletons(self._s)
+            dummy = StatisticJournal(source=dummy_source, statistic_name=dummy_name, time=time())
+            self._s.add(dummy)
+            self._s.flush()
+            try:
+                rowid = dummy.id + 1
+                for type in self.__staging:
+                    self._log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
+                    for sjournal in self.__staging[type]:
+                        sjournal.id = rowid
+                        rowid += 1
+                    self._s.bulk_save_objects(self.__staging[type])
+            finally:
+                self._s.delete(dummy)
+                self._s.commit()
 
     def add(self, name, units, summary, constraint, source, value, time, type):
 

@@ -11,16 +11,18 @@ from .support import Base
 from ..command.args import DATABASE, NamespaceWithVariables, NO_OP, parser
 from ..lib.log import make_log
 
-# mention these so they are "created"
-Source,  Interval,
-ActivityGroup, ActivityJournal, ActivityTimespan,
-Topic, TopicJournal,
-StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText,
+
+# mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
+Source,  Interval, Dummy
+ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
+Topic, TopicJournal, TopicField,
+StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticMeasure
 Segment, SegmentJournal
 Pipeline
 MonitorJournal
-Constant, SystemConstant
+Constant, SystemConstant, SystemProcess
 ActivitySimilarity, ActivityNearby
+Timestamp
 
 
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf

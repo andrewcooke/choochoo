@@ -21,7 +21,6 @@ from .command.monitor import monitor
 from .command.package_fit_profile import package_fit_profile
 from .command.statistics import statistics
 from .command.test_schedule import test_schedule
-from .command.unlock import unlock
 from .lib.io import tui
 from .lib.log import make_log
 from .squeal.database import Database
@@ -54,7 +53,6 @@ COMMANDS = {ACTIVITIES: activities,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,
             TEST_SCHEDULE: test_schedule,
-            UNLOCK: unlock
             }
 
 
@@ -72,9 +70,6 @@ def main():
         if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
             refuse_until_configured()
         else:
-            if not command_name or command_name not in (UNLOCK, FIT, FIX_FIT, GARMIN, TEST_SCHEDULE):
-                with db.session_context() as s:
-                    SystemConstant.assert_unlocked(s)
             set_jupyter_args(log, args)
             try:
                 if command:
