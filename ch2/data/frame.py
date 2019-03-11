@@ -2,6 +2,7 @@
 import datetime as dt
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
+from logging import getLogger
 
 import numpy as np
 import pandas as pd
@@ -22,9 +23,8 @@ from ..stoats.names import TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER
 from ch2.uranus.coasting import CoastingBookmark
 
-# because this is intended to be called from jupyter we hide the log here
-# other callers can use these routines by calling set_log() first.
-LOG = [None]
+
+log = getLogger(__name__)
 
 
 def df(query):
@@ -33,20 +33,10 @@ def df(query):
 
 
 def session(*args):
-    ns, log, db = connect(args)
-    set_log(log)
+    global log
+    ns, db = connect(args)
+    log = getLogger(__name__)
     return db.session()
-
-
-def get_log():
-    if not LOG[0]:
-        raise Exception('Create session first (or call set_log from within python)')
-    return LOG[0]
-
-
-def set_log(log):
-    if log:
-        LOG[0] = log
 
 
 def _add_constraint(q, attribute, value, key):
@@ -63,8 +53,7 @@ def _add_constraint(q, attribute, value, key):
     return q
 
 
-def _collect_statistics(s, names, owner=None, constraint=None, log=None):
-    set_log(log)
+def _collect_statistics(s, names, owner=None, constraint=None):
     if not names:
         names = ['%']
     statistic_ids, statistic_names = set(), set()
@@ -124,16 +113,15 @@ def make_pad(data, times, statistic_names, quiet=False):
             if len(data[name]) != n:
                 err_cnt[name] += 1
                 if err_cnt[name] <= 1 and not quiet:
-                    get_log().warning('Missing %s at %s (single warning)' % (name, times[-1]))
+                    log.warning('Missing %s at %s (single warning)' % (name, times[-1]))
                 data[name].append(None)
 
     return pad
 
 
 def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, source_ids=None,
-               schedule=None, quiet=False, log=None):
+               schedule=None, quiet=False):
 
-    set_log(log)
     statistic_names, statistic_ids = _collect_statistics(s, statistics, owner, constraint)
     q = _build_statistic_journal_query(statistic_ids, start, finish, source_ids, schedule)
     data, times = defaultdict(list), []
@@ -153,14 +141,13 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
 
 
 def resolve_activity(s, local_time=None, time=None, activity_journal_id=None,
-                     activity_group_name=None, activity_group_id=None, log=None):
+                     activity_group_name=None, activity_group_id=None):
     '''
     If activity_journal_id is given, it is returned.
 
     Otherwise, specify one of (local_time, time) and one of (activity_group_name, activity_group_id).
     '''
 
-    set_log(log)
     if activity_journal_id:
         return activity_journal_id
     if local_time:
@@ -175,16 +162,15 @@ def resolve_activity(s, local_time=None, time=None, activity_journal_id=None,
         filter(ActivityJournal.start <= time,
                ActivityJournal.finish >= time,
                ActivityJournal.activity_group_id == activity_group_id).scalar()
-    get_log().info('Using activity_journal_id=%d' % activity_journal_id)
+    log.info('Using activity_journal_id=%d' % activity_journal_id)
     return activity_journal_id
 
 
 def activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
                         local_time=None, time=None, bookmarks=None, activity_journal_id=None,
                         activity_group_name=None, activity_group_id=None, with_timespan=False,
-                        log=None, quiet=False):
+                        quiet=False):
 
-    set_log(log)
     if bookmarks:
         if start or finish or local_time or time or activity_journal_id:
             raise Exception('Cannot use bookmarks with additional activity constraints')
@@ -208,7 +194,7 @@ def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None
                          quiet=False):
 
     statistic_names, statistic_ids = _collect_statistics(s, statistics, owner=owner, constraint=constraint)
-    get_log().debug('Statistics IDs %s' % statistic_ids)
+    log.debug('Statistics IDs %s' % statistic_ids)
     activity_journal_id = resolve_activity(s, local_time=local_time, time=time,
                                            activity_journal_id=activity_journal_id,
                                            activity_group_name=activity_group_name,
@@ -226,7 +212,7 @@ def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None
         q = q.where(t.sj.c.time >= start)
     if finish:
         q = q.where(t.sj.c.time < finish)
-    get_log().debug(q)
+    log.debug(q)
 
     data, times = defaultdict(list), []
     pad = make_pad(data, times, statistic_names, quiet=quiet)
@@ -248,9 +234,8 @@ def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None
 
 
 def statistic_quartiles(s, *statistics, start=None, finish=None, owner=None, constraint=None, source_ids=None,
-                        schedule=None, log=None):
+                        schedule=None):
 
-    set_log(log)
     statistic_names, statistic_ids = _collect_statistics(s, statistics, owner, constraint)
     q = s.query(StatisticMeasure). \
         join(StatisticJournal, StatisticMeasure.statistic_journal_id == StatisticJournal.id). \
@@ -267,7 +252,7 @@ def statistic_quartiles(s, *statistics, start=None, finish=None, owner=None, con
     if schedule:
         q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \
             filter(Interval.schedule == schedule)
-    get_log().debug(q)
+    log.debug(q)
 
     raw_data = defaultdict(lambda: defaultdict(lambda: [0] * 5))
     for measure in q.all():
@@ -287,9 +272,8 @@ def statistic_quartiles(s, *statistics, start=None, finish=None, owner=None, con
 
 
 def std_activity_statistics(s, local_time=None, time=None, activity_journal_id=None,
-                            activity_group_name=None, activity_group_id=None, log=None):
+                            activity_group_name=None, activity_group_id=None):
 
-    set_log(log)
     stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
                                 ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, POWER,
                                 local_time=local_time, time=time, activity_journal_id=activity_journal_id,

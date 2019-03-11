@@ -1,3 +1,4 @@
+from logging import getLogger
 
 import pandas as pd
 
@@ -5,7 +6,6 @@ from .args import SUB_COMMAND, START, FINISH, NAMES, \
     OWNER, CONSTRAINT, SCHEDULE, SOURCE_IDS, STATISTIC_QUARTILES, PRINT, FORMAT, \
     CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS
 from ..data import df, statistics, statistic_quartiles
-from ..data.frame import LOG
 from ..squeal import *
 from ..squeal.support import Base
 
@@ -37,7 +37,6 @@ Will print the contents of the StatisticName table in CSV format.
 Will print HR-related statistics from the start of 2018 for the given activity group.
     '''
 
-    LOG[0] = log
     with db.session_context() as s:
 
         if args[SUB_COMMAND] == TABLE:
