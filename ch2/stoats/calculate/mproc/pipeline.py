@@ -1,5 +1,6 @@
 
 from abc import abstractmethod
+from logging import getLogger
 from sys import exc_info
 from traceback import format_tb
 
@@ -16,6 +17,7 @@ from ....squeal import Timestamp, ActivityJournal, StatisticName, StatisticJourn
 from ....squeal.types import short_cls, long_cls
 
 
+log = getLogger(__name__)
 CPU_FRACTION = 0.9
 MAX_REPEAT = 3
 
@@ -50,7 +52,7 @@ class MultiProcCalculator(Statistics):
 
             if self.force:
                 if self.worker:
-                    self._log.warning('Worker deleting data')
+                    log.warning('Worker deleting data')
                 self._delete(s)
 
             missing = self._missing(s)
@@ -58,7 +60,7 @@ class MultiProcCalculator(Statistics):
         if self.worker:
             self._run_all(s, missing)
         elif not missing:
-            self._log.info(f'No missing statistics for {short_cls(self)}')
+            log.info(f'No missing statistics for {short_cls(self)}')
         else:
             n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
             if n_parallel < 2:
@@ -95,24 +97,26 @@ class MultiProcCalculator(Statistics):
         #   N_TOTAL <= N_MISSING / N_PARALLEL
         #   (N_MISSING / N_TOTAL) * COST > OVERHEAD so we're not wasting our time
         #   N_TOTAL <= N_PARALLEL * MAX_REPEAT because we want large batches, but not too large
+        # really we should include estimates of disk and cpu speed here, in which case we need to separate
+        # out COST_READ too (currently folded into COST_CALC).
 
-        self._log.debug(f'Batching for n_cpu={n_cpu}, overhead={self.overhead}, '
+        log.debug(f'Batching for n_cpu={n_cpu}, overhead={self.overhead}, '
                         f'cost_writes={self.cost_write} cost_calc={self.cost_calc}')
         n_missing = len(missing)
         cost = self.cost_write + self.cost_calc
         limit = cost / self.cost_write
-        self._log.debug(f'Limit on parallel workers from database contention is {limit:3.1f}')
-        self._log.debug(f'Limit on parallel workers from CPU count is {n_cpu:d}')
+        log.debug(f'Limit on parallel workers from database contention is {limit:3.1f}')
+        log.debug(f'Limit on parallel workers from CPU count is {n_cpu:d}')
         n_parallel = int(min(limit, n_cpu))
         n_total = int((n_missing + n_parallel - 1) / n_parallel)
-        self._log.debug(f'Limit on total workers from work available is {n_total:d}')
+        log.debug(f'Limit on total workers from work available is {n_total:d}')
         limit = cost * n_missing / self.overhead
-        self._log.debug(f'Limit on total workers from overhead is {limit:3.1f}')
+        log.debug(f'Limit on total workers from overhead is {limit:3.1f}')
         n_total = min(n_total, int(limit))
         limit = n_parallel * MAX_REPEAT
-        self._log.debug(f'Limit on total workers to boost batch size is {limit:d}')
+        log.debug(f'Limit on total workers to boost batch size is {limit:d}')
         n_total = min(n_total, limit)
-        self._log.info(f'Threads: {n_total}/{n_parallel}')
+        log.info(f'Threads: {n_total}/{n_parallel}')
         return n_total, n_parallel
 
     def __spawn(self, s, missing, n_total, n_parallel):
@@ -121,7 +125,7 @@ class MultiProcCalculator(Statistics):
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(self._log, s, n_parallel, self.owner_out,
+        workers = Workers(s, n_parallel, self.owner_out,
                           f'{{ch2}} -v0 -l {{log}} {STATISTICS} {mm(WORKER)} {self.id}')
         start, finish = None, -1
         for i in range(n_total):
@@ -129,7 +133,7 @@ class MultiProcCalculator(Statistics):
             finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
             if start > finish: raise Exception('Bad chunking logic')
             s, f = time_to_local_time(missing[start]), time_to_local_time(missing[finish])
-            self._log.info(f'Starting worker for {s} - {f}')
+            log.info(f'Starting worker for {s} - {f}')
             args = f'"{s}" "{f}"'
             workers.run(args)
         workers.wait()
@@ -142,12 +146,12 @@ class DataFrameCalculator(MultiProcCalculator):
             source = self._get_source(s, time_or_date)
             data = self._load_data(s, source)
             stats = self._calculate_stats(s, source, data)
-            loader = StatisticJournalLoader(self._log, s, self.owner_out)
+            loader = StatisticJournalLoader(log, s, self.owner_out)
             self._copy_results(s, source, loader, stats)
             loader.load()
         except Exception as e:
-            self._log.warning(f'No statistics on {time_or_date} ({e})')
-            self._log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+            log.warning(f'No statistics on {time_or_date} ({e})')
+            log.debug('\n' + ''.join(format_tb(exc_info()[2])))
 
     @abstractmethod
     def _get_source(self, s, time_or_date):
@@ -170,7 +174,7 @@ class ActivityJournalCalculator(DataFrameCalculator):
 
     def __delimit_query(self, q):
         start, finish = self._start_finish(type=local_time_to_time)
-        self._log.debug(f'Delimit times: {start} - {finish}')
+        log.debug(f'Delimit times: {start} - {finish}')
         if start:
             q = q.filter(ActivityJournal.start >= start)
         if finish:
@@ -196,7 +200,7 @@ class ActivityJournalCalculator(DataFrameCalculator):
             if repeat:
                 s.query(StatisticJournal).filter(StatisticJournal.id.in_(statistic_journals.cte())). \
                     delete(synchronize_session=False)
-                Timestamp.clean_keys(self._log, s,
+                Timestamp.clean_keys(log, s,
                                      s.query(StatisticJournal.source_id).
                                      filter(StatisticJournal.statistic_name_id.in_(statistic_names.cte())),
                                      self.owner_out, constraint=None)
@@ -204,10 +208,10 @@ class ActivityJournalCalculator(DataFrameCalculator):
                 n = s.query(count(StatisticJournal.id)). \
                     filter(StatisticJournal.id.in_(statistic_journals.cte())).scalar()
                 if n:
-                    self._log.warning(f'Deleting {n} statistics for {long_cls(self.owner_out)} from {start} to {finish}')
+                    log.warning(f'Deleting {n} statistics for {long_cls(self.owner_out)} from {start} to {finish}')
                 else:
-                    self._log.warning(f'No statistics to delete for {long_cls(self.owner_out)} from {start} to {finish}')
-                    # self._log.debug(statistic_journals)
+                    log.warning(f'No statistics to delete for {long_cls(self.owner_out)} from {start} to {finish}')
+                    # log.debug(statistic_journals)
         s.commit()
 
     def _get_source(self, s, time):

@@ -1,4 +1,5 @@
 
+from logging import getLogger
 from os import getpid
 from subprocess import Popen
 from sys import argv
@@ -9,6 +10,8 @@ from psutil import pid_exists, Process
 from ....squeal import SystemProcess
 from ....squeal.types import short_cls
 
+
+log = getLogger(__name__)
 DELTA_TIME = 3
 SLEEP = 0.1
 LOG = 'log'
@@ -17,8 +20,7 @@ LIKE = 'like'
 
 class Workers:
 
-    def __init__(self, log, s, n_parallel, owner, cmd):
-        self._log = log
+    def __init__(self, s, n_parallel, owner, cmd):
         self._s = s
         self.n_parallel = n_parallel
         self.owner = owner
@@ -45,12 +47,12 @@ class Workers:
                 i = words.index(argv[1])
                 words = words[:i]
             ch2 = ' '.join(words)
-            self._log.debug(f'Using command "{ch2}"')
+            log.debug(f'Using command "{ch2}"')
             return ch2
 
     def clear_all(self):
         for worker in self.__workers.keys():
-            self._log.warning(f'Killing pending PID {worker.pid} ({worker.args})')
+            log.warning(f'Killing pending PID {worker.pid} ({worker.args})')
             worker.kill()
             self._delete_pid(worker.pid)
         for process in self._s.query(SystemProcess). \
@@ -58,7 +60,7 @@ class Workers:
             if pid_exists(process.pid):
                 p = Process(process.pid)
                 if abs(p.create_time() - process.start) < DELTA_TIME:
-                    self._log.warning(f'Killing rogue PID {process.pid} ({" ".join(p.cmdline())})')
+                    log.warning(f'Killing rogue PID {process.pid} ({" ".join(p.cmdline())})')
                     p.kill()
             self._s.delete(process)
         self._s.commit()
@@ -77,11 +79,11 @@ class Workers:
     def run(self, args):
         self.wait(self.n_parallel - 1)
         log_index = self._free_log_index()
-        log = f'{short_cls(self.owner)}.{log_index}.{LOG}'
-        cmd = (self.cmd + ' ' + args).format(log=log, ch2=self.ch2)
+        log_name = f'{short_cls(self.owner)}.{log_index}.{LOG}'
+        cmd = (self.cmd + ' ' + args).format(log=log_name, ch2=self.ch2)
         worker = Popen(args=cmd, shell=True)
-        self._log.debug(f'Adding command "{cmd}"')
-        self._s.add(SystemProcess(command=cmd, owner=self.owner, pid=worker.pid, log=log))
+        log.debug(f'Adding command "{cmd}"')
+        self._s.add(SystemProcess(command=cmd, owner=self.owner, pid=worker.pid, log=log_name))
         self._s.commit()  # critical, or database is locked for worker
         self.__workers[worker] = log_index
 
@@ -98,16 +100,11 @@ class Workers:
                             raise Exception(f'Command "{process.command}" exited with return code {worker.returncode} '
                                             f'see {process.log} for more info')
                         else:
-                            self._log.debug(f'Command "{process.command}" finished successfully')
+                            log.debug(f'Command "{process.command}" finished successfully')
                     finally:
                         del self.__workers[worker]
                         self._delete_pid(worker.pid)
             sleep(SLEEP)
-
-    def _substitutions(self, log_index):
-        like = short_cls(self.owner)
-        log = like + '.' + str(log_index)
-        return {LOG: log, LIKE: like}
 
     def _free_log_index(self):
         used = set(self.__workers.values())

@@ -1,16 +1,19 @@
 
-from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler, NullHandler
+from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler
 from logging.handlers import RotatingFileHandler
 from os.path import join
 
 from ..command.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG
 
-CACHE = []
+
+log = None
 
 
 def make_log(args, tui=False):
 
-    if not CACHE:
+    global log
+
+    if not log:
 
         level_unset = args[VERBOSITY] is None
         level = 4 if level_unset else args[VERBOSITY][0]
@@ -39,6 +42,10 @@ def make_log(args, tui=False):
         tlog.setLevel(INFO)
         tlog.addHandler(file_handler)
 
+        clog = getLogger('ch2')
+        clog.setLevel(DEBUG)
+        clog.addHandler(file_handler)
+
         log = getLogger(name)
         log.setLevel(DEBUG)
         log.addHandler(file_handler)
@@ -48,12 +55,11 @@ def make_log(args, tui=False):
             stderr_handler = StreamHandler()
             stderr_handler.setLevel(level)
             stderr_handler.setFormatter(stderr_formatter)
-            log.addHandler(stderr_handler)
             # slog.addHandler(stderr_handler)
             # mlog.addHandler(stderr_handler)
             blog.addHandler(stderr_handler)
             tlog.addHandler(stderr_handler)
+            clog.addHandler(stderr_handler)
+            log.addHandler(stderr_handler)
 
-        CACHE.append(log)
-
-    return CACHE[0]
+    return log

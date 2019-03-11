@@ -42,17 +42,17 @@ def fk_pragma_on_connect(dbapi_con, _con_record):
 
 
 @event.listens_for(Engine, 'close')
-def analyxe_pragma_on_close(dbapi_con, _con_record):
-    # cursor = dbapi_con.cursor()
-    # try:
-    #     # this can fail if another process is using the database
-    #     cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
-    # except OperationalError as e:
-    #     log = getLogger(__name__)
-    #     log.warning(repr(e))
-    # finally:
-    #     cursor.close()
-    pass
+def analyze_pragma_on_close(dbapi_con, _con_record):
+    cursor = dbapi_con.cursor()
+    try:
+        # this can fail if another process is using the database
+        cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
+    except OperationalError as e:
+        # log = getLogger(__name__)
+        # log.warning(repr(e))
+        pass
+    finally:
+        cursor.close()
 
 
 class Database:

@@ -1,6 +1,7 @@
 
 from collections import namedtuple
 from json import loads
+from logging import getLogger
 from math import pi
 
 import numpy as np
@@ -18,9 +19,9 @@ from ...lib.data import reftuple, MissingReference
 from ...squeal import StatisticJournalFloat, Constant
 
 
+log = getLogger(__name__)
 Power = reftuple('Power', 'bike, weight, p, g', defaults=(70, 1.225, 9.8))
 Bike = namedtuple('Bike', 'cda, crr, m')
-
 RAD_TO_DEG = 180 / pi
 
 
@@ -93,24 +94,24 @@ class BasicPowerCalculator(PowerCalculator):
         power_ref = self._karg('power')
         power = Power(**loads(Constant.get(s, power_ref).at(s).value))
         # default owner is constant since that's what users can tweak
-        self.power = power.expand(self._log, s, df[TIME].iloc[0], owner=Constant, constraint=ajournal.activity_group)
-        self._log.debug(f'{power_ref}: {self.power}')
+        self.power = power.expand(log, s, df[TIME].iloc[0], owner=Constant, constraint=ajournal.activity_group)
+        log.debug(f'{power_ref}: {self.power}')
 
     def _load_data(self, s, ajournal):
         try:
             df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, CADENCE, LATITUDE, LONGITUDE, HEART_RATE,
                                      activity_journal_id=ajournal.id, with_timespan=True,
-                                     log=self._log, quiet=True)
+                                     log=log, quiet=True)
             _, df = linear_resample(df)
             df = add_differentials(df)
             self._set_power(s, ajournal, df)
             return df
         except PowerException as e:
-            self._log.warn(e)
+            log.warning(e)
         except MissingReference as e:
-            self._log.warning(f'Power configuration incorrect ({e})')
+            log.warning(f'Power configuration incorrect ({e})')
         except Exception as e:
-            self._log.warning(f'Failed to generate statistics for power: {e}')
+            log.warning(f'Failed to generate statistics for power: {e}')
             raise
 
     def _calculate_stats(self, s, ajournal, data):
