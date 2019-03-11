@@ -1,6 +1,7 @@
 
 from logging import getLogger, NullHandler
-from sys import version_info
+from sys import version_info, exc_info
+from traceback import format_tb
 
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
@@ -85,6 +86,8 @@ def main():
         exit(1)
     except Exception as e:
         log.critical(e)
+        log.debug(repr(e))
+        log.debug('\n' + ''.join(format_tb(exc_info()[2])))
         log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
         log.info('Docs at http://andrewcooke.github.io/choochoo')
         if not args or args[DEV]:

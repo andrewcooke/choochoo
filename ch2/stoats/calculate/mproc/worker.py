@@ -67,6 +67,7 @@ class Workers:
         self._s.query(SystemProcess). \
             filter(SystemProcess.owner == self.owner,
                    SystemProcess.pid == pid).delete()
+        self._s.commit()
 
     def _read_pid(self, pid):
         return self._s.query(SystemProcess). \
@@ -81,26 +82,26 @@ class Workers:
         worker = Popen(args=cmd, shell=True)
         self._log.debug(f'Adding command "{cmd}"')
         self._s.add(SystemProcess(command=cmd, owner=self.owner, pid=worker.pid, log=log))
+        self._s.commit()  # critical, or database is locked for worker
         self.__workers[worker] = log_index
 
     def wait(self, n_workers=0):
         # import pdb; pdb.set_trace()
         while len(self.__workers) > n_workers:
-            for worker in self.__workers:
+            for worker in list(self.__workers.keys()):
                 worker.poll()
                 process = self._read_pid(worker.pid)
                 if worker.returncode is not None:
                     try:
-                        del self.__workers[worker]
-                        if worker.returncode:
-                            raise Exception(f'Worker "{process.command}" exited with return code {worker.returncode} '
-                                            f'see {process.log} for more info')
-                        else:
-                            return
-                    finally:
-                        self._delete_pid(worker.pid)
                         if worker.returncode:
                             self.clear_all()
+                            raise Exception(f'Command "{process.command}" exited with return code {worker.returncode} '
+                                            f'see {process.log} for more info')
+                        else:
+                            self._log.debug(f'Command "{process.command}" finished successfully')
+                    finally:
+                        del self.__workers[worker]
+                        self._delete_pid(worker.pid)
             sleep(SLEEP)
 
     def _substitutions(self, log_index):

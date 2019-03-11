@@ -17,6 +17,7 @@ from ...data.power import median_freq, linear_resample
 from ...lib.data import reftuple, MissingReference
 from ...squeal import StatisticJournalFloat, Constant
 
+
 Power = reftuple('Power', 'bike, weight, p, g', defaults=(70, 1.225, 9.8))
 Bike = namedtuple('Bike', 'cda, crr, m')
 
@@ -85,7 +86,8 @@ class BasicPowerStatistics(PowerStatistics):
 class BasicPowerCalculator(PowerCalculator):
 
     def __init__(self, *args, **kargs):
-        super().__init__(*args, cost_calc=2, cost_write=1, **kargs)
+        # a lot of reading for not much writing
+        super().__init__(*args, cost_calc=10, cost_write=1, **kargs)
 
     def _set_power(self, s, ajournal, df):
         power_ref = self._karg('power')

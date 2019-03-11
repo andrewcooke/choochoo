@@ -12,7 +12,7 @@ class StatisticJournalLoader:
     # we want to load multiple tables (because we're using inheritance) quickly and safely.
     # to do this, we need to generate IDs ourselves (to avoid reading the ID for the base class)
     # on sqlite we can do this by:
-    # - using a single transaction (disabling autoflush)
+    # - using a single transaction
     # - starting to write (a dummy StatisticJournal, which also gets us the last ID)
     # - calculating IDs from the dummy ID
     # - writing the data (still in the same transaction)
@@ -38,22 +38,23 @@ class StatisticJournalLoader:
 
     def load(self):
         self._s.commit()
-        with self._s.no_autoflush:
-            dummy_source, dummy_name = Dummy.singletons(self._s)
-            dummy = StatisticJournal(source=dummy_source, statistic_name=dummy_name, time=time())
-            self._s.add(dummy)
-            self._s.flush()
-            try:
-                rowid = dummy.id + 1
-                for type in self.__staging:
-                    self._log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
-                    for sjournal in self.__staging[type]:
-                        sjournal.id = rowid
-                        rowid += 1
-                    self._s.bulk_save_objects(self.__staging[type])
-            finally:
-                self._s.delete(dummy)
-                self._s.commit()
+        dummy_source, dummy_name = Dummy.singletons(self._s)
+        dummy = StatisticJournal(source=dummy_source, statistic_name=dummy_name, time=time())
+        self._s.add(dummy)
+        self._s.flush()
+        self._log.debug(f'Dummy ID {dummy.id}')
+        try:
+            rowid = dummy.id + 1
+            for type in self.__staging:
+                self._log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
+                for sjournal in self.__staging[type]:
+                    sjournal.id = rowid
+                    rowid += 1
+                self._s.bulk_save_objects(self.__staging[type])
+        finally:
+            self._s.commit()
+            self._s.delete(dummy)  # todo - could maybe remove instead and use a single commit?
+            self._s.commit()
 
     def add(self, name, units, summary, constraint, source, value, time, type):
 
@@ -70,12 +71,6 @@ class StatisticJournalLoader:
         if key not in self.__statistic_name_cache:
             self.__statistic_name_cache[key] = \
                 StatisticName.add_if_missing(self._log, self._s, name, units, summary, self._owner, constraint)
-        if not self.__statistic_name_cache.get(key, None):
-            raise Exception('Failed to get StatisticName for %s' % key)
-        if not self.__statistic_name_cache[key].id:
-            self._s.flush()
-            if not self.__statistic_name_cache[key].id:
-                raise Exception('Could not get StatisticName.id for %s' % key)
 
         instance = type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source.id,
                         value=value, time=time, serial=self.__serial)

@@ -1,5 +1,7 @@
 
 from abc import abstractmethod
+from sys import exc_info
+from traceback import format_tb
 
 from psutil import cpu_count
 from sqlalchemy import not_
@@ -21,7 +23,7 @@ MAX_REPEAT = 3
 class MultiProcCalculator(Statistics):
 
     def __init__(self, *args, owner_out=None, force=False, start=None, finish=None,
-                 overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, prog=None, id=None, **kargs):
+                 overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         super().__init__(*args, **kargs)
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # delete data (force re-calculation)?
@@ -31,30 +33,38 @@ class MultiProcCalculator(Statistics):
         self.cost_calc = cost_calc  # see _cost_benefit for full details
         self.cost_write = cost_write  # defaults guarantee a single thread
         self.n_cpu = max(1, int(cpu_count() * CPU_FRACTION)) if n_cpu is None else n_cpu  # number of cpus available
-        self.worker = worker  # if not-None, then we're in a sub-process (actually contains the same value as id)
-        self.prog = prog  # the name of the ch2 program (to run sub-processes)
+        self.worker = worker  # if True, then we're in a sub-process
         self.id = id  # the id for the pipeline entry in the database (passed to sub-processes)
+
+    # todo - move up inheritance hierarchy when not using kargs elsewhere
+    def _start_finish(self, type=None):
+        start, finish = self.start, self.finish
+        if type:
+            if start: start = type(start)
+            if finish: finish = type(finish)
+        return start, finish
 
     def run(self):
 
         with self._db.session_context() as s:
 
             if self.force:
-                if self.worker is not None:
+                if self.worker:
                     self._log.warning('Worker deleting data')
                 self._delete(s)
 
             missing = self._missing(s)
-            if self.worker:
+
+        if self.worker:
+            self._run_all(s, missing)
+        elif not missing:
+            self._log.info(f'No missing statistics for {short_cls(self)}')
+        else:
+            n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
+            if n_parallel < 2:
                 self._run_all(s, missing)
-            elif not missing:
-                self._log.info(f'No missing statistics for {short_cls(self)}')
             else:
-                n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
-                if n_parallel < 2:
-                    self._run_all(s, missing)
-                else:
-                    self.__spawn(s, missing, n_total, n_parallel)
+                self.__spawn(s, missing, n_total, n_parallel)
 
     def _run_all(self, s, missing):
         for time_or_date in missing:
@@ -118,7 +128,9 @@ class MultiProcCalculator(Statistics):
             start = finish + 1
             finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
             if start > finish: raise Exception('Bad chunking logic')
-            args = f'"{time_to_local_time(missing[start])}" "{time_to_local_time(missing[finish])}"'
+            s, f = time_to_local_time(missing[start]), time_to_local_time(missing[finish])
+            self._log.info(f'Starting worker for {s} - {f}')
+            args = f'"{s}" "{f}"'
             workers.run(args)
         workers.wait()
 
@@ -135,6 +147,7 @@ class DataFrameCalculator(MultiProcCalculator):
             loader.load()
         except Exception as e:
             self._log.warning(f'No statistics on {time_or_date} ({e})')
+            self._log.debug('\n' + ''.join(format_tb(exc_info()[2])))
 
     @abstractmethod
     def _get_source(self, s, time_or_date):
@@ -157,6 +170,7 @@ class ActivityJournalCalculator(DataFrameCalculator):
 
     def __delimit_query(self, q):
         start, finish = self._start_finish(type=local_time_to_time)
+        self._log.debug(f'Delimit times: {start} - {finish}')
         if start:
             q = q.filter(ActivityJournal.start >= start)
         if finish:

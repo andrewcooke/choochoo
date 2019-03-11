@@ -1,6 +1,7 @@
 
 import datetime as dt
 from enum import IntEnum
+from sqlite3 import IntegrityError
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.orm import relationship, backref
@@ -33,21 +34,28 @@ class StatisticName(Base):
 
     @classmethod
     def add_if_missing(cls, log, s, name, units, summary, owner, constraint):
-        statistic_name = s.query(StatisticName). \
+        q = s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint).one_or_none()
+                   StatisticName.constraint == constraint)
+        statistic_name = q.one_or_none()
         if not statistic_name:
             statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner,
                                            constraint=constraint)
             s.add(statistic_name)
+            try:
+                s.flush()
+            except IntegrityError:  # worker may have created in parallel, so read
+                statistic_name = q.one()
         else:
             if statistic_name.units != units:
                 log.warning('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
                 statistic_name.units = units
+                s.flush()
             if statistic_name.summary != summary:
                 log.warning('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
                 statistic_name.summary = summary
+                s.flush()
         return statistic_name
 
     @classmethod

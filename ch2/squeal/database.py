@@ -1,5 +1,7 @@
 
 from contextlib import contextmanager
+from logging import getLogger
+from sqlite3 import OperationalError
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
@@ -29,20 +31,28 @@ Timestamp
 @event.listens_for(Engine, "connect")
 def fk_pragma_on_connect(dbapi_con, _con_record):
     cursor = dbapi_con.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON;")  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
-    cursor.execute("PRAGMA temp_store=MEMORY;")  # https://www.sqlite.org/pragma.html#pragma_temp_store
-    cursor.execute("PRAGMA threads=4;")  # https://www.sqlite.org/pragma.html#pragma_threads
-    cursor.execute("PRAGMA cache_size=-1000000;")  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
-    cursor.execute("PRAGMA secure_delete=OFF;")  # https://www.sqlite.org/pragma.html#pragma_secure_delete
-    # cursor.execute("PRAGMA journal_mode=WAL;")  # https://www.sqlite.org/wal.html
+    cursor.execute('PRAGMA foreign_keys=ON;')  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
+    cursor.execute('PRAGMA temp_store=MEMORY;')  # https://www.sqlite.org/pragma.html#pragma_temp_store
+    cursor.execute('PRAGMA threads=4;')  # https://www.sqlite.org/pragma.html#pragma_threads
+    cursor.execute('PRAGMA cache_size=-1000000;')  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
+    cursor.execute('PRAGMA secure_delete=OFF;')  # https://www.sqlite.org/pragma.html#pragma_secure_delete
+    cursor.execute('PRAGMA journal_mode=WAL;')  # https://www.sqlite.org/wal.html
+    cursor.execute(f'PRAGMA busy_timeout={5 * 60 * 1000};')  # https://www.sqlite.org/pragma.html#pragma_busy_timeout
     cursor.close()
 
 
 @event.listens_for(Engine, 'close')
 def analyxe_pragma_on_close(dbapi_con, _con_record):
-    cursor = dbapi_con.cursor()
-    cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
-    cursor.close()
+    # cursor = dbapi_con.cursor()
+    # try:
+    #     # this can fail if another process is using the database
+    #     cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
+    # except OperationalError as e:
+    #     log = getLogger(__name__)
+    #     log.warning(repr(e))
+    # finally:
+    #     cursor.close()
+    pass
 
 
 class Database:
