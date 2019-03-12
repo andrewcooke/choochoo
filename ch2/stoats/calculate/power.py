@@ -7,7 +7,7 @@ from traceback import format_tb
 
 import pandas as pd
 
-from .mproc.pipeline import ActivityJournalCalculator
+from ch2.stoats.calculate import ActivityJournalCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics

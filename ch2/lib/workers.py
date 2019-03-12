@@ -7,8 +7,8 @@ from time import sleep, mktime
 
 from psutil import pid_exists, Process
 
-from ....squeal import SystemProcess
-from ....squeal.types import short_cls
+from ..squeal import SystemProcess
+from ..squeal.types import short_cls
 
 
 log = getLogger(__name__)
@@ -72,7 +72,7 @@ class Workers:
         # could perhaps avoid the extra step by specifying that.
         p = self._s.query(SystemProcess). \
             filter(SystemProcess.owner == self.owner,
-                   SystemProcess.pid == pid).delete()
+                   SystemProcess.pid == pid).one()
         self._s.delete(p)
         self._s.commit()
 

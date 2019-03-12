@@ -1,16 +1,22 @@
 
 from abc import abstractmethod
+from logging import getLogger
+from sys import exc_info
+from traceback import format_tb
 
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ..pipeline import DbPipeline
+from ..load import StatisticJournalLoader
+from ..pipeline import MultiProcPipeline, DbPipeline
 from ..waypoint import WaypointReader
-from ...lib.date import local_date_to_time
+from ...lib.date import local_date_to_time, local_time_to_time
 from ...lib.schedule import Schedule
 from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, StatisticName
 from ...squeal.types import short_cls, long_cls
-from ...stoats.load import StatisticJournalLoader
+
+
+log = getLogger(__name__)
 
 
 class Statistics(DbPipeline): pass
@@ -188,3 +194,82 @@ class DataFrameStatistics(ActivityStatistics):
     @abstractmethod
     def _copy_results(self, s, ajournal, loader, stats):
         raise NotImplementedError()
+
+
+class DataFrameCalculator(MultiProcPipeline):
+
+    def _run_one(self, s, time_or_date):
+        try:
+            source = self._get_source(s, time_or_date)
+            data = self._load_data(s, source)
+            stats = self._calculate_stats(s, source, data)
+            loader = StatisticJournalLoader(log, s, self.owner_out)
+            self._copy_results(s, source, loader, stats)
+            loader.load()
+        except Exception as e:
+            log.warning(f'No statistics on {time_or_date} ({e})')
+            log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+
+    @abstractmethod
+    def _get_source(self, s, time_or_date):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _load_data(self, s, source):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _calculate_stats(self, s, source, data):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _copy_results(self, s, source, loader, stats):
+        raise NotImplementedError()
+
+
+class ActivityJournalCalculator(DataFrameCalculator):
+
+    def __delimit_query(self, q):
+        start, finish = self._start_finish(type=local_time_to_time)
+        log.debug(f'Delimit times: {start} - {finish}')
+        if start:
+            q = q.filter(ActivityJournal.start >= start)
+        if finish:
+            q = q.filter(ActivityJournal.start <= finish)
+        return q
+
+    def _missing(self, s):
+        existing_ids = s.query(Timestamp.key).filter(Timestamp.owner == self.owner_out)
+        q = s.query(ActivityJournal.start). \
+            filter(not_(ActivityJournal.id.in_(existing_ids.cte()))). \
+            order_by(ActivityJournal.start)
+        return [row[0] for row in self.__delimit_query(q)]
+
+    def _delete(self, s):
+        start, finish = self._start_finish(type=local_time_to_time)
+        s.commit()   # so that we don't have any risk of having something in the session that can be deleted
+        statistic_names = s.query(StatisticName.id).filter(StatisticName.owner == self.owner_out)
+        activity_journals = self.__delimit_query(s.query(ActivityJournal.id))
+        statistic_journals = s.query(StatisticJournal.id). \
+            filter(StatisticJournal.statistic_name_id.in_(statistic_names.cte()),
+                   StatisticJournal.source_id.in_(activity_journals))
+        for repeat in range(2):
+            if repeat:
+                s.query(StatisticJournal).filter(StatisticJournal.id.in_(statistic_journals.cte())). \
+                    delete(synchronize_session=False)
+                Timestamp.clean_keys(log, s,
+                                     s.query(StatisticJournal.source_id).
+                                     filter(StatisticJournal.statistic_name_id.in_(statistic_names.cte())),
+                                     self.owner_out, constraint=None)
+            else:
+                n = s.query(count(StatisticJournal.id)). \
+                    filter(StatisticJournal.id.in_(statistic_journals.cte())).scalar()
+                if n:
+                    log.warning(f'Deleting {n} statistics for {long_cls(self.owner_out)} from {start} to {finish}')
+                else:
+                    log.warning(f'No statistics to delete for {long_cls(self.owner_out)} from {start} to {finish}')
+                    # log.debug(statistic_journals)
+        s.commit()
+
+    def _get_source(self, s, time):
+        return s.query(ActivityJournal).filter(ActivityJournal.start == time).one()
