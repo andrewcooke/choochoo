@@ -9,24 +9,24 @@ from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
 from .worker import Workers
-from .. import Statistics
 from ...load import StatisticJournalLoader
 from ....command.args import STATISTICS, WORKER, mm
 from ....lib.date import time_to_local_time, local_time_to_time
 from ....squeal import Timestamp, ActivityJournal, StatisticName, StatisticJournal
 from ....squeal.types import short_cls, long_cls
 
-
 log = getLogger(__name__)
 CPU_FRACTION = 0.9
 MAX_REPEAT = 3
 
 
-class MultiProcCalculator(Statistics):
+class MultiProcCalculator:  # todo - try removing superclass + rename MultiProcPipeline + move to pipeline w worker to lib
 
-    def __init__(self, *args, owner_out=None, force=False, start=None, finish=None,
+    # todo - remove log
+
+    def __init__(self, log, db, owner_out=None, force=False, start=None, finish=None,
                  overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
-        super().__init__(*args, **kargs)
+        self._db = db
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # delete data (force re-calculation)?
         self.start = start  # optional start local time (always present for workers)

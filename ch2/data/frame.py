@@ -34,7 +34,7 @@ def df(query):
 
 def session(*args):
     global log
-    ns, db = connect(args)
+    ns, _, db = connect(args)  # todo
     log = getLogger(__name__)
     return db.session()
 

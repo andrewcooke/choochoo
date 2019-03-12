@@ -59,4 +59,5 @@ def run_pipeline(log, db, type, like=None, id=None, **extra_kargs):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
             log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')
+            log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
             pipeline.cls(log, db, *pipeline.args, id=pipeline.id, **kargs).run()

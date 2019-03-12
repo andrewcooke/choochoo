@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-cat > /dev/null <<XXX
-
 rm -f /tmp/copy.sqlp
 cp ~/.ch2/database.sqlp /tmp/copy.sqlp
 
@@ -40,8 +38,6 @@ select * from topic_journal;
 .mode insert segment
 select * from segment;
 EOF
-
-XXX
 
 rm -f ~/.ch2/database.sqlq
 dev/ch2 no-op

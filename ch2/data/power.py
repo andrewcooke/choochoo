@@ -1,3 +1,4 @@
+from collections import namedtuple
 from logging import getLogger
 from math import pi
 
@@ -5,11 +6,11 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 
-from ..stoats.names import _d, _sqr, _avg
 from ..stoats.names import *
-
+from ..stoats.names import _d, _sqr, _avg
 
 log = getLogger(__name__)
+RAD_TO_DEG = 180 / pi
 
 
 def median_freq(stats):
@@ -132,4 +133,45 @@ def measure_initial_scaling(df):
 class PowerException(Exception): pass
 
 
-RAD_TO_DEG = 180 / pi
+Model = namedtuple('Model', 'cda, crr, slope, intercept, adaption, delay, m,   g,   p,     speed, heading',
+                   defaults=[0,   0,   0,     0,         0,        6,     70,  9.8, 1.225, 0,     0])
+
+
+def evaluate(df, model, quiet=True):
+    if not quiet: log.debug(f'Evaluating {model}')
+    df = add_energy_budget(df, model.m, model.g)
+    df = add_air_speed(df, model.speed, model.heading)
+    df = add_loss_estimate(df, model.cda, model.crr, model.p)
+    return add_power_estimate(df)
+
+
+MIN_DELAY = 1
+
+
+def fix_delay(model):
+    return MIN_DELAY + abs(model.delay - MIN_DELAY)
+
+
+def chisq(df, model):
+    df = evaluate(df, model)
+    pred = (df[POWER] * model.slope + model.intercept).ewm(halflife=fix_delay(model)).mean()
+    obs = df[HEART_RATE] - model.adaption * df[ENERGY]
+    return sp.stats.chisquare(pred, obs).statistic
+
+
+def fit_power(df, *vary, **initial):
+
+    model = Model()._replace(**initial)
+    df = evaluate(df, model)
+    slope, intercept, adaption, delay = measure_initial_scaling(df)
+    model = model._replace(slope=slope, intercept=intercept, adaption=adaption, delay=delay)
+
+    def local_chisq(args):
+        return chisq(df, model._replace(**dict(zip(vary, args))))
+
+    result = sp.optimize.minimize(local_chisq, [getattr(model, name) for name in vary],
+                                  method='Nelder-Mead', tol=0.01)
+
+    model = model._replace(**dict(zip(vary, result.x)))
+    model = model._replace(delay=fix_delay(model))
+    return model

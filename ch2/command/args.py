@@ -211,7 +211,7 @@ def parser():
     parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
                         help='the directory for logs')
-    parser.add_argument(m(L), mm(LOG), action='store', default='log', metavar='FILE',
+    parser.add_argument(m(L), mm(LOG), action='store', metavar='FILE',
                         help='the file for the log (command name by default)')
     parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
                         help='the root directory for the default configuration')
