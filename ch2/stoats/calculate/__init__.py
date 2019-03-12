@@ -205,16 +205,17 @@ class MultiProcCalculator(MultiProcPipeline):
 class DataFrameCalculator(MultiProcCalculator):
 
     def _run_one(self, s, time_or_date):
-        try:
-            source = self._get_source(s, time_or_date)
-            data = self._load_data(s, source)
-            stats = self._calculate_stats(s, source, data)
-            loader = StatisticJournalLoader(log, s, self.owner_out)
-            self._copy_results(s, source, loader, stats)
-            loader.load()
-        except Exception as e:
-            log.warning(f'No statistics on {time_or_date} ({e})')
-            log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+        source = self._get_source(s, time_or_date)
+        with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
+            try:
+                data = self._load_data(s, source)
+                stats = self._calculate_stats(s, source, data)
+                loader = StatisticJournalLoader(log, s, self.owner_out)
+                self._copy_results(s, source, loader, stats)
+                loader.load()
+            except Exception as e:
+                log.warning(f'No statistics on {time_or_date} ({e})')
+                log.debug('\n' + ''.join(format_tb(exc_info()[2])))
 
     @abstractmethod
     def _get_source(self, s, time_or_date):

@@ -67,7 +67,7 @@ def _add_differentials(df, speed, *names):
     if len(spans):
         return pd.concat(spans)
     else:
-        raise PowerException('Missing data')
+        raise PowerException('Missing data - found no spans without NANs')
 
 
 def add_energy_budget(df, m, g=9.8):

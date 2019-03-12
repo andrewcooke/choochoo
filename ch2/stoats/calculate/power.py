@@ -7,6 +7,7 @@ from traceback import format_tb
 
 import pandas as pd
 
+from ch2.squeal import Timestamp
 from . import ActivityJournalCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
@@ -41,7 +42,7 @@ class BasicPowerCalculator(PowerCalculator):
         power = Power(**loads(Constant.get(s, self.power_ref).at(s).value))
         # default owner is constant since that's what users can tweak
         self.power = power.expand(log, s, df[TIME].iloc[0], owner=Constant, constraint=ajournal.activity_group)
-        log.debug(f'{self.power_ref}: {self.power}')
+        log.debug(f'Power: {self.power_ref}: {self.power}')
 
     def _load_data(self, s, ajournal):
         try:
@@ -81,21 +82,22 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
 
     def _run_one(self, s, time_or_date):
-        try:
-            source = self._get_source(s, time_or_date)
-            data = self._load_data(s, source)
-            loader = StatisticJournalLoader(log, s, self.owner_out)
+        source = self._get_source(s, time_or_date)
+        with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
             try:
-                stats = self._calculate_stats(s, source, data)
-            except PowerException as e:
-                log.warning(f'Cannot model power; adding basic values only ({e})')
+                data = self._load_data(s, source)
                 loader = StatisticJournalLoader(log, s, self.owner_out)
-                stats = None, super()._calculate_stats(s, source, data)
-            self._copy_results(s, source, loader, stats)
-            loader.load()
-        except Exception as e:
-            log.warning(f'No statistics on {time_or_date} ({e})')
-            log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+                try:
+                    stats = self._calculate_stats(s, source, data)
+                except PowerException as e:
+                    log.warning(f'Cannot model power; adding basic values only ({e})')
+                    loader = StatisticJournalLoader(log, s, self.owner_out)
+                    stats = None, super()._calculate_stats(s, source, data)
+                self._copy_results(s, source, loader, stats)
+                loader.load()
+            except Exception as e:
+                log.warning(f'No statistics on {time_or_date} ({e})')
+                log.debug('\n' + ''.join(format_tb(exc_info()[2])))
 
     def _calculate_stats(self, s, ajournal, data):
         model = fit_power(data, 'slope', 'intercept', 'adaption', 'delay',

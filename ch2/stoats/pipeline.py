@@ -76,7 +76,9 @@ class MultiProcPipeline:
 
     # todo - this is still slightly statistics-specific
 
-    def __init__(self, db, *args, owner_out=None, force=False, start=None, finish=None,
+    # todo - remove log (first arg)
+
+    def __init__(self, _, db, *args, owner_out=None, force=False, start=None, finish=None,
                  overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self._db = db
         self.owner_out = owner_out or self  # the future owner of any calculated statistics

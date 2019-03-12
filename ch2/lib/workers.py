@@ -3,7 +3,7 @@ from logging import getLogger
 from os import getpid
 from subprocess import Popen
 from sys import argv
-from time import sleep, mktime
+from time import sleep, mktime, time
 
 from psutil import pid_exists, Process
 
@@ -13,7 +13,8 @@ from ..squeal.types import short_cls
 
 log = getLogger(__name__)
 DELTA_TIME = 3
-SLEEP = 1
+SLEEP_TIME = 1
+REPORT_TIME = 60
 LOG = 'log'
 LIKE = 'like'
 
@@ -93,8 +94,11 @@ class Workers:
         self.__workers[worker] = log_index
 
     def wait(self, n_workers=0):
-        # import pdb; pdb.set_trace()
+        last_report = 0
         while len(self.__workers) > n_workers:
+            if time() - last_report > REPORT_TIME:
+                log.info(f'Currently have {len(self.__workers)} workers; waiting to drop to {n_workers}')
+                last_report = time()
             for worker in list(self.__workers.keys()):
                 worker.poll()
                 process = self._read_pid(worker.pid)
@@ -109,7 +113,7 @@ class Workers:
                         log.debug(f'Command "{process.command}" finished successfully')
                         del self.__workers[worker]
                         self._delete_pid(worker.pid)
-            sleep(SLEEP)
+            sleep(SLEEP_TIME)
 
     def _free_log_index(self):
         used = set(self.__workers.values())
