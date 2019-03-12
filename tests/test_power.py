@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 from ch2 import activities, constants
-from ch2.command.args import bootstrap_file, mm, DEV, FAST, V, m
+from ch2.commands.args import bootstrap_file, mm, DEV, FAST, V, m
 from ch2.config import default
 from ch2.data import activity_statistics, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
     ELEVATION, SPEED, CADENCE, HEART_RATE, TIME, TIMESPAN_ID

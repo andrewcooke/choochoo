@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from sqlalchemy.sql.functions import count
 
-from ch2.command.args import m, V, bootstrap_file
+from ch2.commands.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
 from ch2.lib.date import to_time, local_date_to_time, to_date
 from ch2.squeal.database import add

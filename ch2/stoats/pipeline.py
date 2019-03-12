@@ -4,7 +4,7 @@ from logging import getLogger
 
 from psutil import cpu_count
 
-from ..command.args import FORCE, mm, START, FINISH, WORKER, STATISTICS
+from ..commands.args import FORCE, START, FINISH
 from ..lib.data import MutableAttr
 from ..lib.date import time_to_local_time
 from ..lib.utils import short_str
@@ -76,9 +76,7 @@ class MultiProcPipeline:
 
     # todo - this is still slightly statistics-specific
 
-    # todo - remove log
-
-    def __init__(self, log, db, owner_out=None, force=False, start=None, finish=None,
+    def __init__(self, db, *args, owner_out=None, force=False, start=None, finish=None,
                  overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self._db = db
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
@@ -178,8 +176,7 @@ class MultiProcPipeline:
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(s, n_parallel, self.owner_out,
-                          f'{{ch2}} -v0 -l {{log}} {STATISTICS} {mm(WORKER)} {self.id}')
+        workers = Workers(s, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1
@@ -190,3 +187,9 @@ class MultiProcPipeline:
             args = f'"{s}" "{f}"'
             workers.run(args)
         workers.wait()
+
+    @abstractmethod
+    def _base_command(self):
+        raise NotImplementedError()
+
+

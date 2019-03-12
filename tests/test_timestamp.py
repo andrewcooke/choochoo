@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from sqlalchemy.sql.functions import count
 
-from ch2.command.args import bootstrap_file, m, V, mm, DEV
+from ch2.commands.args import bootstrap_file, m, V, mm, DEV
 from ch2.config import default
 from ch2.squeal.tables.timestamp import Timestamp
 

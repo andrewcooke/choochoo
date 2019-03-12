@@ -1,5 +1,5 @@
 
-from ..command.args import PATH, FORCE, FAST, CONSTANTS
+from ..commands.args import PATH, FORCE, FAST, CONSTANTS
 from ..squeal import PipelineType
 from ..stoats.pipeline import run_pipeline
 

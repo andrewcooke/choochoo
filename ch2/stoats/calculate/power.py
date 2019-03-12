@@ -7,7 +7,7 @@ from traceback import format_tb
 
 import pandas as pd
 
-from ch2.stoats.calculate import ActivityJournalCalculator
+from . import ActivityJournalCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics
@@ -15,6 +15,7 @@ from ...data.power import linear_resample, add_differentials, add_energy_budget,
     add_power_estimate, PowerException, evaluate, fit_power
 from ...lib.data import reftuple, MissingReference
 from ...squeal import StatisticJournalFloat, Constant
+
 
 log = getLogger(__name__)
 Power = reftuple('Power', 'bike, weight, p, g', defaults=(70, 1.225, 9.8))
@@ -24,8 +25,8 @@ Bike = namedtuple('Bike', 'cda, crr, m')
 # used as common owner
 class PowerCalculator(ActivityJournalCalculator):
 
-    def __init__(self, log, *args, **kargs):
-        super().__init__(log, *args, owner_out=PowerCalculator, **kargs)
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, owner_out=PowerCalculator, **kargs)
         self.power = None
 
 
@@ -87,7 +88,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             try:
                 stats = self._calculate_stats(s, source, data)
             except PowerException as e:
-                self._log.warning(f'Cannot model power; adding basic values only ({e})')
+                log.warning(f'Cannot model power; adding basic values only ({e})')
                 loader = StatisticJournalLoader(log, s, self.owner_out)
                 stats = None, super()._calculate_stats(s, source, data)
             self._copy_results(s, source, loader, stats)
@@ -97,11 +98,11 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             log.debug('\n' + ''.join(format_tb(exc_info()[2])))
 
     def _calculate_stats(self, s, ajournal, data):
-         model = fit_power(data, 'slope', 'intercept', 'adaption', 'delay',
-                           cda=self.power.bike['cda'], crr=self.power.bike['crr'],
-                           m=self.power.bike['m'] + self.power.weight, g=self.power.g, p=self.power.p)
-         data = evaluate(data, model, quiet=False)
-         return model, data
+        model = fit_power(data, 'slope', 'intercept', 'adaption', 'delay',
+                          cda=self.power.bike['cda'], crr=self.power.bike['crr'],
+                          m=self.power.bike['m'] + self.power.weight, g=self.power.g, p=self.power.p)
+        data = evaluate(data, model, quiet=False)
+        return model, data
 
     def _copy_results(self, s, ajournal, loader, stats):
         model, data = stats

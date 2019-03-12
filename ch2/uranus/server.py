@@ -8,7 +8,7 @@ from time import sleep
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..command.args import JUPYTER as J, ROOT
+from ..commands.args import JUPYTER as J, ROOT
 
 
 class JupyterState: pass

@@ -5,7 +5,7 @@ from unittest import TestCase
 import sqlalchemy.sql.functions as func
 
 from ch2 import monitor
-from ch2.command.args import bootstrap_file, m, V, DEV, mm, FAST
+from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.config.default import default
 from ch2.lib.date import to_time
 from ch2.squeal.tables.monitor import MonitorJournal

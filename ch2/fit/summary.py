@@ -7,7 +7,7 @@ from sys import stdout
 from .format.read import filtered_records, filtered_tokens
 from .format.records import no_bad_values, fix_degrees, append_units, no_unknown_fields, join_values, \
     to_hex, no_filter, merge_duplicates
-from ..command.args import RECORDS, FIELDS, CSV, TABLES, GREP, TOKENS
+from ..commands.args import RECORDS, FIELDS, CSV, TABLES, GREP, TOKENS
 from ..lib.io import terminal_width
 from ..lib.utils import unique
 

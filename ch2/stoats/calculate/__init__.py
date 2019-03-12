@@ -10,11 +10,11 @@ from sqlalchemy.sql.functions import count
 from ..load import StatisticJournalLoader
 from ..pipeline import MultiProcPipeline, DbPipeline
 from ..waypoint import WaypointReader
+from ...commands.args import STATISTICS, WORKER, mm
 from ...lib.date import local_date_to_time, local_time_to_time
 from ...lib.schedule import Schedule
 from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, StatisticName
 from ...squeal.types import short_cls, long_cls
-
 
 log = getLogger(__name__)
 
@@ -196,7 +196,13 @@ class DataFrameStatistics(ActivityStatistics):
         raise NotImplementedError()
 
 
-class DataFrameCalculator(MultiProcPipeline):
+class MultiProcCalculator(MultiProcPipeline):
+
+    def _base_command(self):
+        return f'{{ch2}} -v0 -l {{log}} {STATISTICS} {mm(WORKER)} {self.id}'
+
+
+class DataFrameCalculator(MultiProcCalculator):
 
     def _run_one(self, s, time_or_date):
         try:

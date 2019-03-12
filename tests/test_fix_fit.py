@@ -4,7 +4,7 @@ from os.path import join
 from sys import stdout
 from unittest import TestCase
 
-from ch2.command.args import RECORDS, TABLES
+from ch2.commands.args import RECORDS, TABLES
 from ch2.fit.fix import fix
 from ch2.fit.format.tokens import FileHeader
 from ch2.fit.profile.profile import read_fit

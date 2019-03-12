@@ -6,7 +6,7 @@ from colorama import init, Fore, Style
 
 from ch2.lib.schedule import Schedule
 from ..lib.date import to_date, add_date, MONTH
-from ..command.args import SCHEDULE, MONTHS, START
+from ..commands.args import SCHEDULE, MONTHS, START
 
 INDENT = '   '
 

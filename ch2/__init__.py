@@ -6,22 +6,22 @@ from traceback import format_tb
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
 
-from .command.activities import activities
-from .command.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
+from .commands.activities import activities
+from .commands.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DATA, FIX_FIT, CH2_VERSION
-from .command.constants import constants
-from .command.data import data
-from .command.default_config import default_config
-from .command.diary import diary
-from .command.fit import fit
-from .command.fix_fit import fix_fit
-from .command.garmin import garmin
-from .command.help import help, LengthFmt
-from .command.monitor import monitor
-from .command.package_fit_profile import package_fit_profile
-from .command.statistics import statistics
-from .command.test_schedule import test_schedule
+from .commands.constants import constants
+from .commands.data import data
+from .commands.default_config import default_config
+from .commands.diary import diary
+from .commands.fit import fit
+from .commands.fix_fit import fix_fit
+from .commands.garmin import garmin
+from .commands.help import help, LengthFmt
+from .commands.monitor import monitor
+from .commands.package_fit_profile import package_fit_profile
+from .commands.statistics import statistics
+from .commands.test_schedule import test_schedule
 from .lib.io import tui
 from .lib.log import make_log
 from .squeal.database import Database

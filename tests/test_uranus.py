@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 from time import sleep
 from unittest import TestCase
 
-from ch2.command.args import JUPYTER, ROOT
+from ch2.commands.args import JUPYTER, ROOT
 from ch2.uranus.server import set_jupyter_args, stop_jupyter
 from ch2.uranus.template.compare_activities import compare_activities
 

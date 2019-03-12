@@ -1,7 +1,7 @@
 
 from sqlite3 import connect, Row
 
-from ch2.command.args import bootstrap_file, m, V
+from ch2.commands.args import bootstrap_file, m, V
 from ch2.config.personal import acooke
 from ch2.lib.date import to_time
 from ch2.squeal.database import add

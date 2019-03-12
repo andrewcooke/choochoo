@@ -4,7 +4,7 @@ from sys import stdout
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
-from ch2.command.args import bootstrap_file, m, V
+from ch2.commands.args import bootstrap_file, m, V
 from ch2.lib.data import MutableAttr, reftuple
 from ch2.squeal import StatisticJournalFloat, StatisticJournalText, Source
 from ch2.squeal.tables.source import SourceType

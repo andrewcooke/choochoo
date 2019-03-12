@@ -1,6 +1,6 @@
 
 from ..lib.date import local_date_to_time
-from ..command.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET
+from ..commands.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET
 from ..squeal.database import add
 from ..squeal.tables.constant import Constant
 from ..squeal.tables.statistic import StatisticJournal, StatisticName, STATISTIC_JOURNAL_CLASSES

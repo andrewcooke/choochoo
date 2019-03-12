@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 
 from . import *
 from .support import Base
-from ..command.args import DATABASE, NamespaceWithVariables, NO_OP, parser
+from ..commands.args import DATABASE, NamespaceWithVariables, NO_OP, parser
 from ..lib.log import make_log
 
 

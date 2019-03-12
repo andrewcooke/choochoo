@@ -3,7 +3,7 @@ from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler
 from logging.handlers import RotatingFileHandler
 from os.path import join
 
-from ..command.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG
+from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG
 
 
 log = None
