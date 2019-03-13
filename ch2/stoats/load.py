@@ -1,10 +1,14 @@
 
 from collections import defaultdict
+from logging import getLogger
 from time import time
 
 from .waypoint import make_waypoint
 from ..squeal import StatisticJournal, StatisticName, Dummy
 from ..squeal.types import short_cls
+
+
+log = getLogger(__name__)
 
 
 class StatisticJournalLoader:
@@ -22,8 +26,7 @@ class StatisticJournalLoader:
     # what is special to sqlite is that the final commit will not fail, because there is only ever one
     # process writing (this is true even when using multiple processes)
 
-    def __init__(self, log, s, owner, add_serial=True):
-        self._log = log
+    def __init__(self, s, owner, add_serial=True):
         self._s = s
         self._owner = owner
         self.__statistic_name_cache = dict()
@@ -42,11 +45,11 @@ class StatisticJournalLoader:
         dummy = StatisticJournal(source=dummy_source, statistic_name=dummy_name, time=time())
         self._s.add(dummy)
         self._s.flush()
-        self._log.debug(f'Dummy ID {dummy.id}')
+        log.debug(f'Dummy ID {dummy.id}')
         try:
             rowid = dummy.id + 1
             for type in self.__staging:
-                self._log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
+                log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
                 for sjournal in self.__staging[type]:
                     sjournal.id = rowid
                     rowid += 1
@@ -70,7 +73,7 @@ class StatisticJournalLoader:
         key = (name, constraint)
         if key not in self.__statistic_name_cache:
             self.__statistic_name_cache[key] = \
-                StatisticName.add_if_missing(self._log, self._s, name, units, summary, self._owner, constraint)
+                StatisticName.add_if_missing(log, self._s, name, units, summary, self._owner, constraint)
 
         instance = type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source.id,
                         value=value, time=time, serial=self.__serial)

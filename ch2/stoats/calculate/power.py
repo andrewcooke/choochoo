@@ -84,12 +84,12 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
         with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
             try:
                 data = self._load_dataframe(s, source)
-                loader = StatisticJournalLoader(log, s, self.owner_out)
+                loader = StatisticJournalLoader(s, self.owner_out)
                 try:
                     stats = self._calculate_stats(s, source, data)
                 except PowerException as e:
                     log.warning(f'Cannot model power; adding basic values only ({e})')
-                    loader = StatisticJournalLoader(log, s, self.owner_out)
+                    loader = StatisticJournalLoader(s, self.owner_out)
                     stats = None, super()._calculate_stats(s, source, data)
                 self._copy_results(s, source, loader, stats)
                 loader.load()

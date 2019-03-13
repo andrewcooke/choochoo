@@ -2,7 +2,7 @@
 import datetime as dt
 from collections import deque, namedtuple
 
-from sqlalchemy import inspect, select, and_
+from sqlalchemy import select, and_
 from sqlalchemy.sql.functions import coalesce
 
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat
@@ -134,8 +134,7 @@ class Chunks:
     and then discard and call to maintain the same data length.
     '''
 
-    def __init__(self, log, waypoints):
-        self._log = log
+    def __init__(self, waypoints):
         self._waypoints = waypoints
 
     def chunks(self):

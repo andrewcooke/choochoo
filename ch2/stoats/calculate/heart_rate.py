@@ -5,7 +5,7 @@ from json import loads
 
 from sqlalchemy import desc, inspect, select, and_
 
-from . import ActivityStatistics
+from .activity import ActivityStatistics, hr_zones
 from ..load import StatisticJournalLoader
 from ..names import FTHR, HR_ZONE, HEART_RATE, S
 from ...squeal import Constant, StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalInteger
@@ -15,19 +15,6 @@ HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, max_secs')
 
 # values from british cycling online calculator
 # these are upper limits
-BC_ZONES = (68, 83, 94, 105, 121, 999)
-
-
-def hr_zones_from_database(log, s, activity_group, time):
-    fthr = StatisticJournal.before(s, time, FTHR, Constant, activity_group)
-    if fthr:
-        return hr_zones(fthr.value)
-    else:
-        return None
-
-
-def hr_zones(fthr):
-    return [fthr * pc / 100.0 for pc in BC_ZONES]
 
 
 class HeartRateStatistics(ActivityStatistics):
@@ -45,7 +32,7 @@ class HeartRateStatistics(ActivityStatistics):
         hr_impulse = HRImpulse(**loads(Constant.get(s, impulse).at(s).value))
         self._log.debug('%s: %s' % (impulse, hr_impulse))
 
-        loader = StatisticJournalLoader(self._log, s, self)
+        loader = StatisticJournalLoader(s, self)
         impulses = []
 
         sn = inspect(StatisticName).local_table
@@ -87,7 +74,7 @@ class HeartRateStatistics(ActivityStatistics):
             s.commit()
 
         if impulses:
-            loader = StatisticJournalLoader(self._log, s, self)
+            loader = StatisticJournalLoader(s, self)
             self._interpolate(hr_impulse.dest_name, loader, impulses, ajournal)
             # if there are no values, add a single null so we don't re-process
             if not loader:

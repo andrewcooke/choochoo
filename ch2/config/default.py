@@ -9,7 +9,7 @@ from ..sortem.file import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
-from ..stoats.calculate.activity import ActivityStatistics
+from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.monitor import MonitorStatistics
 from ..stoats.calculate.segment import SegmentStatistics
 from ..stoats.calculate.summary import SummaryStatistics
@@ -20,9 +20,8 @@ from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
     RPM
-from ..stoats.read.activity import ActivityImporter
 from ..stoats.read.monitor import MonitorImporter
-from ..stoats.read.segment import SegmentImporter
+from ..stoats.read.segment import SegmentImporter, SegmentReader
 from ..uweird.fields.topic import Text, Float, Score0
 
 
@@ -41,7 +40,7 @@ def default(log, db, no_diary=False):
         bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
         run = add_activity_group(s, 'Run', c, description='All running activities')
         # sport_to_activity maps from the FIT sport field to the activity defined above
-        add_activities(s, SegmentImporter, c,
+        add_activities(s, SegmentReader, c,
                        sport_to_activity={'cycling': bike.name, 'running': run.name},
                        record_to_db={'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
                                      'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
@@ -56,8 +55,7 @@ def default(log, db, no_diary=False):
         c = Counter()
         # need to specify the owner so that we load waypoints correctly
         add_climb(s, bike)
-        add_statistics(s, ActivityStatistics, c, owner=short_cls(ActivityImporter),
-                       climb=name_constant(CLIMB_CNAME, bike))
+        add_statistics(s, ActivityCalculator, c, climb=name_constant(CLIMB_CNAME, bike))
         add_statistics(s, SegmentStatistics, c, owner=short_cls(SegmentImporter))
         add_statistics(s, MonitorStatistics, c)
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command

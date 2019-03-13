@@ -41,7 +41,7 @@ class TestActivities(TestCase):
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-            run_pipeline(log, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
+            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01')
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
@@ -63,4 +63,4 @@ class TestActivities(TestCase):
         with NamedTemporaryFile() as f:
             rgs, log, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
-            run_pipeline(log, db, PipelineType.ACTIVITY, paths=paths, force=True)
+            run_pipeline(db, PipelineType.ACTIVITY, paths=paths, force=True)

@@ -2,25 +2,19 @@
 from collections import Counter
 from itertools import chain
 from json import loads
+from logging import getLogger
 
 from scipy.interpolate import UnivariateSpline
 
-from . import WaypointStatistics
+from . import MultiProcCalculator, ActivityJournalCalculatorMixin, WaypointCalculatorMixin, WaypointStatistics
 from .climb import find_climbs, Climb
-from .heart_rate import hr_zones_from_database
 from ..load import StatisticJournalLoader
 from ..names import *
 from ..waypoint import Chunks
-from ...squeal import Constant, StatisticName, StatisticJournalFloat, StatisticJournalInteger
+from ...squeal import Constant, StatisticJournalFloat, StatisticName, StatisticJournalInteger, StatisticJournal
 
+log = getLogger(__name__)
 HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
-
-
-def round_km():
-    yield from range(5, 21, 5)
-    yield from range(25, 76, 25)
-    yield from range(100, 251, 50)
-    yield from range(300, 1001, 100)
 
 
 class ActivityStatistics(WaypointStatistics):
@@ -137,10 +131,17 @@ class ActivityStatistics(WaypointStatistics):
             self._add_float_stat(s, ajournal, TOTAL_CLIMB, summaries(MAX, SUM, MSR), total_elevation, M)
 
 
+def round_km():
+    yield from range(5, 21, 5)
+    yield from range(25, 76, 25)
+    yield from range(100, 251, 50)
+    yield from range(300, 1001, 100)
+
+
 class TimeForDistance(Chunks):
 
-    def __init__(self, log, waypoints, distance):
-        super().__init__(log, waypoints)
+    def __init__(self, waypoints, distance):
+        super().__init__(waypoints)
         self.__distance = distance
 
     def times(self):
@@ -156,8 +157,8 @@ class TimeForDistance(Chunks):
 
 class MedianHRForTime(Chunks):
 
-    def __init__(self, log, waypoints, time, max_gap=None):
-        super().__init__(log, waypoints)
+    def __init__(self, waypoints, time, max_gap=None):
+        super().__init__(waypoints)
         self.__time = time
         self.__max_gap = 0.01 * time if max_gap is None else max_gap
         log.debug('Will reject gaps > %ds' % int(self.__max_gap))
@@ -169,7 +170,7 @@ class MedianHRForTime(Chunks):
     def heart_rates(self):
         for chunks in self.chunks():
             while len(chunks) > 1 and self._max_gap(chunks) > self.__max_gap:
-                self._log.debug('Rejecting chunk because of gap (%ds)' % int(self._max_gap(chunks)))
+                log.debug('Rejecting chunk because of gap (%ds)' % int(self._max_gap(chunks)))
                 chunks.popleft()
             time = sum(chunk.time() for chunk in chunks)
             if time > self.__time:
@@ -184,8 +185,8 @@ class MedianHRForTime(Chunks):
 
 class Totals(Chunks):
 
-    def __init__(self, log, waypoints):
-        super().__init__(log, waypoints)
+    def __init__(self, waypoints):
+        super().__init__(waypoints)
         all_chunks = self.complete()
         self.distance = sum(chunk.distance() for chunk in all_chunks)
         self.time = sum(chunk.time() for chunk in all_chunks)
@@ -193,8 +194,8 @@ class Totals(Chunks):
 
 class Zones(Chunks):
 
-    def __init__(self, log, waypoints, zones):
-        super().__init__(log, waypoints)
+    def __init__(self, waypoints, zones):
+        super().__init__(waypoints)
         # this assumes record data are evenly distributed
         self.zones = []
         all_chunks = self.complete()
@@ -212,3 +213,128 @@ class Zones(Chunks):
             for zone in range(len(zones)):
                 self.zones.append((zone + 1, counts[zone] / total))
 
+
+class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin, MultiProcCalculator):
+
+    def __init__(self, *args, cost_calc=10, cost_write=1, climb=None, **kargs):
+        self.climb_ref = climb
+        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+
+    def _names(self):
+        return {HEART_RATE: 'heart_rate',
+                DISTANCE: 'distance',
+                RAW_ELEVATION: 'raw_elevation',
+                ELEVATION: 'elevation'}
+
+    def _get_loader(self, s):
+        # no serial because we timetravel below
+        return StatisticJournalLoader(s, self.owner_out, add_serial=False)
+
+    def _calculate_results(self, s, ajournal, waypoints, loader):
+        totals = self._add_totals(s, ajournal, waypoints, loader)
+        self._add_times_for_distance(s, ajournal, waypoints, loader)
+        self._add_hr_stats(s, totals, ajournal, waypoints, loader)
+        waypoints = self._fix_elevation(s, ajournal, waypoints, loader)
+        self._add_climbs(s, ajournal, waypoints, loader)
+
+    def _add_totals(self, s, ajournal, waypoints, loader):
+        totals = Totals(waypoints)
+        loader.add(ACTIVE_DISTANCE, M, summaries(MAX, CNT, SUM, MSR), ajournal.activity_group, ajournal,
+                   totals.distance, ajournal.start, StatisticJournalFloat)
+        loader.add(ACTIVE_TIME, S, summaries(MAX, SUM, MSR), ajournal.activity_group, ajournal,
+                   totals.time, ajournal.start, StatisticJournalFloat)
+        loader.add(ACTIVE_SPEED, KMH, summaries(MAX, AVG, MSR), ajournal.activity_group, ajournal,
+                   totals.distance * 3.6 / totals.time, ajournal.start, StatisticJournalFloat)
+        return totals
+
+    def _add_times_for_distance(self, s, ajournal, waypoints, loader):
+        for target in round_km():
+            times = list(sorted(TimeForDistance(waypoints, target * 1000).times()))
+            if not times:
+                break
+            median = len(times) // 2
+            loader.add(MEDIAN_KM_TIME % target, S, summaries(MIN, MSR), ajournal.activity_group, ajournal,
+                       times[median], ajournal.start, StatisticJournalFloat)
+
+    def _add_hr_stats(self, s, totals, ajournal, waypoints, loader):
+        zones = hr_zones_from_database(s, ajournal.activity_group, ajournal.start)
+        if zones:
+            for (zone, frac) in Zones(waypoints, zones).zones:
+                loader.add(TIME_IN_Z % zone, PC, None, ajournal.activity_group, ajournal,
+                           100 * frac, ajournal.start, StatisticJournalFloat)
+                loader.add(PERCENT_IN_Z % zone, S, None, ajournal.activity_group, ajournal,
+                           frac * totals.time, ajournal.start, StatisticJournalFloat)
+            for target in HR_MINUTES:
+                heart_rates = sorted(MedianHRForTime(waypoints, target * 60).heart_rates(), reverse=True)
+                if heart_rates:
+                    loader.add(MAX_MED_HR_M % target, BPM, summaries(MAX, MSR), ajournal.activity_group, ajournal,
+                           heart_rates[0], ajournal.start, StatisticJournalFloat)
+        else:
+            log.warning('No HR zones defined for %s or before' % ajournal.start)
+
+    def _fix_elevation(self, s, ajournal, waypoints, loader):
+        with_elevations = [waypoint for waypoint in waypoints if waypoint.raw_elevation != None]
+        if len(with_elevations) > 4:
+            fixed = []
+            x = [waypoint.distance for waypoint in with_elevations]
+            y = [waypoint.raw_elevation for waypoint in with_elevations]
+            i = 1
+            while i < len(x):
+                if x[i-1] >= x[i]:
+                    del x[i-1], y[i-1]
+                else:
+                    i += 1
+            # the 7 here is from eyeballing various plots compared to other values
+            # it seems better to smooth along the route rather that smooth the terrain model since
+            # 1 - we expect the route to be smoother than the terrain in general (roads / tracks)
+            # 2 - smoothing the 2d terrain is difficult to control and can give spikes
+            # 3 - we better handle errors from mismatches between terrain model and position
+            #     (think hairpin bends going up a mountainside)
+            # the main drawbacks are
+            # 1 - speed on loading
+            # 2 - no guarantee of consistency between routes (or even on the same routine retracing a path)
+            spline = UnivariateSpline(x, y, s=len(with_elevations) * 7)
+            for waypoint in with_elevations:
+                elevation = spline(waypoint.distance)
+                loader.add(ELEVATION, M, None, ajournal.activity_group, ajournal,
+                           elevation, waypoint.time, StatisticJournalFloat)
+                fixed.append(waypoint._replace(elevation=elevation))
+            loader.load()
+            return fixed
+        else:
+            return waypoints
+
+    def _add_climbs(self, s, ajournal, waypoints, loader):
+        climb = Climb(**loads(Constant.get(s, self.climb_ref).at(s).value))
+        total_elevation = 0
+        for lo, hi in find_climbs(waypoints, params=climb):
+            up = hi.elevation - lo.elevation
+            along = hi.distance - lo.distance
+            time = (hi.time - lo.time).total_seconds()
+            loader.add(CLIMB_ELEVATION, M, summaries(MAX, SUM, MSR), ajournal.activity_group, ajournal,
+                       up, hi.time, StatisticJournalFloat)
+            loader.add(CLIMB_DISTANCE, M, summaries(MAX, SUM, MSR), ajournal.activity_group, ajournal,
+                       along, hi.time, StatisticJournalFloat)
+            loader.add(CLIMB_TIME, S, summaries(MAX, SUM, MSR), ajournal.activity_group, ajournal,
+                       time, hi.time, StatisticJournalFloat)
+            loader.add(CLIMB_GRADIENT, PC, summaries(MAX, SUM, MSR), ajournal.activity_group, ajournal,
+                       100 * up / along, hi.time, StatisticJournalFloat)
+            total_elevation += up
+        if total_elevation:
+            loader.add(TOTAL_CLIMB, M, summaries(MAX, SUM, MSR), ajournal.activity_group, ajournal,
+                       total_elevation, ajournal.start, StatisticJournalFloat)
+
+
+BC_ZONES = (68, 83, 94, 105, 121, 999)
+
+
+def hr_zones_from_database(s, activity_group, time):
+    fthr = StatisticJournal.before(s, time, FTHR, Constant, activity_group)
+    if fthr:
+        return hr_zones(fthr.value)
+    else:
+        return None
+
+
+def hr_zones(fthr):
+    return [fthr * pc / 100.0 for pc in BC_ZONES]

@@ -109,7 +109,7 @@ class ImpulseStatistics(IntervalStatistics):
             start, finish = Interval.first_missing_date(self._log, s, schedule, self)
 
             if start:
-                loader = StatisticJournalLoader(self._log, s, self, add_serial=False)
+                loader = StatisticJournalLoader(s, self, add_serial=False)
                 start = schedule.start_of_frame(start)
                 # delete forwards
                 Interval.clean_dates(self._log, s, start, finish, owner=self)

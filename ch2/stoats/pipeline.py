@@ -6,16 +6,15 @@ from psutil import cpu_count
 
 from ..commands.args import FORCE, START, FINISH
 from ..lib.data import MutableAttr
-from ..lib.date import time_to_local_time
 from ..lib.utils import short_str
 from ..lib.workers import Workers
 from ..squeal import Pipeline
 from ..squeal.types import short_cls
 
+log = getLogger(__name__)
 CPU_FRACTION = 0.9
 MAX_REPEAT = 3
 NONE = object()
-log = getLogger(__name__)
 
 
 class BasePipeline:
@@ -62,7 +61,7 @@ class DbPipeline(BasePipeline):
         super().__init__(log, *args, **kargs)
 
 
-def run_pipeline(log, db, type, like=None, id=None, **extra_kargs):
+def run_pipeline(db, type, like=None, id=None, **extra_kargs):
     with db.session_context() as s:
         for pipeline in Pipeline.all(s, type, like=like, id=id):
             kargs = dict(pipeline.kargs)
@@ -76,26 +75,17 @@ class MultiProcPipeline:
 
     # todo - remove log (first arg)
 
-    def __init__(self, _, db, *args, owner_out=None, force=False, start=None, finish=None,
+    def __init__(self, _, db, *args, owner_out=None, force=False,
                  overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self._db = db
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
-        self.force = force  # delete data (force re-calculation)?
-        self.start = start  # optional start local time (always present for workers)
-        self.finish = finish  # optional finish local time (always present for workers)
+        self.force = force  # force re-processing
         self.overhead = overhead  # next three args are used to decide if workers are needed
         self.cost_calc = cost_calc  # see _cost_benefit for full details
         self.cost_write = cost_write  # defaults guarantee a single thread
         self.n_cpu = max(1, int(cpu_count() * CPU_FRACTION)) if n_cpu is None else n_cpu  # number of cpus available
         self.worker = worker  # if True, then we're in a sub-process
         self.id = id  # the id for the pipeline entry in the database (passed to sub-processes)
-
-    def _start_finish(self, type=None):
-        start, finish = self.start, self.finish
-        if type:
-            if start: start = type(start)
-            if finish: finish = type(finish)
-        return start, finish
 
     def run(self):
 
@@ -120,9 +110,17 @@ class MultiProcPipeline:
                 self.__spawn(s, missing, n_total, n_parallel)
 
     def _run_all(self, s, missing):
-        for time_or_date in missing:
-            self._run_one(s, time_or_date)
+        self._startup(s)
+        for missed in missing:
+            self._run_one(s, missed)
             s.commit()
+        self._shutdown(s)
+
+    def _startup(self, s):
+        pass
+
+    def _shutdown(self, s):
+        pass
 
     @abstractmethod
     def _missing(self, s):
@@ -133,7 +131,7 @@ class MultiProcPipeline:
         raise NotImplementedError()
 
     @abstractmethod
-    def _run_one(self, s, time_or_date):
+    def _run_one(self, s, missed):
         raise NotImplementedError()
 
     def __cost_benefit(self, missing, n_cpu):
@@ -182,14 +180,19 @@ class MultiProcPipeline:
             start = finish + 1
             finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
             if start > finish: raise Exception('Bad chunking logic')
-            s, f = time_to_local_time(missing[start]), time_to_local_time(missing[finish])
-            log.info(f'Starting worker for {s} - {f}')
-            args = f'"{s}" "{f}"'
-            workers.run(args)
+            workers.run(self._args(missing, start, finish))
         workers.wait()
+
+    @abstractmethod
+    def _args(self, missing, start, finish):
+        raise NotImplementedError()
 
     @abstractmethod
     def _base_command(self):
         raise NotImplementedError()
 
-
+    def _assert(self, name, value):
+        if value is None:
+            raise Exception(f'Undefined {name}')
+        else:
+            return value

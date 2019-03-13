@@ -64,7 +64,6 @@ FIX_CHECKSUM = 'fix-checksum'
 FIX_HEADER = 'fix-header'
 FORMAT = 'format'
 FORCE = 'force'
-FORCE, F = 'force', 'f'
 FTHR = 'fthr'
 GREP = 'grep'
 GROUP = 'group'
@@ -72,6 +71,8 @@ HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
 INTERNAL = 'internal'
 JUPYTER = 'jupyter'
+K = 'k'
+KARG = 'karg'
 LABEL = 'label'
 LATITUDE = 'latitude'
 LIKE = 'like'
@@ -227,8 +228,12 @@ def parser():
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activities.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                             help='path to fit file(s)')
-    activities.add_argument(m(D.upper()), mm(CONSTANT), action='store', nargs='*', metavar='NAME=VALUE', dest=CONSTANTS,
+    activities.add_argument(m(D.upper()), mm(CONSTANT), action='store', nargs='*', metavar='NAME=VALUE', dest=CONSTANT,
                             help='constant(s) to be stored with the activities')
+    activities.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
+                            help='keyword argument(s) to be passed to the pipelines')
+    activities.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
+                            help='internal use only (identifies sub-process workers)')
     activities.set_defaults(command=ACTIVITIES)
 
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
@@ -443,6 +448,8 @@ def parser():
                             help='optional start date')
     statistics.add_argument(FINISH, action='store', metavar='FINISH', nargs='?',
                             help='optional finish date (if start also given)')
+    statistics.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
+                            help='keyword argument(s) to be passed to the pipelines')
     statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
     statistics.set_defaults(command=STATISTICS)
@@ -492,3 +499,13 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
     db = Database(args, log)
 
     return args, log, db
+
+
+def parse_pairs(pairs):
+    # simple name, value pairs.  owner and constraint supplied by command.
+    d = {}
+    if pairs is not None:
+        for pair in pairs:
+            name, value = pair.split('=', 1)
+            d[name] = value
+    return d

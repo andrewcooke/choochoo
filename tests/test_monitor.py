@@ -27,7 +27,7 @@ class TestMonitor(TestCase):
                                            'monitor', mm(FAST), 'data/test/source/personal/25822184777.fit')
             monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(log, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
+            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01')
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
@@ -45,7 +45,7 @@ class TestMonitor(TestCase):
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(log, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
+            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01')
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
@@ -79,7 +79,7 @@ class TestMonitor(TestCase):
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, log, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(log, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
+            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01')
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 # steps

@@ -8,7 +8,7 @@ POWER_CNAME = 'Power'
 
 
 def add_power(s, c, activity_group,
-              bike='#$ActivityImporter:Bike', weight='$Topic:Weight:Topic \"Diary\" (d)', p=1.225, g=9.8):
+              bike='#$ActivityReader:Bike', weight='$Topic:Weight:Topic \"Diary\" (d)', p=1.225, g=9.8):
     '''
     Add the constants necessary to estimate power output.
     '''

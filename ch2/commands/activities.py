@@ -1,5 +1,5 @@
 
-from ..commands.args import PATH, FORCE, FAST, CONSTANTS
+from ..commands.args import PATH, FORCE, FAST, parse_pairs, CONSTANT, KARG, WORKER
 from ..squeal import PipelineType
 from ..stoats.pipeline import run_pipeline
 
@@ -22,18 +22,9 @@ but arbitrary names and values can be used).
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
-    constants = parse_constants(args[CONSTANTS]) if args[CONSTANTS] else {}
-    force, fast, paths = args[FORCE], args[FAST], args[PATH]
-    run_pipeline(log, db, PipelineType.ACTIVITY, paths=paths, force=force, constants=constants)
-    if not fast:
+    run_pipeline(db, PipelineType.ACTIVITY, paths=args[PATH], force=args[FORCE],
+                 worker=args[WORKER] is not None, id=args[WORKER],
+                 constants=parse_pairs(args[CONSTANT]), **parse_pairs(args[KARG]))
+    if not args[FAST] and args[WORKER] is None:
         # don't force this - it auto-detects need
-        run_pipeline(log, db, PipelineType.STATISTIC)
-
-
-def parse_constants(clist):
-    # simple name, value pairs.  owner and constraint supplied by command.
-    constants = {}
-    for constant in clist:
-        name, value = constant.split('=', 1)
-        constants[name] = value
-    return constants
+        run_pipeline(db, PipelineType.STATISTIC)

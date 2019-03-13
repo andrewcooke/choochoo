@@ -11,7 +11,7 @@ from ..load import StatisticJournalLoader
 from ..pipeline import MultiProcPipeline, DbPipeline
 from ..waypoint import WaypointReader
 from ...commands.args import STATISTICS, WORKER, mm
-from ...lib.date import local_date_to_time, local_time_to_time
+from ...lib.date import local_date_to_time, local_time_to_time, time_to_local_time
 from ...lib.schedule import Schedule
 from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, StatisticName
 from ...squeal.types import short_cls, long_cls
@@ -177,7 +177,7 @@ class DataFrameStatistics(ActivityStatistics):
         df = self._load_data(s, ajournal)
         if df is not None and len(df):
             stats = self._calculate_stats(s, ajournal, df)
-            loader = StatisticJournalLoader(self._log, s, self.owner)
+            loader = StatisticJournalLoader(s, self.owner)
             self._copy_results(s, ajournal, loader, stats)
             loader.load()
         else:
@@ -198,8 +198,25 @@ class DataFrameStatistics(ActivityStatistics):
 
 class MultiProcCalculator(MultiProcPipeline):
 
+    def __init__(self, *args, start=None, finish=None, **kargs):
+        self.start = start  # optional start local time (always present for workers)
+        self.finish = finish  # optional finish local time (always present for workers)
+        super().__init__(*args, **kargs)
+
+    def _start_finish(self, type=None):
+        start, finish = self.start, self.finish
+        if type:
+            if start: start = type(start)
+            if finish: finish = type(finish)
+        return start, finish
+
     def _base_command(self):
         return f'{{ch2}} -v0 -l {{log}} {STATISTICS} {mm(WORKER)} {self.id}'
+
+    def _args(self, missing, start, finish):
+        s, f = time_to_local_time(missing[start]), time_to_local_time(missing[finish])
+        log.info(f'Starting worker for {s} - {f}')
+        return f'"{s}" "{f}"'
 
 
 class ActivityJournalCalculatorMixin:
@@ -250,7 +267,13 @@ class ActivityJournalCalculatorMixin:
         return s.query(ActivityJournal).filter(ActivityJournal.start == time).one()
 
 
-class DataFrameCalculatorMixin:
+class LoaderMixin:
+
+    def _get_loader(self, s):
+        return StatisticJournalLoader(s, self.owner_out)
+
+
+class DataFrameCalculatorMixin(LoaderMixin):
 
     def _run_one(self, s, time_or_date):
         source = self._get_source(s, time_or_date)
@@ -259,7 +282,7 @@ class DataFrameCalculatorMixin:
                 # data may be structured (doesn't have to be simply a dataframe)
                 data = self._load_dataframe(s, source)
                 stats = self._calculate_stats(s, source, data)
-                loader = StatisticJournalLoader(log, s, self.owner_out)
+                loader = self._get_loader(s)
                 self._copy_results(s, source, loader, stats)
                 loader.load()
             except Exception as e:
@@ -283,7 +306,7 @@ class DataFrameCalculatorMixin:
         raise NotImplementedError()
 
 
-class WaypointCalculatorMixin:
+class WaypointCalculatorMixin(LoaderMixin):
 
     def _run_one(self, s, time_or_date):
         source = self._get_source(s, time_or_date)
@@ -291,8 +314,8 @@ class WaypointCalculatorMixin:
             try:
                 # data may be structured (doesn't have to be simply waypoints)
                 data = self._load_waypoints(s, source)
-                loader = StatisticJournalLoader(log, s, self.owner_out)
-                self._calculate_stats(s, source, data, loader)
+                loader = self._get_loader(s)
+                self._calculate_results(s, source, data, loader)
                 loader.load()
             except Exception as e:
                 log.warning(f'No statistics on {time_or_date} ({e})')

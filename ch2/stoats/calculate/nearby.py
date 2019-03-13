@@ -6,10 +6,9 @@ from json import loads
 from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
-from .activity import ActivityStatistics
-from ch2.stoats.calculate import Statistics
+from . import Statistics
 from ..names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
-from ..read.activity import ActivityImporter
+from ..read.activity import ActivityReader
 from ...arty import MatchType
 from ...arty.spherical import SQRTree
 from ...lib.date import to_time, local_date_to_time
@@ -77,7 +76,7 @@ class SimilarityStatistics(Statistics):
         if not prev:
             return False
         prev_ids = s.query(Timestamp.key). \
-            filter(Timestamp.owner == ActivityImporter,
+            filter(Timestamp.owner == ActivityReader,
                    Timestamp.constraint == None,
                    Timestamp.time < prev.time).cte()
         return s.query(count(ActivityJournal.id)). \

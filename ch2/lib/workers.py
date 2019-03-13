@@ -114,6 +114,8 @@ class Workers:
                         del self.__workers[worker]
                         self._delete_pid(worker.pid)
             sleep(SLEEP_TIME)
+        if last_report:
+            log.info(f'Now have {len(self.__workers)} workers')
 
     def _free_log_index(self):
         used = set(self.__workers.values())

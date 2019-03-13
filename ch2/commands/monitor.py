@@ -15,6 +15,6 @@ Read monitor data from FIT files.
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     force, fast, paths = args[FORCE], args[FAST], args[PATH]
-    run_pipeline(log, db, PipelineType.MONITOR, paths=paths, force=force)
+    run_pipeline(db, PipelineType.MONITOR, paths=paths, force=force)
     if not fast:
-        run_pipeline(log, db, PipelineType.STATISTIC, force=force)
+        run_pipeline(db, PipelineType.STATISTIC, force=force)
