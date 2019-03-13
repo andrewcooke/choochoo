@@ -7,16 +7,14 @@ from traceback import format_tb
 
 import pandas as pd
 
-from ch2.squeal import Timestamp
-from . import ActivityJournalCalculator
+from . import DataFrameCalculatorMixin, ActivityJournalCalculatorMixin, MultiProcCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics
 from ...data.power import linear_resample, add_differentials, add_energy_budget, add_loss_estimate, \
     add_power_estimate, PowerException, evaluate, fit_power
 from ...lib.data import reftuple, MissingReference
-from ...squeal import StatisticJournalFloat, Constant
-
+from ...squeal import StatisticJournalFloat, Constant, Timestamp
 
 log = getLogger(__name__)
 Power = reftuple('Power', 'bike, weight, p, g', defaults=(70, 1.225, 9.8))
@@ -24,7 +22,7 @@ Bike = namedtuple('Bike', 'cda, crr, m')
 
 
 # used as common owner
-class PowerCalculator(ActivityJournalCalculator):
+class PowerCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, owner_out=PowerCalculator, **kargs)
@@ -44,7 +42,7 @@ class BasicPowerCalculator(PowerCalculator):
         self.power = power.expand(log, s, df[TIME].iloc[0], owner=Constant, constraint=ajournal.activity_group)
         log.debug(f'Power: {self.power_ref}: {self.power}')
 
-    def _load_data(self, s, ajournal):
+    def _load_dataframe(self, s, ajournal):
         try:
             df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, CADENCE, LATITUDE, LONGITUDE, HEART_RATE,
                                      activity_journal_id=ajournal.id, with_timespan=True,
@@ -85,7 +83,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
         source = self._get_source(s, time_or_date)
         with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
             try:
-                data = self._load_data(s, source)
+                data = self._load_dataframe(s, source)
                 loader = StatisticJournalLoader(log, s, self.owner_out)
                 try:
                     stats = self._calculate_stats(s, source, data)

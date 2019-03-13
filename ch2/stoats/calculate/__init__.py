@@ -202,39 +202,7 @@ class MultiProcCalculator(MultiProcPipeline):
         return f'{{ch2}} -v0 -l {{log}} {STATISTICS} {mm(WORKER)} {self.id}'
 
 
-class DataFrameCalculator(MultiProcCalculator):
-
-    def _run_one(self, s, time_or_date):
-        source = self._get_source(s, time_or_date)
-        with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
-            try:
-                data = self._load_data(s, source)
-                stats = self._calculate_stats(s, source, data)
-                loader = StatisticJournalLoader(log, s, self.owner_out)
-                self._copy_results(s, source, loader, stats)
-                loader.load()
-            except Exception as e:
-                log.warning(f'No statistics on {time_or_date} ({e})')
-                log.debug('\n' + ''.join(format_tb(exc_info()[2])))
-
-    @abstractmethod
-    def _get_source(self, s, time_or_date):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _load_data(self, s, source):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _calculate_stats(self, s, source, data):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _copy_results(self, s, source, loader, stats):
-        raise NotImplementedError()
-
-
-class ActivityJournalCalculator(DataFrameCalculator):
+class ActivityJournalCalculatorMixin:
 
     def __delimit_query(self, q):
         start, finish = self._start_finish(type=local_time_to_time)
@@ -280,3 +248,71 @@ class ActivityJournalCalculator(DataFrameCalculator):
 
     def _get_source(self, s, time):
         return s.query(ActivityJournal).filter(ActivityJournal.start == time).one()
+
+
+class DataFrameCalculatorMixin:
+
+    def _run_one(self, s, time_or_date):
+        source = self._get_source(s, time_or_date)
+        with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
+            try:
+                # data may be structured (doesn't have to be simply a dataframe)
+                data = self._load_dataframe(s, source)
+                stats = self._calculate_stats(s, source, data)
+                loader = StatisticJournalLoader(log, s, self.owner_out)
+                self._copy_results(s, source, loader, stats)
+                loader.load()
+            except Exception as e:
+                log.warning(f'No statistics on {time_or_date} ({e})')
+                log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+
+    @abstractmethod
+    def _get_source(self, s, time_or_date):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _load_dataframe(self, s, source):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _calculate_stats(self, s, source, data):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _copy_results(self, s, source, loader, stats):
+        raise NotImplementedError()
+
+
+class WaypointCalculatorMixin:
+
+    def _run_one(self, s, time_or_date):
+        source = self._get_source(s, time_or_date)
+        with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
+            try:
+                # data may be structured (doesn't have to be simply waypoints)
+                data = self._load_waypoints(s, source)
+                loader = StatisticJournalLoader(log, s, self.owner_out)
+                self._calculate_stats(s, source, data, loader)
+                loader.load()
+            except Exception as e:
+                log.warning(f'No statistics on {time_or_date} ({e})')
+                log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+
+    @abstractmethod
+    def _get_source(self, s, time_or_date):
+        raise NotImplementedError()
+
+    def _load_waypoints(self, s, source):
+        waypoints = list(WaypointReader(log).read(s, source, self._names(), self.owner_out))
+        if not waypoints:
+            raise Exception('No waypoints')
+        else:
+            return waypoints
+
+    @abstractmethod
+    def _names(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _calculate_results(self, s, source, waypoints, loader):
+        raise NotImplementedError()

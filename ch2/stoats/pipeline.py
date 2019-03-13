@@ -74,8 +74,6 @@ def run_pipeline(log, db, type, like=None, id=None, **extra_kargs):
 
 class MultiProcPipeline:
 
-    # todo - this is still slightly statistics-specific
-
     # todo - remove log (first arg)
 
     def __init__(self, _, db, *args, owner_out=None, force=False, start=None, finish=None,
@@ -113,7 +111,7 @@ class MultiProcPipeline:
         if self.worker:
             self._run_all(s, missing)
         elif not missing:
-            log.info(f'No missing statistics for {short_cls(self)}')
+            log.info(f'No missing data for {short_cls(self)}')
         else:
             n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
             if n_parallel < 2:
