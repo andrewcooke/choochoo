@@ -14,9 +14,10 @@ def display_pipeline(log, session, factory, date, diary, schedule=None):
     schedule only sent for summary views.
     '''
     date = to_date(date)   # why is this needed?
-    for cls, args, kargs in Pipeline.all(log, session, PipelineType.DIARY):
-        log.info('Building %s (%s, %s)' % (cls, args, kargs))
-        yield from cls(log, *args, diary=diary, **kargs).display(session, factory, date, schedule=schedule)
+    for pipeline in Pipeline.all(session, PipelineType.DIARY):
+        log.info('Building %s (%s, %s)' % (pipeline.cls, pipeline.args, pipeline.kargs))
+        yield from pipeline.cls(log, *pipeline.args, diary=diary, **pipeline.kargs). \
+            display(session, factory, date, schedule=schedule)
 
 
 class Displayer(BasePipeline):
