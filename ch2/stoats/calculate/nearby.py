@@ -89,7 +89,7 @@ class SimilarityStatistics(Statistics):
                          for s in s.query(StatisticJournalFloat).
                          join(StatisticName).
                          filter(StatisticName.name == ACTIVE_DISTANCE,
-                                StatisticName.owner == ActivityStatistics).all())
+                                StatisticName.owner == ActivityReader).all())
         n = 0
         for lo in affected_ids:
             add_lo, d_lo = lo in new_ids, distances.get(lo, None)
