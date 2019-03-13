@@ -7,7 +7,7 @@ from logging import getLogger
 from scipy.interpolate import UnivariateSpline
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, WaypointCalculatorMixin, WaypointStatistics
-from .climb import find_climbs, Climb
+from ch2.data.climb import find_climbs, Climb
 from ..load import StatisticJournalLoader
 from ..names import *
 from ..waypoint import Chunks
@@ -22,8 +22,10 @@ class ActivityStatistics(WaypointStatistics):
     # for historical reasons, and because it adds few stats, this still doesn't use a loader.
 
     def _run_activity(self, s, activity_group):
-        climb = self._karg('climb')
-        self.__climb = Climb(**loads(Constant.get(s, climb).at(s).value))
+        # HACK - these are removed to leat HR stats run.
+        # no idea what is happening here, but we won't need this soon....
+        # climb = self._karg('climb')
+        # self.__climb = Climb(**loads(Constant.get(s, climb).at(s).value))
         return super()._run_activity(s, activity_group)
 
     def _filter_statistic_journals(self, q):

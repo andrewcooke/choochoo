@@ -3,7 +3,7 @@ from random import uniform
 from unittest import TestCase
 
 from ch2.lib.data import MutableAttr
-from ch2.stoats.calculate.climb import find_climbs
+from ch2.data.climb import find_climbs
 
 
 class TestClimb(TestCase):

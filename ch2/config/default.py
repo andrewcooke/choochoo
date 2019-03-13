@@ -56,7 +56,7 @@ def default(log, db, no_diary=False):
         # need to specify the owner so that we load waypoints correctly
         add_climb(s, bike)
         add_statistics(s, ActivityCalculator, c, climb=name_constant(CLIMB_CNAME, bike))
-        add_statistics(s, SegmentStatistics, c, owner=short_cls(SegmentImporter))
+        add_statistics(s, SegmentStatistics, c, owner=short_cls(SegmentReader))
         add_statistics(s, MonitorStatistics, c)
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
         add_power(s, c, bike)
