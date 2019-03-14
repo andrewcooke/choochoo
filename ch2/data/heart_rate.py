@@ -1,7 +1,7 @@
 
 from math import exp
 
-from ch2.stoats.calculate.activity import BC_ZONES
+from ch2.stoats.calculate.heart_rate import BC_ZONES
 
 
 def zone(hr, fthr, zones=BC_ZONES):

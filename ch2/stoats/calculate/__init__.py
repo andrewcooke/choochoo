@@ -168,34 +168,6 @@ class WaypointStatistics(ActivityStatistics):
         raise NotImplementedError()
 
 
-class DataFrameStatistics(ActivityStatistics):
-    '''
-    New calculator scheme.  Uses data frames / shares code with analysis.
-    '''
-
-    def _add_stats(self, s, ajournal):
-        df = self._load_data(s, ajournal)
-        if df is not None and len(df):
-            stats = self._calculate_stats(s, ajournal, df)
-            loader = StatisticJournalLoader(s, self.owner)
-            self._copy_results(s, ajournal, loader, stats)
-            loader.load()
-        else:
-            self._log.warning('No statistics for %s' % ajournal)
-
-    @abstractmethod
-    def _load_data(self, s, ajournal):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _calculate_stats(self, s, ajournal, df):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _copy_results(self, s, ajournal, loader, stats):
-        raise NotImplementedError()
-
-
 class MultiProcCalculator(MultiProcPipeline):
 
     def __init__(self, *args, start=None, finish=None, **kargs):
