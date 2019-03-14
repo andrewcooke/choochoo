@@ -4,14 +4,15 @@ from os.path import splitext, basename
 
 from pygeotile.point import Point
 
+from ch2.squeal.utils import add
 from ..load import StatisticJournalLoader
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
-from ..read import AbortImport, FitImporter, MultiProcFitReader
+from ..read import AbortImport, MultiProcFitReader
+from ...commands.args import ACTIVITIES, WORKER, FAST, mm
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
 from ...sortem.bilinear import bilinear_elevation_from_constant
 from ...squeal.database import Timestamp, StatisticJournalText
-from ch2.squeal.utils import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES
@@ -21,7 +22,6 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    # main cost is in reading; when files contain data 2 if sine, but for empty files 4 helps move on
     def __init__(self, *args, cost_calc=4, cost_write=1, constants=None, sport_to_activity=None, record_to_db=None,
                  **kargs):
         self.constants = constants
@@ -31,6 +31,9 @@ class ActivityReader(MultiProcFitReader):
                              in self._assert('record_to_db', record_to_db).items()]
         self.add_elevation = not any(name == ELEVATION for (field, name, units, type) in self.record_to_db)
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+
+    def _base_command(self):
+        return f'{{ch2}} -v0 -l {{log}} {ACTIVITIES} {mm(WORKER)} {self.id} {mm(FAST)}'
 
     def _startup(self, s):
         super()._startup(s)

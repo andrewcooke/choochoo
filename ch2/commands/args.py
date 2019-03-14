@@ -437,6 +437,10 @@ def parser():
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file(s)')
+    monitor.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
+                         help='keyword argument(s) to be passed to the pipelines')
+    monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
+                         help='internal use only (identifies sub-process workers)')
     monitor.set_defaults(command=MONITOR)
 
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')

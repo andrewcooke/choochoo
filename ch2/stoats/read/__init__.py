@@ -82,9 +82,6 @@ class MultiProcFitReader(MultiProcPipeline):
         self.paths = paths
         super().__init__(*args, **kargs)
 
-    def _base_command(self):
-        return f'{{ch2}} -v0 -l {{log}} {ACTIVITIES} {mm(WORKER)} {self.id} {mm(FAST)}'
-
     def _args(self, missing, start, finish):
         paths = ' '.join(repr(path) for path in missing[start:finish+1])  # quote names
         log.info(f'Starting worker for {missing[start]} - {missing[finish]}')
