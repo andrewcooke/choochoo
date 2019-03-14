@@ -156,8 +156,8 @@ class ActivityImporter(FitImporter):
 
 class ActivityReader(MultiProcFitReader):
 
-    # main cost is in reading
-    def __init__(self, *args, cost_calc=2, cost_write=1, constants=None, sport_to_activity=None, record_to_db=None,
+    # main cost is in reading; when files contain data 2 if sine, but for empty files 4 helps move on
+    def __init__(self, *args, cost_calc=4, cost_write=1, constants=None, sport_to_activity=None, record_to_db=None,
                  **kargs):
         self.constants = constants
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
@@ -168,6 +168,7 @@ class ActivityReader(MultiProcFitReader):
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
 
     def _startup(self, s):
+        super()._startup(s)
         self.__oracle = bilinear_elevation_from_constant(log, s)
 
     def _read(self, s, path):

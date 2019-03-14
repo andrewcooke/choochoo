@@ -327,6 +327,8 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin
                        total_elevation, ajournal.start, StatisticJournalFloat)
 
 
+# values from british cycling online calculator
+# these are upper limits
 BC_ZONES = (68, 83, 94, 105, 121, 999)
 
 

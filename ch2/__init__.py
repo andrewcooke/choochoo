@@ -9,9 +9,9 @@ getLogger('tornado').addHandler(NullHandler())
 from .commands.activities import activities
 from .commands.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DATA, FIX_FIT, CH2_VERSION
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION
 from .commands.constants import constants
-from .commands.data import data
+from .commands.dump import dump
 from .commands.default_config import default_config
 from .commands.diary import diary
 from .commands.fit import fit
@@ -42,9 +42,9 @@ at the command line.
 
 COMMANDS = {ACTIVITIES: activities,
             CONSTANTS: constants,
-            DATA: data,
             DEFAULT_CONFIG: default_config,
             DIARY: diary,
+            DUMP: dump,
             FIT: fit,
             FIX_FIT: fix_fit,
             GARMIN: garmin,

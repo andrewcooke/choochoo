@@ -17,9 +17,9 @@ TOPIC = 'topic'
 
 ACTIVITIES = 'activities'
 CONSTANTS = 'constants'
-DATA = 'data'
 DEFAULT_CONFIG = 'default-config'
 DIARY = 'diary'
+DUMP = 'dump'
 FIT = 'fit'
 FIX_FIT = 'fix-fit'
 GARMIN = 'garmin'
@@ -246,46 +246,46 @@ def parser():
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
     constant.set_defaults(command=CONSTANTS)
 
-    data = subparsers.add_parser(DATA)
-    data_format = data.add_mutually_exclusive_group()
-    data_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
-    data_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV, help='CVS format')
-    data_format.add_argument(mm(DESCRIBE), action='store_const', dest=FORMAT, const=DESCRIBE, help='summary format')
-    data.add_argument(mm(MAX_COLUMNS), action='store', metavar='N', type=int, help='pandas max_columns attribute')
-    data.add_argument(mm(MAX_COLWIDTH), action='store', metavar='N', type=int, help='pandas max_colwidth attribute')
-    data.add_argument(mm(MAX_ROWS), action='store', metavar='N', type=int, help='pandas max_rows attribute')
-    data.add_argument(mm(WIDTH), action='store', metavar='N', type=int, help='pandas width attribute')
-    data_sub = data.add_subparsers()
-    data_statistics = data_sub.add_parser(STATISTICS)
-    data_statistics.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    data_statistics.add_argument(mm(START), action='store', metavar='TIME', help='start time')
-    data_statistics.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
-    data_statistics.add_argument(mm(OWNER), action='store', metavar='OWNER',
+    dump = subparsers.add_parser(DUMP)  # todo - this one needs tests!
+    dump_format = dump.add_mutually_exclusive_group()
+    dump_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
+    dump_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV, help='CVS format')
+    dump_format.add_argument(mm(DESCRIBE), action='store_const', dest=FORMAT, const=DESCRIBE, help='summary format')
+    dump.add_argument(mm(MAX_COLUMNS), action='store', metavar='N', type=int, help='pandas max_columns attribute')
+    dump.add_argument(mm(MAX_COLWIDTH), action='store', metavar='N', type=int, help='pandas max_colwidth attribute')
+    dump.add_argument(mm(MAX_ROWS), action='store', metavar='N', type=int, help='pandas max_rows attribute')
+    dump.add_argument(mm(WIDTH), action='store', metavar='N', type=int, help='pandas width attribute')
+    dump_sub = dump.add_subparsers()
+    dump_statistics = dump_sub.add_parser(STATISTICS)
+    dump_statistics.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
+    dump_statistics.add_argument(mm(START), action='store', metavar='TIME', help='start time')
+    dump_statistics.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
+    dump_statistics.add_argument(mm(OWNER), action='store', metavar='OWNER',
                                  help='typically the class that created the data')
-    data_statistics.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
+    dump_statistics.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
                                  help='a value that makes the name unique (eg activity group)')
-    data_statistics.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
+    dump_statistics.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
                                  help='the schedule on which some statistics are calculated')
-    data_statistics.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
+    dump_statistics.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
                                  help='the source IDs for the statistic')
-    data_statistics.set_defaults(sub_command=STATISTICS)
-    data_statistic_quartiles = data_sub.add_parser(STATISTIC_QUARTILES)
-    data_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    data_statistic_quartiles.add_argument(mm(START), action='store', metavar='TIME', help='start time')
-    data_statistic_quartiles.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
-    data_statistic_quartiles.add_argument(mm(OWNER), action='store', metavar='OWNER',
+    dump_statistics.set_defaults(sub_command=STATISTICS)
+    sump_statistic_quartiles = dump_sub.add_parser(STATISTIC_QUARTILES)
+    sump_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
+    sump_statistic_quartiles.add_argument(mm(START), action='store', metavar='TIME', help='start time')
+    sump_statistic_quartiles.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
+    sump_statistic_quartiles.add_argument(mm(OWNER), action='store', metavar='OWNER',
                                           help='typically the class that created the data')
-    data_statistic_quartiles.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
+    sump_statistic_quartiles.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
                                           help='a value that makes the name unique (eg activity group)')
-    data_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
+    sump_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
                                           help='the schedule on which some statistics are calculated')
-    data_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
+    sump_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
                                           help='the source IDs for the statistic')
-    data_statistic_quartiles.set_defaults(sub_command=STATISTIC_QUARTILES)
-    data_table = data_sub.add_parser(TABLE)
-    data_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
-    data_table.set_defaults(sub_command=TABLE)
-    data.set_defaults(command=DATA, format=PRINT)
+    sump_statistic_quartiles.set_defaults(sub_command=STATISTIC_QUARTILES)
+    sump_table = dump_sub.add_parser(TABLE)
+    sump_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
+    sump_table.set_defaults(sub_command=TABLE)
+    dump.set_defaults(command=DUMP, format=PRINT)
 
     default_config = subparsers.add_parser(DEFAULT_CONFIG,
                                            help='configure the default database ' +

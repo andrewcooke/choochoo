@@ -95,7 +95,7 @@ class ImpulseStatistics(IntervalStatistics):
 
     def _run_calculations(self, schedule):
 
-        from .heart_rate import HeartRateStatistics
+        from .heart_rate import HeartRateCalculator  # todo - move up?
 
         impulse = self._karg('impulse')
         responses = self._karg('responses')
@@ -121,7 +121,7 @@ class ImpulseStatistics(IntervalStatistics):
                         activity_group = constant.statistic_name.constraint
                         source = s.query(StatisticName). \
                             filter(StatisticName.name == impulse.dest_name,
-                                   StatisticName.owner == HeartRateStatistics,
+                                   StatisticName.owner == HeartRateCalculator,  # todo - owner_in?
                                    StatisticName.constraint == activity_group).one_or_none()
                         if source:  # None if no data loaded
                             self._add_response(loader, s, response, interval, source)

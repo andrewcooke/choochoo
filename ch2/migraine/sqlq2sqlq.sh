@@ -41,7 +41,7 @@ select * from segment;
 EOF
 
 rm -f ~/.ch2/database.sqlq
-dev/ch2 no-op
+dev/ch2 --dev no-op
 
 sqlite3 ~/.ch2/database.sqlq < /tmp/dump-q.sql
 
@@ -56,7 +56,7 @@ with db.session_context() as s:
      add_enum_constant(s, 'Cotic Soul', Bike, constraint='ActivityGroup "Bike"')
 EOF
 
-dev/ch2 default-config --no-diary
-dev/ch2 constants --set FTHR.Bike 154
-dev/ch2 constants --set SRTM1.Dir /home/andrew/archive/srtm1
-dev/ch2 constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "m": 12}'
+dev/ch2 --dev default-config --no-diary
+dev/ch2 --dev constants --set FTHR.Bike 154
+dev/ch2 --dev constants --set SRTM1.Dir /home/andrew/archive/srtm1
+dev/ch2 --dev constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "m": 12}'

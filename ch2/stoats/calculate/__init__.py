@@ -306,14 +306,14 @@ class DataFrameCalculatorMixin(LoaderMixin):
         raise NotImplementedError()
 
 
-class WaypointCalculatorMixin(LoaderMixin):
+class DirectCalculatorMixin(LoaderMixin):
 
     def _run_one(self, s, time_or_date):
         source = self._get_source(s, time_or_date)
         with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
             try:
                 # data may be structured (doesn't have to be simply waypoints)
-                data = self._load_waypoints(s, source)
+                data = self._load_data(s, source)
                 loader = self._get_loader(s)
                 self._calculate_results(s, source, data, loader)
                 loader.load()
@@ -325,12 +325,9 @@ class WaypointCalculatorMixin(LoaderMixin):
     def _get_source(self, s, time_or_date):
         raise NotImplementedError()
 
-    def _load_waypoints(self, s, source):
-        waypoints = list(WaypointReader(log).read(s, source, self._names(), self.owner_out))
-        if not waypoints:
-            raise Exception('No waypoints')
-        else:
-            return waypoints
+    @abstractmethod
+    def _load_data(self, s, source):
+        raise NotImplementedError()
 
     @abstractmethod
     def _names(self):
@@ -339,3 +336,14 @@ class WaypointCalculatorMixin(LoaderMixin):
     @abstractmethod
     def _calculate_results(self, s, source, waypoints, loader):
         raise NotImplementedError()
+
+
+class WaypointCalculatorMixin(DirectCalculatorMixin):
+
+    def _load_data(self, s, source):
+        waypoints = list(WaypointReader(log).read(s, source, self._names(), self.owner_out))
+        if not waypoints:
+            raise Exception('No waypoints')
+        else:
+            return waypoints
+

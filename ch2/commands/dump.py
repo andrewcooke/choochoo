@@ -1,4 +1,3 @@
-from logging import getLogger
 
 import pandas as pd
 
@@ -13,11 +12,11 @@ from ..squeal.support import Base
 StatisticName
 
 
-def data(args, log, db):
+def dump(args, log, db):
     '''
-## data
+## dump
 
-    > ch2 data COMMAND
+    > ch2 dump COMMAND
 
 Simple access to the database - similar to the interface provided in Jupyter notebooks,
 but accessed from the command line.
@@ -28,11 +27,11 @@ For full options see `ch2 data -h` and `ch2 data COMMAND -h`
 
 ### Examples
 
-    > ch2 data --csv table StatisticName
+    > ch2 dump --csv table StatisticName
 
 Will print the contents of the StatisticName table in CSV format.
 
-    > ch2 data statistics '%HR%' --constraint 'ActivityGroup "Bike"' --start 2018-01-01
+    > ch2 dump statistics '%HR%' --constraint 'ActivityGroup "Bike"' --start 2018-01-01
 
 Will print HR-related statistics from the start of 2018 for the given activity group.
     '''

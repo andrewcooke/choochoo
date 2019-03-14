@@ -268,7 +268,8 @@ class SegmentImporter(ActivityImporter):
 
 class SegmentReader(ActivityReader):
 
-    def __init__(self, *args, cost_calc=2, cost_write=1, inner_bound=5, match_bound=25, **kargs):
+    # main cost is in reading; when files contain data 2 if sine, but for empty files 4 helps move on
+    def __init__(self, *args, cost_calc=4, cost_write=1, inner_bound=5, match_bound=25, **kargs):
         self.inner_bound = inner_bound
         self.match_bound = match_bound
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
