@@ -4,7 +4,7 @@ from sqlalchemy.sql import func
 from . import IntervalStatistics
 from .summary import SummaryStatistics
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
-from ..read.monitor import MonitorImporter, MonitorReader
+from ..read.monitor import MonitorReader
 from ...lib.date import local_date_to_time
 from ...squeal import Interval, StatisticJournalInteger, StatisticName, NoStatistics
 from ...squeal.utils import add
