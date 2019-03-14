@@ -5,13 +5,14 @@ from math import sqrt, ceil
 
 from pygeotile.point import Point
 
-from .activity import ActivityImporter, ActivityReader
+from .activity import ActivityReader
 from ..waypoint import filter_none
 from ...arty import MatchType
 from ...arty.spherical import LocalTangent, SQRTree, Global
 from ...lib.date import to_time, format_time
 from ...lib.utils import sign
-from ...squeal.database import add, Timestamp
+from ...squeal.database import Timestamp
+from ch2.squeal.utils import add
 from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.segment import Segment, SegmentJournal
 

@@ -1,7 +1,7 @@
 
 from urwid import Text, Pile
 
-from ..calculate.activity import ActivityStatistics
+from ..calculate.activity import ActivityCalculator
 from ..names import PERCENT_IN_Z_ANY
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 
@@ -11,7 +11,7 @@ def build_zones(s, ajournal, width):
     percent_times = s.query(StatisticJournal).join(StatisticName). \
         filter(StatisticJournal.time == ajournal.start,
                StatisticName.name.like(PERCENT_IN_Z_ANY),
-               StatisticName.owner == ActivityStatistics,
+               StatisticName.owner == ActivityCalculator,
                StatisticName.constraint == ajournal.activity_group) \
         .order_by(StatisticName.name).all()
     for zone, percent_time in reversed(list(enumerate(percent_times, start=1))):

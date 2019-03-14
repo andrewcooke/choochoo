@@ -13,7 +13,7 @@ from ..names import MAX
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...squeal import Constant, Interval, StatisticJournal, StatisticName, StatisticJournalFloat
-from ...squeal.database import add
+from ch2.squeal.utils import add
 from ...squeal.types import short_cls
 
 # constraint comes from constant

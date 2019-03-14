@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import coalesce
 from . import IntervalStatistics
 from ..names import MAX, MIN, SUM, CNT, AVG, MSR, ENTRIES
 from ...lib.date import local_date_to_time
-from ...squeal.database import add
+from ch2.squeal.utils import add
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS

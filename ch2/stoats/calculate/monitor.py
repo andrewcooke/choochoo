@@ -6,7 +6,7 @@ from .summary import SummaryStatistics
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ..read.monitor import MonitorImporter
 from ...lib.date import local_date_to_time
-from ...squeal.database import add
+from ch2.squeal.utils import add
 from ...squeal import Interval, StatisticJournalInteger, StatisticName, NoStatistics
 
 

@@ -1,15 +1,16 @@
 
 import datetime as dt
 from enum import IntEnum
-from sqlite3 import IntegrityError
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, backref
 
 from .source import Interval
 from ..support import Base
 from ..types import Time, ShortCls, Str
 from ...lib.date import format_seconds, local_date_to_time
+from ch2.squeal.utils import add
 
 
 class StatisticName(Base):
@@ -34,19 +35,23 @@ class StatisticName(Base):
 
     @classmethod
     def add_if_missing(cls, log, s, name, units, summary, owner, constraint):
+        s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
                    StatisticName.constraint == constraint)
         statistic_name = q.one_or_none()
         if not statistic_name:
-            statistic_name = StatisticName(name=name, units=units, summary=summary, owner=owner,
-                                           constraint=constraint)
-            s.add(statistic_name)
+            statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner,
+                                                  constraint=constraint))
             try:
                 s.flush()
-            except IntegrityError:  # worker may have created in parallel, so read
+            except IntegrityError as e:  # worker may have created in parallel, so read
+                log.debug(f'Rollback for {e}')
+                s.rollback()
+                log.debug('Now trying retrieval...')
                 statistic_name = q.one()
+                log.debug('Retrieved')
         else:
             if statistic_name.units != units:
                 log.warning('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))

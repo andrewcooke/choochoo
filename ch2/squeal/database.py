@@ -1,6 +1,5 @@
 
 from contextlib import contextmanager
-from logging import getLogger
 from sqlite3 import OperationalError
 
 from sqlalchemy import create_engine, event
@@ -12,7 +11,6 @@ from . import *
 from .support import Base
 from ..commands.args import DATABASE, NamespaceWithVariables, NO_OP, parser
 from ..lib.log import make_log
-
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
 Source,  Interval, Dummy
@@ -92,11 +90,6 @@ class Database:
                 n_activities = s.query(count(ActivityGroup.id)).scalar()
                 n_statistics = s.query(count(StatisticName.id)).scalar()
             return not (n_topics + n_activities + n_statistics)
-
-
-def add(s, instance):
-    s.add(instance)
-    return instance
 
 
 def connect(args):

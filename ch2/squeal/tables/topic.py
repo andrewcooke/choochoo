@@ -111,7 +111,7 @@ class TopicJournal(Source):
 
     @classmethod
     def check_tz(cls, log, s):
-        from ..database import add
+        from ch2.squeal.utils import add
         tz = get_local_timezone()
         db_tz = s.query(SystemConstant).filter(SystemConstant.name == SystemConstant.TIMEZONE).one_or_none()
         if not db_tz:

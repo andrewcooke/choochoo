@@ -4,8 +4,6 @@ from collections import namedtuple
 from inspect import stack, getmodule
 from json import loads
 
-from ..squeal import StatisticJournal, StatisticName
-
 
 class WarnDict(dict):
 
@@ -90,6 +88,8 @@ def reftuple(name, *args, **kargs):
     Like a namedtuple, but expands $ strings using a database session and date
     (# is similar, but also does JSON parsing).
     '''
+
+    from ..squeal import StatisticJournal, StatisticName
 
     class klass(namedtuple(name, *args, **kargs)):
 

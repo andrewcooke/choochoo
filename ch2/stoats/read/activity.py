@@ -10,7 +10,8 @@ from ..read import AbortImport, FitImporter, MultiProcFitReader
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
 from ...sortem.bilinear import bilinear_elevation_from_constant
-from ...squeal.database import add, Timestamp, StatisticJournalText
+from ...squeal.database import Timestamp, StatisticJournalText
+from ch2.squeal.utils import add
 from ...squeal.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...squeal.tables.source import Interval
 from ...squeal.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES

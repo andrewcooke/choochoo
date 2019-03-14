@@ -10,7 +10,8 @@ from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_ST
 from ..read import AbortImportButMarkScanned, AbortImport, FitImporter
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
-from ...squeal.database import add, Timestamp
+from ...squeal.database import Timestamp
+from ch2.squeal.utils import add
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
 
@@ -260,3 +261,5 @@ def missing_dates(log, s):
             start += dt.timedelta(days=1)
     else:
         log.warning('No dates to download')
+
+

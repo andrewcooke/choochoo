@@ -6,7 +6,7 @@ from urwid import Text, Pile, Columns, Divider
 from . import JournalDiary
 from .climb import climbs_for_activity
 from .heart_rate import build_zones
-from ..calculate.activity import ActivityStatistics
+from ..calculate.activity import ActivityCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB
 from ...lib.date import format_seconds
@@ -40,7 +40,7 @@ class ActivityDiary(JournalDiary):
         body.append(Text('%s - %s  (%s)' % (ajournal.start.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
                                             format_seconds((ajournal.finish - ajournal.start).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
-            sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityStatistics, ajournal.activity_group)
+            sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityCalculator, ajournal.activity_group)
             body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         return body
 

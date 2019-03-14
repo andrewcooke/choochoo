@@ -8,7 +8,7 @@ from time import time
 from sqlalchemy import desc
 
 from .date import to_time
-from ..squeal.database import add
+from ch2.squeal.utils import add
 from ..squeal.tables.fit import FileScan
 
 log = getLogger(__name__)

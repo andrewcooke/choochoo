@@ -1,6 +1,8 @@
 
 from abc import abstractmethod
 from logging import getLogger
+from sys import exc_info
+from traceback import format_tb
 
 from ..pipeline import DbPipeline, MultiProcPipeline
 from ...commands.args import ACTIVITIES, WORKER, mm, FAST
@@ -103,6 +105,7 @@ class MultiProcFitReader(MultiProcPipeline):
             update_scan(s, path, self.owner_out)
         except Exception as e:
             log.warning(f'Could not process {path} ({e}) (ignored)')
+            log.debug('\n' + ''.join(format_tb(exc_info()[2])))
 
     @abstractmethod
     def _read(self, s, path):

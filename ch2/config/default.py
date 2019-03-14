@@ -21,7 +21,7 @@ from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
     RPM
 from ..stoats.read.monitor import MonitorImporter
-from ..stoats.read.segment import SegmentImporter, SegmentReader
+from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Text, Float, Score0
 
 

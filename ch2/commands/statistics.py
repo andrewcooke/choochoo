@@ -16,7 +16,6 @@ Generate any missing statistics.
 
 Delete statistics after the date (or all, if omitted) and then generate new values.
     '''
-    kargs = parse_pairs(args[KARG])
     run_pipeline(db, PipelineType.STATISTIC,
                  force=args[FORCE], like=args[LIKE], start=args[START], finish=args[FINISH],
-                 worker=args[WORKER] is not None, id=args[WORKER], **kargs)
+                 worker=args[WORKER] is not None, id=args[WORKER], **parse_pairs(args[KARG], convert=True))

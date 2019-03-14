@@ -27,5 +27,6 @@ pip install matplotlib
 #pip install webcolors
 
 pip install setuptools wheel twine
+pip install s-tui
 
 echo "source env/bin/activate"
