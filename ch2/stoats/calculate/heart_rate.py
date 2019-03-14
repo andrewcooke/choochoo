@@ -40,7 +40,6 @@ class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin,
         self.impulse = self._assert('impulse', impulse)
         self.owner_in = self._assert('owner_in', owner_in)
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
-        # super().__init__(*args, cost_calc=1, **kargs)  # single for testing
 
     def _startup(self, s):
         self.__fthr_cache = {}
@@ -51,9 +50,6 @@ class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin,
                             StatisticName.owner == Constant,
                             StatisticName.constraint == activity_group).
                      order_by(desc(StatisticJournal.time)).all())
-
-    def _names(self):
-        return {HEART_RATE: 'heart_rate'}
 
     def _load_data(self, s, ajournal):
         sn = inspect(StatisticName).local_table

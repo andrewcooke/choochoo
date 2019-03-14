@@ -85,14 +85,8 @@ class StatisticJournalLoader:
         else:
             self.__latest[key] = instance
 
-    def latest(self, name, constraint, instance=None):
-        latest = self.__latest.get((name, constraint))
-        if latest:
-            if instance and instance.time > latest.time:
-                latest = instance
-        else:
-            latest = instance
-        return latest
+    def latest(self, name, constraint):
+        return self.__latest.get((name, constraint))
 
     def as_waypoints(self, names):
         Waypoint = make_waypoint(names.values())

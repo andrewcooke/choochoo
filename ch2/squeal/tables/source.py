@@ -109,7 +109,7 @@ class Interval(Source):
         plus the end TIME of the statistics,
         '''
         stats_start, stats_finish = cls._raw_statistics_time_range(s, statistic_owner)
-        log.debug('Statistics exist %s - %s' % (stats_start, stats_finish))
+        log.debug('Statistics (in general) exist %s - %s' % (stats_start, stats_finish))
         starts = cls._open_interval_dates(s, schedule, interval_owner)
         stats_start_date = schedule.start_of_frame(time_to_local_date(stats_start))
         if not starts or starts[0] > stats_start_date:
@@ -118,7 +118,6 @@ class Interval(Source):
         log.debug('Have %d open blocks finishing at %s' % (len(starts), stats_finish))
         for i, start in enumerate(starts):
             log.debug('Block %d starts at %s' % (i, start))
-        log.debug('')
         return starts, stats_finish
 
     @classmethod
@@ -192,13 +191,20 @@ class Interval(Source):
             return None, None
 
     @classmethod
-    def missing_dates(cls, log, s, schedule, interval_owner, statistic_owner=None):
+    def missing_dates(cls, log, s, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
         '''
         Iterator over start DATES for all missing intervals, given the constraints supplied.
         '''
-        starts, overall_finish = cls._missing_interval_start_dates(log, s, schedule, interval_owner, statistic_owner)
-        for block_start in starts:
-            yield from cls._missing_interval_dates_from(log, s, schedule, interval_owner, block_start, overall_finish)
+        def intervals():
+            starts, overall_finish = cls._missing_interval_start_dates(log, s, schedule, interval_owner,
+                                                                       statistic_owner)
+            for block_start in starts:
+                yield from cls._missing_interval_dates_from(log, s, schedule, interval_owner, block_start,
+                                                            overall_finish)
+        for a, b in intervals():
+            if start and b > start: continue
+            if finish and a < finish: continue
+            yield a, b
 
     @classmethod
     def delete_all(cls, log, s):

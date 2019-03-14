@@ -1,7 +1,6 @@
 
 import datetime as dt
 from json import loads
-from re import sub
 
 from sqlalchemy import asc, desc
 from urwid import Pile, Text, Columns

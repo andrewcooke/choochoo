@@ -2,8 +2,6 @@
 from collections import namedtuple
 from json import loads
 from logging import getLogger
-from sys import exc_info
-from traceback import format_tb
 
 import pandas as pd
 
@@ -14,6 +12,7 @@ from ...data import activity_statistics
 from ...data.power import linear_resample, add_differentials, add_energy_budget, add_loss_estimate, \
     add_power_estimate, PowerException, evaluate, fit_power
 from ...lib.data import reftuple, MissingReference
+from ...lib.log import log_current_exception
 from ...squeal import StatisticJournalFloat, Constant, Timestamp
 
 log = getLogger(__name__)
@@ -94,8 +93,8 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
                 self._copy_results(s, source, loader, stats)
                 loader.load()
             except Exception as e:
-                log.warning(f'No statistics on {time_or_date} ({e})')
-                log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+                log.warning(f'No statistics on {time_or_date}')
+                log_current_exception()
 
     def _calculate_stats(self, s, ajournal, data):
         model = fit_power(data, 'slope', 'intercept', 'adaption', 'delay',

@@ -1,17 +1,17 @@
 
 from abc import abstractmethod
 from logging import getLogger
-from sys import exc_info
-from traceback import format_tb
 
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
+from ch2.squeal.utils import add
 from ..load import StatisticJournalLoader
-from ..pipeline import MultiProcPipeline, DbPipeline
+from ..pipeline import MultiProcPipeline, DbPipeline, UniProcPipeline
 from ..waypoint import WaypointReader
 from ...commands.args import STATISTICS, WORKER, mm
 from ...lib.date import local_date_to_time, local_time_to_time, time_to_local_time
+from ...lib.log import log_current_exception
 from ...lib.schedule import Schedule
 from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, StatisticName
 from ...squeal.types import short_cls, long_cls
@@ -168,7 +168,7 @@ class WaypointStatistics(ActivityStatistics):
         raise NotImplementedError()
 
 
-class MultiProcCalculator(MultiProcPipeline):
+class CalculatorMixin:
 
     def __init__(self, *args, start=None, finish=None, **kargs):
         self.start = start  # optional start local time (always present for workers)
@@ -185,10 +185,15 @@ class MultiProcCalculator(MultiProcPipeline):
     def _base_command(self):
         return f'{{ch2}} -v0 -l {{log}} {STATISTICS} {mm(WORKER)} {self.id}'
 
-    def _args(self, missing, start, finish):
-        s, f = time_to_local_time(missing[start]), time_to_local_time(missing[finish])
-        log.info(f'Starting worker for {s} - {f}')
-        return f'"{s}" "{f}"'
+
+class MultiProcCalculator(CalculatorMixin, MultiProcPipeline):
+
+    pass
+
+
+class UniProcCalculator(CalculatorMixin, UniProcPipeline):
+
+    pass
 
 
 class ActivityJournalCalculatorMixin:
@@ -208,6 +213,11 @@ class ActivityJournalCalculatorMixin:
             filter(not_(ActivityJournal.id.in_(existing_ids.cte()))). \
             order_by(ActivityJournal.start)
         return [row[0] for row in self.__delimit_query(q)]
+
+    def _args(self, missing, start, finish):
+        s, f = time_to_local_time(missing[start]), time_to_local_time(missing[finish])
+        log.info(f'Starting worker for {s} - {f}')
+        return f'"{s}" "{f}"'
 
     def _delete(self, s):
         start, finish = self._start_finish(type=local_time_to_time)
@@ -258,8 +268,8 @@ class DataFrameCalculatorMixin(LoaderMixin):
                 self._copy_results(s, source, loader, stats)
                 loader.load()
             except Exception as e:
-                log.warning(f'No statistics on {time_or_date} ({e})')
-                log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+                log.warning(f'No statistics on {time_or_date}')
+                log_current_exception()
 
     @abstractmethod
     def _get_source(self, s, time_or_date):
@@ -290,8 +300,8 @@ class DirectCalculatorMixin(LoaderMixin):
                 self._calculate_results(s, source, data, loader)
                 loader.load()
             except Exception as e:
-                log.warning(f'No statistics on {time_or_date} ({e})')
-                log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+                log.warning(f'No statistics on {time_or_date}')
+                log_current_exception()
 
     @abstractmethod
     def _get_source(self, s, time_or_date):
@@ -302,11 +312,7 @@ class DirectCalculatorMixin(LoaderMixin):
         raise NotImplementedError()
 
     @abstractmethod
-    def _names(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _calculate_results(self, s, source, waypoints, loader):
+    def _calculate_results(self, s, source, data, loader):
         raise NotImplementedError()
 
 
@@ -319,3 +325,77 @@ class WaypointCalculatorMixin(DirectCalculatorMixin):
         else:
             return waypoints
 
+    @abstractmethod
+    def _names(self):
+        raise NotImplementedError()
+
+
+class IntervalCalculatorMixin(LoaderMixin):
+
+    def __init__(self, *args, schedule='m', owner_in=None, **kargs):
+        self.schedule = Schedule(self._assert('schedule', schedule))
+        self.owner_in = self._assert('owner_in', owner_in)
+        self._prev_loader = None
+        super().__init__(*args, **kargs)
+
+    def _missing(self, s):
+        start, finish = self._start_finish(type=local_time_to_time)
+        return list(Interval.missing_dates(log, s, self.schedule, self.owner_out,
+                                           statistic_owner=self.owner_in, start=start, finish=finish))
+
+    def _args(self, missing, start, finish):
+        s, f = time_to_local_time(missing[start][0]), time_to_local_time(missing[finish][1])
+        log.info(f'Starting worker for {s} - {f}')
+        return f'"{s}" "{f}"'
+
+    def _delete(self, s):
+        start, finish = self._start_finish()
+        # we delete the intervals that the statistics depend on and they will cascade
+        for repeat in range(2):
+            if repeat:
+                q = s.query(Interval)
+            else:
+                q = s.query(count(Interval.id))
+            q = q.filter(Interval.owner == self.owner_out)
+            if start:
+                q = q.filter(Interval.finish > start)
+            if finish:
+                q = q.filter(Interval.start < finish)
+            if repeat:
+                for interval in q.all():
+                    log.debug('Deleting %s' % interval)
+                    s.delete(interval)
+            else:
+                n = q.scalar()
+                if n:
+                    log.warning('Deleting %d intervals' % n)
+                else:
+                    log.warning('No intervals to delete')
+        s.commit()
+
+    def _run_one(self, s, missing):
+        interval = self._create_interval(s, missing)
+        try:
+            data = self._load_data(s, interval)
+            loader = self._get_loader(s)
+            self._calculate_results(s, interval, data, loader)
+            loader.load()
+            self._prev_loader = loader
+        except Exception as e:
+            log.warning(f'No statistics for {missing}')
+            log_current_exception()
+            self._prev_loader = None
+
+    def _create_interval(self, s, missing):
+        interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
+                                   start=missing[0], finish=missing[1]))
+        s.commit()
+        return interval
+
+    @abstractmethod
+    def _load_data(self, s, interval):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _calculate_results(self, s, interval, data, loader):
+        raise NotImplementedError()

@@ -2,6 +2,8 @@
 from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler
 from logging.handlers import RotatingFileHandler
 from os.path import join
+from sys import exc_info
+from traceback import format_tb
 
 from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG
 
@@ -64,3 +66,10 @@ def make_log(args, tui=False):
             log.addHandler(stderr_handler)
 
     return log
+
+
+def log_current_exception():
+    e, t, tb = exc_info()
+    log.debug(f'Exception: {e}')
+    log.debug(f'Type: {t}')
+    log.debug('Traceback:\n' + ''.join(format_tb(tb)))

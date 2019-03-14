@@ -4,7 +4,7 @@ from json import dumps
 from .database import add_statistics, add_enum_constant, set_constant, name_constant
 from ..squeal.types import short_cls
 from ..stoats.calculate.heart_rate import HRImpulse, HeartRateCalculator
-from ..stoats.calculate.impulse import Response, ImpulseStatistics
+from ..stoats.calculate.impulse import Response, ImpulseStatistics, ImpulseCalculator
 from ..stoats.names import HR_IMPULSE, FITNESS, FATIGUE
 from ..stoats.read.activity import ActivityReader
 
@@ -48,4 +48,5 @@ def add_impulse(s, c, activity_group):
                                     'dest_name': FATIGUE, 'tau_days': 7, 'scale': 5, 'start': 0}))
 
     add_statistics(s, HeartRateCalculator, c, owner_in=short_cls(ActivityReader), impulse=hr_impulse_name)
-    add_statistics(s, ImpulseStatistics, c, responses=(fitness_name, fatigue_name), impulse=hr_impulse_name)
+    add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(HeartRateCalculator),
+                   responses=(fitness_name, fatigue_name), impulse=hr_impulse_name)

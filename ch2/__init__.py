@@ -1,7 +1,6 @@
 
 from logging import getLogger, NullHandler
-from sys import version_info, exc_info
-from traceback import format_tb
+from sys import version_info
 
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
@@ -23,7 +22,7 @@ from .commands.package_fit_profile import package_fit_profile
 from .commands.statistics import statistics
 from .commands.test_schedule import test_schedule
 from .lib.io import tui
-from .lib.log import make_log
+from .lib.log import make_log, log_current_exception
 from .squeal.database import Database
 from .squeal import SystemConstant
 from .uranus.server import set_jupyter_args, stop_jupyter
@@ -86,8 +85,7 @@ def main():
         exit(1)
     except Exception as e:
         log.critical(e)
-        log.debug(repr(e))
-        log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+        log_current_exception()
         log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
         log.info('Docs at http://andrewcooke.github.io/choochoo')
         if not args or args[DEV]:

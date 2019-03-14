@@ -76,6 +76,7 @@ class MultiProcPipeline:
     # todo - remove log (first arg)
 
     def __init__(self, _, db, *args, owner_out=None, force=False,
+                 # default is for single process (assumed by UniProcPipeline below)
                  overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self._db = db
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
@@ -122,6 +123,7 @@ class MultiProcPipeline:
     def _shutdown(self, s):
         pass
 
+    # as a general rule, _missing and _args should be implemented together
     @abstractmethod
     def _missing(self, s):
         raise NotImplementedError()
@@ -183,6 +185,7 @@ class MultiProcPipeline:
             workers.run(self._args(missing, start, finish))
         workers.wait()
 
+    # as a general rule, _missing and _args should be implemented together
     @abstractmethod
     def _args(self, missing, start, finish):
         raise NotImplementedError()
@@ -196,3 +199,11 @@ class MultiProcPipeline:
             raise Exception(f'Undefined {name}')
         else:
             return value
+
+
+class UniProcPipeline(MultiProcPipeline):
+
+    # block parameters related to multi-process - default is single process
+    def __init__(self, *args, overhead=None, cost_calc=None, cost_write=None, n_cpu=None, worker=None, id=None,
+                 **kargs):
+        super().__init__(*args, **kargs)

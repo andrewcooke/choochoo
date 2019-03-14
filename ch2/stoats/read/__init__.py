@@ -1,15 +1,13 @@
 
 from abc import abstractmethod
 from logging import getLogger
-from sys import exc_info
-from traceback import format_tb
 
 from ..pipeline import DbPipeline, MultiProcPipeline
-from ...commands.args import ACTIVITIES, WORKER, mm, FAST
 from ...fit.format.read import filtered_records
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
 from ...lib.io import for_modified_files, filter_modified_files, update_scan
+from ...lib.log import log_current_exception
 
 log = getLogger(__name__)
 
@@ -98,11 +96,12 @@ class MultiProcFitReader(MultiProcPipeline):
             self._read(s, path)
             update_scan(s, path, self.owner_out)
         except AbortImportButMarkScanned as e:
-            log.warning(f'Could not process {path} ({e}) (scanned)')
+            log.warning(f'Could not process {path} (scanned)')
+            log_current_exception()
             update_scan(s, path, self.owner_out)
         except Exception as e:
-            log.warning(f'Could not process {path} ({e}) (ignored)')
-            log.debug('\n' + ''.join(format_tb(exc_info()[2])))
+            log.warning(f'Could not process {path} (ignored)')
+            log_current_exception()
 
     @abstractmethod
     def _read(self, s, path):
