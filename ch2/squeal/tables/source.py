@@ -124,7 +124,7 @@ class Interval(Source):
     def _raw_statistics_time_range(cls, s, statistics_owner=None):
         '''
         The time range over which statistics exist (optionally restricted by owner),
-        ignoring constants are "time zero".  This is the first to the last time for
+        ignoring constants at "time zero".  This is the first to the last time for
         any statistics - it pays no attention to gaps.
         '''
         from .statistic import StatisticJournal, StatisticName

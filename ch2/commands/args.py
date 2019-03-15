@@ -512,7 +512,7 @@ def parse_pairs(pairs, convert=False):
         for pair in pairs:
             name, value = pair.split('=', 1)
             if convert:
-                for type in (float, int, to_time):
+                for type in (int, float, to_time):
                     try:
                         value = type(value)
                         break

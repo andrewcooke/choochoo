@@ -98,8 +98,10 @@ class MultiProcPipeline:
                 self._delete(s)
 
             missing = self._missing(s)
+            log.debug(f'Have {len(missing)} missing ranges')
 
         if self.worker:
+            log.debug('Worker, so execute directly')
             self._run_all(s, missing)
         elif not missing:
             log.info(f'No missing data for {short_cls(self)}')
@@ -111,10 +113,13 @@ class MultiProcPipeline:
                 self.__spawn(s, missing, n_total, n_parallel)
 
     def _run_all(self, s, missing):
+        log.debug('Startup')
         self._startup(s)
         for missed in missing:
+            log.debug(f'Run {missed}')
             self._run_one(s, missed)
             s.commit()
+        log.debug('Shutdown')
         self._shutdown(s)
 
     def _startup(self, s):

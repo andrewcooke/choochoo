@@ -6,7 +6,7 @@ from sqlalchemy import asc, desc
 from urwid import Pile, Text, Columns
 
 from . import Displayer
-from ..calculate.impulse import ImpulseStatistics, Response
+from ..calculate.impulse import Response, ImpulseCalculator
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...lib.utils import label, em, error
@@ -59,7 +59,7 @@ class ImpulseDiary(Displayer):
         return s.query(StatisticJournal). \
             join(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == ImpulseStatistics,
+                   StatisticName.owner == ImpulseCalculator,
                    StatisticJournal.time >= start_time,
                    StatisticJournal.time < finish_time). \
             order_by(direcn(StatisticJournal.time)). \
@@ -71,7 +71,7 @@ class ImpulseDiary(Displayer):
         q = s.query(jtype). \
             join(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == ImpulseStatistics,
+                   StatisticName.owner == ImpulseCalculator,  # todo - owner_in
                    jtype.time >= start_time,
                    jtype.time < finish_time)
         return (q.order_by(asc(jtype.value)).limit(1).one_or_none(),

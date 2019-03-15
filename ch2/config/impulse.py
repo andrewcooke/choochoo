@@ -4,7 +4,7 @@ from json import dumps
 from .database import add_statistics, add_enum_constant, set_constant, name_constant
 from ..squeal.types import short_cls
 from ..stoats.calculate.heart_rate import HRImpulse, HeartRateCalculator
-from ..stoats.calculate.impulse import Response, ImpulseStatistics, ImpulseCalculator
+from ..stoats.calculate.impulse import Response, ImpulseCalculator
 from ..stoats.names import HR_IMPULSE, FITNESS, FATIGUE
 from ..stoats.read.activity import ActivityReader
 
@@ -19,7 +19,7 @@ def add_impulse(s, c, activity_group):
     This adds:
     * HeartRateCalculator pipeline class to calculate HR zone and impulse
       * Impulse constant with parameters for impulse calculation
-    * ImpulseStatistics pipeline class to calculate fitness and fatigue
+    * ImpulseCalculator pipeline class to calculate fitness and fatigue
       * Fitness constant with parameters for fitness calculation
       * Fatigue constant with parameters for fatigue calculation
     '''

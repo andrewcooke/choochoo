@@ -10,7 +10,8 @@ from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityCalculator
-from ..stoats.calculate.monitor import MonitorStatistics
+from ..stoats.calculate.heart_rate import HeartRateCalculator
+from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.calculate.segment import SegmentStatistics
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
@@ -19,7 +20,7 @@ from ..stoats.display.monitor import MonitorDiary
 from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
-    RPM
+    RPM, STEPS
 from ..stoats.read.monitor import MonitorReader
 from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Text, Float, Score0
@@ -57,7 +58,7 @@ def default(log, db, no_diary=False):
         add_climb(s, bike)
         add_statistics(s, ActivityCalculator, c, climb=name_constant(CLIMB_CNAME, bike))
         add_statistics(s, SegmentStatistics, c, owner=short_cls(SegmentReader))
-        add_statistics(s, MonitorStatistics, c)
+        add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
         add_power(s, c, bike)
 

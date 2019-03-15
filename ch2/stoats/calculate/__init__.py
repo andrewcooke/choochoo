@@ -10,7 +10,7 @@ from ..load import StatisticJournalLoader
 from ..pipeline import MultiProcPipeline, DbPipeline, UniProcPipeline
 from ..waypoint import WaypointReader
 from ...commands.args import STATISTICS, WORKER, mm
-from ...lib.date import local_date_to_time, local_time_to_time, time_to_local_time
+from ...lib.date import local_date_to_time, local_time_to_time, time_to_local_time, format_date, to_date
 from ...lib.log import log_current_exception
 from ...lib.schedule import Schedule
 from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, StatisticName
@@ -332,19 +332,19 @@ class WaypointCalculatorMixin(DirectCalculatorMixin):
 
 class IntervalCalculatorMixin(LoaderMixin):
 
-    def __init__(self, *args, schedule='m', owner_in=None, **kargs):
+    def __init__(self, *args, schedule='m', owner_in=None, load_once=False, **kargs):
         self.schedule = Schedule(self._assert('schedule', schedule))
         self.owner_in = self._assert('owner_in', owner_in)
+        self.load_once = load_once
         self._prev_loader = None
         super().__init__(*args, **kargs)
 
     def _missing(self, s):
-        start, finish = self._start_finish(type=local_time_to_time)
-        return list(Interval.missing_dates(log, s, self.schedule, self.owner_out,
-                                           statistic_owner=self.owner_in, start=start, finish=finish))
+        start, finish = self._start_finish(type=to_date)
+        return list(Interval.missing_dates(log, s, self.schedule, self.owner_out, start=start, finish=finish))
 
     def _args(self, missing, start, finish):
-        s, f = time_to_local_time(missing[start][0]), time_to_local_time(missing[finish][1])
+        s, f = format_date(missing[start][0]), format_date(missing[finish][1])
         log.info(f'Starting worker for {s} - {f}')
         return f'"{s}" "{f}"'
 
@@ -377,14 +377,24 @@ class IntervalCalculatorMixin(LoaderMixin):
         interval = self._create_interval(s, missing)
         try:
             data = self._load_data(s, interval)
-            loader = self._get_loader(s)
+            if self.load_once and self._prev_loader:
+                loader = self._prev_loader
+            else:
+                loader = self._get_loader(s)
             self._calculate_results(s, interval, data, loader)
-            loader.load()
+            if not self.load_once:
+                loader.load()
             self._prev_loader = loader
         except Exception as e:
             log.warning(f'No statistics for {missing}')
             log_current_exception()
-            self._prev_loader = None
+            if not self.load_once:
+                self._prev_loader = None
+
+    def _shutdown(self, s):
+        if self.load_once and self._prev_loader:
+            log.debug('Single load')
+            self._prev_loader.load()
 
     def _create_interval(self, s, missing):
         interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
