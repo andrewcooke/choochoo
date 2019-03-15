@@ -8,6 +8,7 @@ from random import uniform
 from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
+from ch2.stoats.calculate.activity import ActivityCalculator
 from ch2.stoats.read.segment import SegmentReader
 from . import Statistics, UniProcCalculator
 from ..names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
@@ -255,7 +256,7 @@ class SimilarityCalculator(UniProcCalculator):
         # this clears itself beforehand
         # use explicit class to distinguish from subclasses (which compare against this)
         with Timestamp(owner=self.owner_out, constraint=self.nearby.constraint).on_success(log, s):
-            self._save(s, new_ids, affected_ids, n_points, n_overlaps, 1000)
+            self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
     def _prepare(self, s, rtree, n_points, delta):
         n = 0
@@ -352,7 +353,7 @@ class SimilarityCalculator(UniProcCalculator):
                          for s in s.query(StatisticJournalFloat).
                          join(StatisticName).
                          filter(StatisticName.name == ACTIVE_DISTANCE,
-                                StatisticName.owner == SegmentReader).all())  # todo - another owner
+                                StatisticName.owner == self.owner_in).all())  # todo - another owner
         n = 0
         for lo in affected_ids:
             add_lo, d_lo = lo in new_ids, distances.get(lo, None)

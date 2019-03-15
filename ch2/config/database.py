@@ -6,9 +6,9 @@ from ..squeal import ActivityGroup, Constant, Pipeline, PipelineType, StatisticN
 from ..squeal.database import connect
 from ..squeal.tables.constant import ValidateNamedTuple
 from ..squeal.types import long_cls, short_cls
+from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
 from ..stoats.names import DUMMY
-from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Integer
 
 NEARBY_CNAME = 'Nearby'
@@ -260,7 +260,7 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
                                    'latitude': latitude, 'longitude': longitude,
                                    'height': height, 'width': width, 'fraction': fraction}))
     add_statistics(s, SimilarityCalculator, sort, nearby=nearby_name,
-                   owner_in=short_cls(SegmentReader), owner_out=short_cls(SimilarityCalculator))
+                   owner_in=short_cls(ActivityCalculator), owner_out=short_cls(SimilarityCalculator))
     add_statistics(s, NearbyCalculator, sort, constraint=constraint,
                    owner_in=short_cls(SimilarityCalculator), owner_out=short_cls(NearbyCalculator))
 
