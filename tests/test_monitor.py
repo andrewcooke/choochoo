@@ -13,7 +13,7 @@ from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.source import Interval
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticName
 from ch2.stoats.pipeline import run_pipeline
-from ch2.stoats.calculate.monitor import MonitorStatistics
+from ch2.stoats.calculate.monitor import MonitorCalculator
 from ch2.stoats.names import REST_HR, DAILY_STEPS
 
 
@@ -55,7 +55,7 @@ class TestMonitor(TestCase):
                 summary = s.query(StatisticJournal).join(StatisticName, Interval). \
                     filter(Interval.start == '2018-09-06',
                            Interval.schedule == 'd',
-                           StatisticName.owner == MonitorStatistics,
+                           StatisticName.owner == MonitorCalculator,
                            StatisticName.name == DAILY_STEPS).one()
                 # connect has 12757 for this date,
                 self.assertEqual(summary.value, 12757)
@@ -63,7 +63,7 @@ class TestMonitor(TestCase):
                 summary = s.query(StatisticJournal).join(StatisticName, Interval). \
                     filter(Interval.start == '2018-09-06',
                            Interval.schedule == 'd',
-                           StatisticName.owner == MonitorStatistics,
+                           StatisticName.owner == MonitorCalculator,
                            StatisticName.name == REST_HR).one()
                 self.assertEqual(summary.value, 45)
 
@@ -86,7 +86,7 @@ class TestMonitor(TestCase):
                 summary = s.query(StatisticJournal).join(StatisticName, Interval). \
                     filter(Interval.start == '2018-10-07',
                            Interval.schedule == 'd',
-                           StatisticName.owner == MonitorStatistics,
+                           StatisticName.owner == MonitorCalculator,
                            StatisticName.name == DAILY_STEPS).one()
                 # connect has 3031 for this date.
                 self.assertEqual(summary.value, 3031)

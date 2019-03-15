@@ -6,7 +6,7 @@ from ..squeal.types import short_cls
 from ..stoats.calculate.heart_rate import HRImpulse, HeartRateCalculator
 from ..stoats.calculate.impulse import Response, ImpulseCalculator
 from ..stoats.names import HR_IMPULSE, FITNESS, FATIGUE
-from ..stoats.read.activity import ActivityReader
+from ..stoats.read.segment import SegmentReader
 
 FITNESS_CNAME = 'Fitness'
 FATIGUE_CNAME = 'Fatigue'
@@ -27,7 +27,8 @@ def add_impulse(s, c, activity_group):
     activity_group_constraint = str(activity_group)
 
     hr_impulse_name = name_constant('HRImpulse', activity_group)
-    hr_impulse = add_enum_constant(s, hr_impulse_name, HRImpulse, single=True, constraint=activity_group_constraint,
+    hr_impulse = add_enum_constant(s, hr_impulse_name, HRImpulse, single=True,
+                                   constraint=activity_group_constraint,
                                    description='Data needed to calculate the FF-model impulse from HR zones - ' +
                                                'see HRImpulse enum')
     set_constant(s, hr_impulse, dumps({'dest_name': HR_IMPULSE, 'gamma': 1.0, 'zero': 2, 'max_secs': 60}))
@@ -47,6 +48,7 @@ def add_impulse(s, c, activity_group):
     set_constant(s, fatigue, dumps({'src_name': HR_IMPULSE, 'src_owner': short_cls(HeartRateCalculator),
                                     'dest_name': FATIGUE, 'tau_days': 7, 'scale': 5, 'start': 0}))
 
-    add_statistics(s, HeartRateCalculator, c, owner_in=short_cls(ActivityReader), impulse=hr_impulse_name)
+    add_statistics(s, HeartRateCalculator, c, owner_in=short_cls(SegmentReader),
+                   impulse=hr_impulse_name)
     add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(HeartRateCalculator),
                    responses=(fitness_name, fatigue_name), impulse=hr_impulse_name)

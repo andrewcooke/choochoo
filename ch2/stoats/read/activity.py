@@ -48,13 +48,13 @@ class ActivityReader(MultiProcFitReader):
         self._load_constants(s, ajournal)
         s.commit()  # allow other workers in
 
-        loader = StatisticJournalLoader(s, ActivityReader)
+        loader = StatisticJournalLoader(s, self.owner_out)
         timespan, warned, last_timestamp = None, 0, to_time(0.0)
 
         # used by nearby calculations to avoid work
         # no need for constraint because ajournal is per-group
         # use this class so import itself is always clearly understood, even if the subclass changes.
-        with Timestamp(owner=ActivityReader, key=ajournal.id).on_success(log, s):
+        with Timestamp(owner=self.owner_out, key=ajournal.id).on_success(log, s):
 
             for record in records:
                 if record.name == 'event' or (record.name == 'record' and record.timestamp > last_timestamp):
@@ -155,5 +155,5 @@ class ActivityReader(MultiProcFitReader):
     def _load_constants(self, s, ajournal):
         if self.constants:
             for name in self.constants.keys():
-                StatisticJournalText.add(log, s, name, None, None, ActivityReader, ajournal.activity_group,
+                StatisticJournalText.add(log, s, name, None, None, self.owner_out, ajournal.activity_group,
                                          ajournal, self.constants[name], ajournal.start)

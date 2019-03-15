@@ -89,8 +89,8 @@ class MultiProcPipeline:
         self.id = id  # the id for the pipeline entry in the database (passed to sub-processes)
 
     def run(self):
-
         with self._db.session_context() as s:
+            self._startup(s)
 
             if self.force:
                 if self.worker:
@@ -100,27 +100,24 @@ class MultiProcPipeline:
             missing = self._missing(s)
             log.debug(f'Have {len(missing)} missing ranges')
 
-        if self.worker:
-            log.debug('Worker, so execute directly')
-            self._run_all(s, missing)
-        elif not missing:
-            log.info(f'No missing data for {short_cls(self)}')
-        else:
-            n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
-            if n_parallel < 2:
+            if self.worker:
+                log.debug('Worker, so execute directly')
                 self._run_all(s, missing)
+            elif not missing:
+                log.info(f'No missing data for {short_cls(self)}')
             else:
-                self.__spawn(s, missing, n_total, n_parallel)
+                n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
+                if n_parallel < 2:
+                    self._run_all(s, missing)
+                else:
+                    self.__spawn(s, missing, n_total, n_parallel)
+            self._shutdown(s)
 
     def _run_all(self, s, missing):
-        log.debug('Startup')
-        self._startup(s)
         for missed in missing:
             log.debug(f'Run {missed}')
             self._run_one(s, missed)
             s.commit()
-        log.debug('Shutdown')
-        self._shutdown(s)
 
     def _startup(self, s):
         pass

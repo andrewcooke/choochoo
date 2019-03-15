@@ -9,20 +9,19 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_
 from sqlalchemy.sql.functions import coalesce
 
-from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
-    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark
-from ..stoats.calculate.monitor import MonitorStatistics
+from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.display.nearby import nearby_any_time
+from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
+    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W
 from ..stoats.names import TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, FITNESS, FATIGUE, REST_HR, \
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER
-from ch2.uranus.coasting import CoastingBookmark
-
+from ..uranus.coasting import CoastingBookmark
 
 log = getLogger(__name__)
 
@@ -305,7 +304,7 @@ def std_health_statistics(s, start=None, finish=None):
     # also, we downsample the FF data to hourly intervals then shift daily data to match one of those times
     # this avoids introducing gaps in the FF data when merging that mess up the continuity of the plots.
     stats_1 = statistics(s, FITNESS, FATIGUE, start=start, finish=finish).resample('1h').mean()
-    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorStatistics). \
+    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, start=start, finish=finish). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))

@@ -6,13 +6,13 @@ from logging import getLogger
 
 from scipy.interpolate import UnivariateSpline
 
-from ch2.stoats.calculate.heart_rate import hr_zones_from_database
-from . import MultiProcCalculator, ActivityJournalCalculatorMixin, WaypointCalculatorMixin, WaypointStatistics
-from ch2.data.climb import find_climbs, Climb
+from . import MultiProcCalculator, ActivityJournalCalculatorMixin, WaypointCalculatorMixin
 from ..load import StatisticJournalLoader
 from ..names import *
 from ..waypoint import Chunks
-from ...squeal import Constant, StatisticJournalFloat, StatisticName, StatisticJournalInteger
+from ...data.climb import find_climbs, Climb
+from ...squeal import Constant, StatisticJournalFloat
+from ...stoats.calculate.heart_rate import hr_zones_from_database
 
 log = getLogger(__name__)
 HR_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
@@ -118,10 +118,10 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin
         return StatisticJournalLoader(s, self.owner_out, add_serial=False)
 
     def _calculate_results(self, s, ajournal, waypoints, loader):
+        waypoints = self._fix_elevation(s, ajournal, waypoints, loader)
         totals = self._add_totals(s, ajournal, waypoints, loader)
         self._add_times_for_distance(s, ajournal, waypoints, loader)
         self._add_hr_stats(s, totals, ajournal, waypoints, loader)
-        waypoints = self._fix_elevation(s, ajournal, waypoints, loader)
         self._add_climbs(s, ajournal, waypoints, loader)
 
     def _add_totals(self, s, ajournal, waypoints, loader):
@@ -186,7 +186,6 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin
                 loader.add(ELEVATION, M, None, ajournal.activity_group, ajournal,
                            elevation, waypoint.time, StatisticJournalFloat)
                 fixed.append(waypoint._replace(elevation=elevation))
-            loader.load()
             return fixed
         else:
             return waypoints

@@ -44,11 +44,15 @@ class Timestamp(Base):
         log.debug(f'Timestamp for {short_cls(owner)} / {key}')
 
     @classmethod
-    def clear(cls, s, owner, constraint=None, key=None):
-        exists = s.query(Timestamp). \
+    def get(cls, s, owner, constraint=None, key=None):
+        return s.query(Timestamp). \
             filter(Timestamp.owner == owner,
                    Timestamp.constraint == constraint,
                    Timestamp.key == key).one_or_none()
+
+    @classmethod
+    def clear(cls, s, owner, constraint=None, key=None):
+        exists = cls.get(s, owner, constraint=constraint, key=key)
         if exists:
             s.delete(exists)
 

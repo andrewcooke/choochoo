@@ -1,12 +1,14 @@
+
 from json import dumps
 
 from ..squeal import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     Topic, TopicField, Dummy
 from ..squeal.database import connect
 from ..squeal.tables.constant import ValidateNamedTuple
-from ..squeal.types import long_cls
-from ..stoats.calculate.nearby import Nearby, NearbyCalculator
+from ..squeal.types import long_cls, short_cls
+from ..stoats.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
 from ..stoats.names import DUMMY
+from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Integer
 
 NEARBY_CNAME = 'Nearby'
@@ -244,7 +246,7 @@ def add_topic_field(s, topic, name, sort, description=None, units=None, summary=
 
 
 def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=5,
-               start='1970', finish='2999', height=10, width=10, constant=NEARBY_CNAME):
+               start='1970', finish='2999', height=10, width=10, fraction=1, constant=NEARBY_CNAME):
     '''
     Add a pipeline task (and related constant) to find nearby activities in a given geographic
     region (specified by latitude, longitude, width and height, all in degrees).
@@ -256,8 +258,11 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
     set_constant(s, nearby, dumps({'constraint': constraint, 'activity_group': activity_group.name,
                                    'border': border, 'start': start, 'finish': finish,
                                    'latitude': latitude, 'longitude': longitude,
-                                   'height': height, 'width': width}))
-    add_statistics(s, NearbyCalculator, sort, nearby=nearby_name)
+                                   'height': height, 'width': width, 'fraction': fraction}))
+    add_statistics(s, SimilarityCalculator, sort, nearby=nearby_name,
+                   owner_in=short_cls(SegmentReader), owner_out=short_cls(SimilarityCalculator))
+    add_statistics(s, NearbyCalculator, sort, constraint=constraint,
+                   owner_in=short_cls(SimilarityCalculator), owner_out=short_cls(NearbyCalculator))
 
 
 def add_loader_support(s):

@@ -36,9 +36,8 @@ def hr_zones(fthr):
 
 class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, cost_calc=5, cost_write=1, impulse=None, owner_in=None, **kargs):
+    def __init__(self, *args, cost_calc=5, cost_write=1, impulse=None, **kargs):
         self.impulse = self._assert('impulse', impulse)
-        self.owner_in = self._assert('owner_in', owner_in)
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
 
     def _startup(self, s):

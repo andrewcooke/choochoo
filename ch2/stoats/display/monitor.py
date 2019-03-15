@@ -2,7 +2,7 @@
 from urwid import Text, Columns, Pile
 
 from . import Displayer
-from ..calculate.monitor import MonitorStatistics
+from ..calculate.monitor import MonitorCalculator
 from ..names import REST_HR, DAILY_STEPS
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields import ReadOnlyField
@@ -27,7 +27,7 @@ class MonitorDiary(Displayer):
             return None
 
     def __field(self, s, date, name):
-        sjournal = StatisticJournal.at_date(s, date, name, MonitorStatistics, None)
+        sjournal = StatisticJournal.at_date(s, date, name, MonitorCalculator, None)
         if sjournal:
             return ReadOnlyField(self._log, sjournal, date=date).widget()
         else:
@@ -47,6 +47,6 @@ class MonitorDiary(Displayer):
         for name in names:
             sname = s.query(StatisticName). \
                 filter(StatisticName.name == name,
-                       StatisticName.owner == MonitorStatistics).one_or_none()
+                       StatisticName.owner == MonitorCalculator).one_or_none()
             if sname:
                 yield sname

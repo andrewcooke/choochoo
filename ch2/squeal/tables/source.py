@@ -202,8 +202,8 @@ class Interval(Source):
                 yield from cls._missing_interval_dates_from(log, s, schedule, interval_owner, block_start,
                                                             overall_finish)
         for a, b in intervals():
-            if start and b > start: continue
-            if finish and a < finish: continue
+            if start and b <= start: continue
+            if finish and a >= finish: continue
             yield a, b
 
     @classmethod

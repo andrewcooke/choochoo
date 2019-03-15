@@ -170,7 +170,8 @@ class WaypointStatistics(ActivityStatistics):
 
 class CalculatorMixin:
 
-    def __init__(self, *args, start=None, finish=None, **kargs):
+    def __init__(self, *args, owner_in=None, start=None, finish=None, **kargs):
+        self.owner_in = self._assert('owner_in', owner_in)
         self.start = start  # optional start local time (always present for workers)
         self.finish = finish  # optional finish local time (always present for workers)
         super().__init__(*args, **kargs)
@@ -193,7 +194,11 @@ class MultiProcCalculator(CalculatorMixin, MultiProcPipeline):
 
 class UniProcCalculator(CalculatorMixin, UniProcPipeline):
 
-    pass
+    def _base_command(self):
+        raise Exception('UniProc does not support workers')
+
+    def _args(self, missing, start, finish):
+        raise Exception('UniProc does not support workers')
 
 
 class ActivityJournalCalculatorMixin:
@@ -294,7 +299,6 @@ class DirectCalculatorMixin(LoaderMixin):
         source = self._get_source(s, time_or_date)
         with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
             try:
-                # data may be structured (doesn't have to be simply waypoints)
                 data = self._load_data(s, source)
                 loader = self._get_loader(s)
                 self._calculate_results(s, source, data, loader)
@@ -319,7 +323,8 @@ class DirectCalculatorMixin(LoaderMixin):
 class WaypointCalculatorMixin(DirectCalculatorMixin):
 
     def _load_data(self, s, source):
-        waypoints = list(WaypointReader(log).read(s, source, self._names(), self.owner_out))
+        waypoints = list(WaypointReader(log).read(s, source, self._names(),
+                                                  self._assert('owner_in', self.owner_in)))
         if not waypoints:
             raise Exception('No waypoints')
         else:
@@ -332,9 +337,8 @@ class WaypointCalculatorMixin(DirectCalculatorMixin):
 
 class IntervalCalculatorMixin(LoaderMixin):
 
-    def __init__(self, *args, schedule='m', owner_in=None, load_once=False, **kargs):
+    def __init__(self, *args, schedule='m', load_once=False, **kargs):
         self.schedule = Schedule(self._assert('schedule', schedule))
-        self.owner_in = self._assert('owner_in', owner_in)
         self.load_once = load_once
         self._prev_loader = None
         super().__init__(*args, **kargs)
