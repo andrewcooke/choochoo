@@ -8,7 +8,7 @@ from ch2.squeal.utils import add
 from ..load import StatisticJournalLoader
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
 from ..read import AbortImport, MultiProcFitReader
-from ...commands.args import ACTIVITIES, WORKER, FAST, mm
+from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
 from ...sortem.bilinear import bilinear_elevation_from_constant
@@ -33,7 +33,8 @@ class ActivityReader(MultiProcFitReader):
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
 
     def _base_command(self):
-        return f'{{ch2}} -v0 -l {{log}} {ACTIVITIES} {mm(WORKER)} {self.id} {mm(FAST)}'
+        return f'{{ch2}} -v0 -l {{log}} {ACTIVITIES} {mm(WORKER)} {self.id} ' \
+            f'{mm(FAST)} {mm(FORCE) if self.force else ""}'
 
     def _startup(self, s):
         super()._startup(s)
@@ -148,7 +149,7 @@ class ActivityReader(MultiProcFitReader):
         for journal in s.query(ActivityJournal). \
                 filter(ActivityJournal.activity_group == activity_group,
                        ActivityJournal.start == first_timestamp).all():
-            Timestamp.clear(s, owner=ActivityReader, key=journal.id)
+            Timestamp.clear(s, owner=self.owner_out, key=journal.id)
             s.delete(journal)
         s.flush()
 

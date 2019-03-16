@@ -39,7 +39,7 @@ class SegmentReader(ActivityReader):
         for agroup in s.query(ActivityGroup).all():
             self.__segments[agroup.id] = self._read_segments(s, agroup)
 
-    def read(self, s, path):
+    def _read(self, s, path):
         ajournal, loader = super()._read(s, path)
         self._find_segments(s, ajournal, filter_none(NAMES.values(), loader.as_waypoints(NAMES)))
         return ajournal, loader

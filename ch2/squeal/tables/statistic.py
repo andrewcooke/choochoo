@@ -10,7 +10,8 @@ from .source import Interval
 from ..support import Base
 from ..types import Time, ShortCls, Str
 from ...lib.date import format_seconds, local_date_to_time
-from ch2.squeal.utils import add
+from ...lib.log import log_current_exception
+from ...squeal.utils import add
 
 
 class StatisticName(Base):
@@ -47,6 +48,7 @@ class StatisticName(Base):
             try:
                 s.flush()
             except IntegrityError as e:  # worker may have created in parallel, so read
+                log_current_exception()
                 log.debug(f'Rollback for {e}')
                 s.rollback()
                 log.debug('Now trying retrieval...')

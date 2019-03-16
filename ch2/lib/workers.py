@@ -97,7 +97,7 @@ class Workers:
         last_report = 0
         while len(self.__workers) > n_workers:
             if time() - last_report > REPORT_TIME:
-                log.info(f'Currently have {len(self.__workers)} workers; waiting to drop to {n_workers}')
+                log.debug(f'Currently have {len(self.__workers)} workers; waiting to drop to {n_workers}')
                 last_report = time()
             for worker in list(self.__workers.keys()):
                 worker.poll()
@@ -115,7 +115,7 @@ class Workers:
                         self._delete_pid(worker.pid)
             sleep(SLEEP_TIME)
         if last_report:
-            log.info(f'Now have {len(self.__workers)} workers')
+            log.debug(f'Now have {len(self.__workers)} workers')
 
     def _free_log_index(self):
         used = set(self.__workers.values())

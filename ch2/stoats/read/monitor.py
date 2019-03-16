@@ -6,14 +6,14 @@ from logging import getLogger
 from cachetools import cached
 from sqlalchemy import desc
 
-from ...commands.args import MONITOR, WORKER, FAST, mm
+from ch2.squeal.utils import add
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
     CUMULATIVE_STEPS_FINISH
-from ..read import AbortImportButMarkScanned, AbortImport, FitImporter, MultiProcFitReader
+from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
+from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
 from ...squeal.database import Timestamp
-from ch2.squeal.utils import add
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
 
@@ -65,7 +65,7 @@ class MonitorReader(MultiProcFitReader):
         self.__statistics_cache = statistics_cache
 
     def _base_command(self):
-        return f'{{ch2}} -v0 -l {{log}} {MONITOR} {mm(WORKER)} {self.id} {mm(FAST)}'
+        return f'{{ch2}} -v0 -l {{log}} {MONITOR} {mm(WORKER)} {self.id} {mm(FAST)} {mm(FORCE) if self.force else ""}'
 
     def _create(self, s, name, units, summary, constraint, source, value, time, type):
         return type(statistic_name=self.__statistics_cache(s, name, units, summary, constraint),
@@ -107,6 +107,7 @@ class MonitorReader(MultiProcFitReader):
         # need to iterate because sqlite doesn't support multi-table delete and we have inheritance.
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.start == first_timestamp).all():
+            Timestamp.clear(s, owner=self.owner_out, key=mjournal.id)
             log.debug('Deleting %s' % mjournal)
             s.delete(mjournal)
         s.flush()
@@ -230,13 +231,14 @@ class MonitorReader(MultiProcFitReader):
         if first_timestamp == last_timestamp:
             log.debug('File %s is empty (no timespan)' % path)
             raise AbortImportButMarkScanned()
+        self._delete_journals(s, first_timestamp, path)
 
-        log.info('Importing monitor data from %s for %s - %s' %
-                       (path, format_time(first_timestamp), format_time(last_timestamp)))
+        log.info(f'Importing monitor data from {path} '
+                 f'for {format_time(first_timestamp)} - {format_time(last_timestamp)}')
         self._check_previous(s, first_timestamp, last_timestamp, path)
         mjournal = add(s, MonitorJournal(start=first_timestamp, fit_file=path, finish=last_timestamp))
 
-        with Timestamp(owner=self, key=mjournal.id).on_success(log, s):
+        with Timestamp(owner=self.owner_out, key=mjournal.id).on_success(log, s):
 
             cumulative = defaultdict(lambda: 0)
             self._read_previous(s, first_timestamp, cumulative)

@@ -69,7 +69,7 @@ def make_log(args, tui=False):
 
 
 def log_current_exception():
-    e, t, tb = exc_info()
+    t, e, tb = exc_info()
     log.debug(f'Exception: {e}')
     log.debug(f'Type: {t}')
     log.debug('Traceback:\n' + ''.join(format_tb(tb)))

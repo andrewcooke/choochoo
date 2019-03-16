@@ -203,7 +203,7 @@ class UniProcCalculator(CalculatorMixin, UniProcPipeline):
 
 class ActivityJournalCalculatorMixin:
 
-    def __delimit_query(self, q):
+    def _delimit_query(self, q):
         start, finish = self._start_finish(type=local_time_to_time)
         log.debug(f'Delimit times: {start} - {finish}')
         if start:
@@ -217,7 +217,7 @@ class ActivityJournalCalculatorMixin:
         q = s.query(ActivityJournal.start). \
             filter(not_(ActivityJournal.id.in_(existing_ids.cte()))). \
             order_by(ActivityJournal.start)
-        return [row[0] for row in self.__delimit_query(q)]
+        return [row[0] for row in self._delimit_query(q)]
 
     def _args(self, missing, start, finish):
         s, f = time_to_local_time(missing[start]), time_to_local_time(missing[finish])
@@ -228,7 +228,7 @@ class ActivityJournalCalculatorMixin:
         start, finish = self._start_finish(type=local_time_to_time)
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
         statistic_names = s.query(StatisticName.id).filter(StatisticName.owner == self.owner_out)
-        activity_journals = self.__delimit_query(s.query(ActivityJournal.id))
+        activity_journals = self._delimit_query(s.query(ActivityJournal.id))
         statistic_journals = s.query(StatisticJournal.id). \
             filter(StatisticJournal.statistic_name_id.in_(statistic_names.cte()),
                    StatisticJournal.source_id.in_(activity_journals))

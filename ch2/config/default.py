@@ -11,7 +11,7 @@ from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.monitor import MonitorCalculator
-from ..stoats.calculate.segment import SegmentStatistics
+from ..stoats.calculate.segment import SegmentCalculator
 from ..stoats.calculate.summary import SummaryStatistics
 from ..stoats.display.activity import ActivityDiary
 from ..stoats.display.impulse import ImpulseDiary
@@ -58,7 +58,7 @@ def default(log, db, no_diary=False):
         add_climb(s, bike)
         add_statistics(s, ActivityCalculator, c, owner_in=short_cls(SegmentReader),
                        climb=name_constant(CLIMB_CNAME, bike))
-        add_statistics(s, SegmentStatistics, c, owner=short_cls(SegmentReader))
+        add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
         add_power(s, c, bike)
