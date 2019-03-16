@@ -1,14 +1,12 @@
 from logging import getLogger
 
 from sqlalchemy import not_
-from sqlalchemy.sql.functions import count
 
-from . import WaypointStatistics, ActivityJournalCalculatorMixin, WaypointCalculatorMixin, MultiProcCalculator
+from . import ActivityJournalCalculatorMixin, WaypointCalculatorMixin, MultiProcCalculator
 from ..names import SEGMENT_TIME, LATITUDE, LONGITUDE, DISTANCE, S, summaries, MIN, MSR, CNT, HEART_RATE, \
     SEGMENT_HEART_RATE, BPM, MAX
 from ..waypoint import filter_none
-from ...squeal import ActivityJournal, SegmentJournal, Segment, StatisticName, StatisticJournal, \
-    StatisticJournalFloat, Timestamp
+from ...squeal import ActivityJournal, SegmentJournal, StatisticJournalFloat, Timestamp
 
 log = getLogger(__name__)
 

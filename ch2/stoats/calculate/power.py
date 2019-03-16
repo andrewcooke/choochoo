@@ -41,7 +41,7 @@ class BasicPowerCalculator(PowerCalculator):
         self.power = power.expand(log, s, df[TIME].iloc[0], owner=Constant, constraint=ajournal.activity_group)
         log.debug(f'Power: {self.power_ref}: {self.power}')
 
-    def _load_dataframe(self, s, ajournal):
+    def _read_dataframe(self, s, ajournal):
         try:
             df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, CADENCE, LATITUDE, LONGITUDE, HEART_RATE,
                                      activity_journal_id=ajournal.id, with_timespan=True,
@@ -82,7 +82,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
         source = self._get_source(s, time_or_date)
         with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
             try:
-                data = self._load_dataframe(s, source)
+                data = self._read_dataframe(s, source)
                 loader = StatisticJournalLoader(s, self.owner_out)
                 try:
                     stats = self._calculate_stats(s, source, data)

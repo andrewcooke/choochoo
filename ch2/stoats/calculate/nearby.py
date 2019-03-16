@@ -8,11 +8,8 @@ from random import uniform
 from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
-from ch2.stoats.calculate.activity import ActivityCalculator
-from ch2.stoats.read.segment import SegmentReader
-from . import Statistics, UniProcCalculator
+from . import UniProcCalculator
 from ..names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
-from ..read.activity import ActivityReader
 from ...arty import MatchType
 from ...arty.spherical import SQRTree
 from ...lib.date import to_time, local_date_to_time
@@ -20,7 +17,6 @@ from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
 from ...squeal import ActivityJournal, ActivityGroup, Constant, ActivitySimilarity, ActivityNearby, StatisticName, \
     StatisticJournal, StatisticJournalFloat, Timestamp
-
 
 log = getLogger(__name__)
 Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish, '
@@ -82,7 +78,7 @@ class SimilarityCalculator(UniProcCalculator):
 
     def _prepare(self, s, rtree, n_points, delta):
         n = 0
-        for aj_id_in, lon, lat in self._aj_lon_lat(s, new=False):
+        for aj_id_in, lon, lat in self._filter(self._aj_lon_lat(s, new=False)):
             posn = [(lon, lat)]
             rtree[posn] = aj_id_in
             n_points[aj_id_in] += 1
@@ -198,7 +194,7 @@ class SimilarityCalculator(UniProcCalculator):
                         if n % delta == 0:
                             log.info('Saved %d for %s' % (n, self.nearby.constraint))
         if n % delta:
-            log.info('Saved %d for %s' % (n, self.nearby.constraint))
+            log.info('Wrote %d for %s' % (n, self.nearby.constraint))
 
 
 class NearbySimilarityDBSCAN(DBSCAN):
@@ -244,6 +240,7 @@ class NearbyCalculator(UniProcCalculator):
         latest_similarity = Timestamp.get(s, self.owner_in, self.constraint)
         latest_groups = Timestamp.get(s, self.owner_out, self.constraint)
         if not latest_groups or latest_similarity.time > latest_groups.time:
+            self._delete(s)  # missing isn't really missing...
             return [True]
         else:
             return []

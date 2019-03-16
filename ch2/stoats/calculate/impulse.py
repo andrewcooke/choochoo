@@ -49,7 +49,7 @@ class ImpulseCalculator(IntervalCalculatorMixin, UniProcCalculator):
     def _get_loader(self, s):
         return StatisticJournalLoader(s, self.owner_out, add_serial=False)
 
-    def _load_data(self, s, interval):
+    def _read_data(self, s, interval):
         for response, constant in zip(self.responses, self.constants):
             activity_group = constant.statistic_name.constraint
             source = s.query(StatisticName). \

@@ -2,7 +2,7 @@
 from json import dumps
 
 from . import name_constant, add_enum_constant, set_constant
-from ch2.data.climb import Climb, MAX_CLIMB_GRADIENT, MIN_CLIMB_GRADIENT, MAX_CLIMB_REVERSAL, \
+from ..data.climb import Climb, MAX_CLIMB_GRADIENT, MIN_CLIMB_GRADIENT, MAX_CLIMB_REVERSAL, \
     MIN_CLIMB_ELEVATION
 
 CLIMB_CNAME = 'Climb'

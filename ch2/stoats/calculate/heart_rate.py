@@ -50,7 +50,7 @@ class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin,
                             StatisticName.constraint == activity_group).
                      order_by(desc(StatisticJournal.time)).all())
 
-    def _load_data(self, s, ajournal):
+    def _read_data(self, s, ajournal):
         sn = inspect(StatisticName).local_table
         sj = inspect(StatisticJournal).local_table
         sji = inspect(StatisticJournalInteger).local_table

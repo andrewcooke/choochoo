@@ -4,11 +4,11 @@ from re import search
 from urwid import Text, Pile, Columns, Divider
 
 from . import JournalDiary
-from .climb import climbs_for_activity
 from .heart_rate import build_zones
 from ..calculate.activity import ActivityCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB
+from ...data.climb import climbs_for_activity
 from ...lib.date import format_seconds
 from ...lib.utils import label
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
@@ -66,7 +66,7 @@ class ActivityDiary(JournalDiary):
         sjournals = s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticJournal.time == ajournal.start,
                    StatisticName.name.like(template),
-                   StatisticName.owner == ActivityStatistics,
+                   StatisticName.owner == ActivityCalculator,
                    StatisticName.constraint == ajournal.activity_group).order_by(StatisticName.name).all()
         # extract
         for sjournal in self.__sort_journals(sjournals):
@@ -106,9 +106,9 @@ class ActivityDiary(JournalDiary):
         for name in names:
             yield s.query(StatisticName). \
                 filter(StatisticName.name == name,
-                       StatisticName.owner == ActivityStatistics).one()
+                       StatisticName.owner == ActivityCalculator).one()
 
     def __names_like(self, s, name):
         return s.query(StatisticName). \
             filter(StatisticName.name.like(name),
-                   StatisticName.owner == ActivityStatistics).all()
+                   StatisticName.owner == ACTIVE_DISTANCE).all()

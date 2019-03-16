@@ -12,7 +12,7 @@ from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.calculate.segment import SegmentCalculator
-from ..stoats.calculate.summary import SummaryStatistics
+from ..stoats.calculate.summary import SummaryStatistics, SummaryCalculator
 from ..stoats.display.activity import ActivityDiary
 from ..stoats.display.impulse import ImpulseDiary
 from ..stoats.display.monitor import MonitorDiary
@@ -65,8 +65,8 @@ def default(log, db, no_diary=False):
 
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.
-        add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('m'))
-        add_statistics(s, SummaryStatistics, c, schedule=Schedule.normalize('y'))
+        add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('m'))
+        add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('y'))
 
         # obviously you need to edit these parameters - see `ch2 constants Nearby.Bike`
         add_nearby(s, c, bike, 'Santiago', -33.4, -70.4, fraction=0.1)

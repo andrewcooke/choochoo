@@ -58,6 +58,7 @@ class StatisticJournalLoader:
             self._s.commit()
             self._s.delete(dummy)  # todo - could maybe remove instead and use a single commit?
             self._s.commit()
+            # todo - wipe intervals?
 
     def add(self, name, units, summary, constraint, source, value, time, type):
 

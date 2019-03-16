@@ -1,5 +1,9 @@
 
 from collections import namedtuple
+from itertools import groupby
+
+from ..squeal import StatisticJournal, StatisticName
+from ..stoats.names import TOTAL_CLIMB, CLIMB_ELEVATION
 
 # a climb of 80m is roughly equivalent to a score of 8000 on strava's weird approach -
 # https://support.strava.com/hc/en-us/articles/216917057-How-are-Strava-climbs-categorized-For-Rides-
@@ -10,7 +14,6 @@ MAX_CLIMB_REVERSAL = 0.1
 
 # trade-off between pure elevation (0) and pure gradient (1)
 CLIMB_PHI = 0.6
-
 
 Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_gradient, max_reversal',
                    defaults=(CLIMB_PHI, MIN_CLIMB_ELEVATION, MIN_CLIMB_GRADIENT,
@@ -117,3 +120,23 @@ def search(waypoints, params=Climb()):
             if (hi.elevation - lowest[0].elevation) < params.min_elevation:
                 break  # abort if there is no valid future value
     return best
+
+
+def climbs_for_activity(s, ajournal):
+
+    from ..stoats.calculate.activity import ActivityCalculator
+
+    total = s.query(StatisticJournal).join(StatisticName). \
+        filter(StatisticName.name == TOTAL_CLIMB,
+               StatisticJournal.time == ajournal.start,
+               StatisticName.owner == ActivityCalculator,
+               StatisticName.constraint == ajournal.activity_group).order_by(StatisticJournal.time).one_or_none()
+    statistics = s.query(StatisticJournal).join(StatisticName). \
+        filter(StatisticName.name.like('Climb %'),
+               StatisticJournal.time >= ajournal.start,
+               StatisticJournal.time <= ajournal.finish,
+               StatisticName.owner == ActivityCalculator,
+               StatisticName.constraint == ajournal.activity_group).order_by(StatisticJournal.time).all()
+    return total, sorted((dict((statistic.statistic_name.name, statistic) for statistic in climb_statistics)
+                          for _, climb_statistics in groupby(statistics, key=lambda statistic: statistic.time)),
+                         key=lambda climb: climb[CLIMB_ELEVATION].value, reverse=True)

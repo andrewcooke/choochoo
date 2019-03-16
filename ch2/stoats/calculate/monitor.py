@@ -20,7 +20,7 @@ class MonitorCalculator(IntervalCalculatorMixin, MultiProcCalculator):
     def __init__(self, *args, cost_calc=1, cost_write=1, load_once=True, **kargs):
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, load_once=load_once, **kargs)
 
-    def _load_data(self, s, interval):
+    def _read_data(self, s, interval):
         start, finish = local_date_to_time(interval.start), local_date_to_time(interval.finish)
         midpt = start + 0.5 * (finish - start)
         m0 = s.query(func.avg(func.abs(StatisticJournalInteger.time - midpt))).join(StatisticName). \
