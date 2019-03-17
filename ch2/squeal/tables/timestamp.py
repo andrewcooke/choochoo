@@ -5,7 +5,7 @@ from time import time
 from sqlalchemy import Column, Integer, UniqueConstraint
 from sqlalchemy.sql.functions import count
 
-from ..types import Time, ShortCls, Str, short_cls
+from ..types import Time, ShortCls, Str, short_cls, NullStr
 from ..support import Base
 
 
@@ -32,7 +32,7 @@ class Timestamp(Base):
     id = Column(Integer, primary_key=True)
     time = Column(Time, nullable=False, default=time)
     owner = Column(ShortCls, nullable=False)
-    constraint = Column(Str)
+    constraint = Column(NullStr)
     key = Column(Integer)
     UniqueConstraint(owner, constraint, key)
 
@@ -52,9 +52,10 @@ class Timestamp(Base):
 
     @classmethod
     def clear(cls, s, owner, constraint=None, key=None):
-        exists = cls.get(s, owner, constraint=constraint, key=key)
-        if exists:
-            s.delete(exists)
+        s.query(Timestamp). \
+            filter(Timestamp.owner == owner,
+                   Timestamp.constraint == constraint,
+                   Timestamp.key == key).delete()
 
     @classmethod
     def clean_keys(cls, log, s, keep, owner, constraint=None):

@@ -107,8 +107,6 @@ class ActivityReader(MultiProcFitReader):
 
             loader.load()
 
-        # manually clean out intervals because we're doing a fast load
-        Interval.clean_times(log, s, first_timestamp, last_timestamp)
         s.commit()  # allow other workers in
 
         # used by subclasses

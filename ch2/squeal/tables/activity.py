@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
-from ..types import Time, Sort, ShortCls, Str
+from ..types import Time, Sort, ShortCls, Str, NullStr
 from ...lib.date import format_time, local_date_to_time
 
 
@@ -86,7 +86,7 @@ class ActivityBookmark(Base):
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
-    constraint = Column(Str, index=True)
+    constraint = Column(NullStr, index=True)
     UniqueConstraint(activity_journal_id, start, finish, owner, constraint)
 
     def __str__(self):

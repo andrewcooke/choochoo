@@ -150,5 +150,3 @@ class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin,
                 prev = interp
             while integral and time > integral[0][1]:
                 impulse_0, time_0 = integral.pop(0)
-
-

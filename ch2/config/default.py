@@ -12,7 +12,7 @@ from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.calculate.segment import SegmentCalculator
-from ..stoats.calculate.summary import SummaryStatistics, SummaryCalculator
+from ..stoats.calculate.summary import SummaryCalculator
 from ..stoats.display.activity import ActivityDiary
 from ..stoats.display.impulse import ImpulseDiary
 from ..stoats.display.monitor import MonitorDiary

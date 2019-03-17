@@ -18,4 +18,4 @@ Delete statistics after the date (or all, if omitted) and then generate new valu
     '''
     run_pipeline(db, PipelineType.STATISTIC,
                  force=args[FORCE], like=args[LIKE], start=args[START], finish=args[FINISH],
-                 worker=args[WORKER] is not None, id=args[WORKER], **parse_pairs(args[KARG], convert=True))
+                 worker=args[WORKER] is not None, id=args[WORKER], **parse_pairs(args[KARG]))

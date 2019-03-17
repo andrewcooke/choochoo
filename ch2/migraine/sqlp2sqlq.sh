@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+sqlite3 ~/.ch2/database.sqlp 'pragma journal_mode=delete'
 rm -f /tmp/copy.sqlp
 cp ~/.ch2/database.sqlp /tmp/copy.sqlp
 
@@ -16,6 +17,7 @@ EOF
 
 rm -f /tmp/dump-p.sql
 sqlite3 /tmp/copy.sqlp <<EOF
+update statistic_name set "constraint" = 'None' where "constraint" is null;
 .output /tmp/dump-p.sql
 .mode insert source
 select * from source;

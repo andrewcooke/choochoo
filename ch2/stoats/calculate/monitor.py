@@ -17,8 +17,9 @@ QUARTER_DAY = 6 * 60 * 60
 
 class MonitorCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, cost_calc=1, cost_write=1, load_once=True, **kargs):
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, load_once=load_once, **kargs)
+    def __init__(self, *args, cost_calc=1, cost_write=1, load_once=True, schedule='d', **kargs):
+        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write,
+                         load_once=load_once, schedule=schedule, **kargs)
 
     def _read_data(self, s, interval):
         start, finish = local_date_to_time(interval.start), local_date_to_time(interval.finish)
@@ -53,6 +54,7 @@ class MonitorCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         rest_heart_rate, daily_steps = data
         if rest_heart_rate:
             loader.add(REST_HR, BPM, summaries(AVG, CNT, MIN, MSR), None, interval, rest_heart_rate,
-                       local_date_to_time(interval.start), StatisticJournalFloat)
-        loader.add(DAILY_STEPS, STEPS_UNITS, summaries(SUM, AVG, CNT, MAX, MSR), None, interval, daily_steps,
-                   local_date_to_time(interval.start), StatisticJournalFloat)
+                       local_date_to_time(interval.start), StatisticJournalInteger)
+        if daily_steps:
+            loader.add(DAILY_STEPS, STEPS_UNITS, summaries(SUM, AVG, CNT, MAX, MSR), None, interval, daily_steps,
+                       local_date_to_time(interval.start), StatisticJournalInteger)

@@ -121,6 +121,23 @@ class Str(TypeDecorator):
     process_bind_param = process_literal_param
 
 
+class NullStr(TypeDecorator):
+    '''
+    None (NULL) values are converted to 'None'.
+
+    Use for constraint, where NULLs are distinct in UNIQUE constraints.
+    '''
+
+    impl = Text
+
+    def process_literal_param(self, value, dialect):
+        return str(value)
+
+    process_bind_param = process_literal_param
+
+    coerce_to_is_types = tuple()  # don't want "IS NULL" when comparing with None
+
+
 class Json(TypeDecorator):
 
     impl = Text

@@ -7,7 +7,6 @@ from logging import getLogger
 from scipy.interpolate import UnivariateSpline
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, WaypointCalculatorMixin
-from ..load import StatisticJournalLoader
 from ..names import *
 from ..waypoint import Chunks
 from ...data.climb import find_climbs, Climb
@@ -115,7 +114,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin
 
     def _get_loader(self, s):
         # no serial because we timetravel below
-        return StatisticJournalLoader(s, self.owner_out, add_serial=False)
+        return super()._get_loader(s, add_serial=False)
 
     def _calculate_results(self, s, ajournal, waypoints, loader):
         waypoints = self._fix_elevation(s, ajournal, waypoints, loader)

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+sqlite3 ~/.ch2/database.sqlq 'pragma journal_mode=delete' >> /dev/null
 rm -f /tmp/copy.sqlq
 cp ~/.ch2/database.sqlq ~/.ch2/database.sqlq-backup
 mv ~/.ch2/database.sqlq /tmp/copy.sqlq
@@ -17,6 +18,8 @@ EOF
 
 rm -f /tmp/dump-q.sql
 sqlite3 /tmp/copy.sqlq <<EOF
+update statistic_name set "constraint" = 'None' where "constraint" is null;
+update statistic_name set "constraint" = 'None' where "constraint" = '';
 .output /tmp/dump-q.sql
 .mode insert source
 select * from source;

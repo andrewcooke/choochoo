@@ -505,18 +505,17 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
     return args, log, db
 
 
-def parse_pairs(pairs, convert=False):
+def parse_pairs(pairs):
     # simple name, value pairs.  owner and constraint supplied by command.
     d = {}
     if pairs is not None:
         for pair in pairs:
             name, value = pair.split('=', 1)
-            if convert:
-                for type in (int, float, to_time, bool):
-                    try:
-                        value = type(value)
-                        break
-                    except ValueError:
-                        pass
+            for type in (int, float, to_time, bool):
+                try:
+                    value = type(value)
+                    break
+                except ValueError:
+                    pass
             d[name] = value
     return d

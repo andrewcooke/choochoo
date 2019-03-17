@@ -9,7 +9,6 @@ from sqlalchemy import desc, inspect, select, and_
 
 from . import IntervalCalculatorMixin, UniProcCalculator
 from .heart_rate import HRImpulse
-from ..load import StatisticJournalLoader
 from ..names import MAX
 from ...lib.date import local_date_to_time, to_date
 from ...squeal import Constant, Interval, StatisticJournal, StatisticName, StatisticJournalFloat
@@ -29,6 +28,7 @@ class ImpulseCalculator(IntervalCalculatorMixin, UniProcCalculator):
 
     def _startup(self, s):
         super()._startup(s)
+        self._delete(s)
         args_start, args_finish = super()._start_finish(to_date)
         start, finish = Interval.first_missing_date(log, s, self.schedule, self.owner_out)
         if args_start:
@@ -45,9 +45,6 @@ class ImpulseCalculator(IntervalCalculatorMixin, UniProcCalculator):
         self.constants = [Constant.get(s, response) for response in self.responses_ref]
         self.responses = [Response(**loads(constant.at(s).value)) for constant in self.constants]
         self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
-
-    def _get_loader(self, s):
-        return StatisticJournalLoader(s, self.owner_out, add_serial=False)
 
     def _read_data(self, s, interval):
         for response, constant in zip(self.responses, self.constants):

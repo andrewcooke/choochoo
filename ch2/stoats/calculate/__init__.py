@@ -5,65 +5,18 @@ from logging import getLogger
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ch2.squeal.utils import add
 from ..load import StatisticJournalLoader
-from ..pipeline import MultiProcPipeline, DbPipeline, UniProcPipeline
+from ..pipeline import MultiProcPipeline, UniProcPipeline
 from ..waypoint import WaypointReader
 from ...commands.args import STATISTICS, WORKER, mm
-from ...lib.date import local_date_to_time, local_time_to_time, time_to_local_time, format_date, to_date
+from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date
 from ...lib.log import log_current_exception
 from ...lib.schedule import Schedule
-from ...squeal import ActivityJournal, ActivityGroup, Interval, Timestamp, StatisticJournal, StatisticName
-from ...squeal.types import short_cls, long_cls
+from ...squeal import ActivityJournal, Interval, Timestamp, StatisticJournal, StatisticName
+from ...squeal.types import long_cls
+from ...squeal.utils import add
 
 log = getLogger(__name__)
-
-
-class Statistics(DbPipeline): pass
-
-
-class IntervalStatistics(Statistics):
-    '''
-    Support for calculations associated with intervals.
-    '''
-
-    def run(self):
-        schedule = Schedule(self._karg('schedule'))
-        if self._force():
-            self._delete()
-        self._run_calculations(schedule)
-
-    @abstractmethod
-    def _run_calculations(self, schedule):
-        raise NotImplementedError()
-
-    def _delete(self):
-        start, finish = self._start_finish()
-        # we delete the intervals that all summary statistics depend on and they will cascade
-        with self._db.session_context() as s:
-            for repeat in range(2):
-                if repeat:
-                    q = s.query(Interval)
-                else:
-                    q = s.query(count(Interval.id))
-                q = self._filter_intervals(q)
-                if start:
-                    q = q.filter(Interval.finish >= start)
-                if finish:
-                    q = q.filter(Interval.start < finish)
-                if repeat:
-                    for interval in q.all():
-                        self._log.debug('Deleting %s' % interval)
-                        s.delete(interval)
-                else:
-                    n = q.scalar()
-                    if n:
-                        self._log.warning('Deleting %d intervals' % n)
-                    else:
-                        self._log.warning('No intervals to delete')
-
-    def _filter_intervals(self, q):
-        return q.filter(Interval.owner == self)
 
 
 class CalculatorMixin:
@@ -154,8 +107,10 @@ class ActivityJournalCalculatorMixin:
 
 class LoaderMixin:
 
-    def _get_loader(self, s):
-        return StatisticJournalLoader(s, self.owner_out)
+    def _get_loader(self, s, **kargs):
+        if 'owner' not in kargs:
+            kargs['owner'] = self.owner_out
+        return StatisticJournalLoader(s, **kargs)
 
 
 class DataFrameCalculatorMixin(LoaderMixin):
@@ -276,19 +231,26 @@ class IntervalCalculatorMixin(LoaderMixin):
         s.commit()
 
     def _run_one(self, s, missing):
-        interval = self._create_interval(s, missing)
+        if s.query(Interval). \
+            filter(Interval.schedule == self.schedule,
+                   Interval.owner == self.owner_out,
+                   Interval.start == missing[0]).one_or_none():
+            raise Exception('Interval already exists')
+        interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
+                                   start=missing[0], finish=missing[1]))
+        s.commit()
         try:
             data = self._read_data(s, interval)
             if self.load_once and self._prev_loader:
                 loader = self._prev_loader
             else:
-                loader = self._get_loader(s)
+                loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
             self._calculate_results(s, interval, data, loader)
             if not self.load_once:
                 loader.load()
             self._prev_loader = loader
         except Exception as e:
-            log.warning(f'No statistics for {missing}')
+            log.warning(f'No statistics for {missing} due to error ({e})')
             log_current_exception()
             if not self.load_once:
                 self._prev_loader = None
@@ -297,12 +259,6 @@ class IntervalCalculatorMixin(LoaderMixin):
         if self.load_once and self._prev_loader:
             log.debug('Single load')
             self._prev_loader.load()
-
-    def _create_interval(self, s, missing):
-        interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
-                                   start=missing[0], finish=missing[1]))
-        s.commit()
-        return interval
 
     @abstractmethod
     def _read_data(self, s, interval):

@@ -4,8 +4,6 @@ from logging import getLogger
 
 from psutil import cpu_count
 
-from ..commands.args import FORCE, START, FINISH
-from ..lib.data import MutableAttr
 from ..lib.utils import short_str
 from ..lib.workers import Workers
 from ..squeal import Pipeline
@@ -22,11 +20,7 @@ class BasePipeline:
     def __init__(self, log, *args, **kargs):
         self._log = log
         self.__read = set()
-        self._on_init(*args, **kargs)
-
-    def _on_init(self, *args, **kargs):
-        self._args = args
-        self._kargs = MutableAttr(kargs)
+        self._kargs = kargs
 
     def _karg(self, name, default=NONE):
         if name not in self._kargs:
@@ -41,24 +35,6 @@ class BasePipeline:
             self._log.debug(f'{name}={short_str(value)}')
             self.__read.add(name)
         return value
-
-    def _force(self):
-        return self._karg(FORCE, default=False)
-
-    def _start_finish(self, type=None):
-        start = self._karg(START, default=None)
-        finish = self._karg(FINISH, default=None)
-        if type:
-            if start: start = type(start)
-            if finish: finish = type(finish)
-        return start, finish
-
-
-class DbPipeline(BasePipeline):
-
-    def __init__(self, log, db, *args, **kargs):
-        self._db = db
-        super().__init__(log, *args, **kargs)
 
 
 def run_pipeline(db, type, like=None, id=None, **extra_kargs):
@@ -154,7 +130,7 @@ class MultiProcPipeline:
         # out COST_READ too (currently folded into COST_CALC).
 
         log.debug(f'Batching for n_cpu={n_cpu}, overhead={self.overhead}, '
-                        f'cost_writes={self.cost_write} cost_calc={self.cost_calc}')
+                        f'cost_writes={self.cost_write}, cost_calc={self.cost_calc}')
         n_missing = len(missing)
         cost = self.cost_write + self.cost_calc
         limit = cost / self.cost_write

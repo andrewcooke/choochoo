@@ -4,7 +4,7 @@ from logging import getLogger
 from time import time
 
 from .waypoint import make_waypoint
-from ..squeal import StatisticJournal, StatisticName, Dummy
+from ..squeal import StatisticJournal, StatisticName, Dummy, Interval
 from ..squeal.types import short_cls
 
 
@@ -26,15 +26,18 @@ class StatisticJournalLoader:
     # what is special to sqlite is that the final commit will not fail, because there is only ever one
     # process writing (this is true even when using multiple processes)
 
-    def __init__(self, s, owner, add_serial=True):
+    def __init__(self, s, owner, add_serial=True, clear_timestamp=True):
         self._s = s
         self._owner = owner
         self.__statistic_name_cache = dict()
         self.__staging = defaultdict(lambda: [])
         self.__latest = dict()
         self.__add_serial = add_serial
+        self.__start = None
+        self.__finish = None
         self.__last_time = None
         self.__serial = 0 if add_serial else None
+        self.__clear_timestamp = clear_timestamp
 
     def __bool__(self):
         return bool(self.__staging)
@@ -58,7 +61,11 @@ class StatisticJournalLoader:
             self._s.commit()
             self._s.delete(dummy)  # todo - could maybe remove instead and use a single commit?
             self._s.commit()
-            # todo - wipe intervals?
+
+        # manually clean out intervals because we're doing a fast load
+        if self.__clear_timestamp and self.__start and self.__finish:
+            Interval.clean_times(log, self._s, self.__start, self.__finish)
+            self._s.commit()
 
     def add(self, name, units, summary, constraint, source, value, time, type):
 
@@ -70,6 +77,9 @@ class StatisticJournalLoader:
                 self.__serial += 1
             elif time < self.__last_time:
                 raise Exception('Time travel!')
+
+        self.__start = min(self.__start, time) if self.__start else time
+        self.__finish = max(self.__finish, time) if self.__finish else time
 
         key = (name, constraint)
         if key not in self.__statistic_name_cache:

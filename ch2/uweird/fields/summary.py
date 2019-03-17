@@ -4,7 +4,7 @@ from urwid import Text, WEIGHT, Columns
 from . import Field, PAGE_WIDTH
 from ...lib.utils import label, em
 from ...squeal.tables.statistic import StatisticJournal
-from ...stoats.calculate.summary import SummaryStatistics
+from ...stoats.calculate.summary import SummaryCalculator
 
 
 class SummaryField(Field):
@@ -31,9 +31,9 @@ def summary_columns(log, s, f, date, schedule, names, format_name=lambda n: n):
             width += 1
 
     def field_columns(name):
-        journals = StatisticJournal.at_interval(s, date, schedule, SummaryStatistics, name, SummaryStatistics)
+        journals = StatisticJournal.at_interval(s, date, schedule, SummaryCalculator, name, SummaryCalculator)
         for named, journal in enumerate(journals):
-            summary, period, name = SummaryStatistics.parse_name(journal.statistic_name.name)
+            summary, period, name = SummaryCalculator.parse_name(journal.statistic_name.name)
             if not named:
                 yield Text([format_name(name)]), 1
             display = SummaryField(log, journal, summary=summary)

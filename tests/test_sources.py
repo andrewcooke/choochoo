@@ -7,13 +7,13 @@ from sqlalchemy.sql.functions import count
 
 from ch2.commands.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
-from ch2.lib.date import to_time, local_date_to_time, to_date
-from ch2.squeal.utils import add
+from ch2.lib.date import to_date
 from ch2.squeal.tables.source import Source, Interval
 from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \
     StatisticJournalInteger, StatisticJournalType
 from ch2.squeal.tables.topic import TopicJournal, Topic
-from ch2.stoats.calculate.summary import SummaryStatistics
+from ch2.squeal.utils import add
+from ch2.stoats.calculate.summary import SummaryCalculator
 
 
 # the idea here is to test the new database schema with sources etc
@@ -62,8 +62,8 @@ class TestSources(TestCase):
 
             # generate summary stats
 
-            SummaryStatistics(log, db, schedule='m').run()
-            SummaryStatistics(log, db, schedule='y').run()
+            SummaryCalculator(log, db, schedule='m').run()
+            SummaryCalculator(log, db, schedule='y').run()
 
             with db.session_context() as s:
 
