@@ -90,6 +90,13 @@ class StatisticJournalLoader:
             Interval.clean_times(log, self._s, self.__start, self.__finish)
             self._s.commit()
 
+    @classmethod
+    def unlock(cls, s):
+        dummy_source, dummy_name = Dummy.singletons(s)
+        s.query(StatisticJournal). \
+            filter(StatisticJournal.source == dummy_source,
+                   StatisticJournal.statistic_name == dummy_name).delete()
+
     def add(self, name, units, summary, constraint, source, value, time, type):
 
         if self.__add_serial:

@@ -482,9 +482,7 @@ def parser():
                                help='the number of months to display')
     test_schedule.set_defaults(command=TEST_SCHEDULE)
 
-    unlock = subparsers.add_parser(UNLOCK,
-                                   help='remove database locking (emergency only!)')
-    unlock.add_argument(mm(FORCE), action='store_true', help='confirm unlock')
+    unlock = subparsers.add_parser(UNLOCK, help='remove database locking')
     unlock.set_defaults(command=UNLOCK)
 
     return parser

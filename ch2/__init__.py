@@ -21,6 +21,7 @@ from .commands.monitor import monitor
 from .commands.package_fit_profile import package_fit_profile
 from .commands.statistics import statistics
 from .commands.test_schedule import test_schedule
+from .commands.unlock import unlock
 from .lib.io import tui
 from .lib.log import make_log, log_current_exception
 from .squeal.database import Database
@@ -55,6 +56,7 @@ COMMANDS = {ACTIVITIES: activities,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,
             TEST_SCHEDULE: test_schedule,
+            UNLOCK: unlock,
             }
 
 

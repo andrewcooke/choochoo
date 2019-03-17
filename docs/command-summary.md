@@ -57,29 +57,30 @@ refer to multiple entries.
 
 
 
-## data
+Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
 
-    > ch2 data COMMAND
+# Commands
 
-Simple access to the database - similar to the interface provided in
-JupyterState notebooks, but accessed from the command line.
+* activities
+* constants
+* default-config
+* diary
+* dump
+* fit
+* fix-fit
+* garmin
+* help
+* monitor
+* statistics
+* no-op
+* package-fit-profile
+* test-schedule
+* unlock
 
-The format can be selected with `--print` (the default), `--csv` and
-`--describe`.
+See also `ch2 -h` for usage, 'ch2 help CMD` for guidance on a particular
+command,  and `ch2 -h CMD` for usage of that command.
 
-For full options see `ch2 data -h` and `ch2 data COMMAND -h`
-
-### Examples
-
-    > ch2 data --csv table StatisticName
-
-Will print the contents of the StatisticName table in CSV format.
-
-    > ch2 data statistics '%HR%' --constraint 'ActivityGroup "Bike"' --start
-    2018-01-01
-
-Will print HR-related statistics from the start of 2018 for the given activity
-group.    
+Docs at http://andrewcooke.github.io/choochoo/index
 
 
 
@@ -238,7 +239,7 @@ values.
 
 ## no-op
 
-This is used internally when accessing data in JupyterState or configuring the
+This is used internally when accessing data in Jupyter or configuring the
 system at the command line.    
 
 
@@ -270,15 +271,11 @@ Print a calendar showing how the given schedule is interpreted.
 
 ## unlock
 
-    > ch2 unlock --force
+    > ch2 unlock
 
-Remove any locking.
+Remove the "dummy" entry from the databas ethat is used to coordinate locking
+across processes.
 
-The database is locked to allow fast loading of data which requires no other
-command access the database. Using this command removes the lock and so MAY
-CAUSE DATA CORRUPTION if the loading is still in progress.
-
-You should only use this command in the unlikely case that somehow the lock
-remained after the loading finished (eg. if the system crashed or was
-interrupted during loading).    
+This should not be needed in normal use.  DO NOT use when worker processes are
+still running.    
 
