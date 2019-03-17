@@ -1,7 +1,9 @@
 
 from collections import defaultdict
 from logging import getLogger
-from time import time
+from time import time, sleep
+
+from sqlalchemy.exc import IntegrityError
 
 from .waypoint import make_waypoint
 from ..squeal import StatisticJournal, StatisticName, Dummy, Interval
@@ -26,7 +28,10 @@ class StatisticJournalLoader:
     # what is special to sqlite is that the final commit will not fail, because there is only ever one
     # process writing (this is true even when using multiple processes)
 
-    def __init__(self, s, owner, add_serial=True, clear_timestamp=True):
+    # well the above worked for a while. then started throwing exceptions, so i needed to add
+    # the while loop below.
+
+    def __init__(self, s, owner, add_serial=True, clear_timestamp=True, abort_after=100):
         self._s = s
         self._owner = owner
         self.__statistic_name_cache = dict()
@@ -38,6 +43,7 @@ class StatisticJournalLoader:
         self.__last_time = None
         self.__serial = 0 if add_serial else None
         self.__clear_timestamp = clear_timestamp
+        self.__abort_after = abort_after
 
     def __bool__(self):
         return bool(self.__staging)
@@ -45,9 +51,21 @@ class StatisticJournalLoader:
     def load(self):
         self._s.commit()
         dummy_source, dummy_name = Dummy.singletons(self._s)
-        dummy = StatisticJournal(source=dummy_source, statistic_name=dummy_name, time=time())
-        self._s.add(dummy)
-        self._s.flush()
+        dummy, count = None, 0
+        while not dummy:
+            try:
+                log.debug(f'Trying to acquire database ({count})')
+                dummy = StatisticJournal(source=dummy_source, statistic_name=dummy_name, time=0.0)
+                self._s.add(dummy)
+                self._s.flush()
+                log.debug('Acquired database')
+            except IntegrityError:
+                log.debug('Failed to acquire database')
+                self._s.rollback()
+                dummy, count = None, count+1
+                if count > self.__abort_after:
+                    raise Exception(f'Could not acquire database after {count} attempts')
+                sleep(0.1)
         log.debug(f'Dummy ID {dummy.id}')
         try:
             rowid = dummy.id + 1
@@ -57,10 +75,15 @@ class StatisticJournalLoader:
                     sjournal.id = rowid
                     rowid += 1
                 self._s.bulk_save_objects(self.__staging[type])
+            self._s.commit()
+        except Exception:
+            self._s.rollback()
+            raise
         finally:
+            log.debug('Removing Dummy')
+            self._s.delete(dummy)
             self._s.commit()
-            self._s.delete(dummy)  # todo - could maybe remove instead and use a single commit?
-            self._s.commit()
+            log.debug('Dummy removed')
 
         # manually clean out intervals because we're doing a fast load
         if self.__clear_timestamp and self.__start and self.__finish:

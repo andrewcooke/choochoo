@@ -52,7 +52,7 @@ from ch2.config import *
 from ch2.config.database import add_enum_constant
 from ch2.stoats.calculate.power import Bike
 
-log, db = config('-v 5')
+db = config('-v 5')
 with db.session_context() as s:
      add_enum_constant(s, 'Cotic Soul', Bike, constraint='ActivityGroup "Bike"')
 EOF

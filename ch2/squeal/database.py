@@ -31,13 +31,19 @@ log = getLogger(__name__)
 @event.listens_for(Engine, "connect")
 def fk_pragma_on_connect(dbapi_con, _con_record):
     cursor = dbapi_con.cursor()
-    cursor.execute('PRAGMA foreign_keys=ON;')  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
-    cursor.execute('PRAGMA temp_store=MEMORY;')  # https://www.sqlite.org/pragma.html#pragma_temp_store
-    cursor.execute('PRAGMA threads=4;')  # https://www.sqlite.org/pragma.html#pragma_threads
-    cursor.execute('PRAGMA cache_size=-1000000;')  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
-    cursor.execute('PRAGMA secure_delete=OFF;')  # https://www.sqlite.org/pragma.html#pragma_secure_delete
-    cursor.execute('PRAGMA journal_mode=WAL;')  # https://www.sqlite.org/wal.html
-    cursor.execute(f'PRAGMA busy_timeout={5 * 60 * 1000};')  # https://www.sqlite.org/pragma.html#pragma_busy_timeout
+
+    def pragma(cmd):
+        full_cmd = f'PRAGMA {cmd}'
+        log.debug(full_cmd)
+        cursor.execute(full_cmd)
+
+    pragma('foreign_keys=ON;')  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
+    pragma('temp_store=MEMORY;')  # https://www.sqlite.org/pragma.html#pragma_temp_store
+    pragma('threads=4;')  # https://www.sqlite.org/pragma.html#pragma_threads
+    pragma('cache_size=-1000000;')  # 1GB  https://www.sqlite.org/pragma.html#pragma_cache_size
+    pragma('secure_delete=OFF;')  # https://www.sqlite.org/pragma.html#pragma_secure_delete
+    pragma('journal_mode=WAL;')  # https://www.sqlite.org/wal.html
+    pragma(f'busy_timeout={5 * 60 * 1000};')  # https://www.sqlite.org/pragma.html#pragma_busy_timeout
     cursor.close()
 
 
@@ -46,11 +52,11 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
     cursor = dbapi_con.cursor()
     try:
         # this can fail if another process is using the database
+        log.debug('Optimize DB...')
         cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
+        log.debug('Optimize DB done')
     except OperationalError as e:
-        # log = getLogger(__name__)
-        # log.warning(repr(e))
-        pass
+        log.debug("Optimize DB aborted (DB Likely still in use)")
     finally:
         cursor.close()
 

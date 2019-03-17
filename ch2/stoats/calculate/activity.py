@@ -146,9 +146,9 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin
         zones = hr_zones_from_database(s, ajournal.activity_group, ajournal.start)
         if zones:
             for (zone, frac) in Zones(waypoints, zones).zones:
-                loader.add(TIME_IN_Z % zone, PC, None, ajournal.activity_group, ajournal,
+                loader.add(PERCENT_IN_Z % zone, PC, None, ajournal.activity_group, ajournal,
                            100 * frac, ajournal.start, StatisticJournalFloat)
-                loader.add(PERCENT_IN_Z % zone, S, None, ajournal.activity_group, ajournal,
+                loader.add(TIME_IN_Z % zone, S, None, ajournal.activity_group, ajournal,
                            frac * totals.time, ajournal.start, StatisticJournalFloat)
             for target in HR_MINUTES:
                 heart_rates = sorted(MedianHRForTime(waypoints, target * 60).heart_rates(), reverse=True)
