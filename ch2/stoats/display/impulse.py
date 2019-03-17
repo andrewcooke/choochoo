@@ -17,17 +17,19 @@ from ...uweird.tui.decorators import Indent
 
 class ImpulseDiary(Displayer):
 
+    def __init__(self, *args, fitness=None, fatigue=None, **kargs):
+        self.fitness = self._assert('fitness', fitness)
+        self.fatigue = self._assert('fatigue', fatigue)
+        super().__init__(*args, **kargs)
+
     def _display_date(self, s, f, date):
         yield from self._display_schedule(s, f, date, schedule=Schedule('d'))
 
     def _display_schedule(self, s, f, date, schedule=None):
-
-        fitness = self._karg('fitness')
-        fatigue = self._karg('fatigue')
         rows = []
-        for cols in self._single_response(s, f, date, schedule, fitness, schedule.frame_type == 'd'):
+        for cols in self._single_response(s, f, date, schedule, self.fitness, schedule.frame_type == 'd'):
             rows.append(Columns(cols))
-        for cols in self._single_response(s, f, date, schedule, fatigue, schedule.frame_type == 'd'):
+        for cols in self._single_response(s, f, date, schedule, self.fatigue, schedule.frame_type == 'd'):
             rows.append(Columns(cols))
         if rows:
             yield Pile([Text('SHRIMP'), Indent(Pile(rows))])

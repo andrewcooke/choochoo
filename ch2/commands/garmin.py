@@ -28,7 +28,7 @@ https://www.garmin.com/en-US/account/datamanagement/
     else:
         # do this first to avoid login if not needed
         with db.session_context() as s:
-            dates = list(missing_dates(log, s))
+            dates = list(missing_dates(s))
     if dates:
         connect = GarminConnect(log, log_response=False)
         connect.login(user, password)

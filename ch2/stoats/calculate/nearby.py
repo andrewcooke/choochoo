@@ -200,7 +200,7 @@ class SimilarityCalculator(UniProcCalculator):
 
 class NearbySimilarityDBSCAN(DBSCAN):
 
-    def __init__(self, log, s, constraint, epsilon, minpts):
+    def __init__(self, s, constraint, epsilon, minpts):
         super().__init__(log, epsilon, minpts)
         self.__s = s
         self.__constraint = constraint
@@ -257,7 +257,7 @@ class NearbyCalculator(UniProcCalculator):
             self.save(s, self.dbscan(s, d_min))
 
     def dbscan(self, s, d):
-        return NearbySimilarityDBSCAN(log, s, self.constraint, d, 3).run()
+        return NearbySimilarityDBSCAN(s, self.constraint, d, 3).run()
 
     def save(self, s, groups):
         for i, group in enumerate(groups):

@@ -1,30 +1,29 @@
 
 import datetime as dt
 from abc import abstractmethod
+from logging import getLogger
 
-from ch2.stoats.pipeline import BasePipeline
 from ...lib.date import local_date_to_time
 from ...lib.date import to_date
 from ...squeal import ActivityGroup, ActivityJournal
 from ...squeal.tables.pipeline import Pipeline, PipelineType
+from ...stoats.pipeline import BasePipeline
+
+log = getLogger(__name__)
 
 
-def display_pipeline(log, session, factory, date, diary, schedule=None):
+def display_pipeline(session, factory, date, diary, schedule=None):
     '''
     schedule only sent for summary views.
     '''
     date = to_date(date)   # why is this needed?
     for pipeline in Pipeline.all(session, PipelineType.DIARY):
         log.info('Building %s (%s, %s)' % (pipeline.cls, pipeline.args, pipeline.kargs))
-        yield from pipeline.cls(log, *pipeline.args, diary=diary, **pipeline.kargs). \
+        yield from pipeline.cls(*pipeline.args, diary=diary, **pipeline.kargs). \
             display(session, factory, date, schedule=schedule)
 
 
 class Displayer(BasePipeline):
-
-    def _on_init(self, *args, diary=None, **kargs):
-        self._diary = diary
-        super()._on_init(*args, **kargs)
 
     def display(self, s, f, date, schedule=None):
         if schedule:

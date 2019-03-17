@@ -15,28 +15,6 @@ MAX_REPEAT = 3
 NONE = object()
 
 
-class BasePipeline:
-
-    def __init__(self, log, *args, **kargs):
-        self._log = log
-        self.__read = set()
-        self._kargs = kargs
-
-    def _karg(self, name, default=NONE):
-        if name not in self._kargs:
-            if default is NONE:
-                raise Exception('Missing %s parameter for %s' % (name, short_cls(self)))
-            else:
-                self._log.debug(f'Using default for {name}={short_str(default)}')
-                self._kargs[name] = default
-                self.__read.add(name)  # avoid double logging
-        value = self._kargs[name]
-        if name not in self.__read:
-            self._log.debug(f'{name}={short_str(value)}')
-            self.__read.add(name)
-        return value
-
-
 def run_pipeline(db, type, like=None, id=None, **extra_kargs):
     with db.session_context() as s:
         for pipeline in Pipeline.all(s, type, like=like, id=id):
@@ -44,14 +22,25 @@ def run_pipeline(db, type, like=None, id=None, **extra_kargs):
             kargs.update(extra_kargs)
             log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
-            pipeline.cls(log, db, *pipeline.args, id=pipeline.id, **kargs).run()
+            pipeline.cls(db, *pipeline.args, id=pipeline.id, **kargs).run()
 
 
-class MultiProcPipeline:
+class BasePipeline:
 
-    # todo - remove log (first arg)
+    def __init__(self, *args, **kargs):
+        if args or kargs:
+            log.warning(f'Unused ({type(self)}): {args} {list(kargs.keys())}')
 
-    def __init__(self, _, db, *args, owner_out=None, force=False,
+    def _assert(self, name, value):
+        if value is None:
+            raise Exception(f'Undefined {name}')
+        else:
+            return value
+
+
+class MultiProcPipeline(BasePipeline):
+
+    def __init__(self, db, *args, owner_out=None, force=False,
                  # default is for single process (assumed by UniProcPipeline below)
                  overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self._db = db
@@ -63,6 +52,7 @@ class MultiProcPipeline:
         self.n_cpu = max(1, int(cpu_count() * CPU_FRACTION)) if n_cpu is None else n_cpu  # number of cpus available
         self.worker = worker  # if True, then we're in a sub-process
         self.id = id  # the id for the pipeline entry in the database (passed to sub-processes)
+        super().__init__(*args, **kargs)
 
     def run(self):
         with self._db.session_context() as s:
@@ -171,12 +161,6 @@ class MultiProcPipeline:
     @abstractmethod
     def _base_command(self):
         raise NotImplementedError()
-
-    def _assert(self, name, value):
-        if value is None:
-            raise Exception(f'Undefined {name}')
-        else:
-            return value
 
 
 class UniProcPipeline(MultiProcPipeline):

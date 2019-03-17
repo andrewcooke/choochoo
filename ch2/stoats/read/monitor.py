@@ -25,7 +25,7 @@ MONITORING_INFO_ATTR = 'monitoring_info'
 STEPS_ATTR = 'steps'
 
 
-def missing_dates(log, s):
+def missing_dates(s):
     # we don't try to be perfect here.  the idea is that it's called to get the latest
     # updates, rather than fill in all gaps (do the bulk download thing for that).
     # we also don't try to get fractional data.

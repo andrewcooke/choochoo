@@ -5,8 +5,7 @@ from collections import defaultdict
 
 class DBSCAN(ABC):
 
-    def __init__(self, log, epsilon, minpts):
-        self._log = log
+    def __init__(self, epsilon, minpts):
         self.__epsilon = epsilon
         self.__minpts = minpts
 
@@ -31,10 +30,8 @@ class DBSCAN(ABC):
         for candidate in candidates:
             if label[candidate] is None:
                 neighbours = list(self.neighbourhood(candidate, self.__epsilon))
-                # self._log.debug('Candidate %s has %d initial neighbours' % (candidate, len(neighbours)))
                 if len(neighbours) >= self.__minpts:
                     count += 1
-                    # self._log.debug('Candidate %s is nucleus of group %d' % (candidate, count))
                     label[candidate] = count
                     self.grow(count, neighbours, label)
                 else:
@@ -46,7 +43,6 @@ class DBSCAN(ABC):
         while stack:
             candidate = stack.pop()
             neighbours = list(self.neighbourhood(candidate, self.__epsilon))
-            # self._log.debug('Candidate %s has %d neighbours' % (candidate, len(neighbours)))
             if len(neighbours) >= self.__minpts:
                 for neighbour in neighbours:
                     if not label[neighbour]:
@@ -56,7 +52,6 @@ class DBSCAN(ABC):
                         n += 1
             elif label[candidate] is None:
                 label[candidate] = 0  # we know this is a leaf so save some time
-        # self._log.debug('Grew group %d by %d members' % (count, n))
 
     @abstractmethod
     def neighbourhood(self, candidate, epsilon):

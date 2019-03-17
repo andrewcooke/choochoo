@@ -1,12 +1,15 @@
 
 import datetime as dt
 from collections import deque, namedtuple
+from logging import getLogger
 
 from sqlalchemy import select, and_
 from sqlalchemy.sql.functions import coalesce
 
 from ..squeal.tables.statistic import StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat
 from ..squeal.utils import tables
+
+log = getLogger(__name__)
 
 
 def make_waypoint(names, extra=None):
@@ -20,8 +23,7 @@ def make_waypoint(names, extra=None):
 
 class WaypointReader:
 
-    def __init__(self, log, with_timespan=True):
-        self._log = log
+    def __init__(self, with_timespan=True):
         self._with_timespan = with_timespan
 
     def read(self, s, ajournal, names, owner=None, start=None, finish=None):
@@ -34,7 +36,7 @@ class WaypointReader:
         Waypoint = make_waypoint(names.values(), extra='timespan' if self._with_timespan else None)
 
         for timespan in ajournal.timespans:
-            self._log.debug('%s' % timespan)
+            log.debug('%s' % timespan)
             waypoint = None
             stmt = select([t.StatisticName.c.id,
                            t.StatisticJournal.c.time,
@@ -53,7 +55,7 @@ class WaypointReader:
                 stmt = stmt.where(t.StatisticJournal.c.time >= start)
             if finish:
                 stmt = stmt.where(t.StatisticJournal.c.time <= finish)
-            self._log.debug(stmt)
+            log.debug(stmt)
             for id, time, value in s.connection().execute(stmt):
                 if waypoint and waypoint.time != time:
                     yield waypoint
@@ -63,7 +65,7 @@ class WaypointReader:
                     if self._with_timespan:
                         waypoint = waypoint._replace(timespan=timespan)
                 waypoint = waypoint._replace(**{id_map[id]: value})
-        self._log.debug('Waypoints generated')
+        log.debug('Waypoints generated')
 
     def _id_map(self, s, ajournal, names, owner):
         # need to convert from statistic_name_id to attribute name

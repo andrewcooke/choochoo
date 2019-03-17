@@ -1,4 +1,5 @@
 
+from logging import getLogger
 from re import search
 
 from urwid import Text, Pile, Columns, Divider
@@ -15,6 +16,7 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
 
+log = getLogger(__name__)
 HRZ_WIDTH = 30
 
 
@@ -96,11 +98,11 @@ class ActivityDiary(JournalDiary):
     def __schedule_fields(self, s, f, date, schedule):
         names = list(self.__names(s, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
                                   TOTAL_CLIMB, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME))
-        yield from summary_columns(self._log, s, f, date, schedule, names)
+        yield from summary_columns(log, s, f, date, schedule, names)
         names = self.__sort_names(self.__names_like(s, MEDIAN_KM_TIME_ANY))
-        yield from summary_columns(self._log, s, f, date, schedule, names)
+        yield from summary_columns(log, s, f, date, schedule, names)
         names = self.__sort_names(self.__names_like(s, MAX_MED_HR_M_ANY))
-        yield from summary_columns(self._log, s, f, date, schedule, names)
+        yield from summary_columns(log, s, f, date, schedule, names)
 
     def __names(self, s, *names):
         for name in names:

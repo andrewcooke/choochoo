@@ -1,4 +1,6 @@
 
+from logging import getLogger
+
 from urwid import Text, Columns, Pile
 
 from . import Displayer
@@ -8,6 +10,8 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields import ReadOnlyField
 from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
+
+log = getLogger(__name__)
 
 
 class MonitorDiary(Displayer):
@@ -29,7 +33,7 @@ class MonitorDiary(Displayer):
     def __field(self, s, date, name):
         sjournal = StatisticJournal.at_date(s, date, name, MonitorCalculator, None)
         if sjournal:
-            return ReadOnlyField(self._log, sjournal, date=date).widget()
+            return ReadOnlyField(log, sjournal, date=date).widget()
         else:
             return None
 
@@ -41,7 +45,7 @@ class MonitorDiary(Displayer):
 
     def __schedule_fields(self, s, f, date, schedule):
         names = list(self.__names(s, DAILY_STEPS, REST_HR))
-        yield from summary_columns(self._log, s, f, date, schedule, names)
+        yield from summary_columns(log, s, f, date, schedule, names)
 
     def __names(self, s, *names):
         for name in names:

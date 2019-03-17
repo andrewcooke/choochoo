@@ -208,7 +208,7 @@ class DailyDiary(Diary):
         return tjournal
 
     def _display_pipeline(self, s, f):
-        yield from display_pipeline(self._log, s, f, self._date, self)
+        yield from display_pipeline(s, f, self._date, self)
 
     def _display_gui(self, s, f):
         menus = list(self.__gui_menus(s, f))
@@ -277,7 +277,7 @@ class ScheduleDiary(Diary):
         yield from summary_columns(self._log, s, f, self._date, self._schedule, names)
 
     def _display_pipeline(self, s, f):
-        yield from display_pipeline(self._log, s, f, self._date, self, schedule=self._schedule)
+        yield from display_pipeline(s, f, self._date, self, schedule=self._schedule)
 
     def _display_gui(self, s, f):
         button = SquareButton('All Activities')

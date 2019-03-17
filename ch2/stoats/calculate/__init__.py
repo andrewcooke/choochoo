@@ -175,9 +175,10 @@ class DirectCalculatorMixin(LoaderMixin):
 
 class WaypointCalculatorMixin(DirectCalculatorMixin):
 
+    # todo - can / should this be replaced by a data-frame approach?
+
     def _read_data(self, s, source):
-        waypoints = list(WaypointReader(log).read(s, source, self._names(),
-                                                  self._assert('owner_in', self.owner_in)))
+        waypoints = list(WaypointReader().read(s, source, self._names(), self._assert('owner_in', self.owner_in)))
         if not waypoints:
             raise Exception('No waypoints')
         else:

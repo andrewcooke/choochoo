@@ -58,7 +58,7 @@ class SegmentDiary(Displayer):
         sjournal = StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.segment,
                                             source_id=sjournal.id)
         if sjournal:
-            return ReadOnlyField(self._log, sjournal, date=date,
+            return ReadOnlyField(log, sjournal, date=date,
                                  format_name=lambda n: sub(r'^Segment ', '', n)).widget()
         else:
             return None
@@ -83,7 +83,7 @@ class SegmentDiary(Displayer):
 
     def __schedule_fields(self, s, f, date, segment, schedule):
         names = list(self.__names(s, segment, SEGMENT_TIME, SEGMENT_HEART_RATE))
-        yield from summary_columns(self._log, s, f, date, schedule, names,
+        yield from summary_columns(log, s, f, date, schedule, names,
                                    format_name=lambda n: sub(r'^Segment ', '', n))
 
     def __names(self, s, segment, *names):
