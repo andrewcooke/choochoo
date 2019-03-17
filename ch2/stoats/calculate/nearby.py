@@ -42,10 +42,11 @@ class SimilarityCalculator(UniProcCalculator):
             filter(Timestamp.owner == self.owner_in,
                    Timestamp.constraint == None,
                    Timestamp.time < prev.time).cte()
-        if s.query(count(ActivityJournal.id)). \
+        later = s.query(count(ActivityJournal.id)). \
             join(ActivityGroup). \
             filter(ActivityGroup.name == self.nearby.activity_group,
-                   not_(ActivityGroup.id.in_(prev_ids))).scalar():
+                   not_(ActivityJournal.id.in_(prev_ids))).scalar()
+        if later:
             return [True]
         else:
             return []

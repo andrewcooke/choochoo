@@ -10,7 +10,8 @@ from sqlalchemy import desc, inspect, select, and_
 from . import IntervalCalculatorMixin, UniProcCalculator
 from .heart_rate import HRImpulse
 from ..names import MAX
-from ...lib.date import local_date_to_time, to_date
+from ...commands.args import FINISH, START
+from ...lib.date import local_date_to_time
 from ...squeal import Constant, Interval, StatisticJournal, StatisticName, StatisticJournalFloat
 
 log = getLogger(__name__)
@@ -28,20 +29,24 @@ class ImpulseCalculator(IntervalCalculatorMixin, UniProcCalculator):
 
     def _startup(self, s):
         super()._startup(s)
-        self._delete(s)
-        args_start, args_finish = super()._start_finish(to_date)
-        start, finish = Interval.first_missing_date(log, s, self.schedule, self.owner_out)
-        if args_start:
-            if args_start < start:
-                log.debug(f'Given start {args_start} is before needed {start} (will process extended range)')
-                start = args_start
+        existing, _ = Interval.first_missing_date(log, s, self.schedule, self.owner_out)
+        if self.force:
+            if self.start and self.start > existing:
+                log.debug(f'Extending {START}={self.start} to {existing}')
+                self.start = existing
+        else:
+            if self.start:
+                if self.start < existing:
+                    log.debug(f'Restricting {START}={self.start} to {existing}')
+                    self.start = existing
             else:
-                log.warning(f'Ignoring given start ({args_start}) because data missing from {start}')
-        if args_finish:
-            log.warning(f'Ignoring given finish ({args_finish})')
-        self.start = start
-        self.finish = finish
-
+                log.debug(f'Setting {START}={existing}')
+                self.start = existing
+            log.debug(f'Deleting to ensure continuous missing data')
+            self.force = True
+        if self.finish:
+            log.debug(f'Discarding {FINISH}={self.finish}')
+            self.finish = None
         self.constants = [Constant.get(s, response) for response in self.responses_ref]
         self.responses = [Response(**loads(constant.at(s).value)) for constant in self.constants]
         self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
