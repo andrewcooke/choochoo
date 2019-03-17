@@ -1,6 +1,7 @@
 
 import datetime as dt
 from abc import abstractmethod
+from logging import getLogger
 
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
@@ -30,9 +31,10 @@ from ..uweird.tui.fixed import Fixed
 from ..uweird.tui.tabs import TabList
 from ..uweird.tui.widgets import DividedPile, ArrowMenu, SquareButton
 
+log = getLogger(__name__)
 
 @tui
-def diary(args, log, db):
+def diary(args, db):
     '''
 ## diary
 

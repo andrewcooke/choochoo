@@ -1,9 +1,13 @@
 
+from logging import getLogger
+
 from .args import PATH, WARN
 from ..fit.profile.profile import pickle_profile
 
+log = getLogger(__name__)
 
-def package_fit_profile(args, log, db):
+
+def package_fit_profile(args, db):
     '''
 ## package-fit-profile
 

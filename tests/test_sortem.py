@@ -5,13 +5,14 @@ from unittest import TestCase
 
 from ch2 import constants
 from ch2.commands.args import bootstrap_file, V, m, DEV, mm
-from ch2.config import default
+from ch2.config import default, getLogger
 from ch2.sortem.bilinear import bilinear_elevation_from_constant
 from ch2.sortem.file import SRTM1_DIR
 from ch2.sortem.spline import spline_elevation_from_constant
 
-
+log = getLogger(__name__)
 ARCSEC = 1/3600
+
 
 class TestSortem(TestCase):
 
@@ -19,8 +20,8 @@ class TestSortem(TestCase):
     def bilinear(self):
         with NamedTemporaryFile() as f:
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', SRTM1_DIR, '/home/andrew/archive/srtm1')
-            constants(args, log, db)
+            args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', SRTM1_DIR, '/home/andrew/archive/srtm1')
+            constants(args, db)
             with db.session_context() as s:
                 yield bilinear_elevation_from_constant(log, s)
 
@@ -28,8 +29,8 @@ class TestSortem(TestCase):
     def spline(self, smooth=0):
         with NamedTemporaryFile() as f:
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', SRTM1_DIR, '/home/andrew/archive/srtm1')
-            constants(args, log, db)
+            args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', SRTM1_DIR, '/home/andrew/archive/srtm1')
+            constants(args, db)
             with db.session_context() as s:
                 yield spline_elevation_from_constant(log, s, smooth=smooth)
 

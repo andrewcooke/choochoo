@@ -1,12 +1,15 @@
 
 from argparse import ArgumentParser
 from genericpath import exists
+from logging import getLogger
 from os import makedirs
 from os.path import dirname, expanduser, realpath, normpath, relpath, join
 from re import compile, sub
 from typing import Mapping
 
 from ..lib.date import to_date, to_time
+
+log = getLogger(__name__)
 
 CH2_VERSION = '0.17.2'
 
@@ -495,14 +498,14 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
 
     args = [mm(DATABASE), file.name] + list(args)
     if configurator:
-        log, db = config(*args)
-        configurator(log, db)
+        db = config(*args)
+        configurator(db)
     args += post_config if post_config else []
     args = NamespaceWithVariables(parser().parse_args(args))
-    log = make_log(args)
+    make_log(args)
     db = Database(args, log)
 
-    return args, log, db
+    return args, db
 
 
 def parse_pairs(pairs):

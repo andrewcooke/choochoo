@@ -1,5 +1,6 @@
 
 import datetime as dt
+from logging import getLogger
 
 from .format.tokens import FileHeader, token_factory, Checksum, State
 from .profile.profile import read_profile
@@ -7,47 +8,49 @@ from ..commands.args import ADD_HEADER, mm, HEADER_SIZE, PROFILE_VERSION, PROTOC
     MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, MAX_FWD_LEN, MAX_DELTA_T
 from ..lib.date import format_time, format_seconds
 
+log = getLogger(__name__)
 
-def fix(log, data, warn=False,
+
+def fix(data, warn=False,
         add_header=False, drop=False, slices=None, start=None, fix_header=False, fix_checksum=False, force=True,
         validate=True, header_size=None, protocol_version=None, profile_version=None, min_sync_cnt=3,
         max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200, max_delta_t=None, profile_path=None):
 
-    slices = parse_slices(log, slices)
+    slices = parse_slices(slices)
     types, messages = read_profile(log, warn=warn, profile_path=profile_path)
     data = bytearray(data)
 
-    log_data(log, 'Initial', data)
+    log_data('Initial', data)
 
     if add_header:
-        data = prepend_header(log, data, header_size, protocol_version, profile_version)
+        data = prepend_header(data, header_size, protocol_version, profile_version)
 
     if drop:
-        slices = drop_data(log, State(log, types, messages, max_delta_t=max_delta_t), data, warn=warn, force=force,
+        slices = drop_data(State(types, messages, max_delta_t=max_delta_t), data, warn=warn, force=force,
                            min_sync_cnt=min_sync_cnt, max_record_len=max_record_len, max_drop_cnt=max_drop_cnt,
                            max_back_cnt=max_back_cnt, max_fwd_len=max_fwd_len)
 
     if slices:
-        data = apply_slices(log, data, slices)
+        data = apply_slices(data, slices)
 
     if start:
-        data = set_start(log, data, types, messages, start)
+        data = set_start(data, types, messages, start)
 
     if fix_header or fix_checksum:
-        data = header_and_checksums(log, data, State(log, types, messages, max_delta_t=max_delta_t),
+        data = header_and_checksums(data, State(types, messages, max_delta_t=max_delta_t),
                                     fix_header=fix_header, fix_checksum=fix_checksum,
                                     header_size=header_size, protocol_version=protocol_version,
                                     profile_version=profile_version)
 
     if validate:
-        validate_data(log, data, State(log, types, messages, max_delta_t=max_delta_t), warn=warn, force=force)
+        validate_data(data, State(types, messages, max_delta_t=max_delta_t), warn=warn, force=force)
 
-    log_data(log, 'Final', data)
+    log_data('Final', data)
 
     return data
 
 
-def parse_slices(log, slices):
+def parse_slices(slices):
     if not slices:
         return None
     parsed = [parse_slice(slice) for slice in slices.split(',')]
@@ -81,7 +84,7 @@ def format_offset(offset):
     return '' if offset in (0, None) else str(offset)
 
 
-def log_data(log, title, data):
+def log_data(title, data):
     log.info('%s Data ----------' % title)
     log.info('Length: %d bytes' % len(data))
     try:
@@ -98,13 +101,13 @@ def log_data(log, title, data):
         log.info('Could not parse checksum: %s' % e)
 
 
-def prepend_header(log, data, header_size, protocol_version, profile_version):
+def prepend_header(data, header_size, protocol_version, profile_version):
 
     log.info('Add Header ----------')
 
-    header_size = set_default(log, HEADER_SIZE, header_size, 14)
-    protocol_version = set_default(log, PROTOCOL_VERSION, protocol_version, 0x10)  # from FR35
-    profile_version = set_default(log, PROFILE_VERSION, profile_version, 0x07de)  # from FR35
+    header_size = set_default(HEADER_SIZE, header_size, 14)
+    protocol_version = set_default(PROTOCOL_VERSION, protocol_version, 0x10)  # from FR35
+    profile_version = set_default(PROFILE_VERSION, profile_version, 0x07de)  # from FR35
 
     data = bytearray([header_size] + [0] * (header_size - 1)) + data
     header = FileHeader(data)
@@ -114,35 +117,35 @@ def prepend_header(log, data, header_size, protocol_version, profile_version):
     return data
 
 
-def log_param(log, name, value):
+def log_param(name, value):
     log.info('%s %s' % (mm(name), value))
 
 
-def set_default(log, name, value, deflt):
+def set_default(name, value, deflt):
     if value is None:
         value = deflt
-    log_param(log, name, value)
+    log_param(name, value)
     return value
 
 
-def header_and_checksums(log, data, initial_state, fix_header=False, fix_checksum=False,
+def header_and_checksums(data, initial_state, fix_header=False, fix_checksum=False,
                          header_size=None, protocol_version=None, profile_version=None):
     log.info('Header and Checksums ----------')
-    log_param(log, HEADER_SIZE, header_size)
-    log_param(log, PROTOCOL_VERSION, protocol_version)
-    log_param(log, PROFILE_VERSION, profile_version)
+    log_param(HEADER_SIZE, header_size)
+    log_param(PROTOCOL_VERSION, protocol_version)
+    log_param(PROFILE_VERSION, profile_version)
     if fix_header:
-        data = process_header(log, data, header_size=header_size, protocol_version=protocol_version,
+        data = process_header(data, header_size=header_size, protocol_version=protocol_version,
                               profile_version=profile_version)
     if fix_checksum:
-        data = process_checksum(log, data, initial_state.copy())
+        data = process_checksum(data, initial_state.copy())
     if fix_header and fix_checksum:
-        data = process_header(log, data)  # if length changed with checksum
-        data = process_checksum(log, data, initial_state.copy())  # if length changed
+        data = process_header(data)  # if length changed with checksum
+        data = process_checksum(data, initial_state.copy())  # if length changed
     return data
 
 
-def process_header(log, data, header_size=None, protocol_version=None, profile_version=None):
+def process_header(data, header_size=None, protocol_version=None, profile_version=None):
     try:
         with memoryview(data) as view:
             header = FileHeader(view)
@@ -164,7 +167,7 @@ def process_header(log, data, header_size=None, protocol_version=None, profile_v
         raise Exception('Error fixing header - maybe try %s' % mm(ADD_HEADER))
 
 
-def process_checksum(log, data, state):
+def process_checksum(data, state):
     offset = 0
     try:
         # don't use memoryview here as it gets spread into state and token
@@ -185,7 +188,7 @@ def process_checksum(log, data, state):
         raise Exception('Error fixing checksum at offset %d' % offset)
 
 
-def apply_slices(log, data, slices):
+def apply_slices(data, slices):
 
     log.info('Slice ----------')
     log.info('Slices: %s' % format_slices(slices))
@@ -203,8 +206,8 @@ def apply_slices(log, data, slices):
 
 class StartState(State):
 
-    def __init__(self, log, types, messages, start, max_delta_t=None):
-        super().__init__(log, types, messages, max_delta_t=max_delta_t)
+    def __init__(self, types, messages, start, max_delta_t=None):
+        super().__init__(types, messages, max_delta_t=max_delta_t)
         self.__start = start
         self.__delta = None
 
@@ -216,16 +219,16 @@ class StartState(State):
     def timestamp(self, timestamp):
         if self.__delta is None:
             self.__delta = self.__start - timestamp
-            self.log.warning('Shifting timestamps by %s' % format_seconds(self.__delta.total_seconds()))
+            log.warning('Shifting timestamps by %s' % format_seconds(self.__delta.total_seconds()))
         self._timestamp = self._validate_timestamp(timestamp + self.__delta)
 
 
-def set_start(log, data, types, messages, start):
+def set_start(data, types, messages, start):
 
     log.info('Start ----------')
     log.info('Start: %s' % format_time(start))
 
-    state = StartState(log, types, messages, start)
+    state = StartState(types, messages, start)
     with memoryview(data) as view:
         offset = len(FileHeader(view))
         while len(view) - offset > 2:
@@ -236,10 +239,10 @@ def set_start(log, data, types, messages, start):
     return data
 
 
-def validate_data(log, data, state, warn=False, force=True):
+def validate_data(data, state, warn=False, force=True):
 
     log.info('Validation ----------')
-    log_param(log, MAX_DELTA_T, state.max_delta_t)
+    log_param(MAX_DELTA_T, state.max_delta_t)
     if state.max_delta_t is None:
         log.warning('Time-reversal is allowed unless %s is set' % MAX_DELTA_T)
 
@@ -269,18 +272,18 @@ def validate_data(log, data, state, warn=False, force=True):
         raise
 
 
-def drop_data(log, initial_state, data, warn=False, force=True,
+def drop_data(initial_state, data, warn=False, force=True,
               min_sync_cnt=3, max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200):
 
     log.info('Drop Data ----------')
     for (name, value) in [(MIN_SYNC_CNT, min_sync_cnt), (MAX_RECORD_LEN, max_record_len),
                           (MAX_DROP_CNT, max_drop_cnt), (MAX_BACK_CNT, max_back_cnt),
                           (MAX_FWD_LEN, max_fwd_len), (MAX_DELTA_T, initial_state.max_delta_t)]:
-        log_param(log, name, value)
+        log_param(name, value)
 
     # use memoryview for efficient slicing (although it doesn't seem to help much)
     with memoryview(data) as view:
-        slices = advance(log, initial_state, view,
+        slices = advance(initial_state, view,
                          drop_count=0, initial_offset=0, warn=warn, force=force,
                          min_sync_cnt=min_sync_cnt, max_record_len=max_record_len, max_drop_cnt=max_drop_cnt,
                          max_back_cnt=max_back_cnt, max_fwd_len=max_fwd_len)
@@ -311,7 +314,7 @@ def offset_tokens(state, data, offset=0, warn=False, force=True):
         raise Exception('Error (%s) at offset %d' % (e, offset))
 
 
-def slurp(log, state, data, initial_offset, warn=False, force=True, max_record_len=None):
+def slurp(state, data, initial_offset, warn=False, force=True, max_record_len=None):
     '''
     read as much as possible starting at the given offset.
 
@@ -337,7 +340,7 @@ def slurp(log, state, data, initial_offset, warn=False, force=True, max_record_l
 class Backtrack(Exception): pass
 
 
-def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False, force=True,
+def advance(initial_state, data, drop_count=0, initial_offset=0, warn=False, force=True,
             min_sync_cnt=3, max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200):
     '''
     try to synchronize on the stream and then read as much as possible.  if reading later fails,
@@ -349,7 +352,7 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
     some length can be read.
     '''
     initial_offsets_and_states = [(initial_offset, initial_state.copy())]
-    offsets_and_states, complete = slurp(log, initial_state, data, initial_offset,
+    offsets_and_states, complete = slurp(initial_state, data, initial_offset,
                                          warn=warn, force=force, max_record_len=max_record_len)
     if offsets_and_states:
         log.debug('%d: Read %d records; offset %d to %d' %
@@ -378,7 +381,7 @@ def advance(log, initial_state, data, drop_count=0, initial_offset=0, warn=False
                 try:
                     log.debug('%d: Retrying (drop %d, skip %d) at offset %d' %
                               (drop_count, back_cnt-1, delta, offset+delta))
-                    slices = advance(log, state.copy(), data, drop_count+1, offset+delta,
+                    slices = advance(state.copy(), data, drop_count+1, offset+delta,
                                      min_sync_cnt=min_sync_cnt, max_record_len=max_record_len,
                                      max_drop_cnt=max_drop_cnt, max_fwd_len=max_fwd_len)
                     return [slice(initial_offset, offset)] + slices

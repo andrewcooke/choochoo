@@ -1,3 +1,4 @@
+from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
@@ -24,8 +25,10 @@ from ..stoats.read.monitor import MonitorReader
 from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Text, Float, Score0
 
+log = getLogger(__name__)
 
-def default(log, db, no_diary=False):
+
+def default(db, no_diary=False):
 
     with db.session_context() as s:
 

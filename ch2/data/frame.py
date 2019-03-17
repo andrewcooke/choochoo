@@ -32,9 +32,7 @@ def df(query):
 
 
 def session(*args):
-    global log
-    ns, _, db = connect(args)  # todo
-    log = getLogger(__name__)
+    ns, db = connect(args)
     return db.session()
 
 

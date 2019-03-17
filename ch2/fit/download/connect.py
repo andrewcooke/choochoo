@@ -1,10 +1,13 @@
 
 from io import BytesIO
+from logging import getLogger
 from os.path import join, exists
 from re import search, sub
 from zipfile import ZipFile
 
 from requests import session
+
+log = getLogger(__name__)
 
 
 class GarminConnect:
@@ -23,14 +26,13 @@ class GarminConnect:
         'User-Agent': 'Mozilla/5.0 (compatible; https://github.com/andrewcooke/choochoo)'
     }
 
-    def __init__(self, log, log_response=False):
-        self._log = log
+    def __init__(self, log_response=False):
         self._r = session()
         self._log_response = log_response
 
     def login(self, username, password):
 
-        self._log.info('Connecting to Garmin Connect as %s' % username)
+        log.info('Connecting to Garmin Connect as %s' % username)
 
         params = {
             # todo - are these all actually needed?  by an sso service?
@@ -75,7 +77,7 @@ class GarminConnect:
         if not response_url:
             raise Exception('Could not find response URL')
         response_url = sub(r'\\', '', response_url.group(1))
-        self._log.debug('Response URL: %s' % response_url)
+        log.debug('Response URL: %s' % response_url)
 
         response = self._log_r(self._r.get(response_url))
         response.raise_for_status()
@@ -87,11 +89,11 @@ class GarminConnect:
 
     def _log_r(self, response):
         if self._log_response:
-            self._log.debug('headers: %s' % response.headers)
-            self._log.debug('reason: %s' % response.reason)
-            self._log.debug('cookies: %s' % response.cookies)
-            self._log.debug('history: %s' % response.history)
-            # self._log.debug('text: %s' % response.text)
+            log.debug('headers: %s' % response.headers)
+            log.debug('reason: %s' % response.reason)
+            log.debug('cookies: %s' % response.cookies)
+            log.debug('history: %s' % response.history)
+            # log.debug('text: %s' % response.text)
         return response
 
     def get_monitoring_to_zip_file(self, date, dir):
@@ -101,11 +103,11 @@ class GarminConnect:
         response = self.get_monitoring(date)
         with open(path, 'wb') as f:
             f.write(response.content)
-        self._log.info('Downloaded data for %s to %s' % (date, path))
+        log.info('Downloaded data for %s to %s' % (date, path))
 
     def get_monitoring_to_fit_file(self, date, dir):
         response = self.get_monitoring(date)
         zipfile = ZipFile(BytesIO(response.content))
         for name in zipfile.namelist():
             path = zipfile.extract(name, path=dir)
-            self._log.info('Downloaded data for %s to %s' % (date, path))
+            log.info('Downloaded data for %s to %s' % (date, path))

@@ -1,10 +1,13 @@
 
 import datetime as dt
+from logging import getLogger
 
 from ...lib.date import to_date, format_date
 from ...lib.schedule import DOW, Schedule
 from ...squeal.tables.topic import Topic
 from ...squeal.utils import ORMUtils
+
+log = getLogger(__name__)
 
 
 class Assert:
@@ -35,12 +38,12 @@ class Week(Assert, ORMUtils):
             self._assert(len(day) == 0 or self.__n_weeks == len(day),
                          'Day %s of unusual length (%d/%d)' % (key, self.__n_weeks, len(day)))
 
-    def create(self, log, db, parent='Plan', sort=10):
+    def create(self, db, parent='Plan', sort=10):
         with db.session_context() as s:
-            parent = self.__create_parent(log, s, parent, sort)
-            self.__create_children(log, s, parent, sort)
+            parent = self.__create_parent(s, parent, sort)
+            self.__create_children(s, parent, sort)
 
-    def __create_parent(self, log, s, root, sort):
+    def __create_parent(self, s, root, sort):
         if self.__start.weekday():
             log.warning('The start day (%s) is not a Monday, so the days will be rotated appropriately',
                      DOW[self.__start.weekday()])
@@ -55,11 +58,11 @@ class Week(Assert, ORMUtils):
         root.schedule = Schedule.include(root.schedule, parent.schedule)
         return parent
 
-    def __create_children(self, log, s, parent, sort):
+    def __create_children(self, s, parent, sort):
         date = self.__start
         for day in DOW:
             if day in self.__days:
-                self.__days[day].create(log, s, parent, sort, date, self.__n_weeks)
+                self.__days[day].create(s, parent, sort, date, self.__n_weeks)
             date += dt.timedelta(days=1)
 
 
@@ -73,7 +76,7 @@ class Day(Assert):
     def __len__(self):
         return len(self.__notes)
 
-    def create(self, log, s, parent, sort, date, n_weeks):
+    def create(self, s, parent, sort, date, n_weeks):
         dow = date.weekday()
         schedule = Schedule('%s/w[%s]' % (format_date(date), DOW[dow]))
         schedule.start = date

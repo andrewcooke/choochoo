@@ -1,5 +1,6 @@
 
 from collections import Counter
+from logging import getLogger
 from operator import eq, lt, gt
 from re import compile
 from sys import stdout
@@ -11,8 +12,10 @@ from ..commands.args import RECORDS, FIELDS, CSV, TABLES, GREP, TOKENS
 from ..lib.io import terminal_width
 from ..lib.utils import unique
 
+log = getLogger(__name__)
 
-def summarize(log, format, data, all_fields=False, all_messages=False, internal=False,
+
+def summarize(format, data, all_fields=False, all_messages=False, internal=False,
               after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
               messages=None, fields=None, warn=False, profile_path=None, grep=None,
               name_file=None, invert=False, match=1, compact=False, context=False, no_validate=False, max_delta_t=None,
@@ -28,7 +31,7 @@ def summarize(log, format, data, all_fields=False, all_messages=False, internal=
         print(name_file)
 
     if format == RECORDS:
-        summarize_records(log, data,
+        summarize_records(data,
                           all_fields=all_fields, all_messages=all_messages, internal=internal,
                           after_bytes=after_bytes, limit_bytes=limit_bytes,
                           after_records=after_records, limit_records=limit_records,
@@ -36,7 +39,7 @@ def summarize(log, format, data, all_fields=False, all_messages=False, internal=
                           warn=warn, no_validate=no_validate, max_delta_t=max_delta_t,
                           profile_path=profile_path, width=width, output=output)
     elif format == TABLES:
-        summarize_tables(log, data,
+        summarize_tables(data,
                          all_fields=all_fields, all_messages=all_messages, internal=internal,
                          after_bytes=after_bytes, limit_bytes=limit_bytes,
                          after_records=after_records, limit_records=limit_records,
@@ -44,27 +47,27 @@ def summarize(log, format, data, all_fields=False, all_messages=False, internal=
                          warn=warn, no_validate=no_validate, max_delta_t=max_delta_t,
                          profile_path=profile_path, width=width, output=output)
     elif format == GREP:
-        summarize_grep(log, data, grep,
+        summarize_grep(data, grep,
                        name_file=name_file, match=match, compact=compact, context=context, invert=invert,
                        after_bytes=after_bytes, limit_bytes=limit_bytes,
                        after_records=after_records, limit_records=limit_records,
                        warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path,
                        width=width, output=output)
     elif format == CSV:
-        summarize_csv(log, data,
+        summarize_csv(data,
                       after_bytes=after_bytes, limit_bytes=limit_bytes, internal=internal,
                       after_records=after_records, limit_records=limit_records,
                       record_names=messages, field_names=fields, warn=warn, no_header=no_validate,
                       max_delta_t=max_delta_t, profile_path=profile_path,
                       output=output)
     elif format == TOKENS:
-        summarize_tokens(log, data,
+        summarize_tokens(data,
                          after_bytes=after_bytes, limit_bytes=limit_bytes,
                          after_records=after_records, limit_records=limit_records,
                          warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path,
                          output=output)
     elif format == FIELDS:
-        summarize_fields(log, data,
+        summarize_fields(data,
                          after_bytes=after_bytes, limit_bytes=limit_bytes,
                          after_records=after_records, limit_records=limit_records,
                          warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path,
@@ -73,11 +76,11 @@ def summarize(log, format, data, all_fields=False, all_messages=False, internal=
         raise Exception('Bad format: %s' % format)
 
 
-def summarize_tokens(log, data, after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
+def summarize_tokens(data, after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                      warn=False, no_validate=False, max_delta_t=None, profile_path=None, output=stdout):
 
     types, messages, tokens = \
-        filtered_tokens(log, data,
+        filtered_tokens(data,
                         after_bytes=after_bytes, limit_bytes=limit_bytes,
                         after_records=after_records, limit_records=limit_records,
                         warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path)
@@ -86,11 +89,11 @@ def summarize_tokens(log, data, after_bytes=None, limit_bytes=-1, after_records=
         print('%03d %05d %s' % (index, offset, token), file=output)
 
 
-def summarize_fields(log, data, after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
+def summarize_fields(data, after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                      warn=False, no_validate=False, max_delta_t=None, profile_path=None, output=stdout):
 
     types, messages, tokens = \
-        filtered_tokens(log, data,
+        filtered_tokens(data,
                         after_bytes=after_bytes, limit_bytes=limit_bytes,
                         after_records=after_records, limit_records=limit_records,
                         warn=warn, no_validate=no_validate, max_delta_t=max_delta_t, profile_path=profile_path)
@@ -101,14 +104,14 @@ def summarize_fields(log, data, after_bytes=None, limit_bytes=-1, after_records=
             print('  %s' % line, file=output)
 
 
-def summarize_records(log, data, all_fields=False, all_messages=False, internal=False,
+def summarize_records(data, all_fields=False, all_messages=False, internal=False,
                       after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                       record_names=None, field_names=None,
                       warn=False, no_validate=False, max_delta_t=None, profile_path=None,
                       width=None, output=stdout):
 
     types, messages, records = \
-        filtered_records(log, data,
+        filtered_records(data,
                          after_bytes=after_bytes, limit_bytes=limit_bytes,
                          after_records=after_records, limit_records=limit_records,
                          record_names=record_names, field_names=field_names,
@@ -120,14 +123,14 @@ def summarize_records(log, data, all_fields=False, all_messages=False, internal=
     pprint_as_dicts(records, all_fields, all_messages, width=width, output=output)
 
 
-def summarize_tables(log, data, all_fields=False, all_messages=False, internal=False,
+def summarize_tables(data, all_fields=False, all_messages=False, internal=False,
                      after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                      record_names=None, field_names=None,
                      warn=False, no_validate=False, max_delta_t=None, profile_path=None,
                      width=None, output=stdout):
 
     types, messages, records = \
-        filtered_records(log, data,
+        filtered_records(data,
                          after_bytes=after_bytes, limit_bytes=limit_bytes,
                          after_records=after_records, limit_records=limit_records,
                          record_names=record_names, field_names=field_names,
@@ -201,12 +204,12 @@ class Matcher:
                (self.value is None or self.value(value))
 
 
-def summarize_grep(log, data, grep, name_file=None, match=1, compact=False, context=False, invert=False,
+def summarize_grep(data, grep, name_file=None, match=1, compact=False, context=False, invert=False,
                    after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                    warn=False, no_validate=False, max_delta_t=None, profile_path=None, width=80, output=stdout):
 
     types, messages, records = \
-        filtered_records(log, data, warn=warn, no_validate=no_validate, profile_path=profile_path,
+        filtered_records(data, warn=warn, no_validate=no_validate, profile_path=profile_path,
                          max_delta_t=max_delta_t, pipeline=[merge_duplicates])
     matchers = [Matcher(log, pattern) for pattern in grep]
     first, total_matches = True, 0
@@ -255,11 +258,11 @@ def summarize_grep(log, data, grep, name_file=None, match=1, compact=False, cont
             print(name_file, file=output)
 
 
-def summarize_csv(log, data, after_bytes=0, limit_bytes=-1, after_records=0, limit_records=-1, internal=False,
+def summarize_csv(data, after_bytes=0, limit_bytes=-1, after_records=0, limit_records=-1, internal=False,
                   record_names=None, field_names=None, warn=False, no_header=False, max_delta_t=None,
                   profile_path=None, output=stdout):
     types, messages, tokens = \
-        filtered_tokens(log, data,
+        filtered_tokens(data,
                         after_bytes=after_bytes, limit_bytes=limit_bytes,
                         after_records=after_records, limit_records=limit_records,
                         warn=warn, no_validate=no_header, max_delta_t=max_delta_t, profile_path=profile_path)

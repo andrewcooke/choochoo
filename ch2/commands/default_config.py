@@ -1,11 +1,15 @@
 
+from logging import getLogger
+
 from .args import NO_DIARY
 from ..config import default
 from ..squeal.tables.activity import ActivityGroup
 from ..squeal.tables.statistic import StatisticName
 
+log = getLogger(__name__)
 
-def default_config(args, log, db):
+
+def default_config(args, db):
     '''
 ## default-config
 
@@ -21,4 +25,4 @@ Please see the documentation at http://andrewcooke.github.io/choochoo
             raise Exception('The database already contains StatisticName entries')
         if s.query(ActivityGroup).count():
             raise Exception('The database already contains ActivityGroup entries')
-    default(log, db, no_diary=no_diary)
+    default(db, no_diary=no_diary)

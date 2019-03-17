@@ -1,3 +1,4 @@
+from logging import getLogger
 
 import pandas as pd
 
@@ -11,8 +12,10 @@ from ..squeal.support import Base
 # to stop the import * from being deleted
 StatisticName
 
+log = getLogger(__name__)
 
-def dump(args, log, db):
+
+def dump(args, db):
     '''
 ## dump
 

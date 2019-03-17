@@ -1,5 +1,6 @@
 
 from json import dumps
+from logging import getLogger
 
 from ..squeal import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     Topic, TopicField, Dummy
@@ -11,6 +12,7 @@ from ..stoats.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalcul
 from ..stoats.names import DUMMY
 from ..uweird.fields.topic import Integer
 
+log = getLogger(__name__)
 NEARBY_CNAME = 'Nearby'
 
 
@@ -22,8 +24,8 @@ def config(*args):
         print(c...)  todo
         ...
     '''
-    ns, log, db = connect(args)
-    return log, db
+    ns, db = connect(args)
+    return db
 
 
 class Counter:

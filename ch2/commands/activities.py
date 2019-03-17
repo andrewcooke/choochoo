@@ -4,7 +4,7 @@ from ..squeal import PipelineType
 from ..stoats.pipeline import run_pipeline
 
 
-def activities(args, log, db):
+def activities(args, db):
     '''
 ## activities
 

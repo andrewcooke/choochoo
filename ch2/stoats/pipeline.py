@@ -73,7 +73,7 @@ class MultiProcPipeline(BasePipeline):
                 log.info(f'No missing data for {short_cls(self)}')
             else:
                 n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
-                if n_parallel < 2:
+                if n_parallel < 2 or len(missing) == 1:
                     self._run_all(s, missing)
                 else:
                     self.__spawn(s, missing, n_total, n_parallel)

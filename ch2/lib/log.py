@@ -7,15 +7,12 @@ from traceback import format_tb
 
 from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG
 
-
-log = None
+log = getLogger(__name__)
 
 
 def make_log(args, tui=False):
 
-    global log
-
-    if not log:
+    if not getLogger('ch2').handlers:
 
         level_unset = args[VERBOSITY] is None
         level = 4 if level_unset else args[VERBOSITY][0]
@@ -49,10 +46,6 @@ def make_log(args, tui=False):
         clog.setLevel(DEBUG)
         clog.addHandler(file_handler)
 
-        log = getLogger(name)
-        log.setLevel(DEBUG)
-        log.addHandler(file_handler)
-
         if not tui or not level_unset:
             stderr_formatter = Formatter('%(levelname)8s: %(message)s')
             stderr_handler = StreamHandler()
@@ -63,9 +56,6 @@ def make_log(args, tui=False):
             blog.addHandler(stderr_handler)
             tlog.addHandler(stderr_handler)
             clog.addHandler(stderr_handler)
-            log.addHandler(stderr_handler)
-
-    return log
 
 
 def log_current_exception():

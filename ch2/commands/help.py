@@ -1,9 +1,12 @@
 
 from abc import abstractmethod
+from logging import getLogger
 from sys import stdout
 
 from .args import TOPIC, HELP, PROGNAME, m, H, DEFAULT_CONFIG
 from ..lib.io import terminal_width
+
+log = getLogger(__name__)
 
 
 class Fmt:
@@ -33,7 +36,7 @@ class Fmt:
             yield para
 
     @abstractmethod
-    def print(self, para):
+    def print(self, para=None):
         raise NotImplementedError()
 
 
@@ -83,7 +86,7 @@ Docs at http://andrewcooke.github.io/choochoo/index''' % (
         '\n* '.join(COMMANDS.keys()), PROGNAME, m(H), PROGNAME, HELP, PROGNAME, m(H))
 
 
-def help(args, logs, db):
+def help(args, db):
     '''
 ## help
 

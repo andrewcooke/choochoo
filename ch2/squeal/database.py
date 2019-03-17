@@ -1,5 +1,6 @@
 
 from contextlib import contextmanager
+from logging import getLogger
 from sqlite3 import OperationalError
 
 from sqlalchemy import create_engine, event
@@ -24,6 +25,7 @@ Constant, SystemConstant, SystemProcess
 ActivitySimilarity, ActivityNearby
 Timestamp
 
+log = getLogger(__name__)
 
 # https://stackoverflow.com/questions/13712381/how-to-turn-on-pragma-foreign-keys-on-in-sqlalchemy-migration-script-or-conf
 @event.listens_for(Engine, "connect")
@@ -104,7 +106,7 @@ def connect(args):
         args = []
     args.append(NO_OP)
     ns = NamespaceWithVariables(parser().parse_args(args))
-    log = make_log(ns)
+    make_log(ns)
     db = Database(ns, log)
-    return ns, log, db
+    return ns, db
 

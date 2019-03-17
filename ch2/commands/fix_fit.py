@@ -1,4 +1,5 @@
 
+from logging import getLogger
 from sys import stdout, stderr
 
 from .args import PATH, DROP, OUTPUT, SLICES, RAW, WARN, MIN_SYNC_CNT, MAX_RECORD_LEN, MAX_DROP_CNT, MAX_BACK_CNT, \
@@ -7,8 +8,10 @@ from .args import PATH, DROP, OUTPUT, SLICES, RAW, WARN, MIN_SYNC_CNT, MAX_RECOR
 from ..fit.fix import fix
 from ..fit.profile.profile import read_fit
 
+log = getLogger(__name__)
 
-def fix_fit(args, log, db):
+
+def fix_fit(args, db):
     '''
 ## fix-fit
 
@@ -60,7 +63,7 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
         log.debug('Read %d bytes' % len(data))
 
         try:
-            data = fix(log, data, warn=args[WARN],
+            data = fix(data, warn=args[WARN],
                        add_header=args[ADD_HEADER], drop=args[DROP], slices=args[SLICES], start=args[START],
                        fix_header=args[FIX_HEADER], fix_checksum=args[FIX_CHECKSUM],
                        force=args[FORCE], validate=args[VALIDATE],

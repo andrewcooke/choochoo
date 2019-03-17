@@ -1,6 +1,7 @@
 
 import datetime as dt
 from calendar import monthrange
+from logging import getLogger
 
 from colorama import init, Fore, Style
 
@@ -8,10 +9,11 @@ from ch2.lib.schedule import Schedule
 from ..lib.date import to_date, add_date, MONTH
 from ..commands.args import SCHEDULE, MONTHS, START
 
+log = getLogger(__name__)
 INDENT = '   '
 
 
-def test_schedule(args, log, db):
+def test_schedule(args, db):
     '''
 ## test-schedule
 

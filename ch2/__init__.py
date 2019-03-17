@@ -27,6 +27,8 @@ from .squeal.database import Database
 from .squeal import SystemConstant
 from .uranus.server import set_jupyter_args, stop_jupyter
 
+log = getLogger(__name__)
+
 
 @tui
 def no_op(args, log, db):
@@ -61,7 +63,7 @@ def main():
     command_name = args[COMMAND] if COMMAND in args else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     tui = command and hasattr(command, 'tui') and command.tui
-    log = make_log(args, tui=tui)
+    make_log(args, tui=tui)
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
@@ -73,7 +75,7 @@ def main():
             set_jupyter_args(log, args)
             try:
                 if command:
-                    command(args, log, db)
+                    command(args, db)
                 else:
                     log.debug('If you are seeing the "No command given" error during development ' +
                               'you may have forgotten to set the command name via `set_defaults()`.')

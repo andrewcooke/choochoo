@@ -1,7 +1,10 @@
+from logging import getLogger
 
 from ..lib.date import to_time
 from ..squeal import ActivityBookmark
 from ..squeal.database import connect
+
+log = getLogger(__name__)
 
 
 class CoastingBookmark:
@@ -107,5 +110,5 @@ select a.id, s.time, f.time
 
 
 if __name__ == '__main__':
-    ns, log, db = connect(['-v 4'])
+    ns, db = connect(['-v 4'])
     CoastingBookmark(log, db).run(60, 20, 0, constraint='60/20/0')

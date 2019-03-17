@@ -5,9 +5,11 @@ from unittest import TestCase
 
 from ch2 import activities, constants
 from ch2.commands.args import bootstrap_file, mm, DEV, FAST, V, m
-from ch2.config import default
+from ch2.config import default, getLogger
 from ch2.data import activity_statistics, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
     ELEVATION, SPEED, CADENCE, HEART_RATE, TIME, TIMESPAN_ID
+
+log = getLogger(__name__)
 
 
 class TestPower(TestCase):
@@ -17,19 +19,19 @@ class TestPower(TestCase):
 
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-            args, log, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
-            constants(args, log, db)
-            args, log, db = bootstrap_file(f, m(V), '5', 'constants', 'FTHR.%')
-            constants(args, log, db)
-            args, log, db = bootstrap_file(f, m(V), '5', mm(DEV),
+            args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
+            constants(args, db)
+            args, db = bootstrap_file(f, m(V), '5', 'constants', 'FTHR.%')
+            constants(args, db)
+            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                            'activities', mm(FAST), 'data/test/source/personal/2018-03-04-qdp.fit')
-            activities(args, log, db)
+            activities(args, db)
 
             with db.session_context() as s:
                 stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
                                             DISTANCE, ELEVATION, SPEED, CADENCE, HEART_RATE,
                                             local_time='2018-03-04 07:16:33', activity_group_name='Bike',
-                                            with_timespan=True, log=log)
+                                            with_timespan=True)
                 stats.describe()
 
                 sepn = pd.Series(stats.index).diff().median()  # 7 secs

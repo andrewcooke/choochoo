@@ -18,7 +18,7 @@ class File:
     name = '/home/andrew/.ch2/database.sqle'
 
 
-args, log, db = bootstrap_file(File(), m(V), '5', configurator=acooke)
+args, db = bootstrap_file(File(), m(V), '5', configurator=acooke)
 s = db.session()
 
 

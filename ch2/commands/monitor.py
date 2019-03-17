@@ -1,10 +1,14 @@
 
+from logging import getLogger
+
 from ..commands.args import PATH, FORCE, FAST, WORKER, parse_pairs, KARG
 from ..squeal.tables.pipeline import PipelineType
 from ..stoats.pipeline import run_pipeline
 
+log = getLogger(__name__)
 
-def monitor(args, log, db):
+
+def monitor(args, db):
     '''
 ## monitor
 

@@ -11,7 +11,7 @@ from . import IntervalCalculatorMixin, UniProcCalculator
 from .heart_rate import HRImpulse
 from ..names import MAX
 from ...commands.args import FINISH, START
-from ...lib.date import local_date_to_time
+from ...lib.date import local_date_to_time, to_date, format_date
 from ...squeal import Constant, Interval, StatisticJournal, StatisticName, StatisticJournalFloat
 
 log = getLogger(__name__)
@@ -30,18 +30,19 @@ class ImpulseCalculator(IntervalCalculatorMixin, UniProcCalculator):
     def _startup(self, s):
         super()._startup(s)
         existing, _ = Interval.first_missing_date(log, s, self.schedule, self.owner_out)
+        start, finish = self._start_finish(to_date)
         if self.force:
-            if self.start and self.start > existing:
-                log.debug(f'Extending {START}={self.start} to {existing}')
-                self.start = existing
+            if self.start and start > existing:
+                log.debug(f'Extending {START}={self.start} to {format_date(existing)}')
+                self.start = format_date(existing)
         else:
             if self.start:
-                if self.start < existing:
-                    log.debug(f'Restricting {START}={self.start} to {existing}')
-                    self.start = existing
+                if start < existing:
+                    log.debug(f'Restricting {START}={self.start} to {format_date(existing)}')
+                    self.start = format_date(existing)
             else:
-                log.debug(f'Setting {START}={existing}')
-                self.start = existing
+                self.start = format_date(existing)
+                log.debug(f'Setting {START}={self.start}')
             log.debug(f'Deleting to ensure continuous missing data')
             self.force = True
         if self.finish:

@@ -201,7 +201,7 @@ class SimilarityCalculator(UniProcCalculator):
 class NearbySimilarityDBSCAN(DBSCAN):
 
     def __init__(self, s, constraint, epsilon, minpts):
-        super().__init__(log, epsilon, minpts)
+        super().__init__(epsilon, minpts)
         self.__s = s
         self.__constraint = constraint
         self.__max_similarity = self.__s.query(func.max(ActivitySimilarity.similarity)). \

@@ -16,7 +16,7 @@ class Builder(ORMUtils):
         self._spec = spec
         self._ratio = ratio
 
-    def create(self, log, db, parent='Plan', sort=10):
+    def create(self, db, parent='Plan', sort=10):
         with db.session_context() as s:
             root = self._get_or_create(s, Topic, name=parent, sort=sort)
             child = Topic(parent=root, schedule=self._spec,

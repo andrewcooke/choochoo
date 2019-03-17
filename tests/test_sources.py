@@ -1,4 +1,5 @@
 
+from logging import getLogger
 from subprocess import run
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
@@ -15,6 +16,8 @@ from ch2.squeal.tables.topic import TopicJournal, Topic
 from ch2.squeal.utils import add
 from ch2.stoats.calculate.summary import SummaryCalculator
 
+log = getLogger(__name__)
+
 
 # the idea here is to test the new database schema with sources etc
 # so we configure a database then load some data, calculate some stats,
@@ -26,7 +29,7 @@ class TestSources(TestCase):
 
         with NamedTemporaryFile() as f:
 
-            args, log, db = bootstrap_file(f, m(V), '5', configurator=acooke)
+            args, db = bootstrap_file(f, m(V), '5', configurator=acooke)
 
             with db.session_context() as s:
 
@@ -62,8 +65,8 @@ class TestSources(TestCase):
 
             # generate summary stats
 
-            SummaryCalculator(log, db, schedule='m').run()
-            SummaryCalculator(log, db, schedule='y').run()
+            SummaryCalculator(db, schedule='m').run()
+            SummaryCalculator(db, schedule='y').run()
 
             with db.session_context() as s:
 
@@ -111,6 +114,6 @@ class TestSources(TestCase):
                     print(source)
                 for journal in s.query(StatisticJournal).all():
                     print(journal)
-                self.assertEqual(s.query(count(Source.id)).scalar(), 9, list(map(str, s.query(Source).all())))  # constants
+                self.assertEqual(s.query(count(Source.id)).scalar(), 10, list(map(str, s.query(Source).all())))  # constants
                 self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 6, s.query(count(StatisticJournalText.id)).scalar())
                 self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 6, s.query(count(StatisticJournal.id)).scalar())

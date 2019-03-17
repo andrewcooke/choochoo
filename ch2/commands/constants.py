@@ -1,12 +1,13 @@
+from logging import getLogger
 
-from ..lib.date import local_date_to_time
 from ..commands.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET
-from ch2.squeal.utils import add
 from ..squeal.tables.constant import Constant
-from ..squeal.tables.statistic import StatisticJournal, StatisticName, STATISTIC_JOURNAL_CLASSES
+from ..squeal.tables.statistic import StatisticJournal, StatisticName
+
+log = getLogger(__name__)
 
 
-def constants(args, log, db):
+def constants(args, db):
     '''
 ## constants
 

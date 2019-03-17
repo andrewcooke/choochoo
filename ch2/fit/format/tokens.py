@@ -1,6 +1,7 @@
 
 from abc import abstractmethod
 from collections import defaultdict, Counter
+from logging import getLogger
 from re import sub
 from struct import unpack, pack
 
@@ -10,6 +11,7 @@ from ..profile.types import timestamp_to_time, time_to_timestamp
 from ...lib.data import WarnDict, tohex
 from ...stoats.names import S
 
+log = getLogger(__name__)
 FIELD_DESCRIPTION = 206
 
 
@@ -277,7 +279,7 @@ class DeveloperField(Defined):
         name = record.attr.field_name[0][0]
         units = record.attr.units[0][0]
         state.dev_fields[developer_index][number] = \
-            TypedField(state.log, name, number, units, None, None, None, base_type.name, state.types)
+            TypedField(log, name, number, units, None, None, None, base_type.name, state.types)
 
     # todo - display differently?
 
@@ -550,7 +552,7 @@ def token_factory(data, state):
                 return Definition(data, state)
         else:
             if header & 0x10:
-                state.log.debug('Reserved bit set')
+                log.debug('Reserved bit set')
             token = Data(data, state)
             if token.definition.global_message_no == FIELD_DESCRIPTION:
                 return DeveloperField(data, state)
@@ -560,8 +562,7 @@ def token_factory(data, state):
 
 class State:
 
-    def __init__(self, log, types, messages, max_delta_t=None):
-        self.log = log
+    def __init__(self, types, messages, max_delta_t=None):
         self.types = types
         self.messages = messages
         self.max_delta_t = max_delta_t
@@ -589,7 +590,7 @@ class State:
         return timestamp
 
     def copy(self):
-        copy = State(self.log, self.types, self.messages, self.max_delta_t)
+        copy = State(self.types, self.messages, self.max_delta_t)
         copy.dev_fields.update(self.dev_fields)
         copy.definitions.update(self.definitions)
         copy.definition_counter.update(self.definition_counter)

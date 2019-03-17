@@ -13,16 +13,18 @@ from ch2.squeal.support import Base
 from ch2.squeal.types import Date
 from ch2.uweird.tui.widgets import Integer
 
-if not getLogger().handlers:
-    basicConfig(stream=stdout, level=INFO)
-log = getLogger()
-if not log.handlers:
-    log.setLevel(DEBUG)
-    handler = StreamHandler(stdout)
-    handler.setLevel(DEBUG)
-    formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-    handler.setFormatter(formatter)
-    log.addHandler(handler)
+log = getLogger(__name__)
+
+# if not getLogger().handlers:
+#     basicConfig(stream=stdout, level=INFO)
+# log = getLogger()
+# if not log.handlers:
+#     log.setLevel(DEBUG)
+#     handler = StreamHandler(stdout)
+#     handler.setLevel(DEBUG)
+#     formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+#     handler.setFormatter(formatter)
+#     log.addHandler(handler)
 
 
 class Data(Base):
@@ -37,13 +39,12 @@ class Data(Base):
 class Database:
 
     def __init__(self):
-        self._log = log
         self.engine = s.create_engine('sqlite:///:memory:', echo=True)
         self.__create_tables()
         self.session = sessionmaker(bind=self.engine)
 
     def __create_tables(self):
-        self._log.info('Creating tables')
+        log.info('Creating tables')
         Base.metadata.create_all(self.engine)
 
 
