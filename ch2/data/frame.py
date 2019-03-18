@@ -17,8 +17,8 @@ from ..squeal.database import connect, ActivityTimespan, ActivityGroup, Activity
 from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
-    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W
-from ..stoats.names import TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
+    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W, \
+    TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, FITNESS, FATIGUE, REST_HR, \
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER
 from ..uranus.coasting import CoastingBookmark
@@ -268,6 +268,8 @@ def statistic_quartiles(s, *statistics, start=None, finish=None, owner=None, con
     return pd.DataFrame(data, index=times)
 
 
+MIN_PERIODS = 1
+
 def std_activity_statistics(s, local_time=None, time=None, activity_journal_id=None,
                             activity_group_name=None, activity_group_id=None):
 
@@ -279,10 +281,11 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal_id=N
 
     stats[DISTANCE_KM] = stats[DISTANCE]/1000
     stats[SPEED_KMH] = stats[SPEED] * 3.6
-    stats[MED_SPEED_KMH] = stats[SPEED].rolling(WINDOW, min_periods=MIN_PERIODS).median() * 3.6
-    stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(WINDOW, min_periods=MIN_PERIODS).median()
-    stats[MED_CADENCE] = stats[CADENCE].rolling(WINDOW, min_periods=MIN_PERIODS).median()
-    stats[MED_POWER_W] = stats[POWER].rolling(WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
+    stats[MED_SPEED_KMH] = stats[SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
+    stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    stats[MED_CADENCE] = stats[CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    if POWER in stats.columns:
+        stats[MED_POWER_W] = stats[POWER].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
     stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
 
     stats['keep'] = pd.notna(stats[HR_IMPULSE_10])

@@ -1,14 +1,14 @@
 
 from collections import defaultdict
 from logging import getLogger
-from time import time, sleep
+from time import sleep
 
 from sqlalchemy.exc import IntegrityError
 
 from .waypoint import make_waypoint
+from ..commands.args import UNLOCK
 from ..squeal import StatisticJournal, StatisticName, Dummy, Interval
 from ..squeal.types import short_cls
-
 
 log = getLogger(__name__)
 
@@ -64,7 +64,8 @@ class StatisticJournalLoader:
                 self._s.rollback()
                 dummy, count = None, count+1
                 if count > self.__abort_after:
-                    raise Exception(f'Could not acquire database after {count} attempts')
+                    raise Exception(f'Could not acquire database after {count} attempts '
+                                    f'(you may need to use `ch2 {UNLOCK}` once all workers have stopped)')
                 sleep(0.1)
         log.debug(f'Dummy ID {dummy.id}')
         try:

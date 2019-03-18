@@ -3,6 +3,8 @@ import time as t
 from itertools import zip_longest
 from pprint import PrettyPrinter
 
+from ..stoats.names import M, KM, PC
+
 PALETTE_RAINBOW = [
     ('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
     ('em', 'white', 'black'),
@@ -87,3 +89,16 @@ def short_str(x):
         return lines[0][:20] + '...' + lines[-1][-20:]
     else:
         return text
+
+
+def format_metres(dist):
+    if dist < 1000:
+        return str(int(dist)) + M
+    else:
+        return f'{dist/1000:.1f}{KM}'
+
+def format_percent(pc):
+    if pc > 0.5:
+        return f'{pc:.1f}{PC}'
+    else:
+        return f'{pc:.2f}{PC}'

@@ -2,10 +2,11 @@
 import datetime as dt
 
 from bokeh.io import output_file
-from bokeh.layouts import column, row
+from bokeh.layouts import column, row, gridplot
 from bokeh.plotting import show
 
 from ch2.data import *
+from ch2.lib import *
 from ch2.uranus.decorator import template
 
 
@@ -59,13 +60,16 @@ def compare_activities(local_time, compare_time, activity_group_name):
     hr = comparison_line_plot(700, 200, DISTANCE_KM, MED_HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=el.x_range)
     hr_c = cumulative_plot(200, 200, MED_HR_IMPULSE_10, activity, other=compare, ylo=0)
 
-    pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_W, activity, other=compare, ylo=0, x_range=el.x_range)
-    pw_c = cumulative_plot(200, 200, MED_POWER_W, activity, other=compare, ylo=0)
+    if MED_POWER_W in activity.columns:
+        pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_W, activity, other=compare, ylo=0, x_range=el.x_range)
+        pw_c = cumulative_plot(200, 200, MED_POWER_W, activity, other=compare, ylo=0)
+    else:
+        pw, pw_c = None, None
 
     cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, other=compare, ylo=0, x_range=el.x_range)
     hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
 
-    show(column(row(el, el_c), row(sp, sp_c), row(hr, hr_c), row(pw, pw_c), row(cd, hr_h)))
+    show(gridplot([[el, el_c], [sp, sp_c], [hr, hr_c], [pw, pw_c], [cd, hr_h]]))
 
     '''
     ## Activity Maps
@@ -75,8 +79,11 @@ def compare_activities(local_time, compare_time, activity_group_name):
     m_el = map_intensity(200, 200, activity, ELEVATION_M, ranges=map)
     m_sp = map_intensity(200, 200, activity, SPEED_KMH, ranges=map)
     m_hr = map_intensity(200, 200, activity, HR_IMPULSE_10, ranges=map)
-    m_cd = map_intensity(200, 200, activity, MED_POWER_W, ranges=map)
-    show(row(map, column(row(m_el, m_sp), row(m_hr, m_cd))))
+    if MED_POWER_W in activity.columns:
+        m_pw = map_intensity(200, 200, activity, MED_POWER_W, ranges=map)
+    else:
+        m_pw = None
+    show(row(map, gridplot([[m_el, m_sp], [m_hr, m_pw]], toolbar_location='right')))
 
     '''
     ## Activity Statistics
@@ -86,13 +93,16 @@ def compare_activities(local_time, compare_time, activity_group_name):
     Active time and distance exclude pauses.
     '''
 
-    details[[ACTIVE_TIME, ACTIVE_DISTANCE]].dropna()
+    details[[ACTIVE_TIME, ACTIVE_DISTANCE]].dropna(). \
+        transform({ACTIVE_TIME: format_seconds, ACTIVE_DISTANCE: format_metres})
 
     '''
     Climbs are auto-detected and shown only for the main activity. They are included in the elevation plot above.
     '''
 
-    details.filter(like='Climb').dropna()
+    details.filter(like='Climb').dropna(). \
+        transform({CLIMB_TIME: format_seconds, CLIMB_ELEVATION: format_metres,
+                   CLIMB_DISTANCE: format_metres, CLIMB_GRADIENT: format_percent})
 
     '''
     ## Health and Fitness
