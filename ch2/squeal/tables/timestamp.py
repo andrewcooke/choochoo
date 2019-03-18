@@ -58,11 +58,11 @@ class Timestamp(Base):
                    Timestamp.key == key).delete()
 
     @classmethod
-    def clean_keys(cls, log, s, keep, owner, constraint=None):
+    def clean_keys(cls, log, s, keys, owner, constraint=None):
         s.commit()
         for repeat in range(2):
             q = s.query(Timestamp if repeat else count(Timestamp.id)). \
-                filter(~Timestamp.key.in_(keep),
+                filter(Timestamp.key.in_(keys),
                        Timestamp.owner == owner,
                        Timestamp.constraint == constraint)
             if repeat:
@@ -82,6 +82,7 @@ class Timestamp(Base):
     @contextmanager
     def on_success(self, log, s):
         self.clear(s, self.owner, constraint=self.constraint, key=self.key)
+        s.commit()
         yield None
         self.set(log, s, self.owner, constraint=self.constraint, key=self.key)
 

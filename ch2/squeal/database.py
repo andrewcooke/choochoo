@@ -34,7 +34,7 @@ def fk_pragma_on_connect(dbapi_con, _con_record):
 
     def pragma(cmd):
         full_cmd = f'PRAGMA {cmd}'
-        log.debug(full_cmd)
+        # log.debug(full_cmd)
         cursor.execute(full_cmd)
 
     pragma('foreign_keys=ON;')  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
@@ -52,9 +52,9 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
     cursor = dbapi_con.cursor()
     try:
         # this can fail if another process is using the database
-        log.debug('Optimize DB...')
+        # log.debug('Optimize DB...')
         cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
-        log.debug('Optimize DB done')
+        # log.debug('Optimize DB done')
     except OperationalError as e:
         log.debug("Optimize DB aborted (DB Likely still in use)")
     finally:

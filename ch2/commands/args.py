@@ -512,7 +512,7 @@ def parse_pairs(pairs):
     if pairs is not None:
         for pair in pairs:
             name, value = pair.split('=', 1)
-            for type in (int, float, to_time, bool):
+            for type in (int, float, to_time):
                 try:
                     value = type(value)
                     break

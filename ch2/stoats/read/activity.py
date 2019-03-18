@@ -8,7 +8,7 @@ from ch2.squeal.utils import add
 from ..load import StatisticJournalLoader
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
 from ..read import AbortImport, MultiProcFitReader
-from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE
+from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, parse_pairs
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
 from ...sortem.bilinear import bilinear_elevation_from_constant
@@ -32,8 +32,12 @@ class ActivityReader(MultiProcFitReader):
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
 
     def _base_command(self):
+        if self.constants:
+            constants = ' '.join(f'-D "{constant}"' for constant in self.constants) + ' -- '
+        else:
+            constants = ''
         return f'{{ch2}} -v0 -l {{log}} {ACTIVITIES} {mm(WORKER)} {self.id} ' \
-            f'{mm(FAST)} {mm(FORCE) if self.force else ""}'
+            f'{mm(FAST)} {mm(FORCE) if self.force else ""} {constants}'
 
     def _startup(self, s):
         super()._startup(s)
@@ -152,6 +156,8 @@ class ActivityReader(MultiProcFitReader):
 
     def _load_constants(self, s, ajournal):
         if self.constants:
-            for name in self.constants.keys():
+            for constant in self.constants:
+                name, value = constant.split('=', 1)
+                log.debug(f'Setting {name}={value}')
                 StatisticJournalText.add(log, s, name, None, None, self.owner_out, ajournal.activity_group,
-                                         ajournal, self.constants[name], ajournal.start)
+                                         ajournal, value, ajournal.start)

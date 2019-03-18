@@ -87,10 +87,7 @@ class ActivityJournalCalculatorMixin:
             if repeat:
                 s.query(StatisticJournal).filter(StatisticJournal.id.in_(statistic_journals.cte())). \
                     delete(synchronize_session=False)
-                Timestamp.clean_keys(log, s,
-                                     s.query(StatisticJournal.source_id).
-                                     filter(StatisticJournal.statistic_name_id.in_(statistic_names.cte())),
-                                     self.owner_out, constraint=None)
+                Timestamp.clean_keys(log, s, activity_journals.cte(), self.owner_out, constraint=None)
             else:
                 n = s.query(count(StatisticJournal.id)). \
                     filter(StatisticJournal.id.in_(statistic_journals.cte())).scalar()
