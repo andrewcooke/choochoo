@@ -10,7 +10,7 @@ from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics
 from ...data.power import linear_resample, add_differentials, add_energy_budget, add_loss_estimate, \
-    add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed
+    add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr, median_dt
 from ...lib.data import reftuple, MissingReference
 from ...lib.log import log_current_exception
 from ...squeal import StatisticJournalFloat, Constant, Timestamp
@@ -61,7 +61,7 @@ class BasicPowerCalculator(PowerCalculator):
             raise
 
     def _calculate_stats(self, s, ajournal, df):
-        df = add_energy_budget(df, self.power.bike['m'] + self.power.weight)
+        df = add_energy_budget(df, self.power.bike['weight'] + self.power.weight)
         df = add_air_speed(df, 0, 0)
         df = add_loss_estimate(df, self.power.bike['cda'], self.power.bike['crr'])
         df = add_power_estimate(df)
@@ -108,8 +108,9 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
         for name in self.power._fields:
             if name in model._fields:
                 setattr(model, name, getattr(self.power, name))
-        model = fit_power(df, model, 'slope', 'intercept', 'log_adaption', 'delay', 'wind_speed', 'wind_heading')
+        model = fit_power(df, model, 'slope', 'intercept', 'delay', 'wind_speed', 'wind_heading')
         df = evaluate(df, model, quiet=False)
+        df = add_modeled_hr(df, int(0.5 + model.window / median_dt(df)), model.slope, model.intercept, model.delay)
         return model, df
 
     def _copy_results(self, s, ajournal, loader, stats):
@@ -122,8 +123,6 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             loader.add(POWER_HR, J, AVG, ajournal.activity_group, ajournal, 60 / model.slope, ajournal.start,
                        StatisticJournalFloat)
             # todo units - bpm/J?
-            loader.add(LOG_HR_DRIFT, None, AVG, ajournal.activity_group, ajournal, model.log_adaption, ajournal.start,
-                       StatisticJournalFloat)
             loader.add(IDLE_HR, BPM, AVG, ajournal.activity_group, ajournal, model.intercept, ajournal.start,
                        StatisticJournalFloat)
             loader.add(POWER_HR_LAG, S, AVG, ajournal.activity_group, ajournal, model.delay,

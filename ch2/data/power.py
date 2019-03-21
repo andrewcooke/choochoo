@@ -53,20 +53,21 @@ def _add_differentials(df, speed, *names):
     df[speed_2] = df[speed] ** 2
 
     def diff():
-        for _, span in df.groupby(TIMESPAN_ID):
-            if all(len(span[name]) == len(span[name].dropna()) for name in names):
-                span = span.copy()
+        for _, old_span in df.groupby(TIMESPAN_ID):
+            if all(len(old_span[name]) == len(old_span[name].dropna()) for name in names):
+                new_span = pd.DataFrame(index=old_span.index)
                 for col in names:
-                    span[_d(col)] = span[col].diff()
-                if HEADING not in span.columns:
-                    span[HEADING] = np.arctan2(span[_d(LONGITUDE)], span[_d(LATITUDE)]) * RAD_TO_DEG
-                avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(span[speed], span[speed][1:])]
-                span[_avg(speed_2)] = [np.nan] + avg_speed_2
-                yield span
+                    new_span[_d(col)] = old_span[col].diff()
+                if HEADING not in old_span.columns:
+                    new_span[HEADING] = np.arctan2(new_span[_d(LONGITUDE)], new_span[_d(LATITUDE)]) * RAD_TO_DEG
+                avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(old_span[speed], old_span[speed][1:])]
+                new_span[_avg(speed_2)] = [np.nan] + avg_speed_2
+                yield new_span
 
     spans = list(diff())
     if len(spans):
-        return pd.concat(spans)
+        extra = pd.concat(spans)
+        return df.drop(columns=list(extra.columns), errors='ignore').join(extra)
     else:
         raise PowerException('Missing data - found no spans without NANs')
 
@@ -109,9 +110,10 @@ def add_power_estimate(df):
     return df
 
 
-def add_modeled_hr(df, log_adaption, slope, intercept, delay):
-    df[DETRENDED_HEART_RATE] = df[HEART_RATE] - 10 ** log_adaption * df[ENERGY]
-    df[PREDICTED_HEART_RATE] = (df[POWER] * slope + intercept).ewm(halflife=delay).mean()
+def add_modeled_hr(df, window, slope, intercept, delay):
+    df[DETRENDED_HEART_RATE] = df[HEART_RATE] - df[HEART_RATE].rolling(window, center=True, min_periods=1).median()
+    predicted = (df[POWER] * slope + intercept).ewm(halflife=delay).mean()
+    df[PREDICTED_HEART_RATE] = predicted - predicted.rolling(window, center=True, min_periods=1).median()
     return df
 
 
@@ -125,24 +127,18 @@ def measure_initial_delay(df, dt=None, col1=HEART_RATE, col2=POWER, n=20):
 def measure_initial_scaling(df):
     delay = measure_initial_delay(df)
     if delay < 0: raise PowerException('Cannot estimate delay (insufficient data?)')
-    hr_smoothed = df[HEART_RATE].rolling(10, center=True).median().dropna()
-    h0, h1 = hr_smoothed.iloc[0], hr_smoothed.iloc[-1]
-    e0, e1 = df[ENERGY].iloc[0], df[ENERGY].iloc[-1]
-    adaption = (h1 - h0) / (e1 - e0)
-    log_adaption = log10(adaption) if adaption > 0 else -99
-    xy = (df[HEART_RATE] - 10 ** log_adaption * df[ENERGY]).rename(COR_HEART_RATE).to_frame().join(
-        df[POWER].shift(freq=f'{delay}S').to_frame(),
-        how='inner')
-    fit = sp.stats.linregress(x=xy[POWER], y=xy[COR_HEART_RATE])
+    df[DELAYED_POWER] = df[POWER].shift(freq=f'{delay}S')
+    clean = df.loc[:, (DELAYED_POWER, HEART_RATE)].dropna()
+    fit = sp.stats.linregress(x=clean[DELAYED_POWER], y=clean[HEART_RATE])
     log.debug(f'Initial fit {fit}')
-    return log_adaption, fit.slope, fit.intercept,  delay
+    return fit.slope, fit.intercept,  delay
 
 
 class PowerException(Exception): pass
 
 
-PowerModel = namedtuple('PowerModel', 'cda, crr, slope, intercept, log_adaption, delay, m,  wind_speed, wind_heading',
-                             defaults=[0,   0,   0,     0,         0,            40,    70, 0,          0])
+PowerModel = namedtuple('PowerModel', 'cda, crr, slope, intercept, window, delay, m,  wind_speed, wind_heading',
+                             defaults=[0,   0,   0,     0,         60*60,  40,    70, 0,          0])
 
 
 def evaluate(df, model, quiet=True):
@@ -151,7 +147,6 @@ def evaluate(df, model, quiet=True):
     df = add_air_speed(df, model.wind_speed, model.wind_heading)
     df = add_loss_estimate(df, model.cda, model.crr)
     df = add_power_estimate(df)
-    df = add_modeled_hr(df, model.log_adaption, model.slope, model.intercept, model.delay)
     return df
 
 
@@ -162,8 +157,9 @@ def fit_power(df, model, *vary):
 
     log.debug(f'Fit power: varying {vary}')
     df = evaluate(df, model)
-    log_adaption, slope, intercept, delay = measure_initial_scaling(df)
-    model = model._replace(log_adaption=log_adaption, slope=slope, intercept=intercept, delay=delay)
+    dt = median_dt(df)
+    slope, intercept, delay = measure_initial_scaling(df)
+    model = model._replace(slope=slope, intercept=intercept, delay=delay)
     log.debug(f'Fit power: initial model {model}')
 
     # the internal delay is continuous
@@ -181,8 +177,7 @@ def fit_power(df, model, *vary):
 
     def evaluate_and_extend(df, model):
         df = evaluate(df, model)
-        df[DETRENDED_HEART_RATE] = df[HEART_RATE] - 10 ** model.log_adaption * df[ENERGY]
-        df[PREDICTED_HEART_RATE] = (df[POWER] * model.slope + model.intercept).ewm(halflife=model.delay).mean()
+        df = add_modeled_hr(df, int(0.5 + model.window / dt), model.slope, model.intercept, model.delay)
         return df
 
     model = fit(DETRENDED_HEART_RATE, PREDICTED_HEART_RATE, df, model, evaluate_and_extend,
