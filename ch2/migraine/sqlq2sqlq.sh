@@ -62,4 +62,4 @@ EOF
 dev/ch2 --dev -v2 default-config --no-diary
 dev/ch2 --dev -v2 constants --set FTHR.Bike 154
 dev/ch2 --dev -v2 constants --set SRTM1.Dir /home/andrew/archive/srtm1
-dev/ch2 --dev -v2 constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "m": 12}'
+dev/ch2 --dev -v2 constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "weight": 12}'

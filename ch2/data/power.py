@@ -1,11 +1,12 @@
 from collections import namedtuple
 from logging import getLogger
-from math import pi
+from math import pi, log10
 
 import numpy as np
 import pandas as pd
 import scipy as sp
 
+from ch2.data.fit import fit
 from ..stoats.names import *
 from ..stoats.names import _d, _sqr, _avg
 
@@ -13,16 +14,16 @@ log = getLogger(__name__)
 RAD_TO_DEG = 180 / pi
 
 
-def median_freq(stats):
-    return pd.Series(stats.index).diff().median()
+def median_dt(stats):
+    return pd.Series(stats.index).diff().median().total_seconds()
 
 
-def linear_resample(stats, start=None, finish=None, freq=None, with_timestamp=None, keep_nan=True):
+def linear_resample(stats, start=None, finish=None, dt=None, with_timestamp=None, keep_nan=True):
     if with_timestamp is None: with_timestamp = TIMESPAN_ID in stats.columns
-    freq = freq or median_freq(stats)
+    dt = dt or median_dt(stats)
     start = start or stats.index.min()
     finish = finish or stats.index.max()
-    even = pd.DataFrame({'keep': True}, index=pd.date_range(start=start, end=finish, freq=freq))
+    even = pd.DataFrame({'keep': True}, index=pd.date_range(start=start, end=finish, freq=f'{dt}S'))
     both = stats.join(even, how='outer', sort=True)
     both.loc[both['keep'] != True, ['keep']] = False  # not sure this is needed, but avoid interpolating to true
     both.interpolate(method='index', limit_area='inside', inplace=True)
@@ -34,15 +35,15 @@ def linear_resample(stats, start=None, finish=None, freq=None, with_timestamp=No
             resampled.loc[~resampled[TIMESPAN_ID].isin(stats[TIMESPAN_ID].unique())] = np.nan
         else:
             resampled = resampled.loc[resampled[TIMESPAN_ID].isin(stats[TIMESPAN_ID].unique())]
-    return freq, resampled
+    return resampled
 
 
 def add_differentials(df):
     return _add_differentials(df, SPEED, DISTANCE, ELEVATION, SPEED, SPEED_2, LATITUDE, LONGITUDE)
 
 
-def add_air_speed(df, speed=0, heading=0):
-    df[AIR_SPEED] = df[SPEED] + speed * np.cos(df[HEADING] / RAD_TO_DEG - heading + pi / 2)
+def add_air_speed(df, wind_speed=0, wind_heading=0):
+    df[AIR_SPEED] = df[SPEED] + wind_speed * np.cos((df[HEADING] - wind_heading) / RAD_TO_DEG)
     return _add_differentials(df, AIR_SPEED)
 
 
@@ -92,7 +93,7 @@ def add_crr_estimate(df):
 
 def add_loss_estimate(df, cda=0.45, crr=0, p=1.225):
     # this is the energy spent on air and rolling resistance
-    df[LOSS] = (cda * p * df[AVG_SPEED_2] * 0.5 + crr) * df[DELTA_DISTANCE]
+    df[LOSS] = (cda * p * df[AVG_AIR_SPEED_2] * 0.5 + crr) * df[DELTA_DISTANCE]
     return df
 
 
@@ -108,70 +109,89 @@ def add_power_estimate(df):
     return df
 
 
-def measure_initial_delay(df, freq=None, col1=HEART_RATE, col2=POWER, n=20):
-    freq = freq or median_freq(df)
-    correln = [(i, df[col1].corr(df[col2].shift(freq=i * freq))) for i in range(-n, n+1)]
+def add_modeled_hr(df, log_adaption, slope, intercept, delay):
+    df[DETRENDED_HEART_RATE] = df[HEART_RATE] - 10 ** log_adaption * df[ENERGY]
+    df[PREDICTED_HEART_RATE] = (df[POWER] * slope + intercept).ewm(halflife=delay).mean()
+    return df
+
+
+def measure_initial_delay(df, dt=None, col1=HEART_RATE, col2=POWER, n=20):
+    dt = dt or median_dt(df)
+    correln = [(i, df[col1].corr(df[col2].shift(freq=f'{i * dt}S'))) for i in range(-n, n + 1)]
     correln = sorted(correln, key=lambda c: c[1], reverse=True)
-    return freq, correln[0][0]
+    return dt * correln[0][0]
 
 
 def measure_initial_scaling(df):
-    freq, delay = measure_initial_delay(df)
+    delay = measure_initial_delay(df)
     if delay < 0: raise PowerException('Cannot estimate delay (insufficient data?)')
     hr_smoothed = df[HEART_RATE].rolling(10, center=True).median().dropna()
     h0, h1 = hr_smoothed.iloc[0], hr_smoothed.iloc[-1]
     e0, e1 = df[ENERGY].iloc[0], df[ENERGY].iloc[-1]
     adaption = (h1 - h0) / (e1 - e0)
-    xy = (df[HEART_RATE] - adaption * df[ENERGY]).rename(COR_HEART_RATE).to_frame().join(
-        df[POWER].shift(freq=delay*freq).to_frame(),
+    log_adaption = log10(adaption) if adaption > 0 else -99
+    xy = (df[HEART_RATE] - 10 ** log_adaption * df[ENERGY]).rename(COR_HEART_RATE).to_frame().join(
+        df[POWER].shift(freq=f'{delay}S').to_frame(),
         how='inner')
     fit = sp.stats.linregress(x=xy[POWER], y=xy[COR_HEART_RATE])
     log.debug(f'Initial fit {fit}')
-    return fit.slope, fit.intercept, adaption, delay
+    return log_adaption, fit.slope, fit.intercept,  delay
 
 
 class PowerException(Exception): pass
 
 
-Model = namedtuple('Model', 'cda, crr, slope, intercept, adaption, delay, m,   g,   p,     speed, heading',
-                   defaults=[0,   0,   0,     0,         0,        6,     70,  9.8, 1.225, 0,     0])
+PowerModel = namedtuple('PowerModel', 'cda, crr, slope, intercept, log_adaption, delay, m,  wind_speed, wind_heading',
+                             defaults=[0,   0,   0,     0,         0,            40,    70, 0,          0])
 
 
 def evaluate(df, model, quiet=True):
     if not quiet: log.debug(f'Evaluating {model}')
-    df = add_energy_budget(df, model.m, model.g)
-    df = add_air_speed(df, model.speed, model.heading)
-    df = add_loss_estimate(df, model.cda, model.crr, model.p)
-    return add_power_estimate(df)
+    df = add_energy_budget(df, model.m)
+    df = add_air_speed(df, model.wind_speed, model.wind_heading)
+    df = add_loss_estimate(df, model.cda, model.crr)
+    df = add_power_estimate(df)
+    df = add_modeled_hr(df, model.log_adaption, model.slope, model.intercept, model.delay)
+    return df
 
 
 MIN_DELAY = 1
 
 
-def fix_delay(model):
-    return MIN_DELAY + abs(model.delay - MIN_DELAY)
+def fit_power(df, model, *vary):
 
-
-def chisq(df, model):
+    log.debug(f'Fit power: varying {vary}')
     df = evaluate(df, model)
-    pred = (df[POWER] * model.slope + model.intercept).ewm(halflife=fix_delay(model)).mean()
-    obs = df[HEART_RATE] - model.adaption * df[ENERGY]
-    return sp.stats.chisquare(pred, obs).statistic
+    log_adaption, slope, intercept, delay = measure_initial_scaling(df)
+    model = model._replace(log_adaption=log_adaption, slope=slope, intercept=intercept, delay=delay)
+    log.debug(f'Fit power: initial model {model}')
 
+    # the internal delay is continuous
+    # model delay is MIN_DELAY when the internal delay is zero, and otherwise increases
 
-def fit_power(df, *vary, **initial):
+    def forwards(kargs):
+        if 'delay' in kargs:
+            kargs['delay'] = kargs['delay'] - MIN_DELAY
+        return kargs
 
-    model = Model()._replace(**initial)
-    df = evaluate(df, model)
-    slope, intercept, adaption, delay = measure_initial_scaling(df)
-    model = model._replace(slope=slope, intercept=intercept, adaption=adaption, delay=delay)
+    def backwards(kargs):
+        if 'delay' in kargs:
+            kargs['delay'] = abs(kargs['delay']) + MIN_DELAY
+        return kargs
 
-    def local_chisq(args):
-        return chisq(df, model._replace(**dict(zip(vary, args))))
+    def evaluate_and_extend(df, model):
+        df = evaluate(df, model)
+        df[DETRENDED_HEART_RATE] = df[HEART_RATE] - 10 ** model.log_adaption * df[ENERGY]
+        df[PREDICTED_HEART_RATE] = (df[POWER] * model.slope + model.intercept).ewm(halflife=model.delay).mean()
+        return df
 
-    result = sp.optimize.minimize(local_chisq, [getattr(model, name) for name in vary],
-                                  method='Nelder-Mead', tol=0.01)
+    model = fit(DETRENDED_HEART_RATE, PREDICTED_HEART_RATE, df, model, evaluate_and_extend,
+                *vary, forwards=forwards, backwards=backwards)
 
-    model = model._replace(**dict(zip(vary, result.x)))
-    model = model._replace(delay=fix_delay(model))
+    log.debug(f'Fit power: model before fixing {model}')
+    if model.wind_speed < 0:
+        model = model._replace(wind_speed=abs(model.wind_speed), wind_heading=model.wind_heading+180)
+    model = model._replace(wind_heading=model.wind_heading % 360)
+
+    log.debug(f'Fit power: final model {model}')
     return model

@@ -19,6 +19,7 @@ CRR = 'Crr'
 CUMULATIVE_STEPS_START = 'Cumulative Steps Start'
 CUMULATIVE_STEPS_FINISH = 'Cumulative Steps Finish'
 DAILY_STEPS = 'Daily Steps'
+DETRENDED_HEART_RATE = 'Detrended Heart Rate'
 DISTANCE = 'Distance'
 DUMMY = 'Dummy'
 ELEVATION = 'Elevation'
@@ -42,6 +43,7 @@ MEDIAN_KM_TIME_ANY = 'Median % Time'
 PERCENT_IN_Z = 'Percent in Z%d'
 PERCENT_IN_Z_ANY = 'Percent in Z%'
 POWER = 'Power'
+PREDICTED_HEART_RATE = 'Predicted Heart Rate'
 SEGMENT_TIME = 'Segment Time'
 SEGMENT_DISTANCE = 'Segment Distance'
 SEGMENT_HEART_RATE = 'Segment Heart Rate'
@@ -126,6 +128,9 @@ MED_POWER_W = _med(POWER_W)
 
 
 POWER_HR = 'Power / HR'
+POWER_HR_LAG = 'Power / HR Lag'
 HR_DRIFT = 'HR Drift'
+LOG_HR_DRIFT = _log('HR Drift')
 IDLE_HR = 'Idle HR'
-LOG_HR_DRIFT = _log(HR_DRIFT)
+WIND_SPEED = 'Wind Speed'
+WIND_HEADING = 'Wind Heading'
