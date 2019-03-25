@@ -124,6 +124,8 @@ class StatisticJournalLoader:
             prev = self.__latest[key]
             if instance.time > prev.time:
                 self.__latest[key] = instance
+            elif instance.time == prev.time:
+                raise Exception(f'Duplicate time ({prev.time}) for {name}')
         else:
             self.__latest[key] = instance
 

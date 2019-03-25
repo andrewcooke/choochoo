@@ -2,6 +2,7 @@
 import time as t
 from itertools import zip_longest
 from pprint import PrettyPrinter
+from re import split
 
 from ..stoats.names import M, KM, PC
 
@@ -97,8 +98,10 @@ def format_metres(dist):
     else:
         return f'{dist/1000:.1f}{KM}'
 
+
 def format_percent(pc):
     if pc > 0.5:
         return f'{pc:.1f}{PC}'
     else:
         return f'{pc:.2f}{PC}'
+

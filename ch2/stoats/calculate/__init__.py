@@ -5,7 +5,7 @@ from logging import getLogger
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ..load import StatisticJournalLoader
+from ch2.stoats.pipeline import LoaderMixin
 from ..pipeline import MultiProcPipeline, UniProcPipeline
 from ..waypoint import WaypointReader
 from ...commands.args import STATISTICS, WORKER, mm
@@ -100,14 +100,6 @@ class ActivityJournalCalculatorMixin:
 
     def _get_source(self, s, time):
         return s.query(ActivityJournal).filter(ActivityJournal.start == time).one()
-
-
-class LoaderMixin:
-
-    def _get_loader(self, s, **kargs):
-        if 'owner' not in kargs:
-            kargs['owner'] = self.owner_out
-        return StatisticJournalLoader(s, **kargs)
 
 
 class DataFrameCalculatorMixin(LoaderMixin):

@@ -4,12 +4,12 @@ from collections import defaultdict
 from logging import getLogger
 
 from cachetools import cached
-from sqlalchemy import desc
+from sqlalchemy import desc, and_, or_
 
 from ch2.squeal.utils import add
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
-    CUMULATIVE_STEPS_FINISH
-from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
+    CUMULATIVE_STEPS_FINISH, CUMULATIVE_STEPS
+from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader, UniProcFitReader
 from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
@@ -53,19 +53,16 @@ def missing_dates(s):
         log.warning('No dates to download')
 
 
-class MonitorReader(MultiProcFitReader):
+class OldMessMonitorReader(UniProcFitReader):
 
-    def __init__(self, *args, cost_calc=5, cost_write=1, **kargs):
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
 
         @cached(cache={}, key=lambda s, name, units, summary, constraint: (name, constraint))
         def statistics_cache(s, name, units, summary, constraint):
             return StatisticName.add_if_missing(log, s, name, units, summary, self, constraint)
 
         self.__statistics_cache = statistics_cache
-
-    def _base_command(self):
-        return f'{{ch2}} -v0 -l {{log}} {MONITOR} {mm(WORKER)} {self.id} {mm(FAST)} {mm(FORCE) if self.force else ""}'
 
     def _create(self, s, name, units, summary, constraint, source, value, time, type):
         return type(statistic_name=self.__statistics_cache(s, name, units, summary, constraint),
@@ -102,8 +99,6 @@ class MonitorReader(MultiProcFitReader):
 
     def _delete_journals(self, s, first_timestamp, path):
         # key only on time so that repeated files don't affect things
-        if not first_timestamp:
-            raise Exception('Missing timestamp in %s' % path)
         # need to iterate because sqlite doesn't support multi-table delete and we have inheritance.
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.start == first_timestamp).all():
@@ -168,14 +163,14 @@ class MonitorReader(MultiProcFitReader):
                 activity = cumulative_journal.statistic_name.constraint
                 if activity in cumulative and cumulative[activity] != cumulative_journal.value:
                     log.debug('Found %s with inconsistent value (%s != %s)' %
-                                    (CUMULATIVE_STEPS_START, cumulative_journal.value, cumulative[activity]))
+                              (CUMULATIVE_STEPS_START, cumulative_journal.value, cumulative[activity]))
                     steps_journal = StatisticJournal.after(s, next.start, STEPS, self, activity)
                     log.debug('Found %s with value %s' % (STEPS, steps_journal.value))
                     # only fix up if the cumulative value didn't reset
                     if steps_journal.value + cumulative_journal.value >= cumulative[activity]:
                         steps_journal.value = steps_journal.value - cumulative[activity] + cumulative_journal.value
                         log.debug('Updated %s at %s to %s' %
-                                        (STEPS, format_time(last_timestamp), steps_journal.value))
+                                  (STEPS, format_time(last_timestamp), steps_journal.value))
                         cumulative_journal.value = cumulative[activity]
                         if steps_journal.value == 0:
                             activity_journal = StatisticJournal.at(s, steps_journal.time, ACTIVITY, self, activity)
@@ -217,20 +212,22 @@ class MonitorReader(MultiProcFitReader):
                         # we have a contradiction, so simply use the latest
                         # could maybe use max() instead?
                         log.warning('Replacing %s data at %s (%s replaced by %s)' %
-                                          (STEPS, format_time(time), sjournal.value,
-                                           steps_journals[time][activity].value))
+                                    (STEPS, format_time(time), sjournal.value,
+                                     steps_journals[time][activity].value))
                         sjournal.value = steps_journals[time][activity].value
                     del steps_journals[time][activity]
 
-    def _read(self, s, path):
+    def _read_data(self, s, path):
 
-        records = self._load_fit_file(path, merge_duplicates, fix_degrees, unpack_single_bytes)
+        records = self._read_fit_file(path, merge_duplicates, fix_degrees, unpack_single_bytes)
 
         first_timestamp = self._first(path, records, MONITORING_INFO_ATTR).timestamp
         last_timestamp = self._last(path, records, MONITORING_ATTR).timestamp
         if first_timestamp == last_timestamp:
             log.debug('File %s is empty (no timespan)' % path)
             raise AbortImportButMarkScanned()
+        if not first_timestamp:
+            raise Exception('Missing timestamp in %s' % path)
         self._delete_journals(s, first_timestamp, path)
 
         log.info(f'Importing monitor data from {path} '
@@ -238,26 +235,98 @@ class MonitorReader(MultiProcFitReader):
         self._check_previous(s, first_timestamp, last_timestamp, path)
         mjournal = add(s, MonitorJournal(start=first_timestamp, fit_file=path, finish=last_timestamp))
 
-        with Timestamp(owner=self.owner_out, key=mjournal.id).on_success(log, s):
+        return mjournal.id, (first_timestamp, last_timestamp, mjournal, records)
 
-            cumulative = defaultdict(lambda: 0)
-            self._read_previous(s, first_timestamp, cumulative)
-            self._save_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START)
-            saved_activities = list(cumulative.keys())
+    def _load_data(self, s, loader, data):
 
-            steps_journals = self._create_journals(s, records, cumulative, mjournal)
+        first_timestamp, last_timestamp, mjournal, records = data
 
-            self._save_cumulative(s, last_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_FINISH)
-            self._update_next(s, last_timestamp, cumulative)
-            self._update_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START, saved_activities)
+        cumulative = defaultdict(lambda: 0)
+        self._read_previous(s, first_timestamp, cumulative)
+        self._save_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START)
+        saved_activities = list(cumulative.keys())
 
-            self._merge_boundary(s, steps_journals, first_timestamp)
-            self._merge_boundary(s, steps_journals, last_timestamp)
+        steps_journals = self._create_journals(s, records, cumulative, mjournal)
 
-            # write steps at end, when adjoining data have been fixed
-            log.debug('Adding %s to database' % STEPS)
-            for timestamp in steps_journals:
-                for activity in steps_journals[timestamp]:
-                    add(s, steps_journals[timestamp][activity])
-                    self._add(s, ACTIVITY, None, None, activity, mjournal,
-                              activity, timestamp, StatisticJournalText)
+        self._save_cumulative(s, last_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_FINISH)
+        self._update_next(s, last_timestamp, cumulative)
+        self._update_cumulative(s, first_timestamp, cumulative, mjournal, CUMULATIVE_STEPS_START, saved_activities)
+
+        self._merge_boundary(s, steps_journals, first_timestamp)
+        self._merge_boundary(s, steps_journals, last_timestamp)
+
+        # write steps at end, when adjoining data have been fixed
+        log.debug('Adding %s to database' % STEPS)
+        for timestamp in steps_journals:
+            for activity in steps_journals[timestamp]:
+                add(s, steps_journals[timestamp][activity])
+                self._add(s, ACTIVITY, None, None, activity, mjournal,
+                          activity, timestamp, StatisticJournalText)
+
+
+class MonitorReader(MultiProcFitReader):
+
+    def __init__(self, *args, cost_calc=1, cost_write=1, **kargs):
+        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+
+    def _base_command(self):
+        return f'{{ch2}} -v0 -l {{log}} {MONITOR} {mm(WORKER)} {self.id} {mm(FAST)} {mm(FORCE) if self.force else ""}'
+
+    def _delete_contained(self, s, start, finish, path):
+        for mjournal in s.query(MonitorJournal). \
+                filter(MonitorJournal.start >= start,
+                       MonitorJournal.finish <= finish).all():
+            log.warning('Replacing %s with data from %s for %s - %s' % (mjournal, path, start, finish))
+            s.delete(mjournal)
+
+    def _check_inside(self, s, start, finish, path):
+        for mjournal in s.query(MonitorJournal). \
+                filter(or_(and_(MonitorJournal.start <= start, MonitorJournal.finish > finish),
+                           and_(MonitorJournal.start < start, MonitorJournal.finish >= finish))).all():
+            log.warning('%s already includes data from %s for %s - %s' % (mjournal, path, start, finish))
+            raise AbortImportButMarkScanned()
+
+    def _check_overlap(self, s, start, finish, path):
+        for mjournal in s.query(MonitorJournal). \
+                filter(or_(and_(MonitorJournal.start < start,
+                                MonitorJournal.finish > start, MonitorJournal.finish < finish),
+                           and_(MonitorJournal.finish > finish,
+                                MonitorJournal.start > start, MonitorJournal.start < finish))).all():
+            log.warning('%s overlaps data from %s for %s - %s' % (mjournal, path, start, finish))
+            raise AbortImport()
+
+    def _delete_previous(self, s, start, finish, path):
+        self._check_inside(s, start, finish, path)
+        self._check_overlap(s, start, finish, path)
+        self._delete_contained(s, start, finish, path)
+        s.commit()
+
+    def _read_data(self, s, path):
+
+        records = self._read_fit_file(path, merge_duplicates, fix_degrees, unpack_single_bytes)
+
+        first_timestamp = self._first(path, records, MONITORING_INFO_ATTR).timestamp
+        last_timestamp = self._last(path, records, MONITORING_ATTR).timestamp
+        if first_timestamp == last_timestamp:
+            log.debug('File %s is empty (no timespan)' % path)
+            raise AbortImportButMarkScanned()
+        if not first_timestamp:
+            raise Exception('Missing timestamp in %s' % path)
+
+        log.info(f'Importing monitor data from {path} '
+                 f'for {format_time(first_timestamp)} - {format_time(last_timestamp)}')
+        self._delete_previous(s, first_timestamp, last_timestamp, path)
+        mjournal = add(s, MonitorJournal(start=first_timestamp, fit_file=path, finish=last_timestamp))
+
+        return mjournal.id, (first_timestamp, last_timestamp, mjournal, records)
+
+    def _load_data(self, s, loader, data):
+        first_timestamp, last_timestamp, mjournal, records = data
+        for record in records:
+            if HEART_RATE_ATTR in record.data:
+                loader.add(HEART_RATE, BPM, None, None, mjournal, record.data[HEART_RATE_ATTR][0][0],
+                          record.timestamp, StatisticJournalInteger)
+            if STEPS_ATTR in record.data:
+                for (activity, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
+                    loader.add(CUMULATIVE_STEPS, STEPS, None, activity, mjournal, steps,
+                               record.timestamp, StatisticJournalInteger)

@@ -6,7 +6,7 @@ from sqlalchemy.sql import func
 from . import IntervalCalculatorMixin, MultiProcCalculator
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ...lib.date import local_date_to_time
-from ...squeal import StatisticJournalInteger, StatisticName, StatisticJournalFloat
+from ...squeal import StatisticJournalInteger, StatisticName
 
 # this is really just a daily summary - maybe it should be implemented as such?
 # but it would be very inefficient for most stats.  should intervals be improved somehow?

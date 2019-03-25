@@ -12,9 +12,9 @@ from ...arty.spherical import LocalTangent, SQRTree, Global
 from ...lib.date import to_time, format_time
 from ...lib.utils import sign
 from ...squeal.database import Timestamp
-from ch2.squeal.utils import add
 from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.segment import Segment, SegmentJournal
+from ...squeal.utils import add
 
 log = getLogger(__name__)
 NAMES = {'Latitude': 'lat',
@@ -39,10 +39,10 @@ class SegmentReader(ActivityReader):
         for agroup in s.query(ActivityGroup).all():
             self.__segments[agroup.id] = self._read_segments(s, agroup)
 
-    def _read(self, s, path):
-        ajournal, loader = super()._read(s, path)
+    def _load_data(self, s, loader, data):
+        super()._load_data(s, loader, data)
+        ajournal, activity_group, first_timestamp, path, records = data
         self._find_segments(s, ajournal, filter_none(NAMES.values(), loader.as_waypoints(NAMES)))
-        return ajournal, loader
 
     def _find_segments(self, s, ajournal, waypoints):
         matches = self._initial_matches(s, ajournal.activity_group_id, waypoints)

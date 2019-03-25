@@ -4,6 +4,7 @@ from logging import getLogger
 
 from psutil import cpu_count
 
+from ch2.stoats.load import StatisticJournalLoader
 from ..lib.utils import short_str
 from ..lib.workers import Workers
 from ..squeal import Pipeline
@@ -169,3 +170,11 @@ class UniProcPipeline(MultiProcPipeline):
     def __init__(self, *args, overhead=None, cost_calc=None, cost_write=None, n_cpu=None, worker=None, id=None,
                  **kargs):
         super().__init__(*args, **kargs)
+
+
+class LoaderMixin:
+
+    def _get_loader(self, s, **kargs):
+        if 'owner' not in kargs:
+            kargs['owner'] = self.owner_out
+        return StatisticJournalLoader(s, **kargs)

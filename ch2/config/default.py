@@ -64,7 +64,7 @@ def default(db, no_diary=False):
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
-        add_power(s, c, bike)
+        add_power(s, c, bike, vary='')  # model fitting (wind) disabled - doesn't work well
 
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.

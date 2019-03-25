@@ -2,6 +2,7 @@
 from collections import namedtuple
 from json import loads
 from logging import getLogger
+from re import split
 
 import pandas as pd
 
@@ -10,7 +11,7 @@ from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics
 from ...data.power import linear_resample, add_differentials, add_energy_budget, add_loss_estimate, \
-    add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr, median_dt
+    add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
 from ...lib.data import reftuple, MissingReference
 from ...lib.log import log_current_exception
 from ...squeal import StatisticJournalFloat, Constant, Timestamp
@@ -18,7 +19,7 @@ from ...squeal import StatisticJournalFloat, Constant, Timestamp
 log = getLogger(__name__)
 # these configure the model.
 # todo - add varying and stuff we want to fix (w defaults)
-Power = reftuple('Power', 'bike, rider_weight', defaults=(70,))
+Power = reftuple('Power', 'bike, rider_weight, vary', defaults=(70, 'wind_speed, wind_heading, slope'))
 Bike = namedtuple('Bike', 'cda, crr, weight')
 
 
@@ -61,7 +62,7 @@ class BasicPowerCalculator(PowerCalculator):
             raise
 
     def _calculate_stats(self, s, ajournal, df):
-        df = add_energy_budget(df, self.power.bike['weight'] + self.power.weight)
+        df = add_energy_budget(df, self.power.bike['weight'] + self.power.rider_weight)
         df = add_air_speed(df, 0, 0)
         df = add_loss_estimate(df, self.power.bike['cda'], self.power.bike['crr'])
         df = add_power_estimate(df)
@@ -77,6 +78,19 @@ class BasicPowerCalculator(PowerCalculator):
 
 
 class ExtendedPowerCalculator(BasicPowerCalculator):
+    '''
+    This was an experiment that honestly didn't work too well.
+
+    The idea was to extend the power model with constant speed / heading wind, and to fit for that,
+    so that we included a wind correction.  To constrain the fitting I took the power, scaled and lagged,
+    and compared it to heart rate.  The best scale/lag and wind model gave the power estimate,
+
+    However, in testing, none of the windiest routes were the windy days cycling back down the Maipo valley.
+    Instead, it tended to pick interval training when riding a loop.  Obviously fitting the patter in the
+    activity, not the wind.
+
+    And it increased loading times so much it drove the re-implementation with multiple processes.
+    '''
 
     # lots of fitting
     def __init__(self, *args, cost_calc=100, cost_write=1, **kargs):
@@ -94,7 +108,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
                 except PowerException as e:
                     log.warning(f'Cannot model power; adding basic values only ({e})')
                     loader = StatisticJournalLoader(s, self.owner_out)
-                    stats = None, None, super()._calculate_stats(s, source, data)
+                    stats = None, super()._calculate_stats(s, source, data)
                 self._copy_results(s, source, loader, stats)
                 loader.load()
             except Exception as e:
@@ -102,28 +116,35 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
                 log_current_exception()
 
     def _calculate_stats(self, s, ajournal, df):
+        vary = list(filter(None, split(r'[\s,]*([^, ]+)[\s ]*', self.power.vary)))
+        if not vary:
+            raise PowerException('No parameters to vary - fitting disabled')
         model = PowerModel(cda=self.power.bike['cda'], crr=self.power.bike['crr'],
                            m=self.power.bike['weight'] + self.power.rider_weight,
-                           wind_speed=10, wind_heading=180)  # todo - ranges?
+                           wind_speed=10, wind_heading=180)
         for name in self.power._fields:
             if name in model._fields:
                 setattr(model, name, getattr(self.power, name))
-        model = fit_power(df, model, 'slope', 'intercept', 'delay', 'wind_speed', 'wind_heading')
+        model = fit_power(df, model, *vary)
         df = evaluate(df, model, quiet=False)
-        df = add_modeled_hr(df, int(0.5 + model.window / median_dt(df)), model.slope, model.intercept, model.delay)
+        df = add_modeled_hr(df, model.window, model.slope, model.delay)
+        p_hr = 60 / model.slope
+        if p_hr < 100 or p_hr > 500:
+            raise PowerException(f'Unreasonable model results (slope {model.slope} / {p_hr})')
+        if model.delay > 30:
+            raise PowerException(f'Unreasonable model results (delay {model.delay})')
         return model, df
 
     def _copy_results(self, s, ajournal, loader, stats):
         model, df = stats
+        fields = ((POWER, W, AVG),)
         if model:
             # how much energy every heart beat
             # 60W at 60bpm is 60J every second or beat; 60W at 1bpm is 3600J every minute or beat;
             # 1W at 1bpm is 60J every minute or beat
             # slope is BPM / W; 1/slope is W/BPM = W/PM = WM = 60Ws
+            # todo - maybe configurable, given power.vary?
             loader.add(POWER_HR, J, AVG, ajournal.activity_group, ajournal, 60 / model.slope, ajournal.start,
-                       StatisticJournalFloat)
-            # todo units - bpm/J?
-            loader.add(IDLE_HR, BPM, AVG, ajournal.activity_group, ajournal, model.intercept, ajournal.start,
                        StatisticJournalFloat)
             loader.add(POWER_HR_LAG, S, AVG, ajournal.activity_group, ajournal, model.delay,
                        ajournal.start, StatisticJournalFloat)
@@ -131,8 +152,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
                        ajournal.start, StatisticJournalFloat)
             loader.add(WIND_HEADING, DEG, AVG, ajournal.activity_group, ajournal, model.wind_heading,
                        ajournal.start, StatisticJournalFloat)
+            fields = ((POWER, W, AVG), (HEADING, DEG, None),
+                      (PREDICTED_HEART_RATE, BPM, None), (DETRENDED_HEART_RATE, BPM, None))
         # has to come after the above to get times in order
-        super()._copy_results(s, ajournal, loader, df,
-                              fields=((POWER, W, AVG), (HEADING, DEG, None),
-                                      (PREDICTED_HEART_RATE, BPM, None), (DETRENDED_HEART_RATE, BPM, None)))
-
+        super()._copy_results(s, ajournal, loader, df, fields=fields)

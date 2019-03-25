@@ -1,6 +1,7 @@
+
 from collections import namedtuple
 from logging import getLogger
-from math import pi, log10
+from math import pi
 
 import numpy as np
 import pandas as pd
@@ -18,13 +19,13 @@ def median_dt(stats):
     return pd.Series(stats.index).diff().median().total_seconds()
 
 
-def linear_resample(stats, start=None, finish=None, dt=None, with_timestamp=None, keep_nan=True):
-    if with_timestamp is None: with_timestamp = TIMESPAN_ID in stats.columns
-    dt = dt or median_dt(stats)
-    start = start or stats.index.min()
-    finish = finish or stats.index.max()
+def linear_resample(df, start=None, finish=None, dt=None, with_timestamp=None, keep_nan=True):
+    if with_timestamp is None: with_timestamp = TIMESPAN_ID in df.columns
+    dt = dt or median_dt(df)
+    start = start or df.index.min()
+    finish = finish or df.index.max()
     even = pd.DataFrame({'keep': True}, index=pd.date_range(start=start, end=finish, freq=f'{dt}S'))
-    both = stats.join(even, how='outer', sort=True)
+    both = df.join(even, how='outer', sort=True)
     both.loc[both['keep'] != True, ['keep']] = False  # not sure this is needed, but avoid interpolating to true
     both.interpolate(method='index', limit_area='inside', inplace=True)
     resampled = both.loc[both['keep'] == True].drop(columns=['keep'])
@@ -32,9 +33,9 @@ def linear_resample(stats, start=None, finish=None, dt=None, with_timestamp=None
     resampled[DELTA_TIME] = resampled[TIME].diff()
     if with_timestamp:
         if keep_nan:
-            resampled.loc[~resampled[TIMESPAN_ID].isin(stats[TIMESPAN_ID].unique())] = np.nan
+            resampled.loc[~resampled[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())] = np.nan
         else:
-            resampled = resampled.loc[resampled[TIMESPAN_ID].isin(stats[TIMESPAN_ID].unique())]
+            resampled = resampled.loc[resampled[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())]
     return resampled
 
 
@@ -54,15 +55,22 @@ def _add_differentials(df, speed, *names):
 
     def diff():
         for _, old_span in df.groupby(TIMESPAN_ID):
-            if all(len(old_span[name]) == len(old_span[name].dropna()) for name in names):
-                new_span = pd.DataFrame(index=old_span.index)
-                for col in names:
-                    new_span[_d(col)] = old_span[col].diff()
-                if HEADING not in old_span.columns:
-                    new_span[HEADING] = np.arctan2(new_span[_d(LONGITUDE)], new_span[_d(LATITUDE)]) * RAD_TO_DEG
-                avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(old_span[speed], old_span[speed][1:])]
-                new_span[_avg(speed_2)] = [np.nan] + avg_speed_2
-                yield new_span
+
+            # discard leading and trailing na
+            subset = old_span[list(names)].isna().any(axis=1).replace(True, np.nan)
+            start, finish = subset.first_valid_index(), subset.last_valid_index()
+            if start and finish:
+                old_span = old_span.loc[start:finish]
+
+                if all(len(old_span[name]) == len(old_span[name].dropna()) for name in names):
+                    new_span = pd.DataFrame(index=old_span.index)
+                    for col in names:
+                        new_span[_d(col)] = old_span[col].diff()
+                    if HEADING not in old_span.columns:
+                        new_span[HEADING] = np.arctan2(new_span[_d(LONGITUDE)], new_span[_d(LATITUDE)]) * RAD_TO_DEG
+                    avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(old_span[speed], old_span[speed][1:])]
+                    new_span[_avg(speed_2)] = [np.nan] + avg_speed_2
+                    yield new_span
 
     spans = list(diff())
     if len(spans):
@@ -110,9 +118,10 @@ def add_power_estimate(df):
     return df
 
 
-def add_modeled_hr(df, window, slope, intercept, delay):
+def add_modeled_hr(df, window, slope, delay):
+    window = int(0.5 + window / median_dt(df))
     df[DETRENDED_HEART_RATE] = df[HEART_RATE] - df[HEART_RATE].rolling(window, center=True, min_periods=1).median()
-    predicted = (df[POWER] * slope + intercept).ewm(halflife=delay).mean()
+    predicted = (df[POWER] * slope).ewm(halflife=delay).mean()
     df[PREDICTED_HEART_RATE] = predicted - predicted.rolling(window, center=True, min_periods=1).median()
     return df
 
@@ -137,8 +146,10 @@ def measure_initial_scaling(df):
 class PowerException(Exception): pass
 
 
-PowerModel = namedtuple('PowerModel', 'cda, crr, slope, intercept, window, delay, m,  wind_speed, wind_heading',
-                             defaults=[0,   0,   0,     0,         60*60,  40,    70, 0,          0])
+# the 13.5 delay is from fitting my rides til 2019
+# it seems oddly low to me - i wonder if i have an error confusing bins and time
+PowerModel = namedtuple('PowerModel', 'cda, crr, slope, window, delay, m,  wind_speed, wind_heading',
+                             defaults=[0.5, 0,   200,   60*60,  13.5,  70, 0,          0])
 
 
 def evaluate(df, model, quiet=True):
@@ -159,7 +170,8 @@ def fit_power(df, model, *vary):
     df = evaluate(df, model)
     dt = median_dt(df)
     slope, intercept, delay = measure_initial_scaling(df)
-    model = model._replace(slope=slope, intercept=intercept, delay=delay)
+    # we ignore intercept because removing the median makes it very weakly constrained
+    model = model._replace(slope=slope, delay=delay)
     log.debug(f'Fit power: initial model {model}')
 
     # the internal delay is continuous
@@ -177,7 +189,7 @@ def fit_power(df, model, *vary):
 
     def evaluate_and_extend(df, model):
         df = evaluate(df, model)
-        df = add_modeled_hr(df, int(0.5 + model.window / dt), model.slope, model.intercept, model.delay)
+        df = add_modeled_hr(df, model.window, model.slope, model.delay)
         return df
 
     model = fit(DETRENDED_HEART_RATE, PREDICTED_HEART_RATE, df, model, evaluate_and_extend,
