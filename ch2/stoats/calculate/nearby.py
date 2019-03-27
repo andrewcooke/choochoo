@@ -64,6 +64,7 @@ class SimilarityCalculator(UniProcCalculator):
                    or_(ActivitySimilarity.activity_journal_lo_id.in_(activity_ids.cte()),
                        ActivitySimilarity.activity_journal_hi_id.in_(activity_ids.cte()))). \
             delete(synchronize_session=False)
+        Timestamp.clear(s, self.owner_out, self.nearby.constraint)
         s.commit()
 
     def _run_one(self, s, missed):
