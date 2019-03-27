@@ -78,7 +78,7 @@ def group(s, ajournal, constraint):
                 order_by(ActivityJournal.start)]
 
 
-def nearby_earlier(s, ajournal, constraint=None, threshold=0.5):
+def nearby_earlier(s, ajournal, constraint=None, threshold=0.3):
     ajlo = aliased(ActivityJournal)
     ajhi = aliased(ActivityJournal)
     q = s.query(ActivitySimilarity). \
@@ -96,7 +96,7 @@ def nearby_earlier(s, ajournal, constraint=None, threshold=0.5):
             for asm in q.all()]
 
 
-def nearby_any_time(s, ajournal, constraint=None, threshold=0.5):
+def nearby_any_time(s, ajournal, constraint=None, threshold=0.3):
     q = s.query(ActivitySimilarity). \
                 filter(or_(ActivitySimilarity.activity_journal_hi_id == ajournal.id,
                            ActivitySimilarity.activity_journal_lo_id == ajournal.id),
