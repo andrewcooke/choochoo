@@ -273,7 +273,7 @@ Print a calendar showing how the given schedule is interpreted.
 
     > ch2 unlock
 
-Remove the "dummy" entry from the databas ethat is used to coordinate locking
+Remove the "dummy" entry from the database that is used to coordinate locking
 across processes.
 
 This should not be needed in normal use.  DO NOT use when worker processes are
