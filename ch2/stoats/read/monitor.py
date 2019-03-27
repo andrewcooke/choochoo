@@ -3,19 +3,24 @@ import datetime as dt
 from collections import defaultdict
 from logging import getLogger
 
+import pandas as pd
+import numpy as np
 from cachetools import cached
-from sqlalchemy import desc, and_, or_
+from sqlalchemy import desc, and_, or_, distinct, func, alias, select
 
-from ch2.squeal.utils import add
+from ..load import StatisticJournalLoader
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
-    CUMULATIVE_STEPS_FINISH, CUMULATIVE_STEPS
+    CUMULATIVE_STEPS_FINISH, CUMULATIVE_STEPS, _new, TIME, SOURCE
 from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader, UniProcFitReader
 from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE
+from ...data import statistics
+from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
 from ...squeal.database import Timestamp
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
+from ...squeal.utils import add
 
 log = getLogger(__name__)
 ACTIVITY_TYPE_ATTR = 'activity_type'
@@ -264,6 +269,9 @@ class OldMessMonitorReader(UniProcFitReader):
                           activity, timestamp, StatisticJournalText)
 
 
+NEW_STEPS = _new(STEPS)
+
+
 class MonitorReader(MultiProcFitReader):
 
     def __init__(self, *args, cost_calc=1, cost_write=1, **kargs):
@@ -325,8 +333,60 @@ class MonitorReader(MultiProcFitReader):
         for record in records:
             if HEART_RATE_ATTR in record.data:
                 loader.add(HEART_RATE, BPM, None, None, mjournal, record.data[HEART_RATE_ATTR][0][0],
-                          record.timestamp, StatisticJournalInteger)
+                           record.timestamp, StatisticJournalInteger)
             if STEPS_ATTR in record.data:
                 for (activity, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
-                    loader.add(CUMULATIVE_STEPS, STEPS, None, activity, mjournal, steps,
+                    loader.add(CUMULATIVE_STEPS, STEPS_UNITS, None, activity, mjournal, steps,
                                record.timestamp, StatisticJournalInteger)
+
+    def _shutdown(self, s):
+        super()._shutdown(s)
+        if not self.worker:
+            for activity in self._step_activities(s):
+                df = self._read_diff(s, activity)
+                df = self._calculate_diff(df)
+                self._write_diff(s, df, activity)
+
+    def _step_activities(self, s):
+        return [row[0] for row in s.query(distinct(StatisticName.constraint)).
+            filter(StatisticName.name == CUMULATIVE_STEPS,
+                   StatisticName.owner == self.owner_out).all()]
+
+    def _read_diff(self, s, activity):
+        t = _tables()
+        qs = select([t.sj.c.time.label("time"), t.sji.c.value.label("steps")]). \
+            select_from(t.sj.join(t.sn).join(t.sji)). \
+            where(and_(t.sn.c.name == STEPS, t.sn.c.constraint == activity,
+                       t.sn.c.owner == self.owner_out)).alias("steps")
+        q = select([t.sj.c.time.label(TIME), t.sj.c.source_id.label(SOURCE), t.sji.c.value.label(CUMULATIVE_STEPS),
+                    qs.c.steps.label(STEPS)]). \
+            select_from(t.sj.join(t.sn).join(t.sji).outerjoin(qs, t.sj.c.time == qs.c.time)). \
+            where(and_(t.sn.c.name == CUMULATIVE_STEPS, t.sn.c.constraint == activity,
+                       t.sn.c.owner == self.owner_out)). \
+            order_by(t.sj.c.time)
+        # log.debug(q)
+        df = pd.read_sql_query(sql=q, con=s.connection(), index_col=TIME)
+        return df
+
+    def _calculate_diff(self, df):
+        df[NEW_STEPS] = df[CUMULATIVE_STEPS].diff()
+        df.loc[df[NEW_STEPS] < 0, NEW_STEPS] = df[CUMULATIVE_STEPS]
+        df.loc[df[NEW_STEPS].isna(), NEW_STEPS] = df[CUMULATIVE_STEPS]
+        return df
+
+    def _write_diff(self, s, df, activity):
+        steps = StatisticName.add_if_missing(log, s, STEPS, STEPS_UNITS, None, self.owner_out, activity)
+        times = df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[STEPS].isna()].index.astype(np.int64) / 1e9
+        if len(times):
+            n = s.query(func.count(StatisticJournal.id)).\
+                filter(StatisticJournal.time.in_(times),
+                       StatisticJournal.statistic_name == steps).scalar()
+            log.warning(f'Deleting {n} {STEPS}/{activity} entries')
+            s.query(StatisticJournal.id). \
+                filter(StatisticJournal.time.in_(times),
+                       StatisticJournal.statistic_name == steps).delete(synchronize_session=False)
+        loader = StatisticJournalLoader(s, owner=self.owner_out)
+        for time, row in df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
+            loader.add(STEPS, STEPS_UNITS, None, activity, row[SOURCE], int(row[NEW_STEPS]),
+                       time, StatisticJournalInteger)
+        loader.load()

@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy.sql import func
 
-from . import IntervalCalculatorMixin, MultiProcCalculator
+from . import IntervalCalculatorMixin, MultiProcCalculator, DataFrameCalculatorMixin, UniProcCalculator
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ...lib.date import local_date_to_time
 from ...squeal import StatisticJournalInteger, StatisticName

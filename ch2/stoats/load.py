@@ -77,14 +77,14 @@ class StatisticJournalLoader:
                     rowid += 1
                 self._s.bulk_save_objects(self.__staging[type])
             self._s.commit()
-        except Exception:
-            self._s.rollback()
-            raise
-        finally:
             log.debug('Removing Dummy')
             self._s.delete(dummy)
             self._s.commit()
             log.debug('Dummy removed')
+        except Exception:
+            self._s.rollback()
+            # in this case, dummy not persisted (deleting gives error).
+            raise
 
         # manually clean out intervals because we're doing a fast load
         if self.__clear_timestamp and self.__start and self.__finish:
@@ -117,7 +117,11 @@ class StatisticJournalLoader:
             self.__statistic_name_cache[key] = \
                 StatisticName.add_if_missing(log, self._s, name, units, summary, self._owner, constraint)
 
-        instance = type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source.id,
+        try:
+            source = source.id
+        except AttributeError:
+            pass  # literal id
+        instance = type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source,
                         value=value, time=time, serial=self.__serial)
         self.__staging[type].append(instance)
         if key in self.__latest:
