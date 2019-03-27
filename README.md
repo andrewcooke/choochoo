@@ -67,6 +67,16 @@ extensible.*
 
 ## Latest Changes
 
+### v0.18.0
+
+Major rewrite to import pipelines.  Now use multiple processes where
+possible.  Rebuild time for my data, on my machine, cut in half (and
+now including power calculations).  Experimented with power
+calculations, but "advanced" approach, fitting for wind direction and
+speed, didn't give good results (and was slow, hence the rewrite).
+Migrate existing databases using `migraine/sqlp2sqlq.sh` (edit the
+file, run, and then reload data from FIT files).
+
 ### v0.17.0
 
 Added `timestamp` to database which improves / extends logic to avoid
