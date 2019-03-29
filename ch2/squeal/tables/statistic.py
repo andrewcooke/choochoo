@@ -28,13 +28,14 @@ class StatisticName(Base):
     # (eg activity_group.id so that the same statistic can be used across different activities)
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
     constraint = Column(NullStr)
+    statistic_journal_type = Column(Integer, nullable=False)  # StatisticJournalType
     UniqueConstraint(name, owner, constraint)
 
     def __str__(self):
         return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
 
     @classmethod
-    def add_if_missing(cls, log, s, name, units, summary, owner, constraint):
+    def add_if_missing(cls, log, s, name, type, units, summary, owner, constraint):
         s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
@@ -43,7 +44,7 @@ class StatisticName(Base):
         statistic_name = q.one_or_none()
         if not statistic_name:
             statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner,
-                                                  constraint=constraint))
+                                                  constraint=constraint, statistic_journal_type=type))
             try:
                 s.flush()
             except IntegrityError as e:  # worker may have created in parallel, so read
@@ -53,6 +54,9 @@ class StatisticName(Base):
                 statistic_name = q.one()
                 log.debug('Retrieved')
         else:
+            if statistic_name.statistic_journal_type != type:
+                raise Exception('Changing type on %s (%s -> %s)' %
+                                (statistic_name.name, statistic_name.statistic_journal_type, type))
             if statistic_name.units != units:
                 log.warning('Changing units on %s (%s -> %s)' % (statistic_name.name, statistic_name.units, units))
                 statistic_name.units = units
@@ -121,7 +125,7 @@ class StatisticJournal(Base):
 
     @classmethod
     def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial, type):
-        statistic_name = StatisticName.add_if_missing(log, s, name, units, summary, owner, constraint)
+        statistic_name = StatisticName.add_if_missing(log, s, name, type, units, summary, owner, constraint)
         journal = STATISTIC_JOURNAL_CLASSES[type](
                 statistic_name=statistic_name, source=source, value=value, time=time, serial=serial)
         s.add(journal)
@@ -349,8 +353,15 @@ STATISTIC_JOURNAL_CLASSES = {
     StatisticJournalType.TEXT: StatisticJournalText
 }
 
+STATISTIC_JOURNAL_TYPES = {
+    StatisticJournalInteger: StatisticJournalType.INTEGER,
+    StatisticJournalFloat: StatisticJournalType.FLOAT,
+    StatisticJournalText: StatisticJournalType.TEXT
+}
+
 TYPE_TO_JOURNAL_CLASS = {
     int: StatisticJournalInteger,
     float: StatisticJournalFloat,
     str: StatisticJournalText
 }
+

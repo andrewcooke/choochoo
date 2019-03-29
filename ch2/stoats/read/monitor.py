@@ -17,7 +17,7 @@ from ...data import statistics
 from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
-from ...squeal.database import Timestamp
+from ...squeal.database import Timestamp, StatisticJournalType
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
 from ...squeal.utils import add
@@ -164,7 +164,8 @@ class MonitorReader(MultiProcFitReader):
         return df
 
     def _write_diff(self, s, df, activity):
-        steps = StatisticName.add_if_missing(log, s, STEPS, STEPS_UNITS, None, self.owner_out, activity)
+        steps = StatisticName.add_if_missing(log, s, STEPS, StatisticJournalType.INTEGER, STEPS_UNITS, None,
+                                             self.owner_out, activity)
         times = df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):
             n = s.query(func.count(StatisticJournal.id)).\

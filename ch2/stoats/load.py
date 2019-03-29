@@ -5,6 +5,7 @@ from time import sleep
 
 from sqlalchemy.exc import IntegrityError
 
+from ch2.squeal.tables.statistic import TYPE_TO_JOURNAL_CLASS, STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 from .waypoint import make_waypoint
 from ..commands.args import UNLOCK
 from ..squeal import StatisticJournal, StatisticName, Dummy, Interval
@@ -98,7 +99,7 @@ class StatisticJournalLoader:
             filter(StatisticJournal.source == dummy_source,
                    StatisticJournal.statistic_name == dummy_name).delete()
 
-    def add(self, name, units, summary, constraint, source, value, time, type):
+    def add(self, name, units, summary, constraint, source, value, time, cls):
 
         if self.__add_serial:
             if self.__last_time is None:
@@ -115,15 +116,20 @@ class StatisticJournalLoader:
         key = (name, constraint)
         if key not in self.__statistic_name_cache:
             self.__statistic_name_cache[key] = \
-                StatisticName.add_if_missing(log, self._s, name, units, summary, self._owner, constraint)
+                StatisticName.add_if_missing(log, self._s, name, STATISTIC_JOURNAL_TYPES[cls],
+                                             units, summary, self._owner, constraint)
 
         try:
             source = source.id
         except AttributeError:
             pass  # literal id
-        instance = type(statistic_name_id=self.__statistic_name_cache[key].id, source_id=source,
-                        value=value, time=time, serial=self.__serial)
-        self.__staging[type].append(instance)
+        statistic_name = self.__statistic_name_cache[key]
+        journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+        if cls != journal_class:
+            raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
+        instance = journal_class(statistic_name_id=statistic_name.id, source_id=source, value=value,
+                                 time=time, serial=self.__serial)
+        self.__staging[journal_class].append(instance)
         if key in self.__latest:
             prev = self.__latest[key]
             if instance.time > prev.time:

@@ -150,9 +150,9 @@ def add_constant(s, name, description=None, units=None, single=False,
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=None,
-                                          units=units, description=description))
-    return add(s, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
-                           name=name, single=single))
+                                          units=units, description=description,
+                                          statistic_journal_type=statistic_journal_type))
+    return add(s, Constant(statistic_name=statistic_name, name=name, single=single))
 
 
 def add_activity_constant(s, activity_group, name, description=None, units=None, single=False,
@@ -168,9 +168,9 @@ def add_activity_constant(s, activity_group, name, description=None, units=None,
     if activity_group.id is None:
         s.flush()
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=activity_group,
-                                          units=units, description=description))
-    return add(s, Constant(statistic_journal_type=statistic_journal_type, statistic_name=statistic_name,
-                           name='%s.%s' % (name, activity_group.name), single=single))
+                                          units=units, description=description,
+                                          statistic_journal_type=statistic_journal_type))
+    return add(s, Constant(statistic_name=statistic_name, name='%s.%s' % (name, activity_group.name), single=single))
 
 
 def add_enum_constant(s, name, enum, constraint=None, description=None, units=None, single=False):
@@ -178,9 +178,9 @@ def add_enum_constant(s, name, enum, constraint=None, description=None, units=No
     Add a constant that is a JSON encoded enum.  This is validated before saving.
     '''
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=constraint,
-                                          units=units, description=description))
-    return add(s, Constant(statistic_journal_type=StatisticJournalType.TEXT, statistic_name=statistic_name,
-                           name=name, single=single,
+                                          units=units, description=description,
+                                          statistic_journal_type=StatisticJournalType.TEXT))
+    return add(s, Constant(statistic_name=statistic_name, name=name, single=single,
                            validate_cls=ValidateNamedTuple,
                            validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)}))
 
@@ -272,4 +272,5 @@ def add_loader_support(s):
     Add 'dummy' values used by loader.
     '''
     dummy_source = add(s, Dummy())
-    dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source))
+    dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source,
+                                      statistic_journal_type=StatisticJournalType.STATISTIC))

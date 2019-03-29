@@ -3,13 +3,13 @@
 shopt -s globstar
 start_all=$SECONDS
 
-echo
-echo "resetting database"
-start_database=$SECONDS
-./ch2/migraine/sqlq2sqlq.sh
-cp ~/.ch2/database.sqlq ~/.ch2/database.sqlq-empty
-duration=$(($SECONDS - $start_database))
-echo "reset finished $(($duration/60)) min $(($duration%60)) sec"
+#echo
+#echo "resetting database"
+#start_database=$SECONDS
+#./ch2/migraine/sqlq2sqlq.sh
+#cp ~/.ch2/database.sqlq ~/.ch2/database.sqlq-empty
+#duration=$(($SECONDS - $start_database))
+#echo "reset finished $(($duration/60)) min $(($duration%60)) sec"
 
 echo
 echo "running activities in parallel"

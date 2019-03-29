@@ -208,7 +208,7 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlq', metavar='FILE',
+    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlr', metavar='FILE',
                         help='the database file')
     parser.add_argument(no(JUPYTER), action='store_false', dest=JUPYTER,
                         help='don\'t start the Jupyter server')

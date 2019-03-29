@@ -18,7 +18,6 @@ class Constant(Source):
     __tablename__ = 'constant'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    statistic_journal_type = Column(Integer, nullable=False)
     # this could be the statistic_name or it could contain more info related to constraint
     name = Column(Text, nullable=False, index=True)
     # todo - this ondelete cascade could cause problems with orphaned sources
@@ -47,7 +46,7 @@ class Constant(Source):
             time = local_date_to_time(date)
         if time and self.single:
             raise Exception('%s was given time %s but is not time-variable' % (self, format_time(time)))
-        sjournal = STATISTIC_JOURNAL_CLASSES[self.statistic_journal_type](
+        sjournal = STATISTIC_JOURNAL_CLASSES[self.statistic_name.statistic_journal_type](
             statistic_name=self.statistic_name, source=self, value=value, time=time)
         self.validate(sjournal)
         return add(s, sjournal)

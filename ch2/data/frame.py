@@ -1,26 +1,26 @@
 
 import datetime as dt
-from collections import defaultdict
+from collections import defaultdict, Counter
 from collections.abc import Mapping, Sequence
 from logging import getLogger
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import inspect, select, and_
-from sqlalchemy.sql.functions import coalesce
+from sqlalchemy import inspect, select, and_, or_, alias, distinct
+from sqlalchemy.sql.functions import coalesce, func
 
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
-from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark
+from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType
 from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
     ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, FITNESS, FATIGUE, REST_HR, \
-    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER, INDEX
 from ..uranus.coasting import CoastingBookmark
 
 log = getLogger(__name__)
@@ -116,7 +116,7 @@ def make_pad(data, times, statistic_names, quiet=False):
     return pad
 
 
-def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, source_ids=None,
+def old_statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, source_ids=None,
                schedule=None, quiet=False):
 
     statistic_names, statistic_ids = _collect_statistics(s, statistics, owner, constraint)
@@ -335,3 +335,53 @@ def bookmarks(s, constraint, owner=CoastingBookmark):
                ActivityBookmark.constraint == constraint).all()
 
 
+def statistic_names(s, *statistics, owner=None, constraint=None):
+    q = s.query(StatisticName). \
+        filter(or_(StatisticName.name.like(statistic) for statistic in statistics))
+    if owner:
+        q = q.filter(StatisticName.owner == owner)
+    if constraint:
+        q = q.filter(StatisticName.constraint == constraint)
+    return q.all()
+
+
+def _type_to_journal(t):
+    return {StatisticJournalType.INTEGER: t.sji,
+            StatisticJournalType.FLOAT: t.sjf,
+            StatisticJournalType.TEXT: t.sjt}
+
+
+def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None):
+    # the journal constraints (source_ids,
+    t = _tables()
+    ttj = _type_to_journal(t)
+    names = statistic_names(s, *statistics, owner=owner, constraint=constraint)
+    counts = Counter(name.name for name in names)
+    labels = [name.name if counts[name.name] == 1 else f'{name.name} ({name.constraint})' for name in names]
+    tables = [ttj[name.statistic_journal_type] for name in names]
+    time_select = select([distinct(t.sj.c.time).label("time")]).select_from(t.sj). \
+        where(t.sj.c.statistic_name_id.in_([n.id for n in names]))
+    if start:
+        time_select = time_select.where(t.sj.c.time >= start)
+    if finish:
+        time_select = time_select.where(t.sj.c.time <= finish)
+    time_select = time_select.order_by("time").alias("sub_time")  # order here avoids extra index
+    sub_selects = [select([table.c.value, t.sj.c.time]).
+                       select_from(t.sj.join(table)).
+                       where(t.sj.c.statistic_name_id == name.id).
+                       order_by(t.sj.c.time).  # this doesn't affect plan but seems to speed up query
+                       alias(f'sub_{name.name}_{name.constraint}')
+                   for name, table in zip(names, tables)]
+    # don't call this TIME because even though it's moved to index it somehow blocks the later additiion
+    # of a TIME column (eg when plotting health statistics)
+    selects = [time_select.c.time.label(INDEX)] + \
+              [sub.c.value.label(label) for sub, label in zip(sub_selects, labels)]
+    sources = time_select
+    for sub in sub_selects:
+        sources = sources.outerjoin(sub, time_select.c.time == sub.c.time)
+    sql = select(selects).select_from(sources)
+    return pd.read_sql_query(sql=sql, con=s.connection(), index_col=INDEX)
+
+
+def present(df, *names):
+    return all(name in df.columns and len(df[name]) for name in names)

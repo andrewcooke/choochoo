@@ -57,13 +57,16 @@ def activity_details(local_time, activity_group_name):
     hr = comparison_line_plot(700, 200, DISTANCE_KM, MED_HR_IMPULSE_10, activity, ylo=0, x_range=el.x_range)
     hr_c = cumulative_plot(200, 200, MED_HR_IMPULSE_10, activity, ylo=0)
 
-    if MED_POWER_W in activity.columns:
+    if present(activity, MED_POWER_W):
         pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_W, activity, ylo=0, x_range=el.x_range)
         pw_c = cumulative_plot(200, 200, MED_POWER_W, activity, ylo=0)
     else:
         pw, pw_c = None, None
 
-    cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, ylo=0, x_range=el.x_range)
+    if present(activity, MED_CADENCE):
+        cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, ylo=0, x_range=el.x_range)
+    else:
+        cd = None
     hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
 
     show(gridplot([[el, el_c], [sp, sp_c], [hr, hr_c], [pw, pw_c], [cd, hr_h]]))
@@ -76,7 +79,7 @@ def activity_details(local_time, activity_group_name):
     m_el = map_intensity(200, 200, activity, ELEVATION_M, ranges=map)
     m_sp = map_intensity(200, 200, activity, SPEED_KMH, ranges=map)
     m_hr = map_intensity(200, 200, activity, HR_IMPULSE_10, ranges=map)
-    if MED_POWER_W in activity.columns:
+    if present(activity, MED_POWER_W):
         m_pw = map_intensity(200, 200, activity, MED_POWER_W, ranges=map)
     else:
         m_pw = None
