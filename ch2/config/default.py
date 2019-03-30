@@ -108,34 +108,34 @@ def default(db, no_diary=False):
 
             c = Counter()
             diary = add_topic(s, 'Diary', c)
-            add_topic_field(s, diary, 'Notes', c,
+            add_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
                             display_cls=Text)
             # now provided via monitor
             # add_topic_field(s, diary, 'Rest HR', c,
             #                 units=BPM, summary='[avg]',
             #                 display_cls=Integer, lo=25, hi=75)
-            add_topic_field(s, diary, 'Weight', c,
+            add_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,
                             units='kg', summary='[avg],[msr]',
                             display_cls=Float, lo=50, hi=100, dp=1)
-            add_topic_field(s, diary, 'Sleep', c,
+            add_topic_field(s, diary, 'Sleep', c, StatisticJournalType.FLOAT,
                             units='h', summary='[avg]',
                             display_cls=Float, lo=0, hi=24, dp=1)
-            add_topic_field(s, diary, 'Mood', c,
+            add_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
                             summary='[avg]',
                             display_cls=Score0)
-            add_topic_field(s, diary, 'Nutrition', c,
+            add_topic_field(s, diary, 'Nutrition', c, StatisticJournalType.TEXT,
                             summary='[cnt]',
                             display_cls=Text)
-            add_topic_field(s, diary, 'Soreness', c,
+            add_topic_field(s, diary, 'Soreness', c, StatisticJournalType.TEXT,
                             summary='[cnt]',
                             display_cls=Text)
-            add_topic_field(s, diary, 'Medication', c,
+            add_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
                             summary='[cnt]',
                             display_cls=Text)
-            add_topic_field(s, diary, 'Weather', c,
+            add_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
                             summary='[cnt]',
                             display_cls=Text)
-            add_topic_field(s, diary, 'Route', c,
+            add_topic_field(s, diary, 'Route', c, StatisticJournalType.TEXT,
                             summary='[cnt]',
                             display_cls=Text)
 

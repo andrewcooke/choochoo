@@ -1,25 +1,22 @@
 
 import datetime as dt
-from collections import defaultdict
 from logging import getLogger
 
-import pandas as pd
 import numpy as np
-from cachetools import cached
-from sqlalchemy import desc, and_, or_, distinct, func, alias, select
+import pandas as pd
+from sqlalchemy import desc, and_, or_, distinct, func, select
+from sqlalchemy.sql.functions import count
 
 from ..load import StatisticJournalLoader
-from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, ACTIVITY, CUMULATIVE_STEPS_START, \
-    CUMULATIVE_STEPS_FINISH, CUMULATIVE_STEPS, _new, TIME, SOURCE
-from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader, UniProcFitReader
+from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE
+from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
 from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE
-from ...data import statistics
 from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
-from ...squeal.database import Timestamp, StatisticJournalType
+from ...squeal.database import StatisticJournalType
 from ...squeal.tables.monitor import MonitorJournal
-from ...squeal.tables.statistic import StatisticJournalInteger, StatisticJournalText, StatisticName, StatisticJournal
+from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
 from ...squeal.utils import add
 
 log = getLogger(__name__)
@@ -58,6 +55,35 @@ def missing_dates(s):
         log.warning('No dates to download')
 
 
+class MonitorLoader(StatisticJournalLoader):
+
+    def _preload(self):
+        dummy = super()._preload()
+        try:
+            for name in self._s.query(StatisticName). \
+                    filter(StatisticName.name == CUMULATIVE_STEPS,
+                           StatisticName.owner == self._owner).all():
+                n = self._s.query(count(StatisticJournal.id)). \
+                    filter(StatisticJournal.statistic_name == name,
+                           StatisticJournal.time >= self.start,
+                           StatisticJournal.time <= self.finish).scalar()
+                if n and self.start and self.finish:
+                    log.warning(f'Deleting {n} overlapping {CUMULATIVE_STEPS}')
+                    self._s.query(StatisticJournal). \
+                        filter(StatisticJournal.statistic_name == name,
+                               StatisticJournal.time >= self.start,
+                               StatisticJournal.time <= self.finish).delete()
+        except:
+            log.debug('Failed to clean database')
+            self._s.rollback()
+            raise
+        return dummy
+
+    def _resolve_duplicate(self, name, instance, prev):
+        log.warning(f'Using max of duplicate values at {instance.time} for {name} ({instance.value}/{prev.value})')
+        prev.value = max(prev.value, instance.value)
+
+
 NEW_STEPS = _new(STEPS)
 
 
@@ -65,6 +91,11 @@ class MonitorReader(MultiProcFitReader):
 
     def __init__(self, *args, cost_calc=1, cost_write=1, **kargs):
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+
+    def _get_loader(self, s, **kargs):
+        if 'owner' not in kargs:
+            kargs['owner'] = self.owner_out
+        return MonitorLoader(s, **kargs)
 
     def _base_command(self):
         return f'{{ch2}} -v0 -l {{log}} {MONITOR} {mm(WORKER)} {self.id} {mm(FAST)} {mm(FORCE) if self.force else ""}'
@@ -168,7 +199,7 @@ class MonitorReader(MultiProcFitReader):
                                              self.owner_out, activity)
         times = df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):
-            n = s.query(func.count(StatisticJournal.id)).\
+            n = s.query(func.count(StatisticJournal.id)). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).scalar()
             log.warning(f'Deleting {n} {STEPS}/{activity} entries')

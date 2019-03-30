@@ -1,5 +1,6 @@
 
 from logging import getLogger
+from subprocess import run
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
@@ -48,9 +49,9 @@ class TestMonitor(TestCase):
                                           'monitor', mm(FAST),
                                           'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, db)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
-            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
                 assert mjournals[2].start == to_time('2018-09-06 15:06:00'), mjournals[2].start

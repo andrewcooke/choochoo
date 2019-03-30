@@ -352,7 +352,7 @@ def _type_to_journal(t):
 
 
 def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None):
-    # the journal constraints (source_ids,
+    # todo - rather than adding more constraints here, make it possible to pass in statistic_name instances
     t = _tables()
     ttj = _type_to_journal(t)
     names = statistic_names(s, *statistics, owner=owner, constraint=constraint)

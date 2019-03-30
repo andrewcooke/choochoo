@@ -3,13 +3,13 @@
 shopt -s globstar
 start_all=$SECONDS
 
-#echo
-#echo "resetting database"
-#start_database=$SECONDS
-#./ch2/migraine/sqlq2sqlq.sh
-#cp ~/.ch2/database.sqlq ~/.ch2/database.sqlq-empty
-#duration=$(($SECONDS - $start_database))
-#echo "reset finished $(($duration/60)) min $(($duration%60)) sec"
+echo
+echo "resetting database"
+start_database=$SECONDS
+./ch2/migraine/sqlr2sqlr.sh
+cp ~/.ch2/database.sqlr ~/.ch2/database.sqlr-empty
+duration=$(($SECONDS - $start_database))
+echo "reset finished $(($duration/60)) min $(($duration%60)) sec"
 
 echo
 echo "running activities in parallel"
@@ -18,7 +18,7 @@ ALL_CPUS="-K cost_calc=100"
 (dev/ch2 --dev -v2 activities ~/archive/fit/bike/*.fit --fast -D 'Bike=Cotic Soul'; dev/ch2 --dev -v2 activities ~/archive/fit/batch/**/*.fit --fast -D 'Bike=Cotic Soul' $ALL_CPUS) &
 (dev/ch2 --dev -v2 monitor ~/archive/fit/monitor/*.fit --fast; dev/ch2 --dev -v2 monitor ~/archive/fit/batch/**/*.fit --fast $ALL_CPUS) &
 wait
-cp ~/.ch2/database.sqlq ~/.ch2/database.sqlq-loaded
+cp ~/.ch2/database.sqlr ~/.ch2/database.sqlr-loaded
 duration=$(($SECONDS - $start_activities))
 echo "activities finished $(($duration/60)) min $(($duration%60)) sec"
 
@@ -26,7 +26,7 @@ echo
 echo "running statistics in series"
 start_statistics=$SECONDS
 dev/ch2 --dev -v2 statistics
-cp ~/.ch2/database.sqlq ~/.ch2/database.sqlq-stats
+cp ~/.ch2/database.sqlr ~/.ch2/database.sqlr-stats
 duration=$(($SECONDS - $start_statistics))
 echo "statistics finished $(($duration/60)) min $(($duration%60)) sec"
 

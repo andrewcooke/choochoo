@@ -229,7 +229,7 @@ def add_child_topic(s, parent, name, sort, description=None, schedule=None):
     return add(s, Topic(parent=parent, name=name, sort=sort, description=description, schedule=schedule))
 
 
-def add_topic_field(s, topic, name, sort, description=None, units=None, summary=None,
+def add_topic_field(s, topic, name, sort, type, description=None, units=None, summary=None,
                     display_cls=Integer, **display_kargs):
     '''
     Add a field and associated statistic to a topic entry.
@@ -240,7 +240,7 @@ def add_topic_field(s, topic, name, sort, description=None, units=None, summary=
     '''
     if topic.id is None:
         s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=topic, constraint=topic,
+    statistic_name = add(s, StatisticName(name=name, owner=topic, constraint=topic, statistic_journal_type=type,
                                           description=description, units=units, summary=summary))
     field = add(s, TopicField(topic=topic, sort=sort, type=display_cls.statistic_journal_type,
                               display_cls=display_cls, display_kargs=display_kargs,

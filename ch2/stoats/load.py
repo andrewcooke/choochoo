@@ -46,11 +46,31 @@ class StatisticJournalLoader:
         self.__clear_timestamp = clear_timestamp
         self.__abort_after = abort_after
 
+    @property
+    def start(self):
+        return self.__start
+
+    @property
+    def finish(self):
+        return self.__finish
+
     def __bool__(self):
         return bool(self.__staging)
 
     def load(self):
         self._s.commit()
+        dummy = self._preload()
+        try:
+            self._load_ids(dummy)
+        except Exception:
+            self._s.rollback()
+            # dummy may have been deleted in the rollback - it depends if there were any intermediate commits
+            # (which is a whole other problem), so to be sure...
+            self.unlock(self._s)
+            raise
+        self._postload()
+
+    def _preload(self):
         dummy_source, dummy_name = Dummy.singletons(self._s)
         dummy, count = None, 0
         while not dummy:
@@ -69,27 +89,26 @@ class StatisticJournalLoader:
                                     f'(you may need to use `ch2 {UNLOCK}` once all workers have stopped)')
                 sleep(0.1)
         log.debug(f'Dummy ID {dummy.id}')
-        try:
-            rowid = dummy.id + 1
-            for type in self.__staging:
-                log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
-                for sjournal in self.__staging[type]:
-                    sjournal.id = rowid
-                    rowid += 1
-                self._s.bulk_save_objects(self.__staging[type])
-            self._s.commit()
-            log.debug('Removing Dummy')
-            self._s.delete(dummy)
-            self._s.commit()
-            log.debug('Dummy removed')
-        except Exception:
-            self._s.rollback()
-            # in this case, dummy not persisted (deleting gives error).
-            raise
+        return dummy
 
+    def _load_ids(self, dummy):
+        rowid = dummy.id + 1
+        for type in self.__staging:
+            log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
+            for sjournal in self.__staging[type]:
+                sjournal.id = rowid
+                rowid += 1
+            self._s.bulk_save_objects(self.__staging[type])
+        self._s.commit()
+        log.debug('Removing Dummy')
+        self._s.delete(dummy)
+        self._s.commit()
+        log.debug('Dummy removed')
+
+    def _postload(self):
         # manually clean out intervals because we're doing a fast load
-        if self.__clear_timestamp and self.__start and self.__finish:
-            Interval.clean_times(log, self._s, self.__start, self.__finish)
+        if self.__clear_timestamp and self.start and self.finish:
+            Interval.clean_times(log, self._s, self.start, self.finish)
             self._s.commit()
 
     @classmethod
@@ -98,6 +117,7 @@ class StatisticJournalLoader:
         s.query(StatisticJournal). \
             filter(StatisticJournal.source == dummy_source,
                    StatisticJournal.statistic_name == dummy_name).delete()
+        s.commit()
 
     def add(self, name, units, summary, constraint, source, value, time, cls):
 
@@ -129,15 +149,24 @@ class StatisticJournalLoader:
             raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
         instance = journal_class(statistic_name_id=statistic_name.id, source_id=source, value=value,
                                  time=time, serial=self.__serial)
-        self.__staging[journal_class].append(instance)
         if key in self.__latest:
             prev = self.__latest[key]
             if instance.time > prev.time:
                 self.__latest[key] = instance
+                self.__staging[journal_class].append(instance)
             elif instance.time == prev.time:
-                raise Exception(f'Duplicate time ({prev.time}) for {name}')
+                if instance.value == prev.value:
+                    log.warning(f'Skipping duplicate for {name}')
+                else:
+                    self._resolve_duplicate(name, instance, prev)
+            else:
+                self.__staging[journal_class].append(instance)
         else:
             self.__latest[key] = instance
+            self.__staging[journal_class].append(instance)
+
+    def _resolve_duplicate(self, name, instance, prev):
+        raise Exception(f'Duplicate time ({prev.time}) for {name} ({instance.value}/{prev.value})')
 
     def latest(self, name, constraint):
         return self.__latest.get((name, constraint))
