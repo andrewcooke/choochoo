@@ -271,7 +271,7 @@ class CompositeComponent(Base):
     input_source = relationship('Source', foreign_keys=[input_source_id])
     output_source_id = Column(Integer, ForeignKey('composite_source.id', ondelete='cascade'))
     output_source = relationship('Composite', foreign_keys=[output_source_id])
-    UniqueConstraint(input_source_id, output_source_id)
+    UniqueConstraint(output_source_id, input_source_id)  # ordered so output is a useful index
 
 
 class Composite(Source):
@@ -279,8 +279,6 @@ class Composite(Source):
     __tablename__ = 'composite_source'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    start = Column(Date)
-    finish = Column(Date)
     components = relationship('Source', secondary='composite_component')
     n_components = Column(Integer, nullable=False)
 
@@ -289,7 +287,7 @@ class Composite(Source):
     }
 
     def time_range(self, s):
-        return self.start, self.finish
+        return None, None
 
     @classmethod
     def clean(cls, s):
@@ -299,14 +297,14 @@ class Composite(Source):
         q1 = select([id, target, actual]). \
              where(t.cmp.c.id == t.cc.c.output_source_id). \
              group_by(t.cmp.c.id)
-        log.debug(f'q1: {q1}')
+        log.debug(f'Composite clean 1: {q1}')
         q2 = select([q1.c.id]).where(q1.c.target != q1.c.actual)
-        log.debug(f'q2: {q2}')
+        log.debug(f'Composite clean 2: {q2}')
         q3 = select([count()]).select_from(q2)
-        log.debug(f'q3: {q3}')
+        log.debug(f'Composite clean 3: {q3}')
         n = s.connection().execute(q3).scalar()
-        if n or True:
+        if n:
             log.warning(f'Deleting {n} Composite entries due to missing components')
             q4 = t.cmp.delete().where(t.cmp.c.id.in_(q2.cte()))
-            log.debug(f'q4: {q4}')
+            log.debug(f'Composite clean 4: {q4}')
             s.connection().execute(q4)
