@@ -1,18 +1,20 @@
 
+import datetime as dt
 from abc import abstractmethod
 from logging import getLogger
 
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ch2.stoats.pipeline import LoaderMixin
-from ..pipeline import MultiProcPipeline, UniProcPipeline
+from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
 from ..waypoint import WaypointReader
 from ...commands.args import STATISTICS, WORKER, mm
-from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date
+from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date, local_date_to_time, \
+    time_to_local_date
 from ...lib.log import log_current_exception
 from ...lib.schedule import Schedule
-from ...squeal import ActivityJournal, Interval, Timestamp, StatisticJournal, StatisticName
+from ...squeal import ActivityJournal, Interval, Timestamp, StatisticJournal, StatisticName, Composite, \
+    CompositeComponent, Source
 from ...squeal.types import long_cls
 from ...squeal.utils import add
 
@@ -256,4 +258,94 @@ class IntervalCalculatorMixin(LoaderMixin):
 
     @abstractmethod
     def _calculate_results(self, s, interval, data, loader):
+        raise NotImplementedError()
+
+
+class CompositeCalculatorMixin(LoaderMixin):
+
+    def _missing(self, s):
+        dates = set()
+        for source in self._unused_sources(s):
+            dates.update(self._dates_for_source(source))
+        start, finish = self._start_finish(lambda x: to_date(x, none=True))
+        missing = sorted(filter(lambda d: (start is None or start <= d) and (finish is None or d <= finish), dates))
+        log.debug(f'Missing {start} - {finish}: {missing}')
+        return missing
+
+    def _args(self, missing, start, finish):
+        s, f = format_date(missing[start]), format_date(missing[finish])
+        log.info(f'Starting worker for {s} - {f}')
+        return f'"{s}" "{f}"'
+
+    def _dates_for_source(self, mjournal):
+        start = time_to_local_date(mjournal.start)
+        finish = time_to_local_date(mjournal.finish) + dt.timedelta(days=1)
+        while start < finish:
+            yield start
+            start += dt.timedelta(days=1)
+
+    def _unused_sources(self, s):
+        Composite.clean(s)
+        used_sources = s.query(CompositeComponent.input_source_id). \
+            join(StatisticJournal, CompositeComponent.output_source_id == StatisticJournal.source_id). \
+            join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+            filter(StatisticName.owner == self.owner_out)
+        return self._unused_sources_given_used(s, used_sources)
+
+    @abstractmethod
+    def _unused_sources_given_used(self, s, used_sources):
+        raise NotImplementedError()
+
+    def _delete(self, s):
+        composite_ids = s.query(Composite.id). \
+            join(StatisticJournal, Composite.id == StatisticJournal.source_id). \
+            join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+            filter(StatisticName.owner == self.owner_out)
+        start, finish = self._start_finish(local_date_to_time)
+        if start:
+            composite_ids = composite_ids.filter(StatisticJournal.time >= start)
+        if finish:
+            composite_ids = composite_ids.filter(StatisticJournal.time <= finish)
+        log.debug(f'Delete query: {composite_ids}')
+        n = s.query(count(Source.id)). \
+            filter(Source.id.in_(composite_ids)). \
+            scalar()
+        log.debug(n)
+        if n:
+            log.warning(f'Deleting {n} Composite sources ({start} - {finish})')
+            s.query(Source). \
+                filter(Source.id.in_(composite_ids)). \
+                delete(synchronize_session=False)
+            s.commit()
+
+    def _run_one(self, s, start):
+        start = local_date_to_time(start)
+        finish = start + dt.timedelta(days=1)
+        if s.query(count(Composite.id)). \
+                join(StatisticJournal, Composite.id == StatisticJournal.source_id). \
+                join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+                filter(StatisticJournal.time >= start,
+                       StatisticJournal.time <= finish,
+                       StatisticName.owner == self.owner_out).scalar():
+            raise Exception('Source already exists')
+        try:
+            input_source_ids, data = self._read_data(s, start, finish)
+            output_source = add(s, Composite(n_components=len(input_source_ids)))
+            for input_source_id in input_source_ids:
+                s.add(CompositeComponent(input_source_id=input_source_id, output_source=output_source))
+            s.commit()
+            loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
+            self._calculate_results(s, output_source, data, loader, start, finish)
+            loader.load()
+            self._prev_loader = loader
+        except Exception as e:
+            log.warning(f'No statistics for {start} - {finish} due to error ({e})')
+            log_current_exception()
+
+    @abstractmethod
+    def _read_data(self, s, start, finish):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _calculate_results(self, s, source, data, loader, start, finish):
         raise NotImplementedError()
