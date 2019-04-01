@@ -1,14 +1,18 @@
 
 from abc import abstractmethod
 from enum import IntEnum
+from logging import getLogger
 
-from sqlalchemy import ForeignKey, Column, Integer, func, and_, UniqueConstraint
+from sqlalchemy import ForeignKey, Column, Integer, func, and_, UniqueConstraint, select
 from sqlalchemy.event import listens_for
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm import Session, aliased, relationship
+from sqlalchemy.sql.functions import count
 
 from ..support import Base
 from ..types import OpenSched, Date, ShortCls, short_cls
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
+
+log = getLogger(__name__)
 
 
 class SourceType(IntEnum):
@@ -20,7 +24,8 @@ class SourceType(IntEnum):
     CONSTANT = 4
     MONITOR = 5
     SEGMENT = 6
-    DUMMY = 7
+    COMPOSITE = 7
+    DUMMY = 8
 
 
 class Source(Base):
@@ -82,7 +87,7 @@ class NoStatistics(Exception):
 
 class Interval(Source):
 
-    __tablename__ = 'interval'
+    __tablename__ = 'interval'   # would be nice to rename this interval_source at some point
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False, index=True)
@@ -255,3 +260,53 @@ class Dummy(Source):
         source = s.query(Dummy).one()
         name = s.query(StatisticName).filter(StatisticName.owner == source).one()
         return source, name
+
+
+class CompositeComponent(Base):
+
+    __tablename__ = 'composite_component'
+
+    id = Column(Integer, primary_key=True)
+    input_source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'))
+    input_source = relationship('Source', foreign_keys=[input_source_id])
+    output_source_id = Column(Integer, ForeignKey('composite_source.id', ondelete='cascade'))
+    output_source = relationship('Composite', foreign_keys=[output_source_id])
+    UniqueConstraint(input_source_id, output_source_id)
+
+
+class Composite(Source):
+
+    __tablename__ = 'composite_source'
+
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
+    start = Column(Date)
+    finish = Column(Date)
+    components = relationship('Source', secondary='composite_component')
+    n_components = Column(Integer, nullable=False)
+
+    __mapper_args__ = {
+        'polymorphic_identity': SourceType.COMPOSITE
+    }
+
+    def time_range(self, s):
+        return self.start, self.finish
+
+    @classmethod
+    def clean(cls, s):
+        from ...data.frame import _tables
+        t = _tables()
+        id, target, actual = t.cmp.c.id.label("id"), t.cmp.c.n_components.label('target'), count(t.cc.c.id).label('actual')
+        q1 = select([id, target, actual]). \
+             where(t.cmp.c.id == t.cc.c.output_source_id). \
+             group_by(t.cmp.c.id)
+        log.debug(f'q1: {q1}')
+        q2 = select([q1.c.id]).where(q1.c.target != q1.c.actual)
+        log.debug(f'q2: {q2}')
+        q3 = select([count()]).select_from(q2)
+        log.debug(f'q3: {q3}')
+        n = s.connection().execute(q3).scalar()
+        if n or True:
+            log.warning(f'Deleting {n} Composite entries due to missing components')
+            q4 = t.cmp.delete().where(t.cmp.c.id.in_(q2.cte()))
+            log.debug(f'q4: {q4}')
+            s.connection().execute(q4)

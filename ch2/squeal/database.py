@@ -14,7 +14,7 @@ from ..commands.args import DATABASE, NamespaceWithVariables, NO_OP, parser
 from ..lib.log import make_log
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
-Source,  Interval, Dummy
+Source,  Interval, Dummy, Composite, CompositeComponent
 ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
 Topic, TopicJournal, TopicField,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticMeasure

@@ -24,3 +24,4 @@ class MonitorJournal(Source):
 
     def time_range(self, s):
         return self.start, self.finish
+

@@ -121,7 +121,7 @@ class MultiProcPipeline(BasePipeline):
         # out COST_READ too (currently folded into COST_CALC).
 
         log.debug(f'Batching for n_cpu={n_cpu}, overhead={self.overhead}, '
-                        f'cost_writes={self.cost_write}, cost_calc={self.cost_calc}')
+                  f'cost_writes={self.cost_write}, cost_calc={self.cost_calc}')
         n_missing = len(missing)
         cost = self.cost_write + self.cost_calc
         limit = cost / self.cost_write

@@ -13,7 +13,8 @@ from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
-from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType
+from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
+    Composite, CompositeComponent
 from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
@@ -71,7 +72,9 @@ def _tables():
                          sjf=inspect(StatisticJournalFloat).local_table,
                          sjt=inspect(StatisticJournalText).local_table,
                          inv=inspect(Interval).local_table,
-                         at=inspect(ActivityTimespan).local_table)
+                         at=inspect(ActivityTimespan).local_table,
+                         cmp=inspect(Composite).local_table,
+                         cc=inspect(CompositeComponent).local_table)
 
 
 def _build_statistic_journal_query(statistic_ids, start, finish, source_ids, schedule):

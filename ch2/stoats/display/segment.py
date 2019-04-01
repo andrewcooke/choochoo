@@ -1,5 +1,6 @@
 
 import datetime as dt
+from logging import getLogger
 from re import sub
 
 from urwid import Pile, Text, Columns
@@ -14,6 +15,8 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields import ReadOnlyField
 from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
+
+log = getLogger(__name__)
 
 
 def segments_for_activity(s, ajournal):
