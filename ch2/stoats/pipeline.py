@@ -1,10 +1,12 @@
 
 from abc import abstractmethod
 from logging import getLogger
+from time import time
 
 from psutil import cpu_count
 
-from ch2.stoats.load import StatisticJournalLoader
+from .load import StatisticJournalLoader
+from ..lib.date import format_seconds
 from ..lib.utils import short_str
 from ..lib.workers import Workers
 from ..squeal import Pipeline
@@ -23,7 +25,10 @@ def run_pipeline(db, type, like=None, id=None, **extra_kargs):
             kargs.update(extra_kargs)
             log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
+            start = time()
             pipeline.cls(db, *pipeline.args, id=pipeline.id, **kargs).run()
+            duration = time() - start
+            log.info(f'Ran {short_cls(pipeline.cls)} in {format_seconds(duration)}')
 
 
 class BasePipeline:

@@ -1,5 +1,5 @@
 
-from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler
+from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler, WARNING
 from logging.handlers import RotatingFileHandler
 from os.path import join
 from sys import exc_info
@@ -27,7 +27,7 @@ def make_log(args, tui=False):
         file_handler.setFormatter(file_formatter)
 
         slog = getLogger('sqlalchemy')
-        slog.setLevel(INFO)
+        slog.setLevel(WARNING)
         slog.addHandler(file_handler)
 
         mlog = getLogger('matplotlib')

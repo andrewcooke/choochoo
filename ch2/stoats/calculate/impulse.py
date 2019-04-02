@@ -5,128 +5,138 @@ from json import loads
 from logging import getLogger
 from math import exp
 
-from sqlalchemy import desc, inspect, select, and_
+from sqlalchemy import desc, select, and_
 
-from . import IntervalCalculatorMixin, UniProcCalculator
+from . import UniProcCalculator, CompositeCalculatorMixin
 from .heart_rate import HRImpulse
 from ..names import MAX
-from ...commands.args import FINISH, START
-from ...lib.date import local_date_to_time, to_date, format_date
-from ...squeal import Constant, Interval, StatisticJournal, StatisticName, StatisticJournalFloat
+from ...data.frame import _tables
+from ...lib.date import local_date_to_time
+from ...squeal import Constant, StatisticJournal, StatisticName, StatisticJournalFloat, ActivityJournal
 
 log = getLogger(__name__)
 
 # constraint comes from constant
 Response = namedtuple('Response', 'src_name, src_owner, dest_name, tau_days, scale, start')
 
+State = namedtuple('State', 'prev_time, prev_value')
 
-class ImpulseCalculator(IntervalCalculatorMixin, UniProcCalculator):
+
+class ImpulseCalculator(CompositeCalculatorMixin, UniProcCalculator):
 
     def __init__(self, *args, responses=None, impulse=None, **kargs):
         self.responses_ref = self._assert('responses', responses)
         self.impulse_ref = self._assert('impulse', impulse)
+        self.__state = {}
+        self.__impulse_id = None
+        self.__prev_source_id = None
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
         super()._startup(s)
-        existing, _ = Interval.first_missing_date(log, s, self.schedule, self.owner_out)
-        start, finish = self._start_finish(to_date)
-        if self.force:
-            if self.start and start > existing:
-                log.debug(f'Extending {START}={self.start} to {format_date(existing)}')
-                self.start = format_date(existing)
-        else:
-            if self.start:
-                if start < existing:
-                    log.debug(f'Restricting {START}={self.start} to {format_date(existing)}')
-                    self.start = format_date(existing)
-            else:
-                self.start = format_date(existing)
-                log.debug(f'Setting {START}={self.start}')
-            log.debug(f'Deleting to ensure continuous missing data')
-            self.force = True
-        if self.finish:
-            log.debug(f'Discarding {FINISH}={self.finish}')
-            self.finish = None
         self.constants = [Constant.get(s, response) for response in self.responses_ref]
         self.responses = [Response(**loads(constant.at(s).value)) for constant in self.constants]
         self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
 
-    def _read_data(self, s, interval):
-        for response, constant in zip(self.responses, self.constants):
-            activity_group = constant.statistic_name.constraint
-            source = s.query(StatisticName). \
-                filter(StatisticName.name == self.impulse.dest_name,
-                       StatisticName.owner == self.owner_in,
-                       StatisticName.constraint == activity_group).one_or_none()
-            if source:  # None if no data loaded
-                yield response, source, list(self._impulses(s, source, interval))
+    def _missing(self, s):
+        self.__impulse_id = s.query(StatisticName.id). \
+            filter(StatisticName.name == self.impulse.dest_name,
+                   StatisticName.owner == self.owner_in).scalar()
+        log.debug(f'Impulse ID: {self.__impulse_id}')
+        try:
+            dates = super()._missing(s)
+            if dates:
+                # need to delete forwards just in case there's some weird gap
+                log.info('Need to delete forwards for Impulse')
+                self._delete_time_range(s, local_date_to_time(dates[0]), 0)
+                dates = super()._missing(s)
+                return list(self.__days(dates[0], dates[-1]))
             else:
-                log.warning(f'No values for {self.impulse.dest_name}')
+                return []
+        finally:
+            self.__set_state(s)
 
-    def _impulses(self, s, source, interval):
-        sj = inspect(StatisticJournal).local_table
-        sjf = inspect(StatisticJournalFloat).local_table
+    def __days(self, start, finish):
+        day = dt.timedelta(days=1)
+        while start <= finish:
+            yield start
+            start += day
 
-        stmt = select([sj.c.time, sjf.c.value]). \
-            select_from(sj.join(sjf)). \
-            where(and_(sj.c.statistic_name_id == source.id,
-                       sj.c.time >= local_date_to_time(interval.start),
-                       sj.c.time < local_date_to_time(interval.finish))). \
-            order_by(desc(sj.c.time))
-        return s.connection().execute(stmt)
+    def _unused_sources_given_used(self, s, used_sources):
+        sources = s.query(ActivityJournal). \
+            join(StatisticJournal, StatisticName). \
+            filter(~ActivityJournal.id.in_(used_sources),
+                   StatisticName.id == self.__impulse_id)
+        start, finish = self._start_finish(local_date_to_time)
+        if start:
+            sources = sources.filter(ActivityJournal.finish >= start)
+        if finish:
+            sources = sources.filter(ActivityJournal.start <= finish)
+        log.debug(f'Unused query: {sources}')
+        return sources.all()
 
-    def _calculate_results(self, s, interval, data, loader):
-        for response, source, impulses in data:
-            self._calculate_response(s, interval, response, source, impulses, loader)
+    def __set_state(self, s):
+        for response, constant in zip(self.responses, self.constants):
+            start, finish = self._start_finish(local_date_to_time)
+            name = response.dest_name
+            activity_group = constant.statistic_name.constraint
+            prev = s.query(StatisticJournal). \
+                join(StatisticName). \
+                filter(StatisticName.name == name,
+                       StatisticName.owner == self.owner_out,
+                       StatisticName.constraint == activity_group). \
+                order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
+            prev_time = prev.time if prev else start
+            prev_value = prev.value if prev else 1e-20  # avoid zero as it gives numerical issues later
+            self.__state[name] = State(prev_time=prev_time, prev_value=prev_value)
+            log.debug(f'State for {name}: {self.__state[name]}')
+            if not self.__prev_source_id:
+                self.__prev_source_id = prev.source_id if prev else None
+                log.debug(f'Source ID: {self.__prev_source_id}')
 
-    def _calculate_response(self, s, interval, response, source, impulses, loader):
-        log.debug(f'Calculating {response.dest_name} for {interval}')
-        if self._prev_loader:
-            prev = self._prev_loader.latest(response.dest_name, source.constraint)
-        else:
-            prev = self._previous(s, response.dest_name, interval.start)
-        if prev:
-            value = prev.time, prev.value
-        else:
-            value = None
-        days = list(self._hours(interval))
-        prev_time = None
-        # move hours very slightly later in sort so that we can de-duplicate times
-        for time, impulse in sorted(impulses + days,
-                                    key=lambda x: x[0] +
-                                                  (dt.timedelta(seconds=0.01) if x[1] is None else dt.timedelta())):
-            if prev_time is None or time != prev_time:
-                if impulse:
-                    if not value:
-                        value = (time, response.start)
-                    else:
-                        value = self._decay(response, value, time)
-                    value = (time, value[1] + response.scale * impulse)
-                    loader.add(response.dest_name, None, MAX, source.constraint, interval, value[1], value[0],
-                               StatisticJournalFloat)
-                else:
-                    if value:
-                        value = self._decay(response, value, time)
-                        loader.add(response.dest_name, None, MAX, source.constraint, interval, value[1], value[0],
-                                   StatisticJournalFloat)
-            prev_time = time
+    def _read_data(self, s, start, finish):
+        impulses, t, source_ids = {}, _tables(), set()
+        for response, constant in zip(self.responses, self.constants):
+            name = response.dest_name
+            stmt = select([t.sj.c.time, t.sj.c.source_id, t.sjf.c.value]). \
+                select_from(t.sj.join(t.sjf)). \
+                where(and_(t.sj.c.statistic_name_id == self.__impulse_id,
+                           t.sj.c.time >= start,
+                           t.sj.c.time < finish)). \
+                order_by(t.sj.c.time)
+            rows = list(s.connection().execute(stmt))
+            impulses[name] = [(row[0], row[2]) for row in rows]
+            source_ids.update(row[1] for row in rows)
+        if self.__prev_source_id:
+            source_ids.add(self.__prev_source_id)
+        return source_ids, impulses
 
-    def _previous(self, s, dest, start):
-        return s.query(StatisticJournal). \
-            join(StatisticName). \
-            filter(StatisticName.name == dest,
-                   StatisticJournal.time < local_date_to_time(start)). \
-            order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
+    def _calculate_results(self, s, source, data, loader, start, finish):
+        for response, constant in zip(self.responses, self.constants):
+            name = response.dest_name
+            impulses = data[name]
+            prev_time, value = self.__state[name]
+            for time, impulse in self.__pad(impulses, start, finish):
+                if prev_time:
+                    dt = (time - prev_time).total_seconds()
+                    value *= exp(-dt / (response.tau_days * 24 * 60 * 60))
+                value += response.scale * impulse
+                # log.debug(f'{time}: {value}')
+                loader.add(response.dest_name, None, MAX, constant.statistic_name.constraint, source, value, time,
+                           StatisticJournalFloat)
+                prev_time = time
+            self.__state[name] = self.__state[name]._replace(prev_time=prev_time, prev_value=value)
+        self.__prev_source_id = source.id
+        log.debug(f'Source ID: {self.__prev_source_id}')
 
-    def _decay(self, response, value, time):
-        dt = (time - value[0]).total_seconds()
-        return time, value[1] * exp(-dt / (response.tau_days * 24 * 60 * 60))
-
-    def _hours(self, interval):
-        day = interval.start
-        while day < interval.finish:
-            start = local_date_to_time(day)
-            for hours in range(24):
-                yield start + dt.timedelta(hours=hours), None
-            day += dt.timedelta(days=1)
+    def __pad(self, impulses, start, finish):
+        delta = dt.timedelta(hours=2)   # use 2 hours to avoid problems with daylight savings
+        for (time, impulse) in impulses:
+            while start < time:
+                yield start, 0
+                start += delta
+            yield time, impulse
+            start = time + delta
+        while start < finish:
+            yield start, 0
+            start += delta

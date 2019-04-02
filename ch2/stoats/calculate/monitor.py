@@ -6,7 +6,6 @@ from sqlalchemy.sql import func
 
 from . import MultiProcCalculator, CompositeCalculatorMixin
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
-from ...lib.date import local_date_to_time
 from ...squeal import MonitorJournal, StatisticJournalInteger, StatisticName
 
 log = getLogger(__name__)
@@ -21,14 +20,7 @@ class MonitorCalculator(CompositeCalculatorMixin, MultiProcCalculator):
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
 
     def _unused_sources_given_used(self, s, used_sources):
-        mjournals = s.query(MonitorJournal).filter(~MonitorJournal.id.in_(used_sources))
-        start, finish = self._start_finish(local_date_to_time)
-        if start:
-            mjournals = mjournals.filter(MonitorJournal.finish >= start)
-        if finish:
-            mjournals = mjournals.filter(MonitorJournal.start <= finish)
-        log.debug(f'Unused query: {mjournals}')
-        return mjournals.all()
+        return self._unused_sources_given_used_and_class(s, used_sources, MonitorJournal)
 
     def _read_data(self, s, start, finish):
         midpt = start + dt.timedelta(hours=12)

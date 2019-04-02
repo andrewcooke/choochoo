@@ -263,13 +263,16 @@ class IntervalCalculatorMixin(LoaderMixin):
 
 class CompositeCalculatorMixin(LoaderMixin):
 
+    # this assumes daily, but could probably be modified to use a schedule
+
     def _missing(self, s):
         dates = set()
         for source in self._unused_sources(s):
             dates.update(self._dates_for_source(source))
         start, finish = self._start_finish(lambda x: to_date(x, none=True))
         missing = sorted(filter(lambda d: (start is None or start <= d) and (finish is None or d <= finish), dates))
-        log.debug(f'Missing {start} - {finish}: {missing}')
+        if missing:
+            log.debug(f'Missing {start} - {finish}: {missing[0]} - {missing[-1]} / {len(missing)}')
         return missing
 
     def _args(self, missing, start, finish):
@@ -296,12 +299,26 @@ class CompositeCalculatorMixin(LoaderMixin):
     def _unused_sources_given_used(self, s, used_sources):
         raise NotImplementedError()
 
+    def _unused_sources_given_used_and_class(self, s, used_sources, source_cls):
+        sources = s.query(source_cls).filter(~source_cls.id.in_(used_sources))
+        start, finish = self._start_finish(local_date_to_time)
+        if start:
+            sources = sources.filter(source_cls.finish >= start)
+        if finish:
+            sources = sources.filter(source_cls.start <= finish)
+        log.debug(f'Unused query: {sources}')
+        return sources.all()
+
     def _delete(self, s):
+        start, finish = self._start_finish(local_date_to_time)
+        self._delete_time_range(s, start, finish)
+
+    def _delete_time_range(self, s, start, finish):
+        # separate this out because impulse needs to delete forwards
         composite_ids = s.query(Composite.id). \
             join(StatisticJournal, Composite.id == StatisticJournal.source_id). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.owner == self.owner_out)
-        start, finish = self._start_finish(local_date_to_time)
         if start:
             composite_ids = composite_ids.filter(StatisticJournal.time >= start)
         if finish:
@@ -310,7 +327,6 @@ class CompositeCalculatorMixin(LoaderMixin):
         n = s.query(count(Source.id)). \
             filter(Source.id.in_(composite_ids)). \
             scalar()
-        log.debug(n)
         if n:
             log.warning(f'Deleting {n} Composite sources ({start} - {finish})')
             s.query(Source). \
@@ -319,17 +335,20 @@ class CompositeCalculatorMixin(LoaderMixin):
             s.commit()
 
     def _run_one(self, s, start):
+        # careful here to make summertime work correctly
+        finish = local_date_to_time(start + dt.timedelta(days=1))
         start = local_date_to_time(start)
-        finish = start + dt.timedelta(days=1)
         if s.query(count(Composite.id)). \
                 join(StatisticJournal, Composite.id == StatisticJournal.source_id). \
-                join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+                join(StatisticName). \
                 filter(StatisticJournal.time >= start,
-                       StatisticJournal.time <= finish,
+                       StatisticJournal.time < finish,
                        StatisticName.owner == self.owner_out).scalar():
-            raise Exception('Source already exists')
+            raise Exception(f'Source already exists for {start} - {finish}, owner {self.owner_out}')
         try:
             input_source_ids, data = self._read_data(s, start, finish)
+            if not input_source_ids:
+                raise Exception(f'No sources found on {start}')
             output_source = add(s, Composite(n_components=len(input_source_ids)))
             for input_source_id in input_source_ids:
                 s.add(CompositeComponent(input_source_id=input_source_id, output_source=output_source))
