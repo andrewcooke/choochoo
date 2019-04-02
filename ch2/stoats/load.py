@@ -92,14 +92,16 @@ class StatisticJournalLoader:
         return dummy
 
     def _load_ids(self, dummy):
-        rowid = dummy.id + 1
+        rowid, count = dummy.id + 1, 0
         for type in self.__staging:
             log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
             for sjournal in self.__staging[type]:
                 sjournal.id = rowid
                 rowid += 1
             self._s.bulk_save_objects(self.__staging[type])
+            count += len(self.__staging[type])
         self._s.commit()
+        log.info(f'Loaded {count} statistics')
         log.debug('Removing Dummy')
         self._s.delete(dummy)
         self._s.commit()

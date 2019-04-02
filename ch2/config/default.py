@@ -68,8 +68,9 @@ def default(db, no_diary=False):
 
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.
-        add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('m'))
+        # also, add year first so that monthly doesn't get confused by extra stats range
         add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('y'))
+        add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('m'))
 
         # obviously you need to edit these parameters - see `ch2 constants Nearby.Bike`
         add_nearby(s, c, bike, 'Santiago', -33.4, -70.4, fraction=0.1)

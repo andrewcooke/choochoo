@@ -297,14 +297,11 @@ class Composite(Source):
         q1 = select([id, target, actual]). \
              where(t.cmp.c.id == t.cc.c.output_source_id). \
              group_by(t.cmp.c.id)
-        log.debug(f'Composite clean 1: {q1}')
         q2 = select([q1.c.id]).where(q1.c.target != q1.c.actual)
-        log.debug(f'Composite clean 2: {q2}')
         q3 = select([count()]).select_from(q2)
-        log.debug(f'Composite clean 3: {q3}')
         n = s.connection().execute(q3).scalar()
-        if n:
+        while n:
             log.warning(f'Deleting {n} Composite entries due to missing components')
-            q4 = t.cmp.delete().where(t.cmp.c.id.in_(q2.cte()))
-            log.debug(f'Composite clean 4: {q4}')
+            q4 = t.src.delete().where(t.src.c.id.in_(q2.cte()))
             s.connection().execute(q4)
+            n = s.connection().execute(q3).scalar()

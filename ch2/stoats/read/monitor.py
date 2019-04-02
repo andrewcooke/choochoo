@@ -104,7 +104,8 @@ class MonitorReader(MultiProcFitReader):
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.start >= start,
                        MonitorJournal.finish <= finish).all():
-            log.warning('Replacing %s with data from %s for %s - %s' % (mjournal, path, start, finish))
+            log.warning(f'Replacing {mjournal.fit_file} ({mjournal.start} - {mjournal.finish}) with data from '
+                        f'{path} ({start} - {finish}')
             s.delete(mjournal)
 
     def _check_inside(self, s, start, finish, path):

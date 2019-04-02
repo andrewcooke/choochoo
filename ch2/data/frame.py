@@ -74,7 +74,8 @@ def _tables():
                          inv=inspect(Interval).local_table,
                          at=inspect(ActivityTimespan).local_table,
                          cmp=inspect(Composite).local_table,
-                         cc=inspect(CompositeComponent).local_table)
+                         cc=inspect(CompositeComponent).local_table,
+                         src=inspect(Source).local_table)
 
 
 def _build_statistic_journal_query(statistic_ids, start, finish, source_ids, schedule):
