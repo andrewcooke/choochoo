@@ -294,14 +294,21 @@ class Composite(Source):
         from ...data.frame import _tables
         t = _tables()
         id, target, actual = t.cmp.c.id.label("id"), t.cmp.c.n_components.label('target'), count(t.cc.c.id).label('actual')
+        # had horrible bug here when join condition was filter (ie 'where') rather than a condition in the join
+        # (ie 'on') - the where version doesn't expand to nulls and so the count is wrong when zero.
         q1 = select([id, target, actual]). \
-             where(t.cmp.c.id == t.cc.c.output_source_id). \
+             select_from(t.cmp.outerjoin(t.cc, t.cmp.c.id == t.cc.c.output_source_id)). \
              group_by(t.cmp.c.id)
         q2 = select([q1.c.id]).where(q1.c.target != q1.c.actual)
         q3 = select([count()]).select_from(q2)
         n = s.connection().execute(q3).scalar()
-        while n:
-            log.warning(f'Deleting {n} Composite entries due to missing components')
-            q4 = t.src.delete().where(t.src.c.id.in_(q2.cte()))
-            s.connection().execute(q4)
-            n = s.connection().execute(q3).scalar()
+        if n:
+            log.warning(f'Deleting Composite entries due to missing components')
+            total = 0
+            while n:
+                q4 = t.src.delete().where(t.src.c.id.in_(q2.cte()))
+                s.connection().execute(q4)
+                total += n
+                n = s.connection().execute(q3).scalar()
+            log.warning(f'Deleted {total} Composite entries')
+            s.commit()
