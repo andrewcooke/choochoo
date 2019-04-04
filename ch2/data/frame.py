@@ -15,7 +15,6 @@ from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, A
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
     Composite, CompositeComponent
-from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
     ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W, \
@@ -304,6 +303,8 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal_id=N
 
 
 def std_health_statistics(s, start=None, finish=None):
+
+    from ..stoats.calculate.monitor import MonitorCalculator
 
     # this assumes FF cover all the dates and HR/steps fit into them.  may not be true in all cases?
     # also, we downsample the FF data to hourly intervals then shift daily data to match one of those times

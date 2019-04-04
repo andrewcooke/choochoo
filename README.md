@@ -67,6 +67,16 @@ extensible.*
 
 ## Latest Changes
 
+### v0.19.0
+
+Added composite sources to simplify dependencies between data.  Fixes
+problem where multiple statistics pipeline runs were needed to get a
+stable system.  Also changed (much of) Jupyter access to data to
+construct DataFrames directly from SQL queries - this should give
+faster data access, but required that Statistic type was stored in
+the StatisticName table (ie that statistics are of a single type,
+which wasn't actually required until now).
+
 ### v0.18.0
 
 Major rewrite to import pipelines.  Now use multiple processes where

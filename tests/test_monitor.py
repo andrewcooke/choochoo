@@ -9,14 +9,13 @@ import sqlalchemy.sql.functions as func
 from ch2 import monitor
 from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.config.default import default
-from ch2.lib.date import to_time
+from ch2.lib.date import to_time, local_date_to_time
 from ch2.squeal.tables.monitor import MonitorJournal
 from ch2.squeal.tables.pipeline import PipelineType
-from ch2.squeal.tables.source import Interval
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticName
-from ch2.stoats.pipeline import run_pipeline
 from ch2.stoats.calculate.monitor import MonitorCalculator
 from ch2.stoats.names import REST_HR, DAILY_STEPS
+from ch2.stoats.pipeline import run_pipeline
 
 log = getLogger(__name__)
 
@@ -49,7 +48,7 @@ class TestMonitor(TestCase):
                                           'monitor', mm(FAST),
                                           'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, db)
-            run('sqlite3 %s ".dump"' % f.name, shell=True)
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
             run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
@@ -57,17 +56,17 @@ class TestMonitor(TestCase):
                 assert mjournals[2].start == to_time('2018-09-06 15:06:00'), mjournals[2].start
                 print(mjournals[2].fit_file)
                 # steps
-                summary = s.query(StatisticJournal).join(StatisticName, Interval). \
-                    filter(Interval.start == '2018-09-06',
-                           Interval.schedule == 'd',
+                summary = s.query(StatisticJournal).join(StatisticName). \
+                    filter(StatisticJournal.time >= local_date_to_time('2018-09-06'),
+                           StatisticJournal.time < local_date_to_time('2018-09-07'),
                            StatisticName.owner == MonitorCalculator,
                            StatisticName.name == DAILY_STEPS).one()
                 # connect has 12757 for this date,
                 self.assertEqual(summary.value, 12757)
                 # heart rate
-                summary = s.query(StatisticJournal).join(StatisticName, Interval). \
-                    filter(Interval.start == '2018-09-06',
-                           Interval.schedule == 'd',
+                summary = s.query(StatisticJournal).join(StatisticName). \
+                    filter(StatisticJournal.time >= local_date_to_time('2018-09-06'),
+                           StatisticJournal.time < local_date_to_time('2018-09-07'),
                            StatisticName.owner == MonitorCalculator,
                            StatisticName.name == REST_HR).one()
                 self.assertEqual(summary.value, 45)
@@ -88,9 +87,9 @@ class TestMonitor(TestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 # steps
-                summary = s.query(StatisticJournal).join(StatisticName, Interval). \
-                    filter(Interval.start == '2018-10-07',
-                           Interval.schedule == 'd',
+                summary = s.query(StatisticJournal).join(StatisticName). \
+                    filter(StatisticJournal.time >= local_date_to_time('2018-10-07'),
+                           StatisticJournal.time < local_date_to_time('2018-10-08'),
                            StatisticName.owner == MonitorCalculator,
                            StatisticName.name == DAILY_STEPS).one()
                 # connect has 3031 for this date.

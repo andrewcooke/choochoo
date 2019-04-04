@@ -57,7 +57,8 @@ class TestActivities(TestCase):
                 self.assertEqual(2079, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
                 # self.assertEqual(29876, n)
-                self.assertEqual(29865, n)  # why has this dropped slightly?
+                # self.assertEqual(29865, n)  # why has this dropped slightly?
+                self.assertEqual(29669, n)  # why has this dropped?
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 

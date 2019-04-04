@@ -18,6 +18,9 @@ log = getLogger(__name__)
 
 class TestFit(TestCase, OutputMixin):
 
+    # some of these tests depend on the width of the window they are run in!  :(
+    # (use 80 chars until fixed)
+
     def setUp(self):
         self.test_dir = 'data/test'
         self.profile_path = 'data/sdk/Profile.xlsx'
