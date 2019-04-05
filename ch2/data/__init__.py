@@ -1,6 +1,6 @@
 
 from .frame import df, session, statistics, statistic_quartiles, activity_statistics, std_activity_statistics, \
-    std_health_statistics, nearby_activities, bookmarks, statistic_names, old_statistics, present
+    std_health_statistics, nearby_activities, bookmarks, statistic_names, statistics, present
 from .power import linear_resample
 from .heart_rate import *
 from .plot import col_to_boxstats, box_plot, line_plotter, dot_plotter, bar_plotter, add_climbs, multi_plot, \
