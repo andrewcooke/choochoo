@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 
-from ch2.data.fit import fit
+from .fit import fit
 from ..stoats.names import *
 from ..stoats.names import _d, _sqr, _avg
 

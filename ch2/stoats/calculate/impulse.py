@@ -130,7 +130,7 @@ class ImpulseCalculator(CompositeCalculatorMixin, UniProcCalculator):
         log.debug(f'Source ID: {self.__prev_source_id}')
 
     def __pad(self, impulses, start, finish):
-        delta = dt.timedelta(hours=2)   # use 2 hours to avoid problems with daylight savings
+        delta = dt.timedelta(hours=1)  # every hour is assumed by data.frame.std_health_statistics
         for (time, impulse) in impulses:
             while start < time:
                 yield start, 0
