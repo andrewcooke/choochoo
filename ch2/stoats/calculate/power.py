@@ -47,8 +47,7 @@ class BasicPowerCalculator(PowerCalculator):
     def _read_dataframe(self, s, ajournal):
         try:
             df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, CADENCE, LATITUDE, LONGITUDE, HEART_RATE,
-                                     activity_journal_id=ajournal.id, with_timespan=True,
-                                     quiet=True)
+                                     activity_journal=ajournal, with_timespan=True)
             df = linear_resample(df)
             df = add_differentials(df)
             self._set_power(s, ajournal, df)

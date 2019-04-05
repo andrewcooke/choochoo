@@ -7,11 +7,12 @@ from math import exp
 
 from sqlalchemy import desc, select, and_
 
+from ch2.squeal import CompositeComponent
 from . import UniProcCalculator, CompositeCalculatorMixin
 from .heart_rate import HRImpulse
 from ..names import MAX
 from ...data.frame import _tables
-from ...lib.date import local_date_to_time
+from ...lib.date import local_date_to_time, time_to_local_date
 from ...squeal import Constant, StatisticJournal, StatisticName, StatisticJournalFloat, ActivityJournal
 
 log = getLogger(__name__)
@@ -50,7 +51,12 @@ class ImpulseCalculator(CompositeCalculatorMixin, UniProcCalculator):
                 log.info('Need to delete forwards for Impulse')
                 self._delete_time_range(s, local_date_to_time(dates[0]), 0)
                 dates = super()._missing(s)
-                return list(self.__days(dates[0], dates[-1]))
+                start, finish = dates[0], dates[-1]
+                # may need to bridge backwards
+                prev = self._previous_source(s)
+                if prev:
+                    start = time_to_local_date(prev.start) + dt.timedelta(days=1)
+                return list(self.__days(start, finish))
             else:
                 return []
         finally:
@@ -61,6 +67,14 @@ class ImpulseCalculator(CompositeCalculatorMixin, UniProcCalculator):
         while start <= finish:
             yield start
             start += day
+
+    def _previous_source(self, s):
+        return s.query(ActivityJournal). \
+            join(CompositeComponent, CompositeComponent.input_source_id == ActivityJournal.id). \
+            join(StatisticJournal, CompositeComponent.output_source_id == StatisticJournal.source_id). \
+            join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+            filter(StatisticName.owner == self.owner_out). \
+            order_by(desc(ActivityJournal.start)).limit(1).one_or_none()
 
     def _unused_sources_given_used(self, s, used_sources):
         sources = s.query(ActivityJournal). \
