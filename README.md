@@ -10,6 +10,11 @@ contains only:
 * [Technical Overview](#technical-overview)
 * [Latest Changes](#latest-changes)
 
+The following plots are generated automatically from the diary -
+clicking a "link" starts Jupyter and pushes the page to the browser.
+The pages can be edited and serve as an introduction to accessing the
+data manually.
+
 ![](docs/graphic-summary.png)
 
 ![](docs/graphic-similarity.png)
@@ -73,9 +78,10 @@ Added composite sources to simplify dependencies between data.  Fixes
 problem where multiple statistics pipeline runs were needed to get a
 stable system.  Also changed (much of) Jupyter access to data to
 construct DataFrames directly from SQL queries - this should give
-faster data access, but required that Statistic type was stored in
-the StatisticName table (ie that statistics are of a single type,
-which wasn't actually required until now).
+faster data access, but required that Statistic type was stored in the
+StatisticName table (ie that statistics are of a single type, which
+wasn't actually required until now).  As always, the database update
+script can be found in the `migraine` directory.
 
 ### v0.18.0
 
