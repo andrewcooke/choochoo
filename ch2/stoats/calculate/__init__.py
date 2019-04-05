@@ -338,13 +338,14 @@ class CompositeCalculatorMixin(LoaderMixin):
         # careful here to make summertime work correctly
         finish = local_date_to_time(start + dt.timedelta(days=1))
         start = local_date_to_time(start)
+        # in some cases we can have composites that need re-generating with additional data
         if s.query(count(Composite.id)). \
                 join(StatisticJournal, Composite.id == StatisticJournal.source_id). \
                 join(StatisticName). \
                 filter(StatisticJournal.time >= start,
                        StatisticJournal.time < finish,
                        StatisticName.owner == self.owner_out).scalar():
-            raise Exception(f'Source already exists for {start} - {finish}, owner {self.owner_out}')
+            self._delete_time_range(s, start, finish)
         try:
             input_source_ids, data = self._read_data(s, start, finish)
             if not input_source_ids:
