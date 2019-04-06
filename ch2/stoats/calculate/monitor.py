@@ -6,6 +6,7 @@ from sqlalchemy.sql import func
 
 from . import MultiProcCalculator, CompositeCalculatorMixin
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
+from ...lib import local_date_to_time
 from ...squeal import MonitorJournal, StatisticJournalInteger, StatisticName
 
 log = getLogger(__name__)
@@ -16,6 +17,17 @@ class MonitorCalculator(CompositeCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, cost_calc=1, cost_write=1, **kargs):
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+
+    def _missing(self, s):
+        missing = super()._missing(s)
+        if missing:
+            # we may need to back up one day since the last data could be incomplete
+            start = missing[0]
+            if s.query(MonitorJournal).filter(MonitorJournal.start < local_date_to_time(start)).limit(1).one_or_none():
+                log.debug('Back-up one day')
+                start = start - dt.timedelta(days=1)
+                missing = [start] + missing
+        return missing
 
     def _unused_sources_given_used(self, s, used_sources):
         return self._unused_sources_given_used_and_class(s, used_sources, MonitorJournal)

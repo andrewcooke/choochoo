@@ -18,7 +18,6 @@ from ...squeal import StatisticJournalFloat, Constant, Timestamp
 
 log = getLogger(__name__)
 # these configure the model.
-# todo - add varying and stuff we want to fix (w defaults)
 Power = reftuple('Power', 'bike, rider_weight, vary', defaults=(70, 'wind_speed, wind_heading, slope'))
 Bike = namedtuple('Bike', 'cda, crr, weight')
 
@@ -85,7 +84,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
     and compared it to heart rate.  The best scale/lag and wind model gave the power estimate,
 
     However, in testing, none of the windiest routes were the windy days cycling back down the Maipo valley.
-    Instead, it tended to pick interval training when riding a loop.  Obviously fitting the patter in the
+    Instead, it tended to pick interval training when riding a loop.  Obviously fitting the pattern in the
     activity, not the wind.
 
     And it increased loading times so much it drove the re-implementation with multiple processes.

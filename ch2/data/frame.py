@@ -284,7 +284,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
     return stats
 
 
-def std_health_statistics(s, start=None, finish=None):
+def std_health_statistics(s, *extra, start=None, finish=None):
 
     from ..stoats.calculate.monitor import MonitorCalculator
 
@@ -294,7 +294,7 @@ def std_health_statistics(s, start=None, finish=None):
     stats_1 = statistics(s, FITNESS, FATIGUE, start=start, finish=finish).resample('1h').mean()
     stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
-    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, start=start, finish=finish). \
+    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
     stats = stats_1.merge(stats_2, how='outer', left_index=True, right_index=True)
     stats = stats.merge(stats_3, how='outer', left_index=True, right_index=True)
