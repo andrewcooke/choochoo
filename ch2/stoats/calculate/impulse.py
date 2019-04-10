@@ -101,7 +101,7 @@ class ImpulseCalculator(CompositeCalculatorMixin, UniProcCalculator):
                        StatisticName.constraint == activity_group). \
                 order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
             prev_time = prev.time if prev else start
-            prev_value = prev.value if prev else 1e-20  # avoid zero as it gives numerical issues later
+            prev_value = prev.value if prev else 1e-10  # avoid zero as it gives numerical issues later
             self.__state[name] = State(prev_time=prev_time, prev_value=prev_value)
             log.debug(f'State for {name}: {self.__state[name]}')
             if not self.__prev_source_id:
