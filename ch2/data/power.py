@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 
-from .fit import fit
+from .lib import fit, inplace_decay
 from ..stoats.names import *
 from ..stoats.names import _d, _sqr, _avg
 
@@ -121,8 +121,9 @@ def add_power_estimate(df):
 def add_modeled_hr(df, window, slope, delay):
     window = int(0.5 + window / median_dt(df))
     df[DETRENDED_HEART_RATE] = df[HEART_RATE] - df[HEART_RATE].rolling(window, center=True, min_periods=1).median()
-    predicted = (df[POWER] * slope).ewm(halflife=delay).mean()
-    df[PREDICTED_HEART_RATE] = predicted - predicted.rolling(window, center=True, min_periods=1).median()
+    df[PREDICTED_HEART_RATE] = df[POWER] * slope
+    inplace_decay(df, PREDICTED_HEART_RATE, delay)
+    df[PREDICTED_HEART_RATE] -= df[PREDICTED_HEART_RATE].rolling(window, center=True, min_periods=1).median()
     return df
 
 
@@ -164,11 +165,10 @@ def evaluate(df, model, quiet=True):
 MIN_DELAY = 1
 
 
-def fit_power(df, model, *vary):
+def fit_power(df, model, *vary, tol=0.1):
 
     log.debug(f'Fit power: varying {vary}')
     df = evaluate(df, model)
-    dt = median_dt(df)
     slope, intercept, delay = measure_initial_scaling(df)
     # we ignore intercept because removing the median makes it very weakly constrained
     model = model._replace(slope=slope, delay=delay)
@@ -193,7 +193,7 @@ def fit_power(df, model, *vary):
         return df
 
     model = fit(DETRENDED_HEART_RATE, PREDICTED_HEART_RATE, df, model, evaluate_and_extend,
-                *vary, forwards=forwards, backwards=backwards)
+                *vary, forwards=forwards, backwards=backwards, tol=tol)
 
     log.debug(f'Fit power: model before fixing {model}')
     if model.wind_speed < 0:

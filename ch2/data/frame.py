@@ -176,6 +176,8 @@ def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None
 
     activity_journal = _activity_journal(s, activity_journal=activity_journal, local_time=local_time,
                                          time=time, activity_group_name=activity_group_name)
+    if activity_group_name and constraint is None:
+        constraint = s.query(ActivityGroup).filter(ActivityGroup.name == activity_group_name).one_or_none()
     names = _statistic_names(s, *statistics, owner=owner, constraint=constraint)
     counts = Counter(name.name for name in names)
 
