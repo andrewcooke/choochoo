@@ -35,18 +35,19 @@ def add_impulse(s, c, activity_group):
 
     # 7 and 42 days as for training peaks
     # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
+    # 1e-10 as an initial value looks ok on log plot (zero causes numerical issues)
 
     fitness_name = name_constant(FITNESS_CNAME, activity_group)
     fitness = add_enum_constant(s, fitness_name, Response, single=True, constraint=activity_group_constraint,
                                 description='Data needed to calculate the FF-model fitness - see Response enum')
     set_constant(s, fitness, dumps({'src_name': HR_IMPULSE, 'src_owner': short_cls(HeartRateCalculator),
-                                    'dest_name': FITNESS, 'tau_days': 42, 'scale': 1, 'start': 0}))
+                                    'dest_name': FITNESS, 'tau_days': 42, 'scale': 1, 'start': 1e-10}))
 
     fatigue_name = name_constant(FATIGUE_CNAME, activity_group)
     fatigue = add_enum_constant(s, fatigue_name, Response, single=True, constraint=activity_group_constraint,
                                 description='Data needed to calculate the FF-model fitness - see Response enum')
     set_constant(s, fatigue, dumps({'src_name': HR_IMPULSE, 'src_owner': short_cls(HeartRateCalculator),
-                                    'dest_name': FATIGUE, 'tau_days': 7, 'scale': 5, 'start': 0}))
+                                    'dest_name': FATIGUE, 'tau_days': 7, 'scale': 5, 'start': 1e-10}))
 
     add_statistics(s, HeartRateCalculator, c, owner_in=short_cls(SegmentReader),
                    impulse=hr_impulse_name)

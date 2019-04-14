@@ -23,7 +23,9 @@ def fit(observed, modeled, initial_data, initial_params, evaluate, *vary,
         data = evaluate(initial_data, params)
         # return sp.stats.chisquare(data[observed], data[modeled]).statistic
         delta = (data[observed] - data[modeled]).dropna()
-        return sum(delta * delta)
+        chisq = sum(delta * delta)
+        # print(args, chisq)
+        return chisq
 
     result = sp.optimize.minimize(objective,
                                   [forwards(initial_params._asdict())[name] for name in vary],

@@ -343,7 +343,7 @@ def _type_to_journal(t):
             StatisticJournalType.TEXT: t.sjt}
 
 
-def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None):
+def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, sources=None):
     t = _tables()
     ttj = _type_to_journal(t)
     names = statistic_names(s, *statistics, owner=owner, constraint=constraint)
@@ -357,12 +357,17 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
     if finish:
         time_select = time_select.where(t.sj.c.time <= finish)
     time_select = time_select.order_by("time").alias("sub_time")  # order here avoids extra index
-    sub_selects = [select([table.c.value, t.sj.c.time]).
-                   select_from(t.sj.join(table)).
-                   where(t.sj.c.statistic_name_id == name.id).
-                   order_by(t.sj.c.time).  # this doesn't affect plan but seems to speed up query
-                   alias(f'sub_{name.name}_{name.constraint}')
-                   for name, table in zip(names, tables)]
+
+    def sub_select(name, table):
+        q = select([table.c.value, t.sj.c.time]). \
+                   select_from(t.sj.join(table)). \
+                   where(t.sj.c.statistic_name_id == name.id)
+        if sources:
+            q = q.where(t.sj.c.source_id.in_(source.id for source in sources))
+        # order_by doesn't affect plan but seems to speed up query
+        return q.order_by(t.sj.c.time).alias(f'sub_{name.name}_{name.constraint}')
+
+    sub_selects = [sub_select(name, table) for name, table in zip(names, tables)]
     # don't call this TIME because even though it's moved to index it somehow blocks the later addition
     # of a TIME column (eg when plotting health statistics)
     selects = [time_select.c.time.label(INDEX)] + \

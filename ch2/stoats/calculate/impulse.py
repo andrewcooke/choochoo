@@ -7,13 +7,13 @@ from math import exp
 
 from sqlalchemy import desc, select, and_
 
-from ch2.squeal import CompositeComponent
 from . import UniProcCalculator, CompositeCalculatorMixin
 from .heart_rate import HRImpulse
 from ..names import MAX
 from ...data.frame import _tables
 from ...lib.date import local_date_to_time, time_to_local_date
-from ...squeal import Constant, StatisticJournal, StatisticName, StatisticJournalFloat, ActivityJournal
+from ...squeal import Constant, StatisticJournal, StatisticName, StatisticJournalFloat, ActivityJournal, \
+    CompositeComponent
 
 log = getLogger(__name__)
 
@@ -24,6 +24,8 @@ State = namedtuple('State', 'prev_time, prev_value')
 
 
 class ImpulseCalculator(CompositeCalculatorMixin, UniProcCalculator):
+
+    # todo - rewrite to use dataframes (ch2.data.impulse)?
 
     def __init__(self, *args, responses=None, impulse=None, **kargs):
         self.responses_ref = self._assert('responses', responses)
@@ -101,7 +103,7 @@ class ImpulseCalculator(CompositeCalculatorMixin, UniProcCalculator):
                        StatisticName.constraint == activity_group). \
                 order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
             prev_time = prev.time if prev else start
-            prev_value = prev.value if prev else 1e-10  # avoid zero as it gives numerical issues later
+            prev_value = prev.value if prev else response.start
             self.__state[name] = State(prev_time=prev_time, prev_value=prev_value)
             log.debug(f'State for {name}: {self.__state[name]}')
             if not self.__prev_source_id:
