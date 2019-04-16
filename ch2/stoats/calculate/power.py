@@ -113,8 +113,11 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
                 log.warning(f'No statistics on {time_or_date}')
                 log_current_exception()
 
+    def __varying(self):
+        return list(filter(None, split(r'[\s,]*([^, ]+)[\s ]*', self.power.vary)))
+
     def _calculate_stats(self, s, ajournal, df):
-        vary = list(filter(None, split(r'[\s,]*([^, ]+)[\s ]*', self.power.vary)))
+        vary = self.__varying()
         if not vary:
             raise PowerException('No parameters to vary - fitting disabled')
         model = PowerModel(cda=self.power.bike['cda'], crr=self.power.bike['crr'],
@@ -126,11 +129,11 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
         model = fit_power(df, model, *vary)
         df = evaluate(df, model, quiet=False)
         df = add_modeled_hr(df, model.window, model.slope, model.delay)
-        p_hr = 60 / model.slope
-        if p_hr < 100 or p_hr > 500:
-            raise PowerException(f'Unreasonable model results (slope {model.slope} / {p_hr})')
-        if model.delay > 30:
-            raise PowerException(f'Unreasonable model results (delay {model.delay})')
+        # p_hr = 60 / model.slope
+        # if p_hr < 100 or p_hr > 500:
+        #     raise PowerException(f'Unreasonable model results (slope {model.slope} / {p_hr})')
+        # if model.delay > 30:
+        #     raise PowerException(f'Unreasonable model results (delay {model.delay})')
         return model, df
 
     def _copy_results(self, s, ajournal, loader, stats):
@@ -141,15 +144,19 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             # 60W at 60bpm is 60J every second or beat; 60W at 1bpm is 3600J every minute or beat;
             # 1W at 1bpm is 60J every minute or beat
             # slope is BPM / W; 1/slope is W/BPM = W/PM = WM = 60Ws
-            # todo - maybe configurable, given power.vary?
-            loader.add(POWER_HR, J, AVG, ajournal.activity_group, ajournal, 60 / model.slope, ajournal.start,
-                       StatisticJournalFloat)
-            loader.add(POWER_HR_LAG, S, AVG, ajournal.activity_group, ajournal, model.delay,
-                       ajournal.start, StatisticJournalFloat)
-            loader.add(WIND_SPEED, MS, AVG, ajournal.activity_group, ajournal, model.wind_speed,
-                       ajournal.start, StatisticJournalFloat)
-            loader.add(WIND_HEADING, DEG, AVG, ajournal.activity_group, ajournal, model.wind_heading,
-                       ajournal.start, StatisticJournalFloat)
+            vary = self.__varying()
+            if 'slope' in vary:
+                loader.add(POWER_HR, J, AVG, ajournal.activity_group, ajournal, 60 / model.slope, ajournal.start,
+                           StatisticJournalFloat)
+            if 'delay' in vary:
+                loader.add(POWER_HR_LAG, S, AVG, ajournal.activity_group, ajournal, model.delay,
+                           ajournal.start, StatisticJournalFloat)
+            if 'wind_speed' in vary:
+                loader.add(WIND_SPEED, MS, AVG, ajournal.activity_group, ajournal, model.wind_speed,
+                           ajournal.start, StatisticJournalFloat)
+            if 'wind_heading' in vary:
+                loader.add(WIND_HEADING, DEG, AVG, ajournal.activity_group, ajournal, model.wind_heading,
+                           ajournal.start, StatisticJournalFloat)
             fields = ((POWER, W, AVG), (HEADING, DEG, None),
                       (PREDICTED_HEART_RATE, BPM, None), (DETRENDED_HEART_RATE, BPM, None))
         # has to come after the above to get times in order

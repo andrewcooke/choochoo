@@ -119,7 +119,8 @@ def add_power_estimate(df):
 
 
 def add_modeled_hr(df, window, slope, delay):
-    window = int(0.5 + window / median_dt(df))
+    dt = median_dt(df)
+    window, delay = int(0.5 + window / dt), delay / dt
     df[DETRENDED_HEART_RATE] = df[HEART_RATE] - df[HEART_RATE].rolling(window, center=True, min_periods=1).median()
     df[PREDICTED_HEART_RATE] = df[POWER] * slope
     inplace_decay(df, PREDICTED_HEART_RATE, delay)
