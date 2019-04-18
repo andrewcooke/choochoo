@@ -45,7 +45,7 @@ MEDIAN_KM_TIME = 'Median %dkm Time'
 MEDIAN_KM_TIME_ANY = 'Median % Time'
 PERCENT_IN_Z = 'Percent in Z%d'
 PERCENT_IN_Z_ANY = 'Percent in Z%'
-POWER = 'Power'
+POWER_ESTIMATE = 'Power Estimate'
 PREDICTED_HEART_RATE = 'Predicted Heart Rate'
 SEGMENT_TIME = 'Segment Time'
 SEGMENT_DISTANCE = 'Segment Distance'
@@ -122,14 +122,14 @@ CLIMB_MS = _slash(CLIMB, MS)
 DISTANCE_KM = _slash(DISTANCE, KM)
 ELEVATION_M = _slash(ELEVATION, M)
 SPEED_KMH = _slash(SPEED, KMH)
-POWER_W = _slash(POWER, W)
+POWER_ESTIMATE_W = _slash(POWER_ESTIMATE, W)
 
 LOG_FITNESS = _log(FITNESS)
 LOG_FATIGUE = _log(FATIGUE)
 MED_SPEED_KMH = _med(SPEED_KMH)
 MED_HR_IMPULSE_10 = _med(HR_IMPULSE_10)
 MED_CADENCE = _med(CADENCE)
-MED_POWER_W = _med(POWER_W)
+MED_POWER_ESTIMATE_W = _med(POWER_ESTIMATE_W)
 
 
 POWER_HR = 'Power / HR'

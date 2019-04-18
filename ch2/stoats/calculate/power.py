@@ -67,7 +67,7 @@ class BasicPowerCalculator(PowerCalculator):
         return df
 
     def _copy_results(self, s, ajournal, loader, df,
-                      fields=((POWER, W, AVG), (HEADING, DEG, None))):
+                      fields=((POWER_ESTIMATE, W, AVG), (HEADING, DEG, None))):
         for time, row in df.iterrows():
             for name, units, summary in fields:
                 if not pd.isnull(row[name]):
@@ -138,7 +138,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
 
     def _copy_results(self, s, ajournal, loader, stats):
         model, df = stats
-        fields = ((POWER, W, AVG),)
+        fields = ((POWER_ESTIMATE, W, AVG),)
         if model:
             # how much energy every heart beat
             # 60W at 60bpm is 60J every second or beat; 60W at 1bpm is 3600J every minute or beat;
@@ -157,7 +157,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             if 'wind_heading' in vary:
                 loader.add(WIND_HEADING, DEG, AVG, ajournal.activity_group, ajournal, model.wind_heading,
                            ajournal.start, StatisticJournalFloat)
-            fields = ((POWER, W, AVG), (HEADING, DEG, None),
+            fields = ((POWER_ESTIMATE, W, AVG), (HEADING, DEG, None),
                       (PREDICTED_HEART_RATE, BPM, None), (DETRENDED_HEART_RATE, BPM, None))
         # has to come after the above to get times in order
         super()._copy_results(s, ajournal, loader, df, fields=fields)

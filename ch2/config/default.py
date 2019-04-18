@@ -4,7 +4,7 @@ from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
 from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
-from .power import add_power
+from .power import add_power_estimate
 from ..lib.schedule import Schedule
 from ..sortem.file import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
@@ -64,7 +64,7 @@ def default(db, no_diary=False):
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
-        add_power(s, c, bike, vary='')
+        add_power_estimate(s, c, bike, vary='')
 
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.

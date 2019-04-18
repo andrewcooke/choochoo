@@ -108,11 +108,11 @@ def add_loss_estimate(df, cda=0.45, crr=0, p=1.225):
 
 def add_power_estimate(df):
     # power input must balance the energy budget.
-    df[POWER] = (df[DELTA_ENERGY] + df[LOSS]) / df[DELTA_TIME].dt.total_seconds()
-    df[POWER].clip(lower=0, inplace=True)
-    if CADENCE in df.columns: df.loc[df[CADENCE] < 1, [POWER]] = 0
-    df.loc[df[POWER].isna(), [POWER]] = 0
-    energy = (df[POWER].iloc[1:] * df[DELTA_TIME].iloc[1:]).cumsum()
+    df[POWER_ESTIMATE] = (df[DELTA_ENERGY] + df[LOSS]) / df[DELTA_TIME].dt.total_seconds()
+    df[POWER_ESTIMATE].clip(lower=0, inplace=True)
+    if CADENCE in df.columns: df.loc[df[CADENCE] < 1, [POWER_ESTIMATE]] = 0
+    df.loc[df[POWER_ESTIMATE].isna(), [POWER_ESTIMATE]] = 0
+    energy = (df[POWER_ESTIMATE].iloc[1:] * df[DELTA_TIME].iloc[1:]).cumsum()
     df[ENERGY] = 0
     df.loc[1:, [ENERGY]] = energy
     return df
@@ -122,13 +122,13 @@ def add_modeled_hr(df, window, slope, delay):
     dt = median_dt(df)
     window, delay = int(0.5 + window / dt), delay / dt
     df[DETRENDED_HEART_RATE] = df[HEART_RATE] - df[HEART_RATE].rolling(window, center=True, min_periods=1).median()
-    df[PREDICTED_HEART_RATE] = df[POWER] * slope
+    df[PREDICTED_HEART_RATE] = df[POWER_ESTIMATE] * slope
     inplace_decay(df, PREDICTED_HEART_RATE, delay)
     df[PREDICTED_HEART_RATE] -= df[PREDICTED_HEART_RATE].rolling(window, center=True, min_periods=1).median()
     return df
 
 
-def measure_initial_delay(df, dt=None, col1=HEART_RATE, col2=POWER, n=20):
+def measure_initial_delay(df, dt=None, col1=HEART_RATE, col2=POWER_ESTIMATE, n=20):
     dt = dt or median_dt(df)
     correln = [(i, df[col1].corr(df[col2].shift(freq=f'{i * dt}S'))) for i in range(-n, n + 1)]
     correln = sorted(correln, key=lambda c: c[1], reverse=True)
@@ -138,7 +138,7 @@ def measure_initial_delay(df, dt=None, col1=HEART_RATE, col2=POWER, n=20):
 def measure_initial_scaling(df):
     delay = measure_initial_delay(df)
     if delay < 0: raise PowerException('Cannot estimate delay (insufficient data?)')
-    df[DELAYED_POWER] = df[POWER].shift(freq=f'{delay}S')
+    df[DELAYED_POWER] = df[POWER_ESTIMATE].shift(freq=f'{delay}S')
     clean = df.loc[:, (DELAYED_POWER, HEART_RATE)].dropna()
     fit = sp.stats.linregress(x=clean[DELAYED_POWER], y=clean[HEART_RATE])
     log.debug(f'Initial fit {fit}')

@@ -27,7 +27,7 @@ def all_activities(start, finish):
     s = session('-v2')
     maps = [map_thumbnail(100, 120, data.resample('1min').mean())
             for data in (activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                                             activity_journal_id=aj.id)
+                                             activity_journal=aj)
                          for aj in s.query(ActivityJournal).
                              filter(ActivityJournal.start >= local_date_to_time(start),
                                     ActivityJournal.start < local_date_to_time(finish)).all())

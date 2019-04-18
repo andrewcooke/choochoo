@@ -8,6 +8,7 @@ from bokeh.layouts import column, row
 from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis
 from bokeh.plotting import figure
 
+from .frame import present
 from ..stoats.names import LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, CLIMB_ELEVATION, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, DISTANCE_KM, ELEVATION_M
 
@@ -90,7 +91,7 @@ def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if TIME in x else 'linear', tools=make_tools(y))
     y_range(f, y, source, ylo=ylo, yhi=yhi)
     add_tsid_line(f, x, y, source)
-    if other is not None:
+    if present(other, y):
         add_tsid_line(f, x, y, other, color='grey')
         diff = subtract(source, other, x, y)
         green, red, y_range2 = patches(x, y, diff)
@@ -117,7 +118,7 @@ def cumulative_plot(nx, ny, y, source, other=None, ylo=None, yhi=None):
     f = figure(plot_width=nx, plot_height=ny, y_axis_location='right')
     y_range(f, y, source, ylo=ylo, yhi=yhi)
     y1 = add_cum_line(f, y, source)
-    if other is not None:
+    if present(other, y):
         y2 = add_cum_line(f, y, other, color='grey')
         diff = subtract(y1, y2, 'x', 'y')
         green, red, y_range2 = patches('x', 'y', diff)
@@ -168,8 +169,8 @@ def map_plot(nx, ny, source, other=None):
              HoverTool(tooltips=[tooltip(x) for x in (LATITUDE, LONGITUDE, DISTANCE_KM, LOCAL_TIME)])]
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator', tools=tools)
     add_route(f, source)
-    if other is not None:
-        add_route(f, other, color='grey', line_dash='dotted')
+    if present(other, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y):
+        add_route(f, other, color='black', line_dash='dotted')
     f.add_tile(tile_providers.STAMEN_TERRAIN, alpha=0.3)
     f.axis.visible = False
     f.toolbar.logo = None

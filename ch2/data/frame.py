@@ -17,10 +17,10 @@ from ..squeal.database import connect, ActivityTimespan, ActivityGroup, Activity
     Composite, CompositeComponent
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
-    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_W, \
+    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, FITNESS, FATIGUE, REST_HR, \
-    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER, INDEX
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX
 from ..uranus.coasting import CoastingBookmark
 
 log = getLogger(__name__)
@@ -262,7 +262,7 @@ MIN_PERIODS = 1
 def std_activity_statistics(s, local_time=None, time=None, activity_journal=None, activity_group_name=None):
 
     stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
-                                ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, POWER,
+                                ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, POWER_ESTIMATE,
                                 local_time=local_time, time=time, activity_journal=activity_journal,
                                 activity_group_name=activity_group_name, with_timespan=True)
 
@@ -271,8 +271,8 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
     stats[MED_SPEED_KMH] = stats[SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
     stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     stats[MED_CADENCE] = stats[CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    if POWER in stats.columns:
-        stats[MED_POWER_W] = stats[POWER].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
+    if POWER_ESTIMATE in stats.columns:
+        stats[MED_POWER_ESTIMATE_W] = stats[POWER_ESTIMATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
     stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
 
     stats['keep'] = pd.notna(stats[HR_IMPULSE_10])
@@ -382,4 +382,4 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
 
 
 def present(df, *names):
-    return all(name in df.columns and len(df[name]) for name in names)
+    return df is not None and all(name in df.columns and len(df[name].dropna()) for name in names)
