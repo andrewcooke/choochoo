@@ -7,8 +7,8 @@ from urwid import Text, Pile, Columns, Divider
 from . import JournalDiary
 from .heart_rate import build_zones
 from ..calculate.activity import ActivityCalculator
-from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEDIAN_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
-    CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB
+from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
+    CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, MAX_MED_EP_M_ANY
 from ...data.climb import climbs_for_activity
 from ...lib.date import format_seconds
 from ...lib.utils import label
@@ -31,10 +31,10 @@ class ActivityDiary(JournalDiary):
             Text(ajournal.name),
             Indent(Columns([details, (HRZ_WIDTH + 2, zones)])),
             Divider(),
-            Indent(Columns([Pile(self.__template(s, ajournal, MEDIAN_KM_TIME_ANY,
-                                                 'Median Time', r'(\d+km)', date)),
-                            Pile(self.__template(s, ajournal, MAX_MED_HR_M_ANY,
-                                                 'Max Med HR', r'(\d+m)', date))]))
+            Indent(Columns([Pile(self.__template(s, ajournal, MIN_KM_TIME_ANY, 'Min Time', r'(\d+km)', date) +
+                                 self.__template(s, ajournal, MED_KM_TIME_ANY, 'Med Time', r'(\d+km)', date)),
+                            Pile(self.__template(s, ajournal, MAX_MED_HR_M_ANY, 'Max Med HR', r'(\d+m)', date) +
+                                 self.__template(s, ajournal, MAX_MED_EP_M_ANY, 'Max Med EP', r'(\d+m)', date))]))
         ])
 
     def __active_date(self, s, ajournal, date):
@@ -99,7 +99,9 @@ class ActivityDiary(JournalDiary):
         names = list(self.__names(s, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
                                   TOTAL_CLIMB, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME))
         yield from summary_columns(log, s, f, date, schedule, names)
-        names = self.__sort_names(self.__names_like(s, MEDIAN_KM_TIME_ANY))
+        names = self.__sort_names(self.__names_like(s, MIN_KM_TIME_ANY))
+        yield from summary_columns(log, s, f, date, schedule, names)
+        names = self.__sort_names(self.__names_like(s, MED_KM_TIME_ANY))
         yield from summary_columns(log, s, f, date, schedule, names)
         names = self.__sort_names(self.__names_like(s, MAX_MED_HR_M_ANY))
         yield from summary_columns(log, s, f, date, schedule, names)

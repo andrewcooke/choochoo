@@ -13,7 +13,7 @@ from ...squeal import Constant, StatisticJournalFloat
 from ...stoats.calculate.heart_rate import hr_zones_from_database
 
 log = getLogger(__name__)
-MAX_MED_MINUTES = (5, 10, 15, 20, 30, 60, 90, 120, 180)
+MAX_MED_MINUTES = (5, 10, 30, 60, 90, 120, 180)
 
 
 def round_km():
@@ -62,7 +62,7 @@ class MedianHRForTime(Chunks):
                 while chunks and time - chunks[0].time_delta() > self.__time:
                     time -= chunks[0].time_delta()
                     self.drop_first(chunks)
-                heart_rates = list(sorted(chain(*(chunk.heart_rates() for chunk in chunks))))
+                heart_rates = list(sorted(chain(*(chunk.values('heart_rate') for chunk in chunks))))
                 if heart_rates:
                     median = len(heart_rates) // 2
                     yield heart_rates[median]
@@ -117,7 +117,7 @@ class Zones(Chunks):
         lower_limit = 0
         for zone, upper_limit in enumerate(zones):
             for chunk in all_chunks:
-                for heart_rate in chunk.heart_rates():
+                for heart_rate in chunk.values('heart_rate'):
                     if heart_rate is not None:
                         if lower_limit <= heart_rate < upper_limit:
                             counts[zone] += 1  # zero-based (incremented below)
@@ -166,8 +166,10 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin
             times = list(sorted(TimeForDistance(waypoints, target * 1000).times()))
             if not times:
                 break
+            loader.add(MIN_KM_TIME % target, S, summaries(MIN, MSR), ajournal.activity_group, ajournal,
+                       times[0], ajournal.start, StatisticJournalFloat)
             median = len(times) // 2
-            loader.add(MEDIAN_KM_TIME % target, S, summaries(MIN, MSR), ajournal.activity_group, ajournal,
+            loader.add(MED_KM_TIME % target, S, summaries(MIN, MSR), ajournal.activity_group, ajournal,
                        times[median], ajournal.start, StatisticJournalFloat)
 
     def _add_hrz_stats(self, s, totals, ajournal, waypoints, loader):

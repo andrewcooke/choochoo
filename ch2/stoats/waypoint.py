@@ -118,9 +118,6 @@ class Chunk:
     def time_delta(self):
         return self.__diff(1, lambda w: w.time, dt.timedelta(0)).total_seconds()
 
-    def heart_rates(self):
-        return (waypoint.heart_rate for waypoint in self.__waypoints if waypoint.heart_rate is not None)
-
     def values(self, name):
         index = self.__waypoints[0]._fields.index(name)
         return (waypoint[index] for waypoint in self.__waypoints if waypoint[index] is not None)
@@ -132,7 +129,7 @@ class Chunk:
         return self.__waypoints[item]
 
     def __bool__(self):
-        return self.distance_delta() > 0
+        return self.distance() > 0
 
 
 class Chunks:

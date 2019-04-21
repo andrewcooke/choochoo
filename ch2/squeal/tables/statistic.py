@@ -9,8 +9,9 @@ from sqlalchemy.orm import relationship, backref
 from .source import Interval
 from ..support import Base
 from ..types import Time, ShortCls, NullStr
+from ..utils import add
 from ...lib.date import format_seconds, local_date_to_time
-from ...squeal.utils import add
+from ...stoats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W
 
 
 class StatisticName(Base):
@@ -137,21 +138,15 @@ class StatisticJournal(Base):
         units = self.statistic_name.units
         if not units:
             return '%d' % self.value
-        elif units == 'm':
+        elif units == M:
             if self.value > 2000:
                 return '%d km' % (self.value / 1000)
             else:
                 return '%d m' % self.value
-        elif units == 's':
+        elif units == S:
             return format_seconds(self.value)
-        elif units == ' km/h':
-            return '%d km/h' % self.value
-        elif units == '%':
-            return '%d %%' % self.value
-        elif units == 'bpm':
-            return '%d bpm' % self.value
-        elif units == 'steps':
-            return '%d steps' % self.value
+        elif units in (KMH, PC, BPM, STEPS_UNITS, W):
+            return '%d %s' % (self.value, units)
         else:
             return '%d %s' % (self.value, units)
 
@@ -275,27 +270,17 @@ class StatisticJournalFloat(StatisticJournal):
         units = self.statistic_name.units
         if not units:
             return '%f' % self.value
-        elif units == 'm':
+        elif units == M:
             if self.value > 2000:
                 return '%.1f km' % (self.value / 1000)
             else:
                 return '%d m' % int(self.value)
-        elif units == 's':
+        elif units == S:
             return format_seconds(self.value)
-        elif units == 'm':
-            return format_seconds(self.value * 60)
-        elif units == 'h':
-            return format_seconds(self.value * 3600)
-        elif units == 'km/h':
-            return '%.1f km/h' % self.value
-        elif units == '%':
-            return '%.1f %%' % self.value
-        elif units == 'bpm':
-            return '%d bpm' % int(self.value)
-        elif units == 'steps':
-            return '%d steps' % int(self.value)
-        elif units == 'kg':
-            return '%.1f kg' % self.value
+        elif units in (KMH, PC, KG, W):
+            return '%.1f %s' % (self.value, units)
+        elif units in (BPM, STEPS_UNITS):
+            return '%d %s' % (int(self.value), units)
         else:
             return '%s %s' % (self.value, units)
 
