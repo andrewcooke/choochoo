@@ -70,3 +70,13 @@ def auto_fit(observed, modeled, initial_data, initial_params, evaluate, *vary,
         if prev_csq is not None and abs(prev_csq - csq) / csq < tol:
             return result
         count, prev_csq = count + 1, csq
+
+
+def interpolate_to_index(df, extra, *names):
+    df['keep'] = True
+    both = df.join(extra.loc[:, names], how='outer', sort=True)
+    both.loc[both['keep'] != True, ['keep']] = False
+    both.interpolate(method='linear', limit_area='inside', inplace=True)
+    return both.loc[both['keep']].drop(columns=['keep'])
+
+

@@ -122,7 +122,7 @@ def reftuple(name, *args, **kargs):
             else:
                 value = value.value
                 if json:
-                    log.debug(f'Unpackaing JSON "{value}"')
+                    log.debug(f'Unpacking JSON "{value}"')
                     value = loads(value)
                 log.info(f'{name} -> {value}')
             return value
@@ -131,3 +131,14 @@ def reftuple(name, *args, **kargs):
     caller = stack()[1]
     klass.__module__ = getmodule(None, caller.filename).__name__
     return klass
+
+
+class MaxDict(dict):
+
+    def __init__(self, kv):
+        super().__init__()
+        for key, value in kv:
+            if key in self:
+                self[key] = max(value, self[key])
+            else:
+                self[key] = value

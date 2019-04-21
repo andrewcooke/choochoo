@@ -11,7 +11,9 @@ from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityCalculator
+from ..stoats.calculate.elevation import ElevationCalculator
 from ..stoats.calculate.monitor import MonitorCalculator
+from ..stoats.calculate.power import PowerCalculator
 from ..stoats.calculate.segment import SegmentCalculator
 from ..stoats.calculate.summary import SummaryCalculator
 from ..stoats.display.activity import ActivityDiary
@@ -57,14 +59,15 @@ def default(db, no_diary=False):
         # statistics pipeline (called to calculate missing statistics)
 
         c = Counter()
-        # need to specify the owner so that we load waypoints correctly
+        add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')
+        add_power_estimate(s, c, bike, vary='')
         add_climb(s, bike)
-        add_statistics(s, ActivityCalculator, c, owner_in=short_cls(SegmentReader),
+        add_statistics(s, ActivityCalculator, c,
+                       owner_in=f'{short_cls(SegmentReader)},{short_cls(PowerCalculator)},{short_cls(ElevationCalculator)}',
                        climb=name_constant(CLIMB_CNAME, bike))
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
-        add_power_estimate(s, c, bike, vary='')
 
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.

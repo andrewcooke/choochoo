@@ -37,6 +37,7 @@ class WaypointReader:
 
         for timespan in ajournal.timespans:
             log.debug('%s' % timespan)
+            # log.debug(f'{timespan.start.timestamp()} - {timespan.finish.timestamp()}')
             waypoint = None
             stmt = select([t.StatisticName.c.id,
                            t.StatisticJournal.c.time,
@@ -55,9 +56,10 @@ class WaypointReader:
                 stmt = stmt.where(t.StatisticJournal.c.time >= start)
             if finish:
                 stmt = stmt.where(t.StatisticJournal.c.time <= finish)
-            log.debug(stmt)
+            # log.debug(stmt)
             for id, time, value in s.connection().execute(stmt):
                 if waypoint and waypoint.time != time:
+                    # log.debug(waypoint)
                     yield waypoint
                     waypoint = None
                 if not waypoint:
@@ -75,7 +77,9 @@ class WaypointReader:
         from ..data.frame import _add_constraint
         q = s.query(StatisticName.id). \
             filter(StatisticName.name == name, StatisticName.constraint == ajournal.activity_group)
-        return _add_constraint(q, StatisticName.owner, owner, name).scalar()
+        if owner:
+            q = _add_constraint(q, StatisticName.owner, owner.split(','), name)
+        return q.scalar()
 
 
 class Chunk:
@@ -116,6 +120,10 @@ class Chunk:
 
     def heart_rates(self):
         return (waypoint.heart_rate for waypoint in self.__waypoints if waypoint.heart_rate is not None)
+
+    def values(self, name):
+        index = self.__waypoints[0]._fields.index(name)
+        return (waypoint[index] for waypoint in self.__waypoints if waypoint[index] is not None)
 
     def __len__(self):
         return len(self.__waypoints)

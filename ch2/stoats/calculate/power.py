@@ -10,6 +10,7 @@ from . import DataFrameCalculatorMixin, ActivityJournalCalculatorMixin, MultiPro
 from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics
+from ...data.lib import interpolate_to_index
 from ...data.power import linear_resample, add_differentials, add_energy_budget, add_loss_estimate, \
     add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
 from ...lib.data import reftuple, MissingReference
@@ -32,12 +33,11 @@ class PowerCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, 
 
 class BasicPowerCalculator(PowerCalculator):
 
-    # a lot of reading for not much writing
     def __init__(self, *args, cost_calc=10, cost_write=1, power=None, **kargs):
         self.power_ref = power
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
 
-    def _set_power(self, s, ajournal, df):
+    def _set_power(self, s, ajournal):
         power = Power(**loads(Constant.get(s, self.power_ref).at(s).value))
         # default owner is constant since that's what users can tweak
         self.power = power.expand(log, s, ajournal.start, owner=Constant, constraint=ajournal.activity_group)
@@ -45,12 +45,12 @@ class BasicPowerCalculator(PowerCalculator):
 
     def _read_dataframe(self, s, ajournal):
         try:
+            self._set_power(s, ajournal)
             df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, CADENCE, LATITUDE, LONGITUDE, HEART_RATE,
                                      activity_journal=ajournal, with_timespan=True)
-            df = linear_resample(df)
-            df = add_differentials(df)
-            self._set_power(s, ajournal, df)
-            return df
+            ldf = linear_resample(df)
+            ldf = add_differentials(ldf)
+            return df, ldf
         except PowerException as e:
             log.warning(e)
         except MissingReference as e:
@@ -59,15 +59,18 @@ class BasicPowerCalculator(PowerCalculator):
             log.warning(f'Failed to generate statistics for power: {e}')
             raise
 
-    def _calculate_stats(self, s, ajournal, df):
-        df = add_energy_budget(df, self.power.bike['weight'] + self.power.rider_weight)
-        df = add_air_speed(df, 0, 0)
-        df = add_loss_estimate(df, self.power.bike['cda'], self.power.bike['crr'])
-        df = add_power_estimate(df)
-        return df
+    def _calculate_stats(self, s, ajournal, dfs):
+        df, ldf = dfs
+        ldf = add_energy_budget(ldf, self.power.bike['weight'] + self.power.rider_weight)
+        ldf = add_air_speed(ldf, 0, 0)
+        ldf = add_loss_estimate(ldf, self.power.bike['cda'], self.power.bike['crr'])
+        ldf = add_power_estimate(ldf)
+        return df, ldf
 
-    def _copy_results(self, s, ajournal, loader, df,
+    def _copy_results(self, s, ajournal, loader, dfs,
                       fields=((POWER_ESTIMATE, W, AVG), (HEADING, DEG, None))):
+        df, ldf = dfs
+        df = interpolate_to_index(df, ldf, *(field[0] for field in fields))
         for time, row in df.iterrows():
             for name, units, summary in fields:
                 if not pd.isnull(row[name]):
@@ -138,7 +141,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
 
     def _copy_results(self, s, ajournal, loader, stats):
         model, df = stats
-        fields = ((POWER_ESTIMATE, W, AVG),)
+        fields = ((POWER_ESTIMATE, W, AVG), (HEADING, DEG, None))
         if model:
             # how much energy every heart beat
             # 60W at 60bpm is 60J every second or beat; 60W at 1bpm is 3600J every minute or beat;
@@ -157,7 +160,6 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             if 'wind_heading' in vary:
                 loader.add(WIND_HEADING, DEG, AVG, ajournal.activity_group, ajournal, model.wind_heading,
                            ajournal.start, StatisticJournalFloat)
-            fields = ((POWER_ESTIMATE, W, AVG), (HEADING, DEG, None),
-                      (PREDICTED_HEART_RATE, BPM, None), (DETRENDED_HEART_RATE, BPM, None))
+            fields = fields + ((PREDICTED_HEART_RATE, BPM, None), (DETRENDED_HEART_RATE, BPM, None))
         # has to come after the above to get times in order
         super()._copy_results(s, ajournal, loader, df, fields=fields)

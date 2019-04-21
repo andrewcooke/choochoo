@@ -24,7 +24,7 @@ log = getLogger(__name__)
 class CalculatorMixin:
 
     def __init__(self, *args, owner_in=None, start=None, finish=None, **kargs):
-        self.owner_in = self._assert('owner_in', owner_in)
+        self.owner_in = self._assert('owner_in', owner_in)  # todo - not needed by some...
         self.start = start  # optional start local time (always present for workers)
         self.finish = finish  # optional finish local time (always present for workers)
         super().__init__(*args, **kargs)

@@ -46,12 +46,12 @@ class JournalDiary(Displayer):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
         for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
-            for journal in s.query(ActivityJournal). \
+            for ajournal in s.query(ActivityJournal). \
                     filter(ActivityJournal.finish >= start,
                            ActivityJournal.start < finish,
                            ActivityJournal.activity_group == activity_group). \
                     order_by(ActivityJournal.start).all():
-                yield from self._journal_date(s, f, journal, date)
+                yield from self._journal_date(s, f, ajournal, date)
 
     @abstractmethod
     def _journal_date(self, s, f, ajournal, date):
