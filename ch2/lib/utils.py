@@ -32,6 +32,17 @@ def sign(x):
         return -1
 
 
+def sigfig(value, n=2):
+    scale = 1
+    while value >= 10 ** n:
+        value /= 10
+        scale *= 10
+    while value < 10 ** (n-1):
+        value *= 10
+        scale /= 10
+    return int(0.5 + value) * scale
+
+
 def em(text):
     return 'em', text
 

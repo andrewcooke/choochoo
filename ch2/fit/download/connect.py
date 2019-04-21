@@ -23,7 +23,8 @@ class GarminConnect:
 
     headers = {
         # 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:62.0) Gecko/20100101 Firefox/62.0'
-        'User-Agent': 'Mozilla/5.0 (compatible; https://github.com/andrewcooke/choochoo)'
+        'User-Agent': 'Mozilla/5.0 (compatible; https://github.com/andrewcooke/choochoo)',
+        'origin': 'https://sso.garmin.com'
     }
 
     def __init__(self, log_response=False):
@@ -75,6 +76,7 @@ class GarminConnect:
 
         response_url = search(r'"(https:[^"]+?ticket=[^"]+)"', response.text)
         if not response_url:
+            log.debug(response.text)
             raise Exception('Could not find response URL')
         response_url = sub(r'\\', '', response_url.group(1))
         log.debug('Response URL: %s' % response_url)

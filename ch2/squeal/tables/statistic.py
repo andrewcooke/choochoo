@@ -11,7 +11,8 @@ from ..support import Base
 from ..types import Time, ShortCls, NullStr
 from ..utils import add
 from ...lib.date import format_seconds, local_date_to_time
-from ...stoats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W
+from ...lib.utils import sigfig
+from ...stoats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ
 
 
 class StatisticName(Base):
@@ -145,8 +146,10 @@ class StatisticJournal(Base):
                 return '%d m' % self.value
         elif units == S:
             return format_seconds(self.value)
-        elif units in (KMH, PC, BPM, STEPS_UNITS, W):
+        elif units in (KMH, PC, BPM, STEPS_UNITS, W, KJ):
             return '%d %s' % (self.value, units)
+        elif units == KCAL:
+            return '%s %s' % (sigfig(self.value, 2), units)
         else:
             return '%d %s' % (self.value, units)
 
@@ -277,8 +280,10 @@ class StatisticJournalFloat(StatisticJournal):
                 return '%d m' % int(self.value)
         elif units == S:
             return format_seconds(self.value)
-        elif units in (KMH, PC, KG, W):
+        elif units in (KMH, PC, KG, W, KJ):
             return '%.1f %s' % (self.value, units)
+        elif units == KCAL:
+            return '%s %s' % (sigfig(self.value, 2), units)
         elif units in (BPM, STEPS_UNITS):
             return '%d %s' % (int(self.value), units)
         else:

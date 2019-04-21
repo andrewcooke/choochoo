@@ -43,7 +43,7 @@ def missing_dates(s):
     start = time_to_local_date(latest.start + dt.timedelta(seconds=seconds) + dt.timedelta(days=1))
     finish = dt.date.today()
     days = (finish - start).days
-    if days > 10:
+    if days > 14:
         raise Exception('Too many days (%d) - ' % days +
                         'do a bulk download instead: https://www.garmin.com/en-US/account/datamanagement/')
     if days:

@@ -5,7 +5,9 @@ from logging import getLogger
 from re import split
 
 import pandas as pd
+import numpy as np
 
+from ch2.data import present
 from . import DataFrameCalculatorMixin, ActivityJournalCalculatorMixin, MultiProcCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
@@ -33,8 +35,9 @@ class PowerCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, 
 
 class BasicPowerCalculator(PowerCalculator):
 
-    def __init__(self, *args, cost_calc=10, cost_write=1, power=None, **kargs):
+    def __init__(self, *args, cost_calc=10, cost_write=1, power=None, caloric_eff=0.25, **kargs):
         self.power_ref = power
+        self.caloric_eff = caloric_eff
         super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
 
     def _set_power(self, s, ajournal):
@@ -70,12 +73,24 @@ class BasicPowerCalculator(PowerCalculator):
     def _copy_results(self, s, ajournal, loader, dfs,
                       fields=((POWER_ESTIMATE, W, AVG), (HEADING, DEG, None))):
         df, ldf = dfs
+        self.__add_total_energy(s, ajournal, loader, ldf)
         df = interpolate_to_index(df, ldf, *(field[0] for field in fields))
         for time, row in df.iterrows():
             for name, units, summary in fields:
                 if not pd.isnull(row[name]):
                     loader.add(name, units, summary, ajournal.activity_group, ajournal, row[name], time,
                                StatisticJournalFloat)
+
+    def __add_total_energy(self, s, ajournal, loader, ldf):
+        if present(ldf, POWER_ESTIMATE):
+            ldf['tmp'] = ldf[POWER_ESTIMATE]
+            ldf.loc[ldf['tmp'].isna(), ['tmp']] = 0
+            energy = np.trapz(y=ldf['tmp'], x=ldf.index.astype(np.int64) / 1e12)
+            loader.add(ENERGY_ESTIMATE, KJ, MAX, ajournal.activity_group, ajournal, energy, ajournal.start,
+                       StatisticJournalFloat)
+            loader.add(CALORIE_ESTIMATE, KCAL, MAX, ajournal.activity_group, ajournal,
+                       energy * 0.239006 / self.caloric_eff, ajournal.start, StatisticJournalFloat)
+            ldf.drop(columns=['tmp'], inplace=True)
 
 
 class ExtendedPowerCalculator(BasicPowerCalculator):
