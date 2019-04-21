@@ -24,25 +24,11 @@ The schema separates "statistics" (named time series data) from the
 source (which might be direct entry, read from a FIT file, or
 calculated from pre-existing values).
 
-The "diary" view, where the user enters data, is itself generated from
-the database.  So the fields displayed (and the statistics collected)
-can be customized.  This configuration can include "schedules" which
-control when information is displayed (eg: weekdays only; every other
-day; second Sunday in the month).
-
-The combination of customizable diary fields and scheduling allows
-training plans to be entered and displayed.
-
-Customization (fields, training plans, etc) must be done via Python or
-SQL.  There is no graphical user interface for configuration.  This
-presents a steep learning curve but is ultimately very flexible -
-"any" training plan can be accommodated.  Python code for generating
-example plans is included (see package `ch2.config.plan`).
-
 Data are processed via "pipelines".  These are Python classes whose
 class names are also configured in the database.  Existing pipelines
-calculate statistics from FIT file data, recognise segments from GPS
-endpoints, and generate summaries (eg monthly averages).
+calculate statistics from FIT file data, add elevation data from SRTM
+files, recognise segments from GPS endpoints, estimate power output,
+and generate summaries (eg monthly averages).
 
 A Python interface allows data to be extracted as DataFrames for
 analysis in Jupyter workbooks (or dumping to stdout).  So general
@@ -57,6 +43,21 @@ files are *not* migrated - they must be re-imported.
 
 Support libraries include FIT file parsing, spatial R-Trees, and
 reading elevation data from SRTM files.
+
+The "diary" view, where the user enters data, is itself generated from
+the database.  So the fields displayed (and the statistics collected)
+can be customized.  This configuration can include "schedules" which
+control when information is displayed (eg: weekdays only; every other
+day; second Sunday in the month).
+
+The combination of customizable diary fields and scheduling allows
+training plans to be entered and displayed.
+
+Customization (fields, training plans, etc) must be done via Python or
+SQL.  There is no graphical user interface for configuration.  This
+presents a steep learning curve but is ultimately very flexible -
+"any" training plan can be accommodated.  Python code for generating
+example plans is included (see package `ch2.config.plan`).
 
 Currently the program is single-user (ie the data in the database are
 not grouped by user).  Multiple users can co-exist using separate
