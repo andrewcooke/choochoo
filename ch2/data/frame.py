@@ -9,6 +9,7 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_, or_, distinct
 from sqlalchemy.sql.functions import coalesce
 
+from ch2.stoats.names import TIMESPAN_ID, TIME, DELTA_TIME, HEART_RATE
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
@@ -259,12 +260,14 @@ def statistic_quartiles(s, *statistics, start=None, finish=None, owner=None, con
 
 MIN_PERIODS = 1
 
-def std_activity_statistics(s, local_time=None, time=None, activity_journal=None, activity_group_name=None):
+def std_activity_statistics(s, local_time=None, time=None, activity_journal=None, activity_group_name=None,
+                            with_timespan=False):
 
     stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
-                                ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, POWER_ESTIMATE,
+                                ELEVATION, SPEED, HEART_RATE, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE,
+                                POWER_ESTIMATE,
                                 local_time=local_time, time=time, activity_journal=activity_journal,
-                                activity_group_name=activity_group_name, with_timespan=True)
+                                activity_group_name=activity_group_name, with_timespan=with_timespan)
 
     stats[DISTANCE_KM] = stats[DISTANCE]/1000
     stats[SPEED_KMH] = stats[SPEED] * 3.6
@@ -275,9 +278,13 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
         stats[MED_POWER_ESTIMATE_W] = stats[POWER_ESTIMATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
     stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
 
+    if with_timespan:
+        timespans = stats[TIMESPAN_ID].unique()
     stats['keep'] = pd.notna(stats[HR_IMPULSE_10])
     stats.interpolate(method='time', inplace=True)
     stats = stats.loc[stats['keep'] == True].drop(columns=['keep'])
+    if with_timespan:
+        stats = stats.loc[stats[TIMESPAN_ID].isin(timespans)]
 
     stats[CLIMB_MS] = stats[ELEVATION_M].diff() * 0.1
     stats[TIME] = pd.to_datetime(stats.index)
@@ -382,4 +389,55 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
 
 
 def present(df, *names):
-    return df is not None and all(name in df.columns and len(df[name].dropna()) for name in names)
+    if hasattr(df, 'columns'):
+        return df is not None and all(name in df.columns and len(df[name].dropna()) for name in names)
+    else:
+        return df is not None and (len(df.dropna()) and all(df.name == name for name in names))
+
+
+def median_d(df):
+    return pd.Series(df.index).diff().median()
+
+
+KEEP = 'keep'
+
+
+def linear_resample(df, start=None, finish=None, d=None, quantise=True):
+    log.debug(f'Linear resample with type {type(df.index)}, columns {df.columns}')
+    d = d or median_d(df)
+    start = start or df.index.min()
+    finish = finish or df.index.max()
+    if quantise:
+        start, finish = int(start / d) * d, (1 + int(finish / d)) * d
+    lin = pd.DataFrame({KEEP: True}, index=np.arange(start, finish, d))
+    ldf = df.join(lin, how='outer', sort=True)
+    # if this fails check for time-like columns
+    ldf.interpolate(method='slinear', limit_area='inside', inplace=True)
+    ldf = ldf.loc[ldf[KEEP] == True].drop(columns=[KEEP])
+    return ldf
+
+
+def median_dt(df):
+    return pd.Series(df.index).diff().median().total_seconds()
+
+
+def linear_resample_time(df, start=None, finish=None, dt=None, with_timespan=None, keep_nan=True, add_time=True):
+    log.debug(f'Linear resample with type {type(df.index)}, columns {df.columns}')
+    if with_timespan is None: with_timespan = TIMESPAN_ID in df.columns
+    dt = dt or median_dt(df)
+    start = start or df.index.min()
+    finish = finish or df.index.max()
+    lin = pd.DataFrame({KEEP: True}, index=pd.date_range(start=start, end=finish, freq=f'{dt}S'))
+    ldf = df.copy().join(lin, how='outer', sort=True)
+    # if this fails check for time-like columns
+    ldf.interpolate(method='index', limit_area='inside', inplace=True)
+    ldf = ldf.loc[ldf[KEEP] == True].drop(columns=[KEEP])
+    if add_time:
+        ldf[TIME] = ldf.index
+        ldf[DELTA_TIME] = ldf[TIME].diff()
+    if with_timespan:
+        if keep_nan:
+            ldf.loc[~ldf[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())] = np.nan
+        else:
+            ldf = ldf.loc[ldf[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())]
+    return ldf

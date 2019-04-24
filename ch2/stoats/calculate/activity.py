@@ -4,23 +4,16 @@ from itertools import chain
 from json import loads
 from logging import getLogger
 
+from ch2.data.activity import round_km, MAX_MED_MINUTES
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, WaypointCalculatorMixin
 from ..names import *
 from ..waypoint import Chunks
 from ...data.climb import find_climbs, Climb
 from ...lib.data import MaxDict
 from ...squeal import Constant, StatisticJournalFloat
-from ...stoats.calculate.heart_rate import hr_zones_from_database
+from ch2.data import hr_zones_from_database
 
 log = getLogger(__name__)
-MAX_MED_MINUTES = (5, 10, 30, 60, 90, 120, 180)
-
-
-def round_km():
-    yield from range(5, 21, 5)
-    yield from range(25, 76, 25)
-    yield from range(100, 251, 50)
-    yield from range(300, 1001, 100)
 
 
 class TimeForDistance(Chunks):
@@ -212,4 +205,6 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin
         if total_elevation:
             loader.add(TOTAL_CLIMB, M, summaries(MAX, SUM, MSR), ajournal.activity_group, ajournal,
                        total_elevation, ajournal.start, StatisticJournalFloat)
+
+
 

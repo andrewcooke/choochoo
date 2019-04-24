@@ -6,6 +6,7 @@ from logging import getLogger
 
 from sqlalchemy import desc, inspect, select, and_
 
+from ch2.data import hr_zones
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, DirectCalculatorMixin
 from ..load import StatisticJournalLoader
 from ..names import FTHR, HR_ZONE, HEART_RATE, S
@@ -16,22 +17,6 @@ log = getLogger(__name__)
 
 # constraint comes from constant
 HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, max_secs')
-
-# values from british cycling online calculator
-# these are upper limits
-BC_ZONES = (68, 83, 94, 105, 121, 999)
-
-
-def hr_zones_from_database(s, activity_group, time):
-    fthr = StatisticJournal.before(s, time, FTHR, Constant, activity_group)
-    if fthr:
-        return hr_zones(fthr.value)
-    else:
-        return None
-
-
-def hr_zones(fthr):
-    return [fthr * pc / 100.0 for pc in BC_ZONES]
 
 
 class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin, MultiProcCalculator):

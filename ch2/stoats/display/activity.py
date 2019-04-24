@@ -12,7 +12,7 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY,
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, MAX_MED_EP_M_ANY, CALORIE_ESTIMATE, \
     ENERGY_ESTIMATE
 from ...data.climb import climbs_for_activity
-from ...lib.date import format_seconds
+from ...lib.date import format_seconds, time_to_local_time, to_time, HMS
 from ...lib.utils import label
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields.summary import summary_columns
@@ -41,7 +41,8 @@ class ActivityDiary(JournalDiary):
 
     def __active_date(self, s, ajournal, date):
         body = []
-        body.append(Text('%s - %s  (%s)' % (ajournal.start.strftime('%H:%M:%S'), ajournal.finish.strftime('%H:%M:%S'),
+        body.append(Text('%s - %s  (%s)' % (time_to_local_time(to_time(ajournal.start)),
+                                            time_to_local_time(to_time(ajournal.finish), fmt=HMS),
                                             format_seconds((ajournal.finish - ajournal.start).seconds))))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
             sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityCalculator, ajournal.activity_group)

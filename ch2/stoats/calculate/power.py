@@ -7,13 +7,13 @@ from re import split
 import pandas as pd
 import numpy as np
 
-from ch2.data import present
+from ch2.data import present, linear_resample_time
 from . import DataFrameCalculatorMixin, ActivityJournalCalculatorMixin, MultiProcCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics
 from ...data.lib import interpolate_to_index
-from ...data.power import linear_resample, add_differentials, add_energy_budget, add_loss_estimate, \
+from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, \
     add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
 from ...lib.data import reftuple, MissingReference
 from ...lib.log import log_current_exception
@@ -51,7 +51,7 @@ class BasicPowerCalculator(PowerCalculator):
             self._set_power(s, ajournal)
             df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, CADENCE, LATITUDE, LONGITUDE, HEART_RATE,
                                      activity_journal=ajournal, with_timespan=True)
-            ldf = linear_resample(df)
+            ldf = linear_resample_time(df)
             ldf = add_differentials(ldf)
             return df, ldf
         except PowerException as e:
@@ -122,7 +122,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
                 try:
                     stats = self._calculate_stats(s, source, data)
                 except PowerException as e:
-                    log.warning(f'Cannot model power; adding basic values only ({e})')
+                    log.warning(f'Cannot use detailed power model; adding basic values only ({e})')
                     loader = StatisticJournalLoader(s, self.owner_out)
                     stats = None, super()._calculate_stats(s, source, data)
                 self._copy_results(s, source, loader, stats)

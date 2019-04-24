@@ -7,36 +7,13 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 
+from ch2.data.frame import median_dt
 from .lib import fit, inplace_decay
 from ..stoats.names import *
 from ..stoats.names import _d, _sqr, _avg
 
 log = getLogger(__name__)
 RAD_TO_DEG = 180 / pi
-
-
-def median_dt(stats):
-    return pd.Series(stats.index).diff().median().total_seconds()
-
-
-def linear_resample(df, start=None, finish=None, dt=None, with_timestamp=None, keep_nan=True):
-    if with_timestamp is None: with_timestamp = TIMESPAN_ID in df.columns
-    dt = dt or median_dt(df)
-    start = start or df.index.min()
-    finish = finish or df.index.max()
-    even = pd.DataFrame({'keep': True}, index=pd.date_range(start=start, end=finish, freq=f'{dt}S'))
-    both = df.join(even, how='outer', sort=True)
-    both.loc[both['keep'] != True, ['keep']] = False  # not sure this is needed, but avoid interpolating to true
-    both.interpolate(method='index', limit_area='inside', inplace=True)
-    resampled = both.loc[both['keep'] == True].drop(columns=['keep'])
-    resampled[TIME] = resampled.index
-    resampled[DELTA_TIME] = resampled[TIME].diff()
-    if with_timestamp:
-        if keep_nan:
-            resampled.loc[~resampled[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())] = np.nan
-        else:
-            resampled = resampled.loc[resampled[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())]
-    return resampled
 
 
 def add_differentials(df):
