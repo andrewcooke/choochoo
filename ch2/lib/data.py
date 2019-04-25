@@ -142,3 +142,21 @@ class MaxDict(dict):
                 self[key] = max(value, self[key])
             else:
                 self[key] = value
+
+
+def nearest_index(df, name, value):
+    exactmatch = df.loc[df[name] == value]
+    if not exactmatch.empty:
+        return exactmatch.index.item()
+    else:
+        lower = df.loc[df[name] < value]
+        upper = df.loc[df[name] > value]
+        if lower.empty:
+            return upper.idxmin()[0]
+        elif upper.empty:
+            return lower.idxmax()[0]
+        else:
+            if abs(value - df.loc[lower.idxmax()][name][0]) < abs(value - df.loc[upper.idxmin()][name][0]):
+                return lower.idxmax()[0]
+            else:
+                return upper.idxmin()[0]
