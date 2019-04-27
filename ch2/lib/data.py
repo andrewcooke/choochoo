@@ -149,14 +149,22 @@ def nearest_index(df, name, value):
     if not exactmatch.empty:
         return exactmatch.index.item()
     else:
-        lower = df.loc[df[name] < value]
-        upper = df.loc[df[name] > value]
+        lower = df.loc[df[name] < value].index.dropna()
+        upper = df.loc[df[name] > value].index.dropna()
         if lower.empty:
-            return upper.idxmin()[0]
+            return upper.min()
         elif upper.empty:
-            return lower.idxmax()[0]
+            return lower.max()
         else:
-            if abs(value - df.loc[lower.idxmax()][name][0]) < abs(value - df.loc[upper.idxmin()][name][0]):
-                return lower.idxmax()[0]
+            if abs(value - df.loc[lower.max()][name]) < abs(value - df.loc[upper.min()][name]):
+                return lower.max()
             else:
-                return upper.idxmin()[0]
+                return upper.min()
+
+
+def get_index_loc(df, value):
+    loc = df.index.get_loc(value)
+    try:
+        return loc.start  # if slice, take first
+    except AttributeError:
+        return loc  # otherwise, simple value

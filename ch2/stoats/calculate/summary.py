@@ -98,10 +98,11 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
         data = sorted([x for x in
                        s.query(StatisticJournal).
-                      filter(StatisticJournal.statistic_name == statistic_name,
-                             StatisticJournal.time >= start_time,
-                             StatisticJournal.time < finish_time).all()
-                       if x is not None], key=lambda x: x.value, reverse=not pessimistic)
+                       filter(StatisticJournal.statistic_name == statistic_name,
+                              StatisticJournal.time >= start_time,
+                              StatisticJournal.time < finish_time).all()
+                       if x is not None and x.value is not None],
+                       key=lambda x: x.value, reverse=not pessimistic)
 
         n, local_measures = len(data), []
         for rank, journal in enumerate(data, start=1):

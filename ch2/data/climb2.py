@@ -1,14 +1,17 @@
 
 from collections import namedtuple
 from itertools import groupby
-from time import time
+from logging import getLogger
 
 import numpy as np
 
-from ch2.lib.data import nearest_index
-from .frame import linear_resample
-from ..squeal import StatisticName
-from ..stoats.names import _d
+from .frame import linear_resample, present
+from ..lib.data import nearest_index, get_index_loc
+from ..squeal import StatisticName, StatisticJournal
+from ..stoats.names import _d, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
+    CLIMB_GRADIENT
+
+log = getLogger(__name__)
 
 SCORE = 'Score'
 GRADIENT = 'Gradient'
@@ -31,24 +34,28 @@ Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_gradient, max
 def find_climbs(df, params=Climb()):
     by_dist = df.set_index(df[DISTANCE])
     by_dist = linear_resample(by_dist, quantise=False)
-    for lo, hi in find_climbs_raw(by_dist, params=params):
-        a, b = nearest_index(df, DISTANCE, lo), nearest_index(df, DISTANCE, hi)
-        yield a, b
+    for dlo, dhi in find_climb_distances(by_dist, params=params):
+        tlo, thi = nearest_index(df, DISTANCE, dlo), nearest_index(df, DISTANCE, dhi)
+        log.debug(f'Found climb from {tlo} - {thi} ({dlo}m - {dhi}m)')
+        up = df[ELEVATION].loc[thi] - df[ELEVATION].loc[tlo]
+        along = df[DISTANCE].loc[thi] - df[DISTANCE].loc[tlo]
+        yield {TIME: thi, CLIMB_ELEVATION: up, CLIMB_DISTANCE: along,
+               CLIMB_TIME: (thi - tlo).total_seconds(), CLIMB_GRADIENT: 100 * up / along}
 
 
-def find_climbs_raw(df, params=Climb()):
+def find_climb_distances(df, params=Climb()):
     mn, mx = df[ELEVATION].min(), df[ELEVATION].max()
     if mx - mn > params.min_elevation:
         score, lo, hi = biggest_climb(df, params=params)
         if score:
             a, b, c = split(df, lo, hi)
-            yield from find_climbs_raw(a, params=params)
+            yield from find_climb_distances(a, params=params)
             yield from contiguous(b, params=params)
-            yield from find_climbs_raw(c, params=params)
+            yield from find_climb_distances(c, params=params)
 
 
 def split(df, lo, hi, inside=True):
-    ilo, ihi = df.index.get_loc(lo), df.index.get_loc(hi)
+    ilo, ihi = get_index_loc(df, lo), get_index_loc(df, hi)
     if ilo > ihi:
         ilo, ihi = ihi, ilo
     if inside:
@@ -65,7 +72,7 @@ def contiguous(df, params=Climb()):
         if down and down > params.max_reversal * up:
             a, b, c = split(df, lo, hi, inside=False)
             yield from contiguous(a, params=params)
-            yield from find_climbs_raw(b, params=params)
+            yield from find_climb_distances(b, params=params)
             yield from contiguous(c, params=params)
         else:
             along = df.index[-1] - df.index[0]
@@ -88,8 +95,8 @@ def biggest_reversal(df):
             d_elevation = df[_d(ELEVATION)].dropna().max()
             if d_elevation > max_elevation:
                 max_elevation = d_elevation
-                hi = df.loc[df[_d(ELEVATION)] == max_elevation].index.item()
-                lo = df.index[df.index.get_loc(hi) + offset]
+                hi = df.loc[df[_d(ELEVATION)] == max_elevation].index[0]  # break ties
+                lo = df.index[get_index_loc(df, hi) + offset]
                 max_indices = (lo, hi)
     return max_elevation, max_indices[0], max_indices[1]
 
@@ -101,7 +108,7 @@ def biggest_climb(df, params=Climb(), grid=10):
         score, lo, hi = search(df.iloc[::grid].copy())
         if score:
             # need to pass through iloc to extend range
-            ilo, ihi = df.index.get_loc(lo), df.index.get_loc(hi)
+            ilo, ihi = get_index_loc(df, lo), get_index_loc(df, hi)
             return search(df.iloc[max(0, ilo-grid):min(ihi+grid, len(df)-1)].copy(), params=params)
         else:
             return 0, None, None
@@ -122,8 +129,8 @@ def search(df, params=Climb()):
             score = df.loc[df[_d(ELEVATION)] > min_elevation, SCORE].max()
             if not np.isnan(score) and score > max_score:
                 max_score = score
-                hi = df.loc[df[SCORE] == max_score].index.item()
-                lo = df.index[df.index.get_loc(hi) - offset]
+                hi = df.loc[df[SCORE] == max_score].index[0]  # arbitrarily pick one if tied (error here w item())
+                lo = df.index[get_index_loc(df, hi) - offset]
                 max_indices = (lo, hi)
     return max_score, max_indices[0], max_indices[1]
 
@@ -148,14 +155,14 @@ def climbs_for_activity(s, ajournal):
                          key=lambda climb: climb[CLIMB_ELEVATION].value, reverse=True)
 
 
-if __name__ == '__main__':
-    from ch2.data import *
-    start = time()
-    date = '2017-05-28 10:28:13'  # 1495103293
-    s = session('-v5')
-    df = activity_statistics(s, DISTANCE, ELEVATION, local_time=date, activity_group_name='Bike', with_timespan=False)
-    print(list(find_climbs(df)))
-    print(time() - start)
+# if __name__ == '__main__':
+#     from ch2.data import *
+#     start = time()
+#     date = '2017-05-28 10:28:13'  # 1495103293
+#     s = session('-v5')
+#     df = activity_statistics(s, DISTANCE, ELEVATION, local_time=date, activity_group_name='Bike', with_timespan=False)
+#     print(list(find_climbs(df)))
+#     print(time() - start)
 
     # prev
     # Sunday, 28 May 2017 15:26:17

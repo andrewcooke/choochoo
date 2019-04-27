@@ -4,7 +4,7 @@ from itertools import chain
 from json import loads
 from logging import getLogger
 
-from ch2.data.activity import round_km, MAX_MED_MINUTES
+from ch2.data.activity import round_km, MAX_MINUTES
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, WaypointCalculatorMixin
 from ..names import *
 from ..waypoint import Chunks
@@ -177,7 +177,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin
             log.warning('No HR zones defined for %s or before' % ajournal.start)
 
     def _add_max_med_stats(self, s, totals, ajournal, waypoints, loader):
-        for target in MAX_MED_MINUTES:
+        for target in MAX_MINUTES:
             maxes = MaxDict(MedianForTime(waypoints, target * 60).values('heart_rate', 'power_estimate'))
             if 'heart_rate' in maxes:
                 loader.add(MAX_MED_HR_M % target, BPM, summaries(MAX, MSR), ajournal.activity_group, ajournal,

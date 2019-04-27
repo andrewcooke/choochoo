@@ -6,7 +6,7 @@ from urwid import Text, Pile, Columns, Divider
 
 from . import JournalDiary
 from .heart_rate import build_zones
-from ..calculate.activity import ActivityCalculator
+from ..calculate.activity import ActivityCalculator, MAX_MEAN_EP_M_ANY
 from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, MAX_MED_EP_M_ANY, CALORIE_ESTIMATE, \
@@ -36,7 +36,7 @@ class ActivityDiary(JournalDiary):
             Indent(Columns([Pile(self.__template(s, ajournal, MIN_KM_TIME_ANY, 'Min Time', r'(\d+km)', date) +
                                  self.__template(s, ajournal, MED_KM_TIME_ANY, 'Med Time', r'(\d+km)', date)),
                             Pile(self.__template(s, ajournal, MAX_MED_HR_M_ANY, 'Max Med HR', r'(\d+m)', date) +
-                                 self.__template(s, ajournal, MAX_MED_EP_M_ANY, 'Max Med EP', r'(\d+m)', date))]))
+                                 self.__template(s, ajournal, MAX_MEAN_EP_M_ANY, 'Max Mean EP', r'(\d+m)', date))]))
         ])
 
     def __active_date(self, s, ajournal, date):
@@ -49,7 +49,8 @@ class ActivityDiary(JournalDiary):
             body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         for name in (ENERGY_ESTIMATE, CALORIE_ESTIMATE,):
             sjournal = StatisticJournal.at(s, ajournal.start, name, PowerCalculator, ajournal.activity_group)
-            body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
+            if sjournal:
+                body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         return body
 
     def __climbs(self, s, ajournal, date):

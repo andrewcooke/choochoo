@@ -26,9 +26,7 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
             raise
 
     def _calculate_stats(self, s, ajournal, df):
-        if not present(df, ELEVATION):
-            df = fix_elevation(df, smooth=self.smooth)
-        return df
+        return fix_elevation(df, smooth=self.smooth)
 
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():

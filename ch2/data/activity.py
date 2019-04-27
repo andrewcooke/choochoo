@@ -1,15 +1,17 @@
+
 from logging import getLogger
 
 import numpy as np
 import pandas as pd
 
-from .frame import present, linear_resample, linear_resample_time, median_dt
-from ..stoats.names import TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, HR_ZONE, PERCENT_IN_Z, TIME_IN_Z, HEART_RATE, \
-    MAX_MED_HR_M, MAX_MED_EP_M, POWER_ESTIMATE, TIMESPAN_ID
+from .frame import linear_resample, median_dt, present, linear_resample_time
+from ..stoats.names import HEART_RATE, MAX_MED_HR_M, MAX_MED_EP_M, POWER_ESTIMATE, ACTIVE_DISTANCE, ACTIVE_TIME, \
+    ACTIVE_SPEED, TIMESPAN_ID, TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, HR_ZONE, SPEED, \
+    MAX_MEAN_EP_M
 
 log = getLogger(__name__)
 
-MAX_MED_MINUTES = (5, 10, 30, 60, 90, 120, 180)
+MAX_MINUTES = (5, 10, 30, 60, 90, 120, 180)
 
 
 def round_km():
@@ -17,6 +19,16 @@ def round_km():
     yield from range(25, 76, 25)
     yield from range(100, 251, 50)
     yield from range(300, 1001, 100)
+
+
+def active_stats(df):
+    stats = {ACTIVE_DISTANCE: 0, ACTIVE_TIME: 0, ACTIVE_SPEED: 0}
+    for timespan in df[TIMESPAN_ID].dropna().unique():
+        slice = df.loc[df[TIMESPAN_ID] == timespan]
+        stats[ACTIVE_DISTANCE] += slice[DISTANCE].max() - slice[DISTANCE].min()
+        stats[ACTIVE_TIME] += (slice.index.max() - slice.index.min()).total_seconds()
+    stats[ACTIVE_SPEED] = 3.6 * stats[ACTIVE_DISTANCE] / stats[ACTIVE_TIME]
+    return stats
 
 
 def times_for_distance(df, km=None, delta=10):
@@ -36,33 +48,33 @@ def times_for_distance(df, km=None, delta=10):
 
 def hrz_stats(df, zones=None):
     stats, zones = {}, zones or range(7)
-    ldf = linear_resample_time(df, with_timespan=True)
-    hrz = pd.cut(ldf[HR_ZONE], bins=zones).value_counts()
-    dt, total = median_dt(ldf), hrz.sum()
-    for interval, count in hrz.iteritems():
-        zone = interval.right
-        stats[PERCENT_IN_Z % zone] = 100 * count / total
-        stats[TIME_IN_Z % zone] = dt * count
+    if present(df, HR_ZONE):
+        ldf = linear_resample_time(df, with_timespan=True)
+        hrz = pd.cut(ldf[HR_ZONE], bins=zones).value_counts()
+        dt, total = median_dt(ldf), hrz.sum()
+        for interval, count in hrz.iteritems():
+            zone = interval.right
+            stats[PERCENT_IN_Z % zone] = 100 * count / total
+            stats[TIME_IN_Z % zone] = dt * count
     return stats
 
 
-# todo - regularize names
-def max_mean(df, params=((POWER_ESTIMATE, MAX_MED_EP_M),), mins=None, delta=10, zero=0):
-    stats, mins = {}, mins or MAX_MED_MINUTES
+def max_mean_stats(df, params=((POWER_ESTIMATE, MAX_MEAN_EP_M),), mins=None, delta=10, zero=0):
+    stats, mins = {}, mins or MAX_MINUTES
     ldf = linear_resample_time(df, dt=delta, with_timespan=True, keep_nan=True)
     for name, template in params:
         ldf.loc[ldf[TIMESPAN_ID].isnull(), [name]] = zero
         cumsum = ldf[name].cumsum()
         for target in mins:
-            n = target // delta
+            n = (target * 60) // delta
             diff = cumsum.diff(periods=n).dropna()
             if present(diff, name):
                 stats[template % target] = diff.max() / n
     return stats
 
 
-def max_med(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10, gap=0.01):
-    stats, mins = {}, mins or MAX_MED_MINUTES
+def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10, gap=0.01):
+    stats, mins = {}, mins or MAX_MINUTES
     ldf_all = linear_resample_time(df, dt=delta, with_timespan=False, add_time=False)
     ldf_all.interpolate('nearest')
     ldf_tstamp = ldf_all.loc[ldf_all[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())].copy()
@@ -93,9 +105,9 @@ def max_med(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10, gap=0
     return stats
 
 
-if __name__ == '__main__':
-    from ch2.data import *
-    date = '2017-02-07 07:18:50'
-    s = session('-v5')
-    df = activity_statistics(s, HEART_RATE, local_time=date, activity_group_name='Bike', with_timespan=True)
-    print(max_med(df))
+# if __name__ == '__main__':
+#     from ch2.data import *
+#     date = '2017-02-07 07:18:50'
+#     s = session('-v5')
+#     df = activity_statistics(s, HEART_RATE, local_time=date, activity_group_name='Bike', with_timespan=True)
+#     print(max_med(df))

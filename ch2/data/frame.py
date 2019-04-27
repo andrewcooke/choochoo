@@ -261,7 +261,7 @@ def statistic_quartiles(s, *statistics, start=None, finish=None, owner=None, con
 MIN_PERIODS = 1
 
 def std_activity_statistics(s, local_time=None, time=None, activity_journal=None, activity_group_name=None,
-                            with_timespan=False):
+                            with_timespan=True):
 
     stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
                                 ELEVATION, SPEED, HEART_RATE, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE,
