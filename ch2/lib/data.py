@@ -147,7 +147,7 @@ class MaxDict(dict):
 def nearest_index(df, name, value):
     exactmatch = df.loc[df[name] == value]
     if not exactmatch.empty:
-        return exactmatch.index.item()
+        return exactmatch.index[0]
     else:
         lower = df.loc[df[name] < value].index.dropna()
         upper = df.loc[df[name] > value].index.dropna()

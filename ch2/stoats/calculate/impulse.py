@@ -88,7 +88,7 @@ class ImpulseCalculator(CompositeCalculatorMixin, UniProcCalculator):
             sources = sources.filter(ActivityJournal.finish >= start)
         if finish:
             sources = sources.filter(ActivityJournal.start <= finish)
-        log.debug(f'Unused query: {sources}')
+        # log.debug(f'Unused query: {sources}')
         return sources.all()
 
     def __set_state(self, s):

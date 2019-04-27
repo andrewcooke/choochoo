@@ -32,7 +32,6 @@ def _add_differentials(df, speed, *names):
 
     def diff():
         for _, old_span in df.groupby(TIMESPAN_ID):
-
             # discard leading and trailing na
             subset = old_span[list(names)].isna().any(axis=1).replace(True, np.nan)
             start, finish = subset.first_valid_index(), subset.last_valid_index()
