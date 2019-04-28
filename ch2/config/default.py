@@ -10,8 +10,7 @@ from ..sortem.file import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
-#from ..stoats.calculate.activity import ActivityCalculator
-from ..stoats.calculate.activity2 import ActivityCalculator
+from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.elevation import ElevationCalculator
 from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.calculate.power import PowerCalculator
