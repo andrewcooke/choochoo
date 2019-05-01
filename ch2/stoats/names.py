@@ -106,6 +106,7 @@ def _slash(name, units): return f'{name} / {units}'
 def _log(name): return f'Log {name}'
 def _sqr(name): return f'{name}{POW_2}'
 def _new(name): return f'New {name}'
+def _src(name): return f'Src {name}'
 
 MED_WINDOW = '60s'
 def _med(name): return f'Med{MED_WINDOW} {name}'

@@ -161,3 +161,12 @@ def max_time(a, b):
 
 def extend_range(start, finish, time):
     return min_time(start, time), max_time(finish, time)
+
+
+def round_hour(time, up=True):
+    down = time.replace(second=0, microsecond=0, minute=0)
+    if up and down < time:
+        return down + dt.timedelta(hours=1)
+    else:
+        return down
+

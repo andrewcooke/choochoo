@@ -9,7 +9,7 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_, or_, distinct
 from sqlalchemy.sql.functions import coalesce
 
-from ch2.stoats.names import TIMESPAN_ID, TIME, DELTA_TIME, HEART_RATE
+from ch2.stoats.names import TIMESPAN_ID, TIME, DELTA_TIME, HEART_RATE, _src
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
@@ -352,7 +352,8 @@ def _type_to_journal(t):
             StatisticJournalType.TEXT: t.sjt}
 
 
-def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, sources=None):
+def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, sources=None,
+               with_sources=False):
     t = _tables()
     ttj = _type_to_journal(t)
     names = statistic_names(s, *statistics, owner=owner, constraint=constraint)
@@ -368,7 +369,10 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
     time_select = time_select.order_by("time").alias("sub_time")  # order here avoids extra index
 
     def sub_select(name, table):
-        q = select([table.c.value, t.sj.c.time]). \
+        selects = [table.c.value, t.sj.c.time]
+        if with_sources:
+            selects += [t.sj.c.source_id]
+        q = select(selects). \
                    select_from(t.sj.join(table)). \
                    where(t.sj.c.statistic_name_id == name.id)
         if sources:
@@ -381,6 +385,8 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
     # of a TIME column (eg when plotting health statistics)
     selects = [time_select.c.time.label(INDEX)] + \
               [sub.c.value.label(label) for sub, label in zip(sub_selects, labels)]
+    if with_sources:
+        selects += [sub.c.source_id.label(_src(label)) for sub, label in zip(sub_selects, labels)]
     sources = time_select
     for sub in sub_selects:
         sources = sources.outerjoin(sub, time_select.c.time == sub.c.time)

@@ -31,7 +31,7 @@ def add_impulse(s, c, activity_group):
                                    constraint=activity_group_constraint,
                                    description='Data needed to calculate the FF-model impulse from HR zones - ' +
                                                'see HRImpulse enum')
-    set_constant(s, hr_impulse, dumps({'dest_name': HR_IMPULSE, 'gamma': 1.0, 'zero': 2, 'max_secs': 60}))
+    set_constant(s, hr_impulse, dumps({'dest_name': HR_IMPULSE, 'gamma': 2.0, 'zero': 2, 'max_secs': 60}))
 
     # 7 and 42 days as for training peaks
     # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/

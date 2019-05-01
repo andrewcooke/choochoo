@@ -17,7 +17,7 @@ def inplace_decay(data, column, period):
     # note that this assumes evenly-sampled data of spacing dt
     decay = exp(-1 / period)
     alpha = 1 - decay
-    # print(f'decay: {decay}; alpha: {alpha}')
+    log.debug(f'Exponential decay: {decay}; alpha: {alpha}; period {period} (intervals)')
     data[column] = data[column] / alpha
     data[column] = data[column].ewm(alpha=alpha, adjust=False).mean()
 
