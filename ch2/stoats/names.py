@@ -1,3 +1,4 @@
+import re
 
 POW_M1 = '\u207b\u00b9'
 POW_2 = '\u00b2'
@@ -30,6 +31,10 @@ ENERGY = 'Energy'
 ENERGY_ESTIMATE = 'Energy Estimate'
 FATIGUE = 'Fatigue'
 FITNESS = 'Fitness'
+FATIGUE_D = 'Fatigue %dd'
+FATIGUE_D_ANY = 'Fatigue %'
+FITNESS_D = 'Fitness %dd'
+FITNESS_D_ANY = 'Fitness %'
 FTHR = 'FTHR'
 HEADING = 'Heading'
 HEART_RATE = 'Heart Rate'
@@ -110,6 +115,15 @@ def _src(name): return f'Src {name}'
 
 MED_WINDOW = '60s'
 def _med(name): return f'Med{MED_WINDOW} {name}'
+
+def like(pattern, names):
+    return list(_like(pattern, names))
+
+def _like(pattern, names):
+    matcher = re.compile(re.sub('%', '.+', pattern))
+    for name in names:
+        if matcher.match(name):
+            yield name
 
 
 AIR_SPEED_2 = _sqr(AIR_SPEED)

@@ -3,7 +3,7 @@ from logging import getLogger
 from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
-from .impulse import add_impulse, FITNESS_CNAME, FATIGUE_CNAME
+from .impulse import add_impulse
 from .power import add_power_estimate
 from ..lib.schedule import Schedule
 from ..sortem.file import SRTM1_DIR
@@ -22,7 +22,7 @@ from ..stoats.display.monitor import MonitorDiary
 from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
-    RPM
+    RPM, FITNESS_D, FATIGUE_D
 from ..stoats.read.monitor import MonitorReader
 from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Text, Float, Score0
@@ -58,11 +58,17 @@ def default(db, no_diary=False):
 
         # statistics pipeline (called to calculate missing statistics)
 
+        # FF-model parameters
+        # 7 and 42 days as for training peaks
+        # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
+        fitness=((42, 1), (260, 1/6))
+        fatigue=((7, 5),)
+
         c = Counter()
         add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')
         add_power_estimate(s, c, bike, vary='')
         add_climb(s, bike)
-        add_impulse(s, c, bike)  # parameters set here can be adjusted via constants command
+        add_impulse(s, c, bike, fitness=fitness, fatigue=fatigue)
         add_statistics(s, ActivityCalculator, c,
                        owner_in=f'{short_cls(SegmentReader)},{short_cls(PowerCalculator)},{short_cls(ElevationCalculator)}',
                        climb=name_constant(CLIMB_CNAME, bike))
@@ -84,8 +90,8 @@ def default(db, no_diary=False):
         add_diary(s, MonitorDiary, c)
         # these tie-in to the constants used in add_impulse()
         add_diary(s, ImpulseDiary, c,
-                  fitness=name_constant(FITNESS_CNAME, bike),
-                  fatigue=name_constant(FATIGUE_CNAME, bike))
+                  fitness=[name_constant(FITNESS_D % days, bike) for (days, _) in fitness],
+                  fatigue=[name_constant(FATIGUE_D % days, bike) for (days, _) in fatigue])
         add_diary(s, ActivityDiary, c)
         add_diary(s, SegmentDiary, c)
         add_diary(s, NearbyDiary, c)

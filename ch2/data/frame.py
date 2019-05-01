@@ -9,7 +9,7 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_, or_, distinct
 from sqlalchemy.sql.functions import coalesce
 
-from ch2.stoats.names import TIMESPAN_ID, TIME, DELTA_TIME, HEART_RATE, _src
+from ch2.stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
@@ -18,9 +18,9 @@ from ..squeal.database import connect, ActivityTimespan, ActivityGroup, Activity
     Composite, CompositeComponent
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
-    ELEVATION_M, CLIMB_MS, LOG_FITNESS, LOG_FATIGUE, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
+    ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
-    ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, FITNESS, FATIGUE, REST_HR, \
+    ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX
 from ..uranus.coasting import CoastingBookmark
 
@@ -300,15 +300,17 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     # this assumes FF cover all the dates and HR/steps fit into them.  may not be true in all cases?
     # also, we downsample the FF data to hourly intervals then shift daily data to match one of those times
     # this avoids introducing gaps in the FF data when merging that mess up the continuity of the plots.
-    stats_1 = statistics(s, FITNESS, FATIGUE, start=start, finish=finish).resample('1h').mean()
+    stats_1 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, start=start, finish=finish).resample('1h').mean()
     stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
     stats = stats_1.merge(stats_2, how='outer', left_index=True, right_index=True)
     stats = stats.merge(stats_3, how='outer', left_index=True, right_index=True)
-    stats[LOG_FITNESS] = np.log10(stats[FITNESS])
-    stats[LOG_FATIGUE] = np.log10(stats[FATIGUE])
+    for fitness in like(FITNESS_D_ANY, stats.columns):
+        stats[_log(fitness)] = np.log10(stats[fitness])
+    for fatigue in like(FATIGUE_D_ANY, stats.columns):
+        stats[_log(fatigue)] = np.log10(stats[fatigue])
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
     stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
     stats[TIME] = pd.to_datetime(stats.index)

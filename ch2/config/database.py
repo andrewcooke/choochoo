@@ -1,6 +1,7 @@
 
 from json import dumps
 from logging import getLogger
+from re import sub
 
 from ..squeal import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     Topic, TopicField, Dummy
@@ -197,7 +198,7 @@ def name_constant(short_name, activity_group):
     Constants typically combine a name with an activity group (because they're specific to a
     particular activity).
     '''
-    return '%s.%s' % (short_name, activity_group.name)
+    return '%s.%s' % (sub(r'\s+', '', short_name), sub(r'\s+', '', activity_group.name))
 
 
 def add_topic(s, name, sort, description=None, schedule=None):

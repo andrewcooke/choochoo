@@ -7,7 +7,7 @@ from . import ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiPro
 from ..names import ELEVATION, DISTANCE, M, POWER_ESTIMATE, HEART_RATE, ACTIVE_DISTANCE, MSR, SUM, CNT, MAX, summaries, \
     ACTIVE_SPEED, ACTIVE_TIME, AVG, S, KMH, MIN_KM_TIME_ANY, MIN, MED_KM_TIME_ANY, PERCENT_IN_Z_ANY, PC, \
     TIME_IN_Z_ANY, MAX_MED_HR_M_ANY, W, BPM, MAX_MEAN_EP_M_ANY, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
-    CLIMB_GRADIENT, TOTAL_CLIMB, HR_ZONE, TIME
+    CLIMB_GRADIENT, TOTAL_CLIMB, HR_ZONE, TIME, like
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats
 from ...data.climb import find_climbs, Climb
 from ...data.frame import activity_statistics, present
@@ -63,10 +63,8 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
                 self.__copy(ajournal, loader, climb, CLIMB_GRADIENT, PC, summaries(MAX, SUM, MSR), climb[TIME])
 
     def __copy_all(self, ajournal, loader, stats, pattern, units, summary, time):
-        matcher = re.compile(re.sub('%', '.+', pattern))
-        for name in stats:
-            if matcher.match(name):
-                self.__copy(ajournal, loader, stats, name, units, summary, time)
+        for name in like(pattern, stats):
+            self.__copy(ajournal, loader, stats, name, units, summary, time)
 
     def __copy(self, ajournal, loader, stats, name, units, summary, time):
         loader.add(name, units, summary, ajournal.activity_group, ajournal, stats[name], time, StatisticJournalFloat)

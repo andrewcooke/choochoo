@@ -27,10 +27,12 @@ class ImpulseDiary(Displayer):
 
     def _display_schedule(self, s, f, date, schedule=None):
         rows = []
-        for cols in self._single_response(s, f, date, schedule, self.fitness, schedule.frame_type == 'd'):
-            rows.append(Columns(cols))
-        for cols in self._single_response(s, f, date, schedule, self.fatigue, schedule.frame_type == 'd'):
-            rows.append(Columns(cols))
+        for fitness in self.fitness:
+            for cols in self._single_response(s, f, date, schedule, fitness, schedule.frame_type == 'd'):
+                rows.append(Columns(cols))
+        for fatigue in self.fatigue:
+            for cols in self._single_response(s, f, date, schedule, fatigue, schedule.frame_type == 'd'):
+                rows.append(Columns(cols))
         if rows:
             yield Pile([Text('SHRIMP'), Indent(Pile(rows))])
 
