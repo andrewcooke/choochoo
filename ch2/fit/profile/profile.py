@@ -13,6 +13,7 @@ from .types import Types
 PROFILE_NAME = 'global-profile.pkl'
 PROFILE = []
 
+# todo - remove log from here (and docs)
 
 def read_external_profile(log, path, warn=False):
     nlog = NullableLog(log)

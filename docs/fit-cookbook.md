@@ -578,7 +578,7 @@ need to write some code to do that...
     
     data = read_fit(log, 'myfile.fit')
     types, messages = read_profile(log)
-    state, tokens = parse_data(log, data, types, messages)
+    state, tokens = parse_data(data, types, messages)
     
     SPEED = 'enhanced_speed'
     max_speed = None
@@ -595,4 +595,7 @@ need to write some code to do that...
     print('Maximum speed: %.2f' % max_speed)
 
 Giving the output
+
+    Maximum speed: 7.80
+
 
