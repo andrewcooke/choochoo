@@ -31,7 +31,8 @@ The system includes:
 * Algorithms to derive new statistics from the data (using Pandas for
   efficiency).
 
-* Pipelines to apply the algorithms to new data on import.
+* Pipelines to apply the algorithms to new data on import (in parallel
+  processes for efficiency).
 
 * An embedded Jupyter server to explore the data.
 
