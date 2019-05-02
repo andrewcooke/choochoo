@@ -28,7 +28,8 @@ The system includes:
 
 * A FIT reader to import new data.
 
-* Algorithms to derive new statistics from the data.
+* Algorithms to derive new statistics from the data (using Pandas for
+  efficiency).
 
 * Pipelines to apply the algorithms to new data on import.
 
@@ -36,7 +37,7 @@ The system includes:
 
 * Pre-written scripts to present graphical data views via Jupyter.
 
-* A textual "diary" to present textual data and allow data entry.
+* A "diary" to present textual data and allow data entry.
 
 The database has an SQLAlchemy ORM interface.  The schema separates
 "statistics" (named time series data) from the source (which might be
@@ -52,8 +53,9 @@ When the database format changes scripts are provided to migrate
 existing data (see package `ch2.migraine`).  Data extracted from FIT
 files are *not* migrated - they must be re-imported.
 
-Support libraries include FIT file parsing, spatial R-Trees, and
-reading elevation data from SRTM files.
+Support libraries include: FIT file parsing; spatial R-Trees; reading
+elevation data from SRTM files; estimating power from elevation and
+speed; Fitness / Fatigue models.
 
 The "diary" view, where the user enters data, is also configured via
 the database.  So the fields displayed (and the statistics collected)
