@@ -56,7 +56,7 @@ files are *not* migrated - they must be re-imported.
 Support libraries include: FIT file parsing; spatial R-Trees; reading
 elevation data from SRTM files; estimating power from elevation and
 speed; Fitness / Fatigue models; detection of pre-defined segments;
-clustering of routes.
+clustering of routes; climb detection.
 
 The "diary" view, where the user enters data, is also configured via
 the database.  So the fields displayed (and the statistics collected)
