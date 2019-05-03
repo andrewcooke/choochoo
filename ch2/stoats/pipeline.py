@@ -47,8 +47,7 @@ class BasePipeline:
 class MultiProcPipeline(BasePipeline):
 
     def __init__(self, db, *args, owner_out=None, force=False,
-                 # default is for single process (assumed by UniProcPipeline below)
-                 overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
+                 overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self._db = db
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
@@ -171,10 +170,9 @@ class MultiProcPipeline(BasePipeline):
 
 class UniProcPipeline(MultiProcPipeline):
 
-    # block parameters related to multi-process - default is single process
     def __init__(self, *args, overhead=None, cost_calc=None, cost_write=None, n_cpu=None, worker=None, id=None,
                  **kargs):
-        super().__init__(*args, **kargs)
+        super().__init__(*args, overhead=1, cost_calc=0, cost_write=1, n_cpu=None, worker=None, id=None, **kargs)
 
 
 class LoaderMixin:

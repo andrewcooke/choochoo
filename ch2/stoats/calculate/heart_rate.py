@@ -21,9 +21,9 @@ HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, max_secs')
 
 class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, cost_calc=5, cost_write=1, impulse=None, **kargs):
+    def __init__(self, *args, impulse=None, **kargs):
         self.impulse = self._assert('impulse', impulse)
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+        super().__init__(*args, **kargs)
 
     def _startup(self, s):
         self.__fthr_cache = {}

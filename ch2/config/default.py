@@ -82,7 +82,7 @@ def default(db, no_diary=False):
         add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('m'))
 
         # obviously you need to edit these parameters - see `ch2 constants Nearby.Bike`
-        add_nearby(s, c, bike, 'Santiago', -33.4, -70.4, fraction=0.1)
+        add_nearby(s, c, bike, 'Santiago', -33.4, -70.4, fraction=0.1, border=150)
 
         # diary pipeline (called to display data in the diary)
 

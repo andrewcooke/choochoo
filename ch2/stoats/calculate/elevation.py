@@ -12,9 +12,9 @@ log = getLogger(__name__)
 
 class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, cost_calc=2, cost_write=1, smooth=3, **kargs):
+    def __init__(self, *args, smooth=3, **kargs):
         self.smooth = smooth
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+        super().__init__(*args, **kargs)
 
     def _read_dataframe(self, s, ajournal):
         try:

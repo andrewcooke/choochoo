@@ -27,10 +27,10 @@ class CalcFailed(Exception): pass
 
 class SegmentReader(ActivityReader):
 
-    def __init__(self, *args, cost_calc=4, cost_write=1, inner_bound=5, match_bound=25, **kargs):
+    def __init__(self, *args, inner_bound=5, match_bound=25, **kargs):
         self.inner_bound = inner_bound
         self.match_bound = match_bound
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+        super().__init__(*args, **kargs)
 
     def _startup(self, s):
         super()._startup(s)

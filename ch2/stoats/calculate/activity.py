@@ -19,9 +19,9 @@ log = getLogger(__name__)
 
 class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, cost_calc=20, cost_write=1, climb=None, **kargs):
+    def __init__(self, *args, climb=None, **kargs):
         self.climb_ref = climb
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+        super().__init__(*args, **kargs)
 
     def _read_dataframe(self, s, ajournal):
         try:

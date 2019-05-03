@@ -20,15 +20,14 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    def __init__(self, *args, cost_calc=4, cost_write=1, constants=None, sport_to_activity=None, record_to_db=None,
-                 **kargs):
+    def __init__(self, *args, constants=None, sport_to_activity=None, record_to_db=None, **kargs):
         self.constants = constants
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (name, units, type)
                              in self._assert('record_to_db', record_to_db).items()]
         self.add_elevation = not any(name == ELEVATION for (field, name, units, type) in self.record_to_db)
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+        super().__init__(*args, **kargs)
 
     def _base_command(self):
         if self.constants:

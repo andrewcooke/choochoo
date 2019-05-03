@@ -35,10 +35,10 @@ class PowerCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, 
 
 class BasicPowerCalculator(PowerCalculator):
 
-    def __init__(self, *args, cost_calc=10, cost_write=1, power=None, caloric_eff=0.25, **kargs):
+    def __init__(self, *args, power=None, caloric_eff=0.25, **kargs):
         self.power_ref = power
         self.caloric_eff = caloric_eff
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+        super().__init__(*args, **kargs)
 
     def _set_power(self, s, ajournal):
         power = Power(**loads(Constant.get(s, self.power_ref).at(s).value))
@@ -109,8 +109,8 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
     '''
 
     # lots of fitting
-    def __init__(self, *args, cost_calc=100, cost_write=1, **kargs):
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
+    def __init__(self, *args, cost_calc=100, **kargs):
+        super().__init__(*args, cost_calc=cost_calc, **kargs)
 
     def _run_one(self, s, time_or_date):
         source = self._get_source(s, time_or_date)

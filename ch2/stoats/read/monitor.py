@@ -89,9 +89,6 @@ NEW_STEPS = _new(STEPS)
 
 class MonitorReader(MultiProcFitReader):
 
-    def __init__(self, *args, cost_calc=1, cost_write=1, **kargs):
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
-
     def _get_loader(self, s, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out

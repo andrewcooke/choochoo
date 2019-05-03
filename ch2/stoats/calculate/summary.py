@@ -24,8 +24,8 @@ def fuzz(n, q):
 
 class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, cost_calc=5, cost_write=1, owner_in='[unused]', **kargs):
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, owner_in=owner_in, **kargs)
+    def __init__(self, *args, owner_in='[unused]', **kargs):
+        super().__init__(*args, owner_in=owner_in, **kargs)
 
     def _read_data(self, s, interval):
         # here, data is only statistics names, because calculation also involves loading data

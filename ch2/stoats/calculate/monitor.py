@@ -15,9 +15,6 @@ QUARTER_DAY = 6 * 60 * 60
 
 class MonitorCalculator(CompositeCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, cost_calc=1, cost_write=1, **kargs):
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
-
     def _missing(self, s):
         missing = super()._missing(s)
         if missing:

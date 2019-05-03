@@ -13,9 +13,6 @@ log = getLogger(__name__)
 
 class SegmentCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, cost_calc=5, cost_write=1, **kargs):
-        super().__init__(*args, cost_calc=cost_calc, cost_write=cost_write, **kargs)
-
     def _names(self):
         return {LATITUDE: 'lat',
                 LONGITUDE: 'lon',
@@ -25,8 +22,8 @@ class SegmentCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin,
     def _missing(self, s):
         # extends superclass with restriction on activities that have a segment
         existing_ids = s.query(Timestamp.key). \
-            filter(Timestamp.owner == self.owner_out).cte()
-        segment_ids = s.query(SegmentJournal.activity_journal_id).cte()
+            filter(Timestamp.owner == self.owner_out)
+        segment_ids = s.query(SegmentJournal.activity_journal_id)
         q = s.query(ActivityJournal.start). \
             filter(not_(ActivityJournal.id.in_(existing_ids)),
                    ActivityJournal.id.in_(segment_ids))
