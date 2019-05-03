@@ -6,11 +6,11 @@ from urwid import Text, Pile, Columns, Divider
 
 from . import JournalDiary
 from .heart_rate import build_zones
-from ..calculate.activity import ActivityCalculator, MAX_MEAN_EP_M_ANY
+from ..calculate.activity import ActivityCalculator
 from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
-    CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, MAX_MED_EP_M_ANY, CALORIE_ESTIMATE, \
-    ENERGY_ESTIMATE
+    CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
+    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY
 from ...data.climb import climbs_for_activity
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS
 from ...lib.utils import label
@@ -35,8 +35,8 @@ class ActivityDiary(JournalDiary):
             Divider(),
             Indent(Columns([Pile(self.__template(s, ajournal, MIN_KM_TIME_ANY, 'Min Time', r'(\d+km)', date) +
                                  self.__template(s, ajournal, MED_KM_TIME_ANY, 'Med Time', r'(\d+km)', date)),
-                            Pile(self.__template(s, ajournal, MAX_MED_HR_M_ANY, 'Max Med HR', r'(\d+m)', date) +
-                                 self.__template(s, ajournal, MAX_MEAN_EP_M_ANY, 'Max Mean EP', r'(\d+m)', date))]))
+                            Pile(self.__template(s, ajournal, MAX_MED_HR_M_ANY, 'Max Med Heart Rate', r'(\d+m)', date) +
+                                 self.__template(s, ajournal, MAX_MEAN_PE_M_ANY, 'Max Mean Power Estimate', r'(\d+m)', date))]))
         ])
 
     def __active_date(self, s, ajournal, date):
@@ -44,11 +44,11 @@ class ActivityDiary(JournalDiary):
         body.append(Text('%s - %s  (%s)' % (time_to_local_time(to_time(ajournal.start)),
                                             time_to_local_time(to_time(ajournal.finish), fmt=HMS),
                                             format_seconds((ajournal.finish - ajournal.start).seconds))))
-        for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED):
+        for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEAN_POWER_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityCalculator, ajournal.activity_group)
             if sjournal:
                 body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
-        for name in (ENERGY_ESTIMATE, CALORIE_ESTIMATE,):
+        for name in (ENERGY_ESTIMATE, CALORIE_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, PowerCalculator, ajournal.activity_group)
             if sjournal:
                 body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))

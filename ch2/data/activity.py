@@ -5,9 +5,8 @@ import numpy as np
 import pandas as pd
 
 from .frame import linear_resample, median_dt, present, linear_resample_time
-from ..stoats.names import HEART_RATE, MAX_MED_HR_M, MAX_MED_EP_M, POWER_ESTIMATE, ACTIVE_DISTANCE, ACTIVE_TIME, \
-    ACTIVE_SPEED, TIMESPAN_ID, TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, HR_ZONE, SPEED, \
-    MAX_MEAN_EP_M
+from ..stoats.names import HEART_RATE, MAX_MED_HR_M, POWER_ESTIMATE, ACTIVE_DISTANCE, ACTIVE_TIME, \
+    ACTIVE_SPEED, TIMESPAN_ID, TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, HR_ZONE, MAX_MEAN_PE_M
 
 log = getLogger(__name__)
 
@@ -59,7 +58,7 @@ def hrz_stats(df, zones=None):
     return stats
 
 
-def max_mean_stats(df, params=((POWER_ESTIMATE, MAX_MEAN_EP_M),), mins=None, delta=10, zero=0):
+def max_mean_stats(df, params=((POWER_ESTIMATE, MAX_MEAN_PE_M),), mins=None, delta=10, zero=0):
     stats, mins = {}, mins or MAX_MINUTES
     ldf = linear_resample_time(df, dt=delta, with_timespan=True, keep_nan=True)
     for name, template in params:
