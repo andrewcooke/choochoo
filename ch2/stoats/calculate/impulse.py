@@ -27,7 +27,7 @@ class ImpulseCalculator(DataFrameCalculatorMixin, UniProcCalculator):
 
     for now, we do all or nothing.
 
-    first, we check if th ecurrent solution is complete:
+    first, we check if the current solution is complete:
     * extends across full date range
     * all sources used
     (no need to check for gaps - composite chaining should do that)
@@ -132,22 +132,23 @@ class ImpulseCalculator(DataFrameCalculatorMixin, UniProcCalculator):
     def _run_one(self, s, missed):
         start, finish = missed
         hr10 = statistics(s, self.impulse.dest_name, owner=self.owner_in, with_sources=True)
-        all_sources = list(self.__make_sources(s, hr10))
-        for response in self.responses:
-            log.info(f'Creating values for {response.dest_name}')
-            model = DecayModel(start=response.start, zero=0, scale=response.scale,
-                               period=response.tau_days * 24 * 60 * 60 / 3600,  # convert to intervals
-                               input=self.impulse.dest_name, output=response.dest_name)
-            hr3600 = pre_calc(hr10.copy(), model, start=start, finish=finish)
-            result = calc(hr3600, model)
-            loader = StatisticJournalLoader(s, self.owner_out, add_serial=False)
-            source, sources = None, list(all_sources)
-            for time, row in result.iterrows():
-                while sources and time >= sources[0][0]:
-                    source = sources.pop(0)[1]
-                loader.add(response.dest_name, None, None, None, source, row[response.dest_name], time,
-                           StatisticJournalFloat)
-            loader.load()
+        if not hr10.empty:
+            all_sources = list(self.__make_sources(s, hr10))
+            for response in self.responses:
+                log.info(f'Creating values for {response.dest_name}')
+                model = DecayModel(start=response.start, zero=0, scale=response.scale,
+                                   period=response.tau_days * 24 * 60 * 60 / 3600,  # convert to intervals
+                                   input=self.impulse.dest_name, output=response.dest_name)
+                hr3600 = pre_calc(hr10.copy(), model, start=start, finish=finish)
+                result = calc(hr3600, model)
+                loader = StatisticJournalLoader(s, self.owner_out, add_serial=False)
+                source, sources = None, list(all_sources)
+                for time, row in result.iterrows():
+                    while sources and time >= sources[0][0]:
+                        source = sources.pop(0)[1]
+                    loader.add(response.dest_name, None, None, None, source, row[response.dest_name], time,
+                               StatisticJournalFloat)
+                loader.load()
 
     def __make_sources(self, s, hr10):
         log.info('Creating sources')

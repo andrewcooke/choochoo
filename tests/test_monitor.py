@@ -35,13 +35,13 @@ class TestMonitor(TestCase):
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
                 # self.assertEqual(n, 111)
-                self.assertEqual(n, 107)  # why?
+                self.assertEqual(n, 108)  # why?
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
     def test_values(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5')
+            bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             for file in ('24696157869', '24696160481', '24696163486'):
                 args, db = bootstrap_file(f, m(V), '5', mm(DEV),
