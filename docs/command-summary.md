@@ -69,6 +69,7 @@ Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
 * fit
 * fix-fit
 * garmin
+* jupyter
 * help
 * monitor
 * statistics
