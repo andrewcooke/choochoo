@@ -15,6 +15,25 @@ log = getLogger(__name__)
 
 
 def jupyter(args, db):
+    '''
+## jupyter
+
+    > ch2 jupyter show ...
+
+Show the template in the browser, starting a background Jupyter server if necessary.
+
+    > ch2 jupyter list
+
+List the available templates and their arguments.
+
+    > ch2 jupyter status
+
+Indicate whether the background server is running or not.
+
+    > ch2 jupyter stop
+
+Stop the background server.
+    '''
     if args[SUB_COMMAND] == SERVICE:
         service(db)
     elif args[SUB_COMMAND] == START:

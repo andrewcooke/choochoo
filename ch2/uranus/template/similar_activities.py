@@ -2,11 +2,12 @@
 from bokeh.plotting import output_notebook, show
 
 from ch2.data import *
+from ch2.lib import *
 from ch2.uranus.decorator import template
 
 
 @template
-def similar_activities(local_time, activity_group_name):
+def similar_activities(local_time: to_date, activity_group_name):
 
     f'''
     # Similar Activities: {local_time.split()[0]}

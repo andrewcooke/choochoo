@@ -2,13 +2,13 @@
 from bokeh.plotting import output_notebook, show
 
 from ch2.data import *
-from ch2.lib.date import local_date_to_time
+from ch2.lib import *
 from ch2.squeal import *
 from ch2.uranus.decorator import template
 
 
 @template
-def all_activities(start, finish):
+def all_activities(start: to_date, finish: to_date):
 
     f'''
     # All Activities: {start.split()[0]} - {finish.split()[0]}

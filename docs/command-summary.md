@@ -10,6 +10,7 @@
 * [fix-fit](#fix-fit)
 * [garmin](#garmin)
 * [help](#help)
+* [jupyter](#jupyter)
 * [monitor](#monitor)
 * [statistics](#statistics)
 * [no-op](#no-op)
@@ -212,6 +213,27 @@ Displays this information.
     > ch2 help
 
 Lists available topics.    
+
+
+
+## jupyter
+
+    > ch2 jupyter show ...
+
+Show the template in the browser, starting a background Jupyter server if
+necessary.
+
+    > ch2 jupyter list
+
+List the available templates and their arguments.
+
+    > ch2 jupyter status
+
+Indicate whether the background server is running or not.
+
+    > ch2 jupyter stop
+
+Stop the background server.    
 
 
 
