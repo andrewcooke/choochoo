@@ -2,6 +2,7 @@
 import webbrowser as web
 from abc import abstractmethod, ABC
 from inspect import getsource, getfullargspec
+from logging import getLogger
 from os import unlink, makedirs
 from os.path import join, exists
 from re import compile, sub
@@ -10,7 +11,9 @@ import nbformat as nb
 import nbformat.v4 as nbv
 from nbformat.sign import NotebookNotary
 
-from .server import JUPYTER, start_jupyter
+from .server import connection_url, notebook_dir, start_local
+
+log = getLogger(__name__)
 
 QUOTES = "'''"
 FQUOTES = 'f' + QUOTES
@@ -184,12 +187,17 @@ class Params(Code):
         template = compile(r'def [^(]+\(([^)]*)\):\s*')
         match = template.match(line)
         if match and match.group(1):
-            params = Params(vars, match.group(1).split(','))
+            params = Params(vars, Params.split(match.group(1)))
             params.post_one()
             yield params
         elif not match:
             raise Exception(f'Bad template def: {line}')
         yield from Params.parse_text_or_code(vars, lines)
+
+    @staticmethod
+    def split(params):
+        return [param.split(':')[0].strip() for param in params.split(',')]
+
 
     @staticmethod
     def parse_text_or_code(vars, lines):
@@ -213,23 +221,23 @@ def tokenize(vars, text):
     yield from Import.parse(vars, list(text.splitlines()))
 
 
-def load_raw(log, name):
+def load_raw(name):
     log.debug(f'Loading template {name}')
     return getsource(getattr(__import__('ch2.uranus.template', fromlist=[name]), name))
 
 
-def load_tokens(log, name, vars):
+def load_tokens(name, vars):
     log.debug(f'Tokenizing {name}')
-    return tokenize(vars, load_raw(log, name))
+    return tokenize(vars, load_raw(name))
 
 
-def load_notebook(log, name, vars):
-    tokens = list(load_tokens(log, name, vars))
+def load_notebook(name, vars):
+    tokens = list(load_tokens(name, vars))
     tokens = [Help()] + tokens
     return Token.to_notebook(tokens)
 
 
-def create_notebook(log, template, args, kargs):
+def create_notebook(template, args, kargs):
 
     all_args = ' '.join(args)
     if all_args and kargs: all_args += ' '
@@ -241,17 +249,17 @@ def create_notebook(log, template, args, kargs):
         vars[name] = value
 
     template = template.__name__
-    base = join(JUPYTER.NOTEBOOK_DIR, template)
+    base = join(notebook_dir(), template)
     name = all_args + IPYNB
     path = join(base, name)
     makedirs(base, exist_ok=True)
 
     log.info(f'Creating {template} at {path} with {vars}')
-    notebook = load_notebook(log, template, vars)
+    notebook = load_notebook(template, vars)
     # https://testnb.readthedocs.io/en/latest/security.html
     NotebookNotary().sign(notebook)
     if exists(path):
-        log.warn(f'Deleting old version of {path}')
+        log.warning(f'Deleting old version of {path}')
         unlink(path)
     with open(path, 'w') as out:
         log.info(f'Writing {template} to {path}')
@@ -259,13 +267,12 @@ def create_notebook(log, template, args, kargs):
     return join(template, name)
 
 
-def display_notebook(log, template, args, kargs):
+def display_notebook(template, args, kargs, local=True):
     log.debug(f'Displaying {template} with {args}, {kargs}')
-    if not JUPYTER.ENABLED:
-        log.warning(f'Jupyter disabled; ignoring {template}')
-    else:
-        start_jupyter(log)
-        name = create_notebook(log, template, args, kargs)
-        url = f'{JUPYTER.CONNECTION_URL}tree/{name}'
-        log.info(f'Displaying {url}')
-        web.open(url, autoraise=False)
+    if local:
+        start_local()
+    name = create_notebook(template, args, kargs)
+    jupyter_url = connection_url()
+    url = f'{jupyter_url}tree/{name}'
+    log.info(f'Displaying {url}')
+    web.open(url, autoraise=False)

@@ -22,7 +22,6 @@ class App(TabNode):
         super().__init__(log, *self._build(self.__new_session()))
 
     def __new_session(self):
-        self._log.info('NEW SESSION')
         if self.__session:
             self.save()
             self.__session.close()

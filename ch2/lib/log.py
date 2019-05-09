@@ -46,7 +46,7 @@ def make_log(args, tui=False):
         clog.setLevel(DEBUG)
         clog.addHandler(file_handler)
 
-        if not tui or not level_unset:
+        if not tui:
             stderr_formatter = Formatter('%(levelname)8s: %(message)s')
             stderr_handler = StreamHandler()
             stderr_handler.setLevel(level)

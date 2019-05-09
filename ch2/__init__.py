@@ -8,7 +8,7 @@ getLogger('tornado').addHandler(NullHandler())
 from .commands.activities import activities
 from .commands.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER
 from .commands.constants import constants
 from .commands.dump import dump
 from .commands.default_config import default_config
@@ -16,6 +16,7 @@ from .commands.diary import diary
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
+from .commands.jupyter import jupyter
 from .commands.help import help, LengthFmt
 from .commands.monitor import monitor
 from .commands.package_fit_profile import package_fit_profile
@@ -26,7 +27,7 @@ from .lib.io import tui
 from .lib.log import make_log, log_current_exception
 from .squeal.database import Database
 from .squeal import SystemConstant
-from .uranus.server import set_jupyter_args, stop_jupyter
+from .uranus.server import stop_local, set_server_args
 
 log = getLogger(__name__)
 
@@ -50,6 +51,7 @@ COMMANDS = {ACTIVITIES: activities,
             FIT: fit,
             FIX_FIT: fix_fit,
             GARMIN: garmin,
+            JUPYTER: jupyter,
             HELP: help,
             MONITOR: monitor,
             STATISTICS: statistics,
@@ -74,7 +76,7 @@ def main():
         if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
             refuse_until_configured()
         else:
-            set_jupyter_args(log, args)
+            set_server_args(args)
             try:
                 if command:
                     command(args, db)
@@ -83,7 +85,7 @@ def main():
                               'you may have forgotten to set the command name via `set_defaults()`.')
                     raise Exception('No command given (try `ch2 help`)')
             finally:
-                stop_jupyter(log)
+                stop_local()
     except KeyboardInterrupt:
         log.critical('User abort')
         exit(1)

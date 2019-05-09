@@ -1,14 +1,15 @@
 
 import datetime as dt
-from hashlib import md5
 from json import dumps, loads
+from logging import getLogger
 from pydoc import locate
-from struct import unpack
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
 from ..lib.date import to_time, to_date
 from ..lib.schedule import Schedule
+
+log = getLogger(__name__)
 
 
 class Date(TypeDecorator):
@@ -39,7 +40,9 @@ class Time(TypeDecorator):
         if time is None:
             return time
         else:
-            return to_time(time).timestamp()
+            converted = to_time(time).timestamp()
+            # log.debug(f'Time (writing): converted {time} to {converted}')
+            return converted
 
     process_bind_param = process_literal_param
 
@@ -47,7 +50,9 @@ class Time(TypeDecorator):
         if value is None:
             return value
         else:
-            return dt.datetime.fromtimestamp(value, dt.timezone.utc)
+            converted = dt.datetime.fromtimestamp(value, dt.timezone.utc)
+            # log.debug(f'Time (reading): converted {value} to {converted}')
+            return converted
 
 
 CLS_CACHE = {}

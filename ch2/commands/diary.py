@@ -33,6 +33,7 @@ from ..uweird.tui.widgets import DividedPile, ArrowMenu, SquareButton
 
 log = getLogger(__name__)
 
+
 @tui
 def diary(args, db):
     '''

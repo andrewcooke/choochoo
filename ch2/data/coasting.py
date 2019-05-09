@@ -1,8 +1,9 @@
+
 from logging import getLogger
 
-from ..lib.date import to_time
-from ..squeal import ActivityBookmark
-from ..squeal.database import connect
+from ch2.lib.date import to_time
+from ch2.squeal import ActivityBookmark
+from ch2.squeal.database import connect
 
 log = getLogger(__name__)
 

@@ -15,7 +15,6 @@ CH2_VERSION = '0.19.7'
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
-SUB_COMMAND = 'sub_command'
 TOPIC = 'topic'
 
 ACTIVITIES = 'activities'
@@ -43,6 +42,7 @@ AFTER_BYTES = 'after-bytes'
 AFTER_RECORDS = 'after-records'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
+ARG = 'arg'
 BORDER = 'border'
 COMPACT = 'compact'
 CONSTRAINT = 'constraint'
@@ -104,8 +104,6 @@ NAME = 'name'
 NAME_BAD = 'name-bad'
 NAME_GOOD = 'name-good'
 NAMES = 'names'
-NO_DIARY = 'no-diary'
-NO_VALIDATE = 'no-validate'
 NOT = 'not'
 O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
@@ -119,17 +117,22 @@ PWD = 'pwd'
 RAW = 'raw'
 RECORDS = 'records'
 ROOT = 'root'
+RUN = 'run'
 SEGMENT_JOURNALS = 'segment-journals'
 SEGMENTS = 'segments'
 SERVICE = 'service'
 SET = 'set'
 SCHEDULE = 'schedule'
+SHOW = 'show'
 SLICES = 'slices'
 SOURCE_IDS = 'source-ids'
 START = 'start'
 STATISTIC_NAMES = 'statistic-names'
 STATISTIC_JOURNALS = 'statistic-journals'
 STATISTIC_QUARTILES = 'statistic-quartiles'
+STATUS = 'status'
+STOP = 'stop'
+SUB_COMMAND = 'sub-command'
 TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
@@ -144,11 +147,12 @@ WAYPOINTS = 'waypoints'
 WIDTH = 'width'
 WORKER = 'worker'
 YEAR = 'year'
+Y = 'y'
 
 
 def mm(name): return '--' + name
 def m(name): return '-' + name
-def no(name): return mm('no-%s' % name)
+def no(name): return 'no-%s' % name
 
 
 VARIABLE = compile(r'(.*(?:[^$]|^))\${(\w+)\}(.*)')
@@ -161,8 +165,10 @@ class NamespaceWithVariables(Mapping):
         self._dict = vars(ns)
 
     def __getitem__(self, name):
-        name = sub('-', '_', name)
-        value = self._dict[name]
+        try:
+            value = self._dict[name]
+        except KeyError:
+            value = self._dict[sub('-', '_', name)]
         try:
             match = VARIABLE.match(value)
             while match:
@@ -210,8 +216,6 @@ def parser():
 
     parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlr', metavar='FILE',
                         help='the database file')
-    parser.add_argument(no(JUPYTER), action='store_false', dest=JUPYTER,
-                        help='don\'t start the Jupyter server')
     parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
                         help='the directory for logs')
@@ -224,7 +228,7 @@ def parser():
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
 
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(title='commands', dest=COMMAND)
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
@@ -237,7 +241,6 @@ def parser():
                             help='keyword argument(s) to be passed to the pipelines')
     activities.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
-    activities.set_defaults(command=ACTIVITIES)
 
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_flags = constant.add_mutually_exclusive_group()
@@ -247,7 +250,6 @@ def parser():
     constant.add_argument(NAME, action='store', nargs='?', metavar='NAME', help='constant name')
     constant.add_argument(DATE, action='store', nargs='?', metavar='DATE', help='date when measured')
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
-    constant.set_defaults(command=CONSTANTS)
 
     dump = subparsers.add_parser(DUMP)  # todo - this one needs tests!
     dump_format = dump.add_mutually_exclusive_group()
@@ -258,7 +260,7 @@ def parser():
     dump.add_argument(mm(MAX_COLWIDTH), action='store', metavar='N', type=int, help='pandas max_colwidth attribute')
     dump.add_argument(mm(MAX_ROWS), action='store', metavar='N', type=int, help='pandas max_rows attribute')
     dump.add_argument(mm(WIDTH), action='store', metavar='N', type=int, help='pandas width attribute')
-    dump_sub = dump.add_subparsers()
+    dump_sub = dump.add_subparsers(dest=SUB_COMMAND)
     dump_statistics = dump_sub.add_parser(STATISTICS)
     dump_statistics.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
     dump_statistics.add_argument(mm(START), action='store', metavar='TIME', help='start time')
@@ -271,30 +273,26 @@ def parser():
                                  help='the schedule on which some statistics are calculated')
     dump_statistics.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
                                  help='the source IDs for the statistic')
-    dump_statistics.set_defaults(sub_command=STATISTICS)
-    sump_statistic_quartiles = dump_sub.add_parser(STATISTIC_QUARTILES)
-    sump_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    sump_statistic_quartiles.add_argument(mm(START), action='store', metavar='TIME', help='start time')
-    sump_statistic_quartiles.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
-    sump_statistic_quartiles.add_argument(mm(OWNER), action='store', metavar='OWNER',
+    dump_statistic_quartiles = dump_sub.add_parser(STATISTIC_QUARTILES)
+    dump_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
+    dump_statistic_quartiles.add_argument(mm(START), action='store', metavar='TIME', help='start time')
+    dump_statistic_quartiles.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
+    dump_statistic_quartiles.add_argument(mm(OWNER), action='store', metavar='OWNER',
                                           help='typically the class that created the data')
-    sump_statistic_quartiles.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
+    dump_statistic_quartiles.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
                                           help='a value that makes the name unique (eg activity group)')
-    sump_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
+    dump_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
                                           help='the schedule on which some statistics are calculated')
-    sump_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
+    dump_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
                                           help='the source IDs for the statistic')
-    sump_statistic_quartiles.set_defaults(sub_command=STATISTIC_QUARTILES)
     sump_table = dump_sub.add_parser(TABLE)
     sump_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
-    sump_table.set_defaults(sub_command=TABLE)
-    dump.set_defaults(command=DUMP, format=PRINT)
+    dump.set_defaults(format=PRINT)
 
     default_config = subparsers.add_parser(DEFAULT_CONFIG,
                                            help='configure the default database ' +
                                                 '(see docs for full configuration instructions)')
-    default_config.add_argument(mm(NO_DIARY), action='store_true', help='skip diary creation (for migration)')
-    default_config.set_defaults(command=DEFAULT_CONFIG)
+    default_config.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
@@ -302,13 +300,12 @@ def parser():
     diary.add_argument(mm(FAST), action='store_true',
                        help='skip update of statistics on exit')
     diary_summary = diary.add_mutually_exclusive_group()
-    diary_summary.add_argument(mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
+    diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
                                help='show monthly summary')
-    diary_summary.add_argument(mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
+    diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
                                help='show yearly summary')
     diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
                                help='show summary for given schedule')
-    diary.set_defaults(command=DIARY)
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
     fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',
@@ -348,7 +345,7 @@ def parser():
                      help='log additional warnings')
     fit.add_argument(mm(WIDTH), action='store', type=int,
                      help='display width for some formats')
-    fit.add_argument(mm(NO_VALIDATE), action='store_true',
+    fit.add_argument(mm(no(VALIDATE)), action='store_true',
                      help='do not validate checksum, length')
     fit.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
                      help='max seconds between timestamps (and non-decreasing)')
@@ -362,7 +359,7 @@ def parser():
                      help='no space between records (--grep)')
     fit.add_argument(mm(CONTEXT), action='store_true',
                      help='display entire record (--grep)')
-    fit.set_defaults(command=FIT, format=GREP)   # because that's the only one not set if the option is used
+    fit.set_defaults(format=GREP)   # because that's the only one not set if the option is used
 
     fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')
     fix_fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',
@@ -394,9 +391,9 @@ def parser():
                                  help='modify the header')
     fix_fit_process.add_argument(mm(FIX_CHECKSUM), action='store_true',
                                  help='modify the checksum')
-    fix_fit_process.add_argument(no(FORCE), action='store_false', dest=FORCE,
+    fix_fit_process.add_argument(mm(no(FORCE)), action='store_false', dest=FORCE,
                                  help='don\'t parse record contents')
-    fix_fit_process.add_argument(no(VALIDATE), action='store_false', dest=VALIDATE,
+    fix_fit_process.add_argument(mm(no(VALIDATE)), action='store_false', dest=VALIDATE,
                                  help='don\'t validate the final data')
     fix_fit_params = fix_fit.add_argument_group(title='parameters')
     fix_fit_params.add_argument(mm(HEADER_SIZE), action='store', type=int, metavar='N',
@@ -417,7 +414,6 @@ def parser():
                                 help='maximum number of bytes to drop in a single gap')
     fix_fit_params.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
                                 help='max number of seconds between timestamps')
-    fix_fit.set_defaults(command=FIX_FIT)
 
     garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
     garmin.add_argument(DIR, action='store', metavar='DIR',
@@ -428,12 +424,21 @@ def parser():
                         help='garmin connect password')
     garmin.add_argument(mm(DATE), action='store', metavar='DATE', type=to_date,
                         help='date to download')
-    garmin.set_defaults(command=GARMIN)
 
     help = subparsers.add_parser(HELP, help='display help')
     help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
                       help='the subject for help')
-    help.set_defaults(command=HELP)
+
+    jupyter = subparsers.add_parser(JUPYTER, help='access jupyter')
+    jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    jupyter_cmds.add_parser(LIST, help='list available templates')
+    jupyter_show = jupyter_cmds.add_parser(SHOW, help='display a template (starting server if needed)')
+    jupyter_show.add_argument(NAME, action='store', help='the template name')
+    jupyter_show.add_argument(ARG, action='store', nargs='*', help='template arguments')
+    jupyter_cmds.add_parser(START, help='start a background service')
+    jupyter_cmds.add_parser(STOP, help='stop the background service')
+    jupyter_cmds.add_parser(STATUS, help='display status of background service')
+    jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
@@ -444,7 +449,6 @@ def parser():
                          help='keyword argument(s) to be passed to the pipelines')
     monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
-    monitor.set_defaults(command=MONITOR)
 
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
     statistics.add_argument(mm(FORCE), action='store_true',
@@ -459,11 +463,9 @@ def parser():
                             help='keyword argument(s) to be passed to the pipelines')
     statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
-    statistics.set_defaults(command=STATISTICS)
 
     noop = subparsers.add_parser(NO_OP,
                                  help='used within jupyter (no-op from cmd line)')
-    noop.set_defaults(command=NO_OP)
 
     package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
                                                 help='parse and save the global fit profile (dev only)')
@@ -471,7 +473,6 @@ def parser():
                                      help='the path to the profile (Profile.xlsx)')
     package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
                                      help='additional warning messages')
-    package_fit_profile.set_defaults(command=PACKAGE_FIT_PROFILE)
 
     test_schedule = subparsers.add_parser(TEST_SCHEDULE, help='print schedule locations in a calendar')
     test_schedule.add_argument(SCHEDULE, action='store', metavar='SCHEDULE',
@@ -480,10 +481,8 @@ def parser():
                                help='the date to start displaying data')
     test_schedule.add_argument(mm(MONTHS), action='store', metavar='N', type=int,
                                help='the number of months to display')
-    test_schedule.set_defaults(command=TEST_SCHEDULE)
 
     unlock = subparsers.add_parser(UNLOCK, help='remove database locking')
-    unlock.set_defaults(command=UNLOCK)
 
     return parser
 

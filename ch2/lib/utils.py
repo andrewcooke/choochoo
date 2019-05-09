@@ -73,7 +73,7 @@ def unique(elements, key=lambda x: x):
 
 
 def datetime_to_epoch(datetime):
-    return t.mktime(datetime.timetuple())
+    return datetime.timestamp()
 
 
 def interleave(sep, iter):

@@ -1,8 +1,8 @@
 
 from logging import getLogger
 
-from .args import PATH, FORMAT, ALL_FIELDS, ALL_MESSAGES, LIMIT_RECORDS, WARN, GREP, MESSAGE, NAME, NOT, MATCH, \
-    WIDTH, NO_VALIDATE, INTERNAL, MAX_DELTA_T, AFTER_BYTES, AFTER_RECORDS, CONTEXT, LIMIT_BYTES, COMPACT, FIELD
+from .args import no, PATH, FORMAT, ALL_FIELDS, ALL_MESSAGES, LIMIT_RECORDS, WARN, GREP, MESSAGE, NAME, NOT, MATCH, \
+    WIDTH, VALIDATE, INTERNAL, MAX_DELTA_T, AFTER_BYTES, AFTER_RECORDS, CONTEXT, LIMIT_BYTES, COMPACT, FIELD
 from ..fit.profile.profile import read_fit
 from ..fit.summary import summarize
 
@@ -47,5 +47,5 @@ finish and paths start.
                   after_records=args[AFTER_RECORDS], limit_records=args[LIMIT_RECORDS],
                   messages=args[MESSAGE], fields=args[FIELD], warn=args[WARN], grep=args[GREP],
                   name_file=file_path if args[NAME] else None, invert=args[NOT], match=args[MATCH],
-                  compact=args[COMPACT], context=args[CONTEXT], no_validate=args[NO_VALIDATE],
+                  compact=args[COMPACT], context=args[CONTEXT], no_validate=args[no(VALIDATE)],
                   max_delta_t=args[MAX_DELTA_T], width=args[WIDTH])

@@ -111,14 +111,13 @@ class TopicJournal(Source):
 
     @classmethod
     def check_tz(cls, log, s):
-        from ch2.squeal.utils import add
         tz = get_local_timezone()
-        db_tz = s.query(SystemConstant).filter(SystemConstant.name == SystemConstant.TIMEZONE).one_or_none()
+        db_tz = SystemConstant.get(s, SystemConstant.TIMEZONE, none=True)
         if not db_tz:
-            db_tz = add(s, SystemConstant(name=SystemConstant.TIMEZONE, value=''))
-        if db_tz.value != tz.name:
+            db_tz = SystemConstant.set(s, SystemConstant.TIMEZONE, '')
+        if db_tz != tz.name:
             cls.__reset_timezone(log, s)
-            db_tz.value = tz.name
+            SystemConstant.set(s, SystemConstant.TIMEZONE, tz.name, force=True)
 
     @classmethod
     def __reset_timezone(cls, log, s):
