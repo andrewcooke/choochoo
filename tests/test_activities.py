@@ -1,4 +1,4 @@
-
+from subprocess import run
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
@@ -67,3 +67,15 @@ class TestActivities(TestCase):
             rgs, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
             run_pipeline(db, PipelineType.ACTIVITY, paths=paths, force=True)
+
+    def test_florian(self):
+        with NamedTemporaryFile() as f:
+            bootstrap_file(f, m(V), '5')
+            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
+                                      'activities', mm(FAST),
+                                      'data/test/source/private/florian.fit')
+            activities(args, db)
+            run('sqlite3 %s ".dump"' % f.name, shell=True)
+            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01')
+            run('sqlite3 %s ".dump"' % f.name, shell=True)

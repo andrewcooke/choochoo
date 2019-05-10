@@ -5,7 +5,7 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
-from ..read import AbortImport, MultiProcFitReader
+from ..read import AbortImport, MultiProcFitReader, AbortImportButMarkScanned
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
@@ -48,9 +48,16 @@ class ActivityReader(MultiProcFitReader):
         self._load_constants(s, ajournal)
         return ajournal.id, (ajournal, activity_group, first_timestamp, path, records)
 
+    def __read_sport(self, path, records):
+        try:
+            return self._first(path, records, 'sport').value.sport.lower()
+        except AbortImportButMarkScanned:
+            # alternative for some garmin devices (florian)
+            return self._first(path, records, 'session').value.sport.lower()
+
     def _create_activity(self, s, path, records):
         first_timestamp = self._first(path, records, 'event', 'record').value.timestamp
-        sport = self._first(path, records, 'sport').value.sport.lower()
+        sport = self.__read_sport(path, records)
         activity_group = self._activity_group(s, path, sport)
         self._delete_journals(s, activity_group, first_timestamp)
         ajournal = add(s, ActivityJournal(activity_group=activity_group,
