@@ -59,6 +59,7 @@ class ActivityReader(MultiProcFitReader):
         first_timestamp = self._first(path, records, 'event', 'record').value.timestamp
         sport = self.__read_sport(path, records)
         activity_group = self._activity_group(s, path, sport)
+        log.info(f'{activity_group} from {sport}')
         self._delete_journals(s, activity_group, first_timestamp)
         ajournal = add(s, ActivityJournal(activity_group=activity_group,
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later

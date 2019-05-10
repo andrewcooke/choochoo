@@ -60,16 +60,20 @@ def hrz_stats(df, zones=None):
 
 def max_mean_stats(df, params=((POWER_ESTIMATE, MAX_MEAN_PE_M),), mins=None, delta=10, zero=0):
     stats, mins = {}, mins or MAX_MINUTES
-    ldf = linear_resample_time(df, dt=delta, with_timespan=True, keep_nan=True)
-    for name, template in params:
-        ldf.loc[ldf[TIMESPAN_ID].isnull(), [name]] = zero
-        cumsum = ldf[name].cumsum()
-        for target in mins:
-            n = (target * 60) // delta
-            diff = cumsum.diff(periods=n).dropna()
-            if present(diff, name):
-                stats[template % target] = diff.max() / n
-    return stats
+    try:
+        ldf = linear_resample_time(df, dt=delta, with_timespan=True, keep_nan=True)
+        for name, template in params:
+            ldf.loc[ldf[TIMESPAN_ID].isnull(), [name]] = zero
+            cumsum = ldf[name].cumsum()
+            for target in mins:
+                n = (target * 60) // delta
+                diff = cumsum.diff(periods=n).dropna()
+                if present(diff, name):
+                    stats[template % target] = diff.max() / n
+        return stats
+    except Exception as e:
+        log.warning(f'No Max Mean stats: {e}')
+        return {}
 
 
 def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10, gap=0.01):

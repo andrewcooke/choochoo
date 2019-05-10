@@ -11,7 +11,7 @@ from ch2.config.default import default
 from ch2.squeal.tables.activity import ActivityJournal
 from ch2.squeal.tables.pipeline import PipelineType
 from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
-from ch2.stoats.names import RAW_ELEVATION, ELEVATION
+from ch2.stoats.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
 from ch2.stoats.pipeline import run_pipeline
 
 
@@ -68,6 +68,14 @@ class TestActivities(TestCase):
             paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
             run_pipeline(db, PipelineType.ACTIVITY, paths=paths, force=True)
 
+    def __assert_basic_stats(self, s):
+        for name in [ACTIVE_DISTANCE, ACTIVE_TIME]:
+            stat = s.query(StatisticJournal). \
+                join(StatisticName). \
+                filter(StatisticName.name == name).one_or_none()
+            print(f'{name} = {stat}')
+            self.assertTrue(stat, f'No value for {name}')
+
     def test_florian(self):
         with NamedTemporaryFile() as f:
             bootstrap_file(f, m(V), '5')
@@ -76,6 +84,22 @@ class TestActivities(TestCase):
                                       'activities', mm(FAST),
                                       'data/test/source/private/florian.fit')
             activities(args, db)
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            with db.session_context() as s:
+                self.__assert_basic_stats(s)
+
+    def test_michael(self):
+        with NamedTemporaryFile() as f:
+            bootstrap_file(f, m(V), '5')
+            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
+                                      'activities', mm(FAST),
+                                      'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
+            activities(args, db)
             run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01')
+            run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
             run('sqlite3 %s ".dump"' % f.name, shell=True)
+            with db.session_context() as s:
+                self.__assert_basic_stats(s)
