@@ -232,15 +232,15 @@ class DailyDiary(Diary):
 
     def __show_gui(self, w, aj1):
         if w.state:
-            compare_activities(aj1.start, w.state.start, aj1.activity_group.name, log=self._log)
+            compare_activities(aj1.start, w.state.start, aj1.activity_group.name)
         else:
-            activity_details(aj1.start, aj1.activity_group.name, log=self._log)
+            activity_details(aj1.start, aj1.activity_group.name)
 
     def __show_similar(self, w, aj1):
-        similar_activities(aj1.start, aj1.activity_group.name, log=self._log)
+        similar_activities(aj1.start, aj1.activity_group.name)
 
     def __show_health(self, w, date):
-        health(date.strftime(YMD), log=self._log)
+        health(date.strftime(YMD))
 
 
 class ScheduleDiary(Diary):
@@ -289,4 +289,4 @@ class ScheduleDiary(Diary):
 
     def __show_all(self, w):
         finish = self._schedule.next_frame(self._date)
-        all_activities(self._date.strftime('%Y-%m-%d'), finish.strftime('%Y-%m-%d'), log=self._log)
+        all_activities(self._date.strftime('%Y-%m-%d'), finish.strftime('%Y-%m-%d'))
