@@ -25,6 +25,10 @@ def display_pipeline(session, factory, date, diary, schedule=None):
 
 class Displayer(BasePipeline):
 
+    def __init__(self, *args, diary=None, **kargs):
+        self._diary = diary
+        super().__init__(*args, **kargs)
+
     def display(self, s, f, date, schedule=None):
         if schedule:
             yield from self._display_schedule(s, f, date, schedule=schedule)

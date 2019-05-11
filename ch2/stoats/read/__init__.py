@@ -28,7 +28,11 @@ class FitReaderMixin(LoaderMixin):
         super().__init__(*args, **kargs)
 
     def _delete(self, s):
-        pass  # we delete on load
+        # forcing does two things:
+        # first, it by-passes the checks on last-scan date and duplicates
+        # second, we delete any overlapping activities on load (when we know the times)
+        # (without force, overlapping activities trigger an error)
+        pass
 
     def _missing(self, s):
         return filter_modified_files(s, self.paths, self.owner_out, self.force)
@@ -39,7 +43,7 @@ class FitReaderMixin(LoaderMixin):
             update_scan(s, path, self.owner_out)
         except AbortImportButMarkScanned as e:
             log.warning(f'Could not process {path} (scanned)')
-            log_current_exception()
+            # log_current_exception()
             update_scan(s, path, self.owner_out)
         except Exception as e:
             log.warning(f'Could not process {path} (ignored)')

@@ -32,8 +32,9 @@ class ActivityJournal(Source):
     activity_group = relationship('ActivityGroup')
     name = Column(Text, unique=True)
     fit_file = Column(Text, nullable=False, unique=True)
-    start = Column(Time, nullable=False, index=True)
+    start = Column(Time, nullable=False,)
     finish = Column(Time, nullable=False)
+    UniqueConstraint(activity_group_id, start)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY
