@@ -16,7 +16,8 @@ pip install pendulum
 pip install requests
 pip install scipy
 pip install bokeh
-pip install tornado==5.1.1
+#pip install tornado==5.1.1
+pip install tornado
 pip install ipython
 pip install notebook
 pip install psutil
