@@ -55,8 +55,11 @@ def activity_details(local_time: to_date, activity_group_name):
     sp = comparison_line_plot(700, 200, DISTANCE_KM, MED_SPEED_KMH, activity, ylo=0, x_range=el.x_range)
     sp_c = cumulative_plot(200, 200, MED_SPEED_KMH, activity, ylo=0)
 
-    hr = comparison_line_plot(700, 200, DISTANCE_KM, MED_HR_IMPULSE_10, activity, ylo=0, x_range=el.x_range)
-    hr_c = cumulative_plot(200, 200, MED_HR_IMPULSE_10, activity, ylo=0)
+    hri = comparison_line_plot(700, 200, DISTANCE_KM, HR_IMPULSE_10, activity, ylo=0, x_range=el.x_range)
+    hri_c = cumulative_plot(200, 200, HR_IMPULSE_10, activity, ylo=0)
+
+    hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE, activity, ylo=0, x_range=el.x_range)
+    hr_c = cumulative_plot(200, 200, HEART_RATE, activity, ylo=0)
 
     if present(activity, MED_POWER_ESTIMATE_W):
         pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_ESTIMATE_W, activity, ylo=0, x_range=el.x_range)
@@ -70,7 +73,7 @@ def activity_details(local_time: to_date, activity_group_name):
         cd = None
     hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
 
-    show(gridplot([[el, el_c], [sp, sp_c], [hr, hr_c], [pw, pw_c], [cd, hr_h]]))
+    show(gridplot([[el, el_c], [sp, sp_c], [hri, hri_c], [hr, hr_c], [pw, pw_c], [cd, hr_h]]))
 
     '''
     ## Activity Maps

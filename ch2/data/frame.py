@@ -9,7 +9,7 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_, or_, distinct
 from sqlalchemy.sql.functions import coalesce
 
-from ch2.stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log
+from ch2.stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log, MED_HEART_RATE
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
@@ -272,6 +272,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
     stats[DISTANCE_KM] = stats[DISTANCE]/1000
     stats[SPEED_KMH] = stats[SPEED] * 3.6
     stats[MED_SPEED_KMH] = stats[SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
+    stats[MED_HEART_RATE] = stats[HEART_RATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     stats[MED_CADENCE] = stats[CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     if POWER_ESTIMATE in stats.columns:
