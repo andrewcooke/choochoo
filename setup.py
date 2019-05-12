@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(name='choochoo',
                  packages=setuptools.find_packages(),
-                 version='0.19.13',
+                 version='0.19.14',
                  author='andrew cooke',
                  author_email='andrew@acooke.org',
                  description='Data Science for Training',
@@ -28,6 +28,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'numpy',
                      'pandas',
                      'psutil',
+                     'textblob',
                      'pyGeoTile',
                      'colorama',
                      'pendulum',

@@ -21,8 +21,8 @@ pip install tornado
 pip install ipython
 pip install notebook
 pip install psutil
-
 pip install textblob
+
 pip install matplotlib
 #pip install colorcet
 #pip install webcolors
