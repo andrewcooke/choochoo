@@ -13,27 +13,31 @@ is intended mainly to allow data to be imported into the ch2 diary.
 (For information on importing FIT data into Choochoo, see 
 [Daily Use](daily-use))
 
+To display FIT data you use the `fit` command.  This takes a
+sub-command as the first argment.
+
 * [Displaying FIT data](#displaying-fit-data)
 
-  * [The `tables` format](#the-tabless-format) (the default) - this
-    shows the file contents in a high-level, compact, easy-to-read
-    format.  Common records are grouped into tables.
+  * [The `tables` sub-command](#the-tabless-sub-command) - this shows
+    the file contents in a high-level, compact, easy-to-read
+    sub-command.  Common records are grouped into tables.
   
-  * [The `records` format](#the-records-format) - this shows the file
-    contents in a high-level format, ordered as they appear in the
-    file.  Because each entry is displayed separately this is more
-    verbose than the `tables` format.
+  * [The `records` sub-command](#the-records-sub-command) - this shows
+    the file contents in a high-level sub-command, ordered as they
+    appear in the file.  Because each entry is displayed separately
+    this is more verbose than the `tables` sub-command.
   
-  * [The `tokens` format](#the-tokens-format) - this displays the
-    low-level binary data and is mostly of use when debugging errors.
+  * [The `tokens` sub-command](#the-tokens-sub-command) - this
+    displays the low-level binary data and is mostly of use when
+    debugging errors.
 
-  * [The `fields` format](#the-fields-format) - a more detailed
-    low-level display that is also mostly used for debugging.
+  * [The `fields` sub-command](#the-fields-sub-command) - a more
+    detailed low-level display that is also mostly used for debugging.
 
-  * [The `grep` format](#the-grep-format) - this filters the
+  * [The `grep` sub-command](#the-grep-sub-command) - this filters the
     data and can be used to find files containing certain values.
 
-  * [The `csv` format](#the-csv-format) - used to compare test data
+  * [The `csv` sub-command](#the-csv-sub-command) - used to compare test data
     with the examples provided in the
     [SDK](https://www.thisisant.com/resources/fit).
 
@@ -43,38 +47,31 @@ is intended mainly to allow data to be imported into the ch2 diary.
 
 ## Displaying FIT Data
 
-For details of all the options:
+For a list of sub-commands:
 
     ch2 fit -h
 
-All commands take a *single* path that can contain "file globbing".
-Care should be taken that this is not expanded by the shell (write
-glob patterns in quoted strings).
+For the options a particular sub-command takes:
 
-For example
+    ch2 fit sub-command -h
 
-    ch2 fit "/dir1/**/dir2/*.fit"
-
-will match FIT files in subdirectories called `dir2` at *any depth*
-under `dir`.
-
-### The `tables` Format
+### The `tables` Sub-Command
 
 #### Example Usage
 
-    ch2 -v 0 fit FILE
+    ch2 -v 0 fit tables FILE
 
-    ch2 -v 0 fit --tables FILE
+    ch2 -v 0 fit tables FILE
 
-    ch2 -v 0 fit --tables --all-fields --all-messages FILE
+    ch2 -v 0 fit tables --all-fields --all-messages FILE
 
-    ch2 -v 0 fit --tables --after N1 --limit N2 FILE
+    ch2 -v 0 fit tables --after N1 --limit N2 FILE
 
 Note that `-v 0` is used to supress any logging that would otherwise
 confuse the output to the screen.  Logs are still written to the logs
 directory.
 
-#### Format Description
+#### Description
 
 This command displays the contents of the file in two ways:
 
@@ -233,21 +230,21 @@ Some fields could not be completely parsed.  This is not unusual with
 the FIT format, which is very extensible and incompletely documented.
 Such fields are marked by `-`.
 
-### The `records` Format
+### The `records` Sub-Command
 
 #### Example Usage
 
-    ch2 -v 0 fit --records FILE
+    ch2 -v 0 fit records FILE
 
-    ch2 -v 0 fit --records --all-fields --all-messages FILE
+    ch2 -v 0 fit records --all-fields --all-messages FILE
 
-    ch2 -v 0 fit --records --after N1 --limit N2 FILE
+    ch2 -v 0 fit records --after N1 --limit N2 FILE
 
 Note that `-v 0` is used to supress any logging that would otherwise
 confuse the output to the screen.  Logs are still written to the logs
 directory.
 
-#### Format Description
+#### Description
 
 This command displays the contents of the file as a series of
 messages, in the order they appear in the file.
@@ -418,15 +415,15 @@ Some fields could not be completely parsed.  This is not unusual with
 the FIT format, which is very extensible and incompletely documented.
 Such fields are marked by `-`.
 
-### The `tokens` Format
+### The `tokens` Sub-Command
 
 #### Example Usage
 
-    ch2 -v 0 fit --tokens FILE
+    ch2 -v 0 fit tokens FILE
 
-    ch2 -v 0 fit --tokens --after N1 --limit N2 FILE
+    ch2 -v 0 fit tokens --after N1 --limit N2 FILE
 
-#### Format Description
+#### Description
 
 Messages are displayed, one per line, as hex values.  The data are
 preceded by the record number, offset (in bytes from the file start),
@@ -487,15 +484,15 @@ and type.
 The example above shows header (HDR), definition (DFN), data (DTA),
 and checksum (CRC) messages.
 
-### The `fields` Format
+### The `fields` Sub-Command
 
 #### Example Usage
 
-    ch2 -v 0 fit --fields FILE
+    ch2 -v 0 fit fields FILE
 
-    ch2 -v 0 fit --fields --after N1 --limit N2 FILE
+    ch2 -v 0 fit fields --after N1 --limit N2 FILE
 
-#### Format Description
+#### Description
 
 Messages and fields are displayed as hex values.  The message data are
 preceded by the record number, offset (in bytes from the file start),
@@ -560,30 +557,32 @@ and type.
     237 05793 CRC 01a2
       01a2 - checksum
 
-### The `grep` Format
+### The `grep` Sub-Command
+
+The pattern(s) to match follow the `-p` argument.
 
 #### Example Usage
 
-    ch2 -v 0 fit --grep '.*' -- myfile.fit
+    ch2 -v 0 fit grep -p '.*' -- myfile.fit
 
 Prints `MSG:FLD=VAL` entries for every value in the file.
 
-    ch2 -v 0 fit *.fit --match 0 --grep '.*:sport=cycling' --name
+    ch2 -v 0 fit grep *.fit --match 0 -p '.*:sport=cycling' --name
 
 List file names (`--name`) only (`--match 0` so 0 entries displayed)
 that contain a `sport` field with the value `cycling`.
 
-    ch2 -v 0 fit *.fit --match 0 --limit-records 10 --grep '.*:sport=cycling' --not --name
+    ch2 -v 0 fit grep *.fit --match 0 --limit-records 10 -p '.*:sport=cycling' --not --name
 
 List files that *do not* contain a `cycling` value.  For efficiency
 (but at the possible risk of missing some matches) only the first 10
 records are examined.
 
-    ch2 fit --limit 10 --name --grep '.*:timestamp~2018-09-0[5-7]' -- *.fit
+    ch2 fit grep --limit 10 --name -p '.*:timestamp~2018-09-0[5-7]' -- *.fit
 
 Finds files that have timestamps between 2018-09-05 and 2018-09-07.
 
-#### Format Description
+#### Description
 
 The default output format is not compact enough for examining whole
 files, but the search (using regular expressions) allows you to check
@@ -591,7 +590,7 @@ for specific values in a file, or to identify files that meet a
 certain criteria.
 
 An (even) more verbose option is available with `--context` which
-displays the entire record (same format as `--records`).
+displays the entire record (same format as `records`).
 
 Note that for this format the file name is printed *after* any
 matches.  Also, the file name is only printed if *all* matches have
@@ -599,12 +598,12 @@ matched.
 
 #### Example Output
 
-    > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --match 0 --name 
+    > ch2 -v 0 fit grep "DI_CONNECT/**/*2000*.fit" -p '.*:sport=cycling' --match 0 --name 
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_6200097899_2016-08-20-mkt.fit
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000953_tap-sync-31410-8dbc6f38af4ddbecede6e72cdd95f3cb.fit
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000098_tap-sync-31410-1721f3de088eae17e31d3cea3042f2c1.fit
 
-    > ch2 -v 0 fit "DI_CONNECT/**/*2000*.fit" --grep '.*:sport=cycling' --name 
+    > ch2 -v 0 fit grep "DI_CONNECT/**/*2000*.fit" -p '.*:sport=cycling' --name 
     sport:sport=cycling
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_6200097899_2016-08-20-mkt.fit
     lap:sport=cycling
@@ -612,15 +611,15 @@ matched.
     lap:sport=cycling
     /archive/fit/all/DI_CONNECT/DI-Connect-Fitness/UploadedFiles_0-_Part1/andrew@acooke.org_24732000098_tap-sync-31410-1721f3de088eae17e31d3cea3042f2c1.fit
 
-### The `csv` Format
+### The `csv` Sub-Command
 
 #### Example Usage
 
-    ch2 -v 0 fit --csv FILE
+    ch2 -v 0 fit csv FILE
 
-    ch2 -v 0 fit --csv --after N1 --limit N2 FILE
+    ch2 -v 0 fit csv --after N1 --limit N2 FILE
 
-#### Format Description
+#### Description
 
 The output generated is tailored to match the CSV format used by the
 FIT SDK in their examples.  Exceptions are decribed in [implementation
@@ -646,24 +645,11 @@ and limitations](#implementation-and-limitations).
 
 ## Third Party API Use
 
-The main entry point is `filtered_records` in `choochoo.fit.format.read`.
-
-This takes the following arguments:
-
-* `log` - an instance of the standard Python logger.
-
-* `fit_path` - the path to the FIT format file.
-
-* `after=0` - the number of records to skip on reading.
-
-* `limit=-1` - the number of records to return on reading (-1 implines all).
-
-* `profile_path=None` - the path to the `Profile.xlsx` file in the
-  sdk.  If `None` then the "pickled" cache is used.
+The main entry point is `filtered_records` in
+`choochoo.fit.format.read`.  The only required argument is the binary
+data read from a FIT file.
 
 It returns the following values:
-
-* `data` - the raw data (`bytes`) from the FIT file
 
 * `types` - an instance of `choochoo.fit.profile.types.Types`
   describing the types in `Profile.xlsx` (the first sheet).
