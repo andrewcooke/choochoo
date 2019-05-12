@@ -1,6 +1,13 @@
 
 ## Latest Changes
 
+### v0.20.0
+
+Modified `ch2 fit` to use sub-command syntax (so `ch2 fit records`
+instead of `ch2 fit --records`).  This gives more feedback and better
+structured help from argparse.  Also, recent code has a bunch of fixes
+from user feedback, so it seemed worth making a new minor release.
+
 ### v0.19.0
 
 Added composite sources to simplify dependencies between data.  Fixes

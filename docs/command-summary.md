@@ -115,30 +115,33 @@ Display a summary for the month / year / schedule.
 
 ## fit
 
-    > ch2 fit PATH [PATH ...]
+    > ch2 fit SUB-COMMAND PATH [PATH ...]
 
 Print the contents of fit files.
 
-The format and details displayed can be selected with --records, --tables,
---grep, --messages, --fields, and --csv.
+The format and details displayed is selected by the sub-command: records,
+tables, messages, fields, csv and grep (the last requiring patterns to match
+against).
 
-For full options see `ch2 fit -h`.
+For a list of sub-commands options see `ch2 fit -h`.
+
+For options for a particular sub-command see `ch2 fit sub-command -h`.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
 
 ### Examples
 
-    > ch2 -v 0 fit --records ride.fit
+    > ch2 -v 0 fit records ride.fit
 
 Will print the contents of the file to stdout (use `-v 0` to suppress logging
 or redirect stderr elsewhere).
 
-    > ch2 -v 0 fit --grep '.*:sport=cycling' --match 0 --name
+    > ch2 -v 0 fit grep -p '.*:sport=cycling' --match 0 --name
     directory/**/*.fit
 
 Will list file names that contain cycling data.
 
-    > ch2 fit --grep PATTERN -- FILE
+    > ch2 fit grep -p PATTERN -- FILE
 
 You may need a `--` between patterns and file paths so that the argument
 parser can decide where patterns finish and paths start.    
