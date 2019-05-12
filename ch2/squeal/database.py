@@ -65,9 +65,9 @@ class Database:
 
     def __init__(self, args, log):
         self._log = log
-        path = args.file(DATABASE)
-        self._log.info('Using database at %s' % path)
-        self.engine = create_engine('sqlite:///%s' % path, echo=False)
+        self.path = args.file(DATABASE)
+        self._log.info('Using database at %s' % self.path)
+        self.engine = create_engine('sqlite:///%s' % self.path, echo=False)
         self.session = sessionmaker(bind=self.engine)
         self.__create_tables()
 

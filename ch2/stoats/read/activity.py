@@ -40,7 +40,7 @@ class ActivityReader(MultiProcFitReader):
             constants = ' '.join(f'-D "{constant}"' for constant in self.constants) + ' -- '
         else:
             constants = ''
-        return f'{{ch2}} -v0 -l {{log}} {ACTIVITIES} {mm(WORKER)} {self.id} ' \
+        return f'{{ch2}} -v0 -l {{log}} -f {self._db.path} {ACTIVITIES} {mm(WORKER)} {self.id} ' \
             f'{mm(FAST)} {mm(FORCE) if self.force else ""} {constants}'
 
     def _startup(self, s):
