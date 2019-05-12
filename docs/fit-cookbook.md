@@ -189,7 +189,7 @@ Note that:
 In the recipe above data were dropped after the first 4975 bytes.  We
 can see what records that affected as follows:
 
-    > ch2 fit myfile.fit --records --after-bytes 4975
+    > ch2 fit records --after-bytes 4975 myfile.fit
         INFO: Version 0.19.15
         INFO: Using database at ...
     
@@ -239,7 +239,7 @@ Notice how the record numbers are `207`, `209`, and `211`.  Since
 those are not consecutive there must be some internal messages also
 present.  We can display those too:
 
-    > ch2 fit myfile.fit --records --after-bytes 4975 --internal
+    > ch2 fit records --after-bytes 4975 --internal myfile.fit
         INFO: Version 0.19.15
         INFO: Using database at ...
     
@@ -320,7 +320,7 @@ exciting.
 
 We can also see the same data in binary form.  For example:
 
-    > ch2 fit myfile.fit --tokens --after-bytes 4975 --internal
+    > ch2 fit tokens --after-bytes 4975 myfile.fit
         INFO: Version 0.19.15
         INFO: Using database at ...
     207 04975 DTA 00b687bc35f981bc35b5a33ae82425cacdb0bc3ae8a234cacd8e1c120049270f009f730800ffffffff7dbd3ae84f37cecd964739e82425cacd0000b500c9159e1e4e003100ffffffffffffffff0901ffffffffff0702ff007f7fffffffff
@@ -431,7 +431,7 @@ timestamps have the same relative increment as before.
 For some reason we want to know if a file contains any speed values
 over 7 m/s:
 
-    > ch2 fit --grep '.*speed>7' --compact myfile.fit
+    > ch2 fit grep -p '.*speed>7' --compact myfile.fit
         INFO: Version 0.19.15
         INFO: Using database at ...
     record:enhanced_speed=7.521
@@ -459,7 +459,7 @@ over 7 m/s:
 Seeing the results above we'd like to know more about the records
 where we were over 7.5m/s:
 
-    > ch2 fit --grep 'record:enhanced_speed>7' --context myfile.fit
+    > ch2 fit grep -p 'record:enhanced_speed>7' --context myfile.fit
         INFO: Version 0.19.15
         INFO: Using database at ...
     
@@ -499,7 +499,7 @@ the last of these is for regular expression matching on the value.
 
 This has made us curious.  Do we have any rides where we exceed 17m/s?
 
-    > ch2 fit --grep 'record:enhanced_speed>17' --match 0 --name *.fit
+    > ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name *.fit
         INFO: Version 0.19.15
         INFO: Using database at ...
     2017-01-31-lad.fit
@@ -519,7 +519,7 @@ The "usual" display options lets us restrict the range of records or
 bytes, but not timestamps (or any other field).  But we can work
 around this by using `--grep`:
 
-    > ch2 fit --grep --context '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit
+    > ch2 fit grep -p '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit
         INFO: Version 0.19.15
         INFO: Using database at ...
     

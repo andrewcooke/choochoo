@@ -109,6 +109,7 @@ O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
 PASS = 'pass'
 PATH = 'path'
+P, PATTERN = 'p', 'pattern'
 PLAN = 'plan'
 PRINT = 'print'
 PROFILE_VERSION = 'profile-version'
@@ -308,58 +309,74 @@ def parser():
                                help='show summary for given schedule')
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
-    fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',
-                     help='path to fit file')
-    fit_format = fit.add_argument_group(title='output format (one required)').add_mutually_exclusive_group(required=True)
-    fit_format.add_argument(mm(GREP), action='store', dest=GREP, nargs='+', metavar='MSG:FLD[=VAL]',
-                            help='show matching entries')
-    fit_format.add_argument(mm(RECORDS), action='store_const', dest=FORMAT, const=RECORDS,
-                            help='show high-level structure (ordered by time)')
-    fit_format.add_argument(mm(TABLES), action='store_const', dest=FORMAT, const=TABLES,
-                            help='show high-level structure (grouped in tables)')
-    fit_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV,
-                            help='show high-level structure (in CSV format)')
-    fit_format.add_argument(mm(TOKENS), action='store_const', dest=FORMAT, const=TOKENS,
-                            help='show low-level tokens')
-    fit_format.add_argument(mm(FIELDS), action='store_const', dest=FORMAT, const=FIELDS,
-                            help='show low-level fields (within tokens)')
-    fit.add_argument(mm(AFTER_RECORDS), action='store', type=int, metavar='N', default=None,
-                     help='skip initial records')
-    fit.add_argument(mm(LIMIT_RECORDS), action='store', type=int, metavar='N', default=-1,
-                     help='limit number of records displayed')
-    fit.add_argument(mm(AFTER_BYTES), action='store', type=int, metavar='N', default=None,
-                     help='skip initial bytes')
-    fit.add_argument(mm(LIMIT_BYTES), action='store', type=int, metavar='N', default=-1,
-                     help='limit number of bytes displayed')
-    fit.add_argument(mm(INTERNAL), action='store_true',
-                     help='display internal messages')
-    fit.add_argument(mm(ALL_MESSAGES), action='store_true',
-                     help='display undocumented messages')
-    fit.add_argument(mm(ALL_FIELDS), action='store_true',
-                     help='display undocumented fields')
-    fit.add_argument(m(M), mm(MESSAGE), action='store', nargs='+', metavar='MSG',
-                     help='display named messages (--grep, --records, --tables)')
-    fit.add_argument(m(F), mm(FIELD), action='store', nargs='+', metavar='FLD',
-                     help='display named fields (--grep, --records, --tables')
-    fit.add_argument(m(W), mm(WARN), action='store_true',
-                     help='log additional warnings')
-    fit.add_argument(mm(WIDTH), action='store', type=int,
-                     help='display width for some formats')
-    fit.add_argument(mm(no(VALIDATE)), action='store_true',
-                     help='do not validate checksum, length')
-    fit.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
-                     help='max seconds between timestamps (and non-decreasing)')
-    fit.add_argument(mm(NAME), action='store_true',
-                     help='print file name')
-    fit.add_argument(mm(NOT), action='store_true',
-                     help='print file names that don\'t match (--grep --name)')
-    fit.add_argument(mm(MATCH), action='store', type=int, default=-1,
-                     help='max number of matches (--grep, default -1 for all)')
-    fit.add_argument(mm(COMPACT), action='store_true',
-                     help='no space between records (--grep)')
-    fit.add_argument(mm(CONTEXT), action='store_true',
-                     help='display entire record (--grep)')
-    fit.set_defaults(format=GREP)   # because that's the only one not set if the option is used
+    fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    fit_grep = fit_cmds.add_parser(GREP, help='show matching entries')
+    fit_records = fit_cmds.add_parser(RECORDS, help='show high-level structure (ordered by time)')
+    fit_tables = fit_cmds.add_parser(TABLES, help='show high-level structure (grouped in tables)')
+    fit_csv = fit_cmds.add_parser(CSV, help='show high-level structure (in CSV format)')
+    fit_tokens = fit_cmds.add_parser(TOKENS, help='show low-level tokens')
+    fit_fields = fit_cmds.add_parser(FIELDS, help='show low-level fields (within tokens)')
+
+    def add_fit_general(cmd):
+        cmd.add_argument(mm(AFTER_RECORDS), action='store', type=int, metavar='N', default=None,
+                         help='skip initial records')
+        cmd.add_argument(mm(LIMIT_RECORDS), action='store', type=int, metavar='N', default=-1,
+                         help='limit number of records displayed')
+        cmd.add_argument(mm(AFTER_BYTES), action='store', type=int, metavar='N', default=None,
+                         help='skip initial bytes')
+        cmd.add_argument(mm(LIMIT_BYTES), action='store', type=int, metavar='N', default=-1,
+                         help='limit number of bytes displayed')
+        cmd.add_argument(m(W), mm(WARN), action='store_true',
+                         help='log additional warnings')
+        cmd.add_argument(mm(no(VALIDATE)), action='store_true',
+                         help='do not validate checksum, length')
+        cmd.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
+                         help='validate seconds between timestamps (and non-decreasing)')
+        cmd.add_argument(mm(NAME), action='store_true',
+                         help='print file name')
+        cmd.add_argument(PATH, action='store', metavar='PATH', nargs='+',
+                         help='path to fit file')
+
+    def add_fit_grep(cmd):
+        cmd.add_argument(mm(NOT), action='store_true',
+                         help='print file names that don\'t match (with --name)')
+        cmd.add_argument(mm(MATCH), action='store', type=int, default=-1,
+                         help='max number of matches (default -1 for all)')
+        cmd.add_argument(mm(COMPACT), action='store_true',
+                         help='no space between records')
+        cmd.add_argument(mm(CONTEXT), action='store_true',
+                         help='display entire record')
+        cmd.add_argument(m(P), mm(PATTERN), action='store', nargs='+', metavar='MSG:FLD[=VAL]', required=True,
+                         help='pattern to match (separate from PATH with --)')
+
+    def add_fit_high_level(cmd):
+        cmd.add_argument(m(M), mm(MESSAGE), action='store', nargs='+', metavar='MSG',
+                         help='display named messages')
+        cmd.add_argument(m(F), mm(FIELD), action='store', nargs='+', metavar='FLD',
+                         help='display named fields')
+        cmd.add_argument(mm(INTERNAL), action='store_true',
+                         help='display internal messages')
+
+    def add_fit_very_high_level(cmd):
+        cmd.add_argument(mm(ALL_MESSAGES), action='store_true',
+                         help='display undocumented messages')
+        cmd.add_argument(mm(ALL_FIELDS), action='store_true',
+                         help='display undocumented fields')
+
+    for cmd in fit_grep, fit_records, fit_tables, fit_csv, fit_tokens, fit_fields:
+        add_fit_general(cmd)
+
+    for cmd in fit_records, fit_tables, fit_csv:
+        add_fit_high_level(cmd)
+
+    for cmd in fit_records, fit_tables:
+        add_fit_very_high_level(cmd)
+
+    add_fit_grep(fit_grep)
+
+    for cmd in fit_grep, fit_records, fit_tables:
+        cmd.add_argument(mm(WIDTH), action='store', type=int,
+                         help='display width')
 
     fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')
     fix_fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',

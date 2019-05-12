@@ -15,6 +15,7 @@ from ..lib.utils import unique
 log = getLogger(__name__)
 
 
+# this logic now only used in testing - moved to ch2.commands.fit
 def summarize(format, data, all_fields=False, all_messages=False, internal=False,
               after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
               messages=None, fields=None, warn=False, profile_path=None, grep=None,

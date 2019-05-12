@@ -110,8 +110,8 @@ can see what records that affected as follows:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fit myfile.fit --records --after-bytes 4975"
-dev/ch2 fit data/test/source/personal/2018-07-26-rec.fit --records --after-bytes 4975 > $out 2>&1
+echo "    > ch2 fit records --after-bytes 4975 myfile.fit"
+dev/ch2 fit records --after-bytes 4975 data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
 sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed 's/^/    /' $out
@@ -132,8 +132,8 @@ present.  We can display those too:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fit myfile.fit --records --after-bytes 4975 --internal"
-dev/ch2 fit data/test/source/personal/2018-07-26-rec.fit --records --after-bytes 4975 --internal > $out 2>&1
+echo "    > ch2 fit records --after-bytes 4975 --internal myfile.fit"
+dev/ch2 fit records --after-bytes 4975 --internal data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
 sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed 's/^/    /' $out
@@ -145,8 +145,8 @@ We can also see the same data in binary form.  For example:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fit myfile.fit --tokens --after-bytes 4975 --internal"
-dev/ch2 fit data/test/source/personal/2018-07-26-rec.fit --tokens --after-bytes 4975 --internal > $out 2>&1
+echo "    > ch2 fit tokens --after-bytes 4975 myfile.fit"
+dev/ch2 fit tokens --after-bytes 4975 data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
 sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed 's/^/    /' $out
@@ -195,8 +195,8 @@ over 7 m/s:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fit --grep '.*speed>7' --compact myfile.fit"
-dev/ch2 fit --grep '.*speed>7' --compact data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
+echo "    > ch2 fit grep -p '.*speed>7' --compact myfile.fit"
+dev/ch2 fit grep -p '.*speed>7' --compact data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
 sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed 's/^/    /' $out
@@ -208,8 +208,8 @@ where we were over 7.5m/s:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fit --grep 'record:enhanced_speed>7' --context myfile.fit"
-dev/ch2 fit --grep 'record:enhanced_speed>7.5' --context data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
+echo "    > ch2 fit grep -p 'record:enhanced_speed>7' --context myfile.fit"
+dev/ch2 fit grep -p 'record:enhanced_speed>7.5' --context data/test/source/personal/2018-07-26-rec.fit > $out 2>&1
 sed -i 's|data/test/source/personal/2018-07-26-rec|myfile|g' $out
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed 's/^/    /' $out
@@ -225,8 +225,8 @@ This has made us curious.  Do we have any rides where we exceed 17m/s?
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fit --grep 'record:enhanced_speed>17' --match 0 --name *.fit"
-dev/ch2 fit --grep 'record:enhanced_speed>17' --match 0 --name ~/archive/fit/bike/2017-0*.fit > $out 2>&1
+echo "    > ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name *.fit"
+dev/ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name ~/archive/fit/bike/2017-0*.fit > $out 2>&1
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed -i 's|/home/andrew/archive/fit/bike/||g' $out
 sed 's/^/    /' $out
@@ -242,8 +242,8 @@ around this by using `--grep`:
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 fit --grep --context '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit"
-dev/ch2 fit --grep '.*speed' '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- ~/archive/fit/bike/2018-03-04-qdp.fit > $out 2>&1
+echo "    > ch2 fit grep -p '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit"
+dev/ch2 fit grep -p '.*speed' '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- ~/archive/fit/bike/2018-03-04-qdp.fit > $out 2>&1
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
 sed -i 's|~/archive/fit/bike/2018-03-04-qdp.fit|myfile.fit|g' $out
 sed 's/^/    /' $out
