@@ -17,6 +17,8 @@ data manually.
 
 ![](docs/graphic-similarity.png)
 
+![](docs/calendar.png)
+
 ## Technical Overview
 
 The system includes:
