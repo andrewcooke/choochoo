@@ -6,16 +6,15 @@ from bokeh.layouts import column
 from bokeh.plotting import show
 
 from ch2.data import *
-from ch2.lib import to_date
 from ch2.stoats.names import _log
 from ch2.uranus.decorator import template
 
 
 @template
-def health(local_time: to_date):  # todo - date not used?
+def health():
 
-    f'''
-    # Health: {local_time.split()[0]}
+    '''
+    # Health
     '''
 
     '''

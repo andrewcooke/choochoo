@@ -83,6 +83,8 @@ def status(db):
 
 
 def templates():
+    log.debug(dir(template))
+    log.debug(template.__file__)
     for importer, modname, ispkg in iter_modules(template.__path__):
         module = getattr(template, modname)
         function = getattr(module, modname)

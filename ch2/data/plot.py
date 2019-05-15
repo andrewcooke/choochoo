@@ -1,19 +1,24 @@
 
 import datetime as dt
 from calendar import month_abbr, day_abbr
+from logging import getLogger
 
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.layouts import column, row
 from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Plot, Rect, \
-    ColumnDataSource, Label
+    ColumnDataSource, Label, Title, SaveTool
 from bokeh.plotting import figure
 from math import sqrt, pi
 
+from ch2.lib import time_to_local_time
+from ch2.lib.date import YMD
 from .frame import present
 from ..stoats.names import LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, CLIMB_ELEVATION, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, DISTANCE_KM, ELEVATION_M, CALENDAR_X, CALENDAR_Y, CALENDAR_SIZE, \
-    CALENDAR_COLOR, ACTIVE_DISTANCE, CALENDAR_WEEK
+    ACTIVE_DISTANCE, CALENDAR_WEEK, CALENDAR_FILL, CALENDAR_LINE, CALENDAR
+
+log = getLogger(__name__)
 
 _max, _min = max, min
 
@@ -280,23 +285,25 @@ def tile(maps, n):
     return column([row(maps[i:i + n]) for i in range(0, len(maps), n)])
 
 
-def calendar_size(source, name, min=None, max=None, gamma=1, key=CALENDAR_SIZE):
-    min = min or source[name].min()
-    max = max or source[name].max()
-    source[key] = ((source[name] - min) / (max - min)) ** gamma
+def calendar_size(source, name, lo=None, hi=None, min=0, max=1, gamma=1, key=CALENDAR_SIZE):
+    lo = source[name].min() if lo is None else lo
+    hi = source[name].max() if hi is None else hi
+    source[key] = min + (max - min) * ((source[name] - lo) / (hi - lo)) ** gamma
 
 
-def calendar_color(source, name, palette, min=None, max=None, gamma=1):
-    calendar_size(source, name, min=min, max=max, gamma=gamma, key=CALENDAR_COLOR)
+def calendar_color(source, name, palette, lo=None, hi=None, min=0, max=1, gamma=1, key=CALENDAR_FILL):
+    calendar_size(source, name, lo=lo, hi=hi, min=min, max=max, gamma=gamma, key=key)
     n = len(palette)
-    source[CALENDAR_COLOR] = source[CALENDAR_COLOR].map(lambda x: palette[_max(0, _min(n-1, int(x * n)))])
+    source[key] = source[key].map(lambda x: palette[_max(0, _min(n-1, int(x * n)))])
 
 
-def calendar_plot(nx, source, color=CALENDAR_COLOR, background='lightgrey',
-                  border_day=0.25, border_month=0.4, border_year=0.4):
+def calendar_plot(source, fill=CALENDAR_FILL, fill_alpha=1,
+                  line='black', line_alpha=0, line_width=1, background='lightgrey',
+                  scale=13, border_day=0.25, border_month=0.4, border_year=0.4, title=None, hover=None):
 
     start, finish = source.index.min(), source.index.max()
     delta_year = 7 * (1 + border_day) + border_year
+    source[LOCAL_TIME] = source.index.map(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     def set_xy(df):
         offset = dict((y, dt.date(year=y, month=1, day=1).weekday() - 1) for y in range(start.year, finish.year+1))
@@ -304,30 +311,38 @@ def calendar_plot(nx, source, color=CALENDAR_COLOR, background='lightgrey',
         df[CALENDAR_X] = df[CALENDAR_WEEK] * (1 + border_day) + df.index.month * border_month
         df[CALENDAR_Y] = -1 * (df.index.dayofweek * (1 + border_day) + (df.index.year - start.year) * delta_year)
 
-    all_dates = pd.DataFrame(data={CALENDAR_COLOR: background, CALENDAR_SIZE: 1},
+    all_dates = pd.DataFrame(data={CALENDAR_FILL: 'black', CALENDAR_LINE: background, CALENDAR_SIZE: 1},
                              index=pd.date_range(start, finish))
     set_xy(all_dates)
     xlo, xhi = all_dates[CALENDAR_X].min(), all_dates[CALENDAR_X].max()
     ylo, yhi = all_dates[CALENDAR_Y].min(), all_dates[CALENDAR_Y].max()
-    ny = int(nx * (yhi - ylo) / (xhi - xlo) + 0.5)
+    nx, ny = int(scale * (xhi - xlo)), int(scale * (yhi - ylo))
 
-    p = Plot(x_range=Range1d(xlo - 4, xhi + 4), y_range=Range1d(ylo - 1, yhi + 4), width=nx, height=ny)
+    tools = [SaveTool()]
+    hover = [col for col in source.columns if not col.startswith(CALENDAR)] if hover is None else hover
+    if hover:
+        # names ensures that background has no hover
+        tools.append(HoverTool(tooltips=[tooltip(col) for col in hover], names=['source']))
+    p = Plot(x_range=Range1d(xlo - 4, xhi + 4), y_range=Range1d(ylo - 1, yhi + 4), width=nx, height=ny,
+             title=Title(text=title), tools=tools)
 
-    def add_rect(df, fill_alpha=1, line_alpha=0):
-        rect = Rect(x=CALENDAR_X, y=CALENDAR_Y, width=CALENDAR_SIZE, height=CALENDAR_SIZE,
-                    fill_color=CALENDAR_COLOR, fill_alpha=fill_alpha,
-                    line_color=CALENDAR_COLOR, line_alpha=line_alpha)
-        return p.add_glyph(ColumnDataSource(df), rect)
+    def add_rect(df, fill_alpha=fill_alpha, line_alpha=line_alpha, line_width=line_width, name=None):
+        rect = Rect(name=name, x=CALENDAR_X, y=CALENDAR_Y, width=CALENDAR_SIZE, height=CALENDAR_SIZE,
+                    fill_color=CALENDAR_FILL, fill_alpha=fill_alpha,
+                    line_color=CALENDAR_LINE, line_alpha=line_alpha, line_width=line_width)
+        return p.add_glyph(ColumnDataSource(df), rect, name=name)
 
     if background:
-        add_rect(all_dates, fill_alpha=0, line_alpha=1)
+        add_rect(all_dates, fill_alpha=0, line_alpha=1, line_width=1)
 
     set_xy(source)
     if CALENDAR_SIZE not in source.columns:
         source[CALENDAR_SIZE] = 1
-    if color not in source.columns:
-        source[CALENDAR_COLOR] = color
-    add_rect(source)
+    if fill not in source.columns:
+        source[CALENDAR_FILL] = fill
+    if line not in source.columns:
+        source[CALENDAR_LINE] = line
+    add_rect(source, name='source')
 
     for y in range(start.year, finish.year+1):
         p.add_layout(Label(x=xhi+1.1, y=(start.year - y - 0.4) * delta_year, text=str(y),
@@ -340,12 +355,12 @@ def calendar_plot(nx, source, color=CALENDAR_COLOR, background='lightgrey',
         p.add_layout(Label(x=xlo + dx*(m+0.5), y=yhi+1.5, text=text,
                            text_align='center', text_baseline='bottom'))
 
+    p.toolbar.logo = None
     return p
 
 
 if __name__ == '__main__':
     from .frame import session, statistics
-
     s = session('-v5')
     df = statistics(s, ACTIVE_DISTANCE)
     calendar_plot(1000, df)

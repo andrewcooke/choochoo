@@ -240,7 +240,7 @@ class DailyDiary(Diary):
         similar_activities(aj1.start, aj1.activity_group.name)
 
     def __show_health(self, w, date):
-        health(date.strftime(YMD))
+        health()
 
 
 class ScheduleDiary(Diary):
