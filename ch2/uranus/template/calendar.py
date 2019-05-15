@@ -36,7 +36,7 @@ def calendar():
     df.loc[df[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0
 
     calendar_size(df, ACTIVE_DISTANCE, min=0.1, gamma=0.5)
-    p = calendar_plot(df, title='Distance and Time', fill='black',
+    p = calendar_plot(df, title='Distance', fill='black',
                       hover=(DISTANCE_KM, 'Duration', TOTAL_CLIMB, LOCAL_TIME))
 
     show(p)
