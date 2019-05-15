@@ -300,8 +300,7 @@ def calendar_color(source, name, palette, lo=None, hi=None, min=0, max=1, gamma=
 def calendar_plot(source,
                   fill=CALENDAR_FILL, fill_alpha=1,
                   line='black', line_alpha=0.5, line_width=1,
-                  background_fill='lightgrey', background_fill_alpha=0,
-                  background_line='lightgrey', background_line_alpha=1,
+                  background='line', background_color='lightgrey',
                   scale=13, border_day=0.25, border_month=0.4, border_year=0.4, title=None, hover=None):
 
     start, finish = source.index.min(), source.index.max()
@@ -314,7 +313,7 @@ def calendar_plot(source,
         df[CALENDAR_X] = df[CALENDAR_WEEK] * (1 + border_day) + df.index.month * border_month
         df[CALENDAR_Y] = -1 * (df.index.dayofweek * (1 + border_day) + (df.index.year - start.year) * delta_year)
 
-    all_dates = pd.DataFrame(data={CALENDAR_FILL: background_fill, CALENDAR_LINE: background_line, CALENDAR_SIZE: 1},
+    all_dates = pd.DataFrame(data={CALENDAR_FILL: background_color, CALENDAR_LINE: background_color, CALENDAR_SIZE: 1},
                              index=pd.date_range(start, finish))
     set_xy(all_dates)
     xlo, xhi = all_dates[CALENDAR_X].min(), all_dates[CALENDAR_X].max()
@@ -335,7 +334,8 @@ def calendar_plot(source,
                     line_color=CALENDAR_LINE, line_alpha=line_alpha, line_width=line_width)
         return p.add_glyph(ColumnDataSource(df), rect, name=name)
 
-    add_rect(all_dates, fill_alpha=background_fill_alpha, line_alpha=background_line_alpha, line_width=1)
+    add_rect(all_dates, fill_alpha=1 if background == 'fill' else 0,
+             line_alpha=1 if background == 'line' else 0, line_width=1)
 
     set_xy(source)
     if CALENDAR_SIZE not in source.columns:

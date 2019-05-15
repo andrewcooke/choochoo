@@ -23,9 +23,9 @@ def calendar():
     output_file(filename='/dev/null')
 
     '''
-    ## Distance and Time
+    ## Distance
 
-    Larger distances have larger symbols.  Longer rides have "hotter" colours.
+    Larger distances have larger symbols.
     
     Place the cursor over the symbol for more information.
     '''
@@ -36,8 +36,8 @@ def calendar():
     df.loc[df[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0
 
     calendar_size(df, ACTIVE_DISTANCE, min=0.1, gamma=0.5)
-    calendar_color(df, ACTIVE_TIME, magma(256))
-    p = calendar_plot(df, title='Distance and Time', hover=(DISTANCE_KM, 'Duration', TOTAL_CLIMB, LOCAL_TIME))
+    p = calendar_plot(df, title='Distance and Time', fill='black',
+                      hover=(DISTANCE_KM, 'Duration', TOTAL_CLIMB, LOCAL_TIME))
 
     show(p)
 
@@ -51,7 +51,7 @@ def calendar():
 
     calendar_size(df, ACTIVE_DISTANCE, min=0.1, gamma=0.5)
     calendar_color(df, TOTAL_CLIMB, magma(256))
-    p = calendar_plot(df, title='Distance and Climb', background_fill_alpha=0.5, background_line_alpha=0,
+    p = calendar_plot(df, title='Distance and Climb', background='fill',
                       hover=(DISTANCE_KM, 'Duration', TOTAL_CLIMB, LOCAL_TIME))
 
     show(p)
@@ -72,6 +72,6 @@ def calendar():
     df['FF Ratio'] = df[fatigue] / df[fitness]
     calendar_size(df, fitness, min=0.1, gamma=0.5)
     calendar_color(df, 'FF Ratio', magma(256), lo=0.5, hi=2, min=0)
-    p = calendar_plot(df, title='Fitness and Fatigue', background_line_alpha=0)
+    p = calendar_plot(df, title='Fitness and Fatigue', background=None, border_month=0)
 
     show(p)
