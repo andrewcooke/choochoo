@@ -51,7 +51,8 @@ def calendar():
 
     calendar_size(df, ACTIVE_DISTANCE, min=0.1, gamma=0.5)
     calendar_color(df, TOTAL_CLIMB, magma(256))
-    p = calendar_plot(df, title='Distance and Climb', hover=(DISTANCE_KM, 'Duration', TOTAL_CLIMB, LOCAL_TIME))
+    p = calendar_plot(df, title='Distance and Climb', background_fill_alpha=0.5, background_line_alpha=0,
+                      hover=(DISTANCE_KM, 'Duration', TOTAL_CLIMB, LOCAL_TIME))
 
     show(p)
 
@@ -71,6 +72,6 @@ def calendar():
     df['FF Ratio'] = df[fatigue] / df[fitness]
     calendar_size(df, fitness, min=0.1, gamma=0.5)
     calendar_color(df, 'FF Ratio', magma(256), lo=0.5, hi=2, min=0)
-    p = calendar_plot(df, title='Fitness', background=None, line_alpha=0.5)
+    p = calendar_plot(df, title='Fitness and Fatigue', background_line_alpha=0)
 
     show(p)
