@@ -1,16 +1,21 @@
 
 import datetime as dt
-from math import sqrt
+from calendar import month_abbr, day_abbr
 
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.layouts import column, row
-from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis
+from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Plot, Rect, \
+    ColumnDataSource, Label
 from bokeh.plotting import figure
+from math import sqrt, pi
 
 from .frame import present
 from ..stoats.names import LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, CLIMB_ELEVATION, SPHERICAL_MERCATOR_X, \
-    SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, DISTANCE_KM, ELEVATION_M
+    SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, DISTANCE_KM, ELEVATION_M, CALENDAR_X, CALENDAR_Y, CALENDAR_SIZE, \
+    CALENDAR_COLOR, ACTIVE_DISTANCE, CALENDAR_WEEK
+
+_max, _min = max, min
 
 
 def col_to_boxstats(frame, name):
@@ -35,10 +40,13 @@ def box_plot(f, col):
     Generate a boxplot for a column (pandas series) containing a tuple of 5 values
     (index date) as provided by summary statistics,
     '''
+
     def pick(n):
         def pick(x):
             return x[n] if x else None
+
         return pick
+
     q = [col.map(pick(i)) for i in range(5)]
     f.segment(q[0].index, q[0], q[1].index, q[1])
     f.vbar(q[1].index, dt.timedelta(days=20), q[1], q[2], fill_alpha=0)
@@ -65,14 +73,14 @@ def subtract(a, c, key, col):
     c = c.loc[c[key] <= limit, cols]
     both = a.merge(c, how='outer', on=key, sort=True, suffixes=('_a', '_c'))
     both.interpolate(inplace=True, limit_direction='both')
-    return pd.DataFrame({col: both[col+'_a'] - both[col+'_c'], key: both[key]})
+    return pd.DataFrame({col: both[col + '_a'] - both[col + '_c'], key: both[key]})
 
 
 def patches(x, y, diff):
     y = diff.set_index(x)[y]
     range = y.abs().max() * 1.1
-    green = y.clip(lower=0).append(pd.Series([0, 0], index=[y.index[len(y)-1], y.index[0]]))
-    red = y.clip(upper=0).append(pd.Series([0, 0], index=[y.index[len(y)-1], y.index[0]]))
+    green = y.clip(lower=0).append(pd.Series([0, 0], index=[y.index[len(y) - 1], y.index[0]]))
+    red = y.clip(upper=0).append(pd.Series([0, 0], index=[y.index[len(y) - 1], y.index[0]]))
     return green, red, Range1d(start=-range, end=range)
 
 
@@ -146,7 +154,7 @@ def add_climbs(f, climbs, source):
 def histogram_plot(nx, ny, x, source, xlo=None, xhi=None, nsub=5):
     xlo, xhi = source[x].min() if xlo is None else xlo, source[x].max() if xhi is None else xhi
     bins = pd.interval_range(start=xlo, end=xhi, periods=nsub * (xhi - xlo), closed='left')
-    c = [palettes.Inferno[int(xhi-xlo+1)][int(b.left-xlo)] for b in bins]
+    c = [palettes.Inferno[int(xhi - xlo + 1)][int(b.left - xlo)] for b in bins]
     hrz_categorized = pd.cut(source[x], bins)
     counts = hrz_categorized.groupby(hrz_categorized).count()
     f = figure(plot_width=nx, plot_height=ny, x_range=Range1d(start=xlo, end=xhi), x_axis_label=x)
@@ -216,6 +224,7 @@ def dot_plotter():
 def bar_plotter(delta):
     def plotter(f, x=None, y=None, source=None, **kargs):
         f.vbar(x=x, width=delta, top=y, source=source, **kargs)
+
     return plotter
 
 
@@ -268,4 +277,75 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
 
 
 def tile(maps, n):
-    return column([row(maps[i:i+n]) for i in range(0, len(maps), n)])
+    return column([row(maps[i:i + n]) for i in range(0, len(maps), n)])
+
+
+def calendar_size(source, name, min=None, max=None, gamma=1, key=CALENDAR_SIZE):
+    min = min or source[name].min()
+    max = max or source[name].max()
+    source[key] = ((source[name] - min) / (max - min)) ** gamma
+
+
+def calendar_color(source, name, palette, min=None, max=None, gamma=1):
+    calendar_size(source, name, min=min, max=max, gamma=gamma, key=CALENDAR_COLOR)
+    n = len(palette)
+    source[CALENDAR_COLOR] = source[CALENDAR_COLOR].map(lambda x: palette[_max(0, _min(n-1, int(x * n)))])
+
+
+def calendar_plot(nx, source, color=CALENDAR_COLOR, background='lightgrey',
+                  border_day=0.25, border_month=0.4, border_year=0.4):
+
+    start, finish = source.index.min(), source.index.max()
+    delta_year = 7 * (1 + border_day) + border_year
+
+    def set_xy(df):
+        offset = dict((y, dt.date(year=y, month=1, day=1).weekday() - 1) for y in range(start.year, finish.year+1))
+        df[CALENDAR_WEEK] = df.index.map(lambda index: (index.dayofyear + offset[index.year]) // 7)
+        df[CALENDAR_X] = df[CALENDAR_WEEK] * (1 + border_day) + df.index.month * border_month
+        df[CALENDAR_Y] = -1 * (df.index.dayofweek * (1 + border_day) + (df.index.year - start.year) * delta_year)
+
+    all_dates = pd.DataFrame(data={CALENDAR_COLOR: background, CALENDAR_SIZE: 1},
+                             index=pd.date_range(start, finish))
+    set_xy(all_dates)
+    xlo, xhi = all_dates[CALENDAR_X].min(), all_dates[CALENDAR_X].max()
+    ylo, yhi = all_dates[CALENDAR_Y].min(), all_dates[CALENDAR_Y].max()
+    ny = int(nx * (yhi - ylo) / (xhi - xlo) + 0.5)
+
+    p = Plot(x_range=Range1d(xlo - 4, xhi + 4), y_range=Range1d(ylo - 1, yhi + 4), width=nx, height=ny)
+
+    def add_rect(df, fill_alpha=1, line_alpha=0):
+        rect = Rect(x=CALENDAR_X, y=CALENDAR_Y, width=CALENDAR_SIZE, height=CALENDAR_SIZE,
+                    fill_color=CALENDAR_COLOR, fill_alpha=fill_alpha,
+                    line_color=CALENDAR_COLOR, line_alpha=line_alpha)
+        return p.add_glyph(ColumnDataSource(df), rect)
+
+    if background:
+        add_rect(all_dates, fill_alpha=0, line_alpha=1)
+
+    set_xy(source)
+    if CALENDAR_SIZE not in source.columns:
+        source[CALENDAR_SIZE] = 1
+    if color not in source.columns:
+        source[CALENDAR_COLOR] = color
+    add_rect(source)
+
+    for y in range(start.year, finish.year+1):
+        p.add_layout(Label(x=xhi+1.1, y=(start.year - y - 0.4) * delta_year, text=str(y),
+                           text_align='center', text_baseline='bottom', angle=3*pi/2))
+        for d, text in enumerate(day_abbr):
+            p.add_layout(Label(x=xlo-1.5, y=(start.year - y) * delta_year - d * (1 + border_day), text=text,
+                               text_align='right', text_baseline='middle', text_font_size='7pt', text_color='grey'))
+    dx = (xhi - xlo) / 12
+    for m, text in enumerate(month_abbr[1:]):
+        p.add_layout(Label(x=xlo + dx*(m+0.5), y=yhi+1.5, text=text,
+                           text_align='center', text_baseline='bottom'))
+
+    return p
+
+
+if __name__ == '__main__':
+    from .frame import session, statistics
+
+    s = session('-v5')
+    df = statistics(s, ACTIVE_DISTANCE)
+    calendar_plot(1000, df)

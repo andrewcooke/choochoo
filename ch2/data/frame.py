@@ -9,7 +9,9 @@ import pandas as pd
 from sqlalchemy import inspect, select, and_, or_, distinct
 from sqlalchemy.sql.functions import coalesce
 
-from ch2.stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log, MED_HEART_RATE
+from ch2.data.coasting import CoastingBookmark
+from ch2.stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log, HEART_RATE_BPM, \
+    MED_HEART_RATE_BPM
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
@@ -22,7 +24,6 @@ from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX
-from ch2.data.coasting import CoastingBookmark
 
 log = getLogger(__name__)
 
@@ -270,9 +271,10 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
                                 activity_group_name=activity_group_name, with_timespan=with_timespan)
 
     stats[DISTANCE_KM] = stats[DISTANCE]/1000
+    stats[HEART_RATE_BPM] = stats[HEART_RATE]
     stats[SPEED_KMH] = stats[SPEED] * 3.6
     stats[MED_SPEED_KMH] = stats[SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
-    stats[MED_HEART_RATE] = stats[HEART_RATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    stats[MED_HEART_RATE_BPM] = stats[HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     stats[MED_CADENCE] = stats[CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     if POWER_ESTIMATE in stats.columns:

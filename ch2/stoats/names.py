@@ -17,6 +17,7 @@ CLIMB_DISTANCE = 'Climb Distance'
 CLIMB_ELEVATION = 'Climb Elevation'
 CLIMB_GRADIENT = 'Climb Gradient'
 CLIMB_TIME = 'Climb Time'
+COLOR = 'Color'
 CRR = 'Crr'
 CUMULATIVE_STEPS = 'Cumulative Steps'
 CUMULATIVE_STEPS_START = 'Cumulative Steps Start'
@@ -62,6 +63,7 @@ PREDICTED_HEART_RATE = 'Predicted Heart Rate'
 SEGMENT_TIME = 'Segment Time'
 SEGMENT_DISTANCE = 'Segment Distance'
 SEGMENT_HEART_RATE = 'Segment Heart Rate'
+SIZE = 'Size'
 SOURCE = 'Source'
 SPEED = 'Speed'
 SPHERICAL_MERCATOR_X = 'Spherical Mercator X'
@@ -74,6 +76,8 @@ TIME_IN_Z = 'Time in Z%d'
 TIME_IN_Z_ANY = 'Time in Z%'
 TIMESPAN_ID = 'Timespan ID'
 TOTAL_CLIMB = 'Total Climb'
+WEEK = 'Week'
+X, Y = 'x', 'y'
 
 
 MAX = '[max]'
@@ -111,6 +115,7 @@ def _log(name): return f'Log {name}'
 def _sqr(name): return f'{name}{POW_2}'
 def _new(name): return f'New {name}'
 def _src(name): return f'Src {name}'
+def _cal(name): return f'Calendar {name}'
 
 MED_WINDOW = '60s'
 def _med(name): return f'Med{MED_WINDOW} {name}'
@@ -145,13 +150,14 @@ ACTIVE_TIME_H = _slash(ACTIVE_TIME, H)
 CLIMB_MS = _slash(CLIMB, MS)
 DISTANCE_KM = _slash(DISTANCE, KM)
 ELEVATION_M = _slash(ELEVATION, M)
+HEART_RATE_BPM = _slash(HEART_RATE, BPM)
 SPEED_KMH = _slash(SPEED, KMH)
 POWER_ESTIMATE_W = _slash(POWER_ESTIMATE, W)
 
 LOG_FITNESS = _log(FITNESS)
 LOG_FATIGUE = _log(FATIGUE)
 MED_SPEED_KMH = _med(SPEED_KMH)
-MED_HEART_RATE = _med(HEART_RATE)
+MED_HEART_RATE_BPM = _med(HEART_RATE_BPM)
 MED_HR_IMPULSE_10 = _med(HR_IMPULSE_10)
 MED_CADENCE = _med(CADENCE)
 MED_POWER_ESTIMATE_W = _med(POWER_ESTIMATE_W)
@@ -164,3 +170,9 @@ LOG_HR_DRIFT = _log('HR Drift')
 IDLE_HR = 'Idle HR'
 WIND_SPEED = 'Wind Speed'
 WIND_HEADING = 'Wind Heading'
+
+CALENDAR_X = _cal(X.upper())
+CALENDAR_Y = _cal(Y.upper())
+CALENDAR_SIZE = _cal(SIZE)
+CALENDAR_COLOR = _cal(COLOR)
+CALENDAR_WEEK = _cal(WEEK)

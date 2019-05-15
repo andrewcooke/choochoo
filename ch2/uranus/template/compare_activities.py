@@ -61,8 +61,8 @@ def compare_activities(local_time: to_date, compare_time: to_date, activity_grou
     hri = comparison_line_plot(700, 200, DISTANCE_KM, HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=el.x_range)
     hri_c = cumulative_plot(200, 200, HR_IMPULSE_10, activity, other=compare, ylo=0)
 
-    hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE, activity, other=compare, ylo=0, x_range=el.x_range)
-    hr_c = cumulative_plot(200, 200, HEART_RATE, activity, other=compare, ylo=0)
+    hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE_BPM, activity, other=compare, ylo=0, x_range=el.x_range)
+    hr_c = cumulative_plot(200, 200, HEART_RATE_BPM, activity, other=compare, ylo=0)
 
     if present(activity, MED_POWER_ESTIMATE_W):
         pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0, x_range=el.x_range)
