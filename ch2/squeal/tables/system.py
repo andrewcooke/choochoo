@@ -93,7 +93,7 @@ class SystemProcess(Base):
         cls.delete_all(s, owner)
         return False
 
-    def __still_running(self, delta_time=3):
+    def __still_running(self, delta_time=10):
         if not pid_exists(self.pid):
             log.debug(f'PID {self.pid} does not exist')
             return False

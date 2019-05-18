@@ -115,4 +115,3 @@ def format_percent(pc):
         return f'{pc:.1f}{PC}'
     else:
         return f'{pc:.2f}{PC}'
-

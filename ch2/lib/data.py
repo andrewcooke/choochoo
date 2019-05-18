@@ -168,3 +168,9 @@ def get_index_loc(df, value):
         return loc.start  # if slice, take first
     except AttributeError:
         return loc  # otherwise, simple value
+
+
+def linscale(series, lo=0, hi=None, min=0, max=1, gamma=1):
+    lo = series.min() if lo is None else lo
+    hi = series.max() if hi is None else hi
+    return (min + (max - min) * ((series - lo) / (hi - lo)) ** gamma).clip(min, max)

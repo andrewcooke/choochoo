@@ -1,18 +1,19 @@
 
-import re
 from json import loads
 from logging import getLogger
 
-from ch2.stoats.calculate.power import PowerCalculator
 from . import ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator
 from ..names import ELEVATION, DISTANCE, M, POWER_ESTIMATE, HEART_RATE, ACTIVE_DISTANCE, MSR, SUM, CNT, MAX, summaries, \
     ACTIVE_SPEED, ACTIVE_TIME, AVG, S, KMH, MIN_KM_TIME_ANY, MIN, MED_KM_TIME_ANY, PERCENT_IN_Z_ANY, PC, \
     TIME_IN_Z_ANY, MAX_MED_HR_M_ANY, W, BPM, MAX_MEAN_PE_M_ANY, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
-    CLIMB_GRADIENT, TOTAL_CLIMB, HR_ZONE, TIME, like, MEAN_POWER_ESTIMATE, ENERGY_ESTIMATE
-from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats
+    CLIMB_GRADIENT, TOTAL_CLIMB, HR_ZONE, TIME, like, MEAN_POWER_ESTIMATE, ENERGY_ESTIMATE, SPHERICAL_MERCATOR_X, \
+    SPHERICAL_MERCATOR_Y, DIRECTION, DEG, ASPECT_RATIO
+from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, direction_stats
 from ...data.climb import find_climbs, Climb
 from ...data.frame import activity_statistics, present
+from ...lib.log import log_current_exception
 from ...squeal import StatisticJournalFloat, Constant
+from ...stoats.calculate.power import PowerCalculator
 
 log = getLogger(__name__)
 
@@ -26,6 +27,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
     def _read_dataframe(self, s, ajournal):
         try:
             return activity_statistics(s, DISTANCE, ELEVATION, HEART_RATE, HR_ZONE, POWER_ESTIMATE,
+                                       SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
                                        activity_journal=ajournal, with_timespan=True)
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
@@ -39,6 +41,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         stats.update(hrz_stats(df))
         stats.update(max_med_stats(df))
         stats.update(max_mean_stats(df))
+        stats.update(direction_stats(df))
         if present(df, ELEVATION):
             params = Climb(**loads(Constant.get(s, self.climb_ref).at(s).value))
             climbs = list(find_climbs(df, params=params))
@@ -58,6 +61,8 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         self.__copy(ajournal, loader, stats, ACTIVE_TIME, S, summaries(MAX, SUM, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, ACTIVE_SPEED, KMH, summaries(MAX, AVG, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, MEAN_POWER_ESTIMATE, W, summaries(MAX, AVG, MSR), ajournal.start)
+        self.__copy(ajournal, loader, stats, DIRECTION, DEG, None, ajournal.start)
+        self.__copy(ajournal, loader, stats, ASPECT_RATIO, None, None, ajournal.start)
         self.__copy_all(ajournal, loader, stats, MIN_KM_TIME_ANY, S, summaries(MIN, MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, MED_KM_TIME_ANY, S, summaries(MIN, MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, PERCENT_IN_Z_ANY, PC, None, ajournal.start)
@@ -78,4 +83,8 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
             self.__copy(ajournal, loader, stats, name, units, summary, time)
 
     def __copy(self, ajournal, loader, stats, name, units, summary, time):
-        loader.add(name, units, summary, ajournal.activity_group, ajournal, stats[name], time, StatisticJournalFloat)
+        try:
+            loader.add(name, units, summary, ajournal.activity_group, ajournal, stats[name], time, StatisticJournalFloat)
+        except:
+            log.warning(f'Failed to load {name}')
+            log_current_exception()

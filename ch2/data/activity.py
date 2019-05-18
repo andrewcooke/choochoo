@@ -3,10 +3,12 @@ from logging import getLogger
 
 import numpy as np
 import pandas as pd
+from math import atan2, cos, sin, sqrt, pi
 
 from .frame import linear_resample, median_dt, present, linear_resample_time
 from ..stoats.names import HEART_RATE, MAX_MED_HR_M, POWER_ESTIMATE, ACTIVE_DISTANCE, ACTIVE_TIME, \
-    ACTIVE_SPEED, TIMESPAN_ID, TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, HR_ZONE, MAX_MEAN_PE_M
+    ACTIVE_SPEED, TIMESPAN_ID, TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, HR_ZONE, \
+    MAX_MEAN_PE_M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DIRECTION, ASPECT_RATIO
 
 log = getLogger(__name__)
 
@@ -108,9 +110,32 @@ def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10,
     return stats
 
 
+def direction_stats(df):
+    stats = {}
+    df = df.dropna()
+    if not df.empty:
+        x0, y0 = df.iloc[0][SPHERICAL_MERCATOR_X], df.iloc[0][SPHERICAL_MERCATOR_Y]
+        df.loc[:, 'dx'] = df[SPHERICAL_MERCATOR_X] - x0
+        df.loc[:, 'dy'] = df[SPHERICAL_MERCATOR_Y] - y0
+        # average position
+        dx, dy = df['dx'].mean(), df['dy'].mean()
+        x1, y1, d = x0 + dx, y0 + dy, sqrt(dx ** 2 + dy ** 2)
+        theta = atan2(dy, dx)
+        # change coords to centred on average position and perp / parallel to line to start
+        df.loc[:, 'dx'] = df[SPHERICAL_MERCATOR_X] - x1
+        df.loc[:, 'dy'] = df[SPHERICAL_MERCATOR_Y] - y1
+        df.loc[:, 'u'] = df['dx'] * cos(theta) + df['dy'] * sin(theta)
+        df.loc[:, 'v'] = df['dy'] * cos(theta) - df['dx'] * sin(theta)
+        # convert from angle anti-clock from x axis to bearing
+        stats[DIRECTION] = 90 - 180 * theta / pi
+        stats[ASPECT_RATIO] = df['v'].std() / df['u'].std()
+    return stats
+
+
 # if __name__ == '__main__':
 #     from ch2.data import *
 #     date = '2017-02-07 07:18:50'
 #     s = session('-v5')
-#     df = activity_statistics(s, HEART_RATE, local_time=date, activity_group_name='Bike', with_timespan=True)
-#     print(max_med(df))
+#     df = activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
+#                              local_time=date, activity_group_name='Bike', with_timespan=True)
+#     print(direction_stats(df))

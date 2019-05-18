@@ -30,16 +30,13 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
-    df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
-    df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
-    df.loc[df[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0
+    df1 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
+    df1[DISTANCE_KM] = df1[ACTIVE_DISTANCE] / 1000
+    df1['Duration'] = df1[ACTIVE_TIME].map(format_seconds)
+    df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0
 
-    calendar_size(df, ACTIVE_DISTANCE, min=0.1, gamma=0.5)
-    p = calendar_plot(df, title='Distance', fill='black',
-                      hover=(DISTANCE_KM, 'Duration', TOTAL_CLIMB, LOCAL_TIME))
-
-    show(p)
+    calendar = Calendar(df1, title=DISTANCE)
+    calendar.std_distance()
 
     '''
     ## Distance and Climb
@@ -49,12 +46,13 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    calendar_size(df, ACTIVE_DISTANCE, min=0.1, gamma=0.5)
-    calendar_color(df, TOTAL_CLIMB, magma(256))
-    p = calendar_plot(df, title='Distance and Climb', background='fill',
-                      hover=(DISTANCE_KM, 'Duration', TOTAL_CLIMB, LOCAL_TIME))
+    df2 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
+    df2[DISTANCE_KM] = df2[ACTIVE_DISTANCE] / 1000
+    df2['Duration'] = df2[ACTIVE_TIME].map(format_seconds)
+    df2.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0
 
-    show(p)
+    calendar = Calendar(df2, title='Distance and Climb')
+    calendar.std_summary()
 
     '''
     ## Fitness and Fatigue
@@ -64,14 +62,15 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY)
-    df = df.resample('1D').mean()
+    df3 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY)
+    df3 = df3.resample('1D').mean()
     # take shortest period values when multiple definitions
-    fitness = sorted(col for col in df.columns if col.startswith(FITNESS))[0]
-    fatigue = sorted(col for col in df.columns if col.startswith(FATIGUE))[0]
-    df['FF Ratio'] = df[fatigue] / df[fitness]
-    calendar_size(df, fitness, min=0.1, gamma=0.5)
-    calendar_color(df, 'FF Ratio', magma(256), lo=0.5, hi=2, min=0)
-    p = calendar_plot(df, title='Fitness and Fatigue', background=None, border_month=0)
+    fitness = sorted(col for col in df3.columns if col.startswith(FITNESS))[0]
+    fatigue = sorted(col for col in df3.columns if col.startswith(FATIGUE))[0]
+    df3['FF Ratio'] = df3[fatigue] / df3[fitness]
 
-    show(p)
+    calendar = Calendar(df3, title='Fitness and Fatigue', border_month=0, border_day=0)
+    calendar.set_size(fitness, min=0.1, gamma=0.5)
+    calendar.set_palette('FF Ratio', magma(256), lo=0.5, hi=2, min=0)
+    calendar.foreground('square', fill_alpha=1, line_alpha=1)
+    calendar.show()
