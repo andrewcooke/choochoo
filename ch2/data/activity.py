@@ -34,9 +34,9 @@ def active_stats(df):
 
 def times_for_distance(df, km=None, delta=10):
     stats, km = {}, km or round_km()
-    t4d = pd.DataFrame({TIME: df.index}, index=df[DISTANCE])
-    t4d = t4d[~t4d.index.duplicated(keep='last')]
-    t4d[TIME] = (t4d[TIME] - t4d[TIME].iloc[0]).astype(np.int64) / 1e9
+    tmp = pd.DataFrame({TIME: df.index}, index=df[DISTANCE])
+    tmp = tmp[~tmp.index.duplicated(keep='last')]
+    t4d = pd.DataFrame({TIME: (tmp[TIME] - tmp[TIME].iloc[0]).astype(np.int64) / 1e9}, index=df[DISTANCE])
     lt4d = linear_resample(t4d, d=delta)
     for target in km:
         n = target * 1000 / delta
@@ -83,8 +83,8 @@ def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10,
     ldf_all = linear_resample_time(df, dt=delta, with_timespan=False, add_time=False)
     ldf_all.interpolate('nearest')
     ldf_tstamp = ldf_all.loc[ldf_all[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())].copy()
-    ldf_tstamp['gap'] = ldf_tstamp.index.astype(np.int64) / 1e9
-    ldf_tstamp['gap'] = ldf_tstamp['gap'].diff()
+    ldf_tstamp.loc[:, 'gap'] = ldf_tstamp.index.astype(np.int64) / 1e9
+    ldf_tstamp.loc[:, 'gap'] = ldf_tstamp['gap'].diff()
     log.debug(f'Largest gap is {ldf_tstamp["gap"].max()}s')
     for target in mins:
         n = target * 60 // delta
@@ -112,7 +112,7 @@ def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10,
 
 def direction_stats(df):
     stats = {}
-    df = df.dropna()
+    df = df.dropna(subset=[SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y])
     if not df.empty:
         x0, y0 = df.iloc[0][SPHERICAL_MERCATOR_X], df.iloc[0][SPHERICAL_MERCATOR_Y]
         df.loc[:, 'dx'] = df[SPHERICAL_MERCATOR_X] - x0

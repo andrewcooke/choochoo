@@ -13,16 +13,21 @@ from math import pi
 from .utils import tooltip
 from ...lib.data import linscale
 from ...lib.date import time_to_local_time, YMD
-from ...stoats.names import LOCAL_TIME, ARC, X, Y, RADIUS, SIZE, WEEK, ANGLE, WIDTH, START, END, COLOR, \
-    DIRECTION, ASPECT_RATIO, ALPHA, ACTIVE_DISTANCE, TOTAL_CLIMB, FILL
+from ...stoats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB
 
 _max, _min = max, min
 
+CALENDAR = 'Calendar'
+X, Y, XS, YS = 'X', 'Y', 'Xs', 'Ys'
+ALPHA, ANGLE, ARC, COLOR, END, FILL, RADIUS, SIZE, START, WEEK, WIDTH = \
+    'Alpha', 'Angle', 'Arc', 'Color', 'End', 'Fill', 'Radius', 'Size', 'Start', 'Week', 'Width'
+
 def _cal(name): return f'{CALENDAR} {name}'
 
-CALENDAR = 'Calendar'
 CALENDAR_X = _cal(X.upper())
 CALENDAR_Y = _cal(Y.upper())
+CALENDAR_XS = _cal(XS)
+CALENDAR_YS = _cal(YS)
 CALENDAR_ALPHA = _cal(ALPHA)
 CALENDAR_ARC = _cal(ARC)
 CALENDAR_ARC_RADIUS = _cal(f'{ARC} {RADIUS}')
@@ -39,7 +44,16 @@ CALENDAR_FILL = _cal(FILL)
 
 class Calendar:
 
-    def __init__(self, df, scale=13, border_day=0.25, border_month=0.4, border_year=0.4, title=None, hover=None):
+    '''
+    The best way to understand this is probably to see the calendar template which shows three examples.
+    Or read the std_ plot definitions.
+
+    Data are stored in the dataframe, using column names prefixed by 'Calendar'.  These can then be referred
+    to when plotting (or constant values can be provided).
+    '''
+
+    def __init__(self, df, scale=13, border_day=0.25, border_month=0.4, border_year=0.4, title=None,
+                 hover=None, not_hover=tuple(), all_hover=False):
 
         start, finish = df.index.min(), df.index.max()
         delta_year = 7 * (1 + border_day) + border_year
@@ -61,13 +75,14 @@ class Calendar:
         ny = int(scale * (yhi - ylo))
 
         plot = Plot(x_range=Range1d(xlo - 4, xhi + 4), y_range=Range1d(ylo - 1, yhi + 4),
-                    width=nx, height=ny, title=Title(text=title), tools=self._build_tools(df, hover))
+                    width=nx, height=ny, title=Title(text=title),
+                    tools=self._build_tools(df, hover, not_hover, all_hover))
         self._add_labels(plot, start, finish, xlo, xhi, yhi, border_day, delta_year)
         self._plot = plot
 
     @staticmethod
     def _set_date(df):
-        df[LOCAL_TIME] = df.index.map(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
+        df.loc[:, LOCAL_TIME] = df.index.map(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     @staticmethod
     def _set_xy(df, start, finish, border_day, border_month, delta_year):
@@ -94,16 +109,17 @@ class Calendar:
         plot.toolbar.logo = None
 
     @staticmethod
-    def _build_tools(df, hover):
+    def _build_tools(df, hover, not_hover, all_hover):
         tools = [SaveTool()]
-        hover = [col for col in df.columns if not col.startswith(CALENDAR)] if hover is None else hover
+        if hover is None:
+            hover = [col for col in df.columns if all_hover or (not col.startswith(CALENDAR) and not col in not_hover)]
         if hover:
             # names ensures that background has no hover
             tools.append(HoverTool(tooltips=[tooltip(col) for col in hover], names=['with_hover']))
         return tools
 
     def set_constant(self, dest, value):
-        self._df[dest] = value
+        self._df.loc[:, dest] = value
 
     def set_linear(self, dest, name, lo=None, hi=None, min=0, max=1, gamma=1):
         self._df.loc[:, dest] = linscale(self._df[name], lo=lo, hi=hi, min=min, max=max, gamma=gamma)
@@ -117,11 +133,11 @@ class Calendar:
         self._df.loc[:, CALENDAR_COLOR] = linscale(self._df[name], lo=lo, hi=hi, min=min, max=max, gamma=gamma). \
             map(lambda x: x if np.isnan(x) else palette[_max(0, _min(n-1, int(x * n)))])
 
-    def set_arc(self, angle, width, size=None, delta_radius=0, lo=None, hi=None, min=30, max=180, gamma=1):
+    def set_arc(self, angle, width, size=None, delta_radius=0, lo=0, hi=2, min=30, max=180, gamma=1):
         angle = 90 - self._df[angle]  # +ve anticlock from x
         width = linscale(self._df[width], lo=lo, hi=hi, min=min, max=max, gamma=gamma)
-        self._df.loc[:, CALENDAR_START] = pi * (angle - width) / 180
-        self._df.loc[:, CALENDAR_END] = pi * (angle + width) / 180
+        self._df.loc[:, CALENDAR_START] = pi * (angle - width/2) / 180
+        self._df.loc[:, CALENDAR_END] = pi * (angle + width/2) / 180
         if size is None:
             self._df.loc[:, CALENDAR_ARC_RADIUS] = self._df[CALENDAR_RADIUS]
         else:
@@ -136,7 +152,7 @@ class Calendar:
 
     def std_summary(self):
         self.background('circle', fill_alpha=1, line_alpha=0, color='#F0F0F0')
-        self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.2)
+        self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.1)
         self.set_palette(TOTAL_CLIMB, magma(256))
         self.foreground('circle', fill_alpha=1, line_alpha=0)
         self.foreground('circle', fill_alpha=0, line_alpha=1, color='grey')
@@ -181,7 +197,7 @@ class Calendar:
 
     def _arc(self, df, line_alpha=CALENDAR_ALPHA, color=CALENDAR_COLOR):
         arc = Arc(x=CALENDAR_X, y=CALENDAR_Y, radius=CALENDAR_ARC_RADIUS,
-                  start_angle=CALENDAR_START, end_angle=CALENDAR_END,
+                  start_angle=CALENDAR_START, end_angle=CALENDAR_END, direction='anticlock',
                   line_color=color, line_alpha=line_alpha)
         return self._plot.add_glyph(ColumnDataSource(df), arc, name='with_hover' if df is self._df else None)
 
@@ -189,9 +205,9 @@ class Calendar:
         df = df.dropna()
         xys = list(_corners(df))
         xs, ys = list(zip(*xys))
-        df.loc[:, CALENDAR_X] = xs
-        df.loc[:, CALENDAR_Y] = ys
-        multi = MultiLine(xs=CALENDAR_X, ys=CALENDAR_Y, line_color=color, line_alpha=line_alpha)
+        df.loc[:, CALENDAR_XS] = xs
+        df.loc[:, CALENDAR_YS] = ys
+        multi = MultiLine(xs=CALENDAR_XS, ys=CALENDAR_YS, line_color=color, line_alpha=line_alpha)
         self._plot.add_glyph(ColumnDataSource(df), multi)
 
 
@@ -235,7 +251,7 @@ def _linearize(angle):
 
 def _corners(df):
     for _, row in df.iterrows():
-        x, y, r = row[CALENDAR_X], row[CALENDAR_Y], row[CALENDAR_RADIUS]
+        x, y, r = row[CALENDAR_X], row[CALENDAR_Y], row[CALENDAR_ARC_RADIUS]
         start, end = _linearize(row[CALENDAR_START]), _linearize(row[CALENDAR_END])
         xys = list(_line_corners(x, y, r, start, end))
         yield list(zip(*xys))
