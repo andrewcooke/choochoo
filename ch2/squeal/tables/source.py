@@ -72,7 +72,6 @@ class Source(Base):
                     and not isinstance(instance.source, Dummy) and instance.value is not None and instance.time:
                 start, finish = extend_range(start, finish, instance.time)
         if start is not None:
-            # print(f'################ {start} {finish}')
             Interval.clean_times(None, s, start, finish)
 
 

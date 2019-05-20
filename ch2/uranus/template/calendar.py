@@ -38,9 +38,10 @@ def calendar():
     calendar.std_distance()
 
     '''
-    ## Distance and Climb
+    ## Distance, Climb and Direction
 
-    Larger distances have larger symbols.  Higher climbs have "hotter" colours.
+    Larger distances have larger symbols.  Higher climbs are redder.  The arc indicates the general direction
+    relative to the start.
     
     Place the cursor over the symbol for more information.
     '''
@@ -60,7 +61,7 @@ def calendar():
     calendar = Calendar(df2, title='Distance and Climb', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
     calendar.background('square', fill_alpha=1, line_alpha=0, color='#F0F0F0')
     calendar.set_size(ACTIVE_DISTANCE, min=0.2, max=1.0)
-    calendar.set_palette(TOTAL_CLIMB, magma(256))
+    calendar.set_palette(TOTAL_CLIMB, magma(256), gamma=0.3)
     calendar.foreground('square', fill_alpha=1, line_alpha=0)
     calendar.foreground('square', fill_alpha=0, line_alpha=1, color='grey')
     calendar.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.15)
@@ -85,5 +86,5 @@ def calendar():
     calendar = Calendar(df3, title='Fitness and Fatigue', border_month=0, border_day=0)
     calendar.set_size(fitness, min=0.1, gamma=0.5)
     calendar.set_palette('FF Ratio', magma(256), lo=0.5, hi=2, min=0)
-    calendar.foreground('square', fill_alpha=1, line_alpha=1)
+    calendar.foreground('square', fill_alpha=1, line_alpha=0)
     calendar.show()

@@ -250,6 +250,7 @@ def create_notebook(template, args, kargs):
 
     template = template.__name__
     base = join(notebook_dir(), template)
+    all_args = all_args if all_args else template
     name = all_args + IPYNB
     path = join(base, name)
     makedirs(base, exist_ok=True)

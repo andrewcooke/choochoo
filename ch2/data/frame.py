@@ -7,6 +7,7 @@ from logging import getLogger
 import numpy as np
 import pandas as pd
 from sqlalchemy import inspect, select, and_, or_, distinct
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import coalesce
 
 from ch2.data.coasting import CoastingBookmark
@@ -143,11 +144,20 @@ def activity_journal(s, activity_journal=None, local_time=None, time=None, activ
             time = local_time_to_time(local_time)
         if not time or not activity_group_name:
             raise Exception('Specify activity_journal or time and activity_group_name')
-        activity_journal = s.query(ActivityJournal). \
-            join(ActivityGroup). \
-            filter(ActivityJournal.start <= time,
-                   ActivityJournal.finish >= time,
-                   ActivityGroup.name == activity_group_name).one()
+        try:
+            # first, if an activity includes that time
+            activity_journal = s.query(ActivityJournal). \
+                join(ActivityGroup). \
+                filter(ActivityJournal.start <= time,
+                       ActivityJournal.finish >= time,
+                       ActivityGroup.name.ilike(activity_group_name)).one()
+        except NoResultFound:
+            # second, if anything in the following 24 hours (eg if just date given)
+            activity_journal = s.query(ActivityJournal). \
+                join(ActivityGroup). \
+                filter(ActivityJournal.start > time,
+                       ActivityJournal.finish < time + dt.timedelta(days=1),
+                       ActivityGroup.name.ilike(activity_group_name)).one()
         log.info(f'Using Activity Journal {activity_journal}')
     return activity_journal
 

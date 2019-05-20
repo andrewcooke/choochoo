@@ -5,21 +5,11 @@ Below I focus on data access via [pandas](https://pandas.pydata.org/)
 and [Jupyter](http://jupyter.org/) - this will let you read,
 manipulate and plot data within your web browser.
 
-Plotting packages in Python - especially for maps - seem to be
-unreliable, so the emphasis here is on providing the data in a
-standard format.  Hopefully you can then display that data with
-whatever you find works for you.  Current examples use
-[Bokeh](https://bokeh.pydata.org/) and
-[Matplotlib](https://matplotlib.org/).
-
-All Choochoo's data (all *your* data) are stored in an SQLite3 file at
-`~/.ch2/database.sql?` (the final character changes with database
-schema version).  So you can also use any programming language with an
-SQLite binding (for Python the `ch2.squeal.tables` package contains a
-[SQLAchemy](https://www.sqlalchemy.org/) ORM mapping).
-
   * [Starting Jupyter](#starting-jupyter)
-  * [Accessing Data](#accessing-data)
+  * [Quick Start](#quick-start)
+    * [Showing Templates](#showing-templates)
+    * [Roll Your Own](#roll-your-own)
+  * [Slow Start](#slow-start)
     * [Session](#session)
     * [Helpers](#helpers)
       * [Statistics](#statistics)
@@ -28,21 +18,70 @@ SQLite binding (for Python the `ch2.squeal.tables` package contains a
     * [DataFrames](#dataframes)
   * [Plotting Data](#plotting-data)
   * [Summary](#summary)
-  * [Examples](#examples)
+  * [Other Approaches](#other-approaches)
 
 ## Starting Jupyter
 
-I use Jupyter as the environment, because it's pretty and little extra
-work over pure python.  All that is necessary, assuming that Choochoo
-is installed (and you have activated the virtualenv, if necessary), is
-typing
+There are various ways of starting Jupyter:
 
-    jupyter notebook
-    
-which should display a window in your web browser.  There you can load the
-examples from the `notebooks` directory.
+  * **Via choochoo**: `ch2 jupyter start` (this is what is used in
+    [Quick Start](#quick-start) below),
 
-## Accessing Data
+  * **Standalone**: `jupyter notebook` (if you installed choochoo in a
+    virtualenv you will need to use that),
+
+  * **Your current workflow**: if you already use Jupyter you may want
+    to add choochoo to your `PYTHONPATH` and then access your data via
+    your usual tools.
+
+## Quick Start
+
+### Showing Templates
+
+Choochoo includes some Jupyter scripts that will help you get started.
+Many of these can be accessed via the diary (by clicking on "links")
+and all can be accessed from the command line.
+
+To see the scripts available type
+
+    ch2 jupyter list
+
+To start a specific script, use `ch2 jupyter show` followed by the
+script name and any parameters.  For example:
+
+    ch2 show calendar
+
+Once the script appears in your browser select "Run All" from the
+"Cell" menu and you should see something like:
+
+![](calendar.png)
+
+On the calendar identify an interesting activity and note the date
+(move the mouse over the plot for more data).  Then you can see the
+data for that activity:
+
+    ch2 show activity_details 2017-11-05 bike
+
+The second argument is the activity group name.  If you're unsure,
+
+    ch2 dump table ActivityGroup
+
+will list the names.
+
+After selecting "Run All" again, you should see something like:
+
+![](2017-11-05.png)
+
+### Roll Your Own
+
+You can modify the scripts in the browser and re-run all cells or
+individual cells.
+
+You can also write your own script templates.  See the
+[ch2.uranus.template](https://github.com/andrewcooke/choochoo/tree/master/ch2/uranus/template)
+package in the source.
+
+## Slow Start
 
 Pandas works with `DataFrame` objects, while Choochoo stores data in
 an SQLite database with SQLALchemy ORM mapping.  Fortunately these
@@ -69,26 +108,24 @@ helper functions provide simplified access.
 The `statistics` function retrieves a DataFrame of the given statistic
 names, indexed by date:
 
-    In[] > s = statistics(s, 'Active Distance', 'Heart Rate')
+    In[] > df = statistics(s, 'Active Distance', 'Heart Rate')
 
-#### Waypoints
+#### Activity Statistics
 
-It is sometimes useful to access the sequence of data associated with
-an **ActivityJournal**.  This information is spread across multiple
-**StatisticJournal** entries, but can be extracted as a single
-DataFrame using the `waypoints` function:
+Often you want to access data associated with an **ActivityJournal**.
+This information can be extracted as a single DataFrame using the
+`waypoints` function:
 
-    In[] > from ch2.lib.date import to_time
-           aj = s.query(ActivityJournal). \
-                  filter(ActivityJournal.start > to_time('2017-08-21'),
-                         ActivityJournal.finish < to_time('2017-08-22')).one()
-           w = waypoints(s, aj.id, 'Latitude', 'Longitude', Heart Rate')
+    In[] > df = activity_statistics(s, 'Speed', local_time='2017-05-11',
+                                    activity_group_name='Bike')
 
-The example above finds the **ActivityJournal** for a given day and
-then retrieves the associated GPS and HRM data in a time-indexed
-table.
+#### Other
 
-### SQLAlchemy ORM Query
+Look in
+[ch2.data.frame](https://github.com/andrewcooke/choochoo/blob/master/ch2/data/frame.py)
+to see all the available functions.
+
+### Sqlalchemy ORM Query
 
 Using the session we can extract data from the database as Python
 objects.  In practice (see below) we will not use these objects
@@ -135,13 +172,21 @@ The `ch2.data.database.Data` instance provides access to:
 
 ## Plotting Data
 
+Plotting packages in Python - especially for maps - seem to be
+unreliable, so the emphasis here is on providing the data in a
+standard format.  Hopefully you can then display that data with
+whatever you find works for you.  Current examples use
+[Bokeh](https://bokeh.pydata.org/), although if you dig aorund you may
+also find a small amount of [Matplotlib](https://matplotlib.org/).
+
 For examples of how to plot this data see:
 
+* The template scripts described in [Quick Start](#quick-start).
 * The Jupyter notebooks in the `notebooks` directory - these use Bokeh.
 * The code in `tests/test_data.py` - these use Matplotlib.
 
-A few helper routines are available in `ch2.data.plot` to help massage the
-data into the correct format.
+Helper routines are available in
+[ch2.data.plot](https://github.com/andrewcooke/choochoo/tree/master/ch2/data/plot).
 
 ## Summary
 
@@ -161,11 +206,13 @@ data into the correct format.
   
   * Plot the data with Bokeh.
 
-## Examples
+## Other Approaches
 
-These are taken from the Jupyter notebooks described above.  Obviously results
-depend on the data entered into the system.
+All Choochoo's data (all *your* data) are stored in an SQLite3 file at
+`~/.ch2/database.sql?` (the final character changes with database
+schema version).  So you can also use any programming language with an
+SQLite binding (for Python the
+[ch2.squeal.tables](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables)
+package contains a [SQLAchemy](https://www.sqlalchemy.org/) ORM
+mapping).
 
-![](distance.png)
-
-![](summary.png)

@@ -15,13 +15,10 @@ special cases, and reliable enough to avoid errors.
   * [Correctness](#correctness)
   * [Events](#events)
   * [Rules](#rules)
-  * [Hard Reset](#hard-reset)
 * [Data Input](#data-input)
   * [Schedules](#schedules)
   * [Topics](#topics)
 * [Timezones](#timezones)
-  * [Intervals](#intervals)
-  * [Topics](#topics)
 
 ## Concepts
 
@@ -34,7 +31,8 @@ new values, etc.
 
 For a StatisticName to be useful it must be associated with some
 values.  More exactly, it must have entries in the
-**StatisticJournal** which associated values with **Source**s.
+**StatisticJournal** which associated values at particular times with
+**Source**s.
 
 There are three types of StatisticJournal, for values that are
 integers, floats and text.
@@ -66,9 +64,8 @@ from.
 There are several different Sources:
 
 * **Activities** are read from FIT files and provide a wealth of
-  statistics (note that the GPS trace, HR time series, etc, are not
-  stored as statistics themselves, but values calculated from these,
-  like time in HR zones, total distance, are).
+  statistics (both raw - like the GPS data - and derived - like the
+  total distance).
 
 * **Topics** are used to structure entries in the diary and can be
   associated with statistics that are entered by the user (depending
@@ -91,32 +88,33 @@ As with Statistics and the StatisticJournal, the data associated with
 these Activities, Topics and Monitor are stored in
 **ActivityJournal**, **TopicJournal** and **MonitorJournal**.
 
-Every Source has an associated time - this is also the time for the
-statistic.
-
 ## Implementation
 
 ### Inheritance
 
-The use of inheritance in the database schema is driven by the need to balance
-flexibility - a variety of different types and structures - with "freshness" -
-it must be simple to "expire" stale data.  The former pushes towards many
-types; the latter towards few types connected by "on delete cascade".
-Inheritance resolves this conflict by associating multiple types with a single
-(base) table.
+The use of inheritance in the database schema is driven by the need to
+balance flexibility - a variety of different types and structures -
+with "freshness" - it must be simple to "expire" stale data.  The
+former pushes towards many types; the latter towards few types
+connected by "on delete cascade".  Inheritance resolves this conflict
+by associating multiple types with a single (base) table.
 
-For more details on inheritance and the SQLAlchemy approach used, please see
-[Joined Table
+For more details on inheritance and the SQLAlchemy approach used,
+please see [Joined Table
 Inheritance](https://docs.sqlalchemy.org/en/latest/orm/inheritance.html#joined-table-inheritance)
 in the SQLAlchemy docs.
 
-Two inheritance hierarchies are used, for Source and StatisticJournal.  In
-both cases the structure is very simple, with all concrete classes being
-direct children of the base.
+Two inheritance hierarchies are used, for Source and StatisticJournal.
+In both cases the structure is relatively simple, with all concrete
+classes being direct children of the base.
 
-Source has four children: Interval, ActivityJournal, TopicJournal and
+Source has eight children: Interval, ActivityJournal, TopicJournal,
 **Constant** (arbitrary values entered by the user, but not on a
-scheduled basis - FTHR, for example).
+scheduled basis - FTHR, for example), MonitorJournal,
+**SegmentJournal** (used to identify segments), **CompositeJournal**
+(used to identify derived statistics from multiple sources), and
+**DummySource** (used to avoid race conditions when loading data from
+multiple threads).
 
 StatisticJournal has three children: **StatisticJournalInteger**,
 **StatisticJournalFloat** and **StatisticJournalText** - used for
@@ -131,16 +129,15 @@ this we must consider what happens when data are inserted, updated and
 deleted:
 
 * Insertions into StatisticJournal are associated with the appropriate Source.
-  Amongst other things, this gives the time for the StatisticJournal entry.
   New values may invalidate some derived statistics, so any insertion must
   have a corresponding deletion of associated Intervals.
 
 * Updates to StatisticJournal may invalidate some derived statistics, so any
-  insertion must have a corresponding deletion of associated intervals.
+  insertion must have a corresponding deletion of associated Intervals.
 
 * Deletions from Source will cascade into deletions from StatisticJournal.
   This may invalidate some derived statistics, so any insertion must have a
-  corresponding deletion of associated intervals.
+  corresponding deletion of associated Intervals.
 
 The above is true for both raw and derived statistics (since Intervals are
 Sources).
@@ -164,19 +161,14 @@ Following from the above, we have the following rules that must be followed:
 * Do not delete Sources via SQL.  Delete at the object level (within
   SQLAlchemy).  This is required for two reasons:
 
-  1. So that the entire hierarchy is removed.  See `test_inheritance.py` for
-     justification.
+  1. So that the entire hierarchy is removed (this would be OK if the
+  Source parent was deleted - children would be deleted by cascade -
+  but not if the child was deleted).
 
   2. So that automatic deletion of Intervals can be triggered.
 
 Together these allow us to calculate derived statistics only when needed (ie
 when an Interval is missing).
-
-### Hard Reset
-
-Following the rules above allows us to (efficiently) calculate only *missing*
-derived statistics.  In practice it will also be useful to have the option of
-deleting all derived statistics (by deleting all Intervals).
 
 ## Data Input
 
@@ -225,91 +217,10 @@ Example Topics include:
 
 ## Timezones
 
-All the above was written assuming that all calculations are in UTC.
-This was an oversight.  In fact, diary-related presentation is
-(obviously!) timezone-specific.
+Some data are timezone-specific (eg diary entries and intervals) and
+some not.  This is reflected in the different database types used for
+date / time values.
 
-This is a problem.  Some data are timezone-specific and some not.  How
-do we handle this?
-
-First, we need to identify which data vary with timezone.  In
-particular, which Sources.
-
-* Topic entries come from the diary.  These need to be saved (from the
-  diary, when values are changed) and retrieved (for display in the
-  diary).  What happens when the timezone changes?
-
-* Intervals should also depend on the timzeone.  This doesn't matter
-  so much for long (eg yearly) intervals, but for daily intervals, we
-  want to use the local definition of "day".
-
-* Constants may be a small issue, in that we users will assume they
-  are entering local date.  But only conversion on input is needed.
-
-Other than Sources, most data seem to work fine in UTC.  In
-particular, data obtained from FIT files can be converted to UTC (some
-care is needed with handling cumulative steps which accumulate
-throughout a local day).
-
-### Intervals
-
-The Schedule class works internally with dates (not times).  If we
-convert this to times using the local timzone then logic should remain
-consistent (nothing in the code assumes particular alignment except
-when using values derived from Schedule methods).
-
-There *is* going to be a problem if the timzone changes - existing
-Intervals will no longer be found at the "right" times.  But all
-Intervals are derived data and so can be recalculated in this case (eg
-if the user moves location).
-
-Steps to change:
-
-* Remove implicit conversion from date to time.
-
-* Subclass Schedule to include methods that are timezone aware and do
-  conversions.
-
-* Finally implement MonitorSteps correctly.
-
-* Get tests running (maybe add new tests).
-
-In addition, Intervals ended up needing start/finish date fields so that
-calculations for "next" intervals worked correctly during shifts related to
-summer time.
-
-### Topics
-
-Diary entries, etc (plans, injuries, …).
-
-Diary entries are "per day", but are saved - like all data - by time.
-
-We need to worry about:
-
-* Retrieving saved data for the correct day if timestamps change.
-
-* Deleting appropriate Intervals when data change.
-
-* Calculating values using Intervals.
-
-To fix the first of these we either need to save the date in the
-database or use some convention like always use UTC date.  But always
-using UTC date will affect Interval calculations - the `time` field
-must be usable by Interval calculation.
-
-So it seems that we need:
-
-* An additional field for TopicJournal, which is date.
-
-* The time should be set to the start of the local day (in UTC) so
-  that Interval calulations work.
-
-* When the user changes timezone retrieval will still work correctly
-  (using the date field), but time values will be wrong and Interval
-  calculations will be broken.  All I can think of here is that we
-  auto-detect timzeone changes and trigger fix-up (wipe Intervals and
-  set time to correct value based on date).
-
-* To auto-detect timezone data we need to store timezone in the
-  database.
-
+The current timezone is stored in the database.  If this changes then
+Intervals are deleted and the associated dderived statistics
+re-calculated.

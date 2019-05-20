@@ -1,19 +1,22 @@
 
 import datetime as dt
 from calendar import day_abbr, month_abbr
+from logging import getLogger
 
 import numpy as np
 import pandas as pd
 from bokeh.io import show
 from bokeh.models import Rect, ColumnDataSource, Circle, Arc, MultiLine, SaveTool, HoverTool, Label, Plot, Range1d, \
     Title
-from bokeh.palettes import magma
+from bokeh.palettes import *
 from math import pi
 
 from .utils import tooltip
 from ...lib.data import linscale
-from ...lib.date import time_to_local_time, YMD
+from ...lib.date import time_to_local_time, YMD, to_time
 from ...stoats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB
+
+log = getLogger(__name__)
 
 _max, _min = max, min
 
@@ -42,6 +45,9 @@ CALENDAR_COLOR = _cal(COLOR)
 CALENDAR_FILL = _cal(FILL)
 
 
+B2R = [f'#{i:02x}0000'.upper() for i in range(256)]
+
+
 class Calendar:
 
     '''
@@ -54,6 +60,8 @@ class Calendar:
 
     def __init__(self, df, scale=13, border_day=0.25, border_month=0.4, border_year=0.4, title=None,
                  hover=None, not_hover=tuple(), all_hover=False):
+
+        self._hover_args = (hover, not_hover, all_hover)
 
         start, finish = df.index.min(), df.index.max()
         delta_year = 7 * (1 + border_day) + border_year
@@ -75,8 +83,7 @@ class Calendar:
         ny = int(scale * (yhi - ylo))
 
         plot = Plot(x_range=Range1d(xlo - 4, xhi + 4), y_range=Range1d(ylo - 1, yhi + 4),
-                    width=nx, height=ny, title=Title(text=title),
-                    tools=self._build_tools(df, hover, not_hover, all_hover))
+                    width=nx, height=ny, title=Title(text=title))
         self._add_labels(plot, start, finish, xlo, xhi, yhi, border_day, delta_year)
         self._plot = plot
 
@@ -131,7 +138,7 @@ class Calendar:
     def set_palette(self, name, palette, lo=None, hi=None, min=0, max=1, gamma=1):
         n = len(palette)
         self._df.loc[:, CALENDAR_COLOR] = linscale(self._df[name], lo=lo, hi=hi, min=min, max=max, gamma=gamma). \
-            map(lambda x: x if np.isnan(x) else palette[_max(0, _min(n-1, int(x * n)))])
+            map(lambda x: palette[_max(0, _min(n-1, int(x * n)))])
 
     def set_arc(self, angle, width, size=None, delta_radius=0, lo=0, hi=2, min=30, max=180, gamma=1):
         angle = 90 - self._df[angle]  # +ve anticlock from x
@@ -153,7 +160,7 @@ class Calendar:
     def std_summary(self):
         self.background('circle', fill_alpha=1, line_alpha=0, color='#F0F0F0')
         self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.1)
-        self.set_palette(TOTAL_CLIMB, magma(256))
+        self.set_palette(TOTAL_CLIMB, B2R, gamma=0.3)  # more red
         self.foreground('circle', fill_alpha=1, line_alpha=0)
         self.foreground('circle', fill_alpha=0, line_alpha=1, color='grey')
         self.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.2)
@@ -161,6 +168,7 @@ class Calendar:
         self.show()
 
     def show(self):
+        self._plot.add_tools(*self._build_tools(self._df, *self._hover_args))
         show(self._plot)
 
     def background(self, glyph, fill_alpha=CALENDAR_FILL, line_alpha=CALENDAR_ALPHA, color=CALENDAR_COLOR):
@@ -202,7 +210,7 @@ class Calendar:
         return self._plot.add_glyph(ColumnDataSource(df), arc, name='with_hover' if df is self._df else None)
 
     def _sqarc(self, df, line_alpha=CALENDAR_ALPHA, color=CALENDAR_COLOR):
-        df = df.dropna()
+        df = df.dropna().copy()  # copy to avoid set on view errors
         xys = list(_corners(df))
         xs, ys = list(zip(*xys))
         df.loc[:, CALENDAR_XS] = xs

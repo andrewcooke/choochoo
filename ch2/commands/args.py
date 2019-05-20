@@ -252,7 +252,7 @@ def parser():
     constant.add_argument(DATE, action='store', nargs='?', metavar='DATE', help='date when measured')
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
 
-    dump = subparsers.add_parser(DUMP)  # todo - this one needs tests!
+    dump = subparsers.add_parser(DUMP, help='display database contents')  # todo - this one needs tests!
     dump_format = dump.add_mutually_exclusive_group()
     dump_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
     dump_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV, help='CVS format')

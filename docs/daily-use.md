@@ -186,21 +186,4 @@ filtered with a 30 minute window and then the maximum value taken).
 
 ## Data Analysis
 
-For full details [go here](data-analysis), but Choochoo includes some
-basic data anlysis "built-in":
-
-  * At the bottom of a daily diary page that contains an activity you
-    will see a section labelled "Jupyter" with one or two menu
-    options.  Use "tab" to navigate to the menu, "left" and "right"
-    (arrows / cursor keys) to change, and "return" to select.
-
-  * At the bottom of the monthly / yearly diary page you will see a
-    section labelled "Jupyter".  Use "tab" to navigate to the "button"
-    and "return" to select.
-
-Selecting will start Jupyter and display a page in the browser.  You
-can edit this page and load data while the diary remains running.
-
-An example display for comparing activities is:
-
-![](graphic-summary.png)
+Next step: [go here](data-analysis).
