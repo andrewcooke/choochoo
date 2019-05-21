@@ -112,23 +112,24 @@ def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10,
 
 def direction_stats(df):
     stats = {}
-    df = df.dropna(subset=[SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y])
-    if not df.empty:
-        x0, y0 = df.iloc[0][SPHERICAL_MERCATOR_X], df.iloc[0][SPHERICAL_MERCATOR_Y]
-        df.loc[:, 'dx'] = df[SPHERICAL_MERCATOR_X] - x0
-        df.loc[:, 'dy'] = df[SPHERICAL_MERCATOR_Y] - y0
-        # average position
-        dx, dy = df['dx'].mean(), df['dy'].mean()
-        x1, y1, d = x0 + dx, y0 + dy, sqrt(dx ** 2 + dy ** 2)
-        theta = atan2(dy, dx)
-        # change coords to centred on average position and perp / parallel to line to start
-        df.loc[:, 'dx'] = df[SPHERICAL_MERCATOR_X] - x1
-        df.loc[:, 'dy'] = df[SPHERICAL_MERCATOR_Y] - y1
-        df.loc[:, 'u'] = df['dx'] * cos(theta) + df['dy'] * sin(theta)
-        df.loc[:, 'v'] = df['dy'] * cos(theta) - df['dx'] * sin(theta)
-        # convert from angle anti-clock from x axis to bearing
-        stats[DIRECTION] = 90 - 180 * theta / pi
-        stats[ASPECT_RATIO] = df['v'].std() / df['u'].std()
+    if all(name in df.columns for name in (SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y)):
+        df = df.dropna(subset=[SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y])
+        if not df.empty:
+            x0, y0 = df.iloc[0][SPHERICAL_MERCATOR_X], df.iloc[0][SPHERICAL_MERCATOR_Y]
+            df.loc[:, 'dx'] = df[SPHERICAL_MERCATOR_X] - x0
+            df.loc[:, 'dy'] = df[SPHERICAL_MERCATOR_Y] - y0
+            # average position
+            dx, dy = df['dx'].mean(), df['dy'].mean()
+            x1, y1, d = x0 + dx, y0 + dy, sqrt(dx ** 2 + dy ** 2)
+            theta = atan2(dy, dx)
+            # change coords to centred on average position and perp / parallel to line to start
+            df.loc[:, 'dx'] = df[SPHERICAL_MERCATOR_X] - x1
+            df.loc[:, 'dy'] = df[SPHERICAL_MERCATOR_Y] - y1
+            df.loc[:, 'u'] = df['dx'] * cos(theta) + df['dy'] * sin(theta)
+            df.loc[:, 'v'] = df['dy'] * cos(theta) - df['dx'] * sin(theta)
+            # convert from angle anti-clock from x axis to bearing
+            stats[DIRECTION] = 90 - 180 * theta / pi
+            stats[ASPECT_RATIO] = df['v'].std() / df['u'].std()
     return stats
 
 
