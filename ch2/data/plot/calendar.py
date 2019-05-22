@@ -14,7 +14,7 @@ from math import pi
 from .utils import tooltip
 from ...lib.data import linscale
 from ...lib.date import time_to_local_time, YMD, to_time
-from ...stoats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB
+from ...stoats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _d, FITNESS_D_ANY
 
 log = getLogger(__name__)
 
@@ -45,7 +45,8 @@ CALENDAR_COLOR = _cal(COLOR)
 CALENDAR_FILL = _cal(FILL)
 
 
-B2R = [f'#{i:02x}0000'.upper() for i in range(256)]
+K2R = [f'#{i:02x}0000'.upper() for i in range(256)]
+B2R = [f'#{i:02x}00{0xff-i:02x}'.upper() for i in range(256)]
 
 
 class Calendar:
@@ -157,14 +158,24 @@ class Calendar:
         self.foreground('square', fill_alpha=1, line_alpha=0, color='black')
         self.show()
 
-    def std_summary(self):
+    def std_distance_climb_direction(self):
         self.background('circle', fill_alpha=1, line_alpha=0, color='#F0F0F0')
         self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.1)
-        self.set_palette(TOTAL_CLIMB, B2R, gamma=0.3)  # more red
+        self.set_palette(TOTAL_CLIMB, K2R, gamma=0.3)  # more red
         self.foreground('circle', fill_alpha=1, line_alpha=0)
         self.foreground('circle', fill_alpha=0, line_alpha=1, color='grey')
         self.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.2)
         self.foreground('arc', fill_alpha=0, line_alpha=1, color='black')
+        self.show()
+
+    def std_distance_fitness_direction(self):
+        fitness = sorted(like(_d(FITNESS_D_ANY), self._df.columns))[0]
+        self.background('circle', fill_alpha=0, line_alpha=1, color='lightgrey')
+        self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.1)
+        self.set_palette(fitness, B2R, gamma=0.7)
+        self.foreground('circle', fill_alpha=1, line_alpha=0)
+        self.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.2)
+        self.foreground('arc', fill_alpha=0, line_alpha=1)
         self.show()
 
     def show(self):

@@ -6,6 +6,7 @@ import pandas as pd
 
 from .lib import inplace_decay
 from ..lib.date import round_hour
+from ..stoats.names import like, _d, FITNESS_D_ANY, FATIGUE_D_ANY
 
 IMPULSE_3600 = 'Impulse / 3600s'
 DecayModel = namedtuple('DecayModel', 'start, zero, scale, period, input, output')
@@ -42,3 +43,11 @@ def calc(data, model):
     data[model.output] = model.zero + data[IMPULSE_3600] * model.scale
     inplace_decay(data, model.output, model.period)
     return data
+
+
+def impulse_stats(df):
+    stats = {}
+    for pattern in FITNESS_D_ANY, FATIGUE_D_ANY:
+        for name in like(pattern, df.columns):
+            stats[_d(name)] = df[name][-1] - df[name][0]
+    return stats

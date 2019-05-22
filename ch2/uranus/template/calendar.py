@@ -4,6 +4,7 @@ from bokeh.palettes import magma
 
 from ch2.data import *
 from ch2.lib import format_seconds
+from ch2.stoats.names import _d
 from ch2.uranus.decorator import template
 
 
@@ -40,8 +41,8 @@ def calendar():
     '''
     ## Distance, Climb and Direction
 
-    Larger distances have larger symbols.  Higher climbs are redder.  The arc indicates the general direction
-    relative to the start.
+    Larger distances have larger symbols.  Higher climbs are redder.  
+    The arc indicates the general direction relative to the start.
     
     Place the cursor over the symbol for more information.
     '''
@@ -51,22 +52,25 @@ def calendar():
     df2['Duration'] = df2[ACTIVE_TIME].map(format_seconds)
     df2.loc[df2[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
 
-    calendar = Calendar(df2, title='Distance and Climb', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
-    calendar.std_summary()
+    calendar = Calendar(df2, title='Distance, Climb and Direction', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
+    calendar.std_distance_climb_direction()
 
     '''
-    Square arcs don't look as good.
+    ## Distance, Fitness and Direction
+
+    Larger distances have larger symbols.  Stringer gains in fitness are redder.  
+    The arc indicates the general direction relative to the start.
+    
+    Place the cursor over the symbol for more information.
     '''
 
-    calendar = Calendar(df2, title='Distance and Climb', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
-    calendar.background('square', fill_alpha=1, line_alpha=0, color='#F0F0F0')
-    calendar.set_size(ACTIVE_DISTANCE, min=0.2, max=1.0)
-    calendar.set_palette(TOTAL_CLIMB, magma(256), gamma=0.3)
-    calendar.foreground('square', fill_alpha=1, line_alpha=0)
-    calendar.foreground('square', fill_alpha=0, line_alpha=1, color='grey')
-    calendar.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.15)
-    calendar.foreground('sqarc', fill_alpha=0, line_alpha=1, color='black')
-    calendar.show()
+    df2 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, _d(FITNESS_D_ANY))
+    df2[DISTANCE_KM] = df2[ACTIVE_DISTANCE] / 1000
+    df2['Duration'] = df2[ACTIVE_TIME].map(format_seconds)
+    df2.loc[df2[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
+
+    calendar = Calendar(df2, title='Distance, Fitness and Direction', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
+    calendar.std_distance_fitness_direction()
 
     '''
     ## Fitness and Fatigue

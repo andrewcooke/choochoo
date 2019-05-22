@@ -356,7 +356,10 @@ def statistic_names(s, *statistics, owner=None, constraint=None):
         resolved = q.all()
     else:
         resolved = []
-    return [statistic for statistic in statistics if isinstance(statistic, StatisticName)] + resolved
+    all = [statistic for statistic in statistics if isinstance(statistic, StatisticName)] + resolved
+    if not all:
+        raise Exception(f'Found no statistics for {statistics} (owner {owner}; constraint {constraint})')
+    return all
 
 _statistic_names = statistic_names
 

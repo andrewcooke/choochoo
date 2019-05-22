@@ -1,5 +1,6 @@
 from logging import getLogger
 
+from ch2.stoats.calculate.impulse import ImpulseCalculator
 from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
@@ -70,7 +71,7 @@ def default(db, no_diary=False):
         add_climb(s, bike)
         add_impulse(s, c, bike, fitness=fitness, fatigue=fatigue)
         add_statistics(s, ActivityCalculator, c,
-                       owner_in=f'{short_cls(SegmentReader)},{short_cls(PowerCalculator)},{short_cls(ElevationCalculator)}',
+                       owner_in=short_cls(ImpulseCalculator),
                        climb=name_constant(CLIMB_CNAME, bike))
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))

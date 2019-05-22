@@ -6,6 +6,7 @@ start_all=$SECONDS
 echo
 echo "resetting database"
 dev/ch2 -v1 jupyter stop
+sleep 3
 start_database=$SECONDS
 ./ch2/migraine/sqlr2sqlr.sh
 cp ~/.ch2/database.sqlr ~/.ch2/database.sqlr-empty
