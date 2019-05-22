@@ -10,21 +10,21 @@ from sqlalchemy import inspect, select, and_, or_, distinct
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import coalesce
 
-from ch2.data.coasting import CoastingBookmark
-from ch2.stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log, HEART_RATE_BPM, \
-    MED_HEART_RATE_BPM
+from .coasting import CoastingBookmark
 from ..lib.data import kargs_to_attr
 from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
-    Composite, CompositeComponent
+    Composite, CompositeComponent, ActivityNearby
 from ..stoats.display.nearby import nearby_any_time
+from ..stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log, HEART_RATE_BPM, \
+    MED_HEART_RATE_BPM
 from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
     ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
-    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP
 
 log = getLogger(__name__)
 
@@ -465,3 +465,13 @@ def linear_resample_time(df, start=None, finish=None, dt=None, with_timespan=Non
         else:
             ldf = ldf.loc[ldf[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())]
     return ldf
+
+
+def groups_by_time(s, start=None, finish=None):
+    q = s.query(ActivityJournal.start.label(INDEX), ActivityNearby.group.label(GROUP)). \
+        filter(ActivityNearby.activity_journal_id == ActivityJournal.id)
+    if start:
+        q = q.filter(ActivityJournal.start >= start)
+    if finish:
+        q = q.filter(ActivityJournal.start < finish)
+    return pd.read_sql_query(sql=q.statement, con=s.connection(), index_col=INDEX)

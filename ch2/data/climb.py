@@ -32,6 +32,7 @@ Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_gradient, max
 
 
 def find_climbs(df, params=Climb()):
+    df = df.drop_duplicates(subset=[DISTANCE])
     by_dist = df.set_index(df[DISTANCE])
     by_dist = linear_resample(by_dist, quantise=False)
     for dlo, dhi in find_climb_distances(by_dist, params=params):

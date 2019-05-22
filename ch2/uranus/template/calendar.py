@@ -1,3 +1,6 @@
+from colorsys import hsv_to_rgb
+from time import time
+from random import seed, random
 
 from bokeh.io import output_file
 from bokeh.palettes import magma
@@ -92,3 +95,23 @@ def calendar():
     calendar.set_palette('FF Ratio', magma(256), lo=0.5, hi=2, min=0)
     calendar.foreground('square', fill_alpha=1, line_alpha=0)
     calendar.show()
+
+    '''
+    ## Groups, Distance, Climb and Direction
+
+    Larger distances have larger symbols.  Higher climbs are lighter.  
+    The arc indicates the general direction relative to the start.
+    Pastel backgrounds group similar rides.
+    
+    Place the cursor over the symbol for more information.
+    '''
+
+    dfa = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
+    dfa[DISTANCE_KM] = df2[ACTIVE_DISTANCE] / 1000
+    dfa['Duration'] = df2[ACTIVE_TIME].map(format_seconds)
+    dfa.loc[dfa[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
+    dfb = groups_by_time(s)
+    df4 = dfa.join(dfb)
+
+    calendar = Calendar(df4, not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME], scale=15, border_day=0.1)
+    calendar.std_group_distance_climb_direction()

@@ -1,6 +1,7 @@
 
 import datetime as dt
 from calendar import day_abbr, month_abbr
+from colorsys import hsv_to_rgb
 from logging import getLogger
 
 import numpy as np
@@ -14,7 +15,8 @@ from math import pi
 from .utils import tooltip
 from ...lib.data import linscale
 from ...lib.date import time_to_local_time, YMD, to_time
-from ...stoats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _d, FITNESS_D_ANY
+from ...stoats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _d, FITNESS_D_ANY, \
+    GROUP
 
 log = getLogger(__name__)
 
@@ -47,6 +49,7 @@ CALENDAR_FILL = _cal(FILL)
 
 K2R = [f'#{i:02x}0000'.upper() for i in range(256)]
 B2R = [f'#{i:02x}00{0xff-i:02x}'.upper() for i in range(256)]
+K2W = [f'#{i:02x}{i:02x}{i:02x}'.upper() for i in range(256)]
 
 
 class Calendar:
@@ -136,10 +139,10 @@ class Calendar:
         self.set_linear(CALENDAR_SIZE, name, lo=lo, hi=hi, min=min, max=max, gamma=gamma)
         self._df.loc[:, CALENDAR_RADIUS] = self._df[CALENDAR_SIZE] / 2
 
-    def set_palette(self, name, palette, lo=None, hi=None, min=0, max=1, gamma=1):
+    def set_palette(self, name, palette, lo=None, hi=None, min=0, max=1, gamma=1, nan='white'):
         n = len(palette)
         self._df.loc[:, CALENDAR_COLOR] = linscale(self._df[name], lo=lo, hi=hi, min=min, max=max, gamma=gamma). \
-            map(lambda x: palette[_max(0, _min(n-1, int(x * n)))])
+            map(lambda x: nan if np.isnan(x) else palette[_max(0, _min(n-1, int(x * n)))])
 
     def set_arc(self, angle, width, size=None, delta_radius=0, lo=0, hi=2, min=30, max=180, gamma=1):
         angle = 90 - self._df[angle]  # +ve anticlock from x
@@ -176,6 +179,27 @@ class Calendar:
         self.foreground('circle', fill_alpha=1, line_alpha=0)
         self.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.2)
         self.foreground('arc', fill_alpha=0, line_alpha=1)
+        self.show()
+
+    def std_group_distance_climb_direction(self):
+
+        n = int(self._df[GROUP].max())
+
+        def pastel(i):
+            r, g, b = [int(x * 255) for x in hsv_to_rgb((i % n) / n, 0.2, 1)]
+            return f'#{r:02x}{g:02x}{b:02x}'.upper()
+        palette = list(pastel(7 * i) for i in range(n))
+
+        self.background('square', fill_alpha=0, line_alpha=1, color='#F0F0F0')
+        self.set_palette(GROUP, palette)
+        self.set_constant(CALENDAR_SIZE, 1)
+        self.foreground('square', fill_alpha=1, line_alpha=0)
+        self.set_size(ACTIVE_DISTANCE, min=0.2, max=0.8)
+        self.set_palette(TOTAL_CLIMB, K2W, gamma=0.3)
+        self.foreground('circle', fill_alpha=1, line_alpha=0)
+        self.foreground('circle', fill_alpha=0, line_alpha=1, color='black')
+        self.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.2)
+        self.foreground('arc', fill_alpha=0, line_alpha=1, color='black')
         self.show()
 
     def show(self):
