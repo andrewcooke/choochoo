@@ -111,7 +111,6 @@ def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10,
 
 
 def direction_stats(df):
-    import pdb; pdb.set_trace()
     stats = {}
     if all(name in df.columns for name in (SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y)):
         df = df.dropna(subset=[SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y]).copy()
