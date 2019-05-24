@@ -183,7 +183,7 @@ class Calendar:
 
     def std_group_distance_climb_direction(self):
 
-        n = int(self._df[GROUP].max())
+        n = int(self._df[GROUP].max()) + 1
 
         def pastel(i):
             r, g, b = [int(x * 255) for x in hsv_to_rgb((i % n) / n, 0.2, 1)]
