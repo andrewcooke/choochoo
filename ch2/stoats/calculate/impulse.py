@@ -131,7 +131,7 @@ class ImpulseCalculator(DataFrameCalculatorMixin, UniProcCalculator):
 
     def _run_one(self, s, missed):
         start, finish = missed
-        hr10 = statistics(s, self.impulse.dest_name, owner=self.owner_in, with_sources=True)
+        hr10 = statistics(s, self.impulse.dest_name, owner=self.owner_in, with_sources=True, check=False)
         if not hr10.empty:
             all_sources = list(self.__make_sources(s, hr10))
             for response in self.responses:

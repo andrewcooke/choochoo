@@ -166,7 +166,7 @@ _activity_journal = activity_journal
 
 def activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
                         local_time=None, time=None, bookmarks=None, activity_journal=None,
-                        activity_group_name=None, with_timespan=False):
+                        activity_group_name=None, with_timespan=False, check=True):
 
     if bookmarks:
         if start or finish or local_time or time or activity_journal or activity_group_name:
@@ -174,23 +174,23 @@ def activity_statistics(s, *statistics, owner=None, constraint=None, start=None,
         return pd.concat(_activity_statistics(s, *statistics, owner=owner, constraint=constraint,
                                               start=bookmark.start, finish=bookmark.finish,
                                               activity_journal=bookmark.activity_journal,
-                                              with_timespan=with_timespan)
+                                              with_timespan=with_timespan, check=check)
                          for bookmark in bookmarks)
     else:
         return _activity_statistics(s, *statistics, owner=owner, constraint=constraint, start=start, finish=finish,
                                     local_time=local_time, time=time, activity_journal=activity_journal,
-                                    activity_group_name=activity_group_name, with_timespan=with_timespan)
+                                    activity_group_name=activity_group_name, with_timespan=with_timespan, check=check)
 
 
 def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
                          local_time=None, time=None, activity_journal=None,
-                         activity_group_name=None, with_timespan=False):
+                         activity_group_name=None, with_timespan=False, check=True):
 
     activity_journal = _activity_journal(s, activity_journal=activity_journal, local_time=local_time,
                                          time=time, activity_group_name=activity_group_name)
     if constraint is None:
         constraint = activity_journal.activity_group
-    names = _statistic_names(s, *statistics, owner=owner, constraint=constraint)
+    names = _statistic_names(s, *statistics, owner=owner, constraint=constraint, check=check)
     counts = Counter(name.name for name in names)
 
     t = _tables()
@@ -344,7 +344,7 @@ def bookmarks(s, constraint, owner=CoastingBookmark):
                ActivityBookmark.constraint == constraint).all()
 
 
-def statistic_names(s, *statistics, owner=None, constraint=None):
+def statistic_names(s, *statistics, owner=None, constraint=None, check=True):
     unresolved = [statistic for statistic in statistics if not isinstance(statistic, StatisticName)]
     if unresolved:
         q = s.query(StatisticName). \
@@ -356,12 +356,10 @@ def statistic_names(s, *statistics, owner=None, constraint=None):
         resolved = q.all()
     else:
         resolved = []
-    all = [statistic for statistic in statistics if isinstance(statistic, StatisticName)] + resolved
-    # don't raise an exceptin here - it complicates import (better to have missing statis in df that are
-    # detected later)
-    # if not all:
-    #     raise Exception(f'Found no statistics for {statistics} (owner {owner}; constraint {constraint})')
-    return all
+    some = [statistic for statistic in statistics if isinstance(statistic, StatisticName)] + resolved
+    if check and not some:
+        raise Exception(f'Found no statistics for {statistics} (owner {owner}; constraint {constraint})')
+    return some
 
 _statistic_names = statistic_names
 
@@ -373,10 +371,10 @@ def _type_to_journal(t):
 
 
 def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, sources=None,
-               with_sources=False):
+               with_sources=False, check=True):
     t = _tables()
     ttj = _type_to_journal(t)
-    names = statistic_names(s, *statistics, owner=owner, constraint=constraint)
+    names = statistic_names(s, *statistics, owner=owner, constraint=constraint, check=check)
     counts = Counter(name.name for name in names)
     labels = [name.name if counts[name.name] == 1 else f'{name.name} ({name.constraint})' for name in names]
     tables = [ttj[name.statistic_journal_type] for name in names]

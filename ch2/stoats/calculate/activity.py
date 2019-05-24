@@ -31,10 +31,10 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         try:
             adf = activity_statistics(s, DISTANCE, ELEVATION, HEART_RATE, HR_ZONE, POWER_ESTIMATE,
                                       SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                                      activity_journal=ajournal, with_timespan=True)
+                                      activity_journal=ajournal, with_timespan=True, check=False)
             start, finish = ajournal.start - dt.timedelta(hours=1), ajournal.finish + dt.timedelta(hours=1)
             sdf = statistics(s, FATIGUE_D_ANY, FITNESS_D_ANY,
-                             start=start, finish=finish, owner=self.owner_in)
+                             start=start, finish=finish, owner=self.owner_in, check=False)
             return adf, sdf
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
