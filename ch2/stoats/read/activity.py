@@ -132,17 +132,20 @@ class ActivityReader(MultiProcFitReader):
         log.debug(f'Loading {self.record_to_db}')
 
         def is_event(record, *types):
-            # return record.name == 'event' and record.value.event == 'timer' and record.value.event_type == type
-            # iphone does things differently..
-            return record.name == 'event' and record.value.event_type in types
+            event = False
+            if record.name == 'event':
+                event = record.value.event == 'timer' and record.value.event_type in types
+                # log.debug(f'Event: {event} for {types} ({record})')
+            return event
 
         have_timespan = any(is_event(record, 'start') for record in records)
+        only_records = list(filter(lambda x: x.name == 'record', records))
+        final_timestamp = only_records[-1].timestamp
         if not have_timespan:
+            first_timestamp = only_records[0].timestamp
             log.warning('Experimental handling of data without timespans')
-            final_timestamp = filter(lambda x: x.name == 'record', records)[-1].timestamp
             timespan = add(s, ActivityTimespan(activity_journal=ajournal,
-                                               start=first_timestamp,
-                                               finish=final_timestamp))
+                                               start=first_timestamp))
 
         for record in records:
 
@@ -197,3 +200,6 @@ class ActivityReader(MultiProcFitReader):
                 else:
                     log.debug('Ignoring stop with no corresponding start (possible lost data?)')
 
+        if timespan:
+            log.warning('Cleaning up dangling timespan')
+            timespan.finish = final_timestamp

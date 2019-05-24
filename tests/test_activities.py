@@ -103,3 +103,20 @@ class TestActivities(TestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 self.__assert_basic_stats(s)
+
+    def test_heart_alarms(self):
+        with NamedTemporaryFile() as f:
+            bootstrap_file(f, m(V), '5')
+            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
+                                      'activities', mm(FAST),
+                                      'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
+            activities(args, db)
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            with db.session_context() as s:
+                stat = s.query(StatisticJournal). \
+                    join(StatisticName). \
+                    filter(StatisticName.name == ACTIVE_DISTANCE).one()
+                self.assertGreater(stat.value, 30000)
