@@ -357,8 +357,10 @@ def statistic_names(s, *statistics, owner=None, constraint=None):
     else:
         resolved = []
     all = [statistic for statistic in statistics if isinstance(statistic, StatisticName)] + resolved
-    if not all:
-        raise Exception(f'Found no statistics for {statistics} (owner {owner}; constraint {constraint})')
+    # don't raise an exceptin here - it complicates import (better to have missing statis in df that are
+    # detected later)
+    # if not all:
+    #     raise Exception(f'Found no statistics for {statistics} (owner {owner}; constraint {constraint})')
     return all
 
 _statistic_names = statistic_names
