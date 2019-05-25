@@ -3,6 +3,9 @@ from binascii import hexlify
 from collections import namedtuple
 from inspect import stack, getmodule
 from json import loads
+from random import choice
+from re import sub
+from string import ascii_letters
 
 
 class WarnDict(dict):
@@ -171,6 +174,19 @@ def get_index_loc(df, value):
 
 
 def linscale(series, lo=0, hi=None, min=0, max=1, gamma=1):
-    lo = series.min() if lo is None else lo
-    hi = series.max() if hi is None else hi
+    lo = series.dropna().min() if lo is None else lo
+    hi = series.dropna().max() if hi is None else hi
     return (min + (max - min) * ((series - lo) / (hi - lo)) ** gamma).clip(min, max)
+
+
+def sorted_numeric_labels(labels, text=None):
+    if text:
+        labels = [label for label in labels if text in label]
+    return sorted(labels, key=lambda label: int(sub(r'\D', '', label)))
+
+
+def left_interpolate(left, right):
+    tmp = ''.join(choice(ascii_letters) for _ in range(8))
+    left[tmp] = True
+    both = left.join(right, how='outer').interpolate()
+    return both.loc[both[tmp] == True].drop(columns=[tmp])
