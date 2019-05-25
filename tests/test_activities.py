@@ -58,7 +58,7 @@ class TestActivities(TestCase):
                 n = s.query(count(StatisticJournal.id)).scalar()
                 # self.assertEqual(29876, n)
                 # self.assertEqual(29865, n)  # why has this dropped slightly?
-                self.assertEqual(25493, n)  # why has this dropped?
+                self.assertEqual(25499, n)  # why has this dropped?
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 
@@ -120,3 +120,17 @@ class TestActivities(TestCase):
                     join(StatisticName). \
                     filter(StatisticName.name == ACTIVE_DISTANCE).one()
                 self.assertGreater(stat.value, 30000)
+
+    def test_920(self):
+        for src in '920xt-2019-05-16_19-42-54.fit', '920xt-2019-05-16_19-42-54.fit':
+            with NamedTemporaryFile() as f:
+                bootstrap_file(f, m(V), '5')
+                bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+                args, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+                                          f'data/test/source/other/{src}')
+                activities(args, db)
+                # run('sqlite3 %s ".dump"' % f.name, shell=True)
+                run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
+                # run('sqlite3 %s ".dump"' % f.name, shell=True)
+                with db.session_context() as s:
+                    self.__assert_basic_stats(s)

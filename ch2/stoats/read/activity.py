@@ -136,6 +136,7 @@ class ActivityReader(MultiProcFitReader):
             if record.name == 'event':
                 event = record.value.event == 'timer' and record.value.event_type in types
                 # log.debug(f'Event: {event} for {types} ({record})')
+                if event: log.debug(f'{types} at {record.timestamp}')
             return event
 
         have_timespan = any(is_event(record, 'start') for record in records)
