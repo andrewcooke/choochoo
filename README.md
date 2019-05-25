@@ -17,6 +17,10 @@ data manually.
 
 ![](docs/graphic-similarity.png)
 
+The next plot is generated vy `ch2 jupyter show calendar` - it is one
+of a set of "templates" that provide a starting point for exploring
+the data with Jupyter (for details try `ch2 jupyter list`).
+
 ![](docs/calendar.png)
 
 ## Technical Overview
