@@ -48,11 +48,11 @@ def calendar():
     '''
 
     df1 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, _d(FITNESS_D_ANY))
+    df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0  # before interpolation
     df2 = statistics(s, FATIGUE_D_ANY, FITNESS_D_ANY)
     df = left_interpolate(df1, df2)
     df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
     df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
-    df.loc[df[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0
     work_done = sorted_numeric_labels(df.columns, FITNESS)[0]
     fitness = sorted_numeric_labels(df2.columns, FITNESS)[0]
     fatigue = sorted_numeric_labels(df2.columns, FATIGUE)[0]
@@ -115,7 +115,7 @@ def calendar():
     fatigue = sorted_numeric_labels(df.columns, FATIGUE)[0]
     df['FF Ratio'] = df[fatigue] / df[fitness]
 
-    calendar = Calendar(df, title='Fitness and Fatigue', border_month=0, border_day=0)
+    calendar = Calendar(df, title='Fitness and Fatigue', scale=18, border_month=0, border_day=0)
     calendar.set_size(fitness, min=0.1, gamma=0.5)
     calendar.set_palette('FF Ratio', magma(256), lo=0.5, hi=2, min=0)
     calendar.foreground('square', fill_alpha=1, line_alpha=0)

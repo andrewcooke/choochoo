@@ -93,6 +93,7 @@ def summaries(*args): return ','.join(args)
 BPM = 'bpm'
 DEG = 'deg'
 ENTRIES = 'entries'
+FF = 'FF'
 H = 'h'
 KJ = 'kJ'
 KCAL = 'kCal'
@@ -108,7 +109,7 @@ STEPS_UNITS = 'steps'
 W = 'W'
 
 
-def _d(name): return f'Delta {name}'
+def _d(name): return f'Δ {name}'
 def _avg(name): return f'Avg {name}'
 def _cor(name): return f'Cor {name}'
 def _slash(name, units): return f'{name} / {units}'

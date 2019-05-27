@@ -12,7 +12,7 @@ from ..types import Time, ShortCls, NullStr
 from ..utils import add
 from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import sigfig
-from ...stoats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ
+from ...stoats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF
 
 
 class StatisticName(Base):
@@ -190,6 +190,14 @@ class StatisticJournal(Base):
                    StatisticName.constraint == constraint).one_or_none()
 
     @classmethod
+    def at_like(cls, s, time, name, owner, constraint):
+        return s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticName.name.like(name),
+                   StatisticJournal.time == time,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint).all()
+
+    @classmethod
     def before(cls, s, time, name, owner, constraint):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
@@ -286,6 +294,8 @@ class StatisticJournalFloat(StatisticJournal):
             return '%s %s' % (sigfig(self.value, 2), units)
         elif units in (BPM, STEPS_UNITS):
             return '%d %s' % (int(self.value), units)
+        elif units == FF:
+            return '%d' % int(self.value)
         else:
             return '%s %s' % (self.value, units)
 

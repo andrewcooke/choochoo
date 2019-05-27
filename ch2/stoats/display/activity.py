@@ -10,7 +10,7 @@ from ..calculate.activity import ActivityCalculator
 from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
-    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY
+    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d
 from ...data.climb import climbs_for_activity
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS
 from ...lib.utils import label
@@ -47,6 +47,10 @@ class ActivityDiary(JournalDiary):
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEAN_POWER_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityCalculator, ajournal.activity_group)
             if sjournal:
+                body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
+        for name in (_d(FITNESS_D_ANY), _d(FATIGUE_D_ANY)):
+            for sjournal in StatisticJournal.at_like(s, ajournal.start, name, ActivityCalculator,
+                                                     ajournal.activity_group):
                 body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
         for name in (ENERGY_ESTIMATE, CALORIE_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, PowerCalculator, ajournal.activity_group)
