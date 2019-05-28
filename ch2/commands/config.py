@@ -27,7 +27,7 @@ Check that the current database is empty.
         check(db, True, True)
         default(db, no_diary=args[no(DIARY)])
     elif action == CHECK:
-        check(db, args[CONFIG], args[DATA])
+        check(db, args[no(CONFIG)], args[no(DATA)])
 
 
 def check(db, config, data):
