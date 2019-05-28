@@ -254,8 +254,8 @@ def parser():
     config_default = config_cmds.add_parser(DEFAULT, help="create default config")
     config_default.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
     config_check = config_cmds.add_parser(CHECK, help="check config")
-    config_check.add_argument(no(DATA), action='store_true', help='check database has no data loaded')
-    config_check.add_argument(no(CONFIG), action='store_true', help='check database has no data loaded')
+    config_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
+    config_check.add_argument(mm(no(CONFIG)), action='store_true', help='check database has no data loaded')
 
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_flags = constant.add_mutually_exclusive_group()
