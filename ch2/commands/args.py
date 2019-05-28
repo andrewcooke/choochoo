@@ -18,8 +18,8 @@ COMMAND = 'command'
 TOPIC = 'topic'
 
 ACTIVITIES = 'activities'
+CONFIG = 'config'
 CONSTANTS = 'constants'
-DEFAULT_CONFIG = 'default-config'
 DIARY = 'diary'
 DUMP = 'dump'
 FIT = 'fit'
@@ -44,20 +44,24 @@ ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
 BORDER = 'border'
+CHECK = 'check'
 COMPACT = 'compact'
 CONSTRAINT = 'constraint'
 CONSTANT = 'constant'
 CONTEXT = 'context'
 CSV = 'csv'
 D = 'd'
+DATA = 'data'
 DATABASE = 'database'
 DATE = 'date'
+DEFAULT = 'default'
 DELETE = 'delete'
 DESCRIBE = 'describe'
 DEV = 'dev'
 DIR = 'dir'
 DISCARD = 'discard'
 DROP = 'drop'
+EMPTY = 'empty'
 F = 'f'
 FAST = 'fast'
 FIELD = 'field'
@@ -243,6 +247,16 @@ def parser():
     activities.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 
+    config = subparsers.add_parser(CONFIG,
+                                   help='configure the default database ' +
+                                        '(see docs for full configuration instructions)')
+    config_cmds = config.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    config_default = config_cmds.add_parser(DEFAULT, help="create default config")
+    config_default.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
+    config_check = config_cmds.add_parser(CHECK, help="check config")
+    config_check.add_argument(no(DATA), action='store_true', dest=DATA, help='check database has no data loaded')
+    config_check.add_argument(no(CONFIG), action='store_true', dest=CONFIG, help='check database has no data loaded')
+
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_flags = constant.add_mutually_exclusive_group()
     constant_flags.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
@@ -286,14 +300,9 @@ def parser():
                                           help='the schedule on which some statistics are calculated')
     dump_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
                                           help='the source IDs for the statistic')
-    sump_table = dump_sub.add_parser(TABLE)
-    sump_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
+    dump_table = dump_sub.add_parser(TABLE)
+    dump_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
     dump.set_defaults(format=PRINT)
-
-    default_config = subparsers.add_parser(DEFAULT_CONFIG,
-                                           help='configure the default database ' +
-                                                '(see docs for full configuration instructions)')
-    default_config.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',

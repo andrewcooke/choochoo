@@ -7,11 +7,11 @@ getLogger('tornado').addHandler(NullHandler())
 
 from .commands.activities import activities
 from .commands.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
-    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, DEFAULT_CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
+    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER
 from .commands.constants import constants
 from .commands.dump import dump
-from .commands.default_config import default_config
+from .commands.config import config
 from .commands.diary import diary
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
@@ -45,7 +45,7 @@ at the command line.
 
 COMMANDS = {ACTIVITIES: activities,
             CONSTANTS: constants,
-            DEFAULT_CONFIG: default_config,
+            CONFIG: config,
             DIARY: diary,
             DUMP: dump,
             FIT: fit,
@@ -73,7 +73,7 @@ def main():
         raise Exception('Please user Python 3.7 or more recent')
     db = Database(args, log)
     try:
-        if db.is_empty() and (not command or command_name != DEFAULT_CONFIG):
+        if db.is_empty() and (not command or command_name != CONFIG):
             refuse_until_configured()
         else:
             set_server_args(args)
@@ -112,4 +112,4 @@ To generate a default configuration use the command
     %s %s
 
 NOTE: The default configuration is only an example.  Please see the docs
-for more details.''' % (PROGNAME, DEFAULT_CONFIG))
+for more details.''' % (PROGNAME, CONFIG))

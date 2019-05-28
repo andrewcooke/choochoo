@@ -51,6 +51,9 @@ Stop the background server.
 
 
 def service(db):
+    '''
+    Start in this thread.
+    '''
     with db.session_context() as s:
         start_service(s)
         pause()
