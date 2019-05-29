@@ -4,7 +4,7 @@
 * [activities](#activities)
 * [constants](#constants)
 * [data](#data)
-* [default-config](#default-config)
+* [config](#config)
 * [diary](#diary)
 * [fit](#fit)
 * [fix-fit](#fix-fit)
@@ -64,7 +64,7 @@ Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
 
 * activities
 * constants
-* default-config
+* config
 * diary
 * dump
 * fit
@@ -86,13 +86,18 @@ Docs at http://andrewcooke.github.io/choochoo/index
 
 
 
-## default-config
+## config
 
-    > ch2 default-config
+    > ch2 config default
 
 Generate a simple initial configuration.
 
-Please see the documentation at http://andrewcooke.github.io/choochoo    
+Please see the documentation at http://andrewcooke.github.io/choochoo - you
+have a lot more options!
+
+    > ch2 config check --no-config --no-data
+
+Check that the current database is empty.    
 
 
 
