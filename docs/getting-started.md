@@ -78,10 +78,10 @@ the latest release from Pypi.  It's still worth using a virtualenv:
 
 Once installed the system must be configured.
 
-A basic configuration can be generated with the `default-config`
+A basic configuration can be generated with the `config`
 command:
 
-    > ch2 default-config
+    > ch2 config default
 
 (if you are using source you may need to type `dev/ch2` instead of
 `ch2` - I'll assume that's obvious from now on).

@@ -167,7 +167,7 @@ you can use Choochoo to see the contents.
 * You must configure Choochoo.  The default should be sufficient.
 
       > source env/bin/activate
-      > ch2 default-config
+      > ch2 config default
       
   For more information see [here](getting-started).
 

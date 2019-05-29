@@ -693,7 +693,7 @@ Once done, you can run Choochoo:
 
      To generate a default configuration use the command
 
-	 ch2 default-config
+	 ch2 config default
 
      NOTE: The default configuration is only an example.  Please see the docs for
      more details.
@@ -702,7 +702,7 @@ Once done, you can run Choochoo:
 
 Create a default database:
 
-    (env)> ch2 default-config
+    (env)> ch2 config default
 
 You need to define your FTHR or the HR Zones can't be calculated:
 
