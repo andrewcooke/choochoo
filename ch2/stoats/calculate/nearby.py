@@ -127,9 +127,11 @@ class SimilarityCalculator(UniProcCalculator):
         start = to_time(self.nearby.start)
         finish = to_time(self.nearby.finish)
 
-        lat = s.query(StatisticName.id).filter(StatisticName.name == LATITUDE).scalar()
-        lon = s.query(StatisticName.id).filter(StatisticName.name == LONGITUDE).scalar()
         agroup = s.query(ActivityGroup.id).filter(ActivityGroup.name == self.nearby.activity_group).scalar()
+        lat = s.query(StatisticName.id). \
+            filter(StatisticName.name == LATITUDE, StatisticName.constraint == agroup).scalar()
+        lon = s.query(StatisticName.id). \
+            filter(StatisticName.name == LONGITUDE, StatisticName.constraint == agroup).scalar()
 
         sj_lat = inspect(StatisticJournal).local_table
         sj_lon = alias(inspect(StatisticJournal).local_table)
