@@ -2,14 +2,11 @@
 from inspect import getfullargspec
 from logging import getLogger
 from pkgutil import iter_modules
-from signal import pause
-from time import sleep
 
 from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS
-from ..lib.workers import command_root
 from ..squeal import SystemProcess
 from ..uranus import template
-from ..uranus.server import JupyterServer, start_service, STARTUP_SLEEP, start_remote
+from ..uranus.server import JupyterServer, get_controller
 
 log = getLogger(__name__)
 
@@ -35,11 +32,11 @@ Indicate whether the background server is running or not.
 Stop the background server.
     '''
     if args[SUB_COMMAND] == SERVICE:
-        service(db)
+        service()
     elif args[SUB_COMMAND] == START:
-        start(db)
+        start()
     elif args[SUB_COMMAND] == STOP:
-        stop(db)
+        stop()
     elif args[SUB_COMMAND] == SHOW:
         show(db, args)
     elif args[SUB_COMMAND] == STATUS:
@@ -50,31 +47,19 @@ Stop the background server.
         raise Exception(f'Unexpected command {args[SUB_COMMAND]}')
 
 
-def service(db):
+def service():
     '''
     Start in this thread.
     '''
-    with db.session_context() as s:
-        start_service(s)
-        pause()
+    get_controller().run_local()
 
 
-def start(db):
-    with db.session_context() as s:
-
-        def callback():
-            ch2 = command_root()
-            log_name = 'jupyter-service.log'
-            cmd = f'{ch2} -v0 -l {log_name} {JUPYTER} {SERVICE}'
-            SystemProcess.run(s, cmd, log_name, JupyterServer)
-            sleep(STARTUP_SLEEP)
-
-        start_remote(s, callback)
+def start():
+    get_controller().start_service()
 
 
-def stop(db):
-    with db.session_context() as s:
-        SystemProcess.delete_all(s, JupyterServer)
+def stop():
+    get_controller().stop_service()
 
 
 def status(db):
@@ -103,13 +88,12 @@ def print_list():
 
 
 def show(db, args):
-    start(db)
     name = args[NAME]
     params = args[ARG]
     try:
         fn, spec = dict(templates())[name]
         params = build_params(params, spec)
-        fn(*params, local=False)
+        fn(*params)
     except KeyError:
         raise Exception(f'No template called {name} (see {PROGNAME} {JUPYTER} {LIST})')
 

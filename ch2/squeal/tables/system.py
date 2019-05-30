@@ -1,5 +1,6 @@
 
 from logging import getLogger
+from os import getpid
 from time import time, mktime
 
 from psutil import Popen, pid_exists, Process
@@ -80,9 +81,12 @@ class SystemProcess(Base):
     @classmethod
     def delete_all(cls, s, owner, delta_time=3):
         for process in s.query(SystemProcess).filter(SystemProcess.owner == owner).all():
-            process.__kill(delta_time=delta_time)
-            log.debug(f'Deleting process {process.pid}')
-            s.delete(process)
+            if process.pid == getpid():
+                log.debug(f'Not killing self (PID {process.pid})')
+            else:
+                process.__kill(delta_time=delta_time)
+                log.debug(f'Deleting process {process.pid}')
+                s.delete(process)
         s.commit()
 
     @classmethod

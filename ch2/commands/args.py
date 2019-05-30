@@ -109,6 +109,7 @@ NAME_BAD = 'name-bad'
 NAME_GOOD = 'name-good'
 NAMES = 'names'
 NOT = 'not'
+NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
 PASS = 'pass'
@@ -222,12 +223,14 @@ def parser():
     parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlr', metavar='FILE',
                         help='the database file')
     parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
+    parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
+                        help='the directory from which relative paths are taken')
     parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
                         help='the directory for logs')
+    parser.add_argument(mm(NOTEBOOKS), action='store', default='notebooks', metavar='DIR',
+                        help='the notebooks directory')
     parser.add_argument(m(L), mm(LOG), action='store', metavar='FILE',
                         help='the file for the log (command name by default)')
-    parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
-                        help='the root directory for the default configuration')
     parser.add_argument(m(V), mm(VERBOSITY), action='store', nargs=1, default=None, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,

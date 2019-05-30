@@ -18,13 +18,13 @@ def stringify(value):
 
 def template(func):
 
-    def wrapper(*args, direct=False, local=True, **kargs):
+    def wrapper(*args, direct=False, **kargs):
         if direct:
             return func(*args, **kargs)
         else:
             sargs = [stringify(arg) for arg in args]
             skargs = dict((name, stringify(value)) for name, value in kargs.items())
-            display_notebook(func, sargs, skargs, local=local)
+            display_notebook(func, sargs, skargs)
 
     wrapper._original = func
 

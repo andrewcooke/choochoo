@@ -11,7 +11,7 @@ import nbformat as nb
 import nbformat.v4 as nbv
 from nbformat.sign import NotebookNotary
 
-from .server import connection_url, notebook_dir, start_local
+from .server import get_controller
 
 log = getLogger(__name__)
 
@@ -237,7 +237,7 @@ def load_notebook(name, vars):
     return Token.to_notebook(tokens)
 
 
-def create_notebook(template, args, kargs):
+def create_notebook(template, notebook_dir, args, kargs):
 
     all_args = ' '.join(args)
     if all_args and kargs: all_args += ' '
@@ -249,7 +249,7 @@ def create_notebook(template, args, kargs):
         vars[name] = value
 
     template = template.__name__
-    base = join(notebook_dir(), template)
+    base = join(notebook_dir, template)
     all_args = all_args if all_args else template
     name = all_args + IPYNB
     path = join(base, name)
@@ -268,12 +268,11 @@ def create_notebook(template, args, kargs):
     return join(template, name)
 
 
-def display_notebook(template, args, kargs, local=True):
+def display_notebook(template, args, kargs):
     log.debug(f'Displaying {template} with {args}, {kargs}')
-    if local:
-        start_local()
-    name = create_notebook(template, args, kargs)
-    jupyter_url = connection_url()
+    controller = get_controller()
+    name = create_notebook(template, controller.notebook_dir(), args, kargs)
+    jupyter_url = controller.connection_url()
     url = f'{jupyter_url}tree/{name}'
     log.info(f'Displaying {url}')
     web.open(url, autoraise=False)

@@ -27,7 +27,7 @@ from .lib.io import tui
 from .lib.log import make_log, log_current_exception
 from .squeal.database import Database
 from .squeal import SystemConstant
-from .uranus.server import stop_local, set_server_args
+from .uranus.server import start_controller
 
 log = getLogger(__name__)
 
@@ -75,17 +75,13 @@ def main():
     try:
         if db.is_empty() and (not command or command_name != CONFIG):
             refuse_until_configured()
+        elif command:
+            start_controller(db, args)
+            command(args, db)
         else:
-            set_server_args(args)
-            try:
-                if command:
-                    command(args, db)
-                else:
-                    log.debug('If you are seeing the "No command given" error during development ' +
-                              'you may have forgotten to set the command name via `set_defaults()`.')
-                    raise Exception('No command given (try `ch2 help`)')
-            finally:
-                stop_local()
+            log.debug('If you are seeing the "No command given" error during development ' +
+                      'you may have forgotten to set the command name via `set_defaults()`.')
+            raise Exception('No command given (try `ch2 help`)')
     except KeyboardInterrupt:
         log.critical('User abort')
         exit(1)
