@@ -55,7 +55,7 @@ def service():
 
 
 def start():
-    get_controller().start_service()
+    get_controller().start_service(restart=True)
 
 
 def stop():
@@ -65,7 +65,11 @@ def stop():
 def status(db):
     with db.session_context() as s:
         if SystemProcess.exists_any(s, JupyterServer):
-            print('\n  Service running\n')
+            print('\n  Service running:')
+            url = get_controller().connection_url()
+            print(f'    {url}')
+            dir = get_controller().notebook_dir()
+            print(f'    {dir}\n')
         else:
             print('\n  No service running\n')
 

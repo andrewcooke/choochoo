@@ -14,7 +14,6 @@ from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.elevation import ElevationCalculator
 from ..stoats.calculate.monitor import MonitorCalculator
-from ..stoats.calculate.power import PowerCalculator
 from ..stoats.calculate.segment import SegmentCalculator
 from ..stoats.calculate.summary import SummaryCalculator
 from ..stoats.display.activity import ActivityDiary

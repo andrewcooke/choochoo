@@ -9,7 +9,7 @@ from time import sleep
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE
+from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY
 from ..lib.workers import command_root
 from ..squeal import SystemConstant, SystemProcess
 
@@ -42,26 +42,30 @@ class JupyterController:
     def __init__(self, db, args, max_retries=5, retry_secs=3):
         self._db = db
         self._notebooks = args.path(NOTEBOOKS)
+        self._log_level = args[VERBOSITY]
         self._max_retries = max_retries
         self._retry_secs = retry_secs
 
-    def start_service(self):
+    def start_service(self, restart=False):
         with self._db.session_context() as s:
             if SystemProcess.exists_any(s, JupyterServer):
                 log.debug('Jupyter already running')
-            else:
-                log.debug('Starting remote Jupyter server')
-                ch2 = command_root()
-                log_name = 'jupyter-service.log'
-                cmd = f'{ch2} -v0 -l {log_name} --{NOTEBOOKS} {self._notebooks} {JUPYTER} {SERVICE}'
-                SystemProcess.run(s, cmd, log_name, JupyterServer)
-                retries = 0
-                while not SystemProcess.exists_any(s, JupyterServer):
-                    retries += 1
-                    if retries > self._max_retries:
-                        raise Exception('Jupyter server did not start')
-                    sleep(self._retry_secs)
-                log.debug('Jupyter server started')
+                if restart:
+                    self.stop_service()
+                else:
+                    return
+            log.debug('Starting remote Jupyter server')
+            ch2 = command_root()
+            log_name = 'jupyter-service.log'
+            cmd = f'{ch2} -v{self._log_level} -l {log_name} --{NOTEBOOKS} {self._notebooks} {JUPYTER} {SERVICE}'
+            SystemProcess.run(s, cmd, log_name, JupyterServer)
+            retries = 0
+            while not SystemProcess.exists_any(s, JupyterServer):
+                retries += 1
+                if retries > self._max_retries:
+                    raise Exception('Jupyter server did not start')
+                sleep(self._retry_secs)
+            log.info('Jupyter server started')
 
     def stop_service(self):
         log.info('Stopping any running Jupyter server')

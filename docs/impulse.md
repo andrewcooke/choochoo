@@ -727,7 +727,7 @@ goes wrong.).
 If you've got this far, congratulations!  Now we can start Jupyter and
 plot the results in your browser:
 
-    (env)> jupyter notebook
+    (env)> ch2 jupyter start
 
 This should open a new page in your browser.  Select `notebooks` and
 then `plot-ff-distance.pynb`, for example, to see the notebook that

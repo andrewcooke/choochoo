@@ -9,7 +9,7 @@ from ..lib.date import round_hour
 from ..stoats.names import like, _d, FITNESS_D_ANY, FATIGUE_D_ANY
 
 IMPULSE_3600 = 'Impulse / 3600s'
-DecayModel = namedtuple('DecayModel', 'start, zero, scale, period, input, output')
+DecayModel = namedtuple('DecayModel', 'start, zero, log10_scale, log10_period, input, output')
 
 
 def pre_calc(source, model, start=None, finish=None, target=None):
@@ -26,6 +26,9 @@ def pre_calc(source, model, start=None, finish=None, target=None):
             finish = max(finish, target.index[-1])
         else:
             finish = target.index[-1]
+    else:
+        start = source.index[0]
+        finish = source.index[-1]
     start, finish = round_hour(start, up=False), round_hour(finish, up=True)
     data = source.resample('1h', label='right').sum()
     data = data.loc[:, [model.input]]
@@ -40,8 +43,8 @@ def pre_calc(source, model, start=None, finish=None, target=None):
 
 
 def calc(data, model):
-    data[model.output] = model.zero + data[IMPULSE_3600] * model.scale
-    inplace_decay(data, model.output, model.period)
+    data[model.output] = model.zero + data[IMPULSE_3600] * 10 ** model.log10_scale
+    inplace_decay(data, model.output, 10 ** model.log10_period)
     return data
 
 

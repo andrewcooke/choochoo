@@ -14,9 +14,7 @@ def make_log(args, tui=False):
 
     if not getLogger('ch2').handlers:
 
-        level_unset = args[VERBOSITY] is None
-        level = 4 if level_unset else args[VERBOSITY][0]
-        level = 10 * (6 - level)
+        level = 10 * (6 - args[VERBOSITY])
 
         file_formatter = Formatter('%(levelname)-8s %(asctime)s: %(message)s')
         name = args[LOG] if LOG in args and args[LOG] else (

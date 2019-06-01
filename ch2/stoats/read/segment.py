@@ -27,7 +27,7 @@ class CalcFailed(Exception): pass
 
 class SegmentReader(ActivityReader):
 
-    def __init__(self, *args, inner_bound=5, match_bound=25, **kargs):
+    def __init__(self, *args, inner_bound=10, match_bound=25, **kargs):
         self.inner_bound = inner_bound
         self.match_bound = match_bound
         super().__init__(*args, **kargs)

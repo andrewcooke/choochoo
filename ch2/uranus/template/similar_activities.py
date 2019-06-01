@@ -1,5 +1,5 @@
 
-from bokeh.plotting import output_notebook, show
+from bokeh.plotting import output_file, show
 
 from ch2.data import *
 from ch2.lib import *
@@ -38,5 +38,5 @@ def similar_activities(local_time: to_date, activity_group_name):
     ## Display Maps
     '''
 
-    output_notebook()
+    output_file(filename='/dev/null')
     show(tile(maps, 8))

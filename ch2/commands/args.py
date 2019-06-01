@@ -231,7 +231,7 @@ def parser():
                         help='the notebooks directory')
     parser.add_argument(m(L), mm(LOG), action='store', metavar='FILE',
                         help='the file for the log (command name by default)')
-    parser.add_argument(m(V), mm(VERBOSITY), action='store', nargs=1, default=None, type=int, metavar='VERBOSITY',
+    parser.add_argument(m(V), mm(VERBOSITY), action='store', default=4, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
@@ -258,7 +258,9 @@ def parser():
     config_default.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
     config_check = config_cmds.add_parser(CHECK, help="check config")
     config_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
-    config_check.add_argument(mm(no(CONFIG)), action='store_true', help='check database has no data loaded')
+    config_check.add_argument(mm(no(CONFIG)), action='store_true', help='check database has no configuration')
+    config_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
+                              help='check database has no activity groups defined')
 
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_flags = constant.add_mutually_exclusive_group()

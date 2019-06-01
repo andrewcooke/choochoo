@@ -58,7 +58,7 @@ Above, a typical diary entry, showing notes and HR zones for an
 activity.
 
 Options under the heading "Jupyter" are explained
-[below](#data-alanylsis).
+[below](#data-analysis).
 
 ### Re-calculating Statistics
 
