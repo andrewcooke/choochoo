@@ -32,7 +32,7 @@ log = getLogger(__name__)
 # in general these functions should (or are being written to) take both ORM objects and parameters
 # to retrieve those objects if missing.  so, for example, activity_statistics can be called with
 # StatisticName and ActivityJournal instances, or it can be called with more low-level parameters.
-# the low-level parameters are often useful interactively but make simplifying asumptions; the ORM
+# the low-level parameters are often useful interactively but make simplifying assumptions; the ORM
 # instances give complete control.
 
 

@@ -2,6 +2,7 @@
 from collections import namedtuple
 from json import loads
 from logging import getLogger
+from math import log10
 
 from sqlalchemy.sql.functions import count
 
@@ -136,8 +137,8 @@ class ImpulseCalculator(DataFrameCalculatorMixin, UniProcCalculator):
             all_sources = list(self.__make_sources(s, hr10))
             for response in self.responses:
                 log.info(f'Creating values for {response.dest_name}')
-                model = DecayModel(start=response.start, zero=0, scale=response.scale,
-                                   period=response.tau_days * 24 * 60 * 60 / 3600,  # convert to intervals
+                model = DecayModel(start=response.start, zero=0, log10_scale=log10(response.scale),
+                                   log10_period=log10(response.tau_days * 24 * 60 * 60 / 3600),  # convert to intervals
                                    input=self.impulse.dest_name, output=response.dest_name)
                 hr3600 = pre_calc(hr10.copy(), model, start=start, finish=finish)
                 result = calc(hr3600, model)
