@@ -292,10 +292,13 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
     stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
 
     if with_timespan:
-        timespans = stats[TIMESPAN_ID].unique()
-    stats['keep'] = pd.notna(stats[HR_IMPULSE_10])
-    stats.interpolate(method='time', inplace=True)
-    stats = stats.loc[stats['keep'] == True].drop(columns=['keep'])
+        timespans = stats[TIMESPAN_ID].dropna().unique()
+    if stats[HR_IMPULSE_10].dropna().empty:
+        stats = linear_resample_time(stats, dt=10, add_time=False)
+    else:
+        stats[KEEP] = pd.notna(stats[HR_IMPULSE_10])
+        stats.interpolate(method='time', inplace=True)
+        stats = stats.loc[stats[KEEP] == True].drop(columns=[KEEP])
     if with_timespan:
         stats = stats.loc[stats[TIMESPAN_ID].isin(timespans)]
 
@@ -445,14 +448,14 @@ def median_dt(df):
     return pd.Series(df.index).diff().median().total_seconds()
 
 
-def linear_resample_time(df, start=None, finish=None, dt=None, with_timespan=None, keep_nan=True, add_time=True):
+def linear_resample_time(df, start=None, finish=None, dt=None, with_timespan=False, keep_nan=True, add_time=True):
     log.debug(f'Linear resample with type {type(df.index)}, columns {df.columns}')
     if with_timespan is None: with_timespan = TIMESPAN_ID in df.columns
     dt = dt or median_dt(df)
     start = start or df.index.min()
     finish = finish or df.index.max()
     lin = pd.DataFrame({KEEP: True}, index=pd.date_range(start=start, end=finish, freq=f'{dt}S'))
-    ldf = df.copy().join(lin, how='outer', sort=True)
+    ldf = df.join(lin, how='outer', sort=True)
     # if this fails check for time-like columns
     ldf.interpolate(method='index', limit_area='inside', inplace=True)
     ldf = ldf.loc[ldf[KEEP] == True].drop(columns=[KEEP])
@@ -475,3 +478,9 @@ def groups_by_time(s, start=None, finish=None):
     if finish:
         q = q.filter(ActivityJournal.start < finish)
     return pd.read_sql_query(sql=q.statement, con=s.connection(), index_col=INDEX)
+
+
+if __name__ == '__main__':
+    s = session('-v5')
+    activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group_name='Bike')
+    print(activity.describe())
