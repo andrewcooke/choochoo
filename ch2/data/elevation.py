@@ -2,7 +2,7 @@
 from scipy.interpolate import UnivariateSpline
 
 from .frame import present
-from ..stoats.names import ELEVATION, DISTANCE, RAW_ELEVATION
+from ..stoats.names import ELEVATION, DISTANCE, RAW_ELEVATION, GRADE
 
 
 def fix_elevation(df, smooth=4):
@@ -20,6 +20,8 @@ def fix_elevation(df, smooth=4):
         # 2 - no guarantee of consistency between routes (or even on the same routine retracing a path)
         spline = UnivariateSpline(unique[DISTANCE], unique[RAW_ELEVATION], s=len(unique) * smooth)
         df[ELEVATION] = spline(df[DISTANCE])
+        df[GRADE] = (spline.derivative()(df[DISTANCE]) * 100)  # two step to use rolling from pandas
+        df[GRADE] = df[GRADE].rolling(5, center=True).median().ffill().bfill()
         # avoid extrapolation / interpolation
         df.loc[df[RAW_ELEVATION].isna(), [ELEVATION]] = None
     return df

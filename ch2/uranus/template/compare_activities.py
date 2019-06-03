@@ -86,8 +86,8 @@ def compare_activities(local_time: to_date, compare_time: to_date, activity_grou
     '''
 
     map = map_plot(400, 400, activity, other=compare)
-    m_el = map_intensity(200, 200, activity, ELEVATION_M, ranges=map)
-    m_sp = map_intensity(200, 200, activity, SPEED_KMH, ranges=map)
+    m_el = map_intensity_signed(200, 200, activity, GRADE_PC, ranges=map, power=0.5)
+    m_sp = map_intensity(200, 200, activity, SPEED_KMH, ranges=map, power=2)
     m_hr = map_intensity(200, 200, activity, HR_IMPULSE_10, ranges=map)
     if present(activity, MED_POWER_ESTIMATE_W):
         m_pw = map_intensity(200, 200, activity, MED_POWER_ESTIMATE_W, ranges=map)

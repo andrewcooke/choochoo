@@ -19,7 +19,7 @@ from ..squeal.database import connect, ActivityTimespan, ActivityGroup, Activity
     Composite, CompositeComponent, ActivityNearby
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log, HEART_RATE_BPM, \
-    MED_HEART_RATE_BPM
+    MED_HEART_RATE_BPM, GRADE, GRADE_PC
 from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
     ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
@@ -275,7 +275,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
                             with_timespan=True):
 
     stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
-                                ELEVATION, SPEED, HEART_RATE, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE,
+                                ELEVATION, SPEED, HEART_RATE, HR_ZONE, HR_IMPULSE_10, ALTITUDE, GRADE, CADENCE,
                                 POWER_ESTIMATE,
                                 local_time=local_time, time=time, activity_journal=activity_journal,
                                 activity_group_name=activity_group_name, with_timespan=with_timespan)
@@ -290,6 +290,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
     if POWER_ESTIMATE in stats.columns:
         stats[MED_POWER_ESTIMATE_W] = stats[POWER_ESTIMATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
     stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
+    stats.rename(columns={GRADE: GRADE_PC}, inplace=True)
 
     if with_timespan:
         timespans = stats[TIMESPAN_ID].dropna().unique()

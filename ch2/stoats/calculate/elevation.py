@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from . import ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator
-from ..names import RAW_ELEVATION, ELEVATION, DISTANCE, M
+from ..names import RAW_ELEVATION, ELEVATION, DISTANCE, M, GRADE, PC
 from ...data.elevation import fix_elevation
 from ...data.frame import activity_statistics, present
 from ...squeal import StatisticJournalFloat
@@ -31,4 +31,6 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():
             loader.add(ELEVATION, M, None, ajournal.activity_group, ajournal, row[ELEVATION], time,
+                       StatisticJournalFloat)
+            loader.add(GRADE, PC, None, ajournal.activity_group, ajournal, row[GRADE], time,
                        StatisticJournalFloat)

@@ -1,12 +1,13 @@
 
 import datetime as dt
+from math import sqrt
 
+import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.layouts import column, row
 from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis
 from bokeh.plotting import figure
-from math import sqrt
 
 from .utils import tooltip, make_tools
 from ..frame import present
@@ -144,6 +145,34 @@ def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=
     mn, mx = source[z].min(), source[z].max()
     source['size'] = sqrt(nx * ny) * ((source[z] - mn) / (mx - mn)) ** power / 10
     f.circle(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, size='size', source=source, color=color, alpha=alpha)
+    f.axis.visible = False
+    f.toolbar.logo = None
+    if ranges is not None:
+        f.x_range = ranges.x_range
+        f.y_range = ranges.y_range
+    return f
+
+
+def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='blue', alpha=0.01, ranges=None):
+    tools = [PanTool(dimensions='both'),
+             ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
+             ResetTool(),
+             HoverTool(tooltips=[tooltip(x) for x in (z, DISTANCE_KM, LOCAL_TIME)])]
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
+               title=z, tools=tools)
+    tools[-1].renderers = [add_route(f, source)]
+    mn, mx = source[z].min(), source[z].max()
+    scale = max(mx, -mn)
+    if mx > 0:
+        source['size'] = np.sign(source[z]) * sqrt(nx * ny) * (np.abs(source[z]) / scale) ** power / 10
+        source['size'].clip(lower=0, inplace=True)
+        f.circle(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, size='size', source=source,
+                 color=color, alpha=alpha)
+    if mn < 0:
+        source['size'] = -np.sign(source[z]) * sqrt(nx * ny) * (np.abs(source[z]) / scale) ** power / 10
+        source['size'].clip(lower=0, inplace=True)
+        f.circle(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, size='size', source=source,
+                 color=color_neg, alpha=alpha)
     f.axis.visible = False
     f.toolbar.logo = None
     if ranges is not None:
