@@ -3,7 +3,6 @@ from logging import getLogger
 from os.path import splitext, basename
 
 from pygeotile.point import Point
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.functions import count
 
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION

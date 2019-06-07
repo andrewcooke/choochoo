@@ -418,7 +418,7 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
 
 def present(df, *names):
     if hasattr(df, 'columns'):
-        return df is not None and all(name in df.columns and len(df[name].dropna()) for name in names)
+        return all(name in df.columns and len(df[name].dropna()) for name in names)
     else:
         return df is not None and (len(df.dropna()) and all(df.name == name for name in names))
 

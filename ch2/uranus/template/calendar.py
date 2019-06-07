@@ -34,7 +34,8 @@ def calendar():
     df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
     df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
     df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
-    df.loc[df[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0
+    if present(df, TOTAL_CLIMB):
+        df.loc[df[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0
 
     calendar = Calendar(df, title=DISTANCE, not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
     calendar.std_distance()
@@ -48,7 +49,8 @@ def calendar():
     '''
 
     df1 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, _d(FITNESS_D_ANY))
-    df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0  # before interpolation
+    if present(df, TOTAL_CLIMB):
+        df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0  # before interpolation
     df2 = statistics(s, FATIGUE_D_ANY, FITNESS_D_ANY)
     df = left_interpolate(df1, df2)
     df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
@@ -78,7 +80,8 @@ def calendar():
     df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
     df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
     df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
-    df.loc[df[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
+    if present(df, TOTAL_CLIMB):
+        df.loc[df[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
 
     calendar = Calendar(df, title='Distance, Climb and Direction', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
     calendar.std_distance_climb_direction()
@@ -95,7 +98,8 @@ def calendar():
     df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, _d(FITNESS_D_ANY))
     df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
     df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
-    df.loc[df[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
+    if present(df, TOTAL_CLIMB):
+        df.loc[df[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
 
     calendar = Calendar(df, title='Distance, Fitness and Direction', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
     calendar.std_distance_fitness_direction()
@@ -134,8 +138,10 @@ def calendar():
     dfa = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
     dfa[DISTANCE_KM] = dfa[ACTIVE_DISTANCE] / 1000
     dfa['Duration'] = dfa[ACTIVE_TIME].map(format_seconds)
-    dfa.loc[dfa[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
+    if present(dfa, TOTAL_CLIMB):
+        dfa.loc[dfa[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
     dfb = groups_by_time(s)
+    dfb.loc[dfb[GROUP].isna(), GROUP] = -1
     df = dfa.join(dfb)
 
     calendar = Calendar(df, not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME], scale=15, border_day=0.1)

@@ -127,11 +127,13 @@ class SimilarityCalculator(UniProcCalculator):
         start = to_time(self.nearby.start)
         finish = to_time(self.nearby.finish)
 
-        agroup = s.query(ActivityGroup.id).filter(ActivityGroup.name == self.nearby.activity_group).scalar()
+        agroup = s.query(ActivityGroup).filter(ActivityGroup.name == self.nearby.activity_group).one()
         lat = s.query(StatisticName.id). \
             filter(StatisticName.name == LATITUDE, StatisticName.constraint == agroup).scalar()
         lon = s.query(StatisticName.id). \
             filter(StatisticName.name == LONGITUDE, StatisticName.constraint == agroup).scalar()
+        if not lat or not lon:
+            raise Exception(f'No {LATITUDE} or {LONGITUDE} in database for {agroup}')
 
         sj_lat = inspect(StatisticJournal).local_table
         sj_lon = alias(inspect(StatisticJournal).local_table)
@@ -151,7 +153,7 @@ class SimilarityCalculator(UniProcCalculator):
             where(and_(sj_lat.c.source_id == sj_lon.c.source_id,  # same source
                        sj_lat.c.time == sj_lon.c.time,            # same time
                        sj_lat.c.source_id == aj.c.id,             # and associated with an activity
-                       aj.c.activity_group_id == agroup,          # of the right group
+                       aj.c.activity_group_id == agroup.id,       # of the right group
                        sj_lat.c.id == sjf_lat.c.id,               # lat sub-class
                        sj_lon.c.id == sjf_lon.c.id,               # lon sub-class
                        sj_lat.c.statistic_name_id == lat,         # lat name
