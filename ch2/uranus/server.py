@@ -67,6 +67,7 @@ class JupyterController:
                 if retries > self._max_retries:
                     raise Exception('Jupyter server did not start')
                 sleep(self._retry_secs)
+            sleep(5)  # extra wait...
             log.info('Jupyter server started')
 
     def stop_service(self):
