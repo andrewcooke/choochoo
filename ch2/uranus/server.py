@@ -9,7 +9,7 @@ from time import sleep
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY
+from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, DATABASE
 from ..lib.workers import command_root
 from ..squeal import SystemConstant, SystemProcess
 
@@ -43,6 +43,7 @@ class JupyterController:
         self._db = db
         self._notebooks = args.path(NOTEBOOKS)
         self._log_level = args[VERBOSITY]
+        self._database = args[DATABASE]
         self._max_retries = max_retries
         self._retry_secs = retry_secs
 
@@ -57,7 +58,8 @@ class JupyterController:
             log.debug('Starting remote Jupyter server')
             ch2 = command_root()
             log_name = 'jupyter-service.log'
-            cmd = f'{ch2} -v{self._log_level} -l {log_name} --{NOTEBOOKS} {self._notebooks} {JUPYTER} {SERVICE}'
+            cmd = f'{ch2} -v {self._log_level} -l {log_name} -f {self._database} --{NOTEBOOKS} {self._notebooks} ' \
+                  + f'{JUPYTER} {SERVICE}'
             SystemProcess.run(s, cmd, log_name, JupyterServer)
             retries = 0
             while not SystemProcess.exists_any(s, JupyterServer):
