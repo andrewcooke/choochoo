@@ -25,7 +25,7 @@ Note that this cannot be used to download more than 10 days of data.
 For bulk downloads use
 https://www.garmin.com/en-US/account/datamanagement/
     '''
-    dir, user, password, date = args.dir(DIR, rooted=False), args[USER], args[PASS], args[DATE]
+    dir, user, password, date = args.dir(DIR), args[USER], args[PASS], args[DATE]
     if date:
         dates = [date]
     else:

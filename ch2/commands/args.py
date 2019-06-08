@@ -161,7 +161,6 @@ def m(name): return '-' + name
 def no(name): return 'no-%s' % name
 
 
-VARIABLE = compile(r'(.*(?:[^$]|^))\${(\w+)\}(.*)')
 MEMORY = ':memory:'
 
 
@@ -175,27 +174,18 @@ class NamespaceWithVariables(Mapping):
             value = self._dict[name]
         except KeyError:
             value = self._dict[sub('-', '_', name)]
-        try:
-            match = VARIABLE.match(value)
-            while match:
-                value = match.group(1) + self[match.group(2)] + match.group(3)
-                match = VARIABLE.match(value)
-            return sub(r'\$\$', '$', value)
-        except TypeError:
-            return value
+        return value
 
-    def path(self, name, index=None, rooted=True):
+    def path(self, name, index=None):
         # special case sqlite3 in-memory database
         if self[name] == MEMORY: return self[name]
         path = self[name]
         if index is not None: path = path[index]
         path = expanduser(path)
-        if rooted and relpath(path) and name != ROOT:
-            path = join(self.path(ROOT), path)
         return realpath(normpath(path))
 
-    def file(self, name, index=None, rooted=True):
-        file = self.path(name, index=index, rooted=rooted)
+    def file(self, name, index=None):
+        file = self.path(name, index=index)
         # special case sqlite3 in-memory database
         if file == MEMORY: return file
         path = dirname(file)
@@ -203,8 +193,8 @@ class NamespaceWithVariables(Mapping):
             makedirs(path)
         return file
 
-    def dir(self, name, index=None, rooted=True):
-        path = self.path(name, index=index, rooted=rooted)
+    def dir(self, name, index=None):
+        path = self.path(name, index=index)
         if not exists(path):
             makedirs(path)
         return path
@@ -220,14 +210,12 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(m(F), mm(DATABASE), action='store', default='${root}/database.sqlr', metavar='FILE',
-                        help='the database file')
     parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
-    parser.add_argument(mm(ROOT), action='store', default='~/.ch2', metavar='DIR',
-                        help='the directory from which relative paths are taken')
-    parser.add_argument(mm(LOGS), action='store', default='logs', metavar='DIR',
+    parser.add_argument(m(F), mm(DATABASE), action='store', default='~/.ch2/database.sqlr', metavar='FILE',
+                        help='the database file')
+    parser.add_argument(mm(LOGS), action='store', default='~/.ch2/logs', metavar='DIR',
                         help='the directory for logs')
-    parser.add_argument(mm(NOTEBOOKS), action='store', default='notebooks', metavar='DIR',
+    parser.add_argument(mm(NOTEBOOKS), action='store', default='~/.ch2/notebooks', metavar='DIR',
                         help='the notebooks directory')
     parser.add_argument(m(L), mm(LOG), action='store', metavar='FILE',
                         help='the file for the log (command name by default)')

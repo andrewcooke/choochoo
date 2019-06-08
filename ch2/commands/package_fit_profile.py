@@ -18,5 +18,5 @@ to a pickle file that is distributed with this package.
 
 This command is intended for internal use only.
     '''
-    in_path, warn = args.file(PATH, rooted=False), args[WARN]
+    in_path, warn = args.file(PATH), args[WARN]
     pickle_profile(log, in_path, warn=warn)
