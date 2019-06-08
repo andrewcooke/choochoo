@@ -481,6 +481,20 @@ def groups_by_time(s, start=None, finish=None):
     return pd.read_sql_query(sql=q.statement, con=s.connection(), index_col=INDEX)
 
 
+def coallesce(df, *statistics):
+    '''
+    Add statistics from moe than one group.
+    '''
+    for statistic in statistics:
+        if statistic not in df.columns:
+            df[statistic] = 0
+        pattern = f'{statistic} ('
+        for column in df.columns:
+            if column.startswith(pattern):
+                df.loc[~df[column].isna(), statistic] += df.loc[~df[column].isna(), column]
+    return df
+
+
 if __name__ == '__main__':
     s = session('-v5')
     activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group_name='Bike')
