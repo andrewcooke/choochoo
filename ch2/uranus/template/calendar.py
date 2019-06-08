@@ -50,6 +50,7 @@ def calendar():
     '''
 
     df1 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, _d(FITNESS_D_ANY))
+    df1 = coallesce(df1, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
     if present(df, TOTAL_CLIMB):
         df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0  # before interpolation
     df2 = statistics(s, FATIGUE_D_ANY, FITNESS_D_ANY)
@@ -79,6 +80,7 @@ def calendar():
     '''
 
     df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
+    df = coallesce(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
     df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
     df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
     if present(df, TOTAL_CLIMB):
@@ -97,6 +99,7 @@ def calendar():
     '''
 
     df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, _d(FITNESS_D_ANY))
+    df = coallesce(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
     df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
     df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
     if present(df, TOTAL_CLIMB):
@@ -137,6 +140,7 @@ def calendar():
     '''
 
     dfa = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
+    dfa = coallesce(dfa, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
     dfa[DISTANCE_KM] = dfa[ACTIVE_DISTANCE] / 1000
     dfa['Duration'] = dfa[ACTIVE_TIME].map(format_seconds)
     if present(dfa, TOTAL_CLIMB):

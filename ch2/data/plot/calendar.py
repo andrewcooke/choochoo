@@ -68,6 +68,8 @@ class Calendar:
         self._hover_args = (hover, not_hover, all_hover)
 
         start, finish = df.index.min(), df.index.max()
+        start = dt.date(start.year, 1, 1)
+        finish = dt.date(finish.year + 1, 1, 1) - dt.timedelta(days=1)
         delta_year = 7 * (1 + border_day) + border_year
 
         self._df = df
