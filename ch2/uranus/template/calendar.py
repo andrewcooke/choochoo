@@ -99,14 +99,15 @@ def calendar():
     '''
 
     df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, _d(FITNESS_D_ANY))
-    df = coallesce(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
-    df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
-    df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
-    if present(df, TOTAL_CLIMB):
-        df.loc[df[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
+    if present(df, _d(FITNESS_D_ANY), pattern=True):
+        df = coallesce(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
+        df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
+        df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
+        if present(df, TOTAL_CLIMB):
+            df.loc[df[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
 
-    calendar = Calendar(df, title='Distance, Fitness and Direction', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
-    calendar.std_distance_fitness_direction()
+        calendar = Calendar(df, title='Distance, Fitness and Direction', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
+        calendar.std_distance_fitness_direction()
 
     '''
     ## Fitness and Fatigue
@@ -117,17 +118,18 @@ def calendar():
     '''
 
     df = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY)
-    df = df.resample('1D').mean()
-    # take shortest period values when multiple definitions
-    fitness = sorted_numeric_labels(df.columns, FITNESS)[0]
-    fatigue = sorted_numeric_labels(df.columns, FATIGUE)[0]
-    df['FF Ratio'] = df[fatigue] / df[fitness]
+    if present(df, FITNESS_D_ANY, pattern=True):
+        df = df.resample('1D').mean()
+        # take shortest period values when multiple definitions
+        fitness = sorted_numeric_labels(df.columns, FITNESS)[0]
+        fatigue = sorted_numeric_labels(df.columns, FATIGUE)[0]
+        df['FF Ratio'] = df[fatigue] / df[fitness]
 
-    calendar = Calendar(df, title='Fitness and Fatigue', scale=18, border_month=0, border_day=0)
-    calendar.set_size(fitness, min=0.1, gamma=0.5)
-    calendar.set_palette('FF Ratio', magma(256), lo=0.5, hi=2, min=0)
-    calendar.foreground('square', fill_alpha=1, line_alpha=0)
-    calendar.show()
+        calendar = Calendar(df, title='Fitness and Fatigue', scale=18, border_month=0, border_day=0)
+        calendar.set_size(fitness, min=0.1, gamma=0.5)
+        calendar.set_palette('FF Ratio', magma(256), lo=0.5, hi=2, min=0)
+        calendar.foreground('square', fill_alpha=1, line_alpha=0)
+        calendar.show()
 
     '''
     ## Groups, Distance, Climb and Direction

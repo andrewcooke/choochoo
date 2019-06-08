@@ -416,11 +416,22 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
     return pd.read_sql_query(sql=sql, con=s.connection(), index_col=INDEX)
 
 
-def present(df, *names):
-    if hasattr(df, 'columns'):
-        return all(name in df.columns and len(df[name].dropna()) for name in names)
+def present(df, *names, pattern=False):
+    if pattern:
+        if hasattr(df, 'columns'):
+            for name in names:
+                columns = like(name, df.columns)
+                log.debug(f'Checking {columns} for {name}')
+                if not columns or not all(len(df[column].dropna()) for column in columns):
+                    return False
+            return True
+        else:
+            return df is not None and (len(df.dropna()) and all(like(name, [df.name]) for name in names))
     else:
-        return df is not None and (len(df.dropna()) and all(df.name == name for name in names))
+        if hasattr(df, 'columns'):
+            return all(name in df.columns and len(df[name].dropna()) for name in names)
+        else:
+            return df is not None and (len(df.dropna()) and all(df.name == name for name in names))
 
 
 def median_d(df):
