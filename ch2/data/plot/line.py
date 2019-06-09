@@ -228,6 +228,7 @@ def multi_bar_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_l
 
 def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label=None, rescale=False,
                plotters=None):
+    if not present(source, x, *ys): return None
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),

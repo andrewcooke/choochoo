@@ -95,9 +95,10 @@ def activity_details(local_time: to_date, activity_group_name):
     Climbs are auto-detected and shown only for the main activity. They are included in the elevation plot above.
     '''
 
-    details.filter(like='Climb').dropna(). \
-        transform({CLIMB_TIME: format_seconds, CLIMB_ELEVATION: format_metres,
-                   CLIMB_DISTANCE: format_metres, CLIMB_GRADIENT: format_percent})
+    if present(details, CLIMB_TIME):
+        details.filter(like='Climb').dropna(). \
+            transform({CLIMB_TIME: format_seconds, CLIMB_ELEVATION: format_metres,
+                       CLIMB_DISTANCE: format_metres, CLIMB_GRADIENT: format_percent})
 
     '''
     ## Health and Fitness
