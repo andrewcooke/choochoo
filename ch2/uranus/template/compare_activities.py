@@ -54,36 +54,21 @@ def compare_activities(local_time: to_date, compare_time: to_date, activity_grou
     sp = comparison_line_plot(700, 200, DISTANCE_KM, MED_SPEED_KMH, activity, other=compare, ylo=0)
     sp_c = cumulative_plot(200, 200, MED_SPEED_KMH, activity, other=compare, ylo=0)
 
-    if present(activity, ELEVATION_M):
-        el = comparison_line_plot(700, 200, DISTANCE_KM, ELEVATION_M, activity, other=compare, x_range=sp.x_range)
-        add_climbs(el, details, activity)
-        el_c = cumulative_plot(200, 200, CLIMB_MS, activity, other=compare)
-    else:
-        el, el_c = None, None
+    el = comparison_line_plot(700, 200, DISTANCE_KM, ELEVATION_M, activity, other=compare, x_range=sp.x_range)
+    add_climbs(el, details, activity)
+    el_c = cumulative_plot(200, 200, CLIMB_MS, activity, other=compare)
 
-    if present(activity, HR_IMPULSE_10):
-        hri = comparison_line_plot(700, 200, DISTANCE_KM, HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=sp.x_range)
-        hri_c = cumulative_plot(200, 200, HR_IMPULSE_10, activity, other=compare, ylo=0)
+    hri = comparison_line_plot(700, 200, DISTANCE_KM, HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=sp.x_range)
+    hri_c = cumulative_plot(200, 200, HR_IMPULSE_10, activity, other=compare, ylo=0)
 
-        hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE_BPM, activity, other=compare, ylo=0, x_range=sp.x_range)
-        hr_c = cumulative_plot(200, 200, HEART_RATE_BPM, activity, other=compare, ylo=0)
-    else:
-        hri, hri_c, hr, hr_c = None, None, None, None
+    hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE_BPM, activity, other=compare, ylo=0, x_range=sp.x_range)
+    hr_c = cumulative_plot(200, 200, HEART_RATE_BPM, activity, other=compare, ylo=0)
 
-    if present(activity, MED_POWER_ESTIMATE_W):
-        pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0, x_range=sp.x_range)
-        pw_c = cumulative_plot(200, 200, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0)
-    else:
-        pw, pw_c = None, None
+    pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0, x_range=sp.x_range)
+    pw_c = cumulative_plot(200, 200, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0)
 
-    if present(activity, MED_CADENCE):
-        cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, other=compare, ylo=0, x_range=sp.x_range)
-    else:
-        cd = None
-    if present(activity, HR_ZONE):
-        hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
-    else:
-        hr_h = None
+    cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, other=compare, ylo=0, x_range=sp.x_range)
+    hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
 
     show(gridplot([[el, el_c], [sp, sp_c], [hri, hri_c], [hr, hr_c], [pw, pw_c], [cd, hr_h]]))
 
@@ -95,10 +80,7 @@ def compare_activities(local_time: to_date, compare_time: to_date, activity_grou
     m_el = map_intensity_signed(200, 200, activity, GRADE_PC, ranges=map, power=0.5)
     m_sp = map_intensity(200, 200, activity, SPEED_KMH, ranges=map, power=2)
     m_hr = map_intensity(200, 200, activity, HR_IMPULSE_10, ranges=map)
-    if present(activity, MED_POWER_ESTIMATE_W):
-        m_pw = map_intensity(200, 200, activity, MED_POWER_ESTIMATE_W, ranges=map)
-    else:
-        m_pw = None
+    m_pw = map_intensity(200, 200, activity, MED_POWER_ESTIMATE_W, ranges=map)
     show(row(map, gridplot([[m_el, m_sp], [m_hr, m_pw]], toolbar_location='right')))
 
     '''

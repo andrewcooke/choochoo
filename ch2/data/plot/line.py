@@ -45,6 +45,7 @@ def add_tsid_line(f, x, y, source, color='black', line_dash='solid'):
 
 
 def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x_range=None):
+    if not present(source, x, y): return None
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if TIME in x else 'linear', tools=make_tools(y))
     y_range(f, y, source, ylo=ylo, yhi=yhi)
     add_tsid_line(f, x, y, source)
@@ -72,6 +73,7 @@ def add_cum_line(f, y, source, color='black', line_dash='solid'):
 
 
 def cumulative_plot(nx, ny, y, source, other=None, ylo=None, yhi=None):
+    if not present(source, y): return None
     f = figure(plot_width=nx, plot_height=ny, y_axis_location='right')
     y_range(f, y, source, ylo=ylo, yhi=yhi)
     y1 = add_cum_line(f, y, source)
@@ -89,18 +91,20 @@ def cumulative_plot(nx, ny, y, source, other=None, ylo=None, yhi=None):
 
 
 def add_climbs(f, climbs, source):
-    for time, climb in climbs.loc[~pd.isna(climbs[CLIMB_DISTANCE])].iterrows():
-        i = source.index.get_loc(time, method='nearest')
-        x = source[DISTANCE_KM].iloc[i]
-        x = (x - climb[CLIMB_DISTANCE] / 1000, x)
-        y = source[ELEVATION_M].iloc[i]
-        y = (y - climb[CLIMB_ELEVATION], y)
-        f.line(x=x, y=y, color='red', line_width=5, alpha=0.2)
-        for xx, yy in zip(x, y):
-            f.circle(x=xx, y=yy, color='red', size=8, alpha=0.2)
+    if f is not None:
+        for time, climb in climbs.loc[~pd.isna(climbs[CLIMB_DISTANCE])].iterrows():
+            i = source.index.get_loc(time, method='nearest')
+            x = source[DISTANCE_KM].iloc[i]
+            x = (x - climb[CLIMB_DISTANCE] / 1000, x)
+            y = source[ELEVATION_M].iloc[i]
+            y = (y - climb[CLIMB_ELEVATION], y)
+            f.line(x=x, y=y, color='red', line_width=5, alpha=0.2)
+            for xx, yy in zip(x, y):
+                f.circle(x=xx, y=yy, color='red', size=8, alpha=0.2)
 
 
 def histogram_plot(nx, ny, x, source, xlo=None, xhi=None, nsub=5):
+    if not present(source, x): return None
     xlo, xhi = source[x].min() if xlo is None else xlo, source[x].max() if xhi is None else xhi
     bins = pd.interval_range(start=xlo, end=xhi, periods=nsub * (xhi - xlo), closed='left')
     c = [palettes.Inferno[int(xhi - xlo + 1)][int(b.left - xlo)] for b in bins]
@@ -135,6 +139,7 @@ def map_plot(nx, ny, source, other=None):
 
 
 def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=None):
+    if not present(source, z): return None
     tools = [PanTool(dimensions='both'),
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
@@ -154,6 +159,7 @@ def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=
 
 
 def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='blue', alpha=0.01, ranges=None):
+    if not present(source, z): return None
     tools = [PanTool(dimensions='both'),
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
