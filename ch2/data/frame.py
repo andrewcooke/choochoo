@@ -281,16 +281,19 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
                                 activity_group_name=activity_group_name, with_timespan=with_timespan)
 
     stats[DISTANCE_KM] = stats[DISTANCE]/1000
-    stats[HEART_RATE_BPM] = stats[HEART_RATE]
     stats[SPEED_KMH] = stats[SPEED] * 3.6
     stats[MED_SPEED_KMH] = stats[SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
-    stats[MED_HEART_RATE_BPM] = stats[HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    stats[MED_CADENCE] = stats[CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    if POWER_ESTIMATE in stats.columns:
+    if present(stats, CADENCE):
+        stats[MED_CADENCE] = stats[CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    if present(stats, HEART_RATE):
+        stats.rename(columns={HEART_RATE: HEART_RATE_BPM}, inplace=True)
+        stats[MED_HEART_RATE_BPM] = stats[HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+        stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    if present(stats, POWER_ESTIMATE):
         stats[MED_POWER_ESTIMATE_W] = stats[POWER_ESTIMATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
-    stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
-    stats.rename(columns={GRADE: GRADE_PC}, inplace=True)
+    if present(stats, ELEVATION):
+        stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
+        stats.rename(columns={GRADE: GRADE_PC}, inplace=True)
 
     if with_timespan:
         timespans = stats[TIMESPAN_ID].dropna().unique()
@@ -303,7 +306,8 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
     if with_timespan:
         stats = stats.loc[stats[TIMESPAN_ID].isin(timespans)]
 
-    stats[CLIMB_MS] = stats[ELEVATION_M].diff() * 0.1
+    if present(stats, ELEVATION_M):
+        stats[CLIMB_MS] = stats[ELEVATION_M].diff() * 0.1
     stats[TIME] = pd.to_datetime(stats.index)
     stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), HMS))
 
@@ -494,7 +498,7 @@ def groups_by_time(s, start=None, finish=None):
 
 def coallesce(df, *statistics):
     '''
-    Add statistics from moe than one group.
+    Add statistics from more than one group.
     '''
     for statistic in statistics:
         if statistic not in df.columns:
