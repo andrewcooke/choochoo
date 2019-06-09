@@ -6,7 +6,7 @@ from logging import getLogger
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import inspect, select, and_, or_, distinct
+from sqlalchemy import inspect, select, and_, or_, distinct, asc, desc
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import coalesce
 
@@ -318,22 +318,27 @@ def std_health_statistics(s, *extra, start=None, finish=None):
 
     from ..stoats.calculate.monitor import MonitorCalculator
 
-    # this assumes FF cover all the dates and HR/steps fit into them.  may not be true in all cases?
-    # also, we downsample the FF data to hourly intervals then shift daily data to match one of those times
-    # this avoids introducing gaps in the FF data when merging that mess up the continuity of the plots.
+    start = start or s.query(StatisticJournal.time).order_by(asc(StatisticJournal.time)).limit(1).scalar()
+    finish = finish or s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
+    stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
+
     stats_1 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, start=start, finish=finish, check=False)
     if present(stats_1, FITNESS_D_ANY, pattern=True):
         stats_1 = stats_1.resample('1h').mean()
-    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator, check=False). \
-        reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
-    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish). \
-        reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
-    stats = stats_1.merge(stats_2, how='outer', left_index=True, right_index=True)
-    stats = stats.merge(stats_3, how='outer', left_index=True, right_index=True)
-    for fitness in like(FITNESS_D_ANY, stats.columns):
-        stats[_log(fitness)] = np.log10(stats[fitness])
-    for fatigue in like(FATIGUE_D_ANY, stats.columns):
-        stats[_log(fatigue)] = np.log10(stats[fatigue])
+        stats = stats.merge(stats_1.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
+                            how='outer', left_index=True, right_index=True)
+    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator, check=False)
+    if present(stats_2, REST_HR):
+        stats = stats.merge(stats_2.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
+                            how='outer', left_index=True, right_index=True)
+    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish)
+    stats = stats.merge(stats_3.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
+                        how='outer', left_index=True, right_index=True)
+    if present(stats, FITNESS_D_ANY, pattern=True):
+        for fitness in like(FITNESS_D_ANY, stats.columns):
+            stats[_log(fitness)] = np.log10(stats[fitness])
+        for fatigue in like(FATIGUE_D_ANY, stats.columns):
+            stats[_log(fatigue)] = np.log10(stats[fatigue])
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
     stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
     stats[TIME] = pd.to_datetime(stats.index)
