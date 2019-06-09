@@ -297,12 +297,12 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
 
     if with_timespan:
         timespans = stats[TIMESPAN_ID].dropna().unique()
-    if stats[HR_IMPULSE_10].dropna().empty:
-        stats = linear_resample_time(stats, dt=10, add_time=False)
-    else:
+    if present(stats, HR_IMPULSE_10):
         stats[KEEP] = pd.notna(stats[HR_IMPULSE_10])
         stats.interpolate(method='time', inplace=True)
         stats = stats.loc[stats[KEEP] == True].drop(columns=[KEEP])
+    else:
+        stats = linear_resample_time(stats, dt=10, add_time=False)
     if with_timespan:
         stats = stats.loc[stats[TIMESPAN_ID].isin(timespans)]
 
@@ -425,7 +425,6 @@ def present(df, *names, pattern=False):
         if hasattr(df, 'columns'):
             for name in names:
                 columns = like(name, df.columns)
-                log.debug(f'Checking {columns} for {name}')
                 if not columns or not all(len(df[column].dropna()) for column in columns):
                     return False
             return True
