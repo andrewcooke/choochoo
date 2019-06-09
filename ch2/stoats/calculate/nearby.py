@@ -132,8 +132,10 @@ class SimilarityCalculator(UniProcCalculator):
             filter(StatisticName.name == LATITUDE, StatisticName.constraint == agroup).scalar()
         lon = s.query(StatisticName.id). \
             filter(StatisticName.name == LONGITUDE, StatisticName.constraint == agroup).scalar()
+        
         if not lat or not lon:
-            raise Exception(f'No {LATITUDE} or {LONGITUDE} in database for {agroup}')
+            log.warning(f'No {LATITUDE} or {LONGITUDE} in database for {agroup}')
+            return
 
         sj_lat = inspect(StatisticJournal).local_table
         sj_lon = alias(inspect(StatisticJournal).local_table)
