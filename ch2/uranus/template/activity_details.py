@@ -108,15 +108,16 @@ def activity_details(local_time: to_date, activity_group_name):
     colours = ['black'] * len(fitness) + ['red'] * len(fatigue)
     alphas = [1.0] * len(fitness) + [0.5] * len(fatigue)
     ff = multi_line_plot(900, 300, TIME, fitness + fatigue, health, colours, alphas=alphas)
+    xrange = ff.x_range if ff else None
     if ff: show(ff)
     log_ff = multi_line_plot(900, 100, TIME, [_log(name) for name in fitness + fatigue], health, colours,
-                             alphas=alphas, x_range=ff.x_range, y_label='Log FF')
+                             alphas=alphas, x_range=xrange, y_label='Log FF')
     if log_ff: show(log_ff)
     atd = multi_dot_plot(900, 200, TIME, [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM], health, ['black', 'grey'], alphas=[1, 0.5],
-                         x_range=ff.x_range, rescale=True)
+                         x_range=xrange, rescale=True)
     if atd: show(atd)
     shr = multi_plot(900, 200, TIME, [DAILY_STEPS, REST_HR], health, ['grey', 'red'], alphas=[1, 0.5],
-                     x_range=ff.x_range, rescale=True, plotters=[bar_plotter(dt.timedelta(hours=20)), dot_plotter()])
+                     x_range=xrange, rescale=True, plotters=[bar_plotter(dt.timedelta(hours=20)), dot_plotter()])
     if shr: show(shr)
     # avoid current bug in bokeh
     #show(column(ff, log_ff, atd, shr))
