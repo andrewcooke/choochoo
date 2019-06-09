@@ -324,7 +324,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     stats_1 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, start=start, finish=finish, check=False)
     if present(stats_1, FITNESS_D_ANY, pattern=True):
         stats_1 = stats_1.resample('1h').mean()
-    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator). \
+    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator, check=False). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
