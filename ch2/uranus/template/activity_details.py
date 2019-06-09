@@ -49,7 +49,7 @@ def activity_details(local_time: to_date, activity_group_name):
     output_file(filename='/dev/null')
 
     if present(activity, ELEVATION_M):
-        el = comparison_line_plot(700, 200, DISTANCE_KM, ELEVAT`ION_M, activity)
+        el = comparison_line_plot(700, 200, DISTANCE_KM, ELEVATION_M, activity)
         add_climbs(el, details, activity)
         el_c = cumulative_plot(200, 200, CLIMB_MS, activity)
     else:
