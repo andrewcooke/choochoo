@@ -77,7 +77,10 @@ def activity_details(local_time: to_date, activity_group_name):
         cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, ylo=0, x_range=sp.x_range)
     else:
         cd = None
-    hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
+    if present(activity, HR_ZONE):
+        hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
+    else:
+        hr_h = None
 
     show(gridplot([[el, el_c], [sp, sp_c], [hri, hri_c], [hr, hr_c], [pw, pw_c], [cd, hr_h]]))
 
