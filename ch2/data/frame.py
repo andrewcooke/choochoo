@@ -321,7 +321,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     # this assumes FF cover all the dates and HR/steps fit into them.  may not be true in all cases?
     # also, we downsample the FF data to hourly intervals then shift daily data to match one of those times
     # this avoids introducing gaps in the FF data when merging that mess up the continuity of the plots.
-    stats_1 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, start=start, finish=finish).resample('1h').mean()
+    stats_1 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, start=start, finish=finish, check=False).resample('1h').mean()
     stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator). \
         reindex(stats_1.index, method='nearest', tolerance=dt.timedelta(minutes=30))
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish). \
