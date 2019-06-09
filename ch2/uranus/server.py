@@ -87,6 +87,9 @@ class JupyterController:
         with self._db.session_context() as s:
             return SystemConstant.get(s, SystemConstant.JUPYTER_DIR)
 
+    def database_path(self):
+        return self._database
+
     def run_local(self):
         self.stop_service()
 

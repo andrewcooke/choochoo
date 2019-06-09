@@ -5,12 +5,13 @@ from inspect import getsource, getfullargspec
 from logging import getLogger
 from os import unlink, makedirs
 from os.path import join, exists
-from re import compile, sub
+from re import compile, sub, DOTALL
 
 import nbformat as nb
 import nbformat.v4 as nbv
 from nbformat.sign import NotebookNotary
 
+from ..commands.args import DATABASE
 from .server import get_controller
 
 log = getLogger(__name__)
@@ -90,6 +91,7 @@ class Text(TextToken):
         return text
 
     def post_one(self):
+        # add back the surrounding quotes (or f-quotes) and do any substitution required
         self._text = eval('%s%s%s' % (self._fmt, self._text, QUOTES), self._vars)
         self._text = '\n'.join([self._strip_right(line) for line in self._text.splitlines()])
         self._text = self._strip(self._text)
@@ -128,8 +130,29 @@ class Text(TextToken):
 class Code(TextToken):
 
     def post_one(self):
-        self._text = sub(r'output_file\([^)]*\)', 'output_notebook()', self._text)
+        self._fix_output()
+        self._fix_session()
         self._text = self._strip(self._text)
+
+    def _fix_output(self):
+        self._text = sub(r'output_file\([^)]*\)', 'output_notebook()', self._text)
+
+    def _fix_session(self):
+        r_session = compile(r'((?:^|^.*\s)session\s*\()([^)]*)(\).*$)', DOTALL)
+        m_session = r_session.match(self._text)
+        if m_session:
+            args = m_session.group(2).strip()
+            r_f = compile(r'(^|\s)-f\s*(\S+)')
+            m_f = r_f.search(args)
+            if m_f:
+                log.warning(f'Template session() includes database path {m_f.group(1)}')
+            elif DATABASE not in self._vars:
+                raise Exception('No database location available')
+            elif args:
+                args = args[:-1] + f' -f {self._vars[DATABASE]}' + args[-1]
+            else:
+                args = f'"-f {self._vars[DATABASE]}"'
+            self._text = m_session.group(1) + args + m_session.group(3)
 
     def to_cell(self):
         return nbv.new_code_cell(self._text)
@@ -160,7 +183,7 @@ class Import(Code):
     def parse(vars, lines):
         imports = Import(vars, 0)
         while lines:
-            if lines[0].startswith('def '):
+            if lines[0].startswith('def '):  # detect template main function
                 if imports:
                     imports.post_one()
                     yield imports
@@ -171,6 +194,9 @@ class Import(Code):
 
 
 class Params(Code):
+    '''
+    Replace the function definition with definitions of template parameters.
+    '''
 
     def __init__(self, vars, params):
         super().__init__(vars, 0)
@@ -237,7 +263,7 @@ def load_notebook(name, vars):
     return Token.to_notebook(tokens)
 
 
-def create_notebook(template, notebook_dir, args, kargs):
+def create_notebook(template, notebook_dir, database_path, args, kargs):
 
     all_args = ' '.join(args)
     if all_args and kargs: all_args += ' '
@@ -245,6 +271,7 @@ def create_notebook(template, notebook_dir, args, kargs):
     all_args = sub(r'\s+', '-', all_args)
 
     vars = dict(kargs)
+    vars[DATABASE] = database_path
     for name, value in zip(getfullargspec(template).args, args):
         vars[name] = value
 
@@ -270,9 +297,8 @@ def create_notebook(template, notebook_dir, args, kargs):
 
 def display_notebook(template, args, kargs):
     log.debug(f'Displaying {template} with {args}, {kargs}')
-    controller = get_controller()
-    name = create_notebook(template, controller.notebook_dir(), args, kargs)
-    jupyter_url = controller.connection_url()
-    url = f'{jupyter_url}tree/{name}'
+    ctrl = get_controller()
+    name = create_notebook(template, ctrl.notebook_dir(), ctrl.database_path(), args, kargs)
+    url = f'{ctrl.connection_url()}tree/{name}'
     log.info(f'Displaying {url}')
     web.open(url, autoraise=False)
