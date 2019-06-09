@@ -101,7 +101,7 @@ def calendar():
 
     df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, _d(FITNESS_D_ANY))
     if present(df, _d(FITNESS_D_ANY), pattern=True):
-        df = coallesce(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
+        df = coallesce(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
         df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
         df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
         if present(df, TOTAL_CLIMB):
@@ -143,7 +143,7 @@ def calendar():
     '''
 
     dfa = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
-    dfa = coallesce(dfa, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
+    dfa = coallesce(dfa, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
     dfa[DISTANCE_KM] = dfa[ACTIVE_DISTANCE] / 1000
     dfa['Duration'] = dfa[ACTIVE_TIME].map(format_seconds)
     if present(dfa, TOTAL_CLIMB):
