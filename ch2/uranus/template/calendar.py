@@ -118,7 +118,8 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY)
+    # avoid throwing an exception if missing; plot skipped on next line
+    df = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, check=False)
     if present(df, FITNESS_D_ANY, pattern=True):
         df = df.resample('1D').mean()
         # take shortest period values when multiple definitions
@@ -149,8 +150,9 @@ def calendar():
     if present(dfa, TOTAL_CLIMB):
         dfa.loc[dfa[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
     dfb = groups_by_time(s)
-    dfb.loc[dfb[GROUP].isna(), GROUP] = -1
-    df = dfa.join(dfb)
+    if present(dfb, GROUP):
+        dfb.loc[dfb[GROUP].isna(), GROUP] = -1
+        df = dfa.join(dfb)
 
-    calendar = Calendar(df, not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME], scale=15, border_day=0.1)
-    calendar.std_group_distance_climb_direction()
+        calendar = Calendar(df, not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME], scale=15, border_day=0.1)
+        calendar.std_group_distance_climb_direction()
