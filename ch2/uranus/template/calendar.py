@@ -50,25 +50,26 @@ def calendar():
     '''
 
     df1 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, _d(FITNESS_D_ANY))
-    df1 = coallesce(df1, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
-    if present(df, TOTAL_CLIMB):
-        df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0  # before interpolation
-    df2 = statistics(s, FATIGUE_D_ANY, FITNESS_D_ANY)
-    df = left_interpolate(df1, df2)
-    df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
-    df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
-    work_done = sorted_numeric_labels(df.columns, FITNESS)[0]
-    fitness = sorted_numeric_labels(df2.columns, FITNESS)[0]
-    fatigue = sorted_numeric_labels(df2.columns, FATIGUE)[0]
-    print(fatigue, fitness)
-    df['FF Ratio'] = df[fatigue] / df[fitness]
+    if present(df1, _d(FITNESS_D_ANY), pattern=True):
+        df1 = coallesce(df1, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
+        if present(df, TOTAL_CLIMB):
+            df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0  # before interpolation
+        df2 = statistics(s, FATIGUE_D_ANY, FITNESS_D_ANY)
+        df = left_interpolate(df1, df2)
+        df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
+        df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
+        work_done = sorted_numeric_labels(df.columns, FITNESS)[0]
+        fitness = sorted_numeric_labels(df2.columns, FITNESS)[0]
+        fatigue = sorted_numeric_labels(df2.columns, FATIGUE)[0]
+        print(fatigue, fitness)
+        df['FF Ratio'] = df[fatigue] / df[fitness]
 
-    calendar = Calendar(df, title='Work Done and Fatigue', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
-    calendar.background('square', fill_alpha=0, line_alpha=1, color='lightgrey')
-    calendar.set_palette('FF Ratio', K2R, lo=0.5, hi=2)
-    calendar.set_size(work_done, min=0.1, gamma=0.5)
-    calendar.foreground('square', fill_alpha=1, line_alpha=0)
-    calendar.show()
+        calendar = Calendar(df, title='Work Done and Fatigue', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
+        calendar.background('square', fill_alpha=0, line_alpha=1, color='lightgrey')
+        calendar.set_palette('FF Ratio', K2R, lo=0.5, hi=2)
+        calendar.set_size(work_done, min=0.1, gamma=0.5)
+        calendar.foreground('square', fill_alpha=1, line_alpha=0)
+        calendar.show()
 
     '''
     ## Distance, Climb and Direction
