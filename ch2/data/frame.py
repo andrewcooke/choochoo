@@ -429,6 +429,7 @@ def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=N
 
 
 def present(df, *names, pattern=False):
+    if not names: return False  # more useful if fitness + fatigue filtereed columns
     if pattern:
         if hasattr(df, 'columns'):
             for name in names:
