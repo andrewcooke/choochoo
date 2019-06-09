@@ -332,6 +332,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
         stats = stats.merge(stats_2.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                             how='outer', left_index=True, right_index=True)
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish)
+    coallesce(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
     stats = stats.merge(stats_3.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                         how='outer', left_index=True, right_index=True)
     if present(stats, FITNESS_D_ANY, pattern=True):
