@@ -82,6 +82,7 @@ def _tables():
                          sjt=inspect(StatisticJournalText).local_table,
                          inv=inspect(Interval).local_table,
                          at=inspect(ActivityTimespan).local_table,
+                         aj=inspect(ActivityJournal).local_table,
                          cmp=inspect(Composite).local_table,
                          cc=inspect(CompositeComponent).local_table,
                          src=inspect(Source).local_table)
