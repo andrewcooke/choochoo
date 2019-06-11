@@ -1,6 +1,6 @@
 
 import asyncio
-from _signal import pause
+from signal import pause
 from logging import getLogger
 from os import makedirs
 from threading import Thread, Event
