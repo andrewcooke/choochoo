@@ -1,6 +1,5 @@
 
 import asyncio
-from signal import pause
 from logging import getLogger
 from os import makedirs
 from threading import Thread, Event
@@ -119,7 +118,8 @@ class JupyterController:
             SystemConstant.set(s, SystemConstant.JUPYTER_DIR, self._notebooks, force=True)
 
         log.info('Jupyter server started')
-        pause()
+        while True:
+            sleep(1)
 
 
 __CONTROLLER_SINGLETON = None

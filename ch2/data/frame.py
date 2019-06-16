@@ -227,6 +227,7 @@ def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None
                                          t.at.c.finish > time_select.c.time,
                                          t.at.c.activity_journal_id == activity_journal.id))
     sql = select(selects).select_from(sources)
+    # log.debug(sql)
     return pd.read_sql_query(sql=sql, con=s.connection(), index_col=INDEX)
 
 
@@ -319,7 +320,8 @@ def std_health_statistics(s, *extra, start=None, finish=None):
 
     from ..stoats.calculate.monitor import MonitorCalculator
 
-    start = start or s.query(StatisticJournal.time).order_by(asc(StatisticJournal.time)).limit(1).scalar()
+    start = start or s.query(StatisticJournal.time).filter(StatisticJournal.time > 0.0) \
+        .order_by(asc(StatisticJournal.time)).limit(1).scalar()
     finish = finish or s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
 
