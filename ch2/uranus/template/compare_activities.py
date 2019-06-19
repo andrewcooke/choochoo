@@ -1,6 +1,7 @@
 
 import datetime as dt
 
+from IPython.core.display import display
 from bokeh.io import output_file
 from bokeh.layouts import column, row, gridplot
 from bokeh.plotting import show
@@ -99,9 +100,9 @@ def compare_activities(local_time: to_date, compare_time: to_date, activity_grou
     '''
 
     if present(details, CLIMB_TIME):
-        details.filter(like='Climb').dropna(). \
-            transform({CLIMB_TIME: format_seconds, CLIMB_ELEVATION: format_metres,
-                       CLIMB_DISTANCE: format_metres, CLIMB_GRADIENT: format_percent})
+        display(details.filter(like='Climb').dropna().
+                transform({CLIMB_TIME: format_seconds, CLIMB_ELEVATION: format_metres,
+                           CLIMB_DISTANCE: format_metres, CLIMB_GRADIENT: format_percent}))
 
     '''
     ## Health and Fitness
