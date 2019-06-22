@@ -51,14 +51,14 @@ def times_for_distance(df, km=None, delta=10):
 
 
 def hrz_stats(df, zones=None):
-    stats, zones = {}, zones or range(7)
+    stats, zones = {}, zones or range(1, 8)
     try:
         if present(df, HR_ZONE):
             ldf = linear_resample_time(df, with_timespan=True)
-            hrz = pd.cut(ldf[HR_ZONE], bins=zones).value_counts()
+            hrz = pd.cut(ldf[HR_ZONE], bins=zones, right=False).value_counts()
             dt, total = median_dt(ldf), hrz.sum()
             for interval, count in hrz.iteritems():
-                zone = interval.right
+                zone = interval.left
                 stats[PERCENT_IN_Z % zone] = 100 * count / total
                 stats[TIME_IN_Z % zone] = dt * count
     except Exception as e:

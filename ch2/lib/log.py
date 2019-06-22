@@ -56,11 +56,12 @@ def make_log(args, tui=False):
             clog.addHandler(stderr_handler)
 
 
-def log_current_exception():
+def log_current_exception(traceback=True):
     t, e, tb = exc_info()
     try:
         log.debug(f'Exception: {e}')
     except:
         pass
     log.debug(f'Type: {t}')
-    log.debug('Traceback:\n' + ''.join(format_tb(tb)))
+    if traceback:
+        log.debug('Traceback:\n' + ''.join(format_tb(tb)))

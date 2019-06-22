@@ -54,6 +54,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         if present(adf, ELEVATION):
             params = Climb(**loads(Constant.get(s, self.climb_ref).at(s).value))
             climbs = list(find_climbs(adf, params=params))
+            # todo - power on climb
         return df, stats, climbs
 
     def __average_power(self, s, ajournal, active_time):
@@ -101,4 +102,4 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
             del stats[name]
         except:
             log.warning(f'Failed to load {name}')
-            log_current_exception()
+            log_current_exception(traceback=False)
