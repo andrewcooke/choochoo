@@ -77,3 +77,15 @@ def exhaustive(parser):
             if not rest:
                 yield result
     return _parser
+
+
+def single(parser):
+    def _parser(string):
+        results = list(parser(string))
+        if not results:
+            raise Exception(f'Could not parse {string}')
+        elif len(results) != 1:
+            raise Exception(f'Ambiguous expression {string}')
+        else:
+            return results[0]
+    return _parser
