@@ -8,10 +8,10 @@ from ..names import ELEVATION, DISTANCE, M, POWER_ESTIMATE, HEART_RATE, ACTIVE_D
     summaries, ACTIVE_SPEED, ACTIVE_TIME, AVG, S, KMH, MIN_KM_TIME_ANY, MIN, MED_KM_TIME_ANY, PERCENT_IN_Z_ANY, PC, \
     TIME_IN_Z_ANY, MAX_MED_HR_M_ANY, W, BPM, MAX_MEAN_PE_M_ANY, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
     CLIMB_GRADIENT, TOTAL_CLIMB, HR_ZONE, TIME, like, MEAN_POWER_ESTIMATE, ENERGY_ESTIMATE, SPHERICAL_MERCATOR_X, \
-    SPHERICAL_MERCATOR_Y, DIRECTION, DEG, ASPECT_RATIO, FITNESS_D_ANY, FATIGUE_D_ANY, _d, FF
+    SPHERICAL_MERCATOR_Y, DIRECTION, DEG, ASPECT_RATIO, FITNESS_D_ANY, FATIGUE_D_ANY, _d, FF, CLIMB_POWER
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats
-from ...data.climb import find_climbs, Climb
+from ...data.climb import find_climbs, Climb, add_climb_stats
 from ...data.frame import activity_statistics, present, statistics
 from ...data.impulse import impulse_stats
 from ...lib.log import log_current_exception
@@ -54,7 +54,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         if present(adf, ELEVATION):
             params = Climb(**loads(Constant.get(s, self.climb_ref).at(s).value))
             climbs = list(find_climbs(adf, params=params))
-            # todo - power on climb
+            add_climb_stats(adf, climbs)
         return df, stats, climbs
 
     def __average_power(self, s, ajournal, active_time):
@@ -89,6 +89,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
                 self.__copy(ajournal, loader, climb, CLIMB_DISTANCE, M, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_TIME, S, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_GRADIENT, PC, summaries(MAX, SUM, MSR), climb[TIME])
+                self.__copy(ajournal, loader, climb, CLIMB_POWER, W, summaries(MAX, SUM, MSR), climb[TIME])
         if stats:
             log.warning(f'Unsaved statistics: {list(stats.keys())}')
 

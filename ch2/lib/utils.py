@@ -4,7 +4,7 @@ from itertools import zip_longest
 from pprint import PrettyPrinter
 from re import split
 
-from ..stoats.names import M, KM, PC
+from ..stoats.names import M, KM, PC, W
 
 PALETTE_RAINBOW = [
     ('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
@@ -115,3 +115,7 @@ def format_percent(pc):
         return f'{pc:.1f}{PC}'
     else:
         return f'{pc:.2f}{PC}'
+
+
+def format_watts(power):
+    return str(int(power)) + W

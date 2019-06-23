@@ -1,5 +1,6 @@
 
 from collections import namedtuple
+import datetime as dt
 from itertools import groupby
 from logging import getLogger
 
@@ -9,7 +10,7 @@ from .frame import linear_resample, present
 from ..lib.data import nearest_index, get_index_loc
 from ..squeal import StatisticName, StatisticJournal
 from ..stoats.names import _d, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
-    CLIMB_GRADIENT
+    CLIMB_GRADIENT, CLIMB_POWER, POWER_ESTIMATE
 
 log = getLogger(__name__)
 
@@ -154,6 +155,13 @@ def climbs_for_activity(s, ajournal):
     return total, sorted((dict((statistic.statistic_name.name, statistic) for statistic in climb_statistics)
                           for _, climb_statistics in groupby(statistics, key=lambda statistic: statistic.time)),
                          key=lambda climb: climb[CLIMB_ELEVATION].value, reverse=True)
+
+
+def add_climb_stats(df, climbs):
+    for climb in climbs:
+        finish = climb[TIME]
+        start = finish - dt.timedelta(seconds=climb[CLIMB_TIME])
+        climb[CLIMB_POWER] = df.loc[start:finish, [POWER_ESTIMATE]].mean()
 
 
 # if __name__ == '__main__':

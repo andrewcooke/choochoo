@@ -99,7 +99,8 @@ def activity_details(local_time: to_date, activity_group_name):
     if present(details, CLIMB_TIME):
         display(details.filter(like='Climb').dropna().
                 transform({CLIMB_TIME: format_seconds, CLIMB_ELEVATION: format_metres,
-                           CLIMB_DISTANCE: format_metres, CLIMB_GRADIENT: format_percent}))
+                           CLIMB_DISTANCE: format_metres, CLIMB_GRADIENT: format_percent,
+                           CLIMB_POWER: format_watts}))
 
     '''
     ## Health and Fitness
