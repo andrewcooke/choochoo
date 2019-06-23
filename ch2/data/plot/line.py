@@ -6,13 +6,13 @@ import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.layouts import column, row
-from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis
+from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Title
 from bokeh.plotting import figure
 
 from .utils import tooltip, make_tools
 from ..frame import present
 from ...stoats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, ELEVATION_M, CLIMB_ELEVATION, \
-    SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE
+    SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB
 
 
 def subtract(a, c, key, col):
@@ -187,13 +187,35 @@ def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='b
     return f
 
 
-def map_thumbnail(nx, ny, source, other=None):
+def map_thumbnail(nx, ny, source, sample='3min'):
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
                title=source.index[0].strftime('%Y-%m-%d'))
-    add_route(f, source)
+    xy = source.loc[source[SPHERICAL_MERCATOR_X].notna() & source[SPHERICAL_MERCATOR_Y].notna(),
+                    [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y]].resample(sample).mean()
+    add_route(f, xy)
     f.axis.visible = False
     f.toolbar_location = None
+    add_map_caption(f, source)
     return f
+
+
+def first_value(df, name):
+    col = df[name]
+    return col.loc[col.first_valid_index()]
+
+
+def add_map_caption(f, df):
+    caption = ''
+    if present(df, ACTIVE_DISTANCE):
+        caption += '%dkm' % int(0.5 + first_value(df, ACTIVE_DISTANCE) / 1000)
+    if present(df, ACTIVE_TIME):
+        if caption: caption += '/'
+        caption += '%.1fhr' % (first_value(df, ACTIVE_TIME) / 3600)
+    if present(df, TOTAL_CLIMB):
+        if caption: caption += '/'
+        caption += '%dm' % int(first_value(df, TOTAL_CLIMB))
+    if caption:
+        f.add_layout(Title(text=caption, align="left"), "below")
 
 
 def line_plotter():

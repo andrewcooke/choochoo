@@ -27,10 +27,11 @@ def similar_activities(local_time: to_date, activity_group_name):
 
     maps = [map_thumbnail(100, 120, data)
             for data in (activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                                             activity_journal_id=similar[0].id).resample('1min').mean()
+                                             ACTIVE_DISTANCE, ACTIVE_TIME,
+                                             activity_journal_id=similar[0].id)
                          for similar in nearby_activities(s, local_time=local_time,
                                                           activity_group_name=activity_group_name))
-            if len(data.dropna()) > 10]
+            if len(data[SPHERICAL_MERCATOR_X].dropna()) > 10]
 
     print(f'Found {len(maps)} activities')
 
