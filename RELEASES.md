@@ -1,6 +1,11 @@
 
 ## Latest Changes
 
+### v0.21.0
+
+New Jupyter template some_activities that allows filtering by
+statistics.
+
 ### v0.20.0
 
 Modified `ch2 fit` to use sub-command syntax (so `ch2 fit records`
