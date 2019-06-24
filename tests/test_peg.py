@@ -29,10 +29,10 @@ class TestPeg(TestCase):
         self.assertEqual(list(pattern(r'\d(\d+)')('123x')), [(['23'], 'x')])
 
     def test_name(self):
-        self.assertEqual(list(constraint('Active Distance > 10')), [[('Active Distance', '>', 10.0)]])
+        self.assertEqual(list(constraint('Active Distance > 10')), [('Active Distance', '>', 10.0)])
 
     def test_term(self):
         self.assertEqual(list(constraint('a = "b" & (c <= 2 | 1.2 > e)')),
-                         [[(('a', '=', 'b'), '&', (('c', '<=', 2.0), '|', ('e', '<', 1.2)))]])
+                         [(('a', '=', 'b'), '&', (('c', '<=', 2.0), '|', ('e', '<', 1.2)))])
         self.assertEqual(list(constraint('a = "b" & c <= 2 | 1.2 > e')),
-                         [[((('a', '=', 'b'), '&', ('c', '<=', 2.0)), '|', ('e', '<', 1.2))]])
+                         [((('a', '=', 'b'), '&', ('c', '<=', 2.0)), '|', ('e', '<', 1.2))])
