@@ -1,56 +1,67 @@
 
-import datetime as dt
-from collections import namedtuple
-
-import pandas as pd
-
-from .lib import inplace_decay
-from ..lib.date import round_hour
-from ..stoats.names import like, _d, FITNESS_D_ANY, FATIGUE_D_ANY
-
-IMPULSE_3600 = 'Impulse / 3600s'
-DecayModel = namedtuple('DecayModel', 'start, zero, log10_scale, log10_period, input, output')
+from ..lib.date import to_time
+from .heart_rate import BC_ZONES
+from ..stoats.names import HEART_RATE, FTHR, HR_ZONE
 
 
-def pre_calc(source, model, start=None, finish=None, target=None):
-    # sum into 1-hour blocks (the decay is much longer period so this has little effect on accuracy
-    # but saves time) and then add target indices
-    # target here is intended for when fitting to data - that's the target data being fitted
-    # (so we generate data at the right times)
-    if target is not None:
-        if start:
-            start = min(start, target.index[0])
-        else:
-            start = target.index[0]
-        if finish:
-            finish = max(finish, target.index[-1])
-        else:
-            finish = target.index[-1]
-    else:
-        start = source.index[0]
-        finish = source.index[-1]
-    start, finish = round_hour(start, up=False), round_hour(finish, up=True)
-    data = source.resample('1h', label='right').sum()
-    data = data.loc[:, [model.input]]
-    data.rename(columns={model.input: IMPULSE_3600}, inplace=True)
-    times = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1H'), columns=[model.output])
-    data = data.join(times, how='outer', sort=True)
-    t0 = data.index[0]
-    initial = pd.DataFrame({IMPULSE_3600: model.start, model.output: 0}, index=[t0 - dt.timedelta(hours=1)])
-    data = initial.append(data, sort=True)
-    data.fillna(0, inplace=True)
-    return data
+def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=HEART_RATE, hr_zone=HR_ZONE):
+    '''
+    mutate input df to include hr zone
+
+    this can be used for a huge slew of data, or for an individual activity.
+    '''
+    fthrs = sorted([(row.index, row[FTHR]) for row in fthr_df.dropna()], reverse=True)
+    if not fthrs:
+        raise Exception(f'No {FTHR} data')
+    fthrs = fthrs + [(to_time('2999'), None)]
+    fthrs = [(a[0], b[0], a[1]) for a, b in zip(fthrs, fthrs[1:])]
+    for start, finish, fthr in fthrs:  # start is inclusive
+        zones = [x * fthr / 100.0 for x in pc_fthr_zones]
+        for zone, upper in enumerate(zones + [None], start=1):
+            if zone == 1:
+                # we don't try to distinguish zones below 1
+                heart_rate_df.loc[heart_rate_df.index >= start & heart_rate_df.index < finish &
+                                  heart_rate_df[heart_rate] <= upper,
+                                  [hr_zone]] = zone
+            elif not upper:
+                # or above 5
+                heart_rate_df.loc[heart_rate_df.index >= start & heart_rate_df.index < finish &
+                                  heart_rate_df[heart_rate] > lower,
+                                  [hr_zone]] = zone
+            else:
+                heart_rate_df.loc[heart_rate_df.index >= start & heart_rate_df.index < finish &
+                                  heart_rate_df[heart_rate] > lower & heart_rate_df[heart_rate] <= upper,
+                                  [hr_zone]] = \
+                    (heart_rate_df.loc[heart_rate_df.index >= start & heart_rate_df.index < finish &
+                                       heart_rate_df[heart_rate] > lower & heart_rate_df[heart_rate] <= upper,
+                                       [heart_rate]] - lower) / (upper - lower)
+            lower = upper
 
 
-def calc(data, model):
-    data[model.output] = model.zero + data[IMPULSE_3600] * 10 ** model.log10_scale
-    inplace_decay(data, model.output, 10 ** model.log10_period)
-    return data
+def impulse_10(hr_zone_df, impulse, hr_zone=HR_ZONE):
+    '''
+    interpolate HR to 10s values then calculate impulse using model parameters.
+
+    this can be used for a huge slew of data, or for an individual activity.
+    '''
+    impulse_df = hr_zone_df.loc[:, [hr_zone]]
+    impulse_df = impulse_df.resample('10s').interpolate(method='linear', limit=int(0.5 + impulse.max_secs / 10)).dropna()
+    impulse_df[impulse.dest_name] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
+    impulse_df[impulse.dest_name].clip(lower=0, inplace=True)
+    impulse_df[impulse.dest_name] = impulse_df[impulse.dest_name] ** impulse.gamma
+    return impulse_df
 
 
-def impulse_stats(df):
-    stats = {}
-    for pattern in FITNESS_D_ANY, FATIGUE_D_ANY:
-        for name in like(pattern, df.columns):
-            stats[_d(name)] = df[name][-1] - df[name][0]
-    return stats
+if __name__ == '__main__':
+    from ch2.squeal.database import connect
+    from ch2.stoats.calculate.impulse import HRImpulse
+    from ch2.data import statistics
+    _, db = connect(['-v5'])
+    with db.session_context() as s:
+        impulse = HRImpulse(dest_name='Test Impulse', gamma=1.0, zero=2, one=6, max_secs=60)
+        hr_df = statistics(s, HR_ZONE)
+        print(hr_df.describe())
+        print(hr_df)
+        impulse_df = impulse_10(hr_df, impulse)
+        print(impulse_df.describe())
+        print(impulse_df)

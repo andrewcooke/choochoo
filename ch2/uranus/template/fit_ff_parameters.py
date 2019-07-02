@@ -2,12 +2,15 @@
 from math import log10
 
 from bokeh.io import output_file, show
-from bokeh.plotting import figure
 from bokeh.palettes import Dark2
+from bokeh.plotting import figure
 
 from ch2.data import *
-from ch2.data.impulse import *
+from ch2.data.impulse import impulse_10
+from ch2.data.response import *
 from ch2.squeal import *
+from ch2.squeal.database import connect
+from ch2.stoats.calculate.heart_rate import HRImpulse
 from ch2.uranus.decorator import template
 
 
@@ -90,20 +93,76 @@ def fit_ff_parameters(segment_name):
     data = hr3600_data.join(st3600_data, how='outer')
     data[SPEED] = 1/data[SEGMENT_TIME]
 
-    data = calc(data, model._replace(log10_scale=0))
-    model = model._replace(log10_scale=log10((data[SPEED] / data[FITNESS]).dropna().mean()), zero=1e-5)
+    # for stability we do a progressive adjustment
+    model = fit(SPEED, FITNESS, data, model, calc, 'log10_scale', tol=1e-10)
     print(model)
-
-    result = fit(SPEED, FITNESS, data, model, calc, 'log10_scale', 'log10_period', 'zero', tol=1e-10)
-    print(result)
-    print(f'\nFitted time scale {10**result.log10_period} hr')
-    print(f'                  {10**result.log10_period / 24} days')
+    model = fit(SPEED, FITNESS, data, model, calc, 'log10_scale', 'log10_period', tol=1e-10)
+    print(model)
+    model = fit(SPEED, FITNESS, data, model, calc, 'log10_scale', 'log10_period', 'zero', tol=1e-10)
+    print(model)
+    print(f'\nFitted time scale {10**model.log10_period} hr')
+    print(f'                  {10**model.log10_period / 24} days')
 
     '''
     ## Plot Fit
     '''
 
-    results = calc(data, result)
+    results = calc(data, model)
+
+    f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
+    f.line(x=results.index, y=results[FITNESS], color=palette[1], legend=f'new {FITNESS}')
+    f.circle(x=st_data.index, y=1.0/st_data[SEGMENT_TIME], fill_color=palette[2], size=10, legend='Speed')
+    f.legend.location = 'top_left'
+    show(f)
+
+    '''
+    ## Stop Here
+    
+    If running all cells, what follows is not what we want...
+    '''
+
+    #raise Exception()
+
+    '''
+    ## Alternative Impulse Parameters
+    
+    So, for example, below has gamma=1 instead of the default 2.
+    '''
+
+    _, db = connect(['-v5'])
+    impulse = HRImpulse(dest_name='Test Impulse', gamma=1.0, zero=2, one=6, max_secs=60)
+    hr_data = statistics(s, HR_ZONE)
+    print(hr_data.describe())
+    #print(hr_data)
+    impulse_data = impulse_10(hr_data, impulse)
+    print(impulse_data.describe())
+    #print(impulse_data)
+
+    '''
+    Fit to that data.
+    '''
+
+    model = DecayModel(1e-10, 0, log10(10), log10(42 * 24), 'Test Impulse', FITNESS)
+
+    tmp_data = pre_calc(impulse_data, model, target=st3600_data)
+    print(tmp_data.describe())
+    data = tmp_data.join(st3600_data, how='outer')
+    data[SPEED] = 1/data[SEGMENT_TIME]
+
+    model = fit(SPEED, FITNESS, data, model, calc, 'log10_scale', tol=1e-10)
+    print(model)
+    model = fit(SPEED, FITNESS, data, model, calc, 'log10_scale', 'log10_period', tol=1e-10)
+    print(model)
+    model = fit(SPEED, FITNESS, data, model, calc, 'log10_scale', 'log10_period', 'zero', tol=1e-10)
+    print(model)
+    print(f'\nFitted time scale {10**model.log10_period} hr')
+    print(f'                  {10**model.log10_period / 24} days')
+
+    '''
+    And plot the fit.
+    '''
+
+    results = calc(data, model)
 
     f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
     f.line(x=results.index, y=results[FITNESS], color=palette[1], legend=f'new {FITNESS}')

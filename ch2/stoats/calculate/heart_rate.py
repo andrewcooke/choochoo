@@ -16,13 +16,17 @@ from ...squeal import Constant, StatisticJournal, StatisticName, StatisticJourna
 log = getLogger(__name__)
 
 # constraint comes from constant
-HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, max_secs')
+HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, one, max_secs')
 
 
 class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, impulse=None, **kargs):
-        self.impulse = self._assert('impulse', impulse)
+    def __init__(self, *args, impulse=None, impulse_ref=None, **kargs):
+        self.impulse = impulse
+        if not self.impulse:
+            self.impulse_ref = self._assert('impulse_ref', impulse_ref)
+        elif impulse_ref:
+            raise Exception('Both impulse and impulse_ref provided')
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
@@ -34,6 +38,9 @@ class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin,
                             StatisticName.owner == Constant,
                             StatisticName.constraint == activity_group).
                      order_by(desc(StatisticJournal.time)).all())
+        if not self.impulse:
+            self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
+            log.debug('%s: %s' % (self.impulse_ref, self.impulse))
 
     def _read_data(self, s, ajournal):
         sn = inspect(StatisticName).local_table
@@ -51,8 +58,6 @@ class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin,
 
     def _calculate_results(self, s, ajournal, data, loader):
 
-        hr_impulse = HRImpulse(**loads(Constant.get(s, self.impulse).at(s).value))
-        log.debug('%s: %s' % (self.impulse, hr_impulse))
         impulses = []
         prev_time, prev_heart_rate_zone = None, None
 
@@ -66,12 +71,12 @@ class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin,
                 heart_rate_zone = None
             if prev_heart_rate_zone is not None:
                 duration = (time - prev_time).total_seconds()
-                if duration <= hr_impulse.max_secs:
-                    heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, duration, hr_impulse)
+                if duration <= self.impulse.max_secs:
+                    heart_rate_impulse = self._calculate_impulse(prev_heart_rate_zone, duration)
                     impulses.append((heart_rate_impulse, time))
-                    loader.add(hr_impulse.dest_name, None, None, ajournal.activity_group, ajournal,
+                    loader.add(self.impulse.dest_name, None, None, ajournal.activity_group, ajournal,
                                heart_rate_impulse, time, StatisticJournalFloat)
-                    loader.add('%s (duration)' % hr_impulse.dest_name, S, None, ajournal.activity_group, ajournal,
+                    loader.add('%s (duration)' % self.impulse.dest_name, S, None, ajournal.activity_group, ajournal,
                                duration, time, StatisticJournalFloat)
             elif not impulses:
                 impulses.append((0, time))
@@ -79,16 +84,16 @@ class HeartRateCalculator(ActivityJournalCalculatorMixin, DirectCalculatorMixin,
 
         if impulses:
             loader = StatisticJournalLoader(s, self)
-            self._interpolate(hr_impulse.dest_name, loader, impulses, ajournal)
+            self._interpolate(self.impulse.dest_name, loader, impulses, ajournal)
             # if there are no values, add a single null so we don't re-process
             if not loader:
                 loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,
                            StatisticJournalFloat)
             loader.load()
 
-    def _calculate_impulse(self, heart_rate_zone, duration, hr_impulse):
-        return duration * ((max(heart_rate_zone, hr_impulse.zero) - hr_impulse.zero)
-                           / (6 - hr_impulse.zero)) ** hr_impulse.gamma
+    def _calculate_impulse(self, heart_rate_zone, duration):
+        return duration * ((max(heart_rate_zone, self.impulse.zero) - self.impulse.zero)
+                           / (6 - self.impulse.zero)) ** self.impulse.gamma
 
     def _calculate_zone(self, s, heart_rate, time, activity_group):
         for fthr in self.__fthr_cache[activity_group.id]:

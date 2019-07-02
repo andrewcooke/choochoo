@@ -9,7 +9,7 @@ from sqlalchemy.sql.functions import count
 from . import UniProcCalculator, DataFrameCalculatorMixin
 from ..load import StatisticJournalLoader
 from ...data.frame import statistics
-from ...data.impulse import pre_calc, DecayModel, calc
+from ...data.response import pre_calc, DecayModel, calc
 from ...lib.date import round_hour, to_time, local_date_to_time
 from ...squeal import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
@@ -19,7 +19,7 @@ from ...stoats.names import _src
 
 log = getLogger(__name__)
 
-Response = namedtuple('Response', 'src_name, src_owner, dest_name, tau_days, scale, start')
+Response = namedtuple('Response', 'src_owner, dest_name, tau_days, scale, start')
 
 
 class ImpulseCalculator(DataFrameCalculatorMixin, UniProcCalculator):
@@ -36,16 +36,26 @@ class ImpulseCalculator(DataFrameCalculatorMixin, UniProcCalculator):
     if not complete, we regenerate the whole damn thing.
     '''
 
-    def __init__(self, *args, responses=None, impulse=None, **kargs):
-        self.responses_ref = self._assert('responses', responses)
-        self.impulse_ref = self._assert('impulse', impulse)
+    def __init__(self, *args, responses=None, responses_ref=None, impulse=None, impulse_ref=None, **kargs):
+        self.responses = responses
+        if not self.responses:
+            self.responses_ref = self._assert('responses_ref', responses_ref)
+        elif responses_ref:
+            raise Exception('Both response and responses_ref provided')
+        self.impulse = impulse
+        if not self.impulse:
+            self.impulse_ref = self._assert('impulse_ref', impulse_ref)
+        elif impulse_ref:
+            raise Exception('Both impulse and impulse_ref provided')
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
         super()._startup(s)
-        self.constants = [Constant.get(s, response) for response in self.responses_ref]
-        self.responses = [Response(**loads(constant.at(s).value)) for constant in self.constants]
-        self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
+        if not self.responses:
+            constants = [Constant.get(s, response) for response in self.responses_ref]
+            self.responses = [Response(**loads(constant.at(s).value)) for constant in constants]
+        if not self.impulse:
+            self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
 
     def _delete(self, s):
         start, finish = self._start_finish(local_date_to_time)
