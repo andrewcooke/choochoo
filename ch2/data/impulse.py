@@ -1,6 +1,9 @@
 
-from ..lib.date import to_time
+import pandas as pd
+import numpy as np
+
 from .heart_rate import BC_ZONES
+from ..lib.date import to_time
 from ..stoats.names import HEART_RATE, FTHR, HR_ZONE
 
 
@@ -10,31 +13,36 @@ def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=HEART_RAT
 
     this can be used for a huge slew of data, or for an individual activity.
     '''
-    fthrs = sorted([(row.index, row[FTHR]) for row in fthr_df.dropna()], reverse=True)
+    fthrs = sorted([(time, row[FTHR]) for time, row in fthr_df.dropna().iterrows()], reverse=True)
     if not fthrs:
         raise Exception(f'No {FTHR} data')
-    fthrs = fthrs + [(to_time('2999'), None)]
+    fthrs = fthrs + [(to_time('2100'), None)]
     fthrs = [(a[0], b[0], a[1]) for a, b in zip(fthrs, fthrs[1:])]
+    heart_rate_df[hr_zone] = np.nan
     for start, finish, fthr in fthrs:  # start is inclusive
+        start, finish = pd.to_datetime(start, utc=True), pd.to_datetime(finish, utc=True)
         zones = [x * fthr / 100.0 for x in pc_fthr_zones]
         for zone, upper in enumerate(zones + [None], start=1):
             if zone == 1:
                 # we don't try to distinguish zones below 1
-                heart_rate_df.loc[heart_rate_df.index >= start & heart_rate_df.index < finish &
-                                  heart_rate_df[heart_rate] <= upper,
+                heart_rate_df.loc[(heart_rate_df.index >= start) & (heart_rate_df.index < finish) &
+                                  (heart_rate_df[heart_rate] <= upper),
                                   [hr_zone]] = zone
             elif not upper:
                 # or above 5
-                heart_rate_df.loc[heart_rate_df.index >= start & heart_rate_df.index < finish &
-                                  heart_rate_df[heart_rate] > lower,
+                heart_rate_df.loc[(heart_rate_df.index >= start) & (heart_rate_df.index < finish) &
+                                  (heart_rate_df[heart_rate] > lower),
                                   [hr_zone]] = zone
             else:
-                heart_rate_df.loc[heart_rate_df.index >= start & heart_rate_df.index < finish &
-                                  heart_rate_df[heart_rate] > lower & heart_rate_df[heart_rate] <= upper,
-                                  [hr_zone]] = \
-                    (heart_rate_df.loc[heart_rate_df.index >= start & heart_rate_df.index < finish &
-                                       heart_rate_df[heart_rate] > lower & heart_rate_df[heart_rate] <= upper,
-                                       [heart_rate]] - lower) / (upper - lower)
+                hrz = (heart_rate_df.loc[(heart_rate_df.index >= start) & (heart_rate_df.index < finish) &
+                                         (heart_rate_df[heart_rate] > lower) & (heart_rate_df[heart_rate] <= upper),
+                                         [heart_rate]] - lower) / (upper - lower)
+                # .values below from
+                # https://stackoverflow.com/questions/12307099/modifying-a-subset-of-rows-in-a-pandas-dataframe
+                # i do not understand why it is needed...
+                heart_rate_df.loc[(heart_rate_df.index >= start) & (heart_rate_df.index < finish) &
+                                  (heart_rate_df[heart_rate] > lower) & (heart_rate_df[heart_rate] <= upper),
+                                  [hr_zone]] = hrz.values
             lower = upper
 
 
@@ -44,17 +52,22 @@ def impulse_10(hr_zone_df, impulse, hr_zone=HR_ZONE):
 
     this can be used for a huge slew of data, or for an individual activity.
     '''
-    impulse_df = hr_zone_df.loc[:, [hr_zone]]
-    impulse_df = impulse_df.resample('10s').interpolate(method='linear', limit=int(0.5 + impulse.max_secs / 10)).dropna()
-    impulse_df[impulse.dest_name] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
-    impulse_df[impulse.dest_name].clip(lower=0, inplace=True)
-    impulse_df[impulse.dest_name] = impulse_df[impulse.dest_name] ** impulse.gamma
+    if hr_zone_df.empty:
+        impulse_df = pd.DataFrame(columns=[impulse.dest_name])
+    else:
+        impulse_df = hr_zone_df.loc[:, [hr_zone]]
+        impulse_df = impulse_df.resample('10s').interpolate(method='linear',
+                                                            limit=int(0.5 + impulse.max_secs / 10)).dropna()
+        impulse_df[impulse.dest_name] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
+        impulse_df[impulse.dest_name].clip(lower=0, inplace=True)
+        impulse_df[impulse.dest_name] = impulse_df[impulse.dest_name] ** impulse.gamma
+        impulse_df.drop(columns=[hr_zone], inplace=True)
     return impulse_df
 
 
 if __name__ == '__main__':
     from ch2.squeal.database import connect
-    from ch2.stoats.calculate.impulse import HRImpulse
+    from ch2.stoats.calculate.response import HRImpulse
     from ch2.data import statistics
     _, db = connect(['-v5'])
     with db.session_context() as s:

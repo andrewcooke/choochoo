@@ -3,8 +3,8 @@ from json import dumps
 
 from .database import add_statistics, add_enum_constant, set_constant, name_constant
 from ..squeal.types import short_cls
-from ..stoats.calculate.heart_rate import HRImpulse, HeartRateCalculator
-from ..stoats.calculate.impulse import Response, ImpulseCalculator
+from ..stoats.calculate.impulse import HRImpulse, ImpulseCalculator
+from ..stoats.calculate.response import Response, ResponseCalculator
 from ..stoats.names import FITNESS_D, FATIGUE_D, HR_IMPULSE_10
 from ..stoats.read.segment import SegmentReader
 
@@ -38,7 +38,7 @@ def add_impulse(s, c, activity_group, start=1e-6, fitness=((42, 1),), fatigue=((
         fitness = add_enum_constant(s, constant, Response, single=True, constraint=activity_group_constraint,
                                     description=f'Data needed to calculate the FF-model fitness for {days}d - ' +
                                     'see Response enum')
-        set_constant(s, fitness, dumps({'src_owner': short_cls(HeartRateCalculator),
+        set_constant(s, fitness, dumps({'src_owner': short_cls(ImpulseCalculator),
                                         'dest_name': name, 'tau_days': days, 'scale': scale, 'start': start}))
 
     for days, scale in fatigue:
@@ -48,10 +48,10 @@ def add_impulse(s, c, activity_group, start=1e-6, fitness=((42, 1),), fatigue=((
         fitness = add_enum_constant(s, constant, Response, single=True, constraint=activity_group_constraint,
                                     description=f'Data needed to calculate the FF-model fatigue for {days}d - ' +
                                     'see Response enum')
-        set_constant(s, fitness, dumps({'src_owner': short_cls(HeartRateCalculator),
+        set_constant(s, fitness, dumps({'src_owner': short_cls(ImpulseCalculator),
                                         'dest_name': name, 'tau_days': days, 'scale': scale, 'start': start}))
 
-    add_statistics(s, HeartRateCalculator, c, owner_in=short_cls(SegmentReader),
+    add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(SegmentReader),
                    impulse_ref=hr_impulse_name)
-    add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(HeartRateCalculator),
+    add_statistics(s, ResponseCalculator, c, owner_in=short_cls(ImpulseCalculator),
                    responses_ref=responses, impulse_ref=hr_impulse_name)

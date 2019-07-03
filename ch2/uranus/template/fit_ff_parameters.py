@@ -10,7 +10,7 @@ from ch2.data.impulse import impulse_10
 from ch2.data.response import *
 from ch2.squeal import *
 from ch2.squeal.database import connect
-from ch2.stoats.calculate.heart_rate import HRImpulse
+from ch2.stoats.calculate.impulse import HRImpulse
 from ch2.uranus.decorator import template
 
 
@@ -121,7 +121,7 @@ def fit_ff_parameters(segment_name):
     If running all cells, what follows is not what we want...
     '''
 
-    #raise Exception()
+    raise Exception()
 
     '''
     ## Alternative Impulse Parameters
