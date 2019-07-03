@@ -24,10 +24,10 @@ class SegmentCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin,
         # extends superclass with restriction on activities that have a segment
         existing_ids = s.query(Timestamp.key). \
             filter(Timestamp.owner == self.owner_out)
-        segment_ids = s.query(SegmentJournal.activity_journal_id)
+        activity_ids = s.query(SegmentJournal.activity_journal_id)
         q = s.query(ActivityJournal.start). \
             filter(not_(ActivityJournal.id.in_(existing_ids)),
-                   ActivityJournal.id.in_(segment_ids))
+                   ActivityJournal.id.in_(activity_ids))
         return [row[0] for row in self._delimit_query(q)]
 
     def _calculate_results(self, s, ajournal, waypoints, loader):

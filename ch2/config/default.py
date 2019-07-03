@@ -61,7 +61,7 @@ def default(db, no_diary=False):
         # FF-model parameters
         # 7 and 42 days as for training peaks
         # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
-        fitness=((42, 1), (260, 1/6))
+        fitness=((42, 1), (84, 1/2))
         fatigue=((7, 5),)
 
         c = Counter()

@@ -29,7 +29,8 @@ def add_impulse(s, c, activity_group, start=1e-6, fitness=((42, 1),), fatigue=((
                                    constraint=activity_group_constraint,
                                    description='Data needed to calculate the FF-model impulse from HR zones - ' +
                                                'see HRImpulse enum')
-    set_constant(s, hr_impulse, dumps({'dest_name': HR_IMPULSE_10, 'gamma': 2.0, 'zero': 2, 'one': 6, 'max_secs': 60}))
+    # range 1-6, gamma 2 and decay of 84 days seems to fit my data best
+    set_constant(s, hr_impulse, dumps({'dest_name': HR_IMPULSE_10, 'gamma': 2.0, 'zero': 1, 'one': 6, 'max_secs': 60}))
 
     for days, scale in fitness:
         name = FITNESS_D % days
