@@ -9,6 +9,11 @@ from ..stoats.names import FTHR
 BC_ZONES = (68, 83, 94, 105, 121)
 
 
+# these functions were used during development, but are not used in current code
+# which does calculations on dataframes for efficiency.
+# they have been left for documentation (and possibly useful from jupyter).
+
+
 def zone(hr, fthr, zones=BC_ZONES):
     zones = [x * fthr / 100.0 for x in zones]
     for i in range(len(zones)):

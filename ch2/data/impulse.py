@@ -34,9 +34,9 @@ def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=HEART_RAT
                                   (heart_rate_df[heart_rate] > lower),
                                   [hr_zone]] = zone
             else:
-                hrz = (heart_rate_df.loc[(heart_rate_df.index >= start) & (heart_rate_df.index < finish) &
-                                         (heart_rate_df[heart_rate] > lower) & (heart_rate_df[heart_rate] <= upper),
-                                         [heart_rate]] - lower) / (upper - lower)
+                hrz = ((heart_rate_df.loc[(heart_rate_df.index >= start) & (heart_rate_df.index < finish) &
+                                          (heart_rate_df[heart_rate] > lower) & (heart_rate_df[heart_rate] <= upper),
+                                          [heart_rate]] - lower) / (upper - lower)) + zone
                 # .values below from
                 # https://stackoverflow.com/questions/12307099/modifying-a-subset-of-rows-in-a-pandas-dataframe
                 # i do not understand why it is needed...
