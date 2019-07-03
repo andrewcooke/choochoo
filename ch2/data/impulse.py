@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 
+from ch2.lib.data import interpolate_freq
 from .heart_rate import BC_ZONES
 from ..lib.date import to_time
 from ..stoats.names import HEART_RATE, FTHR, HR_ZONE
@@ -55,9 +56,8 @@ def impulse_10(hr_zone_df, impulse, hr_zone=HR_ZONE):
     if hr_zone_df.empty:
         impulse_df = pd.DataFrame(columns=[impulse.dest_name])
     else:
-        impulse_df = hr_zone_df.loc[:, [hr_zone]]
-        impulse_df = impulse_df.resample('10s').interpolate(method='linear',
-                                                            limit=int(0.5 + impulse.max_secs / 10)).dropna()
+        impulse_df = interpolate_freq(hr_zone_df.loc[:, [hr_zone]], '10s',
+                                      method='index', limit=int(0.5 + impulse.max_secs / 10)).dropna()
         impulse_df[impulse.dest_name] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
         impulse_df[impulse.dest_name].clip(lower=0, inplace=True)
         impulse_df[impulse.dest_name] = impulse_df[impulse.dest_name] ** impulse.gamma
