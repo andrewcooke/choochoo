@@ -6,7 +6,7 @@ from sqlalchemy import asc, desc
 from urwid import Pile, Text, Columns
 
 from . import Displayer
-from ..calculate.impulse import Response, ImpulseCalculator
+from ..calculate.response import Response, ResponseCalculator
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 from ...lib.utils import label, em, error
@@ -15,7 +15,7 @@ from ...squeal.tables.statistic import StatisticJournal, StatisticName, TYPE_TO_
 from ...uweird.tui.decorators import Indent
 
 
-class ImpulseDiary(Displayer):
+class ResponseDiary(Displayer):
 
     def __init__(self, *args, fitness=None, fatigue=None, **kargs):
         self.fitness = self._assert('fitness', fitness)
@@ -63,7 +63,7 @@ class ImpulseDiary(Displayer):
         return s.query(StatisticJournal). \
             join(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == ImpulseCalculator,
+                   StatisticName.owner == ResponseCalculator,
                    StatisticJournal.time >= start_time,
                    StatisticJournal.time < finish_time). \
             order_by(direcn(StatisticJournal.time)). \
@@ -75,7 +75,7 @@ class ImpulseDiary(Displayer):
         q = s.query(jtype). \
             join(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == ImpulseCalculator,  # todo - owner_in
+                   StatisticName.owner == ResponseCalculator,  # todo - owner_in
                    jtype.time >= start_time,
                    jtype.time < finish_time)
         return (q.order_by(asc(jtype.value)).limit(1).one_or_none(),

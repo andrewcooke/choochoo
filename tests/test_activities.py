@@ -1,3 +1,4 @@
+
 from subprocess import run
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
@@ -56,7 +57,7 @@ class TestActivities(TestCase):
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(27598, n)
+                self.assertEqual(23403, n)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 

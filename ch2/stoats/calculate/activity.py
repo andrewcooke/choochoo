@@ -13,7 +13,7 @@ from ...data.activity import active_stats, times_for_distance, hrz_stats, max_me
     direction_stats
 from ...data.climb import find_climbs, Climb, add_climb_stats
 from ...data.frame import activity_statistics, present, statistics
-from ...data.impulse import impulse_stats
+from ...data.response import response_stats
 from ...lib.log import log_current_exception
 from ...squeal import StatisticJournalFloat, Constant
 from ...stoats.calculate.power import PowerCalculator
@@ -50,7 +50,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         stats.update(max_med_stats(adf))
         stats.update(max_mean_stats(adf))
         stats.update(direction_stats(adf))
-        stats.update(impulse_stats(sdf))
+        stats.update(response_stats(sdf))
         if present(adf, ELEVATION):
             params = Climb(**loads(Constant.get(s, self.climb_ref).at(s).value))
             climbs = list(find_climbs(adf, params=params))

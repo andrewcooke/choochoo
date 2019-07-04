@@ -40,14 +40,13 @@ def missing_dates(s):
     # find the mid-point to avoid any problems with timezones and edge cases
     # (these files don't span more than a day)
     seconds = (latest.finish - latest.start).total_seconds() / 2
-    start = time_to_local_date(latest.start + dt.timedelta(seconds=seconds) + dt.timedelta(days=1))
+    start = time_to_local_date(latest.start + dt.timedelta(seconds=seconds))
     finish = dt.date.today()
     days = (finish - start).days
     if days > 14:
         raise Exception('Too many days (%d) - ' % days +
                         'do a bulk download instead: https://www.garmin.com/en-US/account/datamanagement/')
     if days:
-        # exclude today since it will be incomplete
         while start < finish:
             yield start
             start += dt.timedelta(days=1)

@@ -170,3 +170,6 @@ def round_hour(time, up=True):
     else:
         return down
 
+
+def datetime_to_epoch(datetime):
+    return datetime.timestamp()

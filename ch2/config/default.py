@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from ch2.stoats.calculate.impulse import ImpulseCalculator
+from ch2.stoats.calculate.response import ResponseCalculator
 from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
@@ -17,7 +17,7 @@ from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.calculate.segment import SegmentCalculator
 from ..stoats.calculate.summary import SummaryCalculator
 from ..stoats.display.activity import ActivityDiary
-from ..stoats.display.impulse import ImpulseDiary
+from ..stoats.display.response import ResponseDiary
 from ..stoats.display.monitor import MonitorDiary
 from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.segment import SegmentDiary
@@ -61,7 +61,7 @@ def default(db, no_diary=False):
         # FF-model parameters
         # 7 and 42 days as for training peaks
         # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
-        fitness=((42, 1), (260, 1/6))
+        fitness=((42, 1), (84, 1/2))
         fatigue=((7, 5),)
 
         c = Counter()
@@ -70,7 +70,7 @@ def default(db, no_diary=False):
         add_climb(s, bike)
         add_impulse(s, c, bike, fitness=fitness, fatigue=fatigue)
         add_statistics(s, ActivityCalculator, c,
-                       owner_in=short_cls(ImpulseCalculator),
+                       owner_in=short_cls(ResponseCalculator),
                        climb=name_constant(CLIMB_CNAME, bike))
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
@@ -89,7 +89,7 @@ def default(db, no_diary=False):
         c = Counter()
         add_diary(s, MonitorDiary, c)
         # these tie-in to the constants used in add_impulse()
-        add_diary(s, ImpulseDiary, c,
+        add_diary(s, ResponseDiary, c,
                   fitness=[name_constant(FITNESS_D % days, bike) for (days, _) in fitness],
                   fatigue=[name_constant(FATIGUE_D % days, bike) for (days, _) in fatigue])
         add_diary(s, ActivityDiary, c)

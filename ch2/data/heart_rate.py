@@ -6,7 +6,12 @@ from ..stoats.names import FTHR
 
 # values from british cycling online calculator
 # these are upper limits
-BC_ZONES = (68, 83, 94, 105, 121, 999)
+BC_ZONES = (68, 83, 94, 105, 121)
+
+
+# these functions were used during development, but are not used in current code
+# which does calculations on dataframes for efficiency.
+# they have been left for documentation (and possibly useful from jupyter).
 
 
 def zone(hr, fthr, zones=BC_ZONES):

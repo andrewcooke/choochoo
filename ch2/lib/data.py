@@ -1,4 +1,5 @@
 
+import pandas as pd
 from binascii import hexlify
 from collections import namedtuple
 from inspect import stack, getmodule
@@ -185,8 +186,18 @@ def sorted_numeric_labels(labels, text=None):
     return sorted(labels, key=lambda label: int(sub(r'\D', '', label)))
 
 
-def left_interpolate(left, right):
+def interpolate_freq(df, freq, **kargs):
+    left = pd.DataFrame(index=pd.date_range(df.index.min(), df.index.max(), freq=freq))
+    return left_interpolate(left, df, **kargs)
+
+
+def left_interpolate(left, right, **kargs):
+    '''
+    interpolate right so that it is on the same index as left.
+    '''
+    # neater solution https://stackoverflow.com/questions/47148446/pandas-resample-interpolate-is-producing-nans
+    # option 1 with reindexing
     tmp = ''.join(choice(ascii_letters) for _ in range(8))
     left[tmp] = True
-    both = left.join(right, how='outer').interpolate()
+    both = left.join(right, how='outer').interpolate(**kargs)
     return both.loc[both[tmp] == True].drop(columns=[tmp])

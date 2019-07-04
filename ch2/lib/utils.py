@@ -1,8 +1,5 @@
-
-import time as t
 from itertools import zip_longest
 from pprint import PrettyPrinter
-from re import split
 
 from ..stoats.names import M, KM, PC, W
 
@@ -70,10 +67,6 @@ def unique(elements, key=lambda x: x):
         if value not in known:
             known.add(value)
             yield element
-
-
-def datetime_to_epoch(datetime):
-    return datetime.timestamp()
 
 
 def interleave(sep, iter):

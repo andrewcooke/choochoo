@@ -15,6 +15,9 @@ from ...stoats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DI
     SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB
 
 
+STAMEN_TERRAIN = tile_providers.get_provider(tile_providers.Vendors.STAMEN_TERRAIN)
+
+
 def subtract(a, c, key, col):
     cols = [key, col]
     limit = min(a[key].max(), c[key].max())
@@ -132,7 +135,7 @@ def map_plot(nx, ny, source, other=None):
     add_route(f, source)
     if present(other, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y):
         add_route(f, other, color='black', line_dash='dotted')
-    f.add_tile(tile_providers.STAMEN_TERRAIN, alpha=0.3)
+    f.add_tile(STAMEN_TERRAIN, alpha=0.3)
     f.axis.visible = False
     f.toolbar.logo = None
     return f

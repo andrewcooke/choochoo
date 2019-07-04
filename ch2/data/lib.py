@@ -76,5 +76,6 @@ def interpolate_to_index(df, extra, *names):
     df['keep'] = True
     both = df.join(extra.loc[:, names], how='outer', sort=True)
     both.loc[both['keep'] != True, ['keep']] = False
+    # todo - should be 'index' below?
     both.interpolate(method='linear', limit_area='inside', inplace=True)
     return both.loc[both['keep']].drop(columns=['keep'])

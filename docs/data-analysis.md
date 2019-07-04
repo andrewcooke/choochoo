@@ -7,7 +7,10 @@ manipulate and plot data within your web browser.
 
   * [Starting Jupyter](#starting-jupyter)
   * [Quick Start](#quick-start)
-    * [Showing Templates](#showing-templates)
+    * [Predefined Scripts](#predefined-scripts)
+      * [Calendar](#calendar)
+      * [Activity Details](#activity-details)
+      * [Activity Search](#activity-search)
     * [Roll Your Own](#roll-your-own)
   * [Slow Start](#slow-start)
     * [Session](#session)
@@ -36,7 +39,7 @@ There are various ways of starting Jupyter:
 
 ## Quick Start
 
-### Showing Templates
+### Predefined Scripts
 
 Choochoo includes some Jupyter scripts that will help you get started.
 Many of these can be accessed via the diary (by clicking on "links")
@@ -45,6 +48,8 @@ and all can be accessed from the command line.
 To see the scripts available type
 
     ch2 jupyter list
+
+#### Calendar
 
 To start a specific script, use `ch2 jupyter show` followed by the
 script name and any parameters.  For example:
@@ -55,6 +60,8 @@ Once the script appears in your browser select "Run All" from the
 "Cell" menu and you should see something like:
 
 ![](calendar.png)
+
+#### Activity Details
 
 On the calendar identify an interesting activity and note the date
 (move the mouse over the plot for more data).  Then you can see the
@@ -71,6 +78,18 @@ will list the names.
 After selecting "Run All" again, you should see something like:
 
 ![](2017-11-05.png)
+
+#### Activity Search
+
+Sometimes you want to locate a particular activity, or all activities
+that meet some condition.  The `some_activities` script lets you
+search by statistic.  For example:
+
+    ch2 show some_activities 'Active Distance > 50000 & Total Climb > 1000'
+
+(note that units here are metres).  For me, this shows:
+
+![](hard-rides.png)
 
 ### Roll Your Own
 
