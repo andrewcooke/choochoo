@@ -1,6 +1,12 @@
 
 ## Latest Changes
 
+### v0.22.0
+
+HR calculations via data frames.  New pipeline class names - use
+dev/reset.sh (modify to get the import paths correct) to rebuild the
+database.
+
 ### v0.21.0
 
 New Jupyter template some_activities that allows filtering by

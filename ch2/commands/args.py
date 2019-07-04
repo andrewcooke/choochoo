@@ -11,7 +11,7 @@ from ..lib.date import to_date, to_time
 
 log = getLogger(__name__)
 
-CH2_VERSION = '0.21.0'
+CH2_VERSION = '0.22.0'
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
