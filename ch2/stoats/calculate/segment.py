@@ -3,22 +3,18 @@ from logging import getLogger
 
 from sqlalchemy import not_
 
-from . import ActivityJournalCalculatorMixin, WaypointCalculatorMixin, MultiProcCalculator
-from ..names import SEGMENT_TIME, LATITUDE, LONGITUDE, DISTANCE, S, summaries, MIN, MSR, CNT, HEART_RATE, \
+from ch2.data import activity_statistics, present, linear_resample_time
+from . import ActivityJournalCalculatorMixin, MultiProcCalculator, DataFrameCalculatorMixin
+from ..names import SEGMENT_TIME, S, summaries, MIN, MSR, CNT, HEART_RATE, \
     SEGMENT_HEART_RATE, BPM, MAX
-from ..waypoint import filter_none
 from ...squeal import ActivityJournal, SegmentJournal, StatisticJournalFloat, Timestamp
 
 log = getLogger(__name__)
 
+SJOURNAL = 'sjournal'
 
-class SegmentCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin, MultiProcCalculator):
 
-    def _names(self):
-        return {LATITUDE: 'lat',
-                LONGITUDE: 'lon',
-                DISTANCE: 'distance',
-                HEART_RATE: 'hr'}
+class SegmentCalculator2(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def _missing(self, s):
         # extends superclass with restriction on activities that have a segment
@@ -30,20 +26,26 @@ class SegmentCalculator(ActivityJournalCalculatorMixin, WaypointCalculatorMixin,
                    ActivityJournal.id.in_(activity_ids))
         return [row[0] for row in self._delimit_query(q)]
 
-    def _calculate_results(self, s, ajournal, waypoints, loader):
+    def _read_dataframe(self, s, ajournal):
+        return activity_statistics(s, HEART_RATE, activity_journal=ajournal)
+
+    def _calculate_stats(self, s, ajournal, df):
+        all = []
         for sjournal in s.query(SegmentJournal). \
                 filter(SegmentJournal.activity_journal == ajournal).all():
+            stats = {SJOURNAL: sjournal,
+                     SEGMENT_TIME: (sjournal.finish - sjournal.start).total_seconds()}
+            if present(df, HEART_RATE):
+                ldf = linear_resample_time(df, start=sjournal.start, finish=sjournal.finish)
+                stats[SEGMENT_HEART_RATE] = ldf[HEART_RATE].mean()
+            all.append(stats)
+        return all
+
+    def _copy_results(self, s, ajournal, loader, all):
+        for stats in all:
+            sjournal = stats[SJOURNAL]
             loader.add(SEGMENT_TIME, S, summaries(MIN, CNT, MSR), sjournal.segment, sjournal,
-                       (sjournal.finish - sjournal.start).total_seconds(), sjournal.start, StatisticJournalFloat)
-            waypoints = [w for w in filter_none(self._names().values(), waypoints)
-                         if sjournal.start <= w.time <= sjournal.finish]
-            # weight by time gap so we don't bias towards more sampled times
-            gaps = [(w1.time - w0.time, 0.5 * (w0.hr + w1.hr))
-                    for w0, w1 in zip(waypoints, waypoints[1:])]
-            if gaps:
-                weighted = sum(dt.total_seconds() * hr for dt, hr in gaps)
-                average = weighted / sum(dt.total_seconds() for dt, _ in gaps)
+                       stats[SEGMENT_TIME], sjournal.start, StatisticJournalFloat)
+            if SEGMENT_HEART_RATE in stats:
                 loader.add(SEGMENT_HEART_RATE, BPM, summaries(MAX, CNT, MSR), sjournal.segment, sjournal,
-                           average, sjournal.start, StatisticJournalFloat)
-            else:
-                log.warning('No Heart Rate data')
+                           stats[SEGMENT_HEART_RATE], sjournal.start, StatisticJournalFloat)

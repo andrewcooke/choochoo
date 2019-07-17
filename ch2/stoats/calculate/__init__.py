@@ -7,7 +7,6 @@ from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
 from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
-from ..waypoint import WaypointReader
 from ...commands.args import STATISTICS, WORKER, mm
 from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date, local_date_to_time, \
     time_to_local_date
@@ -163,21 +162,6 @@ class DirectCalculatorMixin(LoaderMixin):
     def _calculate_results(self, s, source, data, loader):
         raise NotImplementedError()
 
-
-class WaypointCalculatorMixin(DirectCalculatorMixin):
-
-    # todo - can / should this be replaced by a data-frame approach?
-
-    def _read_data(self, s, source):
-        waypoints = list(WaypointReader().read(s, source, self._names(), self._assert('owner_in', self.owner_in)))
-        if not waypoints:
-            raise Exception('No waypoints')
-        else:
-            return waypoints
-
-    @abstractmethod
-    def _names(self):
-        raise NotImplementedError()
 
 
 class IntervalCalculatorMixin(LoaderMixin):

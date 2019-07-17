@@ -14,12 +14,12 @@ from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.elevation import ElevationCalculator
 from ..stoats.calculate.monitor import MonitorCalculator
-from ..stoats.calculate.segment import SegmentCalculator
+from ..stoats.calculate.segment import SegmentCalculator2
 from ..stoats.calculate.summary import SummaryCalculator
 from ..stoats.display.activity import ActivityDiary
-from ..stoats.display.response import ResponseDiary
 from ..stoats.display.monitor import MonitorDiary
 from ..stoats.display.nearby import NearbyDiary
+from ..stoats.display.response import ResponseDiary
 from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
     RPM, FITNESS_D, FATIGUE_D
@@ -72,7 +72,7 @@ def default(db, no_diary=False):
         add_statistics(s, ActivityCalculator, c,
                        owner_in=short_cls(ResponseCalculator),
                        climb=name_constant(CLIMB_CNAME, bike))
-        add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
+        add_statistics(s, SegmentCalculator2, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
 
         # need to call normalize here because schedule isn't a schedule type column,

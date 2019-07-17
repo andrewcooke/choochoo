@@ -216,7 +216,7 @@ def parser():
     parser.add_argument(mm(LOGS), action='store', default='~/.ch2/logs', metavar='DIR',
                         help='the directory for logs')
     parser.add_argument(mm(NOTEBOOKS), action='store', default='~/.ch2/notebooks', metavar='DIR',
-                        help='the notebooks directory')
+                        help='the notebooks directory (when jupyter starts)')
     parser.add_argument(m(L), mm(LOG), action='store', metavar='FILE',
                         help='the file for the log (command name by default)')
     parser.add_argument(m(V), mm(VERBOSITY), action='store', default=4, type=int, metavar='VERBOSITY',

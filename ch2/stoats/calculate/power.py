@@ -7,11 +7,10 @@ from re import split
 import pandas as pd
 import numpy as np
 
-from ch2.data import present, linear_resample_time
 from . import DataFrameCalculatorMixin, ActivityJournalCalculatorMixin, MultiProcCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
-from ...data import activity_statistics
+from ...data import activity_statistics, present, linear_resample_time
 from ...data.lib import interpolate_to_index
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, \
     add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
@@ -20,6 +19,7 @@ from ...lib.log import log_current_exception
 from ...squeal import StatisticJournalFloat, Constant, Timestamp
 
 log = getLogger(__name__)
+
 # these configure the model.
 Power = reftuple('Power', 'bike, rider_weight, vary', defaults=(70, 'wind_speed, wind_heading, slope'))
 Bike = namedtuple('Bike', 'cda, crr, weight')
