@@ -6,7 +6,7 @@ from re import sub
 from urwid import Pile, Text, Columns
 
 from . import Displayer
-from ..calculate.segment import SegmentCalculator2
+from ..calculate.segment import SegmentCalculator
 from ..names import SEGMENT_TIME, SEGMENT_HEART_RATE
 from ...lib.date import local_date_to_time
 from ...squeal.tables.activity import ActivityGroup
@@ -58,7 +58,7 @@ class SegmentDiary(Displayer):
             return None
 
     def __field(self, s, date, sjournal, name):
-        sjournal = StatisticJournal.at_date(s, date, name, SegmentCalculator2, sjournal.segment,
+        sjournal = StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.segment,
                                             source_id=sjournal.id)
         if sjournal:
             return ReadOnlyField(log, sjournal, date=date,

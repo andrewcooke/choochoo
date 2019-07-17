@@ -14,7 +14,7 @@ log = getLogger(__name__)
 SJOURNAL = 'sjournal'
 
 
-class SegmentCalculator2(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class SegmentCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def _missing(self, s):
         # extends superclass with restriction on activities that have a segment
