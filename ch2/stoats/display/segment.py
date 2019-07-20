@@ -94,6 +94,6 @@ class SegmentDiary(Displayer):
             sname = s.query(StatisticName). \
                 filter(StatisticName.name == name,
                        StatisticName.constraint == segment,
-                       StatisticName.owner == SegmentCalculator).one_or_none()
+                       StatisticName.owner == SegmentCalculato2r).one_or_none()
             if sname:
                 yield sname

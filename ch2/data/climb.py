@@ -10,7 +10,7 @@ from .frame import linear_resample, present
 from ..lib.data import nearest_index, get_index_loc
 from ..squeal import StatisticName, StatisticJournal
 from ..stoats.names import _d, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
-    CLIMB_GRADIENT, CLIMB_POWER, POWER_ESTIMATE
+    CLIMB_GRADIENT, CLIMB_POWER, POWER_ESTIMATE, CLIMB_CATEGORY
 
 log = getLogger(__name__)
 
@@ -23,6 +23,7 @@ MIN_CLIMB_ELEVATION = 80
 MIN_CLIMB_GRADIENT = 3
 MAX_CLIMB_GRADIENT = 40
 MAX_CLIMB_REVERSAL = 0.1
+CLIMB_CATEGORIES = {MIN_CLIMB_ELEVATION: '4', 160: '3', 320: '2', 640: '1', 800: 'HC'}
 
 # trade-off between pure elevation (0) and pure gradient (1)
 CLIMB_PHI = 0.6
@@ -41,8 +42,17 @@ def find_climbs(df, params=Climb()):
         log.debug(f'Found climb from {tlo} - {thi} ({dlo}m - {dhi}m)')
         up = df[ELEVATION].loc[thi] - df[ELEVATION].loc[tlo]
         along = df[DISTANCE].loc[thi] - df[DISTANCE].loc[tlo]
-        yield {TIME: thi, CLIMB_ELEVATION: up, CLIMB_DISTANCE: along,
-               CLIMB_TIME: (thi - tlo).total_seconds(), CLIMB_GRADIENT: 100 * up / along}
+        climb = {TIME: thi,
+                 CLIMB_ELEVATION: up,
+                 CLIMB_DISTANCE: along,
+                 CLIMB_TIME: (thi - tlo).total_seconds(),
+                 CLIMB_GRADIENT: 100 * up / along}
+        for height in sorted(CLIMB_CATEGORIES.keys()):
+            if up >= height:
+                climb[CLIMB_CATEGORY] = CLIMB_CATEGORIES[height]
+            else:
+                break
+        yield climb
 
 
 def find_climb_distances(df, params=Climb()):
@@ -165,7 +175,7 @@ def add_climb_stats(df, climbs):
 
 
 # if __name__ == '__main__':
-#     from ch2.data import *
+#     from . import *
 #     start = time()
 #     date = '2017-05-28 10:28:13'  # 1495103293
 #     s = session('-v5')

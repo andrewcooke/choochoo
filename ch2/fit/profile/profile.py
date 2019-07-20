@@ -5,10 +5,10 @@ from pickle import load, dump
 import openpyxl as xls
 from pkg_resources import resource_stream
 
-from ch2 import PACKAGE_FIT_PROFILE
 from .messages import Messages
 from .support import NullableLog
 from .types import Types
+from ...commands.args import PACKAGE_FIT_PROFILE
 
 PROFILE_NAME = 'global-profile.pkl'
 PROFILE = []

@@ -8,14 +8,15 @@ from ..names import ELEVATION, DISTANCE, M, POWER_ESTIMATE, HEART_RATE, ACTIVE_D
     summaries, ACTIVE_SPEED, ACTIVE_TIME, AVG, S, KMH, MIN_KM_TIME_ANY, MIN, MED_KM_TIME_ANY, PERCENT_IN_Z_ANY, PC, \
     TIME_IN_Z_ANY, MAX_MED_HR_M_ANY, W, BPM, MAX_MEAN_PE_M_ANY, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
     CLIMB_GRADIENT, TOTAL_CLIMB, HR_ZONE, TIME, like, MEAN_POWER_ESTIMATE, ENERGY_ESTIMATE, SPHERICAL_MERCATOR_X, \
-    SPHERICAL_MERCATOR_Y, DIRECTION, DEG, ASPECT_RATIO, FITNESS_D_ANY, FATIGUE_D_ANY, _d, FF, CLIMB_POWER
+    SPHERICAL_MERCATOR_Y, DIRECTION, DEG, ASPECT_RATIO, FITNESS_D_ANY, FATIGUE_D_ANY, _d, FF, CLIMB_POWER, \
+    CLIMB_CATEGORY
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats
 from ...data.climb import find_climbs, Climb, add_climb_stats
 from ...data.frame import activity_statistics, present, statistics
 from ...data.response import response_stats
 from ...lib.log import log_current_exception
-from ...squeal import StatisticJournalFloat, Constant
+from ...squeal import StatisticJournalFloat, Constant, StatisticJournalText
 from ...stoats.calculate.power import PowerCalculator
 
 log = getLogger(__name__)
@@ -90,16 +91,18 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
                 self.__copy(ajournal, loader, climb, CLIMB_TIME, S, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_GRADIENT, PC, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_POWER, W, summaries(MAX, SUM, MSR), climb[TIME])
+                self.__copy(ajournal, loader, climb, CLIMB_CATEGORY, W, summaries(MAX, SUM, MSR), climb[TIME],
+                            type=StatisticJournalText)
         if stats:
             log.warning(f'Unsaved statistics: {list(stats.keys())}')
 
-    def __copy_all(self, ajournal, loader, stats, pattern, units, summary, time):
+    def __copy_all(self, ajournal, loader, stats, pattern, units, summary, time, type=StatisticJournalFloat):
         for name in like(pattern, stats):
-            self.__copy(ajournal, loader, stats, name, units, summary, time)
+            self.__copy(ajournal, loader, stats, name, units, summary, time, type=type)
 
-    def __copy(self, ajournal, loader, stats, name, units, summary, time):
+    def __copy(self, ajournal, loader, stats, name, units, summary, time, type=StatisticJournalFloat):
         try:
-            loader.add(name, units, summary, ajournal.activity_group, ajournal, stats[name], time, StatisticJournalFloat)
+            loader.add(name, units, summary, ajournal.activity_group, ajournal, stats[name], time, type)
             del stats[name]
         except:
             log.warning(f'Failed to load {name}')

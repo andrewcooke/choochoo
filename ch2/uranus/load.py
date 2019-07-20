@@ -4,7 +4,7 @@ from abc import abstractmethod, ABC
 from inspect import getsource, getfullargspec
 from logging import getLogger
 from os import unlink, makedirs
-from os.path import join, exists
+from os.path import join, exists, sep
 from re import compile, sub, DOTALL
 
 import nbformat as nb
@@ -136,6 +136,7 @@ class Code(TextToken):
 
     def _fix_output(self):
         self._text = sub(r'output_file\([^)]*\)', 'output_notebook()', self._text)
+        self._text = sub(r'#%matplotlib', '%matplotlib', self._text)
 
     def _fix_session(self):
         r_session = compile(r'((?:^|^.*\s)session\s*\()([^)]*)(\).*$)', DOTALL)
@@ -269,6 +270,7 @@ def create_notebook(template, notebook_dir, database_path, args, kargs):
     if all_args and kargs: all_args += ' '
     all_args += ' '.join(kargs[key] for key in sorted(kargs.keys()))
     all_args = sub(r'\s+', '-', all_args)
+    all_args = sub(sep, '-', all_args)
 
     vars = dict(kargs)
     vars[DATABASE] = database_path

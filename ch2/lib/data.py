@@ -148,6 +148,10 @@ class MaxDict(dict):
                 self[key] = value
 
 
+def tmp_name():
+    return ''.join(choice(ascii_letters) for _ in range(8))
+
+
 def nearest_index(df, name, value):
     exactmatch = df.loc[df[name] == value]
     if not exactmatch.empty:
@@ -197,7 +201,7 @@ def left_interpolate(left, right, **kargs):
     '''
     # neater solution https://stackoverflow.com/questions/47148446/pandas-resample-interpolate-is-producing-nans
     # option 1 with reindexing
-    tmp = ''.join(choice(ascii_letters) for _ in range(8))
+    tmp = tmp_name()
     left[tmp] = True
     both = left.join(right, how='outer').interpolate(**kargs)
     return both.loc[both[tmp] == True].drop(columns=[tmp])

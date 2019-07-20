@@ -5,7 +5,7 @@ from logging import getLogger
 
 from colorama import init, Fore, Style
 
-from ch2.lib.schedule import Schedule
+from ..lib.schedule import Schedule
 from ..lib.date import to_date, add_date, MONTH
 from ..commands.args import SCHEDULE, MONTHS, START
 

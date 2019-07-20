@@ -1,9 +1,9 @@
 
 from logging import getLogger
 
-from ch2.lib.date import to_time
-from ch2.squeal import ActivityBookmark
-from ch2.squeal.database import connect
+from ..lib.date import to_time
+from ..squeal import ActivityBookmark
+from ..squeal.database import connect
 
 log = getLogger(__name__)
 
@@ -111,5 +111,11 @@ select a.id, s.time, f.time
 
 
 if __name__ == '__main__':
+    '''
+    Bookmark sections of activities that exceed 60s of little or no pedalling (maximumu cadence 20)
+    and with any speed (max 0).
+    
+    These are then used in the fit_power_parameters template to estimate CdA and Crr. 
+    '''
     ns, db = connect(['-v 4'])
     CoastingBookmark(log, db).run(60, 20, 0, constraint='60/20/0')

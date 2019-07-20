@@ -28,6 +28,7 @@ estimate power output.
   * [Cotic Soul Constant](#cotic-soul-constant)
   * [Configuration Process](#configuration-process)
 * [Summary](#summary)
+* [Update - Now with Crr](#update---now-with-crr)
 
 ## Previous Work
 
@@ -315,5 +316,17 @@ and can be run via:
 
     > python -m ch2.uranus.coasting
 
-The notebook used in the analysis is available
-[here](https://github.com/andrewcooke/choochoo/blob/master/notebooks/power/plot_cda_via_route.ipynb).
+## Update - Now with Crr
+
+[July 2007] - I have extended the notebook I used for the work above
+and added it as a template.  If you run:
+
+    > ch2 jupyter show fit_power_parameters 'bookmark'
+
+the Jupyter page should be displayed.  This now fits both CdA and Crr
+(despite what I said above!).  For full details (including an
+explanation of the 'bookmark'), see the template.
+
+Below is a snaphshot of the template with my data:
+
+![](power-template.png)

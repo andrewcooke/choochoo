@@ -44,6 +44,11 @@ def make_log(args, tui=False):
         clog.setLevel(DEBUG)
         clog.addHandler(file_handler)
 
+        # capture logging from an executing module, if one exists
+        xlog = getLogger('__main__')
+        xlog.setLevel(DEBUG)
+        xlog.addHandler(file_handler)
+
         if not tui:
             stderr_formatter = Formatter('%(levelname)8s: %(message)s')
             stderr_handler = StreamHandler()
@@ -54,6 +59,7 @@ def make_log(args, tui=False):
             blog.addHandler(stderr_handler)
             tlog.addHandler(stderr_handler)
             clog.addHandler(stderr_handler)
+            xlog.addHandler(stderr_handler)
 
 
 def log_current_exception(traceback=True):
