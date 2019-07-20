@@ -60,10 +60,10 @@ def default(db, no_diary=False):
         # statistics pipeline (called to calculate missing statistics)
 
         # FF-model parameters
-        # 7 and 42 days as for training peaks
+        # 7 and 42 days as for training peaks; 84 as measured via fit_ff_parameters
         # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
-        fitness=((42, 1), (84, 1/2))
-        fatigue=((7, 5),)
+        fitness = ((42, 1), (84, 1/2))
+        fatigue = ((7, 5),)
 
         c = Counter()
         add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')

@@ -111,5 +111,11 @@ select a.id, s.time, f.time
 
 
 if __name__ == '__main__':
+    '''
+    Bookmark sections of activities that exceed 60s of little or no pedalling (maximumu cadence 20)
+    and with any speed (max 0).
+    
+    These are then used in the fit_power_parameters template to estimate CdA and Crr. 
+    '''
     ns, db = connect(['-v 4'])
     CoastingBookmark(log, db).run(60, 20, 0, constraint='60/20/0')

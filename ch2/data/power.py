@@ -3,12 +3,14 @@ from collections import namedtuple
 from logging import getLogger
 from math import pi
 
-import numpy as np
-import pandas as pd
-import scipy as sp
+# hide from imports of this package
+import numpy as _np
+import pandas as _pd
+import scipy as _sp
 
-from ch2.data.frame import median_dt
+from .frame import median_dt, session, activity_statistics, bookmarks
 from .lib import fit, inplace_decay
+from ..lib.data import tmp_name
 from ..stoats.names import *
 from ..stoats.names import _d, _sqr, _avg
 
@@ -21,11 +23,41 @@ def add_differentials(df):
 
 
 def add_air_speed(df, wind_speed=0, wind_heading=0):
-    df[AIR_SPEED] = df[SPEED] + wind_speed * np.cos((df[HEADING] - wind_heading) / RAD_TO_DEG)
-    return _add_differentials(df, AIR_SPEED)
+    df[AIR_SPEED] = df[SPEED] + wind_speed * _np.cos((df[HEADING] - wind_heading) / RAD_TO_DEG)
+    return _add_differentials(df, AIR_SPEED, AIR_SPEED)
 
 
-def _add_differentials(df, speed, *names):
+def _add_differentials(df, speed, *names, max_gap_s=10):
+
+    # rather than use timespans (old approach) it's more reliable to discard any intervals
+    # over a certain time gap.
+
+    speed_2 = _sqr(speed)
+    df[speed_2] = df[speed] ** 2
+
+    tmp = tmp_name()
+    df[tmp] = df.index
+    df[tmp] = df[tmp].diff().dt.seconds
+
+    for name in names:
+        df[_d(name)] = df[name].diff()
+        df.loc[df[tmp] > max_gap_s, [_d(name)]] = _np.nan
+
+    if LATITUDE in names and LONGITUDE in names and HEADING not in df.columns:
+        df[HEADING] = _np.arctan2(df[_d(LONGITUDE)], df[_d(LATITUDE)]) * RAD_TO_DEG
+        df.loc[df[tmp] > max_gap_s, [HEADING]] = _np.nan
+
+    avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(df[speed], df[speed][1:])]
+    df[_avg(speed_2)] = [_np.nan] + avg_speed_2
+    df.loc[df[tmp] > max_gap_s, [_avg(speed_2)]] = _np.nan
+
+    df.drop(columns=[tmp], inplace=True)
+    return df
+
+
+def _add_differentials_old(df, speed, *names):
+
+    # todo - remove once we've checked power calcs
 
     speed_2 = _sqr(speed)
     df[speed_2] = df[speed] ** 2
@@ -33,24 +65,24 @@ def _add_differentials(df, speed, *names):
     def diff():
         for _, old_span in df.groupby(TIMESPAN_ID):
             # discard leading and trailing na
-            subset = old_span[list(names)].isna().any(axis=1).replace(True, np.nan)
+            subset = old_span[list(names)].isna().any(axis=1).replace(True, _np.nan)
             start, finish = subset.first_valid_index(), subset.last_valid_index()
             if start and finish:
                 old_span = old_span.loc[start:finish]
 
                 if all(len(old_span[name]) == len(old_span[name].dropna()) for name in names):
-                    new_span = pd.DataFrame(index=old_span.index)
+                    new_span = _pd.DataFrame(index=old_span.index)
                     for col in names:
                         new_span[_d(col)] = old_span[col].diff()
                     if HEADING not in old_span.columns:
-                        new_span[HEADING] = np.arctan2(new_span[_d(LONGITUDE)], new_span[_d(LATITUDE)]) * RAD_TO_DEG
+                        new_span[HEADING] = _np.arctan2(new_span[_d(LONGITUDE)], new_span[_d(LATITUDE)]) * RAD_TO_DEG
                     avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(old_span[speed], old_span[speed][1:])]
-                    new_span[_avg(speed_2)] = [np.nan] + avg_speed_2
+                    new_span[_avg(speed_2)] = [_np.nan] + avg_speed_2
                     yield new_span
 
     spans = list(diff())
     if len(spans):
-        extra = pd.concat(spans)
+        extra = _pd.concat(spans).sort_index()
         return df.drop(columns=list(extra.columns), errors='ignore').join(extra)
     else:
         raise PowerException('Missing data - found no spans without NANs')
@@ -116,7 +148,7 @@ def measure_initial_scaling(df):
     if delay < 0: raise PowerException('Cannot estimate delay (insufficient data?)')
     df[DELAYED_POWER] = df[POWER_ESTIMATE].shift(freq=f'{delay}S')
     clean = df.loc[:, (DELAYED_POWER, HEART_RATE)].dropna()
-    fit = sp.stats.linregress(x=clean[DELAYED_POWER], y=clean[HEART_RATE])
+    fit = _sp.stats.linregress(x=clean[DELAYED_POWER], y=clean[HEART_RATE])
     log.debug(f'Initial fit {fit}')
     return fit.slope, fit.intercept,  delay
 
@@ -179,3 +211,13 @@ def fit_power(df, model, *vary, tol=0.1):
 
     log.debug(f'Fit power: final model {model}')
     return model
+
+
+if __name__ == '__main__':
+    s = session('-v 5')
+    route = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
+                                ELEVATION, SPEED, CADENCE, bookmarks=bookmarks(s, '60/20/0'), with_timespan=True)
+    route.sort_index(inplace=True)
+    route = add_differentials(route)
+    print(route.describe())
+    print(route.loc[route[DELTA_DISTANCE] > 1000])
