@@ -21,7 +21,7 @@ def fit_power_parameters(bookmark):
 
     Beforehand you should have generated the bookmark by running
 
-        python -m ch2.data.coasting
+        > python -m ch2.data.coasting
 
     or similar to identify sections of activities with little pedalling.  See that module for more information.
     '''
@@ -155,3 +155,17 @@ def fit_power_parameters(bookmark):
     ax.set_xlabel('CdA')
     ax.set_ylabel('Crr')
     plt.title('2D Gaussian Kernel density estimation')
+
+    '''
+    For my data this shows (roughly) Crr ~ 7.4 and CdA ~ 0.38.
+    
+    So I define an entry for this bike:
+    
+        > ch2 constants 'Cotic Soul' '{"cda": 0.38, "crr": 7.4, "weight": 12}' --set --force
+        
+    and when I load data I associate this bike with the activity:
+    
+        > ch2 activities -D 'BikeUsed=Cotic Soul' -- ~/archive/fit/**/*.fit
+        
+    With that, the standard configuration should calculate power estimates.
+    '''
