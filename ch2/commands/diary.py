@@ -14,7 +14,7 @@ from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
 from ..squeal import PipelineType, Topic, TopicJournal
 from ..squeal.database import ActivityJournal, StatisticJournal
-from ch2.squeal.utils import add
+from ..squeal.utils import add
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
 from ..stoats.pipeline import run_pipeline

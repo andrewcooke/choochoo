@@ -37,7 +37,7 @@ class Constant(Source):
             validate.validate(self, sjournal)
 
     def add_value(self, s, value, time=None, date=None):
-        from ch2.squeal.utils import add
+        from ..utils import add
         if time and date:
             raise Exception('Specify one or none of time and date for %s' % self)
         if not time and not date:

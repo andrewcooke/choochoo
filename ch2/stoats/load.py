@@ -5,10 +5,10 @@ from time import sleep
 
 from sqlalchemy.exc import IntegrityError
 
-from ch2.squeal.tables.statistic import TYPE_TO_JOURNAL_CLASS, STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 from .waypoint import make_waypoint
 from ..commands.args import UNLOCK
 from ..squeal import StatisticJournal, StatisticName, Dummy, Interval
+from ..squeal.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
 from ..squeal.types import short_cls
 
 log = getLogger(__name__)

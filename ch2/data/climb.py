@@ -175,7 +175,7 @@ def add_climb_stats(df, climbs):
 
 
 # if __name__ == '__main__':
-#     from ch2.data import *
+#     from . import *
 #     start = time()
 #     date = '2017-05-28 10:28:13'  # 1495103293
 #     s = session('-v5')

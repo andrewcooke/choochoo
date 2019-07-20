@@ -145,7 +145,7 @@ def direction_stats(df):
 
 
 # if __name__ == '__main__':
-#     from ch2.data import *
+#     from . import *
 #     date = '2017-02-07 07:18:50'
 #     s = session('-v5')
 #     df = activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,

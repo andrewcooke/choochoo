@@ -14,8 +14,9 @@ from ..frame import present
 from ...stoats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, ELEVATION_M, CLIMB_ELEVATION, \
     SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB
 
-
 STAMEN_TERRAIN = tile_providers.get_provider(tile_providers.Vendors.STAMEN_TERRAIN)
+
+# todo - make selection of hover tool with name='with_hover' universal
 
 
 def subtract(a, c, key, col):
@@ -44,12 +45,16 @@ def y_range(f, y, source, ylo=None, yhi=None):
 
 def add_tsid_line(f, x, y, source, color='black', line_dash='solid'):
     for _, s in source.groupby(TIMESPAN_ID):
-        f.line(x=x, y=y, source=s, line_color=color, line_dash=line_dash)
+        f.line(x=x, y=y, source=s, line_color=color, line_dash=line_dash, name='with_hover')
 
 
 def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x_range=None):
     if not present(source, x, y): return None
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if TIME in x else 'linear', tools=make_tools(y))
+    tools = [PanTool(dimensions='width'),
+             ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
+             ResetTool(),
+             HoverTool(tooltips=[tooltip(x) for x in (y, DISTANCE_KM, LOCAL_TIME)], names=['with_hover'])]
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if TIME in x else 'linear', tools=tools)
     y_range(f, y, source, ylo=ylo, yhi=yhi)
     add_tsid_line(f, x, y, source)
     if present(other, y):
@@ -63,6 +68,13 @@ def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x
     f.xaxis.axis_label = x
     f.toolbar.logo = None
     if x_range: f.x_range = x_range
+    return f
+
+
+def add_hr_zones(f, df, x, hr_zones):
+    left, right = df[x].min(), df[x].max()
+    for bottom, top in list(zip(hr_zones, hr_zones[1:] + [999]))[::2]:
+        f.quad(top=top, bottom=bottom, left=left, right=right, color='black', alpha=0.1)
     return f
 
 

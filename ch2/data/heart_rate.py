@@ -1,7 +1,8 @@
 
 from math import exp
 
-from ..squeal import StatisticJournal, Constant
+from ..lib import to_time
+from ..squeal import StatisticJournal, Constant, ActivityGroup
 from ..stoats.names import FTHR
 
 # values from british cycling online calculator
@@ -41,8 +42,9 @@ def edwards(hr, max_hr):
     return max(0, int(10 * (1 - (max_hr - hr) / max_hr)) - 4)
 
 
-def hr_zones_from_database(s, activity_group, time):
-    fthr = StatisticJournal.before(s, time, FTHR, Constant, activity_group)
+def hr_zones_from_database(s, local_time, activity_group_name):
+    activity_group = s.query(ActivityGroup).filter(ActivityGroup.name == activity_group_name).one()
+    fthr = StatisticJournal.before(s, to_time(local_time), FTHR, Constant, activity_group)
     if fthr:
         return hr_zones(fthr.value)
     else:

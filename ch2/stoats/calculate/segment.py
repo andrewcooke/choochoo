@@ -3,10 +3,10 @@ from logging import getLogger
 
 from sqlalchemy import not_
 
-from ch2.data import activity_statistics, present, linear_resample_time
 from . import ActivityJournalCalculatorMixin, MultiProcCalculator, DataFrameCalculatorMixin
 from ..names import SEGMENT_TIME, S, summaries, MIN, MSR, CNT, HEART_RATE, \
     SEGMENT_HEART_RATE, BPM, MAX
+from ...data import activity_statistics, present, linear_resample_time
 from ...squeal import ActivityJournal, SegmentJournal, StatisticJournalFloat, Timestamp
 
 log = getLogger(__name__)

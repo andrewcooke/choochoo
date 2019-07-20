@@ -36,6 +36,7 @@ def compare_activities(local_time: to_date, compare_time: to_date, activity_grou
     details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, local_time=local_time,
                                   activity_group_name=activity_group_name)
     health = std_health_statistics(s)
+    hr_zones = hr_zones_from_database(s, local_time, activity_group_name)
 
     f'''
     ## Activity Plots
@@ -62,7 +63,8 @@ def compare_activities(local_time: to_date, compare_time: to_date, activity_grou
     hri = comparison_line_plot(700, 200, DISTANCE_KM, HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=sp.x_range)
     hri_c = cumulative_plot(200, 200, HR_IMPULSE_10, activity, other=compare, ylo=0)
 
-    hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE_BPM, activity, other=compare, ylo=0, x_range=sp.x_range)
+    hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE_BPM, activity, other=compare, x_range=sp.x_range)
+    add_hr_zones(hr, activity, DISTANCE_KM, hr_zones)
     hr_c = cumulative_plot(200, 200, HEART_RATE_BPM, activity, other=compare, ylo=0)
 
     pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0, x_range=sp.x_range)
