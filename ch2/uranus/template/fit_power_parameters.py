@@ -23,7 +23,8 @@ def fit_power_parameters(bookmark):
 
         > python -m ch2.data.coasting
 
-    or similar to identify sections of activities with little pedalling.  See that module for more information.
+    or similar to identify sections of activities with little pedalling.
+    See that module for more information (in particular, it defines the 'bookmark' that should be
     '''
 
     '''
