@@ -1,6 +1,10 @@
 
 ## Latest Changes
 
+### v0.23.0
+
+Dropped old notebooks.  Use new templates instead (ch2 jupyter list).
+
 ### v0.22.0
 
 HR calculations via data frames.  New pipeline class names - use
