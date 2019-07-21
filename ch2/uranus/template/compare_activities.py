@@ -13,7 +13,7 @@ from ch2.uranus.decorator import template
 
 
 @template
-def compare_activities(local_time: to_date, compare_time: to_date, activity_group_name):
+def compare_activities(local_time, compare_time, activity_group_name):
 
     f'''
     # Compare Activities: {local_time.split()[0]} v {compare_time.split()[0]}

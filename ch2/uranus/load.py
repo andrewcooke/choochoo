@@ -214,17 +214,12 @@ class Params(Code):
         template = compile(r'def [^(]+\(([^)]*)\):\s*')
         match = template.match(line)
         if match and match.group(1):
-            params = Params(vars, Params.split(match.group(1)))
+            params = Params(vars, match.group(1).split(','))
             params.post_one()
             yield params
         elif not match:
             raise Exception(f'Bad template def: {line}')
         yield from Params.parse_text_or_code(vars, lines)
-
-    @staticmethod
-    def split(params):
-        return [param.split(':')[0].strip() for param in params.split(',')]
-
 
     @staticmethod
     def parse_text_or_code(vars, lines):

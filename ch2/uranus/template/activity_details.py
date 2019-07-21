@@ -13,7 +13,7 @@ from ch2.uranus.decorator import template
 
 
 @template
-def activity_details(local_time: to_date, activity_group_name):
+def activity_details(local_time, activity_group_name):
 
     f'''
     # Activity Details: {local_time.split()[0]}
