@@ -13,7 +13,7 @@ from ch2.uranus.decorator import template
 
 
 @template
-def compare_activities(local_time: to_date, compare_time: to_date, activity_group_name):
+def compare_activities(local_time, compare_time, activity_group_name):
 
     f'''
     # Compare Activities: {local_time.split()[0]} v {compare_time.split()[0]}
@@ -65,7 +65,7 @@ def compare_activities(local_time: to_date, compare_time: to_date, activity_grou
 
     hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE_BPM, activity, other=compare, x_range=sp.x_range)
     add_hr_zones(hr, activity, DISTANCE_KM, hr_zones)
-    hr_c = cumulative_plot(200, 200, HEART_RATE_BPM, activity, other=compare, ylo=0)
+    hr_c = cumulative_plot(200, 200, HEART_RATE_BPM, activity, other=compare)
 
     pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0, x_range=sp.x_range)
     pw_c = cumulative_plot(200, 200, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0)

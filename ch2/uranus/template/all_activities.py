@@ -8,7 +8,7 @@ from ch2.uranus.decorator import template
 
 
 @template
-def all_activities(start: to_date, finish: to_date):
+def all_activities(start, finish):
 
     f'''
     # All Activities: {start.split()[0]} - {finish.split()[0]}

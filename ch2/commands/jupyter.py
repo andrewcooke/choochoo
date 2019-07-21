@@ -38,7 +38,7 @@ Stop the background server.
     elif args[SUB_COMMAND] == STOP:
         stop()
     elif args[SUB_COMMAND] == SHOW:
-        show(db, args)
+        show(args)
     elif args[SUB_COMMAND] == STATUS:
         status(db)
     elif args[SUB_COMMAND] == LIST:
@@ -91,27 +91,20 @@ def print_list():
     print()
 
 
-def show(db, args):
+def show(args):
     name = args[NAME]
     params = args[ARG]
     try:
         fn, spec = dict(templates())[name]
-        params = build_params(params, spec)
+        params = check_params(params, spec)
         fn(*params)
     except KeyError:
         raise Exception(f'No template called {name} (see {PROGNAME} {JUPYTER} {LIST})')
 
 
-def build_params(params, spec):
+def check_params(params, spec):
     if len(params) != len(spec.args):
         raise Exception(f'Received {len(params)} args but need {len(spec.args)} values ' +
                         f'(see {PROGNAME} {JUPYTER} {LIST})')
-    return [build_param(param, name, spec.annotations.get(name, None)) for param, name in zip(params, spec.args)]
-
-
-def build_param(param, name, annotation):
-    if annotation:
-        return annotation(param)
-    else:
-        return param
+    return params
 
