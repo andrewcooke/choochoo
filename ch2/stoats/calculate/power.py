@@ -4,13 +4,14 @@ from json import loads
 from logging import getLogger
 from re import split
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from . import DataFrameCalculatorMixin, ActivityJournalCalculatorMixin, MultiProcCalculator
 from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics, present, linear_resample_time
+from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, \
     add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
@@ -52,7 +53,7 @@ class BasicPowerCalculator(PowerCalculator):
             df = activity_statistics(s, DISTANCE, ELEVATION, SPEED, CADENCE, LATITUDE, LONGITUDE, HEART_RATE,
                                      activity_journal=ajournal, with_timespan=True)
             ldf = linear_resample_time(df)
-            ldf = add_differentials(ldf)
+            ldf = add_differentials(ldf, max_gap=1.1 * median_dt(df))
             return df, ldf
         except PowerException as e:
             log.warning(e)
@@ -64,9 +65,10 @@ class BasicPowerCalculator(PowerCalculator):
 
     def _calculate_stats(self, s, ajournal, dfs):
         df, ldf = dfs
-        ldf = add_energy_budget(ldf, self.power.bike['weight'] + self.power.rider_weight)
+        weight = self.power.bike['weight'] + self.power.rider_weight
+        ldf = add_energy_budget(ldf, weight)
         ldf = add_air_speed(ldf, 0, 0)
-        ldf = add_loss_estimate(ldf, self.power.bike['cda'], self.power.bike['crr'])
+        ldf = add_loss_estimate(ldf, weight, cda=self.power.bike['cda'], crr=self.power.bike['crr'])
         ldf = add_power_estimate(ldf)
         return df, ldf
 

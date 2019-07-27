@@ -18,16 +18,17 @@ log = getLogger(__name__)
 RAD_TO_DEG = 180 / pi
 
 
-def add_differentials(df):
-    return _add_differentials(df, SPEED, DISTANCE, ELEVATION, SPEED, SPEED_2, LATITUDE, LONGITUDE)
+def add_differentials(df, max_gap=None):
+    return _add_differentials(df, SPEED, DISTANCE, ELEVATION, SPEED, SPEED_2, LATITUDE, LONGITUDE,
+                              max_gap=max_gap)
 
 
-def add_air_speed(df, wind_speed=0, wind_heading=0):
+def add_air_speed(df, wind_speed=0, wind_heading=0, max_gap=None):
     df[AIR_SPEED] = df[SPEED] + wind_speed * _np.cos((df[HEADING] - wind_heading) / RAD_TO_DEG)
-    return _add_differentials(df, AIR_SPEED, AIR_SPEED)
+    return _add_differentials(df, AIR_SPEED, AIR_SPEED, max_gap=max_gap)
 
 
-def _add_differentials(df, speed, *names, max_gap_s=10):
+def _add_differentials(df, speed, *names, max_gap=None):
 
     # rather than use timespans (old approach) it's more reliable to discard any intervals
     # over a certain time gap.
@@ -41,15 +42,16 @@ def _add_differentials(df, speed, *names, max_gap_s=10):
 
     for name in names:
         df[_d(name)] = df[name].diff()
-        df.loc[df[tmp] > max_gap_s, [_d(name)]] = _np.nan
+        df.loc[df[tmp] > max_gap, [_d(name)]] = _np.nan
 
     if LATITUDE in names and LONGITUDE in names and HEADING not in df.columns:
         df[HEADING] = _np.arctan2(df[_d(LONGITUDE)], df[_d(LATITUDE)]) * RAD_TO_DEG
-        df.loc[df[tmp] > max_gap_s, [HEADING]] = _np.nan
+        df.loc[df[tmp] > max_gap, [HEADING]] = _np.nan
 
     avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(df[speed], df[speed][1:])]
     df[_avg(speed_2)] = [_np.nan] + avg_speed_2
-    df.loc[df[tmp] > max_gap_s, [_avg(speed_2)]] = _np.nan
+    if max_gap:
+        df.loc[df[tmp] > max_gap, [_avg(speed_2)]] = _np.nan
 
     df.drop(columns=[tmp], inplace=True)
     return df
@@ -102,15 +104,15 @@ def add_cda_estimate(df, p=1.225):
     return df
 
 
-def add_crr_estimate(df):
+def add_crr_estimate(df, m, g=9.8):
     # assume that all energy lost is due to rolling resistance
-    df[CRR] = -df[DELTA_ENERGY] / df[DELTA_DISTANCE]
+    df[CRR] = -df[DELTA_ENERGY] / (df[DELTA_DISTANCE] * m * g)
     return df
 
 
-def add_loss_estimate(df, cda=0.45, crr=0, p=1.225):
+def add_loss_estimate(df, m, cda=0.45, crr=0, p=1.225, g=9.8):
     # this is the energy spent on air and rolling resistance
-    df[LOSS] = (cda * p * df[AVG_AIR_SPEED_2] * 0.5 + crr) * df[DELTA_DISTANCE]
+    df[LOSS] = (cda * p * df[AVG_AIR_SPEED_2] * 0.5 + crr * m * g) * df[DELTA_DISTANCE]
     return df
 
 
@@ -159,14 +161,14 @@ class PowerException(Exception): pass
 # the 13.5 delay is from fitting my rides til 2019
 # it seems oddly low to me - i wonder if i have an error confusing bins and time
 PowerModel = namedtuple('PowerModel', 'cda, crr, slope, window, delay, m,  wind_speed, wind_heading',
-                             defaults=[0.5, 0,   200,   60*60,  13.5,  70, 0,          0])
+                        defaults=[0.5, 0,   200,   60*60,  13.5,  70, 0,          0])
 
 
 def evaluate(df, model, quiet=True):
     if not quiet: log.debug(f'Evaluating {model}')
     df = add_energy_budget(df, model.m)
     df = add_air_speed(df, model.wind_speed, model.wind_heading)
-    df = add_loss_estimate(df, model.cda, model.crr)
+    df = add_loss_estimate(df, model.m, cda=model.cda, crr=model.crr)
     df = add_power_estimate(df)
     return df
 
@@ -218,6 +220,6 @@ if __name__ == '__main__':
     route = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
                                 ELEVATION, SPEED, CADENCE, bookmarks=bookmarks(s, '60/20/0'), with_timespan=True)
     route.sort_index(inplace=True)
-    route = add_differentials(route)
+    route = add_differentials(route)  # todo max_gap
     print(route.describe())
     print(route.loc[route[DELTA_DISTANCE] > 1000])
