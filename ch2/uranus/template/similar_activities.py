@@ -40,4 +40,4 @@ def similar_activities(local_time, activity_group_name):
     '''
 
     output_file(filename='/dev/null')
-    show(tile(maps, 8))
+    show(htile(maps, 8))

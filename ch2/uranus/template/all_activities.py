@@ -40,4 +40,4 @@ def all_activities(start, finish):
     '''
 
     output_notebook()
-    show(tile(maps, 8))
+    show(htile(maps, 8))
