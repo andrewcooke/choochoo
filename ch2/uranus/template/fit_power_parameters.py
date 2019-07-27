@@ -1,4 +1,6 @@
 
+from distutils.util import strtobool
+
 import numpy as np
 import scipy as sp
 import pandas as pd
@@ -7,11 +9,12 @@ from bokeh.plotting import figure, output_notebook, show
 from scipy.optimize import fmin
 
 from ch2.data.power import *
+from ch2.lib import bookend
 from ch2.uranus.decorator import template
 
 
 @template
-def fit_power_parameters(bookmark):
+def fit_power_parameters(bookmark, large):
 
     f'''
     # Fit Power Parameters to {bookmark}
@@ -24,7 +27,10 @@ def fit_power_parameters(bookmark):
         > python -m ch2.data.coasting
 
     or similar to identify sections of activities with little pedalling.
-    See that module for more information (in particular, it defines the 'bookmark' that should be
+    See that module for more information.
+
+    The `large` parameter means that each bookmark is taken in its entirety.
+    The alternative is that they are divided into small sub-samples reflecting the data sample rate.
     '''
 
     '''
@@ -37,19 +43,27 @@ def fit_power_parameters(bookmark):
     Open a connection to the database and load the data we require.
     '''
     s = session('-v 5')
+    large = strtobool(large)
     route = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
                                 ELEVATION, SPEED, CADENCE, bookmarks=bookmarks(s, bookmark))
     route.sort_index(inplace=True)  # bookmarks are not sorted by time
-    route = add_differentials(route)
+    if large:
+        route, max_gap = bookend(route), None
+    else:
+        max_gap = 10
+    route = add_differentials(route, max_gap=max_gap)
+    if large:
+        route = route.iloc[1::2]
     route.describe()
 
     '''
     ## Add Energy Calculations
     '''
-    route = add_energy_budget(route, 64+12)  # weight of rider + bike / kg  todo - extract weight from db
+    weight = 64+12  # weight of rider + bike / kg  todo - extract weight from db
+    route = add_energy_budget(route, weight)
     route = add_air_speed(route)
     route = add_cda_estimate(route)
-    route = add_crr_estimate(route)
+    route = add_crr_estimate(route, weight)
     route.describe()
 
     '''
@@ -71,9 +85,9 @@ def fit_power_parameters(bookmark):
     '''
     output_notebook()
     f = figure(plot_width=500, plot_height=400)
-    clean = route.dropna()
+    clean = route.loc[route[DELTA_ENERGY] < 0].dropna()
     cs = pd.DataFrame({CDA: [(0, cda) for cda in clean[CDA]],
-                        CRR: [(crr, 0) for crr in clean[CRR]]})
+                       CRR: [(crr, 0) for crr in clean[CRR]]})
     f.multi_line(xs=CDA, ys=CRR, source=cs, line_alpha=0.1, line_color='black')
     f.xaxis.axis_label = 'CdA'
     f.yaxis.axis_label = 'Crr'
@@ -90,7 +104,7 @@ def fit_power_parameters(bookmark):
     '''
     bins = np.linspace(0, 1.5, 30)
     width = bins[1] - bins[0]
-    counts = route[CDA].groupby(pd.cut(route[CDA], bins)).size()
+    counts = clean[CDA].groupby(pd.cut(clean[CDA], bins)).size()
     print(counts.describe())
 
     cda = pd.DataFrame({CDA: 0.5 * (bins[:-1] + bins[1:]), 'n': counts.values})
@@ -113,6 +127,9 @@ def fit_power_parameters(bookmark):
     (You might think that shorter lines should generate less points.
     The way I see it, each line is an observation that constrains CdA and Crr.
     Each observation has equal weight, so each line generates a point.)
+    
+    Random points avoids any systematic patterns from uniform sampling 
+    and allows re-runs to give some idea of noise. 
     '''
 
     def sample():
@@ -121,9 +138,8 @@ def fit_power_parameters(bookmark):
         clean.loc[:, 'y'] = clean[CRR] * (1 - clean['random'])
         return clean.loc[:, ['x', 'y']]
 
-    s = pd.concat([sample() for _ in range(10)])
-    s = s.loc[(s['x'] >= 0) & (s['y'] >= 0)]
-    s.describe()
+    s = pd.concat([sample() for _ in range(100 if large else 10)])
+    print(s.describe())
 
     f = figure(plot_width=600, plot_height=600)
     f.scatter(x='x', y='y', source=s)
@@ -135,12 +151,19 @@ def fit_power_parameters(bookmark):
     We generate and plot a Gaussian kernel density estimate.
     
     See https://towardsdatascience.com/simple-example-of-2d-density-plots-in-python-83b83b934f67
+    
+    You may want to play around with bandwidth by supplying a second argument to gaussian_kde. 
+    See https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html
     '''
 
     kernel = sp.stats.gaussian_kde(s.transpose())
 
+    #xmin, xmax = 0, 50
+    #ymin, ymax = 0, 0.4
     xmin, xmax = 0, 1
-    ymin, ymax = 0, 20
+    ymin, ymax = 0, 0.02
+    #xmin, xmax = 0.3, 0.6
+    #ymin, ymax = 0.003, 0.007
     xx, yy = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
     xy = np.vstack([xx.ravel(), yy.ravel()])
     smooth = np.reshape(kernel(xy), xx.shape)
@@ -158,11 +181,19 @@ def fit_power_parameters(bookmark):
     plt.title('2D Gaussian Kernel density estimation')
 
     '''
-    For my data this shows (roughly) Crr ~ 7.4 and CdA ~ 0.38.
+    For my data this shows (roughly):
     
-    So I define an entry for this bike:
+    * large=True: Crr ~ 0.005-0.006 and CdA ~ 0.40-0.45
     
-        > ch2 constants 'Cotic Soul' '{"cda": 0.38, "crr": 7.4, "weight": 12}' --set --force
+    * large=False: Crr ~ 0.01 and CdA ~ 0.35-0.40
+    
+    which supports the idea that Crr isn't well-constrained by the data.
+    
+    I chose large=True values since I suspect the larger intervals make the elevation values more accurate, 
+    
+    Then I can define an entry for this bike:
+    
+        > ch2 constants 'Cotic Soul' '{"cda": 0.42, "crr": 0.0055, "weight": 12}' --set --force
         
     and when I load data I associate this bike with the activity:
     

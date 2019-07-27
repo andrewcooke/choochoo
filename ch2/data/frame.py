@@ -19,9 +19,8 @@ from ..squeal.database import connect, ActivityTimespan, ActivityGroup, Activity
     Composite, CompositeComponent, ActivityNearby
 from ..stoats.display.nearby import nearby_any_time
 from ..stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log, HEART_RATE_BPM, \
-    MED_HEART_RATE_BPM, GRADE, GRADE_PC
-from ..stoats.names import DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
-    ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
+    MED_HEART_RATE_BPM, GRADE, GRADE_PC, BOOKMARK, DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, \
+    MED_CADENCE, ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP
@@ -165,6 +164,11 @@ def activity_journal(s, activity_journal=None, local_time=None, time=None, activ
 _activity_journal = activity_journal
 
 
+def _add_bookmark(bookmark, df):
+    df[BOOKMARK] = bookmark.id
+    return df
+
+
 def activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
                         local_time=None, time=None, bookmarks=None, activity_journal=None,
                         activity_group_name=None, with_timespan=False, check=True):
@@ -172,10 +176,11 @@ def activity_statistics(s, *statistics, owner=None, constraint=None, start=None,
     if bookmarks:
         if start or finish or local_time or time or activity_journal or activity_group_name:
             raise Exception('Cannot use bookmarks with additional activity constraints')
-        return pd.concat(_activity_statistics(s, *statistics, owner=owner, constraint=constraint,
-                                              start=bookmark.start, finish=bookmark.finish,
-                                              activity_journal=bookmark.activity_journal,
-                                              with_timespan=with_timespan, check=check)
+        return pd.concat(_add_bookmark(bookmark,
+                                       _activity_statistics(s, *statistics, owner=owner, constraint=constraint,
+                                                            start=bookmark.start, finish=bookmark.finish,
+                                                            activity_journal=bookmark.activity_journal,
+                                                            with_timespan=with_timespan, check=check))
                          for bookmark in bookmarks)
     else:
         return _activity_statistics(s, *statistics, owner=owner, constraint=constraint, start=start, finish=finish,

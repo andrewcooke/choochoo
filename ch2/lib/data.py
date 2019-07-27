@@ -8,6 +8,8 @@ from random import choice
 from re import sub
 from string import ascii_letters
 
+from ..stoats.names import BOOKMARK
+
 
 class WarnDict(dict):
 
@@ -205,3 +207,9 @@ def left_interpolate(left, right, **kargs):
     left[tmp] = True
     both = left.join(right, how='outer').interpolate(**kargs)
     return both.loc[both[tmp] == True].drop(columns=[tmp])
+
+
+def bookend(df, column=BOOKMARK):
+    # https://stackoverflow.com/questions/53927414/get-only-the-first-and-last-rows-of-each-group-with-pandas
+    g = df.groupby(column)
+    return pd.concat([g.head(1), g.tail(1)]).drop_duplicates().sort_index()
