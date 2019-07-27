@@ -202,15 +202,14 @@ def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='b
     return f
 
 
-def map_thumbnail(nx, ny, source, sample='3min'):
+def map_thumbnail(nx, ny, source, sample='3min', caption=True, title=True):
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
-               title=source.index[0].strftime('%Y-%m-%d'))
+               title=(source.index[0].strftime('%Y-%m-%d') if title else None))
     xy = source.loc[source[SPHERICAL_MERCATOR_X].notna() & source[SPHERICAL_MERCATOR_Y].notna(),
                     [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y]].resample(sample).mean()
     add_route(f, xy)
     f.axis.visible = False
     f.toolbar_location = None
-    add_map_caption(f, source)
     return f
 
 
@@ -297,5 +296,9 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
     return f
 
 
-def tile(maps, n):
+def htile(maps, n):
     return column([row(maps[i:i + n]) for i in range(0, len(maps), n)])
+
+
+def vtile(maps, n):
+    return row([column(maps[i::n]) for i in range(n)])

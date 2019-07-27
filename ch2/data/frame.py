@@ -513,7 +513,7 @@ def groups_by_time(s, start=None, finish=None):
 
 def coallesce(df, *statistics):
     '''
-    Add statistics from more than one group.
+    Add statistics from more than one activity group.
     '''
     for statistic in statistics:
         if statistic not in df.columns:
