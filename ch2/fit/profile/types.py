@@ -270,7 +270,7 @@ class Date(AliasInteger):
 class Date16(AliasInteger):
 
     '''
-    This is the least significant 16bits of teh timestamp, afaict.
+    This is the least significant 16bits of the timestamp, afaict.
     See https://www.thisisant.com/forum/viewthread/6374 (which checks out with the code).
 
     However, we have data where the 16 bits are slightly smaller than the current time.
