@@ -130,7 +130,7 @@ class StatisticJournalLoader:
                 self.__last_time = time
                 self.__serial += 1
             elif time < self.__last_time:
-                raise Exception('Time travel!')
+                raise Exception('Time travel - timestamp for statistic decreased')
 
         self.__start = min(self.__start, time) if self.__start else time
         self.__finish = max(self.__finish, time) if self.__finish else time

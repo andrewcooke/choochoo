@@ -66,7 +66,7 @@ finish and paths start.
             print()
             print(name_file)
 
-        data = read_fit(log, file_path)
+        data = read_fit(file_path)
 
         if format == RECORDS:
             summarize_records(data,

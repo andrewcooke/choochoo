@@ -269,15 +269,44 @@ class Date(AliasInteger):
 
 class Date16(AliasInteger):
 
+    '''
+    This is the least significant 16bits of teh timestamp, afaict.
+    See https://www.thisisant.com/forum/viewthread/6374 (which checks out with the code).
+
+    However, we have data where the 16 bits are slightly smaller than the current time.
+      https://github.com/andrewcooke/choochoo/issues/5
+    This is causing problems because (1) if we assume monotonically increasing time it's actually 17th
+    bit wraparound and (2) I don't understand how the maths works in that case anyway.
+
+    So let's play with a simpler example - just 4 bits - and consider three cases:
+      1 - Simple increment: timestamp = 0101 1100; timestamp_4 = 1110
+      2 - Small decrement: timestamp = 0101 1100; timestamp_4 = 1010
+      3 - Wrap-around: timestamp = 0101 1100; timestamp_4 = 0010
+
+    Using the given algorithm we'd expect
+      timestamp' = timestamp + (timestamp_4 - (timestamp & 0xf)) & 0xf
+      1 - 0101 1100 + (1110 - 1100) & 0xf = 0101 1100 + 0010 = 0101 1110
+      2 - 0101 1100 + (1010 - 1100) & 0xf = 0101 1100 + 1110 = 0110 1010  (would like 0101 1010 + warning)
+      3 - 0101 1100 + (0010 - 1100) & 0xf = 0101 1100 + 0110 = 0110 0010  (cool, actually works)
+
+    So wrap-around works, but we need to check for 'small' backwards jumps and handle them differently.
+    What is 'small'?  Let's aim for smallest absolute jump in time.  So compare the 'delta' to 1000
+    (in the 4 bits case).
+    '''
+
     def __init__(self, log, name, utc=True):
         super().__init__(log, name, 'uint16')
         self.__tzinfo = dt.timezone.utc if utc else None
 
     def convert(self, time, timestamp, tzinfo=dt.timezone.utc):
-        # https://www.thisisant.com/forum/viewthread/6374
         current = time_to_timestamp(timestamp, tzinfo=tzinfo)
-        current += (time - (current & 0xffff)) & 0xffff
-        return timestamp_to_time(current, tzinfo=tzinfo)
+        delta = time - (current & 0xffff)
+        if delta < 0 and abs(delta) < 0x8000:
+            future = timestamp_to_time(current + delta, tzinfo=tzinfo)
+            self._log.warning(f'Time travel - timestamp_16 moved back in time: {timestamp} -> {future}')
+        else:
+            future = timestamp_to_time(current + (delta & 0xffff), tzinfo=tzinfo)
+        return future
 
     def parse_type(self, data, count, endian, timestamp, raw_time=False, **options):
         times = super().parse_type(data, count, endian, timestamp, raw_time=raw_time, **options)

@@ -17,7 +17,7 @@ def fix(data, warn=False,
         max_record_len=None, max_drop_cnt=1, max_back_cnt=3, max_fwd_len=200, max_delta_t=None, profile_path=None):
 
     slices = parse_slices(slices)
-    types, messages = read_profile(log, warn=warn, profile_path=profile_path)
+    types, messages = read_profile(warn=warn, profile_path=profile_path)
     data = bytearray(data)
 
     log_data('Initial', data)

@@ -26,7 +26,7 @@ class TestFit(TestCase, OutputMixin):
         self.profile_path = 'data/sdk/Profile.xlsx'
 
     def test_profile(self):
-        nlog, types, messages = read_external_profile(log, self.profile_path)
+        nlog, types, messages = read_external_profile(self.profile_path)
         cen = types.profile_to_type('carry_exercise_name')
         self.assertEqual(cen.profile_to_internal('farmers_walk'), 1)
         session = messages.profile_to_message('session')
@@ -42,7 +42,7 @@ class TestFit(TestCase, OutputMixin):
 
     def test_decode(self):
         types, messages, records = \
-            filtered_records(read_fit(log, join(self.test_dir, 'source/personal/2018-07-26-rec.fit')),
+            filtered_records(read_fit(join(self.test_dir, 'source/personal/2018-07-26-rec.fit')),
                              profile_path=self.profile_path)
         with self.assertTextMatch(join(self.test_dir, 'target/personal/TestFit.test_decode'),
                                   filters=[HEX_ADDRESS]) as output:
@@ -52,12 +52,12 @@ class TestFit(TestCase, OutputMixin):
 
     def test_dump(self):
         with self.assertTextMatch(join(self.test_dir, 'target/personal/TestFit.test_dump')) as output:
-            summarize(FIELDS, read_fit(log, join(self.test_dir, 'source/personal/2018-07-30-rec.fit')),
+            summarize(FIELDS, read_fit(join(self.test_dir, 'source/personal/2018-07-30-rec.fit')),
                       profile_path=self.profile_path, width=80, output=output)
 
     def test_developer(self):
         with self.assertTextMatch(join(self.test_dir, 'target/sdk/TestFit.test_developer')) as output:
-            summarize(FIELDS, read_fit(log, join(self.test_dir, 'source/sdk/DeveloperData.fit')),
+            summarize(FIELDS, read_fit(join(self.test_dir, 'source/sdk/DeveloperData.fit')),
                       profile_path=self.profile_path, width=80, output=output)
 
     def test_personal(self):
@@ -65,12 +65,12 @@ class TestFit(TestCase, OutputMixin):
             file_name = basename(fit_file)
             with self.assertTextMatch(
                     join(self.test_dir, 'target/personal/TestFit.test_personal:' + file_name)) as output:
-                summarize_tables(read_fit(log, fit_file), width=80, output=output,
+                summarize_tables(read_fit(fit_file), width=80, output=output,
                                  profile_path=self.profile_path)
 
     def test_timestamp_16(self):
         types, messages, records = \
-            filtered_records(read_fit(log, join(self.test_dir, 'source/personal/andrew@acooke.org_24755630065.fit')),
+            filtered_records(read_fit(join(self.test_dir, 'source/personal/andrew@acooke.org_24755630065.fit')),
                              profile_path=self.profile_path)
         with self.assertTextMatch(join(self.test_dir, 'target/personal/TestFit.test_timestamp_16'),
                                   filters=[HEX_ADDRESS]) as output:
@@ -83,7 +83,7 @@ class TestFit(TestCase, OutputMixin):
         if filters is None: filters = []
         if EXC_HDR_CHK not in filters: filters = [EXC_HDR_CHK] + filters
         with self.assertCSVMatch(csv_path, filters=filters) as output:
-            summarize_csv(read_fit(log, fit_path), profile_path=self.profile_path,
+            summarize_csv(read_fit(fit_path), profile_path=self.profile_path,
                           warn=True, output=output, internal=True)
 
     def standard_csv_dir(self, dir, fit_pattern, exclude=None, filters=None):
@@ -102,7 +102,7 @@ class TestFit(TestCase, OutputMixin):
 
     def standard_dmp(self, source, target, format, filters=None):
         with self.assertTextMatch(target, filters=filters) as output:
-            summarize(format, read_fit(log, source),
+            summarize(format, read_fit(source),
                       warn=True, profile_path=self.profile_path, output=output)
 
     def standard_dmp_dir(self, dir, fit_pattern, format, exclude=None, filters=None):
@@ -146,21 +146,17 @@ class TestFit(TestCase, OutputMixin):
         self.standard_csv_dir('other', '*.fit', filters=[RNM_UNKNOWN, ROUND_DISTANCE])
 
     def test_grep(self):
-        data = read_fit(log, join(self.test_dir, 'source/personal/2018-07-26-rec.fit'))
+        data = read_fit(join(self.test_dir, 'source/personal/2018-07-26-rec.fit'))
         summarize(GREP, data, grep=['.*:.*speed>10'])
 
     def test_python(self):
         # for other-projects.md
-        from logging import basicConfig, getLogger, INFO
         from ch2.fit.profile.profile import read_fit, read_profile
         from ch2.fit.format.records import fix_degrees, no_units
         from ch2.fit.format.read import parse_data
 
-        basicConfig(level=INFO)
-        log = getLogger()
-
-        data = read_fit(log, 'data/test/source/personal/2018-07-26-rec.fit')
-        types, messages = read_profile(log)
+        data = read_fit('data/test/source/personal/2018-07-26-rec.fit')
+        types, messages = read_profile()
         state, tokens = parse_data(data, types, messages)
 
         LAT, LONG = 'position_lat', 'position_long'
