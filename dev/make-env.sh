@@ -16,7 +16,6 @@ pip install pendulum
 pip install requests
 pip install scipy
 pip install bokeh
-#pip install tornado==5.1.1
 pip install tornado
 pip install ipython
 pip install notebook
@@ -24,8 +23,12 @@ pip install psutil
 pip install textblob
 
 pip install matplotlib
-#pip install colorcet
-#pip install webcolors
+
+# these are reqs for mayavi (some are missing, others to avoid errors on install)
+pip install ipywidgets
+pip install ipyevents
+pip install vtk
+pip install mayavi
 
 pip install setuptools wheel twine
 pip install s-tui

@@ -49,7 +49,7 @@ def filtered_tokens(data,
                     after_bytes=None, limit_bytes=-1, after_records=None, limit_records=-1,
                     warn=False, no_validate=False, max_delta_t=None, profile_path=None):
 
-    types, messages = read_profile(log, warn=warn, profile_path=profile_path)
+    types, messages = read_profile(warn=warn, profile_path=profile_path)
     state, tokens = parse_data(data, types, messages, no_validate=no_validate, max_delta_t=max_delta_t)
 
     def generator():
@@ -75,7 +75,7 @@ def filtered_records(data,
 
     if pipeline is None: pipeline = []
     if field_names: pipeline.append(restrict_names(field_names))
-    types, messages = read_profile(log, warn=warn, profile_path=profile_path)
+    types, messages = read_profile(warn=warn, profile_path=profile_path)
     state, tokens = parse_data(data, types, messages, no_validate=no_validate, max_delta_t=max_delta_t)
 
     def generator():

@@ -97,7 +97,7 @@ Here's some example code:
     basicConfig(level=INFO)
     log = getLogger()
 
-    data = read_fit(log, 'data/test/source/personal/2018-07-26-rec.fit')
+    data = read_fit('data/test/source/personal/2018-07-26-rec.fit')
     types, messages = read_profile(log)
     state, tokens = parse_data(log, data, types, messages)
 

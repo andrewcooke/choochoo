@@ -1,4 +1,5 @@
 
+from logging import getLogger
 from os.path import join, dirname
 from pickle import load, dump
 
@@ -10,12 +11,12 @@ from .support import NullableLog
 from .types import Types
 from ...commands.args import PACKAGE_FIT_PROFILE
 
+log = getLogger(__name__)
 PROFILE_NAME = 'global-profile.pkl'
 PROFILE = []
 
-# todo - remove log from here (and docs)
 
-def read_external_profile(log, path, warn=False):
+def read_external_profile(path, warn=False):
     nlog = NullableLog(log)
     wb = xls.load_workbook(path)
     types = Types(nlog, wb['Types'], warn=warn)
@@ -23,7 +24,7 @@ def read_external_profile(log, path, warn=False):
     return nlog, types, messages
 
 
-def read_internal_profile(log):
+def read_internal_profile():
     if not PROFILE:
         log.debug('Unpickling profile')
         try:
@@ -40,25 +41,25 @@ def read_internal_profile(log):
     return PROFILE[0][1:]
 
 
-def read_profile(log, warn=False, profile_path=None):
+def read_profile(warn=False, profile_path=None):
     if profile_path:
         log.debug('Reading profile from %s' % profile_path)
-        _nlog, types, messages = read_external_profile(log, profile_path, warn=warn)
+        _nlog, types, messages = read_external_profile(profile_path, warn=warn)
     else:
-        types, messages = read_internal_profile(log)
+        types, messages = read_internal_profile()
     log.debug('Read profile')
     return types, messages
 
 
-def read_fit(log, fit_path):
+def read_fit(fit_path):
     log.debug('Reading fit file from %s' % fit_path)
     with open(fit_path, 'rb') as input:
         return input.read()
 
 
-def pickle_profile(log, in_path, warn=False):
+def pickle_profile(in_path, warn=False):
     log.info('Reading from %s' % in_path)
-    nlog, types, messages = read_external_profile(log, in_path, warn=warn)
+    nlog, types, messages = read_external_profile(in_path, warn=warn)
     out_path = join(dirname(__file__), PROFILE_NAME)
     nlog.set_log(None)
     log.info('Writing to %s' % out_path)
@@ -66,4 +67,4 @@ def pickle_profile(log, in_path, warn=False):
         dump((nlog, types, messages), output)
     # test loading
     log.info('Test loading from %r' % PROFILE_NAME)
-    log.info('Loaded %s, %s' % read_internal_profile(log))
+    log.info('Loaded %s, %s' % read_internal_profile())

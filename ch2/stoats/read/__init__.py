@@ -58,7 +58,7 @@ class FitReaderMixin(LoaderMixin):
             loader.load()
 
     def _read_fit_file(self, path, *options):
-        types, messages, records = filtered_records(read_fit(log, path))
+        types, messages, records = filtered_records(read_fit(path))
         return [record.as_dict(*options)
                 for _, _, record in sorted(records,
                                            key=lambda r: r[2].timestamp if r[2].timestamp else to_time(0.0))]

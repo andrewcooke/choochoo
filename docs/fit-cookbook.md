@@ -576,7 +576,7 @@ need to write some code to do that...
     basicConfig(level=INFO)
     log = getLogger()
     
-    data = read_fit(log, 'myfile.fit')
+    data = read_fit('myfile.fit')
     types, messages = read_profile(log)
     state, tokens = parse_data(data, types, messages)
     

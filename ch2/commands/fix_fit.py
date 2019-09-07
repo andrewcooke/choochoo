@@ -59,7 +59,7 @@ Will prepend a new 14 byte header, drop the old 14 byte header, and fix the head
 
         log.info('Input ----------')
         log.info('Reading binary data from %s' % path)
-        data = read_fit(log, path)
+        data = read_fit(path)
         log.debug('Read %d bytes' % len(data))
 
         try:

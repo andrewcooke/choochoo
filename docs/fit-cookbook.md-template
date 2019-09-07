@@ -274,7 +274,7 @@ from ch2.fit.format.read import parse_data
 basicConfig(level=INFO)
 log = getLogger()
 #
-data = read_fit(log, '/home/andrew/project/ch2/choochoo/data/test/source/personal/2018-07-26-rec.fit')
+data = read_fit('/home/andrew/project/ch2/choochoo/data/test/source/personal/2018-07-26-rec.fit')
 types, messages = read_profile(log)
 state, tokens = parse_data(data, types, messages)
 #
