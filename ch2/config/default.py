@@ -45,10 +45,13 @@ def default(db, no_diary=False):
         c = Counter()
         bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
         run = add_activity_group(s, 'Run', c, description='All running activities')
+        swim = add_activity_group(s, 'Swim', c, description='All swimming activities')
         # sport_to_activity maps from the FIT sport field to the activity defined above
         add_activities(s, SegmentReader, c,
                        owner_out=short_cls(SegmentReader),
-                       sport_to_activity={'cycling': bike.name, 'running': run.name},
+                       sport_to_activity={'cycling': bike.name,
+                                          'running': run.name,
+                                          'swimming': swim.name},
                        record_to_db={'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
                                      'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
                                      'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
