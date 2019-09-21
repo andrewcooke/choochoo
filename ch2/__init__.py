@@ -84,7 +84,7 @@ def main():
         raise Exception('Please user Python 3.7 or more recent')
     db = Database(args, log)
     try:
-        if db.is_empty() and (not command or command_name != CONFIG):
+        if db.is_empty() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE)):
             refuse_until_configured()
         elif command:
             start_controller(db, args)
