@@ -100,3 +100,20 @@ class TestMonitor(TestCase):
 
     def test_bug_reversed(self):
         self.generic_bug(sorted(self.FILES, reverse=True))
+
+    # issue 6
+    def test_empty_data(self):
+        with NamedTemporaryFile() as f:
+            args, db = bootstrap_file(f, m(V), '5')
+            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
+                                      'monitor', mm(FAST), 'data/test/source/other/37140810636.fit')
+            monitor(args, db)
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
+            # run('sqlite3 %s ".dump"' % f.name, shell=True)
+            with db.session_context() as s:
+                n = s.query(func.count(StatisticJournal.id)).scalar()
+                self.assertEqual(n, 19)
+                mjournal = s.query(MonitorJournal).one()
+                self.assertNotEqual(mjournal.start, mjournal.finish)

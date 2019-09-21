@@ -9,6 +9,7 @@ from pkg_resources import resource_stream
 from .messages import Messages
 from .support import NullableLog
 from .types import Types
+from ... import FatalException
 from ...commands.args import PACKAGE_FIT_PROFILE
 
 log = getLogger(__name__)
@@ -36,7 +37,7 @@ def read_internal_profile():
             log.warning('If you installed via pip then please create an issue at')
             log.warning('https://github.com/andrewcooke/choochoo for support.')
             log.warning('If you installed via git please see `ch2 help %s`' % PACKAGE_FIT_PROFILE)
-            raise Exception('Could not read %s (see log for more details)' % PROFILE_NAME)
+            raise FatalException('Could not read %s (see log for more details)' % PROFILE_NAME)
         PROFILE[0][0].set_log(log)
     return PROFILE[0][1:]
 
