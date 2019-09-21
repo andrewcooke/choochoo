@@ -3,6 +3,7 @@ from abc import abstractmethod
 from logging import getLogger
 
 from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
+from ... import FatalException
 from ...fit.format.read import filtered_records
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
@@ -45,6 +46,8 @@ class FitReaderMixin(LoaderMixin):
             log.warning(f'Could not process {path} (scanned)')
             # log_current_exception()
             update_scan(s, path, self.owner_out)
+        except FatalException:
+            raise
         except Exception as e:
             log.warning(f'Could not process {path} (ignored)')
             log_current_exception()
