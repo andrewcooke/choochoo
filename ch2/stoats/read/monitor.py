@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 from ..load import StatisticJournalLoader
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE
 from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
-from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE
+from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
 from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
@@ -94,7 +94,8 @@ class MonitorReader(MultiProcFitReader):
         return MonitorLoader(s, **kargs)
 
     def _base_command(self):
-        return f'{{ch2}} -v0 -l {{log}} -f {self._db.path} {MONITOR} {mm(WORKER)} {self.id} {mm(FAST)} {mm(FORCE) if self.force else ""}'
+        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self._db.path} ' \
+               f'{MONITOR} {mm(WORKER)} {self.id} --{FAST} {mm(FORCE) if self.force else ""}'
 
     def _delete_contained(self, s, start, finish, path):
         for mjournal in s.query(MonitorJournal). \

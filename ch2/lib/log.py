@@ -5,12 +5,12 @@ from os.path import join
 from sys import exc_info
 from traceback import format_tb
 
-from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG
+from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, TUI
 
 log = getLogger(__name__)
 
 
-def make_log(args, tui=False):
+def make_log(args):
 
     if not getLogger('ch2').handlers:
 
@@ -49,7 +49,7 @@ def make_log(args, tui=False):
         xlog.setLevel(DEBUG)
         xlog.addHandler(file_handler)
 
-        if not tui:
+        if not args[TUI]:
             stderr_formatter = Formatter('%(levelname)8s: %(message)s')
             stderr_handler = StreamHandler()
             stderr_handler.setLevel(level)

@@ -85,7 +85,7 @@ LATITUDE = 'latitude'
 LIKE = 'like'
 LIMIT_BYTES = 'limit-bytes'
 LIMIT_RECORDS = 'limit-records'
-L, LOG = 'l', 'log'
+LOG = 'log'
 LOGS = 'logs'
 LONGITUDE = 'longitude'
 LIST = 'list'
@@ -142,6 +142,7 @@ SUB_COMMAND = 'sub-command'
 TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
+TUI = 'tui'
 UNLOCK = 'unlock'
 USER = 'user'
 VALIDATE = 'validate'
@@ -210,17 +211,19 @@ def parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
+    parser.add_argument(m(V), mm(VERBOSITY), action='store', default=4, type=int, metavar='VERBOSITY',
+                        help='output level for stderr (0: silent; 5:noisy)')
+    parser.add_argument(mm(TUI), action='store_true',
+                        help='text user interface (no log to stdout)')
     parser.add_argument(m(F), mm(DATABASE), action='store', default='~/.ch2/database.sqlr', metavar='FILE',
-                        help='the database file')
+                        help='the file containing the database')
     parser.add_argument(mm(LOGS), action='store', default='~/.ch2/logs', metavar='DIR',
                         help='the directory for logs')
     parser.add_argument(mm(NOTEBOOKS), action='store', default='~/.ch2/notebooks', metavar='DIR',
-                        help='the notebooks directory (when jupyter starts)')
-    parser.add_argument(m(L), mm(LOG), action='store', metavar='FILE',
-                        help='the file for the log (command name by default)')
-    parser.add_argument(m(V), mm(VERBOSITY), action='store', default=4, type=int, metavar='VERBOSITY',
-                        help='output level for stderr (0: silent; 5:noisy)')
+                        help='the directory for notebooks (when jupyter starts)')
+    parser.add_argument(mm(LOG), action='store', metavar='FILE',
+                        help='the filename for the log (command name by default)')
+    parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
 

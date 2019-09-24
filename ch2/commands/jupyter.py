@@ -6,7 +6,7 @@ from pkgutil import iter_modules
 from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS
 from ..squeal import SystemProcess
 from ..uranus import template
-from ..uranus.server import JupyterServer, get_controller
+from ..uranus.server import JupyterServer, get_controller, set_controller_session
 
 log = getLogger(__name__)
 
@@ -31,35 +31,25 @@ Indicate whether the background server is running or not.
 
 Stop the background server.
     '''
-    if args[SUB_COMMAND] == SERVICE:
-        service()
-    elif args[SUB_COMMAND] == START:
-        start()
-    elif args[SUB_COMMAND] == STOP:
-        stop()
-    elif args[SUB_COMMAND] == SHOW:
-        show(args)
-    elif args[SUB_COMMAND] == STATUS:
-        status(db)
-    elif args[SUB_COMMAND] == LIST:
+    cmd = args[SUB_COMMAND]
+    if cmd == LIST:
         print_list()
+    elif cmd == SHOW:
+        show(args)
+    elif cmd == STATUS:
+        status(db)
     else:
-        raise Exception(f'Unexpected command {args[SUB_COMMAND]}')
-
-
-def service():
-    '''
-    Start in this thread.
-    '''
-    get_controller().run_local()
-
-
-def start():
-    get_controller().start_service(restart=True)
-
-
-def stop():
-    get_controller().stop_service()
+        with db.session_context() as s:
+            c = get_controller()
+            set_controller_session(s)
+            if cmd == SERVICE:
+                c.run_local()
+            elif cmd == START:
+                c.start_service(restart=True)
+            elif cmd == STOP:
+                c.stop_service()
+            else:
+                raise Exception(f'Unexpected command {cmd}')
 
 
 def status(db):

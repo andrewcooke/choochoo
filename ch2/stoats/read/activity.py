@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
 from ..read import AbortImport, MultiProcFitReader, AbortImportButMarkScanned
-from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE
+from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
 from ...sortem.bilinear import bilinear_elevation_from_constant
@@ -39,8 +39,8 @@ class ActivityReader(MultiProcFitReader):
             constants = ' '.join(f'-D "{constant}"' for constant in self.constants) + ' -- '
         else:
             constants = ''
-        return f'{{ch2}} -v0 -l {{log}} -f {self._db.path} {ACTIVITIES} {mm(WORKER)} {self.id} ' \
-            f'{mm(FAST)} {mm(FORCE) if self.force else ""} {constants}'
+        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self._db.path} ' \
+               f'{ACTIVITIES} {mm(WORKER)} {self.id} --{FAST} {mm(FORCE) if self.force else ""} {constants}'
 
     def _startup(self, s):
         super()._startup(s)

@@ -7,7 +7,7 @@ from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
 from .args import DATE, SCHEDULE, FAST
-from ..lib.date import to_date, YMD
+from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em, label
@@ -18,6 +18,7 @@ from ..squeal.utils import add
 from ..stoats.display import display_pipeline
 from ..stoats.display.nearby import nearby_any_time, fmt_nearby
 from ..stoats.pipeline import run_pipeline
+from ..uranus.server import set_controller_session
 from ..uranus.template.activity_details import activity_details
 from ..uranus.template.all_activities import all_activities
 from ..uranus.template.compare_activities import compare_activities
@@ -222,24 +223,28 @@ class DailyDiary(Diary):
         for aj1 in ActivityJournal.at_date(s, self._date):
             options = [(None, 'None')] + [(aj2, fmt_nearby(aj2, nb)) for aj2, nb in nearby_any_time(s, aj1)]
             menu = ArrowMenu(label('%s v ' % aj1.name), dict(options))
-            connect_signal(menu, 'click', self.__show_gui, aj1)
+            connect_signal(menu, 'click', self.__show_gui, user_args=[s, aj1])
             button = SquareButton('All Similar')
-            connect_signal(button, 'click', self.__show_similar, aj1)
+            connect_signal(button, 'click', self.__show_similar, user_args=[s, aj1])
             yield Columns([f(menu), f(Padding(Fixed(button, 13), width='clip'))])
         button = SquareButton('Health')
-        connect_signal(button, 'click', self.__show_health, self._date)
+        connect_signal(button, 'click', self.__show_health, user_args=[s, self._date])
         yield f(Padding(Fixed(button, 8), width='clip'))
 
-    def __show_gui(self, w, aj1):
+    def __show_gui(self, s, aj1, w):
+        set_controller_session(s)
         if w.state:
             compare_activities(aj1.start, w.state.start, aj1.activity_group.name)
         else:
             activity_details(aj1.start, aj1.activity_group.name)
 
-    def __show_similar(self, w, aj1):
+    def __show_similar(self, s, aj1, w):
+        set_controller_session(s)
         similar_activities(aj1.start, aj1.activity_group.name)
 
-    def __show_health(self, w, date):
+    def __show_health(self, s, date, w):
+        log.debug(f'w {w} s {s} date {date}')
+        set_controller_session(s)
         health()
 
 

@@ -19,7 +19,7 @@ class FatalException(Exception):
 from .commands.activities import activities
 from .commands.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI
 from .commands.constants import constants
 from .commands.dump import dump
 from .commands.config import config
@@ -74,11 +74,13 @@ COMMANDS = {ACTIVITIES: activities,
 
 
 def main():
-    args = NamespaceWithVariables(parser().parse_args())
-    command_name = args[COMMAND] if COMMAND in args else None
+    ns = parser().parse_args()
+    command_name = ns.command if hasattr(ns, COMMAND) else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
-    tui = command and hasattr(command, 'tui') and command.tui
-    make_log(args, tui=tui)
+    if command and hasattr(command, 'tui') and command.tui:
+        ns.tui = True
+    args = NamespaceWithVariables(ns)
+    make_log(args)
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
@@ -87,7 +89,7 @@ def main():
         if db.is_empty() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE)):
             refuse_until_configured()
         elif command:
-            start_controller(db, args)
+            start_controller(args)
             command(args, db)
         else:
             log.debug('If you are seeing the "No command given" error during development ' +

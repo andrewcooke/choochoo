@@ -7,7 +7,7 @@ from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
 from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
-from ...commands.args import STATISTICS, WORKER, mm
+from ...commands.args import STATISTICS, WORKER, mm, VERBOSITY, LOG
 from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date, local_date_to_time, \
     time_to_local_date
 from ...lib.log import log_current_exception
@@ -36,7 +36,7 @@ class CalculatorMixin:
         return start, finish
 
     def _base_command(self):
-        return f'{{ch2}} -v0 -l {{log}} -f {self._db.path} {STATISTICS} {mm(WORKER)} {self.id}'
+        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self._db.path} {STATISTICS} {mm(WORKER)} {self.id}'
 
 
 class MultiProcCalculator(CalculatorMixin, MultiProcPipeline):

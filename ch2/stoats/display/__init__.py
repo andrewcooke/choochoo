@@ -18,7 +18,7 @@ def display_pipeline(session, factory, date, diary, schedule=None):
     '''
     date = to_date(date)   # why is this needed?
     for pipeline in Pipeline.all(session, PipelineType.DIARY):
-        log.info('Building %s (%s, %s)' % (pipeline.cls, pipeline.args, pipeline.kargs))
+        log.info(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
         yield from pipeline.cls(*pipeline.args, diary=diary, **pipeline.kargs). \
             display(session, factory, date, schedule=schedule)
 
