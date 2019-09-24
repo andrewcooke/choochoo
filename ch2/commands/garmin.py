@@ -2,7 +2,7 @@
 from logging import getLogger
 from time import sleep
 
-from .args import DIR, USER, PASS, DATE
+from .args import DIR, USER, PASS, DATE, FORCE
 from ..fit.download.connect import GarminConnect
 from ..stoats.read.monitor import missing_dates
 
@@ -25,13 +25,13 @@ Note that this cannot be used to download more than 10 days of data.
 For bulk downloads use
 https://www.garmin.com/en-US/account/datamanagement/
     '''
-    dir, user, password, date = args.dir(DIR), args[USER], args[PASS], args[DATE]
+    dir, user, password, date, force = args.dir(DIR), args[USER], args[PASS], args[DATE], args[FORCE]
     if date:
         dates = [date]
     else:
         # do this first to avoid login if not needed
         with db.session_context() as s:
-            dates = list(missing_dates(s))
+            dates = list(missing_dates(s, force=force))
     if dates:
         connect = GarminConnect(log_response=False)
         connect.login(user, password)

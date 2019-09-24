@@ -443,6 +443,7 @@ def parser():
                         help='garmin connect password')
     garmin.add_argument(mm(DATE), action='store', metavar='DATE', type=to_date,
                         help='date to download')
+    garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
 
     help = subparsers.add_parser(HELP, help='display help')
     help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
