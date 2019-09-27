@@ -515,11 +515,14 @@ def coallesce(df, *statistics):
     '''
     for statistic in statistics:
         if statistic not in df.columns:
-            df[statistic] = 0
+            df[statistic] = np.nan
         pattern = f'{statistic} ('
         for column in df.columns:
             if column.startswith(pattern):
-                df.loc[~df[column].isna(), statistic] += df.loc[~df[column].isna(), column]
+                df.loc[~df[statistic].isna() & ~df[column].isna(), statistic] += \
+                    df.loc[~df[statistic].isna() & ~df[column].isna(), column]
+                df.loc[df[statistic].isna() & ~df[column].isna(), statistic] = \
+                    df.loc[df[statistic].isna() & ~df[column].isna(), column]
     return df
 
 
