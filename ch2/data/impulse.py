@@ -16,7 +16,7 @@ def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=HEART_RAT
     '''
     fthrs = sorted([(time, row[FTHR]) for time, row in fthr_df.dropna().iterrows()], reverse=True)
     if not fthrs:
-        raise Exception(f'No {FTHR} data')
+        raise Exception(f'No {FTHR} defined')
     fthrs = fthrs + [(to_time('2100'), None)]
     fthrs = [(a[0], b[0], a[1]) for a, b in zip(fthrs, fthrs[1:])]
     heart_rate_df[hr_zone] = np.nan

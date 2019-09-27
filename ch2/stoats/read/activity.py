@@ -84,7 +84,7 @@ class ActivityReader(MultiProcFitReader):
             raise AbortImport()
 
     def _lookup_activity_group(self, s, name):
-        activity_group = s.query(ActivityGroup).filter(ActivityGroup.name == name).one_or_none()
+        activity_group = ActivityGroup.from_name(s, name, optional=True)
         if not activity_group:
             activities = s.query(ActivityGroup).all()
             if activities:

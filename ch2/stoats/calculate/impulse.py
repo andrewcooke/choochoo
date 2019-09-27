@@ -5,10 +5,10 @@ from json import loads
 from logging import getLogger
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
-from ..names import FTHR, HEART_RATE, HR_ZONE
+from ..names import FTHR, HEART_RATE, HR_ZONE, ALL
 from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10
-from ...squeal import Constant, StatisticJournalFloat
+from ...squeal import Constant, StatisticJournalFloat, ActivityGroup
 
 log = getLogger(__name__)
 
@@ -24,6 +24,7 @@ class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 
     def _startup(self, s):
         self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
+        self.all = ActivityGroup.from_name(s, ALL)
         log.debug('%s: %s' % (self.impulse_ref, self.impulse))
 
     def _read_dataframe(self, s, ajournal):
@@ -50,6 +51,9 @@ class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
                            StatisticJournalFloat)
             if not np.isnan(row[self.impulse.dest_name]):
                 loader.add(self.impulse.dest_name, None, None, ajournal.activity_group, ajournal,
+                           row[self.impulse.dest_name], time, StatisticJournalFloat)
+                # copy for global FF statistics
+                loader.add(self.impulse.dest_name, None, None, self.all, ajournal,
                            row[self.impulse.dest_name], time, StatisticJournalFloat)
         # if there are no values, add a single null so we don't re-process
         if not loader:

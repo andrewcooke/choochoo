@@ -10,11 +10,12 @@ from . import UniProcCalculator
 from ...data.frame import statistics
 from ...data.response import pre_calc, DecayModel, calc
 from ...lib.date import round_hour, to_time, local_date_to_time
+from ...squeal import ActivityGroup
 from ...squeal import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...squeal.utils import add
 from ...stoats.calculate.impulse import HRImpulse
-from ...stoats.names import _src
+from ...stoats.names import _src, ALL
 from ...stoats.pipeline import LoaderMixin
 
 log = getLogger(__name__)
@@ -132,7 +133,8 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
 
     def _run_one(self, s, missed):
         start, finish = missed
-        hr10 = statistics(s, self.impulse.dest_name, owner=self.owner_in, with_sources=True, check=False)
+        hr10 = statistics(s, self.impulse.dest_name, constraint=ActivityGroup.from_name(s, ALL),
+                          owner=self.owner_in, with_sources=True, check=False)
         if not hr10.empty:
             all_sources = list(self.__make_sources(s, hr10))
             for response in self.responses:
@@ -156,6 +158,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         name = _src(self.impulse.dest_name)
         prev = add(s, Composite(n_components=0))
         yield to_time(0.0), prev
+        # find times where the source changes
         for time, row in hr10.loc[hr10[name].ne(hr10[name].shift())].iterrows():
             id = row[name]
             composite = add(s, Composite(n_components=2))

@@ -22,6 +22,13 @@ class ActivityGroup(Base):
     def __str__(self):
         return 'ActivityGroup "%s"' % self.name
 
+    @classmethod
+    def from_name(cls, s, name, optional=False):
+        if optional:
+            return s.query(ActivityGroup).filter(ActivityGroup.name == name).one_or_none()
+        else:
+            return s.query(ActivityGroup).filter(ActivityGroup.name == name).one()
+
 
 class ActivityJournal(Source):
 

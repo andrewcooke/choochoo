@@ -23,7 +23,7 @@ from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.response import ResponseDiary
 from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
-    RPM, FITNESS_D, FATIGUE_D
+    RPM, FITNESS_D, FATIGUE_D, ALL
 from ..stoats.read.monitor import MonitorReader
 from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Text, Float, Score0
@@ -43,15 +43,21 @@ def default(db, no_diary=False):
         # basic activities
 
         c = Counter()
+        # each of the following needs an FTHR defined
         bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
         run = add_activity_group(s, 'Run', c, description='All running activities')
         swim = add_activity_group(s, 'Swim', c, description='All swimming activities')
+        walk = add_activity_group(s, 'Walk', c, description='All walking activities')
+        # this is required by the code; the name (ALL) is fixed and referenced in FF calculations
+        all = add_activity_group(s, ALL, c, description='All activities')
         # sport_to_activity maps from the FIT sport field to the activity defined above
+        sport_to_activity = {'cycling': bike.name,
+                             'running': run.name,
+                             'swimming': swim.name,
+                             'walking': walk.name}
         add_activities(s, SegmentReader, c,
                        owner_out=short_cls(SegmentReader),
-                       sport_to_activity={'cycling': bike.name,
-                                          'running': run.name,
-                                          'swimming': swim.name},
+                       sport_to_activity=sport_to_activity,
                        record_to_db={'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
                                      'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
                                      'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
@@ -103,7 +109,7 @@ def default(db, no_diary=False):
         # monitor pipeline
 
         c = Counter()
-        add_monitor(s, MonitorReader, c)
+        add_monitor(s, MonitorReader, c, sport_to_activity=sport_to_activity)
 
         # constants used by statistics
 
@@ -112,6 +118,12 @@ def default(db, no_diary=False):
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_activity_constant(s, run, FTHR,
                               description='Heart rate at functional threshold (running).',
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+        add_activity_constant(s, swim, FTHR,
+                              description='Heart rate at functional threshold (swimming).',
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+        add_activity_constant(s, walk, FTHR,
+                              description='Heart rate at functional threshold (walking).',
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_constant(s, SRTM1_DIR, description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
