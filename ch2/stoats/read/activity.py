@@ -5,6 +5,7 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
+from ch2 import FatalException
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
 from ..read import AbortImport, MultiProcFitReader, AbortImportButMarkScanned
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
@@ -81,7 +82,8 @@ class ActivityReader(MultiProcFitReader):
             return self._lookup_activity_group(s, self.sport_to_activity[sport])
         else:
             log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
-            raise AbortImport()
+            raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
+                                 'See sport_to_activity in ch2.config.default.py')
 
     def _lookup_activity_group(self, s, name):
         activity_group = ActivityGroup.from_name(s, name, optional=True)
