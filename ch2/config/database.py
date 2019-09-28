@@ -193,12 +193,15 @@ def set_constant(s, constant, value, time=None, date=None):
     constant.add_value(s, value, time=time, date=date)
 
 
-def name_constant(short_name, activity_group):
+def name_constant(short_name, activity_group=None):
     '''
     Constants typically combine a name with an activity group (because they're specific to a
     particular activity).
     '''
-    return '%s.%s' % (sub(r'\s+', '', short_name), sub(r'\s+', '', activity_group.name))
+    name = sub(r'\s+', '', short_name)
+    if activity_group:
+        name = '%s.%s' % (name, sub(r'\s+', '', activity_group.name))
+    return name
 
 
 def add_topic(s, name, sort, description=None, schedule=None):

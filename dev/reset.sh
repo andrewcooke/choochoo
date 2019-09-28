@@ -28,7 +28,7 @@ echo
 echo "running statistics in series"
 start_statistics=$SECONDS
 dev/ch2 --dev -v2 statistics
-cp ~/.ch2/database.sqlr ~/.ch2/database.sqlr-stats
+cp ~/.ch2/database-0-24.sql ~/.ch2/database-0-24-stats.sql
 duration=$(($SECONDS - $start_statistics))
 echo "statistics finished $(($duration/60)) min $(($duration%60)) sec"
 

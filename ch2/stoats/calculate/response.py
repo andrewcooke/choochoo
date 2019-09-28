@@ -14,8 +14,7 @@ from ...squeal import ActivityGroup
 from ...squeal import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...squeal.utils import add
-from ...stoats.calculate.impulse import HRImpulse
-from ...stoats.names import _src, ALL
+from ...stoats.names import _src, ALL, HR_IMPULSE_10
 from ...stoats.pipeline import LoaderMixin
 
 log = getLogger(__name__)
@@ -39,14 +38,12 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
 
     def __init__(self, *args, responses_ref=None, impulse_ref=None, **kargs):
         self.responses_ref = self._assert('responses_ref', responses_ref)
-        self.impulse_ref = self._assert('impulse_ref', impulse_ref)
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
         super()._startup(s)
         constants = [Constant.get(s, response) for response in self.responses_ref]
         self.responses = [Response(**loads(constant.at(s).value)) for constant in constants]
-        self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
 
     def _delete(self, s):
         start, finish = self._start_finish(local_date_to_time)
@@ -117,7 +114,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
             filter(StatisticJournal.statistic_name_id.in_(response_ids))
         unused = s.query(count(StatisticJournal.id)). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-            filter(StatisticName.name == self.impulse.dest_name,
+            filter(StatisticName.name == HR_IMPULSE_10,
                    StatisticName.owner == self.owner_in,
                    ~StatisticJournal.source_id.in_(inputs)).scalar()
         return unused
@@ -133,7 +130,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
 
     def _run_one(self, s, missed):
         start, finish = missed
-        hr10 = statistics(s, self.impulse.dest_name, constraint=ActivityGroup.from_name(s, ALL),
+        hr10 = statistics(s, HR_IMPULSE_10, constraint=ActivityGroup.from_name(s, ALL),
                           owner=self.owner_in, with_sources=True, check=False)
         if not hr10.empty:
             all_sources = list(self.__make_sources(s, hr10))
@@ -141,7 +138,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
                 log.info(f'Creating values for {response.dest_name}')
                 model = DecayModel(start=response.start, zero=0, log10_scale=log10(response.scale),
                                    log10_period=log10(response.tau_days * 24 * 60 * 60 / 3600),  # convert to intervals
-                                   input=self.impulse.dest_name, output=response.dest_name)
+                                   input=HR_IMPULSE_10, output=response.dest_name)
                 hr3600 = pre_calc(hr10.copy(), model, start=start, finish=finish)
                 result = calc(hr3600, model)
                 loader = self._get_loader(s, add_serial=False)
@@ -155,7 +152,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
 
     def __make_sources(self, s, hr10):
         log.info('Creating sources')
-        name = _src(self.impulse.dest_name)
+        name = _src(HR_IMPULSE_10)
         prev = add(s, Composite(n_components=0))
         yield to_time(0.0), prev
         # find times where the source changes

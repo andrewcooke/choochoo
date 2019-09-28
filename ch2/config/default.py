@@ -4,7 +4,7 @@ from logging import getLogger
 from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
-from .impulse import add_impulse
+from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
 from ..lib.schedule import Schedule
 from ..sortem.file import SRTM1_DIR
@@ -78,8 +78,9 @@ def default(db, no_diary=False):
         add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')
         add_power_estimate(s, c, bike, vary='')
         add_climb(s, bike)
-        add_impulse(s, c, bike, fitness=fitness, fatigue=fatigue)
-        add_impulse(s, c, walk, fitness=fitness, fatigue=fatigue)
+        add_impulse(s, c, bike)
+        add_impulse(s, c, walk)
+        add_responses(s, c, fitness=fitness, fatigue=fatigue)
         add_statistics(s, ActivityCalculator, c,
                        owner_in=short_cls(ResponseCalculator),
                        climb=name_constant(CLIMB_CNAME, bike))
@@ -101,8 +102,8 @@ def default(db, no_diary=False):
         add_diary(s, MonitorDiary, c)
         # these tie-in to the constants used in add_impulse()
         add_diary(s, ResponseDiary, c,
-                  fitness=[name_constant(FITNESS_D % days, bike) for (days, _) in fitness],
-                  fatigue=[name_constant(FATIGUE_D % days, bike) for (days, _) in fatigue])
+                  fitness=[name_constant(FITNESS_D % days, all) for (days, _) in fitness],
+                  fatigue=[name_constant(FATIGUE_D % days, all) for (days, _) in fatigue])
         add_diary(s, ActivityDiary, c)
         add_diary(s, SegmentDiary, c)
         add_diary(s, NearbyDiary, c)
