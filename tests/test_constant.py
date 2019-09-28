@@ -16,15 +16,16 @@ log = getLogger(__name__)
 class TestConstant(TestCase):
 
     def test_constant(self):
+        # this is currently failing because there are multiple statistics called Active Distance
         with NamedTemporaryFile() as f:
             args, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
-                self.assertEqual(n, 10)
+                self.assertEqual(n, 13)
             args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
             constants(args, db)
             with db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
-                self.assertEqual(n, 10)
+                self.assertEqual(n, 13)
                 # todo - maybe test for value?
