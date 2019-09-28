@@ -1,1 +1,2 @@
 include ch2/fit/profile/global-profile.pkl
+recursive-include ch2/migraine *.sh
