@@ -27,4 +27,4 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
                  constants=args[CONSTANT], **parse_pairs(args[KARG]))
     if not args[FAST] and args[WORKER] is None:
         # don't force this - it auto-detects need
-        run_pipeline(db, PipelineType.STATISTIC)
+        run_pipeline(db, PipelineType.STATISTIC, **parse_pairs(args[KARG]))

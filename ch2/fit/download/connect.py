@@ -11,8 +11,8 @@ log = getLogger(__name__)
 
 
 '''
-if you want to download your data from garmin you do not need to understand this code.  simply install choochoo
-and use the 'ch2 garmin' command.
+if you want to download your data from garmin you do not need to understand this code.  install choochoo and 
+use the 'ch2 garmin' command.
 
 BUT there is an even easier way.  simply go to garmin and ask for all your data.  follow the instructions at
 

@@ -31,12 +31,14 @@ class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
         try:
             heart_rate_df = activity_statistics(s, HEART_RATE, activity_journal=ajournal)
             fthr_df = statistics(s, FTHR, constraint=ajournal.activity_group)
-            return heart_rate_df, fthr_df
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
             raise
+        if fthr_df.empty:
+            raise Exception(f'No {FTHR} defined for {ajournal.activity_group}')
+        return heart_rate_df, fthr_df
 
-    def _calculate_stats(self, s, source, data):
+    def _calculate_stats(self, s, ajournal, data):
         heart_rate_df, fthr_df = data
         hr_zone(heart_rate_df, fthr_df)
         impulse_df = impulse_10(heart_rate_df, self.impulse)

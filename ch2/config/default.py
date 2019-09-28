@@ -79,6 +79,7 @@ def default(db, no_diary=False):
         add_power_estimate(s, c, bike, vary='')
         add_climb(s, bike)
         add_impulse(s, c, bike, fitness=fitness, fatigue=fatigue)
+        add_impulse(s, c, walk, fitness=fitness, fatigue=fatigue)
         add_statistics(s, ActivityCalculator, c,
                        owner_in=short_cls(ResponseCalculator),
                        climb=name_constant(CLIMB_CNAME, bike))
