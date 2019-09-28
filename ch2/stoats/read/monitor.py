@@ -209,7 +209,7 @@ class MonitorReader(MultiProcFitReader):
         return df
 
     def _write_diff(self, s, df, activity):
-        steps = StatisticName.add_if_missing(log, s, STEPS, StatisticJournalType.INTEGER, STEPS_UNITS, None,
+        steps = StatisticName.add_if_missing(s, STEPS, StatisticJournalType.INTEGER, STEPS_UNITS, None,
                                              self.owner_out, activity)
         times = df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):

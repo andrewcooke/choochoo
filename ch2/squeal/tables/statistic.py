@@ -1,6 +1,7 @@
 
 import datetime as dt
 from enum import IntEnum
+from logging import getLogger
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +14,8 @@ from ..utils import add
 from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import sigfig
 from ...stoats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF
+
+log = getLogger(__name__)
 
 
 class StatisticName(Base):
@@ -37,7 +40,7 @@ class StatisticName(Base):
         return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
 
     @classmethod
-    def add_if_missing(cls, log, s, name, type, units, summary, owner, constraint):
+    def add_if_missing(cls, s, name, type, units, summary, owner, constraint):
         s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
@@ -126,8 +129,8 @@ class StatisticJournal(Base):
             return 'Field Journal'
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial, type):
-        statistic_name = StatisticName.add_if_missing(log, s, name, type, units, summary, owner, constraint)
+    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial, type):
+        statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, owner, constraint)
         journal = STATISTIC_JOURNAL_CLASSES[type](
                 statistic_name=statistic_name, source=source, value=value, time=time, serial=serial)
         s.add(journal)
@@ -251,8 +254,8 @@ class StatisticJournalInteger(StatisticJournal):
     }
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial=None):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time, serial,
+    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+        return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
                            StatisticJournalType.INTEGER)
 
 
@@ -267,8 +270,8 @@ class StatisticJournalFloat(StatisticJournal):
     parse = float
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial=None):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time, serial,
+    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+        return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
                            StatisticJournalType.FLOAT)
 
     __mapper_args__ = {
@@ -311,8 +314,8 @@ class StatisticJournalText(StatisticJournal):
     parse = str
 
     @classmethod
-    def add(cls, log, s, name, units, summary, owner, constraint, source, value, time, serial=None):
-        return super().add(log, s, name, units, summary, owner, constraint, source, value, time, serial,
+    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+        return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
                            StatisticJournalType.TEXT)
 
     __mapper_args__ = {

@@ -84,6 +84,12 @@ TIME_IN_Z_ANY = 'Time in Z%'
 TIMESPAN_ID = 'Timespan ID'
 TOTAL_CLIMB = 'Total Climb'
 
+SPORT_CYCLING = 'cycling'
+SPORT_RUNNING = 'running'
+SPORT_SWIMMING = 'swimming'
+SPORT_WALKING = 'walking'
+SPORT_GENERIC = 'generic'
+
 
 MAX = '[max]'
 MIN = '[min]'

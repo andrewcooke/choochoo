@@ -23,7 +23,7 @@ from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.response import ResponseDiary
 from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
-    RPM, FITNESS_D, FATIGUE_D, ALL
+    RPM, FITNESS_D, FATIGUE_D, ALL, SPORT_WALKING, SPORT_SWIMMING, SPORT_RUNNING, SPORT_CYCLING
 from ..stoats.read.monitor import MonitorReader
 from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Text, Float, Score0
@@ -51,10 +51,10 @@ def default(db, no_diary=False):
         # this is required by the code; the name (ALL) is fixed and referenced in FF calculations
         all = add_activity_group(s, ALL, c, description='All activities')
         # sport_to_activity maps from the FIT sport field to the activity defined above
-        sport_to_activity = {'cycling': bike.name,
-                             'running': run.name,
-                             'swimming': swim.name,
-                             'walking': walk.name}
+        sport_to_activity = {SPORT_CYCLING: bike.name,
+                             SPORT_RUNNING: run.name,
+                             SPORT_SWIMMING: swim.name,
+                             SPORT_WALKING: walk.name}
         add_activities(s, SegmentReader, c,
                        owner_out=short_cls(SegmentReader),
                        sport_to_activity=sport_to_activity,

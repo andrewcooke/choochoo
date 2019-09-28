@@ -91,7 +91,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
                 self.__copy(ajournal, loader, climb, CLIMB_TIME, S, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_GRADIENT, PC, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_POWER, W, summaries(MAX, SUM, MSR), climb[TIME])
-                self.__copy(ajournal, loader, climb, CLIMB_CATEGORY, W, summaries(MAX, SUM, MSR), climb[TIME],
+                self.__copy(ajournal, loader, climb, CLIMB_CATEGORY, None, None, climb[TIME],
                             type=StatisticJournalText)
         if stats:
             log.warning(f'Unsaved statistics: {list(stats.keys())}')
