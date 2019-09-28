@@ -1,6 +1,12 @@
 
 ## Latest Changes
 
+### v0.24.0
+
+Improved support for multiple activities.  FF statistics are
+calculated for all activities (together).  Clearer upgrade
+instructions.
+
 ### v0.23.0
 
 Dropped old notebooks.  Use new templates instead (ch2 jupyter list).
