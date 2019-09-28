@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-sqlite3 ~/.ch2/database-0-24.sql 'pragma journal_mode=delete' >> /dev/null
-rm -f /tmp/copy-0-24.sql
-cp ~/.ch2/database-0-24.sql ~/.ch2/database-0-24.sql-backup
-mv ~/.ch2/database-0-24.sql /tmp/copy-0-24.sql
+DB_DIR=~/.ch2
+TMP_DIR=/tmp
 
-sqlite3 /tmp/copy-0-24.sql <<EOF
+sqlite3 "$DB_DIR/database-0-24.sql" 'pragma journal_mode=delete' >> /dev/null
+rm -f "$TMP_DIR/copy-0-24.sql"
+cp "$DB_DIR/database-0-24.sql" "$DB_DIR/database-0-24.sql-backup"
+mv "$DB_DIR/database-0-24.sql" "$TMP_DIR/copy-0-24.sql"
+
+sqlite3 "$TMP_DIR/copy-0-24.sql" <<EOF
 pragma foreign_keys = on;
 delete from source where type != 3;
 delete from statistic_name where id in (
@@ -16,10 +19,10 @@ delete from statistic_name where id in (
 );
 EOF
 
-rm -f /tmp/dump-0-24.sql
-sqlite3 /tmp/copy-0-24.sql <<EOF
+rm -f "$TMP_DIR/dump-0-24.sql"
+sqlite3 "$TMP_DIR/copy-0-24.sql" <<EOF
 update statistic_name set "constraint" = 'None' where "constraint" is null;
-.output /tmp/dump-0-24.sql
+.output "$TMP_DIR/dump-0-24.sql"
 .mode insert source
 select * from source;
 .mode insert statistic_journal
@@ -42,10 +45,10 @@ select * from topic_journal;
 select * from segment;
 EOF
 
-rm -f ~/.ch2/database-0-24.sql
+rm -f "$DB_DIR/database-0-24.sql"
 dev/ch2 no-op
 
-sqlite3 ~/.ch2/database-0-24.sql < /tmp/dump-0-24.sql
+sqlite3 "$DB_DIR/database-0-24.sql" < "$TMP_DIR/dump-0-24.sql"
 
 source env/bin/activate
 python <<EOF

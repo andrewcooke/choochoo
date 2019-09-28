@@ -47,6 +47,7 @@ support for power meters.
   * [Data Model](data-model)
   * [Schedules](schedules)
   * [Configuration](configuration)
+  * [Version Upgrades](version-upgrades)
   * [Reading FIT Files](fit-files)
   * [Repairing FIT Files](fix-fit)
   * [FIT Cookbook](fit-cookbook)

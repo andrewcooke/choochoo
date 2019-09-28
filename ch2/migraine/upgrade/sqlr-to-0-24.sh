@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 
-sqlite3 ~/.ch2/database.sqlr 'pragma journal_mode=delete'
-rm -f /tmp/copy.sqlr
-cp ~/.ch2/database.sqlr /tmp/copy.sqlr
 
-sqlite3 /tmp/copy.sqlr <<EOF
+# you may want to change these directories
+
+DB_DIR=~/.ch2
+TMP_DIR=/tmp
+
+
+# this section of the script copies diary data across
+
+echo "ensuring write-ahead file for $DB_DIR/database.sqlr is cleared"
+sqlite3 "$DB_DIR/database.sqlr" 'pragma journal_mode=delete'
+echo "copying data to $TMP_DIR/copy.sqlr"
+rm -f "$TMP_DIR/copy.sqlr"
+cp "$DB_DIR/database.sqlr" "$TMP_DIR/copy.sqlr"
+
+echo "dropping activity data from $TMP_DIR/copy.sqlr"
+sqlite3 "$TMP_DIR/copy.sqlr" <<EOF
 pragma foreign_keys = on;
 delete from source where type != 3;
 delete from statistic_name where id in (
@@ -15,10 +27,11 @@ delete from statistic_name where id in (
 );
 EOF
 
-rm -f /tmp/dump-r.sql
-sqlite3 /tmp/copy.sqlr <<EOF
+echo "extracting data from $TMP_DIR/copy.sqlr to load into new database"
+rm -f "$TMP_DIR/dump.sqlr"
+sqlite3 "$TMP_DIR/copy.sqlr" <<EOF
 update statistic_name set "constraint" = 'None' where "constraint" is null;
-.output /tmp/dump-r.sql
+.output $TMP_DIR/dump.sqlr
 .mode insert source
 select * from source;
 .mode insert statistic_journal
@@ -41,11 +54,17 @@ select * from topic_journal;
 select * from segment;
 EOF
 
-rm -f ~/.ch2/database-0-24.sql
+echo "creating new, empty database at $DB_DIR/database-0-24.sql"
+rm -f "$DB_DIR/database-0-24.sql"
 dev/ch2 no-op
 
-sqlite3 ~/.ch2/database-0-24.sql < /tmp/dump-r.sql
+echo "loading data into $DB_DIR/database-0-24.sql"
+sqlite3 "$DB_DIR/database-0-24.sql" < "$TMP_DIR/dump.sqlr"
 
+
+# you almost certainly want to change the following details
+
+echo "adding custom data to $DB_DIR/database-0-24.sql"
 source env/bin/activate
 python <<EOF
 from ch2.config import *
@@ -59,5 +78,10 @@ EOF
 
 dev/ch2 --dev config default --no-diary
 dev/ch2 --dev constants --set FTHR.Bike 154
+dev/ch2 --dev constants --set FTHR.Walk 154
 dev/ch2 --dev constants --set SRTM1.Dir /home/andrew/archive/srtm1
 dev/ch2 --dev constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "weight": 12}'
+
+
+
+echo "next, run 'ch2 activities' or similar to load data"

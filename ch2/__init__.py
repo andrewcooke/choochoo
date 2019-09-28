@@ -1,5 +1,6 @@
-
+from glob import glob
 from logging import getLogger, NullHandler
+from os.path import abspath, dirname, join
 from sys import version_info
 
 getLogger('bokeh').addHandler(NullHandler())
@@ -87,7 +88,7 @@ def main():
     db = Database(args, log)
     try:
         if db.is_empty() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE)):
-            refuse_until_configured()
+            refuse_until_configured(db.path)
         elif command:
             start_controller(args)
             command(args, db)
@@ -108,8 +109,20 @@ def main():
         exit(2)
 
 
-def refuse_until_configured():
-    LengthFmt().print_all('''
+def refuse_until_configured(path):
+    dir = dirname(abspath(path))
+    if len(glob(join(dir, '*'))) > 1:
+        LengthFmt().print_all('''
+Welcome to Choochoo.
+
+There is no database available for this release, but you may have a database from a previous version.
+For information on how to upgrade an old database, 
+please see the documentation at http://andrewcooke.github.io/choochoo/version-upgrades
+
+Otherwise, you will need to configure the system.
+Please see the documentation at http://andrewcooke.github.io/choochoo''')
+    else:
+        LengthFmt().print_all('''
 Welcome to Choochoo.
 
 Before using the ch2 command you must configure the system.
