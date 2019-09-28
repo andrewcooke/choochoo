@@ -10,16 +10,18 @@ from sqlalchemy.sql.functions import count
 from ..load import StatisticJournalLoader
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE
 from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
+from ... import FatalException
 from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
 from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
-from ...squeal.database import StatisticJournalType
+from ...squeal.database import StatisticJournalType, ActivityGroup
 from ...squeal.tables.monitor import MonitorJournal
 from ...squeal.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
 from ...squeal.utils import add
 
 log = getLogger(__name__)
+
 ACTIVITY_TYPE_ATTR = 'activity_type'
 HEART_RATE_ATTR = 'heart_rate'
 MONITORING_ATTR = 'monitoring'
@@ -88,6 +90,15 @@ NEW_STEPS = _new(STEPS)
 
 class MonitorReader(MultiProcFitReader):
 
+    def __init__(self, *args, sport_to_activity=None, **kargs):
+        self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
+        super().__init__(*args, **kargs)
+
+    def _startup(self, s):
+        self.sport_to_activity_group = {label: ActivityGroup.from_name(s, name)
+                                        for label, name in self.sport_to_activity.items()}
+        super()._startup(s)
+
     def _get_loader(self, s, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
@@ -153,9 +164,14 @@ class MonitorReader(MultiProcFitReader):
                 loader.add(HEART_RATE, BPM, None, None, mjournal, record.data[HEART_RATE_ATTR][0][0],
                            record.timestamp, StatisticJournalInteger)
             if STEPS_ATTR in record.data:
-                for (activity, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
-                    loader.add(CUMULATIVE_STEPS, STEPS_UNITS, None, activity, mjournal, steps,
-                               record.timestamp, StatisticJournalInteger)
+                for (sport, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
+                    try:
+                        loader.add(CUMULATIVE_STEPS, STEPS_UNITS, None,
+                                   self.sport_to_activity_group[sport], mjournal, steps,
+                                   record.timestamp, StatisticJournalInteger)
+                    except KeyError:
+                        raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
+                                             'See sport_to_activity in ch2.config.default.py')
 
     def _shutdown(self, s):
         super()._shutdown(s)
@@ -193,7 +209,7 @@ class MonitorReader(MultiProcFitReader):
         return df
 
     def _write_diff(self, s, df, activity):
-        steps = StatisticName.add_if_missing(log, s, STEPS, StatisticJournalType.INTEGER, STEPS_UNITS, None,
+        steps = StatisticName.add_if_missing(s, STEPS, StatisticJournalType.INTEGER, STEPS_UNITS, None,
                                              self.owner_out, activity)
         times = df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):

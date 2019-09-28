@@ -5,7 +5,7 @@ import pandas as pd
 from .heart_rate import BC_ZONES
 from ..lib.data import interpolate_freq
 from ..lib.date import to_time
-from ..stoats.names import HEART_RATE, FTHR, HR_ZONE
+from ..stoats.names import HEART_RATE, FTHR, HR_ZONE, HR_IMPULSE_10
 
 
 def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=HEART_RATE, hr_zone=HR_ZONE):
@@ -16,7 +16,7 @@ def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=HEART_RAT
     '''
     fthrs = sorted([(time, row[FTHR]) for time, row in fthr_df.dropna().iterrows()], reverse=True)
     if not fthrs:
-        raise Exception(f'No {FTHR} data')
+        raise Exception(f'No {FTHR} defined')
     fthrs = fthrs + [(to_time('2100'), None)]
     fthrs = [(a[0], b[0], a[1]) for a, b in zip(fthrs, fthrs[1:])]
     heart_rate_df[hr_zone] = np.nan
@@ -54,13 +54,13 @@ def impulse_10(hr_zone_df, impulse, hr_zone=HR_ZONE):
     this can be used for a huge slew of data, or for an individual activity.
     '''
     if hr_zone_df.empty:
-        impulse_df = pd.DataFrame(columns=[impulse.dest_name])
+        impulse_df = pd.DataFrame(columns=[HR_IMPULSE_10])
     else:
         impulse_df = interpolate_freq(hr_zone_df.loc[:, [hr_zone]], '10s',
                                       method='index', limit=int(0.5 + impulse.max_secs / 10)).dropna()
-        impulse_df[impulse.dest_name] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
-        impulse_df[impulse.dest_name].clip(lower=0, inplace=True)
-        impulse_df[impulse.dest_name] = impulse_df[impulse.dest_name] ** impulse.gamma
+        impulse_df[HR_IMPULSE_10] = (impulse_df[hr_zone] - impulse.zero) / (impulse.one - impulse.zero)
+        impulse_df[HR_IMPULSE_10].clip(lower=0, inplace=True)
+        impulse_df[HR_IMPULSE_10] = impulse_df[HR_IMPULSE_10] ** impulse.gamma
         impulse_df.drop(columns=[hr_zone], inplace=True)
     return impulse_df
 

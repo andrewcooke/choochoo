@@ -5,15 +5,15 @@ from json import loads
 from logging import getLogger
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
-from ..names import FTHR, HEART_RATE, HR_ZONE
+from ..names import FTHR, HEART_RATE, HR_ZONE, ALL, HR_IMPULSE_10
 from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10
-from ...squeal import Constant, StatisticJournalFloat
+from ...squeal import Constant, StatisticJournalFloat, ActivityGroup
 
 log = getLogger(__name__)
 
 # constraint comes from constant
-HRImpulse = namedtuple('HRImpulse', 'dest_name, gamma, zero, one, max_secs')
+HRImpulse = namedtuple('HRImpulse', 'gamma, zero, one, max_secs')
 
 
 class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
@@ -24,18 +24,21 @@ class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 
     def _startup(self, s):
         self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
+        self.all = ActivityGroup.from_name(s, ALL)
         log.debug('%s: %s' % (self.impulse_ref, self.impulse))
 
     def _read_dataframe(self, s, ajournal):
         try:
             heart_rate_df = activity_statistics(s, HEART_RATE, activity_journal=ajournal)
             fthr_df = statistics(s, FTHR, constraint=ajournal.activity_group)
-            return heart_rate_df, fthr_df
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
             raise
+        if fthr_df.empty:
+            raise Exception(f'No {FTHR} defined for {ajournal.activity_group}')
+        return heart_rate_df, fthr_df
 
-    def _calculate_stats(self, s, source, data):
+    def _calculate_stats(self, s, ajournal, data):
         heart_rate_df, fthr_df = data
         hr_zone(heart_rate_df, fthr_df)
         impulse_df = impulse_10(heart_rate_df, self.impulse)
@@ -48,9 +51,13 @@ class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
             if not np.isnan(row[HR_ZONE]):
                 loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, row[HR_ZONE], time,
                            StatisticJournalFloat)
-            if not np.isnan(row[self.impulse.dest_name]):
-                loader.add(self.impulse.dest_name, None, None, ajournal.activity_group, ajournal,
-                           row[self.impulse.dest_name], time, StatisticJournalFloat)
+            if not np.isnan(row[HR_IMPULSE_10]):
+                # todo - do we need this?
+                # loader.add(self.impulse.dest_name, None, None, ajournal.activity_group, ajournal,
+                #            row[self.impulse.dest_name], time, StatisticJournalFloat)
+                # copy for global FF statistics
+                loader.add(HR_IMPULSE_10, None, None, self.all, ajournal,
+                           row[HR_IMPULSE_10], time, StatisticJournalFloat)
         # if there are no values, add a single null so we don't re-process
         if not loader:
             loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,

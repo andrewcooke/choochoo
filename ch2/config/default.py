@@ -4,7 +4,7 @@ from logging import getLogger
 from .climb import add_climb, CLIMB_CNAME
 from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
-from .impulse import add_impulse
+from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
 from ..lib.schedule import Schedule
 from ..sortem.file import SRTM1_DIR
@@ -23,7 +23,7 @@ from ..stoats.display.nearby import NearbyDiary
 from ..stoats.display.response import ResponseDiary
 from ..stoats.display.segment import SegmentDiary
 from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
-    RPM, FITNESS_D, FATIGUE_D
+    RPM, FITNESS_D, FATIGUE_D, ALL, SPORT_WALKING, SPORT_SWIMMING, SPORT_RUNNING, SPORT_CYCLING
 from ..stoats.read.monitor import MonitorReader
 from ..stoats.read.segment import SegmentReader
 from ..uweird.fields.topic import Text, Float, Score0
@@ -43,15 +43,21 @@ def default(db, no_diary=False):
         # basic activities
 
         c = Counter()
+        # each of the following needs an FTHR defined
         bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
         run = add_activity_group(s, 'Run', c, description='All running activities')
         swim = add_activity_group(s, 'Swim', c, description='All swimming activities')
+        walk = add_activity_group(s, 'Walk', c, description='All walking activities')
+        # this is required by the code; the name (ALL) is fixed and referenced in FF calculations
+        all = add_activity_group(s, ALL, c, description='All activities')
         # sport_to_activity maps from the FIT sport field to the activity defined above
+        sport_to_activity = {SPORT_CYCLING: bike.name,
+                             SPORT_RUNNING: run.name,
+                             SPORT_SWIMMING: swim.name,
+                             SPORT_WALKING: walk.name}
         add_activities(s, SegmentReader, c,
                        owner_out=short_cls(SegmentReader),
-                       sport_to_activity={'cycling': bike.name,
-                                          'running': run.name,
-                                          'swimming': swim.name},
+                       sport_to_activity=sport_to_activity,
                        record_to_db={'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
                                      'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
                                      'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
@@ -72,7 +78,9 @@ def default(db, no_diary=False):
         add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')
         add_power_estimate(s, c, bike, vary='')
         add_climb(s, bike)
-        add_impulse(s, c, bike, fitness=fitness, fatigue=fatigue)
+        add_impulse(s, c, bike)
+        add_impulse(s, c, walk)
+        add_responses(s, c, fitness=fitness, fatigue=fatigue)
         add_statistics(s, ActivityCalculator, c,
                        owner_in=short_cls(ResponseCalculator),
                        climb=name_constant(CLIMB_CNAME, bike))
@@ -94,8 +102,8 @@ def default(db, no_diary=False):
         add_diary(s, MonitorDiary, c)
         # these tie-in to the constants used in add_impulse()
         add_diary(s, ResponseDiary, c,
-                  fitness=[name_constant(FITNESS_D % days, bike) for (days, _) in fitness],
-                  fatigue=[name_constant(FATIGUE_D % days, bike) for (days, _) in fatigue])
+                  fitness=[name_constant(FITNESS_D % days, all) for (days, _) in fitness],
+                  fatigue=[name_constant(FATIGUE_D % days, all) for (days, _) in fatigue])
         add_diary(s, ActivityDiary, c)
         add_diary(s, SegmentDiary, c)
         add_diary(s, NearbyDiary, c)
@@ -103,7 +111,7 @@ def default(db, no_diary=False):
         # monitor pipeline
 
         c = Counter()
-        add_monitor(s, MonitorReader, c)
+        add_monitor(s, MonitorReader, c, sport_to_activity=sport_to_activity)
 
         # constants used by statistics
 
@@ -112,6 +120,12 @@ def default(db, no_diary=False):
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_activity_constant(s, run, FTHR,
                               description='Heart rate at functional threshold (running).',
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+        add_activity_constant(s, swim, FTHR,
+                              description='Heart rate at functional threshold (swimming).',
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+        add_activity_constant(s, walk, FTHR,
+                              description='Heart rate at functional threshold (walking).',
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_constant(s, SRTM1_DIR, description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)

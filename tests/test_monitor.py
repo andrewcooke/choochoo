@@ -34,8 +34,7 @@ class TestMonitor(TestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                # self.assertEqual(n, 111)
-                self.assertEqual(n, 108)  # why?
+                self.assertEqual(n, 109)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
@@ -114,6 +113,6 @@ class TestMonitor(TestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 19)
+                self.assertEqual(n, 20)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)

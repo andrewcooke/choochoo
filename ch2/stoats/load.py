@@ -138,7 +138,7 @@ class StatisticJournalLoader:
         key = (name, constraint)
         if key not in self.__statistic_name_cache:
             self.__statistic_name_cache[key] = \
-                StatisticName.add_if_missing(log, self._s, name, STATISTIC_JOURNAL_TYPES[cls],
+                StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
                                              units, summary, self._owner, constraint)
 
         try:

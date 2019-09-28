@@ -33,10 +33,8 @@ class TestData(TestCase):
             with db.session_context() as s:
                 source = Source(type=SourceType.SOURCE)
                 s.add(source)
-                StatisticJournalText.add(self.log, s, 'Bike', None, None, self, None, source,
-                                         '{"mass": 42}', '1980-01-01')
-                StatisticJournalFloat.add(self.log, s, 'Weight', None, None, self, None, source,
-                                          13, '1980-01-01')
+                StatisticJournalText.add(s, 'Bike', None, None, self, None, source, '{"mass": 42}', '1980-01-01')
+                StatisticJournalFloat.add(s, 'Weight', None, None, self, None, source, 13, '1980-01-01')
             p = power.expand(self.log, s, '1990-01-01', owner=self)
             self.assertEqual(p.weight, 13)
             self.assertEqual(p.bike['mass'], 42)

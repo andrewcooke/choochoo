@@ -51,8 +51,7 @@ class Source(Base):
     @classmethod
     def __clean_dirty_intervals(cls, s):
         from .statistic import StatisticJournal
-        # sessions are generally restricted to one time region, so we'll bracket that rather
-        # than list all times
+        # sessions are generally restricted to one time region, so we'll bracket that rather than list all times
         start, finish = None, None
         # all sources except intervals that are being deleted (need to catch on cascade to statistics)
         for instance in s.deleted:

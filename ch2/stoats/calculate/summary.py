@@ -10,7 +10,7 @@ from . import IntervalCalculatorMixin, MultiProcCalculator
 from ..names import MAX, MIN, SUM, CNT, AVG, MSR, ENTRIES
 from ...lib.date import local_date_to_time
 from ...squeal.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
-    StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
+    StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS, StatisticJournalType
 
 log = getLogger(__name__)
 
@@ -30,14 +30,14 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
     def _read_data(self, s, interval):
         # here, data is only statistics names, because calculation also involves loading data
         start, finish = local_date_to_time(interval.start), local_date_to_time(interval.finish)
-        statistics_with_data_but_no_summary = s.query(StatisticName.id). \
+        statistics_with_data_and_summary = s.query(StatisticName.id). \
             join(StatisticJournal). \
             filter(StatisticJournal.time >= start,
                    StatisticJournal.time < finish,
                    StatisticName.summary != None)
         # avoid duplicates
         return s.query(StatisticName). \
-            filter(StatisticName.id.in_(statistics_with_data_but_no_summary)).all()
+            filter(StatisticName.id.in_(statistics_with_data_and_summary)).all()
 
     def _calculate_results(self, s, interval, data, loader):
         start, finish = local_date_to_time(interval.start), local_date_to_time(interval.finish)
@@ -50,9 +50,15 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
                                                      start, finish, interval, measures)
                 if value is not None:
                     name = self.fmt_name(statistic_name.name, summary, self.schedule)
+                    # we need to infer the type
+                    if summary in (MAX, MIN, SUM):
+                        new_type = TYPE_TO_JOURNAL_CLASS[type(value)]
+                    elif summary in (AVG,):
+                        new_type = StatisticJournalFloat
+                    else:
+                        new_type = StatisticJournalInteger
                     # constraint is statistic_name so that we distinguish between stats of the same name
-                    loader.add(name, units, None, statistic_name, interval, value, start,
-                               TYPE_TO_JOURNAL_CLASS[type(value)])
+                    loader.add(name, units, None, statistic_name, interval, value, start, new_type)
         # add and commit these here - what else can we do?
         log.debug(f'Adding {len(measures)} measures')
         for measure in measures:

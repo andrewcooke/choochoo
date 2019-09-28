@@ -80,7 +80,7 @@ def define_segment(local_time, activity_group_name):
     Finally, uncomment the `s.add()` to add this to the database.
     '''
 
-    activity_group = s.query(ActivityGroup).filter(ActivityGroup.name == 'Bike').one()
+    activity_group = ActivityGroup.from_name(s, 'Bike')
     segment = Segment(start=(-70.61813,-33.41536), finish=(-70.63340,-33.42655), distance=4400,
                       activity_group=activity_group,
                       name='San Cristobal', description='Climb up San Cristobal in Parque Metropolitana')

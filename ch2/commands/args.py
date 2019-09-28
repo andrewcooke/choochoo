@@ -12,6 +12,8 @@ from ..lib.date import to_date, to_time
 log = getLogger(__name__)
 
 CH2_VERSION = '0.23.7'
+# new database on minor releases.  not sure this will always be a good idea.  we will see.
+DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
@@ -215,7 +217,7 @@ def parser():
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(mm(TUI), action='store_true',
                         help='text user interface (no log to stdout)')
-    parser.add_argument(m(F), mm(DATABASE), action='store', default='~/.ch2/database.sqlr', metavar='FILE',
+    parser.add_argument(m(F), mm(DATABASE), action='store', default=f'~/.ch2/database-{DB_VERSION}.sql', metavar='FILE',
                         help='the file containing the database')
     parser.add_argument(mm(LOGS), action='store', default='~/.ch2/logs', metavar='DIR',
                         help='the directory for logs')

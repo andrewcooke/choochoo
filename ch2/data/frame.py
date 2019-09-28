@@ -169,7 +169,7 @@ def _add_bookmark(bookmark, df):
     return df
 
 
-def activity_statistics(s, *statistics, owner=None, constraint=None, start=None, finish=None,
+def activity_statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None,
                         local_time=None, time=None, bookmarks=None, activity_journal=None,
                         activity_group_name=None, with_timespan=False, check=True):
 
@@ -196,7 +196,7 @@ def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None
                                          time=time, activity_group_name=activity_group_name)
     if constraint is None:
         constraint = activity_journal.activity_group
-    names = _statistic_names(s, *statistics, owner=owner, constraint=constraint, check=check)
+    names = statistic_names(s, *statistics, owner=owner, constraint=constraint, check=check)
     counts = Counter(name.name for name in names)
 
     t = _tables()
@@ -385,8 +385,6 @@ def statistic_names(s, *statistics, owner=None, constraint=None, check=True):
         raise Exception(f'Found no statistics for {statistics} (owner {owner}; constraint {constraint})')
     return some
 
-_statistic_names = statistic_names
-
 
 def _type_to_journal(t):
     return {StatisticJournalType.INTEGER: t.sji,
@@ -517,11 +515,14 @@ def coallesce(df, *statistics):
     '''
     for statistic in statistics:
         if statistic not in df.columns:
-            df[statistic] = 0
+            df[statistic] = np.nan
         pattern = f'{statistic} ('
         for column in df.columns:
             if column.startswith(pattern):
-                df.loc[~df[column].isna(), statistic] += df.loc[~df[column].isna(), column]
+                df.loc[~df[statistic].isna() & ~df[column].isna(), statistic] += \
+                    df.loc[~df[statistic].isna() & ~df[column].isna(), column]
+                df.loc[df[statistic].isna() & ~df[column].isna(), statistic] = \
+                    df.loc[df[statistic].isna() & ~df[column].isna(), column]
     return df
 
 

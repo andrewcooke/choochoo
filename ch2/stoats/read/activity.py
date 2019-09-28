@@ -5,7 +5,9 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
-from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION
+from ch2 import FatalException
+from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
+    SPORT_GENERIC
 from ..read import AbortImport, MultiProcFitReader, AbortImportButMarkScanned
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
@@ -81,10 +83,14 @@ class ActivityReader(MultiProcFitReader):
             return self._lookup_activity_group(s, self.sport_to_activity[sport])
         else:
             log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
-            raise AbortImport()
+            if sport in (SPORT_GENERIC,):
+                raise Exception(f'Ignoring {sport} entry')
+            else:
+                raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
+                                     'See sport_to_activity in ch2.config.default.py')
 
     def _lookup_activity_group(self, s, name):
-        activity_group = s.query(ActivityGroup).filter(ActivityGroup.name == name).one_or_none()
+        activity_group = ActivityGroup.from_name(s, name, optional=True)
         if not activity_group:
             activities = s.query(ActivityGroup).all()
             if activities:
@@ -121,7 +127,7 @@ class ActivityReader(MultiProcFitReader):
             for constant in self.constants:
                 name, value = constant.split('=', 1)
                 log.debug(f'Setting {name}={value}')
-                StatisticJournalText.add(log, s, name, None, None, self.owner_out, ajournal.activity_group,
+                StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
                                          ajournal, value, ajournal.start)
 
     def _load_data(self, s, loader, data):

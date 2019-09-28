@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
-cat > /dev/null <<XXX
+DB_DIR=~/.ch2
+TMP_DIR=/tmp
 
-sqlite3 ~/.ch2/database.sqlq 'pragma journal_mode=delete'
-rm -f /tmp/copy.sqlq
-cp ~/.ch2/database.sqlq /tmp/copy.sqlq
+sqlite3 "$DB_DIR/database-0-24.sql" 'pragma journal_mode=delete' >> /dev/null
+rm -f "$TMP_DIR/copy-0-24.sql"
+cp "$DB_DIR/database-0-24.sql" "$DB_DIR/database-0-24.sql-backup"
+mv "$DB_DIR/database-0-24.sql" "$TMP_DIR/copy-0-24.sql"
 
-sqlite3 /tmp/copy.sqlq <<EOF
+sqlite3 "$TMP_DIR/copy-0-24.sql" <<EOF
 pragma foreign_keys = on;
 delete from source where type != 3;
 delete from statistic_name where id in (
@@ -15,15 +17,12 @@ delete from statistic_name where id in (
       on statistic_journal.statistic_name_id = statistic_name.id
    where statistic_journal.id is null
 );
-alter table statistic_name add column statistic_journal_type integer default 2;
-update statistic_name set statistic_journal_type=3 where summary='[cnt]';
-update statistic_name set statistic_journal_type=1 where name in ('Mood', 'Rest HR');
 EOF
 
-rm -f /tmp/dump-q.sql
-sqlite3 /tmp/copy.sqlq <<EOF
+rm -f "$TMP_DIR/dump-0-24.sql"
+sqlite3 "$TMP_DIR/copy-0-24.sql" <<EOF
 update statistic_name set "constraint" = 'None' where "constraint" is null;
-.output /tmp/dump-q.sql
+.output "$TMP_DIR/dump-0-24.sql"
 .mode insert source
 select * from source;
 .mode insert statistic_journal
@@ -46,12 +45,10 @@ select * from topic_journal;
 select * from segment;
 EOF
 
-XXX
-
-rm -f ~/.ch2/database.sqlr
+rm -f "$DB_DIR/database-0-24.sql"
 dev/ch2 no-op
 
-sqlite3 ~/.ch2/database.sqlr < /tmp/dump-q.sql
+sqlite3 "$DB_DIR/database-0-24.sql" < "$TMP_DIR/dump-0-24.sql"
 
 source env/bin/activate
 python <<EOF
@@ -64,7 +61,8 @@ with db.session_context() as s:
      add_enum_constant(s, 'Cotic Soul', Bike, constraint='ActivityGroup "Bike"')
 EOF
 
-dev/ch2 --dev default-config --no-diary
+dev/ch2 --dev config default --no-diary
 dev/ch2 --dev constants --set FTHR.Bike 154
+dev/ch2 --dev constants --set FTHR.Walk 154
 dev/ch2 --dev constants --set SRTM1.Dir /home/andrew/archive/srtm1
 dev/ch2 --dev constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "weight": 12}'

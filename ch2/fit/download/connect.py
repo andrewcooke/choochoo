@@ -10,6 +10,26 @@ from requests import session
 log = getLogger(__name__)
 
 
+'''
+if you want to download your data from garmin you do not need to understand this code.  install choochoo and 
+use the 'ch2 garmin' command.
+
+BUT there is an even easier way.  simply go to garmin and ask for all your data.  follow the instructions at
+
+  https://support.garmin.com/en-US/?faq=W1TvTPW8JZ6LfJSfK512Q8
+
+(the second set of instructions is for everything).
+
+you can also go to
+
+  https://www.garmin.com/en-US/account/datamanagement/
+
+and (once logged in) click on 'export your data'.  this gives you data in the raw format (fit files).
+
+i would strongly encourage you to use those approaches rather than my code.  it will be simpler and more reliable.
+'''
+
+
 class GarminConnect:
 
     # logic and data from https://github.com/tcgoetz/GarminDB/blob/master/download_garmin.py
