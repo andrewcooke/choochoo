@@ -30,7 +30,7 @@ class ActivityDiary(JournalDiary):
         climbs = self.__climbs(s, ajournal, date)
         details = Pile(([] if climbs else [Divider()]) + active_date + climbs)
         yield Pile([
-            Text(ajournal.name),
+            Text(f'{ajournal.name} ({ajournal.activity_group.name})'),
             Indent(Columns([details, (HRZ_WIDTH + 2, zones)])),
             Divider(),
             Indent(Columns([Pile(self.__template(s, ajournal, MIN_KM_TIME_ANY, 'Min Time', r'(\d+km)', date) +
