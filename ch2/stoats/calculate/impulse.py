@@ -52,9 +52,10 @@ class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
                 loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, row[HR_ZONE], time,
                            StatisticJournalFloat)
             if not np.isnan(row[HR_IMPULSE_10]):
-                # todo - do we need this?
-                # loader.add(self.impulse.dest_name, None, None, ajournal.activity_group, ajournal,
-                #            row[self.impulse.dest_name], time, StatisticJournalFloat)
+                # load a copy to the activity group as well as to all so that we can extract / display
+                # easily in, for example, std_activity_statistics
+                loader.add(HR_IMPULSE_10, None, None, ajournal.activity_group, ajournal,
+                           row[HR_IMPULSE_10], time, StatisticJournalFloat)
                 # copy for global FF statistics
                 loader.add(HR_IMPULSE_10, None, None, self.all, ajournal,
                            row[HR_IMPULSE_10], time, StatisticJournalFloat)
