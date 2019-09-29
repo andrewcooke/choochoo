@@ -34,8 +34,6 @@ Stop the background server.
     cmd = args[SUB_COMMAND]
     if cmd == LIST:
         print_list()
-    elif cmd == SHOW:
-        show(args)
     elif cmd == STATUS:
         status(db)
     else:
@@ -44,6 +42,8 @@ Stop the background server.
             set_controller_session(s)
             if cmd == SERVICE:
                 c.run_local()
+            elif cmd == SHOW:
+                show(args)
             elif cmd == START:
                 c.start_service(restart=True)
             elif cmd == STOP:
