@@ -526,6 +526,11 @@ def coallesce(df, *statistics):
     return df
 
 
+def transform(df, transformation):
+    transformation = {key: value for key, value in transformation.items() if key in df.columns}
+    return df.transform(transformation)
+
+
 if __name__ == '__main__':
     s = session('-v5')
     activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group_name='Bike')
