@@ -36,7 +36,7 @@ class ResponseDiary(Displayer):
         if rows:
             yield Pile([Text('SHRIMP'), Indent(Pile(rows))])
 
-    def _single_response(self, s, f, date, schedule, constant_name, display_range, ranges=(90, 30)):
+    def _single_response(self, s, f, date, schedule, constant_name, display_range, ranges=(1000, 90, 30)):
         start_time = local_date_to_time(schedule.start_of_frame(date))
         finish_time = local_date_to_time(schedule.next_frame(date))
         response = Response(**loads(Constant.get(s, constant_name).at(s, start_time).value))
@@ -62,7 +62,7 @@ class ResponseDiary(Displayer):
                            Text([label('Frm: '), (style, '%d' % int(start.value))]),
                            Text([label('To:  '), (style, '%d' % int(finish.value))]),
                            Text(em('increase') if start.value < finish.value else error('decrease'))]
-                    yield [Text([label(f'Over {",".join(str(range) for range in ranges)} days')]),
+                    yield [Text([label(f'Over {",".join(str(range) for range in ranges)}d')]),
                            Text([label('Lo:  '), ','.join(str(int(lo.value)) for lo, hi in limits)]),
                            Text([label('Hi:  '), ','.join(str(int(hi.value)) for lo, hi in limits)]),
                            Text('')]
