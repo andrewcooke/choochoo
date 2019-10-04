@@ -16,7 +16,7 @@ from ch2.uranus.decorator import template
 def compare_activities(local_time, compare_time, activity_group_name):
 
     f'''
-    # Compare Activities: {local_time.split()[0]} v {compare_time.split()[0]}
+    # Compare Activities: {local_time.split()[0]} v {compare_time.split()[0]} ({activity_group_name})
     '''
 
     '''
