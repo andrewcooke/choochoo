@@ -3,6 +3,7 @@ from collections import namedtuple
 from json import loads
 from logging import getLogger
 from math import log10
+import datetime as dt
 
 from sqlalchemy.sql.functions import count
 
@@ -29,9 +30,8 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
     for now, we do all or nothing.
 
     first, we check if the current solution is complete:
-    * extends across full date range
-    * all sources used
-    (no need to check for gaps - composite chaining should do that)
+    * all sources used (no need to check for gaps - composite chaining should do that)
+    * within 3 hours of the current time (if not, we regenerate, padding with zeroes)
 
     if not complete, we regenerate the whole damn thing.
     '''
@@ -77,32 +77,29 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         # clean out any gaps by unzipping the chained composites
         Composite.clean(s)
         # range we expect data for
-        start = round_hour(self.__full_range(s, True), up=False)
-        finish = round_hour(self.__full_range(s, False), up=True)
-        n_secs = (finish - start).total_seconds()
-        missing_coverage = any(self.__missing_coverage(s, response.dest_name, n_secs) for response in self.responses)
         missing_sources = self.__missing_sources(s)
-        if missing_coverage or missing_sources:
-            if missing_coverage: log.info('Incomplete coverage (so will re-calculate)')
+        finish = round_hour(dt.datetime.now(tz=dt.timezone.utc), up=True)
+        missing_recent = any(self.__missing_recent(s, response.dest_name, finish) for response in self.responses)
+        if missing_recent or missing_sources:
+            if missing_recent: log.info('Incomplete coverage (so will re-calculate)')
             if missing_sources: log.info('Additional sources (so will re-calculate)')
             self._delete_from(s)
+            start = round_hour(self.__start(s), up=False)
             return [(start, finish)]
         else:
             return []
 
-    def __missing_coverage(self, s, response, n_secs):
-        q = s.query(StatisticJournal.time). \
+    def __missing_recent(self, s, response, now):
+        finish = s.query(StatisticJournal.time). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.name == response,
-                   StatisticName.owner == self.owner_out)
-        start = q.order_by(StatisticJournal.time.asc()).limit(1).one_or_none()
-        finish = q.order_by(StatisticJournal.time.desc()).limit(1).one_or_none()
-        if start is None or finish is None:
+                   StatisticName.owner == self.owner_out). \
+            order_by(StatisticJournal.time.desc()).limit(1).one_or_none()
+        if finish is None:
             log.debug(f'Missing data for {response}')
             return True
-        delta = (finish[0] - start[0]).total_seconds()
-        if delta < n_secs:
-            log.debug(f'Insufficient data for {response}: {delta}s / {n_secs}s (difference of {n_secs - delta}s)')
+        if (now - finish[0]).total_seconds() > 3 * 60 * 60:
+            log.debug(f'Insufficient data for {response}')
             return True
         return False
 
@@ -119,14 +116,12 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
                    ~StatisticJournal.source_id.in_(inputs)).scalar()
         return unused
 
-    def __full_range(self, s, start=True):
-        q = s.query(StatisticJournal.time). \
-            filter(StatisticJournal.time > 1.0)  # avoid constants
-        if start:
-            q = q.order_by(StatisticJournal.time.asc())
-        else:
-            q = q.order_by(StatisticJournal.time.desc())
-        return q.limit(1).scalar()
+    def __start(self, s):
+        # avoid constants defined at time 0
+        return s.query(StatisticJournal.time). \
+            filter(StatisticJournal.time > 1.0). \
+            order_by(StatisticJournal.time.asc()). \
+            limit(1).scalar()
 
     def _run_one(self, s, missed):
         start, finish = missed
