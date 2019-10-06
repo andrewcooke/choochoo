@@ -296,7 +296,7 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
     return f
 
 
-def add_multi_line_at_value(f, x, ys, source, colors, alphas=None, dash='dotted', index=-1):
+def add_multi_line_at_index(f, x, ys, source, colors, alphas=None, dash='dotted', index=-1):
     if alphas is None: alphas = [0.5 for y in ys]
     for y, color, alpha in zip(ys, colors, alphas):
         f.line(x=x, y=source[y].iloc[index], source=source, color=color, alpha=alpha, line_dash=dash)
