@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.layouts import column, row
-from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Title
+from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Title, Line
 from bokeh.plotting import figure
 
 from .utils import tooltip, make_tools
@@ -268,7 +268,7 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),
-             HoverTool(tooltips=[tooltip(x) for x in ys + [LOCAL_TIME]])]
+             HoverTool(tooltips=[tooltip(x) for x in ys + [LOCAL_TIME]], names=['with_hover'])]
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if TIME in x else 'linear', tools=tools)
     if y_label:
         f.yaxis.axis_label = y_label
@@ -285,15 +285,21 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
         if rescale and y != ys[0]:
             f.extra_y_ranges[y] = Range1d(start=mn - 0.1 * dy, end=mx + 0.1 * dy)
             f.add_layout(LinearAxis(y_range_name=y, axis_label=y), 'right')
-            plotter(f, x=x, y=y, source=source, color=color, alpha=alpha, y_range_name=y)
+            plotter(f, x=x, y=y, source=source, color=color, alpha=alpha, y_range_name=y, name='with_hover')
         else:
             f.y_range = Range1d(start=mn - 0.1 * dy, end=mx + 0.1 * dy)
-            plotter(f, x=x, y=y, source=source, color=color, alpha=alpha)
+            plotter(f, x=x, y=y, source=source, color=color, alpha=alpha, name='with_hover')
     f.xaxis.axis_label = x
     f.toolbar.logo = None
     if ny < 300: f.toolbar_location = None
     if x_range: f.x_range = x_range
     return f
+
+
+def add_final_values(f, x, ys, source, colors, alphas=None):
+    if alphas is None: alphas = [0.5 for y in ys]
+    for y, color, alpha in zip(ys, colors, alphas):
+        f.line(x=x, y=source[y].iloc[-1], source=source, color=color, alpha=alpha, line_dash='dotted')
 
 
 def htile(maps, n):

@@ -40,6 +40,7 @@ def health():
     colours = ['black'] * len(fitness) + ['red'] * len(fatigue)
     alphas = [1.0] * len(fitness) + [0.5] * len(fatigue)
     ff = multi_line_plot(900, 300, TIME, fitness + fatigue, health, colours, alphas=alphas)
+    add_final_values(ff, TIME, fitness + fatigue, health, colours, alphas=alphas)
     log_ff = multi_line_plot(900, 100, TIME, [_log(name) for name in fitness + fatigue], health, colours,
                              alphas=alphas, x_range=ff.x_range, y_label='Log FF')
     atd = multi_dot_plot(900, 200, TIME, [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM], health, ['black', 'grey'], alphas=[1, 0.5],
