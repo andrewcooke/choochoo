@@ -7,7 +7,7 @@ from .power import fit_power
 from .heart_rate import *
 from .plot import col_to_boxstats, box_plot, line_plotter, dot_plotter, bar_plotter, add_climbs, multi_plot, \
     multi_dot_plot, multi_bar_plot, multi_line_plot, map_thumbnail, map_intensity, map_plot, histogram_plot, \
-    cumulative_plot, htile, vtile, comparison_line_plot, map_intensity_signed, add_hr_zones, add_final_values
+    cumulative_plot, htile, vtile, comparison_line_plot, map_intensity_signed, add_hr_zones, add_multi_line_at_value
 from .lib import chisq, fit, inplace_decay
 from .text import *
 from ..stoats.display.nearby import nearby_earlier, nearby_any_time
