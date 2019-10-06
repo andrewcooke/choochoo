@@ -12,7 +12,7 @@ from bokeh.models import Rect, ColumnDataSource, Circle, Arc, MultiLine, SaveToo
 from bokeh.palettes import *
 from math import pi
 
-from .utils import tooltip
+from .utils import tooltip, evenly_spaced_hues
 from ...lib.data import linscale
 from ...lib.date import time_to_local_time, YMD, to_time
 from ...stoats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _d, FITNESS_D_ANY, \
@@ -184,14 +184,8 @@ class Calendar:
         self.show()
 
     def std_group_distance_climb_direction(self):
-
         n = int(self._df[GROUP].max()) + 1
-
-        def pastel(i):
-            r, g, b = [int(x * 255) for x in hsv_to_rgb((i % n) / n, 0.2, 1)]
-            return f'#{r:02x}{g:02x}{b:02x}'.upper()
-        palette = list(pastel(7 * i) for i in range(n))
-
+        palette = list(evenly_spaced_hues(n, saturation=0.2, stagger=7))
         self.background('square', fill_alpha=0, line_alpha=1, color='#F0F0F0')
         self.set_palette(GROUP, palette)
         self.set_constant(CALENDAR_SIZE, 1)

@@ -3,6 +3,7 @@ import datetime as dt
 from collections import defaultdict, Counter
 from collections.abc import Mapping, Sequence
 from logging import getLogger
+from re import compile
 
 import numpy as np
 import pandas as pd
@@ -516,14 +517,20 @@ def coallesce(df, *statistics):
     for statistic in statistics:
         if statistic not in df.columns:
             df[statistic] = np.nan
-        pattern = f'{statistic} ('
-        for column in df.columns:
-            if column.startswith(pattern):
-                df.loc[~df[statistic].isna() & ~df[column].isna(), statistic] += \
-                    df.loc[~df[statistic].isna() & ~df[column].isna(), column]
-                df.loc[df[statistic].isna() & ~df[column].isna(), statistic] = \
-                    df.loc[df[statistic].isna() & ~df[column].isna(), column]
+        for group in related_groups(df, statistic):
+            column = f'{statistic} ({group})'
+            df.loc[~df[statistic].isna() & ~df[column].isna(), statistic] += \
+                df.loc[~df[statistic].isna() & ~df[column].isna(), column]
+            df.loc[df[statistic].isna() & ~df[column].isna(), statistic] = \
+                df.loc[df[statistic].isna() & ~df[column].isna(), column]
     return df
+
+
+def related_groups(df, statistic):
+    rx = compile(statistic + r' \(([^\)]+)\)')
+    for column in df.columns:
+        m = rx.match(column)
+        if m: yield m.group(1)
 
 
 def transform(df, transformation):
