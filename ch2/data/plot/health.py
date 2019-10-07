@@ -4,13 +4,13 @@ from bokeh.plotting import figure
 
 from .line import multi_dot_plot, dot_plotter
 from .utils import make_range, evenly_spaced_hues, tooltip
-from ..frame import related_groups
+from ..frame import related_statistics
 from ...stoats.names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME, _slash, \
     H, KM, ACTIVITY_GROUP
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None):
-    groups = list(related_groups(source, ACTIVE_TIME))
+    groups = list(related_statistics(source, ACTIVE_TIME))
     if not groups:
         # original monochrome plot
         return multi_dot_plot(nx, ny, TIME, [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM], source,
