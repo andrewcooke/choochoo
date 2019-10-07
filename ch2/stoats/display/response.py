@@ -7,7 +7,7 @@ from urwid import Pile, Text, Columns
 
 from . import Displayer
 from ..calculate.response import Response, ResponseCalculator
-from ...lib.date import local_date_to_time
+from ...lib.date import local_date_to_time, to_time
 from ...lib.schedule import Schedule
 from ...lib.utils import label, em, error
 from ...squeal.tables.constant import Constant
@@ -36,27 +36,36 @@ class ResponseDiary(Displayer):
         if rows:
             yield Pile([Text('SHRIMP'), Indent(Pile(rows))])
 
-    def _single_response(self, s, f, date, schedule, constant_name, display_range):
+    def _single_response(self, s, f, date, schedule, constant_name, display_range, ranges=('all', '90d', '30d')):
         start_time = local_date_to_time(schedule.start_of_frame(date))
         finish_time = local_date_to_time(schedule.next_frame(date))
         response = Response(**loads(Constant.get(s, constant_name).at(s, start_time).value))
         start = self._read(s, response.dest_name, start_time, finish_time, asc)
         finish = self._read(s, response.dest_name, start_time, finish_time, desc)
         if start and finish and start.value != finish.value:
-            lo, hi = self._range(s, response.dest_name, start, finish_time, dt.timedelta(days=90))
-            if lo is not None and hi is not None:
-                if display_range:
-                    style = 'quintile-%d' % min(5, 1 + int(5 * (finish.value - lo.value) / (hi.value - lo.value)))
+            no_range = [Text(response.dest_name),
+                        Text([label('Frm: '), f'{int(start.value)}']),
+                        Text([label('To:  '), f'{int(finish.value)}']),
+                        Text(em('increase') if start.value < finish.value else error('decrease'))]
+            if not display_range:
+                yield no_range
+            else:
+                limits = [self._range(s, response.dest_name, start, finish_time,
+                                      None if range == 'all' else dt.timedelta(days=int(range[:-1])))
+                          for range in ranges]
+                if any(any(value is None for value in limit) for limit in limits):
+                    yield no_range
                 else:
-                    style = 'em'
-                yield [Text(response.dest_name),
-                       Text([label('Frm: '), (style, '%d' % int(start.value))]),
-                       Text([label('To:  '), (style, '%d' % int(finish.value))]),
-                       Text(em('increase') if start.value < finish.value else error('decrease'))]
-                if display_range:
-                    yield [Text([label('Over 90 days')]),
-                           Text([label('Lo:  '), '%d' % int(lo.value)]),
-                           Text([label('Hi:  '), '%d' % int(hi.value)]),
+                    # use first range for quintiles
+                    lo, hi = limits[0]
+                    style = 'quintile-%d' % min(5, 1 + int(5 * (finish.value - lo.value) / (hi.value - lo.value)))
+                    yield [Text(response.dest_name),
+                           Text([label('Frm: '), (style, '%d' % int(start.value))]),
+                           Text([label('To:  '), (style, '%d' % int(finish.value))]),
+                           Text(em('increase') if start.value < finish.value else error('decrease'))]
+                    yield [Text([label(f'Over {",".join(str(range) for range in ranges)}')]),
+                           Text([label('Lo:  '), ','.join(str(int(lo.value)) for lo, hi in limits)]),
+                           Text([label('Hi:  '), ','.join(str(int(hi.value)) for lo, hi in limits)]),
                            Text('')]
 
     def _read(self, s, name, start_time, finish_time, direcn):
@@ -71,7 +80,7 @@ class ResponseDiary(Displayer):
 
     def _range(self, s, name, value, finish_time, period):
         jtype = TYPE_TO_JOURNAL_CLASS[type(value.value)]
-        start_time = finish_time - period
+        start_time = finish_time - period if period else to_time(0.0)
         q = s.query(jtype). \
             join(StatisticName). \
             filter(StatisticName.name == name,

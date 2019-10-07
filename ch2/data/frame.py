@@ -3,6 +3,7 @@ import datetime as dt
 from collections import defaultdict, Counter
 from collections.abc import Mapping, Sequence
 from logging import getLogger
+from re import compile
 
 import numpy as np
 import pandas as pd
@@ -23,7 +24,7 @@ from ..stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_
     MED_CADENCE, ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
-    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP, MIXED, ACTIVITY_GROUP
 
 log = getLogger(__name__)
 
@@ -340,7 +341,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
         stats = stats.merge(stats_2.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                             how='outer', left_index=True, right_index=True)
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish)
-    coallesce(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
+    coallesce_groups(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
     stats = stats.merge(stats_3.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                         how='outer', left_index=True, right_index=True)
     if present(stats, FITNESS_D_ANY, pattern=True):
@@ -509,21 +510,52 @@ def groups_by_time(s, start=None, finish=None):
     return pd.read_sql_query(sql=q.statement, con=s.connection(), index_col=INDEX)
 
 
-def coallesce(df, *statistics):
+def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
+              unpack='{statistic}'+r' \(([^\)]+)\)', pack='{statistic} ({constraint})'):
     '''
-    Add statistics from more than one activity group.
+    Combine statistics with more than one constraint.
+
+    When multiple statistics with the same name are requested, they are distinguished by their constraint.
+    This is often the activity group.  So if you request 'Active Time' for multiple groups you will get
+    'Active Time (ActivityGroup "Ride")' etc.
+
+    This function combines these into a single column (in the example, 'Active Time'), while also optionally
+    extracting the constraint into a separate column.
+
+    If two values occur at the same time they are added together.  The label is then changed to MIXED.
     '''
     for statistic in statistics:
         if statistic not in df.columns:
             df[statistic] = np.nan
-        pattern = f'{statistic} ('
-        for column in df.columns:
-            if column.startswith(pattern):
-                df.loc[~df[statistic].isna() & ~df[column].isna(), statistic] += \
-                    df.loc[~df[statistic].isna() & ~df[column].isna(), column]
-                df.loc[df[statistic].isna() & ~df[column].isna(), statistic] = \
-                    df.loc[df[statistic].isna() & ~df[column].isna(), column]
+        if constraint_label and constraint_label not in df.columns:
+            df[constraint_label] = np.nan
+        for constraint in related_statistics(df, statistic, unpack=unpack):
+            column = pack.format(statistic=statistic, constraint=constraint)
+            if constraint_label:
+                df.loc[~df[column].isna() & ~df[constraint_label].isna() & ~(df[constraint_label] == constraint),
+                       constraint_label] = mixed
+                df.loc[~df[column].isna() & df[constraint_label].isna(), constraint_label] = constraint
+            df.loc[~df[statistic].isna() & ~df[column].isna(), statistic] += \
+                df.loc[~df[statistic].isna() & ~df[column].isna(), column]
+            df.loc[df[statistic].isna() & ~df[column].isna(), statistic] = \
+                df.loc[df[statistic].isna() & ~df[column].isna(), column]
     return df
+
+
+def coallesce_groups(df, *statistics):
+    '''
+    As coallesce, but extract only the activity group's name (eg 'Ride').
+    '''
+    return coallesce(df, *statistics, constraint_label=ACTIVITY_GROUP,
+                     unpack='{statistic}'+r' \(ActivityGroup "([^\"]+)"\)',
+                     pack='{statistic} (ActivityGroup "{constraint}")')
+
+
+def related_statistics(df, statistic, unpack='{statistic}'+r' \(([^\)]+)\)'):
+    rx = compile(unpack.format(statistic=statistic))
+    for column in df.columns:
+        m = rx.match(column)
+        if m: yield m.group(1)
 
 
 def transform(df, transformation):
@@ -533,5 +565,7 @@ def transform(df, transformation):
 
 if __name__ == '__main__':
     s = session('-v5')
-    activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group_name='Bike')
-    print(activity.describe())
+    # activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group_name='Bike')
+    # print(activity.describe())
+    health = std_health_statistics(s)
+    print(health.describe())

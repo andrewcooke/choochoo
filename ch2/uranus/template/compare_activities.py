@@ -16,7 +16,7 @@ from ch2.uranus.decorator import template
 def compare_activities(local_time, compare_time, activity_group_name):
 
     f'''
-    # Compare Activities: {local_time.split()[0]} v {compare_time.split()[0]}
+    # Compare Activities: {local_time.split()[0]} v {compare_time.split()[0]} ({activity_group_name})
     '''
 
     '''
@@ -118,8 +118,8 @@ def compare_activities(local_time, compare_time, activity_group_name):
     xrange = ff.x_range if ff else None
     log_ff = multi_line_plot(900, 100, TIME, [_log(name) for name in fitness + fatigue], health, colours,
                              alphas=alphas, x_range=xrange, y_label='Log FF')
-    atd = multi_dot_plot(900, 200, TIME, [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM], health, ['black', 'grey'], alphas=[1, 0.5],
-                         x_range=xrange, rescale=True)
+    add_multi_line_at_index(ff, TIME, fitness + fatigue, health, colours, alphas=alphas, index=-1)
+    atd = std_distance_time_plot(900, 200, health, x_range=ff.x_range)
     shr = multi_plot(900, 200, TIME, [DAILY_STEPS, REST_HR], health, ['grey', 'red'], alphas=[1, 0.5],
                      x_range=xrange, rescale=True, plotters=[bar_plotter(dt.timedelta(hours=20)), dot_plotter()])
     show(column(ff, log_ff, atd, shr))

@@ -10,7 +10,7 @@ from ch2.uranus.decorator import template
 def similar_activities(local_time, activity_group_name):
 
     f'''
-    # Similar Activities: {local_time.split()[0]}
+    # Similar Activities: {local_time.split()[0]} ({activity_group_name})
     '''
 
     '''
@@ -28,7 +28,7 @@ def similar_activities(local_time, activity_group_name):
     maps = [map_thumbnail(100, 120, data)
             for data in (activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
                                              ACTIVE_DISTANCE, ACTIVE_TIME,
-                                             activity_journal_id=similar[0].id)
+                                             activity_journal=similar[0])
                          for similar in nearby_activities(s, local_time=local_time,
                                                           activity_group_name=activity_group_name))
             if len(data[SPHERICAL_MERCATOR_X].dropna()) > 10]

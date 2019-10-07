@@ -18,17 +18,11 @@ def pre_calc(source, model, start=None, finish=None, target=None):
     # target here is intended for when fitting to data - that's the target data being fitted
     # (so we generate data at the right times)
     if target is not None:
-        if start:
-            start = min(start, target.index[0])
-        else:
-            start = target.index[0]
-        if finish:
-            finish = max(finish, target.index[-1])
-        else:
-            finish = target.index[-1]
+        start = min(start, target.index[0]) if start else target.index[0]
+        finish = max(finish, target.index[-1]) if finish else target.index[-1]
     else:
-        start = source.index[0]
-        finish = source.index[-1]
+        start = min(start, source.index[0]) if start else source.index[0]
+        finish = max(finish, source.index[-1]) if finish else source.index[-1]
     start, finish = round_hour(start, up=False), round_hour(finish, up=True)
     data = source.resample('1h', label='right').sum()
     data = data.loc[:, [model.input]]
