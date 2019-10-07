@@ -6,7 +6,7 @@ from .line import multi_dot_plot, dot_plotter
 from .utils import make_range, evenly_spaced_hues, tooltip
 from ..frame import related_groups
 from ...stoats.names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME, _slash, \
-    H, KM
+    H, KM, ACTIVITY_GROUP
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None):
@@ -23,7 +23,7 @@ def std_distance_time_plot(nx, ny, source, x_range=None):
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),
-             HoverTool(tooltips=[tooltip(x) for x in (ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME)],
+             HoverTool(tooltips=[tooltip(x) for x in (ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, ACTIVITY_GROUP, LOCAL_TIME)],
                        names=['with_hover'])]
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools)
     f.yaxis.axis_label = ACTIVE_TIME_H

@@ -24,7 +24,7 @@ from ..stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_
     MED_CADENCE, ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
-    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP, MIXED, ACTIVITY_GROUP
 
 log = getLogger(__name__)
 
@@ -341,7 +341,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
         stats = stats.merge(stats_2.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                             how='outer', left_index=True, right_index=True)
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish)
-    coallesce(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
+    coallesce(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE, group_label=ACTIVITY_GROUP)
     stats = stats.merge(stats_3.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                         how='outer', left_index=True, right_index=True)
     if present(stats, FITNESS_D_ANY, pattern=True):
@@ -510,15 +510,20 @@ def groups_by_time(s, start=None, finish=None):
     return pd.read_sql_query(sql=q.statement, con=s.connection(), index_col=INDEX)
 
 
-def coallesce(df, *statistics):
+def coallesce(df, *statistics, group_label=None, mixed=MIXED):
     '''
     Add statistics from more than one activity group.
     '''
     for statistic in statistics:
         if statistic not in df.columns:
             df[statistic] = np.nan
+        if group_label and group_label not in df.columns:
+            df[group_label] = np.nan
         for group in related_groups(df, statistic):
             column = f'{statistic} ({group})'
+            if group_label:
+                df.loc[~df[column].isna() & ~df[group_label].isna() & ~(df[group_label] == group), group_label] = mixed
+                df.loc[~df[column].isna() & df[group_label].isna(), group_label] = group
             df.loc[~df[statistic].isna() & ~df[column].isna(), statistic] += \
                 df.loc[~df[statistic].isna() & ~df[column].isna(), column]
             df.loc[df[statistic].isna() & ~df[column].isna(), statistic] = \
@@ -540,5 +545,7 @@ def transform(df, transformation):
 
 if __name__ == '__main__':
     s = session('-v5')
-    activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group_name='Bike')
-    print(activity.describe())
+    # activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group_name='Bike')
+    # print(activity.describe())
+    health = std_health_statistics(s)
+    print(health.describe())
