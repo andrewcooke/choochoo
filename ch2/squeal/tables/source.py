@@ -235,7 +235,7 @@ class Interval(Source):
             q = q.filter(Interval.owner == owner)
         for interval in q.all():
             # log can be null if called during database handling
-            if log: log.info(f'Deleting {interval}')
+            if log: log.debug(f'Deleting {interval}')
             s.delete(interval)
 
 
