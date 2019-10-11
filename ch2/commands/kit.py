@@ -1,8 +1,8 @@
 
 from logging import getLogger
 
-from ..squeal.tables.kit import KitType, KitItem
-from .args import SUB_COMMAND, NEW, TYPE, ITEM, DATE, FORCE
+from ..squeal.tables.kit import KitType, KitItem, KitComponent, KitPart
+from .args import SUB_COMMAND, NEW, TYPE, ITEM, DATE, FORCE, ADD, COMPONENT, PART
 
 log = getLogger(__name__)
 
@@ -28,10 +28,19 @@ Some of the above will require --force to confirm.
     with db.session_context() as s:
         if cmd == NEW:
             new_kit(s, args[TYPE], args[ITEM], args[DATE], args[FORCE])
+        elif cmd == ADD:
+            add_kit(s, args[ITEM], args[COMPONENT], args[PART], args[DATE], args[FORCE])
 
 
 def new_kit(s, type, item, date, force):
-    log.debug(f'{type} {item} {date}')
     type_instance = KitType.get(s, type, force)
     item_instance = KitItem.new(s, type_instance, item)
     log.info(f'Created {type_instance.name} {item_instance.name}')
+
+
+def add_kit(s, item, component, part, date, force):
+    item_instance = KitItem.get(s, item)
+    component_instance = KitComponent.get(s, component, force)
+    part_instance = KitPart.add(s, item_instance, component_instance, part, date)
+    # todo - include date in logging
+    log.info(f'Added {item_instance.name} {component_instance.name} {part_instance.name}')

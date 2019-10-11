@@ -49,6 +49,7 @@ ARG = 'arg'
 BORDER = 'border'
 CHECK = 'check'
 COMPACT = 'compact'
+COMPONENT = 'component'
 CONSTRAINT = 'constraint'
 CONSTANT = 'constant'
 CONTEXT = 'context'
@@ -118,6 +119,7 @@ NOT = 'not'
 NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
+PART = 'part'
 PASS = 'pass'
 PATH = 'path'
 P, PATTERN = 'p', 'pattern'
@@ -479,6 +481,11 @@ def parser():
     kit_new.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
     kit_new.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type')
     kit_add = kit_cmds.add_parser(ADD, help='add a new part (new wheel, new innersole)')
+    kit_add.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
+    kit_add.add_argument(COMPONENT, action='store', help='component type (chain, laces, etc)')
+    kit_add.add_argument(PART, action='store', help='part description (eg model)')
+    kit_add.add_argument(DATE, action='store', nargs='?', help='when added (default now)')
+    kit_add.add_argument(mm(FORCE), action='store_true', help='allow creation of a new component or part')
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
     kit_retire = kit_cmds.add_parser(RETIRE, help='retire a part or item')
     kit_delete = kit_cmds.add_parser(DELETE, help='delete a part or item from the database')
