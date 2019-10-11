@@ -13,7 +13,7 @@ log = getLogger(__name__)
 
 CH2_VERSION = '0.24.3'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
-DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
+DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2] + ['dev'])
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
@@ -38,6 +38,7 @@ ACTIVITY_GROUP = 'activity-group'
 ACTIVITY_GROUPS = 'activity-groups'
 ACTIVITY_JOURNALS = 'activity-journals'
 ACTIVITY_JOURNAL_ID = 'activity-journal-id'
+ADD = 'add'
 ADD_HEADER = 'add-header'
 AFTER = 'after'
 AFTER_BYTES = 'after-bytes'
@@ -79,9 +80,11 @@ GROUP = 'group'
 HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
 INTERNAL = 'internal'
+ITEM = 'item'
 JUPYTER = 'jupyter'
 K = 'k'
 KARG = 'karg'
+KIT = 'kit'
 LABEL = 'label'
 LATITUDE = 'latitude'
 LIKE = 'like'
@@ -110,6 +113,7 @@ NAME = 'name'
 NAME_BAD = 'name-bad'
 NAME_GOOD = 'name-good'
 NAMES = 'names'
+NEW = 'new'
 NOT = 'not'
 NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
@@ -124,6 +128,7 @@ PROTOCOL_VERSION = 'protocol-version'
 PWD = 'pwd'
 RAW = 'raw'
 RECORDS = 'records'
+RETIRE = 'retire'
 ROOT = 'root'
 RUN = 'run'
 SEGMENT_JOURNALS = 'segment-journals'
@@ -145,6 +150,7 @@ TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
 TUI = 'tui'
+TYPE = 'type'
 UNLOCK = 'unlock'
 USER = 'user'
 VALIDATE = 'validate'
@@ -464,6 +470,18 @@ def parser():
     jupyter_cmds.add_parser(STOP, help='stop the background service')
     jupyter_cmds.add_parser(STATUS, help='display status of background service')
     jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
+
+    kit = subparsers.add_parser(KIT, help='manage kit')
+    kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    kit_new = kit_cmds.add_parser(NEW, help='define a new item (new bike, new shoe)')
+    kit_new.add_argument(TYPE, action='store', help='item type (bike, shoe, etc)')
+    kit_new.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
+    kit_new.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
+    kit_new.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type')
+    kit_add = kit_cmds.add_parser(ADD, help='add a new part (new wheel, new innersole)')
+    kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
+    kit_retire = kit_cmds.add_parser(RETIRE, help='retire a part or item')
+    kit_delete = kit_cmds.add_parser(DELETE, help='delete a part or item from the database')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')

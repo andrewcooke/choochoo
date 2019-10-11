@@ -1,6 +1,7 @@
 
 from .tables.activity import ActivityGroup, ActivityTimespan, ActivityJournal, ActivityBookmark
 from .tables.constant import Constant
+from .tables.kit import KitType, KitItem, KitComponent, KitPart
 from .tables.system import SystemConstant, SystemProcess
 from .tables.monitor import MonitorJournal
 from .tables.nearby import ActivitySimilarity, ActivityNearby

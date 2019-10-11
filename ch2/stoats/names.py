@@ -92,7 +92,7 @@ SPORT_SWIMMING = 'swimming'
 SPORT_WALKING = 'walking'
 SPORT_GENERIC = 'generic'
 
-
+# todo - there is no need for these silly square brackets - remove?
 MAX = '[max]'
 MIN = '[min]'
 CNT = '[cnt]'

@@ -26,6 +26,7 @@ class SourceType(IntEnum):
     SEGMENT = 6
     COMPOSITE = 7
     DUMMY = 8
+    KIT = 9
 
 
 class Source(Base):

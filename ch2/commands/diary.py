@@ -93,7 +93,7 @@ class Diary(DateSwitcher):
         self._log.info(f'{bool(s)}')
         if s:
             self.__clean(s, s.dirty, delete=True)
-            self.__clean(s, s.new, delete=False)
+            self.__clean(s, s.get, delete=False)
         super().save()
 
     def __clean(self, s, instances, delete=False):
