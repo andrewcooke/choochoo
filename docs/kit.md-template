@@ -1,0 +1,41 @@
+
+# Equipment Tracking
+
+* [Introduction](#introduction)
+* [Defining a New Item](#defining-a-new-item)
+* [Adding Parts](#adding-parts)
+
+## Introduction
+
+#/bin/bash
+rm -f /tmp/kit.sql
+dev/ch2 -f /tmp/kit.sql config default > /dev/null 2>&1
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 kit new bike cotic"
+dev/ch2 -f /tmp/kit.sql kit new bike cotic > $out 2>&1
+sed -i 's|/tmp/kit.sql|database.sql|' $out
+sed 's/^/    /' $out
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 kit new bike cotic --force"
+dev/ch2 -f /tmp/kit.sql kit new bike cotic --force > $out 2>&1
+sed -i 's|/tmp/kit.sql|database.sql|' $out
+sed 's/^/    /' $out
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 kit add cotic front-tube michelin 2019-01-01"
+dev/ch2 -f /tmp/kit.sql kit add cotic front-tube michelin 2019-01-01 > $out 2>&1
+sed -i 's|/tmp/kit.sql|database.sql|' $out
+sed 's/^/    /' $out
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 kit add cotic front-tube michelin 2019-01-01 --force"
+dev/ch2 -f /tmp/kit.sql kit add cotic front-tube michelin 2019-01-01 --force > $out 2>&1
+sed -i 's|/tmp/kit.sql|database.sql|' $out
+sed 's/^/    /' $out
+

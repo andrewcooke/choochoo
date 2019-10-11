@@ -1,16 +1,17 @@
 
 from logging import getLogger
 
-from sqlalchemy import Column, Integer, ForeignKey, Text
+from sqlalchemy import Column, Integer, ForeignKey, Text, desc
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
-from sqlite3 import IntegrityError
 
 from .source import Source, SourceType
+from .statistic import StatisticJournal, StatisticName, StatisticJournalText, StatisticJournalFloat
 from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
-
+from ...lib import local_time_to_time, format_seconds
+from ...stoats.names import PART_ADDED, PART_EXPIRED, PART_LIFETIME, S, summaries, MAX, MIN, CNT, AVG
 
 log = getLogger(__name__)
 
@@ -33,21 +34,22 @@ class KitType(Base):
     name = Column(Text, nullable=False, index=True, unique=True)
 
     @classmethod
-    def get(cls, s, type, force):
+    def get(cls, s, name, force):
         try:
-            return s.query(KitType).filter(KitType.name == type).one()
+            return s.query(KitType).filter(KitType.name == name).one()
         except NoResultFound:
             if force:
-                return add(s, KitType(name=type))
+                log.warning(f'Forcing creation of new type ({name}')
+                return add(s, KitType(name=name))
             else:
                 types = s.query(KitType).order_by(KitType.name).all()
                 if types:
                     log.info('Existing types:')
                     for existing in types:
                         log.info(f'  {existing.name}')
-                    raise Exception(f'Give an existing type, or specify {mm(FORCE)} to create a new type ({type})')
+                    raise Exception(f'Give an existing type, or specify {mm(FORCE)} to create a new type ({name})')
                 else:
-                    raise Exception(f'Specify {mm(FORCE)} to create a new type ({type})')
+                    raise Exception(f'Specify {mm(FORCE)} to create a new type ({name})')
 
 
 class KitItem(Base):
@@ -88,6 +90,7 @@ class KitComponent(Base):
             return s.query(KitComponent).filter(KitComponent.name == name).one()
         except NoResultFound:
             if force:
+                log.warning(f'Forcing creation of new component ({name}')
                 return add(s, KitComponent(name=name))
             else:
                 components = s.query(KitComponent).order_by(KitComponent.name).all()
@@ -112,20 +115,28 @@ class KitPart(Source):
     name = Column(Text, nullable=False, index=True)
 
     @classmethod
-    def add(cls, s, item, component, name, date):
+    def add(cls, s, item, component, name, date, force):
+        time = local_time_to_time(date)
         part = cls._add_instance(s, item, component, name)
-        cls._add_statistics(s, part, date)
+        part._add_statistics(s, time, force)
         return part
+
+    @classmethod
+    def _reject_duplicate(cls, s, item, component, name, time):
+        if s.query(StatisticJournal).\
+                join(StatisticName).join(KitPart).join(Source).join(KitComponent).join(KitItem).\
+                filter(StatisticName.name == PART_ADDED,
+                       StatisticJournal.time == time,
+                       KitPart.name == name,
+                       KitComponent.name == component,
+                       KitItem.name == item).count():
+            raise Exception(f'This part already exists at this date')
 
     @classmethod
     def _add_instance(cls, s, item, component, name):
         if not s.query(KitPart).filter(KitPart.name == name).count():
             log.warning(f'Part name {name} does not match any previous entries')
         return add(s, KitPart(item=item, component=component, name=name))
-
-    @classmethod
-    def _add_statistics(cls, s, part, date):
-        pass
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.KIT
@@ -134,3 +145,73 @@ class KitPart(Source):
     def time_range(self, s):
         return None, None
 
+    def _add_statistics(self, s, time, force):
+        self._add_timestamp(s, PART_ADDED, time)
+        before = self.before(s, time)
+        after = self.after(s, time)
+        before_expiry = before.time_expired(s)
+        if before_expiry > time:
+            before._remove_statistic(s, PART_EXPIRED)
+            before._remove_statistic(s, PART_LIFETIME)
+            before_expiry = None
+        if not before_expiry:
+            before._add_timestamp(s, PART_EXPIRED, time)
+            lifetime = time - before.time_added(s)
+            before._add_lifetime(s, lifetime, time)
+            log.info(f'Expired previous {self.component} ({before.name}) - lifetime of {format_seconds(lifetime)}')
+        if after:
+            after_added = after.time_added(s)
+            self._add_timestamp(s, PART_EXPIRED, after_added)
+            lifetime = after_added - time
+            self._add_lifetime(s, lifetime, after_added)
+            log.info(f'Expired new {self.component} ({self.name}) - lifetime of {format_seconds(lifetime)}')
+
+    def _get_statistic(self, s, statistic):
+        return s.query(StatisticJournal).\
+                join(StatisticName).\
+                filter(StatisticName.name == statistic,
+                       StatisticJournal.source == self).one_or_none()
+
+    def _remove_statistic(self, s, statistic):
+        s.query(StatisticJournal).\
+                join(StatisticName).\
+                filter(StatisticName.name == statistic,
+                       StatisticJournal.source == self).delete()
+
+    def _add_timestamp(self, s, statistic, time):
+        return StatisticJournalText.add(s, statistic, None, None, self, None, self, str(self), time)
+
+    def _add_lifetime(self, s, lifetime, time):
+        return StatisticJournalFloat.add(s, PART_LIFETIME, S, summaries(MAX, MIN, CNT, AVG), self, None, self,
+                                         lifetime, time)
+
+    def time_added(self, s):
+        return self._get_statistic(s, PART_ADDED).time
+
+    def time_expired(self, s):
+        try:
+            return self._get_statistic(s, PART_EXPIRED).time
+        except AttributeError:
+            return None
+
+    def _base_sibling_query(self, s, statistic):
+        return s.query(StatisticJournal).\
+                join(StatisticName).join(KitPart).join(Source).join(KitComponent).join(KitItem).\
+                filter(StatisticName.name == statistic,
+                       KitComponent.name == self.component.name,
+                       KitItem.name == self.item.name)
+
+    def before(self, s, time=None):
+        if not time:
+            time = self.time_added(s)
+        return self._base_sibling_query(s, PART_ADDED).filter(StatisticJournal.time < time).\
+            order_by(desc(StatisticJournal.time)).first()
+
+    def after(self, s, time=None):
+        if not time:
+            time = self.time_added(s)
+        return self._base_sibling_query(s, PART_ADDED).filter(StatisticJournal.time > time).\
+            order_by(StatisticJournal.time).first()
+
+    def __str__(self):
+        return f'{self.item.type.name} {self.item.name} {self.component.name} {self.name}'
