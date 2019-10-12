@@ -24,12 +24,27 @@ difficult design decisions here.
   * all parts are automatically given statistics for description, start, and, when retired, a lifetime.
   * items also get statistics for start and lifetime.
 in the end, what drove the design was the commands (see commands/kit.py) - trying to keep them as simple as possible.
+unfortunately that pushed some extra complexity into the data model (eg to guarantee all names unique).
 '''
+
+
+def find_name(s, name):
+    for cls in KitType, KitItem, KitComponent, KitPart:
+        instance = s.query(cls).filter(cls.name == name).one_or_none()
+        if instance:
+            return instance
+
+
+def check_name(s, name, use):
+    instance = find_name(s, name)
+    if instance and not isinstance(instance, use):
+        raise Exception(f'The name "{name}" is already used for a {type(instance).SIMPLE_NAME}')
 
 
 class KitType(Base):
 
     __tablename__ = 'kit_type'
+    SIMPLE_NAME = 'type'
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, index=True, unique=True)
@@ -39,11 +54,13 @@ class KitType(Base):
         try:
             return s.query(KitType).filter(KitType.name == name).one()
         except NoResultFound:
+            check_name(s, name, KitType)
             if force:
                 log.warning(f'Forcing creation of new type ({name})')
                 return add(s, KitType(name=name))
             else:
-                types = s.query(KitType).order_by(KitType.name).all()
+                types =\
+                    s.query(KitType).order_by(KitType.name).all()
                 if types:
                     log.info('Existing types:')
                     for existing in types:
@@ -56,6 +73,7 @@ class KitType(Base):
 class KitItem(Base):
 
     __tablename__ = 'kit_item'
+    SIMPLE_NAME = 'item'
 
     id = Column(Integer, primary_key=True)
     type_id = Column(Integer, ForeignKey('kit_type.id', ondelete='cascade'), nullable=False, index=True)
@@ -68,6 +86,7 @@ class KitItem(Base):
         if s.query(KitItem).filter(KitItem.name == name).count():
             raise Exception(f'Item {name} of type {type.name} already exists')
         else:
+            check_name(s, name, KitItem)
             return add(s, KitItem(type=type, name=name))
 
     @classmethod
@@ -81,6 +100,7 @@ class KitItem(Base):
 class KitComponent(Base):
 
     __tablename__ = 'kit_component'
+    SIMPLE_NAME = 'component'
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, index=True)
@@ -90,6 +110,7 @@ class KitComponent(Base):
         try:
             return s.query(KitComponent).filter(KitComponent.name == name).one()
         except NoResultFound:
+            check_name(s, name, KitComponent)
             if force:
                 log.warning(f'Forcing creation of new component ({name})')
                 return add(s, KitComponent(name=name))
@@ -107,6 +128,7 @@ class KitComponent(Base):
 class KitPart(Source):
 
     __tablename__ = 'kit_part'
+    SIMPLE_NAME = 'part'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     item_id = Column(Integer, ForeignKey('kit_item.id', ondelete='cascade'), nullable=False, index=True)
@@ -139,6 +161,7 @@ class KitPart(Source):
     @classmethod
     def _add_instance(cls, s, item, component, name):
         if not s.query(KitPart).filter(KitPart.name == name).count():
+            check_name(s, name, KitPart)
             log.warning(f'Part name {name} does not match any previous entries')
         return add(s, KitPart(item=item, component=component, name=name))
 
@@ -222,3 +245,5 @@ class KitPart(Source):
 
     def __str__(self):
         return f'{self.item.type.name} {self.item.name} {self.component.name} {self.name}'
+
+

@@ -487,6 +487,9 @@ def parser():
     kit_add.add_argument(DATE, action='store', nargs='?', help='when added (default now)')
     kit_add.add_argument(mm(FORCE), action='store_true', help='allow creation of a new component or part')
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
+    kit_statistics = kit_cmds.add_parser(STATISTICS, help='display lifetime statistics')
+    kit_statistics.add_argument(NAME, action='store', help='type, component or part')
+    kit_statistics.add_argument(COMPONENT, action='store', nargs='?', help='component (when preceded by item)')
     kit_retire = kit_cmds.add_parser(RETIRE, help='retire a part or item')
     kit_delete = kit_cmds.add_parser(DELETE, help='delete a part or item from the database')
 
