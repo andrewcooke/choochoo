@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from .args import SUB_COMMAND, NEW, TYPE, ITEM, DATE, FORCE, ADD, COMPONENT, PART
-from ..lib import format_time
+from ..lib import format_time, time_to_local_time
 from ..squeal.tables.kit import KitType, KitItem, KitComponent, KitPart
 
 log = getLogger(__name__)
@@ -44,4 +44,4 @@ def add_kit(s, item, component, part, date, force):
     component_instance = KitComponent.get(s, component, force)
     part_instance = KitPart.add(s, item_instance, component_instance, part, date, force)
     log.info(f'Added {item_instance.name} {component_instance.name} {part_instance.name} '
-             f'at {format_time(part_instance.time_added(s))}')
+             f'at {time_to_local_time(part_instance.time_added(s))}')

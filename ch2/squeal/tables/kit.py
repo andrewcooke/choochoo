@@ -1,4 +1,5 @@
 
+import datetime as dt
 from logging import getLogger
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, desc
@@ -39,7 +40,7 @@ class KitType(Base):
             return s.query(KitType).filter(KitType.name == name).one()
         except NoResultFound:
             if force:
-                log.warning(f'Forcing creation of new type ({name}')
+                log.warning(f'Forcing creation of new type ({name})')
                 return add(s, KitType(name=name))
             else:
                 types = s.query(KitType).order_by(KitType.name).all()
@@ -90,7 +91,7 @@ class KitComponent(Base):
             return s.query(KitComponent).filter(KitComponent.name == name).one()
         except NoResultFound:
             if force:
-                log.warning(f'Forcing creation of new component ({name}')
+                log.warning(f'Forcing creation of new component ({name})')
                 return add(s, KitComponent(name=name))
             else:
                 components = s.query(KitComponent).order_by(KitComponent.name).all()
@@ -116,7 +117,10 @@ class KitPart(Source):
 
     @classmethod
     def add(cls, s, item, component, name, date, force):
-        time = local_time_to_time(date)
+        if date:
+            time = local_time_to_time(date)
+        else:
+            time = dt.datetime.now(tz=dt.timezone.utc)
         part = cls._add_instance(s, item, component, name)
         part._add_statistics(s, time, force)
         return part
@@ -149,22 +153,25 @@ class KitPart(Source):
         self._add_timestamp(s, PART_ADDED, time)
         before = self.before(s, time)
         after = self.after(s, time)
-        before_expiry = before.time_expired(s)
-        if before_expiry > time:
-            before._remove_statistic(s, PART_EXPIRED)
-            before._remove_statistic(s, PART_LIFETIME)
-            before_expiry = None
-        if not before_expiry:
-            before._add_timestamp(s, PART_EXPIRED, time)
-            lifetime = time - before.time_added(s)
-            before._add_lifetime(s, lifetime, time)
-            log.info(f'Expired previous {self.component} ({before.name}) - lifetime of {format_seconds(lifetime)}')
+        if before:
+            before_expiry = before.time_expired(s)
+            if before_expiry and before_expiry > time:
+                before._remove_statistic(s, PART_EXPIRED)
+                before._remove_statistic(s, PART_LIFETIME)
+                before_expiry = None
+            if not before_expiry:
+                before._add_timestamp(s, PART_EXPIRED, time)
+                lifetime = (time - before.time_added(s)).total_seconds()
+                before._add_lifetime(s, lifetime, time)
+                log.info(f'Expired previous {self.component.name} ({before.name}) - '
+                         f'lifetime of {format_seconds(lifetime)}')
         if after:
             after_added = after.time_added(s)
             self._add_timestamp(s, PART_EXPIRED, after_added)
-            lifetime = after_added - time
+            lifetime = (after_added - time).total_seconds()
             self._add_lifetime(s, lifetime, after_added)
-            log.info(f'Expired new {self.component} ({self.name}) - lifetime of {format_seconds(lifetime)}')
+            log.info(f'Expired new {self.component.name} ({self.name}) - '
+                     f'lifetime of {format_seconds(lifetime)}')
 
     def _get_statistic(self, s, statistic):
         return s.query(StatisticJournal).\
@@ -195,8 +202,8 @@ class KitPart(Source):
             return None
 
     def _base_sibling_query(self, s, statistic):
-        return s.query(StatisticJournal).\
-                join(StatisticName).join(KitPart).join(Source).join(KitComponent).join(KitItem).\
+        return s.query(KitPart).\
+                join(StatisticJournal).join(StatisticName).join(KitComponent).join(KitItem).\
                 filter(StatisticName.name == statistic,
                        KitComponent.name == self.component.name,
                        KitItem.name == self.item.name)

@@ -7,6 +7,10 @@
 
 ## Introduction
 
+Let's walk through a simple example.
+
+First, I will add my Cotic bike:
+
 #/bin/bash
 rm -f /tmp/kit.sql
 dev/ch2 -f /tmp/kit.sql config default > /dev/null 2>&1
@@ -18,12 +22,21 @@ dev/ch2 -f /tmp/kit.sql kit new bike cotic > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
+All the string arguments here are free-form - we can choose whatever
+terms we want - but the system checks against existing terms.  In this
+case we're introducing a completely new *type* (think bike, shoes,
+tent, etc) and so the `--force` flag is needed for confirmation.
+Adding future bikes will not require this, because `bike` will already
+be known by the system..
+
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
 echo "    > ch2 kit new bike cotic --force"
 dev/ch2 -f /tmp/kit.sql kit new bike cotic --force > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
+
+Now I have a bike I am going to add some inner tubes at various dates.
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
@@ -32,10 +45,35 @@ dev/ch2 -f /tmp/kit.sql kit add cotic front-tube michelin 2019-01-01 > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
+Again the syste catches the first use of `front-tube` so we flag that
+it is OK with `--force`.
+
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
 echo "    > ch2 kit add cotic front-tube michelin 2019-01-01 --force"
 dev/ch2 -f /tmp/kit.sql kit add cotic front-tube michelin 2019-01-01 --force > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 kit add cotic front-tube michelin 2019-03-01"
+dev/ch2 --dev -f /tmp/kit.sql kit add cotic front-tube michelin 2019-03-01 > $out 2>&1
+sed -i 's|/tmp/kit.sql|database.sql|' $out
+sed 's/^/    /' $out
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 kit add cotic front-tube vittoria"
+dev/ch2 --dev -f /tmp/kit.sql kit add cotic front-tube vittoria > $out 2>&1
+sed -i 's|/tmp/kit.sql|database.sql|' $out
+sed 's/^/    /' $out
+
+That's three different inner tubes on the front.  The last uses
+today's date as a default - that makes it easy to note changes at the
+command line as you do the work.
+
+Also, it's worth noting that previous tubes are *expired* as new ones
+are added.  You don't need to add the tubes in order - however they're
+added, the start and end times should align correctly.
 
