@@ -106,6 +106,7 @@ MAX_FWD_LEN = 'max-fwd-len'
 MAX_ROWS = 'max-rows'
 MAX_RECORD_LEN = 'max-record-len'
 MIN_SYNC_CNT = 'min-sync-cnt'
+MODEL = 'model'
 MONITOR = 'monitor'
 MONITOR_JOURNALS = 'monitor-journals'
 MONTH = 'month'
@@ -119,7 +120,6 @@ NOT = 'not'
 NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
 OWNER = 'owner'
-PART = 'part'
 PASS = 'pass'
 PATH = 'path'
 P, PATTERN = 'p', 'pattern'
@@ -152,7 +152,6 @@ TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
 TUI = 'tui'
-TYPE = 'type'
 UNLOCK = 'unlock'
 USER = 'user'
 VALIDATE = 'validate'
@@ -476,22 +475,21 @@ def parser():
     kit = subparsers.add_parser(KIT, help='manage kit')
     kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     kit_new = kit_cmds.add_parser(NEW, help='define a new item (new bike, new shoe)')
-    kit_new.add_argument(TYPE, action='store', help='item type (bike, shoe, etc)')
+    kit_new.add_argument(GROUP, action='store', help='item group (bike, shoe, etc)')
     kit_new.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
     kit_new.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
     kit_new.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type')
-    kit_add = kit_cmds.add_parser(ADD, help='add a new part (new wheel, new innersole)')
+    kit_add = kit_cmds.add_parser(ADD, help='add a new part (wheel, innersole, etc)')
     kit_add.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
     kit_add.add_argument(COMPONENT, action='store', help='component type (chain, laces, etc)')
-    kit_add.add_argument(PART, action='store', help='part description (eg model)')
+    kit_add.add_argument(MODEL, action='store', help='model description')
     kit_add.add_argument(DATE, action='store', nargs='?', help='when added (default now)')
-    kit_add.add_argument(mm(FORCE), action='store_true', help='allow creation of a new component or part')
+    kit_add.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type or component')
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display lifetime statistics')
-    kit_statistics.add_argument(NAME, action='store', help='type, component or part')
-    kit_statistics.add_argument(COMPONENT, action='store', nargs='?', help='component (when preceded by item)')
-    kit_retire = kit_cmds.add_parser(RETIRE, help='retire a part or item')
-    kit_delete = kit_cmds.add_parser(DELETE, help='delete a part or item from the database')
+    kit_statistics.add_argument(NAME, action='store', help='group, component or model')
+    kit_retire = kit_cmds.add_parser(RETIRE, help='retire an item or part')
+    kit_delete = kit_cmds.add_parser(DELETE, help='delete an item or part from the database')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')

@@ -7,7 +7,68 @@
 
 ## Introduction
 
-Let's walk through a simple example.
+### Bike Components
+
+I keep forgetting to track when I modify equipment on my bike.  This
+is annoying, because I would like to know if certain models of
+components (chains, particularly) last longer than others.
+
+So I wanted to make a solution that made my life as simple as
+possible.  The result is a command line tool where I can type
+
+    > ch2 kit add cotic chain pc1110
+
+when I add a SRAM PC1110 chain to my Cotic bike, and everything else
+is done for me, automatically.
+
+If I want statistics on chains, I can type:
+
+    > ch2 kit statistics chain
+
+If I want statistics on that particular model:
+
+    > ch2 kit statistics pc1110
+
+### Shoes
+
+I'm not so bothered about shoes, but I know many runners are, and
+supporting them was my second use case.
+
+Unlike bike components, buying a second pair of shoes doesn't
+necessarily replace the first pair.  So you have to expire these
+automatically:
+
+    > ch2 kit new shoe ultraboost-19
+    > ch2 kit new shoe zoom-pegasus
+    > ch2 kit retire ultraboost-19
+    > ch2 kit statistics shoe
+
+### Making Things General
+
+Choochoo can track *anything* that fits into this schema:
+
+**Groups** These are the *kinds of things* you track: shoes, bikes,
+etc.
+
+**Items** These are the particular things: the name you give to a
+particular bike, or a particular pair of shoes.  At this level, items
+need to be retired explicitly.
+
+**Components** These (optionally) make up the things you are tracking.
+So "chain", for a bike, or "shoelaces" (maybe!) for shoes.
+
+**Models* These describe a particular component.  So the chain migbt
+be "PC1110".  At this level, components are retired automatically
+(when they are replaced).
+
+Note that all these names can contain spaces, but if you use spaces
+you need to take care with quotes on the command line.  I find it's
+simpler to use dashes.
+
+Also, names must be unique.  You cannot re-use the same name for
+different things.
+
+### An Example
 
 First, I will add my Cotic bike:
 
@@ -17,36 +78,16 @@ dev/ch2 -f /tmp/kit.sql config default > /dev/null 2>&1
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 kit new bike cotic"
-dev/ch2 -f /tmp/kit.sql kit new bike cotic > $out 2>&1
-sed -i 's|/tmp/kit.sql|database.sql|' $out
-sed 's/^/    /' $out
-
-All the string arguments here are free-form - we can choose whatever
-terms we want - but the system checks against existing terms.  In this
-case we're introducing a completely new *type* (think bike, shoes,
-tent, etc) and so the `--force` flag is needed for confirmation.
-Adding future bikes will not require this, because `bike` will already
-be known by the system..
-
-#/bin/bash
-out=`mktemp /tmp/ch2-doc.XXXXXX`
 echo "    > ch2 kit new bike cotic --force"
 dev/ch2 -f /tmp/kit.sql kit new bike cotic --force > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
+We're introducing a completely new *group* (bike) and so the `--force`
+flag is needed for confirmation.  Adding future bikes will not require
+this, because `bike` will already be known by the system..
+
 Now I have a bike I am going to add some inner tubes at various dates.
-
-#/bin/bash
-out=`mktemp /tmp/ch2-doc.XXXXXX`
-echo "    > ch2 kit add cotic front-tube michelin 2019-01-01"
-dev/ch2 -f /tmp/kit.sql kit add cotic front-tube michelin 2019-01-01 > $out 2>&1
-sed -i 's|/tmp/kit.sql|database.sql|' $out
-sed 's/^/    /' $out
-
-Again the syste catches the first use of `front-tube` so we flag that
-it is OK with `--force`.
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
@@ -55,12 +96,19 @@ dev/ch2 -f /tmp/kit.sql kit add cotic front-tube michelin 2019-01-01 --force > $
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
 
+Again the system catches the first use of `front-tube` so we flag that
+it is OK with `--force`.
+
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
 echo "    > ch2 kit add cotic front-tube michelin 2019-03-01"
 dev/ch2 --dev -f /tmp/kit.sql kit add cotic front-tube michelin 2019-03-01 > $out 2>&1
 sed -i 's|/tmp/kit.sql|database.sql|' $out
 sed 's/^/    /' $out
+
+Previous tubes are *retired* as new ones are added.  You don't need to
+add the tubes in order - however they're added, the start and end
+times should align correctly.
 
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
@@ -73,7 +121,17 @@ That's three different inner tubes on the front.  The last uses
 today's date as a default - that makes it easy to note changes at the
 command line as you do the work.
 
-Also, it's worth noting that previous tubes are *expired* as new ones
-are added.  You don't need to add the tubes in order - however they're
-added, the start and end times should align correctly.
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 kit add cotic front-tube michelin 2019-01-01"
+dev/ch2 -f /tmp/kit.sql kit add cotic front-tube michelin 2019-01-01 > $out 2>&1
+sed -i 's|/tmp/kit.sql|database.sql|' $out
+sed 's/^/    /' $out
+
+#/bin/bash
+out=`mktemp /tmp/ch2-doc.XXXXXX`
+echo "    > ch2 kit new bike cotic"
+dev/ch2 -f /tmp/kit.sql kit new bike cotic > $out 2>&1
+sed -i 's|/tmp/kit.sql|database.sql|' $out
+sed 's/^/    /' $out
 

@@ -16,7 +16,6 @@ log = getLogger(__name__)
 class TestConstant(TestCase):
 
     def test_constant(self):
-        # this is currently failing because there are multiple statistics called Active Distance
         with NamedTemporaryFile() as f:
             args, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)

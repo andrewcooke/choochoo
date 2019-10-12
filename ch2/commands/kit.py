@@ -1,9 +1,9 @@
 
 from logging import getLogger
 
-from .args import SUB_COMMAND, NEW, TYPE, ITEM, DATE, FORCE, ADD, COMPONENT, PART, STATISTICS, NAME1, NAME2
-from ..lib import format_time, time_to_local_time
-from ..squeal.tables.kit import KitType, KitItem, KitComponent, KitPart, find_name
+from .args import SUB_COMMAND, NEW, GROUP, ITEM, DATE, FORCE, ADD, COMPONENT, MODEL, STATISTICS, NAME
+from ..lib import time_to_local_time
+from ..squeal.tables.kit import KitGroup, KitItem, KitComponent, KitModel, find_name
 
 log = getLogger(__name__)
 
@@ -30,25 +30,26 @@ Some of the above will require --force to confirm.
     cmd = args[SUB_COMMAND]
     with db.session_context() as s:
         if cmd == NEW:
-            new(s, args[TYPE], args[ITEM], args[DATE], args[FORCE])
+            new(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
         elif cmd == ADD:
-            add(s, args[ITEM], args[COMPONENT], args[PART], args[DATE], args[FORCE])
+            add(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE])
         elif cmd == STATISTICS:
-            statistics(s, args[NAME1], args[NAME2])
+            statistics(s, args[NAME], args[COMPONENT])
 
 
-def new(s, type, item, date, force):
-    type_instance = KitType.get(s, type, force)
-    item_instance = KitItem.new(s, type_instance, item)
-    log.info(f'Created {type_instance.name} {item_instance.name}')
+def new(s, group, item, date, force):
+    # TODO - dates and statistics for items
+    group_instance = KitGroup.get(s, group, force)
+    item_instance = KitItem.new(s, group_instance, item)
+    log.info(f'Created {group_instance.name} {item_instance.name}')
 
 
 def add(s, item, component, part, date, force):
     item_instance = KitItem.get(s, item)
     component_instance = KitComponent.get(s, component, force)
-    part_instance = KitPart.add(s, item_instance, component_instance, part, date, force)
-    log.info(f'Added {item_instance.name} {component_instance.name} {part_instance.name} '
-             f'at {time_to_local_time(part_instance.time_added(s))}')
+    model_instance = KitModel.add(s, item_instance, component_instance, part, date, force)
+    log.info(f'Added {item_instance.name} {component_instance.name} {model_instance.name} '
+             f'at {time_to_local_time(model_instance.time_added(s))}')
 
 
 def statistics(s, name, component):
@@ -67,8 +68,8 @@ def statistics(s, name, component):
             else:
                 raise Exception('First name must be an item')
         else:
-            if isinstance(instance1, KitType):
-                type_statistics(s, instance1)
+            if isinstance(instance1, KitGroup):
+                group_statistics(s, instance1)
             elif isinstance(instance1, KitComponent):
                 component_statistics(s, instance1)
             else:
@@ -77,8 +78,8 @@ def statistics(s, name, component):
         raise Exception(f'Could not find "{name}"')
 
 
-def type_statistics(s, type):
-    log.info('type')
+def group_statistics(s, group):
+    log.info('group')
 
 
 def component_statistics(s, component):
