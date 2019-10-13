@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from ..commands.args import PATH, FORCE, FAST, WORKER, parse_pairs, KARG
+from ..commands.args import PATH, FORCE, FAST, WORKER, parse_pairs, XARG
 from ..squeal.tables.pipeline import PipelineType
 from ..stoats.pipeline import run_pipeline
 
@@ -19,6 +19,6 @@ Read monitor data from FIT files.
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     run_pipeline(db, PipelineType.MONITOR, paths=args[PATH], force=args[FORCE],
-                 worker=args[WORKER] is not None, id=args[WORKER], **parse_pairs(args[KARG]))
+                 worker=args[WORKER] is not None, id=args[WORKER], **parse_pairs(args[XARG]))
     if not args[FAST]:
         run_pipeline(db, PipelineType.STATISTIC)

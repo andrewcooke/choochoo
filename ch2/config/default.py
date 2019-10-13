@@ -58,6 +58,7 @@ def default(db, no_diary=False):
         add_activities(s, SegmentReader, c,
                        owner_out=short_cls(SegmentReader),
                        sport_to_activity=sport_to_activity,
+                       # todo - does this need to depend on activity group?
                        record_to_db={'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
                                      'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
                                      'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),

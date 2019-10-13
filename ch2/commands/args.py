@@ -84,7 +84,6 @@ INTERNAL = 'internal'
 ITEM = 'item'
 JUPYTER = 'jupyter'
 K = 'k'
-KARG = 'karg'
 KIT = 'kit'
 LABEL = 'label'
 LATITUDE = 'latitude'
@@ -162,6 +161,8 @@ W, WARN = 'w', 'warn'
 WAYPOINTS = 'waypoints'
 WIDTH = 'width'
 WORKER = 'worker'
+X = 'x'
+XARG = 'xarg'
 YEAR = 'year'
 Y = 'y'
 
@@ -243,9 +244,12 @@ def parser():
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activities.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                             help='path to fit file(s)')
+    # todo - no longer need this if we go via kit items
     activities.add_argument(m(D.upper()), mm(CONSTANT), action='store', nargs='*', metavar='NAME=VALUE', dest=CONSTANT,
                             help='constant(s) to be stored with the activities')
-    activities.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
+    activities.add_argument(m(K.upper()), mm(KIT), action='store', nargs='*', metavar='ITEM', dest=KIT,
+                            help='kit items used in the activities')
+    activities.add_argument(m(X.upper()), mm(XARG), action='store', nargs='*', metavar='NAME=VALUE', dest=XARG,
                             help='keyword argument(s) to be passed to the pipelines')
     activities.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
@@ -496,7 +500,7 @@ def parser():
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file(s)')
-    monitor.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
+    monitor.add_argument(m(K.upper()), mm(XARG), action='store', nargs='*', metavar='NAME=VALUE', dest=XARG,
                          help='keyword argument(s) to be passed to the pipelines')
     monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
@@ -510,7 +514,7 @@ def parser():
                             help='optional start date')
     statistics.add_argument(FINISH, action='store', metavar='FINISH', nargs='?',
                             help='optional finish date (if start also given)')
-    statistics.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
+    statistics.add_argument(m(K.upper()), mm(XARG), action='store', nargs='*', metavar='NAME=VALUE', dest=XARG,
                             help='keyword argument(s) to be passed to the pipelines')
     statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')

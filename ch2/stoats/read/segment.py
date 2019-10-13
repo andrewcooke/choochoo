@@ -17,6 +17,7 @@ from ...squeal.tables.segment import Segment, SegmentJournal
 from ...squeal.utils import add
 
 log = getLogger(__name__)
+
 NAMES = {'Latitude': 'lat',
          'Longitude': 'lon',
          'Distance': 'distance'}

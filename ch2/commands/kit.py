@@ -34,7 +34,7 @@ Some of the above will require --force to confirm.
         elif cmd == ADD:
             add(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE])
         elif cmd == STATISTICS:
-            statistics(s, args[NAME], args[COMPONENT])
+            statistics(s, args[NAME])
 
 
 def new(s, group, item, date, force):
@@ -52,41 +52,25 @@ def add(s, item, component, part, date, force):
              f'at {time_to_local_time(model_instance.time_added(s))}')
 
 
-def statistics(s, name, component):
-    instance1 = find_name(s, name)
-    if instance1:
-        if component:
-            if isinstance(instance1, KitItem):
-                instance2 = find_name(s, component)
-                if instance2:
-                    if isinstance(instance2, KitComponent):
-                        item_part_statistics(s, instance1, instance2)
-                    else:
-                        raise Exception('Second name must be a component')
-                else:
-                    raise Exception(f'Could not find "{component}"')
-            else:
-                raise Exception('First name must be an item')
-        else:
-            if isinstance(instance1, KitGroup):
-                group_statistics(s, instance1)
-            elif isinstance(instance1, KitComponent):
-                component_statistics(s, instance1)
-            else:
-                raise Exception(f'Statistics are not supported for {type(instance1).SIMPLE_NAME}')
-    else:
-        raise Exception(f'Could not find "{name}"')
+def statistics(s, name):
+    instance = find_name(s, name)
+    {KitGroup: group_statistics,
+     KitItem: item_statistics,
+     KitComponent: component_statistics,
+     KitModel: model_statistics}[type(instance)](s, instance)
 
 
 def group_statistics(s, group):
     log.info('group')
 
 
+def item_statistics(s, item):
+    log.info('item')
+
+
 def component_statistics(s, component):
     log.info('component')
 
 
-def item_part_statistics(s, item, part):
-    log.info('item part')
-
-
+def model_statistics(s, model):
+    log.info('model')

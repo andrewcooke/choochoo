@@ -113,7 +113,8 @@ class StatisticJournal(Base):
     # record, so all imported values share the same serial.  but that's not true for the corrected elevation,
     # for example.
     serial = Column(Integer)
-    UniqueConstraint(statistic_name_id, time)
+    # relax this for kit support (add source_id)
+    UniqueConstraint(statistic_name_id, time, source_id)
     UniqueConstraint(serial, source_id, statistic_name_id)
     Index('from_activity_timespan', source_id, statistic_name_id, time)  # time last since inequality
 
