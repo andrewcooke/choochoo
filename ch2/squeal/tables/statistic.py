@@ -5,7 +5,7 @@ from logging import getLogger
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, reconstructor
 
 from .source import Interval
 from ..support import Base
@@ -94,6 +94,7 @@ class StatisticJournalType(IntEnum):
     INTEGER = 1
     FLOAT = 2
     TEXT = 3
+    TIMESTAMP = 4
 
 
 class StatisticJournal(Base):
@@ -248,8 +249,6 @@ class StatisticJournalInteger(StatisticJournal):
     value = Column(Integer)
     # Index('cover_integer', id, value)  # experiment with covering index
 
-    parse = int
-
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.INTEGER
     }
@@ -267,8 +266,6 @@ class StatisticJournalFloat(StatisticJournal):
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Float)
     # Index('cover_float', id, value)
-
-    parse = float
 
     @classmethod
     def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
@@ -312,8 +309,6 @@ class StatisticJournalText(StatisticJournal):
     value = Column(Text)
     # Index('cover_text', id, value)
 
-    parse = str
-
     @classmethod
     def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
         return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
@@ -330,6 +325,34 @@ class StatisticJournalText(StatisticJournal):
             return '%s' % self.value
         else:
             return '%s %s' % (self.value, self.units)
+
+
+class StatisticJournalTimestamp(StatisticJournal):
+
+    __tablename__ = 'statistic_journal_timestamp'
+
+    id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
+
+    __mapper_args__ = {
+        'polymorphic_identity': StatisticJournalType.TIMESTAMP
+    }
+
+    def __init__(self, **kargs):
+        super().__init__(**kargs)
+        self.value = None
+
+    @reconstructor
+    def init_on_load(self):
+        # we need a value attribute so that the API is constant across all journal instances
+        self.value = None
+
+    @classmethod
+    def add(cls, s, name, units, summary, owner, constraint, source, time, serial=None):
+        statistic_name = StatisticName.add_if_missing(s, name, StatisticJournalType.TIMESTAMP,
+                                                      units, summary, owner, constraint)
+        journal = StatisticJournalTimestamp(statistic_name=statistic_name, source=source, time=time, serial=serial)
+        s.add(journal)
+        return journal
 
 
 class StatisticMeasure(Base):

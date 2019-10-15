@@ -17,7 +17,7 @@ echo
 echo "running activities in parallel"
 start_activities=$SECONDS
 ALL_CPUS="-K cost_calc=100"
-(dev/ch2 --dev -v2 activities ~/archive/fit/bike/*.fit --fast -D 'Bike=Cotic Soul'; dev/ch2 --dev -v2 activities ~/archive/fit/walk/*.fit --fast; dev/ch2 --dev -v2 activities ~/archive/fit/batch/**/*.fit --fast -D 'Bike=Cotic Soul' $ALL_CPUS) &
+(dev/ch2 --dev -v2 activities ~/archive/fit/bike/*.fit --fast -D 'Bike=Cotic Soul'; dev/ch2 --dev -v2 activities ~/archive/fit/walk/*.fit --fast; dev/ch2 --dev -v2 activities ~/archive/fit/batch/**/*.fit --fast -D 'Bike=Cotic Soul' -D 'kit=cotic' $ALL_CPUS) &
 (dev/ch2 --dev -v2 monitor ~/archive/fit/monitor/*.fit --fast; dev/ch2 --dev -v2 monitor ~/archive/fit/batch/**/*.fit --fast $ALL_CPUS) &
 wait
 cp ~/.ch2/database.sqlr ~/.ch2/database.sqlr-loaded

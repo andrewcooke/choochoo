@@ -262,6 +262,9 @@ class Dummy(Source):
         return source, name
 
 
+# todo - remove composite stuff and just wipe fatigue + fitness when calculating impulse.
+
+
 class CompositeComponent(Base):
 
     __tablename__ = 'composite_component'

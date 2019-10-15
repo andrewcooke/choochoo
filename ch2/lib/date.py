@@ -137,6 +137,17 @@ def local_time_to_time(time):
     raise ValueError(f'Cannot parse "{time}" as a datetime')
 
 
+def local_time_or_now(date):
+    '''
+    convert a local date/time into a utc time, using current time as default
+    (useful when user entering date on command line and omission defaults to now)
+    '''
+    if date:
+        return local_time_to_time(date)
+    else:
+        return dt.datetime.now(tz=dt.timezone.utc)
+
+
 def time_to_local_date(time):
     time = to_time(time)
     ptime = p.DateTime(*time.timetuple()[:6], tzinfo=dt.timezone.utc).in_timezone(p.tz.get_local_timezone())

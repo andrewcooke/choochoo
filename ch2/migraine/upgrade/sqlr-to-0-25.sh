@@ -10,9 +10,9 @@ SRC='0-24'
 DST='0-24-dev'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=0
-DO_DROP=0
-DO_DUMP=0
+DO_COPY=1
+DO_DROP=1
+DO_DUMP=1
 
 
 # this section of the script copies diary data across
@@ -43,29 +43,29 @@ fi
 if [[ $DO_DUMP == 1 ]]; then
   echo "extracting data from $TMP_DIR/copy-$SRC.sql to load into new database"
   rm -f "$TMP_DIR/dump-$SRC.sql"
+  # .commands cannot be indented?!
   sqlite3 "$TMP_DIR/copy-$SRC.sql" <<EOF
-  update statistic_name set "constraint" = 'None' where "constraint" is null;
-  .output $TMP_DIR/dump-$SRC.sql
-  .mode insert source
-  select * from source;
-  .mode insert statistic_journal
-  select * from statistic_journal;
-  .mode insert statistic_journal_float
-  select * from statistic_journal_float;
-  .mode insert statistic_journal_integer
-  select * from statistic_journal_integer;
-  .mode insert statistic_journal_text
-  select * from statistic_journal_text;
-  .mode insert statistic_name
-  select * from statistic_name;
-  .mode insert topic
-  select * from topic;
-  .mode insert topic_field
-  select * from topic_field;
-  .mode insert topic_journal
-  select * from topic_journal;
-  .mode insert segment
-  select * from segment;
+.output $TMP_DIR/dump-$SRC.sql
+.mode insert source
+select * from source;
+.mode insert statistic_journal
+select * from statistic_journal;
+.mode insert statistic_journal_float
+select * from statistic_journal_float;
+.mode insert statistic_journal_integer
+select * from statistic_journal_integer;
+.mode insert statistic_journal_text
+select * from statistic_journal_text;
+.mode insert statistic_name
+select * from statistic_name;
+.mode insert topic
+select * from topic;
+.mode insert topic_field
+select * from topic_field;
+.mode insert topic_journal
+select * from topic_journal;
+.mode insert segment
+select * from segment;
 EOF
 fi
 
@@ -93,11 +93,14 @@ with db.session_context() as s:
 EOF
 
 dev/ch2 --dev config default --no-diary
+
 dev/ch2 --dev constants --set FTHR.Bike 154
 dev/ch2 --dev constants --set FTHR.Walk 154
 dev/ch2 --dev constants --set SRTM1.Dir /home/andrew/archive/srtm1
 dev/ch2 --dev constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "weight": 12}'
 
+dev/ch2 --dev kit new bike cotic 2017-01-01 --force
+dev/ch2 --dev kit add cotic chain pc1110 2019-10-11 --force
 
 
 echo "next, run 'ch2 activities' or similar to load data"

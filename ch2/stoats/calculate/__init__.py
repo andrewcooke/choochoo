@@ -54,6 +54,11 @@ class UniProcCalculator(CalculatorMixin, UniProcPipeline):
 
 
 class ActivityJournalCalculatorMixin:
+    '''
+    auto-detects missing activities, deletes on forcing, and schedules threads via owner_out.
+
+    provides access to the ajournal via _get_source.
+    '''
 
     def _delimit_query(self, q):
         start, finish = self._start_finish(type=local_time_to_time)
@@ -161,7 +166,6 @@ class DirectCalculatorMixin(LoaderMixin):
     @abstractmethod
     def _calculate_results(self, s, source, data, loader):
         raise NotImplementedError()
-
 
 
 class IntervalCalculatorMixin(LoaderMixin):

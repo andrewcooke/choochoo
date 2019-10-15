@@ -1,18 +1,18 @@
 
-import datetime as dt
 from logging import getLogger
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, desc
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 
+from ch2.lib.date import local_time_or_now
 from .source import Source, SourceType
-from .statistic import StatisticJournal, StatisticName, StatisticJournalText, StatisticJournalFloat
+from .statistic import StatisticJournal, StatisticName, StatisticJournalFloat, StatisticJournalTimestamp
 from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
-from ...lib import local_time_to_time, format_seconds
-from ...stoats.names import KIT_ADDED, KIT_RETIRED, KIT_LIFETIME, S, summaries, MAX, MIN, CNT, AVG
+from ...lib import format_seconds
+from ...stoats.names import KIT_ADDED, KIT_RETIRED, KIT_LIFETIME, S, summaries, MAX, MIN, CNT, AVG, KIT_USED
 
 log = getLogger(__name__)
 
@@ -30,7 +30,7 @@ unfortunately that pushed some extra complexity into the data model (eg to guara
 
 def find_name(s, name):
     for cls in KitGroup, KitItem, KitComponent, KitModel:
-        # can be multiple models, inwhich case we return one 'at random'
+        # can be multiple models, in which case we return one 'at random'
         instance = s.query(cls).filter(cls.name == name).first()
         if instance:
             return instance
@@ -42,7 +42,75 @@ def check_name(s, name, use):
         raise Exception(f'The name "{name}" is already used for a {type(instance).SIMPLE_NAME}')
 
 
+def expand_item(s, name, time):
+    try:
+        item = s.query(KitItem).filter(KitItem.name == name).one()
+        start, finish = item.time_added(s), item.time_expired(s)
+        if start <= time and (not finish or finish >= time):
+            log.debug(f'Found {item}')
+            yield item
+            for model in s.query(KitModel).filter(KitModel.item == item).all():
+                start, finish = model.time_added(s), model.time_expired(s)
+                if start <= time and (not finish or finish >= time):
+                    log.debug(f'Found {model}')
+                    yield model
+                else:
+                    log.debug(f'Outside time {start} <= {time} <= {finish}')
+        else:
+            log.debug(f'Outside time {start} <= {time} <= {finish}')
+    except NoResultFound as e:
+        log.error(e)
+        raise Exception(f'Kit item {name} not defined')
+
+
+class StatisticsMixin:
+    '''
+    support for reading and writing statistics related to a kit class.
+    '''
+
+    def _get_statistic(self, s, statistic):
+        return s.query(StatisticJournal).\
+                join(StatisticName).\
+                filter(StatisticName.name == statistic,
+                       StatisticName.constraint == self,
+                       StatisticJournal.source == self).one_or_none()
+
+    def _remove_statistic(self, s, statistic):
+        # cannot delete directly with join
+        statistics = s.query(StatisticJournal).\
+                join(StatisticName).\
+                filter(StatisticName.name == statistic,
+                       StatisticName.constraint == self,
+                       StatisticJournal.source == self).all()
+        for statistic in statistics:
+            s.delete(statistic)
+
+    def _add_timestamp(self, s, statistic, time, source=None, owner=None):
+        owner = owner or self
+        source = source or self
+        return StatisticJournalTimestamp.add(s, statistic, None, None, owner, self, source, time)
+
+    def _add_lifetime(self, s, lifetime, time):
+        return StatisticJournalFloat.add(s, KIT_LIFETIME, S, summaries(MAX, MIN, CNT, AVG), self, self, self,
+                                         lifetime, time)
+
+    def time_added(self, s):
+        return self._get_statistic(s, KIT_ADDED).time
+
+    def time_expired(self, s):
+        try:
+            return self._get_statistic(s, KIT_RETIRED).time
+        except AttributeError:
+            return None
+
+    def add_use(self, s, time, source=None, owner=None):
+        self._add_timestamp(s, KIT_USED, time, source=source, owner=owner)
+
+
 class KitGroup(Base):
+    '''
+    top level group for kit (bike, shoe, etc)
+    '''
 
     __tablename__ = 'kit_group'
     SIMPLE_NAME = 'group'
@@ -70,8 +138,14 @@ class KitGroup(Base):
                 else:
                     raise Exception(f'Specify {mm(FORCE)} to create a new group ({name})')
 
+    def __str__(self):
+        return f'KitGroup "{self.name}"'
 
-class KitItem(Source):
+
+class KitItem(StatisticsMixin, Source):
+    '''
+    an individual kit item (a particular bike, a particular shoe, etc)
+    '''
 
     __tablename__ = 'kit_item'
     SIMPLE_NAME = 'item'
@@ -86,13 +160,19 @@ class KitItem(Source):
     }
 
     @classmethod
-    def new(cls, s, group, name):
+    def new(cls, s, group, name, date):
+        time = local_time_or_now(date)
         # don't rely on unique index to catch duplicates because that's not triggered until commit
         if s.query(KitItem).filter(KitItem.name == name).count():
             raise Exception(f'Item {name} of group {group.name} already exists')
         else:
             check_name(s, name, KitItem)
-            return add(s, KitItem(group=group, name=name))
+            item = add(s, KitItem(group=group, name=name))
+            item._add_statistics(s, time)
+            return item
+
+    def _add_statistics(self, s, time):
+        self._add_timestamp(s, KIT_ADDED, time)
 
     @classmethod
     def get(cls, s, name):
@@ -101,8 +181,14 @@ class KitItem(Source):
         except NoResultFound:
             raise Exception(f'Item {name} does not exist')
 
+    def __str__(self):
+        return f'KitItem "{self.name}"'
+
 
 class KitComponent(Base):
+    '''
+    the kind of thing that a kit item is made of (bike wheel, shoe laces, etc)
+    '''
 
     __tablename__ = 'kit_component'
     SIMPLE_NAME = 'component'
@@ -129,8 +215,14 @@ class KitComponent(Base):
                 else:
                     raise Exception(f'Specify {mm(FORCE)} to create a new component ({name})')
 
+    def __str__(self):
+        return f'KitComponent "{self.name}"'
 
-class KitModel(Source):
+
+class KitModel(StatisticsMixin, Source):
+    '''
+    a particular piece of a a kit item (a particular bike wheel, a particulae set of laces, etc).
+    '''
 
     __tablename__ = 'kit_model'
     SIMPLE_NAME = 'model'
@@ -148,10 +240,7 @@ class KitModel(Source):
 
     @classmethod
     def add(cls, s, item, component, name, date, force):
-        if date:
-            time = local_time_to_time(date)
-        else:
-            time = dt.datetime.now(tz=dt.timezone.utc)
+        time = local_time_or_now(date)
         cls._reject_duplicate(s, item, component, name, time)
         model = cls._add_instance(s, item, component, name)
         model._add_statistics(s, time, force)
@@ -204,37 +293,6 @@ class KitModel(Source):
             log.info(f'Expired new {self.component.name} ({self.name}) - '
                      f'lifetime of {format_seconds(lifetime)}')
 
-    def _get_statistic(self, s, statistic):
-        return s.query(StatisticJournal).\
-                join(StatisticName).\
-                filter(StatisticName.name == statistic,
-                       StatisticJournal.source == self).one_or_none()
-
-    def _remove_statistic(self, s, statistic):
-        # cannot delete directly with join
-        statistics = s.query(StatisticJournal).\
-                join(StatisticName).\
-                filter(StatisticName.name == statistic,
-                       StatisticJournal.source == self).all()
-        for statistic in statistics:
-            s.delete(statistic)
-
-    def _add_timestamp(self, s, statistic, time):
-        return StatisticJournalText.add(s, statistic, None, None, self, None, self, str(self), time)
-
-    def _add_lifetime(self, s, lifetime, time):
-        return StatisticJournalFloat.add(s, KIT_LIFETIME, S, summaries(MAX, MIN, CNT, AVG), self, None, self,
-                                         lifetime, time)
-
-    def time_added(self, s):
-        return self._get_statistic(s, KIT_ADDED).time
-
-    def time_expired(self, s):
-        try:
-            return self._get_statistic(s, KIT_RETIRED).time
-        except AttributeError:
-            return None
-
     def _base_sibling_query(self, s, statistic):
         return s.query(KitModel).\
                 join(StatisticJournal, StatisticJournal.source_id == KitModel.id).\
@@ -257,7 +315,10 @@ class KitModel(Source):
         return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time > time).\
             order_by(StatisticJournal.time).first()
 
+    # def __str__(self):
+    #     return f'{self.item.group.name} {self.item.name} {self.component.name} {self.name}'
+
     def __str__(self):
-        return f'{self.item.group.name} {self.item.name} {self.component.name} {self.name}'
+        return f'KitModel "{self.name}"'
 
 

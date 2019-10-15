@@ -38,10 +38,10 @@ Some of the above will require --force to confirm.
 
 
 def new(s, group, item, date, force):
-    # TODO - dates and statistics for items
     group_instance = KitGroup.get(s, group, force)
-    item_instance = KitItem.new(s, group_instance, item)
-    log.info(f'Created {group_instance.name} {item_instance.name}')
+    item_instance = KitItem.new(s, group_instance, item, date)
+    log.info(f'Created {group_instance.name} {item_instance.name}'
+             f'at {time_to_local_time(item_instance.time_added(s))}')
 
 
 def add(s, item, component, part, date, force):
