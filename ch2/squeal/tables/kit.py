@@ -315,9 +315,6 @@ class KitModel(StatisticsMixin, Source):
         return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time > time).\
             order_by(StatisticJournal.time).first()
 
-    # def __str__(self):
-    #     return f'{self.item.group.name} {self.item.name} {self.component.name} {self.name}'
-
     def __str__(self):
         return f'KitModel "{self.name}"'
 

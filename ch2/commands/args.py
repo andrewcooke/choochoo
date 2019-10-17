@@ -129,6 +129,7 @@ PROFILE_VERSION = 'profile-version'
 PROTOCOL_VERSION = 'protocol-version'
 PWD = 'pwd'
 RAW = 'raw'
+REBUILD = 'rebuild'
 RECORDS = 'records'
 RETIRE = 'retire'
 ROOT = 'root'
@@ -479,17 +480,20 @@ def parser():
     kit_new.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
     kit_new.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
     kit_new.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type')
-    kit_add = kit_cmds.add_parser(ADD, help='add a new part (wheel, innersole, etc)')
+    kit_add = kit_cmds.add_parser(ADD, help='add (or replace) a new part (wheel, innersole, etc)')
     kit_add.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
     kit_add.add_argument(COMPONENT, action='store', help='component type (chain, laces, etc)')
     kit_add.add_argument(MODEL, action='store', help='model description')
     kit_add.add_argument(DATE, action='store', nargs='?', help='when added (default now)')
     kit_add.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type or component')
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
+    kit_show.add_argument(ITEM, action='store', nargs='?', help='which item to display (default all)')
+    kit_show.add_argument(DATE, action='store', nargs='?', help='when to display (default now)')
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display lifetime statistics')
     kit_statistics.add_argument(NAME, action='store', help='group, component or model')
     kit_retire = kit_cmds.add_parser(RETIRE, help='retire an item or part')
-    kit_delete = kit_cmds.add_parser(DELETE, help='delete an item or part from the database')
+    kit_delete = kit_cmds.add_parser(DELETE, help='remove an item or part from the database')
+    kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')

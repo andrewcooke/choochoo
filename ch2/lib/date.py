@@ -145,7 +145,11 @@ def local_time_or_now(date):
     if date:
         return local_time_to_time(date)
     else:
-        return dt.datetime.now(tz=dt.timezone.utc)
+        return now()
+
+
+def now():
+    return dt.datetime.now(tz=dt.timezone.utc)
 
 
 def time_to_local_date(time):
