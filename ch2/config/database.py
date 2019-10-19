@@ -258,16 +258,17 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
     region (specified by latitude, longitude, width and height, all in degrees).
     '''
     activity_group_constraint = str(activity_group)
+    nearby_constraint = name_constant(constraint, activity_group)
     nearby_name = name_constant(constant, activity_group)
     nearby = add_enum_constant(s, nearby_name, Nearby, single=True, constraint=activity_group_constraint,
                                description='Data needed to calculate nearby activities - see Nearby enum')
-    set_constant(s, nearby, dumps({'constraint': constraint, 'activity_group': activity_group.name,
+    set_constant(s, nearby, dumps({'constraint': nearby_constraint, 'activity_group': activity_group.name,
                                    'border': border, 'start': start, 'finish': finish,
                                    'latitude': latitude, 'longitude': longitude,
                                    'height': height, 'width': width, 'fraction': fraction}))
     add_statistics(s, SimilarityCalculator, sort, nearby=nearby_name,
                    owner_in=short_cls(ActivityCalculator), owner_out=short_cls(SimilarityCalculator))
-    add_statistics(s, NearbyCalculator, sort, constraint=constraint,
+    add_statistics(s, NearbyCalculator, sort, constraint=nearby_constraint,
                    owner_in=short_cls(SimilarityCalculator), owner_out=short_cls(NearbyCalculator))
 
 
