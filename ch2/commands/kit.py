@@ -7,10 +7,11 @@ from numpy import median
 from sqlalchemy import or_
 
 from .args import SUB_COMMAND, NEW, GROUP, ITEM, DATE, FORCE, ADD, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV
-from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres
+from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
+    groupby_tuple
 from ..squeal.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
 from ..squeal.tables.statistic import StatisticJournalTimestamp, StatisticName
-from ..stoats.names import KIT_ADDED, KIT_RETIRED, ACTIVE_TIME, ACTIVE_DISTANCE
+from ..stoats.names import KIT_ADDED, KIT_RETIRED, ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME
 
 log = getLogger(__name__)
 
@@ -114,19 +115,22 @@ def statistics(s, name):
 
 def stats(title, values, fmt):
     n = len(values)
-    total = sum(values)
-    avg = total / n
-    med = median(values)
-    return Node(title,
-                (Leaf(f'Count {n}'),
-                 Leaf(f'Sum {fmt(total)}'),
-                 Leaf(f'Average {fmt(avg)}'),
-                 Leaf(f'Median {fmt(med)}')))
+    if n == 1:
+        return Leaf(f'{title} {fmt(values[0])}')
+    else:
+        total = sum(values)
+        avg = total / n
+        med = median(values)
+        return Node(title,
+                    (Leaf(f'Count {n}'),
+                     Leaf(f'Sum {fmt(total)}'),
+                     Leaf(f'Average {fmt(avg)}'),
+                     Leaf(f'Median {fmt(med)}')))
 
 
 def group_statistics(s, group):
     return Node(f'Group {group.name}',
-                (stats('Lifetime',
+                (stats(LIFETIME,
                        [item.lifetime(s).total_seconds() for item in group.items],
                        format_seconds),
                  stats(ACTIVE_TIME,
@@ -141,7 +145,7 @@ def item_statistics(s, item):
     components = item.components
     ordered_components = sorted(components.keys(), key=lambda component: component.name)
     return Node(f'Item {item.name}',
-                [Leaf(f'Lifetime {format_seconds(item.lifetime(s).total_seconds())}'),
+                [Leaf(f'{LIFETIME} {format_seconds(item.lifetime(s).total_seconds())}'),
                  stats(ACTIVE_TIME,
                        [time.value for time in item.active_times(s)],
                        format_seconds),
@@ -150,7 +154,7 @@ def item_statistics(s, item):
                        format_metres)]
                 +
                 [Node(f'Component {component.name}',
-                      (stats('Lifetime',
+                      (stats(LIFETIME,
                              [model.lifetime(s).total_seconds() for model in components[component]],
                              format_seconds),
                        stats(ACTIVE_TIME,
@@ -163,22 +167,34 @@ def item_statistics(s, item):
 
 
 def component_statistics(s, component, output=stdout):
-    models = component.models
-    ordered_models = sorted(models, key=lambda model: model.name)
     return Node(f'Item {component.name}',
-                [Node(f'Model {model.name}',
-                      (Leaf(f'Lifetime {format_seconds(model.lifetime(s).total_seconds())}'),
+                [Node(f'Model {name}',
+                      (stats(LIFETIME,
+                             [model.lifetime(s).total_seconds() for model in group],
+                             format_seconds),
                        stats(ACTIVE_TIME,
-                             [time.value for time in model.active_times(s)],
+                             [sum(time.value for time in model.active_times(s)) for model in group],
                              format_seconds),
                        stats(ACTIVE_DISTANCE,
-                             [time.value for time in model.active_distances(s)],
+                             [sum(time.value for time in model.active_distances(s)) for model in group],
                              format_metres)))
-                 for model in ordered_models])
+                 for name, group in groupby_tuple(sorted(component.models, key=lambda model: model.name),
+                                                  key=lambda model: model.name)])
+    # todo - order by active distance?
 
 
-def model_statistics(s, model, output=stdout):
-    log.info('model')
+def model_statistics(s, model):
+    models = s.query(KitModel).filter(KitModel.name == model.name).all()
+    return Node(f'Model {model.name}',
+                (stats(LIFETIME,
+                       [model.lifetime(s).total_seconds() for model in models],
+                       format_seconds),
+                 stats(ACTIVE_TIME,
+                       [sum(time.value for time in model.active_times(s)) for model in models],
+                       format_seconds),
+                 stats(ACTIVE_DISTANCE,
+                       [sum(time.value for time in model.active_distances(s)) for model in models],
+                       format_metres)))
 
 
 class Node:

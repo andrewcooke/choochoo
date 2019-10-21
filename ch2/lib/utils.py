@@ -1,4 +1,5 @@
-from itertools import zip_longest
+
+from itertools import zip_longest, groupby
 from pprint import PrettyPrinter
 
 from ..stoats.names import M, KM, PC, W
@@ -112,3 +113,8 @@ def format_percent(pc):
 
 def format_watts(power):
     return str(int(power)) + W
+
+
+def groupby_tuple(iterable, key=None):
+    for name, group in groupby(iterable, key=key):
+        yield name, tuple(group)
