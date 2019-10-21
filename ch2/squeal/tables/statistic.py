@@ -329,6 +329,8 @@ class StatisticJournalText(StatisticJournal):
 
 class StatisticJournalTimestamp(StatisticJournal):
 
+    # todo - could value take value from time?
+
     __tablename__ = 'statistic_journal_timestamp'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)

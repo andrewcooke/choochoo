@@ -1,4 +1,4 @@
-
+from subprocess import run
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
@@ -17,6 +17,7 @@ class TestKit(TestCase):
                     new(s, 'bike', 'cotic', None, False)
                 self.assertTrue('--force' in str(ctx.exception), ctx.exception)
                 new(s, 'bike', 'cotic', None, True)
+                # run('sqlite3 %s ".dump"' % f.name, shell=True)
                 with self.assertRaises(Exception) as ctx:
                     new(s, 'xxxx', 'marin', None, False)
                 self.assertTrue('--force' in str(ctx.exception), ctx.exception)
