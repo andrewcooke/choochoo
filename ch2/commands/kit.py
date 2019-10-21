@@ -61,7 +61,7 @@ def add(s, item, component, part, date, force):
              f'at {time_to_local_time(model_instance.time_added(s))}')
 
 
-def show(s, item, date, csv=False, output=stdout):
+def show(s, item, date):
     instance = s.query(KitItem).filter(KitItem.name == item).one_or_none()
     if instance:
         item = instance
@@ -112,7 +112,7 @@ def statistics(s, name):
             KitModel: model_statistics}[type(instance)](s, instance)
 
 
-def stats_node(title, values, fmt):
+def stats(title, values, fmt):
     n = len(values)
     total = sum(values)
     avg = total / n
@@ -124,46 +124,57 @@ def stats_node(title, values, fmt):
                  Leaf(f'Median {fmt(med)}')))
 
 
-def group_statistics(s, group, output=stdout):
+def group_statistics(s, group):
     return Node(f'Group {group.name}',
-                (stats_node('Lifetime',
-                            [item.lifetime(s).total_seconds() for item in group.items],
-                            format_seconds),
-                 stats_node(ACTIVE_TIME,
-                            [sum(time.value for time in item.active_times(s)) for item in group.items],
-                            format_seconds),
-                 stats_node(ACTIVE_DISTANCE,
-                            [sum(distance.value for distance in item.active_distances(s)) for item in group.items],
-                            format_metres)))
+                (stats('Lifetime',
+                       [item.lifetime(s).total_seconds() for item in group.items],
+                       format_seconds),
+                 stats(ACTIVE_TIME,
+                       [sum(time.value for time in item.active_times(s)) for item in group.items],
+                       format_seconds),
+                 stats(ACTIVE_DISTANCE,
+                       [sum(distance.value for distance in item.active_distances(s)) for item in group.items],
+                       format_metres)))
 
 
-def item_statistics(s, item, output=stdout):
+def item_statistics(s, item):
     components = item.components
     ordered_components = sorted(components.keys(), key=lambda component: component.name)
     return Node(f'Item {item.name}',
                 [Leaf(f'Lifetime {format_seconds(item.lifetime(s).total_seconds())}'),
-                 stats_node(ACTIVE_TIME,
-                            [time.value for time in item.active_times(s)],
-                            format_seconds),
-                 stats_node(ACTIVE_DISTANCE,
-                            [distance.value for distance in item.active_distances(s)],
-                            format_metres)]
+                 stats(ACTIVE_TIME,
+                       [time.value for time in item.active_times(s)],
+                       format_seconds),
+                 stats(ACTIVE_DISTANCE,
+                       [distance.value for distance in item.active_distances(s)],
+                       format_metres)]
                 +
                 [Node(f'Component {component.name}',
-                      (stats_node('Lifetime',
-                                  [model.lifetime(s).total_seconds() for model in components[component]],
-                                  format_seconds),
-                       stats_node(ACTIVE_TIME,
-                                  [sum(time.value for time in model.active_times(s)) for model in components[component]],
-                                  format_seconds),
-                       stats_node(ACTIVE_DISTANCE,
-                                  [sum(time.value for time in model.active_distances(s)) for model in components[component]],
-                                  format_metres)))
+                      (stats('Lifetime',
+                             [model.lifetime(s).total_seconds() for model in components[component]],
+                             format_seconds),
+                       stats(ACTIVE_TIME,
+                             [sum(time.value for time in model.active_times(s)) for model in components[component]],
+                             format_seconds),
+                       stats(ACTIVE_DISTANCE,
+                             [sum(time.value for time in model.active_distances(s)) for model in components[component]],
+                             format_metres)))
                  for component in ordered_components])
 
 
 def component_statistics(s, component, output=stdout):
-    log.info('component')
+    models = component.models
+    ordered_models = sorted(models, key=lambda model: model.name)
+    return Node(f'Item {component.name}',
+                [Node(f'Model {model.name}',
+                      (Leaf(f'Lifetime {format_seconds(model.lifetime(s).total_seconds())}'),
+                       stats(ACTIVE_TIME,
+                             [time.value for time in model.active_times(s)],
+                             format_seconds),
+                       stats(ACTIVE_DISTANCE,
+                             [time.value for time in model.active_distances(s)],
+                             format_metres)))
+                 for model in ordered_models])
 
 
 def model_statistics(s, model, output=stdout):

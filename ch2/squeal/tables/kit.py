@@ -274,7 +274,7 @@ class KitModel(StatisticsMixin, Source):
     item_id = Column(Integer, ForeignKey('kit_item.id', ondelete='cascade'), nullable=False, index=True)
     item = relationship('KitItem', foreign_keys=[item_id], backref='models')
     component_id = Column(Integer, ForeignKey('kit_component.id', ondelete='cascade'), nullable=False, index=True)
-    component = relationship('KitComponent')
+    component = relationship('KitComponent', backref='models')
     name = Column(Text, nullable=False, index=True)
 
     __mapper_args__ = {

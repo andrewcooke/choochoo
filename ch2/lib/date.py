@@ -102,7 +102,7 @@ def format_seconds(seconds):
             hours, minutes = minutes // 60, minutes % 60
             if hours >= 24:
                 days, hours = hours // 24, hours % 24
-                return '%s%ddays %dh%02dm%02ds' % (sign, days, hours, minutes, seconds)
+                return '%s%dd %dh%02dm%02ds' % (sign, days, hours, minutes, seconds)
             else:
                 return '%s%dh%02dm%02ds' % (sign, hours, minutes, seconds)
         else:
