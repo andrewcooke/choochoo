@@ -6,7 +6,8 @@ from sys import stdout
 from numpy import median
 from sqlalchemy import or_
 
-from .args import SUB_COMMAND, NEW, GROUP, ITEM, DATE, FORCE, ADD, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, RETIRE
+from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
+    START, CHANGE, FINISH
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
     groupby_tuple
 from ..squeal.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
@@ -20,48 +21,52 @@ def kit(args, db, output=stdout):
     '''
 ## kit
 
-    > ch2 kit new bike cotic
-    > ch2 kit add cotic chain pc1110 2019-10-12
-    > ch2 kit retire cotic chain
+    > ch2 kit start bike cotic
+    > ch2 kit change cotic chain sram 2019-10-12
     > ch2 kit show cotic
     > ch2 kit statistics cotic chain
     > ch2 kit statistics chain
     > ch2 kit statistics bike
-    > ch2 kit delete cotic chain 2019-10-12
-    > ch2 kit delete cotic
+    > ch2 kit change cotic chain kcm
+    > ch2 kit finish cotic
 
-    > ch2 kit new shoe 'red adidas'
-    > ch2 kit retire 'red adidas'
+    > ch2 kit start shoe 'red adidas'
+    > ch2 kit finish 'red adidas'
 
 Some of the above will require --force to confirm.
     '''
     cmd = args[SUB_COMMAND]
     with db.session_context() as s:
-        if cmd == NEW:
-            new(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
-        elif cmd == ADD:
-            add(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE])
+        if cmd == START:
+            start(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
+        elif cmd == CHANGE:
+            change(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE])
+        elif cmd == FINISH:
+            finish(s, args[NAME], args[DATE], args[FOREC])
         elif cmd == SHOW:
             show(s, args[ITEM], args[DATE]).display(csv=args[CSV], output=output)
         elif cmd == STATISTICS:
             statistics(s, args[NAME]).display(csv=args[CSV], output=output)
-        elif cmd == RETIRE:
-            retire(s, args[NAME], args[DATE], args[FOREC])
 
 
-def new(s, group, item, date, force):
+def start(s, group, item, date, force):
     group_instance = KitGroup.get(s, group, force=force)
     item_instance = KitItem.new(s, group_instance, item, date)
-    log.info(f'Created {group_instance.name} {item_instance.name} '
+    log.info(f'Started {group_instance.name} {item_instance.name} '
              f'at {time_to_local_time(item_instance.time_added(s))}')
 
 
-def add(s, item, component, part, date, force):
+def change(s, item, component, part, date, force):
     item_instance = KitItem.get(s, item)
     component_instance = KitComponent.get(s, component, force)
     model_instance = KitModel.add(s, item_instance, component_instance, part, date, force)
-    log.info(f'Added {item_instance.name} {component_instance.name} {model_instance.name} '
+    log.info(f'Changed {item_instance.name} {component_instance.name} {model_instance.name} '
              f'at {time_to_local_time(model_instance.time_added(s))}')
+
+
+def finish(s, name, date, force):
+    get_name(s, name, classes=(KitItem,), require=True).finish(s, date, force)
+    log.info(f'Finished {name}')
 
 
 def show(s, item, date):
@@ -105,14 +110,6 @@ def show_item(s, item, date):
                 (Node(f'Component {component}',
                       (Leaf(f'Model {model.name}') for model in models))
                  for component, models in groupby(models, key=lambda m: m.component.name)))
-
-
-def retire(s, name, date, force):
-    instance = get_name(s, name, classes=(KitItem, KitModel), require=True)
-    if isinstance(instance, KitItem):
-        instance.retire(s, date, force)
-    else:
-        KitModel.retire(s, name, date, force)
 
 
 def statistics(s, name):

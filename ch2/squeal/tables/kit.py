@@ -228,7 +228,7 @@ class KitItem(StatisticsMixin, Source):
             components[model.component].append(model)
         return components
 
-    def retire(self, s, date, force):
+    def finish(self, s, date, force):
         if self.time_expired(s):
             if force:
                 self._remove_statistic(s, KIT_RETIRED, owner=self)
@@ -324,29 +324,6 @@ class KitModel(StatisticsMixin, Source):
             assert_name_does_not_exist(s, name, KitModel)
             log.warning(f'Model {name} does not match any previous entries')
         return add(s, KitModel(item=item, component=component, name=name))
-
-    @classmethod
-    def retire(cls, s, name, date, force):
-        tsq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time).\
-            join(StatisticName).\
-            filter(StatisticName.name == KIT_RETIRED).subquery()
-        model = s.query(KitModel).\
-            outerjoin(tsq, tsq.source_id == KitModel.id).\
-            filter(KitModel.name == name,
-                   tsq.time == None).one_or_none()
-        if not model:
-            if force:
-                model = s.query(KitModel).\
-                    outerjoin(tsq, tsq.source_id == KitModel.id).\
-                    filter(KitModel.name == name).\
-                    order_by(desc(tsq.time)).one_or_none()
-                if model:
-                    model._remove_statistic(s, KIT_RETIRED, owner=model)
-                else:
-                    raise Exception(f'Model {name} does not exist')
-            else:
-                raise Exception(f'Model {name} either does not exist or is already retired')
-        model._add_timestamp(s, KIT_RETIRED, local_time_or_now(date))
 
     def time_range(self, s):
         return None, None

@@ -47,6 +47,7 @@ ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
 BORDER = 'border'
+CHANGE = 'change'
 CHECK = 'check'
 COMPACT = 'compact'
 COMPONENT = 'component'
@@ -475,17 +476,21 @@ def parser():
 
     kit = subparsers.add_parser(KIT, help='manage kit')
     kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    kit_new = kit_cmds.add_parser(NEW, help='define a new item (new bike, new shoe)')
-    kit_new.add_argument(GROUP, action='store', help='item group (bike, shoe, etc)')
-    kit_new.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
-    kit_new.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
-    kit_new.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type')
-    kit_add = kit_cmds.add_parser(ADD, help='add (or replace) a new part (wheel, innersole, etc)')
-    kit_add.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
-    kit_add.add_argument(COMPONENT, action='store', help='component type (chain, laces, etc)')
-    kit_add.add_argument(MODEL, action='store', help='model description')
-    kit_add.add_argument(DATE, action='store', nargs='?', help='when added (default now)')
-    kit_add.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type or component')
+    kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)')
+    kit_start.add_argument(GROUP, action='store', help='item group (bike, shoe, etc)')
+    kit_start.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
+    kit_start.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
+    kit_start.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type')
+    kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)')
+    kit_change.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
+    kit_change.add_argument(COMPONENT, action='store', help='component type (chain, laces, etc)')
+    kit_change.add_argument(MODEL, action='store', help='model description')
+    kit_change.add_argument(DATE, action='store', nargs='?', help='when added (default now)')
+    kit_change.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type or component')
+    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item')
+    kit_finish.add_argument(NAME, action='store', help='item name')
+    kit_finish.add_argument(DATE, action='store', nargs='?', help='when to retire (default now)')
+    kit_finish.add_argument(mm(FORCE), action='store_true', help='allow change of existing date')
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
     kit_show.add_argument(ITEM, action='store', nargs='?', help='which item to display (default all)')
     kit_show.add_argument(DATE, action='store', nargs='?', help='when to display (default now)')
@@ -493,10 +498,6 @@ def parser():
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
     kit_statistics.add_argument(NAME, action='store', help='group, item, component or model')
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
-    kit_retire = kit_cmds.add_parser(RETIRE, help='retire an item or part')
-    kit_retire.add_argument(NAME, action='store', help='item or model')
-    kit_retire.add_argument(DATE, action='store', nargs='?', help='when to retire (default now)')
-    kit_retire.add_argument(mm(FORCE), action='store_true', help='allow change of existing date')
     kit_delete = kit_cmds.add_parser(DELETE, help='remove an item or part from the database')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
 
