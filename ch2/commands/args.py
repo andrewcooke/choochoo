@@ -491,9 +491,12 @@ def parser():
     kit_show.add_argument(DATE, action='store', nargs='?', help='when to display (default now)')
     kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
-    kit_statistics.add_argument(NAME, action='store', help='group, component or model')
+    kit_statistics.add_argument(NAME, action='store', help='group, item, component or model')
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_retire = kit_cmds.add_parser(RETIRE, help='retire an item or part')
+    kit_retire.add_argument(NAME, action='store', help='item or model')
+    kit_retire.add_argument(DATE, action='store', nargs='?', help='when to retire (default now)')
+    kit_retire.add_argument(mm(FORCE), action='store_true', help='allow change of existing date')
     kit_delete = kit_cmds.add_parser(DELETE, help='remove an item or part from the database')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
 

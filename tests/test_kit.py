@@ -1,9 +1,9 @@
-from subprocess import run
+
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 from ch2.commands.args import bootstrap_file, m, V
-from ch2.commands.kit import new, add
+from ch2.commands.kit import new, add, statistics, retire, show
 from ch2.config import default
 
 
@@ -36,4 +36,15 @@ class TestKit(TestCase):
                 with self.assertRaises(Exception) as ctx:
                     new(s, 'bike', 'sram', None, True)
                 self.assertTrue('sram' in str(ctx.exception), ctx.exception)
-
+                new(s, 'bike', 'bowman', None, False)
+                add(s, 'bowman', 'chain', 'sram', None, False)
+                self.assertEquals(len(show(s, 'cotic', None)), 3)
+                self.assertEqual(len(statistics(s, 'bike')), 16)
+                self.assertEqual(len(statistics(s, 'cotic')), 20)
+                self.assertEqual(len(statistics(s, 'chain')), 33)
+                self.assertEqual(len(statistics(s, 'sram')), 16)
+                retire(s, 'bowman', None, False)
+                with self.assertRaises(Exception) as ctx:
+                    retire(s, 'bowman', None, False)
+                self.assertTrue('retired' in str(ctx.exception), ctx.exception)
+                retire(s, 'sram')

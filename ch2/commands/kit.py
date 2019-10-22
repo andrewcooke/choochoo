@@ -6,7 +6,7 @@ from sys import stdout
 from numpy import median
 from sqlalchemy import or_
 
-from .args import SUB_COMMAND, NEW, GROUP, ITEM, DATE, FORCE, ADD, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV
+from .args import SUB_COMMAND, NEW, GROUP, ITEM, DATE, FORCE, ADD, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, RETIRE
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
     groupby_tuple
 from ..squeal.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
@@ -45,12 +45,14 @@ Some of the above will require --force to confirm.
             show(s, args[ITEM], args[DATE]).display(csv=args[CSV], output=output)
         elif cmd == STATISTICS:
             statistics(s, args[NAME]).display(csv=args[CSV], output=output)
+        elif cmd == RETIRE:
+            retire(s, args[NAME], args[DATE], args[FOREC])
 
 
 def new(s, group, item, date, force):
     group_instance = KitGroup.get(s, group, force=force)
     item_instance = KitItem.new(s, group_instance, item, date)
-    log.info(f'Created {group_instance.name} {item_instance.name}'
+    log.info(f'Created {group_instance.name} {item_instance.name} '
              f'at {time_to_local_time(item_instance.time_added(s))}')
 
 
@@ -76,7 +78,7 @@ def show(s, item, date):
                     date = local_time_to_time(item)
                     item = None
                 except:
-                    raise Exception(f'Cannot parse {item} as a date')
+                    raise Exception(f'Cannot parse {item} as a date (and it is not an item)')
         else:
             date = now()
     if item:
@@ -105,8 +107,16 @@ def show_item(s, item, date):
                  for component, models in groupby(models, key=lambda m: m.component.name)))
 
 
+def retire(s, name, date, force):
+    instance = get_name(s, name, classes=(KitItem, KitModel), require=True)
+    if isinstance(instance, KitItem):
+        instance.retire(s, date, force)
+    else:
+        KitModel.retire(s, name, date, force)
+
+
 def statistics(s, name):
-    instance = get_name(s, name)
+    instance = get_name(s, name, require=True)
     return {KitGroup: group_statistics,
             KitItem: item_statistics,
             KitComponent: component_statistics,
@@ -115,7 +125,9 @@ def statistics(s, name):
 
 def stats(title, values, fmt):
     n = len(values)
-    if n == 1:
+    if n == 0:
+        return Leaf(f'{title} [no data]')
+    elif n == 1:
         return Leaf(f'{title} {fmt(values[0])}')
     else:
         total = sum(values)
@@ -225,6 +237,9 @@ class Node:
                 yield prefix + line
                 prefix = '  ' if child is last else '| '
 
+    def __len__(self):
+        return 1 + sum(len(child) for child in self.children)
+
 
 class Leaf:
 
@@ -236,3 +251,6 @@ class Leaf:
 
     def tree_lines(self):
         yield self.value
+
+    def __len__(self):
+        return 1
