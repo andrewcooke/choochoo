@@ -159,7 +159,7 @@ class KitGroup(Base):
     name = Column(Text, nullable=False, index=True, unique=True)
 
     @classmethod
-    def get(cls, s, name, force=False):
+    def get_or_add(cls, s, name, force=False):
         try:
             return s.query(KitGroup).filter(KitGroup.name == name).one()
         except NoResultFound:
@@ -200,7 +200,7 @@ class KitItem(StatisticsMixin, Source):
     }
 
     @classmethod
-    def new(cls, s, group, name, date):
+    def add(cls, s, group, name, date):
         time = local_time_or_now(date)
         # don't rely on unique index to catch duplicates because that's not triggered until commit
         if s.query(KitItem).filter(KitItem.name == name).count():
@@ -256,7 +256,14 @@ class KitComponent(Base):
     name = Column(Text, nullable=False, index=True)
 
     @classmethod
-    def get(cls, s, name, force):
+    def get(cls, s, name, require=True):
+        instance = s.query(KitComponent).filter(KitComponent.name == name).one_or_none()
+        if require and not instance:
+            raise Exception(f'Component {name} does not exist')
+        return instance
+
+    @classmethod
+    def get_or_add(cls, s, name, force):
         try:
             return s.query(KitComponent).filter(KitComponent.name == name).one()
         except NoResultFound:
@@ -298,11 +305,11 @@ class KitModel(StatisticsMixin, Source):
     }
 
     @classmethod
-    def add(cls, s, item, component, name, date, force):
+    def add(cls, s, item, component, name, date):
         time = local_time_or_now(date)
         cls._reject_duplicate(s, item, component, name, time)
         model = cls._add_instance(s, item, component, name)
-        model._add_statistics(s, time, force)
+        model._add_statistics(s, time)
         return model
 
     @classmethod
@@ -325,10 +332,7 @@ class KitModel(StatisticsMixin, Source):
             log.warning(f'Model {name} does not match any previous entries')
         return add(s, KitModel(item=item, component=component, name=name))
 
-    def time_range(self, s):
-        return None, None
-
-    def _add_statistics(self, s, time, force):
+    def _add_statistics(self, s, time):
         self._add_timestamp(s, KIT_ADDED, time)
         before = self.before(s, time)
         after = self.after(s, time)
@@ -344,6 +348,10 @@ class KitModel(StatisticsMixin, Source):
             after_added = after.time_added(s)
             self._add_timestamp(s, KIT_RETIRED, after_added)
             log.info(f'Expired new {self.component.name} ({self.name})')
+
+    @classmethod
+    def get(cls, s, item, component, name, time):
+        pass
 
     def _base_sibling_query(self, s, statistic):
         return s.query(KitModel).\
@@ -366,6 +374,9 @@ class KitModel(StatisticsMixin, Source):
             time = self.time_added(s)
         return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time > time).\
             order_by(StatisticJournal.time).first()
+
+    def time_range(self, s):
+        return None, None
 
     def __str__(self):
         return f'KitModel "{self.name}"'

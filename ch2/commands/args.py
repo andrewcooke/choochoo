@@ -3,8 +3,8 @@ from argparse import ArgumentParser
 from genericpath import exists
 from logging import getLogger
 from os import makedirs
-from os.path import dirname, expanduser, realpath, normpath, relpath, join
-from re import compile, sub
+from os.path import dirname, expanduser, realpath, normpath
+from re import sub
 from typing import Mapping
 
 from ..lib.date import to_date, to_time
@@ -43,6 +43,7 @@ ADD_HEADER = 'add-header'
 AFTER = 'after'
 AFTER_BYTES = 'after-bytes'
 AFTER_RECORDS = 'after-records'
+ALL = 'all'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
@@ -154,6 +155,7 @@ TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
 TUI = 'tui'
+UNDO = 'undo'
 UNLOCK = 'unlock'
 USER = 'user'
 VALIDATE = 'validate'
@@ -480,17 +482,26 @@ def parser():
     kit_start.add_argument(GROUP, action='store', help='item group (bike, shoe, etc)')
     kit_start.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
     kit_start.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
-    kit_start.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type')
+    kit_start.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new group')
+    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item')
+    kit_finish.add_argument(ITEM, action='store', help='item name')
+    kit_finish.add_argument(DATE, action='store', nargs='?', help='when to retire (default now)')
+    kit_finish.add_argument(mm(FORCE), action='store_true', help='confirm change of existing date')
+    kit_delete = kit_cmds.add_parser(DELETE, help='remove all entries for an item or group')
+    kit_delete.add_argument(NAME, action='store', help='item or group to delete')
+    kit_delete.add_argument(mm(FORCE), action='store_true', help='confirm group deletion')
     kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)')
     kit_change.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
     kit_change.add_argument(COMPONENT, action='store', help='component type (chain, laces, etc)')
     kit_change.add_argument(MODEL, action='store', help='model description')
-    kit_change.add_argument(DATE, action='store', nargs='?', help='when added (default now)')
-    kit_change.add_argument(mm(FORCE), action='store_true', help='allow creation of a new type or component')
-    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item')
-    kit_finish.add_argument(NAME, action='store', help='item name')
-    kit_finish.add_argument(DATE, action='store', nargs='?', help='when to retire (default now)')
-    kit_finish.add_argument(mm(FORCE), action='store_true', help='allow change of existing date')
+    kit_change.add_argument(DATE, action='store', nargs='?', help='when changed (default now)')
+    kit_change.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new component')
+    kit_undo = kit_cmds.add_parser(UNDO, help='remove a change')
+    kit_undo.add_argument(ITEM, action='store', help='item name')
+    kit_undo.add_argument(COMPONENT, action='store', help='component type')
+    kit_undo.add_argument(MODEL, action='store', help='model description')
+    kit_undo.add_argument(DATE, action='store', nargs='?', help='active date (to disambiguate models; default now)')
+    kit_undo.add_argument(mm(ALL), action='store_true', help='remove all models (rather than single date)')
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
     kit_show.add_argument(ITEM, action='store', nargs='?', help='which item to display (default all)')
     kit_show.add_argument(DATE, action='store', nargs='?', help='when to display (default now)')
@@ -498,7 +509,6 @@ def parser():
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
     kit_statistics.add_argument(NAME, action='store', help='group, item, component or model')
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
-    kit_delete = kit_cmds.add_parser(DELETE, help='remove an item or part from the database')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')

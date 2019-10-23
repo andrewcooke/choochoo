@@ -7,11 +7,12 @@ from numpy import median
 from sqlalchemy import or_
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH
+    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
     groupby_tuple
 from ..squeal.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
 from ..squeal.tables.statistic import StatisticJournalTimestamp, StatisticName
+from ..squeal.tables.source import Composite
 from ..stoats.names import KIT_ADDED, KIT_RETIRED, ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME
 
 log = getLogger(__name__)
@@ -21,28 +22,19 @@ def kit(args, db, output=stdout):
     '''
 ## kit
 
-    > ch2 kit start bike cotic
-    > ch2 kit change cotic chain sram 2019-10-12
-    > ch2 kit show cotic
-    > ch2 kit statistics cotic chain
-    > ch2 kit statistics chain
-    > ch2 kit statistics bike
-    > ch2 kit change cotic chain kcm
-    > ch2 kit finish cotic
-
-    > ch2 kit start shoe 'red adidas'
-    > ch2 kit finish 'red adidas'
-
-Some of the above will require --force to confirm.
     '''
     cmd = args[SUB_COMMAND]
     with db.session_context() as s:
         if cmd == START:
             start(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
+        elif cmd == FINISH:
+            finish(s, args[ITEM], args[DATE], args[FORCE])
+        elif cmd == DELETE:
+            delete(s, args[NAME], args[FORCE])
         elif cmd == CHANGE:
             change(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE])
-        elif cmd == FINISH:
-            finish(s, args[NAME], args[DATE], args[FOREC])
+        elif cmd == UNDO:
+            undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
         elif cmd == SHOW:
             show(s, args[ITEM], args[DATE]).display(csv=args[CSV], output=output)
         elif cmd == STATISTICS:
@@ -50,23 +42,36 @@ Some of the above will require --force to confirm.
 
 
 def start(s, group, item, date, force):
-    group_instance = KitGroup.get(s, group, force=force)
-    item_instance = KitItem.new(s, group_instance, item, date)
+    group_instance = KitGroup.get_or_add(s, group, force=force)
+    item_instance = KitItem.add(s, group_instance, item, date)
     log.info(f'Started {group_instance.name} {item_instance.name} '
              f'at {time_to_local_time(item_instance.time_added(s))}')
 
 
-def change(s, item, component, part, date, force):
+def finish(s, item, date, force):
+    get_name(s, item, classes=(KitItem,), require=True).finish(s, date, force)
+    log.info(f'Finished {item}')
+
+
+def delete(s, name, force):
+    instance = get_name(s, name, classes=(KitGroup, KitItem), require=True)
+    if isinstance(instance, KitGroup) and not force:
+        raise Exception(f'Specify {mm(FORCE)} to delete group')
+    s.delete(instance)
+    Composite.clean(s)
+
+
+def change(s, item, component, model, date, force):
     item_instance = KitItem.get(s, item)
-    component_instance = KitComponent.get(s, component, force)
-    model_instance = KitModel.add(s, item_instance, component_instance, part, date, force)
+    component_instance = KitComponent.get_or_add(s, component, force)
+    model_instance = KitModel.add(s, item_instance, component_instance, model, date)
     log.info(f'Changed {item_instance.name} {component_instance.name} {model_instance.name} '
              f'at {time_to_local_time(model_instance.time_added(s))}')
 
 
-def finish(s, name, date, force):
-    get_name(s, name, classes=(KitItem,), require=True).finish(s, date, force)
-    log.info(f'Finished {name}')
+def undo(s, item, component, model, date, all):
+    item_instance = KitItem.get(s, item)
+    component_instance = KitComponent.get(s, component)
 
 
 def show(s, item, date):
@@ -94,6 +99,7 @@ def show(s, item, date):
 
 
 def show_item(s, item, date):
+    # todo - include start dates so they can be used for undo
     beforeq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
         join(StatisticName). \
         filter(StatisticName.name == KIT_ADDED).subquery()
