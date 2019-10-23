@@ -1,3 +1,4 @@
+
 from collections import defaultdict
 from logging import getLogger
 
@@ -5,12 +6,12 @@ from sqlalchemy import Column, Integer, ForeignKey, Text, desc, or_
 from sqlalchemy.orm import relationship, aliased
 from sqlalchemy.orm.exc import NoResultFound
 
-from ch2.lib.date import local_time_or_now, now
 from .source import Source, SourceType, Composite, CompositeComponent
 from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestamp
 from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
+from ...lib.date import local_time_or_now, now
 from ...stoats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE
 
 log = getLogger(__name__)
@@ -78,9 +79,9 @@ class StatisticsMixin:
             cc = aliased(CompositeComponent)
             subq = subq.join(cc, Composite.id == cc.output_source_id).filter(cc.input_source == source)
         subq = subq.subquery()
-        q = s.query(StatisticJournal).\
-            join(StatisticName).\
-            outerjoin(subq, subq.c.composite_id == StatisticJournal.source_id).\
+        q = s.query(StatisticJournal). \
+            join(StatisticName). \
+            outerjoin(subq, subq.c.composite_id == StatisticJournal.source_id). \
             filter(StatisticName.name == statistic,
                    StatisticName.constraint == None)
         if len(sources) == 1:
@@ -93,13 +94,13 @@ class StatisticsMixin:
 
     def _base_use_query(self, s, statistic):
         cc1, cc2 = aliased(CompositeComponent), aliased(CompositeComponent)
-        sourceq = s.query(cc1.input_source_id).\
-            join(Composite, Composite.id == cc1.output_source_id).\
-            join(cc2, cc2.output_source_id == Composite.id).\
+        sourceq = s.query(cc1.input_source_id). \
+            join(Composite, Composite.id == cc1.output_source_id). \
+            join(cc2, cc2.output_source_id == Composite.id). \
             filter(cc2.input_source == self,
                    cc1.input_source != self).subquery()
-        return s.query(StatisticJournal).\
-            join(StatisticName).\
+        return s.query(StatisticJournal). \
+            join(StatisticName). \
             filter(StatisticName.name == statistic,
                    StatisticJournal.source_id.in_(sourceq))
 
@@ -168,7 +169,7 @@ class KitGroup(Base):
                 log.warning(f'Forcing creation of new group ({name})')
                 return add(s, KitGroup(name=name))
             else:
-                groups =\
+                groups = \
                     s.query(KitGroup).order_by(KitGroup.name).all()
                 if groups:
                     log.info('Existing groups:')
@@ -281,6 +282,11 @@ class KitComponent(Base):
                 else:
                     raise Exception(f'Specify {mm(FORCE)} to create a new component ({name})')
 
+    def delete_if_unused(self, s):
+        s.refresh(self)  # make sure deleted models are no longer present
+        if not self.models:
+            s.delete(self)
+
     def __str__(self):
         return f'KitComponent "{self.name}"'
 
@@ -314,9 +320,9 @@ class KitModel(StatisticsMixin, Source):
 
     @classmethod
     def _reject_duplicate(cls, s, item, component, name, time):
-        if s.query(StatisticJournal).\
-                join(StatisticName).\
-                join(KitModel, KitModel.id == StatisticJournal.source_id).\
+        if s.query(StatisticJournal). \
+                join(StatisticName). \
+                join(KitModel, KitModel.id == StatisticJournal.source_id). \
                 filter(StatisticName.name == KIT_ADDED,
                        StatisticJournal.time == time,
                        KitModel.name == name,
@@ -350,30 +356,79 @@ class KitModel(StatisticsMixin, Source):
             log.info(f'Expired new {self.component.name} ({self.name})')
 
     @classmethod
-    def get(cls, s, item, component, name, time):
-        pass
+    def get_all_at(cls, s, item, time):
+        beforeq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
+            join(StatisticName). \
+            filter(StatisticName.name == KIT_ADDED).subquery()
+        afterq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
+            join(StatisticName). \
+            filter(StatisticName.name == KIT_RETIRED).subquery()
+        return s.query(KitModel). \
+            join(beforeq, beforeq.c.source_id == KitModel.id). \
+            outerjoin(afterq, afterq.c.source_id == KitModel.id). \
+            filter(KitModel.item == item,
+                   beforeq.c.time <= time,
+                   or_(afterq.c.time >= time, afterq.c.time == None)).all()
+
+    @classmethod
+    def get_all(cls, s, item, component):
+        return s.query(KitModel). \
+            filter(KitModel.item == item,
+                   KitModel.component == component).all()
+
+    @classmethod
+    def get(cls, s, item, component, name, time, require=True):
+        # if time is None, any appropriate model is returned
+        q = s.query(KitModel)
+        if time:
+            beforeq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
+                join(StatisticName). \
+                filter(StatisticName.name == KIT_ADDED).subquery()
+            afterq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
+                join(StatisticName). \
+                filter(StatisticName.name == KIT_RETIRED).subquery()
+            q = q.join(beforeq, beforeq.c.source_id == KitModel.id). \
+                outerjoin(afterq, afterq.c.source_id == KitModel.id). \
+                filter(beforeq.c.time <= time,
+                       or_(afterq.c.time >= time, afterq.c.time == None))
+        instance = q.filter(KitModel.item == item,
+                            KitModel.component == component,
+                            KitModel.name == name).first()
+        if not instance and require:
+            raise Exception(f'Model {name} does not exist')
+        return instance
 
     def _base_sibling_query(self, s, statistic):
-        return s.query(KitModel).\
-                join(StatisticJournal, StatisticJournal.source_id == KitModel.id).\
-                join(StatisticName).\
-                join(KitComponent, KitComponent.id == KitModel.component_id).\
-                join(KitItem, KitItem.id == KitModel.item_id).\
-                filter(StatisticName.name == statistic,
-                       KitComponent.name == self.component.name,
-                       KitItem.name == self.item.name)
+        return s.query(KitModel). \
+            join(StatisticJournal, StatisticJournal.source_id == KitModel.id). \
+            join(StatisticName). \
+            join(KitComponent, KitComponent.id == KitModel.component_id). \
+            join(KitItem, KitItem.id == KitModel.item_id). \
+            filter(StatisticName.name == statistic,
+                   KitComponent.name == self.component.name,
+                   KitItem.name == self.item.name)
 
     def before(self, s, time=None):
         if not time:
             time = self.time_added(s)
-        return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time < time).\
+        return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time < time). \
             order_by(desc(StatisticJournal.time)).first()
 
     def after(self, s, time=None):
         if not time:
             time = self.time_added(s)
-        return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time > time).\
+        return self._base_sibling_query(s, KIT_ADDED).filter(StatisticJournal.time > time). \
             order_by(StatisticJournal.time).first()
+
+    def undo(self, s):
+        time = self.time_added(s)
+        s.delete(self)
+        before = self.before(s, time)
+        if before:
+            before._remove_statistic(s, KIT_RETIRED)
+            after = self.after(s, time)
+            if after:
+                before._add_timestamp(s, KIT_RETIRED, after.time_added(s))
 
     def time_range(self, s):
         return None, None

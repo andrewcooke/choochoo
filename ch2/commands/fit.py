@@ -20,7 +20,7 @@ def fit(args, db):
 
 Print the contents of fit files.
 
-The format and details displayed is selected by the sub-command: records, tables, messages, fields, csv
+The format and details displayed are selected by the sub-command: records, tables, messages, fields, csv
 and grep (the last requiring patterns to match against).
 
 For a list of sub-commands options see `ch2 fit -h`.

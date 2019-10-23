@@ -3,8 +3,9 @@ from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 from ch2.commands.args import bootstrap_file, m, V
-from ch2.commands.kit import start, change, statistics, finish, show
+from ch2.commands.kit import start, change, statistics, finish, show, undo
 from ch2.config import default
+from ch2.squeal import KitModel, KitItem, KitComponent
 
 
 class TestKit(TestCase):
@@ -47,3 +48,10 @@ class TestKit(TestCase):
                 with self.assertRaises(Exception) as ctx:
                     finish(s, 'bowman', None, False)
                 self.assertTrue('retired' in str(ctx.exception), ctx.exception)
+                self.assertEqual(len(KitModel.get_all(s, KitItem.get(s, 'cotic'), KitComponent.get(s, 'chain'))), 5)
+                undo(s, 'cotic', 'chain', 'sram', None, True)
+                self.assertEqual(len(KitModel.get_all(s, KitItem.get(s, 'cotic'), KitComponent.get(s, 'chain'))), 2)
+                undo(s, 'cotic', 'chain', 'kcm', None, True)
+                self.assertEqual(len(KitModel.get_all(s, KitItem.get(s, 'cotic'), KitComponent.get(s, 'chain'))), 0)
+                undo(s, 'bowman', 'chain', 'sram', None, True)
+                self.assertFalse(KitComponent.get(s, 'chain', require=False))

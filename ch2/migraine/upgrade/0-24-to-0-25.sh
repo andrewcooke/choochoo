@@ -10,9 +10,9 @@ SRC='0-24'
 DST='0-24-dev'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=0
-DO_DROP=0
-DO_DUMP=0
+DO_COPY=1
+DO_DROP=1
+DO_DUMP=1
 
 
 # this section of the script copies diary data across
@@ -99,8 +99,8 @@ dev/ch2 --dev constants --set FTHR.Walk 154
 dev/ch2 --dev constants --set SRTM1.Dir /home/andrew/archive/srtm1
 dev/ch2 --dev constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "weight": 12}'
 
-dev/ch2 --dev kit new bike cotic 2017-01-01 --force
-dev/ch2 --dev kit add cotic chain pc1110 2019-10-11 --force
+dev/ch2 --dev kit start bike cotic 2017-01-01 --force
+dev/ch2 --dev kit change cotic chain pc1110 2019-10-11 --force
 
 
 echo "next, run 'ch2 activities' or similar to load data"

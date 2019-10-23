@@ -507,7 +507,7 @@ def parser():
     kit_show.add_argument(DATE, action='store', nargs='?', help='when to display (default now)')
     kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
-    kit_statistics.add_argument(NAME, action='store', help='group, item, component or model')
+    kit_statistics.add_argument(NAME, action='store', nargs='?', help='group, item, component or model')
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
 

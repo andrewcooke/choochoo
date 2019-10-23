@@ -4,16 +4,18 @@ from logging import getLogger
 from sys import stdout
 
 from numpy import median
-from sqlalchemy import or_
 
+from ch2.squeal import PipelineType
+from ch2.squeal.types import long_cls
+from ch2.stoats.calculate.kit import KitCalculator
+from ch2.stoats.pipeline import run_pipeline
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL
+    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
     groupby_tuple
 from ..squeal.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
-from ..squeal.tables.statistic import StatisticJournalTimestamp, StatisticName
 from ..squeal.tables.source import Composite
-from ..stoats.names import KIT_ADDED, KIT_RETIRED, ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME
+from ..stoats.names import ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME
 
 log = getLogger(__name__)
 
@@ -22,23 +24,72 @@ def kit(args, db, output=stdout):
     '''
 ## kit
 
+Track equipment, including the lifetime of particular components.
+
+    > ch2 kit new GROUP ITEM
+    > ch2 kit change ITEM COMPONENT MODEL
+    > ch2 kit statistics ITEM
+
+For full details see `ch2 kit -h` and `ch2 kit SUBCOMMAND -h`.
+
+### Examples
+
+Note that in practice some commands that do 'important' changes to the database require `--force` for confirmation.
+
+    > ch2 kit start bike cotic
+    > ch2 kit change cotic chain sram
+    # ... some months later ...
+    > ch2 kit change cotic chain kmc
+    # ... more time later ...
+    > ch2 kit change cotic chain sram
+    > ch2 kit statistics chain
+
+This example will give statistics on how long (time, distance) different bikes chains lasted.
+
+In addition, when importing activities, the `kit` variable must be defined.  So, for example:
+
+    > ch2 activities -D kit=cotic **/*.fit
+
+In this way the system knows what equipment was used in what activity.
+
+Finally, statistics may be incorrect if the equipment is modified (because the correct use will not be
+associated with each activity).  To recalculate use
+
+    > ch2 kit rebuild
+
+For running shoes you might simply track each item:
+
+    > ch2 kit start shoe adidas
+    # ... later ...
+    > ch2 kit finish adidas
+    > ch2 kit start shoe nike
+
+Statistics for shoes:
+
+    > ch2 kit statistic shoe
+
+Names can be chosen at will (there is nothing hard-coded about 'bike', 'chain', 'cotic', etc),
+but in general must be unique.  They can contain spaces if quoted.
     '''
     cmd = args[SUB_COMMAND]
-    with db.session_context() as s:
-        if cmd == START:
-            start(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
-        elif cmd == FINISH:
-            finish(s, args[ITEM], args[DATE], args[FORCE])
-        elif cmd == DELETE:
-            delete(s, args[NAME], args[FORCE])
-        elif cmd == CHANGE:
-            change(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE])
-        elif cmd == UNDO:
-            undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
-        elif cmd == SHOW:
-            show(s, args[ITEM], args[DATE]).display(csv=args[CSV], output=output)
-        elif cmd == STATISTICS:
-            statistics(s, args[NAME]).display(csv=args[CSV], output=output)
+    if cmd == REBUILD:
+        rebuild(db)
+    else:
+        with db.session_context() as s:
+            if cmd == START:
+                start(s, args[GROUP], args[ITEM], args[DATE], args[FORCE])
+            elif cmd == FINISH:
+                finish(s, args[ITEM], args[DATE], args[FORCE])
+            elif cmd == DELETE:
+                delete(s, args[NAME], args[FORCE])
+            elif cmd == CHANGE:
+                change(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE])
+            elif cmd == UNDO:
+                undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
+            elif cmd == SHOW:
+                show(s, args[ITEM], args[DATE]).display(csv=args[CSV], output=output)
+            elif cmd == STATISTICS:
+                statistics(s, args[NAME]).display(csv=args[CSV], output=output)
 
 
 def start(s, group, item, date, force):
@@ -72,9 +123,25 @@ def change(s, item, component, model, date, force):
 def undo(s, item, component, model, date, all):
     item_instance = KitItem.get(s, item)
     component_instance = KitComponent.get(s, component)
+    if all:
+        if date:
+            raise Exception(f'Provide date or {mm(ALL)}, not both')
+        model_instance = KitModel.get(s, item_instance, component_instance, model, None)
+        while model_instance:
+            model_instance.undo(s)
+            model_instance = KitModel.get(s, item_instance, component_instance, model, None, require=False)
+    else:
+        model_instance = KitModel.get(s, item_instance, component_instance, model, local_time_or_now(date))
+        model_instance.undo(s)
+    component_instance.delete_if_unused(s)
+
+
+def rebuild(db):
+    run_pipeline(db, PipelineType.STATISTIC, force=True, like=long_cls(KitCalculator))
 
 
 def show(s, item, date):
+    # todo show groups too
     instance = s.query(KitItem).filter(KitItem.name == item).one_or_none()
     if instance:
         item = instance
@@ -100,18 +167,7 @@ def show(s, item, date):
 
 def show_item(s, item, date):
     # todo - include start dates so they can be used for undo
-    beforeq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
-        join(StatisticName). \
-        filter(StatisticName.name == KIT_ADDED).subquery()
-    afterq = s.query(StatisticJournalTimestamp.source_id, StatisticJournalTimestamp.time). \
-        join(StatisticName). \
-        filter(StatisticName.name == KIT_RETIRED).subquery()
-    models = s.query(KitModel). \
-        join(beforeq, beforeq.c.source_id == KitModel.id). \
-        outerjoin(afterq, afterq.c.source_id == KitModel.id). \
-        filter(KitModel.item == item,
-               beforeq.c.time <= date,
-               or_(afterq.c.time >= date, afterq.c.time == None)).all()
+    models = KitModel.get_all_at(s, item, date)
     return Node(f'Item {item.name}',
                 (Node(f'Component {component}',
                       (Leaf(f'Model {model.name}') for model in models))
@@ -119,11 +175,19 @@ def show_item(s, item, date):
 
 
 def statistics(s, name):
-    instance = get_name(s, name, require=True)
-    return {KitGroup: group_statistics,
-            KitItem: item_statistics,
-            KitComponent: component_statistics,
-            KitModel: model_statistics}[type(instance)](s, instance)
+    if name:
+        instance = get_name(s, name, require=True)
+        return {KitGroup: group_statistics,
+                KitItem: item_statistics,
+                KitComponent: component_statistics,
+                KitModel: model_statistics}[type(instance)](s, instance)
+    else:
+        return all_statistics(s)
+
+
+def all_statistics(s):
+    groups = s.query(KitGroup).order_by(KitGroup.name).all()
+    return Node('All groups', (group_statistics(s, group) for group in groups))
 
 
 def stats(title, values, fmt):
