@@ -38,7 +38,7 @@ For full details see `ch2 kit -h` and `ch2 kit SUBCOMMAND -h`.
 Note that in practice some commands that do 'important' changes to the database require `--force` for confirmation.
 
     > ch2 kit start bike cotic
-    > ch2 kit change cotic chain sram
+    > ch2 kit change cotic chain sram --start
     # ... some months later ...
     > ch2 kit change cotic chain kmc
     # ... more time later ...
@@ -84,7 +84,7 @@ but in general must be unique.  They can contain spaces if quoted.
             elif cmd == DELETE:
                 delete(s, args[NAME], args[FORCE])
             elif cmd == CHANGE:
-                change(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE])
+                change(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[FORCE], args[START])
             elif cmd == UNDO:
                 undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
             elif cmd == SHOW:
@@ -94,6 +94,7 @@ but in general must be unique.  They can contain spaces if quoted.
 
 
 def start(s, group, item, date, force):
+    date = local_time_or_now(date)
     group_instance = KitGroup.get_or_add(s, group, force=force)
     item_instance = KitItem.add(s, group_instance, item, date)
     log.info(f'Started {group_instance.name} {item_instance.name} '
@@ -101,6 +102,7 @@ def start(s, group, item, date, force):
 
 
 def finish(s, item, date, force):
+    date = local_time_or_now(date)
     get_name(s, item, classes=(KitItem,), require=True).finish(s, date, force)
     log.info(f'Finished {item}')
 
@@ -113,8 +115,14 @@ def delete(s, name, force):
     Composite.clean(s)
 
 
-def change(s, item, component, model, date, force):
+def change(s, item, component, model, date, force, start):
     item_instance = KitItem.get(s, item)
+    if start:
+        if date:
+            raise Exception(f'Do not provide a date with {mm(START)}')
+        date = item_instance.time_added(s)
+    else:
+        date = local_time_or_now(date)
     component_instance = KitComponent.get_or_add(s, component, force)
     model_instance = KitModel.add(s, item_instance, component_instance, model, date)
     log.info(f'Changed {item_instance.name} {component_instance.name} {model_instance.name} '

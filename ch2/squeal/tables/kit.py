@@ -11,7 +11,7 @@ from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestam
 from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
-from ...lib.date import local_time_or_now, now
+from ...lib import now
 from ...stoats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE
 
 log = getLogger(__name__)
@@ -202,14 +202,13 @@ class KitItem(StatisticsMixin, Source):
 
     @classmethod
     def add(cls, s, group, name, date):
-        time = local_time_or_now(date)
         # don't rely on unique index to catch duplicates because that's not triggered until commit
         if s.query(KitItem).filter(KitItem.name == name).count():
             raise Exception(f'Item {name} of group {group.name} already exists')
         else:
             assert_name_does_not_exist(s, name, KitItem)
             item = add(s, KitItem(group=group, name=name))
-            item._add_statistics(s, time)
+            item._add_statistics(s, date)
             return item
 
     def _add_statistics(self, s, time):
@@ -235,7 +234,7 @@ class KitItem(StatisticsMixin, Source):
                 self._remove_statistic(s, KIT_RETIRED, owner=self)
             else:
                 raise Exception(f'Item {self.name} is already retired')
-        self._add_timestamp(s, KIT_RETIRED, local_time_or_now(date))
+        self._add_timestamp(s, KIT_RETIRED, date)
 
     def delete(self, s):
         s.delete(self)
@@ -311,8 +310,7 @@ class KitModel(StatisticsMixin, Source):
     }
 
     @classmethod
-    def add(cls, s, item, component, name, date):
-        time = local_time_or_now(date)
+    def add(cls, s, item, component, name, time):
         cls._reject_duplicate(s, item, component, name, time)
         model = cls._add_instance(s, item, component, name)
         model._add_statistics(s, time)

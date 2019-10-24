@@ -496,6 +496,7 @@ def parser():
     kit_change.add_argument(MODEL, action='store', help='model description')
     kit_change.add_argument(DATE, action='store', nargs='?', help='when changed (default now)')
     kit_change.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new component')
+    kit_change.add_argument(mm(START), action='store_true', help='set default date to start of item')
     kit_undo = kit_cmds.add_parser(UNDO, help='remove a change')
     kit_undo.add_argument(ITEM, action='store', help='item name')
     kit_undo.add_argument(COMPONENT, action='store', help='component type')
