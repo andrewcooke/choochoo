@@ -2,8 +2,18 @@
 # Equipment Tracking
 
 * [Introduction](#introduction)
-* [Defining a New Item](#defining-a-new-item)
-* [Adding Parts](#adding-parts)
+* [A More Complete Example](#a-more-complete-example)
+* [Theory - Making Things General](#theory---making-things-general)
+* [Loading Activities](#loading-activities)
+* [Command Reference](#command-reference)
+  * [kit start](#kit-start)
+  * [kit finish](#kit-finish)
+  * [kit delete](#kit-delete)
+  * [kit change](#kit-change)
+  * [kit undo](#kit-undo)
+  * [kit show](#kit-show)
+  * [kit statistics](#kit-statistics)
+  * [kit rebuild](#kit-rebuild)
 
 ## Introduction
 
@@ -16,16 +26,17 @@ components (chains, particularly) last longer than others.
 So I wanted to make a solution that made my life as simple as
 possible.  The result is a command line tool where I can type
 
-    > ch2 kit add cotic chain pc1110
+    > ch2 kit change cotic chain pc1110
 
 when I add a SRAM PC1110 chain to my Cotic bike, and everything else
 is done for me, automatically.
 
-If I want statistics on chains, I can type:
+If I want statistics (how far I've ridden, how long it's lasted) on
+chains, I can type:
 
     > ch2 kit statistics chain
 
-If I want statistics on that particular model:
+And if I want statistics on that particular model:
 
     > ch2 kit statistics pc1110
 
@@ -38,82 +49,20 @@ Unlike bike components, buying a second pair of shoes doesn't
 necessarily replace the first pair.  So you have to expire these
 automatically:
 
-    > ch2 new shoe ultraboost-19
-    > ch2 new shoe zoom-pegasus
-    > ch2 retire ultraboost-19
-    > ch2 statistics shoe
+    > ch2 kit start shoe ultraboost-19
+    > ch2 kit start shoe zoom-pegasus
+    > ch2 kit finish ultraboost-19
+    > ch2 kit statistics shoe
 
-### Making Things General
-
-Choochoo can track *anything* that fits into this schema:
-
-    **Groups** These are the *kinds of things* you track: shoes,
-    bikes, etc.
-
-    **Items** These are the particular things: the name you give to a
-    particular bike, or a particular pair of shoes.
-
-    **Components** These (optionally) make up the things you are
-    tracking.  So "chain", for a bike, or "shoelaces" (maybe!) for
-    shoes.
-
-    **Models* These describe a particular component.  So the chain
-    migbt be "PC1110".
-
-Note that all these anmes can contain spaces, but if you use spaces
-you need to take care with quotes on the command line.  I find it's
-simpler to use dashes.
-
-Also, names must be unique.  You cannot re-use the same name for
-different things.
-
-### An Example
+## A More Complete Example
 
 First, I will add my Cotic bike:
 
-    > ch2 kit new bike cotic --force
-    Traceback (most recent call last):
-      File "/usr/local/lib/python3.7/runpy.py", line 183, in _run_module_as_main
-        mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
-      File "/usr/local/lib/python3.7/runpy.py", line 142, in _get_module_details
-        return _get_module_details(pkg_main_name, error)
-      File "/usr/local/lib/python3.7/runpy.py", line 109, in _get_module_details
-        __import__(pkg_name)
-      File "/home/andrew/project/ch2/choochoo/ch2/__init__.py", line 22, in <module>
-        from .commands.activities import activities
-      File "/home/andrew/project/ch2/choochoo/ch2/commands/activities.py", line 3, in <module>
-        from ..squeal import PipelineType
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/__init__.py", line 4, in <module>
-        from .tables.kit import KitGroup, KitItem, KitComponent, KitModel
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/tables/kit.py", line 73, in <module>
-        class KitItem(Source):
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/api.py", line 75, in __init__
-        _as_declarative(cls, classname, cls.__dict__)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 131, in _as_declarative
-        _MapperConfig.setup_mapping(cls, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 160, in setup_mapping
-        cfg_cls(cls_, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 194, in __init__
-        self._early_mapping()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 199, in _early_mapping
-        self.map()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 696, in map
-        self.cls, self.local_table, **self.mapper_args
-      File "<string>", line 2, in mapper
-      File "<string>", line 2, in __init__
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 710, in __init__
-        self._configure_inheritance()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 1033, in _configure_inheritance
-        self.inherits.local_table, self.local_table
-      File "<string>", line 2, in join_condition
-      File "<string>", line 2, in _join_condition
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/sql/selectable.py", line 947, in _join_condition
-        % (a.description, b.description, hint)
-    sqlalchemy.exc.NoForeignKeysError: Can't find any foreign key relationships between 'source' and 'kit_item'.
+    > ch2 kit start bike cotic --force
+        INFO: Version 0.24.5
+        INFO: Using database at database.sql
+     WARNING: Forcing creation of new group (bike)
+        INFO: Started bike cotic at 2019-10-24 17:54:33
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -122,239 +71,188 @@ this, because `bike` will already be known by the system..
 
 Now I have a bike I am going to add some inner tubes at various dates.
 
-    > ch2 kit add cotic front-tube michelin 2019-01-01 --force
-    Traceback (most recent call last):
-      File "/usr/local/lib/python3.7/runpy.py", line 183, in _run_module_as_main
-        mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
-      File "/usr/local/lib/python3.7/runpy.py", line 142, in _get_module_details
-        return _get_module_details(pkg_main_name, error)
-      File "/usr/local/lib/python3.7/runpy.py", line 109, in _get_module_details
-        __import__(pkg_name)
-      File "/home/andrew/project/ch2/choochoo/ch2/__init__.py", line 22, in <module>
-        from .commands.activities import activities
-      File "/home/andrew/project/ch2/choochoo/ch2/commands/activities.py", line 3, in <module>
-        from ..squeal import PipelineType
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/__init__.py", line 4, in <module>
-        from .tables.kit import KitGroup, KitItem, KitComponent, KitModel
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/tables/kit.py", line 73, in <module>
-        class KitItem(Source):
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/api.py", line 75, in __init__
-        _as_declarative(cls, classname, cls.__dict__)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 131, in _as_declarative
-        _MapperConfig.setup_mapping(cls, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 160, in setup_mapping
-        cfg_cls(cls_, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 194, in __init__
-        self._early_mapping()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 199, in _early_mapping
-        self.map()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 696, in map
-        self.cls, self.local_table, **self.mapper_args
-      File "<string>", line 2, in mapper
-      File "<string>", line 2, in __init__
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 710, in __init__
-        self._configure_inheritance()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 1033, in _configure_inheritance
-        self.inherits.local_table, self.local_table
-      File "<string>", line 2, in join_condition
-      File "<string>", line 2, in _join_condition
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/sql/selectable.py", line 947, in _join_condition
-        % (a.description, b.description, hint)
-    sqlalchemy.exc.NoForeignKeysError: Can't find any foreign key relationships between 'source' and 'kit_item'.
+    > ch2 kit change cotic front-tube michelin 2019-01-01 --force
+        INFO: Version 0.24.5
+        INFO: Using database at database.sql
+     WARNING: Forcing creation of new component (front-tube)
+     WARNING: Model michelin does not match any previous entries
+        INFO: Changed cotic front-tube michelin at 2019-01-01 00:00:00
 
 
 Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
-    > ch2 kit add cotic front-tube michelin 2019-03-01
-    Traceback (most recent call last):
-      File "/usr/local/lib/python3.7/runpy.py", line 183, in _run_module_as_main
-        mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
-      File "/usr/local/lib/python3.7/runpy.py", line 142, in _get_module_details
-        return _get_module_details(pkg_main_name, error)
-      File "/usr/local/lib/python3.7/runpy.py", line 109, in _get_module_details
-        __import__(pkg_name)
-      File "/home/andrew/project/ch2/choochoo/ch2/__init__.py", line 22, in <module>
-        from .commands.activities import activities
-      File "/home/andrew/project/ch2/choochoo/ch2/commands/activities.py", line 3, in <module>
-        from ..squeal import PipelineType
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/__init__.py", line 4, in <module>
-        from .tables.kit import KitGroup, KitItem, KitComponent, KitModel
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/tables/kit.py", line 73, in <module>
-        class KitItem(Source):
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/api.py", line 75, in __init__
-        _as_declarative(cls, classname, cls.__dict__)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 131, in _as_declarative
-        _MapperConfig.setup_mapping(cls, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 160, in setup_mapping
-        cfg_cls(cls_, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 194, in __init__
-        self._early_mapping()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 199, in _early_mapping
-        self.map()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 696, in map
-        self.cls, self.local_table, **self.mapper_args
-      File "<string>", line 2, in mapper
-      File "<string>", line 2, in __init__
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 710, in __init__
-        self._configure_inheritance()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 1033, in _configure_inheritance
-        self.inherits.local_table, self.local_table
-      File "<string>", line 2, in join_condition
-      File "<string>", line 2, in _join_condition
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/sql/selectable.py", line 947, in _join_condition
-        % (a.description, b.description, hint)
-    sqlalchemy.exc.NoForeignKeysError: Can't find any foreign key relationships between 'source' and 'kit_item'.
+    > ch2 kit change cotic front-tube michelin 2019-03-01
+        INFO: Version 0.24.5
+        INFO: Using database at database.sql
+        INFO: Retired previous front-tube (michelin)
+        INFO: Changed cotic front-tube michelin at 2019-03-01 00:00:00
 
 
-    > ch2 kit add cotic front-tube vittoria
-    Traceback (most recent call last):
-      File "/usr/local/lib/python3.7/runpy.py", line 183, in _run_module_as_main
-        mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
-      File "/usr/local/lib/python3.7/runpy.py", line 142, in _get_module_details
-        return _get_module_details(pkg_main_name, error)
-      File "/usr/local/lib/python3.7/runpy.py", line 109, in _get_module_details
-        __import__(pkg_name)
-      File "/home/andrew/project/ch2/choochoo/ch2/__init__.py", line 22, in <module>
-        from .commands.activities import activities
-      File "/home/andrew/project/ch2/choochoo/ch2/commands/activities.py", line 3, in <module>
-        from ..squeal import PipelineType
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/__init__.py", line 4, in <module>
-        from .tables.kit import KitGroup, KitItem, KitComponent, KitModel
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/tables/kit.py", line 73, in <module>
-        class KitItem(Source):
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/api.py", line 75, in __init__
-        _as_declarative(cls, classname, cls.__dict__)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 131, in _as_declarative
-        _MapperConfig.setup_mapping(cls, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 160, in setup_mapping
-        cfg_cls(cls_, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 194, in __init__
-        self._early_mapping()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 199, in _early_mapping
-        self.map()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 696, in map
-        self.cls, self.local_table, **self.mapper_args
-      File "<string>", line 2, in mapper
-      File "<string>", line 2, in __init__
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 710, in __init__
-        self._configure_inheritance()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 1033, in _configure_inheritance
-        self.inherits.local_table, self.local_table
-      File "<string>", line 2, in join_condition
-      File "<string>", line 2, in _join_condition
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/sql/selectable.py", line 947, in _join_condition
-        % (a.description, b.description, hint)
-    sqlalchemy.exc.NoForeignKeysError: Can't find any foreign key relationships between 'source' and 'kit_item'.
+Previous tubes are *retired* as new ones are added.  You don't need to
+add the tubes in order - however they're added, the start and end
+times should align correctly.
+
+    > ch2 kit change cotic front-tube vittoria
+        INFO: Version 0.24.5
+        INFO: Using database at database.sql
+     WARNING: Model vittoria does not match any previous entries
+        INFO: Retired previous front-tube (michelin)
+        INFO: Changed cotic front-tube vittoria at 2019-10-24 17:54:42
 
 
 That's three different inner tubes on the front.  The last uses
 today's date as a default - that makes it easy to note changes at the
 command line as you do the work.
 
-Previous tubes are *retired* as new ones are added.  You don't need to
-add the tubes in order - however they're added, the start and end
-times should align correctly.
+Now we can see the statistics:
 
-    > ch2 kit add cotic front-tube michelin 2019-01-01
-    Traceback (most recent call last):
-      File "/usr/local/lib/python3.7/runpy.py", line 183, in _run_module_as_main
-        mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
-      File "/usr/local/lib/python3.7/runpy.py", line 142, in _get_module_details
-        return _get_module_details(pkg_main_name, error)
-      File "/usr/local/lib/python3.7/runpy.py", line 109, in _get_module_details
-        __import__(pkg_name)
-      File "/home/andrew/project/ch2/choochoo/ch2/__init__.py", line 22, in <module>
-        from .commands.activities import activities
-      File "/home/andrew/project/ch2/choochoo/ch2/commands/activities.py", line 3, in <module>
-        from ..squeal import PipelineType
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/__init__.py", line 4, in <module>
-        from .tables.kit import KitGroup, KitItem, KitComponent, KitModel
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/tables/kit.py", line 73, in <module>
-        class KitItem(Source):
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/api.py", line 75, in __init__
-        _as_declarative(cls, classname, cls.__dict__)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 131, in _as_declarative
-        _MapperConfig.setup_mapping(cls, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 160, in setup_mapping
-        cfg_cls(cls_, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 194, in __init__
-        self._early_mapping()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 199, in _early_mapping
-        self.map()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 696, in map
-        self.cls, self.local_table, **self.mapper_args
-      File "<string>", line 2, in mapper
-      File "<string>", line 2, in __init__
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 710, in __init__
-        self._configure_inheritance()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 1033, in _configure_inheritance
-        self.inherits.local_table, self.local_table
-      File "<string>", line 2, in join_condition
-      File "<string>", line 2, in _join_condition
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/sql/selectable.py", line 947, in _join_condition
-        % (a.description, b.description, hint)
-    sqlalchemy.exc.NoForeignKeysError: Can't find any foreign key relationships between 'source' and 'kit_item'.
+    > ch2 kit statistics front-tube
+        INFO: Version 0.24.5
+        INFO: Using database at database.sql
+    Item front-tube
+    +-Model michelin
+    | +-Lifetime
+    | | +-Count 2
+    | | +-Sum 296d 17h54m42s
+    | | +-Average 148d 8h57m21s
+    | | `-Median 148d 8h57m21s
+    | +-Active Time
+    | | +-Count 2
+    | | +-Sum 0s
+    | | +-Average 0s
+    | | `-Median 0s
+    | `-Active Distance
+    |   +-Count 2
+    |   +-Sum 0m
+    |   +-Average 0m
+    |   `-Median 0m
+    `-Model vittoria
+      +-Lifetime 2s
+      +-Active Time 0s
+      `-Active Distance 0m
 
 
-    > ch2 kit new bike cotic
-    Traceback (most recent call last):
-      File "/usr/local/lib/python3.7/runpy.py", line 183, in _run_module_as_main
-        mod_name, mod_spec, code = _get_module_details(mod_name, _Error)
-      File "/usr/local/lib/python3.7/runpy.py", line 142, in _get_module_details
-        return _get_module_details(pkg_main_name, error)
-      File "/usr/local/lib/python3.7/runpy.py", line 109, in _get_module_details
-        __import__(pkg_name)
-      File "/home/andrew/project/ch2/choochoo/ch2/__init__.py", line 22, in <module>
-        from .commands.activities import activities
-      File "/home/andrew/project/ch2/choochoo/ch2/commands/activities.py", line 3, in <module>
-        from ..squeal import PipelineType
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/__init__.py", line 4, in <module>
-        from .tables.kit import KitGroup, KitItem, KitComponent, KitModel
-      File "/home/andrew/project/ch2/choochoo/ch2/squeal/tables/kit.py", line 73, in <module>
-        class KitItem(Source):
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/api.py", line 75, in __init__
-        _as_declarative(cls, classname, cls.__dict__)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 131, in _as_declarative
-        _MapperConfig.setup_mapping(cls, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 160, in setup_mapping
-        cfg_cls(cls_, classname, dict_)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 194, in __init__
-        self._early_mapping()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 199, in _early_mapping
-        self.map()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/ext/declarative/base.py", line 696, in map
-        self.cls, self.local_table, **self.mapper_args
-      File "<string>", line 2, in mapper
-      File "<string>", line 2, in __init__
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 710, in __init__
-        self._configure_inheritance()
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/orm/mapper.py", line 1033, in _configure_inheritance
-        self.inherits.local_table, self.local_table
-      File "<string>", line 2, in join_condition
-      File "<string>", line 2, in _join_condition
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 128, in warned
-        return fn(*args, **kwargs)
-      File "/home/andrew/project/ch2/choochoo/env/lib/python3.7/site-packages/sqlalchemy/sql/selectable.py", line 947, in _join_condition
-        % (a.description, b.description, hint)
-    sqlalchemy.exc.NoForeignKeysError: Can't find any foreign key relationships between 'source' and 'kit_item'.
+In this example (which is auto-generated from the commands) there were
+no activities loaded (and because this code is new I don't have any
+'real' data to share either), but you can see that of activities were
+available there would be statistics on active distance and time.  For
+more details on how this works see [Loading
+Activities](#loading-activities).
+
+## Theory - Making Things General
+
+Choochoo can track *anything* that fits into this schema:
+
+**Groups** These are the *kinds of things* you track: shoes, bikes,
+etc.
+
+**Items** These are the particular things: the name you give to a
+particular bike, or a particular pair of shoes.  At this level, items
+need to be retired explicitly.
+
+**Components** These (optionally) make up the things you are tracking.
+So "chain", for a bike, or "shoelaces" (maybe!) for shoes.
+
+**Models** These describe a particular component.  So the chain migbt
+be "PC1110".  At this level, components are retired automatically
+(when they are replaced).
+
+Note that all these names can contain spaces, but if you use spaces
+you need to take care with quotes on the command line.  I find it's
+simpler to use dashes.
+
+Also, names must be unique.  You cannot re-use the same name for
+different things.
+
+## Loading Activities
+
+The software has to 'know' what kit is used in what activitiy.  This
+is done by defining the aviable `kit` when you load the activity.
+
+So, for example, if all the fit files in directory `mtb-rides` are
+from rides on my Cotic bike (defined with `ch2 kit start cotic`), then
+I can load them all with:
+
+    > ch2 activities ./mtb-rides/*.fit -Dkit=cotic
+
+This will populate the appropriate statistics using the kit defined
+before the data were loaded.  If you modify the kit (eg by using `kit
+change`) then you can rebuild the statistics with the
+[rebuild](#kit-rebuild) command.
+
+## Command Reference
+
+Don't forget you can do
+
+    > ch2 kit *command* -h
+
+for more information.
+
+### kit start
+
+Define a new [item](#theory---making-things-general).
+
+Use this to define a new bike, pair of shoes, etc.  You can provide a
+date if necessary; if not, it is assumed that you are starting to use
+this item from "now".
+
+### kit finish
+
+Retire an [item](#theory---making-things-general).
+
+Indicate that you are no longer using the bike, shoes etc.  For
+example, you've crashed the bike or thrown the shoes away.  Again, you
+can provide a date if you stopped using the item some time ago (the
+default is "now").
+
+### kit delete
+
+Remove all information about an [item](#theory---making-things-general).
+
+You might do this if you made a spelling mistake when starting a new
+item, for example.
+
+### kit change
+
+Indicate that you have changed a
+[component](#theory---making-things-general) by giving the new
+[model](#theory---making-things-general).
+
+For example if you change the chain on your bike that you care
+calling "trek", and the new chain is SRAM PC110, you might type
+
+    > ch2 kit change trek chain sram-pc1110
+
+The `chain` is the *component* and `sram-pc110` is the *model*.
+
+You can give a date, or you can use `--start` to indicate that this
+describes how the item was initially.
+
+When you change a component the previous model is automatically
+retired.
+
+### kit undo
+
+Removes information added by [change](#kit-change).
+
+The optional date (default "now") helps identify which model to
+remove.  The previous model will be "unretired" as appropiate.
+
+### kit show
+
+Show the structure (groups, items, components and models) defined.
+
+A date can be given; the default is "now".
+
+### kit statistics
+
+Show the statistics for the named kit.  The name can be a group, item,
+component or model.
+
+### kit rebuild
+
+Rebuild the statistics associated with
+[activities](#loading-activities).
 
 

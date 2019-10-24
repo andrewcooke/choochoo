@@ -347,11 +347,11 @@ class KitModel(StatisticsMixin, Source):
                 before_expiry = None
             if not before_expiry:
                 before._add_timestamp(s, KIT_RETIRED, time)
-                log.info(f'Expired previous {self.component.name} ({before.name})')
+                log.info(f'Retired previous {self.component.name} ({before.name})')
         if after:
             after_added = after.time_added(s)
             self._add_timestamp(s, KIT_RETIRED, after_added)
-            log.info(f'Expired new {self.component.name} ({self.name})')
+            log.info(f'Retired new {self.component.name} ({self.name})')
 
     @classmethod
     def get_all_at(cls, s, item, time):

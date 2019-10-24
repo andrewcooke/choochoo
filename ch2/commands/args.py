@@ -275,6 +275,19 @@ def parser():
     constant.add_argument(DATE, action='store', nargs='?', metavar='DATE', help='date when measured')
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
 
+    diary = subparsers.add_parser(DIARY, help='daily diary and summary')
+    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
+                       help='an optional date to display (default is today)')
+    diary.add_argument(mm(FAST), action='store_true',
+                       help='skip update of statistics on exit')
+    diary_summary = diary.add_mutually_exclusive_group()
+    diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
+                               help='show monthly summary')
+    diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
+                               help='show yearly summary')
+    diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
+                               help='show summary for given schedule')
+
     dump = subparsers.add_parser(DUMP, help='display database contents')  # todo - this one needs tests!
     dump_format = dump.add_mutually_exclusive_group()
     dump_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
@@ -312,19 +325,6 @@ def parser():
     dump_table = dump_sub.add_parser(TABLE)
     dump_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
     dump.set_defaults(format=PRINT)
-
-    diary = subparsers.add_parser(DIARY, help='daily diary and summary')
-    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
-                       help='an optional date to display (default is today)')
-    diary.add_argument(mm(FAST), action='store_true',
-                       help='skip update of statistics on exit')
-    diary_summary = diary.add_mutually_exclusive_group()
-    diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
-                               help='show monthly summary')
-    diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
-                               help='show yearly summary')
-    diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-                               help='show summary for given schedule')
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
     fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
@@ -522,6 +522,16 @@ def parser():
     monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
 
+    noop = subparsers.add_parser(NO_OP,
+                                 help='used within jupyter (no-op from cmd line)')
+
+    package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
+                                                help='parse and save the global fit profile (dev only)')
+    package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE',
+                                     help='the path to the profile (Profile.xlsx)')
+    package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
+                                     help='additional warning messages')
+
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
     statistics.add_argument(mm(FORCE), action='store_true',
                             help='delete existing statistics')
@@ -535,16 +545,6 @@ def parser():
                             help='keyword argument(s) to be passed to the pipelines')
     statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
-
-    noop = subparsers.add_parser(NO_OP,
-                                 help='used within jupyter (no-op from cmd line)')
-
-    package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
-                                                help='parse and save the global fit profile (dev only)')
-    package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE',
-                                     help='the path to the profile (Profile.xlsx)')
-    package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
-                                     help='additional warning messages')
 
     test_schedule = subparsers.add_parser(TEST_SCHEDULE, help='print schedule locations in a calendar')
     test_schedule.add_argument(SCHEDULE, action='store', metavar='SCHEDULE',

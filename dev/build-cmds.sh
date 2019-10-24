@@ -8,13 +8,13 @@ cat > docs/command-summary.md <<EOF
 
 EOF
 
-COMMANDS='activities constants data config diary fit fix-fit garmin help jupyter monitor statistics no-op package-fit-profile test-schedule unlock'
+COMMANDS=`dev/ch2 -h | grep '{' | head -1 | sed -e 's/ *[{}] *//g'`
 
-for cmd in $COMMANDS; do
+IFS=','; for cmd in $COMMANDS; do
     echo "* [$cmd](#$cmd)" >> docs/command-summary.md
 done
 
-for cmd in $COMMANDS; do
+IFS=','; for cmd in $COMMANDS; do
     echo $cmd
     echo >> docs/command-summary.md
     dev/ch2 help $cmd | cut -c 2- >> docs/command-summary.md
