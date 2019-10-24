@@ -5,6 +5,7 @@ from sys import stdout
 
 from numpy import median
 
+from ch2.lib import is_local_time
 from ch2.squeal import PipelineType
 from ch2.squeal.types import long_cls
 from ch2.stoats.calculate.kit import KitCalculator
@@ -87,7 +88,7 @@ but in general must be unique.  They can contain spaces if quoted.
             elif cmd == UNDO:
                 undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
             elif cmd == SHOW:
-                show(s, args[ITEM], args[DATE]).display(csv=args[CSV], output=output)
+                show(s, args[NAME], args[DATE]).display(csv=args[CSV], output=output)
             elif cmd == STATISTICS:
                 statistics(s, args[NAME]).display(csv=args[CSV], output=output)
 
@@ -140,33 +141,31 @@ def rebuild(db):
     run_pipeline(db, PipelineType.STATISTIC, force=True, like=long_cls(KitCalculator))
 
 
-def show(s, item, date):
-    # todo show groups too
-    instance = s.query(KitItem).filter(KitItem.name == item).one_or_none()
-    if instance:
-        item = instance
+def show(s, name, date):
+    if name is None:
+        return show_all(s, now())
+    elif date is None and is_local_time(name):
+        return show_all(s, local_time_to_time(name))
+    else:
+        instance = get_name(s, name, classes=(KitGroup, KitItem), require=True)
         date = local_time_or_now(date)
-    else:
-        if item:
-            if date:
-                raise Exception(f'Cannot find {item}')
-            else:
-                try:
-                    date = local_time_to_time(item)
-                    item = None
-                except:
-                    raise Exception(f'Cannot parse {item} as a date (and it is not an item)')
+        if isinstance(instance, KitGroup):
+            return show_group(s, instance, date)
         else:
-            date = now()
-    if item:
-        return show_item(s, item, date)
-    else:
-        return Node('All items', (show_item(s, item, date)
-                                  for item in s.query(KitItem).order_by(KitItem.name).all()))
+            return show_item(s, instance, date)
+
+
+def show_all(s, date):
+    groups = s.query(KitGroup).order_by(KitGroup.name).all()
+    return Node('All groups', (show_group(s, group, date) for group in groups))
+
+
+def show_group(s, group, date):
+    items = s.query(KitItem).order_by(KitItem.name).all()
+    return Node(f'Group {group.name}', (show_item(s, item, date) for item in items))
 
 
 def show_item(s, item, date):
-    # todo - include start dates so they can be used for undo
     models = KitModel.get_all_at(s, item, date)
     return Node(f'Item {item.name}',
                 (Node(f'Component {component}',

@@ -503,7 +503,7 @@ def parser():
     kit_undo.add_argument(DATE, action='store', nargs='?', help='active date (to disambiguate models; default now)')
     kit_undo.add_argument(mm(ALL), action='store_true', help='remove all models (rather than single date)')
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
-    kit_show.add_argument(ITEM, action='store', nargs='?', help='which item to display (default all)')
+    kit_show.add_argument(NAME, action='store', nargs='?', help='group or item to display (default all)')
     kit_show.add_argument(DATE, action='store', nargs='?', help='when to display (default now)')
     kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')

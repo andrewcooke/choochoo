@@ -137,6 +137,14 @@ def local_time_to_time(time):
     raise ValueError(f'Cannot parse "{time}" as a datetime')
 
 
+def is_local_time(time):
+    try:
+        local_time_to_time(time)
+        return True
+    except:
+        return False
+
+
 def local_time_or_now(date):
     '''
     convert a local date/time into a utc time, using current time as default
