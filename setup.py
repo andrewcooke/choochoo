@@ -35,7 +35,8 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'requests',
                      'scipy',
                      'bokeh',
-                     'jupyter'
+                     'jupyter',
+                     'matplotlib'
                      ],
                  entry_points={
                      'console_scripts': [
