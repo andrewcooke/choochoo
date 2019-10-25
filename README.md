@@ -3,6 +3,13 @@
 
 An **open**, **hackable** and **free** training diary.
 
+    > python3.7 -m venv env
+    > source env/bin/activate
+    > pip install choochoo
+    > ch2 config default
+    > ch2 -h
+    > ch2 diary
+
 Please see the [full
 documentation](https://andrewcooke.github.io/choochoo/).  This page
 contains only some images and a [Technical

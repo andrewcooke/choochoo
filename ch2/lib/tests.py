@@ -127,9 +127,9 @@ class TextEqualContext(TextBufferContext):
                 if result != target:
                     with NamedTemporaryFile(delete=False) as f:
                         f.write(result.encode())
-                        self._log.info('Wrote copy of result to %s' % f.name)
-                        self._log.info('Comparing with %s' % self._path)
-                        self._log.info('diff %s %s' % (f.name, self._path))
+                        self._log.warning('Wrote copy of result to %s' % f.name)
+                        self._log.warning('Comparing with %s' % self._path)
+                        self._log.warning('diff %s %s' % (f.name, self._path))
                 self._test.assertEqual(result, target)
 
 
@@ -147,9 +147,9 @@ class BinaryEqualContext(BinaryBufferContext):
                 if result != target:
                     with NamedTemporaryFile(delete=False) as f:
                         f.write(result)
-                        self._log.info('Wrote copy of result to %s' % f.name)
-                        self._log.info('Comparing with %s' % self._path)
-                        self._log.info('cmp -l %s %s' % (f.name, self._path))
+                        self._log.warning('Wrote copy of result to %s' % f.name)
+                        self._log.warning('Comparing with %s' % self._path)
+                        self._log.warning('cmp -l %s %s' % (f.name, self._path))
                 self._test.assertEqual(result, target)
 
 
@@ -162,7 +162,7 @@ class TextDumpContext(TextBufferContext):
             makedirs(dirname(self._path), exist_ok=True)
             with open(self._path, 'w') as output:
                 output.write(self._filter(self._buffer.getvalue()))
-            self._log.info('Wrote data to "%s"' % self._path)
+            self._log.warning('Wrote data to "%s"' % self._path)
 
 
 class BinaryDumpContext(BinaryBufferContext):
@@ -174,7 +174,7 @@ class BinaryDumpContext(BinaryBufferContext):
             makedirs(dirname(self._path), exist_ok=True)
             with open(self._path, 'wb') as output:
                 output.write(self._buffer.getvalue())
-            self._log.info('Wrote data to "%s"' % self._path)
+            self._log.warning('Wrote data to "%s"' % self._path)
 
 
 class CSVEqualContext(TextBufferContext):
@@ -229,9 +229,9 @@ class CSVEqualContext(TextBufferContext):
     def dump(self, row, us_data):
         with NamedTemporaryFile(delete=False) as f:
             f.write(us_data.encode())
-            self._log.info('Wrote copy of CSV to %s' % f.name)
-            self._log.info('Comparing with %s' % self._path)
-            self._log.info('head -n %d %s | tail -n 1; head -n %d %s | tail -n 1' %
+            self._log.warning('Wrote copy of CSV to %s' % f.name)
+            self._log.warning('Comparing with %s' % self._path)
+            self._log.warning('head -n %d %s | tail -n 1; head -n %d %s | tail -n 1' %
                            (row+2, f.name, row+2, self._path))
 
 

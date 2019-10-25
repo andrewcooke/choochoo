@@ -97,6 +97,7 @@ SPORT_WALKING = 'walking'
 SPORT_GENERIC = 'generic'
 
 # todo - there is no need for these silly square brackets - remove?
+# ahhh. something about allowing parsing with splitting on commas?
 MAX = '[max]'
 MIN = '[min]'
 CNT = '[cnt]'
@@ -111,6 +112,7 @@ DEG = 'deg'
 ENTRIES = 'entries'
 FF = 'FF'
 H = 'h'
+J = 'J'
 KJ = 'kJ'
 KCAL = 'kCal'
 KG = 'kg'

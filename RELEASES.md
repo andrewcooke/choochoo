@@ -1,6 +1,11 @@
 
 ## Latest Changes
 
+### v0.25.0
+
+[Equipment Tracking](https://andrewcooke.github.io/choochoo/kit).
+Some database changes (timestamp statistics).
+
 ### v0.24.0
 
 Improved support for multiple activities.  FF statistics are

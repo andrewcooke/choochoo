@@ -21,8 +21,8 @@ log = getLogger(__name__)
 difficult design decisions here. 
   * too complex for integration with constants.
   * trade-off between simplicity and structure.  no type fo top-level items, for example.
-  * all parts are automatically given statistics for description, start, and, when retired, a lifetime.
-  * items also get statistics for start and lifetime.
+  * all parts are automatically given statistics for start and finish times
+  * tie-in with activities to get active time / distance
 in the end, what drove the design was the commands (see commands/kit.py) - trying to keep them as simple as possible.
 unfortunately that pushed some extra complexity into the data model (eg to guarantee all names unique).
 '''
