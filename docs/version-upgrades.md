@@ -12,7 +12,7 @@ To make this less painful I try to:
  2. Provide a script that automates the transfer of non-activity data
     from the old database.
 
-So to upgrade to a new version you typically need to do the following
+So to upgrade to a new version you probably need to do the following
 steps:
 
  * Locate the correct upgrade script in `ch2/migraine/upgrade`.  These
@@ -30,3 +30,11 @@ steps:
 Note that the previous version's database is left intact.  So you
 should not lose any data in this process - at worst you can always
 return to using the previous version of the software.
+
+## Resets
+
+Sometimes it is useful to wipe the existing database and reload
+activities.  This is a similar process to upgrading (above), but uses
+the scripts in `ch2/migraine/reset` and leaves a copy of the previous
+database with the postfix `-backup`.
+

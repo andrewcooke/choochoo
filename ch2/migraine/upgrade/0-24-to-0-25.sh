@@ -17,7 +17,7 @@ DO_DUMP=1
 
 # this section of the script copies diary data across
 
-if [[ $DO_COPY == 1 ]]; then
+if ((DO_COPY)); then
   echo "ensuring write-ahead file for $DB_DIR/database-$SRC.sql is cleared"
   echo "(should print 'delete')"
   sqlite3 "$DB_DIR/database-$SRC.sql" 'pragma journal_mode=delete'
@@ -26,7 +26,7 @@ if [[ $DO_COPY == 1 ]]; then
   cp "$DB_DIR/database-$SRC.sql" "$TMP_DIR/copy-$SRC.sql"
 fi
 
-if [[ $DO_DROP == 1 ]]; then
+if ((DO_DROP)); then
   echo "dropping activity data from $TMP_DIR/copy-$SRC.sql"
   sqlite3 "$TMP_DIR/copy-$SRC.sql" <<EOF
   pragma foreign_keys = on;
@@ -40,7 +40,7 @@ if [[ $DO_DROP == 1 ]]; then
 EOF
 fi
 
-if [[ $DO_DUMP == 1 ]]; then
+if ((DO_DUMP)); then
   echo "extracting data from $TMP_DIR/copy-$SRC.sql to load into new database"
   rm -f "$TMP_DIR/dump-$SRC.sql"
   # .commands cannot be indented?!
