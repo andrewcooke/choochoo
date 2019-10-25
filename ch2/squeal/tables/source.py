@@ -8,6 +8,7 @@ from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, aliased, relationship
 from sqlalchemy.sql.functions import count
 
+from ch2.squeal.utils import add
 from ..support import Base
 from ..types import OpenSched, Date, ShortCls, short_cls
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
@@ -26,6 +27,8 @@ class SourceType(IntEnum):
     SEGMENT = 6
     COMPOSITE = 7
     DUMMY = 8
+    ITEM = 9
+    MODEL = 10
 
 
 class Source(Base):
@@ -235,7 +238,7 @@ class Interval(Source):
             q = q.filter(Interval.owner == owner)
         for interval in q.all():
             # log can be null if called during database handling
-            if log: log.info(f'Deleting {interval}')
+            if log: log.debug(f'Deleting {interval}')
             s.delete(interval)
 
 
@@ -310,3 +313,23 @@ class Composite(Source):
                 n = s.connection().execute(q3).scalar()
             log.warning(f'Deleted {total} Composite entries')
             s.commit()
+
+    @classmethod
+    def find(cls, s, *sources):
+        from ...data.frame import _tables
+        ids = [source.id if isinstance(source, Source) else source for source in sources]
+        t = _tables()
+        q = s.query(Composite)
+        for id in ids:
+            component = t.cc.alias()
+            q = q.join(component, Composite.id == component.c.output_source_id).\
+                filter(component.c.input_source_id == id)
+        return q.one_or_none()
+
+    @classmethod
+    def create(cls, s, *sources):
+        composite = add(s, Composite(n_components=0))
+        for source in sources:
+            add(s, CompositeComponent(input_source=source, output_source=composite))
+            composite.n_components += 1
+        return composite

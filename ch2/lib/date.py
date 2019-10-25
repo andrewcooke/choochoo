@@ -102,7 +102,7 @@ def format_seconds(seconds):
             hours, minutes = minutes // 60, minutes % 60
             if hours >= 24:
                 days, hours = hours // 24, hours % 24
-                return '%s%ddays %dh%02dm%02ds' % (sign, days, hours, minutes, seconds)
+                return '%s%dd %dh%02dm%02ds' % (sign, days, hours, minutes, seconds)
             else:
                 return '%s%dh%02dm%02ds' % (sign, hours, minutes, seconds)
         else:
@@ -135,6 +135,29 @@ def local_time_to_time(time):
         except ValueError:
             pass
     raise ValueError(f'Cannot parse "{time}" as a datetime')
+
+
+def is_local_time(time):
+    try:
+        local_time_to_time(time)
+        return True
+    except:
+        return False
+
+
+def local_time_or_now(date):
+    '''
+    convert a local date/time into a utc time, using current time as default
+    (useful when user entering date on command line and omission defaults to now)
+    '''
+    if date:
+        return local_time_to_time(date)
+    else:
+        return now()
+
+
+def now():
+    return dt.datetime.now(tz=dt.timezone.utc)
 
 
 def time_to_local_date(time):

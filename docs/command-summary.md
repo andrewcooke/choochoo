@@ -2,19 +2,20 @@
 # Command Summary
 
 * [activities](#activities)
-* [constants](#constants)
-* [data](#data)
 * [config](#config)
+* [constants](#constants)
 * [diary](#diary)
+* [dump](#dump)
 * [fit](#fit)
 * [fix-fit](#fix-fit)
 * [garmin](#garmin)
 * [help](#help)
 * [jupyter](#jupyter)
+* [kit](#kit)
 * [monitor](#monitor)
-* [statistics](#statistics)
 * [no-op](#no-op)
 * [package-fit-profile](#package-fit-profile)
+* [statistics](#statistics)
 * [test-schedule](#test-schedule)
 * [unlock](#unlock)
 
@@ -33,7 +34,24 @@ will load the give file and create an entry for the `Bike` statistic with
 value `Cotic Soul` (this particular variable is used to identify bike-specific
 parameters for power calculation, but arbitrary names and values can be used).
 
-Note: When using bash use `shopt -s globstar` to enable ** globbing.    
+Note: When using bash use `shopt -s globstar` to enable ** globbing.
+    
+
+
+
+## config
+
+    > ch2 config default
+
+Generate a simple initial configuration.
+
+Please see the documentation at http://andrewcooke.github.io/choochoo - you
+have a lot more options!
+
+    > ch2 config check --no-config --no-data
+
+Check that the current database is empty.
+    
 
 
 
@@ -54,50 +72,8 @@ Deletes an entry.
 
 Names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and
 FTHR.Bike, for example. In such a case "entry" in the descriptions above may
-refer to multiple entries.    
-
-
-
-Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
-
-# Commands
-
-* activities
-* constants
-* config
-* diary
-* dump
-* fit
-* fix-fit
-* garmin
-* jupyter
-* help
-* monitor
-* statistics
-* no-op
-* package-fit-profile
-* test-schedule
-* unlock
-
-See also `ch2 -h` for usage, 'ch2 help CMD` for guidance on a particular
-command,  and `ch2 -h CMD` for usage of that command.
-
-Docs at http://andrewcooke.github.io/choochoo/index
-
-
-
-## config
-
-    > ch2 config default
-
-Generate a simple initial configuration.
-
-Please see the documentation at http://andrewcooke.github.io/choochoo - you
-have a lot more options!
-
-    > ch2 config check --no-config --no-data
-
-Check that the current database is empty.    
+refer to multiple entries.
+    
 
 
 
@@ -114,7 +90,35 @@ To exit, alt-q (or, without saving, alt-x).
 
     > ch2 diary (--month | --year | --schedule SCHEDULE) [DATE}
 
-Display a summary for the month / year / schedule.    
+Display a summary for the month / year / schedule.
+    
+
+
+
+## dump
+
+    > ch2 dump COMMAND
+
+Simple access to the database - similar to the interface provided in Jupyter
+notebooks, but accessed from the command line.
+
+The format can be selected with `--print` (the default), `--csv` and
+`--describe`.
+
+For full options see `ch2 data -h` and `ch2 data COMMAND -h`
+
+### Examples
+
+    > ch2 dump --csv table StatisticName
+
+Will print the contents of the StatisticName table in CSV format.
+
+    > ch2 dump statistics '%HR%' --constraint 'ActivityGroup "Bike"' --start
+    2018-01-01
+
+Will print HR-related statistics from the start of 2018 for the given activity
+group.
+    
 
 
 
@@ -124,7 +128,7 @@ Display a summary for the month / year / schedule.
 
 Print the contents of fit files.
 
-The format and details displayed is selected by the sub-command: records,
+The format and details displayed are selected by the sub-command: records,
 tables, messages, fields, csv and grep (the last requiring patterns to match
 against).
 
@@ -149,7 +153,8 @@ Will list file names that contain cycling data.
     > ch2 fit grep -p PATTERN -- FILE
 
 You may need a `--` between patterns and file paths so that the argument
-parser can decide where patterns finish and paths start.    
+parser can decide where patterns finish and paths start.
+    
 
 
 
@@ -187,7 +192,8 @@ Will attempt to fix the given file (in the test data from git).
     --fix-header --fix-checksum
 
 Will prepend a new 14 byte header, drop the old 14 byte header, and fix the
-header and checksum values.    
+header and checksum values.
+    
 
 
 
@@ -202,7 +208,8 @@ Download recent monitor data to the given directory.
 Download monitor data for the given date.
 
 Note that this cannot be used to download more than 10 days of data. For bulk
-downloads use https://www.garmin.com/en-US/account/datamanagement/    
+downloads use https://www.garmin.com/en-US/account/datamanagement/
+    
 
 
 
@@ -220,7 +227,8 @@ Displays this information.
 
     > ch2 help
 
-Lists available topics.    
+Lists available topics.
+    
 
 
 
@@ -241,7 +249,64 @@ Indicate whether the background server is running or not.
 
     > ch2 jupyter stop
 
-Stop the background server.    
+Stop the background server.
+    
+
+
+
+## kit
+
+Track equipment, including the lifetime of particular components.
+
+    > ch2 kit new GROUP ITEM
+    > ch2 kit change ITEM COMPONENT MODEL
+    > ch2 kit statistics ITEM
+
+For full details see `ch2 kit -h` and `ch2 kit SUBCOMMAND -h`.
+
+### Examples
+
+Note that in practice some commands that do 'important' changes to the
+database require `--force` for confirmation.
+
+    > ch2 kit start bike cotic
+    > ch2 kit change cotic chain sram --start
+    # ... some months later ...
+    > ch2 kit change cotic chain kmc
+    # ... more time later ...
+    > ch2 kit change cotic chain sram
+    > ch2 kit statistics chain
+
+This example will give statistics on how long (time, distance) different bikes
+chains lasted.
+
+In addition, when importing activities, the `kit` variable must be defined. 
+So, for example:
+
+    > ch2 activities -D kit=cotic **/*.fit
+
+In this way the system knows what equipment was used in what activity.
+
+Finally, statistics may be incorrect if the equipment is modified (because the
+correct use will not be associated with each activity).  To recalculate use
+
+    > ch2 kit rebuild
+
+For running shoes you might simply track each item:
+
+    > ch2 kit start shoe adidas
+    # ... later ...
+    > ch2 kit finish adidas
+    > ch2 kit start shoe nike
+
+Statistics for shoes:
+
+    > ch2 kit statistic shoe
+
+Names can be chosen at will (there is nothing hard-coded about 'bike',
+'chain', 'cotic', etc), but in general must be unique.  They can contain
+spaces if quoted.
+    
 
 
 
@@ -251,7 +316,28 @@ Stop the background server.
 
 Read monitor data from FIT files.
 
-Note: When using bash use `shopt -s globstar` to enable ** globbing.    
+Note: When using bash use `shopt -s globstar` to enable ** globbing.
+    
+
+
+
+## no-op
+
+This is used internally when accessing data in Jupyter or configuring the
+system at the command line.
+    
+
+
+
+## package-fit-profile
+
+    > ch2 package-fit-profile data/sdk/Profile.xlsx
+
+Parse the global profile and save the structures containing types and messages
+to a pickle file that is distributed with this package.
+
+This command is intended for internal use only.
+    
 
 
 
@@ -264,25 +350,8 @@ Generate any missing statistics.
     > ch2 statistics --force [DATE]
 
 Delete statistics after the date (or all, if omitted) and then generate new
-values.    
-
-
-
-## no-op
-
-This is used internally when accessing data in Jupyter or configuring the
-system at the command line.    
-
-
-
-## package-fit-profile
-
-    > ch2 package-fit-profile data/sdk/Profile.xlsx
-
-Parse the global profile and save the structures containing types and messages
-to a pickle file that is distributed with this package.
-
-This command is intended for internal use only.    
+values.
+    
 
 
 
@@ -296,7 +365,8 @@ Print a calendar showing how the given schedule is interpreted.
 
     > ch2 test-schedule 2w[1mon,2sun]
 
-(Try it and see)    
+(Try it and see)
+    
 
 
 
@@ -308,5 +378,6 @@ Remove the "dummy" entry from the database that is used to coordinate locking
 across processes.
 
 This should not be needed in normal use.  DO NOT use when worker processes are
-still running.    
+still running.
+    
 

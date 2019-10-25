@@ -13,6 +13,7 @@ from ..squeal.tables.topic import TopicJournal
 from ..squeal.types import short_cls
 from ..stoats.calculate.activity import ActivityCalculator
 from ..stoats.calculate.elevation import ElevationCalculator
+from ..stoats.calculate.kit import KitCalculator
 from ..stoats.calculate.monitor import MonitorCalculator
 from ..stoats.calculate.response import ResponseCalculator
 from ..stoats.calculate.segment import SegmentCalculator
@@ -58,6 +59,7 @@ def default(db, no_diary=False):
         add_activities(s, SegmentReader, c,
                        owner_out=short_cls(SegmentReader),
                        sport_to_activity=sport_to_activity,
+                       # todo - does this need to depend on activity group?
                        record_to_db={'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
                                      'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
                                      'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
@@ -86,6 +88,7 @@ def default(db, no_diary=False):
                        climb=name_constant(CLIMB_CNAME, bike))
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
+        add_statistics(s, KitCalculator, c, owner_in=short_cls(SegmentReader))
 
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.

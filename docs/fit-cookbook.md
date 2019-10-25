@@ -401,7 +401,7 @@ file (to the best of its ability).
         INFO: Checksum: 36047 (0x8ccf)
         INFO: Start ----------
         INFO: Start: 2018-01-01 12:00:00
-     WARNING: Shifting timestamps by -460days 21h36m33s
+     WARNING: Shifting timestamps by -460d 21h36m33s
         INFO: Header and Checksums ----------
         INFO: --header-size None
         INFO: --protocol-version None

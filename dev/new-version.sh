@@ -25,7 +25,7 @@ OLD_VERSION=`grep 'version=' setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\
 echo "setup.py: $OLD_VERSION -> $VERSION"
 sed -i setup.py -e "s/\(.*version='\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
 
-dev/document-cmds.sh
+dev/build-cmds.sh
 dev/build-docs.sh
 
 git commit -am "version $VERSION"

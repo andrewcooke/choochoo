@@ -43,7 +43,7 @@ class TestActivities(TestCase):
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01')
+            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
@@ -57,7 +57,7 @@ class TestActivities(TestCase):
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(23406, n)
+                self.assertEqual(54144, n)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 

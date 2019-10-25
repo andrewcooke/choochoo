@@ -59,6 +59,7 @@ support for power meters.
   * [Elevation](elevation)
   * [Detecting Climbs](climbs)
   * [Measuring Power and CdA](cda)
+  * [Tracking Equipment](kit)
 * Development
   * [Spatial Search](rtree)
   * [Other Projects](other-projects)

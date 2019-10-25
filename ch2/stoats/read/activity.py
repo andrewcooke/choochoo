@@ -5,10 +5,10 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
-from ch2 import FatalException
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
-    SPORT_GENERIC
-from ..read import AbortImport, MultiProcFitReader, AbortImportButMarkScanned
+    SPORT_GENERIC, KIT_USED
+from ..read import MultiProcFitReader, AbortImportButMarkScanned
+from ... import FatalException
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
@@ -27,8 +27,9 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    def __init__(self, *args, constants=None, sport_to_activity=None, record_to_db=None, **kargs):
+    def __init__(self, *args, constants=None, kit=None, sport_to_activity=None, record_to_db=None, **kargs):
         self.constants = constants
+        self.kit = kit
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (name, units, type)
@@ -52,7 +53,6 @@ class ActivityReader(MultiProcFitReader):
         log.info('Reading activity data from %s' % path)
         records = self._read_fit_file(path, merge_duplicates, fix_degrees, no_bad_values)
         ajournal, activity_group, first_timestamp = self._create_activity(s, path, records)
-        self._load_constants(s, ajournal)
         return ajournal.id, (ajournal, activity_group, first_timestamp, path, records)
 
     def __read_sport(self, path, records):
@@ -130,10 +130,20 @@ class ActivityReader(MultiProcFitReader):
                 StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
                                          ajournal, value, ajournal.start)
 
+    def _load_kit(self, s, ajournal):
+        if self.kit:
+            for item in self.kit:
+                for item_or_model in expand_items(s, item):
+                    StatisticJournalText.add(s, KIT_USED, None, None, self.owner_out, ajournal.activity_group,
+                                             ajournal, value, ajournal.start)
+
     def _load_data(self, s, loader, data):
 
         ajournal, activity_group, first_timestamp, path, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
+        self._load_constants(s, ajournal)
+        self._load_kit(s, ajournal)
+
         log.debug(f'Loading {self.record_to_db}')
 
         def is_event(record, *types):

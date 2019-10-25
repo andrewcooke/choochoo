@@ -57,7 +57,7 @@ class Constant(Source):
         if date:
             time = local_date_to_time(date)
         if not time:
-            time = dt.datetime.now()
+            time = dt.datetime.now(tz=dt.timezone.utc)
         return s.query(StatisticJournal). \
             filter(StatisticJournal.statistic_name == self.statistic_name,
                    StatisticJournal.time <= time). \

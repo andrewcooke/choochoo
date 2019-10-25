@@ -1,7 +1,9 @@
+
 from glob import glob
 from logging import getLogger, NullHandler
 from os.path import abspath, dirname, join
 from sys import version_info
+
 
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
@@ -20,7 +22,7 @@ class FatalException(Exception):
 from .commands.activities import activities
 from .commands.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI, KIT
 from .commands.constants import constants
 from .commands.dump import dump
 from .commands.config import config
@@ -28,8 +30,9 @@ from .commands.diary import diary
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
-from .commands.jupyter import jupyter
 from .commands.help import help, LengthFmt
+from .commands.jupyter import jupyter
+from .commands.kit import kit
 from .commands.monitor import monitor
 from .commands.package_fit_profile import package_fit_profile
 from .commands.statistics import statistics
@@ -63,8 +66,9 @@ COMMANDS = {ACTIVITIES: activities,
             FIT: fit,
             FIX_FIT: fix_fit,
             GARMIN: garmin,
-            JUPYTER: jupyter,
             HELP: help,
+            JUPYTER: jupyter,
+            KIT: kit,
             MONITOR: monitor,
             STATISTICS: statistics,
             NO_OP: no_op,

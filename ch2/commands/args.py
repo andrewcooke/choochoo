@@ -3,8 +3,8 @@ from argparse import ArgumentParser
 from genericpath import exists
 from logging import getLogger
 from os import makedirs
-from os.path import dirname, expanduser, realpath, normpath, relpath, join
-from re import compile, sub
+from os.path import dirname, expanduser, realpath, normpath
+from re import sub
 from typing import Mapping
 
 from ..lib.date import to_date, to_time
@@ -13,7 +13,7 @@ log = getLogger(__name__)
 
 CH2_VERSION = '0.24.7'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
-DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
+DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2] + ['dev'])
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
@@ -38,16 +38,20 @@ ACTIVITY_GROUP = 'activity-group'
 ACTIVITY_GROUPS = 'activity-groups'
 ACTIVITY_JOURNALS = 'activity-journals'
 ACTIVITY_JOURNAL_ID = 'activity-journal-id'
+ADD = 'add'
 ADD_HEADER = 'add-header'
 AFTER = 'after'
 AFTER_BYTES = 'after-bytes'
 AFTER_RECORDS = 'after-records'
+ALL = 'all'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
 BORDER = 'border'
+CHANGE = 'change'
 CHECK = 'check'
 COMPACT = 'compact'
+COMPONENT = 'component'
 CONSTRAINT = 'constraint'
 CONSTANT = 'constant'
 CONTEXT = 'context'
@@ -79,9 +83,11 @@ GROUP = 'group'
 HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
 INTERNAL = 'internal'
+ITEM = 'item'
 JUPYTER = 'jupyter'
 K = 'k'
 KARG = 'karg'
+KIT = 'kit'
 LABEL = 'label'
 LATITUDE = 'latitude'
 LIKE = 'like'
@@ -102,6 +108,7 @@ MAX_FWD_LEN = 'max-fwd-len'
 MAX_ROWS = 'max-rows'
 MAX_RECORD_LEN = 'max-record-len'
 MIN_SYNC_CNT = 'min-sync-cnt'
+MODEL = 'model'
 MONITOR = 'monitor'
 MONITOR_JOURNALS = 'monitor-journals'
 MONTH = 'month'
@@ -110,6 +117,7 @@ NAME = 'name'
 NAME_BAD = 'name-bad'
 NAME_GOOD = 'name-good'
 NAMES = 'names'
+NEW = 'new'
 NOT = 'not'
 NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
@@ -123,7 +131,9 @@ PROFILE_VERSION = 'profile-version'
 PROTOCOL_VERSION = 'protocol-version'
 PWD = 'pwd'
 RAW = 'raw'
+REBUILD = 'rebuild'
 RECORDS = 'records'
+RETIRE = 'retire'
 ROOT = 'root'
 RUN = 'run'
 SEGMENT_JOURNALS = 'segment-journals'
@@ -145,6 +155,7 @@ TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
 TUI = 'tui'
+UNDO = 'undo'
 UNLOCK = 'unlock'
 USER = 'user'
 VALIDATE = 'validate'
@@ -264,6 +275,19 @@ def parser():
     constant.add_argument(DATE, action='store', nargs='?', metavar='DATE', help='date when measured')
     constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
 
+    diary = subparsers.add_parser(DIARY, help='daily diary and summary')
+    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
+                       help='an optional date to display (default is today)')
+    diary.add_argument(mm(FAST), action='store_true',
+                       help='skip update of statistics on exit')
+    diary_summary = diary.add_mutually_exclusive_group()
+    diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
+                               help='show monthly summary')
+    diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
+                               help='show yearly summary')
+    diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
+                               help='show summary for given schedule')
+
     dump = subparsers.add_parser(DUMP, help='display database contents')  # todo - this one needs tests!
     dump_format = dump.add_mutually_exclusive_group()
     dump_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
@@ -301,19 +325,6 @@ def parser():
     dump_table = dump_sub.add_parser(TABLE)
     dump_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
     dump.set_defaults(format=PRINT)
-
-    diary = subparsers.add_parser(DIARY, help='daily diary and summary')
-    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
-                       help='an optional date to display (default is today)')
-    diary.add_argument(mm(FAST), action='store_true',
-                       help='skip update of statistics on exit')
-    diary_summary = diary.add_mutually_exclusive_group()
-    diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
-                               help='show monthly summary')
-    diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
-                               help='show yearly summary')
-    diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-                               help='show summary for given schedule')
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
     fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
@@ -465,6 +476,42 @@ def parser():
     jupyter_cmds.add_parser(STATUS, help='display status of background service')
     jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
 
+    kit = subparsers.add_parser(KIT, help='manage kit')
+    kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)')
+    kit_start.add_argument(GROUP, action='store', help='item group (bike, shoe, etc)')
+    kit_start.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
+    kit_start.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
+    kit_start.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new group')
+    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item')
+    kit_finish.add_argument(ITEM, action='store', help='item name')
+    kit_finish.add_argument(DATE, action='store', nargs='?', help='when to retire (default now)')
+    kit_finish.add_argument(mm(FORCE), action='store_true', help='confirm change of existing date')
+    kit_delete = kit_cmds.add_parser(DELETE, help='remove all entries for an item or group')
+    kit_delete.add_argument(NAME, action='store', help='item or group to delete')
+    kit_delete.add_argument(mm(FORCE), action='store_true', help='confirm group deletion')
+    kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)')
+    kit_change.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
+    kit_change.add_argument(COMPONENT, action='store', help='component type (chain, laces, etc)')
+    kit_change.add_argument(MODEL, action='store', help='model description')
+    kit_change.add_argument(DATE, action='store', nargs='?', help='when changed (default now)')
+    kit_change.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new component')
+    kit_change.add_argument(mm(START), action='store_true', help='set default date to start of item')
+    kit_undo = kit_cmds.add_parser(UNDO, help='remove a change')
+    kit_undo.add_argument(ITEM, action='store', help='item name')
+    kit_undo.add_argument(COMPONENT, action='store', help='component type')
+    kit_undo.add_argument(MODEL, action='store', help='model description')
+    kit_undo.add_argument(DATE, action='store', nargs='?', help='active date (to disambiguate models; default now)')
+    kit_undo.add_argument(mm(ALL), action='store_true', help='remove all models (rather than single date)')
+    kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
+    kit_show.add_argument(NAME, action='store', nargs='?', help='group or item to display (default all)')
+    kit_show.add_argument(DATE, action='store', nargs='?', help='when to display (default now)')
+    kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
+    kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
+    kit_statistics.add_argument(NAME, action='store', nargs='?', help='group, item, component or model')
+    kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
+    kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
+
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
@@ -474,6 +521,16 @@ def parser():
                          help='keyword argument(s) to be passed to the pipelines')
     monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
+
+    noop = subparsers.add_parser(NO_OP,
+                                 help='used within jupyter (no-op from cmd line)')
+
+    package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
+                                                help='parse and save the global fit profile (dev only)')
+    package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE',
+                                     help='the path to the profile (Profile.xlsx)')
+    package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
+                                     help='additional warning messages')
 
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
     statistics.add_argument(mm(FORCE), action='store_true',
@@ -488,16 +545,6 @@ def parser():
                             help='keyword argument(s) to be passed to the pipelines')
     statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
-
-    noop = subparsers.add_parser(NO_OP,
-                                 help='used within jupyter (no-op from cmd line)')
-
-    package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
-                                                help='parse and save the global fit profile (dev only)')
-    package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE',
-                                     help='the path to the profile (Profile.xlsx)')
-    package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
-                                     help='additional warning messages')
 
     test_schedule = subparsers.add_parser(TEST_SCHEDULE, help='print schedule locations in a calendar')
     test_schedule.add_argument(SCHEDULE, action='store', metavar='SCHEDULE',
