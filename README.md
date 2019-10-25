@@ -7,7 +7,7 @@ An **open**, **hackable** and **free** training diary.
     > source env/bin/activate
     > pip install choochoo
     > ch2 config default
-    > ch2 -h
+    > ch2 help
     > ch2 diary
 
 Please see the [full
