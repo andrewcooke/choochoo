@@ -4,6 +4,7 @@ from logging import getLogger
 
 from sqlalchemy.sql import func
 
+from ch2.squeal import StatisticJournal
 from . import MultiProcCalculator, CompositeCalculatorMixin
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ...lib import local_date_to_time
@@ -24,6 +25,18 @@ class MonitorCalculator(CompositeCalculatorMixin, MultiProcCalculator):
                 log.debug('Back-up one day')
                 start = start - dt.timedelta(days=1)
                 missing = [start] + missing
+                # since we may have an earlier result, delete that
+                q = s.query(StatisticJournal).\
+                    join(StatisticName).\
+                    filter(StatisticName.owner == self.owner_out,
+                           StatisticJournal.time >= local_date_to_time(missing[0]),
+                           StatisticJournal.time <= local_date_to_time(missing[-1]))
+                n = q.count()
+                if n > 0:
+                    log.warning(f'Deleting {n} entries due to overlap')
+                    # cannot call delete on a join
+                    for instance in q.all():
+                        s.delete(instance)
         return missing
 
     def _unused_sources_given_used(self, s, used_sources):

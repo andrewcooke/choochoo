@@ -63,7 +63,7 @@ class TestActivities(TestCase):
 
     def test_segment_bug(self):
         with NamedTemporaryFile() as f:
-            rgs, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
             run_pipeline(db, PipelineType.ACTIVITY, paths=paths, force=True)
 

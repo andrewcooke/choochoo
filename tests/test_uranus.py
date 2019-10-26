@@ -6,10 +6,12 @@ from unittest import TestCase
 
 class TestUranus(TestCase):
 
-    def setUp(self):
-        if not getLogger().handlers:
-            basicConfig(stream=stdout, level=DEBUG)
-        self._log = getLogger()
+    pass
+
+    # def setUp(self):
+    #     if not getLogger().handlers:
+    #         basicConfig(stream=stdout, level=DEBUG)
+    #     self._log = getLogger()
 
     # def test_template(self):
     #     compare_activities('2018-03-01 16:00', '2017-09-19 16:00', direct=True, group='Bike')
