@@ -1,9 +1,8 @@
 
 from logging import getLogger
 
-from ch2.squeal import Timestamp
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin
-from ...squeal import StatisticJournal
+from ...squeal import StatisticJournal, Timestamp
 from ...squeal.tables.kit import expand_item
 
 log = getLogger(__name__)
