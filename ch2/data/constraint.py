@@ -120,4 +120,4 @@ def build_comparison(t, statistic_name, op, value):
 
 
 def join_comparisons(comparisons):
-    raise NotImplemented()
+    return comparisons[0].union(*comparisons[1:])
