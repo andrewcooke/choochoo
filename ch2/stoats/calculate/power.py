@@ -117,7 +117,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
     def _run_one(self, s, time_or_date):
         source = self._get_source(s, time_or_date)
         s.commit()  # free up database
-        with Timestamp(owner=self.owner_out, key=source.id).on_success(log, s):
+        with Timestamp(owner=self.owner_out, key=source.id).on_success(s):
             try:
                 data = self._read_dataframe(s, source)
                 loader = StatisticJournalLoader(s, self.owner_out)

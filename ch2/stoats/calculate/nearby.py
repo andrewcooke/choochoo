@@ -75,7 +75,7 @@ class SimilarityCalculator(UniProcCalculator):
         new_ids, affected_ids = self._count_overlaps(s, rtree, n_points, n_overlaps, 10000)
         # this clears itself beforehand
         # use explicit class to distinguish from subclasses (which compare against this)
-        with Timestamp(owner=self.owner_out, constraint=self.nearby.constraint).on_success(log, s):
+        with Timestamp(owner=self.owner_out, constraint=self.nearby.constraint).on_success(s):
             self._save(s, new_ids, affected_ids, n_points, n_overlaps, 10000)
 
     def _prepare(self, s, rtree, n_points, delta):
@@ -258,7 +258,7 @@ class NearbyCalculator(UniProcCalculator):
         s.query(ActivityNearby).filter(ActivityNearby.constraint == self.constraint).delete()
 
     def _run_one(self, s, missed):
-        with Timestamp(owner=self.owner_out, constraint=self.constraint).on_success(log, s):
+        with Timestamp(owner=self.owner_out, constraint=self.constraint).on_success(s):
             d_min, n = expand_max(log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
             log.info(f'{n} groups at d={d_min}')
             self.save(s, self.dbscan(s, d_min))

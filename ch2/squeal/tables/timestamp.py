@@ -1,5 +1,6 @@
 
 from contextlib import contextmanager
+from logging import getLogger
 from time import time
 
 from sqlalchemy import Column, Integer, UniqueConstraint
@@ -7,6 +8,8 @@ from sqlalchemy.sql.functions import count
 
 from ..types import Time, ShortCls, Str, short_cls, NullStr
 from ..support import Base
+
+log = getLogger(__name__)
 
 
 class Timestamp(Base):
@@ -37,7 +40,7 @@ class Timestamp(Base):
     UniqueConstraint(owner, constraint, key)
 
     @classmethod
-    def set(cls, log, s, owner, constraint=None, key=None):
+    def set(cls, s, owner, constraint=None, key=None):
         cls.clear(s, owner, constraint=constraint, key=key)
         s.add(Timestamp(owner=owner, constraint=constraint, key=key))
         s.commit()
@@ -58,7 +61,7 @@ class Timestamp(Base):
                    Timestamp.key == key).delete()
 
     @classmethod
-    def clean_keys(cls, log, s, keys, owner, constraint=None):
+    def clean_keys(cls, s, keys, owner, constraint=None):
         s.commit()
         for repeat in range(2):
             q = s.query(Timestamp if repeat else count(Timestamp.id)). \
@@ -80,9 +83,9 @@ class Timestamp(Base):
         q.delete()
 
     @contextmanager
-    def on_success(self, log, s):
+    def on_success(self, s):
         self.clear(s, self.owner, constraint=self.constraint, key=self.key)
         s.commit()
         yield None
-        self.set(log, s, self.owner, constraint=self.constraint, key=self.key)
+        self.set(s, self.owner, constraint=self.constraint, key=self.key)
 
