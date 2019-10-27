@@ -17,4 +17,3 @@ class TestConstraints(TestCase):
         q = build_activity_query(s, ast)
         print(q)
         print(list(q))
-

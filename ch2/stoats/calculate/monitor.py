@@ -4,11 +4,10 @@ from logging import getLogger
 
 from sqlalchemy.sql import func
 
-from ch2.squeal import StatisticJournal
 from . import MultiProcCalculator, CompositeCalculatorMixin
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR
 from ...lib import local_date_to_time
-from ...squeal import MonitorJournal, StatisticJournalInteger, StatisticName
+from ...squeal import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal
 
 log = getLogger(__name__)
 QUARTER_DAY = 6 * 60 * 60
