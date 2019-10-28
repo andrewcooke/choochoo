@@ -22,8 +22,8 @@ own calculations (as Python code) then these can be added as a
 
 Display and analysis of data via [Jupyter](data-analysis) is
 supported, with an embedded Jupyter server and pre-written templates
-for common operations (eg [displaying data for an activity](summary),
-displaying [similar routes](nearby)).
+for common operations (eg [data for an activity](summary), [similar
+routes](nearby)).
 
 The diary configuration (ie what fields are displayed) is very
 flexible and can be used to present [training plans](training-plans).
