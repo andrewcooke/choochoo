@@ -11,8 +11,8 @@ Data are combined from three sources:
   * Direct commands (eg [tracking equipment changes](kit)).
 
 Data are combined in an SQLite database that can be accessed via SQL
-or as Panda data frames.  This is easy to copy to safe storage and
-allows you to read and process the data within your own programs.
+or as Panda data frames.  The database is easy to copy to safe storage
+and allows you to read and process the data within your own programs.
 
 The data can be processed via 'pipelines'.  Existing calculations
 include [power estimation](cda), [fitness/fatigue](impulse) and
