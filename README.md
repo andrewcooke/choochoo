@@ -51,7 +51,8 @@ The system includes:
 
 * Pre-written scripts to present graphical data views via Jupyter.
 
-* A "diary" to present textual data and allow data entry.
+* A "diary" (using curses in the terminal) to present textual data and
+  allow data entry.
 
 The database has an SQLAlchemy ORM interface.  The schema separates
 "statistics" (named time series data) from the source (which might be

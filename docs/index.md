@@ -1,37 +1,36 @@
 
 Choochoo helps you plan, collect, process and analyse training data.
 
-Data can be entered by hand, in the "diary", or read from [FIT
-files](fit-files).  Downloading FIT files from Garmin Connect is
-supported.
+Data are combined from three sources:
 
-The choice of what data to track is up to you.  A default
-configuration is provided, but this can be modified.  You can add and
-remove fields, and place them in an appropriate hierachy.  For
-example, you could create a new set of fields to track a particular
-injury (eg notes, pain, medication).
+  * [FIT files](fit-files), both for activities and monitoring (ie
+    steps, heart rate).  The latter can be downloaded from Garmin.
 
-The data displayed in the diary can also be restricted to a range of
-dates, or to repeat on certain days.  This means that it can be used
-to display information about training plans.  It is relatively simple
-to automate the creation of these entries (in Python) - examples are
-provided.  In this way you can programaticaly generate training
-schedules.
+  * Text entry via a '[diary](daily-use)' that runs in the terminal.
 
-"Derived" data can be calculated from the raw data you provide.  A
-simple example would be rankings (eg per month).  A more complex
-example would be [Fitness / Fatigue models](impulse).
+  * Direct commands (eg [tracking equipment changes](kit)).
 
-If you develop your own calculations (as Python code) then these can
-be added to the "pipeline" and run automatically on new data.
+Data are combined in an SQLite database that can be accessed via SQL
+or as Panda data frames.  This is easy to copy to safe storage and
+allows you to read and process the data within your own programs.
 
-All your data (raw and derived) are stored in an SQLite database, in a
-single file.  This is easy to copy to safe storage and allows you to
-read and process the data with your own programs.
+The data can be processed via 'pipelines'.  Existing calculations
+include [power estimation](cda), [fitness/fatigue](impulse) and
+summary values (eg ranking, top value per month).  If you develop your
+own calculations (as Python code) then these can be added as a
+'pipeline' and run automatically on new data.
 
-The data can also be extracted as Panda DataFrames.  Typically this is
-done in the [Jupyter](data-analysis) environment, where you can
-interactively analyse and plot the information.
+Display and analysis of data via [Jupyter](data-analysis) is
+supported, with an embedded Jupyter server and pre-written templates
+for common operations (eg [displaying data for an activity](summary),
+displaying [similar routes](nearby)).
+
+The diary configuration (ie what fields are displayed) is very
+flexible and can be used to present [training plans](training-plans).
+Indeed, the whole system (diary fields, pipelines, activiy groups,
+equipment tracking, etc) can be configured via the database.  A
+[default configuration](configuration) is provided, but this can be
+modified or replaced.
 
 One omission that may be important to some people is the lack of
 support for power meters.
