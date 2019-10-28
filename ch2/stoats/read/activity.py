@@ -27,9 +27,8 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    def __init__(self, *args, constants=None, kit=None, sport_to_activity=None, record_to_db=None, **kargs):
+    def __init__(self, *args, constants=None, sport_to_activity=None, record_to_db=None, **kargs):
         self.constants = constants
-        self.kit = kit
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (name, units, type)
@@ -130,19 +129,11 @@ class ActivityReader(MultiProcFitReader):
                 StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
                                          ajournal, value, ajournal.start)
 
-    def _load_kit(self, s, ajournal):
-        if self.kit:
-            for item in self.kit:
-                for item_or_model in expand_items(s, item):
-                    StatisticJournalText.add(s, KIT_USED, None, None, self.owner_out, ajournal.activity_group,
-                                             ajournal, value, ajournal.start)
-
     def _load_data(self, s, loader, data):
 
         ajournal, activity_group, first_timestamp, path, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
         self._load_constants(s, ajournal)
-        self._load_kit(s, ajournal)
 
         log.debug(f'Loading {self.record_to_db}')
 
