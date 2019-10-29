@@ -21,13 +21,13 @@ QUARTER_DAY = 6 * 60 * 60
 class MonitorCalculator(LoaderMixin, MultiProcCalculator):
 
     '''
-    this is a little unusual, in that we can calculate results from partial data and then, when we have
-    more data, we need to delete the previous values.  so we need to be careful (1) in deciding when
+    This is a little unusual, in that we can calculate results from partial data and then, when we have
+    more data, we need to delete the previous values.  So we need to be careful (1) in deciding when
     we have new data; (2) in avoiding duplicates; and (3) in tracking composite sources.
     '''
 
     def _missing(self, s):
-        'any day that has an unused monitor journal is a missing day'
+        # any day that has an unused monitor journal is a missing day
         Composite.clean(s)
         used_sources = s.query(CompositeComponent.input_source_id). \
             join(StatisticJournal, CompositeComponent.output_source_id == StatisticJournal.source_id). \
