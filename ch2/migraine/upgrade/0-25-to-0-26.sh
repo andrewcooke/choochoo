@@ -7,7 +7,7 @@ DB_DIR=~/.ch2
 TMP_DIR=/tmp
 
 SRC='0-25'
-DST='0-25-dev'
+DST='0-26'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
 DO_COPY=1
