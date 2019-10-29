@@ -52,7 +52,7 @@ class ActivityReader(MultiProcFitReader):
         log.info('Reading activity data from %s' % path)
         records = self._read_fit_file(path, merge_duplicates, fix_degrees, no_bad_values)
         ajournal, activity_group, first_timestamp = self._create_activity(s, path, records)
-        return ajournal.id, (ajournal, activity_group, first_timestamp, path, records)
+        return ajournal, (ajournal, activity_group, first_timestamp, path, records)
 
     def __read_sport(self, path, records):
         try:
@@ -110,7 +110,7 @@ class ActivityReader(MultiProcFitReader):
     def _delete_journals(self, s, activity_group, first_timestamp, last_timestamp):
         for journal in self._overlapping_journals(s, ActivityJournal, activity_group,
                                                   first_timestamp, last_timestamp).all():
-            Timestamp.clear(s, owner=self.owner_out, key=journal.id)
+            Timestamp.clear(s, owner=self.owner_out, source=journal)
             log.debug(f'Deleting {journal}')
             s.delete(journal)
         s.commit()

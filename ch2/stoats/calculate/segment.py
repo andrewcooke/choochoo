@@ -18,7 +18,7 @@ class SegmentCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 
     def _missing(self, s):
         # extends superclass with restriction on activities that have a segment
-        existing_ids = s.query(Timestamp.key). \
+        existing_ids = s.query(Timestamp.source_id). \
             filter(Timestamp.owner == self.owner_out)
         activity_ids = s.query(SegmentJournal.activity_journal_id)
         q = s.query(ActivityJournal.start). \

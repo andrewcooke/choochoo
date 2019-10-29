@@ -70,7 +70,7 @@ class ActivityJournalCalculatorMixin:
         return q
 
     def _missing(self, s):
-        existing_ids = s.query(Timestamp.key).filter(Timestamp.owner == self.owner_out)
+        existing_ids = s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out)
         q = s.query(ActivityJournal.start). \
             filter(not_(ActivityJournal.id.in_(existing_ids.cte()))). \
             order_by(ActivityJournal.start)
@@ -93,7 +93,7 @@ class ActivityJournalCalculatorMixin:
             if repeat:
                 s.query(StatisticJournal).filter(StatisticJournal.id.in_(statistic_journals.cte())). \
                     delete(synchronize_session=False)
-                Timestamp.clean_keys(s, activity_journals.cte(), self.owner_out, constraint=None)
+                Timestamp.clear_keys(s, activity_journals.cte(), self.owner_out, constraint=None)
             else:
                 n = s.query(count(StatisticJournal.id)). \
                     filter(StatisticJournal.id.in_(statistic_journals.cte())).scalar()
@@ -112,7 +112,7 @@ class DataFrameCalculatorMixin(LoaderMixin):
 
     def _run_one(self, s, time_or_date):
         source = self._get_source(s, time_or_date)
-        with Timestamp(owner=self.owner_out, key=source.id).on_success(s):
+        with Timestamp(owner=self.owner_out, source=source).on_success(s):
             try:
                 # data may be structured (doesn't have to be simply a dataframe)
                 data = self._read_dataframe(s, source)
@@ -145,7 +145,7 @@ class DirectCalculatorMixin(LoaderMixin):
 
     def _run_one(self, s, time_or_date):
         source = self._get_source(s, time_or_date)
-        with Timestamp(owner=self.owner_out, key=source.id).on_success(s):
+        with Timestamp(owner=self.owner_out, source=source).on_success(s):
             try:
                 data = self._read_data(s, source)
                 loader = self._get_loader(s)

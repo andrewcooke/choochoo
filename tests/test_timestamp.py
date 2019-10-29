@@ -7,7 +7,9 @@ from sqlalchemy.sql.functions import count
 
 from ch2.commands.args import bootstrap_file, m, V, mm, DEV
 from ch2.config import default, getLogger
+from ch2.squeal import Source
 from ch2.squeal.tables.timestamp import Timestamp
+from ch2.squeal.utils import add
 
 log = getLogger(__name__)
 
@@ -19,9 +21,10 @@ class TestTimestamp(TestCase):
             args, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
+                source = add(s, Source())
                 n = s.query(count(Timestamp.id)).scalar()
                 self.assertEqual(n, 0)
-                Timestamp.set(s, TestTimestamp, None, 1)
+                Timestamp.set(s, TestTimestamp, source=source)
                 n = s.query(count(Timestamp.id)).scalar()
                 self.assertEqual(n, 1)
                 t = s.query(Timestamp).filter(Timestamp.owner == TestTimestamp).one()

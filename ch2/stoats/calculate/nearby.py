@@ -35,10 +35,10 @@ class SimilarityCalculator(UniProcCalculator):
         log.info(f'Reducing to {int(0.5 + 100 * self.nearby.fraction):d}%')
 
     def _missing(self, s):
-        prev = Timestamp.get(s, self.owner_out, self.nearby.constraint)
+        prev = Timestamp.get(s, self.owner_out, constraint=self.nearby.constraint)
         if not prev:
             return [True]
-        prev_ids = s.query(Timestamp.key). \
+        prev_ids = s.query(Timestamp.source_id). \
             filter(Timestamp.owner == self.owner_in,
                    Timestamp.constraint == None,
                    Timestamp.time < prev.time).cte()
@@ -64,7 +64,7 @@ class SimilarityCalculator(UniProcCalculator):
                    or_(ActivitySimilarity.activity_journal_lo_id.in_(activity_ids.cte()),
                        ActivitySimilarity.activity_journal_hi_id.in_(activity_ids.cte()))). \
             delete(synchronize_session=False)
-        Timestamp.clear(s, self.owner_out, self.nearby.constraint)
+        Timestamp.clear(s, self.owner_out, constraint=self.nearby.constraint)
         s.commit()
 
     def _run_one(self, s, missed):
@@ -245,8 +245,8 @@ class NearbyCalculator(UniProcCalculator):
         super().__init__(*args, **kargs)
 
     def _missing(self, s):
-        latest_similarity = Timestamp.get(s, self.owner_in, self.constraint)
-        latest_groups = Timestamp.get(s, self.owner_out, self.constraint)
+        latest_similarity = Timestamp.get(s, self.owner_in, constraint=self.constraint)
+        latest_groups = Timestamp.get(s, self.owner_out, constraint=self.constraint)
         if not latest_groups or latest_similarity.time > latest_groups.time:
             self._delete(s)  # missing isn't really missing...
             return [True]

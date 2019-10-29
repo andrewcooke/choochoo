@@ -155,7 +155,7 @@ class MonitorReader(MultiProcFitReader):
         self._delete_previous(s, first_timestamp, last_timestamp, path)
         mjournal = add(s, MonitorJournal(start=first_timestamp, fit_file=path, finish=last_timestamp))
 
-        return mjournal.id, (first_timestamp, last_timestamp, mjournal, records)
+        return mjournal, (first_timestamp, last_timestamp, mjournal, records)
 
     def _load_data(self, s, loader, data):
         first_timestamp, last_timestamp, mjournal, records = data

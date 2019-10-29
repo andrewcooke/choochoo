@@ -53,9 +53,9 @@ class FitReaderMixin(LoaderMixin):
             log_current_exception()
 
     def _read(self, s, path):
-        key, data = self._read_data(s, path)
+        source, data = self._read_data(s, path)
         s.commit()
-        with Timestamp(owner=self.owner_out, key=key).on_success(s):
+        with Timestamp(owner=self.owner_out, source=source).on_success(s):
             loader = self._get_loader(s)
             self._load_data(s, loader, data)
             loader.load()

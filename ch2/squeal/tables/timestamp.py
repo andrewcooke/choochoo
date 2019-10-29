@@ -3,11 +3,12 @@ from contextlib import contextmanager
 from logging import getLogger
 from time import time
 
-from sqlalchemy import Column, Integer, UniqueConstraint
+from sqlalchemy import Column, Integer, UniqueConstraint, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.functions import count
 
-from ..types import Time, ShortCls, Str, short_cls, NullStr
 from ..support import Base
+from ..types import Time, ShortCls, short_cls, NullStr
 
 log = getLogger(__name__)
 
@@ -36,56 +37,48 @@ class Timestamp(Base):
     time = Column(Time, nullable=False, default=time)
     owner = Column(ShortCls, nullable=False)
     constraint = Column(NullStr)
-    key = Column(Integer)
-    UniqueConstraint(owner, constraint, key)
+    source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'))
+    source = relationship('Source', foreign_keys=[source_id])
+    UniqueConstraint(owner, constraint, source_id)
 
     @classmethod
-    def set(cls, s, owner, constraint=None, key=None):
-        cls.clear(s, owner, constraint=constraint, key=key)
-        s.add(Timestamp(owner=owner, constraint=constraint, key=key))
+    def set(cls, s, owner, constraint=None, source=None):
+        cls.clear(s, owner, constraint=constraint, source=source)
+        s.add(Timestamp(owner=owner, constraint=constraint, source=source))
         s.commit()
-        log.debug(f'Timestamp for {short_cls(owner)} / {key}')
+        log.debug(f'Timestamp for {short_cls(owner)} / {source}')
 
     @classmethod
-    def get(cls, s, owner, constraint=None, key=None):
+    def get(cls, s, owner, constraint=None, source=None):
         return s.query(Timestamp). \
             filter(Timestamp.owner == owner,
                    Timestamp.constraint == constraint,
-                   Timestamp.key == key).one_or_none()
+                   Timestamp.source == source).one_or_none()
 
     @classmethod
-    def clear(cls, s, owner, constraint=None, key=None):
+    def clear(cls, s, owner, constraint=None, source=None):
         s.query(Timestamp). \
             filter(Timestamp.owner == owner,
                    Timestamp.constraint == constraint,
-                   Timestamp.key == key).delete()
+                   Timestamp.source == source).delete()
 
     @classmethod
-    def clean_keys(cls, s, keys, owner, constraint=None):
+    def clear_keys(cls, s, source_ids, owner, constraint=None):
         s.commit()
         for repeat in range(2):
             q = s.query(Timestamp if repeat else count(Timestamp.id)). \
-                filter(Timestamp.key.in_(keys),
+                filter(Timestamp.source_id.in_(source_ids),
                        Timestamp.owner == owner,
                        Timestamp.constraint == constraint)
             if repeat:
                 q.delete(synchronize_session=False)
             else:
-                log.debug(f'Clearing {q.scalar()} Timestamps for {short_cls(owner)} / {constraint}')
-
-    @classmethod
-    def clear_after(cls, s, time, owner, constraint=None):
-        q = s.query(Timestamp). \
-            filter(Timestamp.owner == owner,
-                   Timestamp.constraint == constraint)
-        if time:
-            q = q.filter(Timestamp.time >= time)
-        q.delete()
+                log.debug(f'Clearing {q.scalar()} Timestamps for {short_cls(owner)} / {constraint}')    \
 
     @contextmanager
     def on_success(self, s):
-        self.clear(s, self.owner, constraint=self.constraint, key=self.key)
+        self.clear(s, self.owner, constraint=self.constraint, source=self.source)
         s.commit()
         yield None
-        self.set(s, self.owner, constraint=self.constraint, key=self.key)
+        self.set(s, self.owner, constraint=self.constraint, source=self.source)
 

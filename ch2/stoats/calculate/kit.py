@@ -12,7 +12,7 @@ class KitCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator):
 
     def _run_one(self, s, time):
         ajournal = self._get_source(s, time)
-        with Timestamp(owner=self.owner_out, key=ajournal.id).on_success(s):
+        with Timestamp(owner=self.owner_out, source=ajournal).on_success(s):
             kit = StatisticJournal.for_source(s, ajournal.id, 'kit', self.owner_in, ajournal.activity_group)
             if kit:
                 log.debug(f'Read {kit.value} at {time} / {ajournal.activity_group.name}')
