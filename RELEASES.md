@@ -7,7 +7,8 @@ instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 ### v0.26.0
 
 Small change to database schema.  Not user-visible, but requires a new
-database / minor release.
+database / minor release.  **Important**: v0.26.0 has incorrect
+database name.  Please use 0.26.1.  Sorry :(
 
 ### v0.25.0
 
