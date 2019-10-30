@@ -13,8 +13,8 @@ log = getLogger(__name__)
 
 CH2_VERSION = '0.26.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
-DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2] + ['dev'])
-#DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
+#DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2] + ['dev'])
+DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
