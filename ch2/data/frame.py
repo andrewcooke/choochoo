@@ -24,7 +24,8 @@ from ..stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_
     MED_CADENCE, ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
-    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP, MIXED, ACTIVITY_GROUP
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP, MIXED, ACTIVITY_GROUP, LO_REST_HR, \
+    HI_REST_HR
 
 log = getLogger(__name__)
 
@@ -336,7 +337,8 @@ def std_health_statistics(s, *extra, start=None, finish=None):
         stats_1 = stats_1.resample('1h').mean()
         stats = stats.merge(stats_1.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                             how='outer', left_index=True, right_index=True)
-    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=MonitorCalculator, check=False)
+    stats_2 = statistics(s, LO_REST_HR, REST_HR, HI_REST_HR, start=start, finish=finish, owner=MonitorCalculator,
+                         check=False)
     if present(stats_2, REST_HR):
         stats = stats.merge(stats_2.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                             how='outer', left_index=True, right_index=True)

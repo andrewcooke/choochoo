@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.layouts import column, row
-from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Title, Line
+from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Title, Line, Band, \
+    ColumnDataSource
 from bokeh.plotting import figure
 
 from .utils import tooltip, make_tools, make_range
@@ -294,6 +295,13 @@ def add_multi_line_at_index(f, x, ys, source, colors, alphas=None, dash='dotted'
     for y, color, alpha in zip(ys, colors, alphas):
         f.line(x=x, y=source[y].loc[source[y].notna()].iloc[index],
                source=source, color=color, alpha=alpha, line_dash=dash)
+
+
+def add_band(f, x, ylo, yhi, source, color, alpha=0.3, y_range_name='default'):
+    band = Band(base=x, lower=ylo, upper=yhi, source=ColumnDataSource(source),
+                fill_color=color, fill_alpha=alpha, line_width=1, line_color=color,
+                y_range_name=y_range_name)
+    f.add_layout(band)
 
 
 def htile(maps, n):
