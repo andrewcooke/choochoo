@@ -24,6 +24,8 @@ def heart_rate(start, finish):
     s = session('-v2')
     df = statistics(s, HEART_RATE, owner=MonitorReader, start=start, finish=finish)
     data = sorted(df[HEART_RATE])
+    # take care here to get a fixed number of (integer) heart rates in each bin
+    # this avoids aliasing effects.
     lo, hi = data[0] - 0.5, data[-1] + 0.5
     n = int(hi - lo + bin_width - 0.5) // bin_width
     hi = lo + n * bin_width
@@ -32,6 +34,10 @@ def heart_rate(start, finish):
 
     '''
     Plot histogram of heart rate and mark percentiles used to calculate rest value.
+    
+    The percentiles used are taken from the MonitorCalculator source (currently they are not configurable).
+    It's not clear to me what the 'correct' values should be, but 10% seems to be reasonable, discarding possibly
+    erroneous low counts but still giving a value from the bottom end of the range.
     '''
 
     output_file(filename='/dev/null')
