@@ -16,7 +16,7 @@ from ch2.uranus.decorator import template
 def activity_details(local_time, activity_group_name):
 
     f'''
-    # Activity Details: {local_time.split()[0]} ({activity_group_name})
+    # Activity Details: {local_time} ({activity_group_name})
     '''
 
     '''

@@ -6,6 +6,7 @@ from ..lib.date import format_date, time_to_local_time
 
 
 def stringify(value):
+    # this has auto-conversion of UTC to local times (since interface is public)
     if isinstance(value, str):
         return value
     elif isinstance(value, dt.datetime):

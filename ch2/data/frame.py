@@ -13,7 +13,7 @@ from sqlalchemy.sql.functions import coalesce
 
 from .coasting import CoastingBookmark
 from ..lib.data import kargs_to_attr
-from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
+from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS, to_time
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
@@ -395,14 +395,20 @@ def _type_to_journal(t):
             StatisticJournalType.TEXT: t.sjt}
 
 
-def statistics(s, *statistics, start=None, finish=None, owner=None, constraint=None, sources=None,
-               with_sources=False, check=True):
+def statistics(s, *statistics, start=None, finish=None, local_start=None, local_finish=None,
+               owner=None, constraint=None, sources=None, with_sources=False, check=True):
     t = _tables()
     ttj = _type_to_journal(t)
     names = statistic_names(s, *statistics, owner=owner, constraint=constraint, check=check)
     counts = Counter(name.name for name in names)
     labels = [name.name if counts[name.name] == 1 else f'{name.name} ({name.constraint})' for name in names]
     tables = [ttj[name.statistic_journal_type] for name in names]
+    if local_start:
+        if start: raise Exception('Provide only one of start, local_start')
+        start = local_time_to_time(local_start)
+    if local_finish:
+        if finish: raise Exception('Provide only one of finish, local_finish')
+        finish = local_time_to_time(local_finish)
     time_select = select([distinct(t.sj.c.time).label("time")]).select_from(t.sj). \
         where(t.sj.c.statistic_name_id.in_([n.id for n in names]))
     if start:

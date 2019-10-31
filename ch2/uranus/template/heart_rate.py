@@ -12,7 +12,7 @@ from ch2.uranus.decorator import template
 def heart_rate(start, finish):
 
     f'''
-    # Heart Rate: {start.split()[0]} - {finish.split()[0]}
+    # Heart Rate: {start} - {finish}
     '''
 
     '''
@@ -22,7 +22,7 @@ def heart_rate(start, finish):
     bin_width = 1
 
     s = session('-v2')
-    df = statistics(s, HEART_RATE, owner=MonitorReader, start=start, finish=finish)
+    df = statistics(s, HEART_RATE, owner=MonitorReader, local_start=start, local_finish=finish)
     data = sorted(df[HEART_RATE])
     # take care here to get a fixed number of (integer) heart rates in each bin
     # this avoids aliasing effects.
@@ -42,7 +42,9 @@ def heart_rate(start, finish):
 
     output_file(filename='/dev/null')
 
-    f = figure()
+    f = figure(title=f'Heart Rate: {start} - {finish}')
+    f.xaxis.axis_label = 'Heart Rate / bpm'
+    f.yaxis.axis_label = 'Measurement Density'
     f.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color="grey", line_color="white", alpha=0.5)
     for pc in (5, 10, 15):
         x = data[int(len(data) * pc / 100)]
