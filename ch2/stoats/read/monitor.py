@@ -160,7 +160,7 @@ class MonitorReader(MultiProcFitReader):
     def _load_data(self, s, loader, data):
         first_timestamp, last_timestamp, mjournal, records = data
         for record in records:
-            if HEART_RATE_ATTR in record.data:
+            if HEART_RATE_ATTR in record.data and record.data[HEART_RATE_ATTR][0][0]:
                 loader.add(HEART_RATE, BPM, None, None, mjournal, record.data[HEART_RATE_ATTR][0][0],
                            record.timestamp, StatisticJournalInteger)
             if STEPS_ATTR in record.data:

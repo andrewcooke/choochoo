@@ -1,16 +1,16 @@
 
 import datetime as dt
-from math import sqrt
 
 import numpy as np
 import pandas as pd
 from bokeh import palettes, tile_providers
 from bokeh.layouts import column, row
-from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Title, Line, Band, \
+from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, Range1d, LinearAxis, Title, Band, \
     ColumnDataSource
 from bokeh.plotting import figure
+from math import sqrt
 
-from .utils import tooltip, make_tools, make_range
+from .utils import tooltip, make_range
 from ..frame import present
 from ...stoats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, ELEVATION_M, CLIMB_ELEVATION, \
     SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB
