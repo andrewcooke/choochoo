@@ -38,7 +38,7 @@ def std_distance_time_plot(nx, ny, source, x_range=None):
     for distance, colour in zip(distances, colours):
         distance_km = _slash(distance, KM)
         source[distance_km] = source[distance] / 1000
-        plotter(f, x=TIME, y=distance_km, source=source, color=colour, alpha=0.5, name='with_hover',
+        plotter(f, x=TIME, y=distance_km, source=source, color=colour, line_alpha=1, fill_alpha=0, name='with_hover',
                 y_range_name=ACTIVE_DISTANCE)
     f.xaxis.axis_label = TIME
     f.toolbar.logo = None

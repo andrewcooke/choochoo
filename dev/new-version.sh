@@ -39,3 +39,4 @@ dev/package-python.sh
 twine upload dist/*
 
 rm -fr build
+rm -fr choochoo.egg-info
