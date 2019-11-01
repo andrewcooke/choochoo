@@ -231,6 +231,15 @@ def line_plotter():
     return lambda f, *args, **kargs: f.line(*args, **kargs)
 
 
+def comb_plotter():
+    def plotter(f, x=None, y=None, source=None, **kargs):
+        xs = [(value, value) for value in source[x]]
+        ys = [(0, value) for value in source[y]]
+        f.multi_line(xs, ys, **kargs)
+
+    return plotter
+
+
 def dot_plotter():
     return lambda f, *args, **kargs: f.circle(*args, **kargs)
 

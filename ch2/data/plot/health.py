@@ -2,7 +2,7 @@
 from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, LinearAxis
 from bokeh.plotting import figure
 
-from .line import multi_dot_plot, dot_plotter
+from .line import multi_dot_plot, dot_plotter, comb_plotter
 from .utils import make_range, evenly_spaced_hues, tooltip
 from ..frame import related_statistics
 from ...stoats.names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME, _slash, \
@@ -26,19 +26,20 @@ def std_distance_time_plot(nx, ny, source, x_range=None):
              HoverTool(tooltips=[tooltip(x) for x in (ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, ACTIVITY_GROUP, LOCAL_TIME)],
                        names=['with_hover'])]
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools)
-    f.yaxis.axis_label = ACTIVE_TIME_H
+    f.yaxis.axis_label = f'lines - {ACTIVE_TIME_H}'
     f.y_range = time_y_range
     f.extra_y_ranges = {ACTIVE_DISTANCE: distance_y_range}
-    f.add_layout(LinearAxis(y_range_name=ACTIVE_DISTANCE, axis_label=ACTIVE_DISTANCE_KM), 'right')
-    plotter = dot_plotter()
+    f.add_layout(LinearAxis(y_range_name=ACTIVE_DISTANCE, axis_label=f'dots - {ACTIVE_DISTANCE_KM}'), 'right')
+    plotter = comb_plotter()
     for time, colour in zip(times, colours):
         time_h = _slash(time, H)
         source[time_h] = source[time] / 3600
-        plotter(f, x=TIME, y=time_h, source=source, color=colour, alpha=1, name='with_hover')
+        plotter(f, x=TIME, y=time_h, source=source, color=colour, alpha=1)
+    plotter = dot_plotter()
     for distance, colour in zip(distances, colours):
         distance_km = _slash(distance, KM)
         source[distance_km] = source[distance] / 1000
-        plotter(f, x=TIME, y=distance_km, source=source, color=colour, line_alpha=1, fill_alpha=0, name='with_hover',
+        plotter(f, x=TIME, y=distance_km, source=source, color=colour, alpha=1, name='with_hover',
                 y_range_name=ACTIVE_DISTANCE)
     f.xaxis.axis_label = TIME
     f.toolbar.logo = None
