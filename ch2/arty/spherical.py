@@ -1,7 +1,10 @@
+from logging import getLogger
 
 from math import pi, cos
 
 from .tree import LinearMixin, BaseTree, QuadraticMixin, ExponentialMixin, CartesianMixin
+
+log = getLogger(__name__)
 
 RADIUS = 6371000
 RADIAN = pi / 180
@@ -28,7 +31,9 @@ class LocalTangent:
             self.__zero = point
         zx, zy = self.__zero
         lon, lat = norm180(point[0] - zx), point[1] - zy
-        return RADIUS * RADIAN * lon * cos(self.__zero[1]), RADIUS * RADIAN * lat
+        x, y = RADIUS * RADIAN * lon * cos(self.__zero[1]), RADIUS * RADIAN * lat
+        # log.debug(f'{point[0]},{point[1]} ({zx},{zy} -> {lon},{lat}) -> {x},{y}')
+        return x, y
 
     def denormalize(self, point):
         zx, zy = self.__zero
@@ -66,22 +71,21 @@ class Global:
     def __init__(self, tree=SQRTree, n=36, favour_read=True):
         self.__tree = tree
         self.__n = n
-        self.__trees = [[None] * n for _ in range(n)]
+        self.__trees = [[None] * (n // 2) for _ in range(n)]
         self.__favour_read = favour_read
 
-    def __norm_n(self, i):
+    def __norm(self, i):
         while i < 0: i += self.__n
         while i >= self.__n: i -= self.__n
         return i
 
     def __delegate(self, i, j):
-        i, j = self.__norm_n(i), self.__norm_n(j)
+        i = self.__norm(i)  # lat doesn't need normalization
         if self.__trees[i][j] is None:
             tree = self.__tree()
             # set the local tangent to the centre point
-            bin_width = 360 / self.__n
-            lon = (i + 0.5) * bin_width - 180
-            lat = (j + 0.5) * bin_width - 180
+            lon = (i + 0.5) * (360 / self.__n)
+            lat = (j + 0.5) * (180 / (self.__n // 2)) - 90
             tree.add([(lon, lat)], None)
             tree.delete([(lon, lat)])
             self.__trees[i][j] = tree
@@ -89,14 +93,20 @@ class Global:
 
     def __delegates(self, points, read=True):
         lon, lat = points[0]
-        i, j = int(self.__n * lon / 360), int(self.__n * lat / 180)
+        i, j = int(self.__n * lon / 360), int((self.__n // 2) * (lat + 90) / 180)
         for di in (-1, 0, 1):
             for dj in (-1, 0, 1):
-                yield self.__delegate(i + di, j + dj)
+                if 0 <= j + dj < self.__n // 2:
+                    yield self.__delegate(i + di, j + dj)
 
     def get(self, points, value=None, match=None, border=None):
+        # we can de-duplicate over delegates here
+        known = set()
         for delegate in self.__delegates(points):
-            yield from delegate.get(points, value=value, match=match, border=border)
+            for result in delegate.get(points, value=value, match=match, border=border):
+                if result not in known:
+                    yield result
+                    known.add(result)
 
     def get_items(self, points, value=None, match=None, border=None):
         for delegate in self.__delegates(points):

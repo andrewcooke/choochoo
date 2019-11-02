@@ -39,7 +39,7 @@ def fit_ff_single_segment(segment_name):
     '''
 
     s = session('-v2')
-    hr10_data = statistics(s, HR_IMPULSE_10, with_sources=True)
+    hr10_data = statistics(s, HR_IMPULSE_10, with_sources=True, constraint=ActivityGroup.from_name(s, 'all'))
     print(hr10_data.describe())
     segment_journals = s.query(SegmentJournal).join(Segment).filter(Segment.name == segment_name).all()
     st_data = statistics(s, SEGMENT_TIME, sources=segment_journals)

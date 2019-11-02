@@ -1,3 +1,4 @@
+from functools import total_ordering
 
 from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint, or_
 from sqlalchemy.orm import relationship
@@ -84,3 +85,4 @@ class Segment(Base):
 
     def __str__(self):
         return 'Segment "%s/%s"' % (self.name, self.activity_group.name)
+

@@ -46,8 +46,9 @@ class SegmentReader(ActivityReader):
         self._find_segments(s, ajournal, filter_none(NAMES.values(), loader.as_waypoints(NAMES)))
 
     def _find_segments(self, s, ajournal, waypoints):
-        matches = self._initial_matches(s, ajournal.activity_group_id, waypoints)
-        for _, segment_matches in groupby(matches, key=lambda m: m[2]):
+        matches = sorted(self._initial_matches(s, ajournal.activity_group_id, waypoints), key=lambda m: m[2].name)
+        for segment, segment_matches in groupby(matches, key=lambda m: m[2]):
+            log.debug(f'Considering {segment.name}')
             ordered = sorted(segment_matches, key=lambda m: m[0])
             coallesced = list(self._coallesce(ordered))
             starts, finishes, segment = self._split(coallesced)
@@ -60,7 +61,7 @@ class SegmentReader(ActivityReader):
                         if self._try_segment(s, start, finish, waypoints, segment, ajournal):
                             copy = None  # exit search for this start
                             # move to a start that won't overlap (working backwards)
-                            while starts and starts[-1] > start - 0.9 * (finish - start):
+                            while starts and starts[-1][0] > start[0] - 0.5 * (finish[0] - start[0]):
                                 starts.pop(-1)
                             if starts:
                                 log.debug('Possible second segment')
@@ -257,11 +258,13 @@ class SegmentReader(ActivityReader):
         '''
         found = set()
         for i, waypoint in enumerate(waypoints):
-            for start, id in self.__segments[agroup_id][[(waypoint.lon, waypoint.lat)]]:
-                segment = s.query(Segment).filter(Segment.id == id).one()
+            for start, segment in self.__segments[agroup_id][[(waypoint.lon, waypoint.lat)]]:
                 if segment not in found:
-                    log.info('Candidate segment "%s"' % segment.name)
+                    log.info(f'Candidate segment "{segment.name}" at ({segment.start_lon}, {segment.start_lat}) - '
+                             f'({segment.finish_lon}, {segment.finish_lat})')
                     found.add(segment)
+                log.debug(f'Match at {(waypoint.lon, waypoint.lat)} '
+                          f'for {segment.name} {"start" if start else "finish"}')
                 yield i, start, segment
 
     def _read_segments(self, s, agroup):
@@ -270,8 +273,8 @@ class SegmentReader(ActivityReader):
         '''
         segments = Global(tree=lambda: SQRTree(default_border=self.match_bound, default_match=MatchType.OVERLAP))
         for segment in s.query(Segment).filter(Segment.activity_group == agroup).all():
-            segments[[segment.start]] = (True, segment.id)
-            segments[[segment.finish]] = (False, segment.id)
+            segments[[segment.start]] = (True, segment)
+            segments[[segment.finish]] = (False, segment)
         if not segments:
             log.warning('No segments defined in database for %s' % agroup)
         return segments

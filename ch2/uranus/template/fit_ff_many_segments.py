@@ -39,11 +39,13 @@ def fit_ff_many_segments(*segment_names):
     '''
 
     s = session('-v2')
-    hr10_data = statistics(s, HR_IMPULSE_10, with_sources=True)
+    hr10_data = statistics(s, HR_IMPULSE_10, with_sources=True, constraint=ActivityGroup.from_name(s, 'all'))
     print(hr10_data.describe())
-    segment_journals = s.query(SegmentJournal).join(Segment).filter(Segment.name == segment_name).all()
-    st_data = statistics(s, SEGMENT_TIME, sources=segment_journals)
-    print(st_data.describe())
+    segment_journals = [s.query(SegmentJournal).join(Segment).filter(Segment.name == segment_name).all()
+                        for segment_name in segment_names]
+    st_data = [statistics(s, SEGMENT_TIME, sources=segment_journal) for segment_journal in segment_journals]
+    for data in st_data:
+        print(data.describe())
 
 
     '''
