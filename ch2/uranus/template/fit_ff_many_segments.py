@@ -15,14 +15,14 @@ from ch2.uranus.decorator import template
 
 
 @template
-def fit_ff_parameters(segment_name):
+def fit_ff_many_segments(*segment_names):
 
     f'''
-    # Fit FF Parameters to {segment_name}
+    # Fit FF Parameters to {', '.join(segment_names)}
 
     This notebook allows you to estimate a personal time scale (decay period) for the
     [FF model](https://andrewcooke.github.io/choochoo/impulse) using your times (more exactly, the speed)
-    on the named segment.
+    on the named segments.
 
     The resulting value can be used in the configuration so that the Fitness parameter more accurately
     reflects your personal rate of adaption.

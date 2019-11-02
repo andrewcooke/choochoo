@@ -77,6 +77,9 @@ def templates():
 def print_list():
     for name, (_, spec) in templates():
         args = ' '.join(spec.args)
+        if spec.varargs:
+            if args: args += ' '
+            args += '*' + spec.varargs
         print(f'\n  {name}  {args}')
     print()
 
@@ -93,8 +96,8 @@ def show(args):
 
 
 def check_params(params, spec):
-    if len(params) != len(spec.args):
-        raise Exception(f'Received {len(params)} args but need {len(spec.args)} values ' +
-                        f'(see {PROGNAME} {JUPYTER} {LIST})')
+    if len(params) < len(spec.args) or (not spec.varargs and len(params) > len(spec.args)):
+        raise Exception(f'Received {len(params)} args but need {"at least " if spec.varargs else ""}'
+                        f'{len(spec.args)} values (see {PROGNAME} {JUPYTER} {LIST})')
     return params
 

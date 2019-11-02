@@ -2,6 +2,7 @@
 import webbrowser as web
 from abc import abstractmethod, ABC
 from inspect import getsource, getfullargspec
+from itertools import zip_longest
 from logging import getLogger
 from os import unlink, makedirs
 from os.path import join, exists, sep
@@ -201,11 +202,11 @@ class Params(Code):
 
     def __init__(self, vars, params):
         super().__init__(vars, 0)
-        self._params = [param.strip() for param in params]
+        self._params = [param.strip(' *') for param in params]
 
     def post_one(self):
         for param in self._params:
-            self.append(f'{param} = "{self._vars[param]}"')
+            self.append(f'{param} = {self._vars[param]!r}')
         super().post_one()
 
     @staticmethod
@@ -269,8 +270,14 @@ def create_notebook(template, notebook_dir, database_path, args, kargs):
 
     vars = dict(kargs)
     vars[DATABASE] = database_path
-    for name, value in zip(getfullargspec(template).args, args):
-        vars[name] = value
+    spec = getfullargspec(template)
+    for name, value in zip_longest(spec.args, args):
+        if name:
+            vars[name] = value
+        else:
+            if spec.varargs not in vars:
+                vars[spec.varargs] = []
+            vars[spec.varargs].append(value)
 
     template = template.__name__
     base = join(notebook_dir, template)

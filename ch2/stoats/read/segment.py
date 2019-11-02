@@ -51,13 +51,19 @@ class SegmentReader(ActivityReader):
             ordered = sorted(segment_matches, key=lambda m: m[0])
             coallesced = list(self._coallesce(ordered))
             starts, finishes, segment = self._split(coallesced)
-            for start in reversed(starts):  # work backwards through starts
-                copy = list(finishes)  # work forwards through finishes
+            while starts:
+                start = starts.pop(-1)  # work backwards through starts
+                copy = list(finishes)
                 while copy:
-                    finish = copy.pop(0)
+                    finish = copy.pop(0)  # work forwards through finishes
                     if finish[0] > start[0]:
                         if self._try_segment(s, start, finish, waypoints, segment, ajournal):
-                            finishes = finishes[:-len(copy)]  # drop this finish and later
+                            copy = None  # exit search for this start
+                            # move to a start that won't overlap (working backwards)
+                            while starts and starts[-1] > start - 0.9 * (finish - start):
+                                starts.pop(-1)
+                            if starts:
+                                log.debug('Possible second segment')
 
     def _try_segment(self, s, starts, finishes, waypoints, segment, ajournal):
         try:

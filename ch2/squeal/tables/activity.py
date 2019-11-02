@@ -25,9 +25,9 @@ class ActivityGroup(Base):
     @classmethod
     def from_name(cls, s, name, optional=False):
         if optional:
-            return s.query(ActivityGroup).filter(ActivityGroup.name == name).one_or_none()
+            return s.query(ActivityGroup).filter(ActivityGroup.name.ilike(name)).one_or_none()
         else:
-            return s.query(ActivityGroup).filter(ActivityGroup.name == name).one()
+            return s.query(ActivityGroup).filter(ActivityGroup.name.ilike(name)).one()
 
 
 class ActivityJournal(Source):
