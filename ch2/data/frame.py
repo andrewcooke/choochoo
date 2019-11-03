@@ -571,6 +571,13 @@ def transform(df, transformation):
     return df.transform(transformation)
 
 
+def drop_empty(df):
+    for column in df.columns:
+        if df[column].dropna().empty:
+            df = df.drop(columns=[column])
+    return df
+
+
 if __name__ == '__main__':
     s = session('-v5')
     # activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group_name='Bike')
