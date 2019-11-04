@@ -34,6 +34,7 @@ class SegmentReader(ActivityReader):
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
+        SegmentJournal.clean(s)
         super()._startup(s)
         self.__segments = {}
         for agroup in s.query(ActivityGroup).all():
