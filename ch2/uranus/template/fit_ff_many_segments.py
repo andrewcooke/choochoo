@@ -57,6 +57,13 @@ def fit_ff_many_segments(*segment_names):
 
     hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
 
+    # from pandas import concat
+    # single = concat(
+    #     [performance.rename(columns={performance.columns[0]: 'Performance'}) for performance in performances],
+    #     sort=False)
+    # print(single)
+    # performances = [single]
+
     '''
     ## Define Plot Routine
     '''

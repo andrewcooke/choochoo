@@ -34,16 +34,17 @@ def calc_predicted(response, performances):
     for performance in performances:
         # extract the response data at the points we are going to compare
         measured_y = response.reindex(index=performance.index, method='nearest')
-        poly = polyfit(performance.iloc[:, 0], measured_y.iloc[:, 0], 1)
-        if poly[0] < 0:
-            log.warning(f'Polynomial for {performance.columns[0]} has negative scale')
-        predicted_y = polyval(poly, performance.iloc[:, 0])
+        # poly = polyfit(performance.iloc[:, 0], measured_y.iloc[:, 0], 1)
+        # if poly[0] < 0:
+        #     log.warning(f'Polynomial for {performance.columns[0]} has negative scale')
+        # predicted_y = polyval(poly, performance.iloc[:, 0])
+        predicted_y = performance.iloc[:, 0] * measured_y.iloc[:, 0].mean() / performance.iloc[:, 0].mean()
         yield DataFrame({PREDICTED: predicted_y}, index=performance.index)
 
 
 def calc_chisq(response, predicted):
     # use abs(model) as variance to remove bias towards zero scaling for everything
-    return sum((y1 - y2)**2 / abs(y2) for y1, y2 in zip(response.iloc[:, 0], predicted.iloc[:, 0]))
+    return sum(abs(y1 - y2) for y1, y2 in zip(response.iloc[:, 0], predicted.iloc[:, 0]))
 
 
 def fit_period(data, log10_period, performances, **kargs):
