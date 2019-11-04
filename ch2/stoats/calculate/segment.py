@@ -16,6 +16,10 @@ SJOURNAL = 'sjournal'
 
 class SegmentCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
+    def _shutdown(self, s):
+        SegmentJournal.clean(s)
+        super()._shutdown(s)
+
     def _missing(self, s):
         # extends superclass with restriction on activities that have a segment
         existing_ids = s.query(Timestamp.source_id). \

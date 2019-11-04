@@ -55,6 +55,23 @@ def fit_ff_many_segments(*segment_names):
     for performance in performances:
         print(performance.describe())
 
+    hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
+
+    '''
+    ## Define Plot Routine
+    '''
+
+    output_file(filename='/dev/null')
+
+    def plot(period):
+        response = calc_response(hr3600, period)
+        f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
+        f.line(x=response.index, y=response[RESPONSE], color='grey')
+        for color, predicted in zip(evenly_spaced_hues(len(performances)),
+                                    calc_predicted(response, performances)):
+            f.circle(x='Index', y=PREDICTED, source=predicted, color=color)
+        show(f)
+
     '''
     ## Plot Initial Response
     
@@ -62,14 +79,7 @@ def fit_ff_many_segments(*segment_names):
     '''
 
     initial_period = log10(42 * 24)
-    hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
-    response = calc_response(hr3600, initial_period)
-
-    output_file(filename='/dev/null')
-
-    f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
-    f.line(x=response.index, y=response[RESPONSE], color='grey')
-    show(f)
+    plot(initial_period)
 
     '''
     ## Fit Model
@@ -83,11 +93,4 @@ def fit_ff_many_segments(*segment_names):
     ### Plot Fitted Response
     '''
 
-    response = calc_response(hr3600, period)
-    f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
-    f.line(x=response.index, y=response[RESPONSE], color='grey')
-    for color, predicted in zip(evenly_spaced_hues(len(performances)),
-                                calc_predicted(response, performances)):
-        f.circle(x='Index', y=PREDICTED, source=predicted, color=color)
-    show(f)
-
+    plot(period)

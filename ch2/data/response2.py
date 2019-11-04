@@ -34,8 +34,10 @@ def calc_predicted(response, performances):
     for performance in performances:
         # extract the response data at the points we are going to compare
         measured_y = response.reindex(index=performance.index, method='nearest')
-        predicted_y = polyval(polyfit(performance.iloc[:, 0], measured_y.iloc[:, 0], 1),
-                              performance.iloc[:, 0])
+        poly = polyfit(performance.iloc[:, 0], measured_y.iloc[:, 0], 1)
+        if poly[0] < 0:
+            log.warning(f'Polynomial for {performance.columns[0]} has negative scale')
+        predicted_y = polyval(poly, performance.iloc[:, 0])
         yield DataFrame({PREDICTED: predicted_y}, index=performance.index)
 
 

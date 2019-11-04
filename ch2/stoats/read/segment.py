@@ -36,9 +36,12 @@ class SegmentReader(ActivityReader):
     def _startup(self, s):
         super()._startup(s)
         self.__segments = {}
-        SegmentJournal.clean(s)
         for agroup in s.query(ActivityGroup).all():
             self.__segments[agroup.id] = self._read_segments(s, agroup)
+
+    def _shutdown(self, s):
+        SegmentJournal.clean(s)
+        super()._shutdown(s)
 
     def _load_data(self, s, loader, data):
         super()._load_data(s, loader, data)
