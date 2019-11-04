@@ -2,11 +2,14 @@
 import datetime as dt
 from logging import getLogger
 
+from bokeh.io import show
+from bokeh.plotting import figure
 from numpy import polyval, polyfit
 from pandas import DataFrame
 from scipy import optimize
 
 from ch2.data import inplace_decay
+from ch2.data.plot.utils import evenly_spaced_hues
 
 log = getLogger(__name__)
 
@@ -30,29 +33,31 @@ def calc_response(data, log10_period):
     return response
 
 
-def calc_predicted(response, performances):
-    for performance in performances:
-        # extract the response data at the points we are going to compare
-        measured_y = response.reindex(index=performance.index, method='nearest')
-        # poly = polyfit(performance.iloc[:, 0], measured_y.iloc[:, 0], 1)
-        # if poly[0] < 0:
-        #     log.warning(f'Polynomial for {performance.columns[0]} has negative scale')
-        # predicted_y = polyval(poly, performance.iloc[:, 0])
-        predicted_y = performance.iloc[:, 0] * measured_y.iloc[:, 0].mean() / performance.iloc[:, 0].mean()
-        yield DataFrame({PREDICTED: predicted_y}, index=performance.index)
+def calc_measured(response, performances):
+    return [response.reindex(index=performance.index, method='nearest')
+            for performance in performances]
 
 
-def calc_chisq(response, predicted):
+def calc_predicted(measureds, performances):
+    return [DataFrame({PREDICTED: polyval(polyfit(performance.iloc[:, 0], measured.iloc[:, 0], 1),
+                                          performance.iloc[:, 0])},
+                      index=performance.index)
+            for measured, performance in zip(measureds, performances)]
+
+
+def calc_chisq(measureds, predicteds):
     # use abs(model) as variance to remove bias towards zero scaling for everything
-    return sum(abs(y1 - y2) for y1, y2 in zip(response.iloc[:, 0], predicted.iloc[:, 0]))
+    return sum(sum(abs((measured.iloc[:, 0] - predicted.iloc[:, 0]) / measured.iloc[:, 0].clip(lower=1e-6)))
+               for measured, predicted in zip(measureds, predicteds))
 
 
 def fit_period(data, log10_period, performances, **kargs):
 
     def chisq(log10_period):
         response = calc_response(data, log10_period)
-        return sum(calc_chisq(response, predicted)
-                   for predicted in calc_predicted(response, performances))
+        measureds = calc_measured(response, performances)
+        predicteds = calc_predicted(measureds, performances)
+        return calc_chisq(measureds, predicteds)
 
     result = optimize.minimize(chisq, [log10_period], **kargs)
     log.debug(result)

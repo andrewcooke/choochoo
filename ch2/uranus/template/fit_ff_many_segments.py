@@ -7,7 +7,8 @@ from pandas import DataFrame
 from ch2.data import *
 from ch2.data.frame import drop_empty
 from ch2.data.plot.utils import evenly_spaced_hues
-from ch2.data.response2 import sum_to_hour, calc_response, RESPONSE, fit_period, calc_predicted, PREDICTED
+from ch2.data.response2 import sum_to_hour, calc_response, RESPONSE, fit_period, calc_predicted, PREDICTED, \
+    calc_measured
 from ch2.squeal import *
 from ch2.uranus.decorator import template
 
@@ -75,7 +76,8 @@ def fit_ff_many_segments(*segment_names):
         f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
         f.line(x=response.index, y=response[RESPONSE], color='grey')
         for color, predicted in zip(evenly_spaced_hues(len(performances)),
-                                    calc_predicted(response, performances)):
+                                    calc_predicted(calc_measured(response, performances),
+                                                   performances)):
             f.circle(x='Index', y=PREDICTED, source=predicted, color=color)
         show(f)
 
@@ -92,7 +94,8 @@ def fit_ff_many_segments(*segment_names):
     ## Fit Model
     '''
 
-    result = fit_period(hr3600, initial_period, performances)
+    result = fit_period(hr3600, initial_period, performances,
+                        options={'maxiter': 5})
     print(result)
     period = result.x
 
