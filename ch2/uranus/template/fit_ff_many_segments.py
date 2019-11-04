@@ -2,7 +2,7 @@
 from bokeh.io import output_file, show
 from bokeh.plotting import figure
 from math import log10
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 from ch2.data import *
 from ch2.data.frame import drop_empty
@@ -34,36 +34,27 @@ def fit_ff_many_segments(*segment_names):
     '''
     ## Load Data
     
-    Open a connection to the database and load the data we require.
+    Open a connection to the database and load the data we require.  We reduce the GR data to hourly values
+    so that we have smaller arrays (for faster processing).
     '''
 
     s = session('-v2')
-    hr10 = statistics(s, HR_IMPULSE_10, with_sources=True, constraint=ActivityGroup.from_name(s, 'all'))
+
+    hr10 = statistics(s, HR_IMPULSE_10, constraint=ActivityGroup.from_name(s, 'all'))
     print(hr10.describe())
     segments = [s.query(Segment).filter(Segment.name == segment_name).one() for segment_name in segment_names]
     for segment in segments:
-        print(segment, segment.name, segment.distance)
+        print(segment.name, segment.distance)
     segment_journals = [s.query(SegmentJournal).filter(SegmentJournal.segment == segment).all()
                         for segment in segments]
     times = [drop_empty(statistics(s, SEGMENT_TIME, sources=segment_journal)).dropna()
              for segment_journal in segment_journals]
     for time in times:
         time.index = time.index.round('1H')
-        print(time.describe())
-        print(time.columns)
-    performances = [DataFrame({segment.name: segment.distance / time[time.columns[0]]}, index=time.index)
+    performances = [Series(segment.distance / time.iloc[:, 0], time.index, name=segment.name)
                     for segment, time in zip(segments, times)]
-    for performance in performances:
-        print(performance.describe())
 
     hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
-
-    # from pandas import concat
-    # single = concat(
-    #     [performance.rename(columns={performance.columns[0]: 'Performance'}) for performance in performances],
-    #     sort=False)
-    # print(single)
-    # performances = [single]
 
     '''
     ## Define Plot Routine
@@ -74,11 +65,11 @@ def fit_ff_many_segments(*segment_names):
     def plot(period):
         response = calc_response(hr3600, period)
         f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
-        f.line(x=response.index, y=response[RESPONSE], color='grey')
+        f.line(x=response.index, y=response, color='grey')
         for color, predicted in zip(evenly_spaced_hues(len(performances)),
                                     calc_predicted(calc_measured(response, performances),
                                                    performances)):
-            f.circle(x='Index', y=PREDICTED, source=predicted, color=color)
+            f.circle(x=predicted.index, y=predicted, color=color)
         show(f)
 
     '''
@@ -94,10 +85,10 @@ def fit_ff_many_segments(*segment_names):
     ## Fit Model
     '''
 
-    result = fit_period(hr3600, initial_period, performances,
-                        options={'maxiter': 5})
+    result = fit_period(hr3600, initial_period, performances, tol=0.1)
     print(result)
-    period = result.x
+    period = result.x[0]
+    print(f'Period in days: {10 ** period / 24:.1f}')
 
     '''
     ### Plot Fitted Response
