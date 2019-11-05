@@ -55,13 +55,20 @@ def calc_predicted(measureds, performances):
             for measured, performance in zip(measureds, performances)]
 
 
-def calc_chisq(measureds, predicteds):
-    # use L1 scaled by amplitude to be reasonably robust.
-    return sum(sum(abs((measured - predicted) / measured.clip(lower=1e-6)))
-               for measured, predicted in zip(measureds, predicteds))
+def calc_chisq(measureds, predicteds, method='L1'):
+    if method == 'L1':
+        # use L1 scaled by amplitude to be reasonably robust.
+        return sum(sum(abs((measured - predicted) / measured.clip(lower=1e-6)))
+                   for measured, predicted in zip(measureds, predicteds))
+    elif method == 'L2':
+        # something like chisq
+        return sum(sum(((measured - predicted).pow(2) / measured.clip(lower=1e-6)))
+                   for measured, predicted in zip(measureds, predicteds))
+    else:
+        raise Exception(f'Unknown method ({method}) - use L1 or L2')
 
 
-def fit_period(data, log10_period, performances, **kargs):
+def fit_period(data, log10_period, performances, method='L1', **kargs):
     # data should be a DataFrame with an IMPULSE3600 entry
     # performances should be Series
 
@@ -69,7 +76,7 @@ def fit_period(data, log10_period, performances, **kargs):
         response = calc_response(data, log10_period)
         measureds = calc_measured(response, performances)
         predicteds = calc_predicted(measureds, performances)
-        return calc_chisq(measureds, predicteds)
+        return calc_chisq(measureds, predicteds, method=method)
 
     result = optimize.minimize(chisq, [log10_period], **kargs)
     log.debug(result)

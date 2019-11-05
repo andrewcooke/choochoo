@@ -2,13 +2,11 @@
 from bokeh.io import output_file, show
 from bokeh.plotting import figure
 from math import log10
-from pandas import DataFrame, Series
+from pandas import Series
 
 from ch2.data import *
-from ch2.data.frame import drop_empty
 from ch2.data.plot.utils import evenly_spaced_hues
-from ch2.data.response import sum_to_hour, calc_response, RESPONSE, fit_period, calc_predicted, PREDICTED, \
-    calc_measured
+from ch2.data.response import sum_to_hour, calc_response, fit_period, calc_predicted, calc_measured
 from ch2.squeal import *
 from ch2.uranus.decorator import template
 
@@ -82,16 +80,23 @@ def fit_ff_segments(*segment_names):
     plot(initial_period)
 
     '''
-    ## Fit Model
+    ## Fit Model using L1
     '''
 
-    result = fit_period(hr3600, initial_period, performances, tol=0.1)
+    result = fit_period(hr3600, initial_period, performances, method='L1', tol=0.1)
     print(result)
     period = result.x[0]
     print(f'Period in days: {10 ** period / 24:.1f}')
+    plot(period)
 
     '''
-    ### Plot Fitted Response
+    ## Fit Model using L2
+    
+    Using different methods gives us some idea of how susceptible the value is to processing assumptions.
     '''
 
+    result = fit_period(hr3600, initial_period, performances, method='L2', tol=0.1)
+    print(result)
+    period = result.x[0]
+    print(f'Period in days: {10 ** period / 24:.1f}')
     plot(period)
