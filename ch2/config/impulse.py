@@ -26,7 +26,6 @@ def add_impulse(s, c, activity_group):
     hr_impulse = add_enum_constant(s, hr_impulse_name, HRImpulse, single=True, constraint=activity_group,
                                    description='Data needed to calculate the FF-model impulse from HR zones - ' +
                                                'see HRImpulse enum')
-    # range 1-6, gamma 2 and decay of 84 days seems to fit my data best
     set_constant(s, hr_impulse, dumps({'gamma': 2.0, 'zero': 1, 'one': 6, 'max_secs': 60}))
 
     add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(SegmentReader), impulse_ref=hr_impulse_name)

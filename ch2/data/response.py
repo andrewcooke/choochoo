@@ -73,21 +73,21 @@ def calc_cost(measureds, predicteds, method='L1'):
     return sum(sum(residual) for residual in residuals)
 
 
-def worst_index(predicteds):
+def worst_index(residuals):
     worst, index = None, None
-    for i, predicted in enumerate(predicteds):
-        bad = max(predicted)
+    for i, residual in enumerate(residuals):
+        bad = max(residual)
         if index is None or bad > worst:
             worst, index = bad, i
     return index
 
 
-def reject_worst(log10_period, data, performances, method='L1'):
+def reject_worst_inplace(log10_period, data, performances, method='L1'):
     response = calc_response(data, log10_period)
     measureds = calc_measured(response, performances)
     predicteds = calc_predicted(measureds, performances)
     residuals = calc_residuals(measureds, predicteds, method=method)
-    index = worst_index(predicteds)
+    index = worst_index(residuals)
     print(f'Dropping value at {residuals[index].idxmax()}')
     performances[index].drop(index=residuals[index].idxmax(), inplace=True)
 
@@ -109,7 +109,7 @@ def fit_period(data, log10_period, performances, method='L1', reject=0, **kargs)
         log10_period = result.x[0]
         print(10 ** log10_period)
         if not reject: break
-        reject_worst(log10_period, data, performances, method=method)
+        reject_worst_inplace(log10_period, data, performances, method=method)
         reject -= 1
 
     return result

@@ -24,6 +24,10 @@ class SegmentCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
         SegmentJournal.clean(s)
         super()._shutdown(s)
 
+    def _delete(self, s):
+        super()._delete(s)
+        SegmentJournal.clean(s)
+
     def _missing(self, s):
         # extends superclass with restriction on activities that have a segment
         existing_ids = s.query(Timestamp.source_id). \
@@ -40,7 +44,8 @@ class SegmentCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
     def _calculate_stats(self, s, ajournal, df):
         all = []
         for sjournal in s.query(SegmentJournal). \
-                filter(SegmentJournal.activity_journal == ajournal).all():
+                filter(SegmentJournal.activity_journal == ajournal). \
+                order_by(SegmentJournal.start).all():
             stats = {SJOURNAL: sjournal,
                      SEGMENT_TIME: (sjournal.finish - sjournal.start).total_seconds()}
             if present(df, HEART_RATE):
