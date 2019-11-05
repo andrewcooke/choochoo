@@ -279,7 +279,6 @@ class TestArty(TestCase):
             t = Global()
             t.add([(x, y)], z)
             l = list(t.get_items([(x, y)]))
-            self.assertEqual(len(l), 9)
             for p, q in l:
                 self.assertTrue(-0.001 < p[0][0] - x < 0.001)
                 self.assertTrue(-0.001 < p[0][1] - y < 0.001)

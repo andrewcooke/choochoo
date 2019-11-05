@@ -33,11 +33,10 @@ class TestActivities(TestCase):
             constants(args, db)
 
             args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'SRTM1.dir',
-                                           '/home/andrew/archive/srtm1')
+                                      '/home/andrew/archive/srtm1')
             constants(args, db)
 
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                           'activities', mm(FAST),
+            args, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
                                       'data/test/source/personal/2018-08-27-rec.fit')
             activities(args, db)
 
@@ -57,7 +56,7 @@ class TestActivities(TestCase):
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(54633, n)
+                self.assertEqual(23655, n)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 

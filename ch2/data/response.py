@@ -55,31 +55,63 @@ def calc_predicted(measureds, performances):
             for measured, performance in zip(measureds, performances)]
 
 
-def calc_chisq(measureds, predicteds, method='L1'):
+def calc_residuals(measureds, predicteds, method='L1'):
     if method == 'L1':
         # use L1 scaled by amplitude to be reasonably robust.
-        return sum(sum(abs((measured - predicted) / measured.clip(lower=1e-6)))
-                   for measured, predicted in zip(measureds, predicteds))
+        return [abs(measured - predicted) / measured.clip(lower=1e-6)
+                for measured, predicted in zip(measureds, predicteds)]
     elif method == 'L2':
         # something like chisq
-        return sum(sum(((measured - predicted).pow(2) / measured.clip(lower=1e-6)))
-                   for measured, predicted in zip(measureds, predicteds))
+        return [((measured - predicted).pow(2) / measured.clip(lower=1e-6))
+                for measured, predicted in zip(measureds, predicteds)]
     else:
         raise Exception(f'Unknown method ({method}) - use L1 or L2')
 
 
-def fit_period(data, log10_period, performances, method='L1', **kargs):
+def calc_cost(measureds, predicteds, method='L1'):
+    residuals = calc_residuals(measureds, predicteds, method=method)
+    return sum(sum(residual) for residual in residuals)
+
+
+def worst_index(predicteds):
+    worst, index = None, None
+    for i, predicted in enumerate(predicteds):
+        bad = max(predicted)
+        if index is None or bad > worst:
+            worst, index = bad, i
+    return index
+
+
+def reject_worst(log10_period, data, performances, method='L1'):
+    response = calc_response(data, log10_period)
+    measureds = calc_measured(response, performances)
+    predicteds = calc_predicted(measureds, performances)
+    residuals = calc_residuals(measureds, predicteds, method=method)
+    index = worst_index(predicteds)
+    print(f'Dropping value at {residuals[index].idxmax()}')
+    performances[index].drop(index=residuals[index].idxmax(), inplace=True)
+
+
+def fit_period(data, log10_period, performances, method='L1', reject=0, **kargs):
     # data should be a DataFrame with an IMPULSE3600 entry
     # performances should be Series
 
-    def chisq(log10_period):
+    result = None
+
+    def cost(log10_period):
         response = calc_response(data, log10_period)
         measureds = calc_measured(response, performances)
         predicteds = calc_predicted(measureds, performances)
-        return calc_chisq(measureds, predicteds, method=method)
+        return calc_cost(measureds, predicteds, method=method)
 
-    result = optimize.minimize(chisq, [log10_period], **kargs)
-    log.debug(result)
+    while True:
+        result = optimize.minimize(cost, [log10_period], **kargs)
+        log10_period = result.x[0]
+        print(10 ** log10_period)
+        if not reject: break
+        reject_worst(log10_period, data, performances, method=method)
+        reject -= 1
+
     return result
 
 

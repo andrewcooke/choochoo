@@ -51,8 +51,12 @@ def fit_ff_segments(*segment_names):
         time.index = time.index.round('1H')
     performances = [Series(segment.distance / time.iloc[:, 0], time.index, name=segment.name)
                     for segment, time in zip(segments, times)]
+    n_performances = sum(len(performance) for performance in performances)
 
     hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
+
+    def copy_of_performances():
+        return [performance.copy() for performance in performances]
 
     '''
     ## Define Plot Routine
@@ -81,9 +85,14 @@ def fit_ff_segments(*segment_names):
 
     '''
     ## Fit Model using L1
+    
+    Adjust tol according to the 'fun' value in the result (tol is the tolerance in that value).
+    
+    Note how the period (printed, in hours) varies as points are rejected.
     '''
 
-    result = fit_period(hr3600, initial_period, performances, method='L1', tol=0.1)
+    result = fit_period(hr3600, initial_period, copy_of_performances(),
+                        method='L1', reject=n_performances // 10, tol=0.01)
     print(result)
     period = result.x[0]
     print(f'Period in days: {10 ** period / 24:.1f}')
@@ -93,9 +102,11 @@ def fit_ff_segments(*segment_names):
     ## Fit Model using L2
     
     Using different methods gives us some idea of how susceptible the value is to processing assumptions.
+    For me there was  lot more variation here as points were rejected.
     '''
 
-    result = fit_period(hr3600, initial_period, performances, method='L2', tol=0.1)
+    result = fit_period(hr3600, initial_period, copy_of_performances(),
+                        method='L2', reject=n_performances // 10, tol=0.1)
     print(result)
     period = result.x[0]
     print(f'Period in days: {10 ** period / 24:.1f}')
