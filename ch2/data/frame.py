@@ -346,11 +346,6 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     coallesce_groups(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
     stats = stats.merge(stats_3.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                         how='outer', left_index=True, right_index=True)
-    if present(stats, FITNESS_D_ANY, pattern=True):
-        for fitness in like(FITNESS_D_ANY, stats.columns):
-            stats[_log(fitness)] = np.log10(stats[fitness])
-        for fatigue in like(FATIGUE_D_ANY, stats.columns):
-            stats[_log(fatigue)] = np.log10(stats[fatigue])
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
     stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
     stats[TIME] = pd.to_datetime(stats.index)

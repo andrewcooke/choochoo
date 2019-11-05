@@ -41,10 +41,8 @@ def health():
     alphas = [1.0] * len(fitness) + [0.5] * len(fatigue)
     ff = multi_line_plot(900, 300, TIME, fitness + fatigue, health, colours, alphas=alphas)
     add_multi_line_at_index(ff, TIME, fitness + fatigue, health, colours, alphas=alphas, index=-1)
-    log_ff = multi_line_plot(900, 100, TIME, [_log(name) for name in fitness + fatigue], health, colours,
-                             alphas=alphas, x_range=ff.x_range, y_label='Log FF')
     atd = std_distance_time_plot(900, 200, health, x_range=ff.x_range)
     shr = multi_plot(900, 200, TIME, [DAILY_STEPS, REST_HR], health, ['grey', 'red'], alphas=[1, 0.5],
                      x_range=ff.x_range, rescale=True, plotters=[bar_plotter(dt.timedelta(hours=20)), dot_plotter()])
     add_band(shr, TIME, LO_REST_HR, HI_REST_HR, health, 'red', alpha=0.1, y_range_name=REST_HR)
-    show(column(ff, log_ff, atd, shr))
+    show(column(ff, atd, shr))

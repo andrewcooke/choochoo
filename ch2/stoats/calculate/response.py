@@ -1,15 +1,15 @@
 
+import datetime as dt
 from collections import namedtuple
 from json import loads
 from logging import getLogger
-from math import log10
-import datetime as dt
 
+from math import log10
 from sqlalchemy.sql.functions import count
 
+from ch2.data.response import sum_to_hour, calc_response
 from . import UniProcCalculator
 from ...data.frame import statistics
-from ...data.response import pre_calc, DecayModel, calc
 from ...lib.date import round_hour, to_time, local_date_to_time
 from ...squeal import ActivityGroup
 from ...squeal import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
@@ -20,7 +20,7 @@ from ...stoats.pipeline import LoaderMixin
 
 log = getLogger(__name__)
 
-Response = namedtuple('Response', 'src_owner, dest_name, tau_days, scale, start')
+Response = namedtuple('Response', 'src_owner, dest_name, tau_days, scale')
 
 
 class ResponseCalculator(LoaderMixin, UniProcCalculator):
@@ -131,18 +131,14 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
             all_sources = list(self.__make_sources(s, hr10))
             for response in self.responses:
                 log.info(f'Creating values for {response.dest_name}')
-                model = DecayModel(start=response.start, zero=0, log10_scale=log10(response.scale),
-                                   log10_period=log10(response.tau_days * 24 * 60 * 60 / 3600),  # convert to intervals
-                                   input=HR_IMPULSE_10, output=response.dest_name)
-                hr3600 = pre_calc(hr10.copy(), model, start=start, finish=finish)
-                result = calc(hr3600, model)
+                hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
+                result = calc_response(hr3600, log10(response.tau_days * 24)) * response.scale
                 loader = self._get_loader(s, add_serial=False)
                 source, sources = None, list(all_sources)
-                for time, row in result.iterrows():
+                for time, value in result.iteritems():
                     while sources and time >= sources[0][0]:
                         source = sources.pop(0)[1]
-                    loader.add(response.dest_name, None, None, None, source, row[response.dest_name], time,
-                               StatisticJournalFloat)
+                    loader.add(response.dest_name, None, None, None, source, value, time, StatisticJournalFloat)
                 loader.load()
 
     def __make_sources(self, s, hr10):

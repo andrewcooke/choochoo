@@ -3,5 +3,5 @@
 TEMPLATE = lambda *args: False
 
 # need to import these so they are available for introspection
-from . import activity_details, all_activities, calendar, health, similar_activities, fit_ff_single_segment, \
-    some_activities, fit_power_parameters, define_segment, month, heart_rate, fit_ff_many_segments
+from . import activity_details, all_activities, calendar, health, similar_activities, some_activities, \
+    fit_power_parameters, define_segment, month, heart_rate, fit_ff_segments

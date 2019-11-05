@@ -45,7 +45,7 @@ def add_responses(s, c, start=1e-6, fitness=((42, 1),), fatigue=((7, 5),)):
                                     description=f'Data needed to calculate the FF-model fitness for {days}d - ' +
                                     'see Response enum')
         set_constant(s, fitness, dumps({'src_owner': short_cls(ImpulseCalculator),
-                                        'dest_name': name, 'tau_days': days, 'scale': scale, 'start': start}))
+                                        'dest_name': name, 'tau_days': days, 'scale': scale}))
 
     for days, scale in fatigue:
         name = FATIGUE_D % days
@@ -55,6 +55,6 @@ def add_responses(s, c, start=1e-6, fitness=((42, 1),), fatigue=((7, 5),)):
                                     description=f'Data needed to calculate the FF-model fatigue for {days}d - ' +
                                     'see Response enum')
         set_constant(s, fitness, dumps({'src_owner': short_cls(ImpulseCalculator),
-                                        'dest_name': name, 'tau_days': days, 'scale': scale, 'start': start}))
+                                        'dest_name': name, 'tau_days': days, 'scale': scale}))
 
     add_statistics(s, ResponseCalculator, c, owner_in=short_cls(ImpulseCalculator), responses_ref=responses)

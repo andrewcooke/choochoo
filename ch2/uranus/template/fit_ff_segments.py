@@ -7,14 +7,14 @@ from pandas import DataFrame, Series
 from ch2.data import *
 from ch2.data.frame import drop_empty
 from ch2.data.plot.utils import evenly_spaced_hues
-from ch2.data.response2 import sum_to_hour, calc_response, RESPONSE, fit_period, calc_predicted, PREDICTED, \
+from ch2.data.response import sum_to_hour, calc_response, RESPONSE, fit_period, calc_predicted, PREDICTED, \
     calc_measured
 from ch2.squeal import *
 from ch2.uranus.decorator import template
 
 
 @template
-def fit_ff_many_segments(*segment_names):
+def fit_ff_segments(*segment_names):
 
     f'''
     # Fit FF Parameters to {', '.join(segment_names)}
