@@ -288,6 +288,7 @@ class ScheduleDiary(Diary):
         yield from display_pipeline(s, f, self._date, self, schedule=self._schedule)
 
     def _display_gui(self, s, f):
+        set_controller_session(s)
         button = SquareButton('All Activities')
         connect_signal(button, 'click', self.__show_all)
         yield Pile([Text('Jupyter'), Indent(f(Padding(Fixed(button, 16), width='clip')))])
