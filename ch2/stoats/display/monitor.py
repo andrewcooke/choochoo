@@ -37,7 +37,7 @@ class MonitorDiary(Displayer):
         else:
             return None
 
-    def _display_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule):
         columns = list(self.__schedule_fields(s, f, date, schedule))
         if columns:
             yield Pile([Text('Monitor'),

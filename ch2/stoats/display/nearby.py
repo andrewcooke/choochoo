@@ -22,7 +22,7 @@ def fmt_nearby(aj, nb):
 
 class NearbyDiary(JournalDiary):
 
-    def _display_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule):
         yield from []
 
     def _journal_date(self, s, f, ajournal, date):

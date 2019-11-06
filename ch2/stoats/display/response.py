@@ -23,9 +23,9 @@ class ResponseDiary(Displayer):
         super().__init__(*args, **kargs)
 
     def _display_date(self, s, f, date):
-        yield from self._display_schedule(s, f, date, schedule=Schedule('d'))
+        yield from self._display_schedule(s, f, date, Schedule('d'))
 
-    def _display_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule):
         rows = []
         for fitness in self.fitness:
             for cols in self._single_response(s, f, date, schedule, fitness, schedule.frame_type == 'd'):

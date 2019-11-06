@@ -66,7 +66,7 @@ class SegmentDiary(Displayer):
         else:
             return None
 
-    def _display_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule):
         rows = []
         for agroup in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
             group_rows = []
@@ -94,6 +94,6 @@ class SegmentDiary(Displayer):
             sname = s.query(StatisticName). \
                 filter(StatisticName.name == name,
                        StatisticName.constraint == segment,
-                       StatisticName.owner == SegmentCalculato2r).one_or_none()
+                       StatisticName.owner == SegmentCalculator).one_or_none()
             if sname:
                 yield sname

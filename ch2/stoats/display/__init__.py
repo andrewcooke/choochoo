@@ -31,12 +31,12 @@ class Displayer(BasePipeline):
 
     def display(self, s, f, date, schedule=None):
         if schedule:
-            yield from self._display_schedule(s, f, date, schedule=schedule)
+            yield from self._display_schedule(s, f, date, schedule)
         else:
             yield from self._display_date(s, f, date)
 
     @abstractmethod
-    def _display_schedule(self, s, f, date, schedule=None):
+    def _display_schedule(self, s, f, date, schedule):
         raise NotImplementedError()
 
     @abstractmethod

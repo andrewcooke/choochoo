@@ -12,9 +12,9 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY,
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
     ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d
 from ...data.climb import climbs_for_activity
-from ...lib.date import format_seconds, time_to_local_time, to_time, HMS
+from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time
 from ...lib.utils import label
-from ...squeal.tables.statistic import StatisticJournal, StatisticName
+from ...squeal import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName
 from ...uweird.fields.summary import summary_columns
 from ...uweird.tui.decorators import Indent
 
@@ -101,30 +101,44 @@ class ActivityDiary(JournalDiary):
     def __format_value(self, sjournal, date):
         return ['%s ' % sjournal.formatted()] + sjournal.measures_as_text(date)
 
-    def _display_schedule(self, s, f, date, schedule=None):
-        columns = list(self.__schedule_fields(s, f, date, schedule))
-        if columns:
+    def _display_schedule(self, s, f, date, schedule):
+        all = []
+        start, finish = local_date_to_time(schedule.start_of_frame(date)), local_date_to_time(schedule.next_frame(date))
+        for group in s.query(ActivityGroup). \
+                join(ActivityJournal, ActivityJournal.activity_group_id == ActivityGroup.id). \
+                join(StatisticJournal, StatisticJournal.source_id == ActivityJournal.id). \
+                join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+                filter(StatisticName.name == ACTIVE_TIME,
+                       StatisticJournal.time >= start,
+                       StatisticJournal.time < finish).all():
+            columns = list(self.__schedule_fields(s, f, date, schedule, group))
+            if columns:
+                all.append(Pile([Text(group.name),
+                                 Indent(Pile(columns))]))
+        if all:
             yield Pile([Text('Activities'),
-                        Indent(Pile(columns))])
+                        Indent(Pile(all))])
 
-    def __schedule_fields(self, s, f, date, schedule):
-        names = list(self.__names(s, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
+    def __schedule_fields(self, s, f, date, schedule, group):
+        names = list(self.__names(s, group, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
                                   TOTAL_CLIMB, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME))
         yield from summary_columns(log, s, f, date, schedule, names)
-        names = self.__sort_names(self.__names_like(s, MIN_KM_TIME_ANY))
+        names = self.__sort_names(self.__names_like(s, group, MIN_KM_TIME_ANY))
         yield from summary_columns(log, s, f, date, schedule, names)
-        names = self.__sort_names(self.__names_like(s, MED_KM_TIME_ANY))
+        names = self.__sort_names(self.__names_like(s, group, MED_KM_TIME_ANY))
         yield from summary_columns(log, s, f, date, schedule, names)
-        names = self.__sort_names(self.__names_like(s, MAX_MED_HR_M_ANY))
+        names = self.__sort_names(self.__names_like(s, group, MAX_MED_HR_M_ANY))
         yield from summary_columns(log, s, f, date, schedule, names)
 
-    def __names(self, s, *names):
+    def __names(self, s, group, *names):
         for name in names:
             yield s.query(StatisticName). \
                 filter(StatisticName.name == name,
-                       StatisticName.owner == ActivityCalculator).one()
+                       StatisticName.owner == ActivityCalculator,
+                       StatisticName.constraint == group).one()
 
-    def __names_like(self, s, name):
+    def __names_like(self, s, group, name):
         return s.query(StatisticName). \
             filter(StatisticName.name.like(name),
-                   StatisticName.owner == ACTIVE_DISTANCE).all()
+                   StatisticName.owner == ActivityCalculator,
+                   StatisticName.constraint == group).all()
