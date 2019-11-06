@@ -76,7 +76,7 @@ def constrained_activities(s, query):
 def build_activity_query(s, ast):
     t = _tables()
     constraints = build_constraints(s, t, ast)
-    return s.query(ActivityJournal).filter(ActivityJournal.id.in_(constraints))
+    return s.query(ActivityJournal).filter(ActivityJournal.id.in_(constraints)).order_by(ActivityJournal.start)
 
 
 def build_constraints(s, t, ast):

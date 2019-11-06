@@ -1,5 +1,4 @@
 
-import datetime as dt
 from abc import abstractmethod
 from logging import getLogger
 
@@ -8,12 +7,10 @@ from sqlalchemy.sql.functions import count
 
 from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
 from ...commands.args import STATISTICS, WORKER, mm, VERBOSITY, LOG
-from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date, local_date_to_time, \
-    time_to_local_date
+from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date
 from ...lib.log import log_current_exception
 from ...lib.schedule import Schedule
-from ...squeal import ActivityJournal, Interval, Timestamp, StatisticJournal, StatisticName, Composite, \
-    CompositeComponent, Source
+from ...squeal import ActivityJournal, Interval, Timestamp, StatisticJournal, StatisticName, SegmentJournal
 from ...squeal.types import long_cls
 from ...squeal.utils import add
 
@@ -53,27 +50,29 @@ class UniProcCalculator(CalculatorMixin, UniProcPipeline):
         raise Exception('UniProc does not support workers')
 
 
-class ActivityJournalCalculatorMixin:
+class JournalCalculatorMixin:
     '''
-    auto-detects missing activities, deletes on forcing, and schedules threads via owner_out.
+    auto-detects missing entries, deletes on forcing, and schedules threads via owner_out.
 
-    provides access to the ajournal via _get_source.
+    provides access to the journal via _get_source.
     '''
+
+    _journal_type = None
 
     def _delimit_query(self, q):
         start, finish = self._start_finish(type=local_time_to_time)
         log.debug(f'Delimit times: {start} - {finish}')
         if start:
-            q = q.filter(ActivityJournal.start >= start)
+            q = q.filter(self._journal_type.start >= start)
         if finish:
-            q = q.filter(ActivityJournal.start <= finish)
+            q = q.filter(self._journal_type.start <= finish)
         return q
 
     def _missing(self, s):
         existing_ids = s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out)
-        q = s.query(ActivityJournal.start). \
-            filter(not_(ActivityJournal.id.in_(existing_ids.cte()))). \
-            order_by(ActivityJournal.start)
+        q = s.query(self._journal_type.start). \
+            filter(not_(self._journal_type.id.in_(existing_ids.cte()))). \
+            order_by(self._journal_type.start)
         return [row[0] for row in self._delimit_query(q)]
 
     def _args(self, missing, start, finish):
@@ -85,7 +84,7 @@ class ActivityJournalCalculatorMixin:
         start, finish = self._start_finish(type=local_time_to_time)
         s.commit()   # so that we don't have any risk of having something in the session that can be deleted
         statistic_names = s.query(StatisticName.id).filter(StatisticName.owner == self.owner_out)
-        activity_journals = self._delimit_query(s.query(ActivityJournal.id))
+        activity_journals = self._delimit_query(s.query(self._journal_type.id))
         statistic_journals = s.query(StatisticJournal.id). \
             filter(StatisticJournal.statistic_name_id.in_(statistic_names.cte()),
                    StatisticJournal.source_id.in_(activity_journals))
@@ -105,7 +104,17 @@ class ActivityJournalCalculatorMixin:
         s.commit()
 
     def _get_source(self, s, time):
-        return s.query(ActivityJournal).filter(ActivityJournal.start == time).one()
+        return s.query(self._journal_type).filter(self._journal_type.start == time).one()
+
+
+class ActivityJournalCalculatorMixin(JournalCalculatorMixin):
+
+    _journal_type = ActivityJournal
+
+
+class SegmentJournalCalculatorMixin(JournalCalculatorMixin):
+
+    _journal_type = SegmentJournal
 
 
 class DataFrameCalculatorMixin(LoaderMixin):
