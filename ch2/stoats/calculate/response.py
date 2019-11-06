@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 from ch2.data.response import sum_to_hour, calc_response
 from . import UniProcCalculator
 from ...data.frame import statistics
-from ...lib.date import round_hour, to_time, local_date_to_time
+from ...lib.date import round_hour, to_time, local_date_to_time, now
 from ...squeal import ActivityGroup
 from ...squeal import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
@@ -124,10 +124,10 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
             limit(1).scalar()
 
     def _run_one(self, s, missed):
-        start, finish = missed
         hr10 = statistics(s, HR_IMPULSE_10, constraint=ActivityGroup.from_name(s, ALL),
                           owner=self.owner_in, with_sources=True, check=False)
         if not hr10.empty:
+            hr10.loc[now()] = {HR_IMPULSE_10: 0.0, _src(HR_IMPULSE_10): None}
             all_sources = list(self.__make_sources(s, hr10))
             for response in self.responses:
                 log.info(f'Creating values for {response.dest_name}')
@@ -149,8 +149,11 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         # find times where the source changes
         for time, row in hr10.loc[hr10[name].ne(hr10[name].shift())].iterrows():
             id = row[name]
-            composite = add(s, Composite(n_components=2))
-            add(s, CompositeComponent(input_source_id=id, output_source=composite))
+            if id:
+                composite = add(s, Composite(n_components=2))
+                add(s, CompositeComponent(input_source_id=id, output_source=composite))
+            else:
+                composite = add(s, Composite(n_components=1))
             add(s, CompositeComponent(input_source=prev, output_source=composite))
             yield time, composite
             prev = composite

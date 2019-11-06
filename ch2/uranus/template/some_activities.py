@@ -10,6 +10,12 @@ def some_activities(constraint):
 
     f'''
     # Some Activities: {constraint}
+
+    This displays thumbnails of routes that match the query over statistics.  For example,
+
+        Active Distance > 40000 & Active Distance < 60000
+
+    will show all activities with a distance between 40 and 60 km.
     '''
 
     '''
