@@ -50,7 +50,7 @@ def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (y, DISTANCE_KM, LOCAL_TIME)], names=['with_hover'])]
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if TIME in x else 'linear', tools=tools)
-    f.y_range = make_range(source, y, lo=ylo, hi=yhi)  # was this ignored previously?
+    f.y_range = make_range(source[y], lo=ylo, hi=yhi)  # was this ignored previously?
     add_tsid_line(f, x, y, source)
     if present(other, y):
         add_tsid_line(f, x, y, other, color='grey')
@@ -85,7 +85,7 @@ def add_cum_line(f, y, source, color='black', line_dash='solid'):
 def cumulative_plot(nx, ny, y, source, other=None, ylo=None, yhi=None):
     if not present(source, y): return None
     f = figure(plot_width=nx, plot_height=ny, y_axis_location='right')
-    f.y_range = make_range(source, y, lo=ylo, hi=yhi)
+    f.y_range = make_range(source[y], lo=ylo, hi=yhi)
     y1 = add_cum_line(f, y, source)
     if present(other, y):
         y2 = add_cum_line(f, y, other, color='grey')
@@ -284,7 +284,7 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
     if alphas is None: alphas = [1 for _ in ys]
     while len(plotters) < len(ys): plotters += plotters
     for y, color, alpha, plotter in zip(ys, colors, alphas, plotters):
-        y_range = make_range(source, y)
+        y_range = make_range(source[y])
         if rescale and y != ys[0]:
             f.extra_y_ranges[y] = y_range
             f.add_layout(LinearAxis(y_range_name=y, axis_label=y), 'right')

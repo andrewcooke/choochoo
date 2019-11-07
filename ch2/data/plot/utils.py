@@ -18,8 +18,8 @@ def make_tools(y):
     return tools
 
 
-def make_range(df, name, lo=None, hi=None):
-    column = df[name].dropna()
+def make_range(column, lo=None, hi=None):
+    column = column.dropna()
     mn, mx = column.min() if lo is None else lo, column.max() if hi is None else hi
     delta = mx - mn
     return Range1d(start=mn - 0.1 * delta, end=mx + 0.1 * delta)

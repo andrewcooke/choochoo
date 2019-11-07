@@ -5,7 +5,7 @@ from json import loads
 from logging import getLogger
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
-from ..names import FTHR, HEART_RATE, HR_ZONE, ALL, HR_IMPULSE_10
+from ..names import FTHR, HEART_RATE, HR_ZONE, ALL, HR_IMPULSE_10, SUM
 from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10
 from ...squeal import Constant, StatisticJournalFloat, ActivityGroup
@@ -61,5 +61,5 @@ class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
                            row[HR_IMPULSE_10], time, StatisticJournalFloat)
         # if there are no values, add a single null so we don't re-process
         if not loader:
-            loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,
+            loader.add(HR_ZONE, None, SUM, ajournal.activity_group, ajournal, None, ajournal.start,
                        StatisticJournalFloat)

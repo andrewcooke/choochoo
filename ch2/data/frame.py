@@ -13,13 +13,13 @@ from sqlalchemy.sql.functions import coalesce
 
 from .coasting import CoastingBookmark
 from ..lib.data import kargs_to_attr
-from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS, to_time
+from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
 from ..squeal import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..squeal.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
     Composite, CompositeComponent, ActivityNearby
 from ..stoats.display.nearby import nearby_any_time
-from ..stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, _log, HEART_RATE_BPM, \
+from ..stoats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, HEART_RATE_BPM, \
     MED_HEART_RATE_BPM, GRADE, GRADE_PC, BOOKMARK, DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, \
     MED_CADENCE, ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
@@ -327,6 +327,10 @@ def std_health_statistics(s, *extra, start=None, finish=None):
 
     from ..stoats.calculate.monitor import MonitorCalculator
 
+    def merge_to_hour(stats, extra):
+        return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
+                           how='outer', left_index=True, right_index=True)
+
     start = start or s.query(StatisticJournal.time).filter(StatisticJournal.time > 0.0) \
         .order_by(asc(StatisticJournal.time)).limit(1).scalar()
     finish = finish or s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
@@ -335,17 +339,14 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     stats_1 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, start=start, finish=finish, check=False)
     if present(stats_1, FITNESS_D_ANY, pattern=True):
         stats_1 = stats_1.resample('1h').mean()
-        stats = stats.merge(stats_1.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
-                            how='outer', left_index=True, right_index=True)
+        stats = merge_to_hour(stats, stats_1)
     stats_2 = statistics(s, LO_REST_HR, REST_HR, HI_REST_HR, start=start, finish=finish, owner=MonitorCalculator,
                          check=False)
     if present(stats_2, REST_HR):
-        stats = stats.merge(stats_2.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
-                            how='outer', left_index=True, right_index=True)
+        stats = merge_to_hour(stats, stats_2)
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish)
     coallesce_groups(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
-    stats = stats.merge(stats_3.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
-                        how='outer', left_index=True, right_index=True)
+    stats = merge_to_hour(stats, stats_3)
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
     stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
     stats[TIME] = pd.to_datetime(stats.index)
@@ -417,8 +418,8 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
         if with_sources:
             selects += [t.sj.c.source_id]
         q = select(selects). \
-                   select_from(t.sj.join(table)). \
-                   where(t.sj.c.statistic_name_id == name.id)
+            select_from(t.sj.join(table)). \
+            where(t.sj.c.statistic_name_id == name.id)
         if sources:
             q = q.where(t.sj.c.source_id.in_(source.id for source in sources))
         # order_by doesn't affect plan but seems to speed up query

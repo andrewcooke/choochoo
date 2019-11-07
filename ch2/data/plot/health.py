@@ -1,4 +1,3 @@
-
 from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, LinearAxis
 from bokeh.plotting import figure
 
@@ -17,8 +16,8 @@ def std_distance_time_plot(nx, ny, source, x_range=None):
                               ['black', 'grey'], alphas=[1, 0.5], x_range=x_range, rescale=True)
     times = [f'{ACTIVE_TIME} ({group})' for group in groups]
     distances = [f'{ACTIVE_DISTANCE} ({group})' for group in groups]
-    time_y_range = make_range(source, ACTIVE_TIME_H)
-    distance_y_range = make_range(source, ACTIVE_DISTANCE_KM)
+    time_y_range = make_range(source[ACTIVE_TIME_H])
+    distance_y_range = make_range(source[ACTIVE_DISTANCE_KM])
     colours = list(evenly_spaced_hues(len(groups)))
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),

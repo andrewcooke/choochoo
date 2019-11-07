@@ -44,9 +44,8 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         measures = []
         for statistic_name in data:
             summaries = [x.lower() for x in split(r'[\s,]*(\[[^\]]+\])[\s ]*', statistic_name.summary) if x]
-            pessimistic = MIN in summaries
             for summary in summaries:
-                value, units = self._calculate_value(s, statistic_name, summary, pessimistic,
+                value, units = self._calculate_value(s, statistic_name, summary, MIN in summaries,
                                                      start, finish, interval, measures)
                 if value is not None:
                     name = self.fmt_name(statistic_name.name, summary, self.schedule)
@@ -65,7 +64,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             s.add(measure)
         s.commit()
 
-    def _calculate_value(self, s, statistic_name, summary, pessimistic, start_time, finish_time, interval, measures):
+    def _calculate_value(self, s, statistic_name, summary, order_asc, start_time, finish_time, interval, measures):
 
         sj = inspect(StatisticJournal).local_table
         sji = inspect(StatisticJournalInteger).local_table
@@ -87,7 +86,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         elif summary == AVG:
             result = func.avg(values)
         elif summary == MSR:
-            self._calculate_measures(s, statistic_name, pessimistic, start_time, finish_time, interval, measures)
+            self._calculate_measures(s, statistic_name, order_asc, start_time, finish_time, interval, measures)
             return None, None
         else:
             raise Exception('Bad summary: %s' % summary)
@@ -100,15 +99,15 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
         return next(s.connection().execute(stmt))[0], units
 
-    def _calculate_measures(self, s, statistic_name, pessimistic, start_time, finish_time, interval, measures):
+    def _calculate_measures(self, s, statistic_name, order_asc, start_time, finish_time, interval, measures):
 
         data = sorted([x for x in
                        s.query(StatisticJournal).
-                       filter(StatisticJournal.statistic_name == statistic_name,
-                              StatisticJournal.time >= start_time,
-                              StatisticJournal.time < finish_time).all()
+                      filter(StatisticJournal.statistic_name == statistic_name,
+                             StatisticJournal.time >= start_time,
+                             StatisticJournal.time < finish_time).all()
                        if x is not None and x.value is not None],
-                       key=lambda x: x.value, reverse=not pessimistic)
+                      key=lambda x: x.value, reverse=not order_asc)
 
         n, local_measures = len(data), []
         for rank, journal in enumerate(data, start=1):
