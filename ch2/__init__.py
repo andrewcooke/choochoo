@@ -4,7 +4,6 @@ from logging import getLogger, NullHandler
 from os.path import abspath, dirname, join
 from sys import version_info
 
-
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
 
@@ -20,7 +19,7 @@ class FatalException(Exception):
 
 
 from .commands.activities import activities
-from .commands.args import COMMAND, parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
+from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI, KIT
 from .commands.constants import constants
@@ -79,7 +78,8 @@ COMMANDS = {ACTIVITIES: activities,
 
 
 def main():
-    ns = parser().parse_args()
+    parser = make_parser()
+    ns = parser.parse_args()
     command_name = ns.command if hasattr(ns, COMMAND) else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     if command and hasattr(command, 'tui') and command.tui:

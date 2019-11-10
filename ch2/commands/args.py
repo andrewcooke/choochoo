@@ -221,7 +221,7 @@ class NamespaceWithVariables(Mapping):
         return len(self.__dict__)
 
 
-def parser():
+def make_parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
@@ -571,7 +571,7 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
         db = config(*args)
         configurator(db)
     args += post_config if post_config else []
-    args = NamespaceWithVariables(parser().parse_args(args))
+    args = NamespaceWithVariables(make_parser().parse_args(args))
     make_log(args)
     db = Database(args, log)
 

@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 
 from . import *
 from .support import Base
-from ..commands.args import DATABASE, NamespaceWithVariables, NO_OP, parser
+from ..commands.args import DATABASE, NamespaceWithVariables, NO_OP, make_parser
 from ..lib.log import make_log
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
@@ -111,7 +111,7 @@ def connect(args):
     else:
         args = []
     args.append(NO_OP)
-    ns = NamespaceWithVariables(parser().parse_args(args))
+    ns = NamespaceWithVariables(make_parser().parse_args(args))
     make_log(ns)
     db = Database(ns, log)
     return ns, db
