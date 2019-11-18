@@ -40,7 +40,6 @@ def define_segment(local_time, activity_group_name):
     You may need to play with both sliders before the map displays correctly 
     (todo - fix this, and also all the log messages).  
     '''
-    #TILE = tile_providers.get_provider(tile_providers.Vendors.CARTODBPOSITRON)
     TILE = tile_providers.get_provider(tile_providers.Vendors.STAMEN_TERRAIN)
 
     output_file(filename='/dev/null')

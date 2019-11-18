@@ -49,10 +49,8 @@ class Segment(Base):
     __tablename__ = 'segment'
 
     id = Column(Integer, primary_key=True)
-    # need this because (1) segments do depend on activity group and (2) we want separate stats
-    # depending on segment/group so need this as a constraint.
-    activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=False)
-    activity_group = relationship('ActivityGroup')
+    # segments used to depend on activity group.  but then they also depended on equipment used,
+    # so now they're agnostic about other tables and you need to join and filter as appropriate when extracting
     start_lat = Column(Float, nullable=False)
     start_lon = Column(Float, nullable=False)
     finish_lat = Column(Float, nullable=False)

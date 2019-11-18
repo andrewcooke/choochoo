@@ -276,7 +276,7 @@ class SegmentReader(ActivityReader):
         Read segment endpoints into a global R-tree so we can detect when waypoints pass nearby.
         '''
         segments = Global(tree=lambda: SQRTree(default_border=self.match_bound, default_match=MatchType.OVERLAP))
-        for segment in s.query(Segment).filter(Segment.activity_group == agroup).all():
+        for segment in s.query(Segment).all():
             segments[[segment.start]] = (True, segment)
             segments[[segment.finish]] = (False, segment)
         if not segments:

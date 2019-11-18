@@ -12,10 +12,12 @@ from ..lib.date import to_date, to_time
 log = getLogger(__name__)
 
 CH2_VERSION = '0.26.4'
+# this is checked for false on release (see dev/new-version)
+IS_DEV = True
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
-#DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2] + ['dev'])
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
+if IS_DEV: DB_VERSION += '-dev'
 PROGNAME = 'ch2'
 COMMAND = 'command'
 TOPIC = 'topic'

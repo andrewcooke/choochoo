@@ -31,20 +31,14 @@ class SegmentDiary(Displayer):
         tomorrow = local_date_to_time(date + dt.timedelta(days=1))
         today = local_date_to_time(date)
         pile = []
-        # todo - rewrite to use above
-        for agroup in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
-            segment_pile = []
-            for sjournal in s.query(SegmentJournal). \
-                    join(Segment). \
-                    filter(SegmentJournal.start >= today,
-                           SegmentJournal.start < tomorrow,
-                           Segment.activity_group == agroup). \
-                    order_by(SegmentJournal.start).all():
-                columns = self.__fields(s, date, sjournal)
-                if columns:
-                    segment_pile.append(Columns(columns))
-            if segment_pile:
-                pile.append(Pile([Text(sjournal.segment.name), Indent(Pile(segment_pile))]))
+        for sjournal in s.query(SegmentJournal). \
+                join(Segment). \
+                filter(SegmentJournal.start >= today,
+                       SegmentJournal.start < tomorrow). \
+                order_by(SegmentJournal.start).all():
+            columns = self.__fields(s, date, sjournal)
+            if columns:
+                pile.append(Columns(columns))
         if pile:
             yield Pile([Text('Segments'),
                         Indent(Pile(pile))])
