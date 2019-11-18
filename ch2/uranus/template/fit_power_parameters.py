@@ -158,17 +158,12 @@ def fit_power_parameters(bookmark, large):
 
     kernel = sp.stats.gaussian_kde(s.transpose())
 
-    #xmin, xmax = 0, 50
-    #ymin, ymax = 0, 0.4
     xmin, xmax = 0, 1
     ymin, ymax = 0, 0.02
-    #xmin, xmax = 0.3, 0.6
-    #ymin, ymax = 0.003, 0.007
     xx, yy = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
     xy = np.vstack([xx.ravel(), yy.ravel()])
     smooth = np.reshape(kernel(xy), xx.shape)
 
-    #%matplotlib notebook
     fig = plt.figure(figsize=(8,8))
     ax = fig.gca()
     ax.set_xlim(xmin, xmax)

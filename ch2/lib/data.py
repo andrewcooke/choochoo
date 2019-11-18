@@ -1,14 +1,18 @@
 
-import pandas as pd
-from binascii import hexlify
 from collections import namedtuple
 from inspect import stack, getmodule
 from json import loads
+from logging import getLogger
 from random import choice
-from re import sub
+from re import sub, compile
 from string import ascii_letters
 
+import pandas as pd
+from binascii import hexlify
+
 from ..stoats.names import BOOKMARK
+
+log = getLogger(__name__)
 
 
 class WarnDict(dict):
@@ -95,43 +99,15 @@ def reftuple(name, *args, **kargs):
     (# is similar, but also does JSON parsing).
     '''
 
-    from ..squeal import StatisticJournal, StatisticName
-
     class klass(namedtuple(name, *args, **kargs)):
 
-        def expand(self, log, s, time, owner=None, constraint=None):
+        def expand(self, s, time, default_owner=None, default_constraint=None):
             instance = self
             for name in self._fields:
-                value = getattr(instance, name)
-                if isinstance(value, str) and len(value) > 0 and value[0] in '$#':
-                    log.info(f'Expanding {value} for {name}')
-                    replacement = self._lookup(log, s, time, value[1:], value[0] == '#',
-                                               default_value=self._fields_defaults.get(name, None),
-                                               default_owner=owner, default_constraint=constraint)
-                    instance = instance._replace(**{name: replacement})
+                value = expand(s, getattr(instance, name), time,
+                               default_owner=default_owner, default_constraint=default_constraint)
+                instance = instance._replace(**{name: value})
             return instance
-
-        def _lookup(self, log, s, time, name, json,
-                    default_value=None, default_owner=None, default_constraint=None):
-            if isinstance(name, str) and len(name) > 0 and name[0] in '$#':
-                name = self._lookup(log, s, time, name[1:], name[0] == '#',
-                                    default_owner=default_owner, default_constraint=default_constraint)
-            owner, name, constraint = StatisticName.parse(name, default_owner=default_owner,
-                                                          default_constraint=default_constraint)
-            value = StatisticJournal.before(s, time, name, owner, constraint)
-            if value is None:
-                if default_value:
-                    log.warning(f'No value found for {owner}:{name}:{constraint} (default {default_value})')
-                    value = default_value
-                else:
-                    raise MissingReference(f'No value found for {owner}:{name}:{constraint} (and no default)')
-            else:
-                value = value.value
-                if json:
-                    log.debug(f'Unpacking JSON "{value}"')
-                    value = loads(value)
-                log.info(f'{name} -> {value}')
-            return value
 
     klass.__name__ = name
     caller = stack()[1]
@@ -213,3 +189,32 @@ def bookend(df, column=BOOKMARK):
     # https://stackoverflow.com/questions/53927414/get-only-the-first-and-last-rows-of-each-group-with-pandas
     g = df.groupby(column)
     return pd.concat([g.head(1), g.tail(1)]).drop_duplicates().sort_index()
+
+
+def expand(s, text, before, vars=None, default_owner=None, default_constraint=None):
+    '''
+    Recursively expand any ${name} occurrences in the text using vars (if given) and database.
+    '''
+
+    from ..squeal import StatisticName, StatisticJournal
+
+    if vars is None: vars = {}
+    pattern = compile(r'(.*)\${([^}]+)}(.*)')
+
+    match = pattern.match(text)
+    while match:
+        left, name, right = match.groups()
+        if name in vars:
+            value = vars[name]
+        else:
+            owner, statistic, constraint = StatisticName.parse(name, default_owner=default_owner,
+                                                               default_constraint=default_constraint)
+            value = StatisticJournal.before(s, before, statistic, owner, constraint)
+            if value is None:
+                raise Exception(f'No value defined for {name} ({owner}:{name}:{constraint}) before {before}')
+            else:
+                value = str(value.value)
+        log.debug(f'Substituting {name}="{value}" in "{text}"')
+        text = left + value + right
+        match = pattern.match(text)
+    return text

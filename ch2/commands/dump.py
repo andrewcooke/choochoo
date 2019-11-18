@@ -4,7 +4,7 @@ from logging import getLogger
 import pandas as pd
 
 from .args import SUB_COMMAND, START, FINISH, NAMES, \
-    OWNER, CONSTRAINT, SCHEDULE, SOURCE_IDS, STATISTIC_QUARTILES, PRINT, FORMAT, \
+    OWNER, CONSTRAINT, SCHEDULE, SOURCE_ID, STATISTIC_QUARTILES, PRINT, FORMAT, \
     CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS
 from ..data import df, statistics, statistic_quartiles
 from ..squeal import *
@@ -55,11 +55,11 @@ Will print HR-related statistics from the start of 2018 for the given activity g
         elif args[SUB_COMMAND] == STATISTICS:
             frame = statistics(s, *args[NAMES], start=args[START], finish=args[FINISH],
                                owner=args[OWNER], constraint=args[CONSTRAINT],
-                               schedule=args[SCHEDULE], source_ids=args[SOURCE_IDS])
+                               schedule=args[SCHEDULE], source_ids=args[SOURCE_ID])
         elif args[SUB_COMMAND] == STATISTIC_QUARTILES:
             frame = statistic_quartiles(s, *args[NAMES], start=args[START], finish=args[FINISH],
                                         owner=args[OWNER], constraint=args[CONSTRAINT],
-                                        schedule=args[SCHEDULE], source_ids=args[SOURCE_IDS])
+                                        schedule=args[SCHEDULE], source_ids=args[SOURCE_ID])
         else:
             raise Exception('Unexpected %s: %s' % (SUB_COMMAND, args[SUB_COMMAND]))
 

@@ -74,6 +74,11 @@ class StatisticName(Base):
 
     @classmethod
     def parse(cls, name, default_owner=None, default_constraint=None):
+        '''
+        This parses the standard, extended format for naming statistics.  It is one to three fields, separated by ':'.
+        These are one of 'name', 'owner:name', or 'owner:name:constraint'.
+        Currently this is used only by reftuple which itself is used only in the power pipeline configuration.
+        '''
         parts, owner, constraint = name.split(':'), None, None
         if len(parts) == 1:
             name = parts[0]

@@ -146,7 +146,7 @@ SET = 'set'
 SCHEDULE = 'schedule'
 SHOW = 'show'
 SLICES = 'slices'
-SOURCE_IDS = 'source-ids'
+SOURCE_ID = 'source-id'
 START = 'start'
 STATISTIC_NAMES = 'statistic-names'
 STATISTIC_JOURNALS = 'statistic-journals'
@@ -250,10 +250,10 @@ def make_parser():
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activities.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                             help='path to fit file(s)')
-    activities.add_argument(m(D.upper()), mm(CONSTANT), action='store', nargs='*', metavar='NAME=VALUE', dest=CONSTANT,
-                            help='constant(s) to be stored with the activities')
-    activities.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
-                            help='keyword argument(s) to be passed to the pipelines')
+    activities.add_argument(m(D.upper()), mm(CONSTANT), action='append', metavar='NAME=VALUE', dest=CONSTANT,
+                            help='constant to be stored with the activities (can be repeated)')
+    activities.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE', dest=KARG,
+                            help='keyword argument to be passed to the pipelines (can be repeated)')
     activities.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 
@@ -311,8 +311,8 @@ def make_parser():
                                  help='a value that makes the name unique (eg activity group)')
     dump_statistics.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
                                  help='the schedule on which some statistics are calculated')
-    dump_statistics.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
-                                 help='the source IDs for the statistic')
+    dump_statistics.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
+                                 help='the source ID for the statistic (can be repeated)')
     dump_statistic_quartiles = dump_sub.add_parser(STATISTIC_QUARTILES)
     dump_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
     dump_statistic_quartiles.add_argument(mm(START), action='store', metavar='TIME', help='start time')
@@ -323,8 +323,8 @@ def make_parser():
                                           help='a value that makes the name unique (eg activity group)')
     dump_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
                                           help='the schedule on which some statistics are calculated')
-    dump_statistic_quartiles.add_argument(mm(SOURCE_IDS), action='store', nargs='*', metavar='ID', type=int,
-                                          help='the source IDs for the statistic')
+    dump_statistic_quartiles.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
+                                          help='the source ID for the statistic (can be repeated)')
     dump_table = dump_sub.add_parser(TABLE)
     dump_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
     dump.set_defaults(format=PRINT)
@@ -520,8 +520,8 @@ def make_parser():
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file(s)')
-    monitor.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
-                         help='keyword argument(s) to be passed to the pipelines')
+    monitor.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE', dest=KARG,
+                         help='keyword argument to be passed to the pipelines (can be repeated)')
     monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
 
@@ -544,8 +544,8 @@ def make_parser():
                             help='optional start date')
     statistics.add_argument(FINISH, action='store', metavar='FINISH', nargs='?',
                             help='optional finish date (if start also given)')
-    statistics.add_argument(m(K.upper()), mm(KARG), action='store', nargs='*', metavar='NAME=VALUE', dest=KARG,
-                            help='keyword argument(s) to be passed to the pipelines')
+    statistics.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE', dest=KARG,
+                            help='keyword argument to be passed to the pipelines (can be repeated)')
     statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 
