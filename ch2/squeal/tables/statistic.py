@@ -90,6 +90,7 @@ class StatisticName(Base):
         if not owner:
             raise Exception(f'Missing owner for {name}')
         if not constraint: constraint = default_constraint
+        if constraint == 'None': constraint = None
         return owner, name, constraint
 
 

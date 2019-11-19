@@ -211,7 +211,7 @@ def expand(s, text, before, vars=None, default_owner=None, default_constraint=No
                                                                default_constraint=default_constraint)
             value = StatisticJournal.before(s, before, statistic, owner, constraint)
             if value is None:
-                raise Exception(f'No value defined for {name} ({owner}:{name}:{constraint}) before {before}')
+                raise Exception(f'No value defined for {name} ({owner}:{statistic}:{constraint}) before {before}')
             else:
                 value = str(value.value)
         log.debug(f'Substituting {name}="{value}" in "{text}"')
