@@ -66,6 +66,7 @@ DATE = 'date'
 DEFAULT = 'default'
 DELETE = 'delete'
 DESCRIBE = 'describe'
+DESCRIPTION = 'description'
 DEV = 'dev'
 DIR = 'dir'
 DISCARD = 'discard'
@@ -136,6 +137,7 @@ PWD = 'pwd'
 RAW = 'raw'
 REBUILD = 'rebuild'
 RECORDS = 'records'
+REMOVE = 'remove'
 RETIRE = 'retire'
 ROOT = 'root'
 RUN = 'run'
@@ -145,6 +147,7 @@ SERVICE = 'service'
 SET = 'set'
 SCHEDULE = 'schedule'
 SHOW = 'show'
+SINGLE = 'single'
 SLICES = 'slices'
 SOURCE_ID = 'source-id'
 START = 'start'
@@ -270,13 +273,31 @@ def make_parser():
                               help='check database has no activity groups defined')
 
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
-    constant_flags = constant.add_mutually_exclusive_group()
-    constant_flags.add_argument(mm(DELETE), action='store_true', help='delete existing value(s)')
-    constant_flags.add_argument(mm(SET), action='store_true', help='store a new value')
-    constant.add_argument(mm(FORCE), action='store_true', help='confirm deletion(s) without value')
-    constant.add_argument(NAME, action='store', nargs='?', metavar='NAME', help='constant name')
-    constant.add_argument(DATE, action='store', nargs='?', metavar='DATE', help='date when measured')
-    constant.add_argument(VALUE, action='store', nargs='?', metavar='VALUE', help='constant value')
+    constant_cmds = constant.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    constant_show = constant_cmds.add_parser(SHOW, help='show a value (or all values)')
+    constant_show.add_argument(NAME, action='store', nargs='?', metavar='NAME', help='name (omit for all)')
+    constant_show.add_argument(DATE, action='store', nargs='?', metavar='DATE',
+                               help='date of value to show (omit for all)')
+    constant_create = constant_cmds.add_parser(ADD, help='add a new constant')
+    constant_create.add_argument(NAME, action='store', metavar='NAME', help='name')
+    constant_create.add_argument(CONSTRAINT, action='store', nargs='?', metavar='CONSTRAINT',
+                                 help='constraint (eg activity group)')
+    constant_create.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
+    constant_create.add_argument(mm(DESCRIPTION), help='optional description')
+    constant_set = constant_cmds.add_parser(SET, help='set or modify a value')
+    constant_set.add_argument(NAME, action='store', metavar='NAME', help='name')
+    constant_set.add_argument(VALUE, action='store', metavar='VALUE', help='value')
+    constant_set.add_argument(DATE, action='store', nargs='?', metavar='DATE',
+                              help='date when measured (omit for all time)')
+    constant_set.add_argument(mm(FORCE), action='store_true', help='allow over-writing existing values')
+    constant_delete = constant_cmds.add_parser(DELETE, help='delete a value (or all values)')
+    constant_delete.add_argument(NAME, action='store', metavar='NAME', help='name')
+    constant_delete.add_argument(DATE, action='store', nargs='?', metavar='DATE',
+                                 help='date of value to delete (omit for all)')
+    constant_delete.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
+    constant_remove = constant_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)')
+    constant_remove.add_argument(NAME, action='store', metavar='NAME', help='name')
+    constant_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
