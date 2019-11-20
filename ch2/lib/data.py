@@ -194,6 +194,8 @@ def bookend(df, column=BOOKMARK):
 def expand(s, text, before, vars=None, default_owner=None, default_constraint=None):
     '''
     Recursively expand any ${name} occurrences in the text using vars (if given) and database.
+
+    May be too much magic going on here - can return objects, values as well as strings.
     '''
 
     from ..squeal import StatisticName, StatisticJournal
@@ -205,16 +207,23 @@ def expand(s, text, before, vars=None, default_owner=None, default_constraint=No
     while match:
         left, name, right = match.groups()
         if name in vars:
+            owner = None
             value = vars[name]
         else:
             owner, statistic, constraint = StatisticName.parse(name, default_owner=default_owner,
                                                                default_constraint=default_constraint)
-            value = StatisticJournal.before(s, before, statistic, owner, constraint)
-            if value is None:
-                raise Exception(f'No value defined for {name} ({owner}:{statistic}:{constraint}) before {before}')
-            else:
-                value = str(value.value)
-        log.debug(f'Substituting {name}="{value}" in "{text}"')
-        text = left + value + right
-        match = pattern.match(text)
+            value = StatisticJournal.before_not_null(s, before, statistic, owner, constraint)
+        if value is None:
+            raise Exception(f'No value defined for {name} ({owner}:{statistic}:{constraint}) before {before}')
+        elif left == '' and right == '':
+            text = value.value
+            match = None
+            if owner == 'Constant':
+                text = loads(text)
+            log.debug(f'Unpacked {name}={text}')
+        else:
+            value = str(value.value)
+            log.debug(f'Substituting {name}="{value}" in "{text}"')
+            text = left + value + right
+            match = pattern.match(text)
     return text

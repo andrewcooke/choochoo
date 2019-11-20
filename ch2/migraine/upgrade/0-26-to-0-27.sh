@@ -137,10 +137,11 @@ EOF
 
 dev/ch2 --dev config default --no-diary
 
-dev/ch2 --dev constants --set FTHR.Bike 154
-dev/ch2 --dev constants --set FTHR.Walk 154
-dev/ch2 --dev constants --set SRTM1.Dir /home/andrew/archive/srtm1
-dev/ch2 --dev constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "weight": 12}'
-
+dev/ch2 --dev constants set FTHR.Bike 154
+dev/ch2 --dev constants set FTHR.Walk 154
+dev/ch2 --dev constants set SRTM1.Dir /home/andrew/archive/srtm1
+# todo - validation below
+dev/ch2 --dev constants add --single 'Power.cotic' --description 'Bike namedtuple values for calculating power for this kit'
+dev/ch2 --dev constants set Power.cotic '{"cda": 0.44, "crr": 0, "weight": 12}'
 
 echo "next, run 'ch2 activities' or similar to load data"

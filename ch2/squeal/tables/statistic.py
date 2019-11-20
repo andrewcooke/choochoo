@@ -218,6 +218,19 @@ class StatisticJournal(Base):
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
+    def before_not_null(cls, s, time, name, owner, constraint):
+        statistic_name = s.query(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constraint).one()
+        cls = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+        return s.query(cls). \
+            filter(cls.statistic_name == statistic_name,
+                   cls.time <= time,
+                   cls.value != None). \
+            order_by(desc(cls.time)).limit(1).one_or_none()
+
+    @classmethod
     def after(cls, s, time, name, owner, constraint):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
