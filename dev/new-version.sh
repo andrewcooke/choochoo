@@ -17,7 +17,7 @@ if [ `echo "$VERSION" | sed -e 's/[0-9]\+\.[\0-9]\+\.[0-9]\+//'` ]; then
     exit 2
 fi
 
-IS_DEV=`grep 'IS_DEV =' ch2/commands/args.py | sed -e "s/.*IS_DEV = '\([A-Za-z]\)'.*/\1/"`
+IS_DEV=`grep 'IS_DEV =' ch2/commands/args.py | sed -e "s/.*IS_DEV = \([A-Za-z]\+\).*/\1/"`
 if [ "$IS_DEV" != "False" ]; then
     echo "error: releasing development version"
     exit 3;

@@ -57,16 +57,16 @@ Check that the current database is empty.
 
 ## constants
 
-    > ch2 constants [NAME [DATE]]
+    > ch2 constants show [NAME [DATE]]
 
 Lists constants to stdout.
 
-    > ch2 constants --set NAME [DATE] VALUE
+    > ch2 constants set NAME VALUE [DATE]
 
 Defines a new entry.  If date is omitted a single value is used for all time
 (so any previously defined values are deleted)
 
-    > ch2 constants --delete NAME [DATE]
+    > ch2 constants delete NAME [DATE]
 
 Deletes an entry.
 

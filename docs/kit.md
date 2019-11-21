@@ -1,5 +1,5 @@
 
-# Tracking Equipment
+# Equipment Tracking
 
 * [Introduction](#introduction)
 * [A More Complete Example](#a-more-complete-example)
@@ -59,10 +59,10 @@ automatically:
 First, I will add my Cotic bike:
 
     > ch2 kit start bike cotic --force
-        INFO: Version 0.26.4
+        INFO: Version 0.27.0
         INFO: Using database at database.sql
      WARNING: Forcing creation of new group (bike)
-        INFO: Started bike cotic at 2019-11-06 13:06:31
+        INFO: Started bike cotic at 2019-11-21 20:00:08
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -72,7 +72,7 @@ this, because `bike` will already be known by the system..
 Now I have a bike I am going to add some inner tubes at various dates.
 
     > ch2 kit change cotic front-tube michelin 2019-01-01 --force
-        INFO: Version 0.26.4
+        INFO: Version 0.27.0
         INFO: Using database at database.sql
      WARNING: Forcing creation of new component (front-tube)
      WARNING: Model michelin does not match any previous entries
@@ -83,7 +83,7 @@ Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
     > ch2 kit change cotic front-tube michelin 2019-03-01
-        INFO: Version 0.26.4
+        INFO: Version 0.27.0
         INFO: Using database at database.sql
         INFO: Retired previous front-tube (michelin)
         INFO: Changed cotic front-tube michelin at 2019-03-01 00:00:00
@@ -94,11 +94,11 @@ add the tubes in order - however they're added, the start and end
 times should align correctly.
 
     > ch2 kit change cotic front-tube vittoria
-        INFO: Version 0.26.4
+        INFO: Version 0.27.0
         INFO: Using database at database.sql
      WARNING: Model vittoria does not match any previous entries
         INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube vittoria at 2019-11-06 13:06:39
+        INFO: Changed cotic front-tube vittoria at 2019-11-21 20:00:18
 
 
 That's three different inner tubes on the front.  The last uses
@@ -108,15 +108,15 @@ command line as you do the work.
 Now we can see the statistics:
 
     > ch2 kit statistics front-tube
-        INFO: Version 0.26.4
+        INFO: Version 0.27.0
         INFO: Using database at database.sql
     Item front-tube
     +-Model michelin
     | +-Lifetime
     | | +-Count 2
-    | | +-Sum 309d 13h06m39s
-    | | +-Average 154d 18h33m19s
-    | | `-Median 154d 18h33m19s
+    | | +-Sum 324d 20h00m18s
+    | | +-Average 162d 10h00m09s
+    | | `-Median 162d 10h00m09s
     | +-Active Time
     | | +-Count 2
     | | +-Sum 0s
@@ -135,7 +135,7 @@ Now we can see the statistics:
 
 In this example (which is auto-generated from the commands) there were
 no activities loaded (and because this code is new I don't have any
-'real' data to share either), but you can see that if activities were
+'real' data to share either), but you can see that of activities were
 available there would be statistics on active distance and time.  For
 more details on how this works see [Loading
 Activities](#loading-activities).
@@ -144,19 +144,19 @@ Activities](#loading-activities).
 
 Choochoo can track *anything* that fits into this schema:
 
-**Groups** - These are the *kinds of things* you track: shoes, bikes,
+**Groups** These are the *kinds of things* you track: shoes, bikes,
 etc.
 
-**Items** - These are the particular things: the name you give to a
+**Items** These are the particular things: the name you give to a
 particular bike, or a particular pair of shoes.  At this level, items
 need to be retired explicitly.
 
-**Components** - These (optionally) make up the things you are
-tracking.  So "chain", for a bike, or "shoelaces" (maybe!) for shoes.
+**Components** These (optionally) make up the things you are tracking.
+So "chain", for a bike, or "shoelaces" (maybe!) for shoes.
 
-**Models** - These describe a particular component.  So the chain
-migbt be "PC1110".  At this level, components are retired
-automatically (when they are replaced).
+**Models** These describe a particular component.  So the chain migbt
+be "PC1110".  At this level, components are retired automatically
+(when they are replaced).
 
 Note that all these names can contain spaces, but if you use spaces
 you need to take care with quotes on the command line.  I find it's
@@ -168,7 +168,7 @@ different things.
 ## Loading Activities
 
 The software has to 'know' what kit is used in what activitiy.  This
-is done by defining the available `kit` when you load the activity.
+is done by defining the aviable `kit` when you load the activity.
 
 So, for example, if all the fit files in directory `mtb-rides` are
 from rides on my Cotic bike (defined with `ch2 kit start cotic`), then
@@ -185,9 +185,9 @@ change`) then you can rebuild the statistics with the
 
 Don't forget you can do
 
-    > ch2 kit command -h
+    > ch2 kit *command* -h
 
-for more information on *command*.
+for more information.
 
 ### kit start
 
