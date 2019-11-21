@@ -1,4 +1,3 @@
-from functools import total_ordering
 
 from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint, or_
 from sqlalchemy.orm import relationship

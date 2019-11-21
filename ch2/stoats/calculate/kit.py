@@ -17,8 +17,11 @@ class KitCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator):
             if kit:
                 log.debug(f'Read {kit.value} at {time} / {ajournal.activity_group.name}')
                 for kit_name in kit.value.split(','):
-                    for kit_instance in expand_item(s, kit_name, ajournal.start):
-                        kit_instance.add_use(s, ajournal.start, source=ajournal, owner=self.owner_out)
-                        log.debug(f'Added usage for {kit_instance}')
+                    try:
+                        for kit_instance in expand_item(s, kit_name, ajournal.start):
+                            kit_instance.add_use(s, ajournal.start, source=ajournal, owner=self.owner_out)
+                            log.debug(f'Added usage for {kit_instance}')
+                    except Exception as e:
+                        log.warning(f'Could not add statistics for {kit_name}: {e}')
             else:
                 log.debug(f'No kit defined for this activity ({time})')
