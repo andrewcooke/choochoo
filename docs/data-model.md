@@ -32,10 +32,11 @@ new values, etc.
 For a StatisticName to be useful it must be associated with some
 values.  More exactly, it must have entries in the
 **StatisticJournal** which associated values at particular times with
-**Source**s.
+**Sources**.
 
-There are three types of StatisticJournal, for values that are
-integers, floats and text.
+There are four types of StatisticJournal, three for values that are
+integers, floats and text, and one that has no value but is simply a
+marker that an incident occured - a timestamp.
 
 It will be convenient later to divide Statistics into two kinds:
 
@@ -52,20 +53,28 @@ StatisticJournal.  This is why I used "statistic" with a lower case
 "s" - when I am referring to a particular table I will revert to
 capitalized names.)
 
-Many statistics also have ranking and percentile information.  These
-behave similarly to derived statistics (they are associated with
-Interval Sources), but are stored separately.
+Note that when using Python and SQLAlchemy you do not need to know
+what kind of statistic journal you are requesting from the database.
+You can query the base class (`StatisticJournal`) and will receive the
+appropriate subclass (`StatisticJournalInteger`,
+`StatisticJournalFloat`, etc).
 
 ### Sources
 
-Sources are, well, the sources of statistics - where the values come
-from.
+Sources are where the statistics come from.
 
-There are several different Sources:
+There are many different Sources:
 
 * **Activities** are read from FIT files and provide a wealth of
   statistics (both raw - like the GPS data - and derived - like the
   total distance).
+
+* **Monitor** is similar to an Activity - it is read from FIT files -
+  but is background "wellness" data (rest HR, steps walked, etc).
+  (Dirty implementation detail: Monitor data are recorded at random
+  times throughout the day so the system also calculates a daily
+  value (total steps, lowest rest HR) and associates this with an
+  Interval corresponding to that day.)
 
 * **Topics** are used to structure entries in the diary and can be
   associated with statistics that are entered by the user (depending
@@ -77,16 +86,25 @@ There are several different Sources:
   year.  So the total distance cycled over May 2018, for example, is a
   derived statistic whose source is the interval covering that month.
 
-* **Monitor** is similar to an Activity - it is read from FIT files -
-  but is background "wellness" data (rest HR, steps walked, etc).
-  (Dirty implementation detail: Monitor data are recorded at random
-  times throughout the day so the system also calculates a daily
-  value (total steps, lowest rest HR) and associates this with an
-  Interval corresponding to that day.)
+* **Constants** can be set from the command line using the `ch2
+  constants` command.  They represent configuration values that rarely
+  change (your FTHR, for example).
+
+* **Segments** are used-defined paths that are matched against
+  activities.  When an activity matches a segment statistics like the
+  time for that segment are recorded.
+
+* **Models** and **Items** are used in kit tracking.  Statistics
+  associated with these record their use.
+
+* **Composite** are 'meta' sources that are used to combine other
+  sources.  For example, the statistics associated with kit use for a
+  particular activity has both Item and Activity sources.
 
 As with Statistics and the StatisticJournal, the data associated with
-these Activities, Topics and Monitor are stored in
-**ActivityJournal**, **TopicJournal** and **MonitorJournal**.
+some sources are stored in journals - **ActivityJournal**,
+**TopicJournal**, etc (the data are not the statistics themselves but
+additional metadata, like the date of the activity).
 
 ## Implementation
 
@@ -108,20 +126,6 @@ Two inheritance hierarchies are used, for Source and StatisticJournal.
 In both cases the structure is relatively simple, with all concrete
 classes being direct children of the base.
 
-Source has eight children: Interval, ActivityJournal, TopicJournal,
-**Constant** (arbitrary values entered by the user, but not on a
-scheduled basis - FTHR, for example), MonitorJournal,
-**SegmentJournal** (used to identify segments), **CompositeJournal**
-(used to identify derived statistics from multiple sources), and
-**DummySource** (used to avoid race conditions when loading data from
-multiple threads).
-
-StatisticJournal has three children: **StatisticJournalInteger**,
-**StatisticJournalFloat** and **StatisticJournalText** - used for
-storing values of the respective types.  StatisticJournal has a
-foreign key relationship with Source, so that when a Source is deleted
-the corresponding statistics are deleted (via cascade).
-
 ### Correctness
 
 It is important that the data in the StatisticJournal are correct.  To ensure
@@ -135,12 +139,14 @@ deleted:
 * Updates to StatisticJournal may invalidate some derived statistics, so any
   insertion must have a corresponding deletion of associated Intervals.
 
-* Deletions from Source will cascade into deletions from StatisticJournal.
-  This may invalidate some derived statistics, so any insertion must have a
-  corresponding deletion of associated Intervals.
+* Deletions from Source will cascade into deletions from
+  StatisticJournal.  This may invalidate some derived statistics, so
+  any deletion must have a corresponding deletion of associated
+  Intervals.
 
-The above is true for both raw and derived statistics (since Intervals are
-Sources).
+* Deletions of Composite source components do not cascade
+  (unfortunately).  So `Composite.clean()` must be called manually
+  whenever Composite sources are modified.
 
 ### Events
 
@@ -167,6 +173,8 @@ Following from the above, we have the following rules that must be followed:
 
   2. So that automatic deletion of Intervals can be triggered.
 
+* Call `Composite.clean()` when necessary.
+
 Together these allow us to calculate derived statistics only when needed (ie
 when an Interval is missing).
 
@@ -186,9 +194,8 @@ which "reads" as "the first monday and second wednesday of each fortnight (2
 weeks) in 2018 (the time range at the end), shifted so that 2018-09-29 occurs
 in the first week)".
 
-TODO - check shifting implementation.
-
-For a more precise definition see the code in `ch2.lib.schedule`.
+For a more precise definition see the code in `ch2.lib.schedule` and
+the [Schedule documentation](schedules).
 
 ### Topics
 

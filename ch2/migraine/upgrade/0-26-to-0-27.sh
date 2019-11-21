@@ -120,28 +120,23 @@ dev/ch2 no-op
 echo "loading data into $DB_DIR/database-$DST.sql"
 sqlite3 "$DB_DIR/database-$DST.sql" < "$TMP_DIR/dump-$SRC.sql"
 
+echo "adding default config to $DB_DIR/database-$DST.sql"
+dev/ch2 --dev config default --no-diary
+
 
 # you almost certainly want to change the following details
 
-echo "adding custom data to $DB_DIR/database-$DST.sql"
-source env/bin/activate
-python <<EOF
-from ch2.config import *
-from ch2.config.database import add_enum_constant
-from ch2.stoats.calculate.power import Bike
+echo "adding personal constants to $DB_DIR/database-$DST.sql"
 
-db = config('-v 5')
-with db.session_context() as s:
-     add_enum_constant(s, 'Cotic Soul', Bike, constraint='ActivityGroup "Bike"')
-EOF
-
-dev/ch2 --dev config default --no-diary
-
+# these are defined in the default config
 dev/ch2 --dev constants set FTHR.Bike 154
 dev/ch2 --dev constants set FTHR.Walk 154
 dev/ch2 --dev constants set SRTM1.Dir /home/andrew/archive/srtm1
+
+# this has a name that depends on kit so we need to add it ourselves
 # todo - validation below
 dev/ch2 --dev constants add --single 'Power.cotic' --description 'Bike namedtuple values for calculating power for this kit'
-dev/ch2 --dev constants set Power.cotic '{"cda": 0.44, "crr": 0, "weight": 12}'
+dev/ch2 --dev constants set Power.cotic '{"cda": 0.42, "crr": 0.0055, "weight": 12}'
+
 
 echo "next, run 'ch2 activities' or similar to load data"

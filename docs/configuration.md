@@ -18,6 +18,7 @@ is no need to do all configuration "up front".
     * [The Default Configuration](#the-default-configuration)
       * [Constants](#constants)
       * [Topics and Statistics](#topics-and-statistics)
+      * [Power and Kit](#power-and-kit)
     * [My Personal Configuration](#my-personal-configuration)
     * [Adding a Field](#adding-a-field)
   * [Configuring with SQL](#configuring-with-sql)
@@ -50,7 +51,7 @@ unfortunately, these are disabled by default.  So whenever you are
 using SQL directly (ie using the `sqlite3` command) enable the rules
 with `pragma foreign_keys = on`:
 
-    > sqlite3 /home/andrew/.ch2/database.sqlj
+    > sqlite3 /home/andrew/.ch2/database-version.sql
     SQLite version 3.23.1 2018-04-10 17:39:29
     Enter ".help" for usage hints.
     sqlite> pragma foreign_keys = on
@@ -160,6 +161,35 @@ Some of the numerical values may be different, but this shows how the
 definition of `add_topic_field()` in
 [ch2.config.database](https://github.com/andrewcooke/choochoo/blob/master/ch2/config/database.py)
 you can see the code that does this.
+
+#### Power and Kit
+
+The default pipeline configuration includes the
+`ExtendedPowerCalculator` configured to read parameters from the
+Constant `PowerEstimate.Bike`.
+
+This Constant should have a value like `{"bike":
+"${Constant:Power.${SegmentReader:kit}:None}", "rider_weight":
+"${Topic:Weight:Topic \"Diary\" (d)}", "vary": ""}` which itself has
+three components:
+
+* **bike** - this expands to the Constant `Power.xxx`, where `xxx`
+  is the `kit` defined when the activity was loaded.  For more
+  information on kit, see [Tracking Equipment](kit).
+
+* **rider_weight** - this expands to the `Weight` statistic
+  entered in the diary (the most recent value *before* the
+  activity will be used).
+
+* **vary** - this is currently empty, which means that the
+  extended model is not used (it doesn't work).
+
+The Constant `Power.xxx` is defined like `{"cda": 0.42, "crr": 0.0055,
+"weight": 12}` where the three values are the coefficient of drag,
+rolling resistance, and bike weight (kg).
+
+For more information on the power calculation see [Measuring Power and
+CdA](cda).
 
 ### My Personal Configuration
 

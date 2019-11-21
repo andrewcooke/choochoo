@@ -19,9 +19,9 @@ do if you install from source.
 On the other hand, installing a package is slightly easier and you can
 switch to using the source later, if necessary.
 
-In both cases you need **Python 3.7**.  So you may need to get the
-latest Python version from
-[python.org](https://www.python.org/downloads/).
+In both cases you need **Python 3.7** (or later, although I haven't
+tested yet with 3.8).  So you may need to get a recent Python version
+from [python.org](https://www.python.org/downloads/).
 
 To check your Python version:
 

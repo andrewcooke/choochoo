@@ -177,18 +177,6 @@ The same data can be retrieved as a DataFrame using the `df` function:
            names
     [...table of information...]
 
-For example, in a new Python 3 notebook:
-
-    from ch2.data import data
-    d = data('-v 0')
-    d.statistics()
-
-will show a list of the statistics available.
-
-You may want to revise the [data model](data-model) at this point.
-
-The `ch2.data.database.Data` instance provides access to:
-
 ## Plotting Data
 
 Plotting packages in Python - especially for maps - seem to be
@@ -219,18 +207,17 @@ Helper routines are available in
   
   * Extract the data from the database:
     * use a [helper function](#helpers);
-    * use a [SQLAlchemy ORM Query](#sqlalchemy-orm-query).
-
-  * Wrap the data in a DataFrame using `df`.
+    * use a [SQLAlchemy ORM Query](#sqlalchemy-orm-query) and wrap the
+      data in a DataFrame using `df`.
   
-  * Plot the data with Bokeh.
+  * Plot the data with Bokeh or another, similar package.
 
 ## Other Approaches
 
 All Choochoo's data (all *your* data) are stored in an SQLite3 file at
-`~/.ch2/database.sql?` (the final character changes with database
-schema version).  So you can also use any programming language with an
-SQLite binding (for Python the
+`~/.ch2/database-version.sql` (the version is numeric).  So you can
+also use any programming language with an SQLite binding (for Python
+the
 [ch2.squeal.tables](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables)
 package contains a [SQLAchemy](https://www.sqlalchemy.org/) ORM
 mapping).

@@ -3,8 +3,9 @@
 
 Schedules are used to specify ranges of dates, typically involving
 some kind of repetition.  They are very flexible, but I've tried to
-make the simple cases easy to write and understand.  Before getting
-into any details it's best to look at some examples:
+make the simple cases easy to write and understand.
+
+Before getting into any details it's best to look at some examples:
 
 * **2018-10-07**
 
@@ -16,7 +17,7 @@ into any details it's best to look at some examples:
   This is all the days from today (Sunday) onwards (include the given
   date).
 
-* **-2018-10-07-**
+* **-2018-10-07**
 
   All the days before today (Sunday) (excluding the given date - date
   ranges are semi-open).

@@ -12,6 +12,7 @@
 * [Activities](#activities)
   * [Download from Device](#download-from-device)
   * [Activity Entry](#activity-entry)
+  * [Activities with Kit](#activities-with-kit)
   * [FTHR](#fthr)
 * [Data Analysis](#data-analysis)
 
@@ -29,9 +30,14 @@ the future.
 The program has been designed with this in mind - it will re-scan
 directories containing FIT data and only processs data that are new.
 
-So before starting choose where you will store FIT data (and maybe
-make backup copies of this data on a regular basis, along with the
-Choochoo database).
+In addition, because different activities are associated with
+different kit (eg different bikes), you probably want to separate FIT
+files in a way that lets you load activities with different kit
+separately.
+
+So before starting to use Choochoo choose where you will store FIT
+data (and maybe make backup copies of this data on a regular basis,
+along with the Choochoo database).
 
 ## Diary
 
@@ -159,6 +165,24 @@ then the command might look like:
 
 This will load data and re-calculate appropriate statistics.
 
+### Activities with Kit
+
+To help [track equipment](kit) you may want to group FIT files by kit
+(eg bike).  For example, if I have two bikes (made by Cotic and
+Bowman) then I might save rides in `/archive/cotic` and
+`/archive/bowman`.
+
+Loading the activities with associated kit information would then look
+like:
+
+    > ch2 activities -Dkit=cotic /archive/cotic/*.fit
+    > ch2 activities -Dkit=bowman /archive/bowman/*.fit
+
+This can be extended to more complex cases, limited only by your
+ingenuity with shell scripts (for example, you could put the kit in
+the file name and then extract it in a loader script or, on some file
+systems, store the kit as extended file attributes).
+
 ### FTHR
 
 Some of the statistics require heart rate zones.  These are based on
@@ -166,14 +190,14 @@ the FTHR which you can define as a contants.
 
 To list all available constants:
 
-    > ch2 constants
+    > ch2 constants show
 
 For the default configuration this should include `FTHR.Bike` which is
 the FTHR used for the `Bike` activity group.
 
-To set a glibal value use:
+To set a global value use:
 
-    > ch2 constants --set FTHR.Bike 154
+    > ch2 constants set FTHR.Bike 154
 
 You can also set a value from a particular date, list and delete
 values.  See `ch2 constants -h` and `ch2 help constants` for more

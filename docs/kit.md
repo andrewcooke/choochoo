@@ -1,5 +1,5 @@
 
-# Equipment Tracking
+# Tracking Equipment
 
 * [Introduction](#introduction)
 * [A More Complete Example](#a-more-complete-example)
@@ -135,7 +135,7 @@ Now we can see the statistics:
 
 In this example (which is auto-generated from the commands) there were
 no activities loaded (and because this code is new I don't have any
-'real' data to share either), but you can see that of activities were
+'real' data to share either), but you can see that if activities were
 available there would be statistics on active distance and time.  For
 more details on how this works see [Loading
 Activities](#loading-activities).
@@ -144,19 +144,19 @@ Activities](#loading-activities).
 
 Choochoo can track *anything* that fits into this schema:
 
-**Groups** These are the *kinds of things* you track: shoes, bikes,
+**Groups** - These are the *kinds of things* you track: shoes, bikes,
 etc.
 
-**Items** These are the particular things: the name you give to a
+**Items** - These are the particular things: the name you give to a
 particular bike, or a particular pair of shoes.  At this level, items
 need to be retired explicitly.
 
-**Components** These (optionally) make up the things you are tracking.
-So "chain", for a bike, or "shoelaces" (maybe!) for shoes.
+**Components** - These (optionally) make up the things you are
+tracking.  So "chain", for a bike, or "shoelaces" (maybe!) for shoes.
 
-**Models** These describe a particular component.  So the chain migbt
-be "PC1110".  At this level, components are retired automatically
-(when they are replaced).
+**Models** - These describe a particular component.  So the chain
+migbt be "PC1110".  At this level, components are retired
+automatically (when they are replaced).
 
 Note that all these names can contain spaces, but if you use spaces
 you need to take care with quotes on the command line.  I find it's
@@ -168,7 +168,7 @@ different things.
 ## Loading Activities
 
 The software has to 'know' what kit is used in what activitiy.  This
-is done by defining the aviable `kit` when you load the activity.
+is done by defining the available `kit` when you load the activity.
 
 So, for example, if all the fit files in directory `mtb-rides` are
 from rides on my Cotic bike (defined with `ch2 kit start cotic`), then
@@ -185,9 +185,9 @@ change`) then you can rebuild the statistics with the
 
 Don't forget you can do
 
-    > ch2 kit *command* -h
+    > ch2 kit command -h
 
-for more information.
+for more information on *command*.
 
 ### kit start
 
