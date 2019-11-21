@@ -6,7 +6,7 @@ start_all=$SECONDS
 VERSION=`grep 'CH2_VERSION =' ch2/commands/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\).*/\1/"`
 VERSION=`echo $VERSION | sed -e s/\\\\./-/g`
 
-IS_DEV=`grep 'IS_DEV =' ch2/commands/args.py | sed -e "s/.*IS_DEV = '\([A-Za-z]\)'.*/\1/"`
+IS_DEV=`grep 'IS_DEV =' ch2/commands/args.py | sed -e "s/.*IS_DEV = \([A-Za-z]\+\).*/\1/"`
 if [ "$IS_DEV" != "False" ]; then
     echo "error: using development version)"
     echo "(instead, migrate from previous and update)"
@@ -27,7 +27,7 @@ echo
 echo "running activities in parallel"
 start_activities=$SECONDS
 ALL_CPUS="-K cost_calc=100"
-(dev/ch2 --dev -v2 activities ~/archive/fit/bike/*.fit --fast -D 'Bike=Cotic Soul'; dev/ch2 --dev -v2 activities ~/archive/fit/walk/*.fit --fast; dev/ch2 --dev -v2 activities ~/archive/fit/batch/**/*.fit --fast -D 'Bike=Cotic Soul' -D 'kit=cotic' $ALL_CPUS) &
+(dev/ch2 --dev -v2 activities ~/archive/fit/bike/cotic/*.fit --fast -D 'kit=cotic'; dev/ch2 --dev -v2 activities ~/archive/fit/bike/uk/*.fit --fast -D 'kit=uk'; dev/ch2 --dev -v2 activities ~/archive/fit/walk/*.fit --fast; dev/ch2 --dev -v2 activities ~/archive/fit/batch/**/*.fit --fast -D 'kit=marin' $ALL_CPUS) &
 (dev/ch2 --dev -v2 monitor ~/archive/fit/monitor/*.fit --fast; dev/ch2 --dev -v2 monitor ~/archive/fit/batch/**/*.fit --fast $ALL_CPUS) &
 wait
 cp ~/.ch2/"database-$VERSION.sql" ~/.ch2/"database-$VERSION.sql-loaded"

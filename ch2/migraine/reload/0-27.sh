@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
+# there are more things to edit at the end of this file
 
 # you may want to change these variables
 
 DB_DIR=~/.ch2
 TMP_DIR=/tmp
 
-VER='0-26-dev'
+VER='0-27'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
 DO_COPY=1
@@ -48,6 +49,8 @@ if ((DO_DROP)); then
        group by composite_component.id
     ) where target != actual
   );
+  -- remove statistic names used by constants
+  delete from statistic_name where owner = 'Constant';
 EOF
 fi
 
@@ -102,19 +105,21 @@ dev/ch2 no-op
 echo "loading data into $DB_DIR/database-$VER.sql"
 sqlite3 "$DB_DIR/database-$VER.sql" < "$TMP_DIR/dump-$VER.sql"
 
+# this has to come after loading data to avoid uniqueness conflicts
+echo "adding default config"
+dev/ch2 --dev config default --no-diary
+
 
 # you almost certainly want to change the following details
 
 echo "adding personal constants to $DB_DIR/database-$VER.sql"
-
-# these are defined in the default config
 dev/ch2 --dev constants set FTHR.Bike 154
 dev/ch2 --dev constants set FTHR.Walk 154
 dev/ch2 --dev constants set SRTM1.Dir /home/andrew/archive/srtm1
-
-# this has a name that depends on kit so we need to add it ourselves
-# todo - validation below
-dev/ch2 --dev constants add --single 'Power.cotic' --description 'Bike namedtuple values for calculating power for this kit'
+# the name of this constant depends on the kit name and so we must add it ourselves
+dev/ch2 --dev constants add --single Power.cotic \
+  --description 'Bike namedtuple values to calculate power for this kit' \
+  --validate ch2.stoats.calculate.power.Bike
 dev/ch2 --dev constants set Power.cotic '{"cda": 0.42, "crr": 0.0055, "weight": 12}'
 
 

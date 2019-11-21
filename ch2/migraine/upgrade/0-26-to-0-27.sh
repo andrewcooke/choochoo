@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# there are more things to edit at the end of this file
 
 # you may want to change these variables
 
@@ -7,12 +8,12 @@ DB_DIR=~/.ch2
 TMP_DIR=/tmp
 
 SRC='0-26'
-DST='0-26-dev'
+DST='0-27'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=0
-DO_DROP=0
-DO_DUMP=0
+DO_COPY=1
+DO_DROP=1
+DO_DUMP=1
 
 
 # this section of the script copies diary data and kit data across
@@ -127,15 +128,13 @@ dev/ch2 --dev config default --no-diary
 # you almost certainly want to change the following details
 
 echo "adding personal constants to $DB_DIR/database-$DST.sql"
-
-# these are defined in the default config
 dev/ch2 --dev constants set FTHR.Bike 154
 dev/ch2 --dev constants set FTHR.Walk 154
 dev/ch2 --dev constants set SRTM1.Dir /home/andrew/archive/srtm1
-
-# this has a name that depends on kit so we need to add it ourselves
-# todo - validation below
-dev/ch2 --dev constants add --single 'Power.cotic' --description 'Bike namedtuple values for calculating power for this kit'
+# the name of this constant depends on the kit name and so we must add it ourselves
+dev/ch2 --dev constants add --single Power.cotic \
+  --description 'Bike namedtuple values to calculate power for this kit' \
+  --validate ch2.stoats.calculate.power.Bike
 dev/ch2 --dev constants set Power.cotic '{"cda": 0.42, "crr": 0.0055, "weight": 12}'
 
 

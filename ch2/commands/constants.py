@@ -2,9 +2,10 @@
 from logging import getLogger
 
 from ..commands.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
-    SHOW, REMOVE, CONSTRAINT, DESCRIPTION, SINGLE
-from ..squeal.tables.constant import Constant
+    SHOW, REMOVE, CONSTRAINT, DESCRIPTION, SINGLE, VALIDATE
+from ..squeal.tables.constant import Constant, ValidateNamedTuple
 from ..squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType
+from ..squeal.types import lookup_cls
 from ..squeal.utils import add
 
 log = getLogger(__name__)
@@ -33,7 +34,8 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
     name, cmd = args[NAME], args[SUB_COMMAND]
     with db.session_context() as s:
         if cmd == ADD:
-            add_constant(s, name, args[CONSTRAINT], args[DESCRIPTION], args[SINGLE])
+            add_constant(s, name, constraint=args[CONSTRAINT], description=args[DESCRIPTION],
+                         single=args[SINGLE], validate=args[VALIDATE])
         else:
             if name:
                 constants = constants_like(s, name)
@@ -71,17 +73,21 @@ def constants_like(s, name):
     return constants
 
 
-def add_constant(s, name, constraint=None, description=None, single=False):
-    # TODO - validate_cls
+def add_constant(s, name, constraint=None, description=None, single=False, validate=None):
     if s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == Constant,
                    StatisticName.constraint == constraint).one_or_none():
         raise Exception(f'Constant {name} (constraint {constraint}) already exists')
+    validate_cls, validate_args, validate_kargs = None, [], {}
+    if validate:
+        lookup_cls(validate)
+        validate_cls, validate_kargs = ValidateNamedTuple, {'tuple_cls': validate}
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=constraint,
                                           units=None, description=description,
                                           statistic_journal_type=StatisticJournalType.TEXT))
-    add(s, Constant(statistic_name=statistic_name, name=name, single=single))
+    add(s, Constant(statistic_name=statistic_name, name=name, single=single,
+                    validate_cls=validate_cls, validate_args=validate_args, validate_kargs=validate_kargs))
     log.info(f'Added {name}')
 
 

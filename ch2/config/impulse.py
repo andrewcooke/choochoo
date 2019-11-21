@@ -31,7 +31,7 @@ def add_impulse(s, c, activity_group):
     add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(SegmentReader), impulse_ref=hr_impulse_name)
 
 
-def add_responses(s, c, start=1e-6, fitness=((42, 1),), fatigue=((7, 5),)):
+def add_responses(s, c, fitness=((42, 1),), fatigue=((7, 5),)):
 
     responses = []
     all = ActivityGroup.from_name(s, ALL)

@@ -11,9 +11,9 @@ from ..lib.date import to_date, to_time
 
 log = getLogger(__name__)
 
-CH2_VERSION = '0.26.4'
+CH2_VERSION = '0.27.0'
 # this is checked for false on release (see dev/new-version)
-IS_DEV = True
+IS_DEV = False
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
@@ -278,12 +278,13 @@ def make_parser():
     constant_show.add_argument(NAME, action='store', nargs='?', metavar='NAME', help='name (omit for all)')
     constant_show.add_argument(DATE, action='store', nargs='?', metavar='DATE',
                                help='date of value to show (omit for all)')
-    constant_create = constant_cmds.add_parser(ADD, help='add a new constant')
-    constant_create.add_argument(NAME, action='store', metavar='NAME', help='name')
-    constant_create.add_argument(CONSTRAINT, action='store', nargs='?', metavar='CONSTRAINT',
-                                 help='constraint (eg activity group)')
-    constant_create.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
-    constant_create.add_argument(mm(DESCRIPTION), help='optional description')
+    constant_add = constant_cmds.add_parser(ADD, help='add a new constant')
+    constant_add.add_argument(NAME, action='store', metavar='NAME', help='name')
+    constant_add.add_argument(CONSTRAINT, action='store', nargs='?', metavar='CONSTRAINT',
+                              help='constraint (eg activity group)')
+    constant_add.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
+    constant_add.add_argument(mm(DESCRIPTION), help='optional description')
+    constant_add.add_argument(mm(VALIDATE), help='optional validation class')
     constant_set = constant_cmds.add_parser(SET, help='set or modify a value')
     constant_set.add_argument(NAME, action='store', metavar='NAME', help='name')
     constant_set.add_argument(VALUE, action='store', metavar='VALUE', help='value')
