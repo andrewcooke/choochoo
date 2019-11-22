@@ -73,6 +73,13 @@ class StatisticName(Base):
         return statistic_name
 
     @classmethod
+    def from_name(cls, s, name, owner, constaint=None):
+        return s.query(StatisticName). \
+            filter(StatisticName.name == name,
+                   StatisticName.owner == owner,
+                   StatisticName.constraint == constaint).one()
+
+    @classmethod
     def parse(cls, name, default_owner=None, default_constraint=None):
         '''
         This parses the standard, extended format for naming statistics.  It is one to three fields, separated by ':'.

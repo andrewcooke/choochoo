@@ -1,8 +1,9 @@
 
 from logging import getLogger
 
+from ch2.stoats.read.segment import SegmentReader
 from ..lib.date import to_time
-from ..squeal import ActivityBookmark, ActivityGroup
+from ..squeal import ActivityBookmark, ActivityGroup, StatisticName
 from ..squeal.database import connect
 
 log = getLogger(__name__)
@@ -32,15 +33,15 @@ class CoastingBookmark:
                                owner=self, constraint=constraint))
 
     def __find(self, s, kit, min_time, max_cadence, min_speed, group):
-        group = str(ActivityGroup.from_name(s, group))
+        group = ActivityGroup.from_name(s, group)
+        cadence_statistic = StatisticName.from_name(s, 'Cadence', SegmentReader, group)
+        distance_statistic = StatisticName.from_name(s, 'Distance', SegmentReader, group)
+        speed_statistic = StatisticName.from_name(s, 'Speed', SegmentReader, group)
+        kit_statistic = StatisticName.from_name(s, 'kit', SegmentReader, group)
         s.execute('PRAGMA automatic_index=OFF;')
         for row in s.execute('''
 select t.activity_journal_id, s.time, f.time
-  from statistic_name as c,
-       statistic_name as d,
-       statistic_name as v,
-       statistic_name as k,
-       statistic_journal as ks,
+  from statistic_journal as ks,
        statistic_journal_text as kt,
        activity_timespan as t cross join  -- this tweaked the plan
        statistic_journal as s,
@@ -51,29 +52,16 @@ select t.activity_journal_id, s.time, f.time
        statistic_journal_integer as fi,
        statistic_journal as ff,
        statistic_journal_integer as ffi
- where c.name = 'Cadence'
-   and c.owner = 'SegmentReader'
-   and c."constraint" = :group
-   and d.name = 'Distance'
-   and d.owner = 'SegmentReader'
-   and d."constraint" = :group
-   and v.name = 'Speed'
-   and v.owner = 'SegmentReader'
-   and v."constraint" = :group
-   -- activity must use the given kit
-   and k.name = 'kit'
-   and k.owner = 'SegmentReader'
-   and k."constraint" = :group
-   and ks.source_id = t.activity_journal_id
-   and ks.statistic_name_id = k.id
+ where ks.source_id = t.activity_journal_id
+   and ks.statistic_name_id = :kit_statistic
    and ks.id = kt.id
    and kt.value = :kit
    -- s and ss bracket the change in cadence at the start
    -- f and ff bracket the change in cadence at the finish
-   and s.statistic_name_id = c.id
-   and f.statistic_name_id = c.id
-   and ss.statistic_name_id = c.id
-   and ff.statistic_name_id = c.id
+   and s.statistic_name_id = :cadence_statistic
+   and f.statistic_name_id = :cadence_statistic
+   and ss.statistic_name_id = :cadence_statistic
+   and ff.statistic_name_id = :cadence_statistic
    and s.id = si.id
    and f.id = fi.id
    and ss.id = ssi.id
@@ -97,7 +85,7 @@ select t.activity_journal_id, s.time, f.time
                           statistic_journal as j
                     where ji.value >= :max_cadence
                       and ji.id = j.id
-                      and j.statistic_name_id = c.id
+                      and j.statistic_name_id = :cadence_statistic
                       and j.source_id = s.source_id
                       and j.serial > s.serial
                       and j.serial < f.serial)
@@ -109,8 +97,8 @@ select t.activity_journal_id, s.time, f.time
                       statistic_journal as j2
                 where f1.id = j1.id
                   and f2.id = j2.id
-                  and j1.statistic_name_id = d.id
-                  and j2.statistic_name_id = d.id
+                  and j1.statistic_name_id = :distance_statistic
+                  and j2.statistic_name_id = :distance_statistic
                   and j1.serial = s.serial
                   and j2.serial = f.serial
                   and j1.source_id = f.source_id
@@ -122,12 +110,14 @@ select t.activity_journal_id, s.time, f.time
                           statistic_journal as j
                     where jf.value = 0
                       and jf.id = j.id
-                      and j.statistic_name_id = v.id
+                      and j.statistic_name_id = :speed_statistic
                       and j.source_id = s.source_id
                       and j.serial >= s.serial
                       and j.serial <= f.serial)
  order by t.activity_journal_id;  -- doesn't affect speed and makes duplicates easier to see
-        ''', {'min_time': min_time, 'max_cadence': max_cadence, 'min_speed': min_speed, 'kit': kit, 'group': group}):
+        ''', {'min_time': min_time, 'max_cadence': max_cadence, 'min_speed': min_speed, 'kit': kit,
+              'group': str(group), 'cadence_statistic': cadence_statistic.id, 'speed_statistic': speed_statistic.id,
+              'distance_statistic': distance_statistic.id, 'kit_statistic': kit_statistic.id}):
             yield row[0], row[1], row[2]
         s.execute('PRAGMA automatic_index=ON;')
 
@@ -140,5 +130,5 @@ if __name__ == '__main__':
     These are then used in the fit_power_parameters template to estimate CdA and Crr. 
     '''
     ns, db = connect(['-v 4'])
-    CoastingBookmark(log, db).run('cotic', 60, 20, 0, 'bike', constraint='cotic 60/20/0')
-#     CoastingBookmark(log, db).run('cotic', 15, 5, 10, 'bike', constraint='cotic 15/5/10')
+#    CoastingBookmark(log, db).run('cotic', 60, 20, 0, 'bike', constraint='cotic 60/20/0')
+    CoastingBookmark(log, db).run('cotic', 15, 5, 10, 'bike', constraint='cotic 15/5/10')
