@@ -186,13 +186,16 @@ def fit_power_parameters(bookmark, large):
     
     I chose large=True values since I suspect the larger intervals make the elevation values more accurate, 
     
-    Then I can define an entry for this bike:
+    Since I am loading data with a command like
     
-        > ch2 constants 'Cotic Soul' '{"cda": 0.42, "crr": 0.0055, "weight": 12}' --set --force
-        
-    and when I load data I associate this bike with the activity:
+        > ch2 activities -D kit=cotic -- ~/archive/fit/**/*.fit
     
-        > ch2 activities -D 'BikeUsed=Cotic Soul' -- ~/archive/fit/**/*.fit
+    I define this constant:
+    
+        > ch2 constants add --single Power.cotic \
+            --description 'Bike namedtuple values to calculate power for this kit' \
+            --validate ch2.stoats.calculate.power.Bike
+        > ch2 constants set Power.cotic '{"cda": 0.42, "crr": 0.0055, "weight": 12}'
         
     With that, the standard configuration should calculate power estimates.
     '''
