@@ -146,7 +146,8 @@ def map_plot(nx, ny, source, other=None):
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (LATITUDE, LONGITUDE, DISTANCE_KM, LOCAL_TIME)])]
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator', tools=tools)
+    f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
+               match_aspect=True, tools=tools)
     add_route(f, source)
     if present(other, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y):
         add_route(f, other, color='black', line_dash='dotted')
@@ -163,7 +164,7 @@ def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (z, DISTANCE_KM, LOCAL_TIME)])]
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
-               title=z, tools=tools)
+               title=z, match_aspect=True, tools=tools)
     tools[-1].renderers = [add_route(f, source)]
     mn, mx = source[z].min(), source[z].max()
     source['size'] = sqrt(nx * ny) * ((source[z] - mn) / (mx - mn)) ** power / 10
@@ -183,7 +184,7 @@ def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='b
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (z, DISTANCE_KM, LOCAL_TIME)])]
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
-               title=z, tools=tools)
+               title=z, match_aspect=True, tools=tools)
     tools[-1].renderers = [add_route(f, source)]
     mn, mx = source[z].min(), source[z].max()
     scale = max(mx, -mn)

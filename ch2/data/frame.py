@@ -144,22 +144,26 @@ def activity_journal(s, activity_journal=None, local_time=None, time=None, activ
     else:
         if local_time:
             time = local_time_to_time(local_time)
-        if not time or not activity_group_name:
-            raise Exception('Specify activity_journal or time and activity_group_name')
+        if not time:
+            raise Exception('Specify activity_journal or time')
         try:
             # first, if an activity includes that time
-            activity_journal = s.query(ActivityJournal). \
+            q = s.query(ActivityJournal). \
                 join(ActivityGroup). \
                 filter(ActivityJournal.start <= time,
-                       ActivityJournal.finish >= time,
-                       ActivityGroup.name.ilike(activity_group_name)).one()
+                       ActivityJournal.finish >= time)
+            if activity_group_name:
+                q = q.filter(ActivityGroup.name.ilike(activity_group_name))
+            activity_journal = q.one()
         except NoResultFound:
             # second, if anything in the following 24 hours (eg if just date given)
-            activity_journal = s.query(ActivityJournal). \
+            q = s.query(ActivityJournal). \
                 join(ActivityGroup). \
                 filter(ActivityJournal.start > time,
-                       ActivityJournal.finish < time + dt.timedelta(days=1),
-                       ActivityGroup.name.ilike(activity_group_name)).one()
+                       ActivityJournal.finish < time + dt.timedelta(days=1))
+            if activity_group_name:
+                q = q.filter(ActivityGroup.name.ilike(activity_group_name))
+            activity_journal = q.one()
         log.info(f'Using Activity Journal {activity_journal}')
     return activity_journal
 
