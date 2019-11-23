@@ -23,10 +23,8 @@ estimate power output.
   * [Calculation](#calculation)
   * [Results](#results)
 * [Configuration](#configuration)
-  * [Pipeline](#pipeline)
-  * [Power.Bike Constant](#powerbike-constant)
-  * [Cotic Soul Constant](#cotic-soul-constant)
-  * [Configuration Process](#configuration-process)
+  * [Theory](#theory)
+  * [Practice](#practice)
 * [Summary](#summary)
 * [Update - Now with Crr](#update---now-with-crr)
 
@@ -218,91 +216,67 @@ Limitations include:
 
 ## Configuration
 
+### Theory
+
 Configuring the power calculation is complex because the calculations
 cross-reference values from elsewhere in the database.
 
-### Pipeline
-
 By default the pipeline is configured as:
 
-    > sqlite3 ~/.ch2/database.sqlp "select * from pipeline where cls like '%Power%'"
-    7|0|ch2.stoats.calculate.power.PowerStatistics|[]|{"owner": "ActivityImporter", "power": "Power.Bike"}|60
+    > sqlite3 ~/.ch2/database-version.sql "select * from pipeline where cls like '%Power%'"
+    3|0|ch2.stoats.calculate.power.ExtendedPowerCalculator|[]|{"owner_in": "[unused - data via activity_statistics]", "power": "PowerEstimate.Bike"}|20
 
-which shows that the `power` variable references the constant `Power.Bike`.
+which shows that the `power` variable references the constant
+`PowerEstimate.Bike`:
 
-### Power.Bike Constant
+    > ch2 constants show PowerEstimate.Bike
+    PowerEstimate.Bike: Data needed to estimate power - see Power reftuple
+    1970-01-01 00:00:00+00:00: {"bike": "${Constant:Power.${SegmentReader:kit}:None}", "rider_weight": "${Topic:Weight:Topic \"Diary\" (d)}", "vary": ""}
 
-    > ch2 constants Power.Bike               
-
-    Power.Bike: Data needed to estimate power - see Power enum                     1970-01-01 00:00:00+00:00: {"bike": "#$ActivityImporter:Bike", "weight": "$Topic:Weight:Topic \"Diary\" (d)", "p": 1.225, "g": 9.8}
-
-The constant referenced above contains the basic data used to
-calculate power.  These can be modified using the `ch2 constants`
-command.
+That rather opaque expression contains the basic data used to
+calculate power.
 
 Two entries are particularly important here:
 
-  * `"weight": "$Topic:Weight:Topic \"Diary\"` - this defines a
-    `weight` attribute whose value will be the most recent value of
-    the `Weight` statistic (owner `Topic`, constaint `Topic "Diary"`.
+  * `"rider_weight": "${Topic:Weight:Topic \"Diary\" (d)}"` - this
+    sets `rider_weight` to be the most recent value of the `Weight`
+    statistic from the diary.
 
-    In other words, the `weight` attribute will take the most recent
-    weight from the daily diary.
+  * `"bike": "${Constant:Power.${SegmentReader:kit}:\ None}"` - this
+    sets `bike` to the value of a constant whose name depends on the
+    `kit` specified when they data were loaded (see [Tracking
+    Equipment](kit)).  For example
 
-  * `"bike": "#$ActivityImporter:Bike"` - this defines a `bike`
-    attribute that is JSON encoded (`#`) reference, named by the
-    variable `Bike` (owner `ActivityImporter`, constraint implicitly
-    activity group).
+        > ch2 activities -D 'kit=cotic' ...
 
-    The `Bike` variable is set when the activity is loaded:
+    In this case the constant used would be called `Power.cotic` which
+    is defined as
 
-        > ch2 activities -D 'Bike=Cotic Soul' ...
+        > ch2 constants show Power.cotic
+        Power.cotic: Bike namedtuple values to calculate power for this kit
+        1970-01-01 00:00:00+00:00: {"cda": 0.42, "crr": 0.0055, "weight": 12}
 
-    and is itself a constant (see below).
+    and describes the parrameters for that particular bike.
 
-    So this evaluates to the contents of the `Cotic Soul` constant, in
-    this particular case (a different bike name would evaluate
-    differently).
-
-### Cotic Soul Constant
-
-    > ch2 constants 'Cotic Soul'
-
-    Cotic Soul: [no description]                                                   1970-01-01 00:00:00+00:00: {"cda": 0.44, "crr": 0, "m": 12}
-
-This constant describes a particular bike.  The particular name / bike
-used is chosen when the `ch2 activities` command is run, via the
-`Bike` variable.
-
-### Configuration Process
+### Practice
 
   * The pipeline is configured as part of the default configuration.
 
   * The `Weight` variable in the diary is also part of the default
     configuration.
 
-  * The `Power.Bike` constant is also part of the default configuration,
-    but will need to be modified with the correct value for `CdA`.
+  * The `PowerEstimate.Bike` constant is also part of the default
+    configuration.
 
-  * The `Bike` variable is set during activities import.
+  * The `kit` statistic should be set during activities import.
 
-  * The `Cotic Soul` (or whatever name you use for *your* bike) constant
-    must be added by the user:
+  * The `Power.cotic` (or whatever name you use for *your* bike)
+    constant must be added by the user:
 
-        python <<EOF
-        from ch2.config import *
-        from ch2.config.database import add_enum_constant
-        from ch2.stoats.calculate.power import Bike
-
-        log, db = config('-v 5')
-        with db.session_context() as s:
-             add_enum_constant(s, 'Cotic Soul', Bike, constraint='ActivityGroup "Bike"')
-        EOF
-
-    and then defined correctly using the `ch2 constants` command.
-
-        dev/ch2 constants --set 'Cotic Soul' '{"cda": 0.44, "crr": 0, "m": 12}'
-
+        > ch2 constants add --single Power.cotic \
+          --description 'Bike namedtuple values to calculate power for this kit' \
+          --validate ch2.stoats.calculate.power.Bike
+        > ch2 constants set Power.cotic '{"cda": 0.42, "crr": 0.0055, "weight": 12}'
 
 ## Summary
 
@@ -318,10 +292,10 @@ and can be run via:
 
 ## Update - Now with Crr
 
-[July 2007] - I have extended the notebook I used for the work above
+[July 2019] - I have extended the notebook I used for the work above
 and added it as a template.  If you run:
 
-    > ch2 jupyter show fit_power_parameters 'bookmark'
+    > ch2 jupyter show fit_power_parameters 'bookmark' True
 
 the Jupyter page should be displayed.  This now fits both CdA and Crr
 (despite what I said above!).  For full details (including an
