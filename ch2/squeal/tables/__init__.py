@@ -9,6 +9,6 @@ from .pipeline import Pipeline, PipelineType
 from .segment import Segment, SegmentJournal
 from .source import Source, Interval, NoStatistics, Dummy, Composite, CompositeComponent
 from .statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
-    StatisticJournal, StatisticMeasure, StatisticJournalType
+    StatisticJournalTimestamp, StatisticJournal, StatisticMeasure, StatisticJournalType
 from .topic import TopicJournal, Topic, TopicField
 from .timestamp import Timestamp

@@ -8,14 +8,15 @@ from ch2.data import *
 from ch2.data.plot.utils import evenly_spaced_hues
 from ch2.data.response import sum_to_hour, calc_response, fit_period, calc_predicted, calc_measured
 from ch2.squeal import *
+from ch2.stoats.read.segment import SegmentReader
 from ch2.uranus.decorator import template
 
 
 @template
-def fit_ff_segments(*segment_names):
+def fit_ff_segments(kit, group, *segment_names):
 
     f'''
-    # Fit FF Parameters to {', '.join(segment_names)}
+    # Fit FF Parameters for {kit}/{group} to {', '.join(segment_names)}
 
     This notebook allows you to estimate a personal time scale (decay period) for the
     [FF model](https://andrewcooke.github.io/choochoo/impulse) using your times (more exactly, the speed)
@@ -43,7 +44,14 @@ def fit_ff_segments(*segment_names):
     segments = [s.query(Segment).filter(Segment.name == segment_name).one() for segment_name in segment_names]
     for segment in segments:
         print(segment.name, segment.distance)
-    segment_journals = [s.query(SegmentJournal).filter(SegmentJournal.segment == segment).all()
+    kit_statistic = StatisticName.from_name(s, 'kit', SegmentReader, ActivityGroup.from_name(s, group))
+    # take care to restrict segment journals to those with the givenkit and activity group
+    segment_journals = [s.query(SegmentJournal).
+                            join(ActivityJournal, SegmentJournal.activity_journal_id == ActivityJournal.id).
+                            join(StatisticJournalText, StatisticJournalText.source_id == ActivityJournal.id).
+                            filter(SegmentJournal.segment == segment,
+                                   StatisticJournalText.value == kit,
+                                   StatisticJournalText.statistic_name_id == kit_statistic.id).all()
                         for segment in segments]
     times = [drop_empty(statistics(s, SEGMENT_TIME, sources=segment_journal)).dropna()
              for segment_journal in segment_journals]
