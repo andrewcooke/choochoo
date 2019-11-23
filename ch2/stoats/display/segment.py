@@ -62,18 +62,12 @@ class SegmentDiary(Displayer):
 
     def _display_schedule(self, s, f, date, schedule):
         rows = []
-        for agroup in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
-            group_rows = []
-            for segment in s.query(Segment).filter(Segment.activity_group == agroup).all():
-                segment_rows = list(self.__schedule_fields(s, f, date, segment, schedule))
-                if segment_rows:
-                    segment_rows = Pile([Text(segment.name),
-                                         Indent(Pile(segment_rows))])
-                    group_rows.append(segment_rows)
-            if group_rows:
-                group_rows = Pile([Text(agroup.name),
-                                   Indent(Pile(group_rows))])
-                rows.append(group_rows)
+        for segment in s.query(Segment).all():
+            segment_rows = list(self.__schedule_fields(s, f, date, segment, schedule))
+            if segment_rows:
+                segment_rows = Pile([Text(segment.name),
+                                     Indent(Pile(segment_rows))])
+                rows.append(segment_rows)
         if rows:
             yield Pile([Text('Segments'),
                         Indent(Pile(rows))])
