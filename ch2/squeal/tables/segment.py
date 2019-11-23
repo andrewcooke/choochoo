@@ -57,6 +57,8 @@ class Segment(Base):
     distance = Column(Float, nullable=False)
     name = Column(Text, nullable=False, index=True)
     description = Column(Text)
+    UniqueConstraint(name)
+    UniqueConstraint(start_lat, start_lon, finish_lat, finish_lon)
 
     @property
     def start(self):

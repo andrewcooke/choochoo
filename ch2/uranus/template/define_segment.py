@@ -86,3 +86,4 @@ def define_segment(local_time):
     segment = Segment(start=(-70.61813, -33.41536), finish=(-70.63340, -33.42655), distance=4400,
                       name='San Cristobal', description='Climb up San Cristobal in Parque Metropolitana')
     #s.add(segment)
+    #s.commit()

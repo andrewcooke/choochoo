@@ -1,4 +1,4 @@
-
+from collections import defaultdict
 from itertools import zip_longest, groupby
 from pprint import PrettyPrinter
 
@@ -118,3 +118,12 @@ def format_watts(power):
 def groupby_tuple(iterable, key=None):
     for name, group in groupby(iterable, key=key):
         yield name, tuple(group)
+
+
+def group_to_dict(iterable):
+    'Expects iterable to be (key, value) tuples.'
+    d = defaultdict(lambda: list())
+    for key, value in iterable:
+        d[key].append(value)
+    return d
+

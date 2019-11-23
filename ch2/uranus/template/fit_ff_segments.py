@@ -7,18 +7,18 @@ from pandas import Series
 from ch2.data import *
 from ch2.data.plot.utils import evenly_spaced_hues
 from ch2.data.response import sum_to_hour, calc_response, fit_period, calc_predicted, calc_measured
+from ch2.lib import groupby_tuple
+from ch2.lib.utils import group_to_dict
 from ch2.squeal import *
 from ch2.stoats.read.segment import SegmentReader
 from ch2.uranus.decorator import template
 
-# todo - instead of specifying one kit, use all but have separate scaling (separate segment lists)
-
 
 @template
-def fit_ff_segments(kit, group, *segment_names):
+def fit_ff_segments(group, *segment_names):
 
     f'''
-    # Fit FF Parameters for {kit}/{group} to {', '.join(segment_names)}
+    # Fit FF Parameters for {group} to {', '.join(segment_names)}
 
     This notebook allows you to estimate a personal time scale (decay period) for the
     [FF model](https://andrewcooke.github.io/choochoo/impulse) using your times (more exactly, the speed)
@@ -35,8 +35,8 @@ def fit_ff_segments(kit, group, *segment_names):
     '''
     ## Load Data
     
-    Open a connection to the database and load the data we require.  We reduce the GR data to hourly values
-    so that we have smaller arrays (for faster processing).
+    Open a connection to the database and load the data we require.  
+    We reduce the HR data to hourly values so that we have smaller arrays (for faster processing).
     '''
 
     s = session('-v2')
@@ -47,26 +47,32 @@ def fit_ff_segments(kit, group, *segment_names):
     for segment in segments:
         print(segment.name, segment.distance)
     kit_statistic = StatisticName.from_name(s, 'kit', SegmentReader, ActivityGroup.from_name(s, group))
-    # take care to restrict segment journals to those with the givenkit and activity group
-    segment_journals = [s.query(SegmentJournal).
-                            join(ActivityJournal, SegmentJournal.activity_journal_id == ActivityJournal.id).
-                            join(StatisticJournalText, StatisticJournalText.source_id == ActivityJournal.id).
-                            filter(SegmentJournal.segment == segment,
-                                   StatisticJournalText.value == kit,
-                                   StatisticJournalText.statistic_name_id == kit_statistic.id).all()
-                        for segment in segments]
-    times = [drop_empty(statistics(s, SEGMENT_TIME, sources=segment_journal)).dropna()
-             for segment_journal in segment_journals]
-    for time in times:
-        time.index = time.index.round('1H')
-    performances = [Series(segment.distance / time.iloc[:, 0], time.index, name=segment.name)
-                    for segment, time in zip(segments, times)]
+    journals_by_kit_by_segment = \
+        {segment: group_to_dict(s.query(StatisticJournalText.value, SegmentJournal).
+                                join(ActivityJournal, SegmentJournal.activity_journal_id == ActivityJournal.id).
+                                join(StatisticJournalText, StatisticJournalText.source_id == ActivityJournal.id).
+                                filter(StatisticJournalText.statistic_name_id == kit_statistic.id,
+                                       SegmentJournal.segment == segment).all())
+         for segment in segments}
+    times_by_kit_by_segment = \
+        {segment: {kit: drop_empty(statistics(s, SEGMENT_TIME, sources=journals)).dropna()
+                   for kit, journals in journals_by_kit_by_segment[segment].items()}
+         for segment in segments}
+    performances = []
+    for segment in segments:
+        for kit, times in times_by_kit_by_segment[segment].items():
+            times.index = times.index.round('1H')
+            performances.append(Series(segment.distance / times.iloc[:, 0], times.index,
+                                       name=f'{segment.name}/{kit}'))
     n_performances = sum(len(performance) for performance in performances)
 
     hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
 
     def copy_of_performances():
         return [performance.copy() for performance in performances]
+
+    for performance in performances:
+        print(performance)
 
     '''
     ## Define Plot Routine
@@ -78,10 +84,11 @@ def fit_ff_segments(kit, group, *segment_names):
         response = calc_response(hr3600, period)
         f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
         f.line(x=response.index, y=response, color='grey')
-        for color, predicted in zip(evenly_spaced_hues(len(performances)),
-                                    calc_predicted(calc_measured(response, performances),
-                                                   performances)):
-            f.circle(x=predicted.index, y=predicted, color=color)
+        for color, predicted, performance in zip(evenly_spaced_hues(len(performances)),
+                                                 calc_predicted(calc_measured(response, performances), performances),
+                                                 performances):
+            f.circle(x=predicted.index, y=predicted, color=color, legend_label=performance.name)
+        f.legend.location = 'bottom_left'
         show(f)
 
     '''
