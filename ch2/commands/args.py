@@ -11,7 +11,7 @@ from ..lib.date import to_date, to_time
 
 log = getLogger(__name__)
 
-CH2_VERSION = '0.27.3'
+CH2_VERSION = '0.27.4'
 # this is checked for false on release (see dev/new-version)
 IS_DEV = False
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
