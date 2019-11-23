@@ -59,10 +59,10 @@ automatically:
 First, I will add my Cotic bike:
 
     > ch2 kit start bike cotic --force
-        INFO: Version 0.27.2
+        INFO: Version 0.27.3
         INFO: Using database at database.sql
      WARNING: Forcing creation of new group (bike)
-        INFO: Started bike cotic at 2019-11-22 23:57:35
+        INFO: Started bike cotic at 2019-11-23 18:51:34
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -72,7 +72,7 @@ this, because `bike` will already be known by the system..
 Now I have a bike I am going to add some inner tubes at various dates.
 
     > ch2 kit change cotic front-tube michelin 2019-01-01 --force
-        INFO: Version 0.27.2
+        INFO: Version 0.27.3
         INFO: Using database at database.sql
      WARNING: Forcing creation of new component (front-tube)
      WARNING: Model michelin does not match any previous entries
@@ -83,7 +83,7 @@ Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
     > ch2 kit change cotic front-tube michelin 2019-03-01
-        INFO: Version 0.27.2
+        INFO: Version 0.27.3
         INFO: Using database at database.sql
         INFO: Retired previous front-tube (michelin)
         INFO: Changed cotic front-tube michelin at 2019-03-01 00:00:00
@@ -94,11 +94,11 @@ add the tubes in order - however they're added, the start and end
 times should align correctly.
 
     > ch2 kit change cotic front-tube vittoria
-        INFO: Version 0.27.2
+        INFO: Version 0.27.3
         INFO: Using database at database.sql
      WARNING: Model vittoria does not match any previous entries
         INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube vittoria at 2019-11-22 23:57:45
+        INFO: Changed cotic front-tube vittoria at 2019-11-23 18:51:44
 
 
 That's three different inner tubes on the front.  The last uses
@@ -108,15 +108,15 @@ command line as you do the work.
 Now we can see the statistics:
 
     > ch2 kit statistics front-tube
-        INFO: Version 0.27.2
+        INFO: Version 0.27.3
         INFO: Using database at database.sql
     Item front-tube
     +-Model michelin
     | +-Lifetime
     | | +-Count 2
-    | | +-Sum 325d 23h57m45s
-    | | +-Average 162d 23h58m52s
-    | | `-Median 162d 23h58m52s
+    | | +-Sum 326d 18h51m44s
+    | | +-Average 163d 9h25m52s
+    | | `-Median 163d 9h25m52s
     | +-Active Time
     | | +-Count 2
     | | +-Sum 0s
