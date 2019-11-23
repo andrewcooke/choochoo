@@ -13,7 +13,7 @@ from math import sqrt
 from .utils import tooltip, make_range
 from ..frame import present
 from ...stoats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, ELEVATION_M, CLIMB_ELEVATION, \
-    SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB
+    SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, COLOR
 
 STAMEN_TERRAIN = tile_providers.get_provider(tile_providers.Vendors.STAMEN_TERRAIN)
 
@@ -133,6 +133,14 @@ def add_route(f, source, color='black', line_dash='solid'):
                   color=color, line_dash=line_dash)
 
 
+def add_start_finish(f, source, start='green', finish='red'):
+    source = source.iloc[[0, -1]]
+    source = source.reset_index(drop=True)
+    source.loc[0, COLOR] = start
+    source.loc[1, COLOR] = finish
+    return f.circle(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=source, color=COLOR)
+
+
 def map_plot(nx, ny, source, other=None):
     tools = [PanTool(dimensions='both'),
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
@@ -197,12 +205,14 @@ def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='b
     return f
 
 
-def map_thumbnail(nx, ny, source, sample='3min', caption=True, title=True):
+def map_thumbnail(nx, ny, source, sample='1min', caption=True, title=True):
     f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
+               match_aspect=True,
                title=(source.index[0].strftime('%Y-%m-%d') if title else None))
     xy = source.loc[source[SPHERICAL_MERCATOR_X].notna() & source[SPHERICAL_MERCATOR_Y].notna(),
                     [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y]].resample(sample).mean()
     add_route(f, xy)
+    add_start_finish(f, xy)
     f.axis.visible = False
     f.toolbar_location = None
     return f
