@@ -29,3 +29,10 @@ def evenly_spaced_hues(n, saturation=1, value=1, stagger=1):
     for i in range(n):
         r, g, b = [int(x * 255) for x in hsv_to_rgb(((i * stagger) % n) / n, saturation, value)]
         yield f'#{r:02x}{g:02x}{b:02x}'.upper()
+
+
+def get_renderer(f, name):
+    for renderer in f.renderers:
+        if renderer.name == name:
+            return renderer
+    raise Exception(f'No rendered {name} in {f}')

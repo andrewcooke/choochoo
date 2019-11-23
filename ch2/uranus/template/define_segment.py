@@ -65,12 +65,8 @@ def define_segment(local_time):
             t1.text = '%9.5f,%9.5f' % (df.iloc[l1]['Longitude'], df.iloc[l1]['Latitude'])
             t2.text = '%9.5f,%9.5f' % (df.iloc[l2]['Longitude'], df.iloc[l2]['Latitude'])
             t3.text = '%4.2fkm' % ((df.iloc[l2]['Distance'] - df.iloc[l1]['Distance']) / 1000)
-            for renderer in map.renderers:
-                if renderer.name == 'map':
-                    renderer.data_source.data = df[l1:l2]
-            for renderer in elevation.renderers:
-                if renderer.name == 'elevation':
-                    renderer.data_source.data = df[l1:l2]
+            get_renderer(map, 'map').data_source.data = df[l1:l2]
+            get_renderer(elevation, 'elevation').data_source.data = df[l1:l2]
 
         s1.on_change('value', lambda attr, old, new: mkplot(s1.value, s2.value))
         s2.on_change('value', lambda attr, old, new: mkplot(s1.value, s2.value))
@@ -87,6 +83,6 @@ def define_segment(local_time):
     Finally, uncomment the `s.add()` to add this to the database.
     '''
 
-    segment = Segment(start=(-70.61813,-33.41536), finish=(-70.63340,-33.42655), distance=4400,
+    segment = Segment(start=(-70.61813, -33.41536), finish=(-70.63340, -33.42655), distance=4400,
                       name='San Cristobal', description='Climb up San Cristobal in Parque Metropolitana')
     #s.add(segment)
