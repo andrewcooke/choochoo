@@ -81,5 +81,4 @@ class Segment(Base):
             return self.finish
 
     def __str__(self):
-        return 'Segment "%s/%s"' % (self.name, self.activity_group.name)
-
+        return f'Segment "{self.name}"'
