@@ -11,6 +11,8 @@ from ch2.squeal import *
 from ch2.stoats.read.segment import SegmentReader
 from ch2.uranus.decorator import template
 
+# todo - instead of specifying one kit, use all but have separate scaling (separate segment lists)
+
 
 @template
 def fit_ff_segments(kit, group, *segment_names):
