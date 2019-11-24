@@ -89,7 +89,7 @@ def main():
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
-    db = Database(args, log)
+    db = Database(args)
     try:
         if db.is_empty() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE, HELP)):
             refuse_until_configured(db.path)

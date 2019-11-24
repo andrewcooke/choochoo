@@ -187,7 +187,7 @@ class IntervalCalculatorMixin(LoaderMixin):
 
     def _missing(self, s):
         start, finish = self._start_finish(type=to_date)
-        return list(Interval.missing_dates(log, s, self.schedule, self.owner_out, start=start, finish=finish))
+        return list(Interval.missing_dates(s, self.schedule, self.owner_out, start=start, finish=finish))
 
     def _args(self, missing, start, finish):
         s, f = format_date(missing[start][0]), format_date(missing[finish][1])

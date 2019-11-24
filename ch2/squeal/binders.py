@@ -1,6 +1,9 @@
+from logging import getLogger
 
 from sqlalchemy import inspect
 from urwid import connect_signal, disconnect_signal
+
+log = getLogger(__name__)
 
 
 class Binder:
@@ -11,9 +14,8 @@ class Binder:
     # 2 - rows can be navigated.  a single primary key only.  when changed, the session
     #     is committed and a new value read from the database.
 
-    def __init__(self, log, session, widget, table=None, multirow=False, defaults=None, instance=None):
+    def __init__(self, session, widget, table=None, multirow=False, defaults=None, instance=None):
         if defaults is None: defaults = {}
-        self.__log = log
         self.__session = session
         self.__widget = widget
         self.__multirow = multirow
@@ -33,7 +35,7 @@ class Binder:
         self.__bind()
 
     def __bind(self,):
-        self.__log.debug('Binding %s to %s' % (self.instance, self.__widget))
+        log.debug('Binding %s to %s' % (self.instance, self.__widget))
         save_ignore, self.__ignore_changes = self.__ignore_changes, True
         try:
             for column in inspect(self.__table).columns:
@@ -42,13 +44,13 @@ class Binder:
                 if not name.startswith('_'):
                     try:
                         widget = getattr(self.__widget, name)
-                        self.__log.debug('Setting %s=%s on %s' % (name, value, widget))
+                        log.debug('Setting %s=%s on %s' % (name, value, widget))
                         while widget:
                             if self._try_bind(column, value, widget):
                                 break
                             widget = self._try_descend(column, value, widget)
                     except AttributeError as e:
-                        self.__log.warning('Cannot find %s member of %s (%s): %s' %
+                        log.warning('Cannot find %s member of %s (%s): %s' %
                                         (name, self.__widget, dir(self.__widget), e))
         finally:
             self.__ignore_changes = save_ignore
@@ -59,7 +61,7 @@ class Binder:
         elif hasattr(widget, '_wrapped_widget') and widget != widget._wrapped_widget:
             return widget._wrapped_widget
         else:
-            self.__log.error('Cannot set %s on %s (%s)' % (column.name, widget, dir(widget)))
+            log.error('Cannot set %s on %s (%s)' % (column.name, widget, dir(widget)))
             return None
 
     def _try_bind(self, column, value, widget):
@@ -91,13 +93,13 @@ class Binder:
     def __connect(self, widget, name):
         # we don't use weak args because we want the binder to be around as long as the widget
         user_args = [name]
-        self.__log.debug('Disconnecting %s' % widget)
+        log.debug('Disconnecting %s' % widget)
         disconnect_signal(widget, 'change', self.__change_callback, user_args=user_args)
-        self.__log.debug('Connecting %s' % widget)
+        log.debug('Connecting %s' % widget)
         connect_signal(widget, 'change', self.__change_callback, user_args=user_args)
 
     def __change_callback(self, name, widget, value):
-        self.__log.debug('Change %s=%s for %s (%s)' % (name, value, widget, self.instance))
+        log.debug('Change %s=%s for %s (%s)' % (name, value, widget, self.instance))
         if name in self.__primary_keys:
             if self.__multirow:
                 self.__session.commit()
@@ -108,9 +110,9 @@ class Binder:
                 raise Exception('Primary key (%s) modified, but not multirow')
         else:
             if not self.__from_database and not self.__ignore_changes:
-                self.__log.debug('Adding %s to session' % self.instance)
+                log.debug('Adding %s to session' % self.instance)
                 self.__session.add(self.instance)
-            self.__log.debug('Setting %s=%s on %s' % (name, value, self.instance))
+            log.debug('Setting %s=%s on %s' % (name, value, self.instance))
             setattr(self.instance, name, value)
 
     def __default_instance(self):
@@ -119,7 +121,7 @@ class Binder:
     def __read(self):
         self.instance = None
         if self.__defaults:
-            self.__log.debug('Reading new %s' % self.__table)
+            log.debug('Reading new %s' % self.__table)
             query = self.__session.query(self.__table)
             for (k, v) in self.__defaults.items():
                 query = query.filter(getattr(self.__table, k) == v)
@@ -128,7 +130,7 @@ class Binder:
             self.__from_database = True
         else:
             self.__from_database = False
-            self.__log.debug("No database entry, so creating default from %s" % self.__defaults)
+            log.debug("No database entry, so creating default from %s" % self.__defaults)
             self.instance = self.__default_instance()
 
     def reset(self):
@@ -136,12 +138,12 @@ class Binder:
         Revert the widget to the values in the database (or defaults, if it is not from there).
         """
         if self.instance:
-            self.__log.debug('Refreshing %s' % self.instance)
+            log.debug('Refreshing %s' % self.instance)
             if self.__from_database:
                 self.__session.refresh(self.instance)
                 self.__bind()
             else:
-                self.__log.debug('Expunging %s' % self.instance)
+                log.debug('Expunging %s' % self.instance)
                 self.__session.expunge(self.instance)
                 self.instance = self.__default_instance()
                 self.__bind()
@@ -151,6 +153,6 @@ class Binder:
         Remove from the database.
         """
         if self.instance:
-            self.__log.debug('Deleting %s' % self.instance)
+            log.debug('Deleting %s' % self.instance)
             self.__session.delete(self.instance)
             self.instance = None

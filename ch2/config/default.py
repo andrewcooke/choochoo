@@ -172,4 +172,4 @@ def default(db, no_diary=False):
                             display_cls=Text)
 
         # finally, set the TZ so that first use of the diary doesn't wipe all our intervals
-        TopicJournal.check_tz(log, s)
+        TopicJournal.check_tz(s)

@@ -26,13 +26,13 @@ class TestActivities(TestCase):
 
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-            args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
+            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
             constants(args, db)
 
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'FTHR.%')
+            args, db = bootstrap_file(f, m(V), '5', 'constants', 'show', 'FTHR.%')
             constants(args, db)
 
-            args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'SRTM1.dir',
+            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'SRTM1.dir',
                                       '/home/andrew/archive/srtm1')
             constants(args, db)
 
@@ -56,14 +56,14 @@ class TestActivities(TestCase):
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(23655, n)
+                self.assertEqual(56343, n)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 
     def test_segment_bug(self):
         with NamedTemporaryFile() as f:
             args, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            paths = ['/home/andrew/archive/fit/bike/2016-07-27-pm-z4.fit']
+            paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
             run_pipeline(db, PipelineType.ACTIVITY, paths=paths, force=True)
 
     def __assert_basic_stats(self, s):

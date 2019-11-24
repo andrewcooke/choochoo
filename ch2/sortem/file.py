@@ -1,6 +1,8 @@
 
 from functools import lru_cache
 from genericpath import exists
+from logging import getLogger
+
 from math import floor
 from os.path import join
 from zipfile import ZipFile
@@ -9,6 +11,7 @@ import numpy as np
 
 from ..squeal import Constant
 
+log = getLogger(__name__)
 
 SRTM1_DIR = 'SRTM1.Dir'
 SAMPLES = 3601
@@ -22,7 +25,7 @@ EXTN = '.SRTMGL1.hgt.zip'
 
 
 @lru_cache(4)  # 4 means our tests are quick (and should tile a local patch)
-def cached_file_reader(log, dir, flat, flon):
+def cached_file_reader(dir, flat, flon):
     if not exists(dir):
         raise Exception('SRTM1 directory %s missing' % dir)
     # https://wiki.openstreetmap.org/wiki/SRTM
@@ -52,21 +55,20 @@ def cached_file_reader(log, dir, flat, flon):
 
 class ElevationSupport:
 
-    def __init__(self, log, dir, reader=cached_file_reader):
-        self._log = log
+    def __init__(self, dir, reader=cached_file_reader):
         self._dir = dir
         self._reader = reader
 
     def _lookup(self, lat, lon):
         flat, flon = floor(lat), floor(lon)
         # construct the path in the reader so it's skipped if we hit the cache
-        return flat, flon, self._reader(self._log, self._dir, flat, flon)
+        return flat, flon, self._reader(self._dir, flat, flon)
 
 
-def elevation_from_constant(log, s, interp, dir_name=SRTM1_DIR):
+def elevation_from_constant(s, interp, dir_name=SRTM1_DIR):
     try:
         dir = Constant.get(s, dir_name).at(s).value
     except:
         log.warning('STRM1 config - define %s in constants for elevation data' % dir_name)
         dir = None
-    return interp(log, dir)
+    return interp(dir)

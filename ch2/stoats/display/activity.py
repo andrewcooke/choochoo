@@ -122,13 +122,13 @@ class ActivityDiary(JournalDiary):
     def __schedule_fields(self, s, f, date, schedule, group):
         names = list(self.__names(s, group, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
                                   TOTAL_CLIMB, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME))
-        yield from summary_columns(log, s, f, date, schedule, names)
+        yield from summary_columns(s, f, date, schedule, names)
         names = self.__sort_names(self.__names_like(s, group, MIN_KM_TIME_ANY))
-        yield from summary_columns(log, s, f, date, schedule, names)
+        yield from summary_columns(s, f, date, schedule, names)
         names = self.__sort_names(self.__names_like(s, group, MED_KM_TIME_ANY))
-        yield from summary_columns(log, s, f, date, schedule, names)
+        yield from summary_columns(s, f, date, schedule, names)
         names = self.__sort_names(self.__names_like(s, group, MAX_MED_HR_M_ANY))
-        yield from summary_columns(log, s, f, date, schedule, names)
+        yield from summary_columns(s, f, date, schedule, names)
 
     def __names(self, s, group, *names):
         for name in names:

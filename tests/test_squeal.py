@@ -66,7 +66,7 @@ class TestSqueal(TestCase):
         data = Data(integer=42, text='abc')
         session.add(data)
         widget = DataWidget()
-        binder = Binder(log, session, widget, Data, defaults={'integer': 42})
+        binder = Binder(session, widget, Data, defaults={'integer': 42})
 
         self.assertEqual(binder.instance.text, 'abc', binder.instance.text)
         self.assertEqual(widget.text.edit_text, 'abc', widget.text.edit_text)
@@ -91,7 +91,7 @@ class TestSqueal(TestCase):
         session.expunge_all()
         # no need to add data - it was saved when the first binder above did a query
         widget = DataWidget()
-        binder = Binder(log, session, widget, Data, multirow=True, defaults={'integer': 42})
+        binder = Binder(session, widget, Data, multirow=True, defaults={'integer': 42})
 
         self.assertEqual(binder.instance.text, 'abc', binder.instance.text)
         self.assertEqual(widget.text.edit_text, 'abc', widget.text.edit_text)

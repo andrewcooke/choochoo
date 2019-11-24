@@ -2,8 +2,8 @@
 from .file import SRTM1_DIR, SAMPLES, ElevationSupport, elevation_from_constant
 
 
-def bilinear_elevation_from_constant(log, s, dir_name=SRTM1_DIR):
-    return elevation_from_constant(log, s, BilinearElevation, dir_name=dir_name)
+def bilinear_elevation_from_constant(s, dir_name=SRTM1_DIR):
+    return elevation_from_constant(s, BilinearElevation, dir_name=dir_name)
 
 
 class BilinearElevation(ElevationSupport):

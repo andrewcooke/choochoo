@@ -155,7 +155,7 @@ CMP = compile(r'([^=<>~]+)([=<>~])([^=<>~]+)')
 
 class Matcher:
 
-    def __init__(self, log, pattern):
+    def __init__(self, pattern):
         if ':' in pattern:
             record, pattern = pattern.split(':', 1)
             self.record = compile(record).match
@@ -212,7 +212,7 @@ def summarize_grep(data, grep, name_file=None, match=1, compact=False, context=F
     types, messages, records = \
         filtered_records(data, warn=warn, no_validate=no_validate, profile_path=profile_path,
                          max_delta_t=max_delta_t, pipeline=[merge_duplicates])
-    matchers = [Matcher(log, pattern) for pattern in grep]
+    matchers = [Matcher(pattern) for pattern in grep]
     first, total_matches = True, 0
     first_record = 0 if (after_records is None) else None
     first_bytes = 0 if (after_bytes is None) else None

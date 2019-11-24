@@ -9,11 +9,11 @@ from ...stoats.calculate.summary import SummaryCalculator
 
 class SummaryField(Field):
 
-    def __init__(self, log, journal, summary=None, width=1):
+    def __init__(self, journal, summary=None, width=1):
         if summary is None:
             raise Exception('Summary without summary')
         self._summary = summary
-        super().__init__(log, journal, width=width)
+        super().__init__(journal, width=width)
 
     def _format_value(self, value):
         return self._journal.formatted()
@@ -23,7 +23,7 @@ class SummaryField(Field):
         return Text([label('%s: ' % self._summary), em(self._journal.formatted()), ' '])
 
 
-def summary_columns(log, s, f, date, schedule, names, format_name=lambda n: n):
+def summary_columns(s, f, date, schedule, names, format_name=lambda n: n):
 
     def fill(columns, width):
         while width < PAGE_WIDTH:
@@ -36,7 +36,7 @@ def summary_columns(log, s, f, date, schedule, names, format_name=lambda n: n):
             summary, period, name = SummaryCalculator.parse_name(journal.statistic_name.name)
             if not named:
                 yield Text([format_name(name)]), 1
-            display = SummaryField(log, journal, summary=summary)
+            display = SummaryField(journal, summary=summary)
             yield (WEIGHT, display.width, f(display.widget())), display.width,
 
     # layout algo here tweaked for subjective appearance

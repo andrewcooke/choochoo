@@ -6,7 +6,7 @@ from logging import getLogger
 from sqlalchemy import or_
 from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
 
-from .args import DATE, SCHEDULE, FAST
+from .args import DATE, SCHEDULE, FAST, mm
 from ..lib.date import to_date
 from ..lib.io import tui
 from ..lib.schedule import Schedule
@@ -69,46 +69,46 @@ Display a summary for the month / year / schedule.
         else:
             date = dt.date.today() - dt.timedelta(days=days)
     with db.session_context() as s:
-        TopicJournal.check_tz(log, s)
+        TopicJournal.check_tz(s)
     if schedule:
         schedule = Schedule(schedule)
         if schedule.start or schedule.finish:
             raise Exception('Schedule must be open (no start or finish)')
-        MainLoop(ScheduleDiary(log, db, date, schedule), palette=PALETTE_RAINBOW).run()
+        MainLoop(ScheduleDiary(db, date, schedule), palette=PALETTE_RAINBOW).run()
     else:
-        MainLoop(DailyDiary(log, db, date), palette=PALETTE_RAINBOW).run()
+        MainLoop(DailyDiary(db, date), palette=PALETTE_RAINBOW).run()
         if not args[FAST]:
             print('\n  Please wait while statistics are updated...')
             run_pipeline(db, PipelineType.STATISTIC)
-            print('  ...done (thanks!)\n')
+            print(f'  ...done (thanks! - use {mm(FAST)} to avoid this, if the risk is worth it)\n')
 
 
 class Diary(DateSwitcher):
 
-    def __init__(self, log, db, date):
-        super().__init__(log, db, date)
+    def __init__(self, db, date):
+        super().__init__(db, date)
 
     def save(self):
         s = self._session
-        self._log.info(f'{bool(s)}')
+        log.info(f'{bool(s)}')
         if s:
             self.__clean(s, s.dirty, delete=True)
             self.__clean(s, s.new, delete=False)
         super().save()
 
     def __clean(self, s, instances, delete=False):
-        self._log.debug(f'{len(instances)}')
+        log.debug(f'{len(instances)}')
         for instance in instances:
             if isinstance(instance, StatisticJournal):
                 if instance.value == None:
-                    self._log.debug(f'Discarding {instance}')
+                    log.debug(f'Discarding {instance}')
                     if delete:
                         s.delete(instance)
                     else:
                         s.expunge(instance)
 
     def _build(self, s):
-        self._log.debug('Building diary at %s' % self._date)
+        log.debug('Building diary at %s' % self._date)
         body, f = [], Factory(TabList())
         root_topics = list(self._topics(s))
         for topic in root_topics:
@@ -140,7 +140,7 @@ class Diary(DateSwitcher):
         return footer
 
     def __display_topic(self, s, f, topic):
-        self._log.debug('%s' % topic)
+        log.debug('%s' % topic)
         body, title = [], None
         if topic.name:
             title = Text(topic.name)
@@ -188,13 +188,12 @@ class DailyDiary(Diary):
     def _display_fields(self, s, f, topic):
         columns, width = [], 0
         tjournal = self.__topic_journal(s, topic)
-        tjournal.populate(self._log, s)
+        tjournal.populate(s)
         for field in topic.fields:
             if field in tjournal.statistics:  # might be outside schedule
-                self._log.debug('%s' % field)
-                display = field.display_cls(self._log, tjournal.statistics[field],
-                                            *field.display_args, **field.display_kargs)
-                self._log.debug('%s' % display)
+                log.debug('%s' % field.display_cls)
+                display = field.display_cls(tjournal.statistics[field], *field.display_args, **field.display_kargs)
+                log.debug('%s' % display)
                 if width + display.width > PAGE_WIDTH:
                     yield Columns(columns)
                     columns, width = [], 0
@@ -253,9 +252,9 @@ class ScheduleDiary(Diary):
     Display summary data for the given schedule.
     '''
 
-    def __init__(self, log, db, date, schedule):
+    def __init__(self, db, date, schedule):
         self._schedule = schedule
-        super().__init__(log, db, self._refine_new_date(date))
+        super().__init__(db, self._refine_new_date(date))
 
     def _header(self):
         return Text(self._date.strftime('%Y-%m-%d') + ' - Summary for %s' % self._schedule.describe())
@@ -282,7 +281,7 @@ class ScheduleDiary(Diary):
 
     def _display_fields(self, s, f, topic):
         names = [field.statistic_name for field in topic.fields]
-        yield from summary_columns(self._log, s, f, self._date, self._schedule, names)
+        yield from summary_columns(s, f, self._date, self._schedule, names)
 
     def _display_pipeline(self, s, f):
         yield from display_pipeline(s, f, self._date, self, schedule=self._schedule)

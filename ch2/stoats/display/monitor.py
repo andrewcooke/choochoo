@@ -33,7 +33,7 @@ class MonitorDiary(Displayer):
     def __field(self, s, date, name):
         sjournal = StatisticJournal.at_date(s, date, name, MonitorCalculator, None)
         if sjournal:
-            return ReadOnlyField(log, sjournal, date=date).widget()
+            return ReadOnlyField(sjournal, date=date).widget()
         else:
             return None
 
@@ -45,7 +45,7 @@ class MonitorDiary(Displayer):
 
     def __schedule_fields(self, s, f, date, schedule):
         names = list(self.__names(s, DAILY_STEPS, REST_HR))
-        yield from summary_columns(log, s, f, date, schedule, names)
+        yield from summary_columns(s, f, date, schedule, names)
 
     def __names(self, s, *names):
         for name in names:

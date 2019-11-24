@@ -37,7 +37,7 @@ class TestSources(TestCase):
 
                 diary = s.query(Topic).filter(Topic.name == 'Diary').one()
                 d = add(s, TopicJournal(topic=diary, date='2018-09-29'))
-                d.populate(log, s)
+                d.populate(s)
                 self.assertEqual(len(d.topic.fields), 9, list(enumerate(map(str, d.topic.fields))))
                 self.assertEqual(d.topic.fields[0].statistic_name.name, 'Notes')
                 self.assertEqual(d.topic.fields[1].statistic_name.name, 'Weight', str(d.topic.fields[1]))
@@ -55,7 +55,7 @@ class TestSources(TestCase):
                 d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
                                                  TopicJournal.date == '2018-09-29').one()
                 s.flush()
-                d.populate(log, s)
+                d.populate(s)
                 self.assertEqual(len(d.topic.fields), 9, list(enumerate(map(str, d.topic.fields))))
                 self.assertEqual(d.topic.fields[0].statistic_name.name, 'Notes')
                 self.assertEqual(d.statistics[d.topic.fields[0]].value, 'hello world')

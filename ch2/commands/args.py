@@ -11,13 +11,11 @@ from ..lib.date import to_date, to_time
 
 log = getLogger(__name__)
 
+# this can be modified during development.  it will be reset from setup.py on release.
 CH2_VERSION = '0.27.4'
-# this is checked for false on release (see dev/new-version)
-IS_DEV = False
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
-if IS_DEV: DB_VERSION += '-dev'
 PROGNAME = 'ch2'
 COMMAND = 'command'
 TOPIC = 'topic'
@@ -597,7 +595,7 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
     args += post_config if post_config else []
     args = NamespaceWithVariables(make_parser().parse_args(args))
     make_log(args)
-    db = Database(args, log)
+    db = Database(args)
 
     return args, db
 

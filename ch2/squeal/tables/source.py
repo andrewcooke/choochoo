@@ -74,7 +74,7 @@ class Source(Base):
                     and not isinstance(instance.source, Dummy) and instance.value is not None and instance.time:
                 start, finish = extend_range(start, finish, instance.time)
         if start is not None:
-            Interval.clean_times(None, s, start, finish)
+            Interval.clean_times(s, start, finish)
 
 
 @listens_for(Session, 'before_flush')
@@ -108,7 +108,7 @@ class Interval(Source):
         return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, owner)
 
     @classmethod
-    def _missing_interval_start_dates(cls, log, s, schedule, interval_owner, statistic_owner=None):
+    def _missing_interval_start_dates(cls, s, schedule, interval_owner, statistic_owner=None):
         '''
         Returns a list of times that mark the start DATES of missing intervals covering "all"
         statistics (optionally with a given owner and excluding constants at "zero time"),
@@ -172,7 +172,7 @@ class Interval(Source):
                    Interval.owner == interval_owner).one_or_none()
 
     @classmethod
-    def _missing_interval_dates_from(cls, log, s, schedule, interval_owner, start, finish):
+    def _missing_interval_dates_from(cls, s, schedule, interval_owner, start, finish):
         '''
         Iterator over start DATES for intervals that are not present in the database,
         starting from `start` and ending when an interval is found, or with `finish` if no intervals are found.
@@ -186,34 +186,33 @@ class Interval(Source):
                 return
 
     @classmethod
-    def first_missing_date(cls, log, s, schedule, interval_owner, statistic_owner=None):
+    def first_missing_date(cls, s, schedule, interval_owner, statistic_owner=None):
         '''
         For Impulse (and anything else that needs to delete forwards)
         '''
-        starts, overall_finish = cls._missing_interval_start_dates(log, s, schedule, interval_owner, statistic_owner)
+        starts, overall_finish = cls._missing_interval_start_dates(s, schedule, interval_owner, statistic_owner)
         if starts:
             return starts[0], time_to_local_date(overall_finish)
         else:
             return None, None
 
     @classmethod
-    def missing_dates(cls, log, s, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
+    def missing_dates(cls, s, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
         '''
         Iterator over start DATES for all missing intervals, given the constraints supplied.
         '''
         def intervals():
-            starts, overall_finish = cls._missing_interval_start_dates(log, s, schedule, interval_owner,
+            starts, overall_finish = cls._missing_interval_start_dates(s, schedule, interval_owner,
                                                                        statistic_owner)
             for block_start in starts:
-                yield from cls._missing_interval_dates_from(log, s, schedule, interval_owner, block_start,
-                                                            overall_finish)
+                yield from cls._missing_interval_dates_from(s, schedule, interval_owner, block_start, overall_finish)
         for a, b in intervals():
             if start and b <= start: continue
             if finish and a >= finish: continue
             yield a, b
 
     @classmethod
-    def delete_all(cls, log, s):
+    def delete_all(cls, s):
         '''
         Efficiently delete all intervals.
         '''
@@ -222,14 +221,14 @@ class Interval(Source):
         s.query(Source).filter(Source.type == SourceType.INTERVAL).delete()
 
     @classmethod
-    def clean_times(cls, log, s, start, finish, owner=None):
+    def clean_times(cls, s, start, finish, owner=None):
         '''
         Remove all intervals that include data in the given TIME range,
         '''
-        cls.clean_dates(log, s, time_to_local_date(start), time_to_local_date(finish), owner=owner)
+        cls.clean_dates(s, time_to_local_date(start), time_to_local_date(finish), owner=owner)
 
     @classmethod
-    def clean_dates(cls, log, s, start, finish, owner=None):
+    def clean_dates(cls, s, start, finish, owner=None):
         '''
         Remove all summary intervals (not monitor intervals) in the given DATE range.
         '''
@@ -237,8 +236,7 @@ class Interval(Source):
         if owner:
             q = q.filter(Interval.owner == owner)
         for interval in q.all():
-            # log can be null if called during database handling
-            if log: log.debug(f'Deleting {interval}')
+            log.debug(f'Deleting {interval}')
             s.delete(interval)
 
 

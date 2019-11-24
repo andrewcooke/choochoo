@@ -9,7 +9,6 @@ from . import Displayer
 from ..calculate.segment import SegmentCalculator
 from ..names import SEGMENT_TIME, SEGMENT_HEART_RATE
 from ...lib.date import local_date_to_time
-from ...squeal.tables.activity import ActivityGroup
 from ...squeal.tables.segment import SegmentJournal, Segment
 from ...squeal.tables.statistic import StatisticJournal, StatisticName
 from ...uweird.fields import ReadOnlyField
@@ -55,7 +54,7 @@ class SegmentDiary(Displayer):
         sjournal = StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.segment,
                                             source_id=sjournal.id)
         if sjournal:
-            return ReadOnlyField(log, sjournal, date=date,
+            return ReadOnlyField(sjournal, date=date,
                                  format_name=lambda n: sub(r'^Segment ', '', n)).widget()
         else:
             return None
@@ -74,7 +73,7 @@ class SegmentDiary(Displayer):
 
     def __schedule_fields(self, s, f, date, segment, schedule):
         names = list(self.__names(s, segment, SEGMENT_TIME, SEGMENT_HEART_RATE))
-        yield from summary_columns(log, s, f, date, schedule, names,
+        yield from summary_columns(s, f, date, schedule, names,
                                    format_name=lambda n: sub(r'^Segment ', '', n))
 
     def __names(self, s, segment, *names):

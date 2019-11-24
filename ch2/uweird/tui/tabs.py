@@ -1,10 +1,13 @@
 from collections import OrderedDict
 from collections.abc import Sequence
+from logging import getLogger
 
 from urwid import emit_signal, connect_signal, Widget, ExitMainLoop, disconnect_signal
 
 from .focus import Focus, FocusAttr, FocusWrap
 from ...lib.utils import force_iterable
+
+log = getLogger(__name__)
 
 
 # new tab manager design
@@ -132,13 +135,12 @@ class TabNode(FocusWrap):
 
     signals = ['tab']
 
-    def __init__(self, log, widget, tab_list):
+    def __init__(self, widget, tab_list):
         """
         Create a (local) root to the widget tree that manages tabs to the widgets
         below (possibly via nested TabNode instances).
         """
         super().__init__(widget)
-        self.__log = log
         self.__tabs_and_indices = {}
         self.__focus = OrderedDict()
         self.__root = None
@@ -206,14 +208,14 @@ class TabNode(FocusWrap):
 
     def __try_set_focus(self, n, key):
         try:
-            self.__log.debug('Trying to set focus on %s' % self.__tabs_and_indices[n])
+            log.debug('Trying to set focus on %s' % self.__tabs_and_indices[n])
             self.__set_focus(self.__tabs_and_indices[n], key)
         except AttributeError:
             self.discover(root=self.__root, path=self.__path)
             self.__set_focus(self.__tabs_and_indices[n], key)
 
     def __set_focus(self, tab, key):
-        self.__log.debug('Using %s' % self.__focus[tab])
+        log.debug('Using %s' % self.__focus[tab])
         self.__focus[tab].to(self.__root, key)
 
     def to(self, unused, key):
@@ -223,11 +225,11 @@ class TabNode(FocusWrap):
         """
         if self.__focus:
             n = 0 if key == 'tab' else len(self) - 1
-            self.__log.debug('Re-targetting at %d' % n)
+            log.debug('Re-targetting at %d' % n)
             self.__try_set_focus(n, key)
         else:
             # we have nothing to focus, so re-raise signal for remote neighbours
-            self.__log.debug('Empty so raise signal')
+            log.debug('Empty so raise signal')
             emit_signal(self, 'tab', self, key)
 
     def discover(self, root=None, path=None, discard=False):
@@ -257,10 +259,10 @@ class TabNode(FocusWrap):
 
         def unpack_decorator(widget):
             if hasattr(widget, '_wrapped_widget'):
-                self.__log.warning('Widget %s (type %s) doesn\'t expose contents' % (widget, type(widget)))
+                log.warning('Widget %s (type %s) doesn\'t expose contents' % (widget, type(widget)))
             elif hasattr(widget, 'base_widget'):
                 if widget == widget.base_widget:
-                    self.__log.debug('Widget with no focus: %s (type %s)' % (widget, type(widget)))
+                    log.debug('Widget with no focus: %s (type %s)' % (widget, type(widget)))
                 else:
                     yield widget.base_widget
 
@@ -270,7 +272,7 @@ class TabNode(FocusWrap):
                     self.__focus[widget] = widget
                     widget.discover(self.__root, path=path)
                 else:
-                    self.__focus[widget] = Focus(path, self.__log)
+                    self.__focus[widget] = Focus(path, log)
             else:
                 stack.append((widget, path))
 
@@ -288,34 +290,8 @@ class TabNode(FocusWrap):
         missing = list(filter(lambda x: self.__focus[x] is None, self.__focus))
         if missing:
             if discard:
-                self.__log.info('Removing %s tabs' % len(missing))
+                log.info('Removing %s tabs' % len(missing))
                 self.remove_many(missing)
             else:
                 msg = map(lambda w: '%s (base type %s)' % (w, type(w._w.base_widget)), missing)
                 raise Exception('Could not find %s' % ', '.join(msg))
-
-
-class Root(TabNode):
-
-    def __init__(self, log, widget, tab_list, quit='meta q', save='meta s', abort='meta x', session=None):
-        super().__init__(log, widget, tab_list)
-        self.__quit = quit
-        self.__save = save
-        self.__abort = abort
-        self.__session = session
-
-    def keypress(self, size, key):
-        if key == self.__quit:
-            self.save()
-            raise ExitMainLoop()
-        elif key == self.__abort:
-            raise ExitMainLoop()
-        elif key == self.__save:
-            self.save()
-        else:
-            return super().keypress(size, key)
-
-    def save(self):
-        if self.__session:
-            self.__session.flush()
-            self.__session.commit()

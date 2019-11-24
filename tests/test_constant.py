@@ -22,7 +22,7 @@ class TestConstant(TestCase):
             with db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
                 self.assertEqual(n, 14)
-            args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
+            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
             constants(args, db)
             with db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()

@@ -19,9 +19,9 @@ class TestPower(TestCase):
 
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-            args, db = bootstrap_file(f, m(V), '5', 'constants', '--set', 'FTHR.%', '154')
+            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
             constants(args, db)
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'FTHR.%')
+            args, db = bootstrap_file(f, m(V), '5', 'constants', 'show', 'FTHR.%')
             constants(args, db)
             args, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                            'activities', mm(FAST), 'data/test/source/personal/2018-03-04-qdp.fit')

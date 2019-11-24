@@ -1,3 +1,4 @@
+from logging import getLogger
 
 from urwid import Button, Text, emit_signal, connect_signal, Padding, Pile, Divider, WEIGHT, PACK, ACTIVATE
 
@@ -5,6 +6,8 @@ from .focus import FocusAttr, AttrChange, FocusWrap, OnFocus
 from .state import MutableStatefulText
 from .tabs import TabNode
 from ...lib.utils import label
+
+log = getLogger(__name__)
 
 
 class SquareButton(Button):
@@ -281,12 +284,11 @@ class FilteredPile(DividedPile):
 
 class DynamicContent(TabNode):
 
-    def __init__(self, log, session, bar):
-        self._log = log
+    def __init__(self, session, bar):
         self._session = session
         self._bar = bar
         self.__attrs = []
-        super().__init__(log, *self._make())
+        super().__init__(*self._make())
 
     def _make(self):
         # should return (node, tab_list)
@@ -297,7 +299,7 @@ class DynamicContent(TabNode):
         self._w = node
         self.replace(tabs)
         self._invalidate()
-        self._log.debug('Rebuilt %s' % self)
+        log.debug('Rebuilt %s' % self)
 
 
 class KeyMenu(MutableStatefulText):

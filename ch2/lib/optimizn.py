@@ -1,10 +1,14 @@
 
+from logging import getLogger
+
+log = getLogger(__name__)
+
 
 class NoMaximum(Exception): pass
 
 
 # http://acooke.org/cute/EfficientS2.html
-def expand_max(log, lo, hi, n, f):
+def expand_max(lo, hi, n, f):
 
     data = [(x, f(x)) for x in (lo + i * (hi - lo) / 4 for i in range(5))]
     x_max, fx_max = None, None

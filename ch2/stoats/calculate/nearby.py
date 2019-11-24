@@ -213,7 +213,6 @@ class NearbySimilarityDBSCAN(DBSCAN):
         self.__constraint = constraint
         self.__max_similarity = self.__s.query(func.max(ActivitySimilarity.similarity)). \
             filter(ActivitySimilarity.constraint == constraint).scalar()
-        # self._log.info('Max similarity %.2f' % self.__max_similarity)
 
     def run(self):
         candidates = set(x[0] for x in
@@ -259,7 +258,7 @@ class NearbyCalculator(UniProcCalculator):
 
     def _run_one(self, s, missed):
         with Timestamp(owner=self.owner_out, constraint=self.constraint).on_success(s):
-            d_min, n = expand_max(log, 0, 1, 5, lambda d: len(self.dbscan(s, d)))
+            d_min, n = expand_max(0, 1, 5, lambda d: len(self.dbscan(s, d)))
             log.info(f'{n} groups at d={d_min}')
             self.save(s, self.dbscan(s, d_min))
 

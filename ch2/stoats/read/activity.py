@@ -46,7 +46,7 @@ class ActivityReader(MultiProcFitReader):
 
     def _startup(self, s):
         super()._startup(s)
-        self.__oracle = bilinear_elevation_from_constant(log, s)
+        self.__oracle = bilinear_elevation_from_constant(s)
 
     def _read_data(self, s, path):
         log.info('Reading activity data from %s' % path)

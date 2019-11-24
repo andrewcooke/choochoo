@@ -14,7 +14,7 @@ Read activities data from FIT files.
 
 ### Examples
 
-    > ch2 activities -D 'Bike=Cotic Soul' ~/fit/2018-01-01.fit
+    > ch2 activities -D kit=cotic ~/fit/2018-01-01.fit
 
 will load the give file and create an entry for the `Bike` statistic with value `Cotic Soul`
 (this particular variable is used to identify bike-specific parameters for power calculation,

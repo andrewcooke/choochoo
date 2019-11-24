@@ -1,6 +1,7 @@
 
 import datetime as dt
 from json import dumps
+from logging import getLogger
 
 from pendulum.tz import get_local_timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey
@@ -14,6 +15,8 @@ from ..types import Date, Cls, Json, Sched, Sort
 from ...lib.data import assert_attr
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
+
+log = getLogger(__name__)
 
 
 class Topic(Base):
@@ -86,7 +89,7 @@ class TopicJournal(Source):
         'polymorphic_identity': SourceType.TOPIC
     }
 
-    def populate(self, log, s):
+    def populate(self, s):
         if hasattr(self, 'statistics'):
             return
         assert_attr(self, 'date')
@@ -110,22 +113,22 @@ class TopicJournal(Source):
         return 'TopicJournal from %s' % self.date
 
     @classmethod
-    def check_tz(cls, log, s):
+    def check_tz(cls, s):
         tz = get_local_timezone()
         db_tz = SystemConstant.get(s, SystemConstant.TIMEZONE, none=True)
         if not db_tz:
             db_tz = SystemConstant.set(s, SystemConstant.TIMEZONE, '')
         if db_tz != tz.name:
-            cls.__reset_timezone(log, s)
+            cls.__reset_timezone(s)
             SystemConstant.set(s, SystemConstant.TIMEZONE, tz.name, force=True)
 
     @classmethod
-    def __reset_timezone(cls, log, s):
+    def __reset_timezone(cls, s):
         log.warning('Timezone has changed')
         log.warning('Recalculating times for TopicJournal entries')
         for tj in s.query(TopicJournal).all():
             tj.time = local_date_to_time(tj.date)
-        Interval.delete_all(log, s)
+        Interval.delete_all(s)
 
     def time_range(self, s):
         start = local_date_to_time(self.date)

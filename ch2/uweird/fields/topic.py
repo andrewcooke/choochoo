@@ -1,5 +1,6 @@
 
 from abc import abstractmethod
+from logging import getLogger
 
 from urwid import Edit, connect_signal
 
@@ -7,6 +8,8 @@ from . import PAGE_WIDTH, Field
 from ...lib.utils import label
 from ...squeal.tables.statistic import StatisticJournalType
 from ..tui.widgets import Rating0, Rating1
+
+log = getLogger(__name__)
 
 
 class EditableField(Field):
@@ -17,7 +20,7 @@ class EditableField(Field):
         return widget
 
     def __on_change(self, widget, value):
-        self._log.debug('Setting %s=%r' % (self._journal.statistic_name.name, value))
+        log.debug('Setting %s=%r' % (self._journal.statistic_name.name, value))
         self._journal.value = value
 
 
@@ -25,8 +28,8 @@ class Text(EditableField):
 
     statistic_journal_type = StatisticJournalType.TEXT
 
-    def __init__(self, log, journal, width=PAGE_WIDTH):
-        super().__init__(log, journal, width=width)
+    def __init__(self, journal, width=PAGE_WIDTH):
+        super().__init__(journal, width=width)
 
     def _format_value(self, value):
         return repr(value)
@@ -40,8 +43,8 @@ class Integer(Field):
 
     statistic_journal_type = StatisticJournalType.INTEGER
 
-    def __init__(self, log, journal, lo=None, hi=None, width=1):
-        super().__init__(log, journal, width=width)
+    def __init__(self, journal, lo=None, hi=None, width=1):
+        super().__init__(journal, width=width)
         self._lo = lo
         self._hi = hi
 
@@ -58,8 +61,8 @@ class Float(EditableField):
 
     statistic_journal_type = StatisticJournalType.FLOAT
 
-    def __init__(self, log, journal, lo=None, hi=None, dp=2, format='%f', width=1):
-        super().__init__(log, journal, width=width)
+    def __init__(self, journal, lo=None, hi=None, dp=2, format='%f', width=1):
+        super().__init__(journal, width=width)
         self._lo = lo
         self._hi = hi
         self._dp = dp
@@ -78,8 +81,8 @@ class Score(EditableField):
 
     statistic_journal_type = StatisticJournalType.INTEGER
 
-    def __init__(self, log, journal, width=1):
-        super().__init__(log, journal, width=width)
+    def __init__(self, journal, width=1):
+        super().__init__(journal, width=width)
 
     def _format_value(self, value):
         return '%d' % value

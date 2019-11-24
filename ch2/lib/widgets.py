@@ -1,6 +1,7 @@
 
 import datetime as dt
 from abc import abstractmethod
+from logging import getLogger
 
 from sqlalchemy import desc
 from urwid import ExitMainLoop
@@ -9,17 +10,18 @@ from ..squeal.tables.activity import ActivityJournal
 from .date import DAY, WEEK, MONTH, YEAR, to_time, to_date, add_date, local_date_to_time, time_to_local_date
 from ..uweird.tui.tabs import TabNode
 
+log = getLogger(__name__)
+
 
 class App(TabNode):
     '''
     An urwid mainlopp, database session and tabs.
     '''
 
-    def __init__(self, log, db):
-        self._log = log
+    def __init__(self, db):
         self.__db = db
         self.__session = None
-        super().__init__(log, *self._build(self.__new_session()))
+        super().__init__(*self._build(self.__new_session()))
 
     def __new_session(self):
         if self.__session:
@@ -62,7 +64,7 @@ class App(TabNode):
         try:
             self.replace(tabs)
         except Exception as e:
-            self._log.warning('Could not replace tabs: %s' % e)
+            log.warning('Could not replace tabs: %s' % e)
 
 
 class DateSwitcher(App):
@@ -70,9 +72,9 @@ class DateSwitcher(App):
     Extend App with shortcuts for changing date and rebuilding.
     '''
 
-    def __init__(self, log, db, date):
+    def __init__(self, db, date):
         self.__date = date
-        super().__init__(log, db)
+        super().__init__(db)
 
     def keypress(self, size, key):
         if key.startswith('meta'):

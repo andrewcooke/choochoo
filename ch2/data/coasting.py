@@ -11,8 +11,7 @@ log = getLogger(__name__)
 
 class CoastingBookmark:
 
-    def __init__(self, log, db):
-        self._log = log
+    def __init__(self, db):
         self._db = db
 
     def run(self, kit, min_time, max_cadence, min_speed, group, constraint=None):
@@ -130,5 +129,5 @@ if __name__ == '__main__':
     These are then used in the fit_power_parameters template to estimate CdA and Crr. 
     '''
     ns, db = connect(['-v 4'])
-#    CoastingBookmark(log, db).run('cotic', 60, 20, 0, 'bike', constraint='cotic 60/20/0')
-    CoastingBookmark(log, db).run('cotic', 15, 5, 10, 'bike', constraint='cotic 15/5/10')
+#    CoastingBookmark(db).run('cotic', 60, 20, 0, 'bike', constraint='cotic 60/20/0')
+    CoastingBookmark(db).run('cotic', 15, 5, 10, 'bike', constraint='cotic 15/5/10')

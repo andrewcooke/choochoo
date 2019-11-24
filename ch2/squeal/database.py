@@ -63,17 +63,16 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
 
 class Database:
 
-    def __init__(self, args, log):
-        self._log = log
+    def __init__(self, args):
         self.path = args.file(DATABASE)
-        self._log.info('Using database at %s' % self.path)
+        log.info('Using database at %s' % self.path)
         self.engine = create_engine('sqlite:///%s' % self.path, echo=False)
         self.session = sessionmaker(bind=self.engine)
         self.__create_tables()
 
     def __create_tables(self):
         if self.is_empty(tables=True):
-            self._log.info('Creating tables')
+            log.info('Creating tables')
             Base.metadata.create_all(self.engine)
 
     @contextmanager
@@ -113,6 +112,6 @@ def connect(args):
     args.append(NO_OP)
     ns = NamespaceWithVariables(make_parser().parse_args(args))
     make_log(ns)
-    db = Database(ns, log)
+    db = Database(ns)
     return ns, db
 

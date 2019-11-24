@@ -1,5 +1,8 @@
+from logging import getLogger
 
 from urwid import AttrMap, Widget, WidgetWrap, Text
+
+log = getLogger(__name__)
 
 
 class FocusWrap(WidgetWrap):
@@ -42,12 +45,11 @@ class Focus:
     Store and apply a focus path.
     """
 
-    def __init__(self, focus, log):
+    def __init__(self, focus):
         self._focus = focus
-        self._log = log
 
     def to(self, widget, key=None):
-        self._log.debug('Applying %s to %s (type %s)' % (self._focus, widget, type(widget)))
+        log.debug('Applying %s to %s (type %s)' % (self._focus, widget, type(widget)))
         for focus in self._focus:
             widget = self._container(widget)
             try:
@@ -58,11 +60,11 @@ class Focus:
                 try:
                     widget.focus_position = len(widget.contents) - 1
                 except Exception as e:
-                    self._log.error(e)
+                    log.error(e)
                     return
-            self._log.debug('Set %s (%s) on %s (type %s)' % (focus, widget.focus_position, widget, type(widget)))
+            log.debug('Set %s (%s) on %s (type %s)' % (focus, widget.focus_position, widget, type(widget)))
             try:
-                self._log.debug('Target %s (%s)' % (widget._focus_target, widget._focus_target.focus_position))
+                log.debug('Target %s (%s)' % (widget._focus_target, widget._focus_target.focus_position))
             except AttributeError:
                 pass
             widget = self._unpack_widget(widget.contents[widget.focus_position])

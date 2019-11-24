@@ -2,9 +2,12 @@
 import datetime as dt
 from collections.abc import MutableMapping
 from functools import reduce
+from logging import getLogger
 from operator import and_
 
 from urwid import connect_signal
+
+log = getLogger(__name__)
 
 
 def or_none(f): return lambda x: x if x is None else f(x)
@@ -59,9 +62,8 @@ class Binder:
     but I may have misunderstood.
     """
 
-    def __init__(self, db, log, transforms=None, defaults=None):
+    def __init__(self, db, transforms=None, defaults=None):
         self._db = db
-        self._log = log
         self.__data = {}
         self._widget_names = {}
         self.__defaults = defaults if defaults else {}
@@ -77,7 +79,7 @@ class Binder:
             self._dbview.set_transforms(name, transforms)
         if default is not UNSET:
             self.__defaults[name] = default
-        self._log.debug('Binding %s as %s' % (widget, name))
+        log.debug('Binding %s as %s' % (widget, name))
         connect_signal(widget, 'change', self._save_widget_value)
         self._widget_names[widget] = name
         return widget
@@ -122,7 +124,7 @@ class Binder:
         Update the value in the store, but don't write to disk (although
         sub-classes may auto-save if the key changes).
         """
-        self._log.debug('Saving %s=%s' % (self._widget_names[widget], value))
+        log.debug('Saving %s=%s' % (self._widget_names[widget], value))
         self.__data[self._widget_names[widget]] = value
 
     def _broadcast_values_to_widgets(self):
@@ -133,13 +135,13 @@ class Binder:
         for widget in self._widget_names:
             name = self._widget_names[widget]
             value = self.__data[name]
-            self._log.debug('Setting %s=%s on %s' % (name, value, widget))
+            log.debug('Setting %s=%s on %s' % (name, value, widget))
             if hasattr(widget, 'state'):
                 widget.state = value
             elif hasattr(widget, 'set_edit_text'):
                 widget.set_edit_text(value)
             else:
-                self._log.error('Cannot set value on %s (%s)' % (widget, dir(widget)))
+                log.error('Cannot set value on %s (%s)' % (widget, dir(widget)))
 
     def _write_values_to_db(self):
         """
@@ -178,7 +180,7 @@ class DynamicBinder(Binder):
             if self._key_name in self._dbview:
                 self._write_values_to_db()
             else:
-                self._log.debug('Cannot save values as no previous value for key %s' % self._key_name)
+                log.debug('Cannot save values as no previous value for key %s' % self._key_name)
             super()._save_widget_value(widget, value)
             self._read_values_from_db()
             self._broadcast_values_to_widgets()
@@ -202,7 +204,7 @@ class SingleTableDynamic(DynamicBinder):
         cmd += ', '.join(['?'] * (len(self._dbview)))
         cmd += ')'
         values = list(self._dbview.values())
-        self._log.debug('%s / %s' % (cmd, values))
+        log.debug('%s / %s' % (cmd, values))
         self._db.execute(cmd, values)
 
     def _read_values_from_db(self):
@@ -210,12 +212,12 @@ class SingleTableDynamic(DynamicBinder):
         cmd += ', '.join(self._widget_names.values())
         cmd += ' from %s where %s = ?' % (self._table, self._key_name)
         values = [self._dbview[self._key_name]]
-        self._log.debug('%s / %s' % (cmd, values))
+        log.debug('%s / %s' % (cmd, values))
         row = self._db.execute(cmd, values).fetchone()
         self._clear_and_set_defaults()
         if row:
             for name in self._widget_names.values():
-                self._log.debug('Read %s=%s' % (name, row[name]))
+                log.debug('Read %s=%s' % (name, row[name]))
                 self._dbview[name] = row[name]
         # in case not include in read, or defaults used
         self._dbview[self._key_name] = values[0]
@@ -245,13 +247,13 @@ class SingleTableStatic(Binder):
             if self._have_all_keys():
                 self._write_values_to_db()
             else:
-                self._log.warning('Not saving because missing key values (%s)' % list(self._dbview.keys()))
+                log.warning('Not saving because missing key values (%s)' % list(self._dbview.keys()))
 
     def read_row(self, row):
         self._clear_and_set_defaults()
         if row:
             for name in row.keys():
-                self._log.debug('Read %s=%s' % (name, row[name]))
+                log.debug('Read %s=%s' % (name, row[name]))
                 self._dbview[name] = row[name]
         self._broadcast_values_to_widgets()
 
@@ -264,7 +266,7 @@ class SingleTableStatic(Binder):
             cmd += ', '.join(['?'] * (len(self._dbview)))
             cmd += ')'
             values = list(self._dbview.values())
-            self._log.debug('%s / %s' % (cmd, values))
+            log.debug('%s / %s' % (cmd, values))
             self._db.execute(cmd, values)
             if not replace and len(self._key_names) == 1:
                 self._dbview[self._key_names[0]] = self._db.execute('select last_insert_rowid()', ()).fetchone()[0]
@@ -281,7 +283,7 @@ class SingleTableStatic(Binder):
                 cmd += 'and ' if i else ''
                 cmd += '%s = ? ' % name
             values = [self._dbview[name] for name in self._key_names]
-            self._log.debug('%s / %s' % (cmd, values))
+            log.debug('%s / %s' % (cmd, values))
             row = self._db.execute(cmd, values).fetchone()
         else:
             row = None

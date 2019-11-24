@@ -3,15 +3,14 @@ from abc import ABC, abstractmethod
 
 from urwid import Text
 
-from ...lib.utils import label, em
+from ...lib.utils import label
 
 PAGE_WIDTH = 4
 
 
 class Field(ABC):
 
-    def __init__(self, log, journal, width=1, format_name=None):
-        self._log = log
+    def __init__(self, journal, width=1, format_name=None):
         self._journal = journal
         self.width = width
         self.__format_name = format_name
@@ -46,9 +45,9 @@ class Field(ABC):
 
 class ReadOnlyField(Field):
 
-    def __init__(self, log, journal, width=1, date=None, format_name=None):
+    def __init__(self, journal, width=1, date=None, format_name=None):
         self._date = date
-        super().__init__(log, journal, width=width, format_name=format_name)
+        super().__init__(journal, width=width, format_name=format_name)
 
     def _format_value(self, value):
         return self._journal.formatted()

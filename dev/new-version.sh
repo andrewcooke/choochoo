@@ -5,7 +5,7 @@ source env/bin/activate
 if [ "$#" -ne 1 ]; then
     echo "usage: $0 version"
     echo "eg: $0 1.2.3"
-    OLD_VERSION=`grep 'CH2_VERSION =' ch2/commands/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
+    OLD_VERSION=`grep 'version=' setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
     echo "old version is $OLD_VERSION"
     exit 1
 fi
@@ -17,10 +17,9 @@ if [ `echo "$VERSION" | sed -e 's/[0-9]\+\.[\0-9]\+\.[0-9]\+//'` ]; then
     exit 2
 fi
 
-IS_DEV=`grep 'IS_DEV =' ch2/commands/args.py | sed -e "s/.*IS_DEV = \([A-Za-z]\+\).*/\1/"`
-if [ "$IS_DEV" != "False" ]; then
-    echo "error: releasing development version"
-    exit 3;
+if [ `git rev-parse --abbrev-ref HEAD` != "master" ]; then
+    echo "error: not on master"
+    exit 3
 fi
 
 OLD_VERSION=`grep 'CH2_VERSION =' ch2/commands/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`

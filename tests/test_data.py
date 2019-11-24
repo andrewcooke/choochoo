@@ -1,4 +1,4 @@
-
+from json import loads
 from logging import getLogger, basicConfig, INFO
 from sys import stdout
 from tempfile import NamedTemporaryFile
@@ -26,7 +26,7 @@ class TestData(TestCase):
     def test_reftuple(self):
 
         Power = reftuple('Power', 'bike, weight')
-        power = Power('#Bike', '$Weight')
+        power = Power('${Bike}', '${Weight}')
 
         with NamedTemporaryFile() as f:
             args, db = bootstrap_file(f, m(V), '5')
@@ -35,7 +35,8 @@ class TestData(TestCase):
                 s.add(source)
                 StatisticJournalText.add(s, 'Bike', None, None, self, None, source, '{"mass": 42}', '1980-01-01')
                 StatisticJournalFloat.add(s, 'Weight', None, None, self, None, source, 13, '1980-01-01')
-            p = power.expand(self.log, s, '1990-01-01', default_owner=self)
+            p = power.expand(s, '1990-01-01', default_owner=self)
+            p = p._replace(bike=loads(p.bike))
             self.assertEqual(p.weight, 13)
             self.assertEqual(p.bike['mass'], 42)
 

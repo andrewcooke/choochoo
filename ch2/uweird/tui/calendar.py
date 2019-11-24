@@ -1,6 +1,7 @@
 
 import datetime as dt
 from calendar import month_name, day_abbr, Calendar, monthrange
+from logging import getLogger
 
 from urwid import Columns, GridFlow, Pile, Text, Padding, emit_signal, connect_signal, WEIGHT
 
@@ -8,6 +9,8 @@ from .fixed import Fixed
 from .focus import FocusFor, FocusAttr, FocusWrap, OnFocus
 from .state import ImmutableStatefulText, MutableStatefulText
 from ...lib.date import format_date
+
+log = getLogger(__name__)
 
 MONTHS = month_name
 DAYS2 = list(map(lambda d: day_abbr[d][:2], Calendar(0).iterweekdays()))
@@ -266,8 +269,7 @@ class BaseDate(FocusWrap):
 
     signals = ['change', 'postchange']
 
-    def __init__(self, log, bar=None, date=None):
-        self._log = log
+    def __init__(self, bar=None, date=None):
         if not date: date = dt.date.today()
         self._date = date
         self._bar = bar
@@ -286,16 +288,16 @@ class BaseDate(FocusWrap):
 
     def date_change(self, unused_widget, date):
         if date != self._date:
-            self._log.info('Date has changed: %s - %s' % (format_date(self._date), format_date(date)))
+            log.info('Date has changed: %s - %s' % (format_date(self._date), format_date(date)))
             old_date = date
             self._date = date
-            self._log.debug('Sending change signal for date change')
+            log.debug('Sending change signal for date change')
             # again, arg convention matches Edit
             emit_signal(self, 'change', self, self._date)
-            focus = FocusFor(self._w, self._log)
+            focus = FocusFor(self._w)
             self._w = self._make()
             focus.to(self._w)
-            self._log.debug('Sending change signal for date postchange')
+            log.debug('Sending change signal for date postchange')
             emit_signal(self, 'postchange', self, old_date)
 
 
