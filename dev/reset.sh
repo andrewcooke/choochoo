@@ -27,9 +27,13 @@ echo
 echo "running activities in parallel"
 start_activities=$SECONDS
 ALL_CPUS="-K cost_calc=100"
-(dev/ch2 --dev -v2 activities ~/archive/fit/bike/cotic/*.fit --fast -D 'kit=cotic'; dev/ch2 --dev -v2 activities ~/archive/fit/bike/uk/*.fit --fast -D 'kit=uk'; dev/ch2 --dev -v2 activities ~/archive/fit/walk/*.fit --fast; dev/ch2 --dev -v2 activities ~/archive/fit/batch/**/*.fit --fast -D 'kit=marin' $ALL_CPUS) &
-(dev/ch2 --dev -v2 monitor ~/archive/fit/monitor/*.fit --fast; dev/ch2 --dev -v2 monitor ~/archive/fit/batch/**/*.fit --fast $ALL_CPUS) &
-wait
+for kit in `ls -1 ~/archive/fit/bike`; do
+    dev/ch2 --dev -v2 activities --fast -D kit=$kit -- ~/archive/fit/bike/$kit/*.fit
+done
+dev/ch2 --dev -v2 activities ~/archive/fit/walk/*.fit --fast
+dev/ch2 --dev -v2 activities ~/archive/fit/batch/**/*.fit --fast -D kit=marin $ALL_CPUS
+dev/ch2 --dev -v2 monitor ~/archive/fit/monitor/*.fit --fast $ALL_CPUS
+dev/ch2 --dev -v2 monitor ~/archive/fit/batch/**/*.fit --fast $ALL_CPUS
 cp ~/.ch2/"database-$VERSION.sql" ~/.ch2/"database-$VERSION.sql-loaded"
 duration=$(($SECONDS - $start_activities))
 echo "activities finished $(($duration/60)) min $(($duration%60)) sec"

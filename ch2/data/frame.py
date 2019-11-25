@@ -132,12 +132,6 @@ def make_pad(data, times, statistic_names, quiet=False):
 
 
 def activity_journal(s, activity_journal=None, local_time=None, time=None, activity_group_name=None):
-    '''
-    If activity_journal_id is given, it is returned.
-
-    Otherwise, specify one of (local_time, time) and one of (activity_group_name, activity_group_id).
-    '''
-
     if activity_journal:
         if local_time or time or activity_group_name:
             raise Exception('Activity Journal given, so extra activity-related parameters are unused')
@@ -359,10 +353,10 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     return stats
 
 
-def nearby_activities(s, local_time=None, time=None, activity_journal_id=None, activity_group_name=None):
-    activity_journal_id = activity_journal(s, local_time, time, activity_journal_id,
-                                           activity_group_name=activity_group_name)
-    return nearby_any_time(s, ActivityJournal.from_id(s, activity_journal_id))
+def nearby_activities(s, local_time=None, time=None, activity_journal=None, activity_group_name=None):
+    activity_journal = _activity_journal(s, local_time=local_time, time=time,
+                                         activity_group_name=activity_group_name)
+    return nearby_any_time(s, activity_journal)
 
 
 def bookmarks(s, constraint, owner=CoastingBookmark):
