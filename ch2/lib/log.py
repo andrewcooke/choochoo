@@ -40,6 +40,10 @@ def make_log(args):
         tlog.setLevel(INFO)
         tlog.addHandler(file_handler)
 
+        sslog = getLogger('sentinelsat')
+        sslog.setLevel(DEBUG)
+        sslog.addHandler(file_handler)
+
         clog = getLogger('ch2')
         clog.setLevel(DEBUG)
         clog.addHandler(file_handler)

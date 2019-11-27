@@ -36,7 +36,7 @@ class StatisticJournalLoader:
         self._s = s
         self._owner = owner
         self.__statistic_name_cache = dict()
-        self.__staging = defaultdict(lambda: [])
+        self.__staging = defaultdict(list)
         self.__latest = dict()
         self.__add_serial = add_serial
         self.__start = None

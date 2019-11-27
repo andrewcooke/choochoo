@@ -34,14 +34,14 @@ Stop the background server.
     cmd = args[SUB_COMMAND]
     if cmd == LIST:
         print_list()
-    elif cmd == STATUS:
-        status(db)
     else:
         with db.session_context() as s:
             c = get_controller()
             set_controller_session(s)
             if cmd == SERVICE:
                 c.run_local()
+            elif cmd == STATUS:
+                status(db)
             elif cmd == SHOW:
                 show(args)
             elif cmd == START:

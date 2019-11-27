@@ -7,6 +7,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
 from ..lib.schedule import Schedule
+from ..msil2a.file import MSIL2A_DIR
 from ..sortem.file import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
@@ -132,6 +133,8 @@ def default(db, no_diary=False):
                               description='Heart rate at functional threshold (walking).',
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_constant(s, SRTM1_DIR, description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
+                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
+        add_constant(s, MSIL2A_DIR, description='Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
 
         if not no_diary:

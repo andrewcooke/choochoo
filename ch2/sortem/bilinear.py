@@ -11,6 +11,11 @@ class BilinearElevation(ElevationSupport):
     Provide elevation data from the files in `dir` which should be hgt files with standard naming,
     either zipped or unzipped, downloaded from http://dwtkns.com/srtm30m/.
 
+    You can download *all* data by going to https://search.earthdata.nasa.gov/search?q=srtm%20v3 and
+    selecting 'NASA Shuttle Radar Topography Mission Global 1 arc second V003'.  That will lead to
+    a download page that provides a further links to a list of links and a download script.  Running
+    the download script downloads the links.  You need to register.
+
     All coords are "GPS coords" afaict.
 
     If dir is None then None will be return as elevation for all queries.

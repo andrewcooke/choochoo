@@ -122,7 +122,7 @@ def groupby_tuple(iterable, key=None):
 
 def group_to_dict(iterable):
     'Expects iterable to be (key, value) tuples.'
-    d = defaultdict(lambda: list())
+    d = defaultdict(list)
     for key, value in iterable:
         d[key].append(value)
     return d
