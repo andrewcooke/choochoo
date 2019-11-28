@@ -3,7 +3,6 @@ import datetime as dt
 from collections import defaultdict
 from itertools import groupby
 from logging import getLogger
-from os import unlink
 from os.path import exists, join
 from zipfile import ZipFile
 
@@ -84,7 +83,8 @@ def download_missing(api, products, data_dir, download_dir='/tmp'):
     We do not delete from download_dir - the system will do that for us and the underlying lib will use it as a cache
     if for some reason the unpacked data were deleted.
     '''
-    success, lta, failure = api.download_all((product['uuid'] for product in products), directory_path=download_dir)
+    # list comprehension to work round bug in sentinelsat 0.13
+    success, lta, failure = api.download_all([product['uuid'] for product in products], directory_path=download_dir)
     log.debug(f'success: {len(success)}; lta: {len(lta)}; failure: {len(failure)}')
     if success:
         check_and_unpack_success(products, success, data_dir)

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from itertools import zip_longest, groupby
+from os.path import split
 from pprint import PrettyPrinter
 
 from ..stoats.names import M, KM, PC, W
@@ -126,4 +127,12 @@ def group_to_dict(iterable):
     for key, value in iterable:
         d[key].append(value)
     return d
+
+
+def drop_trailing_slash(path):
+    left, right = split(path)
+    if not right:
+        return left
+    else:
+        return path
 

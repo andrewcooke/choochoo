@@ -7,7 +7,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
 from ..lib.schedule import Schedule
-from ..msil2a.file import MSIL2A_DIR
+from ..msil2a.download import MSIL2A_DIR
 from ..sortem.file import SRTM1_DIR
 from ..squeal.tables.statistic import StatisticJournalType
 from ..squeal.tables.topic import TopicJournal
