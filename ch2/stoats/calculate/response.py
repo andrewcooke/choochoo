@@ -36,7 +36,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
     if not complete, we regenerate the whole damn thing.
     '''
 
-    def __init__(self, *args, responses_ref=None, impulse_ref=None, **kargs):
+    def __init__(self, *args, responses_ref=None, **kargs):
         self.responses_ref = self._assert('responses_ref', responses_ref)
         super().__init__(*args, **kargs)
 
@@ -108,13 +108,17 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
             filter(StatisticName.owner == self.owner_out)
         inputs = s.query(CompositeComponent.input_source_id). \
             join(StatisticJournal, StatisticJournal.source_id == CompositeComponent.output_source_id). \
-            filter(StatisticJournal.statistic_name_id.in_(response_ids))
+            filter(StatisticJournal.statistic_name_id.in_(response_ids),
+                   CompositeComponent.input_source_id != None)
         unused = s.query(count(StatisticJournal.id)). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.name == HR_IMPULSE_10,
                    StatisticName.owner == self.owner_in,
-                   ~StatisticJournal.source_id.in_(inputs)).scalar()
-        return unused
+                   ~StatisticJournal.source_id.in_(inputs))
+        log.debug(unused)
+        log.debug(f'owner_in: {self.owner_in}')
+        log.debug(f'owner_out: {self.owner_out}')
+        return unused.scalar()
 
     def __start(self, s):
         # avoid constants defined at time 0
