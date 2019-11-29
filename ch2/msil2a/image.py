@@ -8,15 +8,16 @@ import rasterio as rio
 from rasterio.enums import Resampling
 from rasterio.features import shapes
 from rasterio.mask import mask
-from rasterio.warp import calculate_default_transform, reproject
-from shapely.geometry import Polygon
+from rasterio.merge import merge
+from rasterio.warp import calculate_default_transform, reproject, transform_geom
+from shapely.geometry import Polygon, mapping, box
 
 from ..lib import drop_trailing_slash, median
 
 log = getLogger(__name__)
 
 
-def open_band(path, band):
+def read_band(path, band):
     files = glob(join(path, '*.SAFE', 'GRANULE', '*', 'IMG_DATA', 'R10m', f'*_{band}_10m.jp2'))
     if len(files) != 1:
         raise Exception(f'Unexpected structure under {path} for band {band}')
@@ -26,10 +27,10 @@ def open_band(path, band):
     return band
 
 
-def open_rgb(path):
-    b = open_band(path, 'B02')
-    g = open_band(path, 'B03')
-    r = open_band(path, 'B04')
+def read_rgb(path):
+    b = read_band(path, 'B02')
+    g = read_band(path, 'B03')
+    r = read_band(path, 'B04')
     return r, g, b
 
 
@@ -43,7 +44,7 @@ def create_rgb(path):
     if exists(tiff):
         log.warning(f'{tiff} already exists')
     else:
-        r, g, b = open_rgb(path)
+        r, g, b = read_rgb(path)
         with rio.open(tiff, 'w', driver='Gtiff', width=r.width, height=r.height, count=3,
                       crs=r.crs, transform=r.transform, dtype=r.dtypes[0], photometric='RGB') as out:
             out.write(r.read(1), 1)
@@ -99,7 +100,7 @@ def reproject_to_memory(image, crs):
     return transformed
 
 
-def shape_to_polygon(shape):
+def shape_to_polygon(shape):  # to do - shapely shape() should do this?
     geometry, value = shape
     if geometry['type'] != 'Polygon':
         raise Exception(f'Unexpected geometry: {shape}')
@@ -117,16 +118,20 @@ def most_intersecting(footprints, targets, candidates, choose=first):
     return choose(score_to_images[scores[0]])
 
 
+def create_image(template, data, transform):
+    meta = template.meta.copy()
+    meta.update({"driver": "GTiff",
+                 "height": data.shape[1],
+                 "width": data.shape[2],
+                 "transform": transform})
+    new_image = rio.MemoryFile().open(**meta)
+    new_image.write(data)
+    return new_image
+
+
 def crop_to_shape(image, shape):
     cropped, transform = mask(image, [shape], crop=True)
-    meta = image.meta.copy()
-    meta.update({"driver": "GTiff",
-                 "height": cropped.shape[1],
-                 "width": cropped.shape[2],
-                 "transform": transform})
-    transformed = rio.MemoryFile().open(**meta)
-    transformed.write(cropped)
-    return transformed
+    return create_image(image, cropped, transform)
 
 
 def measure_scaling(footprints, targets, candidate):
@@ -134,6 +139,7 @@ def measure_scaling(footprints, targets, candidate):
     for target in targets:
         overlap = footprints[target].intersection(footprints[candidate])
         if overlap:
+            log.debug(f'{target} and {candidate} overlap at {overlap}')
             crop_target = crop_to_shape(target, overlap)
             crop_candidate = crop_to_shape(candidate, overlap)
             scalings.append(sorted(crop_target.read(i).mean() / crop_candidate.read(i).mean() for i in range(1, 4))[1])
@@ -158,3 +164,29 @@ def force_same_scaling(images, choose=first):
             copy.write((candidate.read(i) * scale).astype(types[i]), i)
         scaled.append(copy)
     return scaled
+
+
+def combine_images(images, choose=first):
+    images = force_same_crs(images, choose=choose)
+    images = force_same_scaling(images, choose=choose)
+    return create_image(images[0], *merge(images))
+
+
+def crop_to_box(image, gps_bbox):
+    '''
+    This differs from crop to shape in that:
+    1 - the bbox coords are WGS84 lat lon (GPS)
+    2 - we want the result to be a 'square' image (not a diamond)
+    '''
+    # for some reason the gps_bbox cannot be a shapely object; it has to be a geojson dict
+    crs_bbox = transform_geom('WGS84', image.crs, mapping(gps_bbox))
+    pixel_bbox = [image.index(*xy) for xy in crs_bbox['coordinates'][0]]
+    xs, ys = zip(*pixel_bbox)
+    pixel_bbox = box(min(xs), min(ys), max(xs), max(ys))
+    crs_bbox = Polygon([image.xy(*xy) for xy in pixel_bbox.exterior.coords])
+    return crop_to_shape(image, crs_bbox)
+
+
+def write_image(image, path):
+    with rio.open(path, 'w', **image.meta) as dest:
+        dest.write(image.read())

@@ -23,14 +23,19 @@ def route(user, passwd, local_time, activity_group_name):
 
     s = session('-v2')
 
-    api, products = query_activity(s, user, passwd, local_time, activity_group_name)
+    api, products, bbox = query_activity(s, user, passwd, local_time, activity_group_name)
     download_paths = cached_download(s, api, products)
-    print(download_paths)
 
     '''
     ## Create Composite Image
     '''
     image_paths = [create_rgb(download) for download in download_paths]
     images = [rio.open(image) for image in image_paths]
-    images = force_same_crs(images)
-    images = force_same_scaling(images)
+    composite = combine_images(images)
+
+    '''
+    ### Crop and Write Image
+    '''
+
+    cropped = crop_to_box(composite, bbox)
+    write_image(cropped, "/tmp/foo.tiff")
