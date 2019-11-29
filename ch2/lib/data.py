@@ -227,3 +227,13 @@ def expand(s, text, before, vars=None, default_owner=None, default_constraint=No
             text = left + value + right
             match = pattern.match(text)
     return text
+
+
+def median(list):
+    if not list: raise ValueError('Median of empty set')
+    list = sorted(list)
+    n = len(list)
+    if n % 2:
+        return list[n//2]
+    else:
+        return list[n//2] + list[n//2+1]

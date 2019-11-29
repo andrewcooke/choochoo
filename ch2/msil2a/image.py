@@ -1,11 +1,17 @@
 
+from collections import defaultdict
 from glob import glob
 from logging import getLogger
 from os.path import join, exists
 
 import rasterio as rio
+from rasterio.enums import Resampling
+from rasterio.features import shapes
+from rasterio.mask import mask
+from rasterio.warp import calculate_default_transform, reproject
+from shapely.geometry import Polygon
 
-from ..lib import drop_trailing_slash
+from ..lib import drop_trailing_slash, median
 
 log = getLogger(__name__)
 
@@ -49,3 +55,106 @@ def create_rgb(path):
         log.debug(profile)
     return tiff
 
+
+def first(images):
+    return images[0]
+
+
+def split(images, choose=first):
+    reference = choose(images)
+    return reference, [image for image in images if image is not reference]
+
+
+def force_same_crs(images, choose=first):
+    reference, rest = split(images, choose)
+    same = [reference]
+    while rest:
+        image = rest.pop()
+        if image.crs != reference.crs:
+            log.info(f'Converting {image.crs} to {reference.crs}')
+            image = reproject_to_memory(image, reference.crs)
+        same.append(image)
+    return same
+
+
+def reproject_to_memory(image, crs):
+    # https://rasterio.readthedocs.io/en/stable/topics/reproject.html
+    transform, width, height = calculate_default_transform(image.crs, crs, image.width, image.height, *image.bounds)
+    kwargs = image.meta.copy()
+    kwargs.update({
+        'crs': crs,
+        'transform': transform,
+        'width': width,
+        'height': height
+    })
+    transformed = rio.MemoryFile().open(**kwargs)
+    for i in range(1, image.count + 1):
+        reproject(source=rio.band(image, i),
+                  destination=rio.band(transformed, i),
+                  src_transform=image.transform,
+                  src_crs=image.crs,
+                  dst_transform=transform,
+                  dst_crs=crs,
+                  resampling=Resampling.nearest)
+    return transformed
+
+
+def shape_to_polygon(shape):
+    geometry, value = shape
+    if geometry['type'] != 'Polygon':
+        raise Exception(f'Unexpected geometry: {shape}')
+    return Polygon(*geometry['coordinates'])
+
+
+def most_intersecting(footprints, targets, candidates, choose=first):
+    score_to_images = defaultdict(list)
+    for candidate in candidates:
+        score = sum(1 if footprints[target].intersection(footprints[candidate]) else 0 for target in targets)
+        score_to_images[score].append(candidate)
+    scores = sorted(score_to_images.keys(), reverse=True)
+    if scores[0] == 0:
+        raise Exception('Disjoint images')
+    return choose(score_to_images[scores[0]])
+
+
+def crop_to_shape(image, shape):
+    cropped, transform = mask(image, [shape], crop=True)
+    meta = image.meta.copy()
+    meta.update({"driver": "GTiff",
+                 "height": cropped.shape[1],
+                 "width": cropped.shape[2],
+                 "transform": transform})
+    transformed = rio.MemoryFile().open(**meta)
+    transformed.write(cropped)
+    return transformed
+
+
+def measure_scaling(footprints, targets, candidate):
+    scalings = []
+    for target in targets:
+        overlap = footprints[target].intersection(footprints[candidate])
+        if overlap:
+            crop_target = crop_to_shape(target, overlap)
+            crop_candidate = crop_to_shape(candidate, overlap)
+            scalings.append(sorted(crop_target.read(i).mean() / crop_candidate.read(i).mean() for i in range(1, 4))[1])
+    if not scalings:
+        raise Exception('Disjoint images')
+    return median(scalings)
+
+
+def force_same_scaling(images, choose=first):
+    footprints = {image: shape_to_polygon(next(shapes(image.dataset_mask(), transform=image.transform)))
+                  for image in images}
+    reference, rest = split(images, choose)
+    scaled = [reference]
+    while rest:
+        candidate = most_intersecting(footprints, scaled, rest)
+        rest.remove(candidate)
+        scale = measure_scaling(footprints, scaled, candidate)
+        log.info(f'Scaling {candidate} by {scale}')
+        copy = rio.MemoryFile().open(**candidate.meta)
+        types = {i: dtype for i, dtype in zip(candidate.indexes, candidate.dtypes)}
+        for i in range(1, 4):
+            copy.write((candidate.read(i) * scale).astype(types[i]), i)
+        scaled.append(copy)
+    return scaled
