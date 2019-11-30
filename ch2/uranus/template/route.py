@@ -26,8 +26,8 @@ def route(user, passwd, local_time, activity_group_name):
     redo = False
     s = session('-v2')
 
+    api, products, bbox, df = query_activity(s, user, passwd, local_time, activity_group_name)
     if redo:
-        api, products, bbox, df = query_activity(s, user, passwd, local_time, activity_group_name)
         download_paths = cached_download(s, api, products)
 
     '''
@@ -53,4 +53,4 @@ def route(user, passwd, local_time, activity_group_name):
     '''
     ## Calculate Elevation
     '''
-    elevation = create_elevation(s, image)
+    elevation = create_elevation(s, cropped)
