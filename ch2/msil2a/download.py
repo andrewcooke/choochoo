@@ -8,7 +8,7 @@ from zipfile import ZipFile
 
 from shapely.wkt import loads
 
-from ch2.squeal import Constant
+from ..squeal import Constant
 
 log = getLogger(__name__)
 

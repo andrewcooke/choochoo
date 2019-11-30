@@ -15,10 +15,12 @@ from rasterio.plot import reshape_as_image
 from rasterio.warp import calculate_default_transform, reproject, transform_geom
 from shapely.geometry import Polygon, mapping, box
 
-from ch2.stoats.names import LATITUDE, LONGITUDE
 from ..lib import drop_trailing_slash, median
+from ..stoats.names import LATITUDE, LONGITUDE
 
 log = getLogger(__name__)
+
+RGB = (ColorInterp.red, ColorInterp.green, ColorInterp.blue)
 
 
 def read_band(path, band):
@@ -207,11 +209,16 @@ def write_image(image, path):
         dest.write(image.read())
 
 
-def plot_image(ax, image):
+def read_image(path):
+    image = rio.open(path, 'r+')
+    image.colorinterp = RGB
+    return image
+
+
+def matplot_image(ax, image):
     # based on rasterio.plot, but accepts in-memory images
     color_map = dict(zip(image.colorinterp, image.indexes))
-    rgb_indexes = [color_map[ci] for ci in
-                   (ColorInterp.red, ColorInterp.green, ColorInterp.blue)]
+    rgb_indexes = [color_map[ci] for ci in RGB]
     arr = image.read(rgb_indexes, masked=True)
     arr = reshape_as_image(arr)
     # https://stackoverflow.com/questions/24739769/matplotlib-imshow-plots-different-if-using-colormap-or-rgb-array
@@ -220,12 +227,24 @@ def plot_image(ax, image):
     ax.imshow(arr)
 
 
-def plot_route(ax, image, df):
+def matplot_route(ax, image, df):
+    lat, lon = df[LATITUDE].values, df[LONGITUDE].values
+    x, y = latlon_to_xy(image, lat, lon)
+    ax.plot(x, y, color='red', linewidth='1')
+
+
+def latlon_to_xy(image, lat, lon):
     # https://gis.stackexchange.com/a/129857
-    lonlat = [(row[LONGITUDE], row[LATITUDE]) for time, row in df.iterrows()]
     p1 = Proj(proj='latlong', datum='WGS84')
     p2 = Proj(image.crs)
-    eastnorth = zip(*transform(p1, p2, *zip(*lonlat)))
-    rowcol = [image.index(e, n) for e, n in eastnorth]
-    xy = [(col, row) for row, col in rowcol]
-    ax.plot(*zip(*xy), color='red', linewidth='1')
+    east, north = transform(p1, p2, lon, lat)
+    row, col = image.index(east, north)
+    return col, row
+
+
+def xy_to_latlon(image, x, y):
+    east, north = image.xy(x, y)
+    p1 = Proj(image.crs)
+    p2 = Proj(proj='latlong', datum='WGS84')
+    lon, lat = transform(p1, p2, east, north)
+    return lat, lon
