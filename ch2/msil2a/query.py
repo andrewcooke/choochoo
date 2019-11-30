@@ -20,4 +20,4 @@ def query_activity(s, user, passwd, local_time, activity_group_name, margin=0.1)
     api = SentinelAPI(user, passwd, 'https://scihub.copernicus.eu/dhus')
     products = api.query(area=bbox, platformname='Sentinel-2', date=('NOW-1YEAR', 'NOW'),
                          processinglevel='Level-2A', cloudcoverpercentage=(0, 10))
-    return api, products, bbox
+    return api, products, bbox, df

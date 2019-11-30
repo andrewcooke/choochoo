@@ -136,8 +136,10 @@ class Code(TextToken):
         self._text = self._strip(self._text)
 
     def _fix_output(self):
+        # change output depending on destination
         self._text = sub(r'output_file\([^)]*\)', 'output_notebook()', self._text)
-        self._text = sub(r'#%matplotlib', '%matplotlib', self._text)
+        # enable ipython magic commands
+        self._text = sub(r'#(%.*)', r'\1', self._text)
 
     def _fix_session(self):
         r_session = compile(r'((?:^|^.*\s)session\s*\()([^)]*)(\).*$)', DOTALL)

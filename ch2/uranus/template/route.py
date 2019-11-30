@@ -1,5 +1,6 @@
 
 import rasterio as rio
+from matplotlib.pyplot import gca
 
 from ch2.data import *
 from ch2.msil2a import *
@@ -23,19 +24,23 @@ def route(user, passwd, local_time, activity_group_name):
 
     s = session('-v2')
 
-    api, products, bbox = query_activity(s, user, passwd, local_time, activity_group_name)
+    api, products, bbox, df = query_activity(s, user, passwd, local_time, activity_group_name)
     download_paths = cached_download(s, api, products)
 
     '''
-    ## Create Composite Image
+    ## Create Image
     '''
     image_paths = [create_rgb(download) for download in download_paths]
     images = [rio.open(image) for image in image_paths]
     composite = combine_images(images)
-
-    '''
-    ### Crop and Write Image
-    '''
-
     cropped = crop_to_box(composite, bbox)
     write_image(cropped, "/tmp/foo.tiff")
+
+    '''
+    ## First Look
+    '''
+
+    #%matplotlib notebook
+    plot_image(gca(), cropped)
+    plot_route(gca(), cropped, df)
+
