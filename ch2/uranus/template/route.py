@@ -15,7 +15,9 @@ def route(user, passwd, local_time, activity_group_name):
     f'''
     # Route : {local_time} ({activity_group_name})
 
-    Generate a 3D landscape with teh route marked in red.
+    Generate a 3D landscape with the route marked in red.
+    The terrain image is taken from Sentinel satellite data.
+    The elevation model is calculated from SRTM data (already used to give activity elevation).
     Currently (see below) this cannot be displayed in the notebook, but is saved to file as GeoTIFF data.
     '''
 
