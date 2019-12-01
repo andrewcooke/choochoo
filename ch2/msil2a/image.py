@@ -4,23 +4,18 @@ from glob import glob
 from logging import getLogger
 from os.path import join, exists
 
-import numpy as np
 import rasterio as rio
-from pyproj import Proj, transform
-from rasterio.enums import Resampling, ColorInterp
+from rasterio.enums import Resampling
 from rasterio.features import shapes
 from rasterio.mask import mask
 from rasterio.merge import merge
-from rasterio.plot import reshape_as_image
 from rasterio.warp import calculate_default_transform, reproject, transform_geom
 from shapely.geometry import Polygon, mapping, box
 
+from ..lib.image import create_image, RGB, GTIFF, DRIVER, PHOTOMETRIC, DTYPES, COUNT, TRANSFORM, WIDTH, HEIGHT, CRS
 from ..lib import drop_trailing_slash, median
-from ..stoats.names import LATITUDE, LONGITUDE
 
 log = getLogger(__name__)
-
-RGB = (ColorInterp.red, ColorInterp.green, ColorInterp.blue)
 
 
 def read_band(path, band):
@@ -53,10 +48,10 @@ def create_rgb(path):
         log.debug('Reading layers')
         r, g, b = read_rgb(path)
         profile = r.profile
-        profile.update({'driver': 'GTiff',
-                        'count': 3,
-                        'dtypes': (r.dtypes[0], g.dtypes[0], b.dtypes[0]),
-                        'photometric': 'RGB'})
+        profile.update({DRIVER: GTIFF,
+                        COUNT: 3,
+                        DTYPES: (r.dtypes[0], g.dtypes[0], b.dtypes[0]),
+                        PHOTOMETRIC: RGB})
         with rio.open(tiff, 'w', **profile) as out:
             log.debug('Writing red layer')
             out.write(r.read(1), 1)
@@ -94,10 +89,10 @@ def reproject_to_memory(image, crs):
     # https://rasterio.readthedocs.io/en/stable/topics/reproject.html
     transform, width, height = calculate_default_transform(image.crs, crs, image.width, image.height, *image.bounds)
     profile = image.profile.copy()
-    profile.update({'crs': crs,
-                    'transform': transform,
-                    'width': width,
-                    'height': height})
+    profile.update({CRS: crs,
+                    TRANSFORM: transform,
+                    WIDTH: width,
+                    HEIGHT: height})
     transformed = rio.MemoryFile().open(**profile)
     for i in range(1, image.count + 1):
         reproject(source=rio.band(image, i),
@@ -126,19 +121,6 @@ def most_intersecting(footprints, targets, candidates, choose=first):
     if scores[0] == 0:
         raise Exception('Disjoint images')
     return choose(score_to_images[scores[0]])
-
-
-def create_image(template, data, transform):
-    log.debug('Creating new image')
-    profile = template.profile.copy()
-    profile.update({'driver': 'GTiff',
-                    'height': data.shape[1],
-                    'width': data.shape[2],
-                    'transform': transform,
-                    'photometric': 'RGB'})
-    new_image = rio.MemoryFile().open(**profile)
-    new_image.write(data)
-    return new_image
 
 
 def crop_to_shape(image, shape):
@@ -192,6 +174,7 @@ def crop_to_box(image, gps_bbox):
     This differs from crop to shape in that:
     1 - the bbox coords are WGS84 lat lon (GPS)
     2 - we want the result to be a 'square' image (not a diamond)
+    (we're assuming the image is more-or-less aligned N/S)
     '''
     # for some reason the gps_bbox cannot be a shapely object; it has to be a geojson dict
     crs_bbox = transform_geom('WGS84', image.crs, mapping(gps_bbox))
@@ -204,47 +187,3 @@ def crop_to_box(image, gps_bbox):
     return crop_to_shape(image, crs_bbox)
 
 
-def write_image(image, path):
-    with rio.open(path, 'w', **image.profile) as dest:
-        dest.write(image.read())
-
-
-def read_image(path):
-    image = rio.open(path, 'r+')
-    image.colorinterp = RGB
-    return image
-
-
-def matplot_image(ax, image):
-    # based on rasterio.plot, but accepts in-memory images
-    color_map = dict(zip(image.colorinterp, image.indexes))
-    rgb_indexes = [color_map[ci] for ci in RGB]
-    arr = image.read(rgb_indexes, masked=True)
-    arr = reshape_as_image(arr)
-    # https://stackoverflow.com/questions/24739769/matplotlib-imshow-plots-different-if-using-colormap-or-rgb-array
-    lo, hi = np.min(arr), np.max(arr)
-    arr = ((arr - lo) / (hi - lo)) ** (1 / 2.2)
-    ax.imshow(arr)
-
-
-def matplot_route(ax, image, df):
-    lat, lon = df[LATITUDE].values, df[LONGITUDE].values
-    x, y = latlon_to_xy(image, lat, lon)
-    ax.plot(x, y, color='red', linewidth='1')
-
-
-def latlon_to_xy(image, lat, lon):
-    # https://gis.stackexchange.com/a/129857
-    p1 = Proj(proj='latlong', datum='WGS84')
-    p2 = Proj(image.crs)
-    east, north = transform(p1, p2, lon, lat)
-    row, col = image.index(east, north)
-    return col, row
-
-
-def xy_to_latlon(image, x, y):
-    east, north = image.xy(x, y)
-    p1 = Proj(image.crs)
-    p2 = Proj(proj='latlong', datum='WGS84')
-    lon, lat = transform(p1, p2, east, north)
-    return lat, lon

@@ -75,6 +75,7 @@ def templates():
             yield modname, (function, argspec)
         except AttributeError:
             log.debug(f'Skipping {modname}')
+            log.debug('(if this is unexpected, check that the template is imported at the package level)')
 
 
 def print_list():

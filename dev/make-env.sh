@@ -15,8 +15,12 @@ pip install pandas
 pip install pendulum
 pip install psutil
 pip install pyGeoTile
+pip install pyproj
+pip install rasterio
 pip install requests
 pip install scipy
+pip install sentinelsat
+pip install shapely
 pip install sqlalchemy
 pip install textblob
 pip install urwid
