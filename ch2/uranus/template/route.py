@@ -1,10 +1,8 @@
 
 import rasterio as rio
-from matplotlib.pyplot import gca
 
 from ch2.data import *
 from ch2.msil2a import *
-from ch2.msil2a.elevation import create_elevation
 from ch2.uranus.decorator import template
 
 
@@ -17,6 +15,12 @@ def route(user, passwd, local_time, activity_group_name):
 
     '''
     $contents
+    '''
+
+    '''
+    ## Install Notes
+    
+    This notebook requires myavi,  I can't get the damn thing to install.  So it's currently disabled.
     '''
 
     '''
@@ -46,11 +50,17 @@ def route(user, passwd, local_time, activity_group_name):
     ## First Look
     '''
 
-    #%matplotlib notebook
-    matplot_image(gca(), cropped)
-    matplot_route(gca(), cropped, df)
+    ##%matplotlib notebook
+    #matplot_image(gca(), cropped)
+    #matplot_route(gca(), cropped, df)
 
     '''
     ## Calculate Elevation
     '''
     elevation = create_elevation(s, cropped)
+
+    '''
+    ## Display Elevation
+    '''
+
+    plot_elevation(elevation)

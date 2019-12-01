@@ -68,10 +68,13 @@ def templates():
     log.debug(dir(template))
     log.debug(template.__file__)
     for importer, modname, ispkg in iter_modules(template.__path__):
-        module = getattr(template, modname)
-        function = getattr(module, modname)
-        argspec = getfullargspec(function._original)
-        yield modname, (function, argspec)
+        try:
+            module = getattr(template, modname)
+            function = getattr(module, modname)
+            argspec = getfullargspec(function._original)
+            yield modname, (function, argspec)
+        except AttributeError:
+            log.debug(f'Skipping {modname}')
 
 
 def print_list():
