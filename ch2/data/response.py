@@ -13,6 +13,7 @@ log = getLogger(__name__)
 
 IMPULSE_3600 = 'Impulse / 3600s'
 RESPONSE = 'Response'
+LOG10_PERIOD, LOG10_START = 0, 1
 
 
 # NOTE - almost everything below uses Series, not DataFrame
@@ -27,10 +28,13 @@ def sum_to_hour(source, column):
     return data
 
 
-def calc_response(data, log10_period):
+def calc_response(data, params):
     # data is a DataFrame mainly because that's what inplace_decay takes
     response = data.rename(columns={IMPULSE_3600: RESPONSE})  # copy
-    inplace_decay(response, RESPONSE, 10 ** log10_period)
+    if len(params) > LOG10_START:
+        # we replace the very first value which is strictly cheating, but there are so many...
+        response.at[response.index[0], [RESPONSE]] = 10 ** params[LOG10_START]
+    inplace_decay(response, RESPONSE, 10 ** params[LOG10_PERIOD])
     return response[RESPONSE]
 
 
@@ -82,37 +86,44 @@ def worst_index(residuals):
     return index
 
 
-def reject_worst_inplace(log10_period, data, performances, method='L1'):
-    response = calc_response(data, log10_period)
+def reject_worst_inplace(params, data, performances, method='L1'):
+    response = calc_response(data, params)
     measureds = calc_measured(response, performances)
     predicteds = calc_predicted(measureds, performances)
     residuals = calc_residuals(measureds, predicteds, method=method)
     index = worst_index(residuals)
     print(f'Dropping value at {residuals[index].idxmax()}')
     performances[index].drop(index=residuals[index].idxmax(), inplace=True)
+    return index, residuals[index].idxmax()
 
 
-def fit_period(data, log10_period, performances, method='L1', reject=0, **kargs):
+def fmt_params(params):
+    text = f'Period {10 ** params[0] / 24:.1f}'
+    if len(params) > 1:
+        text += f'; Start {10 ** params[1]:.1f}'
+    return text
+
+
+def fit_ff_params(data, params, performances, method='L1', reject=0, **kargs):
     # data should be a DataFrame with an IMPULSE3600 entry
     # performances should be Series
 
-    result = None
+    result, rejected = None, []
 
-    def cost(log10_period):
-        response = calc_response(data, log10_period)
+    def cost(params):
+        response = calc_response(data, params)
         measureds = calc_measured(response, performances)
         predicteds = calc_predicted(measureds, performances)
         return calc_cost(measureds, predicteds, method=method)
 
     while True:
-        result = optimize.minimize(cost, [log10_period], **kargs)
-        log10_period = result.x[0]
-        print(10 ** log10_period)
+        result = optimize.minimize(cost, params, **kargs)
+        print(fmt_params(result.x))
         if not reject: break
-        reject_worst_inplace(log10_period, data, performances, method=method)
+        rejected.append(reject_worst_inplace(params, data, performances, method=method))
         reject -= 1
 
-    return result
+    return result, rejected
 
 
 def response_stats(df):

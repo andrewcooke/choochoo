@@ -6,8 +6,7 @@ from pandas import Series
 
 from ch2.data import *
 from ch2.data.plot.utils import evenly_spaced_hues
-from ch2.data.response import sum_to_hour, calc_response, fit_period, calc_predicted, calc_measured
-from ch2.lib import groupby_tuple
+from ch2.data.response import *
 from ch2.lib.utils import group_to_dict
 from ch2.squeal import *
 from ch2.stoats.read.segment import SegmentReader
@@ -61,9 +60,10 @@ def fit_ff_segments(group, *segment_names):
     performances = []
     for segment in segments:
         for kit, times in times_by_kit_by_segment[segment].items():
-            times.index = times.index.round('1H')
-            performances.append(Series(segment.distance / times.iloc[:, 0], times.index,
-                                       name=f'{segment.name}/{kit}'))
+            if len(times) > 2:
+                times.index = times.index.round('1H')
+                performances.append(Series(segment.distance / times.iloc[:, 0], times.index,
+                                           name=f'{segment.name}/{kit}'))
     n_performances = sum(len(performance) for performance in performances)
 
     hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
@@ -76,18 +76,22 @@ def fit_ff_segments(group, *segment_names):
 
     '''
     ## Define Plot Routine
+
+    Below the `params` are (currently) log10_period and log10_start - the time period for decay and the initial
+    response (fitness) value.  We use log10 so that the values cannot be negative.
     '''
 
     output_file(filename='/dev/null')
 
-    def plot(period):
-        response = calc_response(hr3600, period)
-        f = figure(plot_width=500, plot_height=450, x_axis_type='datetime')
+    def plot_params(params, rejected=tuple()):
+        response = calc_response(hr3600, params)
+        predicted = calc_predicted(calc_measured(response, performances), performances)
+        f = figure(title=fmt_params(params), plot_width=500, plot_height=450, x_axis_type='datetime')
         f.line(x=response.index, y=response, color='grey')
-        for color, predicted, performance in zip(evenly_spaced_hues(len(performances)),
-                                                 calc_predicted(calc_measured(response, performances), performances),
-                                                 performances):
-            f.circle(x=predicted.index, y=predicted, color=color, legend_label=performance.name)
+        for color, prediction, performance in zip(evenly_spaced_hues(len(performances)), predicted, performances):
+            f.circle(x=prediction.index, y=prediction, color=color, legend_label=performance.name)
+        for i, t in rejected:
+            f.x(x=t, y=predicted[i].loc[t], color='black', size=10)
         f.legend.location = 'bottom_left'
         show(f)
 
@@ -98,22 +102,26 @@ def fit_ff_segments(group, *segment_names):
     '''
 
     initial_period = log10(42 * 24)
-    plot(initial_period)
+    plot_params((initial_period,))
 
     '''
     ## Fit Model using L1
     
     Adjust tol according to the 'fun' value in the result (tol is the tolerance in that value).
     
+    We need to fit period before start to get good convergence.
+    
     Note how the period (printed, in hours) varies as points are rejected.
     '''
 
-    result = fit_period(hr3600, initial_period, copy_of_performances(),
-                        method='L1', reject=n_performances // 10, tol=0.01)
+    result, rejected = fit_ff_params(hr3600, (initial_period,), copy_of_performances(),
+                                     method='L1', reject=n_performances // 10, tol=0.01)
     print(result)
-    period = result.x[0]
-    print(f'Period in days: {10 ** period / 24:.1f}')
-    plot(period)
+    print(fmt_params(result.x))
+    result, rejected = fit_ff_params(hr3600, (result.x[0], 0), copy_of_performances(),
+                                     method='L1', reject=n_performances // 10, tol=0.01)
+    print(result)
+    plot_params(result.x, rejected=rejected)
 
     '''
     ## Fit Model using L2
@@ -122,9 +130,12 @@ def fit_ff_segments(group, *segment_names):
     For me there was  lot more variation here as points were rejected.
     '''
 
-    result = fit_period(hr3600, initial_period, copy_of_performances(),
-                        method='L2', reject=n_performances // 10, tol=0.1)
+    initial_period = log10(42 * 24)
+    result, rejected = fit_ff_params(hr3600, (initial_period,), copy_of_performances(),
+                                     method='L2', reject=n_performances // 10, tol=0.01)
     print(result)
-    period = result.x[0]
-    print(f'Period in days: {10 ** period / 24:.1f}')
-    plot(period)
+    print(fmt_params(result.x))
+    result, rejected = fit_ff_params(hr3600, (result.x[0], 0), copy_of_performances(),
+                                     method='L2', reject=n_performances // 10, tol=0.01)
+    print(result)
+    plot_params(result.x, rejected=rejected)
