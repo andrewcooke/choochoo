@@ -2,7 +2,6 @@
 from bokeh.io import output_file, show
 from bokeh.plotting import figure
 from math import log10
-from pandas import Series
 
 from ch2.data import *
 from ch2.data.plot.utils import evenly_spaced_hues
@@ -25,6 +24,8 @@ def fit_ff_segments(group, *segment_names):
 
     The resulting value can be used in the configuration so that the Fitness parameter more accurately
     reflects your personal rate of adaption.
+
+    For more information see the [documentation](https://andrewcooke.github.io/choochoo/ff-fitting).
     '''
 
     '''
