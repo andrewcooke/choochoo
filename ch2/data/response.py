@@ -6,6 +6,7 @@ import numpy as np
 from pandas import DataFrame, Series
 from scipy import optimize
 
+from ch2.data.lib import decay_params
 from . import inplace_decay
 from ..stoats.names import FITNESS_D_ANY, FATIGUE_D_ANY, like, _d
 
@@ -32,10 +33,14 @@ def sum_to_hour(source, column):
 def calc_response(data, params):
     # data is a DataFrame mainly because that's what inplace_decay takes
     response = data.rename(columns={IMPULSE_3600: RESPONSE})  # copy
+    period = 10 ** params[LOG10_PERIOD]
     if len(params) > LOG10_START:
+        decay, alpha = decay_params(period)
+        # correct by alpha so that the value matches the plot (see decay_inplace)
+        start = 10 ** params[LOG10_START] * alpha
         # we replace the very first value which is strictly cheating, but there are so many...
-        response.at[response.index[0], [RESPONSE]] = 10 ** params[LOG10_START]
-    inplace_decay(response, RESPONSE, 10 ** params[LOG10_PERIOD])
+        response.at[response.index[0], RESPONSE] = start
+    inplace_decay(response, RESPONSE, period)
     return response[RESPONSE]
 
 

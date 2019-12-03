@@ -105,6 +105,12 @@ def fit_ff_segments(group, *segment_names):
     plot_params((initial_period,))
 
     '''
+    ## Explore Effect of Start
+    '''
+    plot_params((initial_period, log10(1000)))
+    plot_params((initial_period, log10(3000)))
+
+    '''
     ## Fit Model using L1
     
     Adjust tol according to the 'fun' value in the result (tol is the tolerance in that value).
@@ -135,11 +141,11 @@ def fit_ff_segments(group, *segment_names):
     initial_period = log10(42 * 24)
     result, rejected = fit_ff_params(hr3600, (initial_period,), copy_of_performances(),
                                      method='L2', tol=0.01,
-                                     max_reject=n_performances // 2, threshold=(500, 50)
+                                     max_reject=n_performances // 2, threshold=(500, 50))
     print(result)
     print(fmt_params(result.x))
     result, rejected = fit_ff_params(hr3600, (result.x[0], 0), copy_of_performances(),
                                      method='L2', tol=0.01,
-                                     max_reject=n_performances // 2, threshold=(500, 50)
+                                     max_reject=n_performances // 2, threshold=(500, 50))
     print(result)
     plot_params(result.x, rejected=rejected)
