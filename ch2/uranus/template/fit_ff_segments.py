@@ -60,7 +60,7 @@ def fit_ff_segments(group, *segment_names):
     performances = []
     for segment in segments:
         for kit, times in times_by_kit_by_segment[segment].items():
-            if len(times) > 2:
+            if len(times.columns) and len(times.index) > 2:
                 times.index = times.index.round('1H')
                 performances.append(Series(segment.distance / times.iloc[:, 0], times.index,
                                            name=f'{segment.name}/{kit}'))
@@ -85,7 +85,7 @@ def fit_ff_segments(group, *segment_names):
 
     def plot_params(params, rejected=tuple()):
         response = calc_response(hr3600, params)
-        predicted = calc_predicted(calc_measured(response, performances), performances)
+        predicted = calc_observed(restrict_response(response, performances), performances)
         f = figure(title=fmt_params(params), plot_width=500, plot_height=450, x_axis_type='datetime')
         f.line(x=response.index, y=response, color='grey')
         for color, prediction, performance in zip(evenly_spaced_hues(len(performances)), predicted, performances):
@@ -115,11 +115,13 @@ def fit_ff_segments(group, *segment_names):
     '''
 
     result, rejected = fit_ff_params(hr3600, (initial_period,), copy_of_performances(),
-                                     method='L1', reject=n_performances // 10, tol=0.01)
+                                     method='L1', tol=0.01,
+                                     max_reject=n_performances // 2, threshold=(2, 0.2))
     print(result)
     print(fmt_params(result.x))
     result, rejected = fit_ff_params(hr3600, (result.x[0], 0), copy_of_performances(),
-                                     method='L1', reject=n_performances // 10, tol=0.01)
+                                     method='L1', tol=0.01,
+                                     max_reject=n_performances // 2, threshold=(2, 0.2))
     print(result)
     plot_params(result.x, rejected=rejected)
 
@@ -132,10 +134,12 @@ def fit_ff_segments(group, *segment_names):
 
     initial_period = log10(42 * 24)
     result, rejected = fit_ff_params(hr3600, (initial_period,), copy_of_performances(),
-                                     method='L2', reject=n_performances // 10, tol=0.01)
+                                     method='L2', tol=0.01,
+                                     max_reject=n_performances // 2, threshold=(500, 50)
     print(result)
     print(fmt_params(result.x))
     result, rejected = fit_ff_params(hr3600, (result.x[0], 0), copy_of_performances(),
-                                     method='L2', reject=n_performances // 10, tol=0.01)
+                                     method='L2', tol=0.01,
+                                     max_reject=n_performances // 2, threshold=(500, 50)
     print(result)
     plot_params(result.x, rejected=rejected)

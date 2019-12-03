@@ -2,7 +2,7 @@
 import datetime as dt
 from logging import getLogger
 
-from numpy import polyval, polyfit
+import numpy as np
 from pandas import DataFrame, Series
 from scipy import optimize
 
@@ -16,7 +16,8 @@ RESPONSE = 'Response'
 LOG10_PERIOD, LOG10_START = 0, 1
 
 
-# NOTE - almost everything below uses Series, not DataFrame
+# Almost everything below uses Series, not DataFrame
+# Currently model params are log10_period (hours) and log10_start (initial FF value)
 
 
 def sum_to_hour(source, column):
@@ -38,13 +39,13 @@ def calc_response(data, params):
     return response[RESPONSE]
 
 
-def calc_measured(response, performances):
+def restrict_response(response, performances):
     # we're only interested in the FF model at the times that correspond to performance measurements
     return [response.reindex(index=performance.index, method='nearest')
             for performance in performances]
 
 
-def calc_predicted(measureds, performances):
+def calc_observed(measureds, performances):
     # this is a bit tricky.  we don't know the exact relationship between 'fitness' and how fast we are.
     # all we know is that it should track changes in a useful manner.
     # so there's some arbitrary transform, which could quite easily be different for different routes
@@ -54,47 +55,65 @@ def calc_predicted(measureds, performances):
     # we could fit for the best transform as we fit for the period, but it's more efficient to calculate
     # the 'best' transform for a given period.  this is more efficient because it's equivalent to line fitting
     # (that linear transform is y = ax + b).  so we can call the (fast) line fitting routine in numpy.
-    return [Series(polyval(polyfit(performance, measured, 1), performance),
+    return [Series(np.polyval(np.polyfit(performance, measured, 1), performance),
                    performance.index)
             for measured, performance in zip(measureds, performances)]
 
 
-def calc_residuals(measureds, predicteds, method='L1'):
+def calc_residuals(models, observations, method='L1'):
+    # -ve when observation less than model
     if method == 'L1':
         # use L1 scaled by amplitude to be reasonably robust.
-        return [abs(measured - predicted) / measured.clip(lower=1e-6)
-                for measured, predicted in zip(measureds, predicteds)]
+        return [(observation - model) / model.clip(lower=1e-6)
+                for model, observation in zip(models, observations)]
     elif method == 'L2':
         # something like chisq
-        return [((measured - predicted).pow(2) / measured.clip(lower=1e-6))
-                for measured, predicted in zip(measureds, predicteds)]
+        return [(np.sign(observation - model) * (observation - model).pow(2) / model.clip(lower=1e-6))
+                for model, observation in zip(models, observations)]
     else:
         raise Exception(f'Unknown method ({method}) - use L1 or L2')
 
 
-def calc_cost(measureds, predicteds, method='L1'):
-    residuals = calc_residuals(measureds, predicteds, method=method)
-    return sum(sum(residual) for residual in residuals)
+def calc_cost(model, observation, method='L1'):
+    residuals = calc_residuals(model, observation, method=method)
+    return sum(sum(np.abs(residual)) for residual in residuals)
 
 
-def worst_index(residuals):
-    worst, index = None, None
-    for i, residual in enumerate(residuals):
+def worst_residual(residuals, threshold=None):
+    i, t, worst = None, None, None
+    for index, residual in enumerate(residuals):
         bad = max(residual)
-        if index is None or bad > worst:
-            worst, index = bad, i
-    return index
+        if bad > threshold and (worst is None or bad > worst):
+            worst, i, t = bad, index, residual.idxmax()
+    if worst:
+        log.debug(f'Worst residual magnitude {worst} at {t}')
+    else:
+        log.debug('No worst residual found')
+    return i, t, worst
 
 
-def reject_worst_inplace(params, data, performances, method='L1'):
+def fix_residuals(residuals, threshold=None):
+    try:
+        pos, neg = np.abs(threshold)
+        log.debug(f'Scaling residuals to weight lower by {pos}:{neg}')
+        for residual in residuals:
+            residual.loc[residual < 0] = residual.loc[residual < 0].abs() * pos / neg
+        return residuals, pos
+    except TypeError:
+        return [residual.abs() for residual in residuals], 0 if threshold is None else threshold
+
+
+def reject_worst_inplace(params, data, performances, method='L1', threshold=None):
     response = calc_response(data, params)
-    measureds = calc_measured(response, performances)
-    predicteds = calc_predicted(measureds, performances)
+    measureds = restrict_response(response, performances)
+    predicteds = calc_observed(measureds, performances)
     residuals = calc_residuals(measureds, predicteds, method=method)
-    index = worst_index(residuals)
-    print(f'Dropping value at {residuals[index].idxmax()}')
-    performances[index].drop(index=residuals[index].idxmax(), inplace=True)
-    return index, residuals[index].idxmax()
+    residuals, threshold = fix_residuals(residuals, threshold=threshold)
+    i, t, worst = worst_residual(residuals, threshold=threshold)
+    if t:
+        print(f'Dropping {worst} at {t}')
+        performances[i].drop(index=t, inplace=True)
+    return i, t
 
 
 def fmt_params(params):
@@ -104,26 +123,29 @@ def fmt_params(params):
     return text
 
 
-def fit_ff_params(data, params, performances, method='L1', reject=0, **kargs):
+def fit_ff_params(data, params, performances, method='L1', max_reject=0, threshold=None, **kargs):
     # data should be a DataFrame with an IMPULSE3600 entry
     # performances should be Series
+    # threshold can be None, a value, or a pair.  a pair gives +ve and -ve thresholds
 
     result, rejected = None, []
 
     def cost(params):
         response = calc_response(data, params)
-        measureds = calc_measured(response, performances)
-        predicteds = calc_predicted(measureds, performances)
-        return calc_cost(measureds, predicteds, method=method)
+        restricted = restrict_response(response, performances)
+        observed = calc_observed(restricted, performances)
+        return calc_cost(restricted, observed, method=method)
 
     while True:
         result = optimize.minimize(cost, params, **kargs)
         print(fmt_params(result.x))
-        if not reject: break
-        rejected.append(reject_worst_inplace(params, data, performances, method=method))
-        reject -= 1
-
-    return result, rejected
+        print(f'Currently have {len(rejected)} dropped points (max {max_reject})')
+        if len(rejected) >= max_reject:
+            return result, rejected
+        i, t = reject_worst_inplace(params, data, performances, method=method, threshold=threshold)
+        if t is None:
+            return result, rejected
+        rejected.append((i, t))
 
 
 def response_stats(df):

@@ -7,7 +7,8 @@
 DB_DIR=~/.ch2
 TMP_DIR=/tmp
 
-VER='0-27'
+SRC='0-27'
+DST='0-28'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
 DO_COPY=1
@@ -15,22 +16,20 @@ DO_DROP=1
 DO_DUMP=1
 
 
-# this section of the script copies diary and kit data across
+# this section of the script copies diary data and kit data across
 
 if ((DO_COPY)); then
-  echo "ensuring write-ahead file for $DB_DIR/database-$VER.sql is cleared"
+  echo "ensuring write-ahead file for $DB_DIR/database-$SRC.sql is cleared"
   echo "(should print 'delete')"
-  sqlite3 "$DB_DIR/database-$VER.sql" 'pragma journal_mode=delete' || { echo 'database locked?'; exit 1; }
-  echo "copying data to $TMP_DIR/copy-$VER.sql"
-  rm -f "$DB_DIR/database-$VER.sql-backup"
-  cp "$DB_DIR/database-$VER.sql" "$DB_DIR/database-$VER.sql-backup"
-  rm -f "$TMP_DIR/copy-$VER.sql"
-  cp "$DB_DIR/database-$VER.sql" "$TMP_DIR/copy-$VER.sql"
+  sqlite3 "$DB_DIR/database-$SRC.sql" 'pragma journal_mode=delete' || { echo 'database locked?'; exit 1; }
+  echo "copying data to $TMP_DIR/copy-$SRC.sql"
+  rm -f "$TMP_DIR/copy-$SRC.sql"
+  cp "$DB_DIR/database-$SRC.sql" "$TMP_DIR/copy-$SRC.sql"
 fi
 
 if ((DO_DROP)); then
-  echo "dropping activity data from $TMP_DIR/copy-$VER.sql"
-  sqlite3 "$TMP_DIR/copy-$VER.sql" <<EOF
+  echo "dropping activity data from $TMP_DIR/copy-$SRC.sql"
+  sqlite3 "$TMP_DIR/copy-$SRC.sql" <<EOF
   pragma foreign_keys = on;
   -- don't delete topic and kit data, and keep composite for next step
   delete from source where type not in (3, 9, 10, 7);
@@ -49,17 +48,15 @@ if ((DO_DROP)); then
        group by composite_component.id
     ) where target != actual
   );
-  -- remove statistic names used by constants
-  delete from statistic_name where owner = 'Constant';
 EOF
 fi
 
 if ((DO_DUMP)); then
-  echo "extracting data from $TMP_DIR/copy-$VER.sql to load into new database"
-  rm -f "$TMP_DIR/dump-$VER.sql"
+  echo "extracting data from $TMP_DIR/copy-$SRC.sql to load into new database"
+  rm -f "$TMP_DIR/dump-$SRC.sql"
   # .commands cannot be indented?!
-  sqlite3 "$TMP_DIR/copy-$VER.sql" <<EOF
-.output $TMP_DIR/dump-$VER.sql
+  sqlite3 "$TMP_DIR/copy-$SRC.sql" <<EOF
+.output $TMP_DIR/dump-$SRC.sql
 .mode insert source
 select * from source;
 .mode insert composite_source
@@ -97,22 +94,21 @@ select * from kit_model;
 EOF
 fi
 
-echo "creating new, empty database at $DB_DIR/database-$VER.sql"
+echo "creating new, empty database at $DB_DIR/database-$DST.sql"
 echo "(should print warning config message)"
-rm -f "$DB_DIR/database-$VER.sql"
+rm -f "$DB_DIR/database-$DST.sql"
 dev/ch2 no-op
 
-echo "loading data into $DB_DIR/database-$VER.sql"
-sqlite3 "$DB_DIR/database-$VER.sql" < "$TMP_DIR/dump-$VER.sql"
+echo "loading data into $DB_DIR/database-$DST.sql"
+sqlite3 "$DB_DIR/database-$DST.sql" < "$TMP_DIR/dump-$SRC.sql"
 
-# this has to come after loading data to avoid uniqueness conflicts
-echo "adding default config"
+echo "adding default config to $DB_DIR/database-$DST.sql"
 dev/ch2 --dev config default --no-diary
 
 
 # you almost certainly want to change the following details
 
-echo "adding personal constants to $DB_DIR/database-$VER.sql"
+echo "adding personal constants to $DB_DIR/database-$DST.sql"
 dev/ch2 --dev constants set FTHR.Bike 154
 dev/ch2 --dev constants set FTHR.Walk 154
 dev/ch2 --dev constants set SRTM1.Dir /home/andrew/archive/srtm1

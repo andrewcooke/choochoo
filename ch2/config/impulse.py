@@ -31,12 +31,12 @@ def add_impulse(s, c, activity_group):
     add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(SegmentReader), impulse_ref=hr_impulse_name)
 
 
-def add_responses(s, c, fitness=((42, 1),), fatigue=((7, 5),)):
+def add_responses(s, c, fitness=((42, 1, 1),), fatigue=((7, 1, 5),)):
 
     responses = []
     all = ActivityGroup.from_name(s, ALL)
 
-    for days, scale in fitness:
+    for days, start, scale in fitness:
         name = FITNESS_D % days
         constant = name_constant(name, all)
         responses.append(constant)
@@ -44,9 +44,9 @@ def add_responses(s, c, fitness=((42, 1),), fatigue=((7, 5),)):
                                     description=f'Data needed to calculate the FF-model fitness for {days}d - ' +
                                     'see Response enum')
         set_constant(s, fitness, dumps({'src_owner': short_cls(ImpulseCalculator),
-                                        'dest_name': name, 'tau_days': days, 'scale': scale}))
+                                        'dest_name': name, 'tau_days': days, 'start': start, 'scale': scale}))
 
-    for days, scale in fatigue:
+    for days, start, scale in fatigue:
         name = FATIGUE_D % days
         constant = name_constant(name, all)
         responses.append(constant)
@@ -54,6 +54,6 @@ def add_responses(s, c, fitness=((42, 1),), fatigue=((7, 5),)):
                                     description=f'Data needed to calculate the FF-model fatigue for {days}d - ' +
                                     'see Response enum')
         set_constant(s, fitness, dumps({'src_owner': short_cls(ImpulseCalculator),
-                                        'dest_name': name, 'tau_days': days, 'scale': scale}))
+                                        'dest_name': name, 'tau_days': days, 'start': start, 'scale': scale}))
 
     add_statistics(s, ResponseCalculator, c, owner_in=short_cls(ImpulseCalculator), responses_ref=responses)

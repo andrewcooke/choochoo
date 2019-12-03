@@ -20,7 +20,7 @@ from ...stoats.pipeline import LoaderMixin
 
 log = getLogger(__name__)
 
-Response = namedtuple('Response', 'src_owner, dest_name, tau_days, scale')
+Response = namedtuple('Response', 'src_owner, dest_name, tau_days, start, scale')
 
 
 class ResponseCalculator(LoaderMixin, UniProcCalculator):
@@ -136,7 +136,9 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
             for response in self.responses:
                 log.info(f'Creating values for {response.dest_name}')
                 hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
-                result = calc_response(hr3600, log10(response.tau_days * 24)) * response.scale
+                params = (log10(response.tau_days * 24),
+                          log10(response.start) if response.start > 0 else 1)
+                result = calc_response(hr3600, params) * response.scale
                 loader = self._get_loader(s, add_serial=False)
                 source, sources = None, list(all_sources)
                 for time, value in result.iteritems():

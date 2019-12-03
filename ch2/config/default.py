@@ -74,8 +74,8 @@ def default(db, no_diary=False):
         # FF-model parameters
         # 7 and 42 days as for training peaks; 22 as measured via fit_ff_parameters
         # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
-        fitness = ((42, 1), (22, 2))
-        fatigue = ((7, 5),)
+        fitness = ((42, 1, 1), (22, 1, 2))
+        fatigue = ((7, 1, 5),)
 
         c = Counter()
         add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')
@@ -107,8 +107,8 @@ def default(db, no_diary=False):
         add_diary(s, MonitorDiary, c)
         # these tie-in to the constants used in add_impulse()
         add_diary(s, ResponseDiary, c,
-                  fitness=[name_constant(FITNESS_D % days, all) for (days, _) in fitness],
-                  fatigue=[name_constant(FATIGUE_D % days, all) for (days, _) in fatigue])
+                  fitness=[name_constant(FITNESS_D % days, all) for (days, _, _) in fitness],
+                  fatigue=[name_constant(FATIGUE_D % days, all) for (days, _, _) in fatigue])
         add_diary(s, ActivityDiary, c)
         add_diary(s, SegmentDiary, c)
         add_diary(s, NearbyDiary, c)
