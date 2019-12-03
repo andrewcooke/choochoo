@@ -72,9 +72,11 @@ def default(db, no_diary=False):
         # statistics pipeline (called to calculate missing statistics)
 
         # FF-model parameters
-        # 7 and 42 days as for training peaks; 22 as measured via fit_ff_parameters
+        # 7 and 42 days as for training peaks
         # https://www.trainingpeaks.com/blog/the-science-of-the-performance-manager/
-        fitness = ((42, 1, 1), (22, 1, 2))
+        # you can add further values as determined from your own data
+        # https://andrewcooke.github.io/choochoo/ff-fitting
+        fitness = ((42, 1, 1),)
         fatigue = ((7, 1, 5),)
 
         c = Counter()

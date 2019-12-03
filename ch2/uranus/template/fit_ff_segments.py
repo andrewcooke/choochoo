@@ -115,8 +115,6 @@ def fit_ff_segments(group, *segment_names):
     
     Adjust tol according to the 'fun' value in the result (tol is the tolerance in that value).
     
-    We need to fit period before start to get good convergence.
-    
     Note how the period (printed, in hours) varies as points are rejected.
     '''
 
@@ -124,8 +122,9 @@ def fit_ff_segments(group, *segment_names):
                                      method='L1', tol=0.01,
                                      max_reject=n_performances // 2, threshold=(2, 0.2))
     print(result)
-    print(fmt_params(result.x))
-    result, rejected = fit_ff_params(hr3600, (result.x[0], 0), copy_of_performances(),
+    plot_params(result.x, rejected=rejected)
+
+    result, rejected = fit_ff_params(hr3600, (initial_period, 0), copy_of_performances(),
                                      method='L1', tol=0.01,
                                      max_reject=n_performances // 2, threshold=(2, 0.2))
     print(result)
@@ -135,7 +134,8 @@ def fit_ff_segments(group, *segment_names):
     ## Fit Model using L2
     
     Using different methods gives us some idea of how susceptible the value is to processing assumptions.
-    For me there was  lot more variation here as points were rejected.
+    
+    Note that the thresholds change for the L2 norm.
     '''
 
     initial_period = log10(42 * 24)
@@ -143,8 +143,9 @@ def fit_ff_segments(group, *segment_names):
                                      method='L2', tol=0.01,
                                      max_reject=n_performances // 2, threshold=(500, 50))
     print(result)
-    print(fmt_params(result.x))
-    result, rejected = fit_ff_params(hr3600, (result.x[0], 0), copy_of_performances(),
+    plot_params(result.x, rejected=rejected)
+
+    result, rejected = fit_ff_params(hr3600, (initial_period, 0), copy_of_performances(),
                                      method='L2', tol=0.01,
                                      max_reject=n_performances // 2, threshold=(500, 50))
     print(result)
