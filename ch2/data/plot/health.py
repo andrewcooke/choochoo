@@ -1,14 +1,15 @@
+
 from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool, LinearAxis
 from bokeh.plotting import figure
 
-from .line import multi_dot_plot, dot_plotter, comb_plotter
+from .line import multi_dot_plot, dot_plotter, comb_plotter, DEFAULT_BACKEND
 from .utils import make_range, evenly_spaced_hues, tooltip
 from ..frame import related_statistics
 from ...stoats.names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME, _slash, \
     H, KM, ACTIVITY_GROUP
 
 
-def std_distance_time_plot(nx, ny, source, x_range=None):
+def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_BACKEND):
     groups = list(related_statistics(source, ACTIVE_TIME))
     if not groups:
         # original monochrome plot
@@ -24,7 +25,7 @@ def std_distance_time_plot(nx, ny, source, x_range=None):
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, ACTIVITY_GROUP, LOCAL_TIME)],
                        names=['with_hover'])]
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools)
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools)
     f.yaxis.axis_label = f'lines - {ACTIVE_TIME_H}'
     f.y_range = time_y_range
     f.extra_y_ranges = {ACTIVE_DISTANCE: distance_y_range}

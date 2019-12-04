@@ -16,6 +16,8 @@ from ...stoats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DI
     SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, COLOR
 
 STAMEN_TERRAIN = tile_providers.get_provider(tile_providers.Vendors.STAMEN_TERRAIN)
+DEFAULT_BACKEND = 'webgl'
+MAP_BACKEND = 'canvas'  # weird results with webgl
 
 # todo - make selection of hover tool with name='with_hover' universal
 
@@ -43,13 +45,15 @@ def add_tsid_line(f, x, y, source, color='black', line_dash='solid'):
         f.line(x=x, y=y, source=s, line_color=color, line_dash=line_dash, name='with_hover')
 
 
-def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x_range=None):
+def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x_range=None,
+                         output_backend=DEFAULT_BACKEND):
     if not present(source, x, y): return None
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (y, DISTANCE_KM, LOCAL_TIME)], names=['with_hover'])]
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if TIME in x else 'linear', tools=tools)
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
+               x_axis_type='datetime' if TIME in x else 'linear', tools=tools)
     f.y_range = make_range(source[y], lo=ylo, hi=yhi)  # was this ignored previously?
     add_tsid_line(f, x, y, source)
     if present(other, y):
@@ -82,9 +86,9 @@ def add_cum_line(f, y, source, color='black', line_dash='solid'):
     return df
 
 
-def cumulative_plot(nx, ny, y, source, other=None, ylo=None, yhi=None):
+def cumulative_plot(nx, ny, y, source, other=None, ylo=None, yhi=None, output_backend=DEFAULT_BACKEND):
     if not present(source, y): return None
-    f = figure(plot_width=nx, plot_height=ny, y_axis_location='right')
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny, y_axis_location='right')
     f.y_range = make_range(source[y], lo=ylo, hi=yhi)
     y1 = add_cum_line(f, y, source)
     if present(other, y):
@@ -113,14 +117,15 @@ def add_climbs(f, climbs, source):
                 f.circle(x=xx, y=yy, color='red', size=8, alpha=0.2)
 
 
-def histogram_plot(nx, ny, x, source, xlo=None, xhi=None, nsub=5):
+def histogram_plot(nx, ny, x, source, xlo=None, xhi=None, nsub=5, output_backend=DEFAULT_BACKEND):
     if not present(source, x): return None
     xlo, xhi = source[x].min() if xlo is None else xlo, source[x].max() if xhi is None else xhi
     bins = pd.interval_range(start=xlo, end=xhi, periods=nsub * (xhi - xlo), closed='left')
     c = [palettes.Inferno[int(xhi - xlo + 1)][int(b.left - xlo)] for b in bins]
     hrz_categorized = pd.cut(source[x], bins)
     counts = hrz_categorized.groupby(hrz_categorized).count()
-    f = figure(plot_width=nx, plot_height=ny, x_range=Range1d(start=xlo, end=xhi), x_axis_label=x)
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny, x_range=Range1d(start=xlo, end=xhi),
+               x_axis_label=x)
     f.quad(left=counts.index.categories.left, right=counts.index.categories.right, top=counts, bottom=0,
            color=c, fill_alpha=0.2)
     f.toolbar_location = None
@@ -141,13 +146,13 @@ def add_start_finish(f, source, start='green', finish='red'):
     return f.circle(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=source, color=COLOR)
 
 
-def map_plot(nx, ny, source, other=None):
+def map_plot(nx, ny, source, other=None, output_backend=MAP_BACKEND):
     tools = [PanTool(dimensions='both'),
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (LATITUDE, LONGITUDE, DISTANCE_KM, LOCAL_TIME)])]
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
-               match_aspect=True, tools=tools)
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
+               x_axis_type='mercator', y_axis_type='mercator', match_aspect=True, tools=tools)
     add_route(f, source)
     if present(other, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y):
         add_route(f, other, color='black', line_dash='dotted')
@@ -157,14 +162,14 @@ def map_plot(nx, ny, source, other=None):
     return f
 
 
-def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=None):
+def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=None, output_backend=MAP_BACKEND):
     if not present(source, z): return None
     tools = [PanTool(dimensions='both'),
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (z, DISTANCE_KM, LOCAL_TIME)])]
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
-               title=z, match_aspect=True, tools=tools)
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
+               x_axis_type='mercator', y_axis_type='mercator', title=z, match_aspect=True, tools=tools)
     tools[-1].renderers = [add_route(f, source)]
     mn, mx = source[z].min(), source[z].max()
     source['size'] = sqrt(nx * ny) * ((source[z] - mn) / (mx - mn)) ** power / 10
@@ -177,14 +182,15 @@ def map_intensity(nx, ny, source, z, power=1.0, color='red', alpha=0.01, ranges=
     return f
 
 
-def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='blue', alpha=0.01, ranges=None):
+def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='blue', alpha=0.01, ranges=None,
+                         output_backend=MAP_BACKEND):
     if not present(source, z): return None
     tools = [PanTool(dimensions='both'),
              ZoomInTool(dimensions='both'), ZoomOutTool(dimensions='both'),
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in (z, DISTANCE_KM, LOCAL_TIME)])]
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
-               title=z, match_aspect=True, tools=tools)
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
+               x_axis_type='mercator', y_axis_type='mercator', title=z, match_aspect=True, tools=tools)
     tools[-1].renderers = [add_route(f, source)]
     mn, mx = source[z].min(), source[z].max()
     scale = max(mx, -mn)
@@ -206,9 +212,9 @@ def map_intensity_signed(nx, ny, source, z, power=1.0, color='red', color_neg='b
     return f
 
 
-def map_thumbnail(nx, ny, source, sample='1min', caption=True, title=True):
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='mercator', y_axis_type='mercator',
-               match_aspect=True,
+def map_thumbnail(nx, ny, source, sample='1min', caption=True, title=True, output_backend=MAP_BACKEND):
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
+               x_axis_type='mercator', y_axis_type='mercator', match_aspect=True,
                title=(source.index[0].strftime('%Y-%m-%d') if title else None))
     xy = source.loc[source[SPHERICAL_MERCATOR_X].notna() & source[SPHERICAL_MERCATOR_Y].notna(),
                     [SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y]].resample(sample).mean()
@@ -262,29 +268,33 @@ def bar_plotter(delta):
     return plotter
 
 
-def multi_line_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label=None, rescale=False):
+def multi_line_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label=None, rescale=False,
+                    output_backend=DEFAULT_BACKEND):
     return multi_plot(nx, ny, x, ys, source, colors, alphas=alphas, x_range=x_range, y_label=y_label, rescale=rescale,
-                      plotters=[line_plotter()])
+                      plotters=[line_plotter()], output_backend=output_backend)
 
 
-def multi_dot_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label=None, rescale=False):
+def multi_dot_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label=None, rescale=False,
+                    output_backend=DEFAULT_BACKEND):
     return multi_plot(nx, ny, x, ys, source, colors, alphas=alphas, x_range=x_range, y_label=y_label, rescale=rescale,
-                      plotters=[dot_plotter()])
+                      plotters=[dot_plotter()], output_backend=output_backend)
 
 
-def multi_bar_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label=None, rescale=False):
+def multi_bar_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label=None, rescale=False,
+                    output_backend=DEFAULT_BACKEND):
     return multi_plot(nx, ny, x, ys, source, colors, alphas=alphas, x_range=x_range, y_label=y_label, rescale=rescale,
-                      plotters=[bar_plotter(dt.timedelta(hours=20))])
+                      plotters=[bar_plotter(dt.timedelta(hours=20))], output_backend=output_backend)
 
 
 def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label=None, rescale=False,
-               plotters=None):
+               plotters=None, output_backend=DEFAULT_BACKEND):
     if not ys or not present(source, x, *ys): return None
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),
              HoverTool(tooltips=[tooltip(x) for x in ys + [LOCAL_TIME]], names=['with_hover'])]
-    f = figure(plot_width=nx, plot_height=ny, x_axis_type='datetime' if TIME in x else 'linear', tools=tools)
+    f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny,
+               x_axis_type='datetime' if TIME in x else 'linear', tools=tools)
     if y_label:
         f.yaxis.axis_label = y_label
     elif rescale:

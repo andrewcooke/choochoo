@@ -324,7 +324,6 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
 def std_health_statistics(s, *extra, start=None, finish=None):
 
     from ..stoats.calculate.monitor import MonitorCalculator
-    import pdb; pdb.set_trace()
 
     def merge_to_hour(stats, extra):
         return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),

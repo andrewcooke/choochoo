@@ -18,16 +18,6 @@ def create_elevation(s, image):
     return elevation.reshape(image.height, image.width)
 
 
-# def plot_elevation(elevation):
-#     # import pdb; pdb.set_trace()
-#     mlab.init_notebook('x3d')
-#     mlab.options.offscreen = False
-#     mlab.figure(size=(640, 800), bgcolor=(0.16, 0.28, 0.46))
-#     mlab.surf(elevation, warp_scale=0.2)
-#     mlab.show()
-    # mlab.test_plot3d()
-
-
 def add_elevation(image, elevation):
     r, g, b = extract_rgb(image)
     e = ((elevation / np.max(elevation)) * np.iinfo(r.dtype).max).astype(r.dtype)
