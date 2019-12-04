@@ -6,13 +6,6 @@ start_all=$SECONDS
 VERSION=`grep 'CH2_VERSION =' ch2/commands/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\).*/\1/"`
 VERSION=`echo $VERSION | sed -e s/\\\\./-/g`
 
-IS_DEV=`grep 'IS_DEV =' ch2/commands/args.py | sed -e "s/.*IS_DEV = \([A-Za-z]\+\).*/\1/"`
-if [ "$IS_DEV" != "False" ]; then
-    echo "error: using development version)"
-    echo "(instead, migrate from previous and update)"
-    exit 1;
-fi
-
 echo
 echo "resetting database $VERSION"
 dev/ch2 -v1 jupyter stop
