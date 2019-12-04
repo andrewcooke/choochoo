@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import count
 from ch2.commands.args import bootstrap_file, m, V, DEV, mm
 from ch2.commands.constants import constants
 from ch2.config.default import default
-from ch2.squeal.tables.constant import Constant
+from ch2.sql.tables.constant import Constant
 
 log = getLogger(__name__)
 

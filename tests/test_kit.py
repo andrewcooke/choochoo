@@ -5,7 +5,7 @@ from unittest import TestCase
 from ch2.commands.args import bootstrap_file, m, V
 from ch2.commands.kit import start, change, statistics, finish, show, undo
 from ch2.config import default
-from ch2.squeal import KitModel, KitItem, KitComponent
+from ch2.sql import KitModel, KitItem, KitComponent
 
 
 class TestKit(TestCase):

@@ -3,10 +3,10 @@ from logging import getLogger
 
 from ..commands.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
     SHOW, REMOVE, CONSTRAINT, DESCRIPTION, SINGLE, VALIDATE
-from ..squeal.tables.constant import Constant, ValidateNamedTuple
-from ..squeal.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType
-from ..squeal.types import lookup_cls
-from ..squeal.utils import add
+from ..sql.tables.constant import Constant, ValidateNamedTuple
+from ..sql.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType
+from ..sql.types import lookup_cls
+from ..sql.utils import add
 
 log = getLogger(__name__)
 

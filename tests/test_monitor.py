@@ -10,12 +10,12 @@ from ch2 import monitor
 from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.config.default import default
 from ch2.lib.date import to_time, local_date_to_time
-from ch2.squeal.tables.monitor import MonitorJournal
-from ch2.squeal.tables.pipeline import PipelineType
-from ch2.squeal.tables.statistic import StatisticJournal, StatisticName
-from ch2.stoats.calculate.monitor import MonitorCalculator
-from ch2.stoats.names import REST_HR, DAILY_STEPS
-from ch2.stoats.pipeline import run_pipeline
+from ch2.sql.tables.monitor import MonitorJournal
+from ch2.sql.tables.pipeline import PipelineType
+from ch2.sql.tables.statistic import StatisticJournal, StatisticName
+from ch2.stats.calculate.monitor import MonitorCalculator
+from ch2.stats.names import REST_HR, DAILY_STEPS
+from ch2.stats.pipeline import run_pipeline
 
 log = getLogger(__name__)
 
@@ -34,7 +34,7 @@ class TestMonitor(TestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 110)
+                self.assertEqual(n, 109)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
@@ -113,6 +113,6 @@ class TestMonitor(TestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 21)
+                self.assertEqual(n, 20)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)

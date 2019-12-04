@@ -8,27 +8,27 @@ from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
 from ..lib.schedule import Schedule
 from ..msil2a.download import MSIL2A_DIR
-from ..sortem.file import SRTM1_DIR
-from ..squeal.tables.statistic import StatisticJournalType
-from ..squeal.tables.topic import TopicJournal
-from ..squeal.types import short_cls
-from ..stoats.calculate.activity import ActivityCalculator
-from ..stoats.calculate.elevation import ElevationCalculator
-from ..stoats.calculate.kit import KitCalculator
-from ..stoats.calculate.monitor import MonitorCalculator
-from ..stoats.calculate.response import ResponseCalculator
-from ..stoats.calculate.segment import SegmentCalculator
-from ..stoats.calculate.summary import SummaryCalculator
-from ..stoats.display.activity import ActivityDiary
-from ..stoats.display.monitor import MonitorDiary
-from ..stoats.display.nearby import NearbyDiary
-from ..stoats.display.response import ResponseDiary
-from ..stoats.display.segment import SegmentDiary
-from ..stoats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
+from ..srtm.file import SRTM1_DIR
+from ..sql.tables.statistic import StatisticJournalType
+from ..sql.tables.topic import TopicJournal
+from ..sql.types import short_cls
+from ..stats.calculate.activity import ActivityCalculator
+from ..stats.calculate.elevation import ElevationCalculator
+from ..stats.calculate.kit import KitCalculator
+from ..stats.calculate.monitor import MonitorCalculator
+from ..stats.calculate.response import ResponseCalculator
+from ..stats.calculate.segment import SegmentCalculator
+from ..stats.calculate.summary import SummaryCalculator
+from ..stats.display.activity import ActivityDiary
+from ..stats.display.monitor import MonitorDiary
+from ..stats.display.nearby import NearbyDiary
+from ..stats.display.response import ResponseDiary
+from ..stats.display.segment import SegmentDiary
+from ..stats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
     RPM, FITNESS_D, FATIGUE_D, ALL, SPORT_WALKING, SPORT_SWIMMING, SPORT_RUNNING, SPORT_CYCLING
-from ..stoats.read.monitor import MonitorReader
-from ..stoats.read.segment import SegmentReader
-from ..uweird.fields.topic import Text, Float, Score0
+from ..stats.read.monitor import MonitorReader
+from ..stats.read.segment import SegmentReader
+from ..urwid.fields.topic import Text, Float, Score0
 
 log = getLogger(__name__)
 

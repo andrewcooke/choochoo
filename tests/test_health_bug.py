@@ -2,7 +2,7 @@
 from unittest import TestCase
 
 from ch2.data import session, std_health_statistics
-from ch2.stoats.names import REST_HR
+from ch2.stats.names import REST_HR
 
 
 class TestHealthBug(TestCase):

@@ -5,7 +5,7 @@ import pandas as pd
 from .heart_rate import BC_ZONES
 from ..lib.data import interpolate_freq
 from ..lib.date import to_time
-from ..stoats.names import HEART_RATE, FTHR, HR_ZONE, HR_IMPULSE_10
+from ..stats.names import HEART_RATE, FTHR, HR_ZONE, HR_IMPULSE_10
 
 
 def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=HEART_RATE, hr_zone=HR_ZONE):
@@ -66,8 +66,8 @@ def impulse_10(hr_zone_df, impulse, hr_zone=HR_ZONE):
 
 
 if __name__ == '__main__':
-    from ..squeal.database import connect
-    from ..stoats.calculate.response import HRImpulse
+    from ..sql.database import connect
+    from ..stats.calculate.response import HRImpulse
     from ..data import statistics
     _, db = connect(['-v5'])
     with db.session_context() as s:

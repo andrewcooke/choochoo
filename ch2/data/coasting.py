@@ -1,10 +1,10 @@
 
 from logging import getLogger
 
-from ch2.stoats.read.segment import SegmentReader
+from ch2.stats.read.segment import SegmentReader
 from ..lib.date import to_time
-from ..squeal import ActivityBookmark, ActivityGroup, StatisticName
-from ..squeal.database import connect
+from ..sql import ActivityBookmark, ActivityGroup, StatisticName
+from ..sql.database import connect
 
 log = getLogger(__name__)
 

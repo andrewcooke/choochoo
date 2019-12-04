@@ -7,8 +7,8 @@ from .args import SUB_COMMAND, START, FINISH, NAMES, \
     OWNER, CONSTRAINT, SCHEDULE, SOURCE_ID, STATISTIC_QUARTILES, PRINT, FORMAT, \
     CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS
 from ..data import df, statistics, statistic_quartiles
-from ..squeal import *
-from ..squeal.support import Base
+from ..sql import *
+from ..sql.support import Base
 
 # to stop the import * from being deleted
 StatisticName

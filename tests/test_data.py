@@ -6,8 +6,8 @@ from unittest import TestCase
 
 from ch2.commands.args import bootstrap_file, m, V
 from ch2.lib.data import MutableAttr, reftuple
-from ch2.squeal import StatisticJournalFloat, StatisticJournalText, Source
-from ch2.squeal.tables.source import SourceType
+from ch2.sql import StatisticJournalFloat, StatisticJournalText, Source
+from ch2.sql.tables.source import SourceType
 
 
 class TestData(TestCase):
@@ -41,6 +41,6 @@ class TestData(TestCase):
             self.assertEqual(p.bike['mass'], 42)
 
     def test_types(self):
-        from ch2.stoats.calculate.power import Power, Bike
-        self.assertEqual(Bike.__module__, 'ch2.stoats.calculate.power')
-        self.assertEqual(Power.__module__, 'ch2.stoats.calculate.power')
+        from ch2.stats.calculate.power import Power, Bike
+        self.assertEqual(Bike.__module__, 'ch2.stats.calculate.power')
+        self.assertEqual(Power.__module__, 'ch2.stats.calculate.power')

@@ -7,7 +7,7 @@ from ch2.config.default import default
 from ch2.config.plan.british import twelve_week_improver
 from ch2.config.plan.exponential import exponential_time, exponential_distance
 from ch2.lib.date import to_date, add_date
-from ch2.squeal.tables.topic import Topic
+from ch2.sql.tables.topic import Topic
 
 
 class TestPlan(TestCase):

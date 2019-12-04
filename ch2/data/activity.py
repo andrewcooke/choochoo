@@ -6,7 +6,7 @@ import pandas as pd
 from math import atan2, cos, sin, sqrt, pi
 
 from .frame import linear_resample, median_dt, present, linear_resample_time
-from ..stoats.names import HEART_RATE, MAX_MED_HR_M, POWER_ESTIMATE, ACTIVE_DISTANCE, ACTIVE_TIME, \
+from ..stats.names import HEART_RATE, MAX_MED_HR_M, POWER_ESTIMATE, ACTIVE_DISTANCE, ACTIVE_TIME, \
     ACTIVE_SPEED, TIMESPAN_ID, TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, HR_ZONE, \
     MAX_MEAN_PE_M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DIRECTION, ASPECT_RATIO
 

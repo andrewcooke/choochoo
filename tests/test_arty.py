@@ -4,8 +4,8 @@ from random import uniform, gauss, seed, randrange
 from time import time
 from unittest import TestCase
 
-from ch2.arty.spherical import Global
-from ch2.arty.tree import CLRTree, MatchType, CQRTree, CERTree, LQRTree
+from ch2.rtree.spherical import Global
+from ch2.rtree.tree import CLRTree, MatchType, CQRTree, CERTree, LQRTree
 
 
 class TestArty(TestCase):
@@ -317,7 +317,7 @@ class TestArty(TestCase):
     def test_python(self):
 
         # for other-projects.md
-        from ch2.arty import CQRTree, MatchType
+        from ch2.rtree import CQRTree, MatchType
 
         tree = self.run_python(CQRTree())
         self.assertEqual(list(tree[[(0, 0)]]), ['alice'])

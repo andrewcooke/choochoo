@@ -6,17 +6,17 @@ from sys import stdout
 from numpy import median
 
 from ch2.lib import is_local_time
-from ch2.squeal import PipelineType
-from ch2.squeal.types import long_cls
-from ch2.stoats.calculate.kit import KitCalculator
-from ch2.stoats.pipeline import run_pipeline
+from ch2.sql import PipelineType
+from ch2.sql.types import long_cls
+from ch2.stats.calculate.kit import KitCalculator
+from ch2.stats.pipeline import run_pipeline
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
     START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
     groupby_tuple
-from ..squeal.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
-from ..squeal.tables.source import Composite
-from ..stoats.names import ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME
+from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
+from ..sql.tables.source import Composite
+from ..stats.names import ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME
 
 log = getLogger(__name__)
 

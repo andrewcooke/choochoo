@@ -3,15 +3,15 @@ from json import dumps
 from logging import getLogger
 from re import sub
 
-from ..squeal import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
+from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     Topic, TopicField, Dummy
-from ..squeal.database import connect
-from ..squeal.tables.constant import ValidateNamedTuple
-from ..squeal.types import long_cls, short_cls
-from ..stoats.calculate.activity import ActivityCalculator
-from ..stoats.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
-from ..stoats.names import DUMMY
-from ..uweird.fields.topic import Integer
+from ..sql.database import connect
+from ..sql.tables.constant import ValidateNamedTuple
+from ..sql.types import long_cls, short_cls
+from ..stats.calculate.activity import ActivityCalculator
+from ..stats.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
+from ..stats.names import DUMMY
+from ..urwid.fields.topic import Integer
 
 log = getLogger(__name__)
 NEARBY_CNAME = 'Nearby'
@@ -60,7 +60,7 @@ def add(s, instance):
     You likely don't need this - see the more specific helpers below.
 
     The instance can of any class that subclasses the Field class from SQLAlchemy.
-    In practice, that means most classes in the ch2.squeal.tables mdoule.
+    In practice, that means most classes in the ch2.sql.tables mdoule.
     However, only some classes make sense in the context of a configuration, and
     more specific helpers probably already exist for those.
     '''
@@ -74,7 +74,7 @@ def add_statistics(s, cls, sort, **kargs):
 
     The pipeline classes are invoked when the diary is modified and when activities are added.
     They detect new data and calculate appropriate statistics.
-    See the ch2.stoats module for examples.
+    See the ch2.stats module for examples.
 
     The sort argument fixes the order in which the classes are instantiated and called and can
     be an integer or a callable (that returns an integer) like Counter above.
@@ -90,7 +90,7 @@ def add_diary(s, cls, sort, **kargs):
 
     The pipeline classes are invoked when the diary is displyed.
     They generate display classes for activity statistics (and similar)
-    See the ch2.stoats module for examples.
+    See the ch2.stats module for examples.
 
     The sort argument fixes the order in which the classes are instantiated and called and can
     be an integer or a callable (that returns an integer) like Counter above.

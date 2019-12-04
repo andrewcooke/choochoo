@@ -4,7 +4,7 @@ from time import sleep
 
 from .args import DIR, USER, PASS, DATE, FORCE
 from ..fit.download.connect import GarminConnect
-from ..stoats.read.monitor import missing_dates
+from ..stats.read.monitor import missing_dates
 
 log = getLogger(__name__)
 

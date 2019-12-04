@@ -2,8 +2,8 @@
 from math import exp
 
 from ..lib import to_time
-from ..squeal import StatisticJournal, Constant, ActivityGroup
-from ..stoats.names import FTHR
+from ..sql import StatisticJournal, Constant, ActivityGroup
+from ..stats.names import FTHR
 
 # values from british cycling online calculator
 # these are upper limits

@@ -586,7 +586,7 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
 
     from ..lib.log import make_log
     from ..config.database import config
-    from ..squeal.database import Database
+    from ..sql.database import Database
 
     args = [mm(DATABASE), file.name] + list(args)
     if configurator:

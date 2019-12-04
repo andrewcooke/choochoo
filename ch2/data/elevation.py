@@ -2,7 +2,7 @@
 from scipy.interpolate import UnivariateSpline
 
 from .frame import present
-from ..stoats.names import ELEVATION, DISTANCE, RAW_ELEVATION, GRADE
+from ..stats.names import ELEVATION, DISTANCE, RAW_ELEVATION, GRADE
 
 
 def fix_elevation(df, smooth=4):

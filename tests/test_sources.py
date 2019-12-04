@@ -9,12 +9,12 @@ from sqlalchemy.sql.functions import count
 from ch2.commands.args import m, V, bootstrap_file
 from ch2.config.personal import acooke
 from ch2.lib.date import to_date
-from ch2.squeal.tables.source import Source, Interval
-from ch2.squeal.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \
+from ch2.sql.tables.source import Source, Interval
+from ch2.sql.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \
     StatisticJournalInteger, StatisticJournalType
-from ch2.squeal.tables.topic import TopicJournal, Topic
-from ch2.squeal.utils import add
-from ch2.stoats.calculate.summary import SummaryCalculator
+from ch2.sql.tables.topic import TopicJournal, Topic
+from ch2.sql.utils import add
+from ch2.stats.calculate.summary import SummaryCalculator
 
 log = getLogger(__name__)
 
@@ -115,5 +115,5 @@ class TestSources(TestCase):
                 for journal in s.query(StatisticJournal).all():
                     print(journal)
                 self.assertEqual(s.query(count(Source.id)).scalar(), 15, list(map(str, s.query(Source).all())))  # constants
-                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 9, s.query(count(StatisticJournalText.id)).scalar())
-                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 9, s.query(count(StatisticJournal.id)).scalar())
+                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 8, s.query(count(StatisticJournalText.id)).scalar())
+                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 8, s.query(count(StatisticJournal.id)).scalar())

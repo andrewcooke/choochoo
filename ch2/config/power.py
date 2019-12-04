@@ -2,7 +2,7 @@
 from json import dumps
 
 from . import name_constant, add_enum_constant, set_constant, add_statistics
-from ..stoats.calculate.power import Power, ExtendedPowerCalculator
+from ..stats.calculate.power import Power, ExtendedPowerCalculator
 
 POWER_ESTIMATE_CNAME = 'PowerEstimate'
 

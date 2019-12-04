@@ -1,8 +1,8 @@
 
 from .default import default
 from ..config.database import Counter, add_topic, add_child_topic, add_topic_field
-from ..squeal import StatisticJournalType
-from ..uweird.fields.topic import Text
+from ..sql import StatisticJournalType
+from ..urwid.fields.topic import Text
 
 
 def acooke(db):

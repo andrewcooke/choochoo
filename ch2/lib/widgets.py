@@ -6,9 +6,9 @@ from logging import getLogger
 from sqlalchemy import desc
 from urwid import ExitMainLoop
 
-from ..squeal.tables.activity import ActivityJournal
+from ..sql.tables.activity import ActivityJournal
 from .date import DAY, WEEK, MONTH, YEAR, to_time, to_date, add_date, local_date_to_time, time_to_local_date
-from ..uweird.tui.tabs import TabNode
+from ..urwid.tui.tabs import TabNode
 
 log = getLogger(__name__)
 

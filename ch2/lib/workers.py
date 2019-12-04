@@ -6,8 +6,8 @@ from time import sleep, mktime, time
 
 from psutil import pid_exists, Process
 
-from ..squeal import SystemProcess
-from ..squeal.types import short_cls
+from ..sql import SystemProcess
+from ..sql.types import short_cls
 
 log = getLogger(__name__)
 DELTA_TIME = 3

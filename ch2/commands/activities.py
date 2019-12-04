@@ -1,7 +1,7 @@
 
 from ..commands.args import PATH, FORCE, FAST, parse_pairs, CONSTANT, KARG, WORKER
-from ..squeal import PipelineType
-from ..stoats.pipeline import run_pipeline
+from ..sql import PipelineType
+from ..stats.pipeline import run_pipeline
 
 
 def activities(args, db):

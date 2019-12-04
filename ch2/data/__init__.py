@@ -11,8 +11,8 @@ from .plot import col_to_boxstats, box_plot, line_plotter, dot_plotter, bar_plot
     add_multi_line_at_index, std_distance_time_plot, add_band, get_renderer
 from .lib import chisq, fit, inplace_decay
 from .text import *
-from ..stoats.display.nearby import nearby_earlier, nearby_any_time
-from ..stoats.names import *
+from ..stats.display.nearby import nearby_earlier, nearby_any_time
+from ..stats.names import *
 
 # avoid cleaning of imports
 nearby_earlier, nearby_any_time, CLIMB_DISTANCE

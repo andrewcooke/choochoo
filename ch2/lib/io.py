@@ -8,8 +8,8 @@ from time import time
 from sqlalchemy import desc
 
 from .date import to_time
-from ..squeal.tables.fit import FileScan
-from ..squeal.utils import add
+from ..sql.tables.fit import FileScan
+from ..sql.utils import add
 
 log = getLogger(__name__)
 

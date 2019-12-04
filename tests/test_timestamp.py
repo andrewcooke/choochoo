@@ -7,9 +7,9 @@ from sqlalchemy.sql.functions import count
 
 from ch2.commands.args import bootstrap_file, m, V, mm, DEV
 from ch2.config import default, getLogger
-from ch2.squeal import Source
-from ch2.squeal.tables.timestamp import Timestamp
-from ch2.squeal.utils import add
+from ch2.sql import Source
+from ch2.sql.tables.timestamp import Timestamp
+from ch2.sql.utils import add
 
 log = getLogger(__name__)
 

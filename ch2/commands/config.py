@@ -3,7 +3,7 @@ from logging import getLogger
 
 from .args import DIARY, no, SUB_COMMAND, DEFAULT, CHECK, DATA, CONFIG, ACTIVITY_GROUPS
 from ..config import default, ActivityGroup
-from ..squeal.tables.statistic import StatisticName, StatisticJournal
+from ..sql.tables.statistic import StatisticName, StatisticJournal
 
 log = getLogger(__name__)
 

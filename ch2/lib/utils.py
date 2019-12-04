@@ -3,7 +3,7 @@ from itertools import zip_longest, groupby
 from os.path import split
 from pprint import PrettyPrinter
 
-from ..stoats.names import M, KM, PC, W
+from ..stats.names import M, KM, PC, W
 
 PALETTE_RAINBOW = [
     ('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),

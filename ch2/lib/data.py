@@ -10,7 +10,7 @@ from string import ascii_letters
 import pandas as pd
 from binascii import hexlify
 
-from ..stoats.names import BOOKMARK
+from ..stats.names import BOOKMARK
 
 log = getLogger(__name__)
 
@@ -198,7 +198,7 @@ def expand(s, text, before, vars=None, default_owner=None, default_constraint=No
     May be too much magic going on here - can return objects, values as well as strings.
     '''
 
-    from ..squeal import StatisticName, StatisticJournal
+    from ..sql import StatisticName, StatisticJournal
 
     if vars is None: vars = {}
     pattern = compile(r'(.*)\${([^}]+)}(.*)')

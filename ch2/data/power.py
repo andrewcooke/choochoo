@@ -11,8 +11,8 @@ import scipy as _sp
 from .frame import median_dt, session, activity_statistics, bookmarks
 from .lib import fit, inplace_decay
 from ..lib.data import tmp_name
-from ..stoats.names import *
-from ..stoats.names import _d, _sqr, _avg
+from ..stats.names import *
+from ..stats.names import _d, _sqr, _avg
 
 log = getLogger(__name__)
 RAD_TO_DEG = 180 / pi

@@ -4,8 +4,8 @@ from re import compile
 
 from ...lib.date import format_seconds, to_date, add_date
 from ...lib.schedule import Schedule
-from ...squeal.tables.topic import Topic
-from ...squeal.utils import ORMUtils
+from ...sql.tables.topic import Topic
+from ...sql.utils import ORMUtils
 
 
 class Builder(ORMUtils):

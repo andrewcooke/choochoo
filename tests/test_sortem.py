@@ -6,9 +6,9 @@ from unittest import TestCase
 from ch2 import constants
 from ch2.commands.args import bootstrap_file, V, m, DEV, mm
 from ch2.config import default, getLogger
-from ch2.sortem.bilinear import bilinear_elevation_from_constant
-from ch2.sortem.file import SRTM1_DIR
-from ch2.sortem.spline import spline_elevation_from_constant
+from ch2.srtm.bilinear import bilinear_elevation_from_constant
+from ch2.srtm.file import SRTM1_DIR
+from ch2.srtm.spline import spline_elevation_from_constant
 
 log = getLogger(__name__)
 ARCSEC = 1/3600

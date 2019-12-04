@@ -5,7 +5,7 @@ from sqlalchemy import select, or_, and_
 
 from .frame import _tables
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
-from ..squeal import ActivityJournal, StatisticName, StatisticJournalType
+from ..sql import ActivityJournal, StatisticName, StatisticJournalType
 
 
 def pat(regexp, trans=None):

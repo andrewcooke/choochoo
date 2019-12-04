@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql.functions import count
 
-from ch2.squeal.support import Base
+from ch2.sql.support import Base
 
 basicConfig()
 log = getLogger()

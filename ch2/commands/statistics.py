@@ -2,8 +2,8 @@
 from logging import getLogger
 
 from .args import FORCE, LIKE, FINISH, START, WORKER, parse_pairs, KARG
-from ..squeal.tables.pipeline import PipelineType
-from ..stoats.pipeline import run_pipeline
+from ..sql.tables.pipeline import PipelineType
+from ..stats.pipeline import run_pipeline
 
 log = getLogger(__name__)
 

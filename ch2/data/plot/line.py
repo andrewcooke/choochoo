@@ -12,7 +12,7 @@ from math import sqrt
 
 from .utils import tooltip, make_range
 from ..frame import present
-from ...stoats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, ELEVATION_M, CLIMB_ELEVATION, \
+from ...stats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, ELEVATION_M, CLIMB_ELEVATION, \
     SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, COLOR
 
 STAMEN_TERRAIN = tile_providers.get_provider(tile_providers.Vendors.STAMEN_TERRAIN)

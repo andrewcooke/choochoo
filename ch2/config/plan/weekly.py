@@ -4,8 +4,8 @@ from logging import getLogger
 
 from ...lib.date import to_date, format_date
 from ...lib.schedule import DOW, Schedule
-from ...squeal.tables.topic import Topic
-from ...squeal.utils import ORMUtils
+from ...sql.tables.topic import Topic
+from ...sql.utils import ORMUtils
 
 log = getLogger(__name__)
 

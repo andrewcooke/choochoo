@@ -8,10 +8,10 @@ import sqlalchemy as s
 from sqlalchemy.orm import sessionmaker
 from urwid import WidgetWrap, Pile, Edit, Filler
 
-from ch2.squeal.binders import Binder
-from ch2.squeal.support import Base
-from ch2.squeal.types import Date
-from ch2.uweird.tui.widgets import Integer
+from ch2.sql.binders import Binder
+from ch2.sql.support import Base
+from ch2.sql.types import Date
+from ch2.urwid.tui.widgets import Integer
 
 log = getLogger(__name__)
 

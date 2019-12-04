@@ -12,25 +12,25 @@ from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
-from ..squeal import PipelineType, Topic, TopicJournal
-from ..squeal.database import ActivityJournal, StatisticJournal
-from ..squeal.utils import add
-from ..stoats.display import display_pipeline
-from ..stoats.display.nearby import nearby_any_time, fmt_nearby
-from ..stoats.pipeline import run_pipeline
-from ..uranus.server import set_controller_session
-from ..uranus.template.activity_details import activity_details
-from ..uranus.template.all_activities import all_activities
-from ..uranus.template.compare_activities import compare_activities
-from ..uranus.template.health import health
-from ..uranus.template.similar_activities import similar_activities
-from ..uweird.fields import PAGE_WIDTH
-from ..uweird.fields.summary import summary_columns
-from ..uweird.tui.decorators import Border, Indent
-from ..uweird.tui.factory import Factory
-from ..uweird.tui.fixed import Fixed
-from ..uweird.tui.tabs import TabList
-from ..uweird.tui.widgets import DividedPile, ArrowMenu, SquareButton
+from ..sql import PipelineType, Topic, TopicJournal
+from ..sql.database import ActivityJournal, StatisticJournal
+from ..sql.utils import add
+from ..stats.display import display_pipeline
+from ..stats.display.nearby import nearby_any_time, fmt_nearby
+from ..stats.pipeline import run_pipeline
+from ..jupyter.server import set_controller_session
+from ..jupyter.template.activity_details import activity_details
+from ..jupyter.template.all_activities import all_activities
+from ..jupyter.template.compare_activities import compare_activities
+from ..jupyter.template.health import health
+from ..jupyter.template.similar_activities import similar_activities
+from ..urwid.fields import PAGE_WIDTH
+from ..urwid.fields.summary import summary_columns
+from ..urwid.tui.decorators import Border, Indent
+from ..urwid.tui.factory import Factory
+from ..urwid.tui.fixed import Fixed
+from ..urwid.tui.tabs import TabList
+from ..urwid.tui.widgets import DividedPile, ArrowMenu, SquareButton
 
 log = getLogger(__name__)
 

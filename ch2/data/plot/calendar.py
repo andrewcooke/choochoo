@@ -15,7 +15,7 @@ from math import pi
 from .utils import tooltip, evenly_spaced_hues
 from ...lib.data import linscale
 from ...lib.date import time_to_local_time, YMD, to_time
-from ...stoats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _d, FITNESS_D_ANY, \
+from ...stats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _d, FITNESS_D_ANY, \
     GROUP
 
 log = getLogger(__name__)

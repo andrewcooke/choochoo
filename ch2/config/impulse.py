@@ -2,12 +2,12 @@
 from json import dumps
 
 from .database import add_statistics, add_enum_constant, set_constant, name_constant
-from ..squeal import ActivityGroup
-from ..squeal.types import short_cls
-from ..stoats.calculate.impulse import HRImpulse, ImpulseCalculator
-from ..stoats.calculate.response import Response, ResponseCalculator
-from ..stoats.names import FITNESS_D, FATIGUE_D, ALL
-from ..stoats.read.segment import SegmentReader
+from ..sql import ActivityGroup
+from ..sql.types import short_cls
+from ..stats.calculate.impulse import HRImpulse, ImpulseCalculator
+from ..stats.calculate.response import Response, ResponseCalculator
+from ..stats.names import FITNESS_D, FATIGUE_D, ALL
+from ..stats.read.segment import SegmentReader
 
 
 def add_impulse(s, c, activity_group):

@@ -39,9 +39,9 @@ from .commands.test_schedule import test_schedule
 from .commands.unlock import unlock
 from .lib.io import tui
 from .lib.log import make_log, log_current_exception
-from .squeal.database import Database
-from .squeal import SystemConstant
-from .uranus.server import start_controller
+from .sql.database import Database
+from .sql import SystemConstant
+from .jupyter.server import start_controller
 
 log = getLogger(__name__)
 

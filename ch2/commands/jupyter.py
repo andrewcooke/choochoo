@@ -4,9 +4,9 @@ from logging import getLogger
 from pkgutil import iter_modules
 
 from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS
-from ..squeal import SystemProcess
-from ..uranus import template
-from ..uranus.server import JupyterServer, get_controller, set_controller_session
+from ..sql import SystemProcess
+from ..jupyter import template
+from ..jupyter.server import JupyterServer, get_controller, set_controller_session
 
 log = getLogger(__name__)
 

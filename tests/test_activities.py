@@ -9,11 +9,11 @@ from ch2.commands.activities import activities
 from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.commands.constants import constants
 from ch2.config.default import default
-from ch2.squeal.tables.activity import ActivityJournal
-from ch2.squeal.tables.pipeline import PipelineType
-from ch2.squeal.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
-from ch2.stoats.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
-from ch2.stoats.pipeline import run_pipeline
+from ch2.sql.tables.activity import ActivityJournal
+from ch2.sql.tables.pipeline import PipelineType
+from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
+from ch2.stats.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
+from ch2.stats.pipeline import run_pipeline
 
 
 class TestActivities(TestCase):
@@ -56,7 +56,7 @@ class TestActivities(TestCase):
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(56343, n)
+                self.assertEqual(45941, n)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 
