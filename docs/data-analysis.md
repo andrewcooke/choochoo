@@ -155,14 +155,14 @@ SQL to make conditional queries across multiple tables of data.
 Our basic tools are:
 
   * The [Data Model](data-model), which is embodied in the [table
-    classes](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables)
+    classes](https://github.com/andrewcooke/choochoo/tree/master/ch2/sql/tables)
   * The [SQLAlchemy Query
     API](http://docs.sqlalchemy.org/en/latest/orm/query.html)
 
 Using these we can, for example, see all **StatisticName** instances
 that have units of "bpm":
 
-    In[] > from ch2.squeal import *
+    In[] > from ch2.sql import *
            names = s.query(StatisticName). \
                      filter(StatisticName.units == 'bpm').all()
            str(names[0])    
@@ -199,7 +199,7 @@ Helper routines are available in
 
   * Find where the data are stored in the database:
     * consult the [Data Model](data-model) document;
-    * examine the [table classes](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables);
+    * examine the [table classes](https://github.com/andrewcooke/choochoo/tree/master/ch2/sql/tables);
     * look at similar work in the `notebooks` directory;
     * explore the database using the `sqlite` client.
     
@@ -218,7 +218,7 @@ All Choochoo's data (all *your* data) are stored in an SQLite3 file at
 `~/.ch2/database-version.sql` (the version is numeric).  So you can
 also use any programming language with an SQLite binding (for Python
 the
-[ch2.squeal.tables](https://github.com/andrewcooke/choochoo/tree/master/ch2/squeal/tables)
+[ch2.sql.tables](https://github.com/andrewcooke/choochoo/tree/master/ch2/sql/tables)
 package contains a [SQLAchemy](https://www.sqlalchemy.org/) ORM
 mapping).
 

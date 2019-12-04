@@ -11,7 +11,7 @@ echo "resetting database $VERSION"
 dev/ch2 -v1 jupyter stop
 sleep 3
 start_database=$SECONDS
-"./ch2/migraine/reload/$VERSION.sh"
+"./ch2/migrate/reload/$VERSION.sh"
 cp ~/.ch2/"database-$VERSION.sql" ~/.ch2/"database-$VERSION-empty.sql"
 duration=$(($SECONDS - $start_database))
 echo "reset finished $(($duration/60)) min $(($duration%60)) sec"

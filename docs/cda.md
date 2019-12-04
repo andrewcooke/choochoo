@@ -81,7 +81,7 @@ First, we need to find sections of the ride where the rider is not
 pedaling.  For this we need the cadence sensor.
 
 The SQL query
-[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/stoats/calculate/cda.py#L39)
+[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/stats/calculate/cda.py#L39)
 is intimidating, but not as complex as it looks.  It is trying to find
 start and finish points (`s` and `f`) where:
 
@@ -180,7 +180,7 @@ equal, numerically, to the average power multiplied by the time
 interval.
 
 This logic can be seen in the code
-[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/stoats/calculate/power.py).
+[here](https://github.com/andrewcooke/choochoo/blob/master/ch2/stats/calculate/power.py).
 In particular,
 
     df[POWER] = (df[DELTA_ENERGY] + df[LOSS]) / df[DELTA_TIME]
@@ -224,7 +224,7 @@ cross-reference values from elsewhere in the database.
 By default the pipeline is configured as:
 
     > sqlite3 ~/.ch2/database-version.sql "select * from pipeline where cls like '%Power%'"
-    3|0|ch2.stoats.calculate.power.ExtendedPowerCalculator|[]|{"owner_in": "[unused - data via activity_statistics]", "power": "PowerEstimate.Bike"}|20
+    3|0|ch2.stats.calculate.power.ExtendedPowerCalculator|[]|{"owner_in": "[unused - data via activity_statistics]", "power": "PowerEstimate.Bike"}|20
 
 which shows that the `power` variable references the constant
 `PowerEstimate.Bike`:
@@ -275,7 +275,7 @@ Two entries are particularly important here:
 
         > ch2 constants add --single Power.cotic \
           --description 'Bike namedtuple values to calculate power for this kit' \
-          --validate ch2.stoats.calculate.power.Bike
+          --validate ch2.stats.calculate.power.Bike
         > ch2 constants set Power.cotic '{"cda": 0.42, "crr": 0.0055, "weight": 12}'
 
 ## Summary

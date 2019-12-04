@@ -15,7 +15,7 @@ To make this less painful I try to:
 So to upgrade to a new version you probably need to do the following
 steps:
 
- * Locate the correct upgrade script in `ch2/migraine/upgrade`.  These
+ * Locate the correct upgrade script in `ch2/migrate/upgrade`.  These
    are named by version.  You can find the current version of choochoo
    by running the command `ch2 -V`.
 
@@ -35,6 +35,6 @@ return to using the previous version of the software.
 
 Sometimes it is useful to wipe the existing database and reload
 activities.  This is a similar process to upgrading (above), but uses
-the scripts in `ch2/migraine/reset` and leaves a copy of the previous
+the scripts in `ch2/migrate/reset` and leaves a copy of the previous
 database with the postfix `-backup`.
 

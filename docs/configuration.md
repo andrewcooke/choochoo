@@ -79,7 +79,7 @@ But remember that **this will also delete all your data**.
 
 Changing configuration but keeping data is difficult, but for examples
 of how to approach the problem see the migration scripts (used when
-the database schema changes) in `ch2.migraine`.
+the database schema changes) in `ch2.migrate`.
 
 ## Configuring with Python
 
@@ -154,7 +154,7 @@ In addition, we can see how these are connected to statistic
 definitions in the database:
 
     > sqlite3 /home/andrew/.ch2/database.sqlj "select * from topic_field join statistic_name on statistic_name_id = statistic_name.id where statistic_name.name == 'Medication'"
-    7|1|3|80|9|ch2.uweird.fields.topic.Text|[]|{}||9|Medication|||[cnt]|7403|1
+    7|1|3|80|9|ch2.urwid.fields.topic.Text|[]|{}||9|Medication|||[cnt]|7403|1
 
 Some of the numerical values may be different, but this shows how the
 `topic_field` table refers to `statistic_name`.  If you look at the
@@ -211,8 +211,8 @@ Then add the field:
 
     > python <<EOF
     from ch2.config.database import config, add_topic_field
-    from ch2.squeal.tables.topic import Topic
-    from ch2.uweird.fields import Text
+    from ch2.sql.tables.topic import Topic
+    from ch2.urwid.fields import Text
     log, db = config('-v 5')
     with db.session_context() as s:
         diary = s.query(Topic).filter(Topic.name == 'Diary').one()
