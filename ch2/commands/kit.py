@@ -13,7 +13,7 @@ from ch2.stats.pipeline import run_pipeline
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
     START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
-    groupby_tuple
+    groupby_tuple, format_date
 from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
 from ..sql.tables.source import Composite
 from ..stats.names import ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME
@@ -177,7 +177,7 @@ def show_item(s, item, date):
     models = KitModel.get_all_at(s, item, date)
     return Node(f'Item {item.name}',
                 (Node(f'Component {component}',
-                      (Leaf(f'Model {model.name}') for model in models))
+                      (Leaf(f'Model {model.name} {format_date(model.time_added(s))}') for model in models))
                  for component, models in groupby(models, key=lambda m: m.component.name)))
 
 
