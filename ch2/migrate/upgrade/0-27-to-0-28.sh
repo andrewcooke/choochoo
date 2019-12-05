@@ -48,6 +48,10 @@ if ((DO_DROP)); then
         on statistic_journal.statistic_name_id = statistic_name.id
      where statistic_journal.id is null
   );
+  -- remove statistic names used by constants
+  delete from statistic_name where owner = 'Constant';
+  -- remove puns from package names
+  update topic_field set validate_cls = replace(validate_cls, 'uweird', 'urwid');
 EOF
 fi
 

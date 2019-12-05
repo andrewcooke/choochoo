@@ -51,6 +51,8 @@ if ((DO_DROP)); then
   );
   -- remove statistic names used by constants
   delete from statistic_name where owner = 'Constant';
+  -- remove puns from package names
+  update topic_field set validate_cls = replace(validate_cls, 'uweird', 'urwid');
 EOF
 fi
 
