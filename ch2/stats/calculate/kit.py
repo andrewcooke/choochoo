@@ -9,6 +9,11 @@ log = getLogger(__name__)
 
 
 class KitCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator):
+    '''
+    Convert `-D kit=XXX` statistic set on activities during import into kit usage entries.
+
+    The kit statistic is also used directly by other code (eg to filter activities by kit).
+    '''
 
     def _run_one(self, s, time):
         ajournal = self._get_source(s, time)

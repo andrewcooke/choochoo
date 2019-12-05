@@ -11,6 +11,7 @@ from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
     ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d
+from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time
 from ...lib.utils import label
@@ -30,7 +31,7 @@ class ActivityDiary(JournalDiary):
         climbs = self.__climbs(s, ajournal, date)
         details = Pile(([] if climbs else [Divider()]) + active_date + climbs)
         yield Pile([
-            Text(f'{ajournal.name} ({ajournal.activity_group.name})'),
+            Text(self.__title(s, ajournal)),
             Indent(Columns([details, (HRZ_WIDTH + 2, zones)])),
             Divider(),
             Indent(Columns([Pile(self.__template(s, ajournal, MIN_KM_TIME_ANY, 'Min Time', r'(\d+km)', date) +
@@ -38,6 +39,17 @@ class ActivityDiary(JournalDiary):
                             Pile(self.__template(s, ajournal, MAX_MED_HR_M_ANY, 'Max Med Heart Rate', r'(\d+m)', date) +
                                  self.__template(s, ajournal, MAX_MEAN_PE_M_ANY, 'Max Mean Power Estimate', r'(\d+m)', date))]))
         ])
+
+    def __title(self, s, ajournal):
+        title = f'{ajournal.name} ({ajournal.activity_group.name}'
+        kits = s.query(StatisticJournal). \
+            join(StatisticName). \
+            filter(StatisticJournal.source == ajournal,
+                   StatisticName.name == 'kit',
+                   StatisticName.owner == SegmentReader).all()
+        if kits:
+            title += '/' + ','.join(str(kit.value) for kit in kits)
+        return title + ')'
 
     def __active_date(self, s, ajournal, date):
         body = []
@@ -47,21 +59,21 @@ class ActivityDiary(JournalDiary):
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEAN_POWER_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityCalculator, ajournal.activity_group)
             if sjournal:
-                body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
+                body.append(Text([label(f'{sjournal.statistic_name.name}: ')] + self.__format_value(sjournal, date)))
         for name in (_d(FITNESS_D_ANY), _d(FATIGUE_D_ANY)):
             for sjournal in StatisticJournal.at_like(s, ajournal.start, name, ActivityCalculator,
                                                      ajournal.activity_group):
-                body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
+                body.append(Text([label(f'{sjournal.statistic_name.name}: ')] + self.__format_value(sjournal, date)))
         for name in (ENERGY_ESTIMATE, CALORIE_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, PowerCalculator, ajournal.activity_group)
             if sjournal:
-                body.append(Text([label('%s: ' % sjournal.statistic_name.name)] + self.__format_value(sjournal, date)))
+                body.append(Text([label(f'{sjournal.statistic_name.name}: ')] + self.__format_value(sjournal, date)))
         return body
 
     def __climbs(self, s, ajournal, date):
         total, climbs = climbs_for_activity(s, ajournal)
         if total:
-            body = [Text(['Climbs ', label('Total: '), '%dm ' % total.value, *total.measures_as_text(date)])]
+            body = [Text(['Climbs ', label('Total: '), f'{total.value:.0f}m ', *total.measures_as_text(date)])]
             for climb in climbs:
                 body.append(Text(['%3sm/%.1fkm (%d%%)' %
                                   (int(climb[CLIMB_ELEVATION].value), # display int() with %s to get space padding
