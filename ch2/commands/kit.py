@@ -11,7 +11,7 @@ from ch2.sql.types import long_cls
 from ch2.stats.calculate.kit import KitCalculator
 from ch2.stats.pipeline import run_pipeline
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD
+    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
     groupby_tuple, format_date
 from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
@@ -91,6 +91,8 @@ but in general must be unique.  They can contain spaces if quoted.
                 show(s, args[NAME], args[DATE]).display(csv=args[CSV], output=output)
             elif cmd == STATISTICS:
                 statistics(s, args[NAME]).display(csv=args[CSV], output=output)
+            elif cmd == DUMP:
+                dump(s)
 
 
 def start(s, group, item, date, force):
@@ -328,3 +330,45 @@ class Leaf:
 
     def __len__(self):
         return 1
+
+
+def q(name):
+    name = str(name)
+    if ' ' in name:
+        return f"'{name}'"
+    else:
+        return name
+
+
+def qd(time):
+    return q(time_to_local_time(time))
+
+
+def dump(s):
+    print('#!/bin/sh')
+    groups = s.query(KitGroup).order_by(KitGroup.name).all()
+    for group in groups:
+        delete_group(s, group)
+    for group in groups:
+        dump_group(s, group)
+
+
+def delete_group(s, group):
+    print(f'ch2 {KIT} {DELETE} {mm(FORCE)}  {q(group.name)}')
+
+
+def dump_group(s, group):
+    for item in s.query(KitItem).filter(KitItem.group == group).all():
+        dump_item(s, item)
+
+
+def dump_item(s, item):
+    print(f'ch2 {KIT} {START} {mm(FORCE)}  {q(item.group.name)} {q(item.name)}  {qd(item.time_added(s))}')
+    for model in s.query(KitModel).filter(KitModel.item == item).all():
+        dump_model(s, item, model)
+
+
+def dump_model(s, item, model):
+    print(f'ch2 {KIT} {CHANGE} {mm(FORCE)}  {q(item.name)} {q(model.component.name)} {q(model.name)}   '
+          f'{qd(model.time_added(s))}')
+

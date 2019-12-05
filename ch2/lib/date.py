@@ -123,8 +123,15 @@ def local_date_to_time(date):
     return dt.datetime(*ptime.timetuple()[:6], tzinfo=dt.timezone.utc)
 
 
-def time_to_local_time(time, fmt=YMD_HMS):
-    return time.astimezone(tz=None).strftime(fmt)
+def time_to_local_time(time, fmt=None):
+    if fmt:
+        return time.astimezone(tz=None).strftime(fmt)
+    else:
+        local_time = time.astimezone(tz=None).strftime(YMD_HMS)
+        if local_time.endswith(' 00:00:00'):
+            return time.astimezone(tz=None).strftime(YMD)
+        else:
+            return local_time
 
 
 def local_time_to_time(time):

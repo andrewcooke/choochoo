@@ -534,6 +534,7 @@ def make_parser():
     kit_statistics.add_argument(NAME, action='store', nargs='?', help='group, item, component or model')
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
+    kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
