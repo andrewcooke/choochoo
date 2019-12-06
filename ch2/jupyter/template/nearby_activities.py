@@ -38,7 +38,7 @@ def nearby_activities(constraint):
 
     output_notebook()
     f = figure(plot_width=900, plot_height=900, x_axis_type='mercator', y_axis_type='mercator')
-    f.add_tile(STAMEN_TERRAIN, alpha=0.8)
+    f.add_tile(STAMEN_TERRAIN, alpha=0.5)
 
     for i in range(n_groups):
         source_ids = groups.loc[groups.group == i].activity_journal_id

@@ -22,7 +22,7 @@ This is how [Choochoo](index) identifies these related routes.
       * [Pipeline](#pipeline)
       * [Constants](#constants)
   * [Results](#results)
-    * [Images](#images)
+    * [Image](#image)
     * [Diary](#diary)
   * [Appendix - DIY](#appendix---diy)
 
@@ -138,45 +138,32 @@ called `Nearby.Bike`.
 
 The current value can be displayed with:
 
-    > ch2 constants Nearby.Bike
+    > ch2 constants show Nearby.Bike
     Nearby.Bike: Data needed to calculate nearby activities - see Nearby enum
-    1970-01-01 00:00:00+00:00: {"constraint": "Santiago", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": -33.4, "longitude": -70.4, "height": 10, "width": 10}
+    1970-01-01 00:00:00+00:00: {"constraint": "Santiago.Bike", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": -33.4, "longitude": -70.4, "height": 10, "width": 10}
 
 A new value can be given using `--set --force` (force is needed
 because you are overwriting an existing value).  For example:
 
-    > ch2 constants --set --force Nearby.Bike '{"constraint": "London", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": 51.5, "longitude": 0.1, "height": 10, "width": 10}'
+    > ch2 constants set --force Nearby.Bike '{"constraint": "London.Bike", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": 51.5, "longitude": 0.1, "height": 10, "width": 10}'
     INFO: Using database at /home/andrew/.ch2/database.sqln
     INFO: Checking any previous values
     INFO: Need to delete 1 ConstantJournal entries
-    INFO: Added value {"constraint": "London", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": 51.5, "longitude": 0.1, "height": 10, "width": 10} at None for Nearby.Bike
+    INFO: Added value {"constraint": "London.Bike", "activity_group": "Bike", "border": 3, "start": "1970", "finish": "2999", "latitude": 51.5, "longitude": 0.1, "height": 10, "width": 10} at None for Nearby.Bike
     WARNING: You may want to (re-)calculate statistics
 
 ## Results
 
-### Images
+### Image
 
 ![](nearby-santiago.png)
 
-Images are generated using a [Jupyter
-notebook](https://github.com/andrewcooke/choochoo/blob/master/notebooks/plot-groups.ipynb)
-with Bokeh.
+The image above is generated in Jupyter using the nearby_activities
+template:
 
-The image above shows all the groups identified in my current data.
-The number of rides in each group is given in the legend.
+    > ch2 jupyter show nearby_activities Santiago,Bike
 
-In general the grouping makes intuitive sense, although some groups
-(eg Santiago and Santiago 2) are arguably too fragmented.
-
-![](nearby-sc.png)
-
-The largest group (San Cristobal) is shown above (mid upper left in
-the first image).  These all involve the main path through the park
-(and climb) nearest my house.
-
-Some of the routes in this park double back on themselves.  This
-doubling may explain why such diverse routes are grouped together (see
-comment on double-counting above).
+In general the grouping makes intuitive sense.
 
 ### Diary
 
@@ -206,13 +193,11 @@ To generate similar plots for your own rides:
 
   * Load your FIT data:
 
-        > ch2 activities Bike path/to/*.fit
-
-    (use `Run` instead of `Bike` if these are runs).
+        > ch2 activities path/to/*.fit
 
   * Start Jupyter:
 
-        > jupyter
+        > ch2 jupyter show nearby_activities 
 
     which will automatically appear in your web browser.
 
