@@ -37,7 +37,7 @@ def default(db, no_diary=False):
 
     with db.session_context() as s:
 
-        # the following users helper functions (add_...) but you can also
+        # the following uses helper functions (add_...) but you can also
         # execute arbitrary python code, use the session, etc.
 
         add_loader_support(s)

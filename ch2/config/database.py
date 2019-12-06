@@ -274,7 +274,7 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
 
 def add_loader_support(s):
     '''
-    Add 'dummy' values used by loader.
+    Add 'dummy' value used by loader.
     '''
     dummy_source = add(s, Dummy())
     dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source,

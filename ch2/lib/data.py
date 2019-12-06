@@ -236,4 +236,4 @@ def median(list):
     if n % 2:
         return list[n//2]
     else:
-        return list[n//2] + list[n//2+1]
+        return (list[n//2] + list[n//2+1]) / 2
