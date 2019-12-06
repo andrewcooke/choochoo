@@ -110,10 +110,14 @@ def finish(s, item, date, force):
 
 
 def delete(s, name, force):
+    s.expunge_all()
     instance = get_name(s, name, classes=(KitGroup, KitItem), require=True)
     if isinstance(instance, KitGroup) and not force:
         raise Exception(f'Specify {mm(FORCE)} to delete group')
     s.delete(instance)
+    s.flush()
+    for component in s.query(KitComponent).all():
+        component.delete_if_unused(s)
     Composite.clean(s)
 
 

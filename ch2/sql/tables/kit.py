@@ -3,7 +3,7 @@ from collections import defaultdict
 from logging import getLogger
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, desc, or_
-from sqlalchemy.orm import relationship, aliased
+from sqlalchemy.orm import relationship, aliased, backref
 from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Source, SourceType, Composite, CompositeComponent
@@ -193,7 +193,7 @@ class KitItem(StatisticsMixin, Source):
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     group_id = Column(Integer, ForeignKey('kit_group.id', ondelete='cascade'), nullable=False, index=True)
-    group = relationship('KitGroup', backref='items')
+    group = relationship('KitGroup', backref=backref('items', passive_deletes=True))
     name = Column(Text, nullable=False, index=True, unique=True)
 
     __mapper_args__ = {
@@ -300,9 +300,9 @@ class KitModel(StatisticsMixin, Source):
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     item_id = Column(Integer, ForeignKey('kit_item.id', ondelete='cascade'), nullable=False, index=True)
-    item = relationship('KitItem', foreign_keys=[item_id], backref='models')
+    item = relationship('KitItem', foreign_keys=[item_id], backref=backref('models', passive_deletes=True))
     component_id = Column(Integer, ForeignKey('kit_component.id', ondelete='cascade'), nullable=False, index=True)
-    component = relationship('KitComponent', backref='models')
+    component = relationship('KitComponent', backref=backref('models', passive_deletes=True))
     name = Column(Text, nullable=False, index=True)
 
     __mapper_args__ = {
