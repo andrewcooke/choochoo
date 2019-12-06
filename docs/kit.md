@@ -5,6 +5,7 @@
 * [A More Complete Example](#a-more-complete-example)
 * [Theory - Making Things General](#theory---making-things-general)
 * [Loading Activities](#loading-activities)
+* [Service Intervals](#service-intervals)
 * [Command Reference](#command-reference)
   * [kit start](#kit-start)
   * [kit finish](#kit-finish)
@@ -14,6 +15,7 @@
   * [kit show](#kit-show)
   * [kit statistics](#kit-statistics)
   * [kit rebuild](#kit-rebuild)
+  * [kit dump](#kit-dump)
 
 ## Introduction
 
@@ -59,10 +61,10 @@ automatically:
 First, I will add my Cotic bike:
 
     > ch2 kit start bike cotic --force
-        INFO: Version 0.27.5
+        INFO: Version 0.28.beta
         INFO: Using database at database.sql
      WARNING: Forcing creation of new group (bike)
-        INFO: Started bike cotic at 2019-11-25 09:03:05
+        INFO: Started bike cotic at 2019-12-06 07:38:08
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -72,21 +74,21 @@ this, because `bike` will already be known by the system..
 Now I have a bike I am going to add some inner tubes at various dates.
 
     > ch2 kit change cotic front-tube michelin 2019-01-01 --force
-        INFO: Version 0.27.5
+        INFO: Version 0.28.beta
         INFO: Using database at database.sql
      WARNING: Forcing creation of new component (front-tube)
      WARNING: Model michelin does not match any previous entries
-        INFO: Changed cotic front-tube michelin at 2019-01-01 00:00:00
+        INFO: Changed cotic front-tube michelin at 2019-01-01
 
 
 Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
     > ch2 kit change cotic front-tube michelin 2019-03-01
-        INFO: Version 0.27.5
+        INFO: Version 0.28.beta
         INFO: Using database at database.sql
         INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube michelin at 2019-03-01 00:00:00
+        INFO: Changed cotic front-tube michelin at 2019-03-01
 
 
 Previous tubes are *retired* as new ones are added.  You don't need to
@@ -94,11 +96,11 @@ add the tubes in order - however they're added, the start and end
 times should align correctly.
 
     > ch2 kit change cotic front-tube vittoria
-        INFO: Version 0.27.5
+        INFO: Version 0.28.beta
         INFO: Using database at database.sql
      WARNING: Model vittoria does not match any previous entries
         INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube vittoria at 2019-11-25 09:03:15
+        INFO: Changed cotic front-tube vittoria at 2019-12-06 07:38:17
 
 
 That's three different inner tubes on the front.  The last uses
@@ -108,15 +110,15 @@ command line as you do the work.
 Now we can see the statistics:
 
     > ch2 kit statistics front-tube
-        INFO: Version 0.27.5
+        INFO: Version 0.28.beta
         INFO: Using database at database.sql
     Item front-tube
     +-Model michelin
     | +-Lifetime
     | | +-Count 2
-    | | +-Sum 328d 9h03m15s
-    | | +-Average 164d 4h31m37s
-    | | `-Median 164d 4h31m37s
+    | | +-Sum 339d 7h38m17s
+    | | +-Average 169d 15h49m08s
+    | | `-Median 169d 15h49m08s
     | +-Active Time
     | | +-Count 2
     | | +-Sum 0s
@@ -154,7 +156,7 @@ need to be retired explicitly.
 **Components** These (optionally) make up the things you are tracking.
 So "chain", for a bike, or "shoelaces" (maybe!) for shoes.
 
-**Models** These describe a particular component.  So the chain migbt
+**Models** These describe a particular component.  So the chain might
 be "PC1110".  At this level, components are retired automatically
 (when they are replaced).
 
@@ -165,10 +167,30 @@ simpler to use dashes.
 Also, names must be unique.  You cannot re-use the same name for
 different things.
 
+## Service Intervals
+
+You are not restricted to tracking physical items.  I also use the
+system to track service intervals for my suspension fork.  I do this
+by adding two "items" called `fork-service-lowers` and
+`fork-service-oil` (the "model" doesn't matter much - I use it to
+track the make of seals / oil used).
+
+Doing this lets me see how much time / distance the forks have between
+service intervals:
+
+    > dev/ch2 kit statistics fork-service-oil
+	INFO: Version 0.28.beta
+	INFO: Using database at /home/andrew/.ch2/database-0-28.sql
+    Item fork-service-oil
+    `-Model liquimoly
+      +-Lifetime 457d 7h35m16s
+      +-Active Time 4d 9h32m54s
+      `-Active Distance 2089.5km
+
 ## Loading Activities
 
-The software has to 'know' what kit is used in what activitiy.  This
-is done by defining the aviable `kit` when you load the activity.
+The software has to 'know' what kit is used in what activity.  This
+is done by defining the variable `kit` when you load the activity.
 
 So, for example, if all the fit files in directory `mtb-rides` are
 from rides on my Cotic bike (defined with `ch2 kit start cotic`), then
@@ -237,7 +259,7 @@ retired.
 Removes information added by [change](#kit-change).
 
 The optional date (default "now") helps identify which model to
-remove.  The previous model will be "unretired" as appropiate.
+remove.  The previous model will be "unretired" as appropriate.
 
 ### kit show
 
@@ -254,5 +276,12 @@ component or model.
 
 Rebuild the statistics associated with
 [activities](#loading-activities).
+
+### kit dump
+ 
+Generate a script that, when run, will delete the existing kit and
+then re-add it.  This can be useful to move kit from one database to
+another, or to edit the information (by editing information in the
+script)
 
 

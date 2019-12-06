@@ -51,6 +51,7 @@ ARG = 'arg'
 BORDER = 'border'
 CHANGE = 'change'
 CHECK = 'check'
+CMD = 'cmd'
 COMPACT = 'compact'
 COMPONENT = 'component'
 CONSTRAINT = 'constraint'
@@ -535,12 +536,14 @@ def make_parser():
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
     kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
+    kit_dump.add_argument(mm(CMD), action='store', help='command to use instead of ch2')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file(s)')
+    # todo - is dest needed here and below?
     monitor.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE', dest=KARG,
                          help='keyword argument to be passed to the pipelines (can be repeated)')
     monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,

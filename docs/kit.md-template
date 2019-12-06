@@ -5,6 +5,7 @@
 * [A More Complete Example](#a-more-complete-example)
 * [Theory - Making Things General](#theory---making-things-general)
 * [Loading Activities](#loading-activities)
+* [Service Intervals](#service-intervals)
 * [Command Reference](#command-reference)
   * [kit start](#kit-start)
   * [kit finish](#kit-finish)
@@ -14,6 +15,7 @@
   * [kit show](#kit-show)
   * [kit statistics](#kit-statistics)
   * [kit rebuild](#kit-rebuild)
+  * [kit dump](#kit-dump)
 
 ## Introduction
 
@@ -137,7 +139,7 @@ need to be retired explicitly.
 **Components** These (optionally) make up the things you are tracking.
 So "chain", for a bike, or "shoelaces" (maybe!) for shoes.
 
-**Models** These describe a particular component.  So the chain migbt
+**Models** These describe a particular component.  So the chain might
 be "PC1110".  At this level, components are retired automatically
 (when they are replaced).
 
@@ -148,10 +150,30 @@ simpler to use dashes.
 Also, names must be unique.  You cannot re-use the same name for
 different things.
 
+## Service Intervals
+
+You are not restricted to tracking physical items.  I also use the
+system to track service intervals for my suspension fork.  I do this
+by adding two "items" called `fork-service-lowers` and
+`fork-service-oil` (the "model" doesn't matter much - I use it to
+track the make of seals / oil used).
+
+Doing this lets me see how much time / distance the forks have between
+service intervals:
+
+    > dev/ch2 kit statistics fork-service-oil
+	INFO: Version 0.28.beta
+	INFO: Using database at /home/andrew/.ch2/database-0-28.sql
+    Item fork-service-oil
+    `-Model liquimoly
+      +-Lifetime 457d 7h35m16s
+      +-Active Time 4d 9h32m54s
+      `-Active Distance 2089.5km
+
 ## Loading Activities
 
-The software has to 'know' what kit is used in what activitiy.  This
-is done by defining the aviable `kit` when you load the activity.
+The software has to 'know' what kit is used in what activity.  This
+is done by defining the variable `kit` when you load the activity.
 
 So, for example, if all the fit files in directory `mtb-rides` are
 from rides on my Cotic bike (defined with `ch2 kit start cotic`), then
@@ -220,7 +242,7 @@ retired.
 Removes information added by [change](#kit-change).
 
 The optional date (default "now") helps identify which model to
-remove.  The previous model will be "unretired" as appropiate.
+remove.  The previous model will be "unretired" as appropriate.
 
 ### kit show
 
@@ -237,3 +259,10 @@ component or model.
 
 Rebuild the statistics associated with
 [activities](#loading-activities).
+
+### kit dump
+ 
+Generate a script that, when run, will delete the existing kit and
+then re-add it.  This can be useful to move kit from one database to
+another, or to edit the information (by editing information in the
+script)
