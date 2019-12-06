@@ -1,6 +1,9 @@
 #!/bin/sh
 dev/ch2 kit delete --force  bike
 dev/ch2 kit start --force  bike cotic  2016-09-27
+dev/ch2 kit change --force  cotic fork rs-sid  2018-09-05
+dev/ch2 kit change --force  cotic fork-service-lowers rs  2018-09-05
+dev/ch2 kit change --force  cotic fork-service-oil rs  2018-09-05
 dev/ch2 kit change --force  cotic chain pc1110   2019-10-11
 dev/ch2 kit start --force  bike bowman  2019-11-01
 dev/ch2 kit change --force  bowman front-wheel carbonfan   2019-11-01
