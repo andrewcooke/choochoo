@@ -21,7 +21,7 @@ class SourceType(IntEnum):
     SOURCE = 0
     INTERVAL = 1
     ACTIVITY = 2
-    TOPIC = 3
+    DIARY_TOPIC = 3
     CONSTANT = 4
     MONITOR = 5
     SEGMENT = 6

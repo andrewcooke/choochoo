@@ -91,7 +91,7 @@ class DiaryTopicJournal(Source):
     date = Column(Date, nullable=False, index=True)
 
     __mapper_args__ = {
-        'polymorphic_identity': SourceType.TOPIC
+        'polymorphic_identity': SourceType.DIARY_TOPIC
     }
 
     def populate(self, s):
