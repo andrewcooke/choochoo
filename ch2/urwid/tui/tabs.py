@@ -272,7 +272,7 @@ class TabNode(FocusWrap):
                     self.__focus[widget] = widget
                     widget.discover(self.__root, path=path)
                 else:
-                    self.__focus[widget] = Focus(path, log)
+                    self.__focus[widget] = Focus(path)
             else:
                 stack.append((widget, path))
 

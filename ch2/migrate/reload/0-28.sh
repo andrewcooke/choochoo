@@ -32,6 +32,14 @@ if ((DO_DROP)); then
   echo "dropping activity data from $TMP_DIR/copy-$VER.sql"
   sqlite3 "$TMP_DIR/copy-$VER.sql" <<EOF
   pragma foreign_keys = on;
+  -- don't delete topic and kit data, and keep composite for next step
+  delete from source where type not in (3, 9, 10, 7);
+  delete from statistic_name where id in (
+    select statistic_name.id from statistic_name
+      left outer join statistic_journal
+        on statistic_journal.statistic_name_id = statistic_name.id
+     where statistic_journal.id is null
+  );
   -- clean composite data
   delete from source where id in (
     select id from (
@@ -41,13 +49,8 @@ if ((DO_DROP)); then
        group by composite_component.id
     ) where target != actual
   );
-  -- don't delete topic and kit data, and keep composite for next step
-  delete from source where type not in (3, 9, 10, 7);
-  delete from statistic_name where id in (
-    select statistic_name.id from statistic_name
-      left outer join statistic_journal
-        on statistic_journal.statistic_name_id = statistic_name.id
-     where statistic_journal.id is null
+  delete from source where id in (
+    select id from composite_source where n_components = 0
   );
   -- remove statistic names used by constants
   delete from statistic_name where owner = 'Constant';

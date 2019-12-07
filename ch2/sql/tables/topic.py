@@ -19,19 +19,19 @@ from ...lib.schedule import Schedule
 log = getLogger(__name__)
 
 
-class Topic(Base):
+class DiaryTopic(Base):
     '''
     A topic groups together a set of fields.  At it's simplest, think of it as a title in the diary.
-    Topics can also contain child topics, giving a tree-like structure, and they are associated with
+    DiaryTopics can also contain child topics, giving a tree-like structure, and they are associated with
     a schedule, which means that may only be displayed on certain dates.
     '''
 
-    __tablename__ = 'topic'
+    __tablename__ = 'diary_topic'
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('topic.id'), nullable=True)
+    parent_id = Column(Integer, ForeignKey('diary_topic.id'), nullable=True)
     # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
-    children = relationship('Topic', backref=backref('parent', remote_side=[id]))
+    children = relationship('DiaryTopic', backref=backref('parent', remote_side=[id]))
     schedule = Column(Sched, nullable=False)
     start = Column(Date)
     finish = Column(Date)
@@ -55,19 +55,19 @@ class Topic(Base):
         self.finish = schedule.finish
 
     def __str__(self):
-        return 'Topic "%s" (%s)' % (self.name, self.schedule)
+        return 'DiaryTopic "%s" (%s)' % (self.name, self.schedule)
 
 
-class TopicField(Base):
+class DiaryTopicField(Base):
 
-    __tablename__ = 'topic_field'
+    __tablename__ = 'diary_topic_field'
 
     id = Column(Integer, primary_key=True)
-    topic_id = Column(Integer, ForeignKey('topic.id', ondelete='cascade'), nullable=False)
-    topic = relationship('Topic',
-                         backref=backref('fields', cascade='all, delete-orphan',
+    diary_topic_id = Column(Integer, ForeignKey('diary_topic.id', ondelete='cascade'), nullable=False)
+    diary_topic = relationship('DiaryTopic',
+                               backref=backref('fields', cascade='all, delete-orphan',
                                          passive_deletes=True,
-                                         order_by='TopicField.sort'))
+                                         order_by='DiaryTopicField.sort'))
     type = Column(Integer, nullable=False)  # StatisticJournalType
     sort = Column(Sort)
     statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
@@ -78,16 +78,16 @@ class TopicField(Base):
     schedule = Column(Sched, nullable=False, server_default='')
 
     def __str__(self):
-        return 'TopicField "%s"/"%s"' % (self.topic.name, self.statistic_name.name)
+        return 'DiaryTopicField "%s"/"%s"' % (self.diary_topic.name, self.statistic_name.name)
 
 
-class TopicJournal(Source):
+class DiaryTopicJournal(Source):
 
-    __tablename__ = 'topic_journal'
+    __tablename__ = 'diary_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    topic_id = Column(Integer, ForeignKey('topic.id'))
-    topic = relationship('Topic')
+    diary_topic_id = Column(Integer, ForeignKey('diary_topic.id'))
+    diary_topic = relationship('DiaryTopic')
     date = Column(Date, nullable=False, index=True)
 
     __mapper_args__ = {
@@ -100,14 +100,14 @@ class TopicJournal(Source):
         assert_attr(self, 'date')
         if self.id is None:
             s.flush([self])
-        log.debug('Populating journal for topic %s at %s' % (self.topic.name, self.date))
+        log.debug('Populating journal for topic %s at %s' % (self.diary_topic.name, self.date))
         self.statistics = {}
-        for field in self.topic.fields:
+        for field in self.diary_topic.fields:
             assert_attr(field, 'schedule')
             if field.schedule.at_location(self.date):
                 log.debug('Finding StatisticJournal for field %s' % field.statistic_name.name)
                 journal = StatisticJournal.at_date(s, self.date, field.statistic_name.name,
-                                                   field.statistic_name.owner, self.topic)
+                                                   field.statistic_name.owner, self.diary_topic)
                 if not journal:
                     journal = STATISTIC_JOURNAL_CLASSES[field.type](
                         statistic_name=field.statistic_name, source=self, time=local_date_to_time(self.date))
@@ -115,7 +115,7 @@ class TopicJournal(Source):
                 self.statistics[field] = journal
 
     def __str__(self):
-        return 'TopicJournal from %s' % self.date
+        return 'DiaryTopicJournal from %s' % self.date
 
     @classmethod
     def check_tz(cls, s):
@@ -131,7 +131,7 @@ class TopicJournal(Source):
     def __reset_timezone(cls, s):
         log.warning('Timezone has changed')
         log.warning('Recalculating times for TopicJournal entries')
-        for tj in s.query(TopicJournal).all():
+        for tj in s.query(DiaryTopicJournal).all():
             tj.time = local_date_to_time(tj.date)
         Interval.delete_all(s)
 

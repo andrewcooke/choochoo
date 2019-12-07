@@ -16,7 +16,7 @@ from ..lib.log import make_log
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
 Source,  Interval, Dummy, Composite, CompositeComponent
 ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
-Topic, TopicJournal, TopicField,
+DiaryTopic, DiaryTopicJournal, DiaryTopicField,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticMeasure
 Segment, SegmentJournal
 Pipeline
@@ -93,7 +93,7 @@ class Database:
             return not self.engine.dialect.has_table(self.engine, Source.__tablename__)
         else:
             with self.session_context() as s:
-                n_topics = s.query(count(Topic.id)).scalar()
+                n_topics = s.query(count(DiaryTopic.id)).scalar()
                 n_activities = s.query(count(ActivityGroup.id)).scalar()
                 n_statistics = s.query(count(StatisticName.id)).scalar()
             return not (n_topics + n_activities + n_statistics)

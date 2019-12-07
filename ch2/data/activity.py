@@ -6,6 +6,7 @@ import pandas as pd
 from math import atan2, cos, sin, sqrt, pi
 
 from .frame import linear_resample, median_dt, present, linear_resample_time
+from ..lib.log import log_current_exception
 from ..stats.names import HEART_RATE, MAX_MED_HR_M, POWER_ESTIMATE, ACTIVE_DISTANCE, ACTIVE_TIME, \
     ACTIVE_SPEED, TIMESPAN_ID, TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, HR_ZONE, \
     MAX_MEAN_PE_M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DIRECTION, ASPECT_RATIO
@@ -71,15 +72,19 @@ def max_mean_stats(df, params=((POWER_ESTIMATE, MAX_MEAN_PE_M),), mins=None, del
     try:
         ldf = linear_resample_time(df, dt=delta, with_timespan=True, keep_nan=True)
         for name, template in params:
-            ldf.loc[ldf[TIMESPAN_ID].isnull(), [name]] = zero
-            cumsum = ldf[name].cumsum()
-            for target in mins:
-                n = (target * 60) // delta
-                diff = cumsum.diff(periods=n).dropna()
-                if present(diff, name):
-                    stats[template % target] = diff.max() / n
+            if name in ldf.columns:
+                ldf.loc[ldf[TIMESPAN_ID].isnull(), [name]] = zero
+                cumsum = ldf[name].cumsum()
+                for target in mins:
+                    n = (target * 60) // delta
+                    diff = cumsum.diff(periods=n).dropna()
+                    if present(diff, name):
+                        stats[template % target] = diff.max() / n
+            else:
+                log.warning(f'Missing {name}')
     except Exception as e:
         log.warning(f'No Max Mean stats: {e}')
+        log_current_exception()
     return stats
 
 
@@ -114,7 +119,8 @@ def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10,
                         else:
                             stats[stat_name] = max_med
     except Exception as e:
-        log.warning(f'No Max/Med stats: {e}')
+        log.warning(f'No Max Med stats: {e}')
+        log_current_exception()
     return stats
 
 

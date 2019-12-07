@@ -12,7 +12,7 @@ from ch2.lib.date import to_date
 from ch2.sql.tables.source import Source, Interval
 from ch2.sql.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \
     StatisticJournalInteger, StatisticJournalType
-from ch2.sql.tables.topic import TopicJournal, Topic
+from ch2.sql.tables.topic import DiaryTopicJournal, DiaryTopic
 from ch2.sql.utils import add
 from ch2.stats.calculate.summary import SummaryCalculator
 
@@ -35,8 +35,8 @@ class TestSources(TestCase):
 
                 # add a diary entry
 
-                diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-                d = add(s, TopicJournal(topic=diary, date='2018-09-29'))
+                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
+                d = add(s, DiaryTopicJournal(topic=diary, date='2018-09-29'))
                 d.populate(s)
                 self.assertEqual(len(d.topic.fields), 9, list(enumerate(map(str, d.topic.fields))))
                 self.assertEqual(d.topic.fields[0].statistic_name.name, 'Notes')
@@ -51,9 +51,9 @@ class TestSources(TestCase):
 
                 # check the diary entry was persisted
 
-                diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-                d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
-                                                 TopicJournal.date == '2018-09-29').one()
+                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
+                d = s.query(DiaryTopicJournal).filter(DiaryTopicJournal.diary_topic == diary,
+                                                      DiaryTopicJournal.date == '2018-09-29').one()
                 s.flush()
                 d.populate(s)
                 self.assertEqual(len(d.topic.fields), 9, list(enumerate(map(str, d.topic.fields))))
@@ -72,7 +72,7 @@ class TestSources(TestCase):
 
                 # check the summary stats
 
-                diary = s.query(Topic).filter(Topic.name == 'Diary').one()
+                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
                 weight = s.query(StatisticJournal).join(StatisticName). \
                     filter(StatisticName.owner == diary, StatisticName.name == 'Weight').one()
                 self.assertEqual(weight.value, 64.5)
@@ -97,9 +97,9 @@ class TestSources(TestCase):
 
                 # delete the diary entry
 
-                diary = s.query(Topic).filter(Topic.name == 'Diary').one()
-                d = s.query(TopicJournal).filter(TopicJournal.topic == diary,
-                                                 TopicJournal.date == '2018-09-29').one()
+                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
+                d = s.query(DiaryTopicJournal).filter(DiaryTopicJournal.diary_topic == diary,
+                                                      DiaryTopicJournal.date == '2018-09-29').one()
                 s.delete(d)
 
             run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -108,7 +108,7 @@ class TestSources(TestCase):
 
                 # check the delete cascade
 
-                self.assertEqual(s.query(count(TopicJournal.id)).scalar(), 0)
+                self.assertEqual(s.query(count(DiaryTopicJournal.id)).scalar(), 0)
                 # this should be zero because the Intervals were automatically deleted
                 for source in s.query(Source).all():
                     print(source)

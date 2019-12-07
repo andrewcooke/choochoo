@@ -31,6 +31,8 @@ if ((DO_DROP)); then
   echo "dropping activity data from $TMP_DIR/copy-$SRC.sql"
   sqlite3 "$TMP_DIR/copy-$SRC.sql" <<EOF
   pragma foreign_keys = on;
+  -- don't delete topic and kit data, and keep composite for next step
+  delete from source where type not in (3, 9, 10, 7);
   -- clean composite data
   delete from source where id in (
     select id from (
@@ -40,8 +42,9 @@ if ((DO_DROP)); then
        group by composite_component.id
     ) where target != actual
   );
-  -- don't delete topic and kit data, and keep composite for next step
-  delete from source where type not in (3, 9, 10, 7);
+  delete from source where id in (
+    select id from composite_source where n_components = 0
+  );
   delete from statistic_name where id in (
     select statistic_name.id from statistic_name
       left outer join statistic_journal
@@ -52,6 +55,50 @@ if ((DO_DROP)); then
   delete from statistic_name where owner = 'Constant';
   -- remove puns from package names
   update topic_field set display_cls = replace(display_cls, 'uweird', 'urwid');
+  -- rename topic to diary_topic
+  create table diary_topic (
+        id integer not null,
+        parent_id integer,
+        schedule text not null,
+        start integer,
+        finish integer,
+        name text default '' not null,
+        description text default '' not null,
+        sort integer default '' not null,
+        primary key (id),
+        foreign key(parent_id) references diary_topic (id)
+  );
+  create table diary_topic_field (
+        id integer not null,
+        diary_topic_id integer not null,
+        type integer not null,
+        sort integer,
+        statistic_name_id integer not null,
+        display_cls text not null,
+        display_args text default '[]' not null,
+        display_kargs text default '{}' not null,
+        schedule text default '' not null,
+        primary key (id),
+        foreign key(diary_topic_id) references diary_topic (id) on delete cascade,
+        foreign key(statistic_name_id) references statistic_name (id) on delete cascade
+  );
+  create table diary_topic_journal (
+        id integer not null,
+        diary_topic_id integer,
+        date integer not null,
+        primary key (id),
+        foreign key(id) references source (id) on delete cascade,
+        foreign key(diary_topic_id) references diary_topic (id)
+  );
+  create index ix_diary_topic_journal_date on diary_topic_journal (date);
+  pragma foreign_keys = off;
+  insert into diary_topic select * from topic;
+  insert into diary_topic_field select * from topic_field;
+  insert into diary_topic_journal select * from topic_journal;
+  drop table topic;
+  drop table topic_field;
+  drop table topic_journal;
+  pragma foreign_keys = on;
 EOF
 fi
 
@@ -79,12 +126,12 @@ select * from statistic_journal_text;
 select * from statistic_journal_timestamp;
 .mode insert statistic_name
 select * from statistic_name;
-.mode insert topic
-select * from topic;
-.mode insert topic_field
-select * from topic_field;
-.mode insert topic_journal
-select * from topic_journal;
+.mode insert diary_topic
+select * from diary_topic;
+.mode insert diary_topic_field
+select * from diary_topic_field;
+.mode insert diary_topic_journal
+select * from diary_topic_journal;
 .mode insert segment
 select * from segment;
 .mode insert kit_group

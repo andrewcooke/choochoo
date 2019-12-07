@@ -7,7 +7,7 @@ from ch2.config.default import default
 from ch2.config.plan.british import twelve_week_improver
 from ch2.config.plan.exponential import exponential_time, exponential_distance
 from ch2.lib.date import to_date, add_date
-from ch2.sql.tables.topic import Topic
+from ch2.sql.tables.topic import DiaryTopic
 
 
 class TestPlan(TestCase):
@@ -19,7 +19,7 @@ class TestPlan(TestCase):
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
-                root = s.query(Topic).filter(Topic.parent_id == None, Topic.name == 'Plan').one()
+                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.name == 'Plan').one()
                 self.assertEqual(len(root.children), 1)
                 self.assertTrue(root.schedule)
                 self.assertEqual(root.schedule.start, to_date('2018-07-25'))
@@ -36,7 +36,7 @@ class TestPlan(TestCase):
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
-                root = s.query(Topic).filter(Topic.parent_id == None, Topic.name == 'Plan').one()
+                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.name == 'Plan').one()
                 self.assertEqual(len(root.children), 1)
                 parent = root.children[0]
                 self.assertEqual(len(parent.children), 46)
@@ -50,7 +50,7 @@ class TestPlan(TestCase):
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
-                root = s.query(Topic).filter(Topic.parent_id == None, Topic.name == 'Plan').one()
+                root = s.query(DiaryTopic).filter(DiaryTopic.parent_id == None, DiaryTopic.name == 'Plan').one()
                 self.assertEqual(len(root.children), 1)
                 parent = root.children[0]
                 self.assertEqual(len(parent.children), 14)

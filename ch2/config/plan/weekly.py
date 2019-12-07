@@ -4,7 +4,7 @@ from logging import getLogger
 
 from ...lib.date import to_date, format_date
 from ...lib.schedule import DOW, Schedule
-from ...sql.tables.topic import Topic
+from ...sql.tables.topic import DiaryTopic
 from ...sql.utils import ORMUtils
 
 log = getLogger(__name__)
@@ -47,12 +47,12 @@ class Week(Assert, ORMUtils):
         if self.__start.weekday():
             log.warning('The start day (%s) is not a Monday, so the days will be rotated appropriately',
                      DOW[self.__start.weekday()])
-        root = self._get_or_create(s, Topic, name=root)
+        root = self._get_or_create(s, DiaryTopic, name=root)
         schedule = Schedule('')
         schedule.start = self.__start
         schedule.finish = self.__start + dt.timedelta(days=7 * self.__n_weeks)
-        parent = Topic(parent=root, schedule=schedule, sort=sort,
-                       name=self.__name, description=self.__description)
+        parent = DiaryTopic(parent=root, schedule=schedule, sort=sort,
+                            name=self.__name, description=self.__description)
         s.add(parent)
         # extend root to include parent
         root.schedule = Schedule.include(root.schedule, parent.schedule)
@@ -81,9 +81,9 @@ class Day(Assert):
         schedule = Schedule('%s/w[%s]' % (format_date(date), DOW[dow]))
         schedule.start = date
         schedule.finish = date + dt.timedelta(days=7 * n_weeks)
-        child = Topic(parent=parent, schedule=schedule, name=self.__name, sort=sort)
+        child = DiaryTopic(parent=parent, schedule=schedule, name=self.__name, sort=sort)
         s.add(child)
         for week, note in enumerate(self.__notes):
-            diary = Topic(schedule=str(date + dt.timedelta(days=7 * week)), parent=child,
-                          description=note)
+            diary = DiaryTopic(schedule=str(date + dt.timedelta(days=7 * week)), parent=child,
+                               description=note)
             s.add(diary)

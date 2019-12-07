@@ -12,7 +12,7 @@ from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, em, label
 from ..lib.widgets import DateSwitcher
-from ..sql import PipelineType, Topic, TopicJournal
+from ..sql import PipelineType, DiaryTopic, DiaryTopicJournal
 from ..sql.database import ActivityJournal, StatisticJournal
 from ..sql.utils import add
 from ..stats.display import display_pipeline
@@ -69,7 +69,7 @@ Display a summary for the month / year / schedule.
         else:
             date = dt.date.today() - dt.timedelta(days=days)
     with db.session_context() as s:
-        TopicJournal.check_tz(s)
+        DiaryTopicJournal.check_tz(s)
     if schedule:
         schedule = Schedule(schedule)
         if schedule.start or schedule.finish:
@@ -110,9 +110,9 @@ class Diary(DateSwitcher):
     def _build(self, s):
         log.debug('Building diary at %s' % self._date)
         body, f = [], Factory(TabList())
-        root_topics = list(self._topics(s))
+        root_topics = list(self._diary_topics(s))
         for topic in root_topics:
-            body.append(self.__display_topic(s, f, topic))
+            body.append(self.__display_diary_topic(s, f, topic))
         for extra in self._display_pipeline(s, f):
             body.append(extra)
         for extra in self._display_gui(s, f):
@@ -124,7 +124,7 @@ class Diary(DateSwitcher):
         return body, f.tabs
 
     @abstractmethod
-    def _topics(self, s):
+    def _diary_topics(self, s):
         pass
 
     @abstractmethod
@@ -151,15 +151,15 @@ class Diary(DateSwitcher):
         footer += ['ctivity/', em('t'), 'oday']
         return footer
 
-    def __display_topic(self, s, f, topic):
-        log.debug('%s' % topic)
+    def __display_diary_topic(self, s, f, diary_topic):
+        log.debug('%s' % diary_topic)
         body, title = [], None
-        if topic.name:
-            title = Text(topic.name)
-        if topic.description:
-            body.append(Text(topic.description))
-        body += list(self._display_fields(s, f, topic))
-        body += list(self.__display_children(s, f, topic))
+        if diary_topic.name:
+            title = Text(diary_topic.name)
+        if diary_topic.description:
+            body.append(Text(diary_topic.description))
+        body += list(self._display_diary_topic_fields(s, f, diary_topic))
+        body += list(self.__display_diary_children(s, f, diary_topic))
         if not body:
             return title
         body = Indent(Pile(body))
@@ -167,18 +167,19 @@ class Diary(DateSwitcher):
             body = Pile([title, body])
         return body
 
-    def __display_children(self, s, f, topic):
-        for child in topic.children:
-            if self._filter_child(child):
-                extra = self.__display_topic(s, f, child)
+    @abstractmethod
+    def _display_diary_topic_fields(self, s, f, diary_topic):
+        pass
+
+    def __display_diary_children(self, s, f, diary_topic):
+        for child in diary_topic.children:
+            if self._filter_diary_child(child):
+                extra = self.__display_diary_topic(s, f, child)
                 if extra:
                     yield extra
 
-    def _filter_child(self, child):
+    def _filter_diary_child(self, child):
         return child.schedule.at_location(self._date)
-
-    def _display_gui(self, s, f):
-        yield from []
 
 
 class DailyDiary(Diary):
@@ -186,20 +187,20 @@ class DailyDiary(Diary):
     Render the diary at a given date.
     '''
 
-    def _topics(self, s):
-        for topic in s.query(Topic).filter(Topic.parent == None,
-                                           or_(Topic.start <= self._date, Topic.start == None),
-                                           or_(Topic.finish >= self._date, Topic.finish == None)). \
-                order_by(Topic.sort).all():
+    def _diary_topics(self, s):
+        for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,
+                                                or_(DiaryTopic.start <= self._date, DiaryTopic.start == None),
+                                                or_(DiaryTopic.finish >= self._date, DiaryTopic.finish == None)). \
+                order_by(DiaryTopic.sort).all():
             if topic.schedule.at_location(self._date):
                 yield topic
 
     def _header(self):
         return Text(self._date.strftime('%Y-%m-%d - %A'))
 
-    def _display_fields(self, s, f, topic):
+    def _display_diary_topic_fields(self, s, f, topic):
         columns, width = [], 0
-        tjournal = self.__topic_journal(s, topic)
+        tjournal = self.__diary_topic_journal(s, topic)
         tjournal.populate(s)
         for field in topic.fields:
             if field in tjournal.statistics:  # might be outside schedule
@@ -214,13 +215,13 @@ class DailyDiary(Diary):
         if width:
             yield Columns(columns)
 
-    def __topic_journal(self, s, topic):
-        tjournal = s.query(TopicJournal). \
-            filter(TopicJournal.topic == topic,
-                   TopicJournal.date == self._date).one_or_none()
-        if not tjournal:
-            tjournal = add(s, TopicJournal(topic=topic, date=self._date))
-        return tjournal
+    def __diary_topic_journal(self, s, diary_topic):
+        dtjournal = s.query(DiaryTopicJournal). \
+            filter(DiaryTopicJournal.diary_topic == diary_topic,
+                   DiaryTopicJournal.date == self._date).one_or_none()
+        if not dtjournal:
+            dtjournal = add(s, DiaryTopicJournal(diary_topic=diary_topic, date=self._date))
+        return dtjournal
 
     def _display_pipeline(self, s, f):
         yield from display_pipeline(s, f, self._date, self)
@@ -280,18 +281,18 @@ class ScheduleDiary(Diary):
     def _refine_new_date(self, date):
         return self._schedule.start_of_frame(date)
 
-    def _topics(self, s):
+    def _diary_topics(self, s):
         finish = self._schedule.next_frame(self._date)
-        return s.query(Topic).filter(Topic.parent == None,
-                                     or_(Topic.start < finish, Topic.start == None),
-                                     or_(Topic.finish >= self._date, Topic.finish == None)). \
-            order_by(Topic.sort).all()
+        return s.query(DiaryTopic).filter(DiaryTopic.parent == None,
+                                          or_(DiaryTopic.start < finish, DiaryTopic.start == None),
+                                          or_(DiaryTopic.finish >= self._date, DiaryTopic.finish == None)). \
+            order_by(DiaryTopic.sort).all()
 
-    def _filter_child(self, child):
+    def _filter_diary_child(self, child):
         finish = self._schedule.next_frame(self._date)
         return (child.start is None or child.start < finish) and (child.finish is None or child.finish > self._date)
 
-    def _display_fields(self, s, f, topic):
+    def _display_diary_topic_fields(self, s, f, topic):
         names = [field.statistic_name for field in topic.fields]
         yield from summary_columns(s, f, self._date, self._schedule, names)
 

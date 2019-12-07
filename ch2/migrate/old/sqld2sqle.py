@@ -8,7 +8,7 @@ from ch2.sql.utils import add
 from ch2.sql.tables.source import Source
 from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalText, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticName
-from ch2.sql.tables.topic import TopicJournal, Topic
+from ch2.sql.tables.topic import DiaryTopicJournal, DiaryTopic
 
 old = connect('/home/andrew/.ch2/database.sqld')
 old.row_factory = Row
@@ -28,10 +28,10 @@ def assert_empty(cls):
 
 assert_empty(Source)
 assert_empty(StatisticJournal)
-assert_empty(TopicJournal)
+assert_empty(DiaryTopicJournal)
 
 
-diary = s.query(Topic).filter(Topic.name == 'DailyDiary').one()
+diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'DailyDiary').one()
 fields = dict((field.statistic_name.name, field.statistic_name) for field in diary.fields)
 notes = fields['Notes']
 mood = fields['Mood']
@@ -43,7 +43,7 @@ meds = fields['Medication']
 
 for row in old.execute('''select date, notes, rest_heart_rate, sleep, mood, weather, medication, weight from diary''', []):
     if row['notes'] or row['mood'] or row['rest_heart_rate'] or row['weight'] or row['sleep'] or row['weather']:
-        tj = add(s, TopicJournal(time=to_time(row['date']), topic=diary))
+        tj = add(s, DiaryTopicJournal(time=to_time(row['date']), topic=diary))
         if row['notes']:
             add(s, StatisticJournalText(statistic_name=notes, source=tj, value=row['notes']))
         if row['mood']:
@@ -62,12 +62,12 @@ for row in old.execute('''select date, notes, rest_heart_rate, sleep, mood, weat
 
 def injury_notes(old_name, new_name):
     injury_id = next(old.execute('''select id from injury where name like ?''', [old_name]))[0]
-    topic = s.query(Topic).filter(Topic.name == new_name).one()
+    topic = s.query(DiaryTopic).filter(DiaryTopic.name == new_name).one()
     notes = s.query(StatisticName).filter(StatisticName.name == 'Notes', StatisticName.constraint == topic.id).one()
     for row in old.execute('''select date, notes from injury_diary where injury_id = ?''', [injury_id]):
         if row['notes']:
             # print(row['notes'], len(row['notes']))
-            tj = add(s, TopicJournal(time=to_time(row['date']), topic=topic))
+            tj = add(s, DiaryTopicJournal(time=to_time(row['date']), topic=topic))
             add(s, StatisticJournalText(statistic_name=notes, source=tj, value=row['notes']))
 
 

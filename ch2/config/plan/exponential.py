@@ -4,7 +4,7 @@ from re import compile
 
 from ...lib.date import format_seconds, to_date, add_date
 from ...lib.schedule import Schedule
-from ...sql.tables.topic import Topic
+from ...sql.tables.topic import DiaryTopic
 from ...sql.utils import ORMUtils
 
 
@@ -18,13 +18,13 @@ class Builder(ORMUtils):
 
     def create(self, db, parent='Plan', sort=10):
         with db.session_context() as s:
-            root = self._get_or_create(s, Topic, name=parent, sort=sort)
-            child = Topic(parent=root, schedule=self._spec,
-                          name=self._name, description=self._description, sort=sort)
+            root = self._get_or_create(s, DiaryTopic, name=parent, sort=sort)
+            child = DiaryTopic(parent=root, schedule=self._spec,
+                               name=self._name, description=self._description, sort=sort)
             s.add(child)
             root.schedule = Schedule.include(root.schedule, child.schedule)
             for day in self._spec.locations_from(self._spec.start):
-                s.add(Topic(parent=child, schedule=str(day), name=self._next_value()))
+                s.add(DiaryTopic(parent=child, schedule=str(day), name=self._next_value()))
 
     @abstractmethod
     def _next_value(self):

@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
-from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_topic, add_topic_field, \
+from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_diary_topic, add_diary_topic_field, \
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
@@ -10,7 +10,7 @@ from ..lib.schedule import Schedule
 from ..msil2a.download import MSIL2A_DIR
 from ..srtm.file import SRTM1_DIR
 from ..sql.tables.statistic import StatisticJournalType
-from ..sql.tables.topic import TopicJournal
+from ..sql.tables.topic import DiaryTopicJournal
 from ..sql.types import short_cls
 from ..stats.calculate.activity import ActivityCalculator
 from ..stats.calculate.elevation import ElevationCalculator
@@ -144,37 +144,37 @@ def default(db, no_diary=False):
             # a basic diary
 
             c = Counter()
-            diary = add_topic(s, 'Diary', c)
-            add_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
-                            display_cls=Text)
+            diary = add_diary_topic(s, 'Diary', c)
+            add_diary_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
+                                  display_cls=Text)
             # now provided via monitor
             # add_topic_field(s, diary, 'Rest HR', c,
             #                 units=BPM, summary='[avg]',
             #                 display_cls=Integer, lo=25, hi=75)
-            add_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,
-                            units='kg', summary='[avg],[msr]',
-                            display_cls=Float, lo=50, hi=100, dp=1)
-            add_topic_field(s, diary, 'Sleep', c, StatisticJournalType.FLOAT,
-                            units='h', summary='[avg]',
-                            display_cls=Float, lo=0, hi=24, dp=1)
-            add_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
-                            summary='[avg]',
-                            display_cls=Score0)
-            add_topic_field(s, diary, 'Nutrition', c, StatisticJournalType.TEXT,
-                            summary='[cnt]',
-                            display_cls=Text)
-            add_topic_field(s, diary, 'Soreness', c, StatisticJournalType.TEXT,
-                            summary='[cnt]',
-                            display_cls=Text)
-            add_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
-                            summary='[cnt]',
-                            display_cls=Text)
-            add_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
-                            summary='[cnt]',
-                            display_cls=Text)
-            add_topic_field(s, diary, 'Route', c, StatisticJournalType.TEXT,
-                            summary='[cnt]',
-                            display_cls=Text)
+            add_diary_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,
+                                  units='kg', summary='[avg],[msr]',
+                                  display_cls=Float, lo=50, hi=100, dp=1)
+            add_diary_topic_field(s, diary, 'Sleep', c, StatisticJournalType.FLOAT,
+                                  units='h', summary='[avg]',
+                                  display_cls=Float, lo=0, hi=24, dp=1)
+            add_diary_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
+                                  summary='[avg]',
+                                  display_cls=Score0)
+            add_diary_topic_field(s, diary, 'Nutrition', c, StatisticJournalType.TEXT,
+                                  summary='[cnt]',
+                                  display_cls=Text)
+            add_diary_topic_field(s, diary, 'Soreness', c, StatisticJournalType.TEXT,
+                                  summary='[cnt]',
+                                  display_cls=Text)
+            add_diary_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
+                                  summary='[cnt]',
+                                  display_cls=Text)
+            add_diary_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
+                                  summary='[cnt]',
+                                  display_cls=Text)
+            add_diary_topic_field(s, diary, 'Route', c, StatisticJournalType.TEXT,
+                                  summary='[cnt]',
+                                  display_cls=Text)
 
         # finally, set the TZ so that first use of the diary doesn't wipe all our intervals
-        TopicJournal.check_tz(s)
+        DiaryTopicJournal.check_tz(s)

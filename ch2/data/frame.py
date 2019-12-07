@@ -462,7 +462,7 @@ KEEP = 'keep'
 
 
 def linear_resample(df, start=None, finish=None, d=None, quantise=True):
-    log.debug(f'Linear resample with type {type(df.index)}, columns {df.columns}')
+    log.debug(f'Linear resample with index {type(df.index)}, columns {df.columns}')
     d = d or median_d(df)
     start = start or df.index.min()
     finish = finish or df.index.max()
@@ -481,7 +481,7 @@ def median_dt(df):
 
 
 def linear_resample_time(df, start=None, finish=None, dt=None, with_timespan=False, keep_nan=True, add_time=True):
-    log.debug(f'Linear resample with type {type(df.index)}, columns {df.columns}')
+    log.debug(f'Linear resample with index {type(df.index)}, columns {df.columns}')
     if with_timespan is None: with_timespan = TIMESPAN_ID in df.columns
     dt = dt or median_dt(df)
     start = start or df.index.min()
