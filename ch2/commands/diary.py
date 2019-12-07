@@ -124,6 +124,18 @@ class Diary(DateSwitcher):
         return body, f.tabs
 
     @abstractmethod
+    def _topics(self, s):
+        pass
+
+    @abstractmethod
+    def _display_pipeline(self, s, f):
+        pass
+
+    @abstractmethod
+    def _display_gui(self, s, f):
+        pass
+
+    @abstractmethod
     def _header(self):
         pass
 

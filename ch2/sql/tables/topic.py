@@ -20,6 +20,11 @@ log = getLogger(__name__)
 
 
 class Topic(Base):
+    '''
+    A topic groups together a set of fields.  At it's simplest, think of it as a title in the diary.
+    Topics can also contain child topics, giving a tree-like structure, and they are associated with
+    a schedule, which means that may only be displayed on certain dates.
+    '''
 
     __tablename__ = 'topic'
 
