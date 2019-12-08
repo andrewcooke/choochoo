@@ -102,6 +102,8 @@ if ((DO_DROP)); then
   drop table topic;
   drop table topic_field;
   drop table topic_journal;
+  update statistic_name set owner='DiaryTopic' where owner='Topic';
+  update statistic_name set "constraint"='Diary' || "constraint" where "constraint" like 'Topic%';
   pragma foreign_keys = on;
 EOF
 fi

@@ -202,7 +202,7 @@ class SimilarityCalculator(UniProcCalculator):
                         if n % delta == 0:
                             log.info('Saved %d for %s' % (n, self.nearby.constraint))
         if n % delta:
-            log.info('Wrote %d for %s' % (n, self.nearby.constraint))
+            log.info('Saved %d for %s' % (n, self.nearby.constraint))
 
 
 class NearbySimilarityDBSCAN(DBSCAN):
