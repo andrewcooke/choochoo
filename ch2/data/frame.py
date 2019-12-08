@@ -25,7 +25,7 @@ from ..stats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP, MIXED, ACTIVITY_GROUP, LO_REST_HR, \
-    HI_REST_HR
+    HI_REST_HR, _d, FATIGUE, FITNESS
 
 log = getLogger(__name__)
 
@@ -342,8 +342,10 @@ def std_health_statistics(s, *extra, start=None, finish=None):
                          check=False)
     if present(stats_2, REST_HR):
         stats = merge_to_hour(stats, stats_2)
-    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, *extra, start=start, finish=finish)
-    coallesce_groups(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
+    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, _d(FITNESS_D_ANY), _d(FATIGUE_D_ANY), *extra,
+                         start=start, finish=finish)
+    stats_3 = coallesce_groups(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
+    stats_3 = coallesce(stats_3, _d(FITNESS), _d(FATIGUE), unpack=r'({statistic} \d+d) \(([^\)]+)\)')
     stats = merge_to_hour(stats, stats_3)
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
     stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
@@ -513,7 +515,7 @@ def groups_by_time(s, start=None, finish=None):
 
 
 def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
-              unpack='{statistic}'+r' \(([^\)]+)\)', pack='{statistic} ({constraint})'):
+              unpack=r'({statistic}) \(([^\)]+)\)', pack='{statistic} ({constraint})'):
     '''
     Combine statistics with more than one constraint.
 
@@ -527,20 +529,20 @@ def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
     If two values occur at the same time they are added together.  The label is then changed to MIXED.
     '''
     for statistic in statistics:
-        if statistic not in df.columns:
-            df[statistic] = np.nan
         if constraint_label and constraint_label not in df.columns:
             df[constraint_label] = np.nan
-        for constraint in related_statistics(df, statistic, unpack=unpack):
-            column = pack.format(statistic=statistic, constraint=constraint)
+        for full_statistic, constraint in related_statistics(df, statistic, unpack=unpack):
+            if full_statistic not in df.columns:
+                df[full_statistic] = np.nan
+            column = pack.format(statistic=full_statistic, constraint=constraint)
             if constraint_label:
                 df.loc[~df[column].isna() & ~df[constraint_label].isna() & ~(df[constraint_label] == constraint),
                        constraint_label] = mixed
                 df.loc[~df[column].isna() & df[constraint_label].isna(), constraint_label] = constraint
-            df.loc[~df[statistic].isna() & ~df[column].isna(), statistic] += \
-                df.loc[~df[statistic].isna() & ~df[column].isna(), column]
-            df.loc[df[statistic].isna() & ~df[column].isna(), statistic] = \
-                df.loc[df[statistic].isna() & ~df[column].isna(), column]
+            df.loc[~df[full_statistic].isna() & ~df[column].isna(), full_statistic] += \
+                df.loc[~df[full_statistic].isna() & ~df[column].isna(), column]
+            df.loc[df[full_statistic].isna() & ~df[column].isna(), full_statistic] = \
+                df.loc[df[full_statistic].isna() & ~df[column].isna(), column]
     return df
 
 
@@ -549,15 +551,15 @@ def coallesce_groups(df, *statistics):
     As coallesce, but extract only the activity group's name (eg 'Ride').
     '''
     return coallesce(df, *statistics, constraint_label=ACTIVITY_GROUP,
-                     unpack='{statistic}'+r' \(ActivityGroup "([^\"]+)"\)',
+                     unpack=r'({statistic}) \(ActivityGroup "([^\"]+)"\)',
                      pack='{statistic} (ActivityGroup "{constraint}")')
 
 
-def related_statistics(df, statistic, unpack='{statistic}'+r' \(([^\)]+)\)'):
+def related_statistics(df, statistic, unpack=r'({statistic}) \(([^\)]+)\)'):
     rx = compile(unpack.format(statistic=statistic))
     for column in df.columns:
         m = rx.match(column)
-        if m: yield m.group(1)
+        if m: yield m.group(1), m.group(2)
 
 
 def transform(df, transformation):

@@ -6,11 +6,11 @@ from .line import multi_dot_plot, dot_plotter, comb_plotter, DEFAULT_BACKEND
 from .utils import make_range, evenly_spaced_hues, tooltip
 from ..frame import related_statistics
 from ...stats.names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME, _slash, \
-    H, KM, ACTIVITY_GROUP
+    H, KM, ACTIVITY_GROUP, like, _d, FITNESS_D_ANY, FATIGUE_D_ANY
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_BACKEND):
-    groups = list(related_statistics(source, ACTIVE_TIME))
+    groups = [group for statistic, group in related_statistics(source, ACTIVE_TIME)]
     if not groups:
         # original monochrome plot
         return multi_dot_plot(nx, ny, TIME, [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM], source,
@@ -20,11 +20,13 @@ def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_
     time_y_range = make_range(source[ACTIVE_TIME_H])
     distance_y_range = make_range(source[ACTIVE_DISTANCE_KM])
     colours = list(evenly_spaced_hues(len(groups)))
+    tooltip_names = [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, ACTIVITY_GROUP, LOCAL_TIME]
+    tooltip_names += [name for name in like(_d(FITNESS_D_ANY), source.columns) if '(' not in name]
+    tooltip_names += [name for name in like(_d(FATIGUE_D_ANY), source.columns) if '(' not in name]
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),
-             HoverTool(tooltips=[tooltip(x) for x in (ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, ACTIVITY_GROUP, LOCAL_TIME)],
-                       names=['with_hover'])]
+             HoverTool(tooltips=[tooltip(name) for name in tooltip_names], names=['with_hover'])]
     f = figure(output_backend=output_backend, plot_width=nx, plot_height=ny, x_axis_type='datetime', tools=tools)
     f.yaxis.axis_label = f'lines - {ACTIVE_TIME_H}'
     f.y_range = time_y_range
