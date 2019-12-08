@@ -5,6 +5,7 @@ from logging import getLogger
 
 from pendulum.tz import get_local_timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 
 from .source import SourceType, Source, Interval
@@ -19,25 +20,35 @@ from ...lib.schedule import Schedule
 log = getLogger(__name__)
 
 
-class DiaryTopic(Base):
+class Topic:
     '''
     A topic groups together a set of fields.  At it's simplest, think of it as a title in the diary.
-    DiaryTopics can also contain child topics, giving a tree-like structure, and they are associated with
-    a schedule, which means that may only be displayed on certain dates.
+    Topics can contain child topics, giving a tree-like structure, but relationships must be defined in
+    concrete classes.
+    '''
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False, server_default='')
+    description = Column(Text, nullable=False, server_default='')
+    sort = Column(Sort, nullable=False, server_default='0')
+
+
+class DiaryTopic(Base, Topic):
+    '''
+    DiaryTopics are associated with a schedule, which means that may only be displayed on certain dates.
     '''
 
     __tablename__ = 'diary_topic'
 
-    id = Column(Integer, primary_key=True)
     parent_id = Column(Integer, ForeignKey('diary_topic.id'), nullable=True)
-    # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
-    children = relationship('DiaryTopic', backref=backref('parent', remote_side=[id]))
     schedule = Column(Sched, nullable=False)
     start = Column(Date)
     finish = Column(Date)
-    name = Column(Text, nullable=False, server_default='')
-    description = Column(Text, nullable=False, server_default='')
-    sort = Column(Sort, nullable=False, server_default='')
+
+    @declared_attr
+    def children(cls):
+        # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
+        return relationship('DiaryTopic', backref=backref('parent', remote_side=[cls.id]))
 
     def __init__(self, id=None, parent=None, parent_id=None, schedule=None, name=None, description=None, sort=None):
         # Topic instances are only created in config.  so we intercept here to
@@ -58,27 +69,68 @@ class DiaryTopic(Base):
         return 'DiaryTopic "%s" (%s)' % (self.name, self.schedule)
 
 
-class DiaryTopicField(Base):
+class ActivityTopic(Base, Topic):
 
-    __tablename__ = 'diary_topic_field'
+    __tablename__ = 'activity_topic'
+
+    parent_id = Column(Integer, ForeignKey('activity_topic.id'), nullable=True)
+    activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=False)
+    activity_group = relationship('ActivityGroup')
+
+    @declared_attr
+    def children(cls):
+        # http://docs.sqlalchemy.org/en/latest/orm/self_referential.html
+        return relationship('ActivityTopic', backref=backref('parent', remote_side=[cls.id]))
+
+    def __str__(self):
+        return 'ActivityTopic "%s" (%s)' % (self.name, self.activity_group)
+
+
+class TopicField:
 
     id = Column(Integer, primary_key=True)
-    diary_topic_id = Column(Integer, ForeignKey('diary_topic.id', ondelete='cascade'), nullable=False)
-    diary_topic = relationship('DiaryTopic',
-                               backref=backref('fields', cascade='all, delete-orphan',
-                                         passive_deletes=True,
-                                         order_by='DiaryTopicField.sort'))
     type = Column(Integer, nullable=False)  # StatisticJournalType
-    sort = Column(Sort)
-    statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
-    statistic_name = relationship('StatisticName')
+    sort = Column(Sort, nullable=False, server_default='0')
     display_cls = Column(Cls, nullable=False)
     display_args = Column(Json, nullable=False, server_default=dumps(()))
     display_kargs = Column(Json, nullable=False, server_default=dumps({}))
+
+    @declared_attr
+    def statistic_name_id(cls):
+        return Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
+
+    @declared_attr
+    def statistic_name(cls):
+        return relationship('StatisticName')
+
+
+class DiaryTopicField(Base, TopicField):
+
+    __tablename__ = 'diary_topic_field'
+
+    diary_topic_id = Column(Integer, ForeignKey('diary_topic.id', ondelete='cascade'), nullable=False)
+    diary_topic = relationship('DiaryTopic',
+                               backref=backref('fields', cascade='all, delete-orphan',
+                                               passive_deletes=True,
+                                               order_by='DiaryTopicField.sort'))
     schedule = Column(Sched, nullable=False, server_default='')
 
     def __str__(self):
         return 'DiaryTopicField "%s"/"%s"' % (self.diary_topic.name, self.statistic_name.name)
+
+
+class ActivityTopicField(Base, TopicField):
+
+    __tablename__ = 'activity_topic_field'
+
+    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id', ondelete='cascade'), nullable=False)
+    activity_topic = relationship('ActivityTopic',
+                                  backref=backref('fields', cascade='all, delete-orphan',
+                                                  passive_deletes=True,
+                                                  order_by='ActivityTopicField.sort'))
+
+    def __str__(self):
+        return 'ActivityTopicField "%s"/"%s"' % (self.activity_topic.name, self.statistic_name.name)
 
 
 class DiaryTopicJournal(Source):

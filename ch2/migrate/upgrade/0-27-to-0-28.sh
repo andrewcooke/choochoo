@@ -12,7 +12,7 @@ DST='0-28'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
 DO_COPY=1
-DO_DROP=1
+DO_DROP=$DO_COPY  # because of topic rewrite drop requires copy
 DO_DUMP=1
 
 
@@ -57,43 +57,47 @@ if ((DO_DROP)); then
   update topic_field set display_cls = replace(display_cls, 'uweird', 'urwid');
   -- rename topic to diary_topic
   create table diary_topic (
-        id integer not null,
-        parent_id integer,
-        schedule text not null,
-        start integer,
-        finish integer,
-        name text default '' not null,
-        description text default '' not null,
-        sort integer default '' not null,
-        primary key (id),
-        foreign key(parent_id) references diary_topic (id)
+         id integer not null,
+         name text default '' not null,
+         description text default '' not null,
+         sort integer default '0' not null,
+         parent_id integer,
+         schedule text not null,
+         start integer,
+         finish integer,
+         primary key (id),
+         foreign key(parent_id) references diary_topic (id)
   );
   create table diary_topic_field (
-        id integer not null,
-        diary_topic_id integer not null,
-        type integer not null,
-        sort integer,
-        statistic_name_id integer not null,
-        display_cls text not null,
-        display_args text default '[]' not null,
-        display_kargs text default '{}' not null,
-        schedule text default '' not null,
-        primary key (id),
-        foreign key(diary_topic_id) references diary_topic (id) on delete cascade,
-        foreign key(statistic_name_id) references statistic_name (id) on delete cascade
+         id integer not null,
+         type integer not null,
+         sort integer default '0' not null,
+         display_cls text not null,
+         display_args text default '[]' not null,
+         display_kargs text default '{}' not null,
+         diary_topic_id integer not null,
+         schedule text default '' not null,
+         statistic_name_id integer not null,
+         primary key (id),
+         foreign key(diary_topic_id) references diary_topic (id) on delete cascade,
+         foreign key(statistic_name_id) references statistic_name (id) on delete cascade
   );
   create table diary_topic_journal (
-        id integer not null,
-        diary_topic_id integer,
-        date integer not null,
-        primary key (id),
-        foreign key(id) references source (id) on delete cascade,
-        foreign key(diary_topic_id) references diary_topic (id)
+         id integer not null,
+         diary_topic_id integer,
+         date integer not null,
+         primary key (id),
+         foreign key(id) references source (id) on delete cascade,
+         foreign key(diary_topic_id) references diary_topic (id)
   );
   create index ix_diary_topic_journal_date on diary_topic_journal (date);
   pragma foreign_keys = off;
-  insert into diary_topic select * from topic;
-  insert into diary_topic_field select * from topic_field;
+  insert into diary_topic (id, parent_id, schedule, start, finish, name, description, sort)
+  select id, parent_id, schedule, start, finish, name, description, sort
+    from topic;
+  insert into diary_topic_field (id, diary_topic_id, type, sort, statistic_name_id, display_cls, display_args, display_kargs, schedule)
+  select id, topic_id, type, sort, statistic_name_id, display_cls, display_args, display_kargs, schedule
+    from topic_field;
   insert into diary_topic_journal select * from topic_journal;
   drop table topic;
   drop table topic_field;
