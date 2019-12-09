@@ -2,7 +2,7 @@
 from .constraint import constrained_activities
 from .frame import df, session, statistics, statistic_quartiles, activity_statistics, std_activity_statistics, \
     std_health_statistics, nearby_activities, bookmarks, statistic_names, statistics, present, linear_resample_time, \
-    groups_by_time, coallesce, transform, drop_empty
+    groups_by_time, coallesce, transform, drop_empty, coallesce_like
 from .power import fit_power
 from .heart_rate import *
 from .plot import col_to_boxstats, box_plot, line_plotter, dot_plotter, bar_plotter, add_climbs, multi_plot, \

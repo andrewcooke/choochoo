@@ -9,6 +9,7 @@ from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool,
     ColumnDataSource
 from bokeh.plotting import figure
 from math import sqrt
+from scipy.interpolate import make_interp_spline
 
 from .utils import tooltip, make_range
 from ..frame import present
@@ -332,6 +333,13 @@ def add_band(f, x, ylo, yhi, source, color, alpha=0.3, y_range_name='default'):
                 fill_color=color, fill_alpha=alpha, line_width=1, line_color=color,
                 y_range_name=y_range_name)
     f.add_layout(band)
+
+
+# def add_curve(f, x, y, source, group_size=5, color='black', alpha=1, y_range_name='default'):
+#     source = source[[x, y]].dropna()
+#     k = len(source) // group_size
+#
+#     f.line(source[x], y, color=color, alpha=alpha, y_range_name=y_range_name)
 
 
 def htile(maps, n):

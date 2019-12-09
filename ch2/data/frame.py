@@ -345,7 +345,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, _d(FITNESS_D_ANY), _d(FATIGUE_D_ANY), *extra,
                          start=start, finish=finish)
     stats_3 = coallesce_groups(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
-    stats_3 = coallesce(stats_3, _d(FITNESS), _d(FATIGUE), unpack=r'({statistic} \d+d) \(([^\)]+)\)')
+    stats_3 = coallesce_like(stats_3, _d(FITNESS), _d(FATIGUE))
     stats = merge_to_hour(stats, stats_3)
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
     stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
@@ -546,13 +546,17 @@ def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
     return df
 
 
-def coallesce_groups(df, *statistics):
+def coallesce_groups(df, *statistics, mixed=MIXED):
     '''
     As coallesce, but extract only the activity group's name (eg 'Ride').
     '''
-    return coallesce(df, *statistics, constraint_label=ACTIVITY_GROUP,
+    return coallesce(df, *statistics, constraint_label=ACTIVITY_GROUP, mixed=mixed,
                      unpack=r'({statistic}) \(ActivityGroup "([^\"]+)"\)',
                      pack='{statistic} (ActivityGroup "{constraint}")')
+
+
+def coallesce_like(df, *statistics, **kargs):
+    return coallesce(df, *statistics, unpack=r'({statistic}.*?)\s+\(([^\)]+)\)')
 
 
 def related_statistics(df, statistic, unpack=r'({statistic}) \(([^\)]+)\)'):

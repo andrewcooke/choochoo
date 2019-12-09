@@ -55,6 +55,7 @@ def calendar():
         if present(df, TOTAL_CLIMB):
             df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0  # before interpolation
         df2 = statistics(s, FATIGUE_D_ANY, FITNESS_D_ANY)
+        df2 = coallesce_like(df2, FATIGUE, FITNESS, ACTIVE_DISTANCE, ACTIVE_TIME)
         df = left_interpolate(df1, df2)
         df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
         df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
@@ -64,7 +65,9 @@ def calendar():
         print(fatigue, fitness)
         df['FF Ratio'] = df[fatigue] / df[fitness]
 
-        calendar = Calendar(df, title='Work Done and Fatigue', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
+        calendar = Calendar(df, title='Work Done and Fatigue',
+                            not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME] +
+                                      [column for column in df.columns if '(' in column])
         calendar.background('square', fill_alpha=0, line_alpha=1, color='lightgrey')
         calendar.set_palette('FF Ratio', K2R, lo=0.5, hi=2)
         calendar.set_size(work_done, min=0.1, gamma=0.5)
@@ -87,7 +90,9 @@ def calendar():
     if present(df, TOTAL_CLIMB):
         df.loc[df[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
 
-    calendar = Calendar(df, title='Distance, Climb and Direction', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
+    calendar = Calendar(df, title='Distance, Climb and Direction',
+                        not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME] +
+                                  [column for column in df.columns if '(' in column])
     calendar.std_distance_climb_direction()
 
     '''
@@ -101,13 +106,15 @@ def calendar():
 
     df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, _d(FITNESS_D_ANY))
     if present(df, _d(FITNESS_D_ANY), pattern=True):
-        df = coallesce(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO)
+        df = coallesce_like(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, FITNESS)
         df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
         df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
         if present(df, TOTAL_CLIMB):
             df.loc[df[TOTAL_CLIMB].isna(), TOTAL_CLIMB] = 0
 
-        calendar = Calendar(df, title='Distance, Fitness and Direction', not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME])
+        calendar = Calendar(df, title='Distance, Fitness and Direction',
+                            not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME] +
+                                      [column for column in df.columns if '(' in column])
         calendar.std_distance_fitness_direction()
 
     '''
@@ -154,5 +161,7 @@ def calendar():
         dfb.loc[dfb[GROUP].isna(), GROUP] = -1
         df = dfa.join(dfb)
 
-        calendar = Calendar(df, not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME], scale=15, border_day=0.1)
+        calendar = Calendar(df, scale=15, border_day=0.1,
+                            not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME] +
+                                      [column for column in df.columns if '(' in column])
         calendar.std_group_distance_climb_direction()
