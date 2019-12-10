@@ -21,6 +21,7 @@ pip install requests
 pip install scipy
 pip install sentinelsat
 pip install shapely
+pip install sklearn
 pip install sqlalchemy
 pip install textblob
 pip install urwid

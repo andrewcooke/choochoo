@@ -1,5 +1,6 @@
 
 import datetime as dt
+from logging import getLogger
 
 import numpy as np
 import pandas as pd
@@ -9,12 +10,16 @@ from bokeh.models import PanTool, ZoomInTool, ZoomOutTool, ResetTool, HoverTool,
     ColumnDataSource
 from bokeh.plotting import figure
 from math import sqrt
-from scipy.interpolate import make_interp_spline
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
 
 from .utils import tooltip, make_range
 from ..frame import present
 from ...stats.names import DISTANCE_KM, LOCAL_TIME, TIMESPAN_ID, TIME, CLIMB_DISTANCE, ELEVATION_M, CLIMB_ELEVATION, \
     SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, LATITUDE, LONGITUDE, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, COLOR
+
+log = getLogger(__name__)
 
 STAMEN_TERRAIN = tile_providers.get_provider(tile_providers.Vendors.STAMEN_TERRAIN)
 DEFAULT_BACKEND = 'webgl'
@@ -335,11 +340,18 @@ def add_band(f, x, ylo, yhi, source, color, alpha=0.3, y_range_name='default'):
     f.add_layout(band)
 
 
-# def add_curve(f, x, y, source, group_size=5, color='black', alpha=1, y_range_name='default'):
-#     source = source[[x, y]].dropna()
-#     k = len(source) // group_size
-#
-#     f.line(source[x], y, color=color, alpha=alpha, y_range_name=y_range_name)
+def add_curve(f, x, y, source, group_size=30, color='black', alpha=1, smooth=1, y_range_name='default'):
+    # https://scikit-learn.org/stable/auto_examples/linear_model/plot_polynomial_interpolation.html
+    source = source[[x, y]].dropna()
+    degree = min(10, max(1, len(source) // group_size))
+    log.debug(f'Fitting polynomial of degree {degree} (ridge alpha {smooth})')
+    xf = source[x].values.astype('float64')
+    nxf = (xf - xf[0]) / (xf[1] - xf[0])
+    nxf2 = nxf[:, np.newaxis]
+    y2 = source[y].values[:, np.newaxis]
+    model = make_pipeline(PolynomialFeatures(degree), Ridge(alpha=smooth))
+    model.fit(nxf2, y2)
+    f.line(source[x], model.predict(nxf2)[:, 0], color=color, alpha=alpha, y_range_name=y_range_name)
 
 
 def htile(maps, n):
