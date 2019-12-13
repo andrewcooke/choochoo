@@ -15,7 +15,7 @@ log = getLogger(__name__)
 
 class App(TabNode):
     '''
-    An urwid mainlopp, database session and tabs.
+    An urwid mainloop, database session and tabs.
     '''
 
     def __init__(self, db):

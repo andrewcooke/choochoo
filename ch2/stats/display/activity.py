@@ -25,6 +25,9 @@ HRZ_WIDTH = 30
 
 class ActivityDiary(JournalDiary):
 
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+
     def _journal_date(self, s, f, ajournal, date):
         zones = build_zones(s, ajournal, HRZ_WIDTH)
         active_date = self.__active_date(s, ajournal, date)
@@ -39,6 +42,12 @@ class ActivityDiary(JournalDiary):
                             Pile(self.__template(s, ajournal, MAX_MED_HR_M_ANY, 'Max Med Heart Rate', r'(\d+m)', date) +
                                  self.__template(s, ajournal, MAX_MEAN_PE_M_ANY, 'Max Mean Power Estimate', r'(\d+m)', date))]))
         ])
+
+    def _read_journal_date(self, s, ajournal, date):
+        from ...diary.model import label
+        yield label(self.__title(s, ajournal))
+        climbs = list(self.__read_climbs(s, ajournal, date))
+
 
     def __title(self, s, ajournal):
         title = f'{ajournal.name} ({ajournal.activity_group.name}'
@@ -77,6 +86,23 @@ class ActivityDiary(JournalDiary):
             for climb in climbs:
                 body.append(Text(['%3sm/%.1fkm (%d%%)' %
                                   (int(climb[CLIMB_ELEVATION].value), # display int() with %s to get space padding
+                                   climb[CLIMB_DISTANCE].value / 1000, climb[CLIMB_GRADIENT].value),
+                                  label(' in '),
+                                  format_seconds(climb[CLIMB_TIME].value),
+                                  ' ',
+                                  *climb[CLIMB_ELEVATION].measures_as_text(date),
+                                  ]))
+            return body
+        else:
+            return []
+
+    def __read_climbs(self, s, ajournal, date):
+        total, climbs = climbs_for_activity(s, ajournal)
+        if total:
+            body = [Text(['Climbs ', label('Total: '), f'{total.value:.0f}m ', *total.measures_as_text(date)])]
+            for climb in climbs:
+                body.append(Text(['%3sm/%.1fkm (%d%%)' %
+                                  (int(climb[CLIMB_ELEVATION].value),  # display int() with %s to get space padding
                                    climb[CLIMB_DISTANCE].value / 1000, climb[CLIMB_GRADIENT].value),
                                   label(' in '),
                                   format_seconds(climb[CLIMB_TIME].value),

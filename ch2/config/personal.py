@@ -13,7 +13,7 @@ def acooke(db):
 
         c = Counter(100)
 
-        injuries = add_diary_topic(s, 'Inuries', c)
+        injuries = add_diary_topic(s, 'Injuries', c)
 
         ms = add_child_diary_topic(s, injuries, 'Multiple Sclerosis', c)
         add_diary_topic_field(s, ms, 'Notes', c, StatisticJournalType.TEXT,

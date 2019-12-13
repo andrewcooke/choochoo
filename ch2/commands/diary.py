@@ -110,8 +110,7 @@ class Diary(DateSwitcher):
     def _build(self, s):
         log.debug('Building diary at %s' % self._date)
         body, f = [], Factory(TabList())
-        root_topics = list(self._diary_topics(s))
-        for topic in root_topics:
+        for topic in self._diary_topics(s):
             body.append(self.__display_diary_topic(s, f, topic))
         for extra in self._display_pipeline(s, f):
             body.append(extra)

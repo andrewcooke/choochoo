@@ -23,6 +23,18 @@ def display_pipeline(session, factory, date, diary, schedule=None):
             display(session, factory, date, schedule=schedule)
 
 
+def read_pipeline(session, date, schedule=None):
+    '''
+    schedule only sent for summary views.
+    '''
+    date = to_date(date)   # why is this needed?
+    for pipeline in Pipeline.all(session, PipelineType.DIARY):
+        log.info(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
+        instance = pipeline.cls(*pipeline.args, **pipeline.kargs)
+        if isinstance(instance, Reader):
+            yield from instance.read(session, date, schedule=schedule)
+
+
 class Displayer(BasePipeline):
 
     def __init__(self, *args, diary=None, **kargs):
@@ -44,7 +56,29 @@ class Displayer(BasePipeline):
         raise NotImplementedError()
 
 
-class JournalDiary(Displayer):
+class Reader(BasePipeline):
+
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+
+    def read(self, s, date, schedule=None):
+        if schedule:
+            yield from self._read_schedule(s, date, schedule)
+        else:
+            yield from self._read_date(s, date)
+
+    # @abstractmethod
+    def _read_schedule(self, s, date, schedule):
+        return
+        yield
+
+    # @abstractmethod
+    def _read_date(self, s, date):
+        return
+        yield
+
+
+class JournalDiary(Displayer, Reader):
 
     def _display_date(self, s, f, date):
         start = local_date_to_time(date)
@@ -60,3 +94,19 @@ class JournalDiary(Displayer):
     @abstractmethod
     def _journal_date(self, s, f, ajournal, date):
         raise NotImplementedError()
+
+    def _read_date(self, s, date):
+        start = local_date_to_time(date)
+        finish = start + dt.timedelta(days=1)
+        for activity_group in s.query(ActivityGroup).order_by(ActivityGroup.sort).all():
+            for ajournal in s.query(ActivityJournal). \
+                    filter(ActivityJournal.finish >= start,
+                           ActivityJournal.start < finish,
+                           ActivityJournal.activity_group == activity_group). \
+                    order_by(ActivityJournal.start).all():
+                yield from self._read_journal_date(s, ajournal, date)
+
+    # @abstractmethod
+    def _read_journal_date(self, s, ajournal, date):
+        return
+        yield

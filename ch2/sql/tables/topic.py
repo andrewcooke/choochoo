@@ -94,6 +94,7 @@ class TopicField:
     display_cls = Column(Cls, nullable=False)
     display_args = Column(Json, nullable=False, server_default=dumps(()))
     display_kargs = Column(Json, nullable=False, server_default=dumps({}))
+    model = Column(Json, nullable=False, server_default=dumps({}))
 
     @declared_attr
     def statistic_name_id(cls):

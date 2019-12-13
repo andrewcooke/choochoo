@@ -103,7 +103,7 @@ def connect(args):
     '''
     Bootstrap from commandline-like args.
     '''
-    if len(args) == 1:
+    if len(args) == 1 and isinstance(args[0], str):
         args = args[0].split()
     elif args:
         args = list(args)
