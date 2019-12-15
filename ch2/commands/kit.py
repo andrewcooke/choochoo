@@ -370,7 +370,7 @@ def dump_group(s, cmd, group):
 
 
 def dump_item(s, cmd, item):
-    print(f'{cmd} {KIT} {START} {mm(FORCE)}  {q(item.group.name)} {q(item.name)}  {qd(item.time_added(s))}')
+    print(f'{cmd} {KIT} {START} {mm(FORCE)}  {q(item.constraint.name)} {q(item.name)}  {qd(item.time_added(s))}')
     for model in s.query(KitModel).filter(KitModel.item == item).all():
         dump_model(s, cmd, item, model)
 

@@ -67,14 +67,14 @@ class Reader(BasePipeline):
         else:
             yield from self._read_date(s, date)
 
-    # @abstractmethod
+    @abstractmethod
     def _read_schedule(self, s, date, schedule):
-        return
+        raise NotImplementedError(self.__class__)
         yield
 
-    # @abstractmethod
+    @abstractmethod
     def _read_date(self, s, date):
-        return
+        raise NotImplementedError(self.__class__)
         yield
 
 
@@ -93,7 +93,7 @@ class JournalDiary(Displayer, Reader):
 
     @abstractmethod
     def _journal_date(self, s, f, ajournal, date):
-        raise NotImplementedError()
+        raise NotImplementedError(self.__class__)
 
     def _read_date(self, s, date):
         start = local_date_to_time(date)
@@ -106,7 +106,7 @@ class JournalDiary(Displayer, Reader):
                     order_by(ActivityJournal.start).all():
                 yield from self._read_journal_date(s, ajournal, date)
 
-    # @abstractmethod
+    @abstractmethod
     def _read_journal_date(self, s, ajournal, date):
-        return
+        raise NotImplementedError(self.__class__)
         yield

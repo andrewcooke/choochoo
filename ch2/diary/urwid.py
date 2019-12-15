@@ -4,12 +4,12 @@ from sys import argv
 
 from urwid import Pile, Text, MainLoop, Filler, Divider, Edit, Columns
 
-from ch2.stats.names import S, W, PC, M
 from ..data import session
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
     LABEL, EDIT, MEASURES, SCHEDULES
 from ..lib import to_date, format_seconds
 from ..lib.utils import PALETTE_RAINBOW, format_watts, format_percent, format_metres
+from ..stats.names import S, W, PC, M
 from ..urwid.tui.decorators import Border, Indent
 from ..urwid.tui.widgets import Float, Rating0, Rating1
 
@@ -47,7 +47,8 @@ def stack_and_nest(model, depth=0):
 def widget_size(widget, max_cols=4):
     for cls in (Float, Rating0, Rating1):
         if isinstance(widget, cls): return 1
-    if isinstance(widget, Text): return min(max_cols, 1 + len(widget.text) // 15)
+    if isinstance(widget, Text) and not isinstance(widget, Edit):
+        return min(max_cols, 1 + len(widget.text) // 13)
     return max_cols
 
 
@@ -129,7 +130,10 @@ def create_value(model):
         text += [format_percent(model[VALUE])]
     else:
         if isinstance(model[VALUE], float):
-            text += ['%g' % model[VALUE]]
+            if 1 < model[VALUE] < 1000:
+                text += ['%.1f' % model[VALUE]]
+            else:
+                text += ['%g' % model[VALUE]]
         else:
             text += [str(model[VALUE])]
         if model[UNITS]:
@@ -139,7 +143,7 @@ def create_value(model):
         for schedule in model[MEASURES][SCHEDULES]:
             percentile, rank = model[MEASURES][SCHEDULES][schedule]
             q = 1 + min(4, percentile / 20)
-            extras.append(quintile(q, f'{int(percentile)}%:{rank}/{schedule}'))
+            extras.append(quintile(q, f'{int(percentile)}%:{rank}/{schedule} '))
         text += extras
     return Text(text)
 

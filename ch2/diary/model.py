@@ -5,6 +5,7 @@ FLOAT = 'float'
 HI = 'hi'
 HR_ZONES = 'hr_zones'
 LABEL = 'label'
+LINK = 'link'
 LO = 'lo'
 MEASURES = 'measures'
 PERCENT_TIMES = 'percent_times'
@@ -19,12 +20,15 @@ VALUE = 'value'
 
 
 def from_field(topic_field, statistic_journal):
+    # todo - type?
     model = dict(topic_field.model)
     model.update(value=statistic_journal.value,
                  label=statistic_journal.statistic_name.name,
                  units=statistic_journal.statistic_name.units)
     return model
 
+
+# todo - remove kargs?
 
 def text(text, width=4, height=1, **kargs):
     model = dict(kargs)
@@ -37,6 +41,10 @@ def value(label, value, units=None, measures=None, **kargs):
     model.update(type=VALUE, label=label, value=value, units=units)
     if measures and measures[SCHEDULES]: model.update(measures=measures)
     return model
+
+
+def link(label, value, **kargs):
+    return dict(type=LINK, label=label, value=value, **kargs)
 
 
 def hr_zones(zones, percent_times):

@@ -55,6 +55,12 @@ class ActivityDiary(JournalDiary):
         if active_data: yield [text('Activity Statistics'), active_data]
         climbs = list(self.__read_climbs(s, ajournal, date))
         if climbs: yield [text('Climbs'), climbs]
+        for (title, template, re) in (('Min Time', MIN_KM_TIME_ANY, r'(\d+km)'),
+                                      ('Med Time', MED_KM_TIME_ANY, r'(\d+km)'),
+                                      ('Max Med Heart Rate', MAX_MED_HR_M_ANY, r'(\d+m)'),
+                                      ('Max Mean Power Estimate', MAX_MEAN_PE_M_ANY, r'(\d+m)')):
+            model = list(self.__read_template(s, ajournal, template, re, date))
+            if model: yield [text(title), model]
 
     def __title(self, s, ajournal):
         title = f'{ajournal.name} ({ajournal.activity_group.name}'
@@ -148,6 +154,16 @@ class ActivityDiary(JournalDiary):
             body.append(Text([label(search(re, sjournal.statistic_name.name).group(1) + ': ')] +
                              self.__format_value(sjournal, date)))
         return body
+
+    def __read_template(self, s, ajournal, template, re, date):
+        sjournals = s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticJournal.time == ajournal.start,
+                   StatisticName.name.like(template),
+                   StatisticName.owner == ActivityCalculator,
+                   StatisticName.constraint == ajournal.activity_group).order_by(StatisticName.name).all()
+        for sjournal in self.__sort_journals(sjournals):
+            yield value(search(re, sjournal.statistic_name.name).group(1), sjournal.value,
+                        units=sjournal.statistic_name.units, measures=sjournal.measures_as_model(date))
 
     def __sort_journals(self, sjournals):
         return sorted(sjournals,

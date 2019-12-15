@@ -156,7 +156,7 @@ class Code(TextToken):
                 args = args[:-1] + f' -f {self._vars[DATABASE]}' + args[-1]
             else:
                 args = f'"-f {self._vars[DATABASE]}"'
-            self._text = m_session.group(1) + args + m_session.group(3)
+            self._text = m_session.constraint(1) + args + m_session.constraint(3)
 
     def to_cell(self):
         return nbv.new_code_cell(self._text)
