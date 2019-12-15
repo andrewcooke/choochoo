@@ -11,6 +11,7 @@ from .source import Interval
 from ..support import Base
 from ..types import Time, ShortCls, NullStr
 from ..utils import add
+from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import sigfig
 from ...stats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF
@@ -184,6 +185,16 @@ class StatisticJournal(Base):
                     words += [':', ('rank-%d' % measure.rank, '%d' % measure.rank)]
                 words += ['/' + measure.source.schedule.describe(compact=True)]
         return words
+
+    def measures_as_model(self, date):
+        if hasattr(self, 'measures'):
+            measures = {TYPE: MEASURES, SCHEDULES: {}}
+            for measure in sorted(self.measures,
+                                  key=lambda measure: measure.source.schedule.frame_length_in_days(date)):
+                measures[SCHEDULES][measure.source.schedule.describe(compact=True)] = (measure.percentile, measure.rank)
+            return measures
+        else:
+            return None
 
     @classmethod
     def at_date(cls, s, date, name, owner, constraint, source_id=None):

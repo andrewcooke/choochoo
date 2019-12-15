@@ -110,6 +110,8 @@ if ((DO_DROP)); then
   update statistic_name set owner='DiaryTopic' where owner='Topic';
   update statistic_name set "constraint"='Diary' || "constraint" where "constraint" like 'Topic%';
   pragma foreign_keys = on;
+  -- ancient typo
+  update diary_topic set name='Injuries' where name='Inuries';
 EOF
 python - <<EOF
 from ch2.data import *
@@ -119,6 +121,12 @@ s = session('-v5 --dev -f $TMP_DIR/copy-$SRC.sql')
 for field in s.query(DiaryTopicField).all():
     field.model = field.display_kargs
     field.model['type'] = field.display_cls.__name__.split('.')[-1].lower()
+    if field.model['type'] == 'text':
+        field.model['type'] = 'edit'
+        field.model['width'] = 4
+    else:
+        field.model['width'] = 1
+    field.model['height'] = 1
 s.commit()
 EOF
 fi

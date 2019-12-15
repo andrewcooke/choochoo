@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy import or_
 
-from .model import from_field, label
+from .model import from_field, text
 from ..sql import DiaryTopic, DiaryTopicJournal
 from ..sql.utils import add
 from ..stats.display import read_pipeline
@@ -20,7 +20,7 @@ which can be iterated over together.
 
 
 def read_daily(s, date):
-    yield label(date.strftime('%Y-%m-%d - %A'))
+    yield text(date.strftime('%Y-%m-%d - %A'))
     yield list(read_daily_topics(s, date))
     yield list(read_pipeline(s, date))
 
@@ -31,13 +31,13 @@ def read_daily_topics(s, date):
                                             or_(DiaryTopic.finish >= date, DiaryTopic.finish == None)). \
             order_by(DiaryTopic.sort).all():
         if topic.schedule.at_location(date):
-            yield label(topic.name)
+            yield text(topic.name)
             content = list(read_daily_topic(s, date, topic))
             if content: yield content
 
 
 def read_daily_topic(s, date, topic):
-    if topic.description: yield label(topic.description)
+    if topic.description: yield text(topic.description)
     journal = s.query(DiaryTopicJournal). \
         filter(DiaryTopicJournal.diary_topic == topic,
                DiaryTopicJournal.date == date).one_or_none()
@@ -50,6 +50,6 @@ def read_daily_topic(s, date, topic):
             yield from_field(field, journal.statistics[field])
     for child in topic.children:
         if child.schedule.at_location(date):
-            yield label(child.name)
+            yield text(child.name)
             content = list(read_daily_topic(s, date, child))
             if content: yield content
