@@ -1,3 +1,4 @@
+from ch2.sql.types import short_cls, long_cls
 
 DP = 'dp'
 EDIT = 'edit'
@@ -10,6 +11,7 @@ LINKS = 'links'
 LO = 'lo'
 MEASURES = 'measures'
 MENU = 'menu'
+OWNER = 'owner'
 PERCENT_TIMES = 'percent_times'
 SCHEDULES = 'schedules'
 SCORE0 = 'score0'
@@ -32,9 +34,10 @@ def from_field(topic_field, statistic_journal):
 
 # todo - remove kargs?
 
-def text(text, width=4, height=1, **kargs):
+def text(text, width=4, height=1, owner=None, **kargs):
     model = dict(kargs)
     model.update(type=TEXT, value=text, width=width, height=height)
+    if owner: model.update(owner=long_cls(owner))
     return model
 
 

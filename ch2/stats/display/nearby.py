@@ -38,17 +38,10 @@ class NearbyDiary(JournalDiary):
                             Indent(Columns(row))])
 
     def _read_journal_date(self, s, ajournal, date):
-        constraints = list(self.__read_constraints(s, ajournal))
-        if constraints:
-            yield text('Nearby')
-            yield constraints
-
-    def __read_constraints(self, s, ajournal):
         for constraint in constraints(s):
             results = list(self.__read_constraint(s, ajournal, constraint))
             if results:
-                yield text(constraint)
-                yield results
+                yield [text(constraint, owner=self), results]
 
     def __read_constraint(self, s, ajournal, c):
         for title, callback, fmt in (('Any Time', nearby_any_time,
