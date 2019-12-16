@@ -5,7 +5,7 @@ from sqlalchemy.sql.functions import min
 from urwid import Pile, Text, Columns, connect_signal
 
 from . import JournalDiary
-from ...diary.model import text, link
+from ...diary.model import text, link, menu
 from ...lib.date import to_time, time_to_local_date, to_date
 from ...lib.utils import label
 from ...sql import ActivityJournal, ActivitySimilarity, ActivityNearby
@@ -59,8 +59,7 @@ class NearbyDiary(JournalDiary):
                                       lambda x: link(_fmt_time(x.start), _fmt_time(x.start)))):
             links = [fmt(result) for result in callback(s, ajournal, c)]
             if links:
-                yield text(title)
-                yield links
+                yield menu(title, links)
 
     def __change_date(self, w):
         self._diary._change_date(time_to_local_date(w.state))

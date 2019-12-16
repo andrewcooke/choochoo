@@ -7,7 +7,7 @@ from urwid import Pile, Text, MainLoop, Filler, Divider, Edit, Columns
 
 from ..data import session
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
-    LABEL, EDIT, MEASURES, SCHEDULES
+    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU
 from ..lib import to_date, format_seconds
 from ..lib.utils import PALETTE_RAINBOW, format_watts, format_percent, format_metres
 from ..stats.names import S, W, PC, M
@@ -35,25 +35,7 @@ def extend(dict, **kargs):
 def build(model):
     log.debug(model)
 #    return Border(Filler(stack_and_nest(list(collect_small_widgets(create_widgets(data))))))
-    return Border(Filler(layout(model,
-                                before=extend(BEFORE, Nearby=before_nearby))))
-
-
-# todo - should be widget in model
-
-def link_nearby(model, path, before, after, leaf):
-    log.debug(f'link_nearby: model {model}; path {path}')
-    return [ArrowMenu(label(model[0][VALUE]),
-                      {link[LABEL]: link[VALUE] for link in model[1]})]
-
-
-def before_nearby(model, path, before, after, leaf):
-    log.debug(f'before_nearby: model {model}; path {path}')
-    before['Any Time'] = link_nearby
-    before['Earlier'] = link_nearby
-    before['All'] = link_nearby
-    del before['Nearby']
-    return before['Nearby'](model, path, before, after, leaf)
+    return Border(Filler(layout(model,)))
 
 
 def layout(model, path=None, before=None, after=None, leaf=None):
@@ -151,7 +133,8 @@ LEAF = defaultdict(
         SCORE0: lambda path, model: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
         SCORE1: lambda path, model: Rating1(caption=label(model[LABEL] + ': '), state=model[VALUE]),
         HR_ZONES: create_hr_zones,
-        VALUE: create_value
+        VALUE: create_value,
+        MENU: lambda path, model: ArrowMenu(label(model[LABEL]), {link[LABEL]: link[VALUE] for link in model[LINKS]})
     })
 
 

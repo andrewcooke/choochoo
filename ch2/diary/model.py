@@ -6,8 +6,10 @@ HI = 'hi'
 HR_ZONES = 'hr_zones'
 LABEL = 'label'
 LINK = 'link'
+LINKS = 'links'
 LO = 'lo'
 MEASURES = 'measures'
+MENU = 'menu'
 PERCENT_TIMES = 'percent_times'
 SCHEDULES = 'schedules'
 SCORE0 = 'score0'
@@ -49,3 +51,8 @@ def link(label, value, **kargs):
 
 def hr_zones(zones, percent_times):
     return dict(type=HR_ZONES, hr_zones=zones, percent_times=percent_times)
+
+
+def menu(label, links, **kargs):
+    # links is list of link types
+    return dict(type=MENU, label=label, links=links, **kargs)
