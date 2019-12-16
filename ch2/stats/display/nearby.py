@@ -57,7 +57,7 @@ class NearbyDiary(JournalDiary):
                                       lambda x: link(fmt_nearby(*x), _fmt_time(x[0].start))),
                                      ('All', constraint,
                                       lambda x: link(_fmt_time(x.start), _fmt_time(x.start)))):
-            links = [text(fmt(result)) for result in callback(s, ajournal, c)]
+            links = [fmt(result) for result in callback(s, ajournal, c)]
             if links:
                 yield text(title)
                 yield links
