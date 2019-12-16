@@ -12,7 +12,7 @@ from ..lib import to_date, format_seconds
 from ..lib.utils import PALETTE_RAINBOW, format_watts, format_percent, format_metres
 from ..stats.names import S, W, PC, M
 from ..urwid.tui.decorators import Border, Indent
-from ..urwid.tui.widgets import Float, Rating0, Rating1
+from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu
 
 log = getLogger(__name__)
 HR_ZONES_WIDTH = 30
@@ -26,10 +26,34 @@ def zone(zone, text): return 'zone-%d' % zone, text
 def quintile(quintile, text): return 'quintile-%d' % quintile, text
 
 
+def extend(dict, **kargs):
+    dict = copy(dict)
+    dict.update(**kargs)
+    return dict
+
+
 def build(model):
     log.debug(model)
 #    return Border(Filler(stack_and_nest(list(collect_small_widgets(create_widgets(data))))))
-    return Border(Filler(layout(model)))
+    return Border(Filler(layout(model,
+                                before=extend(BEFORE, Nearby=before_nearby))))
+
+
+# todo - should be widget in model
+
+def link_nearby(model, path, before, after, leaf):
+    log.debug(f'link_nearby: model {model}; path {path}')
+    return [ArrowMenu(label(model[0][VALUE]),
+                      {link[LABEL]: link[VALUE] for link in model[1]})]
+
+
+def before_nearby(model, path, before, after, leaf):
+    log.debug(f'before_nearby: model {model}; path {path}')
+    before['Any Time'] = link_nearby
+    before['Earlier'] = link_nearby
+    before['All'] = link_nearby
+    del before['Nearby']
+    return before['Nearby'](model, path, before, after, leaf)
 
 
 def layout(model, path=None, before=None, after=None, leaf=None):
@@ -114,7 +138,6 @@ def create_value(path, model):
 
 
 def default_leaf(path, model):
-    log.debug(path)
     raise Exception(f'Unexpected leaf at {".".join([p if p else "" for p in path])}')
 
 LEAF = defaultdict(
