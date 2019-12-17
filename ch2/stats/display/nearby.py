@@ -41,7 +41,7 @@ class NearbyDiary(JournalDiary):
         for constraint in constraints(s):
             results = list(self.__read_constraint(s, ajournal, constraint))
             if results:
-                yield [text(constraint, owner=self), results]
+                yield [text(constraint, tag='nearby'), results]
 
     def __read_constraint(self, s, ajournal, c):
         for title, callback, fmt in (('Any Time', nearby_any_time,
@@ -73,10 +73,10 @@ class NearbyDiary(JournalDiary):
                                  dict((aj.start, fmt_nearby(aj, nb)) for aj, nb in
                                       nearby_earlier(s, ajournal, constraint=constraint)))
 
-    def _group(self, s, f, ajournal, constraint):
+    def _group(self, s, f, ajournal, constraint_):
         yield from self.__button(f, 'Group: ',
                                  dict((aj.start, _fmt_time(aj.start)) for aj in
-                                      constraint(s, ajournal, constraint)))
+                                      constraint(s, ajournal, constraint_)))
 
 
 def constraints(s):

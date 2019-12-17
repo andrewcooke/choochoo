@@ -1,4 +1,7 @@
-from ch2.sql.types import short_cls, long_cls
+
+import re
+
+from ch2.sql.types import long_cls
 
 DP = 'dp'
 EDIT = 'edit'
@@ -11,7 +14,7 @@ LINKS = 'links'
 LO = 'lo'
 MEASURES = 'measures'
 MENU = 'menu'
-OWNER = 'owner'
+TAG = 'tag'
 PERCENT_TIMES = 'percent_times'
 SCHEDULES = 'schedules'
 SCORE0 = 'score0'
@@ -32,12 +35,17 @@ def from_field(topic_field, statistic_journal):
     return model
 
 
+def to_tag(text):
+    text = re.sub(r'\W+', '-', text)
+    text = re.sub(r'-?(\w+(:?-\w+)*)-?', r'\1', text)
+    return text.lower()
+
+
 # todo - remove kargs?
 
-def text(text, width=4, height=1, owner=None, **kargs):
+def text(text, width=4, height=1, tag=None, **kargs):
     model = dict(kargs)
-    model.update(type=TEXT, value=text, width=width, height=height)
-    if owner: model.update(owner=long_cls(owner))
+    model.update(type=TEXT, value=text, width=width, height=height, tag=to_tag(tag or text))
     return model
 
 

@@ -89,7 +89,7 @@ class JournalDiary(Displayer, Reader):
                            ActivityJournal.start < finish,
                            ActivityJournal.activity_group == activity_group). \
                     order_by(ActivityJournal.start).all():
-                yield self._journal_date(s, f, ajournal, date)
+                yield from self._journal_date(s, f, ajournal, date)
 
     @abstractmethod
     def _journal_date(self, s, f, ajournal, date):

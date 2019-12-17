@@ -45,8 +45,7 @@ class ActivityDiary(JournalDiary):
         ])
 
     def _read_journal_date(self, s, ajournal, date):
-        yield text(self.__title(s, ajournal))
-        yield from self.__read_details(s, ajournal, date)
+        yield [text(self.__title(s, ajournal), tag='activity'), list(self.__read_details(s, ajournal, date))]
 
     def __read_details(self, s, ajournal, date):
         zones = list(read_zones(s, ajournal))

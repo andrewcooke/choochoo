@@ -5,12 +5,9 @@ from sys import argv
 
 from urwid import Pile, Text, MainLoop, Filler, Divider, Edit, Columns
 
-from ch2.sql.types import long_cls
-from ch2.stats.display.activity import ActivityDiary
-from ch2.stats.display.nearby import NearbyDiary
 from ..data import session
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
-    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, OWNER
+    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG
 from ..lib import to_date, format_seconds
 from ..lib.utils import PALETTE_RAINBOW, format_watts, format_percent, format_metres
 from ..stats.names import S, W, PC, M
@@ -52,7 +49,7 @@ def layout(model, path=None, before=None, after=None, leaf=None):
     leaf = leaf or LEAF
 
     if isinstance(model, list):
-        key = model[0].get(OWNER, model[0].get(LABEL, None)) if model and isinstance(model[0], dict) else None
+        key = model[0].get(TAG, None) if model and isinstance(model[0], dict) else None
         branch = before[key](model, path + [key], copy(before), copy(after), copy(leaf))
         return after[key](path + [key], branch)
     else:
@@ -125,7 +122,6 @@ LEAF = defaultdict(
 def columns(*specs):
 
     def before(model, path, before, after, leaf):
-        import pdb; pdb.set_trace()
         branch_columns = []
         for names in specs:
             try:
@@ -142,7 +138,7 @@ def columns(*specs):
                 model = reduced_model
             except Exception as e:
                 log.warning(e)
-        branch = [default_before(model, path, before, after, leaf) for model in reduced_model]
+        branch = [default_before(m, path, before, after, leaf) for m in model]
         branch.extend(branch_columns)
         return branch
 
@@ -154,9 +150,9 @@ def default_before(model, path, before, after, leaf):
 
 BEFORE = defaultdict(
     lambda: default_before,
-    {long_cls(ActivityDiary): columns(('Min Time', 'Med Time'),
-                                    ('Max Med Heart Rate', 'Max Mean Power Estimate'),
-                                    ('HR Zones', 'Climbs'))})
+    {'activity': columns(('Min Time', 'Med Time'),
+                         ('Max Med Heart Rate', 'Max Mean Power Estimate'),
+                         ('HR Zones', 'Climbs'))})
 
 
 def default_after(path, branch):
