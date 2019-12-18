@@ -180,8 +180,9 @@ def table(name, value):
                 row += [Text(fmt_value_measures(model))]
             return row
 
-        rows = [[Text(header) for header in headers]] + [make_row(m) for m in model[1:]]
-        table = Columns([('pack', Pile(column)) for column in zip(*rows)])
+        rows = [[Text(label(header)) for header in headers]] + [make_row(m) for m in model[1:]]
+        widths = [max(len(row.text) for row in column) for column in zip(*rows)]
+        table = Columns([(width+1, Pile(column)) for column, width in zip(zip(*rows), widths)])
         return [title, table]
 
     return before
@@ -197,7 +198,11 @@ BEFORE = defaultdict(
     {'activity': columns(('hr-zones-time', 'climbs'),
                          ('min-time', 'med-time'),
                          ('max-med-heart-rate', 'max-mean-power-estimate')),
-     'min-time': table('Distance', 'Time')})
+     'min-time': table('Distance', 'Time'),
+     'med-time': table('Distance', 'Time'),
+     'max-med-heart-rate': table('Time', 'HR'),
+     'max-mean-power-estimate': table('Time', 'Power'),
+     })
 
 
 def default_after(branch):
