@@ -1,3 +1,4 @@
+
 from collections import defaultdict
 from copy import copy
 from logging import getLogger
@@ -28,11 +29,10 @@ def quintile(quintile, text): return 'quintile-%d' % quintile, text
 
 def build(model):
     log.debug(model)
-#    return Border(Filler(stack_and_nest(list(collect_small_widgets(create_widgets(data))))))
-    return Border(Filler(layout(model,)))
+    return Border(Filler(layout(model)))
 
 
-def layout(model, path=None, before=None, after=None, leaf=None):
+def layout(model, before=None, after=None, leaf=None):
     '''
     Takes a model and returns an urwid widget.
     The model is nested lists, forming a tree, with nodes that are dicts.
@@ -43,7 +43,6 @@ def layout(model, path=None, before=None, after=None, leaf=None):
     leaf is keyed on the 'type' entry in the dict.
     '''
 
-    path = path or []
     before = before or BEFORE
     after = after or AFTER
     leaf = leaf or LEAF
@@ -55,21 +54,21 @@ def layout(model, path=None, before=None, after=None, leaf=None):
             raise Exception(f'Model list with no head element: {model}')
         key = model[0].get(TAG, None)
         try:
-            branch = before[key](model, path + [key], copy(before), copy(after), copy(leaf))
+            branch = before[key](model, copy(before), copy(after), copy(leaf))
         except Exception as e:
             log.error(f'Error ({e}) while processing {model}')
             raise
-        return after[key](path + [key], branch)
+        return after[key](branch)
     else:
         if not isinstance(model, dict):
             raise Exception(f'Model entry of type {type(model)} ({model})')
         key = model.get(TYPE, None)
-        return leaf[key](path + [key], model)
+        return leaf[key](model)
 
 
 # todo - should just be values
 
-def create_hr_zones(path, model, width=HR_ZONES_WIDTH):
+def create_hr_zones(model, width=HR_ZONES_WIDTH):
     body = []
     for z, percent_time in zip(model[HR_ZONES], model[PERCENT_TIMES]):
         text = ('%d:' + ' ' * (width - 6) + '%3d%%') % (z, int(0.5 + percent_time))
@@ -81,7 +80,7 @@ def create_hr_zones(path, model, width=HR_ZONES_WIDTH):
     return Pile(body)
 
 
-def create_value(path, model):
+def create_value(model):
     text = [label(model[LABEL] + ': ')]
     if model[UNITS] == S:
         text += [format_seconds(model[VALUE])]
@@ -111,29 +110,29 @@ def create_value(path, model):
     return Text(text)
 
 
-def default_leaf(path, model):
+def default_leaf(model):
     raise Exception(f'Unexpected leaf at {".".join([p if p else "" for p in path])}')
 
 LEAF = defaultdict(
     lambda: default_leaf,
     {
-        TEXT: lambda path, model: Text(model[VALUE]),
-        EDIT: lambda path, model: Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or ''),
-        FLOAT: lambda path, model: Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
-                                         minimum=model[LO], maximum=model[HI], dp=model[DP],
-                                         units=model[UNITS]),
-        SCORE0: lambda path, model: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
-        SCORE1: lambda path, model: Rating1(caption=label(model[LABEL] + ': '), state=model[VALUE]),
+        TEXT: lambda model: Text(model[VALUE]),
+        EDIT: lambda model: Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or ''),
+        FLOAT: lambda model: Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
+                                   minimum=model[LO], maximum=model[HI], dp=model[DP],
+                                   units=model[UNITS]),
+        SCORE0: lambda model: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
+        SCORE1: lambda model: Rating1(caption=label(model[LABEL] + ': '), state=model[VALUE]),
         HR_ZONES: create_hr_zones,
         VALUE: create_value,
-        MENU: lambda path, model: ArrowMenu(label(model[LABEL] + ': '),
-                                            {link[LABEL]: link[VALUE] for link in model[LINKS]})
+        MENU: lambda model: ArrowMenu(label(model[LABEL] + ': '),
+                                      {link[LABEL]: link[VALUE] for link in model[LINKS]})
     })
 
 
 def columns(*specs):
 
-    def before(model, path, before, after, leaf):
+    def before(model, before, after, leaf):
         branch_columns = []
         for names in specs:
             try:
@@ -150,17 +149,17 @@ def columns(*specs):
                 model = reduced_model
             except Exception as e:
                 log.warning(e)
-        branch = [layout(m, path, before, after, leaf) for m in model]
+        branch = [layout(m, before, after, leaf) for m in model]
         branch.extend(branch_columns)
         return branch
 
     return before
 
 
-def default_before(model, path, before, after, leaf):
+def default_before(model, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
-    return [layout(m, path, before, after, leaf) for m in model]
+    return [layout(m, before, after, leaf) for m in model]
 
 BEFORE = defaultdict(
     lambda: default_before,
@@ -169,7 +168,7 @@ BEFORE = defaultdict(
                          ('HR Zones', 'Climbs'))})
 
 
-def default_after(path, branch):
+def default_after(branch):
     head, tail = branch[0], branch[1:]
     if tail:
         return Pile([head, Indent(Pile(tail))])
@@ -177,83 +176,6 @@ def default_after(path, branch):
         return head
 
 AFTER = defaultdict(lambda: default_after)
-
-
-
-
-
-
-def stack_and_nest(model, depth=0):
-    if isinstance(model, list):
-        widgets = [stack_and_nest(widget, depth=depth+1) for widget in model]
-        if depth == 1: widgets = [Divider()] + widgets
-        widgets = Pile(widgets)
-        if depth: widgets = Indent(widgets)
-        return widgets
-    else:
-        return model
-
-
-def widget_size(widget, max_cols=4):
-    for cls in (Float, Rating0, Rating1):
-        if isinstance(widget, cls): return 1
-    if isinstance(widget, Text) and not isinstance(widget, Edit):
-        return min(max_cols, 1 + len(widget.text) // 13)
-    return max_cols
-
-
-def collect_small_widgets(widget, max_cols=4):
-    if isinstance(widget, list):
-        group, cols = [], 0
-        for w in widget:
-            if isinstance(w, list):
-                if group:
-                    if cols < max_cols:
-                        group.append(('weight', max_cols - cols, Text('')))
-                    yield Columns(group)
-                    group, cols = [], 0
-                yield list(collect_small_widgets(w, max_cols=max_cols))
-            else:
-                size = widget_size(w, max_cols=max_cols)
-                if cols + size > max_cols:
-                    if group:
-                        if cols < max_cols:
-                            group.append(('weight', max_cols - cols, Text('')))
-                        yield Columns(group)
-                    group, cols = [w], size
-                else:
-                    group.append(('weight', size, w))
-                    cols += size
-        if group:
-            if cols < max_cols:
-                group.append(('weight', max_cols - cols, Text('')))
-            yield Columns(group)
-    else:
-        yield widget
-
-
-def create_widgets(model):
-    if isinstance(model, list):
-        return [create_widgets(m) for m in model]
-    else:
-        type = model[TYPE]
-        if type == TEXT:
-            return Text(model[VALUE])
-        elif type == EDIT:
-            return Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or '')
-        elif type == FLOAT:
-            return Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
-                         minimum=model[LO], maximum=model[HI], dp=model[DP], units=model[UNITS])
-        elif type == SCORE0:
-            return Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE])
-        elif type == SCORE1:
-            return Rating1(caption=label(model[LABEL] + ': '), state=model[VALUE])
-        elif type == HR_ZONES:
-            return create_hr_zones(model)
-        elif type == VALUE:
-            return create_value(model)
-        else:
-            raise Exception(f'Unexpected model type: {type} ({model})')
 
 
 
