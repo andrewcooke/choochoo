@@ -80,17 +80,17 @@ def create_hr_zones(model, width=HR_ZONES_WIDTH):
     return Pile(body)
 
 
-def create_value(model):
-    text = [label(model[LABEL] + ': ')]
+def fmt_value_units(model):
     if model[UNITS] == S:
-        text += [format_seconds(model[VALUE])]
+        return [format_seconds(model[VALUE])]
     elif model[UNITS] == W:
-        text += [format_watts(model[VALUE])]
+        return [format_watts(model[VALUE])]
     elif model[UNITS] == M:
-        text += [format_metres(model[VALUE])]
+        return [format_metres(model[VALUE])]
     elif model[UNITS] == PC:
-        text += [format_percent(model[VALUE])]
+        return [format_percent(model[VALUE])]
     else:
+        text = []
         if isinstance(model[VALUE], float):
             if 1 < model[VALUE] < 1000:
                 text += ['%.1f' % model[VALUE]]
@@ -100,14 +100,21 @@ def create_value(model):
             text += [str(model[VALUE])]
         if model[UNITS]:
             text += [model[UNITS]]
+        return text
+
+
+def fmt_value_measures(model):
+    measures = []
     if MEASURES in model:
-        extras = [' ']
         for schedule in model[MEASURES][SCHEDULES]:
             percentile, rank = model[MEASURES][SCHEDULES][schedule]
             q = 1 + min(4, percentile / 20)
-            extras.append(quintile(q, f'{int(percentile)}%:{rank}/{schedule} '))
-        text += extras
-    return Text(text)
+            measures.append(quintile(q, f'{int(percentile)}%:{rank}/{schedule} '))
+    return measures
+
+
+def create_value(model):
+    return Text([label(model[LABEL] + ': ')] + fmt_value_units(model) + [' '] + fmt_value_measures(model))
 
 
 def default_leaf(model):
@@ -133,19 +140,20 @@ LEAF = defaultdict(
 def columns(*specs):
 
     def before(model, before, after, leaf):
-        import pdb; pdb.set_trace()
         branch_columns = []
         for names in specs:
             try:
-                columns, reduced_model = [], list(model)
+                columns, reduced_model, found = [], list(model), False
                 for name in names:
                     for i, m in enumerate(reduced_model):
-                        if isinstance(m, list) and isinstance(m[0], dict) and m[0].get(LABEL, None) == name:
-                            columns.append(m[0])
+                        if isinstance(m, list) and isinstance(m[0], dict) and m[0].get(TAG) == name:
+                            columns.append(m)
                             del reduced_model[i]
+                            found = True
                             break
-                    raise Exception(f'Missing column {name}')
-                columns = [default_before(column, before, after, leaf) for column in columns]
+                    if not found:
+                        raise Exception(f'Missing column {name}')
+                columns = [layout(column, before, after, leaf) for column in columns]
                 branch_columns.append(Columns(columns))
                 model = reduced_model
             except Exception as e:
@@ -157,6 +165,28 @@ def columns(*specs):
     return before
 
 
+def table(name, value):
+
+    def before(model, before, after, leaf):
+
+        title = layout(model[0], before, after, leaf)
+        has_measures = any(MEASURES in m for m in model[1:])
+        headers = [name, value]
+        if has_measures: headers.append('Stats')
+
+        def make_row(model):
+            row = [Text(label(model[LABEL])), Text(fmt_value_units(model))]
+            if has_measures:
+                row += [Text(fmt_value_measures(model))]
+            return row
+
+        rows = [[Text(header) for header in headers]] + [make_row(m) for m in model[1:]]
+        table = Columns([('pack', Pile(column)) for column in zip(*rows)])
+        return [title, table]
+
+    return before
+
+
 def default_before(model, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
@@ -164,9 +194,10 @@ def default_before(model, before, after, leaf):
 
 BEFORE = defaultdict(
     lambda: default_before,
-    {'activity': columns(('Min Time', 'Med Time'),
-                         ('Max Med Heart Rate', 'Max Mean Power Estimate'),
-                         ('HR Zones', 'Climbs'))})
+    {'activity': columns(('hr-zones-time', 'climbs'),
+                         ('min-time', 'med-time'),
+                         ('max-med-heart-rate', 'max-mean-power-estimate')),
+     'min-time': table('Distance', 'Time')})
 
 
 def default_after(branch):
