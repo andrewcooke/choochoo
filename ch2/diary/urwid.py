@@ -187,6 +187,19 @@ def values_table(model, before, after, leaf):
     return rest + [table]
 
 
+def climbs_table(model, before, after, leaf):
+
+    def climb(model):
+        # assumes elevation, distance and time entries, in that order
+        return [Text(fmt_value_units(model[0])), Text(fmt_value_units(model[1])), Text(fmt_value_units(model[2])),
+                Text(fmt_value_measures(model[0]))]
+
+    elevations = [m for m in model if isinstance(m, list) and m[0].get(LABEL, None) == 'Elevation']
+    rest = [layout(m, before, after, leaf) for m in model if m not in elevations]
+    table = rows_to_table([climb(elevation) for elevation in elevations])
+    return rest + [table]
+
+
 def table(name, value):
 
     def before(model, before, after, leaf):
@@ -214,7 +227,8 @@ BEFORE = defaultdict(
      'med-time': table('Dist', 'Time'),
      'max-med-heart-rate': table('Time', 'HR'),
      'max-mean-power-estimate': table('Time', 'Power'),
-    'activity-statistics': values_table
+     'activity-statistics': values_table,
+     'climbs': climbs_table
      })
 
 
