@@ -165,25 +165,37 @@ def columns(*specs):
     return before
 
 
+def value_to_row(value, has_measures=None):
+    # has_measures can be true/false to force
+    row = [Text(label(value[LABEL])), Text(fmt_value_units(value))]
+    if has_measures is True or MEASURES in value:
+        row += [Text(fmt_value_measures(value))]
+    elif has_measures is None:
+        row += [Text('')]
+    return row
+
+
+def rows_to_table(rows):
+    widths = [max(len(row.text) for row in column) for column in zip(*rows)]
+    return Columns([(width+1, Pile(column)) for column, width in zip(zip(*rows), widths)])
+
+
+def values_table(model, before, after, leaf):
+    values = [m for m in model if isinstance(m, dict) and m.get(TYPE, None) == 'value']
+    rest = [layout(m, before, after, leaf) for m in model if m not in values]
+    table = rows_to_table([value_to_row(value) for value in values])
+    return rest + [table]
+
+
 def table(name, value):
 
     def before(model, before, after, leaf):
-
         title = layout(model[0], before, after, leaf)
         has_measures = any(MEASURES in m for m in model[1:])
         headers = [name, value]
         if has_measures: headers.append('Stats')
-
-        def make_row(model):
-            row = [Text(label(model[LABEL])), Text(fmt_value_units(model))]
-            if has_measures:
-                row += [Text(fmt_value_measures(model))]
-            return row
-
-        rows = [[Text(label(header)) for header in headers]] + [make_row(m) for m in model[1:]]
-        widths = [max(len(row.text) for row in column) for column in zip(*rows)]
-        table = Columns([(width+1, Pile(column)) for column, width in zip(zip(*rows), widths)])
-        return [title, table]
+        rows = [[Text(label(header)) for header in headers]] + [value_to_row(m, has_measures) for m in model[1:]]
+        return [title, rows_to_table(rows)]
 
     return before
 
@@ -198,10 +210,11 @@ BEFORE = defaultdict(
     {'activity': columns(('hr-zones-time', 'climbs'),
                          ('min-time', 'med-time'),
                          ('max-med-heart-rate', 'max-mean-power-estimate')),
-     'min-time': table('Distance', 'Time'),
-     'med-time': table('Distance', 'Time'),
+     'min-time': table('Dist', 'Time'),
+     'med-time': table('Dist', 'Time'),
      'max-med-heart-rate': table('Time', 'HR'),
      'max-mean-power-estimate': table('Time', 'Power'),
+    'activity-statistics': values_table
      })
 
 
