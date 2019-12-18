@@ -41,7 +41,7 @@ class NearbyDiary(JournalDiary):
         for constraint in constraints(s):
             results = list(self.__read_constraint(s, ajournal, constraint))
             if results:
-                yield [text(constraint, tag='nearby'), results]
+                yield [text(constraint, tag='nearby')] + results
 
     def __read_constraint(self, s, ajournal, c):
         for title, callback, fmt in (('Any Time', nearby_any_time,

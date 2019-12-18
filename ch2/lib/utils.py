@@ -21,6 +21,25 @@ PALETTE_RAINBOW = [
     ('quintile-4', 'yellow', 'black'), ('quintile-5', 'light red', 'black'),
 ]
 
+PALETTE_MINIMAL = [
+    ('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
+    ('em', 'white', 'black'),
+    ('label', 'dark gray', 'black'),
+    ('selected', 'black', 'light gray'), ('selected-focus', 'black', 'white'),
+    ('unimportant', 'dark blue', 'black'), ('unimportant-focus', 'light blue', 'black'),
+    ('error', 'dark red', 'black'), ('error-focus', 'light red', 'black'),
+    ('bar', 'dark gray', 'black'), ('bar-focus', 'dark gray', 'black'),
+    ('rank-1', 'white', 'black'), ('rank-2', 'light gray', 'black'), ('rank-3', 'light gray', 'black'),
+    ('rank-4', 'light gray', 'black'), ('rank-5', 'light gray', 'black'),
+    ('zone-6', 'black', 'white'), ('zone-5', 'black', 'white'), ('zone-4', 'black', 'white'),
+    ('zone-3', 'black', 'light gray'), ('zone-2', 'black', 'dark gray'), ('zone-1', 'black', 'dark gray'),
+    ('quintile-1', 'light gray', 'black'), ('quintile-2', 'light gray', 'black'), ('quintile-3', 'light gray', 'black'),
+    ('quintile-4', 'light gray', 'black'), ('quintile-5', 'white', 'black'),
+]
+
+PALETTE = PALETTE_MINIMAL
+
+
 
 def sign(x):
     if x == 0:

@@ -4,13 +4,13 @@ from copy import copy
 from logging import getLogger
 from sys import argv
 
-from urwid import Pile, Text, MainLoop, Filler, Divider, Edit, Columns
+from urwid import Pile, Text, MainLoop, Filler, Edit, Columns
 
 from ..data import session
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
     LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG
 from ..lib import to_date, format_seconds
-from ..lib.utils import PALETTE_RAINBOW, format_watts, format_percent, format_metres
+from ..lib.utils import format_watts, format_percent, format_metres, PALETTE
 from ..stats.names import S, W, PC, M
 from ..urwid.tui.decorators import Border, Indent
 from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu
@@ -232,6 +232,35 @@ BEFORE = defaultdict(
      })
 
 
+COLUMN_WIDTH = 6
+N_COLUMNS = 12
+
+def widget_size(widget, max_cols=N_COLUMNS):
+    for cls in (Float, Rating0, Rating1):
+        if isinstance(widget, cls): return 3
+    if isinstance(widget, ArrowMenu): return 4
+    if isinstance(widget, Text) and not isinstance(widget, Edit):
+        return min(max_cols, 1 + len(widget.text) // COLUMN_WIDTH)
+    return max_cols
+
+
+def pack_widgets(branch, max_cols=N_COLUMNS):
+    new_branch = [branch[0]]
+    columns, width = [], 0
+    for widget in branch[1:]:
+        size = widget_size(widget)
+        if size + width <= max_cols:
+            columns.append((COLUMN_WIDTH * size, widget))
+            width += size
+        else:
+            if columns:
+                new_branch.append(Columns(columns))
+            columns, width = [(COLUMN_WIDTH * size, widget)], size
+    if columns:
+        new_branch.append(Columns(columns))
+    return default_after(new_branch)
+
+
 def default_after(branch):
     head, tail = branch[0], branch[1:]
     if tail:
@@ -239,7 +268,10 @@ def default_after(branch):
     else:
         return head
 
-AFTER = defaultdict(lambda: default_after)
+AFTER = defaultdict(
+    lambda: default_after,
+    {'status': pack_widgets,
+     'nearby': pack_widgets})
 
 
 
@@ -257,4 +289,4 @@ if __name__ == '__main__':
     log.debug(f'Read {data}')
     widget = build(data)
     log.debug(f'Built {widget}')
-    MainLoop(widget, palette=PALETTE_RAINBOW).run()
+    MainLoop(widget, palette=PALETTE).run()
