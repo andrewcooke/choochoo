@@ -111,7 +111,7 @@ def create_value(model):
 
 
 def default_leaf(model):
-    raise Exception(f'Unexpected leaf at {".".join([p if p else "" for p in path])}')
+    raise Exception(f'Unexpected leaf {model}')
 
 LEAF = defaultdict(
     lambda: default_leaf,
@@ -144,7 +144,7 @@ def columns(*specs):
                             del reduced_model[i]
                             break
                     raise Exception(f'Missing column {name}')
-                columns = [default_before(column, path, before, after, leaf) for column in columns]
+                columns = [default_before(column, before, after, leaf) for column in columns]
                 branch_columns.append(Columns(columns))
                 model = reduced_model
             except Exception as e:
