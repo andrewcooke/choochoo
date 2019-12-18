@@ -49,13 +49,25 @@ def layout(model, path=None, before=None, after=None, leaf=None):
     leaf = leaf or LEAF
 
     if isinstance(model, list):
-        key = model[0].get(TAG, None) if model and isinstance(model[0], dict) else None
-        branch = before[key](model, path + [key], copy(before), copy(after), copy(leaf))
+        if not model:
+            raise Exception('Empty list in model')
+        if not isinstance(model[0], dict):
+            raise Exception(f'Model list with no head element: {model}')
+        key = model[0].get(TAG, None)
+        try:
+            branch = before[key](model, path + [key], copy(before), copy(after), copy(leaf))
+        except Exception as e:
+            log.error(f'Error ({e}) while processing {model}')
+            raise
         return after[key](path + [key], branch)
     else:
+        if not isinstance(model, dict):
+            raise Exception(f'Model entry of type {type(model)} ({model})')
         key = model.get(TYPE, None)
         return leaf[key](path + [key], model)
 
+
+# todo - should just be values
 
 def create_hr_zones(path, model, width=HR_ZONES_WIDTH):
     body = []
@@ -138,7 +150,7 @@ def columns(*specs):
                 model = reduced_model
             except Exception as e:
                 log.warning(e)
-        branch = [default_before(m, path, before, after, leaf) for m in model]
+        branch = [layout(m, path, before, after, leaf) for m in model]
         branch.extend(branch_columns)
         return branch
 
@@ -146,6 +158,8 @@ def columns(*specs):
 
 
 def default_before(model, path, before, after, leaf):
+    if not isinstance(model, list):
+        raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
     return [layout(m, path, before, after, leaf) for m in model]
 
 BEFORE = defaultdict(
@@ -156,9 +170,11 @@ BEFORE = defaultdict(
 
 
 def default_after(path, branch):
-    branch = Pile(branch)
-    if len(path) > 1: branch = Indent(branch)
-    return branch
+    head, tail = branch[0], branch[1:]
+    if tail:
+        return Pile([head, Indent(Pile(tail))])
+    else:
+        return head
 
 AFTER = defaultdict(lambda: default_after)
 

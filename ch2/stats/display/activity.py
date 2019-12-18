@@ -10,7 +10,7 @@ from ..calculate.activity import ActivityCalculator
 from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
-    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d, M, KM, S
+    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d, M, S
 from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
 from ...diary.model import text, value
@@ -45,21 +45,22 @@ class ActivityDiary(JournalDiary):
         ])
 
     def _read_journal_date(self, s, ajournal, date):
-        yield [text(self.__title(s, ajournal), tag='activity'), list(self.__read_details(s, ajournal, date))]
+        yield text(self.__title(s, ajournal), tag='activity')
+        yield from self.__read_details(s, ajournal, date)
 
     def __read_details(self, s, ajournal, date):
         zones = list(read_zones(s, ajournal))
-        if zones: yield [text('HR Zones (% time)'), zones]
+        if zones: yield [text('HR Zones (% time)')] + zones
         active_data = list(self.__read_active_data(s, ajournal, date))
-        if active_data: yield [text('Activity Statistics'), active_data]
+        if active_data: yield [text('Activity Statistics')] + active_data
         climbs = list(self.__read_climbs(s, ajournal, date))
-        if climbs: yield [text('Climbs'), climbs]
+        if climbs: yield [text('Climbs')] + climbs
         for (title, template, re) in (('Min Time', MIN_KM_TIME_ANY, r'(\d+km)'),
                                       ('Med Time', MED_KM_TIME_ANY, r'(\d+km)'),
                                       ('Max Med Heart Rate', MAX_MED_HR_M_ANY, r'(\d+m)'),
                                       ('Max Mean Power Estimate', MAX_MEAN_PE_M_ANY, r'(\d+m)')):
             model = list(self.__read_template(s, ajournal, template, re, date))
-            if model: yield [text(title), model]
+            if model: yield [text(title)] + model
 
     def __title(self, s, ajournal):
         title = f'{ajournal.name} ({ajournal.activity_group.name}'
@@ -135,11 +136,11 @@ class ActivityDiary(JournalDiary):
         total, climbs = climbs_for_activity(s, ajournal)
         if total:
             yield value('Total Elevation', total.value, measures=total.measures_as_model(date), units=M)
-            yield [[value('Elevation', climb[CLIMB_ELEVATION].value, units=M,
-                          measures=climb[CLIMB_ELEVATION].measures_as_model(date)),
-                    [value('Distance', climb[CLIMB_DISTANCE].value, units=M),
-                     value('Time', climb[CLIMB_TIME].value, units=S)]]
-                   for climb in climbs]
+            for climb in climbs:
+                yield [value('Elevation', climb[CLIMB_ELEVATION].value, units=M,
+                             measures=climb[CLIMB_ELEVATION].measures_as_model(date)),
+                       value('Distance', climb[CLIMB_DISTANCE].value, units=M),
+                       value('Time', climb[CLIMB_TIME].value, units=S)]
 
     def __template(self, s, ajournal, template, title, re, date):
         body = [Text(title)]

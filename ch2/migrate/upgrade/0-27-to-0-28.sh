@@ -112,6 +112,7 @@ if ((DO_DROP)); then
   pragma foreign_keys = on;
   -- ancient typo
   update diary_topic set name='Injuries' where name='Inuries';
+  update diary_topic set name='Status' where name='Diary';
 EOF
 python - <<EOF
 from ch2.data import *
