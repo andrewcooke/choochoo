@@ -133,6 +133,7 @@ LEAF = defaultdict(
 def columns(*specs):
 
     def before(model, before, after, leaf):
+        import pdb; pdb.set_trace()
         branch_columns = []
         for names in specs:
             try:
