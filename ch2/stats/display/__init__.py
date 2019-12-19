@@ -32,7 +32,7 @@ def read_pipeline(session, date, schedule=None):
         log.info(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
         instance = pipeline.cls(*pipeline.args, **pipeline.kargs)
         if isinstance(instance, Reader):
-            yield from instance.read(session, date, schedule=schedule)
+            yield list(instance.read(session, date, schedule=schedule))
 
 
 class Displayer(BasePipeline):
