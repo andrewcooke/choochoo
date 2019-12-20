@@ -67,3 +67,16 @@ def hr_zones(zones, percent_times):
 def menu(label, links, **kargs):
     # links is list of link types
     return dict(type=MENU, label=label, links=links, **kargs)
+
+
+def optional_label(name):
+    def decorator(f):
+        def decorated(*args, **kargs):
+            first = True
+            for value in f(*args, **kargs):
+                if first:
+                    yield text(name)
+                    first = False
+                yield value
+        return decorated
+    return decorator

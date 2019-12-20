@@ -5,8 +5,9 @@ from json import loads
 from sqlalchemy import asc, desc
 from urwid import Pile, Text, Columns
 
-from . import Displayer
+from . import Displayer, Reader
 from ..calculate.response import Response, ResponseCalculator
+from ...diary.model import text, optional_label, value
 from ...lib.date import local_date_to_time, to_time
 from ...lib.schedule import Schedule
 from ...lib.utils import label, em, error
@@ -15,7 +16,7 @@ from ...sql.tables.statistic import StatisticJournal, StatisticName, TYPE_TO_JOU
 from ...urwid.tui.decorators import Indent
 
 
-class ResponseDiary(Displayer):
+class ResponseDiary(Displayer, Reader):
 
     def __init__(self, *args, fitness=None, fatigue=None, **kargs):
         self.fitness = self._assert('fitness', fitness)
@@ -24,6 +25,32 @@ class ResponseDiary(Displayer):
 
     def _display_date(self, s, f, date):
         yield from self._display_schedule(s, f, date, Schedule('d'))
+
+    @optional_label('SHRIMP')
+    def _read_date(self, s, date):
+        yield from self._read_schedule(s, date, Schedule('d'))
+
+    def _read_schedule(self, s, date, schedule):
+        for response in self.fitness + self.fatigue:
+            yield from self._read_single(s, date, schedule, response, schedule.frame_type == 'd')
+
+    def _read_single(self, s, date, schedule, constant_name, display_range, ranges=('all', '90d', '30d')):
+        start_time = local_date_to_time(schedule.start_of_frame(date))
+        finish_time = local_date_to_time(schedule.next_frame(date))
+        response = Response(**loads(Constant.get(s, constant_name).at(s, start_time).value))
+        start = self._read(s, response.dest_name, start_time, finish_time, asc)
+        finish = self._read(s, response.dest_name, start_time, finish_time, desc)
+        if start and finish and start.value != finish.value:
+            model = [text(response.dest_name),
+                     value('From', int(start.value)), value('To', int(finish.value)),
+                     text('⇧' if start.value < finish.value else '⇩')]
+            if display_range:
+                for range in ranges:
+                    limits = self._range(s, response.dest_name, start, finish_time,
+                                         None if range == 'all' else dt.timedelta(days=int(range[:-1])))
+                    model.append([text(f'Over {range}', tag=range),
+                                  value('Lo', int(limits[0].value)), value('Hi', int(limits[1].value))])
+            yield model
 
     def _display_schedule(self, s, f, date, schedule):
         rows = []

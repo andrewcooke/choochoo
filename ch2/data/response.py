@@ -156,6 +156,6 @@ def fit_ff_params(data, params, performances, method='L1', max_reject=0, thresho
 def response_stats(df):
     stats = {}
     for pattern in FITNESS_D_ANY, FATIGUE_D_ANY:
-        for name in like(pattern, df.columns):
+        for name in like(pattern, df.side_by_side):
             stats[_d(name)] = df[name][-1] - df[name][0]
     return stats

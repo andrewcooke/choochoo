@@ -59,15 +59,15 @@ def calendar():
         df = left_interpolate(df1, df2)
         df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
         df['Duration'] = df[ACTIVE_TIME].map(format_seconds)
-        work_done = sorted_numeric_labels(df.columns, FITNESS)[0]
-        fitness = sorted_numeric_labels(df2.columns, FITNESS)[0]
-        fatigue = sorted_numeric_labels(df2.columns, FATIGUE)[0]
+        work_done = sorted_numeric_labels(df.side_by_side, FITNESS)[0]
+        fitness = sorted_numeric_labels(df2.side_by_side, FITNESS)[0]
+        fatigue = sorted_numeric_labels(df2.side_by_side, FATIGUE)[0]
         print(fatigue, fitness)
         df['FF Ratio'] = df[fatigue] / df[fitness]
 
         calendar = Calendar(df, title='Work Done and Fatigue',
                             not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME] +
-                                      [column for column in df.columns if '(' in column])
+                                      [column for column in df.side_by_side if '(' in column])
         calendar.background('square', fill_alpha=0, line_alpha=1, color='lightgrey')
         calendar.set_palette('FF Ratio', K2R, lo=0.5, hi=2)
         calendar.set_size(work_done, min=0.1, gamma=0.5)
@@ -92,7 +92,7 @@ def calendar():
 
     calendar = Calendar(df, title='Distance, Climb and Direction',
                         not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME] +
-                                  [column for column in df.columns if '(' in column])
+                                  [column for column in df.side_by_side if '(' in column])
     calendar.std_distance_climb_direction()
 
     '''
@@ -114,7 +114,7 @@ def calendar():
 
         calendar = Calendar(df, title='Distance, Fitness and Direction',
                             not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME] +
-                                      [column for column in df.columns if '(' in column])
+                                      [column for column in df.side_by_side if '(' in column])
         calendar.std_distance_fitness_direction()
 
     '''
@@ -130,8 +130,8 @@ def calendar():
     if present(df, FITNESS_D_ANY, pattern=True):
         df = df.resample('1D').mean()
         # take shortest period values when multiple definitions
-        fitness = sorted_numeric_labels(df.columns, FITNESS)[0]
-        fatigue = sorted_numeric_labels(df.columns, FATIGUE)[0]
+        fitness = sorted_numeric_labels(df.side_by_side, FITNESS)[0]
+        fatigue = sorted_numeric_labels(df.side_by_side, FATIGUE)[0]
         df['FF Ratio'] = df[fatigue] / df[fitness]
 
         calendar = Calendar(df, title='Fitness and Fatigue', scale=18, border_month=0, border_day=0)
@@ -163,5 +163,5 @@ def calendar():
 
         calendar = Calendar(df, scale=15, border_day=0.1,
                             not_hover=[ACTIVE_DISTANCE, ACTIVE_TIME] +
-                                      [column for column in df.columns if '(' in column])
+                                      [column for column in df.side_by_side if '(' in column])
         calendar.std_group_distance_climb_direction()

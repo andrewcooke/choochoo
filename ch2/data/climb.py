@@ -171,7 +171,7 @@ def add_climb_stats(df, climbs):
     for climb in climbs:
         finish = climb[TIME]
         start = finish - dt.timedelta(seconds=climb[CLIMB_TIME])
-        if POWER_ESTIMATE in df.columns:
+        if POWER_ESTIMATE in df.side_by_side:
             climb[CLIMB_POWER] = df.loc[start:finish, [POWER_ESTIMATE]].mean()
         else:
             log.warning(f'Missing {POWER_ESTIMATE} in climb data')

@@ -8,7 +8,7 @@ from urwid import Pile, Text, MainLoop, Filler, Edit, Columns
 
 from ..data import session
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
-    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG
+    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG, text
 from ..lib import to_date, format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres, PALETTE
 from ..stats.names import S, W, PC, M
@@ -137,7 +137,7 @@ LEAF = defaultdict(
     })
 
 
-def columns(*specs):
+def side_by_side(*specs):
 
     def before(model, before, after, leaf):
         branch_columns = []
@@ -213,6 +213,18 @@ def table(name, value):
     return before
 
 
+def shrimp_table(model, before, after, leaf):
+
+    def reformat(model):
+        branch = [Text(label(model[0][VALUE])), Text(str(model[1][VALUE])), Text(em(model[3][VALUE])),
+                     Text(str(model[2][VALUE]))]
+        for ranges in model[4:]:
+            branch.append(Text(label(f'{ranges[1][VALUE]}-{ranges[2][VALUE]}/{ranges[0][TAG]}')))
+        return branch
+    
+    return [Text(model[0][VALUE]), rows_to_table([reformat(m) for m in model[1:]])]
+
+
 def default_before(model, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
@@ -220,15 +232,16 @@ def default_before(model, before, after, leaf):
 
 BEFORE = defaultdict(
     lambda: default_before,
-    {'activity': columns(('hr-zones-time', 'climbs'),
-                         ('min-time', 'med-time'),
-                         ('max-med-heart-rate', 'max-mean-power-estimate')),
+    {'activity': side_by_side(('hr-zones-time', 'climbs'),
+                              ('min-time', 'med-time'),
+                              ('max-med-heart-rate', 'max-mean-power-estimate')),
      'min-time': table('Dist', 'Time'),
      'med-time': table('Dist', 'Time'),
      'max-med-heart-rate': table('Time', 'HR'),
      'max-mean-power-estimate': table('Time', 'Power'),
      'activity-statistics': values_table,
-     'climbs': climbs_table
+     'climbs': climbs_table,
+     'shrimp': shrimp_table
      })
 
 

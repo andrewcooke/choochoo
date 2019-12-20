@@ -39,7 +39,7 @@ class Binder:
         log.debug('Binding %s to %s' % (self.instance, self.__widget))
         save_ignore, self.__ignore_changes = self.__ignore_changes, True
         try:
-            for column in inspect(self.__table).columns:
+            for column in inspect(self.__table).side_by_side:
                 name = column.name
                 value = getattr(self.instance, name)
                 if not name.startswith('_'):

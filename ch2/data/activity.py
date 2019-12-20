@@ -72,7 +72,7 @@ def max_mean_stats(df, params=((POWER_ESTIMATE, MAX_MEAN_PE_M),), mins=None, del
     try:
         ldf = linear_resample_time(df, dt=delta, with_timespan=True, keep_nan=True)
         for name, template in params:
-            if name in ldf.columns:
+            if name in ldf.side_by_side:
                 ldf.loc[ldf[TIMESPAN_ID].isnull(), [name]] = zero
                 cumsum = ldf[name].cumsum()
                 for target in mins:
@@ -127,7 +127,7 @@ def max_med_stats(df, params=((HEART_RATE, MAX_MED_HR_M),), mins=None, delta=10,
 def direction_stats(df):
     stats = {}
     try:
-        if all(name in df.columns for name in (SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y)):
+        if all(name in df.side_by_side for name in (SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y)):
             df = df.dropna(subset=[SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y]).copy()
             if not df.empty:
                 x0, y0 = df.iloc[0][SPHERICAL_MERCATOR_X], df.iloc[0][SPHERICAL_MERCATOR_Y]
