@@ -5,9 +5,10 @@ from re import sub
 
 from urwid import Pile, Text, Columns
 
-from . import Displayer
+from . import Displayer, Reader
 from ..calculate.segment import SegmentCalculator
 from ..names import SEGMENT_TIME, SEGMENT_HEART_RATE
+from ...diary.model import value, text, optional_label
 from ...lib.date import local_date_to_time
 from ...sql.tables.segment import SegmentJournal, Segment
 from ...sql.tables.statistic import StatisticJournal, StatisticName
@@ -24,7 +25,22 @@ def segments_for_activity(s, ajournal):
         order_by(SegmentJournal.start).all()
 
 
-class SegmentDiary(Displayer):
+class SegmentDiary(Displayer, Reader):
+
+    @optional_label('Segments')
+    def _read_date(self, s, date):
+        tomorrow = local_date_to_time(date + dt.timedelta(days=1))
+        today = local_date_to_time(date)
+        for sjournal in s.query(SegmentJournal).join(Segment). \
+                filter(SegmentJournal.start >= today,
+                       SegmentJournal.start < tomorrow). \
+                order_by(SegmentJournal.start).all():
+            stats = [value(sub('^Segment ', '', field.statistic_name.name), field.value,
+                           units=field.statistic_name.units, measures=field.measures_as_model(date))
+                     for field in (self.__field(s, date, sjournal, name)
+                                   for name in (SEGMENT_TIME, SEGMENT_HEART_RATE))]
+            if stats:
+                yield [text(sjournal.segment.name)] + stats
 
     def _display_date(self, s, f, date):
         tomorrow = local_date_to_time(date + dt.timedelta(days=1))
@@ -46,18 +62,15 @@ class SegmentDiary(Displayer):
         time = self.__field(s, date, sjournal, SEGMENT_TIME)
         hr = self.__field(s, date, sjournal, SEGMENT_HEART_RATE)
         if time or hr:
-            return [time if time else Text(''), hr if hr else Text('')]
+            return [ReadOnlyField(time, date=date, format_name=lambda n: sub(r'^Segment ', '', n)).widget()
+                    if time else Text(''),
+                    ReadOnlyField(hr, date=date, format_name=lambda n: sub(r'^Segment ', '', n)).widget()
+                    if hr else Text('')]
         else:
             return None
 
     def __field(self, s, date, sjournal, name):
-        sjournal = StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.segment,
-                                            source_id=sjournal.id)
-        if sjournal:
-            return ReadOnlyField(sjournal, date=date,
-                                 format_name=lambda n: sub(r'^Segment ', '', n)).widget()
-        else:
-            return None
+        return StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.segment, source_id=sjournal.id)
 
     def _display_schedule(self, s, f, date, schedule):
         rows = []
