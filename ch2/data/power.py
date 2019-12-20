@@ -44,7 +44,7 @@ def _add_differentials(df, speed, *names, max_gap=None):
         df[_d(name)] = df[name].diff()
         df.loc[df[tmp] > max_gap, [_d(name)]] = _np.nan
 
-    if LATITUDE in names and LONGITUDE in names and HEADING not in df.side_by_side:
+    if LATITUDE in names and LONGITUDE in names and HEADING not in df.columns:
         df[HEADING] = _np.arctan2(df[_d(LONGITUDE)], df[_d(LATITUDE)]) * RAD_TO_DEG
         df.loc[df[tmp] > max_gap, [HEADING]] = _np.nan
 
@@ -76,7 +76,7 @@ def _add_differentials_old(df, speed, *names):
                     new_span = _pd.DataFrame(index=old_span.index)
                     for col in names:
                         new_span[_d(col)] = old_span[col].diff()
-                    if HEADING not in old_span.side_by_side:
+                    if HEADING not in old_span.columns:
                         new_span[HEADING] = _np.arctan2(new_span[_d(LONGITUDE)], new_span[_d(LATITUDE)]) * RAD_TO_DEG
                     avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(old_span[speed], old_span[speed][1:])]
                     new_span[_avg(speed_2)] = [_np.nan] + avg_speed_2
@@ -85,7 +85,7 @@ def _add_differentials_old(df, speed, *names):
     spans = list(diff())
     if len(spans):
         extra = _pd.concat(spans).sort_index()
-        return df.drop(columns=list(extra.side_by_side), errors='ignore').join(extra)
+        return df.drop(columns=list(extra.columns), errors='ignore').join(extra)
     else:
         raise PowerException('Missing data - found no spans without NANs')
 
@@ -120,7 +120,7 @@ def add_power_estimate(df):
     # power input must balance the energy budget.
     df[POWER_ESTIMATE] = (df[DELTA_ENERGY] + df[LOSS]) / df[DELTA_TIME].dt.total_seconds()
     df[POWER_ESTIMATE].clip(lower=0, inplace=True)
-    if CADENCE in df.side_by_side: df.loc[df[CADENCE] < 1, [POWER_ESTIMATE]] = 0
+    if CADENCE in df.columns: df.loc[df[CADENCE] < 1, [POWER_ESTIMATE]] = 0
     df.loc[df[POWER_ESTIMATE].isna(), [POWER_ESTIMATE]] = 0
     energy = (df[POWER_ESTIMATE].iloc[1:] * df[DELTA_TIME].iloc[1:]).cumsum()
     df[ENERGY] = 0

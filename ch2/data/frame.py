@@ -443,7 +443,7 @@ def present(df, *names, pattern=False):
     if pattern:
         if hasattr(df, 'columns'):
             for name in names:
-                columns = like(name, df.side_by_side)
+                columns = like(name, df.columns)
                 if not columns or not all(len(df[column].dropna()) for column in columns):
                     return False
             return True
@@ -451,7 +451,7 @@ def present(df, *names, pattern=False):
             return df is not None and (len(df.dropna()) and all(like(name, [df.name]) for name in names))
     else:
         if hasattr(df, 'columns'):
-            return all(name in df.side_by_side and len(df[name].dropna()) for name in names)
+            return all(name in df.columns and len(df[name].dropna()) for name in names)
         else:
             return df is not None and (len(df.dropna()) and all(df.name == name for name in names))
 
@@ -464,7 +464,7 @@ KEEP = 'keep'
 
 
 def linear_resample(df, start=None, finish=None, d=None, quantise=True):
-    log.debug(f'Linear resample with index {type(df.index)}, columns {df.side_by_side}')
+    log.debug(f'Linear resample with index {type(df.index)}, columns {df.columns}')
     d = d or median_d(df)
     start = start or df.index.min()
     finish = finish or df.index.max()
@@ -483,8 +483,8 @@ def median_dt(df):
 
 
 def linear_resample_time(df, start=None, finish=None, dt=None, with_timespan=False, keep_nan=True, add_time=True):
-    log.debug(f'Linear resample with index {type(df.index)}, columns {df.side_by_side}')
-    if with_timespan is None: with_timespan = TIMESPAN_ID in df.side_by_side
+    log.debug(f'Linear resample with index {type(df.index)}, columns {df.columns}')
+    if with_timespan is None: with_timespan = TIMESPAN_ID in df.columns
     dt = dt or median_dt(df)
     start = start or df.index.min()
     finish = finish or df.index.max()
@@ -529,10 +529,10 @@ def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
     If two values occur at the same time they are added together.  The label is then changed to MIXED.
     '''
     for statistic in statistics:
-        if constraint_label and constraint_label not in df.side_by_side:
+        if constraint_label and constraint_label not in df.columns:
             df[constraint_label] = np.nan
         for full_statistic, constraint in related_statistics(df, statistic, unpack=unpack):
-            if full_statistic not in df.side_by_side:
+            if full_statistic not in df.columns:
                 df[full_statistic] = np.nan
             column = pack.format(statistic=full_statistic, constraint=constraint)
             if constraint_label:
@@ -561,18 +561,18 @@ def coallesce_like(df, *statistics, **kargs):
 
 def related_statistics(df, statistic, unpack=r'({statistic}) \(([^\)]+)\)'):
     rx = compile(unpack.format(statistic=statistic))
-    for column in df.side_by_side:
+    for column in df.columns:
         m = rx.match(column)
         if m: yield m.group(1), m.group(2)
 
 
 def transform(df, transformation):
-    transformation = {key: value for key, value in transformation.items() if key in df.side_by_side}
+    transformation = {key: value for key, value in transformation.items() if key in df.columns}
     return df.transform(transformation)
 
 
 def drop_empty(df):
-    for column in df.side_by_side:
+    for column in df.columns:
         if df[column].dropna().empty:
             df = df.drop(columns=[column])
     return df

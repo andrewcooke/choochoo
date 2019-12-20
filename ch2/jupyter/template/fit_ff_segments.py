@@ -61,7 +61,7 @@ def fit_ff_segments(group, *segment_names):
     performances = []
     for segment in segments:
         for kit, times in times_by_kit_by_segment[segment].items():
-            if len(times.side_by_side) and len(times.index) > 2:
+            if len(times.columns) and len(times.index) > 2:
                 times.index = times.index.round('1H')
                 performances.append(Series(segment.distance / times.iloc[:, 0], times.index,
                                            name=f'{segment.name}/{kit}'))

@@ -125,7 +125,7 @@ class Calendar:
     def _build_tools(df, hover, not_hover, all_hover):
         tools = [SaveTool()]
         if hover is None:
-            hover = [col for col in df.side_by_side if all_hover or (not col.startswith(CALENDAR) and not col in not_hover)]
+            hover = [col for col in df.columns if all_hover or (not col.startswith(CALENDAR) and not col in not_hover)]
         if hover:
             # names ensures that background has no hover
             tools.append(HoverTool(tooltips=[tooltip(col) for col in hover], names=['with_hover']))
@@ -174,7 +174,7 @@ class Calendar:
         self.show()
 
     def std_distance_fitness_direction(self):
-        fitness = sorted(like(_d(FITNESS_D_ANY), self._df.side_by_side))[0]
+        fitness = sorted(like(_d(FITNESS_D_ANY), self._df.columns))[0]
         self.background('circle', fill_alpha=0, line_alpha=1, color='lightgrey')
         self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.1)
         self.set_palette(fitness, B2R, gamma=0.7)

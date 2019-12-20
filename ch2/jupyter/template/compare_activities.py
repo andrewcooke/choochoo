@@ -111,7 +111,7 @@ def compare_activities(local_time, compare_time, activity_group_name):
     ## Health and Fitness
     '''
 
-    fitness, fatigue = like(FITNESS_D_ANY, health.side_by_side), like(FATIGUE_D_ANY, health.side_by_side)
+    fitness, fatigue = like(FITNESS_D_ANY, health.columns), like(FATIGUE_D_ANY, health.columns)
     colours = ['black'] * len(fitness) + ['red'] * len(fatigue)
     alphas = [1.0] * len(fitness) + [0.5] * len(fatigue)
     ff = multi_line_plot(900, 300, TIME, fitness + fatigue, health, colours, alphas=alphas)
