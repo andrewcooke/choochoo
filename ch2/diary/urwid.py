@@ -4,8 +4,10 @@ from copy import copy
 from logging import getLogger
 from sys import argv
 
-from urwid import Pile, Text, MainLoop, Filler, Edit, Columns
+from urwid import Pile, Text, MainLoop, Filler, Edit, Columns, Frame, Divider
 
+from ch2.urwid.tui.factory import Factory
+from ch2.urwid.tui.tabs import TabList, Tab
 from ..data import session
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
     LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG, text
@@ -13,7 +15,7 @@ from ..lib import to_date, format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres, PALETTE
 from ..stats.names import S, W, PC, M
 from ..urwid.tui.decorators import Border, Indent
-from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu
+from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile
 
 log = getLogger(__name__)
 HR_ZONES_WIDTH = 30
@@ -27,12 +29,18 @@ def zone(zone, text): return 'zone-%d' % zone, text
 def quintile(quintile, text): return 'quintile-%d' % quintile, text
 
 
-def build(model):
-    log.debug(model)
-    return Border(Filler(layout(model)))
+def build(model, f, date):
+    footer = ['meta-', em('q'), 'uit/e', em('x'), 'it/', em('s'), 'ave']
+    footer += [' [shift]meta-']
+    for sep, c in enumerate('dwmya'):
+        if sep: footer += ['/']
+        footer += [em(c)]
+    footer += ['ctivity/', em('t'), 'oday']
+    return Border(Frame(Filler(layout(model, f), valign='top'),
+                        footer=Pile([Divider(), Text(footer, align='center')])))
 
 
-def layout(model, before=None, after=None, leaf=None):
+def layout(model, f, before=None, after=None, leaf=None):
     '''
     Takes a model and returns an urwid widget.
     The model is nested lists, forming a tree, with nodes that are dicts.
@@ -54,7 +62,7 @@ def layout(model, before=None, after=None, leaf=None):
             raise Exception(f'Model list with no head element: {model}')
         key = model[0].get(TAG, None)
         try:
-            branch = before[key](model, copy(before), copy(after), copy(leaf))
+            branch = before[key](model, f, copy(before), copy(after), copy(leaf))
         except Exception as e:
             log.error(f'Error ({e}) while processing {model}')
             raise
@@ -63,12 +71,12 @@ def layout(model, before=None, after=None, leaf=None):
         if not isinstance(model, dict):
             raise Exception(f'Model entry of type {type(model)} ({model})')
         key = model.get(TYPE, None)
-        return leaf[key](model)
+        return leaf[key](model, f)
 
 
 # todo - should just be values
 
-def create_hr_zones(model, width=HR_ZONES_WIDTH):
+def create_hr_zones(model, f, width=HR_ZONES_WIDTH):
     body = []
     for z, percent_time in zip(model[HR_ZONES], model[PERCENT_TIMES]):
         text = ('%d:' + ' ' * (width - 6) + '%3d%%') % (z, int(0.5 + percent_time))
@@ -113,7 +121,7 @@ def fmt_value_measures(model):
     return measures
 
 
-def create_value(model):
+def create_value(model, f):
     return Text([label(model[LABEL] + ': ')] + fmt_value_units(model) + [' '] + fmt_value_measures(model))
 
 
@@ -123,23 +131,23 @@ def default_leaf(model):
 LEAF = defaultdict(
     lambda: default_leaf,
     {
-        TEXT: lambda model: Text(model[VALUE]),
-        EDIT: lambda model: Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or ''),
-        FLOAT: lambda model: Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
-                                   minimum=model[LO], maximum=model[HI], dp=model[DP],
-                                   units=model[UNITS]),
-        SCORE0: lambda model: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
-        SCORE1: lambda model: Rating1(caption=label(model[LABEL] + ': '), state=model[VALUE]),
+        TEXT: lambda model, f: Text(model[VALUE]),
+        EDIT: lambda model, f: f(Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or '')),
+        FLOAT: lambda model, f: Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
+                                      minimum=model[LO], maximum=model[HI], dp=model[DP],
+                                      units=model[UNITS]),
+        SCORE0: lambda model, f: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
+        SCORE1: lambda model, f: Rating1(caption=label(model[LABEL] + ': '), state=model[VALUE]),
         HR_ZONES: create_hr_zones,
         VALUE: create_value,
-        MENU: lambda model: ArrowMenu(label(model[LABEL] + ': '),
-                                      {link[LABEL]: link[VALUE] for link in model[LINKS]})
+        MENU: lambda model, f: f(ArrowMenu(label(model[LABEL] + ': '),
+                                           {link[LABEL]: link[VALUE] for link in model[LINKS]}))
     })
 
 
 def side_by_side(*specs):
 
-    def before(model, before, after, leaf):
+    def before(model, f, before, after, leaf):
         branch_columns = []
         for names in specs:
             try:
@@ -153,12 +161,12 @@ def side_by_side(*specs):
                             break
                     if not found:
                         raise Exception(f'Missing column {name}')
-                columns = [layout(column, before, after, leaf) for column in columns]
+                columns = [layout(column, f, before, after, leaf) for column in columns]
                 branch_columns.append(Columns(columns))
                 model = reduced_model
             except Exception as e:
                 log.warning(e)
-        branch = [layout(m, before, after, leaf) for m in model]
+        branch = [layout(m, f, before, after, leaf) for m in model]
         branch.extend(branch_columns)
         return branch
 
@@ -180,14 +188,14 @@ def rows_to_table(rows):
     return Columns([(width+1, Pile(column)) for column, width in zip(zip(*rows), widths)])
 
 
-def values_table(model, before, after, leaf):
+def values_table(model, f, before, after, leaf):
     values = [m for m in model if isinstance(m, dict) and m.get(TYPE, None) == 'value']
-    rest = [layout(m, before, after, leaf) for m in model if m not in values]
+    rest = [layout(m, f, before, after, leaf) for m in model if m not in values]
     table = rows_to_table([value_to_row(value) for value in values])
     return rest + [table]
 
 
-def climbs_table(model, before, after, leaf):
+def climbs_table(model, f, before, after, leaf):
 
     def climb(model):
         # assumes elevation, distance and time entries, in that order
@@ -195,15 +203,15 @@ def climbs_table(model, before, after, leaf):
                 Text(fmt_value_measures(model[0]))]
 
     elevations = [m for m in model if isinstance(m, list) and m[0].get(LABEL, None) == 'Elevation']
-    rest = [layout(m, before, after, leaf) for m in model if m not in elevations]
+    rest = [layout(m, f, before, after, leaf) for m in model if m not in elevations]
     table = rows_to_table([climb(elevation) for elevation in elevations])
-    return rest + [table]
+    return rest[:1] + [table] + rest[1:]  # title, table, total
 
 
 def table(name, value):
 
-    def before(model, before, after, leaf):
-        title = layout(model[0], before, after, leaf)
+    def before(model, f, before, after, leaf):
+        title = layout(model[0], f, before, after, leaf)
         has_measures = any(MEASURES in m for m in model[1:])
         headers = [name, value]
         if has_measures: headers.append('Stats')
@@ -213,7 +221,7 @@ def table(name, value):
     return before
 
 
-def shrimp_table(model, before, after, leaf):
+def shrimp_table(model, f, before, after, leaf):
 
     def reformat(model):
         branch = [Text(label(model[0][VALUE])), Text(str(model[1][VALUE])), Text(em(model[3][VALUE])),
@@ -225,10 +233,10 @@ def shrimp_table(model, before, after, leaf):
     return [Text(model[0][VALUE]), rows_to_table([reformat(m) for m in model[1:]])]
 
 
-def default_before(model, before, after, leaf):
+def default_before(model, f, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
-    return [layout(m, before, after, leaf) for m in model]
+    return [layout(m, f, before, after, leaf) for m in model]
 
 BEFORE = defaultdict(
     lambda: default_before,
@@ -249,6 +257,7 @@ COLUMN_WIDTH = 6
 N_COLUMNS = 12
 
 def widget_size(widget, max_cols=N_COLUMNS):
+    if isinstance(widget, Tab): widget = widget.w
     for cls in (Float, Rating0, Rating1):
         if isinstance(widget, cls): return 3
     if isinstance(widget, ArrowMenu): return 4
@@ -274,6 +283,14 @@ def pack_widgets(branch, max_cols=N_COLUMNS):
     return default_after(new_branch)
 
 
+def title_after(branch):
+    head, tail = branch[0], branch[1:]
+    if tail:
+        return Pile([head, Divider(), Indent(DividedPile(tail))])
+    else:
+        return head
+
+
 def default_after(branch):
     head, tail = branch[0], branch[1:]
     if tail:
@@ -284,7 +301,8 @@ def default_after(branch):
 AFTER = defaultdict(
     lambda: default_after,
     {'status': pack_widgets,
-     'nearby': pack_widgets})
+     'nearby': pack_widgets,
+     'title': title_after})
 
 
 
@@ -300,6 +318,7 @@ if __name__ == '__main__':
     s = session('--dev -v5')
     data = list(read_daily(s, date))
     log.debug(f'Read {data}')
-    widget = build(data)
+    f = Factory(TabList())
+    widget = build(data, f, date)
     log.debug(f'Built {widget}')
     MainLoop(widget, palette=PALETTE).run()

@@ -20,7 +20,7 @@ which can be iterated over together.
 
 
 def read_daily(s, date):
-    yield text(date.strftime('%Y-%m-%d - %A'))
+    yield text(date.strftime('%Y-%m-%d - %A'), tag='title')
     yield list(read_daily_topics(s, date))
     yield from read_pipeline(s, date)
 

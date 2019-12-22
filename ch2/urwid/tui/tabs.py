@@ -62,6 +62,10 @@ class Tab(FocusWrap):
         else:
             return super().keypress(size, key)
 
+    @property
+    def w(self):
+        return self._w.w  # drill down past FocusAttr
+
 
 class TabList(Sequence):
     """

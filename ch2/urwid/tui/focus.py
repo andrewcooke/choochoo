@@ -142,6 +142,10 @@ class FocusAttr(AttrMap):
                 self.set_attr_map({None: self._plain})
                 self.set_focus_map({None: self._focus})
 
+    @property
+    def w(self):
+        return self._original_widget
+
 
 class MessageBar(WidgetWrap):
     """
