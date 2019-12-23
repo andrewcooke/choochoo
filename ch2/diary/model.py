@@ -69,13 +69,13 @@ def menu(label, links, **kargs):
     return dict(type=MENU, label=label, links=links, **kargs)
 
 
-def optional_label(name):
+def optional_label(name, tag=None):
     def decorator(f):
         def decorated(*args, **kargs):
             first = True
             for value in f(*args, **kargs):
                 if first:
-                    yield text(name)
+                    yield text(name, tag=tag)
                     first = False
                 yield value
         return decorated

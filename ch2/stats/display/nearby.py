@@ -5,7 +5,7 @@ from sqlalchemy.sql.functions import min
 from urwid import Pile, Text, Columns, connect_signal
 
 from . import JournalDiary
-from ...diary.model import text, link, menu
+from ...diary.model import text, link, menu, optional_label
 from ...lib.date import to_time, time_to_local_date, to_date
 from ...lib.utils import label
 from ...sql import ActivityJournal, ActivitySimilarity, ActivityNearby
@@ -37,12 +37,11 @@ class NearbyDiary(JournalDiary):
                 yield Pile([Text(constraint),
                             Indent(Columns(row))])
 
+    @optional_label('Nearby', tag='nearbys')
     def _read_journal_date(self, s, ajournal, date):
         for constraint in constraints(s):
             results = list(self.__read_constraint(s, ajournal, constraint))
-            if results:
-                yield text(constraint, tag='nearby')
-                yield from results
+            if results: yield [text(constraint, tag='nearby')] + results
 
     def __read_constraint(self, s, ajournal, c):
         for title, callback, fmt in (('Any Time', nearby_any_time,

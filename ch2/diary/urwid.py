@@ -3,16 +3,17 @@ from collections import defaultdict
 from copy import copy
 from logging import getLogger
 
-from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider
+from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding
 
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
-    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG
+    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG, LINK
 from ..lib import format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres
 from ..stats.names import S, W, PC, M
 from ..urwid.tui.decorators import Border, Indent
+from ..urwid.tui.fixed import Fixed
 from ..urwid.tui.tabs import Tab
-from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile
+from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile, SquareButton
 
 log = getLogger(__name__)
 HR_ZONES_WIDTH = 30
@@ -37,6 +38,11 @@ def build(model, f):
                         footer=Pile([Divider(), Text(footer, align='center')])))
 
 
+def apply_before(model, f, before, after, leaf):
+        key = model[0].get(TAG, None)
+        return before[key](key, model, f, copy(before), copy(after), copy(leaf))
+
+
 def layout(model, f, before=None, after=None, leaf=None):
     '''
     Takes a model and returns an urwid widget.
@@ -57,13 +63,12 @@ def layout(model, f, before=None, after=None, leaf=None):
             raise Exception('Empty list in model')
         if not isinstance(model[0], dict):
             raise Exception(f'Model list with no head element: {model}')
-        key = model[0].get(TAG, None)
         try:
-            branch = before[key](model, f, copy(before), copy(after), copy(leaf))
+            key, branch = apply_before(model, f, copy(before), copy(after), copy(leaf))
+            return after[key](branch)
         except Exception as e:
             log.error(f'Error ({e}) while processing {model}')
             raise
-        return after[key](branch)
     else:
         if not isinstance(model, dict):
             raise Exception(f'Model entry of type {type(model)} ({model})')
@@ -122,7 +127,7 @@ def create_value(model, f):
     return Text([label(model[LABEL] + ': ')] + fmt_value_units(model) + [' '] + fmt_value_measures(model))
 
 
-def default_leaf(model):
+def default_leaf(model, f):
     raise Exception(f'Unexpected leaf {model}')
 
 LEAF = defaultdict(
@@ -138,13 +143,14 @@ LEAF = defaultdict(
         HR_ZONES: create_hr_zones,
         VALUE: create_value,
         MENU: lambda model, f: f(ArrowMenu(label(model[LABEL] + ': '),
-                                           {link[LABEL]: link[VALUE] for link in model[LINKS]}))
+                                           {link[LABEL]: link[VALUE] for link in model[LINKS]})),
+        LINK: lambda model, f: f(Padding(Fixed(SquareButton(model[LABEL]), len(model[LABEL]) + 2), width='clip'))
     })
 
 
 def side_by_side(*specs):
 
-    def before(model, f, before, after, leaf):
+    def before(key, model, f, before, after, leaf):
         branch_columns = []
         for names in specs:
             try:
@@ -165,7 +171,7 @@ def side_by_side(*specs):
                 log.warning(e)
         branch = [layout(m, f, before, after, leaf) for m in model]
         branch.extend(branch_columns)
-        return branch
+        return key, branch
 
     return before
 
@@ -185,14 +191,14 @@ def rows_to_table(rows):
     return Columns([(width+1, Pile(column)) for column, width in zip(zip(*rows), widths)])
 
 
-def values_table(model, f, before, after, leaf):
+def values_table(key, model, f, before, after, leaf):
     values = [m for m in model if isinstance(m, dict) and m.get(TYPE, None) == 'value']
     rest = [layout(m, f, before, after, leaf) for m in model if m not in values]
     table = rows_to_table([value_to_row(value) for value in values])
-    return rest + [table]
+    return key, rest + [table]
 
 
-def climbs_table(model, f, before, after, leaf):
+def climbs_table(key, model, f, before, after, leaf):
 
     def climb(model):
         # assumes elevation, distance and time entries, in that order
@@ -202,23 +208,23 @@ def climbs_table(model, f, before, after, leaf):
     elevations = [m for m in model if isinstance(m, list) and m[0].get(LABEL, None) == 'Elevation']
     rest = [layout(m, f, before, after, leaf) for m in model if m not in elevations]
     table = rows_to_table([climb(elevation) for elevation in elevations])
-    return rest[:1] + [table] + rest[1:]  # title, table, total
+    return key, rest[:1] + [table] + rest[1:]  # title, table, total
 
 
 def table(name, value):
 
-    def before(model, f, before, after, leaf):
+    def before(key, model, f, before, after, leaf):
         title = layout(model[0], f, before, after, leaf)
         has_measures = any(MEASURES in m for m in model[1:])
         headers = [name, value]
         if has_measures: headers.append('Stats')
         rows = [[Text(label(header)) for header in headers]] + [value_to_row(m, has_measures) for m in model[1:]]
-        return [title, rows_to_table(rows)]
+        return key, [title, rows_to_table(rows)]
 
     return before
 
 
-def shrimp_table(model, f, before, after, leaf):
+def shrimp_table(key, model, f, before, after, leaf):
 
     def reformat(model):
         branch = [Text(label(model[0][VALUE])), Text(str(model[1][VALUE])), Text(em(model[3][VALUE])),
@@ -227,13 +233,22 @@ def shrimp_table(model, f, before, after, leaf):
             branch.append(Text(label(f'{ranges[1][VALUE]}-{ranges[2][VALUE]}/{ranges[0][TAG]}')))
         return branch
     
-    return [Text(model[0][VALUE]), rows_to_table([reformat(m) for m in model[1:]])]
+    return key, [Text(model[0][VALUE]), rows_to_table([reformat(m) for m in model[1:]])]
 
 
-def default_before(model, f, before, after, leaf):
+def collapse_title(key, model, f, before, after, leaf):
+    def is_text(x):
+        return isinstance(x, dict) and x[TYPE] == TEXT
+    if len(model) == 2 and is_text(model[0]) and len(model[1]) and is_text(model[1][0]):
+        model[1][0][VALUE] = f'{model[0][VALUE]} - {model[1][0][VALUE]}'
+        model = model[1]
+    return apply_before(model, f, copy(before), copy(after), copy(leaf))
+
+
+def default_before(key, model, f, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
-    return [layout(m, f, before, after, leaf) for m in model]
+    return key, [layout(m, f, before, after, leaf) for m in model]
 
 BEFORE = defaultdict(
     lambda: default_before,
@@ -245,9 +260,11 @@ BEFORE = defaultdict(
      'max-med-heart-rate': table('Time', 'HR'),
      'max-mean-power-estimate': table('Time', 'Power'),
      'activity-statistics': values_table,
+     'segments': collapse_title,
      'segment': values_table,
      'climbs': climbs_table,
-     'shrimp': shrimp_table
+     'shrimp': shrimp_table,
+     'nearbys': collapse_title
      })
 
 
