@@ -245,13 +245,14 @@ BEFORE = defaultdict(
      'max-med-heart-rate': table('Time', 'HR'),
      'max-mean-power-estimate': table('Time', 'Power'),
      'activity-statistics': values_table,
+     'segment': values_table,
      'climbs': climbs_table,
      'shrimp': shrimp_table
      })
 
 
-COLUMN_WIDTH = 6
-N_COLUMNS = 12
+COLUMN_WIDTH = 6  # characters per column
+N_COLUMNS = 12    # columns on screen (typically use multiple; 12 allows 3 or 4 'real' columns)
 
 def widget_size(widget, max_cols=N_COLUMNS):
     if isinstance(widget, Tab): widget = widget.w

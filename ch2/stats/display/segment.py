@@ -40,7 +40,7 @@ class SegmentDiary(Displayer, Reader):
                      for field in (self.__field(s, date, sjournal, name)
                                    for name in (SEGMENT_TIME, SEGMENT_HEART_RATE))]
             if stats:
-                yield [text(sjournal.segment.name)] + stats
+                yield [text(sjournal.segment.name, tag='segment')] + stats
 
     def _display_date(self, s, f, date):
         tomorrow = local_date_to_time(date + dt.timedelta(days=1))
