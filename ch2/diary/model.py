@@ -8,6 +8,7 @@ EDIT = 'edit'
 FLOAT = 'float'
 HI = 'hi'
 HR_ZONES = 'hr_zones'
+INTEGER = 'integer'
 LABEL = 'label'
 LINK = 'link'
 LINKS = 'links'
@@ -41,32 +42,53 @@ def to_tag(text):
     return text.lower()
 
 
-# todo - remove kargs?
+# --- mutable types
 
-def text(text, width=4, height=1, tag=None, **kargs):
-    model = dict(kargs)
-    model.update(type=TEXT, value=text, width=width, height=height, tag=to_tag(tag or text))
-    return model
+def score0(label, value):
+    return {TYPE: SCORE0, LABEL: label, VALUE: value}
 
 
-def value(label, value, units=None, measures=None, **kargs):
-    model = dict(kargs)
-    model.update(type=VALUE, label=label, value=value, units=units)
-    if measures and measures[SCHEDULES]: model.update(measures=measures)
-    return model
+def integer(label, value, units=None, lo=None, hi=None):
+    return {TYPE: FLOAT, LABEL: label, VALUE: value, UNITS: units, LO: lo, HI: hi}
 
 
-def link(label, value, **kargs):
-    return dict(type=LINK, label=label, value=value, **kargs)
+def float(label, value, units=None, lo=None, hi=None, dp=1):
+    return {TYPE: FLOAT, LABEL: label, VALUE: value, UNITS: units, LO: lo, HI: hi, DP: dp}
 
 
+def edit(label, value):
+    return {TYPE: EDIT, VALUE: value}
+
+
+# --- immutable types
+
+def text(text, tag=None):
+    return {TYPE: TEXT, VALUE: text, TAG: to_tag(tag or text)}
+
+
+def value(label, value, units=None, measures=None):
+    return {TYPE: VALUE, LABEL: label, VALUE: value, UNITS: units, MEASURES: measures}
+
+
+def measure(schedules):
+    # schedules are a map from schedule to (percent, rank) tuples
+    return {TYPE: MEASURES, SCHEDULES: schedules}
+
+
+def link(label, value):
+    return {TYPE: LINK, LABEL: label, VALUE: value}
+
+
+
+
+# todo - values?
 def hr_zones(zones, percent_times):
-    return dict(type=HR_ZONES, hr_zones=zones, percent_times=percent_times)
+    return {TYPE: HR_ZONES, HR_ZONES: zones, PERCENT_TIMES: percent_times}
 
-
-def menu(label, links, **kargs):
+# todo - links?
+def menu(label, links):
     # links is list of link types
-    return dict(type=MENU, label=label, links=links, **kargs)
+    return {TYPE: MENU, LABEL: label, LINKS: links}
 
 
 def optional_label(name, tag=None):

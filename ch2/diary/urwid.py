@@ -6,14 +6,14 @@ from logging import getLogger
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding
 
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
-    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG, LINK
+    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG, LINK, INTEGER
 from ..lib import format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres
 from ..stats.names import S, W, PC, M
 from ..urwid.tui.decorators import Border, Indent
 from ..urwid.tui.fixed import Fixed
 from ..urwid.tui.tabs import Tab
-from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile, SquareButton
+from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile, SquareButton, Integer
 
 log = getLogger(__name__)
 HR_ZONES_WIDTH = 30
@@ -115,7 +115,7 @@ def fmt_value_units(model):
 
 def fmt_value_measures(model):
     measures = []
-    if MEASURES in model:
+    if MEASURES in model and model[MEASURES]:
         for schedule in model[MEASURES][SCHEDULES]:
             percentile, rank = model[MEASURES][SCHEDULES][schedule]
             q = 1 + min(4, percentile / 20)
@@ -138,8 +138,9 @@ LEAF = defaultdict(
         FLOAT: lambda model, f: Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
                                       minimum=model[LO], maximum=model[HI], dp=model[DP],
                                       units=model[UNITS]),
+        INTEGER: lambda model, f: Integer(caption=label(model[LABEL] + ': '), state=model[VALUE],
+                                          minimum=model[LO], maximum=model[HI], units=model[UNITS]),
         SCORE0: lambda model, f: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
-        SCORE1: lambda model, f: Rating1(caption=label(model[LABEL] + ': '), state=model[VALUE]),
         HR_ZONES: create_hr_zones,
         VALUE: create_value,
         MENU: lambda model, f: f(ArrowMenu(label(model[LABEL] + ': '),
