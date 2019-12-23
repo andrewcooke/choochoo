@@ -24,6 +24,7 @@ ACTIVITIES = 'activities'
 CONFIG = 'config'
 CONSTANTS = 'constants'
 DIARY = 'diary'
+DIARY2 = 'diary2'
 DUMP = 'dump'
 FIT = 'fit'
 FIX_FIT = 'fix-fit'
@@ -311,6 +312,19 @@ def make_parser():
                                help='show yearly summary')
     diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
                                help='show summary for given schedule')
+
+    diary2 = subparsers.add_parser(DIARY2, help='daily diary and summary')
+    diary2.add_argument(DATE, action='store', metavar='DATE', nargs='?',
+                        help='an optional date to display (default is today)')
+    diary2.add_argument(mm(FAST), action='store_true',
+                        help='skip update of statistics on exit')
+    diary2_summary = diary2.add_mutually_exclusive_group()
+    diary2_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
+                                help='show monthly summary')
+    diary2_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
+                                help='show yearly summary')
+    diary2_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
+                                help='show summary for given schedule')
 
     dump = subparsers.add_parser(DUMP, help='display database contents')  # todo - this one needs tests!
     dump_format = dump.add_mutually_exclusive_group()

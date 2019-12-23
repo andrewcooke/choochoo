@@ -2,19 +2,16 @@
 from collections import defaultdict
 from copy import copy
 from logging import getLogger
-from sys import argv
 
-from urwid import Pile, Text, MainLoop, Filler, Edit, Columns, Frame, Divider
+from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider
 
-from ch2.urwid.tui.factory import Factory
-from ch2.urwid.tui.tabs import TabList, Tab
-from ..data import session
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
-    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG, text
-from ..lib import to_date, format_seconds
-from ..lib.utils import format_watts, format_percent, format_metres, PALETTE
+    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG
+from ..lib import format_seconds
+from ..lib.utils import format_watts, format_percent, format_metres
 from ..stats.names import S, W, PC, M
 from ..urwid.tui.decorators import Border, Indent
+from ..urwid.tui.tabs import Tab
 from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile
 
 log = getLogger(__name__)
@@ -29,7 +26,7 @@ def zone(zone, text): return 'zone-%d' % zone, text
 def quintile(quintile, text): return 'quintile-%d' % quintile, text
 
 
-def build(model, f, date):
+def build(model, f):
     footer = ['meta-', em('q'), 'uit/e', em('x'), 'it/', em('s'), 'ave']
     footer += [' [shift]meta-']
     for sep, c in enumerate('dwmya'):
@@ -305,20 +302,3 @@ AFTER = defaultdict(
      'title': title_after})
 
 
-
-
-
-if __name__ == '__main__':
-
-    from ch2.diary.database import read_daily
-
-    if len(argv) != 2:
-        raise Exception('Usage: python -m ch2.diary.urwid date')
-    date = to_date(argv[1])
-    s = session('--dev -v5')
-    data = list(read_daily(s, date))
-    log.debug(f'Read {data}')
-    f = Factory(TabList())
-    widget = build(data, f, date)
-    log.debug(f'Built {widget}')
-    MainLoop(widget, palette=PALETTE).run()

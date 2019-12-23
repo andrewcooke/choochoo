@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy import or_
 
-from .model import from_field, text
+from .model import from_field, text, optional_label
 from ..sql import DiaryTopic, DiaryTopicJournal
 from ..sql.utils import add
 from ..stats.display import read_pipeline
@@ -21,12 +21,13 @@ which can be iterated over together.
 
 def read_daily(s, date):
     yield text(date.strftime('%Y-%m-%d - %A'), tag='title')
-    yield list(read_daily_topics(s, date))
+    topics = list(read_daily_topics(s, date))
+    if topics: yield topics
     yield from read_pipeline(s, date)
 
 
+@optional_label('Diary')
 def read_daily_topics(s, date):
-    yield text('Diary')
     for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,
                                             or_(DiaryTopic.start <= date, DiaryTopic.start == None),
                                             or_(DiaryTopic.finish >= date, DiaryTopic.finish == None)). \

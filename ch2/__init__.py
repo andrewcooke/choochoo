@@ -21,11 +21,12 @@ class FatalException(Exception):
 from .commands.activities import activities
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI, KIT
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI, KIT, DIARY2
 from .commands.constants import constants
 from .commands.dump import dump
 from .commands.config import config
 from .commands.diary import diary
+from .commands.diary2 import diary2
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
@@ -61,6 +62,7 @@ COMMANDS = {ACTIVITIES: activities,
             CONSTANTS: constants,
             CONFIG: config,
             DIARY: diary,
+            DIARY2: diary2,
             DUMP: dump,
             FIT: fit,
             FIX_FIT: fix_fit,
