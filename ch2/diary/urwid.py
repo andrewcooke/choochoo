@@ -40,6 +40,7 @@ def build(model, f):
 
 def apply_before(model, f, before, after, leaf):
         key = model[0].get(TAG, None)
+        if key in before: log.debug(f'Before key {key}')
         return before[key](key, model, f, copy(before), copy(after), copy(leaf))
 
 
@@ -73,7 +74,12 @@ def layout(model, f, before=None, after=None, leaf=None):
         if not isinstance(model, dict):
             raise Exception(f'Model entry of type {type(model)} ({model})')
         key = model.get(TYPE, None)
-        return leaf[key](model, f)
+        try:
+            if key in leaf: log.debug(f'Leaf key {key}')
+            return leaf[key](model, f)
+        except Exception as e:
+            log.error(f'Error ({e}) while processing leaf {key} in {model}')
+            raise
 
 
 # todo - should just be values
@@ -180,7 +186,7 @@ def side_by_side(*specs):
 def value_to_row(value, has_measures=None):
     # has_measures can be true/false to force
     row = [Text(label(value[LABEL])), Text(fmt_value_units(value))]
-    if has_measures is True or MEASURES in value:
+    if has_measures is True or (MEASURES in value and SCHEDULES in value[MEASURES] and value[MEASURES][SCHEDULES]):
         row += [Text(fmt_value_measures(value))]
     elif has_measures is None:
         row += [Text('')]

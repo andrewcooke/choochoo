@@ -120,14 +120,19 @@ from ch2.sql.tables import *
 
 s = session('-v5 --dev -f $TMP_DIR/copy-$SRC.sql')
 for field in s.query(DiaryTopicField).all():
-    field.model = field.display_kargs
-    field.model['type'] = field.display_cls.__name__.split('.')[-1].lower()
-    if field.model['type'] == 'text':
-        field.model['type'] = 'edit'
-        field.model['width'] = 4
-    else:
-        field.model['width'] = 1
-    field.model['height'] = 1
+    model = {}
+    for name, value in field.display_kargs.items():
+        model[name] = value
+    model['type'] = field.display_cls.__name__.split('.')[-1].lower()
+    if model['type'] == 'text':
+        model['type'] = 'edit'
+    if 'width' in model:
+        del model['width']
+    if 'height' in model:
+        del model['height']
+    field.model = model
+    #print(field.id, field.display_cls, field.model)
+
 s.commit()
 EOF
 fi
@@ -178,6 +183,8 @@ fi
 echo "creating new, empty database at $DB_DIR/database-$DST.sql"
 echo "(should print warning config message)"
 rm -f "$DB_DIR/database-$DST.sql"
+rm -f "$DB_DIR/database-$DST.sql-shm"
+rm -f "$DB_DIR/database-$DST.sql-wal"
 dev/ch2 no-op
 
 echo "loading data into $DB_DIR/database-$DST.sql"

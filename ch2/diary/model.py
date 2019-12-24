@@ -28,12 +28,14 @@ VALUE = 'value'
 
 
 def from_field(topic_field, statistic_journal):
-    # todo - type?
-    model = dict(topic_field.model)
-    model.update(value=statistic_journal.value,
-                 label=statistic_journal.statistic_name.name,
-                 units=statistic_journal.statistic_name.units)
-    return model
+    kargs = dict(topic_field.model)
+    type = kargs[TYPE]
+    del kargs[TYPE]
+    kargs.update(value=statistic_journal.value,
+                 label=statistic_journal.statistic_name.name)
+    if statistic_journal.statistic_name.units:
+        kargs.update(units=statistic_journal.statistic_name.units)
+    return {SCORE0: score0, INTEGER: integer, FLOAT: float, EDIT: edit}[type](**kargs)
 
 
 def to_tag(text):
@@ -57,7 +59,7 @@ def float(label, value, units=None, lo=None, hi=None, dp=1):
 
 
 def edit(label, value):
-    return {TYPE: EDIT, VALUE: value}
+    return {TYPE: EDIT, LABEL: label, VALUE: value}
 
 
 # --- immutable types
@@ -70,10 +72,12 @@ def value(label, value, units=None, measures=None):
     return {TYPE: VALUE, LABEL: label, VALUE: value, UNITS: units, MEASURES: measures}
 
 
-def measure(schedules):
+def measures(schedules):
     # schedules are a map from schedule to (percent, rank) tuples
     return {TYPE: MEASURES, SCHEDULES: schedules}
 
+
+# --- active types
 
 def link(label, value):
     return {TYPE: LINK, LABEL: label, VALUE: value}

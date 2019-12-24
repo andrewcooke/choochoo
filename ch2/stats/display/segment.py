@@ -38,7 +38,8 @@ class SegmentDiary(Displayer, Reader):
             stats = [value(sub('^Segment ', '', field.statistic_name.name), field.value,
                            units=field.statistic_name.units, measures=field.measures_as_model(date))
                      for field in (self.__field(s, date, sjournal, name)
-                                   for name in (SEGMENT_TIME, SEGMENT_HEART_RATE))]
+                                   for name in (SEGMENT_TIME, SEGMENT_HEART_RATE))
+                     if field]
             if stats:
                 yield [text(sjournal.segment.name, tag='segment')] + stats
 
