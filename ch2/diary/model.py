@@ -1,8 +1,6 @@
 
 import re
 
-from ch2.sql.types import long_cls
-
 DP = 'dp'
 EDIT = 'edit'
 FLOAT = 'float'
@@ -68,8 +66,8 @@ def text(text, tag=None):
     return {TYPE: TEXT, VALUE: text, TAG: to_tag(tag or text)}
 
 
-def value(label, value, units=None, measures=None):
-    return {TYPE: VALUE, LABEL: label, VALUE: value, UNITS: units, MEASURES: measures}
+def value(label, value, tag=None, units=None, measures=None):
+    return {TYPE: VALUE, LABEL: label, VALUE: value, TAG: to_tag(tag or label), UNITS: units, MEASURES: measures}
 
 
 def measures(schedules):
@@ -83,11 +81,6 @@ def link(label, value):
     return {TYPE: LINK, LABEL: label, VALUE: value}
 
 
-
-
-# todo - values?
-def hr_zones(zones, percent_times):
-    return {TYPE: HR_ZONES, HR_ZONES: zones, PERCENT_TIMES: percent_times}
 
 # todo - links?
 def menu(label, links):

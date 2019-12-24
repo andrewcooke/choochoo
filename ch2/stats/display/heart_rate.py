@@ -3,7 +3,7 @@ from urwid import Text, Pile
 
 from ..calculate.activity import ActivityCalculator
 from ..names import PERCENT_IN_Z_ANY
-from ...diary.model import *
+from ...diary.model import value
 from ...sql.tables.statistic import StatisticJournal, StatisticName
 
 
@@ -34,7 +34,5 @@ def read_zones(s, ajournal):
                StatisticName.constraint == ajournal.activity_group) \
         .order_by(StatisticName.name).all()
     if percent_times:
-        zones, percent_times = zip(*reversed(list(enumerate((time.value for time in percent_times), start=1))))
-        yield hr_zones(zones, percent_times)
-
-
+        for zone, percent_time in reversed(list(enumerate((time.value for time in percent_times), start=1))):
+            yield [value('Zone', zone, tag='hr-zone'), value('Percent time', percent_time)]

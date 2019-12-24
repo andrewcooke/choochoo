@@ -82,20 +82,6 @@ def layout(model, f, before=None, after=None, leaf=None):
             raise
 
 
-# todo - should just be values
-
-def create_hr_zones(model, f, width=HR_ZONES_WIDTH):
-    body = []
-    for z, percent_time in zip(model[HR_ZONES], model[PERCENT_TIMES]):
-        text = ('%d:' + ' ' * (width - 6) + '%3d%%') % (z, int(0.5 + percent_time))
-        column = 100 / width
-        left = int((percent_time + 0.5 * column) // column)
-        text_left = text[0:left]
-        text_right = text[left:]
-        body.append(Text([zone(z, text_left), text_right]))
-    return Pile(body)
-
-
 def fmt_value_units(model):
     if model[UNITS] == S:
         return [format_seconds(model[VALUE])]
@@ -147,7 +133,6 @@ LEAF = defaultdict(
         INTEGER: lambda model, f: Integer(caption=label(model[LABEL] + ': '), state=model[VALUE],
                                           minimum=model[LO], maximum=model[HI], units=model[UNITS]),
         SCORE0: lambda model, f: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
-        HR_ZONES: create_hr_zones,
         VALUE: create_value,
         MENU: lambda model, f: f(ArrowMenu(label(model[LABEL] + ': '),
                                            {link[LABEL]: link[VALUE] for link in model[LINKS]})),
@@ -252,6 +237,18 @@ def collapse_title(key, model, f, before, after, leaf):
     return apply_before(model, f, copy(before), copy(after), copy(leaf))
 
 
+def hr_zone(key, model, f, before, after, leaf):
+    width = HR_ZONES_WIDTH
+    z = model[0][VALUE]
+    pc = model[1][VALUE]
+    text = ('%d:' + ' ' * (width - 6) + '%3d%%') % (z, int(0.5 + pc))
+    column = 100 / width
+    left = int((pc + 0.5 * column) // column)
+    text_left = text[0:left]
+    text_right = text[left:]
+    return key, Text([zone(z, text_left), text_right])
+
+
 def default_before(key, model, f, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
@@ -271,7 +268,8 @@ BEFORE = defaultdict(
      'segment': values_table,
      'climbs': climbs_table,
      'shrimp': shrimp_table,
-     'nearbys': collapse_title
+     'nearbys': collapse_title,
+     'hr-zone': hr_zone
      })
 
 
@@ -324,6 +322,7 @@ AFTER = defaultdict(
     lambda: default_after,
     {'status': pack_widgets,
      'nearby': pack_widgets,
-     'title': title_after})
+     'title': title_after,
+     'hr-zone': lambda x: x})
 
 
