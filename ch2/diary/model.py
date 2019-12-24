@@ -5,19 +5,14 @@ DP = 'dp'
 EDIT = 'edit'
 FLOAT = 'float'
 HI = 'hi'
-HR_ZONES = 'hr_zones'
 INTEGER = 'integer'
 LABEL = 'label'
 LINK = 'link'
-LINKS = 'links'
 LO = 'lo'
 MEASURES = 'measures'
-MENU = 'menu'
 TAG = 'tag'
-PERCENT_TIMES = 'percent_times'
 SCHEDULES = 'schedules'
 SCORE0 = 'score0'
-SCORE1 = 'score1'
 TEXT = 'text'
 TIME = 'time'
 TYPE = 'type'
@@ -75,20 +70,11 @@ def measures(schedules):
     return {TYPE: MEASURES, SCHEDULES: schedules}
 
 
-# --- active types
-
-def link(label, value):
-    return {TYPE: LINK, LABEL: label, VALUE: value}
+def link(label, value, tag=None):
+    return {TYPE: LINK, LABEL: label, VALUE: value, TAG: to_tag(tag or label)}
 
 
-
-# todo - links?
-def menu(label, links):
-    # links is list of link types
-    return {TYPE: MENU, LABEL: label, LINKS: links}
-
-
-def optional_label(name, tag=None):
+def optional_text(name, tag=None):
     def decorator(f):
         def decorated(*args, **kargs):
             first = True

@@ -5,8 +5,8 @@ from logging import getLogger
 
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding
 
-from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, SCORE1, HR_ZONES, PERCENT_TIMES, \
-    LABEL, EDIT, MEASURES, SCHEDULES, LINKS, MENU, TAG, LINK, INTEGER
+from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
+    LINK, INTEGER
 from ..lib import format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres
 from ..stats.names import S, W, PC, M
@@ -16,7 +16,11 @@ from ..urwid.tui.tabs import Tab
 from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile, SquareButton, Integer
 
 log = getLogger(__name__)
-HR_ZONES_WIDTH = 30
+
+HR_ZONES_WIDTH = 65  # characters total
+
+COLUMN_WIDTH = 6     # characters per column
+N_COLUMNS = 12       # columns on screen (typically use multiple; 12 allows 3 or 4 'real' columns)
 
 
 # for text markup
@@ -51,7 +55,7 @@ def layout(model, f, before=None, after=None, leaf=None):
     This function traverses the tree in a depth-first manner, converting dicts using leaf and assembling
     the visited nodes using after.
     The before map can be used to intercept normal processing.
-    Before and after are keyed on the 'owner' or 'label' entry in the first dict in the list;
+    Before and after are keyed on the 'tag' entry in the first dict in the list;
     leaf is keyed on the 'type' entry in the dict.
     '''
 
@@ -134,10 +138,13 @@ LEAF = defaultdict(
                                           minimum=model[LO], maximum=model[HI], units=model[UNITS]),
         SCORE0: lambda model, f: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
         VALUE: create_value,
-        MENU: lambda model, f: f(ArrowMenu(label(model[LABEL] + ': '),
-                                           {link[LABEL]: link[VALUE] for link in model[LINKS]})),
         LINK: lambda model, f: f(Padding(Fixed(SquareButton(model[LABEL]), len(model[LABEL]) + 2), width='clip'))
     })
+
+
+def menu(key, model, f, before, after, leaf):
+    return key, ArrowMenu(label(model[0][VALUE] + ': '),
+                          {link[LABEL]: link[VALUE] for link in model[1:]})
 
 
 def side_by_side(*specs):
@@ -269,12 +276,11 @@ BEFORE = defaultdict(
      'climbs': climbs_table,
      'shrimp': shrimp_table,
      'nearbys': collapse_title,
-     'hr-zone': hr_zone
+     'hr-zone': hr_zone,
+     'nearby-links': menu,
+     'compare-links': menu
      })
 
-
-COLUMN_WIDTH = 6  # characters per column
-N_COLUMNS = 12    # columns on screen (typically use multiple; 12 allows 3 or 4 'real' columns)
 
 def widget_size(widget, max_cols=N_COLUMNS):
     if isinstance(widget, Tab): widget = widget.w
@@ -311,6 +317,10 @@ def title_after(branch):
         return head
 
 
+def null_after(branch):
+    return branch
+
+
 def default_after(branch):
     head, tail = branch[0], branch[1:]
     if tail:
@@ -323,6 +333,8 @@ AFTER = defaultdict(
     {'status': pack_widgets,
      'nearby': pack_widgets,
      'title': title_after,
-     'hr-zone': lambda x: x})
+     'hr-zone': null_after,
+     'nearby-links': null_after,
+     'compare-links': null_after})
 
 

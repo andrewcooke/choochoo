@@ -6,7 +6,7 @@ from urwid import Text, Columns, Pile
 from . import Displayer, Reader
 from ..calculate.monitor import MonitorCalculator
 from ..names import REST_HR, DAILY_STEPS
-from ...diary.model import value, text, optional_label
+from ...diary.model import value, text, optional_text
 from ...sql.tables.statistic import StatisticJournal, StatisticName
 from ...urwid.fields import ReadOnlyField
 from ...urwid.fields.summary import summary_columns
@@ -23,7 +23,7 @@ class MonitorDiary(Displayer, Reader):
             yield Pile([Text('Monitor'),
                         Indent(Columns(columns))])
 
-    @optional_label('Monitor')
+    @optional_text('Monitor')
     def _read_date(self, s, date):
         for field in self.__read_fields(s, date, DAILY_STEPS, REST_HR):
             yield value(field.statistic_name.name, field.value,

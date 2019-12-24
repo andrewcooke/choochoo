@@ -8,7 +8,7 @@ from urwid import Pile, Text, Columns
 from . import Displayer, Reader
 from ..calculate.segment import SegmentCalculator
 from ..names import SEGMENT_TIME, SEGMENT_HEART_RATE
-from ...diary.model import value, text, optional_label
+from ...diary.model import value, text, optional_text
 from ...lib.date import local_date_to_time
 from ...sql.tables.segment import SegmentJournal, Segment
 from ...sql.tables.statistic import StatisticJournal, StatisticName
@@ -27,7 +27,7 @@ def segments_for_activity(s, ajournal):
 
 class SegmentDiary(Displayer, Reader):
 
-    @optional_label('Segments')
+    @optional_text('Segments')
     def _read_date(self, s, date):
         tomorrow = local_date_to_time(date + dt.timedelta(days=1))
         today = local_date_to_time(date)

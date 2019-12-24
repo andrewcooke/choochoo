@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy import or_
 
-from .model import from_field, text, optional_label, link, menu
+from .model import from_field, text, optional_text, link
 from ..lib import time_to_local_time, to_date
 from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal
 from ..sql.utils import add
@@ -22,7 +22,7 @@ def read_daily(s, date):
     if gui: yield gui
 
 
-@optional_label('Diary')
+@optional_text('Diary')
 def read_daily_topics(s, date):
     for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,
                                             or_(DiaryTopic.start <= date, DiaryTopic.start == None),
@@ -51,7 +51,7 @@ def read_daily_topic(s, date, topic):
             if content: yield content
 
 
-@optional_label('Jupyter')
+@optional_text('Jupyter')
 def read_gui(s, date):
     for aj1 in ActivityJournal.at_date(s, date):
         yield list(read_activity_gui(s, aj1))
@@ -60,10 +60,7 @@ def read_gui(s, date):
 
 def read_activity_gui(s, aj1):
     yield text(aj1.name)
-    # todo - reinstate none
-    links = [link('None', None)] + [link(fmt_nearby(aj2, nb), time_to_local_time(aj2.start))
-                                    for aj2, nb in nearby_any_time(s, aj1)]
-    links = [link(fmt_nearby(aj2, nb), time_to_local_time(aj2.start))
-             for aj2, nb in nearby_any_time(s, aj1)]
-    yield menu(aj1.name, links)
+    links = [link('None', 'todo')] + [link(fmt_nearby(aj2, nb), time_to_local_time(aj2.start))
+                                      for aj2, nb in nearby_any_time(s, aj1)]
+    yield [text('%s v ' % aj1.name, tag='compare-links')] + links
     yield link('All Similar', time_to_local_time(aj1.start))

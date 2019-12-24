@@ -7,7 +7,7 @@ from urwid import Pile, Text, Columns
 
 from . import Displayer, Reader
 from ..calculate.response import Response, ResponseCalculator
-from ...diary.model import text, optional_label, value
+from ...diary.model import text, optional_text, value
 from ...lib.date import local_date_to_time, to_time
 from ...lib.schedule import Schedule
 from ...lib.utils import label, em, error
@@ -26,7 +26,7 @@ class ResponseDiary(Displayer, Reader):
     def _display_date(self, s, f, date):
         yield from self._display_schedule(s, f, date, Schedule('d'))
 
-    @optional_label('SHRIMP')
+    @optional_text('SHRIMP')
     def _read_date(self, s, date):
         yield from self._read_schedule(s, date, Schedule('d'))
 
