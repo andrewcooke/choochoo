@@ -9,6 +9,7 @@ from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, L
     LINK, INTEGER
 from ..lib import format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres
+from ..stats.display.nearby import NEARBY_LINKS
 from ..stats.names import S, W, PC, M
 from ..urwid.tui.decorators import Border, Indent
 from ..urwid.tui.fixed import Fixed
@@ -38,19 +39,19 @@ def build(model, f):
         if sep: footer += ['/']
         footer += [em(c)]
     footer += ['ctivity/', em('t'), 'oday']
-    active = {}
-    branch = layout(model, f, active=active)
+    active = defaultdict(list)
+    branch = layout(model, f, active)
     return active, Border(Frame(Filler(branch, valign='top'),
                                 footer=Pile([Divider(), Text(footer, align='center')])))
 
 
-def apply_before(model, f, before, after, leaf, active):
+def apply_before(model, f, active, before, after, leaf):
         key = model[0].get(TAG, None)
         log.debug(f'Before key {key}')
-        return before[key](key, model, f, copy(before), copy(after), copy(leaf), active)
+        return before[key](key, model, f, active, copy(before), copy(after), copy(leaf))
 
 
-def layout(model, f, before=None, after=None, leaf=None, active=None):
+def layout(model, f, active, before=None, after=None, leaf=None):
     '''
     Takes a model and returns an urwid widget.
     The model is nested lists, forming a tree, with nodes that are dicts.
@@ -64,7 +65,6 @@ def layout(model, f, before=None, after=None, leaf=None, active=None):
     before = before or BEFORE
     after = after or AFTER
     leaf = leaf or LEAF
-    active = active or defaultdict(list)
 
     if isinstance(model, list):
         if not model:
@@ -72,7 +72,7 @@ def layout(model, f, before=None, after=None, leaf=None, active=None):
         if not isinstance(model[0], dict):
             raise Exception(f'Model list with no head element: {model}')
         try:
-            key, branch = apply_before(model, f, before, after, leaf, active)
+            key, branch = apply_before(model, f, active, before, after, leaf)
             return after[key](branch)
         except Exception as e:
             log.error(f'Error ({e}) while processing {model}')
@@ -151,16 +151,16 @@ LEAF = defaultdict(
     })
 
 
-def menu(key, model, f, before, after, leaf, active):
+def menu(key, model, f, active, before, after, leaf):
     menu = ArrowMenu(label(model[0][VALUE] + ': '),
-                     {link[LABEL]: link[VALUE] for link in model[1:]})
+                     {link[VALUE]: link[LABEL] for link in model[1:]})
     active[key].append(menu)
-    return key, menu
+    return key, f(menu)
 
 
 def side_by_side(*specs):
 
-    def before(key, model, f, before, after, leaf, active):
+    def before(key, model, f, active, before, after, leaf):
         branch_columns = []
         for names in specs:
             try:
@@ -174,12 +174,12 @@ def side_by_side(*specs):
                             break
                     if not found:
                         raise Exception(f'Missing column {name}')
-                columns = [layout(column, f, before, after, leaf, active) for column in columns]
+                columns = [layout(column, f, active, before, after, leaf) for column in columns]
                 branch_columns.append(Columns(columns))
                 model = reduced_model
             except Exception as e:
                 log.warning(e)
-        branch = [layout(m, f, before, after, leaf, active) for m in model]
+        branch = [layout(m, f, active, before, after, leaf) for m in model]
         branch.extend(branch_columns)
         return key, branch
 
@@ -201,14 +201,14 @@ def rows_to_table(rows):
     return Columns([(width+1, Pile(column)) for column, width in zip(zip(*rows), widths)])
 
 
-def values_table(key, model, f, before, after, leaf, active):
+def values_table(key, model, f, active, before, after, leaf):
     values = [m for m in model if isinstance(m, dict) and m.get(TYPE, None) == 'value']
     rest = [layout(m, f, before, after, leaf) for m in model if m not in values]
     table = rows_to_table([value_to_row(value) for value in values])
     return key, rest + [table]
 
 
-def climbs_table(key, model, f, before, after, leaf, active):
+def climbs_table(key, model, f, active, before, after, leaf):
 
     def climb(model):
         # assumes elevation, distance and time entries, in that order
@@ -223,7 +223,7 @@ def climbs_table(key, model, f, before, after, leaf, active):
 
 def table(name, value):
 
-    def before(key, model, f, before, after, leaf, active):
+    def before(key, model, f, active, before, after, leaf):
         title = layout(model[0], f, before, after, leaf)
         has_measures = any(MEASURES in m for m in model[1:])
         headers = [name, value]
@@ -234,7 +234,7 @@ def table(name, value):
     return before
 
 
-def shrimp_table(key, model, f, before, after, leaf, active):
+def shrimp_table(key, model, f, active, before, after, leaf):
 
     def reformat(model):
         branch = [Text(label(model[0][VALUE])), Text(str(model[1][VALUE])), Text(em(model[3][VALUE])),
@@ -246,16 +246,16 @@ def shrimp_table(key, model, f, before, after, leaf, active):
     return key, [Text(model[0][VALUE]), rows_to_table([reformat(m) for m in model[1:]])]
 
 
-def collapse_title(key, model, f, before, after, leaf, active):
+def collapse_title(key, model, f, active, before, after, leaf):
     def is_text(x):
         return isinstance(x, dict) and x[TYPE] == TEXT
     if len(model) == 2 and is_text(model[0]) and len(model[1]) and is_text(model[1][0]):
         model[1][0][VALUE] = f'{model[0][VALUE]} - {model[1][0][VALUE]}'
         model = model[1]
-    return apply_before(model, f, before, after, leaf, active)
+    return apply_before(model, f, active, before, after, leaf)
 
 
-def hr_zone(key, model, f, before, after, leaf, active):
+def hr_zone(key, model, f, active, before, after, leaf):
     width = HR_ZONES_WIDTH
     z = model[0][VALUE]
     pc = model[1][VALUE]
@@ -267,10 +267,10 @@ def hr_zone(key, model, f, before, after, leaf, active):
     return key, Text([zone(z, text_left), text_right])
 
 
-def default_before(key, model, f, before, after, leaf, active):
+def default_before(key, model, f, active, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
-    return key, [layout(m, f, before, after, leaf, active) for m in model]
+    return key, [layout(m, f, active, before, after, leaf) for m in model]
 
 BEFORE = defaultdict(
     lambda: default_before,
@@ -288,7 +288,7 @@ BEFORE = defaultdict(
      'shrimp': shrimp_table,
      'nearbys': collapse_title,
      'hr-zone': hr_zone,
-     'nearby-links': menu,
+     NEARBY_LINKS: menu,
      'compare-links': menu
      })
 
@@ -297,7 +297,7 @@ def widget_size(widget, max_cols=N_COLUMNS):
     if isinstance(widget, Tab): widget = widget.w
     for cls in (Float, Rating0, Rating1):
         if isinstance(widget, cls): return 3
-    if isinstance(widget, ArrowMenu): return 4
+    if isinstance(widget, ArrowMenu): return 6
     if isinstance(widget, Text) and not isinstance(widget, Edit):
         return min(max_cols, 1 + len(widget.text) // COLUMN_WIDTH)
     return max_cols
@@ -345,5 +345,5 @@ AFTER = defaultdict(
      'nearby': pack_widgets,
      'title': title_after,
      'hr-zone': null_after,
-     'nearby-links': null_after,
+     NEARBY_LINKS: null_after,
      'compare-links': null_after})

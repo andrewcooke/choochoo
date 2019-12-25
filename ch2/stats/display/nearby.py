@@ -12,6 +12,8 @@ from ...sql import ActivityJournal, ActivitySimilarity, ActivityNearby
 from ...urwid.tui.decorators import Indent
 from ...urwid.tui.widgets import ArrowMenu
 
+NEARBY_LINKS = 'nearby-links'
+
 
 # todo - replace w to_local_date?
 def _fmt_time(time):
@@ -52,7 +54,7 @@ class NearbyDiary(JournalDiary):
                                       lambda x: link(_fmt_time(x.start), _fmt_time(x.start)))):
             links = [fmt(result) for result in callback(s, ajournal, c)]
             if links:
-                yield [text(title, tag=f'nearby-links')] + links
+                yield [text(title, tag=NEARBY_LINKS)] + links
 
     def __change_date(self, w):
         self._diary._change_date(time_to_local_date(w.state))

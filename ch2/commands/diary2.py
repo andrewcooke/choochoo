@@ -22,6 +22,7 @@ from ..lib.widgets import DateSwitcher
 from ..sql import PipelineType, DiaryTopic, DiaryTopicJournal
 from ..sql.database import StatisticJournal
 from ..stats.display import display_pipeline
+from ..stats.display.nearby import NEARBY_LINKS
 from ..stats.pipeline import run_pipeline
 from ..urwid.fields.summary import summary_columns
 from ..urwid.tui.decorators import Indent
@@ -116,6 +117,9 @@ class DailyDiary(Diary):
         model = list(read_daily(s, self._date))
         f = Factory(TabList())
         active, widget = build(model, f)
+        if NEARBY_LINKS in active:
+            for menu in active[NEARBY_LINKS]:
+                connect_signal(menu, 'click', lambda m: self._change_date(to_date(m.state)))
         return widget, f.tabs
 
     def __show_gui(self, s, aj1, w):

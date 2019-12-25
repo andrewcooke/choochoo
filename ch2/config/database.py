@@ -88,7 +88,7 @@ def add_diary(s, cls, sort, **kargs):
     '''
     Add a class to the diary pipeline.
 
-    The pipeline classes are invoked when the diary is displyed.
+    The pipeline classes are invoked when the diary is displayed.
     They generate display classes for activity statistics (and similar)
     See the ch2.stats module for examples.
 
