@@ -12,6 +12,8 @@ from ..stats.display.nearby import fmt_nearby, nearby_any_time
 
 log = getLogger(__name__)
 
+COMPARE_LINKS = 'compare-links'
+
 
 def read_daily(s, date):
     yield text(date.strftime('%Y-%m-%d - %A'), tag='title')
@@ -60,7 +62,6 @@ def read_gui(s, date):
 
 def read_activity_gui(s, aj1):
     yield text(aj1.name)
-    links = [link('None', 'todo')] + [link(fmt_nearby(aj2, nb), time_to_local_time(aj2.start))
-                                      for aj2, nb in nearby_any_time(s, aj1)]
-    yield [text('%s v ' % aj1.name, tag='compare-links')] + links
+    links = [link('None', (aj1, None))] + [link(fmt_nearby(aj2, nb), (aj1, aj2)) for aj2, nb in nearby_any_time(s, aj1)]
+    yield [text('%s v ' % aj1.name, tag=COMPARE_LINKS)] + links
     yield link('All Similar', time_to_local_time(aj1.start))

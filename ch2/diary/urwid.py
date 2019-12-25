@@ -5,6 +5,7 @@ from logging import getLogger
 
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding
 
+from .database import COMPARE_LINKS
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
     LINK, INTEGER
 from ..lib import format_seconds
@@ -289,7 +290,7 @@ BEFORE = defaultdict(
      'nearbys': collapse_title,
      'hr-zone': hr_zone,
      NEARBY_LINKS: menu,
-     'compare-links': menu
+     COMPARE_LINKS: menu
      })
 
 
@@ -346,4 +347,4 @@ AFTER = defaultdict(
      'title': title_after,
      'hr-zone': null_after,
      NEARBY_LINKS: null_after,
-     'compare-links': null_after})
+     COMPARE_LINKS: null_after})

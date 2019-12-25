@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from urwid import MainLoop, Pile, Text, connect_signal, Padding
 
 from .args import DATE, SCHEDULE, FAST, mm
-from ..diary.database import read_daily
+from ..diary.database import read_daily, COMPARE_LINKS
 from ..diary.urwid import build
 from ..jupyter.server import set_controller_session
 from ..jupyter.template.activity_details import activity_details
@@ -117,15 +117,20 @@ class DailyDiary(Diary):
         model = list(read_daily(s, self._date))
         f = Factory(TabList())
         active, widget = build(model, f)
-        if NEARBY_LINKS in active:
-            for menu in active[NEARBY_LINKS]:
-                connect_signal(menu, 'click', lambda m: self._change_date(to_date(m.state)))
+        self.__wire_menu(active, NEARBY_LINKS, lambda m: self._change_date(to_date(m.state)))
+        self.__wire_menu(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
         return widget, f.tabs
 
-    def __show_gui(self, s, aj1, w):
+    def __wire_menu(self, active, name, callback):
+        if name in active:
+            for menu in active[name]:
+                connect_signal(menu, 'click', callback)
+
+    def __show_gui(self, aj1, aj2):
+        s = self._session
         set_controller_session(s)
-        if w.state:
-            compare_activities(aj1.start, w.state.start, aj1.activity_group.name)
+        if aj2:
+            compare_activities(aj1.start, aj2.start, aj1.activity_group.name)
         else:
             activity_details(aj1.start, aj1.activity_group.name)
 
