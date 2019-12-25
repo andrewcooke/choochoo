@@ -115,7 +115,7 @@ class DailyDiary(Diary):
         log.debug('Building diary at %s' % self._date)
         model = list(read_daily(s, self._date))
         f = Factory(TabList())
-        widget = build(model, f)
+        active, widget = build(model, f)
         return widget, f.tabs
 
     def __show_gui(self, s, aj1, w):
