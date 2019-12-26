@@ -105,7 +105,7 @@ class MonitorReader(MultiProcFitReader):
         return MonitorLoader(s, **kargs)
 
     def _base_command(self):
-        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.__db.path} ' \
+        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.db_path} ' \
                f'{MONITOR} {mm(WORKER)} {self.id} --{FAST} {mm(FORCE) if self.force else ""}'
 
     def _delete_contained(self, s, start, finish, path):

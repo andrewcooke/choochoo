@@ -84,7 +84,7 @@ def layout(model, f, active, before=None, after=None, leaf=None):
         key = model.get(TYPE, None)
         try:
             if key in leaf: log.debug(f'Leaf key {key}')
-            return leaf[key](key, model, f, active)
+            return leaf[key](model, f, active)
         except Exception as e:
             log.error(f'Error ({e}) while processing leaf {key} in {model}')
             raise
@@ -123,30 +123,30 @@ def fmt_value_measures(model):
     return measures
 
 
-def create_value(key, model, f, active):
+def create_value(model, f, active):
     return Text([label(model[LABEL] + ': ')] + fmt_value_units(model) + [' '] + fmt_value_measures(model))
 
 
-def create_link(key, model, f, active):
-    button =  SquareButton(model[LABEL])
-    active[key].append(button)
+def create_link(model, f, active):
+    button = SquareButton(model[LABEL])
+    active[model[TAG]].append(button)
     return f(Padding(Fixed(button, len(model[LABEL]) + 2), width='clip'))
 
 
-def default_leaf(key, model, f):
+def default_leaf(model, f, active):
     raise Exception(f'Unexpected leaf: {model}')
 
 LEAF = defaultdict(
     lambda: default_leaf,
     {
-        TEXT: lambda key, model, f, active: Text(model[VALUE]),
-        EDIT: lambda key, model, f, active: f(Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or '')),
-        FLOAT: lambda key, model, f, active: Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
-                                                   minimum=model[LO], maximum=model[HI], dp=model[DP],
-                                                   units=model[UNITS]),
-        INTEGER: lambda key, model, f, active: Integer(caption=label(model[LABEL] + ': '), state=model[VALUE],
-                                                       minimum=model[LO], maximum=model[HI], units=model[UNITS]),
-        SCORE0: lambda key, model, f, active: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
+        TEXT: lambda model, f, active: Text(model[VALUE]),
+        EDIT: lambda model, f, active: f(Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or '')),
+        FLOAT: lambda model, f, active: Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
+                                              minimum=model[LO], maximum=model[HI], dp=model[DP],
+                                              units=model[UNITS]),
+        INTEGER: lambda model, f, active: Integer(caption=label(model[LABEL] + ': '), state=model[VALUE],
+                                                  minimum=model[LO], maximum=model[HI], units=model[UNITS]),
+        SCORE0: lambda model, f, active: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
         VALUE: create_value,
         LINK: create_link
     })

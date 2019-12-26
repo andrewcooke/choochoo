@@ -168,6 +168,10 @@ class MultiProcPipeline(BasePipeline):
     def _base_command(self):
         raise NotImplementedError()
 
+    @property
+    def db_path(self):
+        return self.__db.path
+
 
 class UniProcPipeline(MultiProcPipeline):
 

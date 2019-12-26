@@ -48,7 +48,7 @@ class Workers:
                 last_report = time()
             for worker in list(self.__workers.keys()):
                 worker.poll()
-                process = self.__system.get_process(worker.pid, self.owner)
+                process = self.__system.get_process(self.owner, worker.pid)
                 if worker.returncode is not None:
                     if worker.returncode:
                         msg = f'Command "{process.command}" exited with return code {worker.returncode} ' + \
@@ -59,8 +59,7 @@ class Workers:
                     else:
                         log.debug(f'Command "{process.command}" finished successfully')
                         del self.__workers[worker]
-                        self.__system.delete_process()
-                        SystemProcess.delete_process(self.owner, worker.pid)
+                        self.__system.delete_process(self.owner, worker.pid)
             sleep(SLEEP_TIME)
         if last_report:
             log.debug(f'Now have {len(self.__workers)} workers')

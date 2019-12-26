@@ -33,7 +33,7 @@ class CalculatorMixin:
         return start, finish
 
     def _base_command(self):
-        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self._db.path} {STATISTICS} {mm(WORKER)} {self.id}'
+        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.db_path} {STATISTICS} {mm(WORKER)} {self.id}'
 
 
 class MultiProcCalculator(CalculatorMixin, MultiProcPipeline):

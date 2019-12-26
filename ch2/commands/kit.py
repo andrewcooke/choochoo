@@ -73,7 +73,7 @@ but in general must be unique.  They can contain spaces if quoted.
     '''
     cmd = args[SUB_COMMAND]
     if cmd == REBUILD:
-        rebuild(db)
+        rebuild(system, db)
     else:
         with db.session_context() as s:
             if cmd == START:
@@ -150,8 +150,8 @@ def undo(s, item, component, model, date, all):
     component_instance.delete_if_unused(s)
 
 
-def rebuild(db):
-    run_pipeline(db, PipelineType.STATISTIC, force=True, like=long_cls(KitCalculator))
+def rebuild(system, db):
+    run_pipeline(system, db, PipelineType.STATISTIC, force=True, like=long_cls(KitCalculator))
 
 
 def show(s, name, date):

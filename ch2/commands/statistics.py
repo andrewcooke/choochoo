@@ -20,6 +20,6 @@ Generate any missing statistics.
 
 Delete statistics after the date (or all, if omitted) and then generate new values.
     '''
-    run_pipeline(db, PipelineType.STATISTIC,
+    run_pipeline(system, db, PipelineType.STATISTIC,
                  force=args[FORCE], like=args[LIKE], start=args[START], finish=args[FINISH],
                  worker=args[WORKER] is not None, id=args[WORKER], **parse_pairs(args[KARG]))

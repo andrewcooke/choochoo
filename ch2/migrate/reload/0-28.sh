@@ -105,6 +105,11 @@ fi
 echo "creating new, empty database at $DB_DIR/database-$VER.sql"
 echo "(should print warning config message)"
 rm -f "$DB_DIR/database-$VER.sql"
+rm -f "$DB_DIR/database-$DST.sql-shm"
+rm -f "$DB_DIR/database-$DST.sql-wal"
+rm -f "$DB_DIR/system-$DST.sql"
+rm -f "$DB_DIR/system-$DST.sql-shm"
+rm -f "$DB_DIR/system-$DST.sql-wal"
 dev/ch2 no-op
 
 echo "loading data into $DB_DIR/database-$VER.sql"

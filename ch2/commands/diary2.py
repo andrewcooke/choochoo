@@ -77,7 +77,7 @@ Display a summary for the month / year / schedule.
         MainLoop(DailyDiary(db, date), palette=PALETTE).run()
         if not args[FAST]:
             print('\n  Please wait while statistics are updated...')
-            run_pipeline(db, PipelineType.STATISTIC)
+            run_pipeline(system, db, PipelineType.STATISTIC)
             print(f'  ...done (thanks! - use {mm(FAST)} to avoid this, if the risk is worth it)\n')
 
 
@@ -118,15 +118,18 @@ class DailyDiary(Diary):
         active, widget = build(model, f)
         self.__wire_menu(active, NEARBY_LINKS, lambda m: self._change_date(to_date(m.state)))
         self.__wire_menu(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
+        self.__wire_link(active, 'health', lambda l: self.__show_health())
+        if active:
+            raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs
 
     def __wire_menu(self, active, name, callback):
         if name in active:
             for menu in active[name]:
                 connect_signal(menu, 'click', callback)
+            del active[name]
 
     def __show_gui(self, aj1, aj2):
-        s = self._session
         if aj2:
             compare_activities(aj1.start, aj2.start, aj1.activity_group.name)
         else:
@@ -135,8 +138,7 @@ class DailyDiary(Diary):
     def __show_similar(self, s, aj1, w):
         similar_activities(aj1.start, aj1.activity_group.name)
 
-    def __show_health(self, s, date, w):
-        log.debug(f'w {w} s {s} date {date}')
+    def __show_health(self):
         health()
 
 

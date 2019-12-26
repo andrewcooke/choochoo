@@ -78,7 +78,7 @@ Display a summary for the month / year / schedule.
         MainLoop(DailyDiary(db, date), palette=PALETTE_RAINBOW).run()
         if not args[FAST]:
             print('\n  Please wait while statistics are updated...')
-            run_pipeline(db, PipelineType.STATISTIC)
+            run_pipeline(system, db, PipelineType.STATISTIC)
             print(f'  ...done (thanks! - use {mm(FAST)} to avoid this, if the risk is worth it)\n')
 
 

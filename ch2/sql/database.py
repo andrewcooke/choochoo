@@ -64,10 +64,13 @@ class DatabaseBase:
         self.path = args.file(key)
         log.info('Using database at %s' % self.path)
         self.engine = create_engine('sqlite:///%s' % self.path, echo=False)
-        self.session = sessionmaker(bind=self.engine)
+        self.session = self._sessionmaker()
         if self.no_schema(table):
             log.info('Creating tables')
             base.metadata.create_all(self.engine)
+
+    def _sessionmaker(self):
+        return sessionmaker(bind=self.engine)
 
     def no_schema(self, table):
         # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist

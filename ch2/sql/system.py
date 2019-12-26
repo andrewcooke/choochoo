@@ -1,4 +1,6 @@
 
+from sqlalchemy.orm import sessionmaker
+
 from .database import DatabaseBase, SystemConstant, SystemProcess
 from .support import SystemBase
 from ..commands.args import SYSTEM
@@ -8,6 +10,9 @@ class System(DatabaseBase):
 
     def __init__(self, args):
         super().__init__(SYSTEM, SystemConstant, SystemBase, args)
+
+    def _sessionmaker(self):
+        return sessionmaker(bind=self.engine, expire_on_commit=False)
 
     def get_constant(self, name, none=False):
         with self.session_context() as s:
@@ -21,7 +26,7 @@ class System(DatabaseBase):
         with self.session_context() as s:
             SystemConstant.delete(s, name)
 
-    def get_process(self,owner, pid):
+    def get_process(self, owner, pid):
         with self.session_context() as s:
             return s.query(SystemProcess). \
                 filter(SystemProcess.owner == owner,
