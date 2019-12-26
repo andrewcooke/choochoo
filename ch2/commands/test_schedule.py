@@ -13,7 +13,7 @@ log = getLogger(__name__)
 INDENT = '   '
 
 
-def test_schedule(args, db):
+def test_schedule(args, system, db):
     '''
 ## test-schedule
 

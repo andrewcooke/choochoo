@@ -41,6 +41,7 @@ from .commands.unlock import unlock
 from .lib.io import tui
 from .lib.log import make_log, log_current_exception
 from .sql.database import Database
+from .sql.system import System
 from .sql import SystemConstant
 from .jupyter.server import start_controller
 
@@ -92,12 +93,13 @@ def main():
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
     db = Database(args)
+    system = System(args)
     try:
-        if db.is_empty() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE, HELP)):
+        if db.no_data() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE, HELP)):
             refuse_until_configured(db.path)
         elif command:
-            start_controller(args)
-            command(args, db)
+            start_controller(args, system)
+            command(args, system, db)
         else:
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')

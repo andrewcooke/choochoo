@@ -8,7 +8,7 @@ from ..sql.tables.statistic import StatisticName, StatisticJournal
 log = getLogger(__name__)
 
 
-def config(args, db):
+def config(args, system, db):
     '''
 ## config
 
@@ -26,7 +26,7 @@ Check that the current database is empty.
     if action == DEFAULT:
         no_diary = args[no(DIARY)]
         check(db, not no_diary, not no_diary, True)
-        default(db, no_diary=no_diary)
+        default(system, db, no_diary=no_diary)
     elif action == CHECK:
         check(db, args[no(CONFIG)], args[no(DATA)], args[no(ACTIVITY_GROUPS)])
 

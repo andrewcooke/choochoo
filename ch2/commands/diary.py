@@ -18,7 +18,6 @@ from ..sql.utils import add
 from ..stats.display import display_pipeline
 from ..stats.display.nearby import nearby_any_time, fmt_nearby
 from ..stats.pipeline import run_pipeline
-from ..jupyter.server import set_controller_session
 from ..jupyter.template.activity_details import activity_details
 from ..jupyter.template.all_activities import all_activities
 from ..jupyter.template.compare_activities import compare_activities
@@ -36,7 +35,7 @@ log = getLogger(__name__)
 
 
 @tui
-def diary(args, db):
+def diary(args, system, db):
     '''
 ## diary
 
@@ -69,7 +68,7 @@ Display a summary for the month / year / schedule.
         else:
             date = dt.date.today() - dt.timedelta(days=days)
     with db.session_context() as s:
-        DiaryTopicJournal.check_tz(s)
+        DiaryTopicJournal.check_tz(system, s)
     if schedule:
         schedule = Schedule(schedule)
         if schedule.start or schedule.finish:
@@ -243,19 +242,16 @@ class DailyDiary(Diary):
         yield f(Padding(Fixed(button, 8), width='clip'))
 
     def __show_gui(self, s, aj1, w):
-        set_controller_session(s)
         if w.state:
             compare_activities(aj1.start, w.state.start, aj1.activity_group.name)
         else:
             activity_details(aj1.start, aj1.activity_group.name)
 
     def __show_similar(self, s, aj1, w):
-        set_controller_session(s)
         similar_activities(aj1.start, aj1.activity_group.name)
 
     def __show_health(self, s, date, w):
         log.debug(f'w {w} s {s} date {date}')
-        set_controller_session(s)
         health()
 
 
@@ -299,7 +295,6 @@ class ScheduleDiary(Diary):
         yield from display_pipeline(s, f, self._date, self, schedule=self._schedule)
 
     def _display_gui(self, s, f):
-        set_controller_session(s)
         button = SquareButton('All Activities')
         connect_signal(button, 'click', self.__show_all)
         yield Pile([Text('Jupyter'), Indent(f(Padding(Fixed(button, 16), width='clip')))])

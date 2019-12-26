@@ -12,7 +12,7 @@ from ..lib.io import terminal_width
 log = getLogger(__name__)
 
 
-def fit(args, db):
+def fit(args, system, db):
     '''
 ## fit
 

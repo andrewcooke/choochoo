@@ -4,7 +4,7 @@ from ..sql import PipelineType
 from ..stats.pipeline import run_pipeline
 
 
-def activities(args, db):
+def activities(args, system, db):
     '''
 ## activities
 
@@ -22,9 +22,9 @@ but arbitrary names and values can be used).
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
-    run_pipeline(db, PipelineType.ACTIVITY, paths=args[PATH], force=args[FORCE],
+    run_pipeline(system, db, PipelineType.ACTIVITY, paths=args[PATH], force=args[FORCE],
                  worker=args[WORKER] is not None, id=args[WORKER],
                  constants=args[CONSTANT], **parse_pairs(args[KARG]))
     if not args[FAST] and args[WORKER] is None:
         # don't force this - it auto-detects need
-        run_pipeline(db, PipelineType.STATISTIC, **parse_pairs(args[KARG]))
+        run_pipeline(system, db, PipelineType.STATISTIC, **parse_pairs(args[KARG]))

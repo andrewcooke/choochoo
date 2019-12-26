@@ -5,9 +5,9 @@ from ..sql import StatisticJournalType
 from ..urwid.fields.topic import Text
 
 
-def acooke(db):
+def acooke(system, db):
 
-    default(db)
+    default(system, db)
 
     with db.session_context() as s:
 

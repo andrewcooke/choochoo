@@ -20,7 +20,7 @@ from ..stats.pipeline import run_pipeline
 log = getLogger(__name__)
 
 
-def kit(args, db, output=stdout):
+def kit(args, system, db, output=stdout):
     '''
 ## kit
 

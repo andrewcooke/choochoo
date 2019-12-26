@@ -8,7 +8,7 @@ from ..stats.pipeline import run_pipeline
 log = getLogger(__name__)
 
 
-def monitor(args, db):
+def monitor(args, system, db):
     '''
 ## monitor
 

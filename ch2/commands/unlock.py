@@ -6,7 +6,7 @@ from ..stats.load import StatisticJournalLoader
 log = getLogger(__name__)
 
 
-def unlock(args, db):
+def unlock(args, system, db):
     '''
 ## unlock
 

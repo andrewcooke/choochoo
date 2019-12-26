@@ -11,7 +11,7 @@ from ..fit.profile.profile import read_fit
 log = getLogger(__name__)
 
 
-def fix_fit(args, db):
+def fix_fit(args, system, db):
     '''
 ## fix-fit
 

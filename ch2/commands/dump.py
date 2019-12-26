@@ -16,7 +16,7 @@ StatisticName
 log = getLogger(__name__)
 
 
-def dump(args, db):
+def dump(args, system, db):
     '''
 ## dump
 

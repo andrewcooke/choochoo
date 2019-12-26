@@ -11,7 +11,7 @@ from ..sql.utils import add
 log = getLogger(__name__)
 
 
-def constants(args, db):
+def constants(args, system, db):
     '''
 ## constants
 

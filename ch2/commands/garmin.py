@@ -9,7 +9,7 @@ from ..stats.read.monitor import missing_dates
 log = getLogger(__name__)
 
 
-def garmin(args, db):
+def garmin(args, system, db):
     '''
 ## garmin
 

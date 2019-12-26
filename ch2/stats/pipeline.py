@@ -18,7 +18,7 @@ MAX_REPEAT = 3
 NONE = object()
 
 
-def run_pipeline(db, type, like=None, id=None, **extra_kargs):
+def run_pipeline(system, db, type, like=None, id=None, **extra_kargs):
     with db.session_context() as s:
         for pipeline in Pipeline.all(s, type, like=like, id=id):
             kargs = dict(pipeline.kargs)
@@ -26,7 +26,7 @@ def run_pipeline(db, type, like=None, id=None, **extra_kargs):
             log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
             start = time()
-            pipeline.cls(db, *pipeline.args, id=pipeline.id, **kargs).run()
+            pipeline.cls(system, db, *pipeline.args, id=pipeline.id, **kargs).run()
             duration = time() - start
             log.info(f'Ran {short_cls(pipeline.cls)} in {format_seconds(duration)}')
 
@@ -46,9 +46,10 @@ class BasePipeline:
 
 class MultiProcPipeline(BasePipeline):
 
-    def __init__(self, db, *args, owner_out=None, force=False,
+    def __init__(self, system, db, *args, owner_out=None, force=False,
                  overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
-        self._db = db
+        self.__system = system
+        self.__db = db
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
         self.overhead = overhead  # next three args are used to decide if workers are needed
@@ -60,7 +61,7 @@ class MultiProcPipeline(BasePipeline):
         super().__init__(*args, **kargs)
 
     def run(self):
-        with self._db.session_context() as s:
+        with self.__db.session_context() as s:
             self._startup(s)
 
             if self.force:
@@ -149,7 +150,7 @@ class MultiProcPipeline(BasePipeline):
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(s, n_parallel, self.owner_out, self._base_command())
+        workers = Workers(self.__system, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1

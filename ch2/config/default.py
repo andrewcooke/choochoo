@@ -33,7 +33,7 @@ from ..urwid.fields.topic import Text, Float, Score0
 log = getLogger(__name__)
 
 
-def default(db, no_diary=False):
+def default(system, db, no_diary=False):
 
     with db.session_context() as s:
 
@@ -177,4 +177,4 @@ def default(db, no_diary=False):
                                   display_cls=Text)
 
         # finally, set the TZ so that first use of the diary doesn't wipe all our intervals
-        DiaryTopicJournal.check_tz(s)
+        DiaryTopicJournal.check_tz(system, s)

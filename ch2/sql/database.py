@@ -34,7 +34,6 @@ def fk_pragma_on_connect(dbapi_con, _con_record):
 
     def pragma(cmd):
         full_cmd = f'PRAGMA {cmd}'
-        # log.debug(full_cmd)
         cursor.execute(full_cmd)
 
     pragma('foreign_keys=ON;')  # https://www.sqlite.org/pragma.html#pragma_foreign_keys
@@ -52,28 +51,27 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
     cursor = dbapi_con.cursor()
     try:
         # this can fail if another process is using the database
-        # log.debug('Optimize DB...')
         cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
-        # log.debug('Optimize DB done')
     except OperationalError as e:
         log.debug("Optimize DB aborted (DB Likely still in use)")
     finally:
         cursor.close()
 
 
-class Database:
+class DatabaseBase:
 
-    def __init__(self, args):
-        self.path = args.file(DATABASE)
+    def __init__(self, key, table, base, args):
+        self.path = args.file(key)
         log.info('Using database at %s' % self.path)
         self.engine = create_engine('sqlite:///%s' % self.path, echo=False)
         self.session = sessionmaker(bind=self.engine)
-        self.__create_tables()
-
-    def __create_tables(self):
-        if self.is_empty(tables=True):
+        if self.no_schema(table):
             log.info('Creating tables')
-            Base.metadata.create_all(self.engine)
+            base.metadata.create_all(self.engine)
+
+    def no_schema(self, table):
+        # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
+        return not self.engine.dialect.has_table(self.engine, table.__tablename__)
 
     @contextmanager
     def session_context(self):
@@ -87,15 +85,17 @@ class Database:
         finally:
             session.close()
 
-    def is_empty(self, tables=False):
-        if tables:
-            # https://stackoverflow.com/questions/33053241/sqlalchemy-if-table-does-not-exist
-            return not self.engine.dialect.has_table(self.engine, Source.__tablename__)
-        else:
-            with self.session_context() as s:
-                n_topics = s.query(count(DiaryTopic.id)).scalar()
-                n_activities = s.query(count(ActivityGroup.id)).scalar()
-                n_statistics = s.query(count(StatisticName.id)).scalar()
+
+class Database(DatabaseBase):
+
+    def __init__(self, args):
+        super().__init__(DATABASE, Source, Base, args)
+
+    def no_data(self,):
+        with self.session_context() as s:
+            n_topics = s.query(count(DiaryTopic.id)).scalar()
+            n_activities = s.query(count(ActivityGroup.id)).scalar()
+            n_statistics = s.query(count(StatisticName.id)).scalar()
             return not (n_topics + n_activities + n_statistics)
 
 

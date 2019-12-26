@@ -171,14 +171,14 @@ class DiaryTopicJournal(Source):
         return 'DiaryTopicJournal from %s' % self.date
 
     @classmethod
-    def check_tz(cls, s):
+    def check_tz(cls, system, s):
         tz = get_local_timezone()
-        db_tz = SystemConstant.get(s, SystemConstant.TIMEZONE, none=True)
+        db_tz = system.get_constant(SystemConstant.TIMEZONE, none=True)
         if not db_tz:
-            db_tz = SystemConstant.set(s, SystemConstant.TIMEZONE, '')
+            db_tz = system.set_constant(SystemConstant.TIMEZONE, '')
         if db_tz != tz.name:
             cls.__reset_timezone(s)
-            SystemConstant.set(s, SystemConstant.TIMEZONE, tz.name, force=True)
+            system.set_constant(SystemConstant.TIMEZONE, tz.name, force=True)
 
     @classmethod
     def __reset_timezone(cls, s):

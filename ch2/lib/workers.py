@@ -2,9 +2,7 @@
 from logging import getLogger
 from os import getpid
 from sys import argv
-from time import sleep, mktime, time
-
-from psutil import pid_exists, Process
+from time import sleep, time
 
 from ..sql import SystemProcess
 from ..sql.types import short_cls
@@ -19,8 +17,8 @@ LIKE = 'like'
 
 class Workers:
 
-    def __init__(self, s, n_parallel, owner, cmd):
-        self._s = s
+    def __init__(self, system, n_parallel, owner, cmd):
+        self.__system = system
         self.n_parallel = n_parallel
         self.owner = owner
         self.cmd = cmd
@@ -31,20 +29,15 @@ class Workers:
     def clear_all(self):
         for worker in self.__workers.keys():
             log.warning(f'Killing PID {worker.pid} ({worker.args})')
-            SystemProcess.delete(self._s, self.owner, worker.pid)
-        SystemProcess.delete_all(self._s, self.owner)
-
-    def _read_pid(self, pid):
-        return self._s.query(SystemProcess). \
-            filter(SystemProcess.owner == self.owner,
-                   SystemProcess.pid == pid).one()
+            self.__system.delete_process(self.owner, worker.pid)
+        self.__system.delete_all_processes(self.owner)
 
     def run(self, args):
         self.wait(self.n_parallel - 1)
         log_index = self._free_log_index()
         log_name = f'{short_cls(self.owner)}.{log_index}.{LOG}'
         cmd = (self.cmd + ' ' + args).format(log=log_name, ch2=self.ch2)
-        worker = SystemProcess.run(self._s, cmd, log_name, self.owner)
+        worker = self.__system.run_process(self.owner, cmd, log_name)
         self.__workers[worker] = log_index
 
     def wait(self, n_workers=0):
@@ -55,7 +48,7 @@ class Workers:
                 last_report = time()
             for worker in list(self.__workers.keys()):
                 worker.poll()
-                process = self._read_pid(worker.pid)
+                process = self.__system.get_process(worker.pid, self.owner)
                 if worker.returncode is not None:
                     if worker.returncode:
                         msg = f'Command "{process.command}" exited with return code {worker.returncode} ' + \
@@ -66,7 +59,8 @@ class Workers:
                     else:
                         log.debug(f'Command "{process.command}" finished successfully')
                         del self.__workers[worker]
-                        SystemProcess.delete(self._s, self.owner, worker.pid)
+                        self.__system.delete_process()
+                        SystemProcess.delete_process(self.owner, worker.pid)
             sleep(SLEEP_TIME)
         if last_report:
             log.debug(f'Now have {len(self.__workers)} workers')

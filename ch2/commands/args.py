@@ -157,6 +157,7 @@ STATISTIC_QUARTILES = 'statistic-quartiles'
 STATUS = 'status'
 STOP = 'stop'
 SUB_COMMAND = 'sub-command'
+SYSTEM = 'system'
 TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
@@ -230,18 +231,20 @@ def make_parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
+    parser.add_argument(m(F), mm(DATABASE), action='store', default=f'~/.ch2/database-{DB_VERSION}.sql', metavar='PATH',
+                        help='the file path containing the main database')
+    parser.add_argument(mm(SYSTEM), action='store', default=f'~/.ch2/system-{DB_VERSION}.sql', metavar='PATH',
+                        help='the file path containing the system database')
+    parser.add_argument(mm(LOGS), action='store', default='~/.ch2/logs', metavar='DIR',
+                        help='the directory for logs')
+    parser.add_argument(mm(LOG), action='store', metavar='FILE',
+                        help='the file name for the log (command name by default)')
     parser.add_argument(m(V), mm(VERBOSITY), action='store', default=4, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(mm(TUI), action='store_true',
                         help='text user interface (no log to stdout)')
-    parser.add_argument(m(F), mm(DATABASE), action='store', default=f'~/.ch2/database-{DB_VERSION}.sql', metavar='FILE',
-                        help='the file containing the database')
-    parser.add_argument(mm(LOGS), action='store', default='~/.ch2/logs', metavar='DIR',
-                        help='the directory for logs')
     parser.add_argument(mm(NOTEBOOKS), action='store', default='~/.ch2/notebooks', metavar='DIR',
                         help='the directory for notebooks (when jupyter starts)')
-    parser.add_argument(mm(LOG), action='store', metavar='FILE',
-                        help='the filename for the log (command name by default)')
     parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
@@ -619,7 +622,7 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
 
 
 def parse_pairs(pairs):
-    # simple name, value pairs.  owner and constraint supplied by command.
+    # simple name, value pairs. owner and constraint supplied by command.
     d = {}
     if pairs is not None:
         for pair in pairs:

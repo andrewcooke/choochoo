@@ -4,14 +4,13 @@ from logging import getLogger
 from pkgutil import iter_modules
 
 from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS
-from ..sql import SystemProcess
 from ..jupyter import template
-from ..jupyter.server import JupyterServer, get_controller, set_controller_session
+from ..jupyter.server import JupyterServer, get_controller
 
 log = getLogger(__name__)
 
 
-def jupyter(args, db):
+def jupyter(args, system, db):
     '''
 ## jupyter
 
@@ -37,11 +36,10 @@ Stop the background server.
     else:
         with db.session_context() as s:
             c = get_controller()
-            set_controller_session(s)
             if cmd == SERVICE:
                 c.run_local()
             elif cmd == STATUS:
-                status(db)
+                status(system)
             elif cmd == SHOW:
                 show(args)
             elif cmd == START:
@@ -52,16 +50,15 @@ Stop the background server.
                 raise Exception(f'Unexpected command {cmd}')
 
 
-def status(db):
-    with db.session_context() as s:
-        if SystemProcess.exists_any(s, JupyterServer):
-            print('\n  Service running:')
-            url = get_controller().connection_url()
-            print(f'    {url}')
-            dir = get_controller().notebook_dir()
-            print(f'    {dir}\n')
-        else:
-            print('\n  No service running\n')
+def status(system):
+    if system.exists_any_process(JupyterServer):
+        print('\n  Service running:')
+        url = get_controller().connection_url()
+        print(f'    {url}')
+        dir = get_controller().notebook_dir()
+        print(f'    {dir}\n')
+    else:
+        print('\n  No service running\n')
 
 
 def templates():

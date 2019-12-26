@@ -1,18 +1,18 @@
 
 from logging import getLogger
 from os import getpid
-from time import time, mktime
+from time import time
 
 from psutil import Popen, pid_exists, Process
 from sqlalchemy import Column, Text, Integer
 
-from ..support import Base
+from ..support import SystemBase
 from ..types import Time, ShortCls
 
 log = getLogger(__name__)
 
 
-class SystemConstant(Base):
+class SystemConstant(SystemBase):
 
     __tablename__ = 'system_constant'
 
@@ -51,7 +51,7 @@ class SystemConstant(Base):
     JUPYTER_DIR = 'jupyter-dir'
 
 
-class SystemProcess(Base):
+class SystemProcess(SystemBase):
 
     __tablename__ = 'system_process'
 
@@ -63,7 +63,7 @@ class SystemProcess(Base):
     pid = Column(Integer, nullable=False, index=True)
 
     @classmethod
-    def run(cls, s, cmd, log_name, owner):
+    def run(cls, s, owner, cmd, log_name):
         process = Popen(args=cmd, shell=True)
         log.debug(f'Adding command [{cmd}] (PID {process.pid})')
         s.add(SystemProcess(command=cmd, owner=owner, pid=process.pid, log=log_name))

@@ -8,7 +8,7 @@ from ..stats.pipeline import run_pipeline
 log = getLogger(__name__)
 
 
-def statistics(args, db):
+def statistics(args, system, db):
     '''
 ## statistics
 
