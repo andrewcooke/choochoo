@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship, backref
 from .source import Source, SourceType
 from ..support import Base
 from ..types import Time, Sort, ShortCls, Str, NullStr
-from ...lib.date import format_time, local_date_to_time
+from ...lib.date import format_time, local_date_to_time, local_time_to_time
 
 
 class ActivityGroup(Base):
@@ -59,6 +59,11 @@ class ActivityJournal(Source):
         day = local_date_to_time(date)
         return s.query(ActivityJournal).filter(ActivityJournal.start >= day,
                                                ActivityJournal.start < day + dt.timedelta(days=1)).all()
+
+    @classmethod
+    def at_local_time(cls, s, local_time):
+        time = local_time_to_time(local_time)
+        return s.query(ActivityJournal).filter(ActivityJournal.start == time).one()
 
     @classmethod
     def from_id(cls, s, id):

@@ -13,14 +13,6 @@ SJOURNAL = 'sjournal'
 
 class SegmentCalculator(SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
-    def _startup(self, s):
-        SegmentJournal.clean(s)
-        super()._startup(s)
-
-    def _shutdown(self, s):
-        SegmentJournal.clean(s)
-        super()._shutdown(s)
-
     def _delete(self, s):
         super()._delete(s)
         SegmentJournal.clean(s)

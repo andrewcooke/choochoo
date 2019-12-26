@@ -100,7 +100,6 @@ class JournalCalculatorMixin:
                     log.warning(f'Deleting {n} statistics for {long_cls(self.owner_out)} from {start} to {finish}')
                 else:
                     log.warning(f'No statistics to delete for {long_cls(self.owner_out)} from {start} to {finish}')
-                    # log.debug(statistic_journals)
         s.commit()
 
     def _get_source(self, s, time):

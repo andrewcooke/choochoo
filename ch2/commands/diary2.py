@@ -18,7 +18,7 @@ from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, PALETTE
 from ..lib.widgets import DateSwitcher
-from ..sql import PipelineType, DiaryTopic, DiaryTopicJournal
+from ..sql import PipelineType, DiaryTopic, DiaryTopicJournal, ActivityJournal
 from ..sql.database import StatisticJournal
 from ..stats.display import display_pipeline
 from ..stats.display.nearby import NEARBY_LINKS
@@ -116,14 +116,15 @@ class DailyDiary(Diary):
         model = list(read_daily(s, self._date))
         f = Factory(TabList())
         active, widget = build(model, f)
-        self.__wire_menu(active, NEARBY_LINKS, lambda m: self._change_date(to_date(m.state)))
-        self.__wire_menu(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
-        self.__wire_link(active, 'health', lambda l: self.__show_health())
+        self.__wire(active, NEARBY_LINKS, lambda m: self._change_date(to_date(m.state)))
+        self.__wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
+        self.__wire(active, 'health', lambda l: self.__show_health())
+        self.__wire(active, 'all-similar', lambda l: self.__show_similar(l.state))
         if active:
             raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs
 
-    def __wire_menu(self, active, name, callback):
+    def __wire(self, active, name, callback):
         if name in active:
             for menu in active[name]:
                 connect_signal(menu, 'click', callback)
@@ -135,7 +136,8 @@ class DailyDiary(Diary):
         else:
             activity_details(aj1.start, aj1.activity_group.name)
 
-    def __show_similar(self, s, aj1, w):
+    def __show_similar(self, local_time):
+        aj1 = ActivityJournal.at_local_time(self._session, local_time)
         similar_activities(aj1.start, aj1.activity_group.name)
 
     def __show_health(self):

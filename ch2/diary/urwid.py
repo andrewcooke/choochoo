@@ -19,7 +19,7 @@ from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile,
 
 log = getLogger(__name__)
 
-HR_ZONES_WIDTH = 65  # characters total
+HR_ZONES_WIDTH = 32  # characters total
 
 COLUMN_WIDTH = 6     # characters per column
 N_COLUMNS = 12       # columns on screen (typically use multiple; 12 allows 3 or 4 'real' columns)
