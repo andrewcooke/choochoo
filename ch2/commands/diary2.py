@@ -13,7 +13,7 @@ from ..jupyter.template.all_activities import all_activities
 from ..jupyter.template.compare_activities import compare_activities
 from ..jupyter.template.health import health
 from ..jupyter.template.similar_activities import similar_activities
-from ..lib.date import to_date
+from ..lib.date import to_date, time_to_local_date, time_to_local_time
 from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE_RAINBOW, PALETTE
@@ -116,10 +116,10 @@ class DailyDiary(Diary):
         model = list(read_daily(s, self._date))
         f = Factory(TabList())
         active, widget = build(model, f)
-        self.__wire(active, NEARBY_LINKS, lambda m: self._change_date(to_date(m.state)))
+        self.__wire(active, NEARBY_LINKS, lambda m: self._change_date(time_to_local_date(m.state.start)))
         self.__wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
         self.__wire(active, 'health', lambda l: self.__show_health())
-        self.__wire(active, 'all-similar', lambda l: self.__show_similar(l.state))
+        self.__wire(active, 'all-similar', lambda l: self.__show_similar(time_to_local_time(l.state.start)))
         if active:
             raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs

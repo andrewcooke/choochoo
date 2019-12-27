@@ -7,7 +7,7 @@ from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding
 
 from .database import COMPARE_LINKS
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
-    LINK, INTEGER
+    LINK, INTEGER, DB
 from ..lib import format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres
 from ..stats.display.nearby import NEARBY_LINKS
@@ -128,9 +128,9 @@ def create_value(model, f, active):
 
 
 def create_link(model, f, active):
-    button = SquareButton(model[LABEL])
+    button = SquareButton(model[VALUE], state=model[DB])
     active[model[TAG]].append(button)
-    return f(Padding(Fixed(button, len(model[LABEL]) + 2), width='clip'))
+    return f(Padding(Fixed(button, len(model[VALUE]) + 2), width='clip'))
 
 
 def default_leaf(model, f, active):
@@ -154,7 +154,7 @@ LEAF = defaultdict(
 
 def menu(key, model, f, active, before, after, leaf):
     menu = ArrowMenu(label(model[0][VALUE] + ': '),
-                     {link[VALUE]: link[LABEL] for link in model[1:]})
+                     {link[DB]: link[VALUE] for link in model[1:]})
     active[key].append(menu)
     return key, f(menu)
 

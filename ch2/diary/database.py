@@ -57,12 +57,12 @@ def read_daily_topic(s, date, topic):
 def read_gui(s, date):
     for aj1 in ActivityJournal.at_date(s, date):
         yield list(read_activity_gui(s, aj1))
-    yield link('Health', to_date(date))
+    yield link('Health', db=date)
 
 
 def read_activity_gui(s, aj1):
     yield text(aj1.name)
-    # todo - state is an orm object, not text
-    links = [link('None', (aj1, None))] + [link(fmt_nearby(aj2, nb), (aj1, aj2)) for aj2, nb in nearby_any_time(s, aj1)]
+    links = [link('None', db=(aj1, None))] + \
+            [link(fmt_nearby(aj2, nb), db=(aj1, aj2)) for aj2, nb in nearby_any_time(s, aj1)]
     yield [text('%s v ' % aj1.name, tag=COMPARE_LINKS)] + links
-    yield link('All Similar', time_to_local_time(aj1.start))
+    yield link('All Similar', db=aj1)

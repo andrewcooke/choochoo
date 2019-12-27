@@ -1,6 +1,9 @@
 
 import re
+from logging import getLogger
 
+
+DB = 'db'
 DP = 'dp'
 EDIT = 'edit'
 FLOAT = 'float'
@@ -18,6 +21,8 @@ TIME = 'time'
 TYPE = 'type'
 UNITS = 'units'
 VALUE = 'value'
+
+log = getLogger(__name__)
 
 
 def from_field(topic_field, statistic_journal):
@@ -39,26 +44,30 @@ def to_tag(text):
 
 # --- mutable types
 
-def score0(label, value):
-    return {TYPE: SCORE0, LABEL: label, VALUE: value}
+def score0(label, value, db=None):
+    if db is None: log.warning(f'No db for score0 {label}/{value}')
+    return {TYPE: SCORE0, LABEL: label, VALUE: value, DB: db}
 
 
-def integer(label, value, units=None, lo=None, hi=None):
-    return {TYPE: FLOAT, LABEL: label, VALUE: value, UNITS: units, LO: lo, HI: hi}
+def integer(label, value, units=None, lo=None, hi=None, db=None):
+    if db is None: log.warning(f'No db for integer {label}/{value}')
+    return {TYPE: INTEGER, LABEL: label, VALUE: value, UNITS: units, LO: lo, HI: hi, DB: db}
 
 
-def float(label, value, units=None, lo=None, hi=None, dp=1):
-    return {TYPE: FLOAT, LABEL: label, VALUE: value, UNITS: units, LO: lo, HI: hi, DP: dp}
+def float(label, value, units=None, lo=None, hi=None, dp=1, db=None):
+    if db is None: log.warning(f'No db for float {label}/{value}')
+    return {TYPE: FLOAT, LABEL: label, VALUE: value, UNITS: units, LO: lo, HI: hi, DP: dp, DB: db}
 
 
-def edit(label, value):
-    return {TYPE: EDIT, LABEL: label, VALUE: value}
+def edit(label, value, db=None):
+    if db is None: log.warning(f'No db for edit {label}/{value}')
+    return {TYPE: EDIT, LABEL: label, VALUE: value, DB: db}
 
 
 # --- immutable types
 
-def text(text, tag=None):
-    return {TYPE: TEXT, VALUE: text, TAG: to_tag(tag or text)}
+def text(value, tag=None):
+    return {TYPE: TEXT, VALUE: value, TAG: to_tag(tag or value)}
 
 
 def value(label, value, tag=None, units=None, measures=None):
@@ -70,9 +79,12 @@ def measures(schedules):
     return {TYPE: MEASURES, SCHEDULES: schedules}
 
 
-def link(label, value, tag=None):
-    return {TYPE: LINK, LABEL: label, VALUE: value, TAG: to_tag(tag or label)}
+def link(value, tag=None, db=None):
+    if db is None: log.warning(f'No db for link {value}')
+    return {TYPE: LINK, VALUE: value, TAG: to_tag(tag or value), DB: db}
 
+
+# --- decorators
 
 def optional_text(name, tag=None):
     def decorator(f):

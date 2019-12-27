@@ -15,9 +15,10 @@ class SquareButton(Button):
     button_left = Text('[')
     button_right = Text(']')
 
-    def __init__(self, label, on_press=None, user_data=None):
+    def __init__(self, label, state=None, on_press=None, user_data=None):
         super().__init__(label, on_press=on_press, user_data=user_data)
         self._w.dividechars = 0
+        self.state = state
 
 
 class Nullable(FocusWrap):

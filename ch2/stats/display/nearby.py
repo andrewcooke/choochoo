@@ -47,11 +47,11 @@ class NearbyDiary(JournalDiary):
 
     def __read_constraint(self, s, ajournal, c):
         for title, callback, fmt in (('Any Time', nearby_any_time,
-                                      lambda x: link(fmt_nearby(*x), _fmt_time(x[0].start))),
+                                      lambda x: link(fmt_nearby(*x), db=x[0])),
                                      ('Earlier', nearby_earlier,
-                                      lambda x: link(fmt_nearby(*x), _fmt_time(x[0].start))),
+                                      lambda x: link(fmt_nearby(*x), db=x[0])),
                                      ('All', constraint,
-                                      lambda x: link(_fmt_time(x.start), _fmt_time(x.start)))):
+                                      lambda x: link(_fmt_time(x.start), db=x))):
             links = [fmt(result) for result in callback(s, ajournal, c)]
             if links:
                 yield [text(title, tag=NEARBY_LINKS)] + links
