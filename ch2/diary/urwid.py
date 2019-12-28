@@ -3,7 +3,7 @@ from collections import defaultdict
 from copy import copy
 from logging import getLogger
 
-from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding
+from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding, connect_signal
 
 from .database import COMPARE_LINKS
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
@@ -47,9 +47,9 @@ def build(model, f):
 
 
 def apply_before(model, f, active, before, after, leaf):
-        key = model[0].get(TAG, None)
-        log.debug(f'Before key {key}')
-        return before[key](key, model, f, active, copy(before), copy(after), copy(leaf))
+    key = model[0].get(TAG, None)
+    log.debug(f'Before key {key}')
+    return before[key](key, model, f, active, copy(before), copy(after), copy(leaf))
 
 
 def layout(model, f, active, before=None, after=None, leaf=None):
@@ -120,6 +120,8 @@ def fmt_value_measures(model):
             percentile, rank = model[MEASURES][SCHEDULES][schedule]
             q = 1 + min(4, percentile / 20)
             measures.append(quintile(q, f'{int(percentile)}%:{rank}/{schedule} '))
+    if not measures:
+        measures = [label('--')]
     return measures
 
 
@@ -133,6 +135,13 @@ def create_link(model, f, active):
     return f(Padding(Fixed(button, len(model[VALUE]) + 2), width='clip'))
 
 
+def wire(model, widget):
+    def callback(w, v):
+        model[DB].value = v
+    connect_signal(widget, 'change', callback)
+    return widget
+
+
 def default_leaf(model, f, active):
     raise Exception(f'Unexpected leaf: {model}')
 
@@ -140,13 +149,17 @@ LEAF = defaultdict(
     lambda: default_leaf,
     {
         TEXT: lambda model, f, active: Text(model[VALUE]),
-        EDIT: lambda model, f, active: f(Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or '')),
-        FLOAT: lambda model, f, active: Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
-                                              minimum=model[LO], maximum=model[HI], dp=model[DP],
-                                              units=model[UNITS]),
-        INTEGER: lambda model, f, active: Integer(caption=label(model[LABEL] + ': '), state=model[VALUE],
-                                                  minimum=model[LO], maximum=model[HI], units=model[UNITS]),
-        SCORE0: lambda model, f, active: Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]),
+        EDIT: lambda model, f, active: f(wire(model,
+                                              Edit(caption=label(model[LABEL] + ': '), edit_text=model[VALUE] or ''))),
+        FLOAT: lambda model, f, active: f(wire(model,
+                                               Float(caption=label(model[LABEL] + ': '), state=model[VALUE],
+                                                     minimum=model[LO], maximum=model[HI], dp=model[DP],
+                                                     units=model[UNITS]))),
+        INTEGER: lambda model, f, active: f(wire(model,
+                                                 Integer(caption=label(model[LABEL] + ': '), state=model[VALUE],
+                                                         minimum=model[LO], maximum=model[HI], units=model[UNITS]))),
+        SCORE0: lambda model, f, active:  f(wire(model,
+                                                 Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]))),
         VALUE: create_value,
         LINK: create_link
     })
@@ -239,11 +252,11 @@ def shrimp_table(key, model, f, active, before, after, leaf):
 
     def reformat(model):
         branch = [Text(label(model[0][VALUE])), Text(str(model[1][VALUE])), Text(em(model[3][VALUE])),
-                     Text(str(model[2][VALUE]))]
+                  Text(str(model[2][VALUE]))]
         for ranges in model[4:]:
             branch.append(Text(label(f'{ranges[1][VALUE]}-{ranges[2][VALUE]}/{ranges[0][TAG]}')))
         return branch
-    
+
     return key, [Text(model[0][VALUE]), rows_to_table([reformat(m) for m in model[1:]])]
 
 

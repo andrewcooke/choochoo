@@ -113,6 +113,7 @@ if ((DO_DROP)); then
   -- ancient typo
   update diary_topic set name='Injuries' where name='Inuries';
   update diary_topic set name='Status' where name='Diary';
+  update statistic_name set "constraint"='DiaryTopic "Status" (d)' where "constraint"='DiaryTopic "Diary" (d)';
 EOF
 python - <<EOF
 from ch2.data import *

@@ -142,7 +142,7 @@ class StatisticJournal(Base):
         try:
             return 'StatisticJournal "%s"' % self.value
         except AttributeError:
-            return 'Field Journal'
+            return 'StatisticJournal base'
 
     @classmethod
     def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial, type):
