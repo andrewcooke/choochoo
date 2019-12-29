@@ -109,7 +109,6 @@ def summaries(*args): return ','.join(args)
 
 BPM = 'bpm'
 DEG = 'deg'
-ENTRIES = 'entries'
 FF = 'FF'
 H = 'h'
 J = 'J'
@@ -123,7 +122,7 @@ MS = f'ms{POW_M1}'
 PC = '%'
 RPM = 'rpm'
 S = 's'
-STEPS_UNITS = 'steps'
+STEPS_UNITS = 'stp'
 W = 'W'
 
 

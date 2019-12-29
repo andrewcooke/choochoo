@@ -142,6 +142,10 @@ def wire(model, widget):
     return widget
 
 
+def null_leaf(model, f, active):
+    return model
+
+
 def default_leaf(model, f, active):
     raise Exception(f'Unexpected leaf: {model}')
 
@@ -170,7 +174,7 @@ LEAF_SCHEDULE = defaultdict(
     lambda: default_leaf,
     {
         TEXT: lambda model, f, active: Text(model[VALUE]),
-        VALUE: create_value_no_measures,
+        VALUE: null_leaf,
         LINK: create_link
     })
 
@@ -362,6 +366,39 @@ def null_after(branch):
     return branch
 
 
+def schedule_after(branch):
+
+    def is_row(branch):
+        return isinstance(branch, list) and len(branch) > 1 and isinstance(branch[1], dict) and branch[1][TYPE] == VALUE
+
+    def fmt_row(branch, ncols):
+        yield branch[0]
+        for b in branch[1:]:
+            # extra case to handle up/down arrow in fitness
+            yield create_value_no_measures(b, None, None) if isinstance(b, dict) else b
+        for _ in range(len(branch), ncols):
+            yield Text('')
+
+    if is_row(branch):
+        return branch  # will be processed below
+    if isinstance(branch, list) and len(branch) > 1 and any(is_row(b) for b in branch[1:]):
+        ncols = max(len(b) for b in branch[1:] if is_row(b))
+        all_rows, table = [], []
+        for b in branch[1:]:
+            if is_row(b):
+                table.append(list(fmt_row(b, ncols)))
+            else:
+                if table:
+                    all_rows.append(Columns([Pile(col) for col in zip(*table)]))
+                    table = []
+                all_rows.append(b)
+        if table:
+            all_rows.append(Columns([Pile(col) for col in zip(*table)]))
+        return Pile([branch[0], Indent(Pile(all_rows))])
+    else:
+        return default_after(branch)
+
+
 def default_after(branch):
     head, tail = branch[0], branch[1:]
     if tail:
@@ -381,7 +418,7 @@ AFTER_DATE = defaultdict(
 
 
 AFTER_SCHEDULE = defaultdict(
-    lambda: default_after,
+    lambda: schedule_after,
     {})
 
 

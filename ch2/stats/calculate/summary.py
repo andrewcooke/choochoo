@@ -7,10 +7,10 @@ from sqlalchemy import func, inspect, and_, select
 from sqlalchemy.sql.functions import coalesce
 
 from . import IntervalCalculatorMixin, MultiProcCalculator
-from ..names import MAX, MIN, SUM, CNT, AVG, MSR, ENTRIES
+from ..names import MAX, MIN, SUM, CNT, AVG, MSR
 from ...lib.date import local_date_to_time
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
-    StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS, StatisticJournalType
+    StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
 
 log = getLogger(__name__)
 
@@ -82,7 +82,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             result = func.sum(values)
         elif summary == CNT:
             result = func.count(values)
-            units = ENTRIES
+            units = None
         elif summary == AVG:
             result = func.avg(values)
         elif summary == MSR:

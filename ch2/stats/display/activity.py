@@ -13,7 +13,8 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY,
     ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d, M, S
 from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
-from ...diary.model import text, value
+from ...diary.database import summary_column
+from ...diary.model import text, value, optional_text
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time
 from ...lib.utils import label
 from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName
@@ -196,6 +197,18 @@ class ActivityDiary(JournalDiary):
             yield Pile([Text('Activities'),
                         Indent(Pile(all))])
 
+    @optional_text('Activities', tag='activity')
+    def _read_schedule(self, s, date, schedule):
+        start, finish = local_date_to_time(schedule.start_of_frame(date)), local_date_to_time(schedule.next_frame(date))
+        for group in s.query(ActivityGroup). \
+                join(ActivityJournal, ActivityJournal.activity_group_id == ActivityGroup.id). \
+                join(StatisticJournal, StatisticJournal.source_id == ActivityJournal.id). \
+                join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+                filter(StatisticName.name == ACTIVE_TIME,
+                       StatisticJournal.time >= start,
+                       StatisticJournal.time < finish).all():
+            yield from self.__read_schedule_fields(s, date, schedule, group)
+
     def __schedule_fields(self, s, f, date, schedule, group):
         names = list(self.__names(s, group, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
                                   TOTAL_CLIMB, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME))
@@ -219,3 +232,18 @@ class ActivityDiary(JournalDiary):
             filter(StatisticName.name.like(name),
                    StatisticName.owner == ActivityCalculator,
                    StatisticName.constraint == group).all()
+
+    def __read_schedule_fields(self, s, start, schedule, group):
+        for name in self.__names(s, group, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
+                                 TOTAL_CLIMB, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME):
+            column = list(summary_column(s, schedule, start, name))
+            if column: yield column
+        for name in self.__sort_names(self.__names_like(s, group, MIN_KM_TIME_ANY)):
+            column = list(summary_column(s, schedule, start, name))
+            if column: yield column
+        for name in self.__sort_names(self.__names_like(s, group, MED_KM_TIME_ANY)):
+            column = list(summary_column(s, schedule, start, name))
+            if column: yield column
+        for name in self.__sort_names(self.__names_like(s, group, MAX_MED_HR_M_ANY)):
+            column = list(summary_column(s, schedule, start, name))
+            if column: yield column

@@ -105,4 +105,4 @@ def summary_column(s, schedule, start, name):
         summary, period, name = SummaryCalculator.parse_name(journal.statistic_name.name)
         if not named:
             yield text(name)
-        yield value(summary, journal.value)
+        yield value(summary, journal.value, units=journal.statistic_name.units)
