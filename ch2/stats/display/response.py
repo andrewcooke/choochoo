@@ -30,6 +30,7 @@ class ResponseDiary(Displayer, Reader):
     def _read_date(self, s, date):
         yield from self._read_schedule(s, date, Schedule('d'))
 
+    @optional_text('SHRIMP')
     def _read_schedule(self, s, date, schedule):
         for response in self.fitness + self.fatigue:
             yield from self._read_single(s, date, schedule, response, schedule.frame_type == 'd')

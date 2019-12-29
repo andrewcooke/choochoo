@@ -6,6 +6,7 @@ from urwid import Text, Columns, Pile
 from . import Displayer, Reader
 from ..calculate.monitor import MonitorCalculator
 from ..names import REST_HR, DAILY_STEPS
+from ...diary.database import summary_column
 from ...diary.model import value, text, optional_text
 from ...sql.tables.statistic import StatisticJournal, StatisticName
 from ...urwid.fields import ReadOnlyField
@@ -23,18 +24,18 @@ class MonitorDiary(Displayer, Reader):
             yield Pile([Text('Monitor'),
                         Indent(Columns(columns))])
 
-    @optional_text('Monitor')
-    def _read_date(self, s, date):
-        for field in self.__read_fields(s, date, DAILY_STEPS, REST_HR):
-            yield value(field.statistic_name.name, field.value,
-                        units=field.statistic_name.units, measures=field.measures_as_model(date))
-
     def __fields(self, s, date):
         fields = list(self.__read_fields(s, date, DAILY_STEPS, REST_HR))
         if fields:
             return [ReadOnlyField(field, date=date).widget() for field in fields]
         else:
             return None
+
+    @optional_text('Monitor')
+    def _read_date(self, s, date):
+        for field in self.__read_fields(s, date, DAILY_STEPS, REST_HR):
+            yield value(field.statistic_name.name, field.value,
+                        units=field.statistic_name.units, measures=field.measures_as_model(date))
 
     def __read_fields(self, s, date, *names):
         for name in names:
@@ -58,3 +59,9 @@ class MonitorDiary(Displayer, Reader):
                        StatisticName.owner == MonitorCalculator).one_or_none()
             if sname:
                 yield sname
+
+    @optional_text('Monitor')
+    def _read_schedule(self, s, date, schedule):
+        for name in self.__names(s, DAILY_STEPS, REST_HR):
+            column = list(summary_column(s, schedule, date, name))
+            if column: yield column

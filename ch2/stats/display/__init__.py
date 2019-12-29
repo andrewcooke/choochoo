@@ -64,10 +64,14 @@ class Reader(BasePipeline):
         super().__init__(*args, **kargs)
 
     def read(self, s, date, schedule=None):
-        if schedule:
-            yield from self._read_schedule(s, date, schedule)
-        else:
-            yield from self._read_date(s, date)
+        try:
+            if schedule:
+                yield from self._read_schedule(s, date, schedule)
+            else:
+                yield from self._read_date(s, date)
+        except Exception as e:
+            log.error(e)
+            print(repr(e))
 
     @abstractmethod
     def _read_schedule(self, s, date, schedule):

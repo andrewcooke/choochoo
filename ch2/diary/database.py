@@ -3,10 +3,10 @@ from logging import getLogger
 
 from sqlalchemy import or_
 
-from .model import from_field, text, optional_text, link
-from ..lib import time_to_local_time, to_date
-from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal
+from .model import from_field, text, optional_text, link, value
+from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal, StatisticJournal
 from ..sql.utils import add
+from ..stats.calculate.summary import SummaryCalculator
 from ..stats.display import read_pipeline
 from ..stats.display.nearby import fmt_nearby, nearby_any_time
 
@@ -15,9 +15,9 @@ log = getLogger(__name__)
 COMPARE_LINKS = 'compare-links'
 
 
-def read_daily(s, date):
+def read_date(s, date):
     yield text(date.strftime('%Y-%m-%d - %A'), tag='title')
-    topics = list(read_daily_topics(s, date))
+    topics = list(read_date_topics(s, date))
     if topics: yield topics
     yield from read_pipeline(s, date)
     gui = list(read_gui(s, date))
@@ -25,16 +25,16 @@ def read_daily(s, date):
 
 
 @optional_text('Diary')
-def read_daily_topics(s, date):
+def read_date_topics(s, date):
     for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,
                                             or_(DiaryTopic.start <= date, DiaryTopic.start == None),
                                             or_(DiaryTopic.finish >= date, DiaryTopic.finish == None)). \
             order_by(DiaryTopic.sort).all():
         if topic.schedule.at_location(date):
-            yield list(read_daily_topic(s, date, topic))
+            yield list(read_date_topic(s, date, topic))
 
 
-def read_daily_topic(s, date, topic):
+def read_date_topic(s, date, topic):
     yield text(topic.name)
     if topic.description: yield text(topic.description)
     journal = s.query(DiaryTopicJournal). \
@@ -49,7 +49,7 @@ def read_daily_topic(s, date, topic):
             yield from_field(field, journal.statistics[field])
     for child in topic.children:
         if child.schedule.at_location(date):
-            content = list(read_daily_topic(s, date, child))
+            content = list(read_date_topic(s, date, child))
             if content: yield content
 
 
@@ -66,3 +66,43 @@ def read_activity_gui(s, aj1):
             [link(fmt_nearby(aj2, nb), db=(aj1, aj2)) for aj2, nb in nearby_any_time(s, aj1)]
     yield [text('%s v ' % aj1.name, tag=COMPARE_LINKS)] + links
     yield link('All Similar', db=aj1)
+
+
+def read_schedule(s, schedule, date):
+    yield text(date.strftime('%Y-%m-%d') + ' - Summary for %s' % schedule.describe(), tag='title')
+    topics = list(read_schedule_topics(s, schedule, date))
+    if topics: yield topics
+    yield from read_pipeline(s, date, schedule=schedule)
+    # gui = list(read_gui(s, date))
+    # if gui: yield gui
+
+
+@optional_text('Diary')
+def read_schedule_topics(s, schedule, start):
+    finish = schedule.next_frame(start)
+    for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,
+                                            or_(DiaryTopic.start < finish, DiaryTopic.start == None),
+                                            or_(DiaryTopic.finish >= start, DiaryTopic.finish == None)). \
+            order_by(DiaryTopic.sort).all():
+        yield list(read_schedule_topic(s, schedule, start, finish, topic))
+
+
+def read_schedule_topic(s, schedule, start, finish, topic):
+    yield text(topic.name)
+    if topic.description: yield text(topic.description)
+    for field in topic.fields:
+        column = list(summary_column(s, schedule, start, field.statistic_name))
+        if column: yield column
+    for child in topic.children:
+        if (child.start is None or child.start < finish) and (child.finish is None or child.finish > start):
+            content = list(read_schedule_topic(s, schedule, start, finish, child))
+            if content: yield content
+
+
+def summary_column(s, schedule, start, name):
+    journals = StatisticJournal.at_interval(s, start, schedule, SummaryCalculator, name, SummaryCalculator)
+    for named, journal in enumerate(journals):
+        summary, period, name = SummaryCalculator.parse_name(journal.statistic_name.name)
+        if not named:
+            yield text(name)
+        yield value(summary, journal.value)

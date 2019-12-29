@@ -33,7 +33,7 @@ def zone(zone, text): return 'zone-%d' % zone, text
 def quintile(quintile, text): return 'quintile-%d' % quintile, text
 
 
-def build(model, f):
+def build(model, f, layout):
     footer = ['meta-', em('q'), 'uit/e', em('x'), 'it/', em('s'), 'ave']
     footer += [' [shift]meta-']
     for sep, c in enumerate('dwmya'):
@@ -52,7 +52,7 @@ def apply_before(model, f, active, before, after, leaf):
     return before[key](key, model, f, active, copy(before), copy(after), copy(leaf))
 
 
-def layout(model, f, active, before=None, after=None, leaf=None):
+def layout(model, f, active, before, after, leaf):
     '''
     Takes a model and returns an urwid widget.
     The model is nested lists, forming a tree, with nodes that are dicts.
@@ -62,10 +62,6 @@ def layout(model, f, active, before=None, after=None, leaf=None):
     Before and after are keyed on the 'tag' entry in the first dict in the list;
     leaf is keyed on the 'type' entry in the dict.
     '''
-
-    before = before or BEFORE
-    after = after or AFTER
-    leaf = leaf or LEAF
 
     if isinstance(model, list):
         if not model:
@@ -129,6 +125,10 @@ def create_value(model, f, active):
     return Text([label(model[LABEL] + ': ')] + fmt_value_units(model) + [' '] + fmt_value_measures(model))
 
 
+def create_value_no_measures(model, f, active):
+    return Text([label(model[LABEL] + ': ')] + fmt_value_units(model))
+
+
 def create_link(model, f, active):
     button = SquareButton(model[VALUE], state=model[DB])
     active[model[TAG]].append(button)
@@ -145,7 +145,8 @@ def wire(model, widget):
 def default_leaf(model, f, active):
     raise Exception(f'Unexpected leaf: {model}')
 
-LEAF = defaultdict(
+
+LEAF_DATE = defaultdict(
     lambda: default_leaf,
     {
         TEXT: lambda model, f, active: Text(model[VALUE]),
@@ -161,6 +162,15 @@ LEAF = defaultdict(
         SCORE0: lambda model, f, active:  f(wire(model,
                                                  Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]))),
         VALUE: create_value,
+        LINK: create_link
+    })
+
+
+LEAF_SCHEDULE = defaultdict(
+    lambda: default_leaf,
+    {
+        TEXT: lambda model, f, active: Text(model[VALUE]),
+        VALUE: create_value_no_measures,
         LINK: create_link
     })
 
@@ -286,7 +296,8 @@ def default_before(key, model, f, active, before, after, leaf):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
     return key, [layout(m, f, active, before, after, leaf) for m in model]
 
-BEFORE = defaultdict(
+
+BEFORE_DATE = defaultdict(
     lambda: default_before,
     {'activity': side_by_side(('hr-zones-time', 'climbs'),
                               ('min-time', 'med-time'),
@@ -305,6 +316,11 @@ BEFORE = defaultdict(
      NEARBY_LINKS: menu,
      COMPARE_LINKS: menu
      })
+
+
+BEFORE_SCHEDULE = defaultdict(
+    lambda: default_before,
+    {})
 
 
 def widget_size(widget, max_cols=N_COLUMNS):
@@ -353,7 +369,8 @@ def default_after(branch):
     else:
         return head
 
-AFTER = defaultdict(
+
+AFTER_DATE = defaultdict(
     lambda: default_after,
     {'status': pack_widgets,
      'nearby': pack_widgets,
@@ -361,3 +378,16 @@ AFTER = defaultdict(
      'hr-zone': null_after,
      NEARBY_LINKS: null_after,
      COMPARE_LINKS: null_after})
+
+
+AFTER_SCHEDULE = defaultdict(
+    lambda: default_after,
+    {})
+
+
+def layout_date(model, f, active, before=BEFORE_DATE, after=AFTER_DATE, leaf=LEAF_DATE):
+    return layout(model, f, active, before=before, after=after, leaf=leaf)
+
+
+def layout_schedule(model, f, active, before=BEFORE_SCHEDULE, after=AFTER_SCHEDULE, leaf=LEAF_SCHEDULE):
+    return layout(model, f, active, before=before, after=after, leaf=leaf)

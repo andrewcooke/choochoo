@@ -6,8 +6,8 @@ from sqlalchemy import or_
 from urwid import MainLoop, Pile, Text, connect_signal, Padding
 
 from .args import DATE, SCHEDULE, FAST, mm
-from ..diary.database import read_daily, COMPARE_LINKS
-from ..diary.urwid import build
+from ..diary.database import read_date, COMPARE_LINKS, read_schedule
+from ..diary.urwid import build, layout_date, layout_schedule
 from ..jupyter.template.activity_details import activity_details
 from ..jupyter.template.all_activities import all_activities
 from ..jupyter.template.compare_activities import compare_activities
@@ -16,7 +16,7 @@ from ..jupyter.template.similar_activities import similar_activities
 from ..lib.date import to_date, time_to_local_date, time_to_local_time
 from ..lib.io import tui
 from ..lib.schedule import Schedule
-from ..lib.utils import PALETTE_RAINBOW, PALETTE
+from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
 from ..sql import PipelineType, DiaryTopic, DiaryTopicJournal, ActivityJournal
 from ..sql.database import StatisticJournal
@@ -72,7 +72,7 @@ Display a summary for the month / year / schedule.
         schedule = Schedule(schedule)
         if schedule.start or schedule.finish:
             raise Exception('Schedule must be open (no start or finish)')
-        MainLoop(ScheduleDiary(db, date, schedule), palette=PALETTE_RAINBOW).run()
+        MainLoop(ScheduleDiary(db, date, schedule), palette=PALETTE).run()
     else:
         MainLoop(DailyDiary(db, date), palette=PALETTE).run()
         if not args[FAST]:
@@ -105,6 +105,12 @@ class Diary(DateSwitcher):
                     else:
                         s.expunge(instance)
 
+    def _wire(self, active, name, callback):
+        if name in active:
+            for menu in active[name]:
+                connect_signal(menu, 'click', callback)
+            del active[name]
+
 
 class DailyDiary(Diary):
     '''
@@ -113,22 +119,16 @@ class DailyDiary(Diary):
 
     def _build(self, s):
         log.debug('Building diary at %s' % self._date)
-        model = list(read_daily(s, self._date))
+        model = list(read_date(s, self._date))
         f = Factory(TabList())
-        active, widget = build(model, f)
-        self.__wire(active, NEARBY_LINKS, lambda m: self._change_date(time_to_local_date(m.state.start)))
-        self.__wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
-        self.__wire(active, 'health', lambda l: self.__show_health())
-        self.__wire(active, 'all-similar', lambda l: self.__show_similar(time_to_local_time(l.state.start)))
+        active, widget = build(model, f, layout_date)
+        self._wire(active, NEARBY_LINKS, lambda m: self._change_date(time_to_local_date(m.state.start)))
+        self._wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
+        self._wire(active, 'health', lambda l: self.__show_health())
+        self._wire(active, 'all-similar', lambda l: self.__show_similar(time_to_local_time(l.state.start)))
         if active:
             raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs
-
-    def __wire(self, active, name, callback):
-        if name in active:
-            for menu in active[name]:
-                connect_signal(menu, 'click', callback)
-            del active[name]
 
     def __show_gui(self, aj1, aj2):
         if aj2:
@@ -151,19 +151,26 @@ class ScheduleDiary(Diary):
 
     def __init__(self, db, date, schedule):
         self._schedule = schedule
-        super().__init__(db, self._refine_new_date(date))
+        super().__init__(db, schedule.start_of_frame(date))
 
-    def _header(self):
-        return Text(self._date.strftime('%Y-%m-%d') + ' - Summary for %s' % self._schedule.describe())
+    def _build(self, s):
+        log.debug(f'Building diary at {self._date} for {self._schedule}')
+        model = list(read_schedule(s, self._schedule, self._date))
+        f = Factory(TabList())
+        active, widget = build(model, f, layout_schedule)
+        self._wire(active, NEARBY_LINKS, lambda m: self._change_date(time_to_local_date(m.state.start)))
+        self._wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
+        self._wire(active, 'health', lambda l: self.__show_health())
+        self._wire(active, 'all-similar', lambda l: self.__show_similar(time_to_local_time(l.state.start)))
+        if active:
+            raise Exception(f'Unhandled links: {", ".join(active.keys())}')
+        return widget, f.tabs
 
     def _check_body(self, body):
         if len(body) < 4:
             body.append(Indent(Text('Updating the database automatically deletes summary statistics that cover '
                                     + 'the modified data.  You probably need to re-generate the statistics by '
                                     + 'running `ch2 statistics`.')))
-
-    def _refine_new_date(self, date):
-        return self._schedule.start_of_frame(date)
 
     def _diary_topics(self, s):
         finish = self._schedule.next_frame(self._date)
