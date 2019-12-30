@@ -24,7 +24,6 @@ ACTIVITIES = 'activities'
 CONFIG = 'config'
 CONSTANTS = 'constants'
 DIARY = 'diary'
-DIARY2 = 'diary2'
 DUMP = 'dump'
 FIT = 'fit'
 FIX_FIT = 'fix-fit'
@@ -316,7 +315,7 @@ def make_parser():
     diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
                                help='show summary for given schedule')
 
-    diary2 = subparsers.add_parser(DIARY2, help='daily diary and summary')
+    diary2 = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary2.add_argument(DATE, action='store', metavar='DATE', nargs='?',
                         help='an optional date to display (default is today)')
     diary2.add_argument(mm(FAST), action='store_true',

@@ -230,7 +230,7 @@ def rows_to_table(rows):
 
 def values_table(key, model, f, active, before, after, leaf):
     values = [m for m in model if isinstance(m, dict) and m.get(TYPE, None) == 'value']
-    rest = [layout(m, f, before, after, leaf) for m in model if m not in values]
+    rest = [layout(m, f, active, before, after, leaf) for m in model if m not in values]
     table = rows_to_table([value_to_row(value) for value in values])
     return key, rest + [table]
 
@@ -243,7 +243,7 @@ def climbs_table(key, model, f, active, before, after, leaf):
                 Text(fmt_value_measures(model[0]))]
 
     elevations = [m for m in model if isinstance(m, list) and m[0].get(LABEL, None) == 'Elevation']
-    rest = [layout(m, f, before, after, leaf) for m in model if m not in elevations]
+    rest = [layout(m, f, active, before, after, leaf) for m in model if m not in elevations]
     table = rows_to_table([climb(elevation) for elevation in elevations])
     return key, rest[:1] + [table] + rest[1:]  # title, table, total
 
@@ -251,7 +251,7 @@ def climbs_table(key, model, f, active, before, after, leaf):
 def table(name, value):
 
     def before(key, model, f, active, before, after, leaf):
-        title = layout(model[0], f, before, after, leaf)
+        title = layout(model[0], f, active, before, after, leaf)
         has_measures = any(MEASURES in m for m in model[1:])
         headers = [name, value]
         if has_measures: headers.append('Stats')

@@ -1,35 +1,34 @@
 
 import datetime as dt
-from abc import abstractmethod
 from logging import getLogger
 
 from sqlalchemy import or_
-from urwid import MainLoop, Columns, Pile, Frame, Filler, Text, Divider, WEIGHT, connect_signal, Padding
+from urwid import MainLoop, Pile, Text, connect_signal, Padding
 
 from .args import DATE, SCHEDULE, FAST, mm
-from ..lib.date import to_date
-from ..lib.io import tui
-from ..lib.schedule import Schedule
-from ..lib.utils import PALETTE_RAINBOW, em, label
-from ..lib.widgets import DateSwitcher
-from ..sql import PipelineType, DiaryTopic, DiaryTopicJournal
-from ..sql.database import ActivityJournal, StatisticJournal
-from ..sql.utils import add
-from ..stats.display import display_pipeline
-from ..stats.display.nearby import nearby_any_time, fmt_nearby
-from ..stats.pipeline import run_pipeline
+from ..diary.database import read_date, COMPARE_LINKS, read_schedule
+from ..diary.urwid import build, layout_date, layout_schedule
 from ..jupyter.template.activity_details import activity_details
 from ..jupyter.template.all_activities import all_activities
 from ..jupyter.template.compare_activities import compare_activities
 from ..jupyter.template.health import health
 from ..jupyter.template.similar_activities import similar_activities
-from ..urwid.fields import PAGE_WIDTH
+from ..lib.date import to_date, time_to_local_date, time_to_local_time
+from ..lib.io import tui
+from ..lib.schedule import Schedule
+from ..lib.utils import PALETTE
+from ..lib.widgets import DateSwitcher
+from ..sql import PipelineType, DiaryTopic, DiaryTopicJournal, ActivityJournal
+from ..sql.database import StatisticJournal
+from ..stats.display import display_pipeline
+from ..stats.display.nearby import NEARBY_LINKS
+from ..stats.pipeline import run_pipeline
 from ..urwid.fields.summary import summary_columns
-from ..urwid.tui.decorators import Border, Indent
+from ..urwid.tui.decorators import Indent
 from ..urwid.tui.factory import Factory
 from ..urwid.tui.fixed import Fixed
 from ..urwid.tui.tabs import TabList
-from ..urwid.tui.widgets import DividedPile, ArrowMenu, SquareButton
+from ..urwid.tui.widgets import SquareButton
 
 log = getLogger(__name__)
 
@@ -73,9 +72,9 @@ Display a summary for the month / year / schedule.
         schedule = Schedule(schedule)
         if schedule.start or schedule.finish:
             raise Exception('Schedule must be open (no start or finish)')
-        MainLoop(ScheduleDiary(db, date, schedule), palette=PALETTE_RAINBOW).run()
+        MainLoop(ScheduleDiary(db, date, schedule), palette=PALETTE).run()
     else:
-        MainLoop(DailyDiary(db, date), palette=PALETTE_RAINBOW).run()
+        MainLoop(DailyDiary(db, date), palette=PALETTE).run()
         if not args[FAST]:
             print('\n  Please wait while statistics are updated...')
             run_pipeline(system, db, PipelineType.STATISTIC)
@@ -89,13 +88,13 @@ class Diary(DateSwitcher):
 
     def save(self):
         s = self._session
-        log.info(f'{bool(s)}')
         if s:
             self.__clean(s, s.dirty, delete=True)
             self.__clean(s, s.new, delete=False)
         super().save()
 
-    def __clean(self, s, instances, delete=False):
+    @staticmethod
+    def __clean(s, instances, delete=False):
         for instance in instances:
             if isinstance(instance, StatisticJournal):
                 if instance.value == None:
@@ -105,78 +104,11 @@ class Diary(DateSwitcher):
                     else:
                         s.expunge(instance)
 
-    def _build(self, s):
-        log.debug('Building diary at %s' % self._date)
-        body, f = [], Factory(TabList())
-        for topic in self._diary_topics(s):
-            body.append(self.__display_diary_topic(s, f, topic))
-        for extra in self._display_pipeline(s, f):
-            body.append(extra)
-        for extra in self._display_gui(s, f):
-            body.append(extra)
-        self._check_body(body)
-        body = Border(Frame(Filler(DividedPile(body), valign='top'),
-                            header=Pile([self._header(), Divider()]),
-                            footer=Pile([Divider(), Text(self.__footer(), align='center')])))
-        return body, f.tabs
-
-    @abstractmethod
-    def _diary_topics(self, s):
-        pass
-
-    @abstractmethod
-    def _display_pipeline(self, s, f):
-        pass
-
-    @abstractmethod
-    def _display_gui(self, s, f):
-        pass
-
-    @abstractmethod
-    def _header(self):
-        pass
-
-    def _check_body(self, body):
-        pass
-
-    def __footer(self):
-        footer = ['meta-', em('q'), 'uit/e', em('x'), 'it/', em('s'), 'ave']
-        footer += [' [shift]meta-']
-        for sep, c in enumerate('dwmya'):
-            if sep: footer += ['/']
-            footer += [em(c)]
-        footer += ['ctivity/', em('t'), 'oday']
-        return footer
-
-    def __display_diary_topic(self, s, f, diary_topic):
-        log.debug('%s' % diary_topic)
-        body, title = [], None
-        if diary_topic.name:
-            title = Text(diary_topic.name)
-        if diary_topic.description:
-            body.append(Text(diary_topic.description))
-        body += list(self._display_diary_topic_fields(s, f, diary_topic))
-        body += list(self.__display_diary_children(s, f, diary_topic))
-        if not body:
-            return title
-        body = Indent(Pile(body))
-        if title:
-            body = Pile([title, body])
-        return body
-
-    @abstractmethod
-    def _display_diary_topic_fields(self, s, f, diary_topic):
-        pass
-
-    def __display_diary_children(self, s, f, diary_topic):
-        for child in diary_topic.children:
-            if self._filter_diary_child(child):
-                extra = self.__display_diary_topic(s, f, child)
-                if extra:
-                    yield extra
-
-    def _filter_diary_child(self, child):
-        return child.schedule.at_location(self._date)
+    def _wire(self, active, name, callback):
+        if name in active:
+            for menu in active[name]:
+                connect_signal(menu, 'click', callback)
+            del active[name]
 
 
 class DailyDiary(Diary):
@@ -184,73 +116,30 @@ class DailyDiary(Diary):
     Render the diary at a given date.
     '''
 
-    def _diary_topics(self, s):
-        for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,
-                                                or_(DiaryTopic.start <= self._date, DiaryTopic.start == None),
-                                                or_(DiaryTopic.finish >= self._date, DiaryTopic.finish == None)). \
-                order_by(DiaryTopic.sort).all():
-            if topic.schedule.at_location(self._date):
-                yield topic
+    def _build(self, s):
+        log.debug('Building diary at %s' % self._date)
+        model = list(read_date(s, self._date))
+        f = Factory(TabList())
+        active, widget = build(model, f, layout_date)
+        self._wire(active, NEARBY_LINKS, lambda m: self._change_date(time_to_local_date(m.state.start)))
+        self._wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
+        self._wire(active, 'health', lambda l: self.__show_health())
+        self._wire(active, 'all-similar', lambda l: self.__show_similar(time_to_local_time(l.state.start)))
+        if active:
+            raise Exception(f'Unhandled links: {", ".join(active.keys())}')
+        return widget, f.tabs
 
-    def _header(self):
-        return Text(self._date.strftime('%Y-%m-%d - %A'))
-
-    def _display_diary_topic_fields(self, s, f, topic):
-        columns, width = [], 0
-        tjournal = self.__diary_topic_journal(s, topic)
-        tjournal.populate(s)
-        for field in topic.fields:
-            if field in tjournal.statistics:  # might be outside schedule
-                log.debug('%s' % field.display_cls)
-                display = field.display_cls(tjournal.statistics[field], *field.display_args, **field.display_kargs)
-                log.debug('%s' % display)
-                if width + display.width > PAGE_WIDTH:
-                    yield Columns(columns)
-                    columns, width = [], 0
-                columns.append((WEIGHT, display.width, f(display.widget())))
-                width += display.width
-        if width:
-            yield Columns(columns)
-
-    def __diary_topic_journal(self, s, diary_topic):
-        dtjournal = s.query(DiaryTopicJournal). \
-            filter(DiaryTopicJournal.diary_topic == diary_topic,
-                   DiaryTopicJournal.date == self._date).one_or_none()
-        if not dtjournal:
-            dtjournal = add(s, DiaryTopicJournal(diary_topic=diary_topic, date=self._date))
-        return dtjournal
-
-    def _display_pipeline(self, s, f):
-        yield from display_pipeline(s, f, self._date, self)
-
-    def _display_gui(self, s, f):
-        menus = list(self.__gui_menus(s, f))
-        if menus:
-            yield Pile([Text('Jupyter'), Indent(Pile(menus))])
-
-    def __gui_menus(self, s, f):
-        for aj1 in ActivityJournal.at_date(s, self._date):
-            options = [(None, 'None')] + [(aj2, fmt_nearby(aj2, nb)) for aj2, nb in nearby_any_time(s, aj1)]
-            menu = ArrowMenu(label('%s v ' % aj1.name), dict(options))
-            connect_signal(menu, 'click', self.__show_gui, user_args=[s, aj1])
-            button = SquareButton('All Similar')
-            connect_signal(button, 'click', self.__show_similar, user_args=[s, aj1])
-            yield Columns([f(menu), f(Padding(Fixed(button, 13), width='clip'))])
-        button = SquareButton('Health')
-        connect_signal(button, 'click', self.__show_health, user_args=[s, self._date])
-        yield f(Padding(Fixed(button, 8), width='clip'))
-
-    def __show_gui(self, s, aj1, w):
-        if w.state:
-            compare_activities(aj1.start, w.state.start, aj1.activity_group.name)
+    def __show_gui(self, aj1, aj2):
+        if aj2:
+            compare_activities(aj1.start, aj2.start, aj1.activity_group.name)
         else:
             activity_details(aj1.start, aj1.activity_group.name)
 
-    def __show_similar(self, s, aj1, w):
+    def __show_similar(self, local_time):
+        aj1 = ActivityJournal.at_local_time(self._session, local_time)
         similar_activities(aj1.start, aj1.activity_group.name)
 
-    def __show_health(self, s, date, w):
-        log.debug(f'w {w} s {s} date {date}')
+    def __show_health(self):
         health()
 
 
@@ -261,19 +150,23 @@ class ScheduleDiary(Diary):
 
     def __init__(self, db, date, schedule):
         self._schedule = schedule
-        super().__init__(db, self._refine_new_date(date))
+        super().__init__(db, schedule.start_of_frame(date))
 
-    def _header(self):
-        return Text(self._date.strftime('%Y-%m-%d') + ' - Summary for %s' % self._schedule.describe())
+    def _build(self, s):
+        log.debug(f'Building diary at {self._date} for {self._schedule}')
+        model = list(read_schedule(s, self._schedule, self._date))
+        f = Factory(TabList())
+        active, widget = build(model, f, layout_schedule)
+        self._wire(active, 'all-activities', lambda l: self.__show_all())
+        if active:
+            raise Exception(f'Unhandled links: {", ".join(active.keys())}')
+        return widget, f.tabs
 
     def _check_body(self, body):
         if len(body) < 4:
             body.append(Indent(Text('Updating the database automatically deletes summary statistics that cover '
                                     + 'the modified data.  You probably need to re-generate the statistics by '
                                     + 'running `ch2 statistics`.')))
-
-    def _refine_new_date(self, date):
-        return self._schedule.start_of_frame(date)
 
     def _diary_topics(self, s):
         finish = self._schedule.next_frame(self._date)
@@ -298,6 +191,6 @@ class ScheduleDiary(Diary):
         connect_signal(button, 'click', self.__show_all)
         yield Pile([Text('Jupyter'), Indent(f(Padding(Fixed(button, 16), width='clip')))])
 
-    def __show_all(self, w):
+    def __show_all(self):
         finish = self._schedule.next_frame(self._date)
         all_activities(self._date.strftime('%Y-%m-%d'), finish.strftime('%Y-%m-%d'))

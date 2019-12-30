@@ -26,7 +26,6 @@ class ResponseDiary(Displayer, Reader):
     def _display_date(self, s, f, date):
         yield from self._display_schedule(s, f, date, Schedule('d'))
 
-    @optional_text('SHRIMP')
     def _read_date(self, s, date):
         yield from self._read_schedule(s, date, Schedule('d'))
 
