@@ -464,7 +464,7 @@ AFTER_DATE = defaultdict(
 
 AFTER_SCHEDULE = defaultdict(
     lambda: schedule_tables,
-    {})
+    {'title': title_after})
 
 
 def layout_date(model, f, active, before=BEFORE_DATE, after=AFTER_DATE, leaf=LEAF_DATE):

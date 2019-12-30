@@ -157,10 +157,7 @@ class ScheduleDiary(Diary):
         model = list(read_schedule(s, self._schedule, self._date))
         f = Factory(TabList())
         active, widget = build(model, f, layout_schedule)
-        self._wire(active, NEARBY_LINKS, lambda m: self._change_date(time_to_local_date(m.state.start)))
-        self._wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
-        self._wire(active, 'health', lambda l: self.__show_health())
-        self._wire(active, 'all-similar', lambda l: self.__show_similar(time_to_local_time(l.state.start)))
+        self._wire(active, 'all-activities', lambda l: self.__show_all())
         if active:
             raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs
@@ -194,6 +191,6 @@ class ScheduleDiary(Diary):
         connect_signal(button, 'click', self.__show_all)
         yield Pile([Text('Jupyter'), Indent(f(Padding(Fixed(button, 16), width='clip')))])
 
-    def __show_all(self, w):
+    def __show_all(self):
         finish = self._schedule.next_frame(self._date)
         all_activities(self._date.strftime('%Y-%m-%d'), finish.strftime('%Y-%m-%d'))

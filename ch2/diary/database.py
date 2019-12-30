@@ -73,8 +73,8 @@ def read_schedule(s, schedule, date):
     topics = list(read_schedule_topics(s, schedule, date))
     if topics: yield topics
     yield from read_pipeline(s, date, schedule=schedule)
-    # gui = list(read_gui(s, date))
-    # if gui: yield gui
+    gui = list(read_schedule_gui(s, date))
+    if gui: yield gui
 
 
 @optional_text('Diary')
@@ -106,3 +106,8 @@ def summary_column(s, schedule, start, name):
         if not named:
             yield text(name)
         yield value(summary, journal.value, units=journal.statistic_name.units)
+
+
+@optional_text('Jupyter')
+def read_schedule_gui(s, date):
+    yield link('All Activities')

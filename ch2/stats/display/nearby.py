@@ -29,6 +29,9 @@ class NearbyDiary(JournalDiary):
     def _display_schedule(self, s, f, date, schedule):
         yield from []
 
+    def _read_schedule(self, s, date, schedule):
+        yield from []
+
     def _journal_date(self, s, f, ajournal, date):
         for constraint in constraints(s):
             row = []
