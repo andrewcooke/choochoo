@@ -91,9 +91,6 @@ class TopicField:
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False)  # StatisticJournalType
     sort = Column(Sort, nullable=False, server_default='0')
-    display_cls = Column(Cls, nullable=False)
-    display_args = Column(Json, nullable=False, server_default=dumps(()))
-    display_kargs = Column(Json, nullable=False, server_default=dumps({}))
     model = Column(Json, nullable=False, server_default=dumps({}))
 
     @declared_attr

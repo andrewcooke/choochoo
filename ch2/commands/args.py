@@ -559,8 +559,7 @@ def make_parser():
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
                          help='path to fit file(s)')
-    # todo - is dest needed here and below?
-    monitor.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE', dest=KARG,
+    monitor.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE',
                          help='keyword argument to be passed to the pipelines (can be repeated)')
     monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
@@ -584,7 +583,7 @@ def make_parser():
                             help='optional start date')
     statistics.add_argument(FINISH, action='store', metavar='FINISH', nargs='?',
                             help='optional finish date (if start also given)')
-    statistics.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE', dest=KARG,
+    statistics.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE',
                             help='keyword argument to be passed to the pipelines (can be repeated)')
     statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
@@ -605,12 +604,11 @@ def make_parser():
 def bootstrap_file(file, *args, configurator=None, post_config=None):
 
     from ..lib.log import make_log
-    from ..config.database import config
-    from ..sql.database import Database
+    from ..sql.database import Database, connect
 
     args = [mm(DATABASE), file.name] + list(args)
     if configurator:
-        db = config(*args)
+        ns, db = connect(args)
         configurator(db)
     args += post_config if post_config else []
     args = NamespaceWithVariables(make_parser().parse_args(args))

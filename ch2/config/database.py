@@ -17,18 +17,6 @@ log = getLogger(__name__)
 NEARBY_CNAME = 'Nearby'
 
 
-def config(*args):
-    '''
-    Start here to configure the system.  Create an instance on the command line:
-
-        log, db = config('-v', '4')
-        print(c...)  todo
-        ...
-    '''
-    ns, db = connect(args)
-    return db
-
-
 class Counter:
 
     def __init__(self, start=10, delta=10):

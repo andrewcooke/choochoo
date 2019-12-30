@@ -76,9 +76,6 @@ if ((DO_DROP)); then
          id integer not null,
          type integer not null,
          sort integer default '0' not null,
-         display_cls text not null,
-         display_args text default '[]' not null,
-         display_kargs text default '{}' not null,
          model text default '{}' not null,
          diary_topic_id integer not null,
          schedule text default '' not null,
@@ -100,8 +97,8 @@ if ((DO_DROP)); then
   insert into diary_topic (id, parent_id, schedule, start, finish, name, description, sort)
   select id, parent_id, schedule, start, finish, name, description, sort
     from topic;
-  insert into diary_topic_field (id, diary_topic_id, type, sort, statistic_name_id, display_cls, display_args, display_kargs, schedule)
-  select id, topic_id, type, sort, statistic_name_id, display_cls, display_args, display_kargs, schedule
+  insert into diary_topic_field (id, diary_topic_id, type, sort, statistic_name_id, schedule, model)
+  select id, topic_id, type, sort, statistic_name_id, schedule, display_kargs
     from topic_field;
   insert into diary_topic_journal select * from topic_journal;
   drop table topic;
@@ -121,18 +118,21 @@ from ch2.sql.tables import *
 
 s = session('-v5 --dev -f $TMP_DIR/copy-$SRC.sql')
 for field in s.query(DiaryTopicField).all():
-    model = {}
-    for name, value in field.display_kargs.items():
-        model[name] = value
-    model['type'] = field.display_cls.__name__.split('.')[-1].lower()
-    if model['type'] == 'text':
+    model = dict(field.model)
+    # this isn't wonderful, but the number of fields is small and the number of users smaller
+    if field.statistic_name.name in ('Sleep', 'Weight'):
+        model['type'] = 'float'
+    elif field.statistic_name.name == 'Rest HR':
+        model['type'] = 'integer'
+    elif field.statistic_name.name == 'Mood':
+        model['type'] = 'score0'
+    else:
         model['type'] = 'edit'
     if 'width' in model:
         del model['width']
     if 'height' in model:
         del model['height']
     field.model = model
-    #print(field.id, field.display_cls, field.model)
 
 s.commit()
 EOF
