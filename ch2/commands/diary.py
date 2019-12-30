@@ -2,8 +2,7 @@
 import datetime as dt
 from logging import getLogger
 
-from sqlalchemy import or_
-from urwid import MainLoop, Pile, Text, connect_signal, Padding
+from urwid import MainLoop, connect_signal
 
 from .args import DATE, SCHEDULE, FAST, mm
 from ..diary.database import read_date, COMPARE_LINKS, read_schedule
@@ -18,17 +17,12 @@ from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
-from ..sql import PipelineType, DiaryTopic, DiaryTopicJournal, ActivityJournal
+from ..sql import PipelineType, DiaryTopicJournal, ActivityJournal
 from ..sql.database import StatisticJournal
-from ..stats.display import display_pipeline
 from ..stats.display.nearby import NEARBY_LINKS
 from ..stats.pipeline import run_pipeline
-from ..urwid.fields.summary import summary_columns
-from ..urwid.tui.decorators import Indent
 from ..urwid.tui.factory import Factory
-from ..urwid.tui.fixed import Fixed
 from ..urwid.tui.tabs import TabList
-from ..urwid.tui.widgets import SquareButton
 
 log = getLogger(__name__)
 
@@ -161,35 +155,6 @@ class ScheduleDiary(Diary):
         if active:
             raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs
-
-    def _check_body(self, body):
-        if len(body) < 4:
-            body.append(Indent(Text('Updating the database automatically deletes summary statistics that cover '
-                                    + 'the modified data.  You probably need to re-generate the statistics by '
-                                    + 'running `ch2 statistics`.')))
-
-    def _diary_topics(self, s):
-        finish = self._schedule.next_frame(self._date)
-        return s.query(DiaryTopic).filter(DiaryTopic.parent == None,
-                                          or_(DiaryTopic.start < finish, DiaryTopic.start == None),
-                                          or_(DiaryTopic.finish >= self._date, DiaryTopic.finish == None)). \
-            order_by(DiaryTopic.sort).all()
-
-    def _filter_diary_child(self, child):
-        finish = self._schedule.next_frame(self._date)
-        return (child.start is None or child.start < finish) and (child.finish is None or child.finish > self._date)
-
-    def _display_diary_topic_fields(self, s, f, topic):
-        names = [field.statistic_name for field in topic.fields]
-        yield from summary_columns(s, f, self._date, self._schedule, names)
-
-    def _display_pipeline(self, s, f):
-        yield from display_pipeline(s, f, self._date, self, schedule=self._schedule)
-
-    def _display_gui(self, s, f):
-        button = SquareButton('All Activities')
-        connect_signal(button, 'click', self.__show_all)
-        yield Pile([Text('Jupyter'), Indent(f(Padding(Fixed(button, 16), width='clip')))])
 
     def __show_all(self):
         finish = self._schedule.next_frame(self._date)

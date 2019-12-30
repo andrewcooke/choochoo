@@ -2,27 +2,20 @@
 from logging import getLogger
 from re import search
 
-from urwid import Text, Pile, Columns, Divider
-
 from . import JournalDiary
-from .heart_rate import build_zones, read_zones
 from ..calculate.activity import ActivityCalculator
 from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
-    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d, M, S
+    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d, M, S, PERCENT_IN_Z_ANY
 from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
 from ...diary.model import text, value, optional_text
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time
-from ...lib.utils import label
 from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName
-from ...urwid.fields.summary import summary_columns
-from ...urwid.tui.decorators import Indent
 
 log = getLogger(__name__)
-HRZ_WIDTH = 30
 
 
 class ActivityDiary(JournalDiary):
@@ -35,7 +28,7 @@ class ActivityDiary(JournalDiary):
         yield from self.__read_details(s, ajournal, date)
 
     def __read_details(self, s, ajournal, date):
-        zones = list(read_zones(s, ajournal))
+        zones = list(self.__read_zones(s, ajournal))
         if zones: yield [text('HR Zones (% time)')] + zones
         active_data = list(self.__read_active_data(s, ajournal, date))
         if active_data: yield [text('Activity Statistics')] + active_data
@@ -48,7 +41,20 @@ class ActivityDiary(JournalDiary):
             model = list(self.__read_template(s, ajournal, template, re, date))
             if model: yield [text(title)] + model
 
-    def __title(self, s, ajournal):
+    @staticmethod
+    def __read_zones(s, ajournal):
+        percent_times = s.query(StatisticJournal).join(StatisticName). \
+            filter(StatisticJournal.time == ajournal.start,
+                   StatisticName.name.like(PERCENT_IN_Z_ANY),
+                   StatisticName.owner == ActivityCalculator,
+                   StatisticName.constraint == ajournal.activity_group) \
+            .order_by(StatisticName.name).all()
+        if percent_times:
+            for zone, percent_time in reversed(list(enumerate((time.value for time in percent_times), start=1))):
+                yield [value('Zone', zone, tag='hr-zone'), value('Percent time', percent_time)]
+
+    @staticmethod
+    def __title(s, ajournal):
         title = f'{ajournal.name} ({ajournal.activity_group.name}'
         kits = s.query(StatisticJournal). \
             join(StatisticName). \
@@ -59,7 +65,8 @@ class ActivityDiary(JournalDiary):
             title += '/' + ','.join(str(kit.value) for kit in kits)
         return title + ')'
 
-    def __read_active_data(self, s, ajournal, date):
+    @staticmethod
+    def __read_active_data(s, ajournal, date):
         yield text('%s - %s  (%s)' % (time_to_local_time(to_time(ajournal.start)),
                                       time_to_local_time(to_time(ajournal.finish), fmt=HMS),
                                       format_seconds((ajournal.finish - ajournal.start).seconds)))
@@ -82,7 +89,8 @@ class ActivityDiary(JournalDiary):
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
 
-    def __read_climbs(self, s, ajournal, date):
+    @staticmethod
+    def __read_climbs(s, ajournal, date):
         total, climbs = climbs_for_activity(s, ajournal)
         if total:
             yield value('Total', total.value, measures=total.measures_as_model(date), units=M)
@@ -102,12 +110,14 @@ class ActivityDiary(JournalDiary):
             yield value(search(re, sjournal.statistic_name.name).group(1), sjournal.value,
                         units=sjournal.statistic_name.units, measures=sjournal.measures_as_model(date))
 
-    def __sort_journals(self, sjournals):
+    @staticmethod
+    def __sort_journals(sjournals):
         return sorted(sjournals,
                       # order by integer embedded in name
                       key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic_name.name).group(1)))
 
-    def __sort_names(self, statistic_names):
+    @staticmethod
+    def __sort_names(statistic_names):
         return sorted(statistic_names,
                       # order by integer embedded in name
                       key=lambda statistic_name: int(search(r'(\d+)', statistic_name.name).group(1)))
@@ -126,14 +136,16 @@ class ActivityDiary(JournalDiary):
             if fields:
                 yield [text(group.name)] + fields
 
-    def __names(self, s, group, *names):
+    @staticmethod
+    def __names(s, group, *names):
         for name in names:
             yield s.query(StatisticName). \
                 filter(StatisticName.name == name,
                        StatisticName.owner == ActivityCalculator,
                        StatisticName.constraint == group).one()
 
-    def __names_like(self, s, group, name):
+    @staticmethod
+    def __names_like(s, group, name):
         return s.query(StatisticName). \
             filter(StatisticName.name.like(name),
                    StatisticName.owner == ActivityCalculator,
