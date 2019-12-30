@@ -96,7 +96,6 @@ class Diary(DateSwitcher):
         super().save()
 
     def __clean(self, s, instances, delete=False):
-        log.debug(f'{len(instances)}')
         for instance in instances:
             if isinstance(instance, StatisticJournal):
                 if instance.value == None:

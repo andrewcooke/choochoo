@@ -207,7 +207,9 @@ class ActivityDiary(JournalDiary):
                 filter(StatisticName.name == ACTIVE_TIME,
                        StatisticJournal.time >= start,
                        StatisticJournal.time < finish).all():
-            yield from self.__read_schedule_fields(s, date, schedule, group)
+            fields = list(self.__read_schedule_fields(s, date, schedule, group))
+            if fields:
+                yield [text(group.name)] + fields
 
     def __schedule_fields(self, s, f, date, schedule, group):
         names = list(self.__names(s, group, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,

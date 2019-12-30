@@ -8,6 +8,7 @@ from urwid import Pile, Text, Columns
 from . import Displayer, Reader
 from ..calculate.segment import SegmentCalculator
 from ..names import SEGMENT_TIME, SEGMENT_HEART_RATE
+from ...diary.database import summary_column
 from ...diary.model import value, text, optional_text
 from ...lib.date import local_date_to_time
 from ...sql.tables.segment import SegmentJournal, Segment
@@ -72,6 +73,15 @@ class SegmentDiary(Displayer, Reader):
 
     def __field(self, s, date, sjournal, name):
         return StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.segment, source_id=sjournal.id)
+
+    @optional_text('Segments')
+    def _read_schedule(self, s, date, schedule):
+        for segment in s.query(Segment).all():
+            segment_rows = [list(summary_column(s, schedule, date, name))
+                            for name in self.__names(s, segment, SEGMENT_TIME, SEGMENT_HEART_RATE)]
+            segment_rows = list(filter(bool, segment_rows))
+            if segment_rows:
+                yield [text(segment.name)] + segment_rows
 
     def _display_schedule(self, s, f, date, schedule):
         rows = []

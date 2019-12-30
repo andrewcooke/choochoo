@@ -49,7 +49,6 @@ def build(model, f, layout):
 
 def apply_before(model, f, active, before, after, leaf):
     key = model[0].get(TAG, None)
-    log.debug(f'Before key {key}')
     return before[key](key, model, f, active, copy(before), copy(after), copy(leaf))
 
 
@@ -80,7 +79,6 @@ def layout(model, f, active, before, after, leaf):
             raise Exception(f'Model entry of type {type(model)} ({model})')
         key = model.get(TYPE, None)
         try:
-            if key in leaf: log.debug(f'Leaf key {key}')
             return leaf[key](model, f, active)
         except Exception as e:
             log.error(f'Error ({e}) while processing leaf {key} in {model}')
@@ -326,6 +324,8 @@ def schedule_combine(*patterns):
                             current_pattern, columns = None, []
                     else:
                         yield row
+            if columns:
+                yield columns
 
         if len(model) > 1 and any(is_row(b) for b in model[1:]):
             model = list(rows())
