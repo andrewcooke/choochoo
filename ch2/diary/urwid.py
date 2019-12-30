@@ -2,12 +2,13 @@
 from collections import defaultdict
 from copy import copy
 from logging import getLogger
+from re import compile, sub
 
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding, connect_signal
 
 from .database import COMPARE_LINKS
 from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
-    LINK, INTEGER, DB
+    LINK, INTEGER, DB, value, text
 from ..lib import format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres
 from ..stats.display.nearby import NEARBY_LINKS
@@ -295,6 +296,44 @@ def hr_zone(key, model, f, active, before, after, leaf):
     return key, Text([zone(z, text_left), text_right])
 
 
+def schedule_combine(*patterns):
+
+    patterns = [compile(pattern) for pattern in patterns]
+
+    def before(key, model, f, active, before, after, leaf):
+
+        def rows():
+            current_pattern, columns = None, []
+            for row in model:
+                if not is_row(row):
+                    yield row
+                else:
+                    if not current_pattern:
+                        for pattern in patterns:
+                            title = row[0][VALUE]
+                            match = pattern.match(title)
+                            if match:
+                                current_pattern = pattern
+                                i = title.find(match.group(1))
+                                title = sub(r'\s+', ' ', title[:i] + title[(i + len(match.group(1))):])
+                                columns = [text(title)]
+                    if current_pattern:
+                        match = current_pattern.match(row[0][VALUE])
+                        if match:
+                            columns.append(value(match.group(1), row[1][VALUE], units=row[1][UNITS]))
+                        else:
+                            yield columns
+                            current_pattern, columns = None, []
+                    else:
+                        yield row
+
+        if len(model) > 1 and any(is_row(b) for b in model[1:]):
+            model = list(rows())
+        return key, [layout(m, f, active, before, after, leaf) for m in model]
+
+    return before
+
+
 def default_before(key, model, f, active, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
@@ -323,7 +362,7 @@ BEFORE_DATE = defaultdict(
 
 
 BEFORE_SCHEDULE = defaultdict(
-    lambda: default_before,
+    lambda: schedule_combine(r'Min (\d+km) Time', r'Med (\d+km) Time', r'Max Med HR (\d+m)'),
     {})
 
 
@@ -366,18 +405,24 @@ def null_after(branch):
     return branch
 
 
-def schedule_after(branch):
+def is_row(branch):
+    # check for row in schedule format
+    return isinstance(branch, list) and len(branch) > 1 and isinstance(branch[1], dict) and branch[1][TYPE] == VALUE
 
-    def is_row(branch):
-        return isinstance(branch, list) and len(branch) > 1 and isinstance(branch[1], dict) and branch[1][TYPE] == VALUE
 
-    def fmt_row(branch, ncols):
-        yield branch[0]
+def schedule_tables(branch):
+
+    def fmt_rows(branch, ncols, max_cols=4):
+        row = [branch[0]]
         for b in branch[1:]:
             # extra case to handle up/down arrow in fitness
-            yield create_value_no_measures(b, None, None) if isinstance(b, dict) else b
-        for _ in range(len(branch), ncols):
-            yield Text('')
+            row.append(create_value_no_measures(b, None, None) if isinstance(b, dict) else b)
+            if len(row) == max_cols:
+                yield row
+                row = [Text('')]
+        if len(row) > 1:
+            while len(row) < max_cols: row.append(Text(''))
+            yield row
 
     if is_row(branch):
         return branch  # will be processed below
@@ -386,7 +431,7 @@ def schedule_after(branch):
         all_rows, table = [], []
         for b in branch[1:]:
             if is_row(b):
-                table.append(list(fmt_row(b, ncols)))
+                for row in fmt_rows(b, ncols): table.append(row)
             else:
                 if table:
                     all_rows.append(Columns([Pile(col) for col in zip(*table)]))
@@ -418,7 +463,7 @@ AFTER_DATE = defaultdict(
 
 
 AFTER_SCHEDULE = defaultdict(
-    lambda: schedule_after,
+    lambda: schedule_tables,
     {})
 
 
