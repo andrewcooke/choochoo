@@ -171,7 +171,7 @@ class DiaryTopicJournal(Source):
     def check_tz(cls, system, s):
         tz = get_local_timezone()
         db_tz = system.get_constant(SystemConstant.TIMEZONE, none=True)
-        if not db_tz:
+        if db_tz is None:
             db_tz = system.set_constant(SystemConstant.TIMEZONE, '')
         if db_tz != tz.name:
             cls.__reset_timezone(s)

@@ -12,7 +12,7 @@ class TestKit(TestCase):
 
     def test_bikes(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5', configurator=default)
+            args, sys, db = bootstrap_file(f, m(V), '5', configurator=default)
             with db.session_context() as s:
                 with self.assertRaises(Exception) as ctx:
                     start(s, 'bike', 'cotic', None, False)

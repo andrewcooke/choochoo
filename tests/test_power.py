@@ -19,13 +19,13 @@ class TestPower(TestCase):
 
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
-            constants(args, db)
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'show', 'FTHR.%')
-            constants(args, db)
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
+            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
+            constants(args, sys, db)
+            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'show', 'FTHR.%')
+            constants(args, sys, db)
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                            'activities', mm(FAST), 'data/test/source/personal/2018-03-04-qdp.fit')
-            activities(args, db)
+            activities(args, sys, db)
 
             with db.session_context() as s:
                 stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,

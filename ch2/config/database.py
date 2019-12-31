@@ -221,8 +221,8 @@ def add_child_diary_topic(s, parent, name, sort, description=None, schedule=None
     return add(s, DiaryTopic(parent=parent, name=name, sort=sort, description=description, schedule=schedule))
 
 
-def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, units=None, summary=None,
-                          display_cls=Integer, **display_kargs):
+def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, units=None, summary=None, schedule=None,
+                          model=None):
     '''
     Add a field and associated statistic to a topic entry.
 
@@ -234,8 +234,8 @@ def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, un
         s.flush()
     statistic_name = add(s, StatisticName(name=name, owner=diary_topic, constraint=diary_topic, statistic_journal_type=type,
                                           description=description, units=units, summary=summary))
-    field = add(s, DiaryTopicField(diary_topic=diary_topic, sort=sort, type=display_cls.statistic_journal_type,
-                                   display_cls=display_cls, display_kargs=display_kargs,
+    if model is None: model = {}
+    field = add(s, DiaryTopicField(type=type, diary_topic=diary_topic, sort=sort, model=model, schedule=schedule,
                                    statistic_name=statistic_name))
 
 

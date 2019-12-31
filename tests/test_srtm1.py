@@ -20,8 +20,8 @@ class TestSortem(TestCase):
     def bilinear(self):
         with NamedTemporaryFile() as f:
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1')
-            constants(args, db)
+            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1')
+            constants(args, sys, db)
             with db.session_context() as s:
                 yield bilinear_elevation_from_constant(s)
 
@@ -29,8 +29,8 @@ class TestSortem(TestCase):
     def spline(self, smooth=0):
         with NamedTemporaryFile() as f:
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1')
-            constants(args, db)
+            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1')
+            constants(args, sys, db)
             with db.session_context() as s:
                 yield spline_elevation_from_constant(s, smooth=smooth)
 

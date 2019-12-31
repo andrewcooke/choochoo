@@ -18,7 +18,7 @@ class TestTimestamp(TestCase):
 
     def test_set(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5')
+            args, sys, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
                 source = add(s, Source())
@@ -32,7 +32,7 @@ class TestTimestamp(TestCase):
 
     def test_context(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5')
+            args, sys, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
                 with Timestamp(owner=TestTimestamp).on_success(s):
@@ -43,7 +43,7 @@ class TestTimestamp(TestCase):
 
     def test_context_error(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5')
+            args, sys, db = bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
                 try:

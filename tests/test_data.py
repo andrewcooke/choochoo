@@ -29,7 +29,7 @@ class TestData(TestCase):
         power = Power('${Bike}', '${Weight}')
 
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5')
+            args, sys, db = bootstrap_file(f, m(V), '5')
             with db.session_context() as s:
                 source = Source(type=SourceType.SOURCE)
                 s.add(source)

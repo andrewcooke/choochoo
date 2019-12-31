@@ -22,27 +22,27 @@ class TestActivities(TestCase):
 
         with NamedTemporaryFile() as f:
 
-            args, db = bootstrap_file(f, m(V), '5')
+            args, sys, db = bootstrap_file(f, m(V), '5')
 
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
 
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
-            constants(args, db)
+            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
+            constants(args, sys, db)
 
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'show', 'FTHR.%')
-            constants(args, db)
+            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'show', 'FTHR.%')
+            constants(args, sys, db)
 
-            args, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'SRTM1.dir',
+            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'SRTM1.dir',
                                       '/home/andrew/archive/srtm1')
-            constants(args, db)
+            constants(args, sys, db)
 
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
                                       'data/test/source/personal/2018-08-27-rec.fit')
-            activities(args, db)
+            activities(args, sys, db)
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-            run_pipeline(db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
+            run_pipeline(sys, db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
@@ -56,15 +56,15 @@ class TestActivities(TestCase):
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(45987, n)
+                self.assertEqual(47233, n)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 
     def test_segment_bug(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
-            run_pipeline(db, PipelineType.ACTIVITY, paths=paths, force=True)
+            run_pipeline(sys, db, PipelineType.ACTIVITY, paths=paths, force=True)
 
     def __assert_basic_stats(self, s):
         for name in [ACTIVE_DISTANCE, ACTIVE_TIME]:
@@ -78,12 +78,12 @@ class TestActivities(TestCase):
         with NamedTemporaryFile() as f:
             bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                       'activities', mm(FAST),
                                       'data/test/source/private/florian.fit')
-            activities(args, db)
+            activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
+            run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 self.__assert_basic_stats(s)
@@ -92,12 +92,12 @@ class TestActivities(TestCase):
         with NamedTemporaryFile() as f:
             bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
+            args,sys,  db = bootstrap_file(f, m(V), '5', mm(DEV),
                                       'activities', mm(FAST),
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
-            activities(args, db)
+            activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
+            run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 self.__assert_basic_stats(s)
@@ -106,12 +106,12 @@ class TestActivities(TestCase):
         with NamedTemporaryFile() as f:
             bootstrap_file(f, m(V), '5')
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV),
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
                                       'activities', mm(FAST),
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
-            activities(args, db)
+            activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
+            run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 stat = s.query(StatisticJournal). \
@@ -124,11 +124,11 @@ class TestActivities(TestCase):
             with NamedTemporaryFile() as f:
                 bootstrap_file(f, m(V), '5')
                 bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-                args, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
-                                          f'data/test/source/other/{src}')
-                activities(args, db)
+                args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+                                               f'data/test/source/other/{src}')
+                activities(args, sys, db)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                run_pipeline(db, PipelineType.STATISTIC, n_cpu=1)
+                run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
                 with db.session_context() as s:
                     self.__assert_basic_stats(s)

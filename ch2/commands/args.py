@@ -605,17 +605,20 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
 
     from ..lib.log import make_log
     from ..sql.database import Database, connect
+    from ..sql.system import System
 
-    args = [mm(DATABASE), file.name] + list(args)
+    args = [mm(DATABASE), file.name, mm(SYSTEM), ':memory'] + list(args)
     if configurator:
         ns, db = connect(args)
-        configurator(db)
+        sys = System(ns)
+        configurator(sys, db)
     args += post_config if post_config else []
-    args = NamespaceWithVariables(make_parser().parse_args(args))
-    make_log(args)
-    db = Database(args)
+    ns = NamespaceWithVariables(make_parser().parse_args(args))
+    make_log(ns)
+    db = Database(ns)
+    sys = System(ns)
 
-    return args, db
+    return ns, sys, db
 
 
 def parse_pairs(pairs):

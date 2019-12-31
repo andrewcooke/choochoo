@@ -29,23 +29,23 @@ class TestSources(TestCase):
 
         with NamedTemporaryFile() as f:
 
-            args, db = bootstrap_file(f, m(V), '5', configurator=acooke)
+            args, sys, db = bootstrap_file(f, m(V), '5', configurator=acooke)
 
             with db.session_context() as s:
 
                 # add a diary entry
 
                 diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
-                d = add(s, DiaryTopicJournal(topic=diary, date='2018-09-29'))
+                d = add(s, DiaryTopicJournal(diary_topic=diary, date='2018-09-29'))
                 d.populate(s)
-                self.assertEqual(len(d.topic.fields), 9, list(enumerate(map(str, d.topic.fields))))
-                self.assertEqual(d.topic.fields[0].statistic_name.name, 'Notes')
-                self.assertEqual(d.topic.fields[1].statistic_name.name, 'Weight', str(d.topic.fields[1]))
-                for field in d.topic.fields:
+                self.assertEqual(len(d.diary_topic.fields), 9, list(enumerate(map(str, d.diary_topic.fields))))
+                self.assertEqual(d.diary_topic.fields[0].statistic_name.name, 'Notes')
+                self.assertEqual(d.diary_topic.fields[1].statistic_name.name, 'Weight', str(d.diary_topic.fields[1]))
+                for field in d.diary_topic.fields:
                     if field in d.statistics:
                         self.assertTrue(d.statistics[field].value is None, field)
-                d.statistics[d.topic.fields[0]].value = 'hello world'
-                d.statistics[d.topic.fields[1]].value = 64.5
+                d.statistics[d.diary_topic.fields[0]].value = 'hello world'
+                d.statistics[d.diary_topic.fields[1]].value = 64.5
 
             with db.session_context() as s:
 
@@ -56,17 +56,17 @@ class TestSources(TestCase):
                                                       DiaryTopicJournal.date == '2018-09-29').one()
                 s.flush()
                 d.populate(s)
-                self.assertEqual(len(d.topic.fields), 9, list(enumerate(map(str, d.topic.fields))))
-                self.assertEqual(d.topic.fields[0].statistic_name.name, 'Notes')
-                self.assertEqual(d.statistics[d.topic.fields[0]].value, 'hello world')
-                self.assertEqual(d.topic.fields[1].statistic_name.name, 'Weight')
-                self.assertEqual(d.statistics[d.topic.fields[1]].value, 64.5)
-                self.assertEqual(d.statistics[d.topic.fields[1]].type, StatisticJournalType.FLOAT)
+                self.assertEqual(len(d.diary_topic.fields), 9, list(enumerate(map(str, d.diary_topic.fields))))
+                self.assertEqual(d.diary_topic.fields[0].statistic_name.name, 'Notes')
+                self.assertEqual(d.statistics[d.diary_topic.fields[0]].value, 'hello world')
+                self.assertEqual(d.diary_topic.fields[1].statistic_name.name, 'Weight')
+                self.assertEqual(d.statistics[d.diary_topic.fields[1]].value, 64.5)
+                self.assertEqual(d.statistics[d.diary_topic.fields[1]].type, StatisticJournalType.FLOAT)
 
             # generate summary stats
 
-            SummaryCalculator(db, schedule='m').run()
-            SummaryCalculator(db, schedule='y').run()
+            SummaryCalculator(sys, db, schedule='m').run()
+            SummaryCalculator(sys, db, schedule='y').run()
 
             with db.session_context() as s:
 
@@ -80,9 +80,9 @@ class TestSources(TestCase):
                 self.assertEqual(weight.measures[0].rank, 1)
                 self.assertEqual(weight.measures[0].percentile, 100, weight.measures[0].percentile)
                 n = s.query(count(StatisticJournalFloat.id)).scalar()
-                self.assertEqual(n, 4, n)
+                self.assertEqual(n, 5, n)
                 n = s.query(count(StatisticJournalInteger.id)).scalar()
-                self.assertEqual(n, 11, n)
+                self.assertEqual(n, 10, n)
                 m_avg = s.query(StatisticJournalFloat).join(StatisticName). \
                     filter(StatisticName.name == 'Avg/Month Weight').one()
                 self.assertEqual(m_avg.value, 64.5)

@@ -48,7 +48,7 @@ log = getLogger(__name__)
 
 
 @tui
-def no_op(args, db):
+def no_op(args, system, db):
     '''
 ## no-op
 

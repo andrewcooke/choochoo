@@ -14,7 +14,7 @@ class TestPlan(TestCase):
 
     def test_british(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             plan = twelve_week_improver('2018-07-25')
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -31,7 +31,7 @@ class TestPlan(TestCase):
 
     def test_exponential_time(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             plan = exponential_time('Time test', '2d[2]', '20M', 5, '2018-07-25', '3m')
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -45,7 +45,7 @@ class TestPlan(TestCase):
 
     def test_exponential_distance(self):
         with NamedTemporaryFile() as f:
-            args, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             plan = exponential_distance('Distance test', 'w[mon,wed,fri]', '20km', 5, '2018-07-25', '1m')
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
