@@ -607,7 +607,7 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
     from ..sql.database import Database, connect
     from ..sql.system import System
 
-    args = [mm(DATABASE), file.name, mm(SYSTEM), ':memory'] + list(args)
+    args = [mm(DATABASE), file.name, mm(SYSTEM), ':memory:'] + list(args)
     if configurator:
         ns, db = connect(args)
         sys = System(ns)

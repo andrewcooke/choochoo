@@ -59,6 +59,7 @@ class FitReaderMixin(LoaderMixin):
             loader = self._get_loader(s)
             self._load_data(s, loader, data)
             loader.load()
+        return loader  # returned so coverage can be accessed
 
     def _read_fit_file(self, path, *options):
         types, messages, records = filtered_records(read_fit(path))

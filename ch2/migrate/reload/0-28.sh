@@ -83,12 +83,12 @@ select * from statistic_journal_text;
 select * from statistic_journal_timestamp;
 .mode insert statistic_name
 select * from statistic_name;
-.mode insert topic
-select * from topic;
-.mode insert topic_field
-select * from topic_field;
-.mode insert topic_journal
-select * from topic_journal;
+.mode insert diary_topic
+select * from diary_topic;
+.mode insert diary_topic_field
+select * from diary_topic_field;
+.mode insert diary_topic_journal
+select * from diary_topic_journal;
 .mode insert segment
 select * from segment;
 .mode insert kit_group

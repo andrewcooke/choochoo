@@ -45,6 +45,7 @@ class StatisticJournalLoader:
         self.__serial = 0 if add_serial else None
         self.__clear_timestamp = clear_timestamp
         self.__abort_after = abort_after
+        self.__counts = defaultdict(lambda: 0)
 
     @property
     def start(self):
@@ -156,6 +157,7 @@ class StatisticJournalLoader:
             if instance.time > prev.time:
                 self.__latest[key] = instance
                 self.__staging[journal_class].append(instance)
+                self.__counts[key] += 1
             elif instance.time == prev.time:
                 if instance.value == prev.value:
                     log.warning(f'Skipping duplicate for {name}')
@@ -163,9 +165,11 @@ class StatisticJournalLoader:
                     self._resolve_duplicate(name, instance, prev)
             else:
                 self.__staging[journal_class].append(instance)
+                self.__counts[key] += 1
         else:
             self.__latest[key] = instance
             self.__staging[journal_class].append(instance)
+            self.__counts[key] += 1
 
     def _resolve_duplicate(self, name, instance, prev):
         raise Exception(f'Duplicate time ({prev.time}) for {name} ({instance.value}/{prev.value})')
@@ -185,3 +189,8 @@ class StatisticJournalLoader:
                         time_to_waypoint[sjournal.time]._replace(**{'time': sjournal.time,
                                                                     names[name]: sjournal.value})
         return [time_to_waypoint[time] for time in sorted(time_to_waypoint.keys())]
+
+    def coverage_percentages(self):
+        total = max(self.__counts.values())
+        for key, count in self.__counts.items():
+            yield key, 100 * count / total

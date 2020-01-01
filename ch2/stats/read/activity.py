@@ -6,7 +6,7 @@ from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
-    SPORT_GENERIC, KIT_USED
+    SPORT_GENERIC, KIT_USED, COVERAGE, PC, MIN, summaries, AVG
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
@@ -15,7 +15,7 @@ from ...lib.date import to_time
 from ...srtm.bilinear import bilinear_elevation_from_constant
 from ...sql.database import Timestamp, StatisticJournalText
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
-from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES
+from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -34,6 +34,7 @@ class ActivityReader(MultiProcFitReader):
                              for field, (name, units, type)
                              in self._assert('record_to_db', record_to_db).items()]
         self.add_elevation = not any(name == ELEVATION for (field, name, units, type) in self.record_to_db)
+        self.__ajournal = None  # save for coverage
         super().__init__(*args, **kargs)
 
     def _base_command(self):
@@ -134,6 +135,7 @@ class ActivityReader(MultiProcFitReader):
         ajournal, activity_group, first_timestamp, path, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
         self._load_constants(s, ajournal)
+        self.__ajournal = ajournal
 
         log.debug(f'Loading {self.record_to_db}')
 
@@ -151,8 +153,7 @@ class ActivityReader(MultiProcFitReader):
         if not have_timespan:
             first_timestamp = only_records[0].timestamp
             log.warning('Experimental handling of data without timespans')
-            timespan = add(s, ActivityTimespan(activity_journal=ajournal,
-                                               start=first_timestamp))
+            timespan = add(s, ActivityTimespan(activity_journal=ajournal, start=first_timestamp))
 
         for record in records:
 
@@ -210,3 +211,11 @@ class ActivityReader(MultiProcFitReader):
         if timespan:
             log.warning('Cleaning up dangling timespan')
             timespan.finish = final_timestamp
+
+    def _read(self, s, path):
+        loader = super()._read(s, path)
+        for (name, constraint), percent in loader.coverage_percentages():
+            StatisticJournalFloat.add(s, COVERAGE, PC, summaries(MIN, AVG), self.owner_out,
+                                      f'{name} / {constraint.name}', self.__ajournal, percent,
+                                      self.__ajournal.start)
+        s.commit()
