@@ -4,23 +4,27 @@ from collections import namedtuple
 from json import loads
 from logging import getLogger
 
+import numpy as np
 from math import log10
 from sqlalchemy.sql.functions import count
 
-from ch2.data.response import sum_to_hour, calc_response
 from . import UniProcCalculator
+from ..read.segment import SegmentReader
 from ...data.frame import statistics
+from ...data.response import sum_to_hour, calc_response
 from ...lib.date import round_hour, to_time, local_date_to_time, now
 from ...sql import ActivityGroup
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...sql.utils import add
-from ...stats.names import _src, ALL, HR_IMPULSE_10
+from ...stats.names import _src, ALL, HR_IMPULSE_10, COVERAGE, HEART_RATE
 from ...stats.pipeline import LoaderMixin
 
 log = getLogger(__name__)
 
 Response = namedtuple('Response', 'src_owner, dest_name, tau_days, start, scale')
+
+SCALED = 'Scaled'
 
 
 class ResponseCalculator(LoaderMixin, UniProcCalculator):
@@ -128,14 +132,14 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
             limit(1).scalar()
 
     def _run_one(self, s, missed):
-        hr10 = statistics(s, HR_IMPULSE_10, constraint=ActivityGroup.from_name(s, ALL),
-                          owner=self.owner_in, with_sources=True, check=False)
-        if not hr10.empty:
-            hr10.loc[now()] = {HR_IMPULSE_10: 0.0, _src(HR_IMPULSE_10): None}
-            all_sources = list(self.__make_sources(s, hr10))
+        data = self.__read_data(s)
+        if not data.empty:
+            data.loc[now()] = {HR_IMPULSE_10: 0.0, _src(HR_IMPULSE_10): None, COVERAGE: 100}
+            data[SCALED] = data[HR_IMPULSE_10] * 100 / data[COVERAGE]
+            all_sources = list(self.__make_sources(s, data))
             for response in self.responses:
                 log.info(f'Creating values for {response.dest_name}')
-                hr3600 = sum_to_hour(hr10, HR_IMPULSE_10)
+                hr3600 = sum_to_hour(data, SCALED)
                 params = (log10(response.tau_days * 24),
                           log10(response.start) if response.start > 0 else 1)
                 result = calc_response(hr3600, params) * response.scale
@@ -147,13 +151,34 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
                     loader.add(response.dest_name, None, None, None, source, value, time, StatisticJournalFloat)
                 loader.load()
 
-    def __make_sources(self, s, hr10):
+    def __read_coverage(self, s):
+        names = s.query(StatisticName).\
+            filter(StatisticName.name == COVERAGE).\
+            filter(StatisticName.constraint.like(HEART_RATE + ' / %')).all()
+        coverages = statistics(s, *names, owner=SegmentReader)
+        coverages = coverages.loc[:].replace(0, np.nan)
+        coverages.fillna(axis='columns', method='bfill', inplace=True)
+        coverages.fillna(axis='columns', method='ffill', inplace=True)
+        return coverages.iloc[:, [0]].rename(columns={coverages.columns[0]: COVERAGE})
+
+    def __read_data(self, s):
+        hr10 = statistics(s, HR_IMPULSE_10, constraint=ActivityGroup.from_name(s, ALL),
+                          owner=self.owner_in, with_sources=True, check=False)
+        coverage = self.__read_coverage(s)
+        coverage.reindex(index=hr10.index, method='nearest', copy=False)
+        data = hr10.join(coverage, how='outer')
+        data.loc[:, [HR_IMPULSE_10]] = data.loc[:, [HR_IMPULSE_10]].fillna(0.0,)
+        data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='ffill')
+        data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='bfill')
+        return data
+
+    def __make_sources(self, s, data):
         log.info('Creating sources')
         name = _src(HR_IMPULSE_10)
         prev = add(s, Composite(n_components=0))
         yield to_time(0.0), prev
         # find times where the source changes
-        for time, row in hr10.loc[hr10[name].ne(hr10[name].shift())].iterrows():
+        for time, row in data.loc[data[name].ne(data[name].shift())].iterrows():
             id = row[name]
             if id:
                 composite = add(s, Composite(n_components=2))
