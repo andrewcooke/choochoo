@@ -15,7 +15,7 @@ LO = 'lo'
 MEASURES = 'measures'
 TAG = 'tag'
 SCHEDULES = 'schedules'
-SCORE0 = 'score0'
+SCORE = 'score'
 TEXT = 'text'
 TIME = 'time'
 TYPE = 'type'
@@ -34,7 +34,7 @@ def from_field(topic_field, statistic_journal):
                  db=statistic_journal)
     if statistic_journal.statistic_name.units:
         kargs.update(units=statistic_journal.statistic_name.units)
-    return {SCORE0: score0, INTEGER: integer, FLOAT: float, EDIT: edit}[type](**kargs)
+    return {SCORE: score, INTEGER: integer, FLOAT: float, EDIT: edit}[type](**kargs)
 
 
 def to_tag(text):
@@ -45,9 +45,9 @@ def to_tag(text):
 
 # --- mutable types
 
-def score0(label, value, db=None):
-    if db is None: log.warning(f'No db for score0 {label}/{value}')
-    return {TYPE: SCORE0, LABEL: label, VALUE: value, DB: db}
+def score(label, value, db=None):
+    if db is None: log.warning(f'No db for score {label}/{value}')
+    return {TYPE: SCORE, LABEL: label, VALUE: value, DB: db}
 
 
 def integer(label, value, units=None, lo=None, hi=None, db=None):

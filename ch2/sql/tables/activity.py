@@ -39,7 +39,7 @@ class ActivityJournal(Source):
     activity_group = relationship('ActivityGroup')
     name = Column(Text, unique=True)
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
-    file_hash = relationship('FileHash')
+    file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
     UniqueConstraint(activity_group_id, start)

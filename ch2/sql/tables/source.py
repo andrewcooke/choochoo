@@ -29,6 +29,7 @@ class SourceType(IntEnum):
     DUMMY = 8
     ITEM = 9
     MODEL = 10
+    ACTIVITY_TOPIC = 11
 
 
 class Source(Base):

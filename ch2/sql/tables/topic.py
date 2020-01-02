@@ -4,7 +4,7 @@ from json import dumps
 from logging import getLogger
 
 from pendulum.tz import get_local_timezone
-from sqlalchemy import Column, Integer, Text, ForeignKey
+from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 
@@ -188,3 +188,20 @@ class DiaryTopicJournal(Source):
     def time_range(self, s):
         start = local_date_to_time(self.date)
         return start, start + dt.timedelta(days=1)
+
+
+class ActivityTopicJournal(Source):
+
+    __tablename__ = 'activity_topic_journal'
+
+    id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
+    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id'))
+    activity_topic = relationship('ActivityTopic')
+    file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
+    file_hash = relationship('FileHash', backref=backref('activity_topic_journal', uselist=False))
+    UniqueConstraint(file_hash_id)
+
+    __mapper_args__ = {
+        'polymorphic_identity': SourceType.ACTIVITY_TOPIC
+    }
+

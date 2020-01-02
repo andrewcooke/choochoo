@@ -125,7 +125,7 @@ for field in s.query(DiaryTopicField).all():
     elif field.statistic_name.name == 'Rest HR':
         model['type'] = 'integer'
     elif field.statistic_name.name == 'Mood':
-        model['type'] = 'score0'
+        model['type'] = 'score'
     else:
         model['type'] = 'edit'
     if 'width' in model:

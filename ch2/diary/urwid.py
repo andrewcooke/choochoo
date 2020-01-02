@@ -7,7 +7,7 @@ from re import compile, sub
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding, connect_signal
 
 from .database import COMPARE_LINKS
-from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE0, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
+from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
     LINK, INTEGER, DB, value, text
 from ..lib import format_seconds
 from ..lib.utils import format_watts, format_percent, format_metres
@@ -162,8 +162,8 @@ LEAF_DATE = defaultdict(
         INTEGER: lambda model, f, active: f(wire(model,
                                                  Integer(caption=label(model[LABEL] + ': '), state=model[VALUE],
                                                          minimum=model[LO], maximum=model[HI], units=model[UNITS]))),
-        SCORE0: lambda model, f, active:  f(wire(model,
-                                                 Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]))),
+        SCORE: lambda model, f, active:  f(wire(model,
+                                                Rating0(caption=label(model[LABEL] + ': '), state=model[VALUE]))),
         VALUE: create_value,
         LINK: create_link
     })

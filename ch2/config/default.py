@@ -6,7 +6,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
     add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
-from ..diary.model import TYPE, TEXT, FLOAT, LO, HI, DP, SCORE0
+from ..diary.model import TYPE, TEXT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
 from ..msil2a.download import MSIL2A_DIR
 from ..srtm.file import SRTM1_DIR
@@ -156,7 +156,7 @@ def default(system, db, no_diary=False):
                                   model={TYPE: FLOAT, LO: 0, HI: 24, DP: 1})
             add_diary_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
                                   summary='[avg]',
-                                  model={TYPE: SCORE0})
+                                  model={TYPE: SCORE})
             add_diary_topic_field(s, diary, 'Nutrition', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
                                   model={TYPE: TEXT})
