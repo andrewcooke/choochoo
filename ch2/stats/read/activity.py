@@ -49,11 +49,11 @@ class ActivityReader(MultiProcFitReader):
         super()._startup(s)
         self.__oracle = bilinear_elevation_from_constant(s)
 
-    def _read_data(self, s, path):
-        log.info('Reading activity data from %s' % path)
-        records = self._read_fit_file(path, merge_duplicates, fix_degrees, no_bad_values)
-        ajournal, activity_group, first_timestamp = self._create_activity(s, path, records)
-        return ajournal, (ajournal, activity_group, first_timestamp, path, records)
+    def _read_data(self, s, file_scan):
+        log.info('Reading activity data from %s' % file_scan)
+        records = self._read_fit_file(file_scan.path, merge_duplicates, fix_degrees, no_bad_values)
+        ajournal, activity_group, first_timestamp = self._create_activity(s, file_scan, records)
+        return ajournal, (ajournal, activity_group, first_timestamp, file_scan, records)
 
     def __read_sport(self, path, records):
         try:
@@ -62,12 +62,12 @@ class ActivityReader(MultiProcFitReader):
             # alternative for some garmin devices (florian)
             return self._first(path, records, 'session').value.sport.lower()
 
-    def _create_activity(self, s, path, records):
-        first_timestamp = self._first(path, records, 'event', 'record').value.timestamp
-        last_timestamp = self._last(path, records, 'event', 'record').value.timestamp
+    def _create_activity(self, s, file_scan, records):
+        first_timestamp = self._first(file_scan, records, 'event', 'record').value.timestamp
+        last_timestamp = self._last(file_scan, records, 'event', 'record').value.timestamp
         log.debug(f'Time range: {first_timestamp.timestamp()} - {last_timestamp.timestamp()}')
-        sport = self.__read_sport(path, records)
-        activity_group = self._activity_group(s, path, sport)
+        sport = self.__read_sport(file_scan, records)
+        activity_group = self._activity_group(s, file_scan, sport)
         log.info(f'{activity_group} from {sport}')
         if self.force:
             self._delete_journals(s, activity_group, first_timestamp, last_timestamp)
@@ -75,14 +75,15 @@ class ActivityReader(MultiProcFitReader):
             self._check_journals(s, activity_group, first_timestamp, last_timestamp)
         ajournal = add(s, ActivityJournal(activity_group=activity_group,
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
-                                          fit_file=path, name=splitext(basename(path))[0]))
+                                          file_hash_id=file_scan.file_hash_id,
+                                          name=splitext(basename(file_scan.path))[0]))
         return ajournal, activity_group, first_timestamp
 
-    def _activity_group(self, s, path, sport):
+    def _activity_group(self, s, file_scan, sport):
         if sport in self.sport_to_activity:
             return self._lookup_activity_group(s, self.sport_to_activity[sport])
         else:
-            log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
+            log.warning('Unrecognised sport: "%s" in %s' % (sport, file_scan))
             if sport in (SPORT_GENERIC,):
                 raise Exception(f'Ignoring {sport} entry')
             else:

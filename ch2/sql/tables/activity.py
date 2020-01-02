@@ -38,10 +38,12 @@ class ActivityJournal(Source):
     activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=False)
     activity_group = relationship('ActivityGroup')
     name = Column(Text, unique=True)
-    fit_file = Column(Text, nullable=False, unique=True)
+    file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
+    file_hash = relationship('FileHash')
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
     UniqueConstraint(activity_group_id, start)
+    UniqueConstraint(file_hash_id)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY

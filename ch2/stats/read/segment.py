@@ -46,7 +46,7 @@ class SegmentReader(ActivityReader):
 
     def _load_data(self, s, loader, data):
         super()._load_data(s, loader, data)
-        ajournal, activity_group, first_timestamp, path, records = data
+        ajournal, activity_group, first_timestamp, file_scan, records = data
         self._find_segments(s, ajournal, filter_none(NAMES.values(), loader.as_waypoints(NAMES)))
 
     def _find_segments(self, s, ajournal, waypoints):

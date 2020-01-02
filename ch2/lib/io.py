@@ -8,8 +8,7 @@ from time import time
 from sqlalchemy import desc
 
 from .date import to_time
-from ..sql.tables.fit import FileScan
-from ..sql.utils import add
+from ..sql.tables.file import FileScan, FileHash
 
 log = getLogger(__name__)
 
@@ -35,53 +34,46 @@ def md5_hash(file_path):
     return hash.hexdigest()
 
 
-def filter_modified_files(s, paths, owner, force=False):
+def modified_file_scans(s, paths, owner, force=False):
 
     modified = []
 
-    for file_path in paths:
+    for path in paths:
 
-        last_modified = to_time(stat(file_path).st_mtime)
-        hash = md5_hash(file_path)
-        path_scan = s.query(FileScan). \
-            filter(FileScan.path == file_path,
+        last_modified = to_time(stat(path).st_mtime)
+        hash = md5_hash(path)
+        file_scan_from_path = s.query(FileScan). \
+            filter(FileScan.path == path,
                    FileScan.owner == owner).one_or_none()
 
         # get last scan and make sure it's up-to-date
-        if path_scan:
-            if hash != path_scan.md5_hash:
+        if file_scan_from_path:
+            if hash != file_scan_from_path.file_hash.md5:
                 log.warning('File at %s appears to have changed since last read on %s')
-                path_scan.md5_hash = hash
-                path_scan.last_scan = 0.0
+                file_scan_from_path.file_hash = FileHash.get_or_add(s, hash)
+                file_scan_from_path.last_scan = 0.0
         else:
             # need to_time here because it's not roundtripped via the database to convert for use below
-            path_scan = add(s, FileScan(path=file_path, owner=owner,
-                                        md5_hash=hash, last_scan=to_time(0.0)))
+            file_scan_from_path = FileScan.add(s, path, owner, hash)
             s.flush()  # want this to appear in queries below
 
         # only look at hash if we are going to process anyway
-        if force or last_modified > path_scan.last_scan:
+        if force or last_modified > file_scan_from_path.last_scan:
 
-            hash_scan = s.query(FileScan). \
-                filter(FileScan.md5_hash == hash,
+            file_scan_from_hash = s.query(FileScan).\
+                join(FileHash).\
+                filter(FileHash.md5 == hash,
                        FileScan.owner == owner).\
-                order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as path_scan is a candidate
-            if hash_scan.path != path_scan.path:
+                order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as file_scan_from_path is a candidate
+            if file_scan_from_hash.path != file_scan_from_path.path:
                 log.warning('Ignoring duplicate file (details in debug log)')
-                log.debug('%s' % file_path)
-                log.debug('%s' % hash_scan.path)
+                log.debug('%s' % file_scan_from_path.path)
+                log.debug('%s' % file_scan_from_hash.path)
                 # update the path to avoid triggering in future
-                path_scan.last_scan = hash_scan.last_scan
+                file_scan_from_path.last_scan = file_scan_from_hash.last_scan
 
-            if force or last_modified > hash_scan.last_scan:
-                modified.append(file_path)
+            if force or last_modified > file_scan_from_hash.last_scan:
+                modified.append(file_scan_from_hash)
 
     s.commit()
     return modified
-
-
-def update_scan(s, file_path, owner):
-    path_scan = s.query(FileScan). \
-        filter(FileScan.path == file_path,
-               FileScan.owner == owner).one()
-    path_scan.last_scan = time()

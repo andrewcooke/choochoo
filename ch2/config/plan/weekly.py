@@ -5,7 +5,7 @@ from logging import getLogger
 from ...lib.date import to_date, format_date
 from ...lib.schedule import DOW, Schedule
 from ...sql.tables.topic import DiaryTopic
-from ...sql.utils import ORMUtils
+from .lib import ORMUtils
 
 log = getLogger(__name__)
 

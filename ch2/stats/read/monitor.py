@@ -138,22 +138,22 @@ class MonitorReader(MultiProcFitReader):
         self._delete_contained(s, start, finish, path)
         s.commit()
 
-    def _read_data(self, s, path):
+    def _read_data(self, s, file_scan):
 
-        records = self._read_fit_file(path, merge_duplicates, fix_degrees, unpack_single_bytes)
+        records = self._read_fit_file(file_scan.path, merge_duplicates, fix_degrees, unpack_single_bytes)
 
-        first_timestamp = self._first(path, records, MONITORING_INFO_ATTR).timestamp
-        last_timestamp = self._last(path, records, MONITORING_ATTR).timestamp
+        first_timestamp = self._first(file_scan, records, MONITORING_INFO_ATTR).timestamp
+        last_timestamp = self._last(file_scan, records, MONITORING_ATTR).timestamp
         if first_timestamp == last_timestamp:
-            log.debug('File %s is empty (no timespan)' % path)
+            log.debug('File %s is empty (no timespan)' % file_scan)
             raise AbortImportButMarkScanned()
         if not first_timestamp:
-            raise Exception('Missing timestamp in %s' % path)
+            raise Exception('Missing timestamp in %s' % file_scan)
 
-        log.info(f'Importing monitor data from {path} '
+        log.info(f'Importing monitor data from {file_scan} '
                  f'for {format_time(first_timestamp)} - {format_time(last_timestamp)}')
-        self._delete_previous(s, first_timestamp, last_timestamp, path)
-        mjournal = add(s, MonitorJournal(start=first_timestamp, fit_file=path, finish=last_timestamp))
+        self._delete_previous(s, first_timestamp, last_timestamp, file_scan)
+        mjournal = add(s, MonitorJournal(start=first_timestamp, file_hash=file_scan.file_hash, finish=last_timestamp))
 
         return mjournal, (first_timestamp, last_timestamp, mjournal, records)
 

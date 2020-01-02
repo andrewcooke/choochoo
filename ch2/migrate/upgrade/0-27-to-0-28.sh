@@ -11,9 +11,9 @@ SRC='0-27'
 DST='0-28'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=1
+DO_COPY=0
 DO_DROP=$DO_COPY  # because of topic rewrite drop requires copy
-DO_DUMP=1
+DO_DUMP=0
 
 # we need python
 source env/bin/activate

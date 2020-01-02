@@ -1,13 +1,14 @@
 
 from abc import abstractmethod
 from logging import getLogger
+from time import time
 
-from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
+from ..pipeline import MultiProcPipeline, LoaderMixin
 from ... import FatalException
 from ...fit.format.read import filtered_records
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
-from ...lib.io import filter_modified_files, update_scan
+from ...lib.io import modified_file_scans
 from ...lib.log import log_current_exception
 from ...sql import Timestamp
 
@@ -36,24 +37,24 @@ class FitReaderMixin(LoaderMixin):
         pass
 
     def _missing(self, s):
-        return filter_modified_files(s, self.paths, self.owner_out, self.force)
+        return modified_file_scans(s, self.paths, self.owner_out, self.force)
 
-    def _run_one(self, s, path):
+    def _run_one(self, s, file_scan):
         try:
-            self._read(s, path)
-            update_scan(s, path, self.owner_out)
+            self._read(s, file_scan)
+            file_scan.last_scan = time()
         except AbortImportButMarkScanned as e:
-            log.warning(f'Could not process {path} (scanned)')
+            log.warning(f'Could not process {file_scan} (scanned)')
             # log_current_exception()
-            update_scan(s, path, self.owner_out)
+            file_scan.last_scan = time()
         except FatalException:
             raise
         except Exception as e:
-            log.warning(f'Could not process {path} (ignored)')
+            log.warning(f'Could not process {file_scan} (ignored)')
             log_current_exception()
 
-    def _read(self, s, path):
-        source, data = self._read_data(s, path)
+    def _read(self, s, file_scan):
+        source, data = self._read_data(s, file_scan)
         s.commit()
         with Timestamp(owner=self.owner_out, source=source).on_success(s):
             loader = self._get_loader(s)
@@ -81,7 +82,7 @@ class FitReaderMixin(LoaderMixin):
             raise AbortImportButMarkScanned()
 
     @abstractmethod
-    def _read_data(self, s, path):
+    def _read_data(self, s, file_scan):
         raise NotImplementedError()
 
     @abstractmethod
@@ -89,18 +90,13 @@ class FitReaderMixin(LoaderMixin):
         raise NotImplementedError()
 
 
+def quote(text):
+    return '"' + text + '"'
+
+
 class MultiProcFitReader(FitReaderMixin, MultiProcPipeline):
 
     def _args(self, missing, start, finish):
-        paths = ' '.join(repr(path) for path in missing[start:finish+1])  # quote names
+        paths = ' '.join(quote(file_scan.path) for file_scan in missing[start:finish+1])
         log.info(f'Starting worker for {missing[start]} - {missing[finish]}')
         return paths
-
-
-class UniProcFitReader(FitReaderMixin, UniProcPipeline):
-
-    def _base_command(self):
-        raise Exception('UniProc does not support workers')
-
-    def _args(self, missing, start, finish):
-        raise Exception('UniProc does not support workers')

@@ -1,9 +1,10 @@
 
-from sqlalchemy import Column, Text, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import relationship
 
 from .source import Source, SourceType
 from ..types import Time
-from ...lib.date import format_time, local_date_to_time
+from ...lib.date import format_time
 
 
 class MonitorJournal(Source):
@@ -11,9 +12,11 @@ class MonitorJournal(Source):
     __tablename__ = 'monitor_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    fit_file = Column(Text, nullable=False, unique=True)
+    file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
+    file_hash = relationship('FileHash')
     start = Column(Time, nullable=False, index=True)
     finish = Column(Time, nullable=False, index=True)
+    UniqueConstraint(file_hash_id)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.MONITOR

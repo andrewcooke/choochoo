@@ -4,6 +4,13 @@
 See [upgrade
 instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 
+### v0.28.0
+
+Major database changes to allow activity topics and decouple model
+and view in diary (which has also been rewritten).  Coverage statistics
+and scaling of SHRIMP model when HR data incomplete.  System data in
+separate database to allow for commits that don't affect main data.
+
 ### v0.27.0
 
 Small change to database schema (removing activity type from

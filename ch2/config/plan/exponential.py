@@ -5,7 +5,7 @@ from re import compile
 from ...lib.date import format_seconds, to_date, add_date
 from ...lib.schedule import Schedule
 from ...sql.tables.topic import DiaryTopic
-from ...sql.utils import ORMUtils
+from .lib import ORMUtils
 
 
 class Builder(ORMUtils):
