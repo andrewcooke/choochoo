@@ -279,6 +279,8 @@ def collapse_title(key, model, f, active, before, after, leaf):
     if len(model) == 2 and is_text(model[0]) and len(model[1]) and is_text(model[1][0]):
         model[1][0][VALUE] = f'{model[0][VALUE]} - {model[1][0][VALUE]}'
         model = model[1]
+    else:
+        del before[key]
     return apply_before(model, f, active, before, after, leaf)
 
 
