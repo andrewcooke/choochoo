@@ -13,6 +13,7 @@ from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from .system import SystemConstant
 from ..support import Base
 from ..types import Date, Cls, Json, Sched, Sort
+from ..utils import add
 from ...lib.data import assert_attr
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
@@ -131,38 +132,47 @@ class ActivityTopicField(Base, TopicField):
         return 'ActivityTopicField "%s"/"%s"' % (self.activity_topic.name, self.statistic_name.name)
 
 
+class Cache:
+
+    def __init__(self, s, source, time, query):
+        self.__session = s
+        self.__source = source
+        self.__time = time
+        self.__cache = {field_id: statistic for field_id, statistic in query.all()}
+
+    def __getitem__(self, field):
+        if field.id in self.__cache:
+            return self.__cache[field.id]
+        else:
+            return add(self.__session,
+                       STATISTIC_JOURNAL_CLASSES[field.type](statistic_name=field.statistic_name,
+                                                             source=self.__source, time=self.__time))
+
+
 class DiaryTopicJournal(Source):
 
     __tablename__ = 'diary_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    diary_topic_id = Column(Integer, ForeignKey('diary_topic.id'))
-    diary_topic = relationship('DiaryTopic')
     date = Column(Date, nullable=False, index=True)
+    UniqueConstraint(date)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.DIARY_TOPIC
     }
 
-    def populate(self, s):
-        if hasattr(self, 'statistics'):
-            return
-        assert_attr(self, 'date')
-        if self.id is None:
-            s.flush([self])
-        log.debug('Populating journal for topic %s at %s' % (self.diary_topic.name, self.date))
-        self.statistics = {}
-        for field in self.diary_topic.fields:
-            assert_attr(field, 'schedule')
-            if field.schedule.at_location(self.date):
-                log.debug('Finding StatisticJournal for field %s' % field.statistic_name.name)
-                journal = StatisticJournal.at_date(s, self.date, field.statistic_name.name,
-                                                   field.statistic_name.owner, self.diary_topic)
-                if not journal:
-                    journal = STATISTIC_JOURNAL_CLASSES[field.type](
-                        statistic_name=field.statistic_name, source=self, time=local_date_to_time(self.date))
-                    s.add(journal)
-                self.statistics[field] = journal
+    @classmethod
+    def get_or_add(cls, s, date):
+        instance = s.query(DiaryTopicJournal).filter(DiaryTopicJournal.date == date).one_or_none()
+        if not instance:
+            instance = add(s, DiaryTopicJournal(date=date))
+        return instance
+
+    def cache(self, s):
+        return Cache(s, self, local_date_to_time(self.date),
+                     s.query(DiaryTopicField.id, StatisticJournal).
+                     filter(DiaryTopicField.statistic_name_id == StatisticJournal.statistic_name_id,
+                            StatisticJournal.source_id == self.id))
 
     def __str__(self):
         return 'DiaryTopicJournal from %s' % self.date

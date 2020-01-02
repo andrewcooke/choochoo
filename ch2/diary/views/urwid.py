@@ -6,17 +6,17 @@ from re import compile, sub
 
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding, connect_signal
 
-from .database import COMPARE_LINKS
-from ..diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
+from ch2.diary.database import COMPARE_LINKS
+from ch2.diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
     LINK, INTEGER, DB, value, text
-from ..lib import format_seconds
-from ..lib.utils import format_watts, format_percent, format_metres
-from ..stats.display.nearby import NEARBY_LINKS
-from ..stats.names import S, W, PC, M
-from ..urwid.tui.decorators import Border, Indent
-from ..urwid.tui.fixed import Fixed
-from ..urwid.tui.tabs import Tab
-from ..urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile, SquareButton, Integer
+from ch2.lib import format_seconds
+from ch2.lib.utils import format_watts, format_percent, format_metres
+from ch2.stats.display.nearby import NEARBY_LINKS
+from ch2.stats.names import S, W, PC, M
+from ch2.urwid.tui.decorators import Border, Indent
+from ch2.urwid.tui.fixed import Fixed
+from ch2.urwid.tui.tabs import Tab
+from ch2.urwid.tui.widgets import Float, Rating0, Rating1, ArrowMenu, DividedPile, SquareButton, Integer
 
 log = getLogger(__name__)
 

@@ -11,9 +11,9 @@ SRC='0-27'
 DST='0-28'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=0
+DO_COPY=1
 DO_DROP=$DO_COPY  # because of topic rewrite drop requires copy
-DO_DUMP=0
+DO_DUMP=1
 
 # we need python
 source env/bin/activate
@@ -136,6 +136,24 @@ for field in s.query(DiaryTopicField).all():
 
 s.commit()
 EOF
+python - <<EOF
+from ch2.data import *
+from ch2.sql.tables import *
+from sqlalchemy import func
+
+s = session('-v5 --dev -f $TMP_DIR/copy-$SRC.sql')
+for date in s.query(func.distinct(DiaryTopicJournal.date)).all():
+    saved = None
+    for journal in s.query(DiaryTopicJournal).filter(DiaryTopicJournal.date == date).all():
+        if saved:
+            for statistic in s.query(StatisticJournal).filter(StatisticJournal.source == journal).all():
+                statistic.source = saved
+            s.delete(journal)
+        else:
+            saved = journal
+
+s.commit()
+EOF
 fi
 
 if ((DO_DUMP)); then
@@ -167,7 +185,7 @@ select * from diary_topic;
 .mode insert diary_topic_field
 select * from diary_topic_field;
 .mode insert diary_topic_journal
-select * from diary_topic_journal;
+select id, date from diary_topic_journal;
 .mode insert segment
 select * from segment;
 .mode insert kit_group

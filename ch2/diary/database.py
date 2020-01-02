@@ -26,30 +26,25 @@ def read_date(s, date):
 
 @optional_text('Diary')
 def read_date_topics(s, date):
+    journal = DiaryTopicJournal.get_or_add(s, date)
     for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,
                                             or_(DiaryTopic.start <= date, DiaryTopic.start == None),
                                             or_(DiaryTopic.finish >= date, DiaryTopic.finish == None)). \
             order_by(DiaryTopic.sort).all():
         if topic.schedule.at_location(date):
-            yield list(read_date_topic(s, date, topic))
+            yield list(read_date_topic(s, date, journal.cache(s), topic))
 
 
-def read_date_topic(s, date, topic):
+def read_date_topic(s, date, cache, topic):
     yield text(topic.name)
     if topic.description: yield text(topic.description)
-    journal = s.query(DiaryTopicJournal). \
-        filter(DiaryTopicJournal.diary_topic == topic,
-               DiaryTopicJournal.date == date).one_or_none()
-    if not journal:
-        journal = add(s, DiaryTopicJournal(diary_topic=topic, date=date))
-    journal.populate(s)
     log.debug(f'topic id {topic.id}; fields {topic.fields}')
     for field in topic.fields:
         if field.schedule.at_location(date):
-            yield from_field(field, journal.statistics[field])
+            yield from_field(field, cache[field])
     for child in topic.children:
         if child.schedule.at_location(date):
-            content = list(read_date_topic(s, date, child))
+            content = list(read_date_topic(s, date, cache, child))
             if content: yield content
 
 

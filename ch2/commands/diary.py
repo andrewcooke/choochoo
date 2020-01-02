@@ -6,7 +6,7 @@ from urwid import MainLoop, connect_signal
 
 from .args import DATE, SCHEDULE, FAST, mm
 from ..diary.database import read_date, COMPARE_LINKS, read_schedule
-from ..diary.urwid import build, layout_date, layout_schedule
+from ch2.diary.views.urwid import build, layout_date, layout_schedule
 from ..jupyter.template.activity_details import activity_details
 from ..jupyter.template.all_activities import all_activities
 from ..jupyter.template.compare_activities import compare_activities
