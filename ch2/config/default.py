@@ -9,13 +9,12 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
 from ..diary.model import TYPE, TEXT, FLOAT, LO, HI, DP, SCORE
-from ..sql.tables.activity import NAME
 from ..lib.schedule import Schedule
 from ..msil2a.download import MSIL2A_DIR
-from ..srtm.file import SRTM1_DIR
 from ..sql.tables.statistic import StatisticJournalType
 from ..sql.tables.topic import DiaryTopicJournal
 from ..sql.types import short_cls
+from ..srtm.file import SRTM1_DIR
 from ..stats.calculate.activity import ActivityCalculator
 from ..stats.calculate.elevation import ElevationCalculator
 from ..stats.calculate.kit import KitCalculator
@@ -32,7 +31,6 @@ from ..stats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DIS
     RPM, FITNESS_D, FATIGUE_D, ALL, SPORT_WALKING, SPORT_SWIMMING, SPORT_RUNNING, SPORT_CYCLING
 from ..stats.read.monitor import MonitorReader
 from ..stats.read.segment import SegmentReader
-from ..urwid.fields.topic import Text, Float, Score0
 
 log = getLogger(__name__)
 
@@ -178,10 +176,9 @@ def default(system, db, no_diary=False):
 
             # and activity-related topics
             # a null parent here means that the fields appear under the title
-            # in addition, the Name field has special treatment if present
 
             c = Counter()
-            add_activity_topic_field(s, None, NAME, c, StatisticJournalType.TEXT,
+            add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
                                      model={TYPE: TEXT})
             add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
                                      model={TYPE: TEXT})

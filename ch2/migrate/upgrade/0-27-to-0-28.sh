@@ -217,7 +217,7 @@ from ch2.diary.model import *
 
 s = session('-v5 --dev -f $DB_DIR/database-$DST.sql')
 c = Counter()
-add_activity_topic_field(s, None, 'Name', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
+add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
 add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
 s.commit()
 EOF

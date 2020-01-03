@@ -77,7 +77,6 @@ class ActivityReader(MultiProcFitReader):
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
                                           file_hash_id=file_scan.file_hash_id,
                                           name=splitext(basename(file_scan.path))[0]))
-        ajournal.set_name(s)
         return ajournal, activity_group, first_timestamp
 
     def _activity_group(self, s, file_scan, sport):

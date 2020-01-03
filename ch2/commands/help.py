@@ -3,7 +3,7 @@ from abc import abstractmethod
 from logging import getLogger
 from sys import stdout
 
-from .args import TOPIC, HELP, PROGNAME, m, H, CONFIG
+from .args import TOPIC, HELP, PROGNAME, m, H
 from ..lib.io import terminal_width
 
 log = getLogger(__name__)

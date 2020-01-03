@@ -11,7 +11,6 @@ from ch2.diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE, 
     LINK, INTEGER, DB, value, text
 from ch2.lib import format_seconds
 from ch2.lib.utils import format_watts, format_percent, format_metres
-from ch2.sql.tables.activity import NAME
 from ch2.stats.display.nearby import NEARBY_LINKS
 from ch2.stats.names import S, W, PC, M
 from ch2.urwid.tui.decorators import Border, Indent
@@ -188,15 +187,7 @@ def menu(key, model, f, active, before, after, leaf):
 
 def side_by_side(*specs):
 
-    def promote_activity_name(model):
-        if len(model) > 1 and isinstance(model[1], dict) and model[1][LABEL] == NAME:
-            del model[0]
-        return model
-
     def before(key, model, f, active, before, after, leaf):
-
-        model = promote_activity_name(model)
-
         branch_columns = []
         for names in specs:
             try:
