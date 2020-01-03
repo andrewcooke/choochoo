@@ -17,7 +17,7 @@ COMPARE_LINKS = 'compare-links'
 
 def read_date(s, date):
     yield text(date.strftime('%Y-%m-%d - %A'), tag='title')
-    topics = list(read_date_topics(s, date))
+    topics = list(read_date_diary_topics(s, date))
     if topics: yield topics
     yield from read_pipeline(s, date)
     gui = list(read_gui(s, date))
@@ -25,17 +25,17 @@ def read_date(s, date):
 
 
 @optional_text('Diary')
-def read_date_topics(s, date):
+def read_date_diary_topics(s, date):
     journal = DiaryTopicJournal.get_or_add(s, date)
     for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,
                                             or_(DiaryTopic.start <= date, DiaryTopic.start == None),
                                             or_(DiaryTopic.finish >= date, DiaryTopic.finish == None)). \
             order_by(DiaryTopic.sort).all():
         if topic.schedule.at_location(date):
-            yield list(read_date_topic(s, date, journal.cache(s), topic))
+            yield list(read_date_diary_topic(s, date, journal.cache(s), topic))
 
 
-def read_date_topic(s, date, cache, topic):
+def read_date_diary_topic(s, date, cache, topic):
     yield text(topic.name)
     if topic.description: yield text(topic.description)
     log.debug(f'topic id {topic.id}; fields {topic.fields}')
@@ -44,7 +44,7 @@ def read_date_topic(s, date, cache, topic):
             yield from_field(field, cache[field])
     for child in topic.children:
         if child.schedule.at_location(date):
-            content = list(read_date_topic(s, date, cache, child))
+            content = list(read_date_diary_topic(s, date, cache, child))
             if content: yield content
 
 

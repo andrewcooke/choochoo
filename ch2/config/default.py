@@ -2,8 +2,10 @@
 from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
-from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_diary_topic, add_diary_topic_field, \
-    add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support
+from .database import Counter, add_statistics, add_activity_group, add_activity_constant, add_diary_topic, \
+    add_diary_topic_field, \
+    add_diary, add_activities, add_monitor, name_constant, add_nearby, add_constant, add_loader_support, \
+    add_activity_topic_field
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
 from ..diary.model import TYPE, TEXT, FLOAT, LO, HI, DP, SCORE
@@ -172,6 +174,16 @@ def default(system, db, no_diary=False):
             add_diary_topic_field(s, diary, 'Route', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
                                   model={TYPE: TEXT})
+
+            # and activity-related topics
+            # a null parent here means that the fields appear under the title
+            # in addition, the Name field has special treatment if present
+
+            c = Counter()
+            add_activity_topic_field(s, None, 'Name', c, StatisticJournalType.TEXT,
+                                     model={TYPE: TEXT})
+            add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
+                                     model={TYPE: TEXT})
 
         # finally, set the TZ so that first use of the diary doesn't wipe all our intervals
         DiaryTopicJournal.check_tz(system, s)

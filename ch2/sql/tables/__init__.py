@@ -12,4 +12,5 @@ from .statistic import StatisticName, StatisticJournalFloat, StatisticJournalTex
     StatisticJournalTimestamp, StatisticJournal, StatisticMeasure, StatisticJournalType
 from .system import SystemConstant, SystemProcess
 from .timestamp import Timestamp
-from .topic import DiaryTopicJournal, DiaryTopic, DiaryTopicField
+from .topic import DiaryTopicJournal, DiaryTopic, DiaryTopicField, ActivityTopicJournal, ActivityTopic, \
+    ActivityTopicField

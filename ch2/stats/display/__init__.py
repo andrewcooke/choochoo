@@ -3,8 +3,8 @@ import datetime as dt
 from abc import abstractmethod
 from logging import getLogger
 
-from ...lib.date import local_date_to_time
-from ...lib.date import to_date
+from ...lib.date import local_date_to_time, to_date
+from ...lib.log import log_current_exception
 from ...sql import ActivityGroup, ActivityJournal
 from ...sql.tables.pipeline import Pipeline, PipelineType
 from ...stats.pipeline import BasePipeline
@@ -38,8 +38,7 @@ class Reader(BasePipeline):
             else:
                 yield from self._read_date(s, date)
         except Exception as e:
-            log.error(e)
-            print(repr(e))
+            log_current_exception(e)
 
     @abstractmethod
     def _read_schedule(self, s, date, schedule):

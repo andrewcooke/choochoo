@@ -11,9 +11,9 @@ SRC='0-27'
 DST='0-28'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=1
+DO_COPY=0
 DO_DROP=$DO_COPY  # because of topic rewrite drop requires copy
-DO_DUMP=1
+DO_DUMP=0
 
 # we need python
 source env/bin/activate
@@ -74,7 +74,6 @@ if ((DO_DROP)); then
   );
   create table diary_topic_field (
          id integer not null,
-         type integer not null,
          sort integer default '0' not null,
          model text default '{}' not null,
          diary_topic_id integer not null,
@@ -97,8 +96,8 @@ if ((DO_DROP)); then
   insert into diary_topic (id, parent_id, schedule, start, finish, name, description, sort)
   select id, parent_id, schedule, start, finish, name, description, sort
     from topic;
-  insert into diary_topic_field (id, diary_topic_id, type, sort, statistic_name_id, schedule, model)
-  select id, topic_id, type, sort, statistic_name_id, schedule, display_kargs
+  insert into diary_topic_field (id, diary_topic_id, sort, statistic_name_id, schedule, model)
+  select id, topic_id, sort, statistic_name_id, schedule, display_kargs
     from topic_field;
   insert into diary_topic_journal select * from topic_journal;
   drop table topic;
@@ -112,7 +111,7 @@ if ((DO_DROP)); then
   update diary_topic set name='Status' where name='Diary';
   update statistic_name set "constraint"='DiaryTopic "Status" (d)' where "constraint"='DiaryTopic "Diary" (d)';
 EOF
-python - <<EOF
+  python - <<EOF
 from ch2.data import *
 from ch2.sql.tables import *
 
@@ -136,14 +135,14 @@ for field in s.query(DiaryTopicField).all():
 
 s.commit()
 EOF
-python - <<EOF
+  python - <<EOF
 from ch2.data import *
 from ch2.sql.tables import *
 from sqlalchemy import func
 
 s = session('-v5 --dev -f $TMP_DIR/copy-$SRC.sql')
-for date in s.query(func.distinct(DiaryTopicJournal.date)).all():
-    saved = None
+for row in s.query(func.distinct(DiaryTopicJournal.date)).all():
+    date, saved = row[0], None
     for journal in s.query(DiaryTopicJournal).filter(DiaryTopicJournal.date == date).all():
         if saved:
             for statistic in s.query(StatisticJournal).filter(StatisticJournal.source == journal).all():
@@ -208,6 +207,20 @@ rm -f "$DB_DIR/system-$DST.sql"
 rm -f "$DB_DIR/system-$DST.sql-shm"
 rm -f "$DB_DIR/system-$DST.sql-wal"
 dev/ch2 no-op
+
+echo "defining new activity fields"
+python - <<EOF
+from ch2.data import *
+from ch2.sql import *
+from ch2.config.database import *
+from ch2.diary.model import *
+
+s = session('-v5 --dev -f $DB_DIR/database-$DST.sql')
+c = Counter()
+add_activity_topic_field(s, None, 'Name', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
+add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
+s.commit()
+EOF
 
 echo "loading data into $DB_DIR/database-$DST.sql"
 sqlite3 "$DB_DIR/database-$DST.sql" < "$TMP_DIR/dump-$SRC.sql"

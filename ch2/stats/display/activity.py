@@ -2,6 +2,8 @@
 from logging import getLogger
 from re import search
 
+from sqlalchemy import or_
+
 from . import JournalDiary
 from ..calculate.activity import ActivityCalculator
 from ..calculate.power import PowerCalculator
@@ -11,9 +13,10 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY,
 from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
-from ...diary.model import text, value, optional_text
+from ...diary.model import text, value, optional_text, from_field
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time
-from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName
+from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
+    ActivityTopicField
 
 log = getLogger(__name__)
 
@@ -25,7 +28,34 @@ class ActivityDiary(JournalDiary):
 
     def _read_journal_date(self, s, ajournal, date):
         yield text(self.__title(s, ajournal), tag='activity')
+        yield from self.__read_activity_topics(s, ajournal, date)
         yield from self.__read_details(s, ajournal, date)
+
+    def __read_activity_topics(self, s, ajournal, date):
+        tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash)
+        cache = tjournal.cache(s)
+        # special case parentless fields
+        for field in s.query(ActivityTopicField). \
+                filter(ActivityTopicField.activity_topic == None). \
+                order_by(ActivityTopicField.sort).all():
+            yield from_field(field, cache[field])
+        for topic in s.query(ActivityTopic). \
+                filter(ActivityTopic.parent == None,
+                       or_(ActivityTopic.activity_group_id == None,
+                           ActivityTopic.activity_group_id == ajournal.activity_group.id)). \
+                order_by(ActivityTopic.sort).all():
+            yield list(self.__read_activity_topic(s, date, cache, topic))
+
+    def __read_activity_topic(self, s, date, cache, topic):
+        yield text(topic.name)
+        if topic.description: yield text(topic.description)
+        log.debug(f'topic id {topic.id}; fields {topic.fields}')
+        for field in topic.fields:
+            yield from_field(field, cache[field])
+        for child in topic.children:
+            if child.schedule.at_location(date):
+                content = list(self.__read_activity_topic(s, date, cache, child))
+                if content: yield content
 
     def __read_details(self, s, ajournal, date):
         zones = list(self.__read_zones(s, ajournal))

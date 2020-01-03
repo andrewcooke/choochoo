@@ -4,7 +4,7 @@ from logging import getLogger
 from re import sub
 
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
-    DiaryTopic, DiaryTopicField, Dummy
+    DiaryTopic, DiaryTopicField, Dummy, ActivityTopic, ActivityTopicField
 from ..sql.database import connect
 from ..sql.tables.constant import ValidateNamedTuple
 from ..sql.types import long_cls, short_cls
@@ -232,11 +232,59 @@ def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, un
     '''
     if diary_topic.id is None:
         s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=diary_topic, constraint=diary_topic, statistic_journal_type=type,
-                                          description=description, units=units, summary=summary))
+    statistic_name = add(s, StatisticName(name=name, owner=DiaryTopic, constraint=diary_topic,
+                                          statistic_journal_type=type, description=description,
+                                          units=units, summary=summary))
     if model is None: model = {}
-    field = add(s, DiaryTopicField(type=type, diary_topic=diary_topic, sort=sort, model=model, schedule=schedule,
+    field = add(s, DiaryTopicField(diary_topic=diary_topic, sort=sort, model=model, schedule=schedule,
                                    statistic_name=statistic_name))
+
+
+def add_activity_topic(s, name, sort, description=None):
+    '''
+    Add a root topic.
+
+    DiaryTopics are displayed in the diary.
+    They can be permanent, or associated with some schedule.
+    They can also be associated with fields (and so with statistics).
+
+    A root topic is usually used as a header to group related children.
+    For example, 'DailyDiary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
+    '''
+    return add(s, ActivityTopic(name=name, sort=sort, description=description))
+
+
+def add_child_activity_topic(s, parent, name, sort, description=None):
+    '''
+    Add a child topic.
+
+    DiaryTopics are displayed in the diary.
+    They can be permanent, or associated with some schedule.
+    They can also be associated with fields (and so with statistics).
+
+    A child topic is used to add additional structure to an existing topic.
+    For example, the parent topic might be "injuries" and permanent, while children are defined for
+    specific injuries with a schedule that gives start and end dates.
+    '''
+    return add(s, ActivityTopic(parent=parent, name=name, sort=sort, description=description))
+
+
+def add_activity_topic_field(s, activity_topic, name, sort, type, description=None, units=None, summary=None, model=None):
+    '''
+    Add a field and associated statistic to a topic entry.
+
+    This is how the user can enter values into the diary.
+    The field describes how the values are displayed in the diary.
+    The statistic describes how the values are stored in the database.
+    '''
+    if activity_topic and activity_topic.id is None:
+        s.flush()
+    statistic_name = add(s, StatisticName(name=name, owner=ActivityTopic, constraint=activity_topic,
+                                          statistic_journal_type=type, description=description,
+                                          units=units, summary=summary))
+    if model is None: model = {}
+    field = add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,
+                                      statistic_name=statistic_name))
 
 
 def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=5,

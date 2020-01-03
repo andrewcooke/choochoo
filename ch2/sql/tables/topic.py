@@ -12,9 +12,8 @@ from .source import SourceType, Source, Interval
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from .system import SystemConstant
 from ..support import Base
-from ..types import Date, Cls, Json, Sched, Sort
+from ..types import Date, Json, Sched, Sort
 from ..utils import add
-from ...lib.data import assert_attr
 from ...lib.date import local_date_to_time
 from ...lib.schedule import Schedule
 
@@ -75,7 +74,7 @@ class ActivityTopic(Base, Topic):
     __tablename__ = 'activity_topic'
 
     parent_id = Column(Integer, ForeignKey('activity_topic.id'), nullable=True)
-    activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=False)
+    activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=True)
     activity_group = relationship('ActivityGroup')
 
     @declared_attr
@@ -90,7 +89,6 @@ class ActivityTopic(Base, Topic):
 class TopicField:
 
     id = Column(Integer, primary_key=True)
-    type = Column(Integer, nullable=False)  # StatisticJournalType
     sort = Column(Sort, nullable=False, server_default='0')
     model = Column(Json, nullable=False, server_default=dumps({}))
 
@@ -122,7 +120,11 @@ class ActivityTopicField(Base, TopicField):
 
     __tablename__ = 'activity_topic_field'
 
-    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id', ondelete='cascade'), nullable=False)
+    # unlike diary topic fields, this can have a null parent.  that means that it is a child to the
+    # title of the activity.
+    # in addition, display promotes any 'Name' field with a null parent to replace the activity title,
+    # and this same field is loaded with a default (based on file name) when data are read from FIT files.
+    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id', ondelete='cascade'), nullable=True)
     activity_topic = relationship('ActivityTopic',
                                   backref=backref('fields', cascade='all, delete-orphan',
                                                   passive_deletes=True,
@@ -144,9 +146,10 @@ class Cache:
         if field.id in self.__cache:
             return self.__cache[field.id]
         else:
+            name = field.statistic_name
             return add(self.__session,
-                       STATISTIC_JOURNAL_CLASSES[field.type](statistic_name=field.statistic_name,
-                                                             source=self.__source, time=self.__time))
+                       STATISTIC_JOURNAL_CLASSES[name.statistic_journal_type](
+                           statistic_name=name, source=self.__source, time=self.__time))
 
 
 class DiaryTopicJournal(Source):
@@ -205,8 +208,6 @@ class ActivityTopicJournal(Source):
     __tablename__ = 'activity_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id'))
-    activity_topic = relationship('ActivityTopic')
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
     file_hash = relationship('FileHash', backref=backref('activity_topic_journal', uselist=False))
     UniqueConstraint(file_hash_id)
@@ -215,3 +216,15 @@ class ActivityTopicJournal(Source):
         'polymorphic_identity': SourceType.ACTIVITY_TOPIC
     }
 
+    @classmethod
+    def get_or_add(cls, s, file_hash):
+        instance = s.query(ActivityTopicJournal).filter(ActivityTopicJournal.file_hash == file_hash).one_or_none()
+        if not instance:
+            instance = add(s, ActivityTopicJournal(file_hash=file_hash))
+        return instance
+
+    def cache(self, s):
+        return Cache(s, self, self.file_hash.activity_journal.start,
+                     s.query(ActivityTopicField.id, StatisticJournal).
+                     filter(ActivityTopicField.statistic_name_id == StatisticJournal.statistic_name_id,
+                            StatisticJournal.source_id == self.id))
