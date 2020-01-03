@@ -187,7 +187,15 @@ def menu(key, model, f, active, before, after, leaf):
 
 def side_by_side(*specs):
 
+    def promote_activity_name(model):
+        if len(model) > 1 and isinstance(model[1], dict) and model[1][LABEL] == 'Name':
+            del model[0]
+        return model
+
     def before(key, model, f, active, before, after, leaf):
+
+        model = promote_activity_name(model)
+
         branch_columns = []
         for names in specs:
             try:
