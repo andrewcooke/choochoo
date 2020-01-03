@@ -6,8 +6,11 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
-from ..types import Time, Sort, ShortCls, Str, NullStr
+from ..types import Time, Sort, ShortCls, NullStr
+from ..utils import add
 from ...lib.date import format_time, local_date_to_time, local_time_to_time
+
+NAME = 'Name'  # special activity field name
 
 
 class ActivityGroup(Base):
@@ -37,7 +40,7 @@ class ActivityJournal(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=False)
     activity_group = relationship('ActivityGroup')
-    name = Column(Text, unique=True)
+    name = Column(Text, unique=True)  # copied into ActivityTopicField if available
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
     file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
     start = Column(Time, nullable=False)
@@ -70,6 +73,21 @@ class ActivityJournal(Source):
     @classmethod
     def from_id(cls, s, id):
         return s.query(ActivityJournal).filter(ActivityJournal.id == id).one()
+
+    def set_name(self, s):
+        from ch2.sql import ActivityTopicField, StatisticName, StatisticJournalType, ActivityTopicJournal, \
+            StatisticJournal, ActivityTopic, StatisticJournalText
+        field = s.query(ActivityTopicField). \
+            join(StatisticName).\
+            filter(ActivityTopicField.activity_topic == None,
+                   StatisticName.name == NAME,
+                   StatisticName.statistic_journal_type == StatisticJournalType.TEXT).one_or_none()
+        if field:
+            tjournal = ActivityTopicJournal.get_or_add(s, self.file_hash)
+            statistic = StatisticJournal.for_source(s, tjournal.id, NAME, ActivityTopic, None)
+            if not statistic:
+                add(s, StatisticJournalText(statistic_name=field.statistic_name,
+                                            source=tjournal, value=self.name, time=self.start))
 
 
 class ActivityTimespan(Base):
@@ -106,3 +124,4 @@ class ActivityBookmark(Base):
 
     def __str__(self):
         return 'ActivityBookmark from %s - %s' % (format_time(self.start), format_time(self.finish))
+

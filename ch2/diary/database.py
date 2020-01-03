@@ -5,7 +5,6 @@ from sqlalchemy import or_
 
 from .model import from_field, text, optional_text, link, value
 from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal, StatisticJournal
-from ..sql.utils import add
 from ..stats.calculate.summary import SummaryCalculator
 from ..stats.display import read_pipeline
 from ..stats.display.nearby import fmt_nearby, nearby_any_time

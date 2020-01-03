@@ -9,6 +9,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
 from ..diary.model import TYPE, TEXT, FLOAT, LO, HI, DP, SCORE
+from ..sql.tables.activity import NAME
 from ..lib.schedule import Schedule
 from ..msil2a.download import MSIL2A_DIR
 from ..srtm.file import SRTM1_DIR
@@ -180,7 +181,7 @@ def default(system, db, no_diary=False):
             # in addition, the Name field has special treatment if present
 
             c = Counter()
-            add_activity_topic_field(s, None, 'Name', c, StatisticJournalType.TEXT,
+            add_activity_topic_field(s, None, NAME, c, StatisticJournalType.TEXT,
                                      model={TYPE: TEXT})
             add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
                                      model={TYPE: TEXT})

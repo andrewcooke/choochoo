@@ -6,17 +6,17 @@ from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
-    SPORT_GENERIC, KIT_USED, COVERAGE, PC, MIN, summaries, AVG
+    SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
-from ...srtm.bilinear import bilinear_elevation_from_constant
 from ...sql.database import Timestamp, StatisticJournalText
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
-from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName
+from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES
 from ...sql.utils import add
+from ...srtm.bilinear import bilinear_elevation_from_constant
 
 log = getLogger(__name__)
 
@@ -77,6 +77,7 @@ class ActivityReader(MultiProcFitReader):
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
                                           file_hash_id=file_scan.file_hash_id,
                                           name=splitext(basename(file_scan.path))[0]))
+        ajournal.set_name(s)
         return ajournal, activity_group, first_timestamp
 
     def _activity_group(self, s, file_scan, sport):
