@@ -35,33 +35,33 @@ class TestSources(TestCase):
 
                 # add a diary entry
 
+                journal = add(s, DiaryTopicJournal(date='2018-09-29'))
+                cache = journal.cache(s)
                 diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
-                d = add(s, DiaryTopicJournal(diary_topic=diary, date='2018-09-29'))
-                d.populate(s)
-                self.assertEqual(len(d.diary_topic.fields), 9, list(enumerate(map(str, d.diary_topic.fields))))
-                self.assertEqual(d.diary_topic.fields[0].statistic_name.name, 'Notes')
-                self.assertEqual(d.diary_topic.fields[1].statistic_name.name, 'Weight', str(d.diary_topic.fields[1]))
-                for field in d.diary_topic.fields:
-                    if field in d.statistics:
-                        self.assertTrue(d.statistics[field].value is None, field)
-                d.statistics[d.diary_topic.fields[0]].value = 'hello world'
-                d.statistics[d.diary_topic.fields[1]].value = 64.5
+                fields = diary.fields
+                self.assertEqual(len(fields), 9, list(enumerate(map(str, fields))))
+                self.assertEqual(fields[0].statistic_name.name, 'Notes')
+                self.assertEqual(fields[1].statistic_name.name, 'Weight', str(fields[1]))
+                statistics = [cache[field] for field in fields]
+                for statistic in statistics:
+                    self.assertTrue(statistic.value is None, statistics)
+                statistics[0].value = 'hello world'
+                statistics[1].value = 64.5
 
             with db.session_context() as s:
 
                 # check the diary entry was persisted
 
+                journal = DiaryTopicJournal.get_or_add(s, '2018-09-29')
+                cache = journal.cache(s)
                 diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
-                d = s.query(DiaryTopicJournal).filter(DiaryTopicJournal.diary_topic == diary,
-                                                      DiaryTopicJournal.date == '2018-09-29').one()
-                s.flush()
-                d.populate(s)
-                self.assertEqual(len(d.diary_topic.fields), 9, list(enumerate(map(str, d.diary_topic.fields))))
-                self.assertEqual(d.diary_topic.fields[0].statistic_name.name, 'Notes')
-                self.assertEqual(d.statistics[d.diary_topic.fields[0]].value, 'hello world')
-                self.assertEqual(d.diary_topic.fields[1].statistic_name.name, 'Weight')
-                self.assertEqual(d.statistics[d.diary_topic.fields[1]].value, 64.5)
-                self.assertEqual(d.statistics[d.diary_topic.fields[1]].type, StatisticJournalType.FLOAT)
+                fields = diary.fields
+                self.assertEqual(len(fields), 9, list(enumerate(map(str, fields))))
+                self.assertEqual(fields[0].statistic_name.name, 'Notes')
+                self.assertEqual(fields[1].statistic_name.name, 'Weight', str(fields[1]))
+                statistics = [cache[field] for field in fields]
+                self.assertEqual(statistics[1].value, 64.5)
+                self.assertEqual(statistics[1].type, StatisticJournalType.FLOAT)
 
             # generate summary stats
 
@@ -97,10 +97,8 @@ class TestSources(TestCase):
 
                 # delete the diary entry
 
-                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
-                d = s.query(DiaryTopicJournal).filter(DiaryTopicJournal.diary_topic == diary,
-                                                      DiaryTopicJournal.date == '2018-09-29').one()
-                s.delete(d)
+                journal = DiaryTopicJournal.get_or_add(s, '2018-09-29')
+                s.delete(journal)
 
             run('sqlite3 %s ".dump"' % f.name, shell=True)
 

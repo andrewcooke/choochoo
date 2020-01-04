@@ -151,6 +151,9 @@ class Cache:
                        STATISTIC_JOURNAL_CLASSES[name.statistic_journal_type](
                            statistic_name=name, source=self.__source, time=self.__time))
 
+    def __len__(self):
+        return len(self.__cache)
+
 
 class DiaryTopicJournal(Source):
 
