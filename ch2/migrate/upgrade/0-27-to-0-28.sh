@@ -11,9 +11,9 @@ SRC='0-27'
 DST='0-28'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=0
+DO_COPY=1
 DO_DROP=$DO_COPY  # because of topic rewrite drop requires copy
-DO_DUMP=0
+DO_DUMP=1
 
 # we need python
 source env/bin/activate
@@ -24,7 +24,7 @@ if ((DO_COPY)); then
   echo "ensuring write-ahead file for $DB_DIR/database-$SRC.sql is cleared"
   echo "(should print 'delete')"
   sqlite3 "$DB_DIR/database-$SRC.sql" 'pragma journal_mode=delete' || { echo 'database locked?'; exit 1; }
-  echo "copying data to $TMP_DIR/copy-$SRC.sql"
+  echo "copying $DB_DIR/database-$SRC.sql to $TMP_DIR/copy-$SRC.sql"
   rm -f "$TMP_DIR/copy-$SRC.sql"
   cp "$DB_DIR/database-$SRC.sql" "$TMP_DIR/copy-$SRC.sql"
 fi
@@ -34,7 +34,7 @@ if ((DO_DROP)); then
   sqlite3 "$TMP_DIR/copy-$SRC.sql" <<EOF
   pragma foreign_keys = on;
   -- don't delete topic and kit data, and keep composite for next step
-  delete from source where type not in (3, 9, 10, 7);
+  delete from source where type not in (3, 9, 10, 7, 11);
   -- clean composite data
   delete from source where id in (
     select id from (
@@ -52,6 +52,7 @@ if ((DO_DROP)); then
       left outer join statistic_journal
         on statistic_journal.statistic_name_id = statistic_name.id
      where statistic_journal.id is null
+       and statistic_name.owner not in ('DiaryTopic', 'ActivityTopic')
   );
   -- remove statistic names used by constants
   delete from statistic_name where owner = 'Constant';

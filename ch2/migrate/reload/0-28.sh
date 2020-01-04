@@ -21,7 +21,7 @@ if ((DO_COPY)); then
   echo "ensuring write-ahead file for $DB_DIR/database-$VER.sql is cleared"
   echo "(should print 'delete')"
   sqlite3 "$DB_DIR/database-$VER.sql" 'pragma journal_mode=delete' || { fuser "$DB_DIR/database-$VER.sql"; exit 1; }
-  echo "copying data to $TMP_DIR/copy-$VER.sql"
+  echo "copying $DB_DIR/database-$VER.sql to $TMP_DIR/copy-$VER.sql"
   rm -f "$DB_DIR/database-$VER.sql-backup"
   cp "$DB_DIR/database-$VER.sql" "$DB_DIR/database-$VER.sql-backup"
   rm -f "$TMP_DIR/copy-$VER.sql"
@@ -33,12 +33,13 @@ if ((DO_DROP)); then
   sqlite3 "$TMP_DIR/copy-$VER.sql" <<EOF
   pragma foreign_keys = on;
   -- don't delete topic and kit data, and keep composite for next step
-  delete from source where type not in (3, 9, 10, 7);
+  delete from source where type not in (3, 9, 10, 7, 11);
   delete from statistic_name where id in (
     select statistic_name.id from statistic_name
       left outer join statistic_journal
         on statistic_journal.statistic_name_id = statistic_name.id
      where statistic_journal.id is null
+       and statistic_name.owner not in ('DiaryTopic', 'ActivityTopic')
   );
   -- clean composite data
   delete from source where id in (
@@ -54,8 +55,6 @@ if ((DO_DROP)); then
   );
   -- remove statistic names used by constants
   delete from statistic_name where owner = 'Constant';
-  -- remove puns from package names
-  update topic_field set display_cls = replace(display_cls, 'uweird', 'urwid');
 EOF
 fi
 
