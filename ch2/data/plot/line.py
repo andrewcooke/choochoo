@@ -79,7 +79,7 @@ def comparison_line_plot(nx, ny, x, y, source, other=None, ylo=None, yhi=None, x
 def add_hr_zones(f, df, x, hr_zones):
     left, right = df[x].min(), df[x].max()
     for bottom, top in list(zip(hr_zones, hr_zones[1:] + [999]))[::2]:
-        f.quad(top=top, bottom=bottom, left=left, right=right, color='black', alpha=0.1)
+        f.quad(top=top, bottom=bottom, left=left, right=right, color='black', alpha=0.05)
     return f
 
 
