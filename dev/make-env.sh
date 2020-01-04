@@ -19,6 +19,7 @@ pip install pyproj
 pip install rasterio
 pip install requests
 pip install scipy
+pip install scikit-image
 pip install sentinelsat
 pip install shapely
 pip install sklearn

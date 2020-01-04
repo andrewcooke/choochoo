@@ -1,6 +1,7 @@
 #!/bin/bash -x
 
-VERSION=`grep 'CH2_VERSION =' ch2/commands/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
+# use 'official' version (not CH2_VERSION)
+VERSION=`grep 'version=' setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
 
 cd /tmp
 rm -fr ch2

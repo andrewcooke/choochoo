@@ -36,6 +36,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'rasterio',
                      'requests',
                      'scipy',
+                     'scikit-image',
                      'sentinelsat',
                      'shapely',
                      'sklearn',
