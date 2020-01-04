@@ -24,11 +24,11 @@ fi
 
 OLD_VERSION=`grep 'CH2_VERSION =' ch2/commands/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
 echo "commands/args.py: $OLD_VERSION -> $VERSION"
-sed -i ch2/commands/args.py -e "s/\(.*CH2_VERSION = '\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
+sed -i ch2/commands/args.py -e "s/\(.*CH2_VERSION = '\)\([^']\+\)\('.*\)/\1$VERSION\3/"
 
 OLD_VERSION=`grep 'version=' setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
 echo "setup.py: $OLD_VERSION -> $VERSION"
-sed -i setup.py -e "s/\(.*version='\)\([0-9]\+\.[\0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
+sed -i setup.py -e "s/\(.*version='\)\([0-9]\+\.[0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
 
 dev/build-cmds.sh
 dev/build-docs.sh
