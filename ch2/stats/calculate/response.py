@@ -155,11 +155,13 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         names = s.query(StatisticName).\
             filter(StatisticName.name == COVERAGE).\
             filter(StatisticName.constraint.like(HEART_RATE + ' / %')).all()
-        coverages = statistics(s, *names, owner=SegmentReader)
+        coverages = statistics(s, *names, owner=SegmentReader, check=False)
         coverages = coverages.loc[:].replace(0, np.nan)
         coverages.fillna(axis='columns', method='bfill', inplace=True)
         coverages.fillna(axis='columns', method='ffill', inplace=True)
-        return coverages.iloc[:, [0]].rename(columns={coverages.columns[0]: COVERAGE})
+        if not coverages.empty:
+            coverages = coverages.iloc[:, [0]].rename(columns={coverages.columns[0]: COVERAGE})
+        return coverages
 
     def __read_data(self, s):
         hr10 = statistics(s, HR_IMPULSE_10, constraint=ActivityGroup.from_name(s, ALL),
@@ -167,9 +169,10 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         coverage = self.__read_coverage(s)
         coverage.reindex(index=hr10.index, method='nearest', copy=False)
         data = hr10.join(coverage, how='outer')
-        data.loc[:, [HR_IMPULSE_10]] = data.loc[:, [HR_IMPULSE_10]].fillna(0.0,)
-        data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='ffill')
-        data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='bfill')
+        if not data.empty:
+            data.loc[:, [HR_IMPULSE_10]] = data.loc[:, [HR_IMPULSE_10]].fillna(0.0,)
+            data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='ffill')
+            data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='bfill')
         return data
 
     def __make_sources(self, s, data):

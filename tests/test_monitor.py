@@ -53,7 +53,6 @@ class TestMonitor(TestCase):
             with db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
                 assert mjournals[2].start == to_time('2018-09-06 15:06:00'), mjournals[2].start
-                print(mjournals[2].fit_file)
                 # steps
                 summary = s.query(StatisticJournal).join(StatisticName). \
                     filter(StatisticJournal.time >= local_date_to_time('2018-09-06'),
