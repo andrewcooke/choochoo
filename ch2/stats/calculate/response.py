@@ -133,7 +133,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
 
     def _run_one(self, s, missed):
         data = self.__read_data(s)
-        if not data.empty:
+        if HR_IMPULSE_10 in data.columns and COVERAGE in data.columns:
             data.loc[now()] = {HR_IMPULSE_10: 0.0, _src(HR_IMPULSE_10): None, COVERAGE: 100}
             data[SCALED] = data[HR_IMPULSE_10] * 100 / data[COVERAGE]
             all_sources = list(self.__make_sources(s, data))
@@ -169,7 +169,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         coverage = self.__read_coverage(s)
         coverage.reindex(index=hr10.index, method='nearest', copy=False)
         data = hr10.join(coverage, how='outer')
-        if not data.empty:
+        if HR_IMPULSE_10 in data.columns and COVERAGE in data.columns:
             data.loc[:, [HR_IMPULSE_10]] = data.loc[:, [HR_IMPULSE_10]].fillna(0.0,)
             data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='ffill')
             data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='bfill')
