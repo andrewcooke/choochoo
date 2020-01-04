@@ -214,11 +214,16 @@ from ch2.data import *
 from ch2.sql import *
 from ch2.config.database import *
 from ch2.diary.model import *
+from ch2.lib.schedule import Schedule
+from datetime import date
 
 s = session('-v5 --dev -f $DB_DIR/database-$DST.sql')
 c = Counter()
 add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
 add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
+field = s.query(DiaryTopicField).join(StatisticName).filter(StatisticName.name == 'Route').one_or_none()
+if field and not field.schedule:
+    field.schedule = Schedule('-' + str(date.today()))
 s.commit()
 EOF
 

@@ -123,6 +123,17 @@ def add_climbs(f, climbs, source):
                 f.circle(x=xx, y=yy, color='red', size=8, alpha=0.2)
 
 
+def add_climb_zones(f, climbs, source):
+    if f is not None:
+        for time, climb in climbs.loc[~pd.isna(climbs[CLIMB_DISTANCE])].iterrows():
+            i = source.index.get_loc(time, method='nearest')
+            right = source[DISTANCE_KM].iloc[i]
+            left = right - climb[CLIMB_DISTANCE] / 1000
+            top = f.y_range.end
+            bottom = f.y_range.start
+            f.quad(top=top, bottom=bottom, left=left, right=right, color='red', alpha=0.05)
+
+
 def histogram_plot(nx, ny, x, source, xlo=None, xhi=None, nsub=5, output_backend=DEFAULT_BACKEND):
     if not present(source, x): return None
     xlo, xhi = source[x].min() if xlo is None else xlo, source[x].max() if xhi is None else xhi

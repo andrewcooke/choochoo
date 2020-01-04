@@ -54,6 +54,7 @@ def compare_activities(local_time, compare_time, activity_group_name):
     output_file(filename='/dev/null')
 
     sp = comparison_line_plot(700, 200, DISTANCE_KM, MED_SPEED_KMH, activity, other=compare, ylo=0)
+    add_climb_zones(sp, details, activity)
     sp_c = cumulative_plot(200, 200, MED_SPEED_KMH, activity, other=compare, ylo=0)
 
     el = comparison_line_plot(700, 200, DISTANCE_KM, ELEVATION_M, activity, other=compare, x_range=sp.x_range)
@@ -61,16 +62,20 @@ def compare_activities(local_time, compare_time, activity_group_name):
     el_c = cumulative_plot(200, 200, CLIMB_MS, activity, other=compare)
 
     hri = comparison_line_plot(700, 200, DISTANCE_KM, HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=sp.x_range)
+    add_climb_zones(hri, details, activity)
     hri_c = cumulative_plot(200, 200, HR_IMPULSE_10, activity, other=compare, ylo=0)
 
     hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE_BPM, activity, other=compare, x_range=sp.x_range)
     add_hr_zones(hr, activity, DISTANCE_KM, hr_zones)
+    add_climb_zones(hr, details, activity)
     hr_c = cumulative_plot(200, 200, HEART_RATE_BPM, activity, other=compare)
 
     pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0, x_range=sp.x_range)
+    add_climb_zones(pw, details, activity)
     pw_c = cumulative_plot(200, 200, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0)
 
     cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, other=compare, ylo=0, x_range=sp.x_range)
+    add_climb_zones(cd, details, activity)
     hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
 
     show(gridplot([[el, el_c], [sp, sp_c], [hri, hri_c], [hr, hr_c], [pw, pw_c], [cd, hr_h]]))
