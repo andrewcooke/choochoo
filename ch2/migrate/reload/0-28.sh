@@ -20,7 +20,7 @@ DO_DUMP=1
 if ((DO_COPY)); then
   echo "ensuring write-ahead file for $DB_DIR/database-$VER.sql is cleared"
   echo "(should print 'delete')"
-  sqlite3 "$DB_DIR/database-$VER.sql" 'pragma journal_mode=delete' || { echo 'database locked?'; exit 1; }
+  sqlite3 "$DB_DIR/database-$VER.sql" 'pragma journal_mode=delete' || { fuser "$DB_DIR/database-$VER.sql"; exit 1; }
   echo "copying data to $TMP_DIR/copy-$VER.sql"
   rm -f "$DB_DIR/database-$VER.sql-backup"
   cp "$DB_DIR/database-$VER.sql" "$DB_DIR/database-$VER.sql-backup"
@@ -89,6 +89,12 @@ select * from diary_topic;
 select * from diary_topic_field;
 .mode insert diary_topic_journal
 select * from diary_topic_journal;
+.mode insert activity_topic
+select * from activity_topic;
+.mode insert activity_topic_field
+select * from activity_topic_field;
+.mode insert activity_topic_journal
+select * from activity_topic_journal;
 .mode insert segment
 select * from segment;
 .mode insert kit_group
