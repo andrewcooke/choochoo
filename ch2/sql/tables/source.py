@@ -94,8 +94,7 @@ class Interval(Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False, index=True)
     # disambiguate creator so each can wipe only its own data on force
-    owner_id = Column(Integer, ForeignKey('owner.id', ondelete='set null'))
-    owner = relationship('Owner')
+    owner = Column(ShortCls, nullable=False)
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
@@ -106,7 +105,8 @@ class Interval(Source):
     }
 
     def __str__(self):
-        return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, self.owner)
+        owner = self.owner if isinstance(self.owner, str) else short_cls(self.owner)
+        return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, owner)
 
     @classmethod
     def _missing_interval_start_dates(cls, s, schedule, interval_owner, statistic_owner=None):
@@ -191,9 +191,7 @@ class Interval(Source):
         '''
         For Impulse (and anything else that needs to delete forwards)
         '''
-        from . import owner
-        starts, overall_finish = cls._missing_interval_start_dates(s, schedule, owner(s, interval_owner),
-                                                                   owner(s, statistic_owner))
+        starts, overall_finish = cls._missing_interval_start_dates(s, schedule, interval_owner, statistic_owner)
         if starts:
             return starts[0], time_to_local_date(overall_finish)
         else:
@@ -204,9 +202,6 @@ class Interval(Source):
         '''
         Iterator over start DATES for all missing intervals, given the constraints supplied.
         '''
-        from . import owner
-        interval_owner = owner(s, interval_owner)
-        statistic_owner = owner(s, statistic_owner)
         def intervals():
             starts, overall_finish = cls._missing_interval_start_dates(s, schedule, interval_owner,
                                                                        statistic_owner)
@@ -227,22 +222,20 @@ class Interval(Source):
         s.query(Source).filter(Source.type == SourceType.INTERVAL).delete()
 
     @classmethod
-    def clean_times(cls, s, start, finish, owner_=None):
+    def clean_times(cls, s, start, finish, owner=None):
         '''
         Remove all intervals that include data in the given TIME range,
         '''
-        from . import owner
-        cls.clean_dates(s, time_to_local_date(start), time_to_local_date(finish), owner=owner(s, owner_))
+        cls.clean_dates(s, time_to_local_date(start), time_to_local_date(finish), owner=owner)
 
     @classmethod
-    def clean_dates(cls, s, start, finish, owner_=None):
+    def clean_dates(cls, s, start, finish, owner=None):
         '''
         Remove all summary intervals (not monitor intervals) in the given DATE range.
         '''
-        from . import owner
         q = s.query(Interval).filter(Interval.start <= finish, Interval.finish > start)
         if owner:
-            q = q.filter(Interval.owner == owner(s, owner_))
+            q = q.filter(Interval.owner == owner)
         for interval in q.all():
             log.debug(f'Deleting {interval}')
             s.delete(interval)

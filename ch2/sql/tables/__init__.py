@@ -5,7 +5,6 @@ from .file import FileScan, FileHash
 from .kit import KitGroup, KitItem, KitComponent, KitModel
 from .monitor import MonitorJournal
 from .nearby import ActivitySimilarity, ActivityNearby
-from .owner import Owner, owner
 from .pipeline import Pipeline, PipelineType
 from .segment import Segment, SegmentJournal
 from .source import Source, Interval, NoStatistics, Dummy, Composite, CompositeComponent
