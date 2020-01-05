@@ -138,7 +138,7 @@ def add_constant(s, name, description=None, units=None, single=False,
     An example is FTHR, which you will only measure occasionally, but which is needed when calculating
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=None,
+    statistic_name = add(s, StatisticName(name=name, owner=owner(s, Constant), constraint=None,
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
     return add(s, Constant(statistic_name=statistic_name, name=name, single=single))

@@ -3,7 +3,7 @@ from json import dumps
 
 from .database import add_statistics, add_enum_constant, set_constant, name_constant
 from ..sql import ActivityGroup
-from ..sql.types import short_cls
+from ..sql.types import short_cls, long_cls
 from ..stats.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..stats.calculate.response import Response, ResponseCalculator
 from ..stats.names import FITNESS_D, FATIGUE_D, ALL
@@ -28,7 +28,7 @@ def add_impulse(s, c, activity_group):
                                                'see HRImpulse enum')
     set_constant(s, hr_impulse, dumps({'gamma': 2.0, 'zero': 1, 'one': 6, 'max_secs': 60}))
 
-    add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(SegmentReader), impulse_ref=hr_impulse_name)
+    add_statistics(s, ImpulseCalculator, c, owner_in=long_cls(SegmentReader), impulse_ref=hr_impulse_name)
 
 
 def add_responses(s, c, fitness=((42, 1, 1),), fatigue=((7, 1, 5),)):

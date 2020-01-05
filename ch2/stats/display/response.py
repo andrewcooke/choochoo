@@ -9,8 +9,8 @@ from ..calculate.response import Response, ResponseCalculator
 from ...diary.model import text, optional_text, value
 from ...lib.date import local_date_to_time, to_time
 from ...lib.schedule import Schedule
-from ...sql.tables.constant import Constant
-from ...sql.tables.statistic import StatisticJournal, StatisticName, TYPE_TO_JOURNAL_CLASS
+from ...sql import Constant, StatisticJournal, StatisticName, owner
+from ...sql.tables.statistic import TYPE_TO_JOURNAL_CLASS
 
 
 class ResponseDiary(Reader):
@@ -51,7 +51,7 @@ class ResponseDiary(Reader):
         return s.query(StatisticJournal). \
             join(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == ResponseCalculator,
+                   StatisticName.owner == owner(s, ResponseCalculator),
                    StatisticJournal.time >= start_time,
                    StatisticJournal.time < finish_time). \
             order_by(direcn(StatisticJournal.time)). \
@@ -64,7 +64,7 @@ class ResponseDiary(Reader):
         q = s.query(jtype). \
             join(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == ResponseCalculator,  # todo - owner_in
+                   StatisticName.owner == owner(s, ResponseCalculator),  # todo - owner_in
                    jtype.time >= start_time,
                    jtype.time < finish_time)
         return (q.order_by(asc(jtype.value)).limit(1).one_or_none(),

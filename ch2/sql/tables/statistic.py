@@ -32,7 +32,8 @@ class StatisticName(Base):
     # this is done by (1) "owner" (typically the source of the data) and
     # (2) by some additional (optional) constraint used by the owner (typically)
     # (eg activity_group.id so that the same statistic can be used across different activities)
-    owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
+    owner_id = Column(Integer, ForeignKey('owner.id', ondelete='set null'))
+    owner = relationship('Owner')
     constraint = Column(NullStr)
     statistic_journal_type = Column(Integer, nullable=False)  # StatisticJournalType
     UniqueConstraint(name, owner, constraint)
@@ -41,15 +42,17 @@ class StatisticName(Base):
         return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
 
     @classmethod
-    def add_if_missing(cls, s, name, type, units, summary, owner, constraint):
+    def add_if_missing(cls, s, name, type, units, summary, owner_, constraint):
+        from . import owner
+        owner_ = owner(s, owner_)
         s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner_,
                    StatisticName.constraint == constraint)
         statistic_name = q.one_or_none()
         if not statistic_name:
-            statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner,
+            statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner_,
                                                   constraint=constraint, statistic_journal_type=type))
             try:
                 s.flush()
@@ -74,10 +77,11 @@ class StatisticName(Base):
         return statistic_name
 
     @classmethod
-    def from_name(cls, s, name, owner, constaint=None):
+    def from_name(cls, s, name, owner_, constaint=None):
+        from . import owner
         return s.query(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner(s, owner_),
                    StatisticName.constraint == constaint).one()
 
     @classmethod
@@ -197,49 +201,54 @@ class StatisticJournal(Base):
             return None
 
     @classmethod
-    def at_date(cls, s, date, name, owner, constraint, source_id=None):
+    def at_date(cls, s, date, name, owner_, constraint, source_id=None):
+        from . import owner
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
         q = s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= start,
                    StatisticJournal.time < finish,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner(s, owner_),
                    StatisticName.constraint == constraint)
         if source_id is not None:
             q = q.filter(StatisticJournal.source_id == source_id)
         return q.one_or_none()
 
     @classmethod
-    def at(cls, s, time, name, owner, constraint):
+    def at(cls, s, time, name, owner_, constraint):
+        from . import owner
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time == time,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner(s, owner_),
                    StatisticName.constraint == constraint).one_or_none()
 
     @classmethod
-    def at_like(cls, s, time, name, owner, constraint):
+    def at_like(cls, s, time, name, owner_, constraint):
+        from . import owner
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name.like(name),
                    StatisticJournal.time == time,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner(s, owner_),
                    StatisticName.constraint == constraint).all()
 
     @classmethod
-    def before(cls, s, time, name, owner, constraint):
+    def before(cls, s, time, name, owner_, constraint):
+        from . import owner
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time <= time,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner(s, owner_),
                    StatisticName.constraint == constraint). \
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def before_not_null(cls, s, time, name, owner, constraint):
+    def before_not_null(cls, s, time, name, owner_, constraint):
+        from . import owner
         statistic_name = s.query(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner(s, owner_),
                    StatisticName.constraint == constraint).one()
         cls = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
         return s.query(cls). \
@@ -249,31 +258,34 @@ class StatisticJournal(Base):
             order_by(desc(cls.time)).limit(1).one_or_none()
 
     @classmethod
-    def after(cls, s, time, name, owner, constraint):
+    def after(cls, s, time, name, owner_, constraint):
+        from . import owner
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= time,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner(s, owner_),
                    StatisticName.constraint == constraint). \
             order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
     def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner):
+        from . import owner
         return s.query(StatisticJournal).join(StatisticName, Interval). \
                     filter(StatisticJournal.statistic_name_id == StatisticName.id,
                            Interval.schedule == schedule,
                            Interval.start == start,
-                           Interval.owner == interval_owner,
-                           StatisticName.owner == statistic_owner,
+                           Interval.owner == owner(s, interval_owner),
+                           StatisticName.owner == owner(s, statistic_owner),
                            StatisticName.constraint == statistic_constraint). \
                     order_by(StatisticName.constraint,  # order places summary stats from same source together
                              StatisticName.name).all()
 
     @classmethod
-    def for_source(cls, s, source_id, name, owner, constraint):
+    def for_source(cls, s, source_id, name, owner_, constraint):
+        from . import owner
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
+                   StatisticName.owner == owner(s, owner_),
                    StatisticName.constraint == constraint,
                    StatisticJournal.source_id == source_id).one_or_none()
 
