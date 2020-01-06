@@ -74,6 +74,13 @@ def print_list():
     print()
 
 
+def check_params(params, spec):
+    if len(params) < len(spec.args) or (not spec.varargs and len(params) > len(spec.args)):
+        raise Exception(f'Received {len(params)} args but need {"at least " if spec.varargs else ""}'
+                        f'{len(spec.args)} values (see {PROGNAME} {JUPYTER} {LIST})')
+    return params
+
+
 def show(args):
     name = args[NAME]
     params = args[ARG]
@@ -83,10 +90,3 @@ def show(args):
         fn(*params)
     except KeyError:
         raise Exception(f'No template called {name} (see {PROGNAME} {JUPYTER} {LIST})')
-
-
-def check_params(params, spec):
-    if len(params) < len(spec.args) or (not spec.varargs and len(params) > len(spec.args)):
-        raise Exception(f'Received {len(params)} args but need {"at least " if spec.varargs else ""}'
-                        f'{len(spec.args)} values (see {PROGNAME} {JUPYTER} {LIST})')
-    return params
