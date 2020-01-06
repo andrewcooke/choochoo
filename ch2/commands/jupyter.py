@@ -36,7 +36,7 @@ Stop the background server.
     else:
         c = JupyterController(args, system)
         if cmd == STATUS:
-            status(c, system)  # todo - move to controller?
+            c.status()
         elif cmd == SHOW:
             set_controller(c)  # c is passed implicitly to template via global
             show(args)
@@ -48,17 +48,6 @@ Stop the background server.
             c.stop_service()
         else:
             raise Exception(f'Unexpected command {cmd}')
-
-
-def status(c, system):
-    if system.exists_any_process(JupyterServer):
-        print('\n  Service running:')
-        url = c.connection_url()
-        print(f'    {url}')
-        dir = c.notebook_dir()
-        print(f'    {dir}\n')
-    else:
-        print('\n  No service running\n')
 
 
 def templates():

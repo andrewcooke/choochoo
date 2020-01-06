@@ -47,6 +47,14 @@ class JupyterController:
         self.__max_retries = max_retries
         self.__retry_secs = retry_secs
 
+    def status(self):
+        if self.__sys.exists_any_process(JupyterServer):
+            print('\n  Service running:')
+            print(f'    {self.connection_url()}')
+            print(f'    {self.notebook_dir()}\n')
+        else:
+            print('\n  No service running\n')
+
     def start_service(self, restart=False):
         if self.__sys.exists_any_process(JupyterServer):
             log.debug('Jupyter already running')
