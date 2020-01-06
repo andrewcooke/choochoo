@@ -121,11 +121,11 @@ class JupyterController:
 __CONTROLLER_SINGLETON = None
 
 
-def start_controller(args, system):
+def set_controller(controller):
     global __CONTROLLER_SINGLETON
     if __CONTROLLER_SINGLETON:
-        raise Exception('Jupyter controller already started')
-    __CONTROLLER_SINGLETON = JupyterController(args, system)
+        raise Exception('Jupyter controller already set')
+    __CONTROLLER_SINGLETON = controller
     return __CONTROLLER_SINGLETON
 
 
@@ -133,5 +133,3 @@ def get_controller():
     if not __CONTROLLER_SINGLETON:
         raise Exception('Jupyter controller not started')
     return __CONTROLLER_SINGLETON
-
-

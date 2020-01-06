@@ -43,7 +43,6 @@ from .lib.log import make_log, log_current_exception
 from .sql.database import Database
 from .sql.system import System
 from .sql import SystemConstant
-from .jupyter.server import start_controller
 
 log = getLogger(__name__)
 

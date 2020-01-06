@@ -5,7 +5,7 @@ from pkgutil import iter_modules
 
 from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS
 from ..jupyter import template
-from ..jupyter.server import JupyterServer, start_controller
+from ..jupyter.server import JupyterServer, set_controller, JupyterController
 
 log = getLogger(__name__)
 
@@ -34,11 +34,12 @@ Stop the background server.
     if cmd == LIST:
         print_list()
     else:
-        c = start_controller(args, system)
+        c = JupyterController(args, system)
         if cmd == STATUS:
             status(c, system)  # todo - move to controller?
         elif cmd == SHOW:
-            show(args)  # c is passed implicitly to template via global
+            set_controller(c)  # c is passed implicitly to template via global
+            show(args)
         elif cmd == SERVICE:
             c.run_local()
         elif cmd == START:
