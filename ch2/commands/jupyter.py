@@ -41,11 +41,11 @@ Stop the background server.
             set_controller(c)  # c is passed implicitly to template via global
             show(args)
         elif cmd == SERVICE:
-            c.run_local()
+            c.service()
         elif cmd == START:
-            c.start_service(restart=True)
+            c.start(restart=True)
         elif cmd == STOP:
-            c.stop_service()
+            c.stop()
         else:
             raise Exception(f'Unexpected command {cmd}')
 

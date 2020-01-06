@@ -9,6 +9,7 @@ from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
 from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, DATABASE, TUI, LOG, SYSTEM
+from ..lib.server import BaseController
 from ..lib.workers import command_root
 from ..sql import SystemConstant
 
@@ -36,68 +37,40 @@ class JupyterServer(NotebookApp):
         super().start()
 
 
-class JupyterController:
+class JupyterController(BaseController):
 
     def __init__(self, args, sys, max_retries=5, retry_secs=3):
-        self.__notebooks = args.path(NOTEBOOKS)
-        self.__log_level = args[VERBOSITY]
-        self.__database = args[DATABASE]
-        self.__system = args[SYSTEM]
-        self.__sys = sys
-        self.__max_retries = max_retries
-        self.__retry_secs = retry_secs
+        super().__init__(args, sys, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
+        self.__notebooks = args[NOTEBOOKS]
 
-    def status(self):
-        if self.__sys.exists_any_process(JupyterServer):
-            print('\n  Service running:')
+    def _status(self, running):
+        if running:
             print(f'    {self.connection_url()}')
-            print(f'    {self.notebook_dir()}\n')
-        else:
-            print('\n  No service running\n')
+            print(f'    {self.notebook_dir()}')
+        print()
 
-    def start_service(self, restart=False):
-        if self.__sys.exists_any_process(JupyterServer):
-            log.debug('Jupyter already running')
-            if restart:
-                self.stop_service()
-            else:
-                return
-        log.debug('Starting remote Jupyter server')
-        ch2 = command_root()
+    def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
-        cmd = f'{ch2} --{VERBOSITY} {self.__log_level} --{TUI} --{LOG} {log_name} --{DATABASE} {self.__database} ' \
-              f'--{SYSTEM} {self.__system} --{NOTEBOOKS} {self.__notebooks} {JUPYTER} {SERVICE}'
-        self.__sys.run_process(JupyterServer, cmd, log_name)
-        retries = 0
-        while not self.__sys.exists_any_process(JupyterServer):
-            retries += 1
-            if retries > self.__max_retries:
-                raise Exception('Jupyter server did not start')
-            sleep(self.__retry_secs)
-        sleep(5)  # extra wait...
-        log.info('Jupyter server started')
+        cmd = f'{ch2} --{VERBOSITY} {self._log_level} --{TUI} --{LOG} {log_name} --{DATABASE} {self._database} ' \
+              f'--{SYSTEM} {self._system} --{NOTEBOOKS} {self.__notebooks} {JUPYTER} {SERVICE}'
+        return cmd, log_name
 
-    def stop_service(self):
-        log.info('Stopping any running Jupyter server')
-        self.__sys.delete_all_processes(JupyterServer)
-        self.__sys.delete_constant(SystemConstant.JUPYTER_URL)
-        self.__sys.delete_constant(SystemConstant.JUPYTER_DIR)
+    def _cleanup(self):
+        self._sys.delete_constant(SystemConstant.JUPYTER_URL)
+        self._sys.delete_constant(SystemConstant.JUPYTER_DIR)
 
     def connection_url(self):
-        self.start_service()
-        return self.__sys.get_constant(SystemConstant.JUPYTER_URL)
+        self.start()
+        return self._sys.get_constant(SystemConstant.JUPYTER_URL)
 
     def notebook_dir(self):
-        self.start_service()
-        return self.__sys.get_constant(SystemConstant.JUPYTER_DIR)
+        self.start()
+        return self._sys.get_constant(SystemConstant.JUPYTER_DIR)
 
     def database_path(self):
-        return self.__database
+        return self._database
 
-    def run_local(self):
-        self.stop_service()
-
-        log.info('Starting a local Jupyter server')
+    def _run(self):
         log.debug(f'Creating {self.__notebooks}')
         makedirs(self.__notebooks, exist_ok=True)
 
@@ -118,8 +91,8 @@ class JupyterController:
             log.debug('Waiting for connection URL')
             sleep(1)
 
-        self.__sys.set_constant(SystemConstant.JUPYTER_URL, JupyterServer._instance.connection_url, force=True)
-        self.__sys.set_constant(SystemConstant.JUPYTER_DIR, self.__notebooks, force=True)
+        self._sys.set_constant(SystemConstant.JUPYTER_URL, JupyterServer._instance.connection_url, force=True)
+        self._sys.set_constant(SystemConstant.JUPYTER_DIR, self.__notebooks, force=True)
 
         log.info('Jupyter server started')
         while True:

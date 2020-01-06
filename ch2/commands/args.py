@@ -603,12 +603,15 @@ def make_parser():
 
     web = subparsers.add_parser(WEB, help='start the web interface')
     web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    web_start = web_cmds.add_parser(START, help='start the web server')
-    web_start.add_argument(mm(BIND), default='0.0.0.0', help='bind address (default 0.0.0.0)')
-    web_start.add_argument(mm(PORT), type=int, help='port to use')
+
+    def add_web_server_args(cmd):
+        cmd.add_argument(mm(BIND), default='0.0.0.0', help='bind address (default 0.0.0.0)')
+        cmd.add_argument(mm(PORT), default=8000, type=int, help='port to use')
+
+    add_web_server_args(web_cmds.add_parser(START, help='start the web server'))
     web_cmds.add_parser(STOP, help='stop the web server')
     web_cmds.add_parser(STATUS, help='display status of web server')
-    web_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
+    add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
 
     return parser
 
