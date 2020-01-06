@@ -8,7 +8,7 @@ from time import sleep
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, DATABASE, TUI, LOG
+from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, DATABASE, TUI, LOG, SYSTEM
 from ..lib.workers import command_root
 from ..sql import SystemConstant
 
@@ -38,16 +38,17 @@ class JupyterServer(NotebookApp):
 
 class JupyterController:
 
-    def __init__(self, args, system, max_retries=5, retry_secs=3):
+    def __init__(self, args, sys, max_retries=5, retry_secs=3):
         self.__notebooks = args.path(NOTEBOOKS)
         self.__log_level = args[VERBOSITY]
         self.__database = args[DATABASE]
-        self.__system = system
+        self.__system = args[SYSTEM]
+        self.__sys = sys
         self.__max_retries = max_retries
         self.__retry_secs = retry_secs
 
     def start_service(self, restart=False):
-        if self.__system.exists_any_process(JupyterServer):
+        if self.__sys.exists_any_process(JupyterServer):
             log.debug('Jupyter already running')
             if restart:
                 self.stop_service()
@@ -57,10 +58,10 @@ class JupyterController:
         ch2 = command_root()
         log_name = 'jupyter-service.log'
         cmd = f'{ch2} --{VERBOSITY} {self.__log_level} --{TUI} --{LOG} {log_name} --{DATABASE} {self.__database} ' \
-              f'--{NOTEBOOKS} {self.__notebooks} {JUPYTER} {SERVICE}'
-        self.__system.run_process(JupyterServer, cmd, log_name)
+              f'--{SYSTEM} {self.__system} --{NOTEBOOKS} {self.__notebooks} {JUPYTER} {SERVICE}'
+        self.__sys.run_process(JupyterServer, cmd, log_name)
         retries = 0
-        while not self.__system.exists_any_process(JupyterServer):
+        while not self.__sys.exists_any_process(JupyterServer):
             retries += 1
             if retries > self.__max_retries:
                 raise Exception('Jupyter server did not start')
@@ -70,17 +71,17 @@ class JupyterController:
 
     def stop_service(self):
         log.info('Stopping any running Jupyter server')
-        self.__system.delete_all_processes(JupyterServer)
-        self.__system.delete_constant(SystemConstant.JUPYTER_URL)
-        self.__system.delete_constant(SystemConstant.JUPYTER_DIR)
+        self.__sys.delete_all_processes(JupyterServer)
+        self.__sys.delete_constant(SystemConstant.JUPYTER_URL)
+        self.__sys.delete_constant(SystemConstant.JUPYTER_DIR)
 
     def connection_url(self):
         self.start_service()
-        return self.__system.get_constant(SystemConstant.JUPYTER_URL)
+        return self.__sys.get_constant(SystemConstant.JUPYTER_URL)
 
     def notebook_dir(self):
         self.start_service()
-        return self.__system.get_constant(SystemConstant.JUPYTER_DIR)
+        return self.__sys.get_constant(SystemConstant.JUPYTER_DIR)
 
     def database_path(self):
         return self.__database
@@ -109,8 +110,8 @@ class JupyterController:
             log.debug('Waiting for connection URL')
             sleep(1)
 
-        self.__system.set_constant(SystemConstant.JUPYTER_URL, JupyterServer._instance.connection_url, force=True)
-        self.__system.set_constant(SystemConstant.JUPYTER_DIR, self.__notebooks, force=True)
+        self.__sys.set_constant(SystemConstant.JUPYTER_URL, JupyterServer._instance.connection_url, force=True)
+        self.__sys.set_constant(SystemConstant.JUPYTER_DIR, self.__notebooks, force=True)
 
         log.info('Jupyter server started')
         while True:
@@ -125,6 +126,7 @@ def start_controller(args, system):
     if __CONTROLLER_SINGLETON:
         raise Exception('Jupyter controller already started')
     __CONTROLLER_SINGLETON = JupyterController(args, system)
+    return __CONTROLLER_SINGLETON
 
 
 def get_controller():

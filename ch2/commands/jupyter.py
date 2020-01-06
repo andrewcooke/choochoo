@@ -5,7 +5,7 @@ from pkgutil import iter_modules
 
 from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS
 from ..jupyter import template
-from ..jupyter.server import JupyterServer, get_controller
+from ..jupyter.server import JupyterServer, start_controller
 
 log = getLogger(__name__)
 
@@ -34,28 +34,27 @@ Stop the background server.
     if cmd == LIST:
         print_list()
     else:
-        with db.session_context() as s:
-            c = get_controller()
-            if cmd == SERVICE:
-                c.run_local()
-            elif cmd == STATUS:
-                status(system)
-            elif cmd == SHOW:
-                show(args)
-            elif cmd == START:
-                c.start_service(restart=True)
-            elif cmd == STOP:
-                c.stop_service()
-            else:
-                raise Exception(f'Unexpected command {cmd}')
+        c = start_controller(args, system)
+        if cmd == STATUS:
+            status(c, system)  # todo - move to controller?
+        elif cmd == SHOW:
+            show(args)  # c is passed implicitly to template via global
+        elif cmd == SERVICE:
+            c.run_local()
+        elif cmd == START:
+            c.start_service(restart=True)
+        elif cmd == STOP:
+            c.stop_service()
+        else:
+            raise Exception(f'Unexpected command {cmd}')
 
 
-def status(system):
+def status(c, system):
     if system.exists_any_process(JupyterServer):
         print('\n  Service running:')
-        url = get_controller().connection_url()
+        url = c.connection_url()
         print(f'    {url}')
-        dir = get_controller().notebook_dir()
+        dir = c.notebook_dir()
         print(f'    {dir}\n')
     else:
         print('\n  No service running\n')
@@ -101,4 +100,3 @@ def check_params(params, spec):
         raise Exception(f'Received {len(params)} args but need {"at least " if spec.varargs else ""}'
                         f'{len(spec.args)} values (see {PROGNAME} {JUPYTER} {LIST})')
     return params
-

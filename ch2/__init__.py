@@ -21,7 +21,7 @@ class FatalException(Exception):
 from .commands.activities import activities
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI, KIT
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI, KIT, WEB
 from .commands.constants import constants
 from .commands.dump import dump
 from .commands.config import config
@@ -37,6 +37,7 @@ from .commands.package_fit_profile import package_fit_profile
 from .commands.statistics import statistics
 from .commands.test_schedule import test_schedule
 from .commands.unlock import unlock
+from .commands.web import web
 from .lib.io import tui
 from .lib.log import make_log, log_current_exception
 from .sql.database import Database
@@ -75,6 +76,7 @@ COMMANDS = {ACTIVITIES: activities,
             PACKAGE_FIT_PROFILE: package_fit_profile,
             TEST_SCHEDULE: test_schedule,
             UNLOCK: unlock,
+            WEB: web
             }
 
 
@@ -96,7 +98,6 @@ def main():
         if db.no_data() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE, HELP)):
             refuse_until_configured(db.path)
         elif command:
-            start_controller(args, system)
             command(args, system, db)
         else:
             log.debug('If you are seeing the "No command given" error during development ' +

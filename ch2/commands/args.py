@@ -48,6 +48,7 @@ ALL = 'all'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
+BIND = 'bind'
 BORDER = 'border'
 CHANGE = 'change'
 CHECK = 'check'
@@ -129,6 +130,7 @@ PASS = 'pass'
 PATH = 'path'
 P, PATTERN = 'p', 'pattern'
 PLAN = 'plan'
+PORT = 'port'
 PRINT = 'print'
 PROFILE_VERSION = 'profile-version'
 PROTOCOL_VERSION = 'protocol-version'
@@ -170,6 +172,7 @@ VALUE = 'value'
 VERSION = 'version'
 W, WARN = 'w', 'warn'
 WAYPOINTS = 'waypoints'
+WEB = 'web'
 WIDTH = 'width'
 WORKER = 'worker'
 YEAR = 'year'
@@ -230,19 +233,19 @@ def make_parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(m(F), mm(DATABASE), action='store', default=f'~/.ch2/database-{DB_VERSION}.sql', metavar='PATH',
+    parser.add_argument(m(F), mm(DATABASE), default=f'~/.ch2/database-{DB_VERSION}.sql', metavar='PATH',
                         help='the file path containing the main database')
-    parser.add_argument(mm(SYSTEM), action='store', default=f'~/.ch2/system-{DB_VERSION}.sql', metavar='PATH',
+    parser.add_argument(mm(SYSTEM), default=f'~/.ch2/system-{DB_VERSION}.sql', metavar='PATH',
                         help='the file path containing the system database')
-    parser.add_argument(mm(LOGS), action='store', default='~/.ch2/logs', metavar='DIR',
+    parser.add_argument(mm(LOGS), default='~/.ch2/logs', metavar='DIR',
                         help='the directory for logs')
-    parser.add_argument(mm(LOG), action='store', metavar='FILE',
+    parser.add_argument(mm(LOG), metavar='FILE',
                         help='the file name for the log (command name by default)')
-    parser.add_argument(m(V), mm(VERBOSITY), action='store', default=4, type=int, metavar='VERBOSITY',
+    parser.add_argument(m(V), mm(VERBOSITY), default=4, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(mm(TUI), action='store_true',
                         help='text user interface (no log to stdout)')
-    parser.add_argument(mm(NOTEBOOKS), action='store', default='~/.ch2/notebooks', metavar='DIR',
+    parser.add_argument(mm(NOTEBOOKS), default='~/.ch2/notebooks', metavar='DIR',
                         help='the directory for notebooks (when jupyter starts)')
     parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
@@ -253,13 +256,13 @@ def make_parser():
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
-    activities.add_argument(PATH, action='store', metavar='PATH', nargs='+',
+    activities.add_argument(PATH, metavar='PATH', nargs='+',
                             help='path to fit file(s)')
     activities.add_argument(m(D.upper()), mm(CONSTANT), action='append', metavar='NAME=VALUE', dest=CONSTANT,
                             help='constant to be stored with the activities (can be repeated)')
     activities.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE', dest=KARG,
                             help='keyword argument to be passed to the pipelines (can be repeated)')
-    activities.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
+    activities.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 
     config = subparsers.add_parser(CONFIG,
@@ -277,33 +280,33 @@ def make_parser():
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_cmds = constant.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     constant_show = constant_cmds.add_parser(SHOW, help='show a value (or all values)')
-    constant_show.add_argument(NAME, action='store', nargs='?', metavar='NAME', help='name (omit for all)')
-    constant_show.add_argument(DATE, action='store', nargs='?', metavar='DATE',
+    constant_show.add_argument(NAME, nargs='?', metavar='NAME', help='name (omit for all)')
+    constant_show.add_argument(DATE, nargs='?', metavar='DATE',
                                help='date of value to show (omit for all)')
     constant_add = constant_cmds.add_parser(ADD, help='add a new constant')
-    constant_add.add_argument(NAME, action='store', metavar='NAME', help='name')
-    constant_add.add_argument(CONSTRAINT, action='store', nargs='?', metavar='CONSTRAINT',
+    constant_add.add_argument(NAME, metavar='NAME', help='name')
+    constant_add.add_argument(CONSTRAINT, nargs='?', metavar='CONSTRAINT',
                               help='constraint (eg activity group)')
     constant_add.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
     constant_add.add_argument(mm(DESCRIPTION), help='optional description')
     constant_add.add_argument(mm(VALIDATE), help='optional validation class')
     constant_set = constant_cmds.add_parser(SET, help='set or modify a value')
-    constant_set.add_argument(NAME, action='store', metavar='NAME', help='name')
-    constant_set.add_argument(VALUE, action='store', metavar='VALUE', help='value')
-    constant_set.add_argument(DATE, action='store', nargs='?', metavar='DATE',
+    constant_set.add_argument(NAME, metavar='NAME', help='name')
+    constant_set.add_argument(VALUE, metavar='VALUE', help='value')
+    constant_set.add_argument(DATE, nargs='?', metavar='DATE',
                               help='date when measured (omit for all time)')
     constant_set.add_argument(mm(FORCE), action='store_true', help='allow over-writing existing values')
     constant_delete = constant_cmds.add_parser(DELETE, help='delete a value (or all values)')
-    constant_delete.add_argument(NAME, action='store', metavar='NAME', help='name')
-    constant_delete.add_argument(DATE, action='store', nargs='?', metavar='DATE',
+    constant_delete.add_argument(NAME, metavar='NAME', help='name')
+    constant_delete.add_argument(DATE, nargs='?', metavar='DATE',
                                  help='date of value to delete (omit for all)')
     constant_delete.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
     constant_remove = constant_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)')
-    constant_remove.add_argument(NAME, action='store', metavar='NAME', help='name')
+    constant_remove.add_argument(NAME, metavar='NAME', help='name')
     constant_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
-    diary.add_argument(DATE, action='store', metavar='DATE', nargs='?',
+    diary.add_argument(DATE, metavar='DATE', nargs='?',
                        help='an optional date to display (default is today)')
     diary.add_argument(mm(FAST), action='store_true',
                        help='skip update of statistics on exit')
@@ -316,7 +319,7 @@ def make_parser():
                                help='show summary for given schedule')
 
     diary2 = subparsers.add_parser(DIARY, help='daily diary and summary')
-    diary2.add_argument(DATE, action='store', metavar='DATE', nargs='?',
+    diary2.add_argument(DATE, metavar='DATE', nargs='?',
                         help='an optional date to display (default is today)')
     diary2.add_argument(mm(FAST), action='store_true',
                         help='skip update of statistics on exit')
@@ -333,37 +336,37 @@ def make_parser():
     dump_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
     dump_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV, help='CVS format')
     dump_format.add_argument(mm(DESCRIBE), action='store_const', dest=FORMAT, const=DESCRIBE, help='summary format')
-    dump.add_argument(mm(MAX_COLUMNS), action='store', metavar='N', type=int, help='pandas max_columns attribute')
-    dump.add_argument(mm(MAX_COLWIDTH), action='store', metavar='N', type=int, help='pandas max_colwidth attribute')
-    dump.add_argument(mm(MAX_ROWS), action='store', metavar='N', type=int, help='pandas max_rows attribute')
-    dump.add_argument(mm(WIDTH), action='store', metavar='N', type=int, help='pandas width attribute')
+    dump.add_argument(mm(MAX_COLUMNS), metavar='N', type=int, help='pandas max_columns attribute')
+    dump.add_argument(mm(MAX_COLWIDTH), metavar='N', type=int, help='pandas max_colwidth attribute')
+    dump.add_argument(mm(MAX_ROWS), metavar='N', type=int, help='pandas max_rows attribute')
+    dump.add_argument(mm(WIDTH), metavar='N', type=int, help='pandas width attribute')
     dump_sub = dump.add_subparsers(dest=SUB_COMMAND)
     dump_statistics = dump_sub.add_parser(STATISTICS)
-    dump_statistics.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    dump_statistics.add_argument(mm(START), action='store', metavar='TIME', help='start time')
-    dump_statistics.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
-    dump_statistics.add_argument(mm(OWNER), action='store', metavar='OWNER',
+    dump_statistics.add_argument(NAMES, nargs='*', metavar='NAME', help='statistic names')
+    dump_statistics.add_argument(mm(START), metavar='TIME', help='start time')
+    dump_statistics.add_argument(mm(FINISH), metavar='TIME', help='finish time')
+    dump_statistics.add_argument(mm(OWNER), metavar='OWNER',
                                  help='typically the class that created the data')
-    dump_statistics.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
+    dump_statistics.add_argument(mm(CONSTRAINT), metavar='CONSTRAINT',
                                  help='a value that makes the name unique (eg activity group)')
-    dump_statistics.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
+    dump_statistics.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
                                  help='the schedule on which some statistics are calculated')
     dump_statistics.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
                                  help='the source ID for the statistic (can be repeated)')
     dump_statistic_quartiles = dump_sub.add_parser(STATISTIC_QUARTILES)
-    dump_statistic_quartiles.add_argument(NAMES, action='store', nargs='*', metavar='NAME', help='statistic names')
-    dump_statistic_quartiles.add_argument(mm(START), action='store', metavar='TIME', help='start time')
-    dump_statistic_quartiles.add_argument(mm(FINISH), action='store', metavar='TIME', help='finish time')
-    dump_statistic_quartiles.add_argument(mm(OWNER), action='store', metavar='OWNER',
+    dump_statistic_quartiles.add_argument(NAMES, nargs='*', metavar='NAME', help='statistic names')
+    dump_statistic_quartiles.add_argument(mm(START), metavar='TIME', help='start time')
+    dump_statistic_quartiles.add_argument(mm(FINISH), metavar='TIME', help='finish time')
+    dump_statistic_quartiles.add_argument(mm(OWNER), metavar='OWNER',
                                           help='typically the class that created the data')
-    dump_statistic_quartiles.add_argument(mm(CONSTRAINT), action='store', metavar='CONSTRAINT',
+    dump_statistic_quartiles.add_argument(mm(CONSTRAINT), metavar='CONSTRAINT',
                                           help='a value that makes the name unique (eg activity group)')
-    dump_statistic_quartiles.add_argument(mm(SCHEDULE), action='store', metavar='SCHEDULE',
+    dump_statistic_quartiles.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
                                           help='the schedule on which some statistics are calculated')
     dump_statistic_quartiles.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
                                           help='the source ID for the statistic (can be repeated)')
     dump_table = dump_sub.add_parser(TABLE)
-    dump_table.add_argument(NAME, action='store', metavar='NAME', help='table name')
+    dump_table.add_argument(NAME, metavar='NAME', help='table name')
     dump.set_defaults(format=PRINT)
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
@@ -376,41 +379,41 @@ def make_parser():
     fit_fields = fit_cmds.add_parser(FIELDS, help='show low-level fields (within tokens)')
 
     def add_fit_general(cmd):
-        cmd.add_argument(mm(AFTER_RECORDS), action='store', type=int, metavar='N', default=None,
+        cmd.add_argument(mm(AFTER_RECORDS), type=int, metavar='N', default=None,
                          help='skip initial records')
-        cmd.add_argument(mm(LIMIT_RECORDS), action='store', type=int, metavar='N', default=-1,
+        cmd.add_argument(mm(LIMIT_RECORDS), type=int, metavar='N', default=-1,
                          help='limit number of records displayed')
-        cmd.add_argument(mm(AFTER_BYTES), action='store', type=int, metavar='N', default=None,
+        cmd.add_argument(mm(AFTER_BYTES), type=int, metavar='N', default=None,
                          help='skip initial bytes')
-        cmd.add_argument(mm(LIMIT_BYTES), action='store', type=int, metavar='N', default=-1,
+        cmd.add_argument(mm(LIMIT_BYTES), type=int, metavar='N', default=-1,
                          help='limit number of bytes displayed')
         cmd.add_argument(m(W), mm(WARN), action='store_true',
                          help='log additional warnings')
         cmd.add_argument(mm(no(VALIDATE)), action='store_true',
                          help='do not validate checksum, length')
-        cmd.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
+        cmd.add_argument(mm(MAX_DELTA_T), type=float, metavar='S',
                          help='validate seconds between timestamps (and non-decreasing)')
         cmd.add_argument(mm(NAME), action='store_true',
                          help='print file name')
-        cmd.add_argument(PATH, action='store', metavar='PATH', nargs='+',
+        cmd.add_argument(PATH, metavar='PATH', nargs='+',
                          help='path to fit file')
 
     def add_fit_grep(cmd):
         cmd.add_argument(mm(NOT), action='store_true',
                          help='print file names that don\'t match (with --name)')
-        cmd.add_argument(mm(MATCH), action='store', type=int, default=-1,
+        cmd.add_argument(mm(MATCH), type=int, default=-1,
                          help='max number of matches (default -1 for all)')
         cmd.add_argument(mm(COMPACT), action='store_true',
                          help='no space between records')
         cmd.add_argument(mm(CONTEXT), action='store_true',
                          help='display entire record')
-        cmd.add_argument(m(P), mm(PATTERN), action='store', nargs='+', metavar='MSG:FLD[=VAL]', required=True,
+        cmd.add_argument(m(P), mm(PATTERN), nargs='+', metavar='MSG:FLD[=VAL]', required=True,
                          help='pattern to match (separate from PATH with --)')
 
     def add_fit_high_level(cmd):
-        cmd.add_argument(m(M), mm(MESSAGE), action='store', nargs='+', metavar='MSG',
+        cmd.add_argument(m(M), mm(MESSAGE), nargs='+', metavar='MSG',
                          help='display named messages')
-        cmd.add_argument(m(F), mm(FIELD), action='store', nargs='+', metavar='FLD',
+        cmd.add_argument(m(F), mm(FIELD), nargs='+', metavar='FLD',
                          help='display named fields')
         cmd.add_argument(mm(INTERNAL), action='store_true',
                          help='display internal messages')
@@ -433,11 +436,11 @@ def make_parser():
     add_fit_grep(fit_grep)
 
     for cmd in fit_grep, fit_records, fit_tables:
-        cmd.add_argument(mm(WIDTH), action='store', type=int,
+        cmd.add_argument(mm(WIDTH), type=int,
                          help='display width')
 
     fix_fit = subparsers.add_parser(FIX_FIT, help='fix a corrupted fit file')
-    fix_fit.add_argument(PATH, action='store', metavar='PATH', nargs='+',
+    fix_fit.add_argument(PATH, metavar='PATH', nargs='+',
                          help='path to fit file')
     fix_fit.add_argument(m(W), mm(WARN), action='store_true',
                          help='additional warning messages')
@@ -458,9 +461,9 @@ def make_parser():
     fix_fit_stage = fix_fit_process.add_mutually_exclusive_group()
     fix_fit_stage.add_argument(mm(DROP), action='store_true',
                                help='search for data that can be dropped to give a successful parse')
-    fix_fit_stage.add_argument(mm(SLICES), action='store', metavar='A:B,C:D,...',
+    fix_fit_stage.add_argument(mm(SLICES), metavar='A:B,C:D,...',
                                help='data slices to pick')
-    fix_fit_stage.add_argument(mm(START), action='store', type=to_time, metavar='TIME',
+    fix_fit_stage.add_argument(mm(START), type=to_time, metavar='TIME',
                                help='change start time')
     fix_fit_process.add_argument(mm(FIX_HEADER), action='store_true',
                                  help='modify the header')
@@ -471,46 +474,46 @@ def make_parser():
     fix_fit_process.add_argument(mm(no(VALIDATE)), action='store_false', dest=VALIDATE,
                                  help='don\'t validate the final data')
     fix_fit_params = fix_fit.add_argument_group(title='parameters')
-    fix_fit_params.add_argument(mm(HEADER_SIZE), action='store', type=int, metavar='N',
+    fix_fit_params.add_argument(mm(HEADER_SIZE), type=int, metavar='N',
                                 help='header size (validation and/or new header)')
-    fix_fit_params.add_argument(mm(PROTOCOL_VERSION), action='store', type=int, metavar='N',
+    fix_fit_params.add_argument(mm(PROTOCOL_VERSION), type=int, metavar='N',
                                 help='protocol version (validation and/or new header)')
-    fix_fit_params.add_argument(mm(PROFILE_VERSION), action='store', type=int, metavar='N',
+    fix_fit_params.add_argument(mm(PROFILE_VERSION), type=int, metavar='N',
                                 help='profile version (validation and/or new header)')
-    fix_fit_params.add_argument(mm(MIN_SYNC_CNT), action='store', type=int, metavar='N', default=3,
+    fix_fit_params.add_argument(mm(MIN_SYNC_CNT), type=int, metavar='N', default=3,
                                 help='minimum number of records to read for synchronization')
-    fix_fit_params.add_argument(mm(MAX_RECORD_LEN), action='store', type=int, metavar='N', default=None,
+    fix_fit_params.add_argument(mm(MAX_RECORD_LEN), type=int, metavar='N', default=None,
                                 help='maximum record length')
-    fix_fit_params.add_argument(mm(MAX_DROP_CNT), action='store', type=int, metavar='N', default=1,
+    fix_fit_params.add_argument(mm(MAX_DROP_CNT), type=int, metavar='N', default=1,
                                 help='maximum number of gaps to drop')
-    fix_fit_params.add_argument(mm(MAX_BACK_CNT), action='store', type=int, metavar='N', default=3,
+    fix_fit_params.add_argument(mm(MAX_BACK_CNT), type=int, metavar='N', default=3,
                                 help='maximum number of readable records to discard in a single gap')
-    fix_fit_params.add_argument(mm(MAX_FWD_LEN), action='store', type=int, metavar='N', default=200,
+    fix_fit_params.add_argument(mm(MAX_FWD_LEN), type=int, metavar='N', default=200,
                                 help='maximum number of bytes to drop in a single gap')
-    fix_fit_params.add_argument(mm(MAX_DELTA_T), action='store', type=float, metavar='S',
+    fix_fit_params.add_argument(mm(MAX_DELTA_T), type=float, metavar='S',
                                 help='max number of seconds between timestamps')
 
     garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
-    garmin.add_argument(DIR, action='store', metavar='DIR',
+    garmin.add_argument(DIR, metavar='DIR',
                         help='the directory where FIT files are stored')
-    garmin.add_argument(mm(USER), action='store', metavar='USER', required=True,
+    garmin.add_argument(mm(USER), metavar='USER', required=True,
                         help='garmin connect username')
-    garmin.add_argument(mm(PASS), action='store', metavar='PASSWORD', required=True,
+    garmin.add_argument(mm(PASS), metavar='PASSWORD', required=True,
                         help='garmin connect password')
-    garmin.add_argument(mm(DATE), action='store', metavar='DATE', type=to_date,
+    garmin.add_argument(mm(DATE), metavar='DATE', type=to_date,
                         help='date to download')
     garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
 
     help = subparsers.add_parser(HELP, help='display help')
-    help.add_argument(TOPIC, action='store', nargs='?', metavar=TOPIC,
+    help.add_argument(TOPIC, nargs='?', metavar=TOPIC,
                       help='the subject for help')
 
     jupyter = subparsers.add_parser(JUPYTER, help='access jupyter')
     jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     jupyter_cmds.add_parser(LIST, help='list available templates')
     jupyter_show = jupyter_cmds.add_parser(SHOW, help='display a template (starting server if needed)')
-    jupyter_show.add_argument(NAME, action='store', help='the template name')
-    jupyter_show.add_argument(ARG, action='store', nargs='*', help='template arguments')
+    jupyter_show.add_argument(NAME, help='the template name')
+    jupyter_show.add_argument(ARG, nargs='*', help='template arguments')
     jupyter_cmds.add_parser(START, help='start a background service')
     jupyter_cmds.add_parser(STOP, help='stop the background service')
     jupyter_cmds.add_parser(STATUS, help='display status of background service')
@@ -519,49 +522,49 @@ def make_parser():
     kit = subparsers.add_parser(KIT, help='manage kit')
     kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)')
-    kit_start.add_argument(GROUP, action='store', help='item group (bike, shoe, etc)')
-    kit_start.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
-    kit_start.add_argument(DATE, action='store', nargs='?', help='when created (default now)')
+    kit_start.add_argument(GROUP, help='item group (bike, shoe, etc)')
+    kit_start.add_argument(ITEM, help='item name (cotic, adidas, etc)')
+    kit_start.add_argument(DATE, nargs='?', help='when created (default now)')
     kit_start.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new group')
     kit_finish = kit_cmds.add_parser(FINISH, help='retire an item')
-    kit_finish.add_argument(ITEM, action='store', help='item name')
-    kit_finish.add_argument(DATE, action='store', nargs='?', help='when to retire (default now)')
+    kit_finish.add_argument(ITEM, help='item name')
+    kit_finish.add_argument(DATE, nargs='?', help='when to retire (default now)')
     kit_finish.add_argument(mm(FORCE), action='store_true', help='confirm change of existing date')
     kit_delete = kit_cmds.add_parser(DELETE, help='remove all entries for an item or group')
-    kit_delete.add_argument(NAME, action='store', help='item or group to delete')
+    kit_delete.add_argument(NAME, help='item or group to delete')
     kit_delete.add_argument(mm(FORCE), action='store_true', help='confirm group deletion')
     kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)')
-    kit_change.add_argument(ITEM, action='store', help='item name (cotic, adidas, etc)')
-    kit_change.add_argument(COMPONENT, action='store', help='component type (chain, laces, etc)')
-    kit_change.add_argument(MODEL, action='store', help='model description')
-    kit_change.add_argument(DATE, action='store', nargs='?', help='when changed (default now)')
+    kit_change.add_argument(ITEM, help='item name (cotic, adidas, etc)')
+    kit_change.add_argument(COMPONENT, help='component type (chain, laces, etc)')
+    kit_change.add_argument(MODEL, help='model description')
+    kit_change.add_argument(DATE, nargs='?', help='when changed (default now)')
     kit_change.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new component')
     kit_change.add_argument(mm(START), action='store_true', help='set default date to start of item')
     kit_undo = kit_cmds.add_parser(UNDO, help='remove a change')
-    kit_undo.add_argument(ITEM, action='store', help='item name')
-    kit_undo.add_argument(COMPONENT, action='store', help='component type')
-    kit_undo.add_argument(MODEL, action='store', help='model description')
-    kit_undo.add_argument(DATE, action='store', nargs='?', help='active date (to disambiguate models; default now)')
+    kit_undo.add_argument(ITEM, help='item name')
+    kit_undo.add_argument(COMPONENT, help='component type')
+    kit_undo.add_argument(MODEL, help='model description')
+    kit_undo.add_argument(DATE, nargs='?', help='active date (to disambiguate models; default now)')
     kit_undo.add_argument(mm(ALL), action='store_true', help='remove all models (rather than single date)')
     kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
-    kit_show.add_argument(NAME, action='store', nargs='?', help='group or item to display (default all)')
-    kit_show.add_argument(DATE, action='store', nargs='?', help='when to display (default now)')
+    kit_show.add_argument(NAME, nargs='?', help='group or item to display (default all)')
+    kit_show.add_argument(DATE, nargs='?', help='when to display (default now)')
     kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
-    kit_statistics.add_argument(NAME, action='store', nargs='?', help='group, item, component or model')
+    kit_statistics.add_argument(NAME, nargs='?', help='group, item, component or model')
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
     kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
     kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
-    kit_dump.add_argument(mm(CMD), action='store', help='command to use instead of ch2')
+    kit_dump.add_argument(mm(CMD), help='command to use instead of ch2')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
-    monitor.add_argument(PATH, action='store', metavar='PATH', nargs='+',
+    monitor.add_argument(PATH, metavar='PATH', nargs='+',
                          help='path to fit file(s)')
     monitor.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE',
                          help='keyword argument to be passed to the pipelines (can be repeated)')
-    monitor.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
+    monitor.add_argument(mm(WORKER), metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
 
     noop = subparsers.add_parser(NO_OP,
@@ -569,7 +572,7 @@ def make_parser():
 
     package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
                                                 help='parse and save the global fit profile (dev only)')
-    package_fit_profile.add_argument(PATH, action='store', metavar='PROFILE',
+    package_fit_profile.add_argument(PATH, metavar='PROFILE',
                                      help='the path to the profile (Profile.xlsx)')
     package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
                                      help='additional warning messages')
@@ -577,26 +580,35 @@ def make_parser():
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
     statistics.add_argument(mm(FORCE), action='store_true',
                             help='delete existing statistics')
-    statistics.add_argument(mm(LIKE), action='store', metavar='PATTERN',
+    statistics.add_argument(mm(LIKE), metavar='PATTERN',
                             help='run only matching pipeline classes')
-    statistics.add_argument(START, action='store', metavar='START', nargs='?',
+    statistics.add_argument(START, metavar='START', nargs='?',
                             help='optional start date')
-    statistics.add_argument(FINISH, action='store', metavar='FINISH', nargs='?',
+    statistics.add_argument(FINISH, metavar='FINISH', nargs='?',
                             help='optional finish date (if start also given)')
     statistics.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE',
                             help='keyword argument to be passed to the pipelines (can be repeated)')
-    statistics.add_argument(mm(WORKER), action='store', metavar='ID', type=int,
+    statistics.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 
     test_schedule = subparsers.add_parser(TEST_SCHEDULE, help='print schedule locations in a calendar')
-    test_schedule.add_argument(SCHEDULE, action='store', metavar='SCHEDULE',
-                               help='the schedule to test')
-    test_schedule.add_argument(mm(START), action='store', metavar='DATE',
-                               help='the date to start displaying data')
-    test_schedule.add_argument(mm(MONTHS), action='store', metavar='N', type=int,
-                               help='the number of months to display')
+    test_schedule.add_argument(SCHEDULE, metavar='SCHEDULE',
+                               help='schedule to test')
+    test_schedule.add_argument(mm(START), metavar='DATE',
+                               help='date to start displaying data')
+    test_schedule.add_argument(mm(MONTHS), metavar='N', type=int,
+                               help='number of months to display')
 
     unlock = subparsers.add_parser(UNLOCK, help='remove database locking')
+
+    web = subparsers.add_parser(WEB, help='start the web interface')
+    web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    web_start = web_cmds.add_parser(START, help='start the web server')
+    web_start.add_argument(mm(BIND), default='0.0.0.0', help='bind address (default 0.0.0.0)')
+    web_start.add_argument(mm(PORT), type=int, help='port to use')
+    web_cmds.add_parser(STOP, help='stop the web server')
+    web_cmds.add_parser(STATUS, help='display status of web server')
+    web_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
 
     return parser
 
