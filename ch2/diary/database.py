@@ -4,6 +4,7 @@ from logging import getLogger
 from sqlalchemy import or_
 
 from .model import from_field, text, optional_text, link, value
+from ..lib import format_date, time_to_local_time
 from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal, StatisticJournal
 from ..stats.calculate.summary import SummaryCalculator
 from ..stats.display import read_pipeline
@@ -51,13 +52,14 @@ def read_date_diary_topic(s, date, cache, topic):
 def read_gui(s, date):
     for aj1 in ActivityJournal.at_date(s, date):
         yield list(read_activity_gui(s, aj1))
-    yield link('Health', db=date)
+    yield link('Health', db=format_date(date))
 
 
 def read_activity_gui(s, aj1):
     yield text(aj1.name)
-    links = [link('None', db=(aj1, None))] + \
-            [link(fmt_nearby(aj2, nb), db=(aj1, aj2)) for aj2, nb in nearby_any_time(s, aj1)]
+    links = [link('None', db=(time_to_local_time(aj1.start), None))] + \
+            [link(fmt_nearby(aj2, nb), db=(time_to_local_time(aj1.start), time_to_local_time(aj2.start)))
+             for aj2, nb in nearby_any_time(s, aj1)]
     yield [text('%s v ' % aj1.name, tag=COMPARE_LINKS)] + links
     yield link('All Similar', db=aj1)
 

@@ -79,6 +79,8 @@ class Api:
     def diary(self, request, s, date):
         schedule, date = parse_date(date)
         if schedule == 'd':
-            return Response(dumps(rewrite_db(list(read_date(s, date)))))
+            data = rewrite_db(list(read_date(s, date)))
+            print(data)
+            return Response(dumps(data))
         else:
             return Response(dumps(rewrite_db(list(read_schedule(s, Schedule(schedule), date)))))

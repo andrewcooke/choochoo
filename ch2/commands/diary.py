@@ -13,7 +13,7 @@ from ..jupyter.template.all_activities import all_activities
 from ..jupyter.template.compare_activities import compare_activities
 from ..jupyter.template.health import health
 from ..jupyter.template.similar_activities import similar_activities
-from ..lib.date import to_date, time_to_local_date, time_to_local_time
+from ..lib.date import to_date, time_to_local_date, time_to_local_time, local_time_to_time
 from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE
@@ -117,19 +117,21 @@ class DailyDiary(Diary):
         model = list(read_date(s, self._date))
         f = Factory(TabList())
         active, widget = build(model, f, layout_date)
-        self._wire(active, NEARBY_LINKS, lambda m: self._change_date(time_to_local_date(m.state.start)))
+        self._wire(active, NEARBY_LINKS, lambda m: self._change_date(to_date(m.state.split(' ')[0])))
         self._wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
         self._wire(active, 'health', lambda l: self.__show_health())
-        self._wire(active, 'all-similar', lambda l: self.__show_similar(time_to_local_time(l.state.start)))
+        self._wire(active, 'all-similar', lambda l: self.__show_similar(l.state))
         if active:
             raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs
 
     def __show_gui(self, aj1, aj2):
+        aj1t, aj2t = local_time_to_time(aj1), local_time_to_time(aj2) if aj2 else None
+        aj1 = ActivityJournal.at_local_time(self._session, aj1)
         if aj2:
-            compare_activities(aj1.start, aj2.start, aj1.activity_group.name)
+            compare_activities(aj1t, aj2t, aj1.activity_group.name)
         else:
-            activity_details(aj1.start, aj1.activity_group.name)
+            activity_details(aj1t, aj1.activity_group.name)
 
     def __show_similar(self, local_time):
         aj1 = ActivityJournal.at_local_time(self._session, local_time)

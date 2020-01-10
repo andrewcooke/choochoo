@@ -5,7 +5,7 @@ from sqlalchemy.sql.functions import min
 
 from . import JournalDiary
 from ...diary.model import text, link, optional_text
-from ...lib.date import to_time
+from ...lib.date import to_time, time_to_local_time
 from ...sql import ActivityJournal, ActivitySimilarity, ActivityNearby
 
 NEARBY_LINKS = 'nearby-links'
@@ -33,11 +33,11 @@ class NearbyDiary(JournalDiary):
 
     def __read_constraint(self, s, ajournal, c):
         for title, callback, fmt in (('Any Time', nearby_any_time,
-                                      lambda x: link(fmt_nearby(*x), db=x[0])),
+                                      lambda x: link(fmt_nearby(*x), db=time_to_local_time(x[0].start))),
                                      ('Earlier', nearby_earlier,
-                                      lambda x: link(fmt_nearby(*x), db=x[0])),
+                                      lambda x: link(fmt_nearby(*x), db=time_to_local_time(x[0].start))),
                                      ('All', constraint,
-                                      lambda x: link(_fmt_time(x.start), db=x))):
+                                      lambda x: link(_fmt_time(x.start), db=time_to_local_time(x.start)))):
             links = [fmt(result) for result in callback(s, ajournal, c)]
             if links:
                 yield [text(title, tag=NEARBY_LINKS)] + links
