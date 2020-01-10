@@ -8,7 +8,7 @@ def web(args, system, db):
     TODO
     '''
     cmd = args[SUB_COMMAND]
-    controller = WebController(args, system)
+    controller = WebController(args, system, db)
     if cmd == SERVICE:
         controller.service()
     elif cmd == STATUS:

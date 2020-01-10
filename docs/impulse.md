@@ -62,6 +62,7 @@ questions that I hope to explore using this software.
   * [Modify Constants](#modify-constants)
   * [Re-calculate](#re-calculate)
 * [Appendix - The Author](#appendix---the-author)
+* [Appendix - An Alternative View]
 
 ## Theory
 
@@ -783,3 +784,43 @@ If you came here actually expecting to find something out about me,
 well... way, way back in the day I got a PhD in Astronomy, but most of
 my working life has been spent programming computers.  I also like to
 ride my bike, when I'm not injured.
+
+## Appendix - An Alternative View
+
+The description above presents fitness (or fatigue) as the "sum" of
+previous efforts.  There is a decay component, for sure, but the
+fundamental idea is that you keep training and it "all adds up".
+
+That's a little misleading.
+
+An equivalent way of looking at the maths is that fitness is a running
+average of your most recent efforts.  So if you trained hard in the
+last month (or so) then your fitness is high.  If you didn't, it's
+low.
+
+That's also a perfectly valid way of looking at things.  Yet the two
+views seem to contradict each other.  If fitness is the cumulative
+result of a long period of training and steady improvement, how can it
+be calculated from only the last month of training?
+
+But you cannot do a month of hard training if you have not already put
+in the hard work previously!
+
+Another way to see this is to understand training as the following
+process:
+
+  * You put in the hours, slowly getting better
+
+  * As you improve, you can do harder workouts
+
+  * Harder workouts give you a better fitness score
+
+So even though we calculate fitness as a relatively short-term
+average, it reflects many months of cumulative effort.
+
+The motivation for adding this comment came from fitting peformance
+data to find the time scale for fitness decay.  I foud that the
+results were insensitive to my initial fitness (before i began
+recording data).  This was because any initial value becomes
+irrelevant after a short period (some small multiple of the decay
+time).

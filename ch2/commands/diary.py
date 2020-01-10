@@ -6,7 +6,8 @@ from urwid import MainLoop, connect_signal
 
 from .args import DATE, SCHEDULE, FAST, mm
 from ..diary.database import read_date, COMPARE_LINKS, read_schedule
-from ch2.diary.views.urwid import build, layout_date, layout_schedule
+from ..diary.views.urwid import build, layout_date, layout_schedule
+from ..jupyter.server import set_controller, JupyterController
 from ..jupyter.template.activity_details import activity_details
 from ..jupyter.template.all_activities import all_activities
 from ..jupyter.template.compare_activities import compare_activities
@@ -44,6 +45,7 @@ To exit, alt-q (or, without saving, alt-x).
 
 Display a summary for the month / year / schedule.
     '''
+    set_controller(JupyterController(args, system))
     date, schedule = args[DATE], args[SCHEDULE]
     if not date:
         date = dt.date.today()

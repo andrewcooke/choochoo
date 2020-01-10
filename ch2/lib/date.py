@@ -66,10 +66,6 @@ MONTH = 'm'
 YEAR = 'y'
 
 
-def to_duration(duration):
-    return int(duration[:-1]), duration[-1]
-
-
 def add_date(date, duration):
     # this only works with dates
     # before, working with datetime, we had confusion between dates and datetimes and unnecessary conversions
