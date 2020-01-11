@@ -52,7 +52,7 @@ def read_date_diary_topic(s, date, cache, topic):
 def read_gui(s, date):
     for aj1 in ActivityJournal.at_date(s, date):
         yield list(read_activity_gui(s, aj1))
-    yield link('Health', db=format_date(date))
+    yield link('Health', db=(format_date(date),))
 
 
 def read_activity_gui(s, aj1):
@@ -61,7 +61,7 @@ def read_activity_gui(s, aj1):
             [link(fmt_nearby(aj2, nb), db=(time_to_local_time(aj1.start), time_to_local_time(aj2.start)))
              for aj2, nb in nearby_any_time(s, aj1)]
     yield [text('%s v ' % aj1.name, tag=COMPARE_LINKS)] + links
-    yield link('All Similar', db=aj1)
+    yield link('All Similar', db=(time_to_local_time(aj1.start),))
 
 
 def read_schedule(s, schedule, date):
@@ -106,4 +106,4 @@ def summary_column(s, schedule, start, name):
 
 @optional_text('Jupyter')
 def read_schedule_gui(s, date):
-    yield link('All Activities')
+    yield link('All Activities', db=tuple())

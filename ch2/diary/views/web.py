@@ -1,13 +1,10 @@
 
 from ..model import DB
+from ...sql import StatisticJournal
 
 
 def str_or_none(x):
     return x is None or isinstance(x, str)
-
-
-def iterable(x):
-    return isinstance(x, tuple) or isinstance(x, list)
 
 
 def rewrite_db(model):
@@ -16,10 +13,8 @@ def rewrite_db(model):
     else:
         if DB in model:
             db = model[DB]
-            if not (str_or_none(db) or iterable(db) and all(str_or_none(x) for x in db)):
-                if isinstance(db, tuple) or isinstance(db, list):
-                    db = [x if str_or_none(x) else x.id for x in db]
-                else:
-                    db = db.id
-                model[DB] = db
+            if isinstance(db, StatisticJournal):
+                model[DB] = db.id
+            else:  # links have tuples
+                model[DB] = [x if str_or_none(x) else x.id for x in db]
         return model

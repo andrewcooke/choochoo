@@ -17,7 +17,6 @@ TAG = 'tag'
 SCHEDULES = 'schedules'
 SCORE = 'score'
 TEXT = 'text'
-TIME = 'time'
 TYPE = 'type'
 UNITS = 'units'
 VALUE = 'value'
@@ -81,7 +80,7 @@ def measures(schedules):
 
 
 def link(value, tag=None, db=None):
-    if db is None: log.warning(f'No db for link {value}')
+    if not isinstance(db, tuple): log.warning(f'Bad db for link {value}')
     return {TYPE: LINK, VALUE: value, TAG: to_tag(tag or value), DB: db}
 
 

@@ -117,10 +117,10 @@ class DailyDiary(Diary):
         model = list(read_date(s, self._date))
         f = Factory(TabList())
         active, widget = build(model, f, layout_date)
-        self._wire(active, NEARBY_LINKS, lambda m: self._change_date(to_date(m.state.split(' ')[0])))
+        self._wire(active, NEARBY_LINKS, lambda m: self._change_date(to_date(m.state[0].split(' ')[0])))
         self._wire(active, COMPARE_LINKS, lambda m: self.__show_gui(*m.state))
         self._wire(active, 'health', lambda l: self.__show_health())
-        self._wire(active, 'all-similar', lambda l: self.__show_similar(l.state))
+        self._wire(active, 'all-similar', lambda l: self.__show_similar(l.state[0]))
         if active:
             raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs
