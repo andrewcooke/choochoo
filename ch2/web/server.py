@@ -1,11 +1,14 @@
 
 import time as t
 import datetime as dt
+from importlib.resources import read_binary
 from json import dumps
 from logging import getLogger
+from os.path import dirname, join, split, sep
 
 from werkzeug import Response, Request, run_simple, BaseResponse
 from werkzeug.exceptions import NotFound, HTTPException
+from werkzeug.middleware.shared_data import SharedDataMiddleware
 from werkzeug.routing import Map, Rule
 from werkzeug.wrappers.json import JSONMixin
 
@@ -43,8 +46,10 @@ class WebServer:
     def __init__(self, db):
         self.__db = db
         api = Api()
+        static = Static()
         self.url_map = Map([
-            Rule('/api/diary/<date>', endpoint=api.diary, methods=('GET',))
+            Rule('/api/diary/<date>', endpoint=api.diary, methods=('GET',)),
+            Rule('/static/<path>', endpoint=static, methods=('GET', ))
         ])
 
     def dispatch_request(self, request):
@@ -83,3 +88,18 @@ class Api:
         else:
             data = read_schedule(s, Schedule(schedule), date)
         return Response(dumps(rewrite_db(list(data))))
+
+
+class Static:
+
+    def __call__(self, request, s, path):
+        package = __name__.rsplit('.', maxsplit=1)[0] + '.static'
+        head, tail = split(path)
+        if not tail:
+            raise Exception(f'{path} is a directory')
+        if head:
+            package += '.' + '.'.join(head.split(sep))
+        if tail == '__init__.py':
+            raise Exception('Refusing to serve package marker')
+        log.info(f'Reading {tail} from {package}')
+        return Response(read_binary(package, tail))
