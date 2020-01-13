@@ -14,8 +14,8 @@ npm init -y
 # webpack builds a single file for loading in the browser
 npm i webpack --save-dev
 npm i webpack-cli --save-dev
-sed -ie '$d' package.json
-sed -ie '$d' package.json
+sed -i -e '$d' package.json
+sed -i -e '$d' package.json
 cat >> package.json << EOF
   },
   "scripts": {
