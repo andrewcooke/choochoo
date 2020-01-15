@@ -1,16 +1,15 @@
 
-import time as t
 import datetime as dt
+import time as t
+from collections import defaultdict
 from importlib.resources import read_binary
 from json import dumps
 from logging import getLogger
-from os.path import dirname, join, split, sep
+from os.path import split, sep, splitext
 
-from werkzeug import Response, Request, run_simple, BaseResponse
-from werkzeug.exceptions import NotFound, HTTPException
-from werkzeug.middleware.shared_data import SharedDataMiddleware
+from werkzeug import Response, Request, run_simple
+from werkzeug.exceptions import HTTPException
 from werkzeug.routing import Map, Rule
-from werkzeug.wrappers.json import JSONMixin
 
 from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV
 from ..diary.database import read_date, read_schedule
@@ -92,6 +91,12 @@ class Api:
 
 class Static:
 
+    CONTENT_TYPE = defaultdict(lambda: 'text',
+        {
+            'js': 'text/javascript',
+            'html': 'text/html'
+        })
+
     def __call__(self, request, s, path):
         package = __name__.rsplit('.', maxsplit=1)[0] + '.static'
         head, tail = split(path)
@@ -102,4 +107,11 @@ class Static:
         if tail == '__init__.py':
             raise Exception('Refusing to serve package marker')
         log.info(f'Reading {tail} from {package}')
-        return Response(read_binary(package, tail))
+        response = Response(read_binary(package, tail))
+        self.set_content_type(response, tail)
+        return response
+
+    def set_content_type(self, response, name):
+        ext = splitext(name)[1].lower()
+        if ext: ext = ext[1:]
+        response.content_type = self.CONTENT_TYPE[ext]
