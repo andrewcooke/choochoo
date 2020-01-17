@@ -91,13 +91,19 @@ class Api:
 
 class Static:
 
-    CONTENT_TYPE = defaultdict(lambda: 'text',
-        {
-            'js': 'text/javascript',
-            'html': 'text/html'
-        })
+    CONTENT_TYPE = defaultdict(lambda: 'text', {
+        'js': 'text/javascript',
+        'html': 'text/html'
+    })
 
     def __call__(self, request, s, path):
+        package, file = self.parse_path(path)
+        log.info(f'Reading {file} from {package}')
+        response = Response(read_binary(package, file))
+        self.set_content_type(response, file)
+        return response
+
+    def parse_path(self, path):
         package = __name__.rsplit('.', maxsplit=1)[0] + '.static'
         head, tail = split(path)
         if not tail:
@@ -106,12 +112,10 @@ class Static:
             package += '.' + '.'.join(head.split(sep))
         if tail == '__init__.py':
             raise Exception('Refusing to serve package marker')
-        log.info(f'Reading {tail} from {package}')
-        response = Response(read_binary(package, tail))
-        self.set_content_type(response, tail)
-        return response
+        return package, tail
 
     def set_content_type(self, response, name):
         ext = splitext(name)[1].lower()
-        if ext: ext = ext[1:]
+        if ext:
+            ext = ext[1:]
         response.content_type = self.CONTENT_TYPE[ext]
