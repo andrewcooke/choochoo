@@ -48,7 +48,8 @@ class WebServer:
         static = Static('.static')
         self.url_map = Map([
             Rule('/api/diary/<date>', endpoint=api.diary, methods=('GET',)),
-            Rule('/static/<path>', endpoint=static, methods=('GET', ))
+            Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
+            Rule('/static/<path:path>', endpoint=static, methods=('GET', ))
         ])
 
     def dispatch_request(self, request):
@@ -91,9 +92,10 @@ class Api:
 
 class Static:
 
-    CONTENT_TYPE = defaultdict(lambda: 'text', {
+    CONTENT_TYPE = defaultdict(lambda: 'text/plain', {
         'js': 'text/javascript',
-        'html': 'text/html'
+        'html': 'text/html',
+        'css': 'text/css'
     })
 
     def __init__(self, package):
@@ -112,6 +114,7 @@ class Static:
     def parse_path(self, path):
         package = self.__package
         head, tail = split(path)
+        log.debug(f'{path} -> {head}, {tail}')
         if not tail:
             raise Exception(f'{path} is a directory')
         if tail == '__init__.py':
