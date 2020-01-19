@@ -6,7 +6,7 @@
 			"scripts": {
 						"build": "webpack -p --progress --config webpack.config.js",
 						"dev-build": "webpack -d --progress --config webpack.config.js",
-						"watch": "webpack -d --progress --config webpack.config.js --watch"
+						"dev-watch": "webpack -d --progress --config webpack.config.js --watch"
 			},
 			"keywords": [
 						"choochoo",
@@ -27,6 +27,7 @@
 						"webpack-cli": "^3.3.10"
 			},
 			"dependencies": {
+						"@material-ui/core": "^4.8.3",
 						"history": "^4.10.1",
 						"react-router-dom": "^5.1.2"
 			}

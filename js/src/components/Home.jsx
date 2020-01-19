@@ -1,8 +1,13 @@
+
 import React, { Component } from 'react';
+import Button from '@material-ui/core/Button';
+
 export default class Home extends Component {
     render() {
-       return (
-          <h1>Hello React!</h1>
+        return (
+            <Button variant="contained" color="primary">
+                Hello World
+            </Button>
        )
     }
 }
