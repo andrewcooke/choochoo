@@ -45,7 +45,7 @@ class WebServer:
     def __init__(self, db):
         self.__db = db
         api = Api()
-        static = Static()
+        static = Static('.static')
         self.url_map = Map([
             Rule('/api/diary/<date>', endpoint=api.diary, methods=('GET',)),
             Rule('/static/<path>', endpoint=static, methods=('GET', ))
@@ -96,6 +96,12 @@ class Static:
         'html': 'text/html'
     })
 
+    def __init__(self, package):
+        if package.startswith('.'):
+            self.__package = __name__.rsplit('.', maxsplit=1)[0] + package
+        else:
+            self.__package = package
+
     def __call__(self, request, s, path):
         package, file = self.parse_path(path)
         log.info(f'Reading {file} from {package}')
@@ -104,14 +110,16 @@ class Static:
         return response
 
     def parse_path(self, path):
-        package = __name__.rsplit('.', maxsplit=1)[0] + '.static'
+        package = self.__package
         head, tail = split(path)
         if not tail:
             raise Exception(f'{path} is a directory')
-        if head:
-            package += '.' + '.'.join(head.split(sep))
         if tail == '__init__.py':
             raise Exception('Refusing to serve package marker')
+        if '.' in head:
+            raise Exception(f'Package separators in {head}')
+        if head:
+            package += '.' + '.'.join(head.split(sep))
         return package, tail
 
     def set_content_type(self, response, name):
