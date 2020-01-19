@@ -44,6 +44,10 @@ def make_log(args):
         sslog.setLevel(DEBUG)
         sslog.addHandler(file_handler)
 
+        wlog = getLogger('werkzeug')
+        wlog.setLevel(DEBUG)
+        wlog.addHandler(file_handler)
+
         clog = getLogger('ch2')
         clog.setLevel(DEBUG)
         clog.addHandler(file_handler)
@@ -58,10 +62,9 @@ def make_log(args):
             stderr_handler = StreamHandler()
             stderr_handler.setLevel(level)
             stderr_handler.setFormatter(stderr_formatter)
-            # slog.addHandler(stderr_handler)
-            # mlog.addHandler(stderr_handler)
             blog.addHandler(stderr_handler)
             tlog.addHandler(stderr_handler)
+            wlog.addHandler(stderr_handler)
             clog.addHandler(stderr_handler)
             xlog.addHandler(stderr_handler)
 

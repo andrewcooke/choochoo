@@ -21,7 +21,7 @@ class FatalException(Exception):
 from .commands.activities import activities
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, TUI, KIT, WEB
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB
 from .commands.constants import constants
 from .commands.dump import dump
 from .commands.config import config
@@ -42,7 +42,6 @@ from .lib.io import tui
 from .lib.log import make_log, log_current_exception
 from .sql.database import Database
 from .sql.system import System
-from .sql import SystemConstant
 
 log = getLogger(__name__)
 
