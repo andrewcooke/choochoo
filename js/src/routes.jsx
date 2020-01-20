@@ -1,11 +1,17 @@
 
-import React from 'react';
-import { BrowserRouter, Route, hashHistory } from 'react-router-dom';
+import React, { Component } from 'react';
+import { BrowserRouter, Route } from 'react-router-dom';
 import Home from './components/Home';
 
-// import more components
-export default (
-    <BrowserRouter>
-        <Route path='/' component={Home} />
-    </BrowserRouter>
-);
+
+export default class Routes extends Component {
+
+    render() {
+        return (
+            <BrowserRouter>
+                <Route path='/' component={Home} />
+            </BrowserRouter>
+        );
+    }
+
+}
