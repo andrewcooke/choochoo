@@ -1,7 +1,7 @@
 
 import React, { Component } from 'react';
-import { BrowserRouter, Route } from 'react-router-dom';
-import Home from './Home';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import Diary from './Diary';
 
 
 export default class Routes extends Component {
@@ -9,7 +9,9 @@ export default class Routes extends Component {
     render() {
         return (
             <BrowserRouter>
-                <Route path='/' component={Home} />
+                <Switch>
+                    <Route path='/:date' component={Diary} />
+                </Switch>
             </BrowserRouter>
         );
     }

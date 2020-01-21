@@ -48,14 +48,16 @@ class WebServer:
         static = Static('.static')
         self.url_map = Map([
             Rule('/api/diary/<date>', endpoint=api.diary, methods=('GET',)),
-            Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
-            Rule('/static/<path:path>', endpoint=static, methods=('GET', ))
+            Rule('/static/<path:path>', endpoint=static, methods=('GET', )),
+            Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
+            Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',))
         ])
 
     def dispatch_request(self, request):
         adapter = self.url_map.bind_to_environ(request.environ)
         try:
             endpoint, values = adapter.match()
+            values.pop('_', None)
             with self.__db.session_context() as s:
                 return endpoint(request, s, **values)
         except HTTPException as e:
