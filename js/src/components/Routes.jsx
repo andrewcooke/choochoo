@@ -4,16 +4,12 @@ import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import Diary from './Diary';
 
 
-export default class Routes extends Component {
-
-    render() {
-        return (
-            <BrowserRouter>
-                <Switch>
-                    <Route path='/:date' component={Diary} />
-                </Switch>
-            </BrowserRouter>
-        );
-    }
-
+export default function Routes() {
+    return (
+        <BrowserRouter>
+            <Switch>
+                <Route path='/:date' component={Diary} />
+            </Switch>
+        </BrowserRouter>
+    );
 }
