@@ -9,32 +9,10 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 
 
-export default function Diary(props) {
-    return (
-        <div>
-            <TopBar />
-            <Button variant="contained" color="primary">
-                Hello World
-            </Button>
-        </div>
-   )
-}
+const useStyles = makeStyles();
 
 
-const useStyles = makeStyles({
-  root: {
-    background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
-    border: 0,
-    borderRadius: 3,
-    boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
-    color: 'white',
-    height: 48,
-    padding: '0 30px',
-  },
-});
-
-
-function TopBar(props) {
+export default function TopBar(props) {
     const classes = useStyles();
     return (
         <AppBar position="static">
@@ -43,9 +21,8 @@ function TopBar(props) {
                     <MenuIcon />
                 </IconButton>
                 <Typography variant="h6" className={classes.title}>
-                    Diary
+                    Choochoo
                 </Typography>
-                <Button color="inherit">Login</Button>
             </Toolbar>
         </AppBar>
     )

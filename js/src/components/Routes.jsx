@@ -1,7 +1,7 @@
 
 import React, { Component } from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
-import Diary from './Diary';
+import Diary from './diary/Diary';
 
 
 export default function Routes() {
