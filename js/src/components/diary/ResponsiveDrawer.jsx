@@ -21,15 +21,15 @@ import { drawerWidth } from '../../layout'
 
 
 const useStyles = makeStyles(theme => ({
-  drawer: {
-    [theme.breakpoints.up('sm')]: {
-      width: drawerWidth,
-      flexShrink: 0,
+    drawer: {
+        [theme.breakpoints.up('sm')]: {
+            width: drawerWidth,
+            flexShrink: 0,
+        },
     },
-  },
-  drawerPaper: {
-    width: drawerWidth,
-  },
+    drawerPaper: {
+        width: drawerWidth,
+    },
 }));
 
 
@@ -46,7 +46,7 @@ export default function ResponsiveDrawer(props) {
   );
 
   return (
-     <nav className={classes.drawer} aria-label="mailbox folders">
+     <nav className={classes.drawer}>
         <Hidden smUp implementation="css">
           <Drawer
             container={container}

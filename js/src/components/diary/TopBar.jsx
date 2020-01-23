@@ -28,6 +28,7 @@ const useStyles = makeStyles(theme => ({
 
 
 export default function TopBar(props) {
+
     const classes = useStyles();
 
     const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -37,7 +38,7 @@ export default function TopBar(props) {
 
     return (
         <div>
-            <AppBar position="static" className={classes.topBar}>
+            <AppBar position="fixed" className={classes.topBar}>
                 <Toolbar>
                     <IconButton
                         color="inherit"
