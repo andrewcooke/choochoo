@@ -3,7 +3,7 @@
 shopt -s globstar
 start_all=$SECONDS
 
-VERSION=`grep 'CH2_VERSION =' ch2/commands/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\).*/\1/"`
+VERSION=`grep 'CH2_VERSION =' py/ch2/commands/args.py | sed -e "s/.*CH2_VERSION = '\([0-9]\+\.[0-9]\+\).*/\1/"`
 VERSION=`echo $VERSION | sed -e s/\\\\./-/g`
 
 echo
@@ -11,7 +11,7 @@ echo "resetting database $VERSION"
 dev/ch2 -v1 jupyter stop
 sleep 3
 start_database=$SECONDS
-"./ch2/migrate/reload/$VERSION.sh"
+"./py/ch2/migrate/reload/$VERSION.sh"
 cp ~/.ch2/"database-$VERSION.sql" ~/.ch2/"database-$VERSION-empty.sql"
 duration=$(($SECONDS - $start_database))
 echo "reset finished $(($duration/60)) min $(($duration%60)) sec"

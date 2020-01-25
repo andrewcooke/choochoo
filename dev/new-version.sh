@@ -1,6 +1,11 @@
 #!/bin/bash
 
+pushd py
+
 source env/bin/activate
+
+echo "todo - package js"
+exit 999
 
 if [ "$#" -ne 1 ]; then
     echo "usage: $0 version"
@@ -30,6 +35,8 @@ OLD_VERSION=`grep 'version=' setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\
 echo "setup.py: $OLD_VERSION -> $VERSION"
 sed -i setup.py -e "s/\(.*version='\)\([0-9]\+\.[0-9]\+\.[0-9]\+\)\('.*\)/\1$VERSION\3/"
 
+popd
+
 dev/build-cmds.sh
 dev/build-docs.sh
 
@@ -43,5 +50,7 @@ dev/package-python.sh
 #twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 twine upload dist/*
 
+pushd py
 rm -fr build
 rm -fr choochoo.egg-info
+popd
