@@ -3,6 +3,8 @@ import Button from '@material-ui/core/Button';
 import TopBar from './TopBar.jsx'
 import {makeStyles} from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import {ThemeProvider} from "@material-ui/styles";
+import {theme} from "../../theme";
 
 
 const useStyles = makeStyles(theme => ({
@@ -23,14 +25,16 @@ export default function Diary(props) {
 
     return (
         <div className={classes.root}>
-            <CssBaseline/>
-            <TopBar/>
-            <main className={classes.content}>
-                <div className={classes.toolbar}/>
-                <Button variant="contained" color="primary">
-                    Hello World
-                </Button>
-            </main>
+            <ThemeProvider theme={theme}>
+                <CssBaseline/>
+                <TopBar/>
+                <main className={classes.content}>
+                    <div className={classes.toolbar}/>
+                    <Button variant="contained" color="primary">
+                        Hello World
+                    </Button>
+                </main>
+            </ThemeProvider>
         </div>
     )
 }
