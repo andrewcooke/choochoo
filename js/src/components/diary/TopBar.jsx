@@ -4,6 +4,7 @@ import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import Typography from '@material-ui/core/Typography';
+import SideDrawer from './SideDrawer'
 import {makeStyles} from '@material-ui/core/styles';
 import {drawerWidth} from '../../layout'
 
@@ -33,22 +34,25 @@ export default function TopBar(props) {
         setMobileOpen(!mobileOpen);
     };
 
-    return {mobileOpen, handleDrawerToggle, topBar:(
-        <AppBar position="fixed" className={classes.topBar}>
-            <Toolbar>
-                <IconButton
-                    color="inherit"
-                    aria-label="open drawer"
-                    edge="start"
-                    onClick={handleDrawerToggle}
-                    className={classes.menuButton}
-                >
-                    <MenuIcon/>
-                </IconButton>
-                <Typography variant="h6" noWrap>
-                    Choochoo
-                </Typography>
-            </Toolbar>
-        </AppBar>
-    )}
+    return (
+        <div>
+            <AppBar position="fixed" className={classes.topBar}>
+                <Toolbar>
+                    <IconButton
+                        color="inherit"
+                        aria-label="open drawer"
+                        edge="start"
+                        onClick={handleDrawerToggle}
+                        className={classes.menuButton}
+                    >
+                        <MenuIcon/>
+                    </IconButton>
+                    <Typography variant="h6" noWrap>
+                        Choochoo
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+            {SideDrawer({mobileOpen, handleDrawerToggle})}
+        </div>
+    )
 }
