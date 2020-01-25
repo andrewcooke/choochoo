@@ -3,6 +3,7 @@ import Drawer from '@material-ui/core/Drawer';
 import Hidden from '@material-ui/core/Hidden';
 import {makeStyles, useTheme} from '@material-ui/core/styles';
 import {drawerWidth} from '../../layout'
+import Divider from "@material-ui/core/Divider";
 
 
 const useStyles = makeStyles(theme => ({
@@ -12,6 +13,7 @@ const useStyles = makeStyles(theme => ({
             flexShrink: 0,
         },
     },
+    toolbar: theme.mixins.toolbar,
     drawerPaper: {
         width: drawerWidth,
     },
@@ -26,6 +28,8 @@ export default function SideDrawer(props) {
 
     const drawer = (
         <div>
+            <div className={classes.toolbar} />
+            <Divider />
             <p>hello world</p>
         </div>
     );
