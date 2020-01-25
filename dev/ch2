@@ -1,5 +1,5 @@
 #!/bin/bash
 
-pushd py
+pushd py > /dev/null
 source env/bin/activate
 python -m ch2 "$@"

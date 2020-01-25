@@ -1,35 +1,35 @@
 {
-			"name": "choochoo",
-			"version": "0.0.0",
-			"description": "a browser-based frontend for choochoo training diary",
-			"main": "index.js",
-			"scripts": {
-						"build": "webpack -p --progress --config webpack.config.js",
-						"dev-build": "webpack -d --progress --config webpack.config.js",
-						"dev-watch": "webpack -d --progress --config webpack.config.js --watch"
-			},
-			"keywords": [
-						"choochoo",
-						"ch2"
-			],
-			"author": "andrew cooke",
-			"license": "GPLv2",
-			"devDependencies": {
-						"@babel/core": "^7.8.0",
-						"@babel/preset-env": "^7.8.2",
-						"@babel/preset-react": "^7.8.0",
-						"babel-loader": "^8.0.6",
-						"css-loader": "^3.4.2",
-						"react": "^16.12.0",
-						"react-dom": "^16.12.0",
-						"style-loader": "^1.1.3",
-						"webpack": "^4.41.5",
-						"webpack-cli": "^3.3.10"
-			},
-			"dependencies": {
-						"@material-ui/core": "^4.8.3",
-						"@material-ui/icons": "^4.5.1",
-						"history": "^4.10.1",
-						"react-router-dom": "^5.1.2"
-			}
+  "name": "choochoo",
+  "version": "0.0.0",
+  "description": "a browser-based frontend for choochoo training diary",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack -p --progress --config webpack.config.js",
+    "dev-build": "webpack -d --progress --config webpack.config.js",
+    "dev-watch": "webpack -d --progress --config webpack.config.js --watch"
+  },
+  "keywords": [
+    "choochoo",
+    "ch2"
+  ],
+  "author": "andrew cooke",
+  "license": "GPLv2",
+  "devDependencies": {
+    "@babel/core": "^7.8.0",
+    "@babel/preset-env": "^7.8.2",
+    "@babel/preset-react": "^7.8.0",
+    "babel-loader": "^8.0.6",
+    "css-loader": "^3.4.2",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "style-loader": "^1.1.3",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  },
+  "dependencies": {
+    "@material-ui/core": "^4.8.3",
+    "@material-ui/icons": "^4.5.1",
+    "history": "^4.10.1",
+    "react-router-dom": "^5.1.2"
+  }
 }
