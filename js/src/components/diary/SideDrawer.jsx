@@ -21,6 +21,9 @@ const useStyles = makeStyles(theme => ({
     drawerPaper: {
         width: drawerWidth,
     },
+    button: {
+        'min-width': 79,
+    },
 }));
 
 
@@ -57,10 +60,10 @@ export default function SideDrawer(props) {
         <div>
             <div className={classes.toolbar} />
             <AppBar position="static">
-                <Tabs value={value} onChange={handleChange}>
-                    <Tab label="Day"/>
-                    <Tab label="Month"/>
-                    <Tab label="Year"/>
+                <Tabs value={value} variant="fullWidth" onChange={handleChange}>
+                    <Tab label="Day" className={classes.button}/>
+                    <Tab label="Month" className={classes.button}/>
+                    <Tab label="Year" className={classes.button}/>
                 </Tabs>
             </AppBar>
             <TabPanel value={value} index={0}>
