@@ -8,6 +8,11 @@ import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import Button from "@material-ui/core/Button";
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 
 const useStyles = makeStyles(theme => ({
@@ -28,6 +33,7 @@ const useStyles = makeStyles(theme => ({
 
 
 function TabPanel(props) {
+
     const {children, value, index, ...other} = props;
 
     return (
@@ -45,20 +51,37 @@ function TabPanel(props) {
 }
 
 
-export default function SideDrawer(props) {
+function MainMenu(props) {
 
-    const {container, mobileOpen, handleDrawerToggle} = props;
+    const {onClick} = props;
+
+    return (
+        <div>
+            <List component="nav">
+                <ListItem button onClick={() => onClick(1)}>
+                    <ListItemText primary="Diary" />
+                </ListItem>
+            </List>
+        </div>)
+}
+
+
+function DiaryMenu(props) {
+
+    const {back} = props;
+
     const [value, setValue] = React.useState(0);
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
     const classes = useStyles();
-    const theme = useTheme();
 
-    const drawer = (
+    return (
         <div>
-            <div className={classes.toolbar} />
+            <Button onClick={back}>
+                <ArrowBackIcon/>
+            </Button>
             <AppBar position="static">
                 <Tabs value={value} variant="fullWidth" onChange={handleChange}>
                     <Tab label="Day" className={classes.button}/>
@@ -67,13 +90,39 @@ export default function SideDrawer(props) {
                 </Tabs>
             </AppBar>
             <TabPanel value={value} index={0}>
-                Item One
+                Day Picker
             </TabPanel>
             <TabPanel value={value} index={1}>
-                Item Two
+                Month Picker
             </TabPanel>
             <TabPanel value={value} index={2}>
-                Item Three
+                Year Picker
+            </TabPanel>
+        </div>
+    );
+}
+
+
+export default function SideDrawer(props) {
+
+    const {container, mobileOpen, handleDrawerToggle} = props;
+
+    const [topMenu, setTopMenu] = React.useState(0);
+    const handleChange = (event, newValue) => {
+        setTopMenu(newValue);
+    };
+
+    const classes = useStyles();
+    const theme = useTheme();
+
+    const mainMenuTabs = (
+        <div>
+            <div className={classes.toolbar}/>
+            <TabPanel value={topMenu} index={0}>
+                <MainMenu back={() => setTopMenu(0)} onClick={setTopMenu}/>
+            </TabPanel>
+            <TabPanel value={topMenu} index={1}>
+                <DiaryMenu back={() => setTopMenu(0)}/>
             </TabPanel>
         </div>
     );
@@ -94,7 +143,7 @@ export default function SideDrawer(props) {
                         keepMounted: true, // Better open performance on mobile.
                     }}
                 >
-                    {drawer}
+                    {mainMenuTabs}
                 </Drawer>
             </Hidden>
             <Hidden xsDown implementation="css">
@@ -105,7 +154,7 @@ export default function SideDrawer(props) {
                     variant="permanent"
                     open
                 >
-                    {drawer}
+                    {mainMenuTabs}
                 </Drawer>
             </Hidden>
         </nav>
