@@ -26,8 +26,9 @@ const useStyles = makeStyles(theme => ({
     drawerPaper: {
         width: drawerWidth,
     },
-    button: {
-        'min-width': 79,
+    tab: {
+        'min-width': drawerWidth / 3,
+        backgroundColor: theme.palette.background.paper
     },
 }));
 
@@ -51,7 +52,7 @@ function TabPanel(props) {
 }
 
 TabPanel.defaultProps = {
-    p: 3
+    p: 3  /* set to zero to remove padding */
 };
 
 
@@ -68,6 +69,9 @@ function MainMenu(props) {
                 <ListItem button onClick={() => onClick(1)}>
                     <ListItemText primary="Diary" />
                 </ListItem>
+                <ListItem button onClick={() => onClick(2)}>
+                    <ListItemText primary="Analysis" />
+                </ListItem>
             </List>
         </div>)
 }
@@ -78,7 +82,7 @@ function DiaryMenu(props) {
     const {back} = props;
 
     const [value, setValue] = React.useState(0);
-    const handleChange = (event, newValue) => {
+    const onChange = (event, newValue) => {
         setValue(newValue);
     };
 
@@ -92,10 +96,12 @@ function DiaryMenu(props) {
                 </IconButton>
             </div>
             <AppBar position="static">
-                <Tabs value={value} variant="fullWidth" onChange={handleChange}>
-                    <Tab label="Day" className={classes.button}/>
-                    <Tab label="Month" className={classes.button}/>
-                    <Tab label="Year" className={classes.button}/>
+                <Tabs value={value} variant="fullWidth" onChange={onChange}
+                      indicatorColor="primary"
+                      textColor="primary">
+                    <Tab label="Day" className={classes.tab}/>
+                    <Tab label="Month" className={classes.tab}/>
+                    <Tab label="Year" className={classes.tab}/>
                 </Tabs>
             </AppBar>
             <TabPanel value={value} index={0}>
