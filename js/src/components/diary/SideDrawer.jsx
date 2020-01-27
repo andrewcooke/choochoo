@@ -86,10 +86,11 @@ function DiaryMenu(props) {
 
     return (
         <div>
-            <IconButton onClick={back}>
-                <ArrowBackIcon/>
-            </IconButton>
-            <div className={classes.toolbar}/>
+            <div className={classes.toolbar}>
+                <IconButton onClick={back}>
+                    <ArrowBackIcon/>
+                </IconButton>
+            </div>
             <AppBar position="static">
                 <Tabs value={value} variant="fullWidth" onChange={handleChange}>
                     <Tab label="Day" className={classes.button}/>
