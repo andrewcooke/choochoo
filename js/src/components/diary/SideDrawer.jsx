@@ -11,8 +11,8 @@ import Box from "@material-ui/core/Box";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
-import Button from "@material-ui/core/Button";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import IconButton from "@material-ui/core/IconButton";
 
 
 const useStyles = makeStyles(theme => ({
@@ -45,18 +45,25 @@ function TabPanel(props) {
             aria-labelledby={`simple-tab-${index}`}
             {...other}
         >
-            {value === index && <Box p={3}>{children}</Box>}
+            {value === index && <Box p={props.p}>{children}</Box>}
         </Typography>
     );
 }
+
+TabPanel.defaultProps = {
+    p: 3
+};
 
 
 function MainMenu(props) {
 
     const {onClick} = props;
 
+    const classes = useStyles();
+
     return (
         <div>
+            <div className={classes.toolbar}/>
             <List component="nav">
                 <ListItem button onClick={() => onClick(1)}>
                     <ListItemText primary="Diary" />
@@ -79,9 +86,10 @@ function DiaryMenu(props) {
 
     return (
         <div>
-            <Button onClick={back}>
+            <IconButton onClick={back}>
                 <ArrowBackIcon/>
-            </Button>
+            </IconButton>
+            <div className={classes.toolbar}/>
             <AppBar position="static">
                 <Tabs value={value} variant="fullWidth" onChange={handleChange}>
                     <Tab label="Day" className={classes.button}/>
@@ -108,21 +116,18 @@ export default function SideDrawer(props) {
     const {container, mobileOpen, handleDrawerToggle} = props;
 
     const [topMenu, setTopMenu] = React.useState(0);
-    const handleChange = (event, newValue) => {
-        setTopMenu(newValue);
-    };
+    const back = () => setTopMenu(0);
 
     const classes = useStyles();
     const theme = useTheme();
 
     const mainMenuTabs = (
         <div>
-            <div className={classes.toolbar}/>
-            <TabPanel value={topMenu} index={0}>
-                <MainMenu back={() => setTopMenu(0)} onClick={setTopMenu}/>
+            <TabPanel value={topMenu} index={0} p={0}>
+                <MainMenu back={back} onClick={setTopMenu}/>
             </TabPanel>
-            <TabPanel value={topMenu} index={1}>
-                <DiaryMenu back={() => setTopMenu(0)}/>
+            <TabPanel value={topMenu} index={1} p={0}>
+                <DiaryMenu back={back}/>
             </TabPanel>
         </div>
     );
