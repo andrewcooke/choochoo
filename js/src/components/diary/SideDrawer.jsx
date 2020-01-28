@@ -13,6 +13,7 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import IconButton from "@material-ui/core/IconButton";
+import {DatePicker} from "@material-ui/pickers";
 
 
 const useStyles = makeStyles(theme => ({
@@ -67,10 +68,10 @@ function MainMenu(props) {
             <div className={classes.toolbar}/>
             <List component="nav">
                 <ListItem button onClick={() => onClick(1)}>
-                    <ListItemText primary="Diary" />
+                    <ListItemText primary="Diary"/>
                 </ListItem>
                 <ListItem button onClick={() => onClick(2)}>
-                    <ListItemText primary="Analysis" />
+                    <ListItemText primary="Analysis"/>
                 </ListItem>
             </List>
         </div>)
@@ -111,7 +112,9 @@ function DiaryMenu(props) {
                 Month Picker
             </TabPanel>
             <TabPanel value={value} index={2}>
-                Year Picker
+                <DatePicker
+                    views={["year"]}
+                />
             </TabPanel>
         </div>
     );
