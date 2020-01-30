@@ -4,7 +4,9 @@ import Hidden from '@material-ui/core/Hidden';
 import {makeStyles, useTheme} from '@material-ui/core/styles';
 import {drawerWidth} from '../layout'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
-import {Link} from "react-router-dom";
+import Divider from "@material-ui/core/Divider";
+import List from "@material-ui/core/List";
+import ListItemLink from "./ListItemLink";
 
 
 const useStyles = makeStyles(theme => ({
@@ -32,9 +34,10 @@ function Content(props) {
     function Back() {
         if (match.path !== '/') {
             return (
-                <Link to='/'>
-                    <ArrowBackIcon/>
-                </Link>);
+                <List>
+                    <ListItemLink primary='Welcome' to='/' icon={<ArrowBackIcon/>}/>
+                </List>
+            )
         } else {
             return <span/>;
         }
@@ -45,6 +48,7 @@ function Content(props) {
             <div className={classes.toolbar}>
                 <Back/>
             </div>
+            <Divider/>
             {content}
         </>
     );
