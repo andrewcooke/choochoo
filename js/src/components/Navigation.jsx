@@ -50,11 +50,11 @@ export default function Navigation(props) {
                         <MenuIcon/>
                     </IconButton>
                     <Typography variant="h6" noWrap>
-                        Choochoo - {title}
+                        Choochoo
                     </Typography>
                 </Toolbar>
             </AppBar>
-            {SideDrawer({mobileOpen, handleDrawerToggle, content, match})}
+            {SideDrawer({mobileOpen, handleDrawerToggle, content, match, title})}
         </>
     )
 }

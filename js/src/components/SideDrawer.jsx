@@ -7,6 +7,8 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Divider from "@material-ui/core/Divider";
 import List from "@material-ui/core/List";
 import ListItemLink from "./ListItemLink";
+import {ListItemText} from "@material-ui/core";
+import ListItem from "@material-ui/core/ListItem";
 
 
 const useStyles = makeStyles(theme => ({
@@ -25,21 +27,25 @@ const useStyles = makeStyles(theme => ({
 
 function Content(props) {
 
-    const {match, content} = props;
+    const {title, match, content} = props;
 
     const classes = useStyles();
-
-    console.log(`match: ${match.path} length ${match.path.length}`)
 
     function Back() {
         if (match.path !== '/') {
             return (
                 <List>
-                    <ListItemLink primary='Welcome' to='/' icon={<ArrowBackIcon/>}/>
+                    <ListItemLink primary={title} to='/' icon={<ArrowBackIcon/>}/>
                 </List>
             )
         } else {
-            return <span/>;
+            return (
+                <List>
+                    <ListItem>
+                        <ListItemText primary={title}/>
+                    </ListItem>
+                </List>
+            )
         }
     }
 
@@ -57,7 +63,7 @@ function Content(props) {
 
 export default function SideDrawer(props) {
 
-    const {container, content, mobileOpen, handleDrawerToggle, match} = props;
+    const {container, content, mobileOpen, handleDrawerToggle, match, title} = props;
 
     const classes = useStyles();
     const theme = useTheme();
@@ -78,7 +84,7 @@ export default function SideDrawer(props) {
                         keepMounted: true, // Better open performance on mobile.
                     }}
                 >
-                    <Content match={match} content={content}/>
+                    <Content match={match} content={content} title={title}/>
                 </Drawer>
             </Hidden>
             <Hidden xsDown implementation="css">
@@ -89,7 +95,7 @@ export default function SideDrawer(props) {
                     variant="permanent"
                     open
                 >
-                    <Content match={match} content={content}/>
+                    <Content match={match} content={content} title={title}/>
                 </Drawer>
             </Hidden>
         </nav>
