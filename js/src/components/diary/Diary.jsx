@@ -23,6 +23,15 @@ export default function Diary(props) {
 
     const classes = useStyles();
 
+    const content = (
+        <Button variant="contained" color="primary">
+            Hello World
+        </Button>);
+
+    return (
+      <Layout navigation={navigation} content={content}/>
+    );
+
     return (
         <div className={classes.root}>
             <ThemeProvider theme={theme}>
