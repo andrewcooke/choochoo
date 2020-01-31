@@ -1,5 +1,5 @@
 import React from 'react';
-import Layout from "./Layout";
+import Layout from "../utils/Layout";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import {DatePicker} from "@material-ui/pickers";
 import {useParams} from 'react-router-dom';

@@ -6,7 +6,7 @@ import MenuIcon from '@material-ui/icons/Menu';
 import Typography from '@material-ui/core/Typography';
 import SideDrawer from './SideDrawer'
 import {makeStyles} from '@material-ui/core/styles';
-import {drawerWidth} from '../layout'
+import {drawerWidth} from '../../layout'
 
 
 const useStyles = makeStyles(theme => ({

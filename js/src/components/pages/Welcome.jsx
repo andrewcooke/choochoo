@@ -1,12 +1,12 @@
 import React from 'react';
-import Layout from "./Layout";
+import Layout from "../utils/Layout";
 import List from "@material-ui/core/List";
 import {ListItemText} from "@material-ui/core";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import ListItem from "@material-ui/core/ListItem";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
 import Collapse from "@material-ui/core/Collapse";
-import ListItemLink from "./ListItemLink";
+import ListItemLink from "../utils/ListItemLink";
 
 
 const useStyles = makeStyles(theme => ({
