@@ -1,13 +1,9 @@
 import React from 'react';
 import Layout from "./Layout";
 import makeStyles from "@material-ui/core/styles/makeStyles";
-import {drawerWidth} from "../layout";
-import AppBar from "@material-ui/core/AppBar";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
-import Typography from "@material-ui/core/Typography";
-import Box from "@material-ui/core/Box";
 import {DatePicker} from "@material-ui/pickers";
+import {useParams} from 'react-router-dom';
+import parse from 'date-fns/parse';
 
 
 const useStyles = makeStyles(theme => ({
@@ -19,86 +15,69 @@ const useStyles = makeStyles(theme => ({
         flexGrow: 1,
         padding: theme.spacing(3),
     },
-    nested: {
-        paddingLeft: theme.spacing(4),
-    },
-    tab: {
-        'min-width': drawerWidth / 3,
-        backgroundColor: theme.palette.background.paper
-    },
 }));
 
 
-function TabPanel(props) {
-
-    const {children, value, index, ...other} = props;
-
-    return (
-        <Typography
-            component="div"
-            role="tabpanel"
-            hidden={value !== index}
-            id={`simple-tabpanel-${index}`}
-            aria-labelledby={`simple-tab-${index}`}
-            {...other}
-        >
-            {value === index && <Box p={props.p}>{children}</Box>}
-        </Typography>
-    );
+function Picker(props) {
+    const {ymd, datetime} = props;
+    switch (ymd) {
+        case 0: return <DatePicker value={datetime} views={["year"]}/>;
+        case 1: return <DatePicker value={datetime} views={["year", "month"]}/>;
+        case 2: return <DatePicker value={datetime} animateYearScrolling/>;
+    }
 }
-
-TabPanel.defaultProps = {
-    p: 3  /* set to zero to remove padding */
-};
 
 
 function DiaryMenu(props) {
 
-    const [value, setValue] = React.useState(0);
-    const onChange = (event, newValue) => {
-        setValue(newValue);
-    };
-
+    const {ymd, datetime} = props;
     const classes = useStyles();
 
     return (
         <>
-            <AppBar position="static">
-                <Tabs value={value} variant="fullWidth" onChange={onChange}
-                      indicatorColor="primary"
-                      textColor="primary">
-                    <Tab label="Day" className={classes.tab}/>
-                    <Tab label="Month" className={classes.tab}/>
-                    <Tab label="Year" className={classes.tab}/>
-                </Tabs>
-            </AppBar>
-            <TabPanel value={value} index={0}>
-                Day Picker
-            </TabPanel>
-            <TabPanel value={value} index={1}>
-                Month Picker
-            </TabPanel>
-            <TabPanel value={value} index={2}>
-                <DatePicker
-                    views={["year"]}
-                />
-            </TabPanel>
+           <Picker ymd={ymd} datetime={datetime}/>
         </>
     );
 }
 
+
+function parseDate(date) {
+    const ymd = (date.match(/-/g) || []).length;
+    switch (ymd) {
+        case 0:
+            return {ymd, datetime:parse(date, 'yyyy', new Date()), title:'Year'};
+        case 1:
+            return {ymd, datetime:parse(date, 'yyyy-MM', new Date()), title:'Month'};
+        case 2:
+            return {ymd, datetime:parse(date, 'yyyy-MM-dd', new Date()), title:'Day'};
+        default:
+            throw('Bad date ' + date);
+    }
+}
+
+
 export default function Diary(props) {
 
     const {match} = props;
-
+    const {date} = useParams();
     const classes = useStyles();
+
+    const {ymd, datetime, title} = parseDate(date);
+
+    console.log(ymd);
+    console.log(date);
+    console.log(datetime);
 
     const content = (
         <p>
             Diary here.
         </p>);
 
+    const navigation = (
+        <DiaryMenu ymd={ymd} datetime={datetime}/>
+    );
+
     return (
-        <Layout navigation={<DiaryMenu/>} content={content} match={match} title='Diary'/>
+        <Layout navigation={navigation} content={content} match={match} title={title}/>
     );
 }
