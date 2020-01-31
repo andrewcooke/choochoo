@@ -4,38 +4,50 @@ import makeStyles from "@material-ui/core/styles/makeStyles";
 import {DatePicker} from "@material-ui/pickers";
 import {useParams} from 'react-router-dom';
 import parse from 'date-fns/parse';
+import format from 'date-fns/format';
+import ListItem from "@material-ui/core/ListItem";
+import List from "@material-ui/core/List";
 
 
 const useStyles = makeStyles(theme => ({
     root: {
-        display: 'flex',
+        width: '100%',
+        maxWidth: 360,
+        backgroundColor: theme.palette.background.paper,
     },
-    toolbar: theme.mixins.toolbar,
-    content: {
-        flexGrow: 1,
-        padding: theme.spacing(3),
+    nested: {
+        paddingLeft: theme.spacing(4),
     },
 }));
 
 
 function Picker(props) {
-    const {ymd, datetime} = props;
+    const {ymd, datetime, onChange} = props;
     switch (ymd) {
-        case 0: return <DatePicker value={datetime} views={["year"]}/>;
-        case 1: return <DatePicker value={datetime} views={["year", "month"]}/>;
-        case 2: return <DatePicker value={datetime} animateYearScrolling/>;
+        case 0: return <DatePicker value={datetime} views={["year"]} onChange={onChange}/>;
+        case 1: return <DatePicker value={datetime} views={["year", "month"]} onChange={onChange}/>;
+        case 2: return <DatePicker value={datetime} animateYearScrolling onChange={onChange}/>;
     }
 }
 
 
 function DiaryMenu(props) {
 
-    const {ymd, datetime} = props;
+    const {ymd, datetime, fmt, history} = props;
     const classes = useStyles();
+
+    function onChange(datetime) {
+        const date = format(datetime, fmt);
+        history.push('/' + date);
+    }
 
     return (
         <>
-           <Picker ymd={ymd} datetime={datetime}/>
+            <List component="nav" className={classes.root}>
+                <ListItem>
+                    <Picker ymd={ymd} datetime={datetime} onChange={onChange}/>
+                </ListItem>
+            </List>
         </>
     );
 }
@@ -44,29 +56,20 @@ function DiaryMenu(props) {
 function parseDate(date) {
     const ymd = (date.match(/-/g) || []).length;
     switch (ymd) {
-        case 0:
-            return {ymd, datetime:parse(date, 'yyyy', new Date()), title:'Year'};
-        case 1:
-            return {ymd, datetime:parse(date, 'yyyy-MM', new Date()), title:'Month'};
-        case 2:
-            return {ymd, datetime:parse(date, 'yyyy-MM-dd', new Date()), title:'Day'};
-        default:
-            throw('Bad date ' + date);
+        case 0: return {ymd, fmt:'yyyy', title:'Year'};
+        case 1: return {ymd, fmt:'yyyy-MM', title:'Month'};
+        case 2: return {ymd, fmt:'yyyy-MM-dd', title:'Day'};
+        default: throw('Bad date ' + date);
     }
 }
 
 
 export default function Diary(props) {
 
-    const {match} = props;
+    const {match, history} = props;
     const {date} = useParams();
-    const classes = useStyles();
-
-    const {ymd, datetime, title} = parseDate(date);
-
-    console.log(ymd);
-    console.log(date);
-    console.log(datetime);
+    const {ymd, fmt, title} = parseDate(date);
+    const datetime = parse(date, fmt, new Date());
 
     const content = (
         <p>
@@ -74,10 +77,10 @@ export default function Diary(props) {
         </p>);
 
     const navigation = (
-        <DiaryMenu ymd={ymd} datetime={datetime}/>
+        <DiaryMenu ymd={ymd} datetime={datetime} fmt={fmt} history={history}/>
     );
 
     return (
-        <Layout navigation={navigation} content={content} match={match} title={title}/>
+        <Layout navigation={navigation} content={content} match={match} title={'Diary: ' + date}/>
     );
 }
