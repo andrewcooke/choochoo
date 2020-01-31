@@ -27,7 +27,7 @@ const useStyles = makeStyles(theme => ({
 
 function Content(props) {
 
-    const {title, match, content} = props;
+    const {match, content} = props;
 
     const classes = useStyles();
 
@@ -35,14 +35,14 @@ function Content(props) {
         if (match.path !== '/') {
             return (
                 <List>
-                    <ListItemLink primary={title} to='/' icon={<ArrowBackIcon/>}/>
+                    <ListItemLink primary='Choochoo' to='/'/>
                 </List>
             )
         } else {
             return (
                 <List>
                     <ListItem>
-                        <ListItemText primary={title}/>
+                        <ListItemText primary='Choochoo'/>
                     </ListItem>
                 </List>
             )
@@ -63,7 +63,7 @@ function Content(props) {
 
 export default function SideDrawer(props) {
 
-    const {container, content, mobileOpen, handleDrawerToggle, match, title} = props;
+    const {container, content, mobileOpen, handleDrawerToggle, match} = props;
 
     const classes = useStyles();
     const theme = useTheme();
@@ -84,7 +84,7 @@ export default function SideDrawer(props) {
                         keepMounted: true, // Better open performance on mobile.
                     }}
                 >
-                    <Content match={match} content={content} title={title}/>
+                    <Content match={match} content={content}/>
                 </Drawer>
             </Hidden>
             <Hidden xsDown implementation="css">
@@ -95,7 +95,7 @@ export default function SideDrawer(props) {
                     variant="permanent"
                     open
                 >
-                    <Content match={match} content={content} title={title}/>
+                    <Content match={match} content={content}/>
                 </Drawer>
             </Hidden>
         </nav>

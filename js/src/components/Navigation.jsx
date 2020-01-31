@@ -27,10 +27,8 @@ const useStyles = makeStyles(theme => ({
 
 export default function Navigation(props) {
 
-    const classes = useStyles();
-
     const {content, match, title} = props;
-
+    const classes = useStyles();
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -50,11 +48,11 @@ export default function Navigation(props) {
                         <MenuIcon/>
                     </IconButton>
                     <Typography variant="h6" noWrap>
-                        Choochoo
+                        {title}
                     </Typography>
                 </Toolbar>
             </AppBar>
-            {SideDrawer({mobileOpen, handleDrawerToggle, content, match, title})}
+            {SideDrawer({mobileOpen, handleDrawerToggle, content, match})}
         </>
     )
 }
