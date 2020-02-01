@@ -1,8 +1,7 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import Layout from "../utils/Layout";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import {DatePicker} from "@material-ui/pickers";
-import {useParams} from 'react-router-dom';
 import parse from 'date-fns/parse';
 import format from 'date-fns/format';
 import ListItem from "@material-ui/core/ListItem";
@@ -67,9 +66,15 @@ function parseDate(date) {
 export default function Diary(props) {
 
     const {match, history} = props;
-    const {date} = useParams();
+    const {date} = match.params;
     const {ymd, fmt, title} = parseDate(date);
     const datetime = parse(date, fmt, new Date());
+
+    useEffect(() => {
+        fetch('api/diary/' + date)
+            .then(res => res.json())
+            .then(res => console.log(res));
+    });
 
     const content = (
         <p>
