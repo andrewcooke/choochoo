@@ -1,11 +1,14 @@
-import React, {useEffect} from 'react';
-import Layout from "../utils/Layout";
+import React, {useEffect, useState} from 'react';
+import Layout from "../../utils/Layout";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 import {DatePicker} from "@material-ui/pickers";
 import parse from 'date-fns/parse';
 import format from 'date-fns/format';
 import ListItem from "@material-ui/core/ListItem";
 import List from "@material-ui/core/List";
+import fmtDay from './fmtDay';
+import fmtMonth from "./fmtMonth";
+import fmtYear from "./fmtYear";
 
 
 const useStyles = makeStyles(theme => ({
@@ -32,11 +35,11 @@ function Picker(props) {
 
 function DiaryMenu(props) {
 
-    const {ymd, datetime, fmt, history} = props;
+    const {ymd, datetime, dateFmt, history} = props;
     const classes = useStyles();
 
     function onChange(datetime) {
-        const date = format(datetime, fmt);
+        const date = format(datetime, dateFmt);
         history.push('/' + date);
     }
 
@@ -52,12 +55,12 @@ function DiaryMenu(props) {
 }
 
 
-function parseDate(date) {
+function classifyDate(date) {
     const ymd = (date.match(/-/g) || []).length;
     switch (ymd) {
-        case 0: return {ymd, fmt:'yyyy', title:'Year'};
-        case 1: return {ymd, fmt:'yyyy-MM', title:'Month'};
-        case 2: return {ymd, fmt:'yyyy-MM-dd', title:'Day'};
+        case 0: return {ymd, dateFmt:'yyyy', fmt:fmtYear};
+        case 1: return {ymd, dateFmt:'yyyy-MM', fmt:fmtMonth};
+        case 2: return {ymd, dateFmt:'yyyy-MM-dd', fmt:fmtDay};
         default: throw('Bad date ' + date);
     }
 }
@@ -67,22 +70,18 @@ export default function Diary(props) {
 
     const {match, history} = props;
     const {date} = match.params;
-    const {ymd, fmt, title} = parseDate(date);
-    const datetime = parse(date, fmt, new Date());
+    const {ymd, dateFmt, fmt} = classifyDate(date);
+    const datetime = parse(date, dateFmt, new Date());
+    const [content, setContent] = useState(<p/>);
 
     useEffect(() => {
         fetch('api/diary/' + date)
             .then(res => res.json())
-            .then(res => console.log(res));
-    });
-
-    const content = (
-        <p>
-            Diary here.
-        </p>);
+            .then(res => setContent(fmt(res)));
+    }, [date]);
 
     const navigation = (
-        <DiaryMenu ymd={ymd} datetime={datetime} fmt={fmt} history={history}/>
+        <DiaryMenu ymd={ymd} datetime={datetime} dateFmt={dateFmt} history={history}/>
     );
 
     return (

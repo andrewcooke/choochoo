@@ -1,7 +1,7 @@
 import React from 'react';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
 import Welcome from "./pages/Welcome";
-import Diary from "./pages/Diary";
+import Diary from "./pages/diary/Diary";
 
 
 export default function Routes() {
