@@ -2,6 +2,29 @@
 import re
 from logging import getLogger
 
+'''
+The model is intended to be, as far as reasonable, self-describing.
+In other words, clients are expected to be able to display the model even if the order of the data changes,
+or if entries are added or removed.
+Exceptions to the above should be keyed on tag attributes (see below).
+The 'low-level' details (eg attribute names) of the model should not change.
+
+The model is hierarchical, modelled as a tree.
+So the outermost list is the 'root' and each entry is a 'node'.
+Non-leaf nodes, including  the root, are lists.
+Leaf nodes are dicts / maps and represent individual 'values'.
+
+Within a non-leaf node, the first child node is a 'text' type node (see below) that acts as a 'title' 
+describing the contents of the node.
+
+All leaf nodes have a 'type' attribute which describes the type of the node.
+The contents of a node of a given type match the constructor functions below.
+All leaf nodes have a 'value' attribute.
+All leaf nodes except those of type 'text' have a 'label' attribute.
+All leaf nodes have a 'tag' attribute that is intended as a machine-readable semantic marker (so where the client 
+needs exceptional processing I will try to maintain these even if the text of a node changes, for example).
+'''
+
 
 DB = 'db'
 DP = 'dp'
