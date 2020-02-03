@@ -37,6 +37,9 @@ function DiaryMenu(props) {
 
     const {ymd, datetime, dateFmt, history} = props;
     const classes = useStyles();
+    const writer = new Worker('static/writer.js');
+
+    writer.postMessage('hwllo world');
 
     function onChange(datetime) {
         const date = format(datetime, dateFmt);
