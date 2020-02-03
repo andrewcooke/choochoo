@@ -37,9 +37,9 @@ function DiaryMenu(props) {
 
     const {ymd, datetime, dateFmt, history} = props;
     const classes = useStyles();
-    const writer = new Worker('static/writer.js');
+    const writer = new Worker('/static/writer.js');
 
-    writer.postMessage('hwllo world');
+    writer.postMessage({1: 'one', 2: 'two'});
 
     function onChange(datetime) {
         const date = format(datetime, dateFmt);
@@ -78,7 +78,7 @@ export default function Diary(props) {
     const [content, setContent] = useState(<p/>);
 
     useEffect(() => {
-        fetch('api/diary/' + date)
+        fetch('/api/diary/' + date)
             .then(res => res.json())
             .then(res => setContent(fmt(res)));
     }, [date]);

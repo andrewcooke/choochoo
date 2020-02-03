@@ -1,15 +1,51 @@
 
-const pause_ms = 500;
+const pause_ms = 1000;
 var timeout;
+
+let data = {};
+
+
+const close = self.close;
+
+self.close = () => {
+  write();
+  close();
+};
 
 
 function queue(event) {
-    console.log(`queue ${event}`)
+    Object.entries(event.data).forEach(([key, value]) => {
+        console.log(`queue ${key}:${value}`);
+        data[key] = value;
+    });
 }
 
 
 function write() {
-    console.log('write');
+
+    function onError(response) {
+        response.text().then((msg) => console.log(msg));
+    }
+
+    function onSuccess(response) {
+        data = {};
+        console.log('written');
+    }
+
+    if (Object.keys(data).length > 0) {
+        Object.entries(data).forEach(([key, value]) => {
+            console.log(`write ${key}:${value}`);
+            fetch('/api/statistic', {method: 'post', body: JSON.stringify(data)})
+                .then((response) => {
+                    if (response.ok) {
+                        onSuccess(response);
+                    } else {
+                        onError(response);
+                    }
+                })
+                .catch(onError);
+        });
+    }
 }
 
 
