@@ -3,10 +3,13 @@ const resolve = require('path').resolve;
 
 const config = {
     devtool: 'eval-source-map',
-    entry: __dirname + '/src/index.jsx',
+    entry: {
+	bundle: __dirname + '/src/index.jsx',
+	writer: __dirname + '/src/workers/writer.jsx'
+    },
     output: {
         path: resolve('../py/ch2/web/static'),
-        filename: 'bundle.js',
+        filename: '[name].js',
         publicPath: 'static/'
     },
     resolve: {

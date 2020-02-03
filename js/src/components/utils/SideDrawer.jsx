@@ -2,7 +2,7 @@ import React from 'react';
 import Drawer from '@material-ui/core/Drawer';
 import Hidden from '@material-ui/core/Hidden';
 import {makeStyles, useTheme} from '@material-ui/core/styles';
-import {drawerWidth} from '../../layout'
+import {drawerWidth} from '../../constants'
 import Divider from "@material-ui/core/Divider";
 import List from "@material-ui/core/List";
 import ListItemLink from "./ListItemLink";
