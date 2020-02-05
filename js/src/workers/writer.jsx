@@ -35,16 +35,16 @@ function write() {
     if (Object.keys(data).length > 0) {
         Object.entries(data).forEach(([key, value]) => {
             console.log(`write ${key}:${value}`);
-            fetch('/api/statistic', {method: 'post', body: JSON.stringify(data)})
-                .then((response) => {
-                    if (response.ok) {
-                        onSuccess(response);
-                    } else {
-                        onError(response);
-                    }
-                })
-                .catch(onError);
         });
+        fetch('/api/statistics', {method: 'post', body: JSON.stringify(data)})
+            .then((response) => {
+                if (response.ok) {
+                    onSuccess(response);
+                } else {
+                    onError(response);
+                }
+            })
+            .catch(onError);
     }
 }
 

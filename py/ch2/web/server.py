@@ -48,6 +48,7 @@ class WebServer:
         static = Static('.static')
         self.url_map = Map([
             Rule('/api/diary/<date>', endpoint=api.diary, methods=('GET',)),
+            Rule('/api/statistics', endpoint=api.statistics, methods=('POST',)),
             Rule('/static/<path:path>', endpoint=static, methods=('GET', )),
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
             Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',))
@@ -90,6 +91,9 @@ class Api:
         else:
             data = read_schedule(s, Schedule(schedule), date)
         return Response(dumps(rewrite_db(list(data))))
+
+    def statistics(self, request, s):
+        return Response()
 
 
 class Static:
