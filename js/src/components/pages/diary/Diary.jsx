@@ -61,7 +61,7 @@ function classifyDate(date) {
         case 0: return {ymd, dateFmt:'yyyy', fmt:fmtYear};
         case 1: return {ymd, dateFmt:'yyyy-MM', fmt:fmtMonth};
         case 2: return {ymd, dateFmt:'yyyy-MM-dd', fmt:fmtDay};
-        default: throw('Bad date ' + date);
+        default: throw 'Bad date ' + date;
     }
 }
 

@@ -47,8 +47,8 @@ class WebServer:
         api = Api()
         static = Static('.static')
         self.url_map = Map([
-            Rule('/api/diary/<date>', endpoint=api.diary, methods=('GET',)),
-            Rule('/api/statistics', endpoint=api.statistics, methods=('POST',)),
+            Rule('/api/diary/<date>', endpoint=api.read_diary, methods=('GET',)),
+            Rule('/api/statistics', endpoint=api.write_statistics, methods=('POST',)),
             Rule('/static/<path:path>', endpoint=static, methods=('GET', )),
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
             Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',))
@@ -84,7 +84,7 @@ def parse_date(date):
 
 class Api:
 
-    def diary(self, request, s, date):
+    def read_diary(self, request, s, date):
         schedule, date = parse_date(date)
         if schedule == 'd':
             data = read_date(s, date)
@@ -92,7 +92,7 @@ class Api:
             data = read_schedule(s, Schedule(schedule), date)
         return Response(dumps(rewrite_db(list(data))))
 
-    def statistics(self, request, s):
+    def write_statistics(self, request, s):
         return Response()
 
 

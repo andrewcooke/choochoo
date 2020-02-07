@@ -7,6 +7,7 @@ import ListItem from "@material-ui/core/ListItem";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
 import Collapse from "@material-ui/core/Collapse";
 import ListItemLink from "../utils/ListItemLink";
+import format from 'date-fns/format';
 
 
 const useStyles = makeStyles(theme => ({
@@ -41,9 +42,9 @@ export default function Welcome(props) {
                 </ListItem>
                 <Collapse in={open} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding className={classes.nested}>
-                        <ListItemLink primary='Day' to='/2020-01-30'/>
-                        <ListItemLink primary='Month' to='/2020-01'/>
-                        <ListItemLink primary='Year' to='/2020'/>
+                        <ListItemLink primary='Day' to={'/' + format(new Date(), 'yyyy-MM-dd')}/>
+                        <ListItemLink primary='Month' to={'/' + format(new Date(), 'yyyy-MM')}/>
+                        <ListItemLink primary='Year' to={'/' + format(new Date(), 'yyyy')}/>
                     </List>
                 </Collapse>
                 <ListItemLink primary='Analysis' to='/analysis'/>
