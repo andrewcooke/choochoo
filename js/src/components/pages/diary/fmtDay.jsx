@@ -1,6 +1,6 @@
 import React from 'react';
 import {TreeView, TreeItem} from '@material-ui/lab';
-import {Typography} from "@material-ui/core";
+import {Box, Container, Typography} from "@material-ui/core";
 import EditField from "./EditField";
 import IntegerField from "./IntegerField";
 import FloatField from "./FloatField";
@@ -18,14 +18,19 @@ function fmtJson(writer) {
     function fmtList(json) {
         if (! Array.isArray(json)) throw 'Expected array';
         const head = json[0], rest = json.slice(1);
-        let dom = [];
+        let dom = [], fields = [];
         rest.forEach((row) => {
             if (Array.isArray(row)) {
+                if (fields.length) {
+                    dom.push(<div>{fields}</div>);
+                    fields = [];
+                }
                 dom.push(fmtList(row));
             } else {
-                dom.push(fmtField(writer, row));
+                fields.push(fmtField(writer, row));
             }
         });
+        if (fields.length) dom.push(<form>{fields}</form>);
         return <TreeItem key={json.id} nodeId={json.id} label={head.value}>{dom}</TreeItem>;
     }
 
