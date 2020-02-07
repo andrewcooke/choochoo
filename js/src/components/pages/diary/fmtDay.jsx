@@ -2,6 +2,8 @@ import React from 'react';
 import {TreeView, TreeItem} from '@material-ui/lab';
 import {Typography} from "@material-ui/core";
 import EditField from "./EditField";
+import IntegerField from "./IntegerField";
+import FloatField from "./FloatField";
 
 
 export default function fmtDay(writer, json) {
@@ -16,20 +18,14 @@ function fmtJson(writer) {
     function fmtList(json) {
         if (! Array.isArray(json)) throw 'Expected array';
         const head = json[0], rest = json.slice(1);
-        let dom = [], label = [], id = '';
+        let dom = [];
         rest.forEach((row) => {
             if (Array.isArray(row)) {
-                if (label.length) {
-                    dom.push(<TreeItem key={id} nodeId={id} label={label}/>);
-                    label = [];
-                }
                 dom.push(fmtList(row));
             } else {
-                if (! label.length) id = row.id + ',outer';
-                label.push(fmtField(writer, row));
+                dom.push(fmtField(writer, row));
             }
         });
-        if (label.length) dom.push(<TreeItem key={id} nodeId={id} label={label}/>);
         return <TreeItem key={json.id} nodeId={json.id} label={head.value}>{dom}</TreeItem>;
     }
 
@@ -40,6 +36,10 @@ function fmtJson(writer) {
 function fmtField(writer, json) {
     if (json.type === 'edit') {
         return <EditField key={json.id} writer={writer} json={json}/>
+    } else if (json.type === 'integer') {
+        return <IntegerField key={json.id} writer={writer} json={json}/>
+    } else if (json.type === 'float') {
+        return <FloatField key={json.id} writer={writer} json={json}/>
     } else {
         return <Typography key={json.id}>{json.label}={json.value}</Typography>;
     }
