@@ -6,7 +6,7 @@ import parse from 'date-fns/parse';
 import format from 'date-fns/format';
 import ListItem from '@material-ui/core/ListItem';
 import List from "@material-ui/core/List";
-import fmtDay from './fmtDay';
+import Day from './Day';
 import fmtMonth from "./fmtMonth";
 import fmtYear from "./fmtYear";
 
@@ -58,9 +58,9 @@ function DiaryMenu(props) {
 function classifyDate(date) {
     const ymd = (date.match(/-/g) || []).length;
     switch (ymd) {
-        case 0: return {ymd, dateFmt:'yyyy', fmt:fmtYear};
-        case 1: return {ymd, dateFmt:'yyyy-MM', fmt:fmtMonth};
-        case 2: return {ymd, dateFmt:'yyyy-MM-dd', fmt:fmtDay};
+        case 0: return {ymd, dateFmt:'yyyy', component:fmtYear};
+        case 1: return {ymd, dateFmt:'yyyy-MM', component:fmtMonth};
+        case 2: return {ymd, dateFmt:'yyyy-MM-dd', component:Day};
         default: throw 'Bad date ' + date;
     }
 }
@@ -70,15 +70,15 @@ export default function Diary(props) {
 
     const {match, history} = props;
     const {date} = match.params;
-    const {ymd, dateFmt, fmt} = classifyDate(date);
+    const {ymd, dateFmt, component} = classifyDate(date);
     const datetime = parse(date, dateFmt, new Date());
     const [content, setContent] = useState(<p/>);
     const writer = new Worker('/static/writer.js');
 
     useEffect(() => {
         fetch('/api/diary/' + date)
-            .then(res => res.json())
-            .then(res => setContent(fmt(writer, res)));
+            .then(response => response.json())
+            .then(json => setContent(component({writer, json})));
     }, [date]);
 
     const navigation = (

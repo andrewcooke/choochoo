@@ -1,44 +1,49 @@
 import React from 'react';
-import {TreeView, TreeItem} from '@material-ui/lab';
 import {Box, Container, Typography} from "@material-ui/core";
 import EditField from "./EditField";
 import IntegerField from "./IntegerField";
 import FloatField from "./FloatField";
+import Grid from "@material-ui/core/Grid";
 
 
-export default function fmtDay(writer, json) {
+export default function Day(props) {
+
+    const {writer, json} = props;
+
+    if (! Array.isArray(json)) throw 'Expected array';
     const ids = addIds(json);
-    console.log(json);
-    return (<TreeView defaultExpanded={ids}>{fmtJson(writer)(json)}</TreeView>);
+
+    return <Grid container key='outer'><Outer writer={writer} json={json}/></Grid>;
 }
 
 
-function fmtJson(writer) {
+function Outer(props) {
 
-    function fmtList(json) {
-        if (! Array.isArray(json)) throw 'Expected array';
-        const head = json[0], rest = json.slice(1);
-        let dom = [], fields = [];
-        rest.forEach((row) => {
-            if (Array.isArray(row)) {
-                if (fields.length) {
-                    dom.push(<div>{fields}</div>);
-                    fields = [];
-                }
-                dom.push(fmtList(row));
-            } else {
-                fields.push(fmtField(writer, row));
+    const {writer, json} = props;
+    const head = json[0], rest = json.slice(1);
+
+    let children = [], inners = [];
+    rest.forEach((row) => {
+        if (Array.isArray(row)) {
+            if (inners.length) {
+                children.push(<div>{inners}</div>);
+                inners = [];
             }
-        });
-        if (fields.length) dom.push(<form>{fields}</form>);
-        return <TreeItem key={json.id} nodeId={json.id} label={head.value}>{dom}</TreeItem>;
-    }
+            children.push(<Outer writer={writer} json={row}/>);
+        } else {
+            inners.push(<Inner writer={writer} json={row}/>);
+        }
+    });
+    if (inners.length) children.push(<form>{inners}</form>);
 
-    return fmtList;
+    return <Grid item container key={json.id}>{children}</Grid>;
 }
 
 
-function fmtField(writer, json) {
+function Inner(props) {
+
+    const {writer, json} = props;
+
     if (json.type === 'edit') {
         return <EditField key={json.id} writer={writer} json={json}/>
     } else if (json.type === 'integer') {
@@ -70,7 +75,7 @@ function addIds(json) {
 
     function list(json) {
         ids.push(json.id);
-        if (Array.isArray(json)) json.map(list);
+        if (Array.isArray(json)) json.forEach(list);
     }
 
     list(json);
