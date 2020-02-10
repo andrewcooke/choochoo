@@ -1,9 +1,6 @@
 import React from 'react';
 import {Grid, Typography} from "@material-ui/core";
-import EditField from "./EditField";
-import IntegerField from "./IntegerField";
-import FloatField from "./FloatField";
-import ScoreField from "./ScoreField";
+import {EditField, IntegerField, FloatField, ScoreField} from "./fields";
 
 
 export default function Day(props) {
@@ -61,7 +58,9 @@ function Inner(props) {
         return <ScoreField key={json.id} writer={writer} json={json}/>
     } else {
         console.log('no support for type: ' + json.type)
-        return <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>;
+        return (<Grid item xs={4}>
+            <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>
+        </Grid>);
     }
 }
 
