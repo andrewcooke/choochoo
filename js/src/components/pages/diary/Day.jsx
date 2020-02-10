@@ -1,42 +1,48 @@
 import React from 'react';
-import {Box, Container, Typography} from "@material-ui/core";
+import {Grid, Typography} from "@material-ui/core";
 import EditField from "./EditField";
 import IntegerField from "./IntegerField";
 import FloatField from "./FloatField";
-import Grid from "@material-ui/core/Grid";
+import ScoreField from "./ScoreField";
 
 
 export default function Day(props) {
 
     const {writer, json} = props;
 
-    if (! Array.isArray(json)) throw 'Expected array';
+    if (!Array.isArray(json)) throw 'Expected array';
     const ids = addIds(json);
 
-    return <Grid container key='outer'><Outer writer={writer} json={json}/></Grid>;
+    // drop outer date label since we already have that in the page
+    return (<Grid container direction='column'>
+        {json.slice(1).map(row => <Outer writer={writer} json={row}/>)}
+    </Grid>);
 }
 
 
 function Outer(props) {
 
-    const {writer, json} = props;
+    const {writer, json, level=1} = props;
     const head = json[0], rest = json.slice(1);
 
-    let children = [], inners = [];
+    let children = [];
     rest.forEach((row) => {
         if (Array.isArray(row)) {
-            if (inners.length) {
-                children.push(<div>{inners}</div>);
-                inners = [];
-            }
-            children.push(<Outer writer={writer} json={row}/>);
+            children.push(<Outer writer={writer} json={row} level={level + 1}/>);
         } else {
-            inners.push(<Inner writer={writer} json={row}/>);
+            children.push(<Inner writer={writer} json={row}/>);
         }
     });
-    if (inners.length) children.push(<form>{inners}</form>);
 
-    return <Grid item container key={json.id}>{children}</Grid>;
+    return (<Grid item container spacing={1} key={json.id}>
+        <Grid item xs={12} key={head.id}>
+            <Typography variant={'h' + level}>{head.value}</Typography>
+        </Grid>
+        <Grid item xs={1} key={json.id + 'indent'}/>
+        <Grid item container xs={11} spacing={2} key={json.id + 'content'}>
+            {children}
+        </Grid>
+    </Grid>);
 }
 
 
@@ -50,8 +56,11 @@ function Inner(props) {
         return <IntegerField key={json.id} writer={writer} json={json}/>
     } else if (json.type === 'float') {
         return <FloatField key={json.id} writer={writer} json={json}/>
+    } else if (json.type === 'score') {
+        return <ScoreField key={json.id} writer={writer} json={json}/>
     } else {
-        return <Typography key={json.id}>{json.label}={json.value}</Typography>;
+        console.log('no support for type: ' + json.type)
+        return <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>;
     }
 }
 

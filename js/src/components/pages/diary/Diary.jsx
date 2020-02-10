@@ -4,8 +4,7 @@ import makeStyles from "@material-ui/core/styles/makeStyles";
 import {DatePicker} from "@material-ui/pickers";
 import parse from 'date-fns/parse';
 import format from 'date-fns/format';
-import ListItem from '@material-ui/core/ListItem';
-import List from "@material-ui/core/List";
+import {ListItem, List} from '@material-ui/core';
 import Day from './Day';
 import fmtMonth from "./fmtMonth";
 import fmtYear from "./fmtYear";
@@ -86,6 +85,6 @@ export default function Diary(props) {
     );
 
     return (
-        <Layout navigation={navigation} content={content} match={match} title={'Diary: ' + date}/>
+        <Layout navigation={navigation} content={content} match={match} title={date}/>
     );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import Layout from "../utils/Layout";
 import List from "@material-ui/core/List";
 import {ListItemText} from "@material-ui/core";
@@ -28,7 +28,7 @@ export default function Welcome(props) {
 
     const classes = useStyles();
 
-    const [open, setOpen] = React.useState(true);
+    const [open, setOpen] = useState(true);
     const handleClick = () => {
         setOpen(!open);
     };
