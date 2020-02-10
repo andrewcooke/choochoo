@@ -7,7 +7,7 @@ import {Link} from "react-router-dom";
 
 export default function ListItemLink(props) {
 
-    const {icon, primary, to} = props;
+    const {icon, primary, to, ...rest} = props;
 
     const renderLink = React.useMemo(
         () => React.forwardRef(
@@ -20,7 +20,7 @@ export default function ListItemLink(props) {
         <li>
             <ListItem button component={renderLink}>
                 {icon ? <ListItemIcon>{icon}</ListItemIcon> : null}
-                <ListItemText primary={primary}/>
+                <ListItemText primary={primary} {...rest}/>
             </ListItem>
         </li>
     );

@@ -47,7 +47,7 @@ export default function Navigation(props) {
                     >
                         <MenuIcon/>
                     </IconButton>
-                    <Typography variant="h6" noWrap>
+                    <Typography variant='h1' noWrap>
                         {title}
                     </Typography>
                 </Toolbar>

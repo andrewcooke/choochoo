@@ -22,7 +22,8 @@ export default function Day(props) {
 
 function Outer(props) {
 
-    const {writer, json, level=1} = props;
+    // start level at 3 because 'Choochoo' is 1
+    const {writer, json, level=2} = props;
     const head = json[0], rest = json.slice(1);
 
     let children = [];

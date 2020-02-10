@@ -34,14 +34,14 @@ function Content(props) {
         if (match.path !== '/') {
             return (
                 <List>
-                    <ListItemLink primary='Choochoo' to='/'/>
+                    <ListItemLink primaryTypographyProps={{variant: 'h1'}} primary='Choochoo' to='/'/>
                 </List>
             )
         } else {
             return (
                 <List>
                     <ListItem>
-                        <ListItemText primary='Choochoo'/>
+                        <ListItemText primaryTypographyProps={{variant: 'h1'}} primary='Choochoo'/>
                     </ListItem>
                 </List>
             )

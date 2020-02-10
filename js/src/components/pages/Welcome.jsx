@@ -1,11 +1,8 @@
 import React, {useState} from 'react';
 import Layout from "../utils/Layout";
-import List from "@material-ui/core/List";
-import {ListItemText} from "@material-ui/core";
+import {ListItemText, List, ListItem, Collapse, Typography} from "@material-ui/core";
 import makeStyles from "@material-ui/core/styles/makeStyles";
-import ListItem from "@material-ui/core/ListItem";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
-import Collapse from "@material-ui/core/Collapse";
 import ListItemLink from "../utils/ListItemLink";
 import format from 'date-fns/format';
 
@@ -53,9 +50,9 @@ export default function Welcome(props) {
     );
 
     const content = (
-        <p>
-            Welcome to Choochoo. More here (replace p with Typography).
-        </p>);
+        <Typography variant='body1'>
+            Welcome to Choochoo. More here.
+        </Typography>);
 
     return (
         <Layout navigation={navigation} content={content} match={match} title='Welcome'/>
