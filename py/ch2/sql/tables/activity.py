@@ -1,7 +1,7 @@
 
 import datetime as dt
 
-from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc
 from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
@@ -70,6 +70,22 @@ class ActivityJournal(Source):
     @classmethod
     def from_id(cls, s, id):
         return s.query(ActivityJournal).filter(ActivityJournal.id == id).one()
+
+    @classmethod
+    def before_local_time(cls, s, local_time):
+        time = local_date_to_time(local_time)
+        return s.query(ActivityJournal). \
+            filter(ActivityJournal.start < time). \
+            order_by(desc(ActivityJournal.start)). \
+            limit(1).one_or_none()
+
+    @classmethod
+    def after_local_time(cls, s, local_time):
+        time = local_date_to_time(local_time)
+        return s.query(ActivityJournal). \
+            filter(ActivityJournal.start >= (time + dt.timedelta(days=1))). \
+            order_by(ActivityJournal.start). \
+            limit(1).one_or_none()
 
 
 class ActivityTimespan(Base):

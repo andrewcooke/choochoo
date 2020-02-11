@@ -10,17 +10,14 @@ import fmtYear from "./fmtYear";
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
-import { add } from 'date-fns'
+import {add} from 'date-fns';
 
 
 const useStyles = makeStyles(theme => ({
     root: {
         width: '100%',
-        maxWidth: 360,
+        maxWidth: 360,  // what is this for?  is it the same as constants.drawerWidth?
         backgroundColor: theme.palette.background.paper,
-    },
-    nested: {
-        paddingLeft: theme.spacing(4),
     },
 }));
 
@@ -28,10 +25,38 @@ const useStyles = makeStyles(theme => ({
 function Picker(props) {
     const {ymdSelected, datetime, onChange} = props;
     switch (ymdSelected) {
-        case 0: return <DatePicker value={datetime} views={["year"]} onChange={onChange}/>;
-        case 1: return <DatePicker value={datetime} views={["year", "month"]} onChange={onChange}/>;
-        case 2: return <DatePicker value={datetime} animateYearScrolling onChange={onChange}/>;
+        case 0:
+            return <DatePicker value={datetime} views={["year"]} onChange={onChange}/>;
+        case 1:
+            return <DatePicker value={datetime} views={["year", "month"]} onChange={onChange}/>;
+        case 2:
+            return <DatePicker value={datetime} animateYearScrolling onChange={onChange}/>;
     }
+}
+
+
+function BeforeNextButtons(props) {
+
+    const {centre, onBefore, onCentre, onNext, label} = props;
+
+    return (<ListItem>
+        <Grid container alignItems='center'>
+            <Grid item xs={5} justify='center'>
+                <Typography variant='body1' align='left'>{label}</Typography>
+            </Grid>
+            <Grid item xs={2} justify='center'>
+                <IconButton edge='start' onClick={onBefore}><NavigateBeforeIcon/></IconButton>
+            </Grid>
+            {centre ?
+                <Grid item xs={3} justify='center'>
+                    <IconButton onClick={onCentre}><CalendarTodayIcon/></IconButton>
+                </Grid> :
+                <Grid item xs={3} justify='center'/>}
+            <Grid item xs={2} justify='center'>
+                <IconButton onClick={onNext}><NavigateNextIcon/></IconButton>
+            </Grid>
+        </Grid>
+    </ListItem>);
 }
 
 
@@ -44,38 +69,32 @@ function DateButtons(props) {
 
     function delta(n) {
         switch (ymd) {
-            case 0: return {years: n};
-            case 1: return {months: n};
-            case 2: return {days: n};
+            case 0:
+                return {years: n};
+            case 1:
+                return {months: n};
+            case 2:
+                return {days: n};
         }
     }
 
-    function before() {onChange(add(datetime, delta(-1)));}
-    function next() {onChange(add(datetime, delta(1)));}
-    function today() {onChange(new Date());}
+    function onBefore() {
+        onChange(add(datetime, delta(-1)));
+    }
+
+    function onNext() {
+        onChange(add(datetime, delta(1)));
+    }
+
+    function onCentre() {
+        onChange(new Date());
+    }
 
     if (ymd > ymdSelected) {
         return <></>;
     } else {
-        const centre = (ymd === ymdSelected ?
-            <Grid item xs={3} justify='center'>
-                <IconButton onClick={today}><CalendarTodayIcon/></IconButton>
-            </Grid> :
-            <Grid item xs={3} justify='center'/>);
-        return (<ListItem>
-                    <Grid container alignItems='center'>
-                        <Grid item xs={5} justify='center'>
-                            <Typography variant='body1' align='left'>{YMD[ymd]}</Typography>
-                        </Grid>
-                        <Grid item xs={2} justify='center'>
-                            <IconButton edge='start' onClick={before}><NavigateBeforeIcon/></IconButton>
-                        </Grid>
-                        {centre}
-                        <Grid item xs={2} justify='center'>
-                            <IconButton onClick={next}><NavigateNextIcon/></IconButton>
-                        </Grid>
-                    </Grid>
-                </ListItem>);
+        return (<BeforeNextButtons centre={ymd === ymdSelected} onCentre={onCentre}
+                                   onBefore={onBefore} onNext={onNext} label={YMD[ymd]}/>);
     }
 }
 
@@ -90,6 +109,14 @@ function DiaryMenu(props) {
         history.push('/' + date);
     }
 
+    function activityBefore() {
+        window.location = '/redirect/before/' + format(datetime, dateFmt);
+    }
+
+    function activityNext() {
+        window.location = '/redirect/after/' + format(datetime, dateFmt);
+    }
+
     return (
         <>
             <List component="nav" className={classes.root}>
@@ -99,21 +126,7 @@ function DiaryMenu(props) {
                 <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
                 <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
                 <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
-                <ListItem>
-                    <Grid container alignItems='center'>
-                        <Grid item xs={5} justify='center'>
-                            <Typography variant='body1' align='left'>Activity</Typography>
-                        </Grid>
-                        <Grid item xs={2} justify='center'>
-                            <IconButton edge='start'><NavigateBeforeIcon/></IconButton>
-                        </Grid>
-                        <Grid item xs={3} justify='center'>
-                        </Grid>
-                        <Grid item xs={2} justify='center'>
-                            <IconButton><NavigateNextIcon/></IconButton>
-                        </Grid>
-                    </Grid>
-                </ListItem>
+                <BeforeNextButtons label='Activity' onBefore={activityBefore} onNext={activityNext}/>
             </List>
         </>
     );
@@ -123,10 +136,14 @@ function DiaryMenu(props) {
 function classifyDate(date) {
     const ymdSelected = (date.match(/-/g) || []).length;
     switch (ymdSelected) {
-        case 0: return {ymdSelected, dateFmt:'yyyy', component:fmtYear};
-        case 1: return {ymdSelected, dateFmt:'yyyy-MM', component:fmtMonth};
-        case 2: return {ymdSelected, dateFmt:'yyyy-MM-dd', component:Day};
-        default: throw 'Bad date ' + date;
+        case 0:
+            return {ymdSelected, dateFmt: 'yyyy', component: fmtYear};
+        case 1:
+            return {ymdSelected, dateFmt: 'yyyy-MM', component: fmtMonth};
+        case 2:
+            return {ymdSelected, dateFmt: 'yyyy-MM-dd', component: Day};
+        default:
+            throw 'Bad date ' + date;
     }
 }
 

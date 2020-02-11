@@ -10,12 +10,15 @@ from os.path import split, sep, splitext
 from werkzeug import Response, Request, run_simple
 from werkzeug.exceptions import HTTPException
 from werkzeug.routing import Map, Rule
+from werkzeug.utils import redirect
 
 from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV
 from ..diary.database import read_date, read_schedule
 from ..diary.views.web import rewrite_db
 from ..lib.schedule import Schedule
 from ..lib.server import BaseController
+from ..lib.date import time_to_local_time
+from ..sql import ActivityJournal
 
 log = getLogger(__name__)
 
@@ -46,10 +49,13 @@ class WebServer:
         self.__db = db
         api = Api()
         static = Static('.static')
+        redirect = Redirect()
         self.url_map = Map([
             Rule('/api/diary/<date>', endpoint=api.read_diary, methods=('GET',)),
             Rule('/api/statistics', endpoint=api.write_statistics, methods=('POST',)),
             Rule('/static/<path:path>', endpoint=static, methods=('GET', )),
+            Rule('/redirect/after/<date>', endpoint=redirect.after, methods=('GET', )),
+            Rule('/redirect/before/<date>', endpoint=redirect.before, methods=('GET', )),
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
             Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',))
         ])
@@ -136,3 +142,22 @@ class Static:
         if ext:
             ext = ext[1:]
         response.content_type = self.CONTENT_TYPE[ext]
+
+
+class Redirect:
+
+    FMT = ('%Y', '%Y-%m', '%Y-%m-%d')
+
+    def after(self, request, s, date):
+        ymd = date.count('-')
+        journal = ActivityJournal.after_local_time(s, date)
+        if journal:
+            date = time_to_local_time(journal.start, self.FMT[ymd])
+        return redirect('/' + date)
+
+    def before(self, request, s, date):
+        ymd = date.count('-')
+        journal = ActivityJournal.before_local_time(s, date)
+        if journal:
+            date = time_to_local_time(journal.start, self.FMT[ymd])
+        return redirect('/' + date)

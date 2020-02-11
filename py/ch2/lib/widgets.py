@@ -89,13 +89,10 @@ class DateSwitcher(App):
 
     def _next_prev_activity(self, c):
         s = self._session
-        q = s.query(ActivityJournal)
-        time = local_date_to_time(self._date)
         if c == 'a':
-            q = q.filter(ActivityJournal.start < time).order_by(desc(ActivityJournal.start))
+            journal = ActivityJournal.before_local_time(s, self._date)
         else:
-            q = q.filter(ActivityJournal.start >= (time + dt.timedelta(days=1))).order_by(ActivityJournal.start)
-        journal = q.limit(1).one_or_none()
+            journal = ActivityJournal.after_local_time(s, self._date)
         if journal:
             self._change_date(time_to_local_date(journal.start))
 
