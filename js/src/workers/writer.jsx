@@ -1,6 +1,6 @@
 
 const pause_ms = 1000;
-var timeout;
+let timeout;
 
 let data = {};
 

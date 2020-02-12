@@ -35,9 +35,9 @@ function Picker(props) {
 }
 
 
-function BeforeNextButtons(props) {
+function BeforeNextButtonsBase(props) {
 
-    const {centre, onBefore, onCentre, onNext, label} = props;
+    const {label, before, centre, next} = props;
 
     return (<ListItem>
         <Grid container alignItems='center'>
@@ -45,18 +45,65 @@ function BeforeNextButtons(props) {
                 <Typography variant='body1' align='left'>{label}</Typography>
             </Grid>
             <Grid item xs={2} justify='center'>
-                <IconButton edge='start' onClick={onBefore}><NavigateBeforeIcon/></IconButton>
+                {before}
             </Grid>
-            {centre ?
-                <Grid item xs={3} justify='center'>
-                    <IconButton onClick={onCentre}><CalendarTodayIcon/></IconButton>
-                </Grid> :
-                <Grid item xs={3} justify='center'/>}
+            <Grid item xs={3} justify='center'>
+                {centre}
+            </Grid>
             <Grid item xs={2} justify='center'>
-                <IconButton onClick={onNext}><NavigateNextIcon/></IconButton>
+                {next}
             </Grid>
         </Grid>
     </ListItem>);
+}
+
+
+function ActivityButtons(props) {
+
+    const {date, dateFmt, onChange} = props;
+    const [before, setBefore] = useState(<IconButton edge='start' disabled><NavigateBeforeIcon/></IconButton>);
+    const [next, setNext] = useState(<IconButton disabled><NavigateNextIcon/></IconButton>);
+
+    function setContent(json) {
+
+        const {before, after} = json;
+        
+        if (before !== undefined) {
+            setBefore(<IconButton edge='start' onClick={() => onChange(parse(before, dateFmt, new Date()))}>
+                <NavigateBeforeIcon/>
+            </IconButton>);
+        }
+        if (after !== undefined) {
+            setNext(<IconButton onClick={() => onChange(parse(after, dateFmt, new Date()))}>
+                <NavigateNextIcon/>
+            </IconButton>)
+        }
+    }
+
+    useEffect(() => {
+        fetch('/api/neighbour-activities/' + date)
+            .then(response => response.json())
+            .then(setContent);
+    }, [date]);
+
+    return (<BeforeNextButtonsBase
+        label={<Typography variant='body1' align='left'>Activity</Typography>}
+        before={before}
+        next={next}
+    />);
+}
+
+
+function ImmediateBeforeNextButtons(props) {
+
+    const {centre, onBefore, onCentre, onNext, label} = props;
+
+    return (<BeforeNextButtonsBase
+        label={<Typography variant='body1' align='left'>{label}</Typography>}
+        before={<IconButton edge='start' onClick={onBefore}><NavigateBeforeIcon/></IconButton>}
+        centre={centre ? <IconButton onClick={onCentre}><CalendarTodayIcon/></IconButton> : null}
+        next={<IconButton onClick={onNext}><NavigateNextIcon/></IconButton>}
+    />);
 }
 
 
@@ -93,8 +140,8 @@ function DateButtons(props) {
     if (ymd > ymdSelected) {
         return <></>;
     } else {
-        return (<BeforeNextButtons centre={ymd === ymdSelected} onCentre={onCentre}
-                                   onBefore={onBefore} onNext={onNext} label={YMD[ymd]}/>);
+        return (<ImmediateBeforeNextButtons centre={ymd === ymdSelected} onCentre={onCentre}
+                                            onBefore={onBefore} onNext={onNext} label={YMD[ymd]}/>);
     }
 }
 
@@ -103,6 +150,7 @@ function DiaryMenu(props) {
 
     const {ymdSelected, datetime, dateFmt, history} = props;
     const classes = useStyles();
+    const date = format(datetime, dateFmt);
 
     function onChange(datetime) {
         const date = format(datetime, dateFmt);
@@ -110,11 +158,11 @@ function DiaryMenu(props) {
     }
 
     function activityBefore() {
-        window.location = '/redirect/before/' + format(datetime, dateFmt);
+        window.location = '/redirect/before/' + date;
     }
 
     function activityNext() {
-        window.location = '/redirect/after/' + format(datetime, dateFmt);
+        window.location = '/redirect/after/' + date;
     }
 
     return (
@@ -126,7 +174,7 @@ function DiaryMenu(props) {
                 <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
                 <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
                 <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
-                <BeforeNextButtons label='Activity' onBefore={activityBefore} onNext={activityNext}/>
+                <ActivityButtons date={date} dateFmt={dateFmt} onChange={onChange}/>
             </List>
         </>
     );

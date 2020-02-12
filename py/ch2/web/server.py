@@ -52,6 +52,7 @@ class WebServer:
         redirect = Redirect()
         self.url_map = Map([
             Rule('/api/diary/<date>', endpoint=api.read_diary, methods=('GET',)),
+            Rule('/api/neighbour-activities/<date>', endpoint=api.read_neighbour_activities, methods=('GET',)),
             Rule('/api/statistics', endpoint=api.write_statistics, methods=('POST',)),
             Rule('/static/<path:path>', endpoint=static, methods=('GET', )),
             Rule('/redirect/after/<date>', endpoint=redirect.after, methods=('GET', )),
@@ -90,6 +91,8 @@ def parse_date(date):
 
 class Api:
 
+    FMT = ('%Y', '%Y-%m', '%Y-%m-%d')
+
     def read_diary(self, request, s, date):
         schedule, date = parse_date(date)
         if schedule == 'd':
@@ -97,6 +100,15 @@ class Api:
         else:
             data = read_schedule(s, Schedule(schedule), date)
         return Response(dumps(rewrite_db(list(data))))
+
+    def read_neighbour_activities(self, request, s, date):
+        ymd = date.count('-')
+        before = ActivityJournal.before_local_time(s, date)
+        after = ActivityJournal.after_local_time(s, date)
+        result = {}
+        if before: result['before'] = time_to_local_time(before.start, self.FMT[ymd])
+        if after: result['after'] = time_to_local_time(after.start, self.FMT[ymd])
+        return Response(dumps(result))
 
     def write_statistics(self, request, s):
         return Response()
