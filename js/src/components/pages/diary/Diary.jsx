@@ -67,7 +67,7 @@ function ActivityButtons(props) {
     function setContent(json) {
 
         const {before, after} = json;
-        
+
         if (before !== undefined) {
             setBefore(<IconButton edge='start' onClick={() => onChange(parse(before, dateFmt, new Date()))}>
                 <NavigateBeforeIcon/>
