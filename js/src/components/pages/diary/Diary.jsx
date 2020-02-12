@@ -60,24 +60,27 @@ function BeforeNextButtonsBase(props) {
 
 function ActivityButtons(props) {
 
+    const noBefore = <IconButton edge='start' disabled><NavigateBeforeIcon/></IconButton>;
+    const noNext = <IconButton disabled><NavigateNextIcon/></IconButton>;
     const {date, dateFmt, onChange} = props;
-    const [before, setBefore] = useState(<IconButton edge='start' disabled><NavigateBeforeIcon/></IconButton>);
-    const [next, setNext] = useState(<IconButton disabled><NavigateNextIcon/></IconButton>);
+    const [before, setBefore] = useState(noBefore);
+    const [next, setNext] = useState(noNext);
 
     function setContent(json) {
 
         const {before, after} = json;
 
-        if (before !== undefined) {
-            setBefore(<IconButton edge='start' onClick={() => onChange(parse(before, dateFmt, new Date()))}>
+        setBefore(before !== undefined ?
+            <IconButton edge='start' onClick={() => onChange(parse(before, dateFmt, new Date()))}>
                 <NavigateBeforeIcon/>
-            </IconButton>);
-        }
-        if (after !== undefined) {
-            setNext(<IconButton onClick={() => onChange(parse(after, dateFmt, new Date()))}>
+            </IconButton> :
+            noBefore);
+
+        setNext(after !== undefined ?
+            <IconButton onClick={() => onChange(parse(after, dateFmt, new Date()))}>
                 <NavigateNextIcon/>
-            </IconButton>)
-        }
+            </IconButton> :
+            noNext);
     }
 
     useEffect(() => {
@@ -174,7 +177,7 @@ function DiaryMenu(props) {
                 <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
                 <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
                 <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
-                <ActivityButtons date={date} dateFmt={dateFmt} onChange={onChange}/>
+                {ymdSelected === 2 ? <ActivityButtons date={date} dateFmt={dateFmt} onChange={onChange}/> : <></>}
             </List>
         </>
     );
