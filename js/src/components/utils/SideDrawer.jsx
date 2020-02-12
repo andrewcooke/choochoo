@@ -12,7 +12,7 @@ import ListItem from "@material-ui/core/ListItem";
 
 const useStyles = makeStyles(theme => ({
     drawer: {
-        [theme.breakpoints.up('sm')]: {
+        [theme.breakpoints.up('lg')]: {
             width: drawerWidth,
             flexShrink: 0,
         },
@@ -69,7 +69,7 @@ export default function SideDrawer(props) {
 
     return (
         <nav className={classes.drawer}>
-            <Hidden smUp implementation="css">
+            <Hidden lgUp implementation="css">
                 <Drawer
                     container={container}
                     variant="temporary"
@@ -86,7 +86,7 @@ export default function SideDrawer(props) {
                     <Content match={match} content={content}/>
                 </Drawer>
             </Hidden>
-            <Hidden xsDown implementation="css">
+            <Hidden mdDown implementation="css">
                 <Drawer
                     classes={{
                         paper: classes.drawerPaper,
