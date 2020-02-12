@@ -5,7 +5,7 @@ import {useWriterRx} from "../../../../workers/useWriter";
 
 export default function mkfield(args) {
 
-    const {rx, ...rest} = args;
+    const {rx, multiline=false, ...rest} = args;
 
     return (props) => {
         const {json, writer} = props;
@@ -14,7 +14,7 @@ export default function mkfield(args) {
 
         return (<Grid item {...rest}>
             <TextField label={props.json.label} value={value} onChange={handleChange} error={error}
-                       fullWidth variant="filled"/>
+                       fullWidth multiline={multiline} variant="filled"/>
         </Grid>);
     }
 }
