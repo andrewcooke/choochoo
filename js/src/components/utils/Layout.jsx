@@ -11,7 +11,7 @@ const useStyles = makeStyles(theme => ({
     toolbar: theme.mixins.toolbar,
     content: {
         flexGrow: 1,
-        padding: theme.spacing(3),
+        padding: theme.spacing(1),  // paper has margin 1 so together we get 2 around all edges
     },
 }));
 

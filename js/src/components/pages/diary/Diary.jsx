@@ -16,7 +16,6 @@ import {add} from 'date-fns';
 const useStyles = makeStyles(theme => ({
     root: {
         width: '100%',
-        maxWidth: 360,  // what is this for?  is it the same as constants.drawerWidth?
         backgroundColor: theme.palette.background.paper,
     },
 }));
@@ -158,14 +157,6 @@ function DiaryMenu(props) {
     function onChange(datetime) {
         const date = format(datetime, dateFmt);
         history.push('/' + date);
-    }
-
-    function activityBefore() {
-        window.location = '/redirect/before/' + date;
-    }
-
-    function activityNext() {
-        window.location = '/redirect/after/' + date;
     }
 
     return (

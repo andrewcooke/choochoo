@@ -1,6 +1,15 @@
 import React from 'react';
 import {Grid, Typography, Paper} from "@material-ui/core";
 import {EditField, IntegerField, FloatField, ScoreField} from "./fields";
+import makeStyles from "@material-ui/core/styles/makeStyles";
+
+
+const useStyles = makeStyles(theme => ({
+    paper: {
+        padding: theme.spacing(1),
+        margin: theme.spacing(1),
+    },
+}));
 
 
 export default function Day(props) {
@@ -34,10 +43,11 @@ function TopLevel(props) {
 
     const {writer, json} = props;
     const head = json[0], rest = json.slice(1);
-    const children = childrenFromRest(rest, writer, 2);
+    const children = childrenFromRest(rest, writer, 3);
+    const classes = useStyles();
 
     return (<Grid item spacing={1} xs={12} md={6}>
-        <Paper>
+        <Paper className={classes.paper}>
             <Typography variant={'h2'}>{head.value}</Typography>
             <Grid container>
                 {children}
