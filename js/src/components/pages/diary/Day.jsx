@@ -1,5 +1,5 @@
 import React from 'react';
-import {Grid, Typography, Paper, List, ListItem} from "@material-ui/core";
+import {Grid, Typography, Paper, List, ListItem, Box} from "@material-ui/core";
 import {EditField, IntegerField, FloatField, ScoreField} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
 
@@ -55,7 +55,7 @@ function TopLevel(props) {
 
     return (<ListItem>
         <Paper className={classes.paper}>
-            <Typography variant={'h2'}>{head.value}</Typography>
+            <Box mb={1}><Typography variant={'h2'}>{head.value}</Typography></Box>
             <Grid container>
                 {children}
             </Grid>
@@ -68,17 +68,19 @@ function OuterGrid(props) {
 
     const {writer, json, level} = props;
     const head = json[0], rest = json.slice(1);
-    const children = childrenFromRest(rest, writer, level+1);
+    const children = childrenFromRest(rest, writer, level + 1);
 
-    return (<Grid item container spacing={1} key={json.id}>
-        <Grid item xs={12} key={head.id}>
-            <Typography variant={'h' + level}>{head.value}</Typography>
+    return (<Box mt={1} mb={1} width='100%'>
+        <Grid item container spacing={1} key={json.id}>
+            <Grid item xs={12} key={head.id}>
+                <Typography variant={'h' + level}>{head.value}</Typography>
+            </Grid>
+            <Grid item xs={1} key={json.id + 'indent'}/>
+            <Grid item container xs={11} spacing={1} justify='space-between' key={json.id + 'content'}>
+                {children}
+            </Grid>
         </Grid>
-        <Grid item xs={1} key={json.id + 'indent'}/>
-        <Grid item container xs={11} spacing={2} key={json.id + 'content'}>
-            {children}
-        </Grid>
-    </Grid>);
+    </Box>);
 }
 
 

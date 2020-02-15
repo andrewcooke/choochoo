@@ -12,7 +12,7 @@ export default function mkfield(args) {
         const [error, setError] = useState();
         const [value, handleChange] = useWriterRx(json, writer, rx, setError);
 
-        return (<Grid item {...rest}>
+        return (<Grid item {...rest} spacing={0}>
             <TextField label={props.json.label} value={value} onChange={handleChange} error={error}
                        fullWidth multiline={multiline} variant="filled"/>
         </Grid>);
