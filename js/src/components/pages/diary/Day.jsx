@@ -1,5 +1,5 @@
 import React from 'react';
-import {Grid, Typography, Paper} from "@material-ui/core";
+import {Grid, Typography, Paper, List, ListItem} from "@material-ui/core";
 import {EditField, IntegerField, FloatField, ScoreField} from "./fields";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 
@@ -15,14 +15,15 @@ const useStyles = makeStyles(theme => ({
 export default function Day(props) {
 
     const {writer, json} = props;
+    const classes = useStyles();  // this line causes an error (illegal use of hook).
 
     if (!Array.isArray(json)) throw 'Expected array';
     const ids = addIds(json);
 
     // drop outer date label since we already have that in the page
-    return (<Grid container>
+    return (<List>
         {json.slice(1).map(row => <TopLevel writer={writer} json={row}/>)}
-    </Grid>);
+    </List>);
 }
 
 
@@ -46,14 +47,14 @@ function TopLevel(props) {
     const children = childrenFromRest(rest, writer, 3);
     const classes = useStyles();
 
-    return (<Grid item spacing={1} xs={12} md={6}>
+    return (<ListItem>
         <Paper className={classes.paper}>
             <Typography variant={'h2'}>{head.value}</Typography>
             <Grid container>
                 {children}
             </Grid>
         </Paper>
-    </Grid>);
+    </ListItem>);
 }
 
 
