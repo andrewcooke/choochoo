@@ -1,13 +1,19 @@
 import React from 'react';
 import {Grid, Typography, Paper, List, ListItem} from "@material-ui/core";
 import {EditField, IntegerField, FloatField, ScoreField} from "./fields";
-import makeStyles from "@material-ui/core/styles/makeStyles";
+import {makeStyles} from "@material-ui/core/styles";
 
 
 const useStyles = makeStyles(theme => ({
+    list: {
+        [theme.breakpoints.up('md')]: {
+            columnCount: 2,
+        },
+    },
     paper: {
         padding: theme.spacing(1),
         margin: theme.spacing(1),
+        width: '100%',
     },
 }));
 
@@ -15,13 +21,13 @@ const useStyles = makeStyles(theme => ({
 export default function Day(props) {
 
     const {writer, json} = props;
-    const classes = useStyles();  // this line causes an error (illegal use of hook).
+    const classes = useStyles();
 
-    if (!Array.isArray(json)) throw 'Expected array';
+    if (!Array.isArray(json)) return <div/>; // undefined initial data
     const ids = addIds(json);
 
     // drop outer date label since we already have that in the page
-    return (<List>
+    return (<List className={classes.list}>
         {json.slice(1).map(row => <TopLevel writer={writer} json={row}/>)}
     </List>);
 }

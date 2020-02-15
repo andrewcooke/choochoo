@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import Layout from "../utils/Layout";
 import {ListItemText, List, ListItem, Collapse, Typography} from "@material-ui/core";
-import makeStyles from "@material-ui/core/styles/makeStyles";
+import {makeStyles} from "@material-ui/core/styles";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
 import ListItemLink from "../utils/ListItemLink";
 import format from 'date-fns/format';

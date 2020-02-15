@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import Layout from "../../utils/Layout";
-import makeStyles from "@material-ui/core/styles/makeStyles";
+import {Layout} from "../../utils";
+import {makeStyles} from "@material-ui/core/styles";
 import {DatePicker} from "@material-ui/pickers";
 import {parse, format} from 'date-fns';
 import {ListItem, List, Grid, IconButton, Typography} from '@material-ui/core';
@@ -196,13 +196,13 @@ export default function Diary(props) {
     const {date} = match.params;
     const {ymdSelected, dateFmt, component} = classifyDate(date);
     const datetime = parse(date, dateFmt, new Date());
-    const [content, setContent] = useState(<p/>);
+    const [json, setJson] = useState(<p/>);
     const writer = new Worker('/static/writer.js');
 
     useEffect(() => {
         fetch('/api/diary/' + date)
             .then(response => response.json())
-            .then(json => setContent(component({writer, json})));
+            .then(json => setJson(json));
     }, [date]);
 
     const navigation = (
@@ -210,6 +210,6 @@ export default function Diary(props) {
     );
 
     return (
-        <Layout navigation={navigation} content={content} match={match} title={date}/>
+        <Layout navigation={navigation} content={component({json, writer})} match={match} title={date}/>
     );
 }
