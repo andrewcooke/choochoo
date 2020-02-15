@@ -1,5 +1,5 @@
 import React from 'react';
-import {Grid, Typography, Paper, List, ListItem} from "@material-ui/core";
+import {Grid, Typography, Paper} from "@material-ui/core";
 import {EditField, IntegerField, FloatField, ScoreField} from "./fields";
 import makeStyles from "@material-ui/core/styles/makeStyles";
 
@@ -9,26 +9,20 @@ const useStyles = makeStyles(theme => ({
         padding: theme.spacing(1),
         margin: theme.spacing(1),
     },
-    columns: {
-    },
-    list: {
-        width: '50%',
-    }
 }));
 
 
 export default function Day(props) {
 
     const {writer, json} = props;
-    const classes = useStyles();  // this line triggers 'Error: Invalid hook call. Hooks can only be called inside of the body of a function component'
 
     if (!Array.isArray(json)) throw 'Expected array';
     const ids = addIds(json);
 
     // drop outer date label since we already have that in the page
-    return (<List>
+    return (<Grid container>
         {json.slice(1).map(row => <TopLevel writer={writer} json={row}/>)}
-    </List>);
+    </Grid>);
 }
 
 
@@ -49,15 +43,17 @@ function TopLevel(props) {
 
     const {writer, json} = props;
     const head = json[0], rest = json.slice(1);
-    // const children = childrenFromRest(rest, writer, 3);
-    // const classes = useStyles();
+    const children = childrenFromRest(rest, writer, 3);
+    const classes = useStyles();
 
-    return (<ListItem>
-        <Paper>
+    return (<Grid item spacing={1} xs={12} md={6}>
+        <Paper className={classes.paper}>
             <Typography variant={'h2'}>{head.value}</Typography>
-            children
+            <Grid container>
+                {children}
+            </Grid>
         </Paper>
-    </ListItem>);
+    </Grid>);
 }
 
 
@@ -67,7 +63,7 @@ function OuterGrid(props) {
     const head = json[0], rest = json.slice(1);
     const children = childrenFromRest(rest, writer, level+1);
 
-    return (<Grid container spacing={1} key={json.id}>
+    return (<Grid item container spacing={1} key={json.id}>
         <Grid item xs={12} key={head.id}>
             <Typography variant={'h' + level}>{head.value}</Typography>
         </Grid>
@@ -93,7 +89,9 @@ function InnerField(props) {
         return <ScoreField key={json.id} writer={writer} json={json}/>
     } else {
         console.log('no support for type: ' + json.type)
-        return <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>;
+        return (<Grid item xs={4}>
+            <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>
+        </Grid>);
     }
 }
 
