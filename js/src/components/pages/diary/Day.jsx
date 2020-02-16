@@ -9,6 +9,11 @@ const useStyles = makeStyles(theme => ({
         [theme.breakpoints.up('md')]: {
             columnCount: 2,
         },
+        padding: 0,
+        columnGap: 0,
+    },
+    listItem: {
+        padding: theme.spacing(1),
     },
     paper: {
         padding: theme.spacing(1),
@@ -53,7 +58,7 @@ function TopLevel(props) {
     const children = childrenFromRest(rest, writer, 3);
     const classes = useStyles();
 
-    return (<ListItem>
+    return (<ListItem className={classes.listItem}>
         <Paper className={classes.paper}>
             <Box mb={1}><Typography variant={'h2'}>{head.value}</Typography></Box>
             <Grid container>
