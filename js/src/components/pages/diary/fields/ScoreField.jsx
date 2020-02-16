@@ -1,6 +1,6 @@
 import React from 'react';
-import mkfield from "./mkfield";
+import mkEditableField from "./mkEditableField";
 
 
-const ScoreField = mkfield({rx: /^\d?$/, xs: 4});
+const ScoreField = mkEditableField({rx: /^\d?$/, xs: 4});
 export default ScoreField;

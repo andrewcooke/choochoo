@@ -1,6 +1,6 @@
 import React from 'react';
-import mkfield from "./mkfield";
+import mkEditableField from "./mkEditableField";
 
 
-const FloatField = mkfield({rx: /^\d*$/, xs: 4});
+const FloatField = mkEditableField({rx: /^\d*$/, xs: 4});
 export default FloatField;

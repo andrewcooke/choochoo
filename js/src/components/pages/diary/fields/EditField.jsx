@@ -1,6 +1,6 @@
 import React from 'react';
-import mkfield from "./mkfield";
+import mkEditableField from "./mkEditableField";
 
 
-const EditField = mkfield({rx: /^.*$/, xs: 12, multiline: true});
+const EditField = mkEditableField({rx: /^.*$/, xs: 12, multiline: true});
 export default EditField;

@@ -1,6 +1,6 @@
 import React from 'react';
 import {Grid, Typography, Paper, List, ListItem, Box} from "@material-ui/core";
-import {EditField, IntegerField, FloatField, ScoreField} from "./fields";
+import {EditField, IntegerField, FloatField, ScoreField, TextField} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -27,6 +27,7 @@ export default function Day(props) {
 
     const {writer, json} = props;
     const classes = useStyles();
+    console.log(json);
 
     if (!Array.isArray(json)) return <div/>; // undefined initial data
     const ids = addIds(json);
@@ -101,8 +102,11 @@ function InnerField(props) {
         return <FloatField key={json.id} writer={writer} json={json}/>
     } else if (json.type === 'score') {
         return <ScoreField key={json.id} writer={writer} json={json}/>
+    } else if (json.type === 'text') {
+        return <TextField key={json.id} writer={writer} json={json}/>
     } else {
         console.log('no support for type: ' + json.type)
+        console.log(json)
         return (<Grid item xs={4}>
             <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>
         </Grid>);

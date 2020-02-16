@@ -45,7 +45,12 @@ def read_date_diary_topic(s, date, cache, topic):
     for child in topic.children:
         if child.schedule.at_location(date):
             content = list(read_date_diary_topic(s, date, cache, child))
-            if content: yield content
+            if content:
+                # single entries are just text fields
+                if len(content) == 1:
+                    yield content[0]
+                else:
+                    yield content
 
 
 @optional_text('Jupyter')

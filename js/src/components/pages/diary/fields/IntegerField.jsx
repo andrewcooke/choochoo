@@ -1,6 +1,6 @@
 import React from 'react';
-import mkfield from "./mkfield";
+import mkEditableField from "./mkEditableField";
 
 
-const IntegerField = mkfield({rx: /^\d*$/, xs: 4});
+const IntegerField = mkEditableField({rx: /^\d*$/, xs: 4});
 export default IntegerField;

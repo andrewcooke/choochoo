@@ -3,7 +3,7 @@ import {Grid, TextField} from "@material-ui/core";
 import {useWriterRx} from "../../../../workers/useWriter";
 
 
-export default function mkfield(args) {
+export default function mkEditableField(args) {
 
     const {rx, multiline=false, ...rest} = args;
 
