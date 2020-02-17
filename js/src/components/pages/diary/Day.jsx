@@ -1,6 +1,6 @@
 import React from 'react';
 import {Grid, Typography, Paper, List, ListItem, Box} from "@material-ui/core";
-import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField} from "./fields";
+import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -39,11 +39,15 @@ export default function Day(props) {
 }
 
 
-function childrenFromRest(rest, writer, level) {
+function childrenFromRest(head, rest, writer, level) {
     let children = [];
     rest.forEach((row) => {
         if (Array.isArray(row)) {
-            children.push(<OuterGrid writer={writer} json={row} level={level}/>);
+            if (head === 'shrimp') {
+                children.push(<ShrimpField json={row}/>);
+            } else {
+                children.push(<OuterGrid writer={writer} json={row} level={level}/>);
+            }
         } else {
             children.push(<InnerField writer={writer} json={row}/>);
         }
@@ -56,7 +60,7 @@ function TopLevel(props) {
 
     const {writer, json} = props;
     const head = json[0], rest = json.slice(1);
-    const children = childrenFromRest(rest, writer, 3);
+    const children = childrenFromRest(head.tag, rest, writer, 3);
     const classes = useStyles();
 
     return (<ListItem className={classes.listItem}>
@@ -74,7 +78,7 @@ function OuterGrid(props) {
 
     const {writer, json, level} = props;
     const head = json[0], rest = json.slice(1);
-    const children = childrenFromRest(rest, writer, level + 1);
+    const children = childrenFromRest(head.tag, rest, writer, level + 1);
 
     return (<Box mt={1} mb={1} width='100%'>
         <Grid item container spacing={1} key={json.id}>
