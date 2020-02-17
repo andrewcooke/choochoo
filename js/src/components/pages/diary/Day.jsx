@@ -1,6 +1,6 @@
 import React from 'react';
 import {Grid, Typography, Paper, List, ListItem, Box} from "@material-ui/core";
-import {EditField, IntegerField, FloatField, ScoreField, TextField} from "./fields";
+import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -103,7 +103,9 @@ function InnerField(props) {
     } else if (json.type === 'score') {
         return <ScoreField key={json.id} writer={writer} json={json}/>
     } else if (json.type === 'text') {
-        return <TextField key={json.id} writer={writer} json={json}/>
+        return <TextField key={json.id} json={json}/>
+    } else if (json.type === 'value') {
+        return <ValueField key={json.id} json={json}/>
     } else {
         console.log('no support for type: ' + json.type)
         console.log(json)
