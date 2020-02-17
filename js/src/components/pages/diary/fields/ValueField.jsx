@@ -41,7 +41,7 @@ export default function ValueField(props) {
 function CommonValueField(props) {
     const {json} = props;
     return (<>
-        <Text secondary>{json.label}: </Text>
+        <Text>{json.label}: </Text>
         <Text>{json.value}</Text>
         {json.units && <Text secondary> {json.units}</Text>}
     </>);
@@ -60,10 +60,10 @@ function SimpleValueField(props) {
 function MeasuredValueField(props) {
     const {json} = props;
     return (<>
-        <Grid item xs={5}>
+        <Grid item xs={6}>
             <CommonValueField {...props}/>
         </Grid>
-        <Grid item xs={7}>
+        <Grid item xs={6}>
             <Schedules schedules={json.measures.schedules}/>
         </Grid>
     </>);
