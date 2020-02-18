@@ -190,7 +190,8 @@ class StatisticJournal(Base):
         if hasattr(self, 'measures'):
             measures = {TYPE: MEASURES, SCHEDULES: {}}
             for measure in sorted(self.measures,
-                                  key=lambda measure: measure.source.schedule.frame_length_in_days(date)):
+                                  key=lambda measure: measure.source.schedule.frame_length_in_days(date),
+                                  reverse=True):
                 measures[SCHEDULES][measure.source.schedule.describe(compact=True)] = (measure.percentile, measure.rank)
             return measures
         else:

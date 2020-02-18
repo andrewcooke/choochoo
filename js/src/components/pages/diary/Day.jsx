@@ -1,6 +1,6 @@
 import React from 'react';
 import {Grid, Typography, Paper, List, ListItem, Box} from "@material-ui/core";
-import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField} from "./fields";
+import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -45,6 +45,8 @@ function childrenFromRest(head, rest, writer, level) {
         if (Array.isArray(row)) {
             if (head === 'shrimp') {
                 children.push(<ShrimpField json={row}/>);
+            } else if (head === 'hr-zones-time') {
+                children.push(<HRZoneField json={row}/>);
             } else {
                 children.push(<OuterGrid writer={writer} json={row} level={level}/>);
             }
@@ -66,7 +68,7 @@ function TopLevel(props) {
     return (<ListItem className={classes.listItem}>
         <Paper className={classes.paper}>
             <Box mb={1}><Typography variant={'h2'}>{head.value}</Typography></Box>
-            <Grid container>
+            <Grid container spacing={1}>
                 {children}
             </Grid>
         </Paper>

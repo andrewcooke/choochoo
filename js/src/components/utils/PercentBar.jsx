@@ -30,9 +30,8 @@ const useStyles = makeStyles(theme => ({
 
 export default function PercentBar(props) {
 
-    const {percent, label} = props;
+    const {percent, label, width=50, height=19} = props;
     const classes = useStyles();
-    const [width, height] = [50, 19];
     const x = width * percent / 100;
     const text = label ? label : percent.toFixed(0) + ' %';
 
