@@ -4,11 +4,15 @@ import Text from "./Text";
 
 
 export default function FormatValueUnits(props) {
-    const {value, units} = props;
+    const {value, units, tag} = props;
     if (units === 's') {
         return <FormatSeconds value={value}/>
     } else if (units === 'm') {
-        return (<Text>{sprintf('%.1fkm', value / 1000)}</Text>);
+        if (tag === 'total-climb') {
+            return (<Text>{sprintf('%d', value)}{units}</Text>);
+        } else {
+            return (<Text>{sprintf('%.1fkm', value / 1000)}</Text>);
+        }
     } else if (units === 'kmh⁻¹') {
         return (<Text>{sprintf('%.1f', value)}{units}</Text>);
     } else if (['W', 'bpm'].includes(units)) {

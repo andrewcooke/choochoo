@@ -123,7 +123,7 @@ class ActivityDiary(JournalDiary):
     def __read_climbs(s, ajournal, date):
         total, climbs = climbs_for_activity(s, ajournal)
         if total:
-            yield value('Total', total.value, measures=total.measures_as_model(date), units=M)
+            yield value('Total', total.value, measures=total.measures_as_model(date), units=M, tag='total-climb')
             for climb in climbs:
                 yield [text('Climb'),
                        value('Elevation', climb[CLIMB_ELEVATION].value, units=M,

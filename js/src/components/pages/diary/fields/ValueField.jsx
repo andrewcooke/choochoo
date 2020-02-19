@@ -17,7 +17,7 @@ function CommonValueField(props) {
     const {json} = props;
     return (<>
         <Text>{json.label}: </Text>
-        <FormatValueUnits value={json.value} units={json.units}/>
+        <FormatValueUnits value={json.value} units={json.units} tag={json.tag}/>
     </>);
 }
 
