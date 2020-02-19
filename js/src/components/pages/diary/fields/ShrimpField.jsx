@@ -13,8 +13,7 @@ export default function ShrimpField(prop) {
     });
     return (<>
         <Grid item xs={6}>
-            <Text>{label.value}: </Text>
-            <Text>{from.value}</Text>
+            <Text>{label.value}: {from.value}</Text>
             <Text secondary>{arrow.value}</Text>
             <Text>{to.value}</Text>
         </Grid>

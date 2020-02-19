@@ -1,6 +1,7 @@
 import React from 'react';
 import {Grid, Typography, Paper, List, ListItem, Box} from "@material-ui/core";
-import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField} from "./fields";
+import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField, ClimbField}
+from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -82,17 +83,21 @@ function OuterGrid(props) {
     const head = json[0], rest = json.slice(1);
     const children = childrenFromRest(head.tag, rest, writer, level + 1);
 
-    return (<Box mt={1} mb={1} width='100%'>
-        <Grid item container spacing={1} key={json.id}>
-            <Grid item xs={12} key={head.id}>
-                <Typography variant={'h' + level}>{head.value}</Typography>
+    if (head.tag === 'climb') {
+        return <ClimbField json={json}/>
+    } else {
+        return (<Box mt={1} mb={1} width='100%'>
+            <Grid item container spacing={1} key={json.id}>
+                <Grid item xs={12} key={head.id}>
+                    <Typography variant={'h' + level}>{head.value}</Typography>
+                </Grid>
+                <Grid item xs={1} key={json.id + 'indent'}/>
+                <Grid item container xs={11} spacing={1} justify='space-between' key={json.id + 'content'}>
+                    {children}
+                </Grid>
             </Grid>
-            <Grid item xs={1} key={json.id + 'indent'}/>
-            <Grid item container xs={11} spacing={1} justify='space-between' key={json.id + 'content'}>
-                {children}
-            </Grid>
-        </Grid>
-    </Box>);
+        </Box>);
+    }
 }
 
 

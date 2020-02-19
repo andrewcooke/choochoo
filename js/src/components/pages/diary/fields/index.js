@@ -1,3 +1,4 @@
+export {default as ClimbField} from './ClimbField';
 export {default as EditField} from './EditField';
 export {default as FloatField} from './FloatField';
 export {default as HRZoneField} from './HRZoneField';
