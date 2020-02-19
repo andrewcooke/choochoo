@@ -125,7 +125,8 @@ class ActivityDiary(JournalDiary):
         if total:
             yield value('Total', total.value, measures=total.measures_as_model(date), units=M)
             for climb in climbs:
-                yield [value('Elevation', climb[CLIMB_ELEVATION].value, units=M,
+                yield [text('Climb'),
+                       value('Elevation', climb[CLIMB_ELEVATION].value, units=M,
                              measures=climb[CLIMB_ELEVATION].measures_as_model(date)),
                        value('Distance', climb[CLIMB_DISTANCE].value, units=M),
                        value('Time', climb[CLIMB_TIME].value, units=S)]

@@ -113,8 +113,6 @@ function InnerField(props) {
     } else if (json.type === 'value') {
         return <ValueField key={json.id} json={json}/>
     } else {
-        console.log('no support for type: ' + json.type)
-        console.log(json)
         return (<Grid item xs={4}>
             <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>
         </Grid>);

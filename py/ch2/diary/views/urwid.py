@@ -238,11 +238,11 @@ def values_table(key, model, f, active, before, after, leaf):
 def climbs_table(key, model, f, active, before, after, leaf):
 
     def climb(model):
-        # assumes elevation, distance and time entries, in that order
-        return [Text(fmt_value_units(model[0])), Text(fmt_value_units(model[1])), Text(fmt_value_units(model[2])),
-                Text(fmt_value_measures(model[0]))]
+        # assumes title, elevation, distance and time entries, in that order
+        return [Text(fmt_value_units(model[1])), Text(fmt_value_units(model[2])), Text(fmt_value_units(model[3])),
+                Text(fmt_value_measures(model[1]))]
 
-    elevations = [m for m in model if isinstance(m, list) and m[0].get(LABEL, None) == 'Elevation']
+    elevations = [m for m in model if isinstance(m, list) and m[0].get(TAG, None) == 'climb']
     rest = [layout(m, f, active, before, after, leaf) for m in model if m not in elevations]
     table = rows_to_table([climb(elevation) for elevation in elevations])
     return key, rest[:1] + [table] + rest[1:]  # title, table, total

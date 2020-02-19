@@ -34,6 +34,7 @@
     "@material-ui/pickers": "^3.2.10",
     "date-fns": "^2.9.0",
     "history": "^4.10.1",
-    "react-router-dom": "^5.1.2"
+    "react-router-dom": "^5.1.2",
+    "sprintf-js": "^1.1.2"
   }
 }
