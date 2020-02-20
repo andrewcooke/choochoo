@@ -6,3 +6,4 @@ export {default as Navigation} from './Navigation';
 export {default as PercentBar} from './PercentBar';
 export {default as SideDrawer} from './SideDrawer';
 export {default as Text} from './Text';
+export {default as zip} from './zip'

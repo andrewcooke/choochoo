@@ -1,12 +1,11 @@
 import React from "react";
 import {Button, Menu, MenuItem, Grid, Link} from "@material-ui/core";
-import Text from "../../../utils/Text";
+import {Text, zip} from "../../../utils";
 
 
 export default function JupyterMenu(props) {
 
-    const {json, label, path} = props;
-    console.log(json);
+    const {json, label, template, params} = props;
     const [, ...rest] = json;
     const [anchor, setAnchor] = React.useState(null);
 
@@ -19,13 +18,10 @@ export default function JupyterMenu(props) {
     };
 
     const items = rest.map(row => {
-        const date = row.db[0].split(' ')[0];
-        function onClick() {
-            handleClose();
-        }
-        return (<MenuItem onClick={onClick}>
-            <Link href={'jupyter/' + path + '/' + row.db}>{row.value}</Link>
-            </MenuItem>);
+        const urlArgs = zip(params, row.db).map(([name, value]) => name + '=' + value).join('&');
+        return (<MenuItem onClick={handleClose}>
+            <Link href={'jupyter/' + template + '?' + urlArgs} target='_blank'>{row.value}</Link>
+        </MenuItem>);
     });
 
     return (<Grid item xs={4}>

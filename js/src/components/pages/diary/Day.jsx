@@ -3,13 +3,15 @@ import {Grid, Typography, Paper, List, ListItem, Box, Link} from "@material-ui/c
 import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField, ClimbField,
     NearbyLink, JupyterActivity} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
-import Text from "../../utils/Text";
 
 
 const useStyles = makeStyles(theme => ({
     list: {
         [theme.breakpoints.up('md')]: {
             columnCount: 2,
+        },
+        [theme.breakpoints.up('xl')]: {
+            columnCount: 3,
         },
         padding: 0,
         columnGap: 0,
