@@ -61,7 +61,7 @@ def read_gui(s, date):
 
 
 def read_activity_gui(s, aj1):
-    yield text(aj1.name)
+    yield text(aj1.name, tag='jupyter-activity')
     links = [link('None', db=(time_to_local_time(aj1.start), None))] + \
             [link(fmt_nearby(aj2, nb), db=(time_to_local_time(aj1.start), time_to_local_time(aj2.start)))
              for aj2, nb in nearby_any_time(s, aj1)]

@@ -1,9 +1,9 @@
 import React from "react";
 import {Button, Menu, MenuItem, Grid} from "@material-ui/core";
-import Text from "./Text";
+import Text from "../../../utils/Text";
 
 
-export default function Link(props) {
+export default function NearbyLink(props) {
 
     const {json, history} = props;
     const [head, ...rest] = json;

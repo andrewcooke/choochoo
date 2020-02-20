@@ -1,9 +1,9 @@
 import React from 'react';
-import {Grid, Typography, Paper, List, ListItem, Box} from "@material-ui/core";
-import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField, ClimbField}
-from "./fields";
-import {Link} from '../../utils';
+import {Grid, Typography, Paper, List, ListItem, Box, Link} from "@material-ui/core";
+import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField, ClimbField,
+    NearbyLink, JupyterLink} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
+import Text from "../../utils/Text";
 
 
 const useStyles = makeStyles(theme => ({
@@ -21,6 +21,10 @@ const useStyles = makeStyles(theme => ({
         padding: theme.spacing(1),
         margin: theme.spacing(1),
         width: '100%',
+    },
+    grid: {
+        justifyContent: 'flex-start',
+        alignItems: 'baseline',
     },
 }));
 
@@ -60,17 +64,27 @@ function childrenFromRest(head, rest, writer, level, history) {
 }
 
 
+function JupyterActivity(props) {
+    const {json, history} = props;
+    console.log(json);
+    return (<>
+        <Grid item xs={4}><JupyterLink json={json[0]} label='Compare'/></Grid>
+        <Grid item xs={4}><Link>{json[1].value}</Link></Grid>
+    </>);
+}
+
+
 function TopLevel(props) {
 
     const {writer, json, history} = props;
-    const head = json[0], rest = json.slice(1);
-    const children = childrenFromRest(head.tag, rest, writer, 3, history);
+    const [head, ...rest] = json;
     const classes = useStyles();
+    const children = childrenFromRest(head.tag, rest, writer, 3, history);
 
     return (<ListItem className={classes.listItem}>
         <Paper className={classes.paper}>
             <Box mb={1}><Typography variant={'h2'}>{head.value}</Typography></Box>
-            <Grid container spacing={1}>
+            <Grid container spacing={1} className={classes.grid}>
                 {children}
             </Grid>
         </Paper>
@@ -81,14 +95,16 @@ function TopLevel(props) {
 function OuterGrid(props) {
 
     const {writer, json, level, history} = props;
-    const head = json[0], rest = json.slice(1);
-    const children = childrenFromRest(head.tag, rest, writer, level + 1, history);
+    const [head, ...rest] = json;
+    const classes = useStyles();
+    const children = head.tag === 'jupyter-activity' ?
+        <JupyterActivity json={rest} history={history}/> :
+        childrenFromRest(head.tag, rest, writer, level + 1, history);
 
     if (head.tag === 'climb') {
         return (<ClimbField json={json}/>);
     } else if (head.tag === 'nearby-links') {
-        console.log(json);
-        return (<Link json={json} history={history}/>);
+        return (<NearbyLink json={json} history={history}/>);
     } else {
         return (<Box mt={1} mb={1} width='100%'>
             <Grid item container spacing={1} key={json.id}>
@@ -96,7 +112,8 @@ function OuterGrid(props) {
                     <Typography variant={'h' + level}>{head.value}</Typography>
                 </Grid>
                 <Grid item xs={1} key={json.id + 'indent'}/>
-                <Grid item container xs={11} spacing={1} justify='space-between' key={json.id + 'content'}>
+                <Grid item container xs={11} spacing={1} justify='space-between' key={json.id + 'content'}
+                      className={classes.grid}>
                     {children}
                 </Grid>
             </Grid>
