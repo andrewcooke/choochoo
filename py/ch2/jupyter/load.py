@@ -264,6 +264,9 @@ def load_notebook(name, vars):
 
 def create_notebook(template, notebook_dir, database_path, args, kargs):
 
+    if hasattr(template, '_original'):  # drop wrapper
+        template = template._original
+
     all_args = ' '.join(args)
     if all_args and kargs: all_args += ' '
     all_args += ' '.join(kargs[key] for key in sorted(kargs.keys()))
