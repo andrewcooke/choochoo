@@ -28,5 +28,6 @@ def template(func):
             display_notebook(func, sargs, skargs)
 
     wrapper._original = func
+    wrapper.__name__ = func.__name__
 
     return wrapper

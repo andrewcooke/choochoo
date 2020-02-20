@@ -169,7 +169,8 @@ class Jupyter:
         fn, spec = get_template(template)
         args = list(self.match_args(request.args, spec))
         log.debug(f'Template args: {args}')
-        name = create_notebook(fn, self.__controller.notebook_dir(), self.__controller.database_path(), args, {})
+        name = create_notebook(fn, self.__controller.notebook_dir(), self.__controller.database_path(),
+                               args, {})
         url = f'{self.__controller.connection_url()}tree/{name}'
         log.debug(f'Redirecting to {url}')
         return redirect(url)
