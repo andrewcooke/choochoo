@@ -1,7 +1,7 @@
 import React from 'react';
 import {Grid, Typography, Paper, List, ListItem, Box, Link} from "@material-ui/core";
 import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField, ClimbField,
-    NearbyLink, JupyterLink} from "./fields";
+    NearbyLink, JupyterActivity} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
 import Text from "../../utils/Text";
 
@@ -64,16 +64,6 @@ function childrenFromRest(head, rest, writer, level, history) {
 }
 
 
-function JupyterActivity(props) {
-    const {json, history} = props;
-    console.log(json);
-    return (<>
-        <Grid item xs={4}><JupyterLink json={json[0]} label='Compare'/></Grid>
-        <Grid item xs={4}><Link>{json[1].value}</Link></Grid>
-    </>);
-}
-
-
 function TopLevel(props) {
 
     const {writer, json, history} = props;
@@ -98,7 +88,7 @@ function OuterGrid(props) {
     const [head, ...rest] = json;
     const classes = useStyles();
     const children = head.tag === 'jupyter-activity' ?
-        <JupyterActivity json={rest} history={history}/> :
+        <JupyterActivity json={rest}/> :
         childrenFromRest(head.tag, rest, writer, level + 1, history);
 
     if (head.tag === 'climb') {

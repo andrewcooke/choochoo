@@ -1,11 +1,11 @@
 import React from "react";
-import {Button, Menu, MenuItem, Grid} from "@material-ui/core";
+import {Button, Menu, MenuItem, Grid, Link} from "@material-ui/core";
 import Text from "../../../utils/Text";
 
 
-export default function JupyterLink(props) {
+export default function JupyterMenu(props) {
 
-    const {json, label} = props;
+    const {json, label, path} = props;
     console.log(json);
     const [, ...rest] = json;
     const [anchor, setAnchor] = React.useState(null);
@@ -23,7 +23,9 @@ export default function JupyterLink(props) {
         function onClick() {
             handleClose();
         }
-        return (<MenuItem onClick={onClick}>{row.value}</MenuItem>);
+        return (<MenuItem onClick={onClick}>
+            <Link href={'jupyter/' + path + '/' + row.db}>{row.value}</Link>
+            </MenuItem>);
     });
 
     return (<Grid item xs={4}>

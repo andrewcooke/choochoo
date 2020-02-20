@@ -10,7 +10,7 @@ from ch2.jupyter.decorator import template
 
 
 @template
-def route(user, passwd, local_time, activity_group_name):
+def route_sentinel_3d(user, passwd, local_time, activity_group_name):
 
     f'''
     # Route : {local_time} ({activity_group_name})

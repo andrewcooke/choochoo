@@ -10,10 +10,14 @@ from os.path import split, sep, splitext
 from werkzeug import Response, Request, run_simple
 from werkzeug.exceptions import HTTPException
 from werkzeug.routing import Map, Rule
+from werkzeug.utils import redirect
 
 from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV
 from ..diary.database import read_date, read_schedule
 from ..diary.views.web import rewrite_db
+from ..jupyter.load import create_notebook
+from ..jupyter.server import JupyterController
+from ..jupyter.utils import get_template
 from ..lib.date import time_to_local_time
 from ..lib.schedule import Schedule
 from ..lib.server import BaseController
@@ -30,6 +34,7 @@ class WebController(BaseController):
         self.__port = args[PORT] if BIND in args else None
         self.__dev = args[DEV]
         self.__db = db
+        self.__jupyter = JupyterController(args, sys)
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
@@ -38,21 +43,23 @@ class WebController(BaseController):
         return cmd, log_name
 
     def _run(self):
-        run_simple(self.__bind, self.__port, WebServer(self.__db),
+        run_simple(self.__bind, self.__port, WebServer(self.__db, self.__jupyter),
                    use_debugger=self.__dev, use_reloader=self.__dev)
 
 
 class WebServer:
 
-    def __init__(self, db):
+    def __init__(self, db, jcontrol):
         self.__db = db
         api = Api()
         static = Static('.static')
+        jupyter = Jupyter(jcontrol)
         self.url_map = Map([
             Rule('/api/diary/<date>', endpoint=api.read_diary, methods=('GET',)),
             Rule('/api/neighbour-activities/<date>', endpoint=api.read_neighbour_activities, methods=('GET',)),
             Rule('/api/statistics', endpoint=api.write_statistics, methods=('POST',)),
             Rule('/static/<path:path>', endpoint=static, methods=('GET', )),
+            Rule('/jupyter/<template>', endpoint=jupyter, methods=('GET', )),
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
             Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',))
         ])
@@ -150,3 +157,24 @@ class Static:
         if ext:
             ext = ext[1:]
         response.content_type = self.CONTENT_TYPE[ext]
+
+
+class Jupyter:
+
+    def __init__(self, controller):
+        self.__controller = controller
+
+    def __call__(self, request, s, template):
+        log.info(f'Attempting to display template {template}')
+        fn, spec = get_template(template)
+        args = list(self.match_args(request.args, spec))
+        log.debug(f'Template args: {args}')
+        name = create_notebook(fn, self.__controller.notebook_dir(), self.__controller.database_path(), args, {})
+        url = f'{self.__controller.connection_url()}tree/{name}'
+        log.debug(f'Redirecting to {url}')
+        return redirect(url)
+
+    def match_args(self, params, spec):
+        # the HTTP parameters are not ordered, but the temp[late function args are
+        for arg in spec.args:
+            yield params[arg]

@@ -1,11 +1,8 @@
-
-from inspect import getfullargspec
 from logging import getLogger
-from pkgutil import iter_modules
 
 from .args import SUB_COMMAND, SERVICE, START, STOP, SHOW, JUPYTER, LIST, PROGNAME, NAME, ARG, STATUS
-from ..jupyter import template
-from ..jupyter.server import JupyterServer, set_controller, JupyterController
+from ..jupyter.server import set_controller, JupyterController
+from ..jupyter.utils import templates, get_template
 
 log = getLogger(__name__)
 
@@ -50,20 +47,6 @@ Stop the background server.
             raise Exception(f'Unexpected command {cmd}')
 
 
-def templates():
-    log.debug(dir(template))
-    log.debug(template.__file__)
-    for importer, modname, ispkg in iter_modules(template.__path__):
-        try:
-            module = getattr(template, modname)
-            function = getattr(module, modname)
-            argspec = getfullargspec(function._original)
-            yield modname, (function, argspec)
-        except AttributeError:
-            log.debug(f'Skipping {modname}')
-            log.debug('(if this is unexpected, check that the template is imported at the package level)')
-
-
 def print_list():
     for name, (_, spec) in templates():
         args = ' '.join(spec.args)
@@ -85,7 +68,7 @@ def show(args):
     name = args[NAME]
     params = args[ARG]
     try:
-        fn, spec = dict(templates())[name]
+        fn, spec = get_template(name)
         params = check_params(params, spec)
         fn(*params)
     except KeyError:
