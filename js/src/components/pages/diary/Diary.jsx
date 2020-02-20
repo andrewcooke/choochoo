@@ -210,6 +210,6 @@ export default function Diary(props) {
     );
 
     return (
-        <Layout navigation={navigation} content={component({json, writer})} match={match} title={date}/>
+        <Layout navigation={navigation} content={component({json, writer, history})} match={match} title={date}/>
     );
 }

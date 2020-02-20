@@ -2,6 +2,7 @@ import React from 'react';
 import {Grid, Typography, Paper, List, ListItem, Box} from "@material-ui/core";
 import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField, ClimbField}
 from "./fields";
+import {Link} from '../../utils';
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -26,7 +27,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function Day(props) {
 
-    const {writer, json} = props;
+    const {writer, json, history} = props;
     const classes = useStyles();
     console.log(json);
 
@@ -35,12 +36,12 @@ export default function Day(props) {
 
     // drop outer date label since we already have that in the page
     return (<List className={classes.list}>
-        {json.slice(1).map(row => <TopLevel writer={writer} json={row}/>)}
+        {json.slice(1).map(row => <TopLevel writer={writer} json={row} history={history}/>)}
     </List>);
 }
 
 
-function childrenFromRest(head, rest, writer, level) {
+function childrenFromRest(head, rest, writer, level, history) {
     let children = [];
     rest.forEach((row) => {
         if (Array.isArray(row)) {
@@ -49,7 +50,7 @@ function childrenFromRest(head, rest, writer, level) {
             } else if (head === 'hr-zones-time') {
                 children.push(<HRZoneField json={row}/>);
             } else {
-                children.push(<OuterGrid writer={writer} json={row} level={level}/>);
+                children.push(<OuterGrid writer={writer} json={row} level={level} history={history}/>);
             }
         } else {
             children.push(<InnerField writer={writer} json={row}/>);
@@ -61,9 +62,9 @@ function childrenFromRest(head, rest, writer, level) {
 
 function TopLevel(props) {
 
-    const {writer, json} = props;
+    const {writer, json, history} = props;
     const head = json[0], rest = json.slice(1);
-    const children = childrenFromRest(head.tag, rest, writer, 3);
+    const children = childrenFromRest(head.tag, rest, writer, 3, history);
     const classes = useStyles();
 
     return (<ListItem className={classes.listItem}>
@@ -79,12 +80,15 @@ function TopLevel(props) {
 
 function OuterGrid(props) {
 
-    const {writer, json, level} = props;
+    const {writer, json, level, history} = props;
     const head = json[0], rest = json.slice(1);
-    const children = childrenFromRest(head.tag, rest, writer, level + 1);
+    const children = childrenFromRest(head.tag, rest, writer, level + 1, history);
 
     if (head.tag === 'climb') {
-        return <ClimbField json={json}/>
+        return (<ClimbField json={json}/>);
+    } else if (head.tag === 'nearby-links') {
+        console.log(json);
+        return (<Link json={json} history={history}/>);
     } else {
         return (<Box mt={1} mb={1} width='100%'>
             <Grid item container spacing={1} key={json.id}>
