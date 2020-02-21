@@ -12,7 +12,7 @@ import {
     ShrimpField,
     TextField,
     ValueField
-} from "./fields";
+} from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
 import {LinkButton} from "../../utils";
 import Text from "../../utils/Text";

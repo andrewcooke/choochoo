@@ -32,10 +32,12 @@ function FormatSeconds(props) {
     const units = [[60, '%02d', 's'], [60, '%02d', 'm'], [24, '%d', 'h'], [999, '%d', 'd']];
 
     function helper(value, cumulative, units) {
-        const [[factor, format, label], ...rest] = units;
+        let [[factor, format, label], ...rest] = units;
         let time = '';
         if (value > factor * cumulative) {
             [value, time] = helper(value, cumulative * factor, rest);
+        } else {
+            format = '%d';  /* outermost value is not padded */
         }
         const n = Math.trunc(value / cumulative);
         time = time + sprintf(format, n) + label;
