@@ -3,7 +3,7 @@ import {Layout} from "../../utils";
 import {makeStyles} from "@material-ui/core/styles";
 import {DatePicker} from "@material-ui/pickers";
 import {parse, format} from 'date-fns';
-import {ListItem, List, Grid, IconButton, Typography} from '@material-ui/core';
+import {ListItem, List, Grid, IconButton, Typography, CircularProgress} from '@material-ui/core';
 import Day from './Day';
 import fmtMonth from "./fmtMonth";
 import fmtYear from "./fmtYear";
@@ -196,10 +196,11 @@ export default function Diary(props) {
     const {date} = match.params;
     const {ymdSelected, dateFmt, component} = classifyDate(date);
     const datetime = parse(date, dateFmt, new Date());
-    const [json, setJson] = useState(<p/>);
+    const [json, setJson] = useState(null);
     const writer = new Worker('/static/writer.js');
 
     useEffect(() => {
+        setJson(null);
         fetch('/api/diary/' + date)
             .then(response => response.json())
             .then(json => setJson(json));

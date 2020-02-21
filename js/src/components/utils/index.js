@@ -3,10 +3,12 @@ export {default as FormatValueUnits} from './FormatValueUnits';
 export {default as Layout} from './Layout';
 export {default as LinkButton} from './LinkButton';
 export {default as ListItemLink} from './ListItemLink';
+export {default as Loading} from './Loading';
 export {default as Measures} from './Measures';
 export {default as MenuButton} from './MenuButton';
 export {default as Navigation} from './Navigation';
 export {default as PercentBar} from './PercentBar';
+export {default as setIds} from './setIds';
 export {default as SideDrawer} from './SideDrawer';
 export {default as Text} from './Text';
 export {default as zip} from './zip'

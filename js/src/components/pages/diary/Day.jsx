@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Grid, ListItem, Paper, Typography} from "@material-ui/core";
+import {Box, CircularProgress, Grid, ListItem, Paper, Typography} from "@material-ui/core";
 import {
     ClimbField,
     EditField,
@@ -14,7 +14,7 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {ColumnList, LinkButton, Text} from "../../utils";
+import {ColumnList, LinkButton, Loading, setIds, Text} from "../../utils";
 
 
 const useStyles = makeStyles(theme => ({
@@ -36,16 +36,17 @@ const useStyles = makeStyles(theme => ({
 export default function Day(props) {
 
     const {writer, json, history} = props;
-    const classes = useStyles();
     console.log(json);
 
-    if (!Array.isArray(json)) return <div/>; // undefined initial data
-    const ids = addIds(json);
-
-    // drop outer date label since we already have that in the page
-    return (<ColumnList>
-        {json.slice(1).map(row => <TopLevel writer={writer} json={row} history={history} key={row.id}/>)}
-    </ColumnList>);
+    if (!Array.isArray(json)) {
+        return <Loading/>;  // undefined initial data
+    } else {
+        setIds(json);
+        // drop outer date label since we already have that in the page
+        return (<ColumnList>
+            {json.slice(1).map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
+        </ColumnList>);
+    }
 }
 
 
@@ -58,17 +59,17 @@ function childrenFromRest(head, rest, writer, level, history) {
             } else if (head === 'hr-zones-time') {
                 children.push(<HRZoneField json={row} key={row.id}/>);
             } else {
-                children.push(<OuterGrid writer={writer} json={row} level={level} history={history} key={row.id}/>);
+                children.push(<IndentedGrid writer={writer} json={row} level={level} history={history} key={row.id}/>);
             }
         } else {
-            children.push(<InnerField writer={writer} json={row} key={row.id}/>);
+            children.push(<Field writer={writer} json={row} key={row.id}/>);
         }
     });
     return children;
 }
 
 
-function TopLevel(props) {
+function TopLevelPaper(props) {
 
     const {writer, json, history} = props;
     const [head, ...rest] = json;
@@ -86,7 +87,7 @@ function TopLevel(props) {
 }
 
 
-function OuterGrid(props) {
+function IndentedGrid(props) {
 
     const {writer, json, level, history} = props;
     const [head, ...rest] = json;
@@ -113,12 +114,12 @@ function OuterGrid(props) {
 }
 
 
-function InnerField(props) {
+function Field(props) {
 
     const {writer, json} = props;
 
     if (json.type === 'edit') {
-        return <EditField key={json.id} writer={writer} json={json}/>
+        return <EditField writer={writer} json={json}/>
     } else if (json.type === 'integer') {
         return <IntegerField writer={writer} json={json}/>
     } else if (json.type === 'float') {
@@ -133,39 +134,9 @@ function InnerField(props) {
         if (json.tag === 'health') {
             return <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
         } else {
-            return <Text>Unsupported link: {json}</Text>
+            return (<Grid item xs={4}><Text>Unsupported link: {json}</Text></Grid>);
         }
     } else {
-        return (<Grid item xs={4}>
-            <Typography variant='body1'>{json.label}={json.value}</Typography>
-        </Grid>);
+        return (<Grid item xs={4}><Text>Unsupported type: {json}</Text></Grid>);
     }
-}
-
-
-function addIds(json) {
-
-    /* react docs say keys only need to be unique amongst siblings.
-       if that's literally true then this is overkill. */
-
-    function add(base) {
-        return (json, index) => {
-            const id = (base === undefined) ? `${index}` : `${base},${index}`;
-            json.id = id;
-            if (Array.isArray(json)) json.map(add(id));
-        }
-    }
-
-    add()(json, 0);
-
-    let ids = [];
-
-    function list(json) {
-        ids.push(json.id);
-        if (Array.isArray(json)) json.forEach(list);
-    }
-
-    list(json);
-
-    return ids
 }
