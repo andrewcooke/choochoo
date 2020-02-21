@@ -6,7 +6,7 @@ export default function TextField(props) {
 
     const {json} = props;
 
-    return (<Grid item xs={12} spacing={0}>
+    return (<Grid item xs={12}>
         <Typography variant='body1'>{json.value}</Typography>
     </Grid>)
 }

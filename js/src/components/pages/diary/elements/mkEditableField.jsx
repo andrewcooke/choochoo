@@ -15,7 +15,7 @@ export default function mkEditableField(args) {
         let label = json.label;
         if (json.units) label += '/' + json.units
 
-        return (<Grid item {...rest} spacing={0}>
+        return (<Grid item {...rest}>
             <TextField label={label} value={value} onChange={handleChange} error={error}
                        fullWidth multiline={multiline} variant="filled"/>
         </Grid>);

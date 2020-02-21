@@ -28,7 +28,7 @@ export default function MenuButton(props) {
     };
 
     const items = json.map(row => mkItem(row, handleClose));
-    return (<Grid xs={4}>
+    return (<Grid item xs={4}>
         <Button onClick={handleClick}>
             <MenuIcon className={classes.icon}/>
             <Text>{label}</Text>

@@ -14,7 +14,7 @@ export default function NearbyMenu(props) {
             handleClose();
             history.push('/' + date);
         }
-        return (<MenuItem onClick={onClick}>{row.value}</MenuItem>);
+        return (<MenuItem onClick={onClick} key={row.id}>{row.value}</MenuItem>);
     }
 
     return (<MenuButton json={rest} label={head.value} mkItem={mkItem}/>);

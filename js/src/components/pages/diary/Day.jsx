@@ -44,7 +44,7 @@ export default function Day(props) {
 
     // drop outer date label since we already have that in the page
     return (<ColumnList>
-        {json.slice(1).map(row => <TopLevel writer={writer} json={row} history={history}/>)}
+        {json.slice(1).map(row => <TopLevel writer={writer} json={row} history={history} key={row.id}/>)}
     </ColumnList>);
 }
 
@@ -54,14 +54,14 @@ function childrenFromRest(head, rest, writer, level, history) {
     rest.forEach((row) => {
         if (Array.isArray(row)) {
             if (head === 'shrimp') {
-                children.push(<ShrimpField json={row}/>);
+                children.push(<ShrimpField json={row} key={row.id}/>);
             } else if (head === 'hr-zones-time') {
-                children.push(<HRZoneField json={row}/>);
+                children.push(<HRZoneField json={row} key={row.id}/>);
             } else {
-                children.push(<OuterGrid writer={writer} json={row} level={level} history={history}/>);
+                children.push(<OuterGrid writer={writer} json={row} level={level} history={history} key={row.id}/>);
             }
         } else {
-            children.push(<InnerField writer={writer} json={row}/>);
+            children.push(<InnerField writer={writer} json={row} key={row.id}/>);
         }
     });
     return children;
@@ -100,13 +100,12 @@ function OuterGrid(props) {
     } else if (head.tag === 'nearby-links') {
         return (<NearbyMenu json={json} history={history}/>);
     } else {
-        return (<Grid item container spacing={1} key={json.id} className={classes.grid}>
-            <Grid item xs={12} key={head.id} className={classes.grid}>
+        return (<Grid item container spacing={1} className={classes.grid}>
+            <Grid item xs={12} className={classes.grid}>
                 <Typography variant={'h' + level}>{head.value}</Typography>
             </Grid>
-            <Grid item xs={1} key={json.id + 'indent'} className={classes.grid}/>
-            <Grid item container xs={11} spacing={1} justify='space-between' key={json.id + 'content'}
-                  className={classes.grid}>
+            <Grid item xs={1} className={classes.grid}/>
+            <Grid item container xs={11} spacing={1} justify='space-between' className={classes.grid}>
                 {children}
             </Grid>
         </Grid>);
@@ -121,15 +120,15 @@ function InnerField(props) {
     if (json.type === 'edit') {
         return <EditField key={json.id} writer={writer} json={json}/>
     } else if (json.type === 'integer') {
-        return <IntegerField key={json.id} writer={writer} json={json}/>
+        return <IntegerField writer={writer} json={json}/>
     } else if (json.type === 'float') {
-        return <FloatField key={json.id} writer={writer} json={json}/>
+        return <FloatField writer={writer} json={json}/>
     } else if (json.type === 'score') {
-        return <ScoreField key={json.id} writer={writer} json={json}/>
+        return <ScoreField writer={writer} json={json}/>
     } else if (json.type === 'text') {
-        return <TextField key={json.id} json={json}/>
+        return <TextField json={json}/>
     } else if (json.type === 'value') {
-        return <ValueField key={json.id} json={json}/>
+        return <ValueField json={json}/>
     } else if (json.type === 'link') {
         if (json.tag === 'health') {
             return <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
@@ -138,7 +137,7 @@ function InnerField(props) {
         }
     } else {
         return (<Grid item xs={4}>
-            <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>
+            <Typography variant='body1'>{json.label}={json.value}</Typography>
         </Grid>);
     }
 }
