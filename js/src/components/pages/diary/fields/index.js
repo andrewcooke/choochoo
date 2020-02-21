@@ -5,7 +5,7 @@ export {default as HRZoneField} from './HRZoneField';
 export {default as IntegerField} from './IntegerField';
 export {default as JupyterActivity} from './JupyterActivity';
 export {default as JupyterMenu} from './JupyterMenu';
-export {default as NearbyLink} from './NearbyLink';
+export {default as NearbyMenu} from './NearbyMenu';
 export {default as ScoreField} from './ScoreField';
 export {default as ShrimpField} from './ShrimpField';
 export {default as TextField} from './TextField';

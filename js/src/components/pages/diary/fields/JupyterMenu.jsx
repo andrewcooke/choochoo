@@ -1,6 +1,15 @@
 import React from "react";
 import {Button, Menu, MenuItem, Grid, Link} from "@material-ui/core";
 import {Text, zip} from "../../../utils";
+import MenuIcon from '@material-ui/icons/Menu'
+import {makeStyles} from "@material-ui/core/styles";
+
+
+const useStyles = makeStyles(theme => ({
+    icon: {
+        verticalAlign: 'middle',
+    },
+}));
 
 
 export default function JupyterMenu(props) {
@@ -8,6 +17,7 @@ export default function JupyterMenu(props) {
     const {json, label, template, params} = props;
     const [, ...rest] = json;
     const [anchor, setAnchor] = React.useState(null);
+    const classes = useStyles();
 
     const handleClick = event => {
         setAnchor(event.currentTarget);
@@ -24,8 +34,11 @@ export default function JupyterMenu(props) {
         </MenuItem>);
     });
 
-    return (<Grid item xs={4}>
-        <Button onClick={handleClick}><Text>{label}</Text></Button>
+    return (<Grid xs={4}>
+        <Button onClick={handleClick}>
+            <MenuIcon className={classes.icon}/>
+            <Text>{label}</Text>
+        </Button>
         <Menu anchorEl={anchor} keepMounted open={Boolean(anchor)} onClose={handleClose}>{items}</Menu>
     </Grid>);
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import {Grid, Typography, Paper, List, ListItem, Box, Link} from "@material-ui/core";
 import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField, ClimbField,
-    NearbyLink, JupyterActivity} from "./fields";
+    NearbyMenu, JupyterActivity} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -96,7 +96,7 @@ function OuterGrid(props) {
     if (head.tag === 'climb') {
         return (<ClimbField json={json}/>);
     } else if (head.tag === 'nearby-links') {
-        return (<NearbyLink json={json} history={history}/>);
+        return (<NearbyMenu json={json} history={history}/>);
     } else {
         return (<Box mt={1} mb={1} width='100%'>
             <Grid item container spacing={1} key={json.id}>

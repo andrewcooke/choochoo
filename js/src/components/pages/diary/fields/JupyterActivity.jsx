@@ -15,8 +15,8 @@ export default function JupyterActivity(props) {
                             json[1].db[0], json[1].db[1]);
     return (<>
         <Grid item xs={4}><LinkButton href={details}><Text>Details</Text></LinkButton></Grid>
-        <Grid item xs={4}><JupyterMenu json={rest} label='Compare' template='compare_activities'
-                                       params={['local_time', 'compare_time', 'activity_group_name']}/></Grid>
+        <JupyterMenu json={rest} label='Compare' template='compare_activities'
+                     params={['local_time', 'compare_time', 'activity_group_name']}/>
         <Grid item xs={4}><LinkButton href={similar}><Text>{json[1].value}</Text></LinkButton></Grid>
     </>);
 }
