@@ -125,7 +125,7 @@ class DailyDiary(Diary):
             raise Exception(f'Unhandled links: {", ".join(active.keys())}')
         return widget, f.tabs
 
-    def __show_gui(self, aj1, aj2):
+    def __show_gui(self, aj1, aj2, group):
         aj1t, aj2t = local_time_to_time(aj1), local_time_to_time(aj2) if aj2 else None
         aj1 = ActivityJournal.at_local_time(self._session, aj1)
         if aj2:

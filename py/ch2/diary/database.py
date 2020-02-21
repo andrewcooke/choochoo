@@ -67,7 +67,7 @@ def read_activity_gui(s, aj1):
                   db=(time_to_local_time(aj1.start), time_to_local_time(aj2.start), aj1.activity_group.name))
              for aj2, nb in nearby_any_time(s, aj1)]
     yield [text('%s v ' % aj1.name, tag=COMPARE_LINKS)] + links
-    yield link('All Similar', db=(time_to_local_time(aj1.start),))
+    yield link('All Similar', db=(time_to_local_time(aj1.start), aj1.activity_group.name))
 
 
 def read_schedule(s, schedule, date):
