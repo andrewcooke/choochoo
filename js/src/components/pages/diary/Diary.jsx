@@ -40,16 +40,16 @@ function BeforeNextButtonsBase(props) {
 
     return (<ListItem>
         <Grid container alignItems='center'>
-            <Grid item xs={5} justify='center'>
-                <Typography variant='body1' align='left'>{label}</Typography>
+            <Grid item xs={5}>
+                <Typography variant='body1' component='span' align='left'>{label}</Typography>
             </Grid>
-            <Grid item xs={2} justify='center'>
+            <Grid item xs={2}>
                 {before}
             </Grid>
-            <Grid item xs={3} justify='center'>
+            <Grid item xs={3}>
                 {centre}
             </Grid>
-            <Grid item xs={2} justify='center'>
+            <Grid item xs={2}>
                 {next}
             </Grid>
         </Grid>
@@ -89,7 +89,7 @@ function ActivityButtons(props) {
     }, [date]);
 
     return (<BeforeNextButtonsBase
-        label={<Typography variant='body1' align='left'>Activity</Typography>}
+        label={<Typography variant='body1' component='span' align='left'>Activity</Typography>}
         before={before}
         next={next}
     />);
@@ -101,7 +101,7 @@ function ImmediateBeforeNextButtons(props) {
     const {centre, onBefore, onCentre, onNext, label} = props;
 
     return (<BeforeNextButtonsBase
-        label={<Typography variant='body1' align='left'>{label}</Typography>}
+        label={<Typography variant='body1' component='span' align='left'>{label}</Typography>}
         before={<IconButton edge='start' onClick={onBefore}><NavigateBeforeIcon/></IconButton>}
         centre={centre ? <IconButton onClick={onCentre}><CalendarTodayIcon/></IconButton> : null}
         next={<IconButton onClick={onNext}><NavigateNextIcon/></IconButton>}

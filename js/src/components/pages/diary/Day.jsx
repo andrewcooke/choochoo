@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Grid, List, ListItem, Paper, Typography} from "@material-ui/core";
+import {Box, Grid, ListItem, Paper, Typography} from "@material-ui/core";
 import {
     ClimbField,
     EditField,
@@ -14,21 +14,10 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {LinkButton} from "../../utils";
-import Text from "../../utils/Text";
+import {ColumnList, LinkButton, Text} from "../../utils";
 
 
 const useStyles = makeStyles(theme => ({
-    list: {
-        [theme.breakpoints.up('md')]: {
-            columnCount: 2,
-        },
-        [theme.breakpoints.up('xl')]: {
-            columnCount: 3,
-        },
-        padding: 0,
-        columnGap: 0,
-    },
     listItem: {
         padding: theme.spacing(1),
     },
@@ -54,9 +43,9 @@ export default function Day(props) {
     const ids = addIds(json);
 
     // drop outer date label since we already have that in the page
-    return (<List className={classes.list}>
+    return (<ColumnList>
         {json.slice(1).map(row => <TopLevel writer={writer} json={row} history={history}/>)}
-    </List>);
+    </ColumnList>);
 }
 
 
