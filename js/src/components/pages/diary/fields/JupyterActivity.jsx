@@ -6,13 +6,15 @@ import {sprintf} from "sprintf-js";
 
 
 export default function JupyterActivity(props) {
+
     const {json} = props;
     const [, head, ...rest] = json[0];
-    console.log(json);
+
     const details = sprintf('jupyter/activity_details?local_time=%s&activity_group_name=%s',
                             head.db[0], head.db[1]);
     const similar = sprintf('jupyter/similar_activities?local_time=%s&activity_group_name=%s',
                             json[1].db[0], json[1].db[1]);
+
     return (<>
         <Grid item xs={4}><LinkButton href={details}><Text>Details</Text></LinkButton></Grid>
         <JupyterMenu json={rest} label='Compare' template='compare_activities'

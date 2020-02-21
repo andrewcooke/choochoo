@@ -1,8 +1,21 @@
 import React from 'react';
-import {Grid, Typography, Paper, List, ListItem, Box, Link} from "@material-ui/core";
-import {EditField, IntegerField, FloatField, ScoreField, TextField, ValueField, ShrimpField, HRZoneField, ClimbField,
-    NearbyMenu, JupyterActivity} from "./fields";
+import {Box, Grid, List, ListItem, Paper, Typography} from "@material-ui/core";
+import {
+    ClimbField,
+    EditField,
+    FloatField,
+    HRZoneField,
+    IntegerField,
+    JupyterActivity,
+    NearbyMenu,
+    ScoreField,
+    ShrimpField,
+    TextField,
+    ValueField
+} from "./fields";
 import {makeStyles} from "@material-ui/core/styles";
+import {LinkButton} from "../../utils";
+import Text from "../../utils/Text";
 
 
 const useStyles = makeStyles(theme => ({
@@ -98,18 +111,16 @@ function OuterGrid(props) {
     } else if (head.tag === 'nearby-links') {
         return (<NearbyMenu json={json} history={history}/>);
     } else {
-        return (<Box mt={1} mb={1} width='100%'>
-            <Grid item container spacing={1} key={json.id}>
-                <Grid item xs={12} key={head.id}>
-                    <Typography variant={'h' + level}>{head.value}</Typography>
-                </Grid>
-                <Grid item xs={1} key={json.id + 'indent'}/>
-                <Grid item container xs={11} spacing={1} justify='space-between' key={json.id + 'content'}
-                      className={classes.grid}>
-                    {children}
-                </Grid>
+        return (<Grid item container spacing={1} key={json.id} className={classes.grid}>
+            <Grid item xs={12} key={head.id} className={classes.grid}>
+                <Typography variant={'h' + level}>{head.value}</Typography>
             </Grid>
-        </Box>);
+            <Grid item xs={1} key={json.id + 'indent'} className={classes.grid}/>
+            <Grid item container xs={11} spacing={1} justify='space-between' key={json.id + 'content'}
+                  className={classes.grid}>
+                {children}
+            </Grid>
+        </Grid>);
     }
 }
 
@@ -130,6 +141,12 @@ function InnerField(props) {
         return <TextField key={json.id} json={json}/>
     } else if (json.type === 'value') {
         return <ValueField key={json.id} json={json}/>
+    } else if (json.type === 'link') {
+        if (json.tag === 'health') {
+            return <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
+        } else {
+            return <Text>Unsupported link: {json}</Text>
+        }
     } else {
         return (<Grid item xs={4}>
             <Typography variant='body1' key={json.id}>{json.label}={json.value}</Typography>

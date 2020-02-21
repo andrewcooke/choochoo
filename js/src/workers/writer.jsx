@@ -15,7 +15,6 @@ self.close = () => {
 
 function queue(event) {
     Object.entries(event.data).forEach(([key, value]) => {
-        console.log(`queue ${key}:${value}`);
         data[key] = value;
     });
 }
