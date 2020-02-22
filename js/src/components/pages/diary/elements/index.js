@@ -1,3 +1,4 @@
+export {default as Calendar} from './Calendar';
 export {default as ClimbField} from './ClimbField';
 export {default as EditField} from './EditField';
 export {default as FloatField} from './FloatField';

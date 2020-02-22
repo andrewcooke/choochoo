@@ -2,15 +2,16 @@ import React, {useEffect, useState} from 'react';
 import {Layout} from "../../utils";
 import {makeStyles} from "@material-ui/core/styles";
 import {DatePicker} from "@material-ui/pickers";
-import {parse, format} from 'date-fns';
-import {ListItem, List, Grid, IconButton, Typography, CircularProgress} from '@material-ui/core';
+import {add, format, parse} from 'date-fns';
+import {Grid, IconButton, List, ListItem, Typography} from '@material-ui/core';
 import Day from './Day';
 import Month from "./Month";
 import fmtYear from "./fmtYear";
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
-import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
-import {add} from 'date-fns';
+import TodayIcon from '@material-ui/icons/Today';
+import DateRangeIcon from '@material-ui/icons/DateRange';
+import {Calendar} from './elements'
 
 
 const useStyles = makeStyles(theme => ({
@@ -103,7 +104,9 @@ function ImmediateBeforeNextButtons(props) {
     return (<BeforeNextButtonsBase
         label={<Typography variant='body1' component='span' align='left'>{label}</Typography>}
         before={<IconButton edge='start' onClick={onBefore}><NavigateBeforeIcon/></IconButton>}
-        centre={centre ? <IconButton onClick={onCentre}><CalendarTodayIcon/></IconButton> : null}
+        centre={centre ?
+            <IconButton onClick={onCentre}><TodayIcon/></IconButton> :
+            <IconButton><DateRangeIcon/></IconButton>}
         next={<IconButton onClick={onNext}><NavigateNextIcon/></IconButton>}
     />);
 }
@@ -148,6 +151,19 @@ function DateButtons(props) {
 }
 
 
+function ActiveDays(props) {
+    const {date, onChange} = props;
+    const [json, setJson] = useState(null);
+    useEffect(() => {
+        setJson(null);
+        fetch('/api/active-days/' + date)
+            .then(response => response.json())
+            .then(json => setJson(json));
+    }, [date]);
+    return (<Calendar month={date} active={json} onChange={onChange}/>);
+}
+
+
 function DiaryMenu(props) {
 
     const {ymdSelected, datetime, dateFmt, history} = props;
@@ -168,6 +184,7 @@ function DiaryMenu(props) {
                 <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
                 <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
                 <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
+                {ymdSelected === 1 ? <ActiveDays date={date} onChange={onChange}/> : <></>}
                 {ymdSelected === 2 ? <ActivityButtons date={date} dateFmt={dateFmt} onChange={onChange}/> : <></>}
             </List>
         </>

@@ -8,6 +8,7 @@ export {default as Measures} from './Measures';
 export {default as MenuButton} from './MenuButton';
 export {default as Navigation} from './Navigation';
 export {default as PercentBar} from './PercentBar';
+export {default as range} from './range';
 export {default as setIds} from './setIds';
 export {default as SideDrawer} from './SideDrawer';
 export {default as Text} from './Text';

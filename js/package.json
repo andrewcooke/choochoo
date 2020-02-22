@@ -32,9 +32,11 @@
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.42",
     "@material-ui/pickers": "^3.2.10",
+    "core-js": "^3.6.4",
     "date-fns": "^2.9.0",
     "history": "^4.10.1",
     "react-router-dom": "^5.1.2",
+    "regenerator-runtime": "^0.13.3",
     "sprintf-js": "^1.1.2"
   }
 }
