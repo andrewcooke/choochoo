@@ -5,7 +5,7 @@ import {DatePicker} from "@material-ui/pickers";
 import {parse, format} from 'date-fns';
 import {ListItem, List, Grid, IconButton, Typography, CircularProgress} from '@material-ui/core';
 import Day from './Day';
-import fmtMonth from "./fmtMonth";
+import Month from "./Month";
 import fmtYear from "./fmtYear";
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
@@ -181,7 +181,7 @@ function classifyDate(date) {
         case 0:
             return {ymdSelected, dateFmt: 'yyyy', component: fmtYear};
         case 1:
-            return {ymdSelected, dateFmt: 'yyyy-MM', component: fmtMonth};
+            return {ymdSelected, dateFmt: 'yyyy-MM', component: Month};
         case 2:
             return {ymdSelected, dateFmt: 'yyyy-MM-dd', component: Day};
         default:

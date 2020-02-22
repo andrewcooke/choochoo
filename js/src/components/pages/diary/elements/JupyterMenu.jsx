@@ -1,6 +1,6 @@
 import React from "react";
-import {Link, MenuItem} from "@material-ui/core";
-import {zip, MenuButton} from "../../../utils";
+import {MenuItem} from "@material-ui/core";
+import {MenuButton, zip} from "../../../utils";
 
 
 export default function JupyterMenu(props) {
@@ -10,9 +10,11 @@ export default function JupyterMenu(props) {
 
     function mkItem(row, handleClose) {
         const urlArgs = zip(params, row.db).map(([name, value]) => name + '=' + value).join('&');
-        return (<MenuItem onClick={handleClose} key={row.id}>
-            <Link href={'jupyter/' + template + '?' + urlArgs} target='_blank'>{row.value}</Link>
-        </MenuItem>);
+        function onClick() {
+            handleClose();
+            window.open('jupyter/' + template + '?' + urlArgs, '_blank');
+        }
+        return (<MenuItem onClick={onClick}>{row.value}</MenuItem>);
     }
 
     return (<MenuButton json={rest} label={label} mkItem={mkItem}/>);

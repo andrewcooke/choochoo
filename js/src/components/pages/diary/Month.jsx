@@ -33,7 +33,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-export default function Day(props) {
+export default function Month(props) {
 
     const {writer, json, history} = props;
     console.log(json);
