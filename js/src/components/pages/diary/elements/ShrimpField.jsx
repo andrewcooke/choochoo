@@ -17,7 +17,7 @@ export default function ShrimpField(prop) {
             <Text secondary>{arrow.value}</Text>
             <Text>{to.value}</Text>
         </Grid>
-        <Grid item xs={6} key={json.id + 'bars'}>
+        <Grid item xs={6}>
             {bars}
         </Grid>
     </>);
