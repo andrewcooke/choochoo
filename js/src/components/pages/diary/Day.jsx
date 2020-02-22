@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, CircularProgress, Grid, ListItem, Paper, Typography} from "@material-ui/core";
+import {Box, Grid, ListItem, Paper, Typography} from "@material-ui/core";
 import {
     ClimbField,
     EditField,

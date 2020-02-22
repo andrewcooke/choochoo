@@ -15,6 +15,7 @@ export default function mkEditableField(args) {
         let label = json.label;
         if (json.units) label += '/' + json.units
 
+        // note this is mui's TextField, not mine...
         return (<Grid item {...rest}>
             <TextField label={label} value={value} onChange={handleChange} error={error}
                        fullWidth multiline={multiline} variant="filled"/>
