@@ -1,8 +1,9 @@
 
+import datetime as dt
 from logging import getLogger
 from re import search
 
-from sqlalchemy import or_
+from sqlalchemy import or_, distinct
 
 from . import JournalDiary
 from ..calculate.activity import ActivityCalculator
@@ -14,7 +15,8 @@ from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
 from ...diary.model import text, value, optional_text, from_field
-from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time
+from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time, to_date, MONTH, add_date, \
+    time_to_local_date, YMD
 from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
     ActivityTopicField
 
@@ -196,3 +198,14 @@ class ActivityDiary(JournalDiary):
         for name in self.__sort_names(self.__names_like(s, group, MAX_MED_HR_M_ANY)):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
+
+
+def active_days(s, month):
+    month_start = to_date(month)
+    month_end = add_date(month_start, (1, MONTH))
+    start = local_date_to_time(month_start)
+    end = local_date_to_time(month_end)
+    times = s.query(distinct(ActivityJournal.start)). \
+        filter(ActivityJournal.start >= start,
+               ActivityJournal.start < end).all()
+    return [time_to_local_date(row[0]).strftime(YMD) for row in times]

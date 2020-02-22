@@ -8,7 +8,7 @@ from logging import getLogger
 from os.path import split, sep, splitext
 
 from werkzeug import Response, Request, run_simple
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import HTTPException, BadRequest
 from werkzeug.routing import Map, Rule
 from werkzeug.utils import redirect
 
@@ -22,6 +22,7 @@ from ..lib.date import time_to_local_time
 from ..lib.schedule import Schedule
 from ..lib.server import BaseController
 from ..sql import ActivityJournal
+from ..stats.display.activity import active_days
 
 log = getLogger(__name__)
 
@@ -47,6 +48,12 @@ class WebController(BaseController):
                    use_debugger=self.__dev, use_reloader=self.__dev)
 
 
+def error(exception):
+    def handler(*args, **kargs):
+        raise exception()
+    return handler
+
+
 class WebServer:
 
     def __init__(self, db, jcontrol):
@@ -57,7 +64,9 @@ class WebServer:
         self.url_map = Map([
             Rule('/api/diary/<date>', endpoint=api.read_diary, methods=('GET',)),
             Rule('/api/neighbour-activities/<date>', endpoint=api.read_neighbour_activities, methods=('GET',)),
+            Rule('/api/active-days/<month>', endpoint=api.read_active_days, methods=('GET',)),
             Rule('/api/statistics', endpoint=api.write_statistics, methods=('POST',)),
+            Rule('/api/<path:path>', endpoint=error(BadRequest), methods=('GET', 'POST')),
             Rule('/static/<path:path>', endpoint=static, methods=('GET', )),
             Rule('/jupyter/<template>', endpoint=jupyter, methods=('GET', )),
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
@@ -96,7 +105,8 @@ class Api:
 
     FMT = ('%Y', '%Y-%m', '%Y-%m-%d')
 
-    def read_diary(self, request, s, date):
+    @staticmethod
+    def read_diary(request, s, date):
         schedule, date = parse_date(date)
         if schedule == 'd':
             data = read_date(s, date)
@@ -105,6 +115,7 @@ class Api:
         return Response(dumps(rewrite_db(list(data))))
 
     def read_neighbour_activities(self, request, s, date):
+        # used in the sidebar menu to advance/retreat to the next activity
         ymd = date.count('-')
         before = ActivityJournal.before_local_time(s, date)
         after = ActivityJournal.after_local_time(s, date)
@@ -113,7 +124,14 @@ class Api:
         if after: result['after'] = time_to_local_time(after.start, self.FMT[ymd])
         return Response(dumps(result))
 
-    def write_statistics(self, request, s):
+    @staticmethod
+    def read_active_days(request, s, month):
+        return Response(dumps(active_days(s, month)))
+
+    @staticmethod
+    def write_statistics(request, s):
+        # used to write modified fields back to the database
+        log.error('write_statistics not implemented')
         return Response()
 
 
