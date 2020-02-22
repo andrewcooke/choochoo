@@ -170,7 +170,11 @@ function DiaryMenu(props) {
     const classes = useStyles();
     const date = format(datetime, dateFmt);
 
-    function onChange(datetime) {
+    function setDate(date) {
+        history.push('/' + date);
+    }
+
+    function setMonth(datetime) {
         const date = format(datetime, dateFmt);
         history.push('/' + date);
     }
@@ -179,13 +183,13 @@ function DiaryMenu(props) {
         <>
             <List component="nav" className={classes.root}>
                 <ListItem>
-                    <Picker ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
+                    <Picker ymdSelected={ymdSelected} datetime={datetime} onChange={setMonth}/>
                 </ListItem>
-                <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
-                <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
-                <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime} onChange={onChange}/>
-                {ymdSelected === 1 ? <ActiveDays date={date} onChange={onChange}/> : <></>}
-                {ymdSelected === 2 ? <ActivityButtons date={date} dateFmt={dateFmt} onChange={onChange}/> : <></>}
+                <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime} onChange={setMonth}/>
+                <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime} onChange={setMonth}/>
+                <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime} onChange={setMonth}/>
+                {ymdSelected === 1 ? <ActiveDays date={date} onChange={setDate}/> : <></>}
+                {ymdSelected === 2 ? <ActivityButtons date={date} dateFmt={dateFmt} onChange={setMonth}/> : <></>}
             </List>
         </>
     );
