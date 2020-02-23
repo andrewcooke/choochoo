@@ -11,7 +11,7 @@ pip install jupyter
 pip install matplotlib
 pip install numpy
 pip install openpyxl
-pip install pandas
+pip install pandas==0.25.3
 pip install pendulum
 pip install psutil
 pip install pyGeoTile
