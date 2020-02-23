@@ -12,6 +12,7 @@ import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import TodayIcon from '@material-ui/icons/Today';
 import DateRangeIcon from '@material-ui/icons/DateRange';
 import {Calendar} from './elements'
+import {FMT_YEAR, FMT_MONTH, FMT_DAY} from "../../../constants";
 
 
 const useStyles = makeStyles(theme => ({
@@ -174,22 +175,25 @@ function DiaryMenu(props) {
         history.push('/' + date);
     }
 
-    function setMonth(datetime) {
-        const date = format(datetime, dateFmt);
-        history.push('/' + date);
+    function setDatetime(datetime, fmt) {
+        setDate(format(datetime, dateFmt));
     }
 
     return (
         <>
             <List component="nav" className={classes.root}>
                 <ListItem>
-                    <Picker ymdSelected={ymdSelected} datetime={datetime} onChange={setMonth}/>
+                    <Picker ymdSelected={ymdSelected} datetime={datetime}
+                            onChange={datetime => setDatetime(datetime, dateFmt)}/>
                 </ListItem>
-                <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime} onChange={setMonth}/>
-                <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime} onChange={setMonth}/>
-                <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime} onChange={setMonth}/>
+                <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime}
+                             onChange={datetime => setDatetime(datetime, dateFmt)}/>
+                <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime}
+                             onChange={datetime => setDatetime(datetime, ymdSelected === 1 ? dateFmt : FMT_MONTH)}/>
+                <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime}
+                             onChange={datetime => setDatetime(datetime, ymdSelected === 0 ? dateFmt : FMT_YEAR)}/>
                 {ymdSelected === 1 ? <ActiveDays date={date} onChange={setDate}/> : <></>}
-                {ymdSelected === 2 ? <ActivityButtons date={date} dateFmt={dateFmt} onChange={setMonth}/> : <></>}
+                {ymdSelected === 2 ? <ActivityButtons date={date} dateFmt={dateFmt} onChange={setYMD}/> : <></>}
             </List>
         </>
     );
@@ -200,11 +204,11 @@ function classifyDate(date) {
     const ymdSelected = (date.match(/-/g) || []).length;
     switch (ymdSelected) {
         case 0:
-            return {ymdSelected, dateFmt: 'yyyy', component: fmtYear};
+            return {ymdSelected, dateFmt: FMT_YEAR, component: fmtYear};
         case 1:
-            return {ymdSelected, dateFmt: 'yyyy-MM', component: Month};
+            return {ymdSelected, dateFmt: FMT_MONTH, component: Month};
         case 2:
-            return {ymdSelected, dateFmt: 'yyyy-MM-dd', component: Day};
+            return {ymdSelected, dateFmt: FMT_DAY, component: Day};
         default:
             throw 'Bad date ' + date;
     }

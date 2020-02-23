@@ -3,6 +3,7 @@ import {getDay, getDaysInMonth, parse} from "date-fns";
 import {Loading, range} from "../../../utils";
 import {Button} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
+import {FMT_DAY} from "../../../../constants";
 
 
 const useStyles = makeStyles(theme => ({
@@ -71,7 +72,7 @@ export default function Calendar(props) {
     if (!Array.isArray(active)) {
         return <Loading/>;  // undefined initial data
     } else {
-        const first = parse(month + '-01', 'yyyy-MM-dd', new Date());
+        const first = parse(month + '-01', FMT_DAY, new Date());
         const start = dayOfWeek(first);
         const days = getDaysInMonth(first);
         return (<table className={classes.table}><tbody>
