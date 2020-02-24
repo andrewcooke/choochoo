@@ -3,6 +3,7 @@ from logging import getLogger
 from re import search
 
 from sqlalchemy import or_
+from sqlalchemy.orm.exc import NoResultFound
 
 from . import JournalDiary
 from ..calculate.activity import ActivityCalculator
@@ -169,10 +170,13 @@ class ActivityDiary(JournalDiary):
     @staticmethod
     def __names(s, group, *names):
         for name in names:
-            yield s.query(StatisticName). \
-                filter(StatisticName.name == name,
-                       StatisticName.owner == ActivityCalculator,
-                       StatisticName.constraint == group).one()
+            try:
+                yield s.query(StatisticName). \
+                    filter(StatisticName.name == name,
+                           StatisticName.owner == ActivityCalculator,
+                           StatisticName.constraint == group).one()
+            except NoResultFound:
+                log.warning('Missing {name} in database')
 
     @staticmethod
     def __names_like(s, group, name):
