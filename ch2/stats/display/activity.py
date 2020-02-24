@@ -176,7 +176,7 @@ class ActivityDiary(JournalDiary):
                            StatisticName.owner == ActivityCalculator,
                            StatisticName.constraint == group).one()
             except NoResultFound:
-                log.warning('Missing {name} in database')
+                log.warning(f'Missing "{name}" in database')
 
     @staticmethod
     def __names_like(s, group, name):

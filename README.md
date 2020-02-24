@@ -7,7 +7,8 @@ An **open**, **hackable** and **free** training diary.
     > source env/bin/activate
     > pip install choochoo
     > ch2 config default
-    > constants set FTHR.Bike 154
+    > ch2 constants set FTHR.Bike 154          # or whatever your FTHR is
+    > ch2 constants set SRTM1.Dir /.../srtm1   # cache for elevation data
     > ch2 help
     > ch2 diary
 
