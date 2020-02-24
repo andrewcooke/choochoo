@@ -7,9 +7,17 @@ An **open**, **hackable** and **free** training diary.
     > source env/bin/activate
     > pip install choochoo
     > ch2 config default
-    > constants set FTHR.Bike 154
+    > ch2 constants set FTHR.Bike 154          # or whatever your FTHR is
     > ch2 help
     > ch2 diary
+
+You will also need to configure and download elevation data if your
+device does not have a barometer.  See
+[here](https://andrewcooke.github.io/choochoo/elevation#configuration). Also,
+there's a [known
+issue](https://github.com/andrewcooke/choochoo/issues/28) with Jupyter
+configuration - you may need to edit a configuration file to get
+Jupyter working correctly.
 
 Please see the [full
 documentation](https://andrewcooke.github.io/choochoo/).  This page

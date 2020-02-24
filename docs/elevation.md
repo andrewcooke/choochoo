@@ -37,7 +37,7 @@ Two things need to be done to get elevation working.
 
 First, you must set the directory where the SRTM files will be stored:
 
-    > ch2 constants --set SRTM1.Dir /PATH/TO/SRTM/DIRECTORY
+    > ch2 constants set SRTM1.Dir /PATH/TO/SRTM/DIRECTORY
 
 Second, you must download the appropriate data.  You may be able to
 find the correct file(s) [here](http://dwtkns.com/srtm30m/) by using

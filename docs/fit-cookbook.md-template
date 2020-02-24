@@ -226,9 +226,9 @@ This has made us curious.  Do we have any rides where we exceed 17m/s?
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
 echo "    > ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name *.fit"
-dev/ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name ~/archive/fit/bike/2017-0*.fit > $out 2>&1
+dev/ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name ~/archive/fit/bike/cotic/2017-0*.fit > $out 2>&1
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
-sed -i 's|/home/andrew/archive/fit/bike/||g' $out
+sed -i 's|/home/andrew/archive/fit/bike/cotic/||g' $out
 sed 's/^/    /' $out
 
 The `--name` flag displays filenames on matching, while `--match 0`
@@ -243,9 +243,9 @@ around this by using `--grep`:
 #/bin/bash
 out=`mktemp /tmp/ch2-doc.XXXXXX`
 echo "    > ch2 fit grep -p '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit"
-dev/ch2 fit grep -p '.*speed' '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- ~/archive/fit/bike/2018-03-04-qdp.fit > $out 2>&1
+dev/ch2 fit grep -p '.*speed' '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- ~/archive/fit/bike/cotic/2018-03-04-qdp.fit > $out 2>&1
 sed -i 's|/home/andrew/.ch2/database.*|...|g' $out
-sed -i 's|~/archive/fit/bike/2018-03-04-qdp.fit|myfile.fit|g' $out
+sed -i 's|~/archive/fit/bike/cotic/2018-03-04-qdp.fit|myfile.fit|g' $out
 sed 's/^/    /' $out
 
 Note that we needed to explicitly include a wildcard record for the
@@ -274,7 +274,7 @@ from ch2.fit.format.read import parse_data
 basicConfig(level=INFO)
 log = getLogger()
 #
-data = read_fit('/home/andrew/project/ch2/choochoo/data/test/source/personal/2018-07-26-rec.fit')
+data = read_fit('data/test/source/personal/2018-07-26-rec.fit')
 types, messages = read_profile(log)
 state, tokens = parse_data(data, types, messages)
 #
@@ -295,7 +295,7 @@ EOF
 sed -i 's/#//' $src
 source env/bin/activate
 PYTHONPATH=. python $src > $rst
-sed -i 's|/home/andrew/project/ch2/choochoo/data/test/source/personal/2018-07-26-rec.fit|myfile.fit|' $src
+sed -i 's|data/test/source/personal/2018-07-26-rec.fit|myfile.fit|' $src
 sed 's/^/    /' $src > $out
 echo >> $out
 echo Giving the output >> $out

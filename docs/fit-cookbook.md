@@ -31,9 +31,9 @@ default configuration (`ch2 default-config`) is sufficient.
 To check for errors in `myfile.fit`:
 
     > ch2 fix-fit myfile.fit --discard
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
         INFO: Input ----------
         INFO: Reading binary data from myfile.fit
         INFO: Initial Data ----------
@@ -90,9 +90,9 @@ To check that the timestamp never increases by more than 60s between
 records:
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --discard
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
         INFO: Input ----------
         INFO: Reading binary data from myfile.fit
         INFO: Initial Data ----------
@@ -126,9 +126,9 @@ file (see below to understand what information is removed).
 The command to drop data is (see notes below):
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
         INFO: Input ----------
         INFO: Reading binary data from myfile.fit
         INFO: Initial Data ----------
@@ -193,9 +193,9 @@ In the recipe above data were dropped after the first 4975 bytes.  We
 can see what records that affected as follows:
 
     > ch2 fit records --after-bytes 4975 myfile.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
     
     207 04975 lap
       end_position_lat: -33.42734768986702°,
@@ -244,9 +244,9 @@ those are not consecutive there must be some internal messages also
 present.  We can display those too:
 
     > ch2 fit records --after-bytes 4975 --internal myfile.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
     
     207 04975 lap
       end_position_lat: -33.42734768986702°,
@@ -326,9 +326,9 @@ exciting.
 We can also see the same data in binary form.  For example:
 
     > ch2 fit tokens --after-bytes 4975 myfile.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
     207 04975 DTA 00b687bc35f981bc35b5a33ae82425cacdb0bc3ae8a234cacd8e1c120049270f009f730800ffffffff7dbd3ae84f37cecd964739e82425cacd0000b500c9159e1e4e003100ffffffffffffffff0901ffffffffff0702ff007f7fffffffff
     208 05069 DFN 41000012002cfd04860204860304850404850704860804860904860a04861d04851e04851f04852004854e04866e1007fe02840b02840e02840f02841602841702841902841a02845902845a02845b02840001000101000501000601001001021101021201021301021801021b01021c01003901013a01015101005c01025d01025e01026d01026f0102
     209 05207 DTA 01b687bc35f981bc35b5a33ae82425cacd8e1c120049270f009f730800ffffffff7dbd3ae84f37cecd964739e82425cacdffffffff42696b650000000000000000000000000000b500c9159e1e4e00310000000100ffffffffffff09010200ffffffffffff007f7f00ffffffffff
@@ -349,9 +349,9 @@ First, we note from the `tokens` dump that the data extend from offset
 follows:
 
     > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
         INFO: Input ----------
         INFO: Reading binary data from myfile.fit
         INFO: Initial Data ----------
@@ -396,9 +396,9 @@ file (to the best of its ability).
 ## Change the Times in a FIT File
 
     > ch2 fix-fit myfile.fit --start '2018-01-01 12:00:00' --fix-checksum -o fixed.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
         INFO: Input ----------
         INFO: Reading binary data from myfile
         INFO: Initial Data ----------
@@ -440,9 +440,9 @@ For some reason we want to know if a file contains any speed values
 over 7 m/s:
 
     > ch2 fit grep -p '.*speed>7' --compact myfile.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
     record:enhanced_speed=7.521
     record:enhanced_speed=7.241
     record:enhanced_speed=7.082
@@ -469,9 +469,9 @@ Seeing the results above we'd like to know more about the records
 where we were over 7.5m/s:
 
     > ch2 fit grep -p 'record:enhanced_speed>7' --context myfile.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
     
     052 01697 record
       distance: 570.39m,  enhanced_altitude: 563.2m,  enhanced_speed: 7.521m/s,
@@ -510,12 +510,15 @@ the last of these is for regular expression matching on the value.
 This has made us curious.  Do we have any rides where we exceed 17m/s?
 
     > ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name *.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
-    CRITICAL: [Errno 2] No such file or directory: '2017-0*.fit'
-        INFO: See `ch2 help` for available commands.
-        INFO: Docs at http://andrewcooke.github.io/choochoo
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
+    2017-01-31-lad.fit
+    2017-06-11-sp2.fit
+    2017-06-28-jp2.fit
+    2017-07-03-ayn.fit
+    2017-07-07-jp2.fit
+    2017-09-17-jp2.fit
 
 
 The `--name` flag displays filenames on matching, while `--match 0`
@@ -528,12 +531,40 @@ bytes, but not timestamps (or any other field).  But we can work
 around this by using `--grep`:
 
     > ch2 fit grep -p '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit
-        INFO: Version 0.28.4
-        INFO: Using database at ...
-        INFO: Using database at /home/andrew/.ch2/system-0-28.sql
-    CRITICAL: [Errno 2] No such file or directory: '/home/andrew/archive/fit/bike/2018-03-04-qdp.fit'
-        INFO: See `ch2 help` for available commands.
-        INFO: Docs at http://andrewcooke.github.io/choochoo
+        INFO: Version 0.28.6
+        INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
+    
+    record:enhanced_speed=2.883
+    record:timestamp=2018-03-04 11:56:46+00:00
+    
+    record:enhanced_speed=2.902
+    record:timestamp=2018-03-04 11:57:07+00:00
+    
+    record:enhanced_speed=2.874
+    record:timestamp=2018-03-04 11:57:29+00:00
+    
+    record:enhanced_speed=2.762
+    record:timestamp=2018-03-04 11:57:51+00:00
+    
+    record:enhanced_speed=2.93
+    record:timestamp=2018-03-04 11:58:07+00:00
+    
+    record:enhanced_speed=2.79
+    record:timestamp=2018-03-04 11:58:29+00:00
+    
+    record:enhanced_speed=3.219
+    record:timestamp=2018-03-04 11:58:50+00:00
+    
+    record:enhanced_speed=3.172
+    record:timestamp=2018-03-04 11:59:06+00:00
+    
+    record:enhanced_speed=3.266
+    record:timestamp=2018-03-04 11:59:25+00:00
+    
+    record:enhanced_speed=3.2
+    record:timestamp=2018-03-04 11:59:44+00:00
+    
 
 
 Note that we needed to explicitly include a wildcard record for the
@@ -576,4 +607,7 @@ need to write some code to do that...
     print('Maximum speed: %.2f' % max_speed)
 
 Giving the output
+
+    Maximum speed: 7.80
+
 
