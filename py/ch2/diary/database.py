@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy import or_
 
-from .model import from_field, text, optional_text, link, value
+from .model import from_field, text, optional_text, link, value, trim_no_stats
 from ..lib import format_date, time_to_local_time
 from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal, StatisticJournal
 from ..stats.calculate.summary import SummaryCalculator
@@ -80,6 +80,7 @@ def read_schedule(s, schedule, date):
 
 
 @optional_text('Diary')
+@trim_no_stats
 def read_schedule_topics(s, schedule, start):
     finish = schedule.next_frame(start)
     for topic in s.query(DiaryTopic).filter(DiaryTopic.parent == None,

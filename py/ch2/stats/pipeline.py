@@ -4,6 +4,7 @@ from logging import getLogger
 from time import time
 
 from psutil import cpu_count
+from sqlalchemy import text
 
 from .load import StatisticJournalLoader
 from ..lib.date import format_seconds
@@ -78,12 +79,21 @@ class MultiProcPipeline(BasePipeline):
             elif not missing:
                 log.info(f'No missing data for {short_cls(self)}')
             else:
+                self.__flush_wal(s)
                 n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
                 if n_parallel < 2 or len(missing) == 1:
                     self._run_all(s, missing)
                 else:
                     self.__spawn(s, missing, n_total, n_parallel)
             self._shutdown(s)
+
+    def __flush_wal(self, session):
+        session.commit()
+        cnx = session.connection()
+        log.debug('Clearing WAL')
+        cnx.execute(text('pragma wal_checkpoint(RESTART);'))
+        log.debug('Cleared WAL')
+        session.commit()
 
     def _run_all(self, s, missing):
         for missed in missing:

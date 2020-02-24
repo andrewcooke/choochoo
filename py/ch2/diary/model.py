@@ -120,3 +120,23 @@ def optional_text(name, tag=None):
                 yield value
         return decorated
     return decorator
+
+
+def trim_no_stats(f):
+
+    def decorated(*args, **kargs):
+        result = list(f(*args, **kargs))
+
+        def trim(model):
+            if isinstance(model, list):
+                head, rest = model[0:1], model[1:]
+                rest = [x for x in [trim(entry) for entry in rest] if x]
+                if rest:
+                    return head + rest
+                else:
+                    return []
+            else:
+                return model
+        return trim(result)
+
+    return decorated
