@@ -100,14 +100,12 @@ function ActivityButtons(props) {
 
 function ImmediateBeforeNextButtons(props) {
 
-    const {centre, onBefore, onCentre, onNext, label} = props;
+    const {top, onBefore, onCentre, onNext, label} = props;
 
     return (<BeforeNextButtonsBase
         label={<Typography variant='body1' component='span' align='left'>{label}</Typography>}
         before={<IconButton edge='start' onClick={onBefore}><NavigateBeforeIcon/></IconButton>}
-        centre={centre ?
-            <IconButton onClick={onCentre}><TodayIcon/></IconButton> :
-            <IconButton><DateRangeIcon/></IconButton>}
+        centre={<IconButton onClick={onCentre}>{top ? <TodayIcon/> : <DateRangeIcon/>}</IconButton>}
         next={<IconButton onClick={onNext}><NavigateNextIcon/></IconButton>}
     />);
 }
@@ -119,6 +117,7 @@ const YMD = ['Year', 'Month', 'Day'];
 function DateButtons(props) {
 
     const {ymd, ymdSelected, datetime, onChange} = props;
+    const top = ymd === ymdSelected;
 
     function delta(n) {
         switch (ymd) {
@@ -140,14 +139,15 @@ function DateButtons(props) {
     }
 
     function onCentre() {
-        onChange(new Date());
+        // if top, revert to today, otherwise switch range at current date
+        onChange(top ? new Date() : datetime);
     }
 
     if (ymd > ymdSelected) {
         return <></>;
     } else {
-        return (<ImmediateBeforeNextButtons centre={ymd === ymdSelected} onCentre={onCentre}
-                                            onBefore={onBefore} onNext={onNext} label={YMD[ymd]}/>);
+        return (<ImmediateBeforeNextButtons top={top} label={YMD[ymd]}
+                                            onCentre={onCentre} onBefore={onBefore} onNext={onNext}/>);
     }
 }
 
@@ -176,7 +176,7 @@ function DiaryMenu(props) {
     }
 
     function setDatetime(datetime, fmt) {
-        setDate(format(datetime, dateFmt));
+        setDate(format(datetime, fmt));
     }
 
     return (
@@ -189,11 +189,14 @@ function DiaryMenu(props) {
                 <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime}
                              onChange={datetime => setDatetime(datetime, dateFmt)}/>
                 <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime}
-                             onChange={datetime => setDatetime(datetime, ymdSelected === 1 ? dateFmt : FMT_MONTH)}/>
+                             onChange={datetime => setDatetime(datetime, FMT_MONTH)}/>
                 <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime}
-                             onChange={datetime => setDatetime(datetime, ymdSelected === 0 ? dateFmt : FMT_YEAR)}/>
+                             onChange={datetime => setDatetime(datetime, FMT_YEAR)}/>
                 {ymdSelected === 1 ? <ActiveDays date={date} onChange={setDate}/> : <></>}
-                {ymdSelected === 2 ? <ActivityButtons date={date} dateFmt={dateFmt} onChange={setYMD}/> : <></>}
+                {ymdSelected === 2 ?
+                    <ActivityButtons date={date} dateFmt={dateFmt}
+                                     onChange={datetime => setDatetime(datetime, dateFmt)}/> :
+                    <></>}
             </List>
         </>
     );

@@ -2,9 +2,13 @@
 this is largely based on
 https://itnext.io/a-template-for-creating-a-full-stack-web-application-with-flask-npm-webpack-and-reactjs-be2294b111bd
 
-the code in src is compiled into bundle.js by 'npm run dev-build' and
+the code in src is compiled into bundle.js by `npm run dev-build` and
 then served by flask.
 
 that file (bundle.js) will need to be included in binary
 distributions.
 
+from clean checkout, run `npm install` to install dependencies.
+
+during development, `npm run dev-watch` will rebuild the bundle(s)
+on detecting edits.

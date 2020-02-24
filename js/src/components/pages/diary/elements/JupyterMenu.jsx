@@ -14,7 +14,7 @@ export default function JupyterMenu(props) {
             handleClose();
             window.open('jupyter/' + template + '?' + urlArgs, '_blank');
         }
-        return (<MenuItem onClick={onClick}>{row.value}</MenuItem>);
+        return (<MenuItem onClick={onClick} key={row.id}>{row.value}</MenuItem>);
     }
 
     return (<MenuButton json={rest} label={label} mkItem={mkItem}/>);
