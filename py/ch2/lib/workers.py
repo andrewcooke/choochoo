@@ -73,22 +73,27 @@ class Workers:
 
 
 def command_root():
-    with open(f'/proc/{getpid()}/cmdline', 'rb') as f:
-        line = f.readline()
+    try:
+        with open(f'/proc/{getpid()}/cmdline', 'rb') as f:
+            line = f.readline()
 
-        def parse():
-            word = bytearray()
-            for char in line:
-                if char:
-                    word.append(char)
-                else:
-                    yield word.decode('utf8')
-                    word = bytearray()
+            def parse():
+                word = bytearray()
+                for char in line:
+                    if char:
+                        word.append(char)
+                    else:
+                        yield word.decode('utf8')
+                        word = bytearray()
 
-        words = list(parse())
-        if len(argv) > 1:
-            i = words.index(argv[1])
-            words = words[:i]
-        ch2 = ' '.join(words)
-        log.debug(f'Using command "{ch2}"')
-        return ch2
+            words = list(parse())
+            if len(argv) > 1:
+                i = words.index(argv[1])
+                words = words[:i]
+            ch2 = ' '.join(words)
+            log.debug(f'Using command "{ch2}"')
+            return ch2
+    except:
+        log.warning('Cannot read /proc so assuming that ch2 is started on the command line as "chs"')
+        return 'ch2'
+

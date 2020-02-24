@@ -31,7 +31,7 @@ default configuration (`ch2 default-config`) is sufficient.
 To check for errors in `myfile.fit`:
 
     > ch2 fix-fit myfile.fit --discard
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
         INFO: Input ----------
@@ -90,7 +90,7 @@ To check that the timestamp never increases by more than 60s between
 records:
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --discard
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
         INFO: Input ----------
@@ -126,7 +126,7 @@ file (see below to understand what information is removed).
 The command to drop data is (see notes below):
 
     > ch2 fix-fit myfile.fit --max-delta-t 60 --drop --fix-header --fix-checksum --max-fwd-len 500 -o fixed.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
         INFO: Input ----------
@@ -193,7 +193,7 @@ In the recipe above data were dropped after the first 4975 bytes.  We
 can see what records that affected as follows:
 
     > ch2 fit records --after-bytes 4975 myfile.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
     
@@ -244,7 +244,7 @@ those are not consecutive there must be some internal messages also
 present.  We can display those too:
 
     > ch2 fit records --after-bytes 4975 --internal myfile.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
     
@@ -326,7 +326,7 @@ exciting.
 We can also see the same data in binary form.  For example:
 
     > ch2 fit tokens --after-bytes 4975 myfile.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
     207 04975 DTA 00b687bc35f981bc35b5a33ae82425cacdb0bc3ae8a234cacd8e1c120049270f009f730800ffffffff7dbd3ae84f37cecd964739e82425cacd0000b500c9159e1e4e003100ffffffffffffffff0901ffffffffff0702ff007f7fffffffff
@@ -349,7 +349,7 @@ First, we note from the `tokens` dump that the data extend from offset
 follows:
 
     > ch2 fix-fit myfile.fit --slices :05069,05317: --fix-header --fix-checksum -o sliced.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
         INFO: Input ----------
@@ -396,7 +396,7 @@ file (to the best of its ability).
 ## Change the Times in a FIT File
 
     > ch2 fix-fit myfile.fit --start '2018-01-01 12:00:00' --fix-checksum -o fixed.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
         INFO: Input ----------
@@ -440,7 +440,7 @@ For some reason we want to know if a file contains any speed values
 over 7 m/s:
 
     > ch2 fit grep -p '.*speed>7' --compact myfile.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
     record:enhanced_speed=7.521
@@ -469,7 +469,7 @@ Seeing the results above we'd like to know more about the records
 where we were over 7.5m/s:
 
     > ch2 fit grep -p 'record:enhanced_speed>7' --context myfile.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
     
@@ -510,7 +510,7 @@ the last of these is for regular expression matching on the value.
 This has made us curious.  Do we have any rides where we exceed 17m/s?
 
     > ch2 fit grep -p 'record:enhanced_speed>17' --match 0 --name *.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
     CRITICAL: [Errno 2] No such file or directory: '2017-0*.fit'
@@ -528,7 +528,7 @@ bytes, but not timestamps (or any other field).  But we can work
 around this by using `--grep`:
 
     > ch2 fit grep -p '.*:timestamp>2018-03-04 11:56:33+00:00' '.*:timestamp<2018-03-04 12:00:00+00:00' -- myfile.fit
-        INFO: Version 0.28.1
+        INFO: Version 0.28.4
         INFO: Using database at ...
         INFO: Using database at /home/andrew/.ch2/system-0-28.sql
     CRITICAL: [Errno 2] No such file or directory: '/home/andrew/archive/fit/bike/2018-03-04-qdp.fit'
@@ -576,7 +576,4 @@ need to write some code to do that...
     print('Maximum speed: %.2f' % max_speed)
 
 Giving the output
-
-    Maximum speed: 7.80
-
 

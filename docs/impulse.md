@@ -707,7 +707,7 @@ Create a default database:
 
 You need to define your FTHR or the HR Zones can't be calculated:
 
-    (env)> ch2 constants --set FTHR.Bike NNN
+    (env)> ch2 constants set FTHR.Bike NNN
 
 (replace `NNN` with your FTHR in bpm).
     
@@ -752,19 +752,19 @@ As you use the system more you will probably need to understand the
 
 The constants used in the calculations can be viewed:
 
-    (env)> ch2 constants
+    (env)> ch2 constants show
 
 gives a list of all names.  To see a particular value use, for example:
 
-    (env)> ch2 constants Fatigue.Bike
-    Fatigue.Bike: Data needed to calculate the FF-model fitness - see Response enum
-    1970-01-01 00:00:00+00:00: {"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 5, "start": 0}
+    (env)> ch2 constants show Fitness42d.All
+    Fitness42d.All: Data needed to calculate the FF-model fitness for 42d - see Response enum
+    1970-01-01 00:00:00+00:00: {"src_owner": "ImpulseCalculator", "dest_name": "Fitness 42d", "tau_days": 42, "start": 1, "scale": 1}
 
 This is a JSON-encoded dict and a modified value can be entered
-directly.  For example, to change `scale` to `7`:
+directly.  For example, to change `scale` to `2`:
 
-    (env)> ch2 constants --set Fatigue.Bike '{"src_name": "HR Impulse", "src_owner": "HeartRateStatistics", "dest_name": "Fatigue", "tau_days": 7, "scale": 7, "start": 0}'
-
+    (env)> ch2 constants set Fitness42d.All '{"src_owner": "ImpulseCalculator", "dest_name": "Fitness 42d", "tau_days": 42, "start": 1, "scale": 2}'
+    
 ### Re-calculate
 
 Changing the constants will not re-trigger calculation of the

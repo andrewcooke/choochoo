@@ -8,7 +8,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
     add_activity_topic_field
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
-from ..diary.model import TYPE, TEXT, FLOAT, LO, HI, DP, SCORE
+from ..diary.model import TYPE, FLOAT, LO, HI, DP, SCORE, EDIT
 from ..lib.schedule import Schedule
 from ..msil2a.download import MSIL2A_DIR
 from ..sql.tables.statistic import StatisticJournalType
@@ -148,7 +148,7 @@ def default(system, db, no_diary=False):
             c = Counter()
             diary = add_diary_topic(s, 'Diary', c)
             add_diary_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
-                                  model={TYPE: TEXT})
+                                  model={TYPE: EDIT})
             add_diary_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,
                                   units='kg', summary='[avg],[msr]',
                                   model={TYPE: FLOAT, LO: 50, HI: 100, DP: 1})
@@ -160,28 +160,28 @@ def default(system, db, no_diary=False):
                                   model={TYPE: SCORE})
             add_diary_topic_field(s, diary, 'Nutrition', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
-                                  model={TYPE: TEXT})
+                                  model={TYPE: EDIT})
             add_diary_topic_field(s, diary, 'Soreness', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
-                                  model={TYPE: TEXT})
+                                  model={TYPE: EDIT})
             add_diary_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
-                                  model={TYPE: TEXT})
+                                  model={TYPE: EDIT})
             add_diary_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
-                                  model={TYPE: TEXT})
+                                  model={TYPE: EDIT})
             add_diary_topic_field(s, diary, 'Route', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
-                                  model={TYPE: TEXT})
+                                  model={TYPE: EDIT})
 
             # and activity-related topics
             # a null parent here means that the fields appear under the title
 
             c = Counter()
             add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
-                                     model={TYPE: TEXT})
+                                     model={TYPE: EDIT})
             add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
-                                     model={TYPE: TEXT})
+                                     model={TYPE: EDIT})
 
         # finally, set the TZ so that first use of the diary doesn't wipe all our intervals
         DiaryTopicJournal.check_tz(system, s)
