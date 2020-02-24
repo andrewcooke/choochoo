@@ -513,9 +513,12 @@ This has made us curious.  Do we have any rides where we exceed 17m/s?
         INFO: Version 0.28.6
         INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
         INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
-    CRITICAL: [Errno 2] No such file or directory: '2017-0*.fit'
-        INFO: See `ch2 help` for available commands.
-        INFO: Docs at http://andrewcooke.github.io/choochoo
+    2017-01-31-lad.fit
+    2017-06-11-sp2.fit
+    2017-06-28-jp2.fit
+    2017-07-03-ayn.fit
+    2017-07-07-jp2.fit
+    2017-09-17-jp2.fit
 
 
 The `--name` flag displays filenames on matching, while `--match 0`
@@ -531,9 +534,37 @@ around this by using `--grep`:
         INFO: Version 0.28.6
         INFO: Using database at /home/andrew/.ch2/save/database-0-28.sql-original
         INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
-    CRITICAL: [Errno 2] No such file or directory: '/home/andrew/archive/fit/bike/2018-03-04-qdp.fit'
-        INFO: See `ch2 help` for available commands.
-        INFO: Docs at http://andrewcooke.github.io/choochoo
+    
+    record:enhanced_speed=2.883
+    record:timestamp=2018-03-04 11:56:46+00:00
+    
+    record:enhanced_speed=2.902
+    record:timestamp=2018-03-04 11:57:07+00:00
+    
+    record:enhanced_speed=2.874
+    record:timestamp=2018-03-04 11:57:29+00:00
+    
+    record:enhanced_speed=2.762
+    record:timestamp=2018-03-04 11:57:51+00:00
+    
+    record:enhanced_speed=2.93
+    record:timestamp=2018-03-04 11:58:07+00:00
+    
+    record:enhanced_speed=2.79
+    record:timestamp=2018-03-04 11:58:29+00:00
+    
+    record:enhanced_speed=3.219
+    record:timestamp=2018-03-04 11:58:50+00:00
+    
+    record:enhanced_speed=3.172
+    record:timestamp=2018-03-04 11:59:06+00:00
+    
+    record:enhanced_speed=3.266
+    record:timestamp=2018-03-04 11:59:25+00:00
+    
+    record:enhanced_speed=3.2
+    record:timestamp=2018-03-04 11:59:44+00:00
+    
 
 
 Note that we needed to explicitly include a wildcard record for the
@@ -576,4 +607,7 @@ need to write some code to do that...
     print('Maximum speed: %.2f' % max_speed)
 
 Giving the output
+
+    Maximum speed: 7.80
+
 

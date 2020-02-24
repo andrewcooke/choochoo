@@ -13,7 +13,11 @@ An **open**, **hackable** and **free** training diary.
 
 You will also need to configure and download elevation data if your
 device does not have a barometer.  See
-[here](https://andrewcooke.github.io/choochoo/elevation#configuration).
+[here](https://andrewcooke.github.io/choochoo/elevation#configuration). Also,
+there's a [known
+issue](https://github.com/andrewcooke/choochoo/issues/28) with Jupyter
+configuration - you may need to edit a configuration file to get
+Jupyter working correctly.
 
 Please see the [full
 documentation](https://andrewcooke.github.io/choochoo/).  This page
