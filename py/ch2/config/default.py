@@ -28,7 +28,7 @@ from ..stats.display.nearby import NearbyDiary
 from ..stats.display.response import ResponseDiary
 from ..stats.display.segment import SegmentDiary
 from ..stats.names import BPM, FTHR, LONGITUDE, LATITUDE, HEART_RATE, SPEED, DISTANCE, ALTITUDE, DEG, MS, M, CADENCE, \
-    RPM, FITNESS_D, FATIGUE_D, ALL, SPORT_WALKING, SPORT_SWIMMING, SPORT_RUNNING, SPORT_CYCLING
+    RPM, FITNESS_D, FATIGUE_D, ALL, SPORT_WALKING, SPORT_SWIMMING, SPORT_RUNNING, SPORT_CYCLING, KM
 from ..stats.read.monitor import MonitorReader
 from ..stats.read.segment import SegmentReader
 
@@ -67,7 +67,7 @@ def default(system, db, no_diary=False):
                                      'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
                                      'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
                                      'enhanced_speed': (SPEED, MS, StatisticJournalType.FLOAT),
-                                     'distance': (DISTANCE, M, StatisticJournalType.FLOAT),
+                                     'distance': (DISTANCE, KM, StatisticJournalType.FLOAT),
                                      'enhanced_altitude': (ALTITUDE, M, StatisticJournalType.FLOAT),
                                      'cadence': (CADENCE, RPM, StatisticJournalType.INTEGER)})
 

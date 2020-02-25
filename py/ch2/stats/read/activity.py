@@ -6,7 +6,7 @@ from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
-    SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG
+    SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG, KM
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
@@ -176,6 +176,8 @@ class ActivityReader(MultiProcFitReader):
                             log.debug(f'{name} = {value}')
                         if value is not None:
                             value = value[0][0]
+                            if units == KM:  # internally everything uses M
+                                value /= 1000
                             loader.add(name, units, None, activity_group, ajournal, value, timestamp, type)
                             if name == LATITUDE:
                                 lat = value

@@ -25,6 +25,9 @@ MAX_CLIMB_GRADIENT = 40
 MAX_CLIMB_REVERSAL = 0.1
 CLIMB_CATEGORIES = {MIN_CLIMB_ELEVATION: '4', 160: '3', 320: '2', 640: '1', 800: 'HC'}
 
+# conversion of gradient to percent, but correcting for distance in km
+PERCENT = 100 / 1000
+
 # trade-off between pure elevation (0) and pure gradient (1)
 CLIMB_PHI = 0.6
 
@@ -39,14 +42,14 @@ def find_climbs(df, params=Climb()):
     by_dist = linear_resample(by_dist, quantise=False)
     for dlo, dhi in find_climb_distances(by_dist, params=params):
         tlo, thi = nearest_index(df, DISTANCE, dlo), nearest_index(df, DISTANCE, dhi)
-        log.debug(f'Found climb from {tlo} - {thi} ({dlo}m - {dhi}m)')
+        log.debug(f'Found climb from {tlo} - {thi} ({dlo}km - {dhi}km)')
         up = df[ELEVATION].loc[thi] - df[ELEVATION].loc[tlo]
         along = df[DISTANCE].loc[thi] - df[DISTANCE].loc[tlo]
         climb = {TIME: thi,
                  CLIMB_ELEVATION: up,
                  CLIMB_DISTANCE: along,
                  CLIMB_TIME: (thi - tlo).total_seconds(),
-                 CLIMB_GRADIENT: 100 * up / along}
+                 CLIMB_GRADIENT: PERCENT * up / along}
         for height in sorted(CLIMB_CATEGORIES.keys()):
             if up >= height:
                 climb[CLIMB_CATEGORY] = CLIMB_CATEGORIES[height]
@@ -88,7 +91,7 @@ def contiguous(df, params=Climb()):
             yield from contiguous(c, params=params)
         else:
             along = df.index[-1] - df.index[0]
-            if along and 100 * up / along < params.max_gradient:
+            if along and PERCENT * up / along < params.max_gradient:
                 yield df.index[0], df.index[-1]
 
 
@@ -137,7 +140,8 @@ def search(df, params=Climb()):
         d_distance = d * offset
         min_elevation = max(params.min_elevation, params.min_gradient * d_distance / 100)
         if df[_d(ELEVATION)].max() > min_elevation:  # avoid some work
-            df[SCORE] = df[_d(ELEVATION)] / d_distance ** params.phi
+            # factor of 1000 below to convert km to m
+            df[SCORE] = (df[_d(ELEVATION)] / (1000 * d_distance)) ** params.phi
             score = df.loc[df[_d(ELEVATION)] > min_elevation, SCORE].max()
             if not np.isnan(score) and score > max_score:
                 max_score = score
