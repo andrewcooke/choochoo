@@ -23,7 +23,7 @@ function CommonValueField(props) {
 
 
 function SimpleValueField(props) {
-    return (<Grid item xs={4}>
+    return (<Grid item xs={6}>
         <CommonValueField {...props}/>
     </Grid>);
 }

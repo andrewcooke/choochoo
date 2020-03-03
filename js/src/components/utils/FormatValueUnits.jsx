@@ -4,14 +4,14 @@ import Text from "./Text";
 
 
 export default function FormatValueUnits(props) {
-    const {value, units, tag} = props;
+    const {value, units} = props;
     if (units === 's') {
         return <FormatSeconds value={value}/>
-    } else if (['kmh⁻¹', 'km'].includes(units)) {
+    } else if (['kmh⁻¹', 'km', '%'].includes(units)) {
         return (<Text>{sprintf('%.1f', value)}{units}</Text>);
     } else if (['W', 'bpm', 'm'].includes(units)) {
         return (<Text>{sprintf('%d', value)}{units}</Text>);
-    } else if (units === 'FF') {
+    } else if (['FF', 'stp'].includes(units)) {
         return (<Text>{sprintf('%d', value)}</Text>);
     } else if (units) {
         return (<Text>{value}{units}</Text>);
@@ -39,5 +39,9 @@ function FormatSeconds(props) {
         return [value, time];
     }
 
-    return (<Text>{helper(value, 1, units)[1]}</Text>);
+    var text = helper(value, 1, units)[1];
+    const match = /(\d+d.*?)\d+s/.exec(text);
+    if (match) text = match[1];
+
+    return (<Text>{text}</Text>);
 }

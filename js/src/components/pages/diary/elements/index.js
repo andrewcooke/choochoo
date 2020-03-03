@@ -9,5 +9,6 @@ export {default as JupyterMenu} from './JupyterMenu';
 export {default as NearbyMenu} from './NearbyMenu';
 export {default as ScoreField} from './ScoreField';
 export {default as ShrimpField} from './ShrimpField';
+export {default as SummaryField} from './SummaryField';
 export {default as TextField} from './TextField';
 export {default as ValueField} from './ValueField';

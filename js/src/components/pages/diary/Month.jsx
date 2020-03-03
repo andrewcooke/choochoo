@@ -1,18 +1,6 @@
 import React from 'react';
 import {Box, Grid, ListItem, Paper, Typography} from "@material-ui/core";
-import {
-    ClimbField,
-    EditField,
-    FloatField,
-    HRZoneField,
-    IntegerField,
-    JupyterActivity,
-    NearbyMenu,
-    ScoreField,
-    ShrimpField,
-    TextField,
-    ValueField
-} from "./elements";
+import {ClimbField, HRZoneField, JupyterActivity, NearbyMenu, ShrimpField, SummaryField} from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
 import {ColumnList, LinkButton, Loading, setIds, Text} from "../../utils";
 
@@ -59,7 +47,7 @@ function childrenFromRest(head, rest, writer, level, history) {
             } else if (head === 'hr-zones-time') {
                 children.push(<HRZoneField json={row} key={row.id}/>);
             } else {
-                children.push(<IndentedGrid writer={writer} json={row} level={level} history={history} key={row.id}/>);
+                children.push(<Header writer={writer} json={row} level={level} history={history} key={row.id}/>);
             }
         } else {
             children.push(<Field writer={writer} json={row} key={row.id}/>);
@@ -87,11 +75,12 @@ function TopLevelPaper(props) {
 }
 
 
-function IndentedGrid(props) {
+function Header(props) {
 
     const {writer, json, level, history} = props;
     const [head, ...rest] = json;
     const classes = useStyles();
+
     const children = head.tag === 'jupyter-activity' ?
         <JupyterActivity json={rest}/> :
         childrenFromRest(head.tag, rest, writer, level + 1, history);
@@ -101,15 +90,12 @@ function IndentedGrid(props) {
     } else if (head.tag === 'nearby-links') {
         return (<NearbyMenu json={json} history={history}/>);
     } else {
-        return (<Grid item container spacing={1} className={classes.grid}>
+        return (<>
             <Grid item xs={12} className={classes.grid}>
                 <Typography variant={'h' + level}>{head.value}</Typography>
             </Grid>
-            <Grid item xs={1} className={classes.grid}/>
-            <Grid item container xs={11} spacing={1} justify='space-between' className={classes.grid}>
-                {children}
-            </Grid>
-        </Grid>);
+            {children}
+        </>);
     }
 }
 
@@ -118,18 +104,8 @@ function Field(props) {
 
     const {writer, json} = props;
 
-    if (json.type === 'edit') {
-        return <EditField writer={writer} json={json}/>
-    } else if (json.type === 'integer') {
-        return <IntegerField writer={writer} json={json}/>
-    } else if (json.type === 'float') {
-        return <FloatField writer={writer} json={json}/>
-    } else if (json.type === 'score') {
-        return <ScoreField writer={writer} json={json}/>
-    } else if (json.type === 'text') {
-        return <TextField json={json}/>
-    } else if (json.type === 'value') {
-        return <ValueField json={json}/>
+    if (json.type === 'value') {
+        return <SummaryField json={json}/>
     } else if (json.type === 'link') {
         if (json.tag === 'health') {
             return <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
