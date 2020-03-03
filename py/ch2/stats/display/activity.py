@@ -18,7 +18,7 @@ from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
 from ...diary.model import text, value, optional_text, from_field
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time, to_date, MONTH, add_date, \
-    time_to_local_date, YMD
+    time_to_local_date, YMD, YEAR, YM
 from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
     ActivityTopicField
 
@@ -206,12 +206,20 @@ class ActivityDiary(JournalDiary):
             if column: yield column
 
 
-def active_days(s, month):
-    month_start = to_date(month)
-    month_end = add_date(month_start, (1, MONTH))
-    start = local_date_to_time(month_start)
-    end = local_date_to_time(month_end)
+def active_dates(s, start, range, fmt):
+    date_start = to_date(start)
+    date_end = add_date(date_start, (1, range))
+    time_start = local_date_to_time(date_start)
+    time_end = local_date_to_time(date_end)
     times = s.query(distinct(ActivityJournal.start)). \
-        filter(ActivityJournal.start >= start,
-               ActivityJournal.start < end).all()
-    return [time_to_local_date(row[0]).strftime(YMD) for row in times]
+        filter(ActivityJournal.start >= time_start,
+               ActivityJournal.start < time_end).all()
+    return list(set(time_to_local_date(row[0]).strftime(fmt) for row in times))
+
+
+def active_days(s, month):
+    return active_dates(s, month, MONTH, YMD)
+
+
+def active_months(s, year):
+    return active_dates(s, year, YEAR, YM)

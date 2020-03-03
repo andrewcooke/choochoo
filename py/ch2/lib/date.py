@@ -5,6 +5,7 @@ import time as t
 from calendar import monthrange
 
 
+YM = '%Y-%m'
 YMD = '%Y-%m-%d'
 HMS = '%H:%M:%S'
 YMD_HMS = YMD + ' ' + HMS

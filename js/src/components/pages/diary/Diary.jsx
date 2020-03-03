@@ -10,7 +10,7 @@ import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import TodayIcon from '@material-ui/icons/Today';
 import DateRangeIcon from '@material-ui/icons/DateRange';
-import {Calendar} from './elements'
+import {Calendar, Months} from './elements'
 import {FMT_YEAR, FMT_MONTH, FMT_DAY} from "../../../constants";
 
 
@@ -164,14 +164,27 @@ function ActiveDays(props) {
 }
 
 
+function ActiveMonths(props) {
+    const {date, onChange} = props;
+    const [json, setJson] = useState(null);
+    useEffect(() => {
+        setJson(null);
+        fetch('/api/active-months/' + date)
+            .then(response => response.json())
+            .then(json => setJson(json));
+    }, [date]);
+    return (<Months year={date} active={json} onChange={onChange}/>);
+}
+
+
 function SubMenu(props) {
 
-    const {ymd, date, dateFmt, onActivity, onDay} = props;
+    const {ymd, date, dateFmt, onActivity, onDay, onMonth} = props;
 
     if (ymd === 0) {
-        return [];
+        return <ListItem><ActiveMonths date={date} onChange={onMonth}/></ListItem>;
     } else if (ymd === 1) {
-        return <ActiveDays date={date} onChange={onDay}/>;
+        return <ListItem><ActiveDays date={date} onChange={onDay}/></ListItem>;
     } else {
         return <ActivityButtons date={date} dateFmt={dateFmt} onChange={onActivity}/>;
     }
@@ -193,20 +206,20 @@ function DiaryMenu(props) {
     }
 
     return (<List component="nav" className={classes.root}>
-                <ListItem>
-                    <Picker ymdSelected={ymdSelected} datetime={datetime}
-                            onChange={datetime => setDatetime(datetime, dateFmt)}/>
-                </ListItem>
-                <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime}
-                             onChange={datetime => setDatetime(datetime, dateFmt)}/>
-                <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime}
-                             onChange={datetime => setDatetime(datetime, FMT_MONTH)}/>
-                <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime}
-                             onChange={datetime => setDatetime(datetime, FMT_YEAR)}/>
-                <SubMenu ymd={ymdSelected} date={date} dateFmt={dateFmt}
-                         onDay={setDate}
-                         onActivity={datetime => setDatetime(datetime, dateFmt)}/>
-            </List>);
+        <ListItem>
+            <Picker ymdSelected={ymdSelected} datetime={datetime}
+                    onChange={datetime => setDatetime(datetime, dateFmt)}/>
+        </ListItem>
+        <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime}
+                     onChange={datetime => setDatetime(datetime, dateFmt)}/>
+        <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime}
+                     onChange={datetime => setDatetime(datetime, FMT_MONTH)}/>
+        <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime}
+                     onChange={datetime => setDatetime(datetime, FMT_YEAR)}/>
+        <SubMenu ymd={ymdSelected} date={date} dateFmt={dateFmt}
+                 onDay={setDate} onMonth={setDate}
+                 onActivity={datetime => setDatetime(datetime, dateFmt)}/>
+    </List>);
 }
 
 

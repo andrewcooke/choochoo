@@ -22,7 +22,7 @@ from ..lib.date import time_to_local_time
 from ..lib.schedule import Schedule
 from ..lib.server import BaseController
 from ..sql import ActivityJournal
-from ..stats.display.activity import active_days
+from ..stats.display.activity import active_days, active_months
 
 log = getLogger(__name__)
 
@@ -65,6 +65,7 @@ class WebServer:
             Rule('/api/diary/<date>', endpoint=api.read_diary, methods=('GET',)),
             Rule('/api/neighbour-activities/<date>', endpoint=api.read_neighbour_activities, methods=('GET',)),
             Rule('/api/active-days/<month>', endpoint=api.read_active_days, methods=('GET',)),
+            Rule('/api/active-months/<year>', endpoint=api.read_active_months, methods=('GET',)),
             Rule('/api/statistics', endpoint=api.write_statistics, methods=('POST',)),
             Rule('/api/<path:path>', endpoint=error(BadRequest), methods=('GET', 'POST')),
             Rule('/static/<path:path>', endpoint=static, methods=('GET', )),
@@ -127,6 +128,10 @@ class Api:
     @staticmethod
     def read_active_days(request, s, month):
         return Response(dumps(active_days(s, month)))
+
+    @staticmethod
+    def read_active_months(request, s, year):
+        return Response(dumps(active_months(s, year)))
 
     @staticmethod
     def write_statistics(request, s):

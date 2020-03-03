@@ -7,6 +7,7 @@ export {default as IntegerField} from './IntegerField';
 export {default as JupyterActivity} from './JupyterActivity';
 export {default as JupyterAllActivities} from './JupyterAllActivites';
 export {default as JupyterMenu} from './JupyterMenu';
+export {default as Months} from './Months';
 export {default as NearbyMenu} from './NearbyMenu';
 export {default as ScoreField} from './ScoreField';
 export {default as ShrimpField} from './ShrimpField';
