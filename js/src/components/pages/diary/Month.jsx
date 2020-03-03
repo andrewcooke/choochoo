@@ -23,7 +23,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function Month(props) {
 
-    const {writer, json, history} = props;
+    const {json, history} = props;
     console.log(json);
 
     if (!Array.isArray(json)) {
@@ -32,25 +32,23 @@ export default function Month(props) {
         setIds(json);
         // drop outer date label since we already have that in the page
         return (<ColumnList>
-            {json.slice(1).map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
+            {json.slice(1).map(row => <TopLevelPaper json={row} history={history} key={row.id}/>)}
         </ColumnList>);
     }
 }
 
 
-function childrenFromRest(head, rest, writer, level, history) {
+function childrenFromRest(head, rest, level, history) {
     let children = [];
     rest.forEach((row) => {
         if (Array.isArray(row)) {
             if (head === 'shrimp') {
                 children.push(<ShrimpField json={row} key={row.id}/>);
-            } else if (head === 'hr-zones-time') {
-                children.push(<HRZoneField json={row} key={row.id}/>);
             } else {
-                children.push(<Header writer={writer} json={row} level={level} history={history} key={row.id}/>);
+                children.push(<Header json={row} level={level} history={history} key={row.id}/>);
             }
         } else {
-            children.push(<Field writer={writer} json={row} key={row.id}/>);
+            children.push(<Field json={row} key={row.id}/>);
         }
     });
     return children;
@@ -59,10 +57,10 @@ function childrenFromRest(head, rest, writer, level, history) {
 
 function TopLevelPaper(props) {
 
-    const {writer, json, history} = props;
+    const {json, history} = props;
     const [head, ...rest] = json;
     const classes = useStyles();
-    const children = childrenFromRest(head.tag, rest, writer, 3, history);
+    const children = childrenFromRest(head.tag, rest,3, history);
 
     return (<ListItem className={classes.listItem}>
         <Paper className={classes.paper}>
@@ -77,32 +75,26 @@ function TopLevelPaper(props) {
 
 function Header(props) {
 
-    const {writer, json, level, history} = props;
+    const {json, level, history} = props;
     const [head, ...rest] = json;
     const classes = useStyles();
 
     const children = head.tag === 'jupyter-activity' ?
         <JupyterActivity json={rest}/> :
-        childrenFromRest(head.tag, rest, writer, level + 1, history);
+        childrenFromRest(head.tag, rest, level + 1, history);
 
-    if (head.tag === 'climb') {
-        return (<ClimbField json={json}/>);
-    } else if (head.tag === 'nearby-links') {
-        return (<NearbyMenu json={json} history={history}/>);
-    } else {
-        return (<>
-            <Grid item xs={12} className={classes.grid}>
-                <Typography variant={'h' + level}>{head.value}</Typography>
-            </Grid>
-            {children}
-        </>);
-    }
+    return (<>
+        <Grid item xs={12} className={classes.grid}>
+            <Typography variant={'h' + level}>{head.value}</Typography>
+        </Grid>
+        {children}
+    </>);
 }
 
 
 function Field(props) {
 
-    const {writer, json} = props;
+    const {json} = props;
 
     if (json.type === 'value') {
         return <SummaryField json={json}/>
