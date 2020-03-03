@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Grid, ListItem, Paper, Typography} from "@material-ui/core";
-import {ClimbField, HRZoneField, JupyterActivity, NearbyMenu, ShrimpField, SummaryField} from "./elements";
+import {JupyterActivity, ShrimpField, SummaryField} from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
 import {ColumnList, LinkButton, Loading, setIds, Text} from "../../utils";
 import JupyterAllActivites from "./elements/JupyterAllActivites";
@@ -22,7 +22,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-export default function Month(props) {
+export default function Schedule(props) {
 
     const {json, history} = props;
     console.log(json);
