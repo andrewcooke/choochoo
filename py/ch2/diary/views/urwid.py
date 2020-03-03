@@ -90,8 +90,6 @@ def fmt_value_units(model):
         return [format_seconds(model[VALUE])]
     elif model[UNITS] == W:
         return [format_watts(model[VALUE])]
-    elif model[UNITS] == M:
-        return [format_metres(model[VALUE])]
     elif model[UNITS] == PC:
         return [format_percent(model[VALUE])]
     else:

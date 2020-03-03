@@ -7,15 +7,9 @@ export default function FormatValueUnits(props) {
     const {value, units, tag} = props;
     if (units === 's') {
         return <FormatSeconds value={value}/>
-    } else if (units === 'm') {
-        if (tag === 'total-climb') {
-            return (<Text>{sprintf('%d', value)}{units}</Text>);
-        } else {
-            return (<Text>{sprintf('%.1fkm', value / 1000)}</Text>);
-        }
-    } else if (units === 'kmh⁻¹') {
+    } else if (['kmh⁻¹', 'km'].includes(units)) {
         return (<Text>{sprintf('%.1f', value)}{units}</Text>);
-    } else if (['W', 'bpm'].includes(units)) {
+    } else if (['W', 'bpm', 'm'].includes(units)) {
         return (<Text>{sprintf('%d', value)}{units}</Text>);
     } else if (units === 'FF') {
         return (<Text>{sprintf('%d', value)}</Text>);
@@ -47,5 +41,3 @@ function FormatSeconds(props) {
 
     return (<Text>{helper(value, 1, units)[1]}</Text>);
 }
-
-

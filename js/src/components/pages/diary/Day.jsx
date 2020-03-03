@@ -59,7 +59,7 @@ function childrenFromRest(head, rest, writer, level, history) {
             } else if (head === 'hr-zones-time') {
                 children.push(<HRZoneField json={row} key={row.id}/>);
             } else {
-                children.push(<IndentedGrid writer={writer} json={row} level={level} history={history} key={row.id}/>);
+                children.push(<Header writer={writer} json={row} level={level} history={history} key={row.id}/>);
             }
         } else {
             children.push(<Field writer={writer} json={row} key={row.id}/>);
@@ -87,11 +87,12 @@ function TopLevelPaper(props) {
 }
 
 
-function IndentedGrid(props) {
+function Header(props) {
 
     const {writer, json, level, history} = props;
     const [head, ...rest] = json;
     const classes = useStyles();
+
     const children = head.tag === 'jupyter-activity' ?
         <JupyterActivity json={rest}/> :
         childrenFromRest(head.tag, rest, writer, level + 1, history);
@@ -101,15 +102,12 @@ function IndentedGrid(props) {
     } else if (head.tag === 'nearby-links') {
         return (<NearbyMenu json={json} history={history}/>);
     } else {
-        return (<Grid item container spacing={1} className={classes.grid}>
+        return (<>
             <Grid item xs={12} className={classes.grid}>
                 <Typography variant={'h' + level}>{head.value}</Typography>
             </Grid>
-            <Grid item xs={1} className={classes.grid}/>
-            <Grid item container xs={11} spacing={1} justify='space-between' className={classes.grid}>
-                {children}
-            </Grid>
-        </Grid>);
+            {children}
+        </>);
     }
 }
 
@@ -132,11 +130,17 @@ function Field(props) {
         return <ValueField json={json}/>
     } else if (json.type === 'link') {
         if (json.tag === 'health') {
-            return <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
+            return (<Grid item xs={4}>
+                <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
+            </Grid>);
         } else {
-            return (<Grid item xs={4}><Text>Unsupported link: {JSON.stringify(json)}</Text></Grid>);
+            return (<Grid item xs={4}>
+                <Text>Unsupported link: {JSON.stringify(json)}</Text>
+            </Grid>);
         }
     } else {
-        return (<Grid item xs={4}><Text>Unsupported type: {JSON.stringify(json)}</Text></Grid>);
+        return (<Grid item xs={4}>
+            <Text>Unsupported type: {JSON.stringify(json)}</Text>
+        </Grid>);
     }
 }

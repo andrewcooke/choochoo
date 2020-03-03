@@ -9,7 +9,7 @@ from ..names import ELEVATION, DISTANCE, M, POWER_ESTIMATE, HEART_RATE, ACTIVE_D
     TIME_IN_Z_ANY, MAX_MED_HR_M_ANY, W, BPM, MAX_MEAN_PE_M_ANY, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
     CLIMB_GRADIENT, TOTAL_CLIMB, HR_ZONE, TIME, like, MEAN_POWER_ESTIMATE, ENERGY_ESTIMATE, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y, DIRECTION, DEG, ASPECT_RATIO, FITNESS_D_ANY, FATIGUE_D_ANY, _d, FF, CLIMB_POWER, \
-    CLIMB_CATEGORY
+    CLIMB_CATEGORY, KM
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats
 from ...data.climb import find_climbs, Climb, add_climb_stats
@@ -68,7 +68,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
 
     def _copy_results(self, s, ajournal, loader, data):
         df, stats, climbs = data
-        self.__copy(ajournal, loader, stats, ACTIVE_DISTANCE, M, summaries(MAX, CNT, SUM, MSR), ajournal.start)
+        self.__copy(ajournal, loader, stats, ACTIVE_DISTANCE, KM, summaries(MAX, CNT, SUM, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, ACTIVE_TIME, S, summaries(MAX, SUM, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, ACTIVE_SPEED, KMH, summaries(MAX, AVG, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, MEAN_POWER_ESTIMATE, W, summaries(MAX, AVG, MSR), ajournal.start)
@@ -87,7 +87,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
                        sum(climb[CLIMB_ELEVATION] for climb in climbs), ajournal.start, StatisticJournalFloat)
             for climb in sorted(climbs, key=lambda climb: climb[TIME]):
                 self.__copy(ajournal, loader, climb, CLIMB_ELEVATION, M, summaries(MAX, SUM, MSR), climb[TIME])
-                self.__copy(ajournal, loader, climb, CLIMB_DISTANCE, M, summaries(MAX, SUM, MSR), climb[TIME])
+                self.__copy(ajournal, loader, climb, CLIMB_DISTANCE, KM, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_TIME, S, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_GRADIENT, PC, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_POWER, W, summaries(MAX, SUM, MSR), climb[TIME])

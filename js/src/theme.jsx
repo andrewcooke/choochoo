@@ -16,5 +16,5 @@ theme.typography.h4.fontSize = '1.0rem';
 
 theme.typography.h1.fontWeight = 300;
 theme.typography.h2.fontWeight = 500;
-theme.typography.h3.fontWeight = 400;
-theme.typography.h4.fontWeight = 400;
+theme.typography.h3.fontWeight = 500;
+theme.typography.h4.fontWeight = 500;

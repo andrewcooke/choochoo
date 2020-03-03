@@ -11,7 +11,8 @@ from ..calculate.activity import ActivityCalculator
 from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
-    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d, M, S, PERCENT_IN_Z_ANY
+    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _d, M, S, PERCENT_IN_Z_ANY, \
+    KM
 from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
@@ -129,9 +130,10 @@ class ActivityDiary(JournalDiary):
             yield value('Total', total.value, measures=total.measures_as_model(date), units=M, tag='total-climb')
             for climb in climbs:
                 yield [text('Climb'),
+                       # todo - why are units hardcoded here?  already caused one bug when switched distance to km
                        value('Elevation', climb[CLIMB_ELEVATION].value, units=M,
                              measures=climb[CLIMB_ELEVATION].measures_as_model(date)),
-                       value('Distance', climb[CLIMB_DISTANCE].value, units=M),
+                       value('Distance', climb[CLIMB_DISTANCE].value, units=KM),
                        value('Time', climb[CLIMB_TIME].value, units=S)]
 
     def __read_template(self, s, ajournal, template, re, date):
