@@ -164,6 +164,20 @@ function ActiveDays(props) {
 }
 
 
+function SubMenu(props) {
+
+    const {ymd, date, dateFmt, onActivity, onDay} = props;
+
+    if (ymd === 0) {
+        return [];
+    } else if (ymd === 1) {
+        return <ActiveDays date={date} onChange={onDay}/>;
+    } else {
+        return <ActivityButtons date={date} dateFmt={dateFmt} onChange={onActivity}/>;
+    }
+}
+
+
 function DiaryMenu(props) {
 
     const {ymdSelected, datetime, dateFmt, history} = props;
@@ -178,9 +192,7 @@ function DiaryMenu(props) {
         setDate(format(datetime, fmt));
     }
 
-    return (
-        <>
-            <List component="nav" className={classes.root}>
+    return (<List component="nav" className={classes.root}>
                 <ListItem>
                     <Picker ymdSelected={ymdSelected} datetime={datetime}
                             onChange={datetime => setDatetime(datetime, dateFmt)}/>
@@ -191,14 +203,10 @@ function DiaryMenu(props) {
                              onChange={datetime => setDatetime(datetime, FMT_MONTH)}/>
                 <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime}
                              onChange={datetime => setDatetime(datetime, FMT_YEAR)}/>
-                {ymdSelected === 1 ? <ActiveDays date={date} onChange={setDate}/> : <></>}
-                {ymdSelected === 2 ?
-                    <ActivityButtons date={date} dateFmt={dateFmt}
-                                     onChange={datetime => setDatetime(datetime, dateFmt)}/> :
-                    <></>}
-            </List>
-        </>
-    );
+                <SubMenu ymd={ymdSelected} date={date} dateFmt={dateFmt}
+                         onDay={setDate}
+                         onActivity={datetime => setDatetime(datetime, dateFmt)}/>
+            </List>);
 }
 
 
