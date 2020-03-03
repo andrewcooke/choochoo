@@ -3,6 +3,7 @@ import {Box, Grid, ListItem, Paper, Typography} from "@material-ui/core";
 import {ClimbField, HRZoneField, JupyterActivity, NearbyMenu, ShrimpField, SummaryField} from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
 import {ColumnList, LinkButton, Loading, setIds, Text} from "../../utils";
+import JupyterAllActivites from "./elements/JupyterAllActivites";
 
 
 const useStyles = makeStyles(theme => ({
@@ -101,6 +102,8 @@ function Field(props) {
     } else if (json.type === 'link') {
         if (json.tag === 'health') {
             return <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
+        } else if (json.tag === 'all-activities') {
+            return <JupyterAllActivites json={json}/>
         } else {
             return (<Grid item xs={4}><Text>Unsupported link: {JSON.stringify(json)}</Text></Grid>);
         }

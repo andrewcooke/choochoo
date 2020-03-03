@@ -5,6 +5,7 @@ export {default as FloatField} from './FloatField';
 export {default as HRZoneField} from './HRZoneField';
 export {default as IntegerField} from './IntegerField';
 export {default as JupyterActivity} from './JupyterActivity';
+export {default as JupyterAllActivities} from './JupyterAllActivites';
 export {default as JupyterMenu} from './JupyterMenu';
 export {default as NearbyMenu} from './NearbyMenu';
 export {default as ScoreField} from './ScoreField';

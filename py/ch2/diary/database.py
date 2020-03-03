@@ -75,7 +75,7 @@ def read_schedule(s, schedule, date):
     topics = list(read_schedule_topics(s, schedule, date))
     if topics: yield topics
     yield from read_pipeline(s, date, schedule=schedule)
-    gui = list(read_schedule_gui(s, date))
+    gui = list(read_schedule_gui(s, schedule, date))
     if gui: yield gui
 
 
@@ -112,5 +112,6 @@ def summary_column(s, schedule, start, name):
 
 
 @optional_text('Jupyter')
-def read_schedule_gui(s, date):
-    yield link('All Activities', db=tuple())
+def read_schedule_gui(s, schedule, start):
+    finish = schedule.next_frame(start)
+    yield link('All Activities', db=(format_date(start), format_date(finish)))
