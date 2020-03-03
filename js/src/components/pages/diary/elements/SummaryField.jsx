@@ -5,8 +5,8 @@ import {FormatValueUnits, Text} from '../../../utils';
 
 export default function SummaryField(props) {
     const {json} = props;
-    return (<Grid item xs={4}>
-        <Text>{json.label}: </Text>
-        <FormatValueUnits value={json.value} units={json.units} tag={json.tag}/>
-    </Grid>);
+    return (<>
+        <Grid item xs={1}><Text secondary>{json.label}:</Text></Grid>
+        <Grid item xs={2}><FormatValueUnits value={json.value} units={json.units} tag={json.tag}/></Grid>
+    </>);
 }

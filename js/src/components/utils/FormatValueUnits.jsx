@@ -23,7 +23,7 @@ export default function FormatValueUnits(props) {
 
 function FormatSeconds(props) {
     const {value} = props;
-    const units = [[60, '%02d', 's'], [60, '%02d', 'm'], [24, '%d', 'h'], [999, '%d', 'd']];
+    const units = [[60, '%d', 's'], [60, '%d', 'm'], [24, '%d', 'h'], [999, '%d', 'd']];
 
     function helper(value, cumulative, units) {
         let [[factor, format, label], ...rest] = units;

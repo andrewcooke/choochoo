@@ -83,7 +83,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         self.__copy_all(ajournal, loader, stats, _d(FATIGUE_D_ANY), FF, summaries(MAX, MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, _d(FITNESS_D_ANY), FF, summaries(MAX, MSR), ajournal.start)
         if climbs:
-            loader.add(TOTAL_CLIMB, M, summaries(MAX, SUM, MSR), ajournal.activity_group, ajournal,
+            loader.add(TOTAL_CLIMB, M, summaries(MAX, MSR), ajournal.activity_group, ajournal,
                        sum(climb[CLIMB_ELEVATION] for climb in climbs), ajournal.start, StatisticJournalFloat)
             for climb in sorted(climbs, key=lambda climb: climb[TIME]):
                 self.__copy(ajournal, loader, climb, CLIMB_ELEVATION, M, summaries(MAX, SUM, MSR), climb[TIME])
