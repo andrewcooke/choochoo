@@ -1,9 +1,8 @@
 import React from 'react';
 import {Grid, Typography} from "@material-ui/core";
-import {JupyterActivity, ShrimpField, SummaryField} from "./elements";
+import {JupyterActivity, ShrimpField, SummaryField, JupyterAllActivities} from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
 import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../elements";
-import JupyterAllActivites from "./elements/JupyterAllActivites";
 import {setIds} from '../../functions';
 
 
@@ -94,7 +93,7 @@ function Field(props) {
         if (json.tag === 'health') {
             return <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
         } else if (json.tag === 'all-activities') {
-            return <JupyterAllActivites json={json}/>
+            return <JupyterAllActivities json={json}/>
         } else {
             return (<Grid item xs={4}><Text>Unsupported link: {JSON.stringify(json)}</Text></Grid>);
         }

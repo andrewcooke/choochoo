@@ -1,6 +1,7 @@
 import React from 'react';
 import {Grid} from "@material-ui/core";
 import FormatValueUnits from "./FormatValueUnits";
+import {Text} from '../../../elements';
 
 
 export default function SummaryField(props) {
