@@ -241,3 +241,12 @@ def activities_start(s):
 
 def activities_finish(s):
     return activities_date(s, desc, 1)
+
+
+def activity_groups(s):
+    return [row[0] for row in s.query(distinct(ActivityGroup.name)).all()]
+
+
+def latest_activity(s):
+    return s.query(ActivityJournal). \
+        order_by(desc(ActivityJournal.start)).limit(1).one_or_none()
