@@ -13,8 +13,8 @@ function Columns(props) {
     } else {
         console.log(params);
         return (<ColumnList>
-            <Calendar/>
             <AllActivities params={params}/>
+            <Calendar/>
         </ColumnList>);
     }
 }
