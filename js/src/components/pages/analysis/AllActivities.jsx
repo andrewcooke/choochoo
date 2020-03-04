@@ -5,6 +5,7 @@ import {FMT_DAY} from "../../../constants";
 import {format, parse} from 'date-fns';
 import {DatePicker} from "@material-ui/pickers";
 import ActivityCard from "./ActivityCard";
+import {addDay} from "../../functions";
 
 
 export default function AllActivities(props) {
@@ -14,6 +15,7 @@ export default function AllActivities(props) {
     const [finish, setFinish] = useState(params.activities_finish);
     const href = sprintf('jupyter/all_activities?start=%s&finish=%s', start, finish);
 
+    // the addDay increments below are weird, but work.  bug in picker?  or i just don't understand.
     return (<ActivityCard header='All Activities' displayWidth={4} href={href}>
         <Grid item xs={12}><Text>
             <p>Thumbnail maps for each route between the start and finish dates.</p>
@@ -21,11 +23,13 @@ export default function AllActivities(props) {
         <Grid item xs={4}>
             <DatePicker value={parse(start, FMT_DAY, new Date())}
                         onChange={date => setStart(format(date, FMT_DAY))}
+                        minDate={addDay(params.activities_start)} maxDate={finish}
                         animateYearScrolling format={FMT_DAY} label='Start'/>
         </Grid>
         <Grid item xs={4}>
             <DatePicker value={parse(finish, FMT_DAY, new Date())}
                         onChange={date => setFinish(format(date, FMT_DAY))}
+                        minDate={addDay(start, 2)} maxDate={addDay(params.activities_finish)}
                         animateYearScrolling format={FMT_DAY} label='Finish'/>
         </Grid>
     </ActivityCard>);
