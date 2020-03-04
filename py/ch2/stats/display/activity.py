@@ -3,7 +3,7 @@ import datetime as dt
 from logging import getLogger
 from re import search
 
-from sqlalchemy import or_, distinct
+from sqlalchemy import or_, distinct, desc, asc
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import JournalDiary
@@ -18,7 +18,7 @@ from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
 from ...diary.model import text, value, optional_text, from_field
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time, to_date, MONTH, add_date, \
-    time_to_local_date, YMD, YEAR, YM
+    time_to_local_date, YMD, YEAR, YM, DAY
 from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
     ActivityTopicField
 
@@ -223,3 +223,21 @@ def active_days(s, month):
 
 def active_months(s, year):
     return active_dates(s, year, YEAR, YM)
+
+
+def activities_date(s, order, add_days=0):
+    time = s.query(ActivityJournal.start). \
+                order_by(order(ActivityJournal.start)).limit(1).one_or_none()
+    if time:
+        time = add_date(time_to_local_date(time[0]), (add_days, DAY))
+        return time.strftime(YMD)
+    else:
+        return None
+
+
+def activities_start(s):
+    return activities_date(s, asc)
+
+
+def activities_finish(s):
+    return activities_date(s, desc, 1)

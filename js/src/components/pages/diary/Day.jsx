@@ -31,7 +31,7 @@ export default function Day(props) {
     const {writer, json, history} = props;
     console.log(json);
 
-    if (!Array.isArray(json)) {
+    if (json === null) {
         return <Loading/>;  // undefined initial data
     } else {
         setIds(json);

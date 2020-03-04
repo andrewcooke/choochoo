@@ -27,7 +27,7 @@ export default function Schedule(props) {
     const {json, history} = props;
     console.log(json);
 
-    if (!Array.isArray(json)) {
+    if (json === null) {
         return <Loading/>;  // undefined initial data
     } else {
         setIds(json);
