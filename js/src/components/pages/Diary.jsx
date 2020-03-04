@@ -1,17 +1,16 @@
 import React, {useEffect, useState} from 'react';
-import {Layout} from "../../utils";
+import {Layout} from "../utils";
 import {makeStyles} from "@material-ui/core/styles";
 import {DatePicker} from "@material-ui/pickers";
 import {add, format, parse} from 'date-fns';
 import {Grid, IconButton, List, ListItem, Typography} from '@material-ui/core';
-import Day from './Day';
-import Schedule from "./Schedule";
+import {Day, Schedule} from './diary';
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import TodayIcon from '@material-ui/icons/Today';
 import DateRangeIcon from '@material-ui/icons/DateRange';
-import {Calendar, Months} from './elements'
-import {FMT_YEAR, FMT_MONTH, FMT_DAY} from "../../../constants";
+import {Calendar, Months} from './diary/elements'
+import {FMT_DAY, FMT_MONTH, FMT_YEAR} from "../../constants";
 
 
 const useStyles = makeStyles(theme => ({

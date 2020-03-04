@@ -27,7 +27,6 @@ const useStyles = makeStyles(theme => ({
 function Content(props) {
 
     const {match, content} = props;
-
     const classes = useStyles();
 
     function Back() {
@@ -67,22 +66,19 @@ export default function SideDrawer(props) {
     const classes = useStyles();
     const theme = useTheme();
 
+    // todo - fix up classes below
     return (
         <nav className={classes.drawer}>
             <Hidden lgUp implementation="css">
-                <Drawer
-                    container={container}
-                    variant="temporary"
-                    anchor={theme.direction === 'rtl' ? 'right' : 'left'}
-                    open={mobileOpen}
-                    onClose={handleDrawerToggle}
-                    classes={{
-                        paper: classes.drawerPaper,
-                    }}
-                    ModalProps={{
-                        keepMounted: true, // Better open performance on mobile.
-                    }}
-                >
+                <Drawer container={container} variant="temporary"
+                        anchor={theme.direction === 'rtl' ? 'right' : 'left'}
+                        open={mobileOpen} onClose={handleDrawerToggle}
+                        classes={{
+                            paper: classes.drawerPaper,
+                        }}
+                        ModalProps={{
+                            keepMounted: true, // Better open performance on mobile.
+                        }}>
                     <Content match={match} content={content}/>
                 </Drawer>
             </Hidden>
@@ -91,9 +87,7 @@ export default function SideDrawer(props) {
                     classes={{
                         paper: classes.drawerPaper,
                     }}
-                    variant="permanent"
-                    open
-                >
+                    variant="permanent" open>
                     <Content match={match} content={content}/>
                 </Drawer>
             </Hidden>

@@ -1,7 +1,9 @@
 import React from 'react';
 import {Grid} from "@material-ui/core";
 import {sprintf} from "sprintf-js";
-import {Measures, Text, FormatValueUnits} from '../../../utils';
+import {Text} from '../../../utils';
+import FormatValueUnits from "./FormatValueUnits";
+import Measures from "./Measures";
 
 
 export default function ClimbField(prop) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Grid, ListItem, Paper, Typography} from "@material-ui/core";
+import {Grid, Typography} from "@material-ui/core";
 import {
     ClimbField,
     EditField,
@@ -14,18 +14,10 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {ColumnList, LinkButton, Loading, setIds, Text} from "../../utils";
+import {ColumnCard, ColumnList, LinkButton, Loading, setIds, Text} from "../../utils";
 
 
 const useStyles = makeStyles(theme => ({
-    listItem: {
-        padding: theme.spacing(1),
-    },
-    paper: {
-        padding: theme.spacing(1),
-        margin: theme.spacing(1),
-        width: '100%',
-    },
     grid: {
         justifyContent: 'flex-start',
         alignItems: 'baseline',
@@ -70,20 +62,10 @@ function childrenFromRest(head, rest, writer, level, history) {
 
 
 function TopLevelPaper(props) {
-
     const {writer, json, history} = props;
     const [head, ...rest] = json;
-    const classes = useStyles();
     const children = childrenFromRest(head.tag, rest, writer, 3, history);
-
-    return (<ListItem className={classes.listItem}>
-        <Paper className={classes.paper}>
-            <Box mb={1}><Typography variant={'h2'}>{head.value}</Typography></Box>
-            <Grid container spacing={1} className={classes.grid}>
-                {children}
-            </Grid>
-        </Paper>
-    </ListItem>);
+    return (<ColumnCard header={head.value}>{children}</ColumnCard>);
 }
 
 

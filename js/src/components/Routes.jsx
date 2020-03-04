@@ -1,7 +1,6 @@
 import React from 'react';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
-import Welcome from "./pages/Welcome";
-import Diary from "./pages/diary/Diary";
+import {Welcome, Analysis, Diary} from "./pages";
 
 
 export default function Routes() {
@@ -9,6 +8,7 @@ export default function Routes() {
         <BrowserRouter>
             <Switch>
                 <Route path='/' exact={true} component={Welcome}/>
+                <Route path='/analysis' exact={true} component={Analysis}/>
                 <Route path='/:date' exact={true} component={Diary}/>
             </Switch>
         </BrowserRouter>

@@ -30,21 +30,17 @@ export default function Navigation(props) {
     const {content, match, title} = props;
     const classes = useStyles();
     const [mobileOpen, setMobileOpen] = React.useState(false);
-    const handleDrawerToggle = () => {
+
+    function handleDrawerToggle() {
         setMobileOpen(!mobileOpen);
-    };
+    }
 
     return (
         <>
             <AppBar position="fixed" className={classes.appBar}>
                 <Toolbar>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        edge="start"
-                        onClick={handleDrawerToggle}
-                        className={classes.menuButton}
-                    >
+                    <IconButton color="inherit" aria-label="open drawer" edge="start"
+                                onClick={handleDrawerToggle} className={classes.menuButton}>
                         <MenuIcon/>
                     </IconButton>
                     <Typography variant='h1' noWrap>
@@ -52,7 +48,8 @@ export default function Navigation(props) {
                     </Typography>
                 </Toolbar>
             </AppBar>
-            {SideDrawer({mobileOpen, handleDrawerToggle, content, match})}
+            <SideDrawer mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle}
+                        content={content} match={match}/>
         </>
     )
 }

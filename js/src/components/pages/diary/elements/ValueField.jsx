@@ -1,6 +1,7 @@
 import React from 'react';
 import {Grid} from "@material-ui/core";
-import {Measures, Text, FormatValueUnits} from '../../../utils';
+import {Text} from '../../../utils';
+import FormatValueUnits from "./FormatValueUnits";
 
 
 export default function ValueField(props) {
