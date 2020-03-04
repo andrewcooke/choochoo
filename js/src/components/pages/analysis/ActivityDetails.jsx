@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
-import {Text, MenuButton} from "../../elements";
-import {Grid, MenuItem} from "@material-ui/core";
+import {Text} from "../../elements";
+import {Grid, MenuItem, Select, InputLabel} from "@material-ui/core";
 import {FMT_DAY_TIME} from "../../../constants";
 import {format, parse} from 'date-fns';
 import {DateTimePicker} from "@material-ui/pickers";
@@ -11,21 +11,9 @@ import {addDay} from "../../functions";
 export default function ActivityDetails(props) {
 
     const {params} = props;
-    console.log(params);
     const [datetime, setDatetime] = useState(params.latest_activity_time);
-    console.log(datetime);
-    console.log(parse(datetime, FMT_DAY_TIME, new Date()));
     const [group, setGroup] = useState(params.latest_activity_group);
     const href = sprintf('jupyter/activity_details?local_time=%s&activity_group_name=%s', datetime, group);
-    console.log(href);
-
-    function mkItem(group, handleClose) {
-        function onClick() {
-            handleClose();
-            setGroup(group);
-        }
-        return (<MenuItem onClick={onClick} key={group}>{group}</MenuItem>);
-    }
 
     return (<ActivityCard header='Activity Details' displayWidth={4} href={href}>
         <Grid item xs={12}><Text>
@@ -39,7 +27,10 @@ export default function ActivityDetails(props) {
                             animateYearScrolling label='Time'/>
         </Grid>
         <Grid item xs={3}>
-            <MenuButton json={params.activity_groups} label='Group' mkItem={mkItem}/>
+            <InputLabel shrink>Group</InputLabel>
+            <Select onChange={setGroup} value={params.latest_activity_group}>
+                {params.activity_groups.map(group => <MenuItem value={group}>{group}</MenuItem>)}
+            </Select>
         </Grid>
     </ActivityCard>);
 }
