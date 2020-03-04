@@ -7,8 +7,5 @@ export {default as Loading} from './Loading';
 export {default as MainMenu} from './MainMenu';
 export {default as MenuButton} from './MenuButton';
 export {default as Navigation} from './Navigation';
-export {default as range} from './range';
-export {default as setIds} from './setIds';
 export {default as SideDrawer} from './SideDrawer';
 export {default as Text} from './Text';
-export {default as zip} from './zip'

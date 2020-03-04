@@ -1,8 +1,9 @@
 import React from "react";
-import {range, Loading} from "../../../utils";
-import {Grid, Button} from "@material-ui/core";
+import {Loading} from "../../../elements";
+import {Button, Grid} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {sprintf} from "sprintf-js";
+import {range} from "../../../functions";
 
 
 const useStyles = makeStyles(theme => ({

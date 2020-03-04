@@ -1,6 +1,6 @@
 import React from 'react';
 import {Typography} from "@material-ui/core";
-import {Layout, MainMenu} from "../utils";
+import {Layout, MainMenu} from "../elements";
 
 
 export default function Welcome(props) {

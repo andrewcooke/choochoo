@@ -2,8 +2,9 @@ import React from 'react';
 import {Grid, Typography} from "@material-ui/core";
 import {JupyterActivity, ShrimpField, SummaryField} from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {ColumnCard, ColumnList, LinkButton, Loading, setIds, Text} from "../../utils";
+import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../elements";
 import JupyterAllActivites from "./elements/JupyterAllActivites";
+import {setIds} from '../../functions';
 
 
 const useStyles = makeStyles(theme => ({

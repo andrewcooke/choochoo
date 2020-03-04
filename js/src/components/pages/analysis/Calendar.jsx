@@ -1,5 +1,5 @@
 import React from 'react';
-import {ColumnCard} from "../../utils";
+import {ColumnCard} from "../../elements";
 
 
 export default function Calendar(props) {

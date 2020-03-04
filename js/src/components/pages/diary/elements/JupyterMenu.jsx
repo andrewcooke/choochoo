@@ -1,6 +1,7 @@
 import React from "react";
 import {MenuItem} from "@material-ui/core";
-import {MenuButton, zip} from "../../../utils";
+import {MenuButton} from "../../../elements";
+import {zip} from "../../../functions";
 
 
 export default function JupyterMenu(props) {

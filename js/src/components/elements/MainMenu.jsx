@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {Collapse, List, ListItem, ListItemText} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
-import ListItemLink from "../utils/ListItemLink";
+import ListItemLink from ".//ListItemLink";
 import format from 'date-fns/format';
 import {FMT_DAY, FMT_MONTH, FMT_YEAR} from "../../constants";
 

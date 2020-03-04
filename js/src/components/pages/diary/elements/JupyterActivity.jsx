@@ -1,6 +1,6 @@
 import React from "react";
 import {Grid} from "@material-ui/core";
-import {LinkButton, Text} from '../../../utils';
+import {LinkButton, Text} from '../../../elements';
 import JupyterMenu from './JupyterMenu'
 import {sprintf} from "sprintf-js";
 

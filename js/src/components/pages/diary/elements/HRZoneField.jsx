@@ -1,6 +1,6 @@
 import React from 'react';
 import {Grid} from "@material-ui/core";
-import {Text} from '../../../utils';
+import {Text} from '../../../elements';
 import PercentBar from "./PercentBar";
 
 

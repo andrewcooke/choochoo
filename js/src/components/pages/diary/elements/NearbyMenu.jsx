@@ -1,6 +1,6 @@
 import React from "react";
 import {MenuItem} from "@material-ui/core";
-import {MenuButton} from "../../../utils";
+import {MenuButton} from "../../../elements";
 
 
 export default function NearbyMenu(props) {

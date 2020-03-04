@@ -1,7 +1,7 @@
 import React from 'react';
 import {Grid} from "@material-ui/core";
 import {sprintf} from "sprintf-js";
-import {Text} from '../../../utils';
+import {Text} from '../../../elements';
 import FormatValueUnits from "./FormatValueUnits";
 import Measures from "./Measures";
 

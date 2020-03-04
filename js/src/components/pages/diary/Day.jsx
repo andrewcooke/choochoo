@@ -14,7 +14,8 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {ColumnCard, ColumnList, LinkButton, Loading, setIds, Text} from "../../utils";
+import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../elements";
+import {setIds} from "../../functions";
 
 
 const useStyles = makeStyles(theme => ({

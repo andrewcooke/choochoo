@@ -1,5 +1,5 @@
 import React from 'react';
-import {Layout, MainMenu, ColumnList} from "../utils";
+import {Layout, MainMenu, ColumnList} from "../elements";
 import {Calendar} from "./analysis";
 
 

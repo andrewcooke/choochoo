@@ -1,6 +1,6 @@
 import React from "react";
 import {sprintf} from "sprintf-js";
-import Text from "../../../utils/Text";
+import Text from "../../../elements/Text";
 
 
 export default function FormatValueUnits(props) {
