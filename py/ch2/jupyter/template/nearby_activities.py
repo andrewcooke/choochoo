@@ -48,14 +48,14 @@ def nearby_activities(constraint):
         for j, source_id in enumerate(source_ids):
             b = 2 * pi * j / n_source_ids
             dxb, dyb = offset_b * sin(b), offset_b * cos(b)
-            df = activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
+            stats = activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
                                      activity_journal=ActivityJournal.from_id(s, source_id))
-            f.line(x=df[SPHERICAL_MERCATOR_X] + dxa + dxb, y=df[SPHERICAL_MERCATOR_Y] + dya + dyb,
+            f.line(x=stats[SPHERICAL_MERCATOR_X] + dxa + dxb, y=stats[SPHERICAL_MERCATOR_Y] + dya + dyb,
                    color=palette[i], line_width=1.5, line_dash='dotted')
             if x_max is None:
-                x_max, y_max = max(df[SPHERICAL_MERCATOR_X]), max(df[SPHERICAL_MERCATOR_Y])
+                x_max, y_max = max(stats[SPHERICAL_MERCATOR_X]), max(stats[SPHERICAL_MERCATOR_Y])
             else:
-                x_max, y_max = max(x_max, max(df[SPHERICAL_MERCATOR_X])), max(y_max, max(df[SPHERICAL_MERCATOR_Y]))
+                x_max, y_max = max(x_max, max(stats[SPHERICAL_MERCATOR_X])), max(y_max, max(stats[SPHERICAL_MERCATOR_Y]))
 
     if not labels:
         labels = [f'{constraint} {g}' for g in range(n_groups)]

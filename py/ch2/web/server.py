@@ -24,6 +24,7 @@ from ..lib.server import BaseController
 from ..sql import ActivityJournal
 from ..stats.display.activity import active_days, active_months, activities_start, activities_finish, activity_groups, \
     latest_activity, activities_by_group
+from ..stats.display.nearby import constraints
 
 log = getLogger(__name__)
 
@@ -143,7 +144,8 @@ class Api:
                   'activities_finish': activities_finish(s),
                   'activities_by_group': activities_by_group(s),
                   'latest_activity_group': latest.activity_group.name if latest else None,
-                  'latest_activity_time': time_to_local_time(latest.start) if latest else None}
+                  'latest_activity_time': time_to_local_time(latest.start) if latest else None,
+                  'nearby_constraints': list(constraints(s))}
         return Response(dumps(result))
 
     @staticmethod
