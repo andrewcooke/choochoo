@@ -23,7 +23,7 @@ from ..lib.schedule import Schedule
 from ..lib.server import BaseController
 from ..sql import ActivityJournal
 from ..stats.display.activity import active_days, active_months, activities_start, activities_finish, activity_groups, \
-    latest_activity
+    latest_activity, activities_by_group
 
 log = getLogger(__name__)
 
@@ -141,7 +141,7 @@ class Api:
         latest = latest_activity(s)
         result = {'activities_start': activities_start(s),
                   'activities_finish': activities_finish(s),
-                  'activity_groups': activity_groups(s),
+                  'activities_by_group': activities_by_group(s),
                   'latest_activity_group': latest.activity_group.name if latest else None,
                   'latest_activity_time': time_to_local_time(latest.start) if latest else None}
         return Response(dumps(result))

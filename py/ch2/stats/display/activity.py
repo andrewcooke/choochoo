@@ -250,3 +250,13 @@ def activity_groups(s):
 def latest_activity(s):
     return s.query(ActivityJournal). \
         order_by(desc(ActivityJournal.start)).limit(1).one_or_none()
+
+
+def activities_by_group(s):
+    by_group = {}
+    for group in s.query(ActivityGroup).all():
+        activities = [time_to_local_time(activity.start)
+                      for activity in s.query(ActivityJournal).filter(ActivityJournal.activity_group == group).all()]
+        if activities:
+            by_group[group.name] = activities
+    return by_group
