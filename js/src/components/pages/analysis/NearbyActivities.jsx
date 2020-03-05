@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {Text} from "../../elements";
 import {Grid, InputLabel, MenuItem, Select} from "@material-ui/core";
 import ActivityCard from "./ActivityCard";
+import {fmtHref} from "../../functions";
 
 
 export default function NearbyActivities(props) {
@@ -10,7 +11,7 @@ export default function NearbyActivities(props) {
     if (Object.keys(params.nearby_constraints).length === 0) return <Empty/>;
 
     const [constraint, setConstraint] = useState(params.nearby_constraints[0]);
-    const href = sprintf('jupyter/nearby_activities?constraint=%s', constraint);
+    const href = fmtHref('jupyter/nearby_activities?constraint=%s', constraint);
 
     return (<ActivityCard header='Nearby Activities' displayWidth={6} href={href}>
         <Grid item xs={12}><Text>

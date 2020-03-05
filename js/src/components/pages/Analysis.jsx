@@ -8,7 +8,8 @@ import {
     Health,
     Month,
     NearbyActivities,
-    SimilarActivities
+    SimilarActivities,
+    SomeActivities
 } from "./analysis";
 
 
@@ -29,6 +30,7 @@ function Columns(props) {
             <Month/>
             <Calendar/>
             <Health/>
+            <SomeActivities/>
         </ColumnList>);
     }
 }

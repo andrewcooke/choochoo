@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {Text} from "../../elements";
 import {Grid, InputLabel, MenuItem, Select} from "@material-ui/core";
 import ActivityCard from "./ActivityCard";
+import {fmtHref} from "../../functions";
 
 
 export default function ActivityDetails(props) {
@@ -11,7 +12,7 @@ export default function ActivityDetails(props) {
 
     const [group, setGroup] = useState(params.latest_activity_group);
     const [datetime, setDatetime] = useState(params.latest_activity_time);
-    const href = sprintf('jupyter/activity_details?local_time=%s&activity_group_name=%s', datetime, group);
+    const href = fmtHref('jupyter/activity_details?local_time=%s&activity_group_name=%s', datetime, group);
 
     // force consistent date (will re-render)
     const datetimes = params.activities_by_group[group];
