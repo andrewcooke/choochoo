@@ -2,7 +2,7 @@ import React from 'react';
 import {Grid, Typography} from "@material-ui/core";
 import {JupyterActivity, ShrimpField, SummaryField, JupyterAllActivities} from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../elements";
+import {Break, ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../elements";
 import {setIds} from '../../functions';
 
 
@@ -46,6 +46,7 @@ function childrenFromRest(head, rest, level, history) {
             if (head === 'shrimp') {
                 children.push(<ShrimpField json={row} key={row.id}/>);
             } else {
+                children.push(<Break/>);
                 children.push(<Header json={row} level={level} history={history} key={row.id}/>);
             }
         } else {
@@ -75,7 +76,7 @@ function Header(props) {
         childrenFromRest(head.tag, rest, level + 1, history);
 
     return (<>
-        <Grid item xs={12} className={classes.grid}>
+        <Grid item xs={4} className={classes.grid}>
             <Typography variant={'h' + level}>{head.value}</Typography>
         </Grid>
         {children}
