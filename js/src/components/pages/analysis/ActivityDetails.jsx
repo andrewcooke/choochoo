@@ -7,6 +7,8 @@ import ActivityCard from "./ActivityCard";
 export default function ActivityDetails(props) {
 
     const {params} = props;
+    if (Object.keys(params.activities_by_group).length === 0) return <Empty/>;
+
     const [group, setGroup] = useState(params.latest_activity_group);
     const [datetime, setDatetime] = useState(params.latest_activity_time);
     const href = sprintf('jupyter/activity_details?local_time=%s&activity_group_name=%s', datetime, group);
