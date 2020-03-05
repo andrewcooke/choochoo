@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {ColumnList, Layout, Loading, MainMenu} from "../elements";
-import {ActivityDetails, AllActivities, Calendar, CompareActivities, Health} from "./analysis";
+import {ActivityDetails, AllActivities, Calendar, CompareActivities, Health, Month} from "./analysis";
 
 
 function Columns(props) {
@@ -15,6 +15,7 @@ function Columns(props) {
             <ActivityDetails params={params}/>
             <CompareActivities params={params}/>
             <AllActivities params={params}/>
+            <Month/>
             <Calendar/>
             <Health/>
         </ColumnList>);
