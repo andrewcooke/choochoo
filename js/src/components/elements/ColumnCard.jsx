@@ -18,11 +18,11 @@ const useStyles = makeStyles(theme => ({
 
 export default function ColumnCard(props) {
 
-    const {header, children} = props;
+    const {header=null, children} = props;
     const classes = useStyles();
 
     return (<ListItem className={classes.listItem}><Card>
-        <Typography variant='h2'>{header}</Typography>
+        {header !== null ? <Typography variant='h2'>{header}</Typography> : <></>}
         <Grid container spacing={1}>{children}</Grid>
     </Card></ListItem>);
 }
