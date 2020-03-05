@@ -1,5 +1,6 @@
 export {default as ColumnCard} from './ColumnCard';
 export {default as ColumnList} from './ColumnList';
+export {default as Empty} from './Empty';
 export {default as Layout} from './Layout';
 export {default as LinkButton} from './LinkButton';
 export {default as ListItemLink} from './ListItemLink';

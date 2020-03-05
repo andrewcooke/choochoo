@@ -13,15 +13,15 @@ export default function ActivityDetails(props) {
 
     // force consistent date (will re-render)
     const datetimes = params.activities_by_group[group];
-    if (! datetimes.includes(datetime)) {
+    if (datetime !== null && ! datetimes.includes(datetime)) {
         setDatetime(datetimes[datetimes.length - 1])
     }
 
-    return (<ActivityCard header='Activity Details' displayWidth={4} href={href}>
+    return (<ActivityCard header='Activity Details' displayWidth={5} href={href}>
         <Grid item xs={12}><Text>
             <p>Graphical details for the given activity.</p>
         </Text></Grid>
-        <Grid item xs={3}>
+        <Grid item xs={2}>
             <InputLabel shrink>Group</InputLabel>
             <Select onChange={event => setGroup(event.target.value)} value={group}>
                 {Object.keys(params.activities_by_group).map(group =>
