@@ -32,4 +32,13 @@ pip install werkzeug
 pip install setuptools wheel twine
 pip install s-tui
 
+echo
+echo "creating link to so that ch2 package appears in the environment"
+ln -s `pwd`/ch2 env/lib/python3.7/site-packages/ch2
+echo "to remove:"
+echo "  rm py/env/lib/python3.7/site-packages/ch2"
+echo "but jupyter will then fail to find ch2 unless it is installed or you"
+echo "modify .ipython/profile_default/ipython_config.py"
+echo
 echo "source env/bin/activate"
+echo

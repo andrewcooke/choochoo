@@ -39,17 +39,11 @@ In a suitable directory, clone the latest source from github:
 Then you can execute the code within a virtualenv:
 
     cd choochoo
-    dev/make-env.sh
+    dev/make-env-py.sh
     dev/ch2 help
 
-If you are not making frequent changes to the code you may want to
-install it within the virtualenv:
-
-    dev/install-in-env.sh
-    source env/bin/activate
-    ch2 help
-    
-(you will need to re-install whenever you alter the code).
+This adds a soft link so that the development code is present in the
+Python path (see output from `make-env-py.sh`).
 
 ### Package
 
