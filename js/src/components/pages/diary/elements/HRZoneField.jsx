@@ -12,7 +12,7 @@ export default function HRZoneField(prop) {
             <Text>Zone {zone.value}</Text>
         </Grid>
         <Grid item xs={9}>
-            <PercentBar percent={percent.value} width={200}/>
+            <PercentBar percent={percent.value} width={200} fraction={0.99}/>
         </Grid>
     </>);
 }

@@ -27,14 +27,14 @@ export default function ClimbField(prop) {
     const classes = useStyles();
 
     return (<>
-        <Grid item xs={6} className={classes.left}>
+        <Grid item xs={5} className={classes.left}>
             <Text>{sprintf('%d', elevation.value)}m</Text>
             <Text secondary> / </Text>
             <FormatValueUnits value={distance.value} units={distance.units}/>
-            <Text secondary> in </Text>
+            <Text secondary> / </Text>
             <FormatValueUnits value={time.value} units={time.units}/>
         </Grid>
-        <Grid item xs={6} className={classes.right}>
+        <Grid item xs={7} className={classes.right}>
             <Measures measures={elevation.measures}/>
         </Grid>
     </>);

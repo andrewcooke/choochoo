@@ -1,12 +1,14 @@
 import React from 'react';
 import PercentBar from './PercentBar';
+import {barWidth} from "../../../functions";
 
 
 export default function Measures(props) {
     const {measures} = props;
-    return Object.entries(measures.schedules).map((entry, i) => {
+    const schedules = Object.entries(measures.schedules);
+    return schedules.map((entry, i) => {
         const [period, [percent, rank]] = entry;
         const label = rank + '/' + period;
-        return (<PercentBar percent={percent} label={label} key={i}/>);
+        return (<PercentBar percent={percent} label={label} key={i} fraction={barWidth(schedules)}/>);
     });
 }
