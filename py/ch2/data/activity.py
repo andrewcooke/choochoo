@@ -29,7 +29,7 @@ def active_stats(df):
         slice = df.loc[df[TIMESPAN_ID] == timespan]
         stats[ACTIVE_DISTANCE] += slice[DISTANCE].max() - slice[DISTANCE].min()
         stats[ACTIVE_TIME] += (slice.index.max() - slice.index.min()).total_seconds()
-    stats[ACTIVE_SPEED] = 3.6 * stats[ACTIVE_DISTANCE] / stats[ACTIVE_TIME]
+    stats[ACTIVE_SPEED] = 3600 * stats[ACTIVE_DISTANCE] / stats[ACTIVE_TIME]
     return stats
 
 
