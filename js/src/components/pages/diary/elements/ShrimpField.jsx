@@ -1,11 +1,14 @@
 import React from 'react';
-import {Grid} from "@material-ui/core";
+import {Grid, InputLabel} from "@material-ui/core";
 import {Text} from '../../../elements';
 import {makeStyles} from "@material-ui/core/styles";
 import PercentBar from "./PercentBar";
 
 
 const useStyles = makeStyles(theme => ({
+    right: {
+        textAlign: 'right',
+    },
     center: {
         textAlign: 'center',
     },
@@ -27,11 +30,11 @@ export default function ShrimpField(prop) {
     });
 
     return (<>
-        <Grid item xs={3}><Text>{label.value}:</Text></Grid>
-        <Grid item xs={1}><Text>{from.value}</Text></Grid>
-        <Grid item xs={1} className={classes.center}><Text>{arrow.value}</Text></Grid>
-        <Grid item xs={1} className={classes.left}><Text>{to.value}</Text></Grid>
-        <Grid item xs={6}>
+        <Grid item xs={5} className={classes.left}>
+            <InputLabel shrink>{label.value}</InputLabel>
+            <Text>{from.value} {arrow.value} {to.value}</Text>
+        </Grid>
+        <Grid item xs={7} className={classes.right}>
             {bars}
         </Grid>
     </>);

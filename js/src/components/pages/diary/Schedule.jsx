@@ -7,14 +7,6 @@ import {setIds} from '../../functions';
 
 
 const useStyles = makeStyles(theme => ({
-    listItem: {
-        padding: theme.spacing(1),
-    },
-    paper: {
-        padding: theme.spacing(1),
-        margin: theme.spacing(1),
-        width: '100%',
-    },
     grid: {
         justifyContent: 'flex-start',
         alignItems: 'baseline',

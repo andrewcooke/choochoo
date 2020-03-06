@@ -6,12 +6,11 @@ import Card from "./Card";
 
 const useStyles = makeStyles(theme => ({
     listItem: {
-        padding: theme.spacing(1),
-    },
-    paper: {
-        padding: theme.spacing(1),
-        margin: theme.spacing(1),
-        width: '100%',
+        padding: 0,
+        [theme.breakpoints.up('md')]: {
+            // get the widest display possible on a phone, single column
+            padding: theme.spacing(1),
+        },
     },
 }));
 

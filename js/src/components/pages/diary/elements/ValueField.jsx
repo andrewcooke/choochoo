@@ -1,8 +1,21 @@
 import React from 'react';
-import {Grid} from "@material-ui/core";
-import {Text} from '../../../elements';
+import {Grid, InputLabel} from "@material-ui/core";
 import FormatValueUnits from "./FormatValueUnits";
 import Measures from "./Measures";
+import {makeStyles} from "@material-ui/core/styles";
+
+
+const useStyles = makeStyles(theme => ({
+    right: {
+        textAlign: 'right',
+    },
+    center: {
+        textAlign: 'center',
+    },
+    left: {
+        textAlign: 'left',
+    },
+}));
 
 
 export default function ValueField(props) {
@@ -18,7 +31,7 @@ export default function ValueField(props) {
 function CommonValueField(props) {
     const {json} = props;
     return (<>
-        <Text>{json.label}: </Text>
+        <InputLabel shrink>{json.label}</InputLabel>
         <FormatValueUnits value={json.value} units={json.units} tag={json.tag}/>
     </>);
 }
@@ -32,12 +45,15 @@ function SimpleValueField(props) {
 
 
 function MeasuredValueField(props) {
+
     const {json} = props;
+    const classes = useStyles();
+
     return (<>
-        <Grid item xs={6}>
+        <Grid item xs={4} className={classes.left}>
             <CommonValueField {...props}/>
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={8} className={classes.right}>
             <Measures measures={json.measures}/>
         </Grid>
     </>);
