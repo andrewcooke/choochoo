@@ -98,6 +98,7 @@ def default(system, db, no_diary=False):
         # need to call normalize here because schedule isn't a schedule type column,
         # but part of a kargs JSON blob.
         # also, add year first so that monthly doesn't get confused by extra stats range
+        add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('x'))
         add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('y'))
         add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('m'))
 

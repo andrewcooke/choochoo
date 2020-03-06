@@ -13,9 +13,14 @@ from .date import to_date, format_date, add_date, local_date_to_time, time_to_lo
 # week offset by hand (here it's because 1970-01-01 is a thursday).
 
 ZERO = dt.date(1970, 1, 1)
+INFINITY = dt.date(3000, 1, 1)
 WEEK_OFFSET = 3
 EPOCH_OFFSET = ZERO.toordinal()
 DOW = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
+
+
+class ScheduleException(Exception):
+    pass
 
 
 class Schedule:
@@ -41,15 +46,17 @@ class Schedule:
             spec = '' if spec is None else spec
             spec = sub(r'\s+', '', spec)
             spec = spec.lower()
-            m = match(r'^([\d\-/]*[dwmy])?(\[[^\]]*\])?([\d\-]*)$', spec)
+            m = match(r'^([\d\-/]*[xdwmy])?(\[[^\]]*\])?([\d\-]*)$', spec)
             frame, locations, range = m.group(1), m.group(2), m.group(3)
             self.__parse_frame(frame)
-            self.__parse_locations(locations)
             self.__parse_range(range)
+            self.__parse_locations(locations)  # after range so we can reject extended locations
+        except ScheduleException:
+            raise
         except:
-            raise Exception('Cannot parse "%s" (%s)' % (spec, type(spec)))
+            raise ScheduleException('Cannot parse "%s" (%s)' % (spec, type(spec)))
         if self.locations and self.frame_type == 'y':
-            raise Exception('Locations not supported in yearly schedules')
+            raise ScheduleException('Locations not supported in yearly schedules')
         self.__frame = self.frame_class()(self)
 
     def __date_to_ordinal(self, text):
@@ -72,6 +79,8 @@ class Schedule:
         else:
             offset, rft = '0', frame
         self.repeat, self.frame_type = self.__parse_ordinal(rft)
+        if self.frame_type == 'x' and (self.repeat != 1 or offset != '0'):
+            raise ScheduleException('Repetition and offset not supported by extended frames')
         if '-' in offset:
             self.offset = self.__date_to_ordinal(offset)
         else:
@@ -82,11 +91,13 @@ class Schedule:
         if location[-3:] in DOW:
             if len(location) > 3:
                 if self.frame_type == 'd':
-                    raise Exception('Numbered locations in daily frames not supported')
+                    raise ScheduleException('Numbered locations in daily frames not supported')
                 return int(location[:-3]), self.DOW_INDEX[location[-3:]]
             else:
                 return 0, self.DOW_INDEX[location]  # 0 means all weeks (in a month)
         else:
+            if self.frame_type == 'x' and not self.start:
+                raise ScheduleException('Numerical locations in extended frames require a range start')
             return int(location)
 
     def __parse_locations(self, locations):
@@ -94,7 +105,7 @@ class Schedule:
             locations = locations[1:-1]  # drop []
         if locations:
             if self.frame_type == 'y':
-                raise Exception('Locations in yearly frames not supported')
+                raise ScheduleException('Locations in yearly frames not supported')
             self.locations = sorted(map(self.__parse_location, locations.split(',')), key=self.__key)
         else:
             self.locations = []  # all
@@ -165,7 +176,7 @@ class Schedule:
             return format_date(range)
 
     def frame_class(self):
-        return {'d': Day, 'w': Week, 'm': Month, 'y': Year}[self.frame_type]
+        return {'x': Extended, 'd': Day, 'w': Week, 'm': Month, 'y': Year}[self.frame_type]
 
     # allow range to be set separately (allows separate column in database, so
     # we can select for valid reminders).
@@ -192,6 +203,8 @@ class Schedule:
         if self.repeat > 1:
             text = '%d%ss' % (self.repeat, text)
         text = '%s%s' % (text, self.__str_locations())
+        if compact and text == 'x':
+            text = 'all'
         return text
 
     def __in_range_or_none(self, date):
@@ -255,6 +268,9 @@ class Schedule:
 
 
 class DateOrdinals:
+
+    # calculate various useful numbers for a given date.
+    # not the most efficient, but useful
 
     def __init__(self, date):
         date = to_date(date)
@@ -378,3 +394,33 @@ class Year(Frame):
     def at_location(self, date):
         # locations not supported, so ignore for efficiency
         return self.schedule.in_range(date)
+
+
+class Extended(Frame):
+
+    def start_of_frame(self, date):
+        if self.schedule.start:
+            return self.schedule.start
+        else:
+            return ZERO
+
+    def locations_from(self, start):
+        if self.schedule.locations:
+            if self.schedule.start:
+                yield from super().locations_from(start)
+            else:
+                while self.schedule.in_range(start):
+                    days = set(location[1] for location in self.schedule.locations)
+                    if DateOrdinals(start).dow in days:
+                        yield start
+                    start += dt.timedelta(days=1)
+        else:
+            while self.schedule.in_range(start):
+                yield start
+                start += dt.timedelta(days=1)
+
+    def length_in_days(self, date):
+        start = self.schedule.start if self.schedule.start else ZERO
+        finish = self.schedule.finish if self.schedule.finish else INFINITY
+        return (finish - start).days
+

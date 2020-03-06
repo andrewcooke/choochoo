@@ -3,7 +3,7 @@ import datetime as dt
 from unittest import TestCase
 
 from ch2.lib.date import to_date
-from ch2.lib.schedule import Schedule, DateOrdinals
+from ch2.lib.schedule import Schedule, DateOrdinals, INFINITY
 
 
 class TestRepeating(TestCase):
@@ -109,3 +109,55 @@ class TestRepeating(TestCase):
         s = Schedule('2018-01-01/2y')
         self.assertEqual(s.start_of_frame('2018-01-02'), to_date('2018-01-01'))
         self.assertEqual(s.start_of_frame('2017-01-02'), to_date('2016-01-01'))
+
+    def test_extended(self):
+        # from the spec doc
+        self.assert_str(Schedule('x2018-10-07-'), 'x2018-10-07-')
+        self.assert_str(Schedule('x[1,2,3]2020-03-06-'), 'x[1,2,3]2020-03-06-')
+        self.assert_str(Schedule('x[fri]2020-03-06-'), 'x[fri]2020-03-06-')
+        self.assert_bad(Schedule, 'x[1,2,3]')  # no range start
+        self.assert_bad(Schedule, '2018-10-07x')  # no offset
+        self.assert_bad(Schedule, '2x')  # no multiple repeat
+        self.assert_at('x', '2018-07-06', True)
+        # single day range
+        self.assert_at('x2018-07-06', '2018-07-05', False)
+        self.assert_at('x2018-07-06', '2018-07-06', True)
+        self.assert_at('x2018-07-06', '2018-07-07', False)
+        # from date onwards
+        self.assert_at('x2018-07-06-', '2018-07-05', False)
+        self.assert_at('x2018-07-06-', '2018-07-06', True)
+        self.assert_at('x2018-07-06-', '2018-07-07', True)
+        # until date
+        self.assert_at('x-2018-07-06', '2018-07-05', True)
+        self.assert_at('x-2018-07-06', '2018-07-06', False)
+        self.assert_at('x-2018-07-06', '2018-07-07', False)
+        # numbered locations with start of range
+        self.assert_at('x[1,2,3]2018-07-06-', '2018-07-05', False)
+        self.assert_at('x[1,2,3]2018-07-06-', '2018-07-06', True)
+        self.assert_at('x[1,2,3]2018-07-06-', '2018-07-07', True)
+        self.assert_at('x[1,2,3]2018-07-06-', '2018-07-08', True)
+        self.assert_at('x[1,2,3]2018-07-06-', '2018-07-09', False)
+        # named locations with start of range
+        self.assert_at('x[fri]2018-07-06-', '2018-07-05', False)
+        self.assert_at('x[fri]2018-07-06-', '2018-07-06', True)
+        self.assert_at('x[fri]2018-07-06-', '2018-07-07', False)
+        # named locations with no range
+        self.assert_at('x[fri]', '2018-07-05', False)
+        self.assert_at('x[fri]', '2018-07-06', True)
+        self.assert_at('x[fri]', '2018-07-07', False)
+        s = Schedule('x')
+        self.assertEqual(s.start_of_frame('2018-01-02'), to_date('1970-01-01'))
+        self.assertEqual(s.start, None)
+        self.assertEqual(s.finish, None)
+        # this is not None because it is used to set end dates for repeating intervals
+        self.assertEqual(s.next_frame('2018-01-02'), INFINITY)
+
+    def test_error_messages(self):
+        with self.assertRaisesRegex(Exception, r'Cannot parse "z"'):
+            Schedule('z')
+        with self.assertRaisesRegex(Exception, r'Cannot parse "z2018-10-07-"'):
+            Schedule('z2018-10-07-')
+        with self.assertRaisesRegex(Exception, r'Numbered locations in daily frames not supported'):
+            Schedule('d[1mon]')
+        with self.assertRaisesRegex(Exception, r'Repetition and offset not supported by extended frames'):
+            Schedule('2x')

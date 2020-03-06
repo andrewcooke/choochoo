@@ -5,6 +5,17 @@ Schedules are used to specify ranges of dates, typically involving
 some kind of repetition.  They are very flexible, but I've tried to
 make the simple cases easy to write and understand.
 
+* [Introduction](#introduction)
+  * [Extended Intervals](#extended-intervals)
+* [Structure](#structure)
+  * [Offset](#offset)
+  * [Repeat](#repeat)
+  * [Locations](#locations)
+  * [Range](#range)
+* [Exploration](#exploration)  
+
+## Introduction
+
 Before getting into any details it's best to look at some examples:
 
 * **2018-10-07**
@@ -14,8 +25,8 @@ Before getting into any details it's best to look at some examples:
 
 * **2018-10-07-**
 
-  This is all the days from today (Sunday) onwards (include the given
-  date).
+  This is all the days from today (this is being written on Sunday, 7
+  October, 2018) onwards (include the given date).
 
 * **-2018-10-07**
 
@@ -53,15 +64,29 @@ Before getting into any details it's best to look at some examples:
 
   Every Sunday, every month.  Also, the 5th and 10th of the month.
 
-Hopefully that gives the idea.  
+Hopefully that gives the idea.
 
-* [Introduction](#introduction)
-* [Structure](#structure)
-  * [Offset](#offset)
-  * [Repeat](#repeat)
-  * [Locations](#locations)
-  * [Range](#range)
-* [Exploration](#exploration)  
+### Extended Intervals
+
+In the examples above, `2018-10-07-` was "all the days from that date".
+So it is a series of intervals, each a day long.
+
+In contrast, the extended interval `x2018-10-07-` is a *single*
+interval that starts on the given date and continues forever.
+
+The extended interval `x` is a single interval that covers all time.
+
+This may seem an odd thing to have, but it allows us to, for example,
+calculate statistics for "all time".
+
+Extended intervals cannot have offsets or multiple repeats and can
+only have numeric locations if it has a range start (these terms are
+explained below).
+
+The extended interval `x[1,2,3]2020-03-06-` is a single interval,
+starting on 2020-03-06, that identifies the three days between
+2020-03-06 and 2020-03-08 (so uses 1-based indexing);
+`x[fri]2020-03-06-` identifies all Fridays from that date, etc.
 
 ## Structure
 
