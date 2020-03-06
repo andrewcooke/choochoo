@@ -16,6 +16,8 @@ log = getLogger(__name__)
 
 
 def fuzz(n, q):
+    # n is number of points, q is quartile (0-4).
+    # return index for quartile that is unbiased when location not exact
     i = (n-1) * q / 4
     if i != int(i):
         i = int(i) + choice([0, 1])  # if we're between two points, pick either
@@ -103,9 +105,9 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
         data = sorted([x for x in
                        s.query(StatisticJournal).
-                      filter(StatisticJournal.statistic_name == statistic_name,
-                             StatisticJournal.time >= start_time,
-                             StatisticJournal.time < finish_time).all()
+                           filter(StatisticJournal.statistic_name == statistic_name,
+                                 StatisticJournal.time >= start_time,
+                                 StatisticJournal.time < finish_time).all()
                        if x is not None and x.value is not None],
                       key=lambda x: x.value, reverse=not order_asc)
 

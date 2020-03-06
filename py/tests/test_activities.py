@@ -56,7 +56,7 @@ class TestActivities(TestCase):
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
                 n = s.query(count(StatisticJournal.id)).scalar()
-                self.assertEqual(47445, n)
+                self.assertEqual(50403, n)
                 journal = s.query(ActivityJournal).one()
                 self.assertNotEqual(journal.start, journal.finish)
 
@@ -117,7 +117,7 @@ class TestActivities(TestCase):
                 stat = s.query(StatisticJournal). \
                     join(StatisticName). \
                     filter(StatisticName.name == ACTIVE_DISTANCE).one()
-                self.assertGreater(stat.value, 30000)
+                self.assertGreater(stat.value, 30)
 
     def test_920(self):
         for src in '920xt-2019-05-16_19-42-54.fit', '920xt-2019-05-16_19-42-54.fit':
