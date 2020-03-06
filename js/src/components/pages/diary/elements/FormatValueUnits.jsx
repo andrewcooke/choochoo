@@ -23,20 +23,21 @@ export default function FormatValueUnits(props) {
 
 function FormatSeconds(props) {
     const {value} = props;
-    const units = [[60, '%d', 's'], [60, '%d', 'm'], [24, '%d', 'h'], [999, '%d', 'd']];
+    const units = [[60, 's'], [60, 'm'], [24, 'h'], [999, 'd']];
 
-    function helper(value, cumulative, units) {
-        let [[factor, format, label], ...rest] = units;
+    function helper(value, cumulative, units, depth=0) {
+        let [[factor, label], ...rest] = units;
         let time = '';
+        let maxDepth = depth;
         if (value > factor * cumulative) {
-            [value, time] = helper(value, cumulative * factor, rest);
-        } else {
-            format = '%d';  /* outermost value is not padded */
+            [value, time, maxDepth] = helper(value, cumulative * factor, rest, depth+1);
         }
-        const n = Math.trunc(value / cumulative);
-        time = time + sprintf(format, n) + label;
-        value = value - n * cumulative;
-        return [value, time];
+        if (maxDepth - depth < 2) {  // restrict to two most significant units for compact display
+            const n = Math.trunc(value / cumulative);
+            time = time + sprintf('%d', n) + label;
+            value = value - n * cumulative;
+        }
+        return [value, time, maxDepth];
     }
 
     var text = helper(value, 1, units)[1];
