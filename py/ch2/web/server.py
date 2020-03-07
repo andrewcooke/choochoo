@@ -171,10 +171,24 @@ class Static:
 
     def __call__(self, request, s, path):
         package, file = self.parse_path(path)
-        log.info(f'Reading {file} from {package}')
-        response = Response(read_binary(package, file))
-        self.set_content_type(response, file)
-        return response
+        for (extension, encoding) in (('.gz', 'gzip'), ('', None)):
+            if not encoding or encoding in request.accept_encodings:
+                file_extn = file + extension
+                try:
+                    log.debug(f'Reading {file_extn} from {package}')
+                    response = Response(read_binary(package, file_extn))
+                    if encoding:
+                        response.content_encoding = encoding
+                    self.set_content_type(response, file)
+                    return response
+                except Exception as e:
+                    if encoding:
+                        log.debug(f'Encoding {encoding} not supported by server: {e}')
+                    else:
+                        log.warning(f'Error serving {file}: {e}')
+            else:
+                log.debug(f'Encoding {encoding} not supported by client')
+        raise Exception(f'File not found: {file}')
 
     def parse_path(self, path):
         package = self.__package
