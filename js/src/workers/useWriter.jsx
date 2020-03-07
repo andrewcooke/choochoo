@@ -3,12 +3,14 @@ import React, {useState} from "react";
 
 export function useWriter(json, writer) {
 
+    // used like useState, but the equivalent of setValue also writes back to the server.
+
     const [value, setValue] = useState(json.value === null ? '' : json.value);
 
     function handleChange(event) {
         setValue(event.target.value);
         let data = {};
-        data[json.label] = event.target.value;
+        data[json.db] = event.target.value;
         writer.postMessage(data);
     }
 
@@ -17,6 +19,8 @@ export function useWriter(json, writer) {
 
 
 export function useWriterRx(json, writer, rx, setError) {
+
+    // as above, but validates using an rx first, and only writes if ok.
 
     const [value, setValue] = useState(json.value === null ? '' : json.value);
 
@@ -27,7 +31,7 @@ export function useWriterRx(json, writer, rx, setError) {
         setError(! ok);
         if (ok) {
             let data = {};
-            data[json.label] = value;
+            data[json.db] = value;
             writer.postMessage(data);
         }
     }

@@ -1,4 +1,10 @@
 
+// a worker tat receives dictionaries and sends them to the server.
+// data are accumulated and only sent when there's a pause in updates
+// (so that editing doesn't result in a constant stream of posts).
+
+// there is no flagging of errors back to the caller (the source of events).
+
 const pause_ms = 1000;
 let timeout;
 
@@ -35,7 +41,10 @@ function write() {
         Object.entries(data).forEach(([key, value]) => {
             console.log(`write ${key}:${value}`);
         });
-        fetch('/api/statistics', {method: 'post', body: JSON.stringify(data)})
+        fetch('/api/statistics',
+            {method: 'post',
+                  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                  body: JSON.stringify(data)})
             .then((response) => {
                 if (response.ok) {
                     onSuccess(response);

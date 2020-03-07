@@ -285,11 +285,13 @@ class StatisticJournalInteger(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Integer)
-    # Index('cover_integer', id, value)  # experiment with covering index
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.INTEGER
     }
+
+    def set(self, value):
+        self.value = value if value is None else int(value)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
@@ -303,7 +305,9 @@ class StatisticJournalFloat(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Float)
-    # Index('cover_float', id, value)
+
+    def set(self, value):
+        self.value = value if value is None else float(value)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
@@ -345,7 +349,9 @@ class StatisticJournalText(StatisticJournal):
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
     value = Column(Text)
-    # Index('cover_text', id, value)
+
+    def set(self, value):
+        self.value = value if value is None else str(value)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):

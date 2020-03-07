@@ -200,12 +200,14 @@ class Schedule:
         if compact:
             text = self.frame_type
         else:
-            text = '%s' % self.frame_class().__name__
+            text = self.frame_class().__name__
         if self.repeat > 1:
             text = '%d%ss' % (self.repeat, text)
         text = '%s%s' % (text, self.__str_locations())
         if compact and text == 'x':
             text = 'all'
+        elif not compact and text == 'Extended':
+            text = 'All'
         return text
 
     def __in_range_or_none(self, date):

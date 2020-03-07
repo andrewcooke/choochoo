@@ -11,6 +11,7 @@ from werkzeug import Response, Request, run_simple
 from werkzeug.exceptions import HTTPException, BadRequest
 from werkzeug.routing import Map, Rule
 from werkzeug.utils import redirect
+from werkzeug.wrappers.json import JSONMixin
 
 from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV
 from ..diary.database import read_date, read_schedule
@@ -21,12 +22,16 @@ from ..jupyter.utils import get_template
 from ..lib.date import time_to_local_time
 from ..lib.schedule import Schedule
 from ..lib.server import BaseController
-from ..sql import ActivityJournal
-from ..stats.display.activity import active_days, active_months, activities_start, activities_finish, activity_groups, \
-    latest_activity, activities_by_group
+from ..sql import ActivityJournal, StatisticJournal
+from ..stats.display.activity import active_days, active_months, activities_start, activities_finish, latest_activity, \
+    activities_by_group
 from ..stats.display.nearby import constraints
 
 log = getLogger(__name__)
+
+
+class JSONRequest(Request, JSONMixin):
+    pass
 
 
 class WebController(BaseController):
@@ -88,7 +93,7 @@ class WebServer:
             return e
 
     def wsgi_app(self, environ, start_response):
-        request = Request(environ)
+        request = JSONRequest(environ)
         response = self.dispatch_request(request)
         return response(environ, start_response)
 
@@ -151,7 +156,19 @@ class Api:
     @staticmethod
     def write_statistics(request, s):
         # used to write modified fields back to the database
-        log.error('write_statistics not implemented')
+        data = request.json
+        log.info(data)
+        n = 0
+        for key, value in data.items():
+            try:
+                id = int(key)
+                journal = s.query(StatisticJournal).filter(StatisticJournal.id == id).one()
+                journal.set(value)
+                n += 1
+            except Exception as e:
+                log.error(f'Could not save {key}:{value}: {e}')
+        s.commit()
+        log.info(f'Saved {n} values')
         return Response()
 
 
