@@ -3,7 +3,7 @@ import datetime as dt
 from unittest import TestCase
 
 from ch2.lib.date import to_date
-from ch2.lib.schedule import Schedule, DateOrdinals, INFINITY
+from ch2.lib.schedule import Schedule, DateOrdinals, POS_INFINITY
 
 
 class TestRepeating(TestCase):
@@ -150,7 +150,7 @@ class TestRepeating(TestCase):
         self.assertEqual(s.start, None)
         self.assertEqual(s.finish, None)
         # this is not None because it is used to set end dates for repeating intervals
-        self.assertEqual(s.next_frame('2018-01-02'), INFINITY)
+        self.assertEqual(s.next_frame('2018-01-02'), POS_INFINITY)
 
     def test_error_messages(self):
         with self.assertRaisesRegex(Exception, r'Cannot parse "z"'):

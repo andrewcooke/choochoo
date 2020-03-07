@@ -13,7 +13,7 @@ from sqlalchemy.sql.functions import coalesce
 
 from .coasting import CoastingBookmark
 from ..lib.data import kargs_to_attr
-from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS
+from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS, to_date, local_date_to_time
 from ..sql import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..sql.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
@@ -329,7 +329,9 @@ def std_health_statistics(s, *extra, start=None, finish=None):
         return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                            how='outer', left_index=True, right_index=True)
 
-    start = start or s.query(StatisticJournal.time).filter(StatisticJournal.time > 0.0) \
+    # avoid x statistics some time in first day
+    start = start or s.query(StatisticJournal.time).filter(StatisticJournal.time >
+                                                           local_date_to_time(to_date('1970-01-03'))) \
         .order_by(asc(StatisticJournal.time)).limit(1).scalar()
     finish = finish or s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))

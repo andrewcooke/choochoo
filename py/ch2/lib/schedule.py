@@ -13,7 +13,8 @@ from .date import to_date, format_date, add_date, local_date_to_time, time_to_lo
 # week offset by hand (here it's because 1970-01-01 is a thursday).
 
 ZERO = dt.date(1970, 1, 1)
-INFINITY = dt.date(3000, 1, 1)
+NEG_INFINITY = ZERO + dt.timedelta(days=1)  # any timezone will still be a valid date
+POS_INFINITY = dt.date(3000, 1, 1)
 WEEK_OFFSET = 3
 EPOCH_OFFSET = ZERO.toordinal()
 DOW = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
@@ -402,7 +403,7 @@ class Extended(Frame):
         if self.schedule.start:
             return self.schedule.start
         else:
-            return ZERO
+            return NEG_INFINITY
 
     def locations_from(self, start):
         if self.schedule.locations:
@@ -420,7 +421,7 @@ class Extended(Frame):
                 start += dt.timedelta(days=1)
 
     def length_in_days(self, date):
-        start = self.schedule.start if self.schedule.start else ZERO
-        finish = self.schedule.finish if self.schedule.finish else INFINITY
+        start = self.schedule.start if self.schedule.start else NEG_INFINITY
+        finish = self.schedule.finish if self.schedule.finish else POS_INFINITY
         return (finish - start).days
 

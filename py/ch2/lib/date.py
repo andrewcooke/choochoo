@@ -49,7 +49,7 @@ def to_time(value, none=False):
     elif isinstance(value, dt.date):
         raise Exception('Use tz-aware conversion')
     elif isinstance(value, int):
-        return to_time(to_date(value))
+        return local_date_to_time(to_date(value))
     elif isinstance(value, float):
         return dt.datetime.fromtimestamp(value, dt.timezone.utc)
     else:
