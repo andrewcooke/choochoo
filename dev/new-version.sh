@@ -46,6 +46,7 @@ git tag -a "v$VERSION" -m "version $VERSION"
 git push origin "v$VERSION"
 
 dev/package-profile.sh
+dev/package-bundle.sh
 dev/package-python.sh
 #twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 twine upload dist/*
