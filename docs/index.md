@@ -47,7 +47,6 @@ support for power meters.
   * [Schedules](schedules)
   * [Configuration](configuration)
   * [Training Plans](training-plans)
-  * [Version Upgrades](version-upgrades)
   * [Reading FIT Files](fit-files)
   * [Repairing FIT Files](fix-fit)
   * [FIT Cookbook](fit-cookbook)
@@ -60,6 +59,7 @@ support for power meters.
   * [Detecting Climbs](climbs)
   * [Measuring Power and CdA](cda)
   * [Tracking Equipment](kit)
+  * [Version Upgrades](version-upgrades)
 * Development
   * [Spatial Search](rtree)
   * [Other Projects](other-projects)

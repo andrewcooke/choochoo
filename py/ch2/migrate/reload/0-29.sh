@@ -22,8 +22,8 @@ if ((DO_COPY)); then
   echo "(should print 'delete')"
   sqlite3 "$DB_DIR/database-$VER.sql" 'pragma journal_mode=delete' || { fuser "$DB_DIR/database-$VER.sql"; exit 1; }
   echo "copying $DB_DIR/database-$VER.sql to $TMP_DIR/copy-$VER.sql"
-  rm -f "$DB_DIR/database-$VER.sql-backup"
-  cp "$DB_DIR/database-$VER.sql" "$DB_DIR/database-$VER.sql-backup"
+  rm -f "$DB_DIR/database-$VER-backup.sql"
+  cp "$DB_DIR/database-$VER.sql" "$DB_DIR/database-$VER-backup.sql"
   rm -f "$TMP_DIR/copy-$VER.sql"
   cp "$DB_DIR/database-$VER.sql" "$TMP_DIR/copy-$VER.sql"
 fi
