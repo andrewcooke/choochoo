@@ -94,6 +94,7 @@ class TopicField:
 
     @declared_attr
     def statistic_name_id(cls):
+        # https://stackoverflow.com/questions/24666261/sqlalchemy-mixins-foreignkeys-and-declared-attr
         return Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
 
     @declared_attr
@@ -111,6 +112,8 @@ class DiaryTopicField(Base, TopicField):
                                                passive_deletes=True,
                                                order_by='DiaryTopicField.sort'))
     schedule = Column(Sched, nullable=False, server_default='')
+    UniqueConstraint('statistic_name_id')
+
 
     def __str__(self):
         return 'DiaryTopicField "%s"/"%s"' % (self.diary_topic.name, self.statistic_name.name)
@@ -118,17 +121,20 @@ class DiaryTopicField(Base, TopicField):
 
 class ActivityTopicField(Base, TopicField):
 
+    NAME = 'Name'
+
     __tablename__ = 'activity_topic_field'
 
     # unlike diary topic fields, this can have a null parent.  that means that it is a child to the
-    # title of the activity.
-    # in addition, display promotes any 'Name' field with a null parent to replace the activity title,
-    # and this same field is loaded with a default (based on file name) when data are read from FIT files.
+    # 'top' of the activity.
+    # the 'Name' field with a null parent is the activity title,
+    # this is loaded with a default (based on file name) when data are read from FIT files.
     activity_topic_id = Column(Integer, ForeignKey('activity_topic.id', ondelete='cascade'), nullable=True)
     activity_topic = relationship('ActivityTopic',
                                   backref=backref('fields', cascade='all, delete-orphan',
                                                   passive_deletes=True,
                                                   order_by='ActivityTopicField.sort'))
+    UniqueConstraint('statistic_name_id')
 
     def __str__(self):
         return 'ActivityTopicField "%s"/"%s"' % (self.activity_topic.name, self.statistic_name.name)

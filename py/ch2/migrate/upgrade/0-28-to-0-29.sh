@@ -11,9 +11,9 @@ SRC='0-28'
 DST='0-29'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=0
-DO_DROP=0
-DO_DUMP=0
+DO_COPY=1
+DO_DROP=1
+DO_DUMP=1
 
 
 # this section of the script copies diary data and kit data across
@@ -94,7 +94,13 @@ select * from diary_topic;
 .mode insert diary_topic_field
 select * from diary_topic_field;
 .mode insert diary_topic_journal
-select id, date from diary_topic_journal;
+select * from diary_topic_journal;
+.mode insert activity_topic
+select * from activity_topic;
+.mode insert activity_topic_field
+select * from activity_topic_field;
+.mode insert activity_topic_journal
+select * from activity_topic_journal;
 .mode insert segment
 select * from segment;
 .mode insert kit_group
@@ -105,6 +111,8 @@ select * from kit_item;
 select * from kit_component;
 .mode insert kit_model
 select * from kit_model;
+.mode insert file_hash
+select * from file_hash;
 EOF
 fi
 

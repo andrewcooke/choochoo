@@ -10,11 +10,14 @@ from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERC
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
+from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
 from ...sql.database import Timestamp, StatisticJournalText
+from ...sql.tables.topic import ActivityTopicField, ActivityTopic
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
-from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES
+from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
+    StatisticJournalType
 from ...sql.utils import add
 from ...srtm.bilinear import bilinear_elevation_from_constant
 
@@ -75,8 +78,7 @@ class ActivityReader(MultiProcFitReader):
             self._check_journals(s, activity_group, first_timestamp, last_timestamp)
         ajournal = add(s, ActivityJournal(activity_group=activity_group,
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
-                                          file_hash_id=file_scan.file_hash_id,
-                                          name=splitext(basename(file_scan.path))[0]))
+                                          file_hash_id=file_scan.file_hash_id))
         return ajournal, activity_group, first_timestamp
 
     def _activity_group(self, s, file_scan, sport):
@@ -131,11 +133,25 @@ class ActivityReader(MultiProcFitReader):
                 StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
                                          ajournal, value, ajournal.start)
 
+    @staticmethod
+    def _save_name(s, ajournal, path):
+        from ...config import add_activity_topic_field
+        name = splitext(basename(path))[0]
+        if not s.query(ActivityTopicField). \
+                join(StatisticName). \
+                filter(StatisticName.name == ActivityTopicField.NAME,
+                       ActivityTopicField.activity_topic_id == None).one_or_none():
+            add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
+                                     model={TYPE: EDIT})
+        StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic, ajournal.activity_group,
+                                 ajournal, name, ajournal.start)
+
     def _load_data(self, s, loader, data):
 
-        ajournal, activity_group, first_timestamp, path, records = data
+        ajournal, activity_group, first_timestamp, file_scan, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
         self._load_constants(s, ajournal)
+        self._save_name(s, ajournal, file_scan.path)
         self.__ajournal = ajournal
 
         log.debug(f'Loading {self.record_to_db}')
@@ -144,7 +160,6 @@ class ActivityReader(MultiProcFitReader):
             event = False
             if record.name == 'event':
                 event = record.value.event == 'timer' and record.value.event_type in types
-                # log.debug(f'Event: {event} for {types} ({record})')
                 if event: log.debug(f'{types} at {record.timestamp}')
             return event
 
@@ -198,7 +213,7 @@ class ActivityReader(MultiProcFitReader):
                                            StatisticJournalFloat)
                 else:
                     log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
-                                (path, record.value.timestamp))
+                                (file_scan.path, record.value.timestamp))
                 last_timestamp = record.value.timestamp
                 if not have_timespan:
                     ajournal.finish = record.value.timestamp

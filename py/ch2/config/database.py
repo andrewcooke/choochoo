@@ -283,8 +283,8 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, description=No
                                           statistic_journal_type=type, description=description,
                                           units=units, summary=summary))
     if model is None: model = {}
-    field = add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,
-                                      statistic_name=statistic_name))
+    return add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,
+                                     statistic_name=statistic_name))
 
 
 def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=5,

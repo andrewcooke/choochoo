@@ -94,6 +94,12 @@ select * from activity_topic;
 select * from activity_topic_field;
 .mode insert activity_topic_journal
 select * from activity_topic_journal;
+.mode insert activity_topic
+select * from activity_topic;
+.mode insert activity_topic_field
+select * from activity_topic_field;
+.mode insert activity_topic_journal
+select * from activity_topic_journal;
 .mode insert segment
 select * from segment;
 .mode insert kit_group
@@ -104,6 +110,8 @@ select * from kit_item;
 select * from kit_component;
 .mode insert kit_model
 select * from kit_model;
+.mode insert file_hash
+select * from file_hash;
 EOF
 fi
 
