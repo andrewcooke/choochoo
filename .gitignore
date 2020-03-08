@@ -17,3 +17,5 @@ dist
 */.sass-cache
 dev/update.sh
 node_modules
+\#*
+.#*
