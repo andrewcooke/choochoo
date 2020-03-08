@@ -605,7 +605,7 @@ def make_parser():
     web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
 
     def add_web_server_args(cmd):
-        cmd.add_argument(mm(BIND), default='127.0.0.1', help='bind address (default localhost)')
+        cmd.add_argument(mm(BIND), default='localhost', help='bind address (default localhost)')
         cmd.add_argument(mm(PORT), default=8000, type=int, help='port to use')
 
     add_web_server_args(web_cmds.add_parser(START, help='start the web server'))
