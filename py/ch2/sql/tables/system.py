@@ -49,6 +49,7 @@ class SystemConstant(SystemBase):
     TIMEZONE = 'timezone'
     JUPYTER_URL = 'jupyter-url'
     JUPYTER_DIR = 'jupyter-dir'
+    WEB_URL = 'web-url'
 
 
 class SystemProcess(SystemBase):

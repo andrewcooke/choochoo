@@ -22,7 +22,7 @@ from ..jupyter.utils import get_template
 from ..lib.date import time_to_local_time
 from ..lib.schedule import Schedule
 from ..lib.server import BaseController
-from ..sql import ActivityJournal, StatisticJournal
+from ..sql import ActivityJournal, StatisticJournal, SystemConstant
 from ..stats.display.activity import active_days, active_months, activities_start, activities_finish, latest_activity, \
     activities_by_group
 from ..stats.display.nearby import constraints
@@ -51,8 +51,20 @@ class WebController(BaseController):
         return cmd, log_name
 
     def _run(self):
+        self._sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self.__bind, self.__port), force=True)
         run_simple(self.__bind, self.__port, WebServer(self.__db, self.__jupyter),
                    use_debugger=self.__dev, use_reloader=self.__dev)
+
+    def _cleanup(self):
+         self._sys.delete_constant(SystemConstant.WEB_URL)
+
+    def _status(self, running):
+        if running:
+            print(f'    {self.connection_url()}')
+        print()
+
+    def connection_url(self):
+        return self._sys.get_constant(SystemConstant.WEB_URL, none=True)
 
 
 def error(exception):

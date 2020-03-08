@@ -26,7 +26,7 @@ class BaseController(ABC):
             self._status(True)
         else:
             print('\n  No service running')
-            self._status(True)
+            self._status(False)
 
     def _status(self, running):
         print()

@@ -6,8 +6,8 @@
   * [Package](#package)
   * [Further Reading](#further-reading)
 * [Configuration](#configuration)
-  * [Default Config](#default-config)
-  * [Going Deeper](#going-deeper)
+* [User Interface](#user-interface)
+* [Going Deeper](#going-deeper)
 
 ## Install
 
@@ -68,8 +68,6 @@ the latest release from Pypi.  It's still worth using a virtualenv:
 
 ## Configuration
 
-### Default Config
-
 Once installed the system must be configured.
 
 A basic configuration can be generated with the `config`
@@ -80,14 +78,20 @@ command:
 (if you are using source you may need to type `dev/ch2` instead of
 `ch2` - I'll assume that's obvious from now on).
 
-You can see what that implies by starting the diary:
+## User Interface
+
+You can see what the default config provides by starting the diary
 
     > ch2 diary
 
 which will display today's entry.  To quit the diary, type `alt-Q`.
 To quit without saving changes, type `alt-X`.
 
-### Going Deeper
+Alternatively, to use the new web interface, start the server:
+
+    > ch2 web start
+
+## Going Deeper
 
 Choochoo is very flexible.  You can configure it however you want.
 Unfortunately, the process for doing this is rather low-level and

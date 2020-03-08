@@ -18,6 +18,7 @@
 * [statistics](#statistics)
 * [test-schedule](#test-schedule)
 * [unlock](#unlock)
+* [web](#web)
 
 
 ## activities
@@ -379,5 +380,22 @@ across processes.
 
 This should not be needed in normal use.  DO NOT use when worker processes are
 still running.
+    
+
+
+
+## web
+
+    > ch2 web start
+
+Start the web server.
+
+    > ch2 web status
+
+Indicate whether the server is running or not.
+
+    > ch2 web stop
+
+Stop the server.
     
 
