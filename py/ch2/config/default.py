@@ -178,11 +178,13 @@ def default(system, db, no_diary=False):
             # and activity-related topics
             # a null parent here means that the fields appear under the title
 
-            c = Counter()
-            add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
-                                     model={TYPE: EDIT})
-            add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
-                                     model={TYPE: EDIT})
+            for activity_group in (bike, run, swim, walk):
+                c = Counter()
+                if activity_group != swim:
+                    add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
+                                             activity_group, model={TYPE: EDIT})
+                add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
+                                         activity_group, model={TYPE: EDIT})
 
         # finally, set the TZ so that first use of the diary doesn't wipe all our intervals
         DiaryTopicJournal.check_tz(system, s)

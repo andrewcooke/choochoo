@@ -8,7 +8,9 @@ from calendar import monthrange
 YM = '%Y-%m'
 YMD = '%Y-%m-%d'
 HMS = '%H:%M:%S'
+HM = '%H:%M'
 YMD_HMS = YMD + ' ' + HMS
+YMD_HM = YMD + ' ' + HM
 
 ALL_DATE_FORMATS = ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
                     '%Y-%m-%dT%H:%M:%S', YMD_HMS,
@@ -102,6 +104,23 @@ def format_seconds(seconds):
                 return '%s%dd %dh%02dm%02ds' % (sign, days, hours, minutes, seconds)
             else:
                 return '%s%dh%02dm%02ds' % (sign, hours, minutes, seconds)
+        else:
+            return '%s%dm%02ds' % (sign, minutes, seconds)
+    else:
+        return '%s%ds' % (sign, seconds)
+
+
+def format_minutes(seconds):
+    sign, seconds = '-' if seconds < 0 else '', abs(seconds)
+    if seconds >= 60:
+        minutes, seconds = seconds // 60, seconds % 60
+        if minutes >= 60:
+            hours, minutes = minutes // 60, minutes % 60
+            if hours >= 24:
+                days, hours = hours // 24, hours % 24
+                return '%s%dd %dh%02dm' % (sign, days, hours, minutes)
+            else:
+                return '%s%dh%02dm' % (sign, hours, minutes)
         else:
             return '%s%dm%02ds' % (sign, minutes, seconds)
     else:

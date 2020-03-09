@@ -33,6 +33,12 @@ if ((DO_DROP)); then
   pragma foreign_keys = on;
   -- don't delete topic and kit data, and keep composite for next step
   delete from source where type not in (3, 9, 10, 7, 11);
+  -- zap activity topics (exceptionally - starting over)
+  delete from source where type = 11;
+  delete from statistic_name where owner = 'ActivityTopic';
+  delete from activity_topic;
+  delete from activity_topic_field;
+  delete from activity_topic_journal;
   -- clean composite data
   delete from source where id in (
     select id from (
@@ -96,12 +102,6 @@ select * from diary_topic;
 select * from diary_topic_field;
 .mode insert diary_topic_journal
 select * from diary_topic_journal;
-.mode insert activity_topic
-select * from activity_topic;
-.mode insert activity_topic_field
-select * from activity_topic_field;
-.mode insert activity_topic_journal
-select * from activity_topic_journal;
 .mode insert segment
 select * from segment;
 .mode insert kit_group
@@ -133,6 +133,25 @@ sqlite3 "$DB_DIR/database-$DST.sql" < "$TMP_DIR/dump-$SRC.sql"
 echo "adding default config to $DB_DIR/database-$DST.sql"
 dev/ch2 --dev config default --no-diary
 
+echo "defining new activity fields"
+python - <<EOF
+from ch2.data import *
+from ch2.sql import *
+from ch2.config.database import *
+from ch2.diary.model import *
+from ch2.lib.schedule import Schedule
+from datetime import date
+
+s = session('-v5 --dev -f $DB_DIR/database-$DST.sql')
+for activity_group in s.query(ActivityGroup).filter(ActivityGroup.name != 'All').all():
+    c = Counter()
+    if activity_group.name != 'Swim':
+        add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
+                                 activity_group, model={TYPE: EDIT})
+    add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
+                             activity_group, model={TYPE: EDIT})
+s.commit()
+EOF
 
 # you almost certainly want to change the following details
 

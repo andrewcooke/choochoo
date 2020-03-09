@@ -14,7 +14,7 @@ from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
 from ...sql.database import Timestamp, StatisticJournalText
-from ...sql.tables.topic import ActivityTopicField, ActivityTopic
+from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
     StatisticJournalType
@@ -134,25 +134,26 @@ class ActivityReader(MultiProcFitReader):
                                          ajournal, value, ajournal.start)
 
     @staticmethod
-    def _save_name(s, ajournal, path):
+    def _save_name(s, ajournal, file_scan):
         from ...config import add_activity_topic_field
-        name = splitext(basename(path))[0]
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
                 filter(StatisticName.name == ActivityTopicField.NAME,
                        StatisticName.constraint == ajournal.activity_group,
                        ActivityTopicField.activity_topic_id == None).one_or_none():
             add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
-                                     model={TYPE: EDIT})
+                                     ajournal.activity_group, model={TYPE: EDIT})
+        value = splitext(basename(file_scan.path))[0]
+        source = add(s, ActivityTopicJournal(file_hash_id=file_scan.file_hash_id))
         StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic, ajournal.activity_group,
-                                 ajournal, name, ajournal.start)
+                                 source, value, ajournal.start)
 
     def _load_data(self, s, loader, data):
 
         ajournal, activity_group, first_timestamp, file_scan, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
         self._load_constants(s, ajournal)
-        self._save_name(s, ajournal, file_scan.path)
+        self._save_name(s, ajournal, file_scan)
         self.__ajournal = ajournal
 
         log.debug(f'Loading {self.record_to_db}')

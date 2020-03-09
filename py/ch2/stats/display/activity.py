@@ -1,5 +1,3 @@
-
-import datetime as dt
 from logging import getLogger
 from re import search
 
@@ -18,7 +16,7 @@ from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
 from ...diary.model import text, value, optional_text, from_field
 from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time, to_date, MONTH, add_date, \
-    time_to_local_date, YMD, YEAR, YM, DAY
+    time_to_local_date, YMD, YEAR, YM, DAY, HM, format_minutes, YMD_HM
 from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
     ActivityTopicField
 
@@ -40,7 +38,9 @@ class ActivityDiary(JournalDiary):
         cache = tjournal.cache(s)
         # special case parentless fields
         for field in s.query(ActivityTopicField). \
-                filter(ActivityTopicField.activity_topic == None). \
+                join(StatisticName). \
+                filter(ActivityTopicField.activity_topic == None,
+                       StatisticName.constraint == ajournal.activity_group). \
                 order_by(ActivityTopicField.sort).all():
             yield from_field(field, cache[field])
         for topic in s.query(ActivityTopic). \
@@ -55,9 +55,10 @@ class ActivityDiary(JournalDiary):
         if topic.description: yield text(topic.description)
         log.debug(f'topic id {topic.id}; fields {topic.fields}')
         for field in topic.fields:
-            yield from_field(field, cache[field])
+            if field.statistic_name.constraint == str(topic.activity_group):
+                yield from_field(field, cache[field])
         for child in topic.children:
-            if child.schedule.at_location(date):
+            if child.activity_group == topic.activity_group and child.schedule.at_location(date):
                 content = list(self.__read_activity_topic(s, date, cache, child))
                 if content: yield content
 
@@ -89,7 +90,10 @@ class ActivityDiary(JournalDiary):
 
     @staticmethod
     def __title(s, ajournal):
-        title = f'ajournal.name ({ajournal.activity_group.name}'
+        title = '%s - %s  (%s) %s' % (time_to_local_time(to_time(ajournal.start), fmt=YMD_HM),
+                                      time_to_local_time(to_time(ajournal.finish), fmt=HM),
+                                      format_minutes((ajournal.finish - ajournal.start).seconds),
+                                      ajournal.activity_group.name)
         kits = s.query(StatisticJournal). \
             join(StatisticName). \
             filter(StatisticJournal.source == ajournal,
@@ -97,13 +101,10 @@ class ActivityDiary(JournalDiary):
                    StatisticName.owner == SegmentReader).all()
         if kits:
             title += '/' + ','.join(str(kit.value) for kit in kits)
-        return title + ')'
+        return title
 
     @staticmethod
     def __read_active_data(s, ajournal, date):
-        yield text('%s - %s  (%s)' % (time_to_local_time(to_time(ajournal.start)),
-                                      time_to_local_time(to_time(ajournal.finish), fmt=HMS),
-                                      format_seconds((ajournal.finish - ajournal.start).seconds)))
         for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEAN_POWER_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityCalculator, ajournal.activity_group)
             if sjournal:

@@ -5,7 +5,7 @@ from sqlalchemy import or_
 
 from .model import from_field, text, optional_text, link, value, trim_no_stats
 from ..lib import format_date, time_to_local_time
-from ..lib.date import YMD
+from ..lib.date import YMD, to_time, YMD_HM, HM
 from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal, StatisticJournal
 from ..stats.calculate.summary import SummaryCalculator
 from ..stats.display import read_pipeline
@@ -62,12 +62,14 @@ def read_gui(s, date):
 
 
 def read_activity_gui(s, aj1):
-    yield text('aj1.name', tag='jupyter-activity')
+    title = '%s - %s' % (time_to_local_time(to_time(aj1.start), fmt=YMD_HM),
+                         time_to_local_time(to_time(aj1.finish), fmt=HM))
+    yield text(title, tag='jupyter-activity')
     links = [link('None', db=(time_to_local_time(aj1.start), None, aj1.activity_group.name))] + \
             [link(fmt_nearby(aj2, nb),
                   db=(time_to_local_time(aj1.start), time_to_local_time(aj2.start), aj1.activity_group.name))
              for aj2, nb in nearby_any_time(s, aj1)]
-    yield [text('%s v ' % 'aj1.name', tag=COMPARE_LINKS)] + links
+    yield [text('Compare to', tag=COMPARE_LINKS)] + links
     yield link('All Similar', db=(time_to_local_time(aj1.start), aj1.activity_group.name))
 
 

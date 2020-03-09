@@ -89,7 +89,7 @@ def edit(label, value, db=None):
 
 # --- immutable types
 
-def text(value, tag=None):
+def text(value: object, tag: object = None) -> object:
     return {TYPE: TEXT, VALUE: value, TAG: to_tag(tag or value)}
 
 

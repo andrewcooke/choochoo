@@ -269,7 +269,8 @@ def add_child_activity_topic(s, parent, name, sort, description=None):
     return add(s, ActivityTopic(parent=parent, name=name, sort=sort, description=description))
 
 
-def add_activity_topic_field(s, activity_topic, name, sort, type, description=None, units=None, summary=None, model=None):
+def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group,
+                             description=None, units=None, summary=None, model=None):
     '''
     Add a field and associated statistic to a topic entry.
 
@@ -279,7 +280,7 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, description=No
     '''
     if activity_topic and activity_topic.id is None:
         s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=ActivityTopic, constraint=activity_topic,
+    statistic_name = add(s, StatisticName(name=name, owner=ActivityTopic, constraint=activity_group,
                                           statistic_journal_type=type, description=description,
                                           units=units, summary=summary))
     if model is None: model = {}

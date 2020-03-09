@@ -104,6 +104,9 @@ class TopicField:
 
 class DiaryTopicField(Base, TopicField):
 
+    # diary topic fields are associated with statistics whose constraints are the diary topic.
+    # this lets us use the same name under different 'headings'.
+
     __tablename__ = 'diary_topic_field'
 
     diary_topic_id = Column(Integer, ForeignKey('diary_topic.id', ondelete='cascade'), nullable=False)
@@ -114,12 +117,15 @@ class DiaryTopicField(Base, TopicField):
     schedule = Column(Sched, nullable=False, server_default='')
     UniqueConstraint('statistic_name_id')
 
-
     def __str__(self):
         return 'DiaryTopicField "%s"/"%s"' % (self.diary_topic.name, self.statistic_name.name)
 
 
 class ActivityTopicField(Base, TopicField):
+
+    # activity topic fields are associated with statistics whose constraints are the activity group.
+    # this correlates to some extent with the activity topic, which is also specific to an activity group
+    # (so you will never see a field for group X if it has parent activity for group Y).
 
     NAME = 'Name'
 
