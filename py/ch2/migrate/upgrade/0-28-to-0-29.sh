@@ -59,9 +59,10 @@ if ((DO_DROP)); then
     select s.id from diary_topic_field as d, statistic_name as s
       where d.statistic_name_id = s.id and s.summary = '[cnt]');
   -- change units
-  update statistic_name set units = 'km' where where units='m' and name not like '%Distance%';
-  update statistic_journal_float set value = value / 1000 where statistic_name_id in (
-    select id from statistic_name where units = 'km');
+  update statistic_name set units = 'km' where units='m' and name like '%Distance%';
+  update statistic_journal_float set value = value / 1000 where id in
+    (select statistic_journal.id from statistic_journal, statistic_name
+       where statistic_journal.statistic_name_id = statistic_name.id and statistic_name.units = 'km');
 EOF
 fi
 

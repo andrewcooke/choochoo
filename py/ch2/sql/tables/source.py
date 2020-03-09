@@ -136,7 +136,7 @@ class Interval(Source):
         '''
         from .statistic import StatisticJournal, StatisticName
         q = s.query(func.min(StatisticJournal.time), func.max(StatisticJournal.time)). \
-            filter(StatisticJournal.time > to_time(24 * 60 * 60.0))
+            filter(StatisticJournal.time > to_time(2 * 24 * 60 * 60.0))
         if statistics_owner:
             q = q.join(StatisticName).filter(StatisticName.owner == statistics_owner)
         start, finish = q.one()   # skip entire first day because tz
