@@ -5,6 +5,7 @@ from sqlalchemy import or_
 
 from .model import from_field, text, optional_text, link, value, trim_no_stats
 from ..lib import format_date, time_to_local_time
+from ..lib.date import YMD
 from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal, StatisticJournal
 from ..stats.calculate.summary import SummaryCalculator
 from ..stats.display import read_pipeline
@@ -61,17 +62,17 @@ def read_gui(s, date):
 
 
 def read_activity_gui(s, aj1):
-    yield text(aj1.name, tag='jupyter-activity')
+    yield text('aj1.name', tag='jupyter-activity')
     links = [link('None', db=(time_to_local_time(aj1.start), None, aj1.activity_group.name))] + \
             [link(fmt_nearby(aj2, nb),
                   db=(time_to_local_time(aj1.start), time_to_local_time(aj2.start), aj1.activity_group.name))
              for aj2, nb in nearby_any_time(s, aj1)]
-    yield [text('%s v ' % aj1.name, tag=COMPARE_LINKS)] + links
+    yield [text('%s v ' % 'aj1.name', tag=COMPARE_LINKS)] + links
     yield link('All Similar', db=(time_to_local_time(aj1.start), aj1.activity_group.name))
 
 
 def read_schedule(s, schedule, date):
-    yield text(date.strftime('%Y-%m-%d') + ' - Summary for %s' % schedule.describe(), tag='title')
+    yield text(date.strftime(YMD) + ' - Summary for %s' % schedule.describe(), tag='title')
     topics = list(read_schedule_topics(s, schedule, date))
     if topics: yield topics
     yield from read_pipeline(s, date, schedule=schedule)

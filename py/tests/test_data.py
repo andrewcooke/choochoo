@@ -1,6 +1,4 @@
 from json import loads
-from logging import getLogger, basicConfig, INFO
-from sys import stdout
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
@@ -11,11 +9,6 @@ from ch2.sql.tables.source import SourceType
 
 
 class TestData(TestCase):
-
-    def setUp(self):
-        if not getLogger().handlers:
-            basicConfig(stream=stdout, level=INFO)
-        self.log = getLogger()
 
     def test_attr(self):
         d = MutableAttr()

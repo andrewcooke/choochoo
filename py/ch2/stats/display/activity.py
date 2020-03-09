@@ -89,7 +89,7 @@ class ActivityDiary(JournalDiary):
 
     @staticmethod
     def __title(s, ajournal):
-        title = f'{ajournal.name} ({ajournal.activity_group.name}'
+        title = f'ajournal.name ({ajournal.activity_group.name}'
         kits = s.query(StatisticJournal). \
             join(StatisticName). \
             filter(StatisticJournal.source == ajournal,

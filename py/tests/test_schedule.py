@@ -146,7 +146,7 @@ class TestRepeating(TestCase):
         self.assert_at('x[fri]', '2018-07-06', True)
         self.assert_at('x[fri]', '2018-07-07', False)
         s = Schedule('x')
-        self.assertEqual(s.start_of_frame('2018-01-02'), to_date('1970-01-01'))
+        self.assertEqual(s.start_of_frame('2018-01-02'), to_date('1970-01-02'))
         self.assertEqual(s.start, None)
         self.assertEqual(s.finish, None)
         # this is not None because it is used to set end dates for repeating intervals

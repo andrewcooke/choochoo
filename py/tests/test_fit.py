@@ -1,13 +1,12 @@
 
 from glob import glob
-from logging import getLogger, basicConfig, INFO
+from logging import getLogger
 from os.path import basename, join, exists
-from sys import stdout
 from unittest import TestCase
 
 from ch2.commands.args import FIELDS, TABLES, GREP
 from ch2.fit.format.read import filtered_records
-from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain, no_units
+from ch2.fit.format.records import no_names, append_units, no_bad_values, fix_degrees, chain
 from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_external_profile, read_fit
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables

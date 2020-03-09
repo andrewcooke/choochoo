@@ -1,31 +1,16 @@
-
-from logging import getLogger, basicConfig, DEBUG, StreamHandler, Formatter
-from sys import stdout
 from unittest import TestCase
 
 from sqlalchemy import Column, Integer, ForeignKey, create_engine
 from sqlalchemy.event import listen
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql.functions import count
 
 from ch2.sql.support import Base
 
-basicConfig()
-log = getLogger()
-if not log.handlers:
-    log.setLevel(DEBUG)
-    handler = StreamHandler(stdout)
-    handler.setLevel(DEBUG)
-    formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-    handler.setFormatter(formatter)
-    log.addHandler(handler)
-
 
 class Database:
 
     def __init__(self):
-        self._log = log
         self.engine = create_engine('sqlite:///:memory:', echo=True)
         listen(self.engine, 'connect', self.fk_pragma_on_connect)
         self.session = sessionmaker(bind=self.engine)

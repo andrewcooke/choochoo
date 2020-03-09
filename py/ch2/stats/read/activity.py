@@ -140,6 +140,7 @@ class ActivityReader(MultiProcFitReader):
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
                 filter(StatisticName.name == ActivityTopicField.NAME,
+                       StatisticName.constraint == ajournal.activity_group,
                        ActivityTopicField.activity_topic_id == None).one_or_none():
             add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
                                      model={TYPE: EDIT})

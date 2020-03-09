@@ -1,10 +1,7 @@
-
-from logging import basicConfig, getLogger, INFO, DEBUG
 from os.path import join
-from sys import stdout
 from unittest import TestCase
 
-from ch2.commands.args import RECORDS, TABLES
+from ch2.commands.args import RECORDS
 from ch2.fit.fix import fix
 from ch2.fit.format.tokens import FileHeader
 from ch2.fit.profile.profile import read_fit
@@ -15,9 +12,6 @@ from ch2.lib.tests import OutputMixin
 class TestFixFit(TestCase, OutputMixin):
 
     def setUp(self):
-        if not getLogger().handlers:
-            basicConfig(stream=stdout, level=DEBUG)
-        self.log = getLogger()
         self.test_dir = 'data/test'
         self.profile_path = 'data/sdk/Profile.xlsx'
 

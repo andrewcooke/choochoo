@@ -1,7 +1,6 @@
 
 import datetime as dt
-from logging import getLogger, basicConfig, DEBUG, StreamHandler, Formatter
-from sys import stdout
+from logging import getLogger
 from unittest import TestCase
 
 import sqlalchemy as s
@@ -14,17 +13,6 @@ from ch2.sql.types import Date
 from ch2.urwid.tui.widgets import Integer
 
 log = getLogger(__name__)
-
-# if not getLogger().handlers:
-#     basicConfig(stream=stdout, level=INFO)
-# log = getLogger()
-# if not log.handlers:
-#     log.setLevel(DEBUG)
-#     handler = StreamHandler(stdout)
-#     handler.setLevel(DEBUG)
-#     formatter = Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
-#     handler.setFormatter(formatter)
-#     log.addHandler(handler)
 
 
 class Data(Base):
