@@ -112,6 +112,7 @@ class ActivityReader(MultiProcFitReader):
                        ActivityJournal.finish >= first_timestamp)
 
     def _delete_journals(self, s, activity_group, first_timestamp, last_timestamp):
+        log.debug('Deleting overlapping journals')
         for journal in self._overlapping_journals(s, ActivityJournal, activity_group,
                                                   first_timestamp, last_timestamp).all():
             Timestamp.clear(s, owner=self.owner_out, source=journal)
@@ -120,6 +121,7 @@ class ActivityReader(MultiProcFitReader):
         s.commit()
 
     def _check_journals(self, s, activity_group, first_timestamp, last_timestamp):
+        log.debug('Checking for overlapping journals')
         if self._overlapping_journals(s, count(ActivityJournal.id), activity_group,
                                       first_timestamp, last_timestamp).scalar():
             log.warning(f'Overlapping activities for {first_timestamp} - {last_timestamp}')
@@ -136,6 +138,7 @@ class ActivityReader(MultiProcFitReader):
     @staticmethod
     def _save_name(s, ajournal, file_scan):
         from ...config import add_activity_topic_field
+        log.debug('Saving name')
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
                 filter(StatisticName.name == ActivityTopicField.NAME,

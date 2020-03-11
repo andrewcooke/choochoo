@@ -18,7 +18,7 @@ from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
-from ..sql import PipelineType, DiaryTopicJournal, ActivityJournal
+from ..sql import PipelineType, DiaryTopicJournal, ActivityJournal, Interval
 from ..sql.database import StatisticJournal
 from ..stats.display.nearby import NEARBY_LINKS
 from ..stats.pipeline import run_pipeline
@@ -71,6 +71,8 @@ Display a summary for the month / year / schedule.
         MainLoop(ScheduleDiary(db, date, schedule), palette=PALETTE).run()
     else:
         MainLoop(DailyDiary(db, date), palette=PALETTE).run()
+        with db.session_context() as s:
+            Interval.clean(s)
         if not args[FAST]:
             print('\n  Please wait while statistics are updated...')
             run_pipeline(system, db, PipelineType.STATISTIC)

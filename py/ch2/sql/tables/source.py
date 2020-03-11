@@ -3,14 +3,14 @@ from abc import abstractmethod
 from enum import IntEnum
 from logging import getLogger
 
-from sqlalchemy import ForeignKey, Column, Integer, func, and_, UniqueConstraint, select
+from sqlalchemy import ForeignKey, Column, Integer, func, and_, UniqueConstraint, select, Boolean
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, aliased, relationship
 from sqlalchemy.sql.functions import count
 
-from ch2.sql.utils import add
 from ..support import Base
 from ..types import OpenSched, Date, ShortCls, short_cls
+from ..utils import add
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 
 log = getLogger(__name__)
@@ -54,7 +54,7 @@ class Source(Base):
 
     @classmethod
     def __clean_dirty_intervals(cls, s):
-        from .statistic import StatisticJournal
+        from .statistic import StatisticJournal, StatisticJournalText
         # sessions are generally restricted to one time region, so we'll bracket that rather than list all times
         start, finish = None, None
         # all sources except intervals that are being deleted (need to catch on cascade to statistics)
@@ -65,17 +65,22 @@ class Source(Base):
         # all modified statistics
         for instance in s.dirty:
             # ignore constants as time 0
-            if isinstance(instance, StatisticJournal) and s.is_modified(instance) and instance.time:
+            # ignore textual values (don't have useful stats and commonly modified fields)
+            if isinstance(instance, StatisticJournal) and s.is_modified(instance) and instance.time \
+                    and not isinstance(instance, StatisticJournalText):
                 start, finish = extend_range(start, finish, instance.time)
         # all new statistics that aren't associated with intervals and have non-null data
         # (avoid triggering on empty diary entries)
         for instance in s.new:
             # ignore constants as time 0
-            if isinstance(instance, StatisticJournal) and not isinstance(instance.source, Interval) \
-                    and not isinstance(instance.source, Dummy) and instance.value is not None and instance.time:
+            # ignore textual values
+             if isinstance(instance, StatisticJournal) and not isinstance(instance.source, Interval) \
+                     and not isinstance(instance.source, Dummy) \
+                     and not isinstance(instance.source, StatisticJournalText) \
+                     and instance.value is not None and instance.time:
                 start, finish = extend_range(start, finish, instance.time)
         if start is not None:
-            Interval.clean_times(s, start, finish)
+            Interval.mark_dirty_times(s, start, finish)
 
 
 @listens_for(Session, 'before_flush')
@@ -98,6 +103,7 @@ class Interval(Source):
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
+    dirty = Column(Boolean, nullable=False, default=False)
     UniqueConstraint(schedule, owner, start)
 
     __mapper_args__ = {
@@ -222,23 +228,28 @@ class Interval(Source):
         s.query(Source).filter(Source.type == SourceType.INTERVAL).delete()
 
     @classmethod
-    def clean_times(cls, s, start, finish, owner=None):
+    def mark_dirty_times(cls, s, start, finish, owner=None):
         '''
-        Remove all intervals that include data in the given TIME range,
+        Dirty all intervals that include data in the given TIME range,
         '''
-        cls.clean_dates(s, time_to_local_date(start), time_to_local_date(finish), owner=owner)
+        cls.mark_dirty_dates(s, time_to_local_date(start), time_to_local_date(finish), owner=owner)
 
     @classmethod
-    def clean_dates(cls, s, start, finish, owner=None):
+    def mark_dirty_dates(cls, s, start, finish, owner=None):
         '''
-        Remove all summary intervals (not monitor intervals) in the given DATE range.
+        Dirty all summary intervals (not monitor intervals) in the given DATE range.
         '''
         q = s.query(Interval).filter(Interval.start <= finish, Interval.finish > start)
         if owner:
             q = q.filter(Interval.owner == owner)
+#        q.update({Interval.dirty: True}, synchronize_session=False)
+
+    @classmethod
+    def clean(cls, s):
+        q = s.query(Interval).filter(Interval.dirty == True)
+        log.info(f'Deleting {q.count()} dirty Intervals')
         for interval in q.all():
-            log.debug(f'Deleting {interval}')
-            s.delete(interval)
+            interval.delete()
 
 
 class Dummy(Source):

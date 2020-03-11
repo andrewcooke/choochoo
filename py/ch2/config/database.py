@@ -280,6 +280,7 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group
     '''
     if activity_topic and activity_topic.id is None:
         s.flush()
+    # query first
     statistic_name = add(s, StatisticName(name=name, owner=ActivityTopic, constraint=activity_group,
                                           statistic_journal_type=type, description=description,
                                           units=units, summary=summary))

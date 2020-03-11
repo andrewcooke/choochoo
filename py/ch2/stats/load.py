@@ -111,7 +111,8 @@ class StatisticJournalLoader:
     def _postload(self):
         # manually clean out intervals because we're doing a fast load
         if self.__clear_timestamp and self.start and self.finish:
-            Interval.clean_times(self._s, self.start, self.finish)
+            Interval.mark_dirty_times(self._s, self.start, self.finish)
+            Interval.clean(self._s)
             self._s.commit()
 
     @classmethod
