@@ -242,14 +242,14 @@ class Interval(Source):
         q = s.query(Interval).filter(Interval.start <= finish, Interval.finish > start)
         if owner:
             q = q.filter(Interval.owner == owner)
-#        q.update({Interval.dirty: True}, synchronize_session=False)
+        q.update({Interval.dirty: True}, synchronize_session=False)
 
     @classmethod
     def clean(cls, s):
         q = s.query(Interval).filter(Interval.dirty == True)
         log.info(f'Deleting {q.count()} dirty Intervals')
         for interval in q.all():
-            interval.delete()
+            s.delete(interval)
 
 
 class Dummy(Source):

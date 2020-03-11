@@ -334,6 +334,11 @@ def schedule_combine(*patterns):
     return before
 
 
+def drop_measures(key, model, f, active, before, after, leaf):
+    leaf[VALUE] = create_value_no_measures
+    return default_before(key, model, f, active, before, after, leaf)
+
+
 def default_before(key, model, f, active, before, after, leaf):
     if not isinstance(model, list):
         raise Exception(f'"before" called with non-list type ({type(model)}, {model})')
@@ -356,6 +361,7 @@ BEFORE_DATE = defaultdict(
      'shrimp': shrimp_table,
      'nearbys': collapse_title,
      'hr-zone': hr_zone,
+     'database': drop_measures,
      NEARBY_LINKS: menu,
      COMPARE_LINKS: menu
      })

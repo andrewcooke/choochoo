@@ -71,8 +71,6 @@ Display a summary for the month / year / schedule.
         MainLoop(ScheduleDiary(db, date, schedule), palette=PALETTE).run()
     else:
         MainLoop(DailyDiary(db, date), palette=PALETTE).run()
-        with db.session_context() as s:
-            Interval.clean(s)
         if not args[FAST]:
             print('\n  Please wait while statistics are updated...')
             run_pipeline(system, db, PipelineType.STATISTIC)

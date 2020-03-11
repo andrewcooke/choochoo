@@ -9,6 +9,7 @@ from sqlalchemy.sql.functions import coalesce
 from . import IntervalCalculatorMixin, MultiProcCalculator
 from ..names import MAX, MIN, SUM, CNT, AVG, MSR
 from ...lib.date import local_date_to_time
+from ...sql.tables.source import Interval
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
 
@@ -28,6 +29,9 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, owner_in='[unused]', **kargs):
         super().__init__(*args, owner_in=owner_in, **kargs)
+
+    def _startup(self, s):
+        Interval.clean(s)
 
     def _read_data(self, s, interval):
         # here, data is only statistics names, because calculation also involves loading data

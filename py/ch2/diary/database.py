@@ -2,11 +2,12 @@
 from logging import getLogger
 
 from sqlalchemy import or_
+from sqlalchemy.sql.functions import count
 
 from .model import from_field, text, optional_text, link, value, trim_no_stats
 from ..lib import format_date, time_to_local_time
 from ..lib.date import YMD, to_time, YMD_HM, HM
-from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal, StatisticJournal
+from ..sql import DiaryTopic, DiaryTopicJournal, ActivityJournal, StatisticJournal, Interval
 from ..stats.calculate.summary import SummaryCalculator
 from ..stats.display import read_pipeline
 from ..stats.display.nearby import fmt_nearby, nearby_any_time
@@ -23,6 +24,7 @@ def read_date(s, date):
     yield from read_pipeline(s, date)
     gui = list(read_gui(s, date))
     if gui: yield gui
+    yield list(read_database_health(s, date))
 
 
 @optional_text('Diary')
@@ -118,3 +120,19 @@ def summary_column(s, schedule, start, name):
 def read_schedule_gui(s, schedule, start):
     finish = schedule.next_frame(start)
     yield link('All Activities', db=(format_date(start), format_date(finish)))
+
+
+@optional_text('Database')
+def read_database_health(s, date):
+    total = s.query(count(Interval.id)).filter(Interval.dirty == True).scalar()
+    today = s.query(count(Interval.id)). \
+        filter(Interval.dirty == True,
+               Interval.start <= date,
+               Interval.finish > date).scalar()
+    if not total:
+        yield text('No dirty statistics')
+    else:
+        if today:
+            yield value('Dirty statistics today', today)
+        yield value('Total dirty statistics', total)
+        yield text('Recalculate statistics')
