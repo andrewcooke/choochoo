@@ -65,7 +65,7 @@ First, I will add my Cotic bike:
         INFO: Using database at database.sql
         INFO: Using database at /home/andrew/.ch2/system-0-29.sql
      WARNING: Forcing creation of new group (bike)
-        INFO: Started bike cotic at 2020-03-10 21:25:57
+        INFO: Started bike cotic at 2020-03-10 21:40:16
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -104,7 +104,7 @@ times should align correctly.
         INFO: Using database at /home/andrew/.ch2/system-0-29.sql
      WARNING: Model vittoria does not match any previous entries
         INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube vittoria at 2020-03-10 21:26:07
+        INFO: Changed cotic front-tube vittoria at 2020-03-10 21:40:26
 
 
 That's three different inner tubes on the front.  The last uses
@@ -121,9 +121,9 @@ Now we can see the statistics:
     +-Model michelin
     | +-Lifetime
     | | +-Count 2
-    | | +-Sum 434d 21h26m07s
-    | | +-Average 217d 10h43m03s
-    | | `-Median 217d 10h43m03s
+    | | +-Sum 434d 21h40m26s
+    | | +-Average 217d 10h50m13s
+    | | `-Median 217d 10h50m13s
     | +-Active Time
     | | +-Count 2
     | | +-Sum 0s
