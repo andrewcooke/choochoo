@@ -148,6 +148,10 @@ deleted:
   (unfortunately).  So `Composite.clean()` must be called manually
   whenever Composite sources are modified.
 
+Note that Intervals are not deleted immediately, but marked "dirty"
+(since release 0.30).  This avoids deleting many unaffected statistics
+when small changes are made to the database.
+
 ### Events
 
 The above "deletion of associated intervals" can be automated within
