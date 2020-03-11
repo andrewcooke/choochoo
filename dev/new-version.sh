@@ -4,9 +4,6 @@ pushd py
 
 source env/bin/activate
 
-echo "todo - package js"
-exit 999
-
 if [ "$#" -ne 1 ]; then
     echo "usage: $0 version"
     echo "eg: $0 1.2.3"
