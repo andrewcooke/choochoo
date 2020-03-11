@@ -41,7 +41,7 @@ class StatisticName(Base):
         return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
 
     @classmethod
-    def add_if_missing(cls, s, name, type, units, summary, owner, constraint):
+    def add_if_missing(cls, s, name, type, units, summary, owner, constraint, description=None):
         s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
@@ -50,7 +50,8 @@ class StatisticName(Base):
         statistic_name = q.one_or_none()
         if not statistic_name:
             statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner,
-                                                  constraint=constraint, statistic_journal_type=type))
+                                                  constraint=constraint, statistic_journal_type=type,
+                                                  description=description))
             try:
                 s.flush()
             except IntegrityError as e:  # worker may have created in parallel, so read
@@ -70,6 +71,10 @@ class StatisticName(Base):
             if statistic_name.summary != summary:
                 log.warning('Changing summary on %s (%s -> %s)' % (statistic_name.name, statistic_name.summary, summary))
                 statistic_name.summary = summary
+                s.flush()
+            if statistic_name.description != description:
+                log.warning('Changing description on %s (%s -> %s)' % (statistic_name.name, statistic_name.description, description))
+                statistic_name.description = description
                 s.flush()
         return statistic_name
 

@@ -280,9 +280,9 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group
     '''
     if activity_topic and activity_topic.id is None:
         s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=ActivityTopic, constraint=activity_group,
-                                          statistic_journal_type=type, description=description,
-                                          units=units, summary=summary))
+    # cannot simply add as this is also called during loading
+    statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, ActivityTopic,
+                                                  activity_group, description=description)
     if model is None: model = {}
     return add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,
                                      statistic_name=statistic_name))
