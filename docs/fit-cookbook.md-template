@@ -293,7 +293,7 @@ for offset, token in tokens:
 print('Maximum speed: %.2f' % max_speed)
 EOF
 sed -i 's/#//' $src
-source env/bin/activate
+source py/env/bin/activate
 PYTHONPATH=. python $src > $rst
 sed -i 's|data/test/source/personal/2018-07-26-rec.fit|myfile.fit|' $src
 sed 's/^/    /' $src > $out

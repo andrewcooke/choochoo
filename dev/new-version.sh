@@ -4,9 +4,6 @@ pushd py
 
 source env/bin/activate
 
-echo "todo - package js"
-exit 999
-
 if [ "$#" -ne 1 ]; then
     echo "usage: $0 version"
     echo "eg: $0 1.2.3"
@@ -48,10 +45,10 @@ git push origin "v$VERSION"
 dev/package-profile.sh
 dev/package-bundle.sh
 dev/package-python.sh
-#twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-twine upload dist/*
 
 pushd py
+#twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+twine upload dist/*
 rm -fr build
 rm -fr choochoo.egg-info
 popd

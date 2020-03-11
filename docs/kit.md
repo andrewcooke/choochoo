@@ -61,11 +61,11 @@ automatically:
 First, I will add my Cotic bike:
 
     > ch2 kit start bike cotic --force
-        INFO: Version 0.28.6
+        INFO: Version 0.29.0
         INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/system-0-29.sql
      WARNING: Forcing creation of new group (bike)
-        INFO: Started bike cotic at 2020-02-24 12:05:47
+        INFO: Started bike cotic at 2020-03-10 21:40:16
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -75,9 +75,9 @@ this, because `bike` will already be known by the system..
 Now I have a bike I am going to add some inner tubes at various dates.
 
     > ch2 kit change cotic front-tube michelin 2019-01-01 --force
-        INFO: Version 0.28.6
+        INFO: Version 0.29.0
         INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/system-0-29.sql
      WARNING: Forcing creation of new component (front-tube)
      WARNING: Model michelin does not match any previous entries
         INFO: Changed cotic front-tube michelin at 2019-01-01
@@ -87,9 +87,9 @@ Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
     > ch2 kit change cotic front-tube michelin 2019-03-01
-        INFO: Version 0.28.6
+        INFO: Version 0.29.0
         INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/system-0-29.sql
         INFO: Retired previous front-tube (michelin)
         INFO: Changed cotic front-tube michelin at 2019-03-01
 
@@ -99,12 +99,12 @@ add the tubes in order - however they're added, the start and end
 times should align correctly.
 
     > ch2 kit change cotic front-tube vittoria
-        INFO: Version 0.28.6
+        INFO: Version 0.29.0
         INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/system-0-29.sql
      WARNING: Model vittoria does not match any previous entries
         INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube vittoria at 2020-02-24 12:05:57
+        INFO: Changed cotic front-tube vittoria at 2020-03-10 21:40:26
 
 
 That's three different inner tubes on the front.  The last uses
@@ -114,16 +114,16 @@ command line as you do the work.
 Now we can see the statistics:
 
     > ch2 kit statistics front-tube
-        INFO: Version 0.28.6
+        INFO: Version 0.29.0
         INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/save/system-0-28.sql-original
+        INFO: Using database at /home/andrew/.ch2/system-0-29.sql
     Item front-tube
     +-Model michelin
     | +-Lifetime
     | | +-Count 2
-    | | +-Sum 419d 12h05m57s
-    | | +-Average 209d 18h02m58s
-    | | `-Median 209d 18h02m58s
+    | | +-Sum 434d 21h40m26s
+    | | +-Average 217d 10h50m13s
+    | | `-Median 217d 10h50m13s
     | +-Active Time
     | | +-Count 2
     | | +-Sum 0s
