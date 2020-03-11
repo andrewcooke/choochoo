@@ -28,7 +28,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'matplotlib',
                      'numpy',
                      'openpyxl',
-                     'pandas',
+                     'pandas==0.25.3',
                      'pendulum',
                      'psutil',
                      'pyGeoTile',
@@ -43,6 +43,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'sqlalchemy',
                      'textblob',
                      'urwid',
+                     'werkzeug',
                      ],
                  entry_points={
                      'console_scripts': [

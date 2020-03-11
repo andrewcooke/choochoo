@@ -4,6 +4,13 @@
 See [upgrade
 instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 
+### v0.29.0
+
+Rewrote diary, decoupling model and view, and added web based (React)
+view.  See `ch2 web start`.  Re-did activity topics (so old data lost
+on upgrade, sorry).  Added support for 'extended' intervals which
+allows statistics on 'all time'.
+
 ### v0.28.0
 
 Major database changes to allow activity topics and decouple model
