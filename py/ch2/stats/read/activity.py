@@ -17,7 +17,7 @@ from ...sql.database import Timestamp, StatisticJournalText
 from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
-    StatisticJournalType
+    StatisticJournalType, StatisticJournal
 from ...sql.utils import add
 from ...srtm.bilinear import bilinear_elevation_from_constant
 
@@ -112,6 +112,7 @@ class ActivityReader(MultiProcFitReader):
                        ActivityJournal.finish >= first_timestamp)
 
     def _delete_journals(self, s, activity_group, first_timestamp, last_timestamp):
+        log.debug('Deleting overlapping journals')
         for journal in self._overlapping_journals(s, ActivityJournal, activity_group,
                                                   first_timestamp, last_timestamp).all():
             Timestamp.clear(s, owner=self.owner_out, source=journal)
@@ -120,6 +121,7 @@ class ActivityReader(MultiProcFitReader):
         s.commit()
 
     def _check_journals(self, s, activity_group, first_timestamp, last_timestamp):
+        log.debug('Checking for overlapping journals')
         if self._overlapping_journals(s, count(ActivityJournal.id), activity_group,
                                       first_timestamp, last_timestamp).scalar():
             log.warning(f'Overlapping activities for {first_timestamp} - {last_timestamp}')
@@ -136,17 +138,34 @@ class ActivityReader(MultiProcFitReader):
     @staticmethod
     def _save_name(s, ajournal, file_scan):
         from ...config import add_activity_topic_field
+        log.debug('Saving name')
+        # first, do we have the 'Name' field defined for all activities?
+        # this should be triggered at most once if it was not already defined
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
                 filter(StatisticName.name == ActivityTopicField.NAME,
                        StatisticName.constraint == ajournal.activity_group,
+                       StatisticName.owner == ActivityTopic,
                        ActivityTopicField.activity_topic_id == None).one_or_none():
             add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
                                      ajournal.activity_group, model={TYPE: EDIT})
-        value = splitext(basename(file_scan.path))[0]
-        source = add(s, ActivityTopicJournal(file_hash_id=file_scan.file_hash_id))
-        StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic, ajournal.activity_group,
-                                 source, value, ajournal.start)
+        # second, do we already have a journal for this file, or do we need to add one?
+        source = s.query(ActivityTopicJournal). \
+            filter(ActivityTopicJournal.file_hash_id == file_scan.file_hash_id). \
+            one_or_none()
+        if not source:
+            source = add(s, ActivityTopicJournal(file_hash_id=file_scan.file_hash_id))
+        # and third, does that journal contain a name?
+        if not s.query(StatisticJournal). \
+                join(StatisticName). \
+                filter(StatisticJournal.source == source,
+                       StatisticName.owner == ActivityTopic,
+                       StatisticName.constraint == ajournal.activity_group,
+                       StatisticName.name == ActivityTopicField.NAME). \
+                one_or_none():
+            value = splitext(basename(file_scan.path))[0]
+            StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic, ajournal.activity_group,
+                                     source, value, ajournal.start)
 
     def _load_data(self, s, loader, data):
 
