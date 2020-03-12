@@ -9,6 +9,7 @@ from string import ascii_letters
 
 import pandas as pd
 from binascii import hexlify
+from sqlalchemy.orm.exc import NoResultFound
 
 from ..stats.names import BOOKMARK
 
@@ -104,8 +105,10 @@ def reftuple(name, *args, **kargs):
         def expand(self, s, time, default_owner=None, default_constraint=None):
             instance = self
             for name in self._fields:
-                value = expand(s, getattr(instance, name), time,
-                               default_owner=default_owner, default_constraint=default_constraint)
+                value = getattr(instance, name)
+                log.debug(f'Expanding {name}: {value} at {time}')
+                value = expand(s, value, time, default_owner=default_owner, default_constraint=default_constraint)
+                log.debug(f'Setting {name} = {value}')
                 instance = instance._replace(**{name: value})
             return instance
 
@@ -206,6 +209,7 @@ def expand(s, text, before, vars=None, default_owner=None, default_constraint=No
     match = pattern.match(text)
     while match:
         left, name, right = match.groups()
+        log.debug(f'Found "{name}" in {text}')
         if name in vars:
             owner = None
             value = vars[name]

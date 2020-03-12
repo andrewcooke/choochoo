@@ -6,6 +6,7 @@ from logging import getLogger
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, backref, reconstructor
+from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
 from ..support import Base
@@ -243,10 +244,14 @@ class StatisticJournal(Base):
 
     @classmethod
     def before_not_null(cls, s, time, name, owner, constraint):
-        statistic_name = s.query(StatisticName). \
-            filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
-                   StatisticName.constraint == constraint).one()
+        try:
+            statistic_name = s.query(StatisticName). \
+                filter(StatisticName.name == name,
+                       StatisticName.owner == owner,
+                       StatisticName.constraint == constraint).one()
+        except NoResultFound:
+            raise Exception(f'The statistic name "{name}" (owner {owner}, constraint {constraint}) '
+                            'is undefined in the database')
         cls = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
         return s.query(cls). \
             filter(cls.statistic_name == statistic_name,
