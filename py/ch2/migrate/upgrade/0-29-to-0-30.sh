@@ -11,9 +11,9 @@ SRC='0-29'
 DST='0-30'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=1
-DO_DROP=1
-DO_DUMP=1
+DO_COPY=0
+DO_DROP=0
+DO_DUMP=0
 
 
 # this section of the script copies diary data and kit data across

@@ -164,6 +164,7 @@ TABLES = 'tables'
 TOKENS = 'tokens'
 TUI = 'tui'
 UNDO = 'undo'
+UNLIKE = 'unlike'
 UNLOCK = 'unlock'
 USER = 'user'
 VALIDATE = 'validate'
@@ -580,8 +581,10 @@ def make_parser():
     statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
     statistics.add_argument(mm(FORCE), action='store_true',
                             help='delete existing statistics')
-    statistics.add_argument(mm(LIKE), metavar='PATTERN',
+    statistics.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
                             help='run only matching pipeline classes')
+    statistics.add_argument(mm(UNLIKE), action='append', default=[], metavar='PATTERN',
+                            help='exclude matching pipeline classes')
     statistics.add_argument(START, metavar='START', nargs='?',
                             help='optional start date')
     statistics.add_argument(FINISH, metavar='FINISH', nargs='?',

@@ -1,4 +1,5 @@
 
+from .achievement import Achievement
 from .activity import ActivityGroup, ActivityTimespan, ActivityJournal, ActivityBookmark
 from .constant import Constant
 from .file import FileScan, FileHash

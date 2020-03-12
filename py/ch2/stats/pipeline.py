@@ -19,9 +19,9 @@ MAX_REPEAT = 3
 NONE = object()
 
 
-def run_pipeline(system, db, type, like=None, id=None, **extra_kargs):
+def run_pipeline(system, db, type, like=tuple(), unlike=tuple(), id=None, **extra_kargs):
     with db.session_context() as s:
-        for pipeline in Pipeline.all(s, type, like=like, id=id):
+        for pipeline in Pipeline.all(s, type, like=like, unlike=unlike, id=id):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
             log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')

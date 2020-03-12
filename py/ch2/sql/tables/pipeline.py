@@ -2,7 +2,7 @@
 from enum import IntEnum
 from json import dumps
 
-from sqlalchemy import Column, Integer
+from sqlalchemy import Column, Integer, not_
 
 from ..support import Base
 from ..types import Cls, Json, Sort
@@ -28,10 +28,12 @@ class Pipeline(Base):
     sort = Column(Sort)
 
     @classmethod
-    def all(cls, s, type, like=None, id=None):
+    def all(cls, s, type, like=tuple(), unlike=tuple(), id=None):
         q = s.query(Pipeline).filter(Pipeline.type == type)
-        if like:
-            q = q.filter(Pipeline.cls.like(like))
+        for pattern in like:
+            q = q.filter(Pipeline.cls.like(pattern))
+        for pattern in unlike:
+            q = q.filter(not_(Pipeline.cls.like(pattern)))
         if id:
             q = q.filter(Pipeline.id == id)
         pipelines = q.order_by(Pipeline.sort).all()

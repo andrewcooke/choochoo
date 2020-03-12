@@ -15,6 +15,7 @@ from ..sql.tables.statistic import StatisticJournalType
 from ..sql.tables.topic import DiaryTopicJournal
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR
+from ..stats.calculate.achievement import AchievementCalculator
 from ..stats.calculate.activity import ActivityCalculator
 from ..stats.calculate.elevation import ElevationCalculator
 from ..stats.calculate.kit import KitCalculator
@@ -101,6 +102,8 @@ def default(system, db, no_diary=False):
         add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('x'))
         add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('y'))
         add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('m'))
+
+        add_statistics(s, AchievementCalculator, c, owner_in=short_cls(SegmentReader))
 
         # obviously you need to edit these parameters - see `ch2 constants show Nearby.Bike`
         add_nearby(s, c, bike, 'Santiago', -33.4, -70.4, fraction=0.1, border=150)
