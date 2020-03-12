@@ -9,7 +9,7 @@ POWER_ESTIMATE_CNAME = 'PowerEstimate'
 
 def add_power_estimate(s, c, activity_group,
                        bike='${Constant:Power.${SegmentReader:kit}:None}',
-                       rider_weight='${DiaryTopic:Weight:DiaryTopic \"Diary\" (d)}',
+                       rider_weight='${DiaryTopic:Weight:DiaryTopic \"Status\" (d)}',
                        vary='wind_speed, wind_heading, slope'):
     '''
     Add the constants necessary to estimate power output.
