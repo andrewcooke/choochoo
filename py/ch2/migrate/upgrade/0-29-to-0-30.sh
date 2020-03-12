@@ -96,6 +96,12 @@ select * from diary_topic;
 select * from diary_topic_field;
 .mode insert diary_topic_journal
 select * from diary_topic_journal;
+.mode insert activity_topic
+select * from activity_topic;
+.mode insert activity_topic_field
+select * from activity_topic_field;
+.mode insert activity_topic_journal
+select * from activity_topic_journal;
 .mode insert segment
 select * from segment;
 .mode insert kit_group
