@@ -2,6 +2,7 @@
 import datetime as dt
 from enum import IntEnum
 from logging import getLogger
+from re import split
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.exc import IntegrityError
@@ -40,6 +41,13 @@ class StatisticName(Base):
 
     def __str__(self):
         return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
+
+    @property
+    def summaries(self):
+        if self.summary:
+            return [x.lower() for x in split(r'[\s,]*(\[[^\]]+\])[\s ]*', self.summary) if x]
+        else:
+            return []
 
     @classmethod
     def add_if_missing(cls, s, name, type, units, summary, owner, constraint, description=None):

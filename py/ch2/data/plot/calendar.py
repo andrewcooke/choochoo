@@ -15,7 +15,7 @@ from math import pi
 from .utils import tooltip, evenly_spaced_hues
 from ...lib.data import linscale
 from ...lib.date import time_to_local_time, YMD, to_time
-from ...stats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _d, FITNESS_D_ANY, \
+from ...stats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _delta, FITNESS_D_ANY, \
     GROUP
 
 log = getLogger(__name__)
@@ -174,7 +174,7 @@ class Calendar:
         self.show()
 
     def std_distance_fitness_direction(self):
-        fitness = sorted(like(_d(FITNESS_D_ANY), self._df.columns))[0]
+        fitness = sorted(like(_delta(FITNESS_D_ANY), self._df.columns))[0]
         self.background('circle', fill_alpha=0, line_alpha=1, color='lightgrey')
         self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.1)
         self.set_palette(fitness, B2R, gamma=0.7)

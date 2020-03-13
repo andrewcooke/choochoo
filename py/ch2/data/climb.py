@@ -9,7 +9,7 @@ import numpy as np
 from .frame import linear_resample, present
 from ..lib.data import nearest_index, get_index_loc
 from ..sql import StatisticName, StatisticJournal
-from ..stats.names import _d, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
+from ..stats.names import _delta, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
     CLIMB_GRADIENT, CLIMB_POWER, POWER_ESTIMATE, CLIMB_CATEGORY
 
 log = getLogger(__name__)
@@ -105,12 +105,12 @@ def first_or_none(generator):
 def biggest_reversal(df):
     max_elevation, max_indices, d = 0, (None, None), df.index[1] - df.index[0]
     for offset in range(1, len(df)-1):
-        df[_d(ELEVATION)] = df[ELEVATION].diff(-offset)
-        if present(df, _d(ELEVATION)):
-            d_elevation = df[_d(ELEVATION)].dropna().max()
+        df[_delta(ELEVATION)] = df[ELEVATION].diff(-offset)
+        if present(df, _delta(ELEVATION)):
+            d_elevation = df[_delta(ELEVATION)].dropna().max()
             if d_elevation > max_elevation:
                 max_elevation = d_elevation
-                hi = df.loc[df[_d(ELEVATION)] == max_elevation].index[0]  # break ties
+                hi = df.loc[df[_delta(ELEVATION)] == max_elevation].index[0]  # break ties
                 lo = df.index[get_index_loc(df, hi) + offset]
                 max_indices = (lo, hi)
     return max_elevation, max_indices[0], max_indices[1]
@@ -136,13 +136,13 @@ def search(df, params=Climb()):
     # use times (indices) rather than ilocs because we're subdividing the data
     max_score, max_indices, d = 0, (None, None), df.index[1] - df.index[0]
     for offset in range(len(df)-1, 0, -1):
-        df[_d(ELEVATION)] = df[ELEVATION].diff(offset)
+        df[_delta(ELEVATION)] = df[ELEVATION].diff(offset)
         d_distance = d * offset
         min_elevation = max(params.min_elevation, params.min_gradient * d_distance / 100)
-        if df[_d(ELEVATION)].max() > min_elevation:  # avoid some work
+        if df[_delta(ELEVATION)].max() > min_elevation:  # avoid some work
             # factor of 1000 below to convert km to m
-            df[SCORE] = (df[_d(ELEVATION)] / (1000 * d_distance)) ** params.phi
-            score = df.loc[df[_d(ELEVATION)] > min_elevation, SCORE].max()
+            df[SCORE] = (df[_delta(ELEVATION)] / (1000 * d_distance)) ** params.phi
+            score = df.loc[df[_delta(ELEVATION)] > min_elevation, SCORE].max()
             if not np.isnan(score) and score > max_score:
                 max_score = score
                 hi = df.loc[df[SCORE] == max_score].index[0]  # arbitrarily pick one if tied (error here w item())

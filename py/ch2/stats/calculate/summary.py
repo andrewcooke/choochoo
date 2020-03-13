@@ -1,7 +1,6 @@
 
 from logging import getLogger
 from random import choice
-from re import split
 
 from sqlalchemy import func, inspect, and_, select
 from sqlalchemy.sql.functions import coalesce
@@ -49,7 +48,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         start, finish = local_date_to_time(interval.start), local_date_to_time(interval.finish)
         measures = []
         for statistic_name in data:
-            summaries = [x.lower() for x in split(r'[\s,]*(\[[^\]]+\])[\s ]*', statistic_name.summary) if x]
+            summaries = statistic_name.summaries
             for summary in summaries:
                 value, units = self._calculate_value(s, statistic_name, summary, MIN in summaries,
                                                      start, finish, interval, measures)

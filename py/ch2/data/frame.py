@@ -25,7 +25,7 @@ from ..stats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
     DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP, MIXED, ACTIVITY_GROUP, LO_REST_HR, \
-    HI_REST_HR, _d, FATIGUE, FITNESS
+    HI_REST_HR, _delta, FATIGUE, FITNESS
 
 log = getLogger(__name__)
 
@@ -344,10 +344,10 @@ def std_health_statistics(s, *extra, start=None, finish=None):
                          check=False)
     if present(stats_2, REST_HR):
         stats = merge_to_hour(stats, stats_2)
-    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, _d(FITNESS_D_ANY), _d(FATIGUE_D_ANY), *extra,
+    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, _delta(FITNESS_D_ANY), _delta(FATIGUE_D_ANY), *extra,
                          start=start, finish=finish)
     stats_3 = coallesce_groups(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
-    stats_3 = coallesce_like(stats_3, _d(FITNESS), _d(FATIGUE))
+    stats_3 = coallesce_like(stats_3, _delta(FITNESS), _delta(FATIGUE))
     stats = merge_to_hour(stats, stats_3)
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
     stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000

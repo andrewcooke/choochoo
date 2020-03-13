@@ -5,7 +5,7 @@ from bokeh.palettes import magma
 from ch2.data import *
 from ch2.data.plot.calendar import *
 from ch2.lib import *
-from ch2.stats.names import _d
+from ch2.stats.names import _delta
 from ch2.jupyter.decorator import template
 
 
@@ -49,8 +49,8 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df1 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, _d(FITNESS_D_ANY))
-    if present(df1, _d(FITNESS_D_ANY), pattern=True):
+    df1 = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, _delta(FITNESS_D_ANY))
+    if present(df1, _delta(FITNESS_D_ANY), pattern=True):
         df1 = coallesce(df1, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB)
         if present(df, TOTAL_CLIMB):
             df1.loc[df1[TOTAL_CLIMB].isna(), [TOTAL_CLIMB]] = 0  # before interpolation
@@ -104,8 +104,8 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, _d(FITNESS_D_ANY))
-    if present(df, _d(FITNESS_D_ANY), pattern=True):
+    df = statistics(s, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, _delta(FITNESS_D_ANY))
+    if present(df, _delta(FITNESS_D_ANY), pattern=True):
         df = coallesce_like(df, ACTIVE_DISTANCE, ACTIVE_TIME, TOTAL_CLIMB, DIRECTION, ASPECT_RATIO, FITNESS)
         df[DISTANCE_KM] = df[ACTIVE_DISTANCE] / 1000
         df['Duration'] = df[ACTIVE_TIME].map(format_seconds)

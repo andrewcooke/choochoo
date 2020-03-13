@@ -8,7 +8,7 @@ from scipy import optimize
 
 from ch2.data.lib import decay_params
 from . import inplace_decay
-from ..stats.names import FITNESS_D_ANY, FATIGUE_D_ANY, like, _d
+from ..stats.names import FITNESS_D_ANY, FATIGUE_D_ANY, like, _delta
 
 log = getLogger(__name__)
 
@@ -157,5 +157,5 @@ def response_stats(df):
     stats = {}
     for pattern in FITNESS_D_ANY, FATIGUE_D_ANY:
         for name in like(pattern, df.columns):
-            stats[_d(name)] = df[name][-1] - df[name][0]
+            stats[_delta(name)] = df[name][-1] - df[name][0]
     return stats

@@ -127,7 +127,7 @@ STEPS_UNITS = 'stp'
 W = 'W'
 
 
-def _d(name): return f'Δ {name}'
+def _delta(name): return f'Δ {name}'
 def _avg(name): return f'Avg {name}'
 def _cor(name): return f'Cor {name}'
 def _slash(name, units): return f'{name} / {units}'
@@ -156,17 +156,17 @@ HI_REST_HR = _hi(REST_HR)
 
 AIR_SPEED_2 = _sqr(AIR_SPEED)
 AVG_AIR_SPEED_2 = _avg(AIR_SPEED_2)
-DELTA_AIR_SPEED_2 = _d(AIR_SPEED_2)
+DELTA_AIR_SPEED_2 = _delta(AIR_SPEED_2)
 
 SPEED_2 = _sqr(SPEED)
 AVG_SPEED_2 = _avg(SPEED_2)
-DELTA_SPEED_2 = _d(SPEED_2)
+DELTA_SPEED_2 = _delta(SPEED_2)
 
-DELTA_TIME = _d(TIME)
-DELTA_DISTANCE = _d(DISTANCE)
-DELTA_ELEVATION = _d(ELEVATION)
-DELTA_SPEED = _d(SPEED)
-DELTA_ENERGY = _d(ENERGY)
+DELTA_TIME = _delta(TIME)
+DELTA_DISTANCE = _delta(DISTANCE)
+DELTA_ELEVATION = _delta(ELEVATION)
+DELTA_SPEED = _delta(SPEED)
+DELTA_ENERGY = _delta(ENERGY)
 COR_HEART_RATE = _cor(HEART_RATE)
 
 ACTIVE_DISTANCE_KM = _slash(ACTIVE_DISTANCE, KM)

@@ -6,7 +6,7 @@ from .line import multi_dot_plot, dot_plotter, comb_plotter, DEFAULT_BACKEND
 from .utils import make_range, evenly_spaced_hues, tooltip
 from ..frame import related_statistics
 from ...stats.names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME, _slash, \
-    H, KM, ACTIVITY_GROUP, like, _d, FITNESS_D_ANY, FATIGUE_D_ANY
+    H, KM, ACTIVITY_GROUP, like, _delta, FITNESS_D_ANY, FATIGUE_D_ANY
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_BACKEND):
@@ -21,8 +21,8 @@ def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_
     distance_y_range = make_range(source[ACTIVE_DISTANCE_KM])
     colours = list(evenly_spaced_hues(len(groups)))
     tooltip_names = [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, ACTIVITY_GROUP, LOCAL_TIME]
-    tooltip_names += [name for name in like(_d(FITNESS_D_ANY), source.columns) if '(' not in name]
-    tooltip_names += [name for name in like(_d(FATIGUE_D_ANY), source.columns) if '(' not in name]
+    tooltip_names += [name for name in like(_delta(FITNESS_D_ANY), source.columns) if '(' not in name]
+    tooltip_names += [name for name in like(_delta(FATIGUE_D_ANY), source.columns) if '(' not in name]
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),

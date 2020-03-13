@@ -12,7 +12,7 @@ from .frame import median_dt, session, activity_statistics, bookmarks
 from .lib import fit, inplace_decay
 from ..lib.data import tmp_name
 from ..stats.names import *
-from ..stats.names import _d, _sqr, _avg
+from ..stats.names import _delta, _sqr, _avg
 
 log = getLogger(__name__)
 RAD_TO_DEG = 180 / pi
@@ -41,11 +41,11 @@ def _add_differentials(df, speed, *names, max_gap=None):
     df[tmp] = df[tmp].diff().dt.seconds
 
     for name in names:
-        df[_d(name)] = df[name].diff()
-        df.loc[df[tmp] > max_gap, [_d(name)]] = _np.nan
+        df[_delta(name)] = df[name].diff()
+        df.loc[df[tmp] > max_gap, [_delta(name)]] = _np.nan
 
     if LATITUDE in names and LONGITUDE in names and HEADING not in df.columns:
-        df[HEADING] = _np.arctan2(df[_d(LONGITUDE)], df[_d(LATITUDE)]) * RAD_TO_DEG
+        df[HEADING] = _np.arctan2(df[_delta(LONGITUDE)], df[_delta(LATITUDE)]) * RAD_TO_DEG
         df.loc[df[tmp] > max_gap, [HEADING]] = _np.nan
 
     avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(df[speed], df[speed][1:])]
@@ -75,9 +75,9 @@ def _add_differentials_old(df, speed, *names):
                 if all(len(old_span[name]) == len(old_span[name].dropna()) for name in names):
                     new_span = _pd.DataFrame(index=old_span.index)
                     for col in names:
-                        new_span[_d(col)] = old_span[col].diff()
+                        new_span[_delta(col)] = old_span[col].diff()
                     if HEADING not in old_span.columns:
-                        new_span[HEADING] = _np.arctan2(new_span[_d(LONGITUDE)], new_span[_d(LATITUDE)]) * RAD_TO_DEG
+                        new_span[HEADING] = _np.arctan2(new_span[_delta(LONGITUDE)], new_span[_delta(LATITUDE)]) * RAD_TO_DEG
                     avg_speed_2 = [(a**2 + a*b + b**2)/3 for a, b in zip(old_span[speed], old_span[speed][1:])]
                     new_span[_avg(speed_2)] = [_np.nan] + avg_speed_2
                     yield new_span
