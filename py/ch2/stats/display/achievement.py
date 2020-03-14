@@ -40,7 +40,7 @@ class AchievementDiary(Reader):
     def _achievements_for_journal(self, s, journal):
         for achievement in s.query(Achievement). \
                 filter(Achievement.activity_journal == journal). \
-                order_by(desc(Achievement.sort)).all():
+                order_by(desc(Achievement.sort)).limit(5).all():   # limit 5 for compact display
             yield text(achievement.text)
 
     def _read_schedule(self, s, date, schedule):
