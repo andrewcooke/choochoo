@@ -1,16 +1,17 @@
 import datetime as dt
 from logging import getLogger
+from re import compile
 
 from sqlalchemy import desc, asc
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin
 from .activity import ActivityCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, _delta, TOTAL_CLIMB, \
-    CLIMB_DISTANCE, CLIMB_ELEVATION, PERCENT_IN_Z_ANY, TIME_IN_Z_ANY, MAX_MED_HR_M_ANY
+    CLIMB_DISTANCE, CLIMB_ELEVATION, MAX_MED_HR_M_ANY
 from ...lib import local_time_to_time
 from ...lib.log import log_current_exception
 from ...sql import ActivityJournal, Timestamp, StatisticName, StatisticJournal, Achievement
-from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
+from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournalFloat
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -37,24 +38,22 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
 
     def _build_table(self, s):
         table = []
-        self._append_like(table, s, 'longest', ACTIVE_DISTANCE, ActivityCalculator)
-        self._append_like(table, s, 'longest', ACTIVE_TIME, ActivityCalculator)
-        self._append_like(table, s, 'fastest', ACTIVE_SPEED, ActivityCalculator)
-        self._append_like(table, s, 'highest', MAX_MEAN_PE_M_ANY, ActivityCalculator)
-        self._append_like(table, s, 'highest', _delta(FITNESS_D_ANY), ActivityCalculator)
-        self._append_like(table, s, 'highest', TOTAL_CLIMB, ActivityCalculator)
-        self._append_like(table, s, 'highest', CLIMB_ELEVATION, ActivityCalculator)
-        self._append_like(table, s, 'highest', CLIMB_DISTANCE, ActivityCalculator)
-        self._append_like(table, s, 'highest', PERCENT_IN_Z_ANY, ActivityCalculator)
-        self._append_like(table, s, 'longest', TIME_IN_Z_ANY, ActivityCalculator)
-        self._append_like(table, s, 'highest', MAX_MED_HR_M_ANY, ActivityCalculator)
+        self._append_like(table, s, 'longest', 10, ACTIVE_DISTANCE, ActivityCalculator)
+        self._append_like(table, s, 'longest', 10, ACTIVE_TIME, ActivityCalculator)
+        self._append_like(table, s, 'fastest', 10, ACTIVE_SPEED, ActivityCalculator)
+        self._append_like(table, s, 'highest', 3, MAX_MEAN_PE_M_ANY, ActivityCalculator)
+        self._append_like(table, s, 'highest', 10, _delta(FITNESS_D_ANY), ActivityCalculator)
+        self._append_like(table, s, 'highest', 10, TOTAL_CLIMB, ActivityCalculator)
+        self._append_like(table, s, 'highest', 5, CLIMB_ELEVATION, ActivityCalculator)
+        self._append_like(table, s, 'highest', 5, CLIMB_DISTANCE, ActivityCalculator)
+        self._append_like(table, s, 'highest', 3, MAX_MED_HR_M_ANY, ActivityCalculator)
         return table
 
-    def _append_like(self, table, s, superlative, pattern, owner):
+    def _append_like(self, table, s, superlative, score, pattern, owner):
         for statistic_name in s.query(StatisticName). \
                 filter(StatisticName.name.like(pattern),
                        StatisticName.owner == owner):
-            table.append((superlative, statistic_name))
+            table.append((superlative, statistic_name, score))
 
     def _run_one(self, s, time_or_date):
         activity_journal = s.query(ActivityJournal).filter(ActivityJournal.start == time_or_date).one()
@@ -70,39 +69,53 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
         self._check_all(s, activity_journal)
 
     def _check_all(self, s, activity_journal):
-        for (superlative, statistic_name) in self._table:
-            for (days, period) in [(50 * 365, 'all time'), (365, 'the last year'),
-                                   (30, 'the last 30 days'), (7, 'the last week')]:
+        for (superlative, statistic_name, statistic_score) in self._table:
+            # going down to a week gets way too many
+            for (days, period, period_score) in [(50 * 365, 'of all time', 10),
+                                                 (365, 'this year', 5),
+                                                 (30, 'in 30 days', 1)]:
                 rank, achievement = self._check(s, activity_journal, superlative, statistic_name, days, period)
                 if achievement:
-                    log.debug(f'{achievement}')
-                    add(s, Achievement(text=achievement, level=rank+1, activity_journal=activity_journal))
+                    score = statistic_score + period_score - rank
+                    log.debug(f'{achievement}/{score}')
+                    add(s, Achievement(text=achievement, sort=score, activity_journal=activity_journal))
                     break  # if month, also week
+
+    def _build_query(self, s, activity_journal, statistic_name, days=0):
+        less_is_better = 'min' in statistic_name.summaries
+        order = asc if less_is_better else desc
+        journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+        q = s.query(journal_class.value). \
+            filter(StatisticJournal.statistic_name == statistic_name,
+                   StatisticJournal.time >= activity_journal.start - dt.timedelta(days=days),
+                   StatisticJournal.time < activity_journal.finish)
+        if journal_class == StatisticJournalFloat:
+            q = q.filter(journal_class.value != 0.0)
+        q = q.order_by(order(journal_class.value))
+        return q
 
     def _check(self, s, activity_journal, superlative, statistic_name, days, period):
         try:
-            less_is_better = 'min' in statistic_name.summaries
-            order = asc if less_is_better else desc
-            journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
-            best_values = s.query(journal_class.value). \
-                filter(StatisticJournal.statistic_name == statistic_name,
-                       StatisticJournal.time >= activity_journal.start - dt.timedelta(days=days),
-                       StatisticJournal.time < activity_journal.finish). \
-                order_by(order(journal_class.value)). \
-                limit(4).all()  # 4 so we know something worse
-            best_values = [values[0] for values in best_values]
-            current_value = s.query(journal_class.value). \
-                filter(StatisticJournal.statistic_name == statistic_name,
-                       StatisticJournal.time >= activity_journal.start,
-                       StatisticJournal.time < activity_journal.finish).scalar()
-            for rank, adjective in enumerate(('%s', 'second %s', 'third %s')):
+            # 4 so we know something worse
+            best_values = self._build_query(s, activity_journal, statistic_name, days).limit(4).all()
+            best_values = [x[0] for x in best_values]
+            current_value = self._build_query(s, activity_journal, statistic_name).limit(1).scalar()
+            for rank, adjective in enumerate(('%s', '2nd %s', '3rd %s')):
                 description = adjective % superlative
                 # +1 below so we don't give prizes for last
                 if len(best_values) > rank+1 and current_value == best_values[rank]:
-                    achievement = f'{description} {statistic_name.name.lower()} in {period}'
+                    achievement = f'{description} {lower(statistic_name.name)} {period}'
                     achievement = achievement[0].upper() + achievement[1:]
                     return rank, achievement
         except Exception as e:
             log.warning(f'No achievement for {statistic_name}: {e}')
             log_current_exception()
         return 0, None
+
+
+def lower(text):
+    def l(word):
+        if compile(r'^[A-Z][a-z]+$').match(word):
+            word = word[0].lower() + word[1:]
+        return word
+    return ' '.join(l(word) for word in text.split(' '))

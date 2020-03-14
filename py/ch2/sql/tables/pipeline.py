@@ -25,7 +25,7 @@ class Pipeline(Base):
     cls = Column(Cls, nullable=False)
     args = Column(Json, nullable=False, server_default=dumps(()))
     kargs = Column(Json, nullable=False, server_default=dumps({}))
-    sort = Column(Sort)
+    sort = Column(Sort, nullable=False)
 
     @classmethod
     def all(cls, s, type, like=tuple(), unlike=tuple(), id=None):

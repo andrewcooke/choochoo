@@ -23,6 +23,7 @@ from ..stats.calculate.monitor import MonitorCalculator
 from ..stats.calculate.response import ResponseCalculator
 from ..stats.calculate.segment import SegmentCalculator
 from ..stats.calculate.summary import SummaryCalculator
+from ..stats.display.achievement import AchievementDiary
 from ..stats.display.activity import ActivityDiary
 from ..stats.display.monitor import MonitorDiary
 from ..stats.display.nearby import NearbyDiary
@@ -117,6 +118,7 @@ def default(system, db, no_diary=False):
         add_diary(s, ResponseDiary, c,
                   fitness=[name_constant(FITNESS_D % days, all) for (days, _, _) in fitness],
                   fatigue=[name_constant(FATIGUE_D % days, all) for (days, _, _) in fatigue])
+        add_diary(s, AchievementDiary, c)
         add_diary(s, ActivityDiary, c)
         add_diary(s, SegmentDiary, c)
         add_diary(s, NearbyDiary, c)

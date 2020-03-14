@@ -109,7 +109,7 @@ def read_schedule_topic(s, schedule, start, finish, topic):
 
 def summary_column(s, schedule, start, name):
     journals = StatisticJournal.at_interval(s, start, schedule, SummaryCalculator, name, SummaryCalculator)
-    for named, journal in enumerate(journals):
+    for named, journal in enumerate(journal for journal in journals if journal.value != 0):
         summary, period, name = SummaryCalculator.parse_name(journal.statistic_name.name)
         if not named:
             yield text(name)
