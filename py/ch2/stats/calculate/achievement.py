@@ -73,7 +73,7 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
         for (superlative, statistic_name, statistic_score) in self._table:
             # going down to a week gets way too many
             for (days, period, period_score) in [(50 * 365, 'of all time', 10),
-                                                 (365, 'this year', 5),
+                                                 (365, 'in a year', 5),
                                                  (30, 'in 30 days', 1)]:
                 rank, achievement = self._check(s, activity_journal, superlative, statistic_name, days, period)
                 if achievement:

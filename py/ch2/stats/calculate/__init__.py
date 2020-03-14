@@ -201,7 +201,8 @@ class IntervalCalculatorMixin(LoaderMixin):
                 q = s.query(Interval)
             else:
                 q = s.query(count(Interval.id))
-            q = q.filter(Interval.owner == self.owner_out)
+            q = q.filter(Interval.schedule == self.schedule,
+                         Interval.owner == self.owner_out)
             if start:
                 q = q.filter(Interval.finish > start)
             if finish:
