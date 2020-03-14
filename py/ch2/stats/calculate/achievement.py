@@ -7,7 +7,7 @@ from sqlalchemy import desc, asc
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin
 from .activity import ActivityCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, _delta, TOTAL_CLIMB, \
-    CLIMB_DISTANCE, CLIMB_ELEVATION, MAX_MED_HR_M_ANY
+    CLIMB_DISTANCE, CLIMB_ELEVATION, MAX_MED_HR_M_ANY, MIN_KM_TIME_ANY
 from ...lib import local_time_to_time
 from ...lib.log import log_current_exception
 from ...sql import ActivityJournal, Timestamp, StatisticName, StatisticJournal, Achievement
@@ -38,6 +38,7 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
 
     def _build_table(self, s):
         table = []
+        self._append_like(table, s, 'fastest', 15, MIN_KM_TIME_ANY, ActivityCalculator)
         self._append_like(table, s, 'longest', 10, ACTIVE_DISTANCE, ActivityCalculator)
         self._append_like(table, s, 'longest', 10, ACTIVE_TIME, ActivityCalculator)
         self._append_like(table, s, 'fastest', 10, ACTIVE_SPEED, ActivityCalculator)

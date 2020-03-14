@@ -33,7 +33,7 @@ def active_stats(df):
     return stats
 
 
-def times_for_distance(df, km=None, delta=10):
+def times_for_distance(df, km=None, delta=0.01):  # all units of km
     stats, km = {}, km or round_km()
     try:
         tmp = pd.DataFrame({TIME: df.index}, index=df[DISTANCE])
@@ -41,7 +41,7 @@ def times_for_distance(df, km=None, delta=10):
         t4d = pd.DataFrame({TIME: (tmp[TIME] - tmp[TIME].iloc[0]).astype(np.int64) / 1e9}, index=df[DISTANCE])
         lt4d = linear_resample(t4d, d=delta)
         for target in km:
-            n = target * 1000 / delta
+            n = target / delta
             dlt4d = lt4d.diff(periods=n).dropna()
             if present(dlt4d, TIME):
                 stats[MIN_KM_TIME % target] = dlt4d[TIME].min()
