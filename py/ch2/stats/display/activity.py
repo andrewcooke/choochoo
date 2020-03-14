@@ -144,7 +144,7 @@ class ActivityDiary(JournalDiary):
                    StatisticName.owner == ActivityCalculator,
                    StatisticName.constraint == ajournal.activity_group).order_by(StatisticName.name).all()
         for sjournal in self.__sort_journals(sjournals):
-            if sjournal.value > 0:
+            if sjournal.value > 0:  # avoid zero power and anything else with silly value
                 yield value(search(re, sjournal.statistic_name.name).group(1), sjournal.value,
                             units=sjournal.statistic_name.units, measures=sjournal.measures_as_model(date))
 
