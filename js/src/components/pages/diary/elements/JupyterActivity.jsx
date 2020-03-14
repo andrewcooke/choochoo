@@ -12,7 +12,7 @@ export default function JupyterActivity(props) {
     const [, head, ...rest] = json[0];
 
     const details = fmtHref('jupyter/activity_details?local_time=%s&activity_group_name=%s',
-                            head.db[0], head.db[1]);
+                            head.db[0], head.db[2]);
     const similar = fmtHref('jupyter/similar_activities?local_time=%s&activity_group_name=%s',
                             json[1].db[0], json[1].db[1]);
 
