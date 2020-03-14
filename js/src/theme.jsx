@@ -18,3 +18,9 @@ theme.typography.h1.fontWeight = 300;
 theme.typography.h2.fontWeight = 400;
 theme.typography.h3.fontWeight = 400;
 theme.typography.h4.fontWeight = 400;
+
+theme.typography.h1.lineHeight = 'normal';
+theme.typography.h2.lineHeight = '200%';
+theme.typography.h3.lineHeight = '200%';
+theme.typography.h4.lineHeight = '200%';
+
