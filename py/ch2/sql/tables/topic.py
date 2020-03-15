@@ -211,7 +211,7 @@ class DiaryTopicJournal(Source):
         log.warning('Recalculating times for TopicJournal entries')
         for tj in s.query(DiaryTopicJournal).all():
             tj.time = local_date_to_time(tj.date)
-        Interval.delete_all(s)
+        Interval.dirty_all(s)
 
     def time_range(self, s):
         start = local_date_to_time(self.date)

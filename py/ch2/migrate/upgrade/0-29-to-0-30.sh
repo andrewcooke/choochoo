@@ -133,6 +133,25 @@ sqlite3 "$DB_DIR/database-$DST.sql" < "$TMP_DIR/dump-$SRC.sql"
 echo "adding default config to $DB_DIR/database-$DST.sql"
 dev/ch2 --dev config default --no-diary
 
+echo "defining activity fields for new groups"
+python - <<EOF
+from ch2.data import *
+from ch2.sql import *
+from ch2.config.database import *
+from ch2.diary.model import *
+from ch2.lib.schedule import Schedule
+from datetime import date
+
+s = session('-v5 --dev -f $DB_DIR/database-$DST.sql')
+for activity_group in s.query(ActivityGroup).filter(ActivityGroup.name.in_(['MTB', 'Road'])).all():
+    c = Counter()
+    add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
+                             activity_group, model={TYPE: EDIT})
+    add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
+                             activity_group, model={TYPE: EDIT})
+s.commit()
+EOF
+
 # you almost certainly want to change the following details
 
 echo "adding personal constants to $DB_DIR/database-$DST.sql"

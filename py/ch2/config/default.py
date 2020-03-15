@@ -190,26 +190,17 @@ def default(system, db, no_diary=False):
             add_diary_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
                                   summary='[avg]',
                                   model={TYPE: SCORE})
-            add_diary_topic_field(s, diary, 'Nutrition', c, StatisticJournalType.TEXT,
-                                  summary='[cnt]',
-                                  model={TYPE: EDIT})
-            add_diary_topic_field(s, diary, 'Soreness', c, StatisticJournalType.TEXT,
-                                  summary='[cnt]',
-                                  model={TYPE: EDIT})
             add_diary_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
                                   model={TYPE: EDIT})
             add_diary_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
                                   summary='[cnt]',
                                   model={TYPE: EDIT})
-            add_diary_topic_field(s, diary, 'Route', c, StatisticJournalType.TEXT,
-                                  summary='[cnt]',
-                                  model={TYPE: EDIT})
 
             # and activity-related topics
             # a null parent here means that the fields appear under the title
 
-            for activity_group in (bike, run, swim, walk):
+            for activity_group in (bike, mtb, road, run, swim, walk):
                 c = Counter()
                 if activity_group != swim:
                     add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,

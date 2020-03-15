@@ -178,10 +178,8 @@ class DirectCalculatorMixin(LoaderMixin):
 
 class IntervalCalculatorMixin(LoaderMixin):
 
-    def __init__(self, *args, schedule='m', load_once=False, **kargs):
+    def __init__(self, *args, schedule='m', **kargs):
         self.schedule = Schedule(self._assert('schedule', schedule))
-        self.load_once = load_once
-        self._prev_loader = None
         super().__init__(*args, **kargs)
 
     def _missing(self, s):
@@ -230,24 +228,12 @@ class IntervalCalculatorMixin(LoaderMixin):
         s.commit()
         try:
             data = self._read_data(s, interval)
-            if self.load_once and self._prev_loader:
-                loader = self._prev_loader
-            else:
-                loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
+            loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
             self._calculate_results(s, interval, data, loader)
-            if not self.load_once:
-                loader.load()
-            self._prev_loader = loader
+            loader.load()
         except Exception as e:
             log.warning(f'No statistics for {missing} due to error ({e})')
             log_current_exception()
-            if not self.load_once:
-                self._prev_loader = None
-
-    def _shutdown(self, s):
-        if self.load_once and self._prev_loader:
-            log.debug('Single load')
-            self._prev_loader.load()
 
     @abstractmethod
     def _read_data(self, s, interval):

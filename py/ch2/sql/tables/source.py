@@ -3,9 +3,9 @@ from abc import abstractmethod
 from enum import IntEnum
 from logging import getLogger
 
-from sqlalchemy import ForeignKey, Column, Integer, func, and_, UniqueConstraint, select, Boolean
+from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, select, Boolean
 from sqlalchemy.event import listens_for
-from sqlalchemy.orm import Session, aliased, relationship
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql.functions import count
 
 from ..support import Base
@@ -115,25 +115,6 @@ class Interval(Source):
         return 'Interval "%s from %s" (owner %s)' % (self.schedule, self.start, owner)
 
     @classmethod
-    def _missing_interval_start_dates(cls, s, schedule, interval_owner, statistic_owner=None):
-        '''
-        Returns a list of times that mark the start DATES of missing intervals covering "all"
-        statistics (optionally with a given owner and excluding constants at "zero time"),
-        plus the end TIME of the statistics,
-        '''
-        stats_start, stats_finish = cls._raw_statistics_time_range(s, statistic_owner)
-        log.debug('Statistics (in general) exist %s - %s' % (stats_start, stats_finish))
-        starts = cls._open_interval_dates(s, schedule, interval_owner)
-        stats_start_date = schedule.start_of_frame(time_to_local_date(stats_start))
-        if not starts or starts[0] > stats_start_date:
-            if not cls._existing_interval_at(s, schedule, interval_owner, stats_start_date):
-                starts = [stats_start_date] + starts
-        log.debug('Have %d open blocks finishing at %s' % (len(starts), stats_finish))
-        for i, start in enumerate(starts):
-            log.debug('Block %d starts at %s' % (i, start))
-        return starts, stats_finish
-
-    @classmethod
     def _raw_statistics_time_range(cls, s, statistics_owner=None):
         '''
         The time range over which statistics exist (optionally restricted by owner),
@@ -152,24 +133,7 @@ class Interval(Source):
             raise NoStatistics('No statistics are currently defined')
 
     @classmethod
-    def _open_interval_dates(cls, s, schedule, interval_owner):
-        '''
-        The finish DATES that come at the ends of contiguous intervals
-        (for intervals of the given schedule and owner)
-        '''
-        close = aliased(Interval)
-        return [result[0] for result in s.query(Interval.finish). \
-            outerjoin(close,
-                      and_(Interval.finish == close.start,
-                           Interval.owner == close.owner,
-                           Interval.schedule == close.schedule)). \
-            filter(close.start == None,
-                   Interval.owner == interval_owner,
-                   Interval.schedule == schedule). \
-            order_by(Interval.finish).all()]
-
-    @classmethod
-    def _existing_interval_at(cls, s, schedule, interval_owner, start):
+    def at(cls, s, schedule, interval_owner, start):
         '''
         The existing interval for a given start, owner, schedule.
         '''
@@ -179,53 +143,26 @@ class Interval(Source):
                    Interval.owner == interval_owner).one_or_none()
 
     @classmethod
-    def _missing_interval_dates_from(cls, s, schedule, interval_owner, start, finish):
-        '''
-        Iterator over start DATES for intervals that are not present in the database,
-        starting from `start` and ending when an interval is found, or with `finish` if no intervals are found.
-        '''
-        while start <= time_to_local_date(finish):
-            next = schedule.next_frame(start)
-            log.debug('Missing Interval %s - %s' % (start, next))
-            yield start, next
-            start = next
-            if cls._existing_interval_at(s, schedule, interval_owner, start):
-                return
-
-    @classmethod
-    def first_missing_date(cls, s, schedule, interval_owner, statistic_owner=None):
-        '''
-        For Impulse (and anything else that needs to delete forwards)
-        '''
-        starts, overall_finish = cls._missing_interval_start_dates(s, schedule, interval_owner, statistic_owner)
-        if starts:
-            return starts[0], time_to_local_date(overall_finish)
-        else:
-            return None, None
-
-    @classmethod
     def missing_dates(cls, s, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
         '''
-        Iterator over start DATES for all missing intervals, given the constraints supplied.
+        Previous approach was way too complicated and not thread-safe.  Instead, just enumerate intervals and test.
         '''
-        def intervals():
-            starts, overall_finish = cls._missing_interval_start_dates(s, schedule, interval_owner,
-                                                                       statistic_owner)
-            for block_start in starts:
-                yield from cls._missing_interval_dates_from(s, schedule, interval_owner, block_start, overall_finish)
-        for a, b in intervals():
-            if start and b <= start: continue
-            if finish and a >= finish: continue
-            yield a, b
+        stats_start_time, stats_finish_time = cls._raw_statistics_time_range(s, statistic_owner)
+        stats_start = time_to_local_date(stats_start_time)
+        stats_finish = time_to_local_date(stats_finish_time)
+        log.debug('Statistics (in general) exist %s - %s' % (stats_start, stats_finish))
+        start = schedule.start_of_frame(start if start else stats_start)
+        finish = finish if finish else schedule.next_frame(stats_finish)
+        while start < finish:
+            next = schedule.next_frame(start)
+            if not cls.at(s, schedule, interval_owner, start):
+                yield start, next
+            start = next
 
     @classmethod
-    def delete_all(cls, s):
-        '''
-        Efficiently delete all intervals.
-        '''
-        log.warning('Deleting all Intervals')
-        # this uses the on delete cascade between source and interval
-        s.query(Source).filter(Source.type == SourceType.INTERVAL).delete()
+    def dirty_all(cls, s):
+        log.warning('Dirtying all Intervals')
+        s.query(Interval).update({Interval.dirty: True}, synchronize_session=False)
 
     @classmethod
     def mark_dirty_times(cls, s, start, finish, owner=None):
