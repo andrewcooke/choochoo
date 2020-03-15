@@ -22,7 +22,8 @@ class TestPower(TestCase):
             activities(args, sys, db)
             with db.session_context() as s:
                 model = list(read_date(s, to_date('2018-03-04')))
-                [title, diary, activity, jupyter] = model
+                print(model, len(model))
+                [title, diary, achievements, activity, jupyter, database] = model
                 print(activity)
                 name = activity[1]
                 print(name)

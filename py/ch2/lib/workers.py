@@ -94,6 +94,6 @@ def command_root():
             log.debug(f'Using command "{ch2}"')
             return ch2
     except:
-        log.warning('Cannot read /proc so assuming that ch2 is started on the command line as "chs"')
+        log.warning('Cannot read /proc so assuming that ch2 is started on the command line as "ch2"')
         return 'ch2'
 

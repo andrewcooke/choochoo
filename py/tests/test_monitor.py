@@ -30,11 +30,11 @@ class TestMonitor(TestCase):
                                       'monitor', mm(FAST), 'data/test/source/personal/25822184777.fit')
             monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, PipelineType.STATISTIC, force=True, start='2018-01-01')
+            run_pipeline(sys, db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 109)
+                self.assertEqual(n, 123)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
@@ -112,6 +112,6 @@ class TestMonitor(TestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 24)
+                self.assertEqual(n, 30)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)

@@ -21,10 +21,10 @@ class TestConstant(TestCase):
             bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
-                self.assertEqual(n, 14)
+                self.assertEqual(n, 22)
             args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
             constants(args, sys, db)
             with db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
-                self.assertEqual(n, 14)
+                self.assertEqual(n, 22)
                 # todo - maybe test for value?

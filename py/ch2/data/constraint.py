@@ -1,7 +1,7 @@
 
 from re import escape
 
-from sqlalchemy import select, or_, and_
+from sqlalchemy import select, or_, and_, union
 
 from .frame import _tables
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
@@ -103,7 +103,7 @@ def build_comparisons(s, t, ast):
     if len(comparisons) == 1:
         return comparisons[0]
     else:
-        return join_comparisons(comparisons)
+        return union(*comparisons)
 
 
 def build_comparison(t, statistic_name, op, value):
@@ -117,7 +117,3 @@ def build_comparison(t, statistic_name, op, value):
     attr = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}[op]
     q = q.where(getattr(table.c.value, attr)(value))
     return q
-
-
-def join_comparisons(comparisons):
-    return comparisons[0].union(*comparisons[1:])
