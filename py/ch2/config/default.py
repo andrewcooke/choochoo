@@ -49,18 +49,37 @@ def default(system, db, no_diary=False):
         # basic activities
 
         c = Counter()
+
         # each of the following needs an FTHR defined
-        bike = add_activity_group(s, 'Bike', c, description='All cycling activities')
-        run = add_activity_group(s, 'Run', c, description='All running activities')
-        swim = add_activity_group(s, 'Swim', c, description='All swimming activities')
-        walk = add_activity_group(s, 'Walk', c, description='All walking activities')
+        bike = add_activity_group(s, 'Bike', c, description='General cycling activities')
+        mtb = add_activity_group(s, 'MTB', c, description='MTB cycling activities')
+        road = add_activity_group(s, 'Road', c, description='Road cycling activities')
+        run = add_activity_group(s, 'Run', c, description='Running activities')
+        swim = add_activity_group(s, 'Swim', c, description='Swimming activities')
+        walk = add_activity_group(s, 'Walk', c, description='Walking activities')
+        bike_groups = (bike, mtb, road)
+
         # this is required by the code; the name (ALL) is fixed and referenced in FF calculations
         all = add_activity_group(s, ALL, c, description='All activities')
+
         # sport_to_activity maps from the FIT sport field to the activity defined above
-        sport_to_activity = {SPORT_CYCLING: bike.name,
-                             SPORT_RUNNING: run.name,
-                             SPORT_SWIMMING: swim.name,
-                             SPORT_WALKING: walk.name}
+        # you can also use values passed via -D (--define) so, for example, if the FIT sport field is
+        # 'cycling' and the data are loaded with -Dkit=cotic then the MTB activity group is used.
+        # if there is no match at a certain level and 'default' is defined, then that is used.
+        # note that the top level must be a FIT field value for it to be recognized for monitor data
+        # (which uses defaults only).
+        sport_to_activity = {
+            SPORT_CYCLING: {
+                'kit': {
+                    'cotic': mtb.name,
+                    'bowman': road.name
+                },
+                'default': bike.name
+            },
+            SPORT_RUNNING: run.name,
+            SPORT_SWIMMING: swim.name,
+            SPORT_WALKING: walk.name}
+
         add_activities(s, SegmentReader, c,
                        owner_out=short_cls(SegmentReader),
                        sport_to_activity=sport_to_activity,
@@ -85,14 +104,14 @@ def default(system, db, no_diary=False):
 
         c = Counter()
         add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')
-        add_power_estimate(s, c, bike, vary='')
-        add_climb(s, bike)
-        add_impulse(s, c, bike)
+        for group in bike_groups:
+            add_power_estimate(s, c, group, vary='')
+            add_impulse(s, c, group)
+        add_climb(s)
         add_impulse(s, c, walk)
         add_responses(s, c, fitness=fitness, fatigue=fatigue)
         add_statistics(s, ActivityCalculator, c,
-                       owner_in=short_cls(ResponseCalculator),
-                       climb=name_constant(CLIMB_CNAME, bike))
+                       owner_in=short_cls(ResponseCalculator), climb=CLIMB_CNAME)
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_statistics(s, KitCalculator, c, owner_in=short_cls(SegmentReader))
@@ -107,7 +126,8 @@ def default(system, db, no_diary=False):
         add_statistics(s, AchievementCalculator, c, owner_in=short_cls(SegmentReader))
 
         # obviously you need to edit these parameters - see `ch2 constants show Nearby.Bike`
-        add_nearby(s, c, bike, 'Santiago', -33.4, -70.4, fraction=0.1, border=150)
+        for group in bike_groups:
+            add_nearby(s, c, group, 'Santiago', -33.4, -70.4, fraction=0.1, border=150)
         add_nearby(s, c, walk, 'Santiago', -33.4, -70.4, fraction=0.1, border=150)
 
         # diary pipeline (called to display data in the diary)
@@ -132,6 +152,12 @@ def default(system, db, no_diary=False):
 
         add_activity_constant(s, bike, FTHR,
                               description='Heart rate at functional threshold (cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0',
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+        add_activity_constant(s, mtb, FTHR,
+                              description='Heart rate at functional threshold (MTB cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0',
+                              units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+        add_activity_constant(s, road, FTHR,
+                              description='Heart rate at functional threshold (road cycling). See https://www.britishcycling.org.uk/knowledge/article/izn20140808-Understanding-Intensity-2--Heart-Rate-0',
                               units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_activity_constant(s, run, FTHR,
                               description='Heart rate at functional threshold (running).',

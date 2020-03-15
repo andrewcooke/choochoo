@@ -90,18 +90,10 @@ class ActivityDiary(JournalDiary):
 
     @staticmethod
     def __title(s, ajournal):
-        title = '%s - %s  (%s) %s' % (time_to_local_time(to_time(ajournal.start), fmt=YMD_HM),
-                                      time_to_local_time(to_time(ajournal.finish), fmt=HM),
-                                      format_minutes((ajournal.finish - ajournal.start).seconds),
-                                      ajournal.activity_group.name)
-        kits = s.query(StatisticJournal). \
-            join(StatisticName). \
-            filter(StatisticJournal.source == ajournal,
-                   StatisticName.name == 'kit',
-                   StatisticName.owner == SegmentReader).all()
-        if kits:
-            title += '/' + ','.join(str(kit.value) for kit in kits)
-        return title
+        return '%s - %s  (%s) %s' % (time_to_local_time(to_time(ajournal.start), fmt=YMD_HM),
+                                     time_to_local_time(to_time(ajournal.finish), fmt=HM),
+                                     format_minutes((ajournal.finish - ajournal.start).seconds),
+                                     ajournal.activity_group.name)
 
     @staticmethod
     def __read_active_data(s, ajournal, date):

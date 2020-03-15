@@ -1,5 +1,5 @@
 
-from ..commands.args import PATH, FORCE, FAST, parse_pairs, CONSTANT, KARG, WORKER
+from ..commands.args import PATH, FORCE, FAST, parse_pairs, DEFINE, KARG, WORKER
 from ..sql import PipelineType
 from ..stats.pipeline import run_pipeline
 
@@ -24,7 +24,7 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     run_pipeline(system, db, PipelineType.ACTIVITY, paths=args[PATH], force=args[FORCE],
                  worker=args[WORKER] is not None, id=args[WORKER],
-                 constants=args[CONSTANT], **parse_pairs(args[KARG]))
+                 define=parse_pairs(args[DEFINE], convert=False), **parse_pairs(args[KARG]))
     if not args[FAST] and args[WORKER] is None:
         # don't force this - it auto-detects need
         run_pipeline(system, db, PipelineType.STATISTIC, **parse_pairs(args[KARG]))

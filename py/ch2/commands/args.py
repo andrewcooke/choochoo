@@ -56,7 +56,6 @@ CMD = 'cmd'
 COMPACT = 'compact'
 COMPONENT = 'component'
 CONSTRAINT = 'constraint'
-CONSTANT = 'constant'
 CONTEXT = 'context'
 CSV = 'csv'
 D = 'd'
@@ -64,6 +63,7 @@ DATA = 'data'
 DATABASE = 'database'
 DATE = 'date'
 DEFAULT = 'default'
+DEFINE = 'define'
 DELETE = 'delete'
 DESCRIBE = 'describe'
 DESCRIPTION = 'description'
@@ -259,9 +259,9 @@ def make_parser():
     activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     activities.add_argument(PATH, metavar='PATH', nargs='+',
                             help='path to fit file(s)')
-    activities.add_argument(m(D.upper()), mm(CONSTANT), action='append', metavar='NAME=VALUE', dest=CONSTANT,
-                            help='constant to be stored with the activities (can be repeated)')
-    activities.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE', dest=KARG,
+    activities.add_argument(m(D.upper()), mm(DEFINE), action='append', default=[], metavar='NAME=VALUE', dest=DEFINE,
+                            help='statistic to be stored with the activities (can be repeated)')
+    activities.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE', dest=KARG,
                             help='keyword argument to be passed to the pipelines (can be repeated)')
     activities.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
@@ -563,7 +563,7 @@ def make_parser():
     monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
     monitor.add_argument(PATH, metavar='PATH', nargs='+',
                          help='path to fit file(s)')
-    monitor.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE',
+    monitor.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                          help='keyword argument to be passed to the pipelines (can be repeated)')
     monitor.add_argument(mm(WORKER), metavar='ID', type=int,
                          help='internal use only (identifies sub-process workers)')
@@ -589,7 +589,7 @@ def make_parser():
                             help='optional start date')
     statistics.add_argument(FINISH, metavar='FINISH', nargs='?',
                             help='optional finish date (if start also given)')
-    statistics.add_argument(m(K.upper()), mm(KARG), action='append', metavar='NAME=VALUE',
+    statistics.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                             help='keyword argument to be passed to the pipelines (can be repeated)')
     statistics.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
@@ -639,17 +639,18 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
     return ns, sys, db
 
 
-def parse_pairs(pairs):
+def parse_pairs(pairs, convert=True):
     # simple name, value pairs. owner and constraint supplied by command.
     d = {}
     if pairs is not None:
         for pair in pairs:
             name, value = pair.split('=', 1)
-            for type in (int, float, to_time):
-                try:
-                    value = type(value)
-                    break
-                except ValueError:
-                    pass
+            if convert:
+                for type in (int, float, to_time):
+                    try:
+                        value = type(value)
+                        break
+                    except ValueError:
+                        pass
             d[name] = value
     return d

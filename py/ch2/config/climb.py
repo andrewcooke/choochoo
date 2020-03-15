@@ -8,13 +8,11 @@ from ..data.climb import Climb, MAX_CLIMB_GRADIENT, MIN_CLIMB_GRADIENT, MAX_CLIM
 CLIMB_CNAME = 'Climb'
 
 
-def add_climb(s, activity_group, phi=0.7):
+def add_climb(s, phi=0.7):
     '''
     Add the constants necessary to auto-detect climbs.
     '''
-    activity_group_constraint = str(activity_group)
-    climb_name = name_constant(CLIMB_CNAME, activity_group)
-    climb = add_enum_constant(s, climb_name, Climb, single=True, constraint=activity_group_constraint,
+    climb = add_enum_constant(s, CLIMB_CNAME, Climb, single=True,
                               description='Data needed to detect climbs - see Climb enum')
     set_constant(s, climb, dumps({'phi': phi,
                                   'min_gradient': MIN_CLIMB_GRADIENT,

@@ -11,9 +11,9 @@ SRC='0-29'
 DST='0-30'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=0
-DO_DROP=0
-DO_DUMP=0
+DO_COPY=1
+DO_DROP=1
+DO_DUMP=1
 
 
 # this section of the script copies diary data and kit data across
@@ -137,6 +137,8 @@ dev/ch2 --dev config default --no-diary
 
 echo "adding personal constants to $DB_DIR/database-$DST.sql"
 dev/ch2 --dev constants set FTHR.Bike 154
+dev/ch2 --dev constants set FTHR.MTB 154
+dev/ch2 --dev constants set FTHR.Road 154
 dev/ch2 --dev constants set FTHR.Walk 154
 dev/ch2 --dev constants set SRTM1.Dir /home/andrew/archive/srtm1
 # the name of this constant depends on the kit name and so we must add it ourselves

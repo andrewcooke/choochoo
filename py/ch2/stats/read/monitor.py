@@ -5,13 +5,14 @@ from logging import getLogger
 import numpy as np
 import pandas as pd
 from sqlalchemy import desc, and_, or_, distinct, func, select
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 
 from ..load import StatisticJournalLoader
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE
 from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
+from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE, VERBOSITY, LOG, DEFAULT
 from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...lib.date import time_to_local_date, format_time
@@ -95,9 +96,20 @@ class MonitorReader(MultiProcFitReader):
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
-        self.sport_to_activity_group = {label: ActivityGroup.from_name(s, name)
-                                        for label, name in self.sport_to_activity.items()}
+        self.sport_to_activity_group = {label: group for label, group in self._expand_activities(s)}
         super()._startup(s)
+
+    def _expand_activities(self, s):
+        # extract default values from config that supports more complex activity loading
+        for key, value in self.sport_to_activity.items():
+            while value and not isinstance(value, str):
+                try:
+                    value = value[DEFAULT]
+                except KeyError:
+                    log.warning(f'Missing default in sport_to_activity for {key}')
+                    value = None
+            if value:
+                yield key, ActivityGroup.from_name(s, value)
 
     def _get_loader(self, s, **kargs):
         if 'owner' not in kargs:

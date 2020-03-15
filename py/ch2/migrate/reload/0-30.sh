@@ -131,6 +131,8 @@ dev/ch2 --dev config default --no-diary
 
 echo "adding personal constants to $DB_DIR/database-$VER.sql"
 dev/ch2 --dev constants set FTHR.Bike 154
+dev/ch2 --dev constants set FTHR.MTB 154
+dev/ch2 --dev constants set FTHR.Road 154
 dev/ch2 --dev constants set FTHR.Walk 154
 dev/ch2 --dev constants set SRTM1.Dir /home/andrew/archive/srtm1
 # the name of this constant depends on the kit name and so we must add it ourselves

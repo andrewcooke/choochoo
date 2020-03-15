@@ -9,7 +9,7 @@ from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERC
     SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG, KM
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
-from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG
+from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG, DEFAULT
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...lib.date import to_time
@@ -30,8 +30,8 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    def __init__(self, *args, constants=None, sport_to_activity=None, record_to_db=None, **kargs):
-        self.constants = constants
+    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, **kargs):
+        self.define = define if define else {}
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (name, units, type)
@@ -41,12 +41,12 @@ class ActivityReader(MultiProcFitReader):
         super().__init__(*args, **kargs)
 
     def _base_command(self):
-        if self.constants:
-            constants = ' '.join(f'-D "{constant}"' for constant in self.constants) + ' -- '
+        if self.define:
+            define = ' '.join(f'-D "{name}={value}"' for name, value in self.define.items()) + ' -- '
         else:
-            constants = ''
+            define = ''
         return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.db_path} ' \
-               f'{ACTIVITIES} {mm(WORKER)} {self.id} --{FAST} {mm(FORCE) if self.force else ""} {constants}'
+               f'{ACTIVITIES} {mm(WORKER)} {self.id} --{FAST} {mm(FORCE) if self.force else ""} {define}'
 
     def _startup(self, s):
         super()._startup(s)
@@ -70,27 +70,33 @@ class ActivityReader(MultiProcFitReader):
         last_timestamp = self._last(file_scan, records, 'event', 'record').value.timestamp
         log.debug(f'Time range: {first_timestamp.timestamp()} - {last_timestamp.timestamp()}')
         sport = self.__read_sport(file_scan, records)
-        activity_group = self._activity_group(s, file_scan, sport)
+        activity_group = self._activity_group(s, file_scan, sport, self.sport_to_activity)
         log.info(f'{activity_group} from {sport}')
         if self.force:
-            self._delete_journals(s, activity_group, first_timestamp, last_timestamp)
+            self._delete_journals(s, activity_group, first_timestamp, last_timestamp, file_scan)
         else:
-            self._check_journals(s, activity_group, first_timestamp, last_timestamp)
+            self._check_journals(s, activity_group, first_timestamp, last_timestamp, file_scan)
         ajournal = add(s, ActivityJournal(activity_group=activity_group,
                                           start=first_timestamp, finish=first_timestamp,  # will be over-written later
                                           file_hash_id=file_scan.file_hash_id))
         return ajournal, activity_group, first_timestamp
 
-    def _activity_group(self, s, file_scan, sport):
-        if sport in self.sport_to_activity:
-            return self._lookup_activity_group(s, self.sport_to_activity[sport])
+    def _activity_group(self, s, file_scan, sport, lookup):
+        if isinstance(lookup, str):
+            return self._lookup_activity_group(s, lookup)
+        if sport in lookup:
+            return self._activity_group(s, file_scan, sport, lookup[sport])
+        for key, value in self.define.items():
+            if key in lookup and value in lookup[key]:
+                return self._activity_group(s, file_scan, sport, lookup[key][value])
+        if DEFAULT in lookup:
+            return self._activity_group(s, file_scan, sport, lookup[DEFAULT])
+        log.warning('Unrecognised sport: "%s" in %s' % (sport, file_scan))
+        if sport in (SPORT_GENERIC,):
+            raise Exception(f'Ignoring {sport} entry')
         else:
-            log.warning('Unrecognised sport: "%s" in %s' % (sport, file_scan))
-            if sport in (SPORT_GENERIC,):
-                raise Exception(f'Ignoring {sport} entry')
-            else:
-                raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
-                                     'See sport_to_activity in ch2.config.default.py')
+            raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
+                                 'See sport_to_activity in ch2.config.default.py')
 
     def _lookup_activity_group(self, s, name):
         activity_group = ActivityGroup.from_name(s, name, optional=True)
@@ -111,28 +117,39 @@ class ActivityReader(MultiProcFitReader):
                        ActivityJournal.start < last_timestamp,
                        ActivityJournal.finish >= first_timestamp)
 
-    def _delete_journals(self, s, activity_group, first_timestamp, last_timestamp):
-        log.debug('Deleting overlapping journals')
-        for journal in self._overlapping_journals(s, ActivityJournal, activity_group,
-                                                  first_timestamp, last_timestamp).all():
+    def _file_hash_journals(self, s, what, file_scan):
+        return s.query(what). \
+                filter(ActivityJournal.file_hash == file_scan.file_hash)
+
+    def _delete_query(self, s, query):
+        for journal in query.all():
             Timestamp.clear(s, owner=self.owner_out, source=journal)
             log.debug(f'Deleting {journal}')
             s.delete(journal)
+
+    def _delete_journals(self, s, activity_group, first_timestamp, last_timestamp, file_scan):
+        log.debug('Deleting overlapping journals')
+        self._delete_query(s, self._overlapping_journals(s, ActivityJournal, activity_group,
+                                                         first_timestamp, last_timestamp))
+        log.debug('Deleting journals from same file')
+        self._delete_query(s, self._file_hash_journals(s, ActivityJournal, file_scan))
         s.commit()
 
-    def _check_journals(self, s, activity_group, first_timestamp, last_timestamp):
+    def _check_journals(self, s, activity_group, first_timestamp, last_timestamp, file_scan):
         log.debug('Checking for overlapping journals')
         if self._overlapping_journals(s, count(ActivityJournal.id), activity_group,
                                       first_timestamp, last_timestamp).scalar():
             log.warning(f'Overlapping activities for {first_timestamp} - {last_timestamp}')
             raise AbortImportButMarkScanned()
+        log.debug('Checking for previous file')
+        if self._file_hash_journals(s, count(ActivityJournal.id), file_scan).scalar():
+            log.warning(f'Repeated scan of file {file_scan.path}')
+            raise Exception(file_scan.path)  # this should not happen since hash is checked before import
 
-    def _load_constants(self, s, ajournal):
-        if self.constants:
-            for constant in self.constants:
-                name, value = constant.split('=', 1)
-                log.debug(f'Setting {name}={value}')
-                StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
+    def _load_define(self, s, ajournal):
+        for name, value in self.define.items():
+            log.debug(f'Setting {name}={value}')
+            StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
                                          ajournal, value, ajournal.start)
 
     @staticmethod
@@ -171,7 +188,7 @@ class ActivityReader(MultiProcFitReader):
 
         ajournal, activity_group, first_timestamp, file_scan, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
-        self._load_constants(s, ajournal)
+        self._load_define(s, ajournal)
         self._save_name(s, ajournal, file_scan)
         self.__ajournal = ajournal
 
