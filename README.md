@@ -31,6 +31,10 @@ jupyter` and provide an introduction to doing your own analysis.
 
 ![](docs/calendar.png)
 
+![](docs/web-1.png)
+
+![](docs/web-2.png)
+
 ## Technical Overview
 
 The system includes:

@@ -38,6 +38,7 @@
     "history": "^4.10.1",
     "react-router-dom": "^5.1.2",
     "regenerator-runtime": "^0.13.3",
-    "sprintf-js": "^1.1.2"
+    "sprintf-js": "^1.1.2",
+    "acorn": ">=6.4.1"
   }
 }
