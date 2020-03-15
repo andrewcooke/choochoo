@@ -114,7 +114,7 @@ const YMD = ['Year', 'Month', 'Day'];
 
 function DateButtons(props) {
 
-    const {ymd, ymdSelected, datetime, onChange} = props;
+    const {ymd, ymdSelected, datetime, onChange, onCentre} = props;
     const top = ymd === ymdSelected;
 
     function delta(n) {
@@ -136,16 +136,16 @@ function DateButtons(props) {
         onChange(add(datetime, delta(1)));
     }
 
-    function onCentre() {
+    function onHere() {
         // if top, revert to today, otherwise switch range at current date
-        onChange(top ? new Date() : datetime);
+        onCentre(top ? new Date() : datetime);
     }
 
     if (ymd > ymdSelected) {
         return <></>;
     } else {
         return (<ImmediateBeforeNextButtons top={top} label={YMD[ymd]}
-                                            onCentre={onCentre} onBefore={onBefore} onNext={onNext}/>);
+                                            onCentre={onHere} onBefore={onBefore} onNext={onNext}/>);
     }
 }
 
@@ -210,11 +210,14 @@ function DiaryMenu(props) {
                     onChange={datetime => setDatetime(datetime, dateFmt)}/>
         </ListItem>
         <DateButtons ymd={2} ymdSelected={ymdSelected} datetime={datetime}
-                     onChange={datetime => setDatetime(datetime, dateFmt)}/>
+                     onChange={datetime => setDatetime(datetime, dateFmt)}
+                     onCentre={datetime => setDatetime(datetime, dateFmt)}/>
         <DateButtons ymd={1} ymdSelected={ymdSelected} datetime={datetime}
-                     onChange={datetime => setDatetime(datetime, FMT_MONTH)}/>
+                     onChange={datetime => setDatetime(datetime, dateFmt)}
+                     onCentre={datetime => setDatetime(datetime, FMT_MONTH)}/>
         <DateButtons ymd={0} ymdSelected={ymdSelected} datetime={datetime}
-                     onChange={datetime => setDatetime(datetime, FMT_YEAR)}/>
+                     onChange={datetime => setDatetime(datetime, dateFmt)}
+                     onCentre={datetime => setDatetime(datetime, FMT_YEAR)}/>
         <SubMenu ymd={ymdSelected} date={date} dateFmt={dateFmt}
                  onDay={setDate} onMonth={setDate}
                  onActivity={datetime => setDatetime(datetime, dateFmt)}/>
