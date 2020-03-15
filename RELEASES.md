@@ -4,6 +4,13 @@
 See [upgrade
 instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 
+### v0.30.0
+
+Change interval handling so that possibly incorrect values are marked
+'dirty' rather than deleted immediately.  Add separate activity groups
+for road and MTB (see default config).  Fix a bunch of bugs introduced
+in the big changes in the previous release.
+
 ### v0.29.0
 
 Rewrote diary, decoupling model and view, and added web based (React)
