@@ -31,6 +31,8 @@ jupyter` and provide an introduction to doing your own analysis.
 
 ![](docs/calendar.png)
 
+A couple of screenshots of the responsive web interface from my phone:
+
 ![](docs/web-1.png)
 
 ![](docs/web-2.png)
