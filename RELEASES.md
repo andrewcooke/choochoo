@@ -6,10 +6,11 @@ instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 
 ### v0.30.0
 
-Change interval handling so that possibly incorrect values are marked
-'dirty' rather than deleted immediately.  Add separate activity groups
-for road and MTB (see default config).  Fix a bunch of bugs introduced
-in the big changes in the previous release.
+Changed interval handling so that possibly incorrect values are marked
+'dirty' rather than deleted immediately.  Added separate activity
+groups for road and MTB (see default config).  Added achievements.
+Fixed a bunch of bugs introduced in the big changes in the previous
+release.
 
 ### v0.29.0
 
