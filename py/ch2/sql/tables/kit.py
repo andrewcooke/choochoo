@@ -292,7 +292,7 @@ class KitComponent(Base):
 
 class KitModel(StatisticsMixin, Source):
     '''
-    a particular piece of a a kit item (a particular bike wheel, a particular set of laces, etc).
+    a particular piece of a kit item (a particular bike wheel, a particular set of laces, etc).
     '''
 
     __tablename__ = 'kit_model'

@@ -328,7 +328,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     def merge_to_hour(stats, extra):
         return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                            how='outer', left_index=True, right_index=True)
-
+    
     # avoid x statistics some time in first day
     start = start or s.query(StatisticJournal.time).filter(StatisticJournal.time >
                                                            local_date_to_time(to_date('1970-01-03'))) \

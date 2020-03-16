@@ -121,7 +121,11 @@ def format_metres(dist):
     if dist < 1000:
         return str(int(dist)) + M
     else:
-        return f'{dist/1000:.1f}{KM}'
+        return format_km(dist / 1000)
+
+
+def format_km(dist):
+    return f'{dist:.1f}{KM}'
 
 
 def format_percent(pc):

@@ -7,7 +7,7 @@ from numpy import median
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
     START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD
-from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_metres, \
+from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_km, \
     groupby_tuple, format_date, is_local_time
 from ..sql import PipelineType
 from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
@@ -229,7 +229,7 @@ def group_statistics(s, group):
                        format_seconds),
                  stats(ACTIVE_DISTANCE,
                        [sum(distance.value for distance in item.active_distances(s)) for item in group.items],
-                       format_metres)))
+                       format_km)))
 
 
 def item_statistics(s, item):
@@ -242,7 +242,7 @@ def item_statistics(s, item):
                        format_seconds),
                  stats(ACTIVE_DISTANCE,
                        [distance.value for distance in item.active_distances(s)],
-                       format_metres)]
+                       format_km)]
                 +
                 [Node(f'Component {component.name}',
                       (stats(LIFETIME,
@@ -253,7 +253,7 @@ def item_statistics(s, item):
                              format_seconds),
                        stats(ACTIVE_DISTANCE,
                              [sum(time.value for time in model.active_distances(s)) for model in components[component]],
-                             format_metres)))
+                             format_km)))
                  for component in ordered_components])
 
 
@@ -268,7 +268,7 @@ def component_statistics(s, component, output=stdout):
                              format_seconds),
                        stats(ACTIVE_DISTANCE,
                              [sum(time.value for time in model.active_distances(s)) for model in group],
-                             format_metres)))
+                             format_km)))
                  for name, group in groupby_tuple(sorted(component.models, key=lambda model: model.name),
                                                   key=lambda model: model.name)])
     # todo - order by active distance?
@@ -285,7 +285,7 @@ def model_statistics(s, model):
                        format_seconds),
                  stats(ACTIVE_DISTANCE,
                        [sum(time.value for time in model.active_distances(s)) for model in models],
-                       format_metres)))
+                       format_km)))
 
 
 class Node:
@@ -370,7 +370,7 @@ def dump_group(s, cmd, group):
 
 
 def dump_item(s, cmd, item):
-    print(f'{cmd} {KIT} {START} {mm(FORCE)}  {q(item.constraint.name)} {q(item.name)}  {qd(item.time_added(s))}')
+    print(f'{cmd} {KIT} {START} {mm(FORCE)}  {q(item.group.name)} {q(item.name)}  {qd(item.time_added(s))}')
     for model in s.query(KitModel).filter(KitModel.item == item).all():
         dump_model(s, cmd, item, model)
 
