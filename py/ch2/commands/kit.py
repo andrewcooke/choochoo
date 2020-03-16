@@ -151,7 +151,7 @@ def undo(s, item, component, model, date, all):
 
 
 def rebuild(system, db):
-    run_pipeline(system, db, PipelineType.STATISTIC, force=True, like=long_cls(KitCalculator))
+    run_pipeline(system, db, PipelineType.STATISTIC, force=True, like=[long_cls(KitCalculator)])
 
 
 def show(s, name, date):
@@ -361,7 +361,7 @@ def dump(s, cmd):
 
 
 def delete_group(s, cmd, group):
-    print(f'{cmd} {KIT} {DELETE} {mm(FORCE)}  {q(group.name)}')
+    print(f'{cmd} {KIT} {DELETE} {mm(FORCE)} {q(group.name)}')
 
 
 def dump_group(s, cmd, group):
@@ -370,12 +370,12 @@ def dump_group(s, cmd, group):
 
 
 def dump_item(s, cmd, item):
-    print(f'{cmd} {KIT} {START} {mm(FORCE)}  {q(item.group.name)} {q(item.name)}  {qd(item.time_added(s))}')
+    print(f'{cmd} {KIT} {START} {mm(FORCE)} {q(item.group.name)} {q(item.name)} {qd(item.time_added(s))}')
     for model in s.query(KitModel).filter(KitModel.item == item).all():
         dump_model(s, cmd, item, model)
 
 
 def dump_model(s, cmd, item, model):
-    print(f'{cmd} {KIT} {CHANGE} {mm(FORCE)}  {q(item.name)} {q(model.component.name)} {q(model.name)}   '
+    print(f'{cmd} {KIT} {CHANGE} {mm(FORCE)} {q(item.name)} {q(model.component.name)} {q(model.name)} '
           f'{qd(model.time_added(s))}')
 
