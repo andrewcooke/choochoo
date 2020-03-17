@@ -43,7 +43,7 @@ export default function Analysis(props) {
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/analysis-parameters')
+        fetch('/api/diary/analysis-parameters')
             .then(response => response.json())
             .then(json => setJson(json));
     }, [1]);

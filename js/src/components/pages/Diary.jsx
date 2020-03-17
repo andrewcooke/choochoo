@@ -83,7 +83,7 @@ function ActivityButtons(props) {
     }
 
     useEffect(() => {
-        fetch('/api/neighbour-activities/' + date)
+        fetch('/api/diary/neighbour-activities/' + date)
             .then(response => response.json())
             .then(setContent);
     }, [date]);
@@ -155,7 +155,7 @@ function ActiveDays(props) {
     const [json, setJson] = useState(null);
     useEffect(() => {
         setJson(null);
-        fetch('/api/active-days/' + date)
+        fetch('/api/diary/active-days/' + date)
             .then(response => response.json())
             .then(json => setJson(json));
     }, [date]);
@@ -168,7 +168,7 @@ function ActiveMonths(props) {
     const [json, setJson] = useState(null);
     useEffect(() => {
         setJson(null);
-        fetch('/api/active-months/' + date)
+        fetch('/api/diary/active-months/' + date)
             .then(response => response.json())
             .then(json => setJson(json));
     }, [date]);
@@ -247,11 +247,11 @@ export default function Diary(props) {
     const {ymdSelected, dateFmt, component} = classifyDate(date);
     const datetime = parse(date, dateFmt, new Date());
     const [json, setJson] = useState(null);
-    const writer = new Worker('/static/writer.js');
+    const writer = new Worker('/api/static/writer.js');
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/diary/' + date)
+        fetch('/api/diary/on/' + date)
             .then(response => response.json())
             .then(json => setJson(json));
     }, [date]);

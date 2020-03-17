@@ -23,17 +23,22 @@ export default function MainMenu(props) {
 
     const classes = useStyles();
 
-    const [open, setOpen] = useState(false);
-    const handleClick = () => {
-        setOpen(!open);
+    const [openDiary, setOpenDiary] = useState(false);
+    const handleDiaryClick = () => {
+        setOpenDiary(!openDiary);
+    };
+
+    const [openKit, setOpenKit] = useState(false);
+    const handleKitClick = () => {
+        setOpenKit(!openKit);
     };
 
     return (<List component="nav" className={classes.root}>
-        <ListItem button onClick={handleClick}>
+        <ListItem button onClick={handleDiaryClick}>
             <ListItemText primary='Diary'/>
-            {open ? <ExpandLess/> : <ExpandMore/>}
+            {openDiary ? <ExpandLess/> : <ExpandMore/>}
         </ListItem>
-        <Collapse in={open} timeout="auto" unmountOnExit>
+        <Collapse in={openDiary} timeout="auto" unmountOnExit>
             <List component="div" disablePadding className={classes.nested}>
                 <ListItemLink primary='Day' to={'/' + format(new Date(), FMT_DAY)}/>
                 <ListItemLink primary='Month' to={'/' + format(new Date(), FMT_MONTH)}/>
@@ -41,5 +46,15 @@ export default function MainMenu(props) {
             </List>
         </Collapse>
         <ListItemLink primary='Analysis' to='/analysis'/>
+        <ListItem button onClick={handleKitClick}>
+            <ListItemText primary='Kit'/>
+            {openKit ? <ExpandLess/> : <ExpandMore/>}
+        </ListItem>
+        <Collapse in={openKit} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding className={classes.nested}>
+                <ListItemLink primary='Change' to={'/kit/change'}/>
+                <ListItemLink primary='Statistics' to={'/kit/statistics'}/>
+            </List>
+        </Collapse>
     </List>);
 }

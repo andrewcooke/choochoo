@@ -11,7 +11,7 @@ module.exports = {
     output: {
 	path: resolve('../py/ch2/web/static'),
 	filename: '[name].js',
-	publicPath: 'static/'
+	publicPath: 'api/static/'
     },
     resolve: {
 	extensions: ['.js', '.jsx', '.css']

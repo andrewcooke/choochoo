@@ -11,6 +11,7 @@ from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestam
 from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
+from ...diary.model import TYPE, DB, NAME, ITEMS, COMPONENTS, MODELS
 from ...lib import now
 from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE
 
@@ -179,6 +180,10 @@ class KitGroup(Base):
                 else:
                     raise Exception(f'Specify {mm(FORCE)} to create a new group ({name})')
 
+    def to_model(self):
+        return {TYPE: self.SIMPLE_NAME, DB: self.id, NAME: self.name,
+                ITEMS: [item.to_model() for item in self.items]}
+
     def __str__(self):
         return f'KitGroup "{self.name}"'
 
@@ -240,6 +245,10 @@ class KitItem(StatisticsMixin, Source):
         s.delete(self)
         Composite.clean(s)
 
+    def to_model(self):
+        return {TYPE: self.SIMPLE_NAME, NAME: self.name,
+                COMPONENTS: [component.to_model() for component in self.components]}
+
     def __str__(self):
         return f'KitItem "{self.name}"'
 
@@ -285,6 +294,10 @@ class KitComponent(Base):
         s.refresh(self)  # make sure deleted models are no longer present
         if not self.models:
             s.delete(self)
+
+    def to_model(self):
+        return {TYPE: self.SIMPLE_NAME, NAME: self.name,
+                MODELS: [model.to_model for model in self.models]}
 
     def __str__(self):
         return f'KitComponent "{self.name}"'
@@ -430,6 +443,9 @@ class KitModel(StatisticsMixin, Source):
 
     def time_range(self, s):
         return None, None
+
+    def to_model(self):
+        return None
 
     def __str__(self):
         return f'KitModel "{self.name}"'
