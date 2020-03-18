@@ -2,6 +2,7 @@
 from collections import defaultdict
 from logging import getLogger
 
+from numpy import median
 from sqlalchemy import Column, Integer, ForeignKey, Text, desc, or_
 from sqlalchemy.orm import relationship, aliased, backref
 from sqlalchemy.orm.exc import NoResultFound
@@ -11,11 +12,21 @@ from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestam
 from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
-from ...diary.model import TYPE, DB, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS
+from ...diary.model import TYPE, DB, UNITS
 from ...lib import now
-from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE
+from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S
 
 log = getLogger(__name__)
+
+NAME = 'name'
+ITEMS = 'items'
+COMPONENTS = 'components'
+MODELS = 'models'
+STATISTICS = 'statistics'
+N = 'n'
+SUM = 'sum'
+AVERAGE = 'average'
+MEDIAN = 'median'
 
 
 '''
@@ -151,7 +162,18 @@ class StatisticsMixin:
         return expired - added
 
     def _add_model_statistics(self, s, model):
-        model[STATISTICS] = {ACTIVE_DISTANCE: list(self.active_distances(s))}
+        model_statistics = {}
+        self._calculate_model_statistics(model_statistics, ACTIVE_DISTANCE, self.active_distances(s), KM)
+        self._calculate_model_statistics(model_statistics, ACTIVE_TIME, self.active_times(s), S)
+        if model_statistics:
+            model[STATISTICS] = model_statistics
+
+    def _calculate_model_statistics(self, model_statistics, name, values, units):
+        n = len(values)
+        if n:
+            values = [value.value for value in values]
+            total = sum(values)
+            model_statistics[name] = {N: n, SUM: total, AVERAGE: total / n, MEDIAN: median(values), UNITS: units}
 
 
 class ModelMixin:

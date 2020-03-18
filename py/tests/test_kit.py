@@ -6,9 +6,9 @@ from ch2.commands.activities import activities
 from ch2.commands.args import bootstrap_file, m, V, mm, FAST, DEV, D
 from ch2.commands.kit import start, change, statistics, finish, show, undo
 from ch2.config import default
-from ch2.diary.model import TYPE, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS
+from ch2.diary.model import TYPE
 from ch2.sql import KitModel, KitItem, KitComponent, PipelineType
-from ch2.sql.tables.kit import get_name, KitGroup
+from ch2.sql.tables.kit import get_name, KitGroup, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS
 from ch2.stats.names import ACTIVE_DISTANCE
 from ch2.stats.pipeline import run_pipeline
 
@@ -68,6 +68,7 @@ class TestKit(TestCase):
             args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
                                            'data/test/source/personal/2018-08-03-rec.fit',
                                            m(D.upper())+'kit=cotic')
+            activities(args, sys, db)
             args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
                                            'data/test/source/personal/2018-08-27-rec.fit',
                                            m(D.upper())+'kit=cotic')
@@ -101,4 +102,4 @@ class TestKit(TestCase):
                 self.assertEqual(chain[NAME], 'chain')
                 self.assertEqual(len(chain[MODELS]), 6)
                 self.assertFalse(STATISTICS in bike)
-                print(cotic[STATISTICS])
+                print(bike)
