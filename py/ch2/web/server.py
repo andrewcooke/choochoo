@@ -64,6 +64,7 @@ class WebServer:
     def __init__(self, db, jcontrol):
         self.__db = db
         diary = Diary()
+        kit = Kit()
         static = Static('.static')
         jupyter = Jupyter(jcontrol)
         self.url_map = Map([
@@ -74,6 +75,7 @@ class WebServer:
             Rule('/api/diary/analysis-parameters', endpoint=diary.read_analysis_params, methods=('GET',)),
             Rule('/api/diary/statistics', endpoint=diary.write_statistics, methods=('POST',)),
             Rule('/api/diary/<path:path>', endpoint=error(BadRequest), methods=('GET', 'POST')),
+            Rule('/api/kit/statistics', endpoint=kit.statistics, methods=('GET', )),
             Rule('/api/static/<path:path>', endpoint=static, methods=('GET', )),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=('GET', )),
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),

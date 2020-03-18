@@ -11,7 +11,7 @@ from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestam
 from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
-from ...diary.model import TYPE, DB, NAME, ITEMS, COMPONENTS, MODELS
+from ...diary.model import TYPE, DB, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS
 from ...lib import now
 from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE
 
@@ -117,9 +117,11 @@ class StatisticsMixin:
             s.delete(instance)
 
     def _add_timestamp(self, s, statistic, time, source=None, owner=None):
+        log.debug(f'Add timestamp for {statistic} at {time} with source {source}')
         # if source is given it is in addition to self
         if source:
             source = Composite.create(s, source, self)
+            log.debug(f'Composite {source}')
         else:
             source = self
         owner = owner or self
@@ -148,8 +150,24 @@ class StatisticsMixin:
         expired = expired or now()
         return expired - added
 
+    def _add_model_statistics(self, s, model):
+        model[STATISTICS] = {ACTIVE_DISTANCE: list(self.active_distances(s))}
 
-class KitGroup(Base):
+
+class ModelMixin:
+
+    def to_model(self, s, depth=0, statistics=False):
+        model = {TYPE: self.SIMPLE_NAME, DB: self.id, NAME: self.name}
+        if depth > 0: self._add_children(s, model, depth=depth-1, statistics=statistics)
+        if statistics:
+            try:
+                self._add_model_statistics(s, model)
+            except AttributeError:
+                pass  # not a statistics mixin
+        return model
+
+
+class KitGroup(ModelMixin, Base):
     '''
     top level group for kit (bike, shoe, etc)
     '''
@@ -180,15 +198,14 @@ class KitGroup(Base):
                 else:
                     raise Exception(f'Specify {mm(FORCE)} to create a new group ({name})')
 
-    def to_model(self):
-        return {TYPE: self.SIMPLE_NAME, DB: self.id, NAME: self.name,
-                ITEMS: [item.to_model() for item in self.items]}
+    def _add_children(self, s, model, depth=0, statistics=False):
+        model[ITEMS] = [item.to_model(s, depth=depth, statistics=statistics) for item in self.items]
 
     def __str__(self):
         return f'KitGroup "{self.name}"'
 
 
-class KitItem(StatisticsMixin, Source):
+class KitItem(ModelMixin, StatisticsMixin, Source):
     '''
     an individual kit item (a particular bike, a particular shoe, etc)
     '''
@@ -245,15 +262,14 @@ class KitItem(StatisticsMixin, Source):
         s.delete(self)
         Composite.clean(s)
 
-    def to_model(self):
-        return {TYPE: self.SIMPLE_NAME, NAME: self.name,
-                COMPONENTS: [component.to_model() for component in self.components]}
+    def _add_children(self, s, model, depth=0, statistics=False):
+        model[COMPONENTS] = [component.to_model(s, depth=depth, statistics=statistics) for component in self.components]
 
     def __str__(self):
         return f'KitItem "{self.name}"'
 
 
-class KitComponent(Base):
+class KitComponent(ModelMixin, Base):
     '''
     the kind of thing that a kit item is made of (bike wheel, shoe laces, etc)
     '''
@@ -295,15 +311,14 @@ class KitComponent(Base):
         if not self.models:
             s.delete(self)
 
-    def to_model(self):
-        return {TYPE: self.SIMPLE_NAME, NAME: self.name,
-                MODELS: [model.to_model for model in self.models]}
+    def _add_children(self, s, model, depth=0, statistics=False):
+        model[MODELS] = [model.to_model(s, depth=depth, statistics=statistics) for model in self.models]
 
     def __str__(self):
         return f'KitComponent "{self.name}"'
 
 
-class KitModel(StatisticsMixin, Source):
+class KitModel(ModelMixin, StatisticsMixin, Source):
     '''
     a particular piece of a kit item (a particular bike wheel, a particular set of laces, etc).
     '''
@@ -444,8 +459,8 @@ class KitModel(StatisticsMixin, Source):
     def time_range(self, s):
         return None, None
 
-    def to_model(self):
-        return None
+    def _add_children(self, s, model, depth=0, statistics=False):
+        pass
 
     def __str__(self):
         return f'KitModel "{self.name}"'

@@ -49,6 +49,8 @@ NAME = 'name'
 ITEMS = 'items'
 COMPONENTS = 'components'
 MODELS = 'models'
+STATISTICS = 'statistics'
+
 
 log = getLogger(__name__)
 

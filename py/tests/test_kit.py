@@ -1,13 +1,16 @@
-
+from subprocess import run
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
-from ch2.commands.args import bootstrap_file, m, V
+from ch2.commands.activities import activities
+from ch2.commands.args import bootstrap_file, m, V, mm, FAST, DEV, D
 from ch2.commands.kit import start, change, statistics, finish, show, undo
 from ch2.config import default
-from ch2.diary.model import TYPE, NAME, ITEMS, COMPONENTS, MODELS
-from ch2.sql import KitModel, KitItem, KitComponent
+from ch2.diary.model import TYPE, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS
+from ch2.sql import KitModel, KitItem, KitComponent, PipelineType
 from ch2.sql.tables.kit import get_name, KitGroup
+from ch2.stats.names import ACTIVE_DISTANCE
+from ch2.stats.pipeline import run_pipeline
 
 
 class TestKit(TestCase):
@@ -60,18 +63,32 @@ class TestKit(TestCase):
 
     def test_models(self):
         with NamedTemporaryFile() as f:
+
             args, sys, db = bootstrap_file(f, m(V), '5', configurator=default)
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+                                           'data/test/source/personal/2018-08-03-rec.fit',
+                                           m(D.upper())+'kit=cotic')
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+                                           'data/test/source/personal/2018-08-27-rec.fit',
+                                           m(D.upper())+'kit=cotic')
+            activities(args, sys, db)
+            run_pipeline(sys, db, PipelineType.STATISTIC, like=['%Activity%'], n_cpu=1)
+
             with db.session_context() as s:
-                start(s, 'bike', 'cotic', None, True)
-                start(s, 'bike', 'marin', None, False)
+                start(s, 'bike', 'cotic', '2018-01-01', True)
+                start(s, 'bike', 'marin', '2018-01-01', False)
                 change(s, 'cotic', 'chain', 'sram', None, True, True)
                 change(s, 'cotic', 'chain', 'kcm', '2018-01-01', False, False)
                 change(s, 'cotic', 'chain', 'sram', '2018-05-01', False, False)
                 change(s, 'cotic', 'chain', 'kcm', '2018-07-01', False, False)
                 change(s, 'cotic', 'chain', 'sram', '2018-04-01', False, False)
-                start(s, 'bike', 'bowman', None, False)
+                start(s, 'bike', 'bowman', '2018-01-01', False)
                 change(s, 'bowman', 'chain', 'sram', None, False, True)
-                bike = get_name(s, 'bike').to_model()
+
+            run_pipeline(sys, db, PipelineType.STATISTIC, like=['%Kit%'], n_cpu=1)
+
+            with db.session_context() as s:
+                bike = get_name(s, 'bike').to_model(s, depth=3, statistics=True)
                 self.assertEqual(bike[TYPE], KitGroup.SIMPLE_NAME)
                 self.assertEqual(bike[NAME], 'bike')
                 self.assertEqual(len(bike[ITEMS]), 3)
@@ -83,3 +100,5 @@ class TestKit(TestCase):
                 self.assertEqual(chain[TYPE], KitComponent.SIMPLE_NAME)
                 self.assertEqual(chain[NAME], 'chain')
                 self.assertEqual(len(chain[MODELS]), 6)
+                self.assertFalse(STATISTICS in bike)
+                print(cotic[STATISTICS])
