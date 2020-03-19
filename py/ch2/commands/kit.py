@@ -6,11 +6,12 @@ from sys import stdout
 from numpy import median
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD
+    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, NEW
+from ..diary.model import TYPE
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_km, \
     groupby_tuple, format_date, is_local_time
 from ..sql import PipelineType
-from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
+from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED
 from ..sql.tables.source import Composite
 from ..sql.types import long_cls
 from ..stats.calculate.kit import KitCalculator
@@ -87,7 +88,10 @@ but in general must be unique.  They can contain spaces if quoted.
             elif cmd == UNDO:
                 undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
             elif cmd == SHOW:
-                show(s, args[NAME], args[DATE]).display(csv=args[CSV], output=output)
+                if args[NEW]:
+                    show2(s, args[NAME], args[DATE]).display(csv=args[CSV], output=output)
+                else:
+                    show(s, args[NAME], args[DATE]).display(csv=args[CSV], output=output)
             elif cmd == STATISTICS:
                 statistics(s, args[NAME]).display(csv=args[CSV], output=output)
             elif cmd == DUMP:
@@ -166,6 +170,59 @@ def show(s, name, date):
             return show_group(s, instance, date)
         else:
             return show_item(s, instance, date)
+
+
+def show2(s, name, date):
+    # this is complicated because both name and date are optional so if only one is
+    # supplied we need to guess which from the format.
+    if name is None:  # date must be None too, since it comes second on command line
+        name, time = '*', now()
+    elif date is None and is_local_time(name):  # only one was supplied and it looke like a date
+        name, time = '*', local_time_to_time(name)
+    else:
+        time = local_time_to_time(name)
+    if name == '*':
+        models = [group.to_model(s, time=time, depth=3) for group in s.query(KitGroup).order_by(KitGroup.name).all()]
+    else:
+        models = [get_name(s, name, classes=(KitGroup, KitItem), require=True).to_model(s, time=time, depth=3)]
+    print(models)
+    for model in models:
+        for line in to_tree(model, to_label_name_dates):
+            print(line)
+
+
+CHILDREN = {KitGroup.SIMPLE_NAME: KitItem.SIMPLE_NAME + 's',
+            KitItem.SIMPLE_NAME: KitComponent.SIMPLE_NAME + 's',
+            KitComponent.SIMPLE_NAME: KitModel.SIMPLE_NAME + 's'}
+
+
+def to_name(model):
+    yield model[NAME]
+
+
+def to_label_name(model):
+    yield f'{model[TYPE]}: {model[NAME]}'
+
+
+def to_label_name_dates(model):
+    if ADDED in model:
+        added = time_to_local_time(model[ADDED])
+        expired = time_to_local_time(model[EXPIRED]) if model[EXPIRED] else ''
+        yield f'{model[TYPE]}: {model[NAME]}  {added} - {expired}'
+    else:
+        yield f'{model[TYPE]}: {model[NAME]}'
+
+
+def to_tree(model, to_lines):
+    for line in to_lines(model):
+        yield line
+    if model[TYPE] in CHILDREN:
+        children = model[CHILDREN[model[TYPE]]]
+        for child in children:
+            prefix = '+-'
+            for line in to_tree(child, to_lines):
+                yield prefix + line
+                prefix = '  ' if child is children[-1] else '| '
 
 
 def show_all(s, date):

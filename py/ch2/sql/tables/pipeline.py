@@ -33,7 +33,7 @@ class Pipeline(Base):
         if like:
             q = q.filter(or_(*[Pipeline.cls.like(pattern) for pattern in like]))
         if unlike:
-            q = q.filter(not_(or_(*[Pipeline.cls.like(pattern) for pattern in like])))
+            q = q.filter(not_(or_(*[Pipeline.cls.like(pattern) for pattern in unlike])))
         if id:
             q = q.filter(Pipeline.id == id)
         pipelines = q.order_by(Pipeline.sort).all()
