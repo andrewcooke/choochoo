@@ -10,13 +10,14 @@ from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATI
 from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_km, \
     groupby_tuple, format_date, is_local_time
+from ..lib.date import format_minutes
 from ..lib.tree import to_tree, to_csv
 from ..sql import PipelineType
-from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED
+from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, N
 from ..sql.tables.source import Composite
 from ..sql.types import long_cls
 from ..stats.calculate.kit import KitCalculator
-from ..stats.names import ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME
+from ..stats.names import ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME, KM, S
 from ..stats.pipeline import run_pipeline
 
 log = getLogger(__name__)
@@ -214,10 +215,21 @@ def statistics(s, name, csv=False, output=stdout):
         models = [group.to_model(s, depth=3, statistics=True)
                   for group in s.query(KitGroup).order_by(KitGroup.name).all()]
     driver = to_csv if csv else to_tree
-    format = to_label_name_dates_csv if csv else to_stats
+    format = to_stats_csv if csv else to_stats
     for model in models:
         for line in driver(model, format, model_children):
             print(line, file=output)
+
+
+def stats_children(model):
+    names = [key for key in model.keys() if key not in (NAME, UNITS)]
+    if model[UNITS] == KM:
+        format = format_km
+    elif model[UNITS] == S:
+        format = lambda s: format_minutes(int(s))
+    else:
+        format = lambda x: x
+    return [{NAME: N, VALUE: model[N]}] + [{NAME: name, VALUE: format(model[name])} for name in names if name != N]
 
 
 def to_stats(model):
@@ -228,10 +240,22 @@ def to_stats(model):
         else:
             return label, None
     elif VALUE not in model:
-        names = [key for key in model.keys() if key not in (NAME, UNITS)]
-        return f'{model[NAME]} / {model[UNITS]}', [{NAME: name, VALUE: model[name]} for name in names]
+        return f'{model[NAME]}', stats_children(model)
     else:
         return f'{model[NAME]}: {model[VALUE]}', None
+
+
+def to_stats_csv(model):
+    if TYPE in model:
+        label = f'{q(model[TYPE])},{q(model[NAME])}'
+        if STATISTICS in model:
+            return label, model[STATISTICS]
+        else:
+            return label, None
+    elif VALUE not in model:
+        return f'{q(model[NAME])}', stats_children(model)
+    else:
+        return f'{q(model[NAME])},{q(model[VALUE])}', None
 
 
 def q(name):
