@@ -551,7 +551,6 @@ def make_parser():
     kit_show.add_argument(NAME, nargs='?', help='group or item to display (default all)')
     kit_show.add_argument(DATE, nargs='?', help='when to display (default now)')
     kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
-    kit_show.add_argument(mm(NEW), action='store_true', help='test new model')
     kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
     kit_statistics.add_argument(NAME, nargs='?', help='group, item, component or model')
     kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')

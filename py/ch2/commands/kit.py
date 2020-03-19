@@ -6,10 +6,11 @@ from sys import stdout
 from numpy import median
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, NEW
-from ..diary.model import TYPE
+    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, NEW, VALUE
+from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_km, \
     groupby_tuple, format_date, is_local_time
+from ..lib.tree import to_tree, to_csv
 from ..sql import PipelineType
 from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED
 from ..sql.tables.source import Composite
@@ -88,12 +89,9 @@ but in general must be unique.  They can contain spaces if quoted.
             elif cmd == UNDO:
                 undo(s, args[ITEM], args[COMPONENT], args[MODEL], args[DATE], args[ALL])
             elif cmd == SHOW:
-                if args[NEW]:
-                    show2(s, args[NAME], args[DATE]).display(csv=args[CSV], output=output)
-                else:
-                    show(s, args[NAME], args[DATE]).display(csv=args[CSV], output=output)
+                show(s, args[NAME], args[DATE], csv=args[CSV], output=output)
             elif cmd == STATISTICS:
-                statistics(s, args[NAME]).display(csv=args[CSV], output=output)
+                statistics(s, args[NAME], csv=args[CSV], output=output)
             elif cmd == DUMP:
                 dump(s, args[CMD])
 
@@ -158,37 +156,27 @@ def rebuild(system, db):
     run_pipeline(system, db, PipelineType.STATISTIC, force=True, like=[long_cls(KitCalculator)])
 
 
-def show(s, name, date):
-    if name is None:
-        return show_all(s, now())
-    elif date is None and is_local_time(name):
-        return show_all(s, local_time_to_time(name))
-    else:
-        instance = get_name(s, name, classes=(KitGroup, KitItem), require=True)
-        date = local_time_or_now(date)
-        if isinstance(instance, KitGroup):
-            return show_group(s, instance, date)
-        else:
-            return show_item(s, instance, date)
-
-
-def show2(s, name, date):
+def show(s, name, date, csv=None, output=stdout):
     # this is complicated because both name and date are optional so if only one is
     # supplied we need to guess which from the format.
     if name is None:  # date must be None too, since it comes second on command line
         name, time = '*', now()
-    elif date is None and is_local_time(name):  # only one was supplied and it looke like a date
-        name, time = '*', local_time_to_time(name)
+    elif date is None:
+        if is_local_time(name):  # only one was supplied and it looke like a date
+            name, time = '*', local_time_to_time(name)
+        else:
+            time = now()
     else:
-        time = local_time_to_time(name)
+        time = local_time_to_time(date)
     if name == '*':
         models = [group.to_model(s, time=time, depth=3) for group in s.query(KitGroup).order_by(KitGroup.name).all()]
     else:
         models = [get_name(s, name, classes=(KitGroup, KitItem), require=True).to_model(s, time=time, depth=3)]
-    print(models)
+    driver = to_csv if csv else to_tree
+    format = to_label_name_dates_csv if csv else to_label_name_dates
     for model in models:
-        for line in to_tree(model, to_label_name_dates):
-            print(line)
+        for line in driver(model, format, model_children):
+            print(line, file=output)
 
 
 CHILDREN = {KitGroup.SIMPLE_NAME: KitItem.SIMPLE_NAME + 's',
@@ -196,200 +184,54 @@ CHILDREN = {KitGroup.SIMPLE_NAME: KitItem.SIMPLE_NAME + 's',
             KitComponent.SIMPLE_NAME: KitModel.SIMPLE_NAME + 's'}
 
 
-def to_name(model):
-    yield model[NAME]
-
-
-def to_label_name(model):
-    yield f'{model[TYPE]}: {model[NAME]}'
+def model_children(model):
+    if TYPE in model and model[TYPE] in CHILDREN:
+        yield from model[CHILDREN[model[TYPE]]]
 
 
 def to_label_name_dates(model):
     if ADDED in model:
         added = time_to_local_time(model[ADDED])
         expired = time_to_local_time(model[EXPIRED]) if model[EXPIRED] else ''
-        yield f'{model[TYPE]}: {model[NAME]}  {added} - {expired}'
+        return f'{model[TYPE]}: {model[NAME]}  {added} - {expired}', None
     else:
-        yield f'{model[TYPE]}: {model[NAME]}'
+        return f'{model[TYPE]}: {model[NAME]}', None
 
 
-def to_tree(model, to_lines):
-    for line in to_lines(model):
-        yield line
-    if model[TYPE] in CHILDREN:
-        children = model[CHILDREN[model[TYPE]]]
-        for child in children:
-            prefix = '+-'
-            for line in to_tree(child, to_lines):
-                yield prefix + line
-                prefix = '  ' if child is children[-1] else '| '
+def to_label_name_dates_csv(model):
+    if ADDED in model:
+        added = time_to_local_time(model[ADDED])
+        expired = time_to_local_time(model[EXPIRED]) if model[EXPIRED] else ''
+    else:
+        added, expired = '', ''
+    return f'{q(model[TYPE])},{q(model[NAME])},{q(added)},{q(expired)}', None
 
 
-def show_all(s, date):
-    groups = s.query(KitGroup).order_by(KitGroup.name).all()
-    return Node('All groups', (show_group(s, group, date) for group in groups))
-
-
-def show_group(s, group, date):
-    items = s.query(KitItem).order_by(KitItem.name).all()
-    return Node(f'Group {group.name}', (show_item(s, item, date) for item in items))
-
-
-def show_item(s, item, date):
-    models = KitModel.get_all_at(s, item, date)
-    return Node(f'Item {item.name}',
-                (Node(f'Component {component}',
-                      (Leaf(f'Model {model.name} {format_date(model.time_added(s))}') for model in models))
-                 for component, models in groupby(models, key=lambda m: m.component.name)))
-
-
-def statistics(s, name):
+def statistics(s, name, csv=False, output=stdout):
     if name:
-        instance = get_name(s, name, require=True)
-        return {KitGroup: group_statistics,
-                KitItem: item_statistics,
-                KitComponent: component_statistics,
-                KitModel: model_statistics}[type(instance)](s, instance)
+        models = [get_name(s, name, require=True).to_model(s, depth=3, statistics=True)]
     else:
-        return all_statistics(s)
+        models = [group.to_model(s, depth=3, statistics=True)
+                  for group in s.query(KitGroup).order_by(KitGroup.name).all()]
+    driver = to_csv if csv else to_tree
+    format = to_label_name_dates_csv if csv else to_stats
+    for model in models:
+        for line in driver(model, format, model_children):
+            print(line, file=output)
 
 
-def all_statistics(s):
-    groups = s.query(KitGroup).order_by(KitGroup.name).all()
-    return Node('All groups', (group_statistics(s, group) for group in groups))
-
-
-def stats(title, values, fmt):
-    n = len(values)
-    if n == 0:
-        return Leaf(f'{title} [no data]')
-    elif n == 1:
-        return Leaf(f'{title} {fmt(values[0])}')
-    else:
-        total = sum(values)
-        avg = total / n
-        med = median(values)
-        return Node(title,
-                    (Leaf(f'Count {n}'),
-                     Leaf(f'Sum {fmt(total)}'),
-                     Leaf(f'Average {fmt(avg)}'),
-                     Leaf(f'Median {fmt(med)}')))
-
-
-def group_statistics(s, group):
-    return Node(f'Group {group.name}',
-                (stats(LIFETIME,
-                       [item.lifetime(s).total_seconds() for item in group.items],
-                       format_seconds),
-                 stats(ACTIVE_TIME,
-                       [sum(time.value for time in item.active_times(s)) for item in group.items],
-                       format_seconds),
-                 stats(ACTIVE_DISTANCE,
-                       [sum(distance.value for distance in item.active_distances(s)) for item in group.items],
-                       format_km)))
-
-
-def item_statistics(s, item):
-    components = item.components
-    ordered_components = sorted(components.keys(), key=lambda component: component.name)
-    return Node(f'Item {item.name}',
-                [Leaf(f'{LIFETIME} {format_seconds(item.lifetime(s).total_seconds())}'),
-                 stats(ACTIVE_TIME,
-                       [time.value for time in item.active_times(s)],
-                       format_seconds),
-                 stats(ACTIVE_DISTANCE,
-                       [distance.value for distance in item.active_distances(s)],
-                       format_km)]
-                +
-                [Node(f'Component {component.name}',
-                      (stats(LIFETIME,
-                             [model.lifetime(s).total_seconds() for model in components[component]],
-                             format_seconds),
-                       stats(ACTIVE_TIME,
-                             [sum(time.value for time in model.active_times(s)) for model in components[component]],
-                             format_seconds),
-                       stats(ACTIVE_DISTANCE,
-                             [sum(time.value for time in model.active_distances(s)) for model in components[component]],
-                             format_km)))
-                 for component in ordered_components])
-
-
-def component_statistics(s, component, output=stdout):
-    return Node(f'Item {component.name}',
-                [Node(f'Model {name}',
-                      (stats(LIFETIME,
-                             [model.lifetime(s).total_seconds() for model in group],
-                             format_seconds),
-                       stats(ACTIVE_TIME,
-                             [sum(time.value for time in model.active_times(s)) for model in group],
-                             format_seconds),
-                       stats(ACTIVE_DISTANCE,
-                             [sum(time.value for time in model.active_distances(s)) for model in group],
-                             format_km)))
-                 for name, group in groupby_tuple(sorted(component.models, key=lambda model: model.name),
-                                                  key=lambda model: model.name)])
-    # todo - order by active distance?
-
-
-def model_statistics(s, model):
-    models = s.query(KitModel).filter(KitModel.name == model.name).all()
-    return Node(f'Model {model.name}',
-                (stats(LIFETIME,
-                       [model.lifetime(s).total_seconds() for model in models],
-                       format_seconds),
-                 stats(ACTIVE_TIME,
-                       [sum(time.value for time in model.active_times(s)) for model in models],
-                       format_seconds),
-                 stats(ACTIVE_DISTANCE,
-                       [sum(time.value for time in model.active_distances(s)) for model in models],
-                       format_km)))
-
-
-class Node:
-
-    def __init__(self, label, children):
-        self.label = label
-        self.children = tuple(children)
-
-    def display(self, csv=False, output=stdout):
-        if csv:
-            self.csv(output=output)
+def to_stats(model):
+    if TYPE in model:
+        label = f'{model[TYPE]}: {model[NAME]}'
+        if STATISTICS in model:
+            return label, model[STATISTICS]
         else:
-            self.tree(output=output)
-
-    def csv(self, line='', output=stdout):
-        for child in self.children:
-            child.csv(line + f'{self.label},', output=output)
-
-    def tree(self, output=stdout):
-        print('\n'.join(self.tree_lines()), file=output)
-
-    def tree_lines(self):
-        yield self.label
-        last = self.children[-1] if self.children else None
-        for child in self.children:
-            prefix = '`-' if child is last else '+-'
-            for line in child.tree_lines():
-                yield prefix + line
-                prefix = '  ' if child is last else '| '
-
-    def __len__(self):
-        return 1 + sum(len(child) for child in self.children)
-
-
-class Leaf:
-
-    def __init__(self, value):
-        self.value = value
-
-    def csv(self, line='', output=stdout):
-        print(line + self.value, file=output)
-
-    def tree_lines(self):
-        yield self.value
-
-    def __len__(self):
-        return 1
+            return label, None
+    elif VALUE not in model:
+        names = [key for key in model.keys() if key not in (NAME, UNITS)]
+        return f'{model[NAME]} / {model[UNITS]}', [{NAME: name, VALUE: model[name]} for name in names]
+    else:
+        return f'{model[NAME]}: {model[VALUE]}', None
 
 
 def q(name):

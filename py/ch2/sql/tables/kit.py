@@ -26,7 +26,7 @@ MODELS = 'models'
 STATISTICS = 'statistics'
 N = 'n'
 SUM = 'sum'
-AVERAGE = 'average'
+MEAN = 'mean'
 MEDIAN = 'median'
 ADDED = 'added'
 EXPIRED = 'expired'
@@ -165,7 +165,7 @@ class StatisticsMixin:
         return expired - added
 
     def _add_model_statistics(self, s, model):
-        model_statistics = {}
+        model_statistics = []
         self._calculate_model_statistics(model_statistics, ACTIVE_DISTANCE, self.active_distances(s), KM)
         self._calculate_model_statistics(model_statistics, ACTIVE_TIME, self.active_times(s), S)
         if model_statistics:
@@ -176,7 +176,8 @@ class StatisticsMixin:
         if n:
             values = [value.value for value in values]
             total = sum(values)
-            model_statistics[name] = {N: n, SUM: total, AVERAGE: total / n, MEDIAN: median(values), UNITS: units}
+            model_statistics.append({NAME: name, N: n, SUM: total,
+                                     MEAN: total / n, MEDIAN: median(values), UNITS: units})
 
 
 class ModelMixin:
