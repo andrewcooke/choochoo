@@ -1,6 +1,6 @@
 import React from 'react';
 import {Grid, InputLabel} from "@material-ui/core";
-import FormatValueUnits from "./FormatValueUnits";
+import {FormatValueUnits} from "../../../elements";
 
 
 export default function SummaryField(props) {

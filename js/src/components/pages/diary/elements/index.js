@@ -2,7 +2,6 @@ export {default as Calendar} from './Calendar';
 export {default as ClimbField} from './ClimbField';
 export {default as EditField} from './EditField';
 export {default as FloatField} from './FloatField';
-export {default as FormatValueUnits} from './FormatValueUnits';
 export {default as HRZoneField} from './HRZoneField';
 export {default as IntegerField} from './IntegerField';
 export {default as JupyterActivity} from './JupyterActivity';

@@ -7,6 +7,7 @@ from werkzeug.wrappers.json import JSONMixin
 
 from .diary import Diary
 from .jupyter import Jupyter
+from .kit import Kit
 from .static import Static
 from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV
 from ..jupyter.server import JupyterController
@@ -75,7 +76,7 @@ class WebServer:
             Rule('/api/diary/analysis-parameters', endpoint=diary.read_analysis_params, methods=('GET',)),
             Rule('/api/diary/statistics', endpoint=diary.write_statistics, methods=('POST',)),
             Rule('/api/diary/<path:path>', endpoint=error(BadRequest), methods=('GET', 'POST')),
-            Rule('/api/kit/statistics', endpoint=kit.statistics, methods=('GET', )),
+            Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=('GET', )),
             Rule('/api/static/<path:path>', endpoint=static, methods=('GET', )),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=('GET', )),
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),

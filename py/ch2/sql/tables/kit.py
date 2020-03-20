@@ -13,7 +13,7 @@ from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
 from ...diary.model import TYPE, DB, UNITS
-from ...lib import now
+from ...lib import now, time_to_local_time
 from ...lib.utils import inside_interval
 from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S
 
@@ -182,10 +182,18 @@ class StatisticsMixin:
 
 class ModelMixin:
 
+    @staticmethod
+    def fmt_time(time):
+        if time:
+            return time_to_local_time(time)
+        else:
+            return None
+
     def to_model(self, s, depth=0, statistics=False, time=None):
         model = {TYPE: self.SIMPLE_NAME, DB: self.id, NAME: self.name}
         try:
-            model.update({ADDED: self.time_added(s), EXPIRED: self.time_expired(s)})
+            model.update({ADDED: self.fmt_time(self.time_added(s)),
+                          EXPIRED: self.fmt_time(self.time_expired(s))})
         except AttributeError:
             pass  # not a subclass of statistics mixin
         if depth > 0:

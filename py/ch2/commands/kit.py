@@ -1,15 +1,11 @@
-
-from itertools import groupby
 from logging import getLogger
 from sys import stdout
 
-from numpy import median
-
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, NEW, VALUE
+    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE
 from ..diary.model import TYPE, UNITS
-from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_seconds, format_km, \
-    groupby_tuple, format_date, is_local_time
+from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
+    is_local_time
 from ..lib.date import format_minutes
 from ..lib.tree import to_tree, to_csv
 from ..sql import PipelineType
@@ -17,7 +13,7 @@ from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
 from ..sql.tables.source import Composite
 from ..sql.types import long_cls
 from ..stats.calculate.kit import KitCalculator
-from ..stats.names import ACTIVE_TIME, ACTIVE_DISTANCE, LIFETIME, KM, S
+from ..stats.names import KM, S
 from ..stats.pipeline import run_pipeline
 
 log = getLogger(__name__)
@@ -192,9 +188,7 @@ def model_children(model):
 
 def to_label_name_dates(model):
     if ADDED in model:
-        added = time_to_local_time(model[ADDED])
-        expired = time_to_local_time(model[EXPIRED]) if model[EXPIRED] else ''
-        return f'{model[TYPE]}: {model[NAME]}  {added} - {expired}', None
+        return f'{model[TYPE]}: {model[NAME]}  {model[ADDED]} - {model[EXPIRED] or ""}', None
     else:
         return f'{model[TYPE]}: {model[NAME]}', None
 
