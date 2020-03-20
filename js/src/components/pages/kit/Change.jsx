@@ -9,7 +9,6 @@ function Columns(props) {
     if (params === null) {
         return <Loading/>;  // undefined initial data
     } else {
-        console.log(params);
         return (<p>todo</p>);
     }
 }

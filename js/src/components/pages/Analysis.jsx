@@ -20,7 +20,6 @@ function Columns(props) {
     if (params === null) {
         return <Loading/>;  // undefined initial data
     } else {
-        console.log(params);
         return (<ColumnList>
             <ActivityDetails params={params}/>
             <CompareActivities params={params}/>
