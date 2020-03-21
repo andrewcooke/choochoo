@@ -4,6 +4,7 @@ import {Grid, InputLabel, List, ListItem, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
 import {differenceInCalendarDays, format, formatDistance, parse} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
+import {setIds} from "../../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -38,14 +39,15 @@ function Statistic(props) {
         <NamedValue xs={1} name='n' value={statistic.n}/>
         {Object.keys(statistic).
             filter(key => ! ['n', 'name', 'units'].includes(key)).
-            map(key => <NamedValue xs={2} name={key} value={statistic[key]} units={statistic.units}/>)}
+            map((key, id) =>
+                <NamedValue xs={2} name={key} value={statistic[key]} units={statistic.units} key={id}/>)}
     </>)
 }
 
 
 function StatisticsValues(props) {
     const {statistics} = props;
-    return statistics.map(statistic => <Statistic statistic={statistic}/>);
+    return statistics.map(statistic => <Statistic statistic={statistic} key={statistic.id}/>);
 }
 
 
@@ -91,7 +93,7 @@ function ItemStatistics(props) {
         <StatisticsValues statistics={item.statistics}/>
         {item.components.map(
             component => component.models.map(
-                model => <ModelStatistics model={model} component={component} key={model.db}
+                model => <ModelStatistics model={model} component={component} key={model.id}
                                           datetime={datetime}/>)).flat()}
     </ColumnCard>);
 }
@@ -104,10 +106,12 @@ function Columns(props) {
     if (groups === null) {
         return <Loading/>;  // undefined initial data
     } else {
+        let id = 0;
+        groups.forEach(group => id = setIds(group, id, ['items', 'components', 'models', 'statistics']));
         return (<ColumnList>
             {groups.map(
                 group => group.items.map(
-                    item => <ItemStatistics item={item} group={group} key={item.db} datetime={datetime}/>)).flat()}
+                    item => <ItemStatistics item={item} group={group} key={item.id} datetime={datetime}/>)).flat()}
         </ColumnList>);
     }
 }
