@@ -43,7 +43,7 @@ class WebController(BaseController):
                    use_debugger=self.__dev, use_reloader=self.__dev)
 
     def _cleanup(self):
-         self._sys.delete_constant(SystemConstant.WEB_URL)
+        self._sys.delete_constant(SystemConstant.WEB_URL)
 
     def _status(self, running):
         if running:
@@ -69,16 +69,17 @@ class WebServer:
         static = Static('.static')
         jupyter = Jupyter(jcontrol)
         self.url_map = Map([
-            Rule('/api/diary/on/<date>', endpoint=diary.read_diary, methods=('GET',)),
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=('GET',)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=('GET',)),
             Rule('/api/diary/active-months/<year>', endpoint=diary.read_active_months, methods=('GET',)),
             Rule('/api/diary/analysis-parameters', endpoint=diary.read_analysis_params, methods=('GET',)),
             Rule('/api/diary/statistics', endpoint=diary.write_statistics, methods=('POST',)),
-            Rule('/api/diary/<path:path>', endpoint=error(BadRequest), methods=('GET', 'POST')),
-            Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=('GET', )),
+            Rule('/api/diary/<date>', endpoint=diary.read_diary, methods=('GET',)),
+            Rule('/api/kit/show', endpoint=kit.read_structure, methods=('GET', )),
+            Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=('GET', )),
             Rule('/api/static/<path:path>', endpoint=static, methods=('GET', )),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=('GET', )),
+            Rule('/api/<path:path>', endpoint=error(BadRequest), methods=('GET', 'POST')),
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
             Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',))
         ])

@@ -52,8 +52,8 @@ export default function MainMenu(props) {
         </ListItem>
         <Collapse in={openKit} timeout="auto" unmountOnExit>
             <List component="div" disablePadding className={classes.nested}>
+                <ListItemLink primary='Snapshot' to={'/kit/' + format(new Date(), FMT_DAY)}/>
                 <ListItemLink primary='Change' to={'/kit/change'}/>
-                <ListItemLink primary='Statistics' to={'/kit/statistics'}/>
             </List>
         </Collapse>
     </List>);

@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, FormatValueUnits, Layout, Loading, MainMenu, Text} from "../../elements";
-import {Grid, InputLabel, Typography} from "@material-ui/core";
+import {ColumnCard, ColumnList, DateButtons, FormatValueUnits, Layout, Loading, Picker, Text} from "../../elements";
+import {Grid, InputLabel, List, ListItem, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
-import {differenceInCalendarDays, formatDistanceToNow, parse} from 'date-fns';
+import {differenceInCalendarDays, format, formatDistanceToNow, parse} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -55,7 +55,7 @@ function Added(props) {
     const classes = useStyles();
 
     const date = parse(added, FMT_DAY, new Date());
-    const age = differenceInCalendarDays(Date.now(), date);
+    const age = differenceInCalendarDays(new Date(), date);
     const readable = age > 7 ? ` (${formatDistanceToNow(date)})` : '';
 
     return (<>
@@ -75,7 +75,9 @@ function ModelStatistics(props) {
     const classes = useStyles();
 
     return (<>
-        <Grid item xs={12} className={classes.h3}><Typography variant='h3'>{model.name} / {component.name}</Typography></Grid>
+        <Grid item xs={12} className={classes.h3}>
+            <Typography variant='h3'>{model.name} / {component.name}</Typography>
+        </Grid>
         <Added added={model.added}/>
         <StatisticsValues statistics={model.statistics}/>
     </>);
@@ -110,19 +112,43 @@ function Columns(props) {
 }
 
 
-export default function Statistics(props) {
+function SnapshotMenu(props) {
 
-    const {match} = props;
+    const {datetime, history} = props;
+    const classes = useStyles();
+
+    function setDate(datetime) {
+        history.push('/kit/' + format(datetime, FMT_DAY));
+    }
+
+    return (<List component="nav" className={classes.root}>
+        <ListItem>
+            <Picker ymdSelected={2} datetime={datetime} onChange={setDate}/>
+        </ListItem>
+        <DateButtons ymd={2} ymdSelected={2} datetime={datetime} onChange={setDate} onCentre={setDate}/>
+        <DateButtons ymd={1} ymdSelected={2} datetime={datetime} onChange={setDate}/>
+        <DateButtons ymd={0} ymdSelected={2} datetime={datetime} onChange={setDate}/>
+    </List>);
+}
+
+
+export default function Snapshot(props) {
+
+
+    const {match, history} = props;
+    const {date} = match.params;
+    const datetime = parse(date, FMT_DAY, new Date());
     const [json, setJson] = useState(null);
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/kit/statistics')
+        fetch('/api/kit/' + date)
             .then(response => response.json())
             .then(json => setJson(json));
     }, [1]);
 
     return (
-        <Layout navigation={<MainMenu/>} content={<Columns groups={json}/>} match={match} title='Kit Statistics'/>
+        <Layout navigation={<SnapshotMenu datetime={datetime} history={history}/>}
+                content={<Columns groups={json}/>} match={match} title={`Kit: ${date}`}/>
     );
 }

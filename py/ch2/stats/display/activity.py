@@ -9,8 +9,9 @@ from ..calculate.activity import ActivityCalculator
 from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
-    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _delta, M, S, PERCENT_IN_Z_ANY, \
-    KM
+    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _delta, M, S, \
+    PERCENT_IN_Z_ANY, \
+    KM, PC
 from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
@@ -127,7 +128,8 @@ class ActivityDiary(JournalDiary):
                        value('Elevation', climb[CLIMB_ELEVATION].value, units=M,
                              measures=climb[CLIMB_ELEVATION].measures_as_model(date)),
                        value('Distance', climb[CLIMB_DISTANCE].value, units=KM),
-                       value('Time', climb[CLIMB_TIME].value, units=S)]
+                       value('Time', climb[CLIMB_TIME].value, units=S),
+                       value('Gradient', climb[CLIMB_GRADIENT].value, units=PC)]
 
     def __read_template(self, s, ajournal, template, re, date):
         sjournals = s.query(StatisticJournal).join(StatisticName). \
