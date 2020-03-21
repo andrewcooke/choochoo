@@ -138,7 +138,7 @@ def search(df, params=Climb()):
     for offset in range(len(df)-1, 0, -1):
         df[_delta(ELEVATION)] = df[ELEVATION].diff(offset)
         d_distance = d * offset
-        min_elevation = max(params.min_elevation, params.min_gradient * d_distance / 100)
+        min_elevation = max(params.min_elevation, params.min_gradient * d_distance / PERCENT)
         if df[_delta(ELEVATION)].max() > min_elevation:  # avoid some work
             # factor of 1000 below to convert km to m
             df[SCORE] = (df[_delta(ELEVATION)] / (1000 * d_distance)) ** params.phi

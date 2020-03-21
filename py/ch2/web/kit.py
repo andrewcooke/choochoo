@@ -15,5 +15,4 @@ class Kit:
     def read_statistics(request, s):
         data = [group.to_model(s, depth=3, statistics=True)
                 for group in s.query(KitGroup).order_by(KitGroup.name).all()]
-        print(data)
         return Response(dumps(data))

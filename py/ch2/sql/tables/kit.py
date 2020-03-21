@@ -176,8 +176,8 @@ class StatisticsMixin:
         if n:
             values = [value.value for value in values]
             total = sum(values)
-            model_statistics.append({NAME: name, N: n, SUM: total,
-                                     MEAN: total / n, MEDIAN: median(values), UNITS: units})
+            # had mean and median, but they were pointless
+            model_statistics.append({NAME: name, N: n, SUM: total, UNITS: units})
 
 
 class ModelMixin:

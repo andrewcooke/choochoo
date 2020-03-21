@@ -16,6 +16,9 @@ const useStyles = makeStyles(theme => ({
     left: {
         textAlign: 'left',
     },
+    h3: {
+        marginTop: theme.spacing(2),
+    },
 }));
 
 
@@ -67,9 +70,12 @@ function Added(props) {
 
 
 function ModelStatistics(props) {
+
     const {model, component} = props;
+    const classes = useStyles();
+
     return (<>
-        <Grid item xs={12}><Typography variant='h3'>{model.name} / {component.name}</Typography></Grid>
+        <Grid item xs={12} className={classes.h3}><Typography variant='h3'>{model.name} / {component.name}</Typography></Grid>
         <Added added={model.added}/>
         <StatisticsValues statistics={model.statistics}/>
     </>);
