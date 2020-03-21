@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Break, ColumnCard, ColumnList, FormatValueUnits, Layout, Loading, MainMenu, Text} from "../../elements";
+import {ColumnCard, ColumnList, FormatValueUnits, Layout, Loading, MainMenu, Text} from "../../elements";
 import {Grid, InputLabel, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
 import {differenceInCalendarDays, formatDistanceToNow, parse} from 'date-fns';
@@ -46,7 +46,7 @@ function StatisticsValues(props) {
 }
 
 
-function Age(props) {
+function Added(props) {
 
     const {added} = props;
     const classes = useStyles();
@@ -56,8 +56,12 @@ function Age(props) {
     const readable = age > 7 ? ` (${formatDistanceToNow(date)})` : '';
 
     return (<>
-        <Grid item xs={3}><Text>Age</Text></Grid>
-        <Grid item xs={9} className={classes.left}><Text>{age}d {readable}</Text></Grid>
+        <Grid item xs={3}><Text>Added</Text></Grid>
+        <Grid item xs={3}><Text>{added}</Text></Grid>
+        <Grid item xs={6} className={classes.left}>
+            <InputLabel shrink>age</InputLabel>
+            <Text>{age}d {readable}</Text>
+        </Grid>
     </>);
 }
 
@@ -66,7 +70,7 @@ function ModelStatistics(props) {
     const {model, component} = props;
     return (<>
         <Grid item xs={12}><Typography variant='h3'>{model.name} / {component.name}</Typography></Grid>
-        <Age added={model.added}/>
+        <Added added={model.added}/>
         <StatisticsValues statistics={model.statistics}/>
     </>);
 }
@@ -75,7 +79,7 @@ function ModelStatistics(props) {
 function ItemStatistics(props) {
     const {item, group} = props;
     return (<ColumnCard header={`${item.name} / ${group.name}`}>
-        <Age added={item.added}/>
+        <Added added={item.added}/>
         <StatisticsValues statistics={item.statistics}/>
         {item.components.map(
             component => component.models.map(
