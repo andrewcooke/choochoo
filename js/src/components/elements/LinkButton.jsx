@@ -7,5 +7,5 @@ export default function LinkButton(props) {
     function onClick() {
         window.open(href, '_blank')
     }
-    return <Button onClick={onClick}>{children}</Button>
+    return <Button variant='outlined' onClick={onClick}>{children}</Button>
 }

@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {ColumnCard, ColumnList, DateButtons, FormatValueUnits, Layout, Loading, Picker, Text} from "../../elements";
 import {Grid, InputLabel, List, ListItem, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
-import {differenceInCalendarDays, format, formatDistanceToNow, parse} from 'date-fns';
+import {differenceInCalendarDays, format, formatDistance, parse} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
 
 
@@ -51,12 +51,12 @@ function StatisticsValues(props) {
 
 function Added(props) {
 
-    const {added} = props;
+    const {added, datetime} = props;
     const classes = useStyles();
 
     const date = parse(added, FMT_DAY, new Date());
-    const age = differenceInCalendarDays(new Date(), date);
-    const readable = age > 7 ? ` (${formatDistanceToNow(date)})` : '';
+    const age = differenceInCalendarDays(datetime, date);
+    const readable = age > 7 ? ` (${formatDistance(date, datetime)})` : '';
 
     return (<>
         <Grid item xs={3}><Text>Added</Text></Grid>
@@ -71,34 +71,35 @@ function Added(props) {
 
 function ModelStatistics(props) {
 
-    const {model, component} = props;
+    const {model, component, datetime} = props;
     const classes = useStyles();
 
     return (<>
         <Grid item xs={12} className={classes.h3}>
             <Typography variant='h3'>{model.name} / {component.name}</Typography>
         </Grid>
-        <Added added={model.added}/>
+        <Added added={model.added} datetime={datetime}/>
         <StatisticsValues statistics={model.statistics}/>
     </>);
 }
 
 
 function ItemStatistics(props) {
-    const {item, group} = props;
+    const {item, group, datetime} = props;
     return (<ColumnCard header={`${item.name} / ${group.name}`}>
-        <Added added={item.added}/>
+        <Added added={item.added} datetime={datetime}/>
         <StatisticsValues statistics={item.statistics}/>
         {item.components.map(
             component => component.models.map(
-                model => <ModelStatistics model={model} component={component} key={model.db}/>)).flat()}
+                model => <ModelStatistics model={model} component={component} key={model.db}
+                                          datetime={datetime}/>)).flat()}
     </ColumnCard>);
 }
 
 
 function Columns(props) {
 
-    const {groups} = props;
+    const {groups, datetime} = props;
 
     if (groups === null) {
         return <Loading/>;  // undefined initial data
@@ -106,7 +107,7 @@ function Columns(props) {
         return (<ColumnList>
             {groups.map(
                 group => group.items.map(
-                    item => <ItemStatistics item={item} group={group} key={item.db}/>)).flat()}
+                    item => <ItemStatistics item={item} group={group} key={item.db} datetime={datetime}/>)).flat()}
         </ColumnList>);
     }
 }
@@ -145,10 +146,10 @@ export default function Snapshot(props) {
         fetch('/api/kit/' + date)
             .then(response => response.json())
             .then(json => setJson(json));
-    }, [1]);
+    }, [date]);
 
     return (
         <Layout navigation={<SnapshotMenu datetime={datetime} history={history}/>}
-                content={<Columns groups={json}/>} match={match} title={`Kit: ${date}`}/>
+                content={<Columns groups={json} datetime={datetime}/>} match={match} title={`Kit: ${date}`}/>
     );
 }
