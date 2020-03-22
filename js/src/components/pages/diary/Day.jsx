@@ -23,6 +23,9 @@ const useStyles = makeStyles(theme => ({
         justifyContent: 'flex-start',
         alignItems: 'baseline',
     },
+    center: {
+        textAlign: 'center',
+    },
 }));
 
 
@@ -97,6 +100,7 @@ function Header(props) {
 function Field(props) {
 
     const {writer, json} = props;
+    const classes = useStyles();
 
     if (json.type === 'edit') {
         return <EditField writer={writer} json={json}/>
@@ -112,7 +116,7 @@ function Field(props) {
         return <ValueField json={json}/>
     } else if (json.type === 'link') {
         if (json.tag === 'health') {
-            return (<Grid item xs={4}>
+            return (<Grid item xs={4} className={classes.center}>
                 <LinkButton href='api/jupyter/health'><Text>{json.value}</Text></LinkButton>
             </Grid>);
         } else {
