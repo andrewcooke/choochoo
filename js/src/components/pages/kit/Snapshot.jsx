@@ -38,7 +38,7 @@ function Statistic(props) {
         <Grid item xs={3}><Text>{statistic.name}</Text></Grid>
         <NamedValue xs={1} name='n' value={statistic.n}/>
         {Object.keys(statistic).
-            filter(key => ! ['n', 'name', 'units'].includes(key)).
+            filter(key => ! ['n', 'name', 'units', 'id'].includes(key)).
             map((key, id) =>
                 <NamedValue xs={2} name={key} value={statistic[key]} units={statistic.units} key={id}/>)}
     </>)

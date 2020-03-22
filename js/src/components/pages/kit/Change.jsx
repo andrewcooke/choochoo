@@ -1,9 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {MainMenu, LinkButton, Text, ColumnCard, ColumnList, Layout, Loading} from "../../elements";
-import {Grid, InputLabel, Typography} from "@material-ui/core";
+import {ColumnCard, ColumnList, Layout, LinkButton, Loading, MainMenu, Text} from "../../elements";
+import {Grid, Typography} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
-import {differenceInCalendarDays, formatDistanceToNow, parse} from 'date-fns';
-import {FMT_DAY} from "../../../constants";
 
 
 const useStyles = makeStyles(theme => ({
@@ -34,22 +32,22 @@ function Button(props) {
 function Added(props) {
     const {added} = props;
     return (<>
-        <Grid item xs={3}><Text>Added</Text></Grid>
-        <Grid item xs={3}><Text>{added}</Text></Grid>
+        <Grid item xs={2}><Text>Added</Text></Grid>
+        <Grid item xs={2}><Text>{added}</Text></Grid>
     </>);
 }
 
 
 function ModelShow(props) {
-
     const {model, component} = props;
     const classes = useStyles();
-
     return (<>
         <Grid item xs={12} className={classes.h3}>
             <Typography variant='h3'>{model.name} / {component.name}</Typography>
         </Grid>
         <Added added={model.added}/>
+        <Grid xs={5}>Autocomplete</Grid>
+        <Button xs={3} label='Replace'/>
     </>);
 }
 
@@ -58,7 +56,7 @@ function ItemShow(props) {
     const {item, group} = props;
     return (<ColumnCard header={`${item.name} / ${group.name}`}>
         <Added added={item.added}/>
-        <Button xs={6} label='Retire'/>
+        <Button xs={8} label='Retire'/>
         {item.components.map(
             component => component.models.map(
                 model => <ModelShow model={model} component={component} key={model.db}/>)).flat()}
@@ -89,7 +87,7 @@ export default function Change(props) {
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/kit/show')
+        fetch('/api/kit/change')
             .then(response => response.json())
             .then(json => setJson(json));
     }, [1]);
