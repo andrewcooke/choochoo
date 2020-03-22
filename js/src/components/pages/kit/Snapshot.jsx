@@ -81,7 +81,7 @@ function ModelStatistics(props) {
             <Typography variant='h3'>{model.name} / {component.name}</Typography>
         </Grid>
         <Added added={model.added} datetime={datetime}/>
-        <StatisticsValues statistics={model.statistics}/>
+        {'statistics' in model && <StatisticsValues statistics={model.statistics}/>}
     </>);
 }
 
@@ -90,7 +90,7 @@ function ItemStatistics(props) {
     const {item, group, datetime} = props;
     return (<ColumnCard header={`${item.name} / ${group.name}`}>
         <Added added={item.added} datetime={datetime}/>
-        <StatisticsValues statistics={item.statistics}/>
+        {'statistics' in item && <StatisticsValues statistics={item.statistics}/>}
         {item.components.map(
             component => component.models.map(
                 model => <ModelStatistics model={model} component={component} key={model.id}

@@ -14,6 +14,7 @@ from ..utils import add
 from ...commands.args import FORCE, mm
 from ...diary.model import TYPE, DB, UNITS
 from ...lib import now, time_to_local_time
+from ...lib.date import YMD
 from ...lib.utils import inside_interval
 from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S
 
@@ -185,7 +186,7 @@ class ModelMixin:
     @staticmethod
     def fmt_time(time):
         if time:
-            return time_to_local_time(time)
+            return time_to_local_time(time, fmt=YMD)
         else:
             return None
 
