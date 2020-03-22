@@ -13,7 +13,7 @@ export default function JupyterMenu(props) {
         const urlArgs = zip(params, row.db).map(([name, value]) => name + '=' + value).join('&');
         function onClick() {
             handleClose();
-            window.open('jupyter/' + template + '?' + urlArgs, '_blank');
+            window.open('api/jupyter/' + template + '?' + urlArgs, '_blank');
         }
         return (<MenuItem onClick={onClick} key={row.id}>{row.value}</MenuItem>);
     }

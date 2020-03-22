@@ -8,7 +8,7 @@ import {fmtHref} from "../../functions";
 export default function SomeActivities(props) {
 
     const [constraint, setConstraint] = useState('');
-    const href = fmtHref('jupyter/some_activities?constraint=%s', constraint);
+    const href = fmtHref('api/jupyter/some_activities?constraint=%s', constraint);
 
     return (<ActivityCard header='Some Activities' href={href}>
         <Grid item xs={12}><Text>

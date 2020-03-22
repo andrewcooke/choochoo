@@ -5,7 +5,7 @@ import ActivityCard from "./ActivityCard";
 
 
 export default function Health(props) {
-    return (<ActivityCard header='Health' href='jupyter/health'>
+    return (<ActivityCard header='Health' href='api/jupyter/health'>
         <Grid item xs={12}><Text>
             <p>Plots of SHRIMP parameters, rest heart rate, steps, and activity distances and times.</p>
         </Text></Grid>

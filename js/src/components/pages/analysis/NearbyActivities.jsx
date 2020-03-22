@@ -11,7 +11,7 @@ export default function NearbyActivities(props) {
     if (Object.keys(params.nearby_constraints).length === 0) return <Empty/>;
 
     const [constraint, setConstraint] = useState(params.nearby_constraints[0]);
-    const href = fmtHref('jupyter/nearby_activities?constraint=%s', constraint);
+    const href = fmtHref('api/jupyter/nearby_activities?constraint=%s', constraint);
 
     return (<ActivityCard header='Nearby Activities' displayWidth={6} href={href}>
         <Grid item xs={12}><Text>

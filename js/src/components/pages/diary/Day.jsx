@@ -113,7 +113,7 @@ function Field(props) {
     } else if (json.type === 'link') {
         if (json.tag === 'health') {
             return (<Grid item xs={4}>
-                <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
+                <LinkButton href='api/jupyter/health'><Text>{json.value}</Text></LinkButton>
             </Grid>);
         } else {
             return (<Grid item xs={4}>

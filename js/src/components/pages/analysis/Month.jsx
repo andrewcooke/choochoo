@@ -11,7 +11,7 @@ import {fmtHref} from "../../functions";
 export default function Month(props) {
 
     const [month, setMonth] = useState(format(new Date(), FMT_MONTH));
-    const href = fmtHref('jupyter/month?month=%s', month);
+    const href = fmtHref('api/jupyter/month?month=%s', month);
 
     return (<ActivityCard header='Month' displayWidth={9} href={href}>
         <Grid item xs={12}><Text>

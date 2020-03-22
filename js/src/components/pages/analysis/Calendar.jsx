@@ -5,7 +5,7 @@ import ActivityCard from "./ActivityCard";
 
 
 export default function Calendar(props) {
-    return (<ActivityCard header='Calendar' href='jupyter/calendar'>
+    return (<ActivityCard header='Calendar' href='api/jupyter/calendar'>
         <Grid item xs={12}><Text>
             <p>Various representations of all activities, across all dates, showing distance, time, SHRIMP, etc.</p>
         </Text></Grid>
