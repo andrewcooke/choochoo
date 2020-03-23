@@ -33,39 +33,61 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-function ConfirmButton(props) {
+function ConfirmedWriteButton(props) {
 
-    const {children, href, label, xs = 12, update=null, disabled=false} = props;
+    const {children, href, data={}, label, xs = 12, update=null, disabled=false} = props;
     const classes = useStyles();
-    const [open, setOpen] = React.useState(false);
+    const [openConfirm, setOpenConfirm] = React.useState(false);
+    const [openWait, setOpenWait] = React.useState(false);
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
     function handleClickOpen() {
-        setOpen(true);
+        setOpenConfirm(true);
     }
 
-    function handleClose() {
-        setOpen(false);
-    }
-
-    function handleCloseOk() {
-        handleClose();
+    function handleWrite() {
+        setOpenWait(false);
         if (update !== null) update();
+    }
+
+    function handleCancel() {
+        setOpenConfirm(false);
+    }
+
+    function handleOk() {
+        handleCancel();
+        setOpenWait(true);
+        console.log(data);
+        fetch(href,
+            {method: 'put',
+                  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                  body: JSON.stringify(data)})
+            .then((response) => {
+                console.log(response);
+                handleWrite();
+            })
+            .catch(handleWrite);
     }
 
     return (
         <Grid item xs={xs} className={classes.right}>
             <Button variant="outlined" onClick={handleClickOpen} disabled={disabled}>{label}</Button>
-            <Dialog fullScreen={fullScreen} open={open} onClose={handleClose}>
+            <Dialog fullScreen={fullScreen} open={openConfirm} onClose={handleCancel}>
                 <DialogTitle>{'Confirm modification?'}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>{children}</DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button autoFocus onClick={handleClose} color="primary">Cancel</Button>
-                    <Button onClick={handleCloseOk} color="primary" autoFocus>OK</Button>
+                    <Button autoFocus onClick={handleCancel}>Cancel</Button>
+                    <Button onClick={handleOk} autoFocus>OK</Button>
                 </DialogActions>
+            </Dialog>
+            <Dialog fullScreen={fullScreen} open={openWait}>
+                <DialogTitle>{'Please wait'}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>Saving data.</DialogContentText>
+                </DialogContent>
             </Dialog>
         </Grid>
     );
@@ -74,7 +96,7 @@ function ConfirmButton(props) {
 
 function ModelShow(props) {
 
-    const {model, component, update} = props;
+    const {item, model, component, update} = props;
     const classes = useStyles();
     const [newModel, setNewModel] = useState(model.name);
     const disabled = newModel === '';
@@ -88,9 +110,11 @@ function ModelShow(props) {
                           onInputChange={(event, value) => setNewModel(value)}
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
-        <ConfirmButton xs={3} label='Replace' update={update} disabled={disabled}>
+        <ConfirmedWriteButton xs={3} label='Replace' disabled={disabled}
+                              href='/api/kit/replace-model' update={update}
+                              data={{'item': item.db, 'component': component.db, 'model': newModel}}>
             Adding a new model will replace the current value from today's date.
-        </ConfirmButton>
+        </ConfirmedWriteButton>
     </>);
 }
 
@@ -119,9 +143,11 @@ function AddComponent(props) {
                           onInputChange={(event, value) => setModel(value)}
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
-        <ConfirmButton xs={3} label='Add' update={update} disabled={disabled}>
+        <ConfirmedWriteButton xs={3} label='Add' disabled={disabled}
+                              href='/api/kit/add-component' update={update}
+                              data={{'item': item.db, 'component': component, 'model': model}}>
             Adding a new component and model will extend this item from today's date.
-        </ConfirmButton>
+        </ConfirmedWriteButton>
     </>);
 }
 
@@ -133,12 +159,14 @@ function ItemShow(props) {
         <Grid item xs={9}>
             <Typography variant='h2'>{item.name} / {group.name} / {item.added}</Typography>
         </Grid>
-        <ConfirmButton xs={3} label='Retire' update={update}>
+        <ConfirmedWriteButton xs={3} label='Retire'
+                              href='/api/kit/retire-item' update={update} data={{'item': item.db}}>
             Retiring this item will remove it and all components from today's date.
-        </ConfirmButton>
+        </ConfirmedWriteButton>
         {item.components.map(
             component => component.models.filter(model => model_dbs.includes(model.db)).map(
-                model => <ModelShow model={model} component={component} update={update} key={model.db}/>)).flat()}
+                model => <ModelShow item={item} model={model} component={component}
+                                    update={update} key={model.db}/>)).flat()}
         <AddComponent item={item} update={update} allComponents={allComponents}/>
     </ColumnCard>);
 }

@@ -1,6 +1,8 @@
 from json import dumps
 from logging import getLogger
 
+from werkzeug import Response
+
 from .json import JsonResponse
 from ..lib import local_date_to_time, now
 from ..sql import KitGroup
@@ -20,12 +22,12 @@ class Kit:
 
     @staticmethod
     def read_statistics(request, s, date):
-        groupd = [group.to_model(s, depth=3, statistics=True, time=local_date_to_time(date))
+        groups = [group.to_model(s, depth=3, statistics=True, time=local_date_to_time(date))
                   for group in s.query(KitGroup).order_by(KitGroup.name).all()]
-        for group in groupd:
+        for group in groups:
             for item in group[ITEMS]:
                 del item[MODELS]
-        return groupd
+        return JsonResponse(groups)
 
     @staticmethod
     def read_edit(request, s):
@@ -33,6 +35,18 @@ class Kit:
                 for group in s.query(KitGroup).order_by(KitGroup.name).all()]
         return JsonResponse(data)
 
-    def write_retire(self, request, s):
+    def write_retire_item(self, request, s):
         data = request.json
         log.info(data)
+        return Response()
+
+    def write_replace_model(self, request, s):
+        data = request.json
+        log.info(data)
+        return Response()
+
+    def write_add_component(self, request, s):
+        data = request.json
+        log.info(data)
+        return Response()
+
