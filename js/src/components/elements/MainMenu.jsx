@@ -21,6 +21,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function MainMenu(props) {
 
+    const {kit=false} = props;
     const classes = useStyles();
 
     const [openDiary, setOpenDiary] = useState(false);
@@ -28,7 +29,7 @@ export default function MainMenu(props) {
         setOpenDiary(!openDiary);
     };
 
-    const [openKit, setOpenKit] = useState(false);
+    const [openKit, setOpenKit] = useState(kit);
     const handleKitClick = () => {
         setOpenKit(!openKit);
     };

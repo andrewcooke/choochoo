@@ -170,12 +170,12 @@ export default function Edit(props) {
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/kit/change')
+        fetch('/api/kit/edit')
             .then(response => response.json())
             .then(json => setJson(json));
     }, [1]);
 
     return (
-        <Layout navigation={<MainMenu/>} content={<Columns groups={json}/>} match={match} title='Edit Kit'/>
+        <Layout navigation={<MainMenu kit/>} content={<Columns groups={json}/>} match={match} title='Edit Kit'/>
     );
 }

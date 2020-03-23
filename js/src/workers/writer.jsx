@@ -42,7 +42,7 @@ function write() {
             console.log(`write ${key}:${value}`);
         });
         fetch('/api/diary/statistics',
-            {method: 'post',
+            {method: 'put',
                   headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
                   body: JSON.stringify(data)})
             .then((response) => {
