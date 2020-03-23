@@ -1,6 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {Break, ColumnCard, ColumnList, Layout, LinkButton, Loading, MainMenu, Text} from "../../elements";
-import {Grid, Typography, TextField, Box} from "@material-ui/core";
+import {
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Grid,
+    TextField,
+    Typography,
+    useMediaQuery, useTheme
+} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 
@@ -21,12 +33,42 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-function Button(props) {
-    const {href, label, xs=12, disabled=false} = props;
+function ConfirmButton(props) {
+
+    const {children, href, label, xs = 12, disabled = false} = props;
     const classes = useStyles();
-    return (<Grid item xs={xs} className={classes.right}>
-        <LinkButton href={href} disabled={disabled}>{label}</LinkButton>
-    </Grid>);
+    const [open, setOpen] = React.useState(false);
+    const theme = useTheme();
+    const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+    function handleClickOpen() {
+        setOpen(true);
+    }
+
+    function handleClose() {
+        setOpen(false);
+    }
+
+    function handleCloseOk() {
+        handleClose();
+        // do something here
+    }
+
+    return (
+        <Grid item xs={xs} className={classes.right}>
+            <Button variant="outlined" onClick={handleClickOpen} disabled={disabled}>{label}</Button>
+            <Dialog fullScreen={fullScreen} open={open} onClose={handleClose}>
+                <DialogTitle>{'Confirm modification?'}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>{children}</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button autoFocus onClick={handleClose} color="primary">Cancel</Button>
+                    <Button onClick={handleCloseOk} color="primary" autoFocus>OK</Button>
+                </DialogActions>
+            </Dialog>
+        </Grid>
+    );
 }
 
 
@@ -46,7 +88,9 @@ function ModelShow(props) {
                           onInputChange={(event, value) => setNewModel(value)}
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
-        <Button xs={3} label='Replace' disabled={disabled}/>
+        <ConfirmButton xs={3} label='Replace' disabled={disabled}>
+            Adding a new model will replace the current value from today's date.
+        </ConfirmButton>
     </>);
 }
 
@@ -75,7 +119,9 @@ function AddComponent(props) {
                           onInputChange={(event, value) => setModel(value)}
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
-        <Button xs={3} label='Add' disabled={disabled}/>
+        <ConfirmButton xs={3} label='Add' disabled={disabled}>
+            Adding a new component and model will extend this item from today's date.
+        </ConfirmButton>
     </>);
 }
 
@@ -87,7 +133,9 @@ function ItemShow(props) {
         <Grid item xs={9}>
             <Typography variant='h2'>{item.name} / {group.name} / {item.added}</Typography>
         </Grid>
-        <Button xs={3} label='Retire'/>
+        <ConfirmButton xs={3} label='Retire'>
+            Retiring this item will remove it and all components from today's date.
+        </ConfirmButton>
         {item.components.map(
             component => component.models.filter(model => model_dbs.includes(model.db)).map(
                 model => <ModelShow model={model} component={component} key={model.db}/>)).flat()}
