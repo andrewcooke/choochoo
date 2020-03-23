@@ -36,19 +36,22 @@ class Kit:
                 for group in s.query(KitGroup).order_by(KitGroup.name).all()]
         return JsonResponse(data)
 
-    def write_retire_item(self, request, s):
+    @staticmethod
+    def write_retire_item(request, s):
         data = request.json
         log.debug(data)
         finish(s, data[ITEM], None, True)
         return Response()
 
-    def write_replace_model(self, request, s):
+    @staticmethod
+    def write_replace_model(request, s):
         data = request.json
         log.debug(data)
         change(s, data[ITEM], data[COMPONENT], data[MODEL], None, False, False)
         return Response()
 
-    def write_add_component(self, request, s):
+    @staticmethod
+    def write_add_component(request, s):
         data = request.json
         log.debug(data)
         change(s, data[ITEM], data[COMPONENT], data[MODEL], None, True, False)
