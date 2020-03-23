@@ -31,18 +31,22 @@ function Button(props) {
 
 
 function ModelShow(props) {
+
     const {model, component} = props;
     const classes = useStyles();
+    const [newModel, setNewModel] = useState(model.name);
+    const disabled = newModel === '';
+
     return (<>
         <Grid item xs={12} className={classes.h3}>
             <Typography variant='h3'>{component.name} / {model.added}</Typography>
         </Grid>
         <Grid item xs={9}>
-            <Autocomplete options={component.models.map(model => model.name)} freeSolo
-                          defaultValue={model.name}
-                          renderInput={params => <TextField {...params} label=''/>}/>
+            <Autocomplete options={component.models.map(model => model.name)} freeSolo value={newModel}
+                          onInputChange={(event, value) => setNewModel(value)}
+                          renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
-        <Button xs={3} label='Replace'/>
+        <Button xs={3} label='Replace' disabled={disabled}/>
     </>);
 }
 
@@ -64,12 +68,12 @@ function AddComponent(props) {
         <Grid item xs={9}>
             <Autocomplete options={components} label='Component' freeSolo value={component}
                           onInputChange={(event, value) => setComponent(value)}
-                          renderInput={params => <TextField {...params} label=''/>}/>
+                          renderInput={params => <TextField {...params} label='Component' variant='outlined'/>}/>
         </Grid><Break/>
         <Grid item xs={9}>
             <Autocomplete options={models} label='Model' freeSolo value={model}
                           onInputChange={(event, value) => setModel(value)}
-                          renderInput={params => <TextField {...params} label=''/>}/>
+                          renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
         <Button xs={3} label='Add' disabled={disabled}/>
     </>);
