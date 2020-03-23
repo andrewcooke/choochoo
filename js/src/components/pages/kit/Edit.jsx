@@ -35,7 +35,7 @@ const useStyles = makeStyles(theme => ({
 
 function ConfirmButton(props) {
 
-    const {children, href, label, xs = 12, disabled = false} = props;
+    const {children, href, label, xs = 12, update=null, disabled=false} = props;
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
     const theme = useTheme();
@@ -51,7 +51,7 @@ function ConfirmButton(props) {
 
     function handleCloseOk() {
         handleClose();
-        // do something here
+        if (update !== null) update();
     }
 
     return (
@@ -74,7 +74,7 @@ function ConfirmButton(props) {
 
 function ModelShow(props) {
 
-    const {model, component} = props;
+    const {model, component, update} = props;
     const classes = useStyles();
     const [newModel, setNewModel] = useState(model.name);
     const disabled = newModel === '';
@@ -88,7 +88,7 @@ function ModelShow(props) {
                           onInputChange={(event, value) => setNewModel(value)}
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
-        <ConfirmButton xs={3} label='Replace' disabled={disabled}>
+        <ConfirmButton xs={3} label='Replace' update={update} disabled={disabled}>
             Adding a new model will replace the current value from today's date.
         </ConfirmButton>
     </>);
@@ -97,7 +97,7 @@ function ModelShow(props) {
 
 function AddComponent(props) {
 
-    const {item, allComponents} = props;
+    const {item, update, allComponents} = props;
     const [component, setComponent] = useState('');
     const [model, setModel] = useState('');
     const existing = item.components.map(component => component.name);
@@ -119,7 +119,7 @@ function AddComponent(props) {
                           onInputChange={(event, value) => setModel(value)}
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
-        <ConfirmButton xs={3} label='Add' disabled={disabled}>
+        <ConfirmButton xs={3} label='Add' update={update} disabled={disabled}>
             Adding a new component and model will extend this item from today's date.
         </ConfirmButton>
     </>);
@@ -127,26 +127,26 @@ function AddComponent(props) {
 
 
 function ItemShow(props) {
-    const {item, group, allComponents} = props;
+    const {item, group, update, allComponents} = props;
     let model_dbs = item.models.map(model => model.db);
     return (<ColumnCard>
         <Grid item xs={9}>
             <Typography variant='h2'>{item.name} / {group.name} / {item.added}</Typography>
         </Grid>
-        <ConfirmButton xs={3} label='Retire'>
+        <ConfirmButton xs={3} label='Retire' update={update}>
             Retiring this item will remove it and all components from today's date.
         </ConfirmButton>
         {item.components.map(
             component => component.models.filter(model => model_dbs.includes(model.db)).map(
-                model => <ModelShow model={model} component={component} key={model.db}/>)).flat()}
-        <AddComponent item={item} allComponents={allComponents}/>
+                model => <ModelShow model={model} component={component} update={update} key={model.db}/>)).flat()}
+        <AddComponent item={item} update={update} allComponents={allComponents}/>
     </ColumnCard>);
 }
 
 
 function Columns(props) {
 
-    const {groups} = props;
+    const {groups, update} = props;
 
     if (groups === null) {
         return <Loading/>;  // undefined initial data
@@ -157,7 +157,8 @@ function Columns(props) {
         return (<ColumnList>
             {groups.map(
                 group => group.items.map(
-                    item => <ItemShow item={item} group={group} key={item.db} allComponents={allComponents}/>)).flat()}
+                    item => <ItemShow item={item} group={group} update={update} key={item.db}
+                                      allComponents={allComponents}/>)).flat()}
         </ColumnList>);
     }
 }
@@ -167,15 +168,22 @@ export default function Edit(props) {
 
     const {match} = props;
     const [json, setJson] = useState(null);
+    const [edits, setEdits] = useState(0);
+
+    function update() {
+        setEdits(edits + 1);
+    }
 
     useEffect(() => {
         setJson(null);
         fetch('/api/kit/edit')
             .then(response => response.json())
             .then(json => setJson(json));
-    }, [1]);
+    }, [edits]);
 
     return (
-        <Layout navigation={<MainMenu kit/>} content={<Columns groups={json}/>} match={match} title='Edit Kit'/>
+        <Layout navigation={<MainMenu kit/>}
+                content={<Columns groups={json} update={update}/>}
+                match={match} title='Edit Kit'/>
     );
 }
