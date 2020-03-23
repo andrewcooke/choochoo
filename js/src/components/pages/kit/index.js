@@ -1,3 +1,3 @@
 export {default as Snapshot} from './Snapshot';
-export {default as Change} from './Change';
+export {default as Edit} from './Edit';
 export {default as Components} from './Components';

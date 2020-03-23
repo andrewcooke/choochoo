@@ -153,7 +153,7 @@ function Columns(props) {
     } else {
         const allComponents = {};
         groups.forEach(group => group.items.forEach(item => item.components.forEach(
-            component => allComponents[component.name] = component.models)))
+            component => allComponents[component.name] = component.models)));
         return (<ColumnList>
             {groups.map(
                 group => group.items.map(
@@ -163,7 +163,7 @@ function Columns(props) {
 }
 
 
-export default function Change(props) {
+export default function Edit(props) {
 
     const {match} = props;
     const [json, setJson] = useState(null);
@@ -176,6 +176,6 @@ export default function Change(props) {
     }, [1]);
 
     return (
-        <Layout navigation={<MainMenu/>} content={<Columns groups={json}/>} match={match} title='Change Kit'/>
+        <Layout navigation={<MainMenu/>} content={<Columns groups={json}/>} match={match} title='Edit Kit'/>
     );
 }
