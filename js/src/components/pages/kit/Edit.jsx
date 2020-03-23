@@ -58,15 +58,11 @@ function ConfirmedWriteButton(props) {
     function handleOk() {
         handleCancel();
         setOpenWait(true);
-        console.log(data);
         fetch(href,
             {method: 'put',
                   headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
                   body: JSON.stringify(data)})
-            .then((response) => {
-                console.log(response);
-                handleWrite();
-            })
+            .then(handleWrite)
             .catch(handleWrite);
     }
 
@@ -112,7 +108,7 @@ function ModelShow(props) {
         </Grid>
         <ConfirmedWriteButton xs={3} label='Replace' disabled={disabled}
                               href='/api/kit/replace-model' update={update}
-                              data={{'item': item.db, 'component': component.db, 'model': newModel}}>
+                              data={{'item': item.name, 'component': component.name, 'model': newModel}}>
             Adding a new model will replace the current value from today's date.
         </ConfirmedWriteButton>
     </>);
@@ -145,7 +141,7 @@ function AddComponent(props) {
         </Grid>
         <ConfirmedWriteButton xs={3} label='Add' disabled={disabled}
                               href='/api/kit/add-component' update={update}
-                              data={{'item': item.db, 'component': component, 'model': model}}>
+                              data={{'item': item.name, 'component': component, 'model': model}}>
             Adding a new component and model will extend this item from today's date.
         </ConfirmedWriteButton>
     </>);
@@ -160,7 +156,7 @@ function ItemShow(props) {
             <Typography variant='h2'>{item.name} / {group.name} / {item.added}</Typography>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Retire'
-                              href='/api/kit/retire-item' update={update} data={{'item': item.db}}>
+                              href='/api/kit/retire-item' update={update} data={{'item': item.name}}>
             Retiring this item will remove it and all components from today's date.
         </ConfirmedWriteButton>
         {item.components.map(

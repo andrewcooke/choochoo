@@ -16,14 +16,17 @@ from ...diary.model import TYPE, DB, UNITS
 from ...lib import now, time_to_local_time
 from ...lib.date import YMD
 from ...lib.utils import inside_interval
-from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S
+from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s
 
 log = getLogger(__name__)
 
 NAME = 'name'
-ITEMS = 'items'
-COMPONENTS = 'components'
-MODELS = 'models'
+ITEM = 'item'
+ITEMS = _s(ITEM)
+COMPONENT = 'components'
+COMPONENTS = _s(COMPONENT)
+MODEL = 'models'
+MODELS = _s(MODEL)
 STATISTICS = 'statistics'
 N = 'n'
 SUM = 'sum'

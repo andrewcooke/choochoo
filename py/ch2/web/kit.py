@@ -4,9 +4,10 @@ from logging import getLogger
 from werkzeug import Response
 
 from .json import JsonResponse
+from ..commands.kit import finish, change
 from ..lib import local_date_to_time, now
 from ..sql import KitGroup
-from ..sql.tables.kit import MODELS, ITEMS
+from ..sql.tables.kit import MODELS, ITEMS, ITEM, COMPONENT, MODEL
 
 log = getLogger(__name__)
 
@@ -37,16 +38,18 @@ class Kit:
 
     def write_retire_item(self, request, s):
         data = request.json
-        log.info(data)
+        log.debug(data)
+        finish(s, data[ITEM], None, True)
         return Response()
 
     def write_replace_model(self, request, s):
         data = request.json
-        log.info(data)
+        log.debug(data)
+        change(s, data[ITEM], data[COMPONENT], data[MODEL], None, False, False)
         return Response()
 
     def write_add_component(self, request, s):
         data = request.json
-        log.info(data)
+        log.debug(data)
+        change(s, data[ITEM], data[COMPONENT], data[MODEL], None, True, False)
         return Response()
-

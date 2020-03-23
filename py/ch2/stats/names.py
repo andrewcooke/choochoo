@@ -137,6 +137,7 @@ def _new(name): return f'New {name}'
 def _src(name): return f'Src {name}'
 def _lo(name): return f'Lo {name}'
 def _hi(name): return f'Hi {name}'
+def _s(name): return f'{name}s'
 
 MED_WINDOW = '60s'
 def _med(name): return f'Med{MED_WINDOW} {name}'
