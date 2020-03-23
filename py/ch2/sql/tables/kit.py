@@ -2,7 +2,6 @@
 from collections import defaultdict
 from logging import getLogger
 
-from numpy import median
 from sqlalchemy import Column, Integer, ForeignKey, Text, desc, or_
 from sqlalchemy.orm import relationship, aliased, backref
 from sqlalchemy.orm.exc import NoResultFound
@@ -23,9 +22,9 @@ log = getLogger(__name__)
 NAME = 'name'
 ITEM = 'item'
 ITEMS = _s(ITEM)
-COMPONENT = 'components'
+COMPONENT = 'component'
 COMPONENTS = _s(COMPONENT)
-MODEL = 'models'
+MODEL = 'model'
 MODELS = _s(MODEL)
 STATISTICS = 'statistics'
 N = 'n'
@@ -377,6 +376,10 @@ class KitComponent(ModelMixin, Base):
                                         time=time, own_models=own_models)
                          for model in self.models
                          if time is None or inside_interval(model.time_added(s), time, model.time_expired(s))]
+
+    def to_model(self, s, depth=0, statistics=False, time=None, own_models=True):
+        # force all time, since this is constrained via the item if needed and, if not, helps prompts
+        return super().to_model(s, depth=depth, statistics=statistics, time=time if statistics else None)
 
     def __str__(self):
         return f'KitComponent "{self.name}"'

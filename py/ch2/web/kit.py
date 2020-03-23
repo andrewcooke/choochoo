@@ -1,4 +1,3 @@
-from json import dumps
 from logging import getLogger
 
 from werkzeug import Response
@@ -25,9 +24,6 @@ class Kit:
     def read_statistics(request, s, date):
         groups = [group.to_model(s, depth=3, statistics=True, time=local_date_to_time(date))
                   for group in s.query(KitGroup).order_by(KitGroup.name).all()]
-        for group in groups:
-            for item in group[ITEMS]:
-                del item[MODELS]
         return JsonResponse(groups)
 
     @staticmethod

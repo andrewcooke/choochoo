@@ -55,6 +55,7 @@ export default function MainMenu(props) {
             <List component="div" disablePadding className={classes.nested}>
                 <ListItemLink primary='Snapshot' to={'/kit/' + format(new Date(), FMT_DAY)}/>
                 <ListItemLink primary='Edit' to={'/kit/edit'}/>
+                <ListItemLink primary='Statistics' to={'/kit/statistics'}/>
             </List>
         </Collapse>
     </List>);

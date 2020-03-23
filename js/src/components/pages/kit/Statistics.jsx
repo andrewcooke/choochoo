@@ -13,14 +13,14 @@ function Columns(props) {
 }
 
 
-export default function Components(props) {
+export default function Statistics(props) {
 
     const {match} = props;
     const [json, setJson] = useState(null);
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/kit/components')
+        fetch('/api/kit/statistics')
             .then(response => response.json())
             .then(json => setJson(json));
     }, [1]);

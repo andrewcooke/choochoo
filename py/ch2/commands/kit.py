@@ -13,7 +13,7 @@ from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name
 from ..sql.tables.source import Composite
 from ..sql.types import long_cls
 from ..stats.calculate.kit import KitCalculator
-from ..stats.names import KM, S
+from ..stats.names import KM, S, _s
 from ..stats.pipeline import run_pipeline
 
 log = getLogger(__name__)
@@ -176,13 +176,14 @@ def show(s, name, date, csv=None, output=stdout):
             print(line, file=output)
 
 
-CHILDREN = {KitGroup.SIMPLE_NAME: KitItem.SIMPLE_NAME + 's',
-            KitItem.SIMPLE_NAME: KitComponent.SIMPLE_NAME + 's',
-            KitComponent.SIMPLE_NAME: KitModel.SIMPLE_NAME + 's'}
+CHILDREN = {KitGroup.SIMPLE_NAME: _s(KitItem.SIMPLE_NAME),
+            KitItem.SIMPLE_NAME: _s(KitComponent.SIMPLE_NAME),
+            KitComponent.SIMPLE_NAME: _s(KitModel.SIMPLE_NAME)}
 
 
 def model_children(model):
-    if TYPE in model and model[TYPE] in CHILDREN:
+    if TYPE in model and model[TYPE] in CHILDREN and CHILDREN[model[TYPE]] in model:
+        log.debug(f'Traversing from {model[TYPE]} to {CHILDREN[model[TYPE]]}')
         yield from model[CHILDREN[model[TYPE]]]
 
 
@@ -210,6 +211,7 @@ def statistics(s, name, csv=False, output=stdout):
                   for group in s.query(KitGroup).order_by(KitGroup.name).all()]
     driver = to_csv if csv else to_tree
     format = to_stats_csv if csv else to_stats
+    log.debug(models)
     for model in models:
         for line in driver(model, format, model_children):
             print(line, file=output)
@@ -230,12 +232,16 @@ def to_stats(model):
     if TYPE in model:
         label = f'{model[TYPE]}: {model[NAME]}'
         if STATISTICS in model:
+            log.debug(f'Extracting statistics from {model[TYPE]}')
             return label, model[STATISTICS]
         else:
+            log.debug('No statistics in model')
             return label, None
     elif VALUE not in model:
+        log.debug('Formatting statistic')
         return f'{model[NAME]}', stats_children(model)
     else:
+        # leaf
         return f'{model[NAME]}: {model[VALUE]}', None
 
 
