@@ -29,8 +29,8 @@ my phone:
 
 ![](docs/web-2.png)
 
-Below are examples of some of the included Jupyter templates.  They
-can be displayed from the diary, the web interface, or via `ch2
+Next, below, are examples of some of the included Jupyter templates.
+They can be displayed from the diary, the web interface, or via `ch2
 jupyter` and provide an introduction to doing your own analysis.
 
 ![](docs/graphic-summary.png)
