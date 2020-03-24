@@ -39,13 +39,14 @@ support for power meters.
 
 * Manual
   * [Getting Started](getting-started)
+  * [Web Interface](web-interface)
   * [Daily Use](daily-use)
   * [Data Analysis](data-analysis)
   * [Command Summmary](command-summary)
 * Reference
+  * [Configuration](configuration)
   * [Data Model](data-model)
   * [Schedules](schedules)
-  * [Configuration](configuration)
   * [Training Plans](training-plans)
   * [Reading FIT Files](fit-files)
   * [Repairing FIT Files](fix-fit)
