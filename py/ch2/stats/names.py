@@ -3,6 +3,7 @@ import re
 POW_M1 = '\u207b\u00b9'
 POW_2 = '\u00b2'
 
+AGE = 'Age'
 ACTIVE_DISTANCE = 'Active Distance'
 ACTIVE_SPEED = 'Active Speed'
 ACTIVE_TIME = 'Active Time'

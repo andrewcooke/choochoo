@@ -11,11 +11,11 @@ from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestam
 from ..support import Base
 from ..utils import add
 from ...commands.args import FORCE, mm
-from ...diary.model import TYPE, DB, UNITS
+from ...diary.model import TYPE, DB, UNITS, VALUE
 from ...lib import now, time_to_local_time
 from ...lib.date import YMD
 from ...lib.utils import inside_interval
-from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s
+from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s, AGE
 
 log = getLogger(__name__)
 
@@ -33,6 +33,10 @@ MEAN = 'mean'
 MEDIAN = 'median'
 ADDED = 'added'
 EXPIRED = 'expired'
+
+# statistics calculations
+INDIVIDUAL = 'individual'
+POPULATION = 'population'
 
 
 '''
@@ -167,14 +171,14 @@ class StatisticsMixin:
         expired = expired or now()
         return expired - added
 
-    def _add_model_statistics(self, s, model):
+    def _add_individual_statistics(self, s, model):
         model_statistics = []
-        self._calculate_model_statistics(model_statistics, ACTIVE_DISTANCE, self.active_distances(s), KM)
-        self._calculate_model_statistics(model_statistics, ACTIVE_TIME, self.active_times(s), S)
+        self._calculate_individual_statistics(model_statistics, ACTIVE_DISTANCE, self.active_distances(s), KM)
+        self._calculate_individual_statistics(model_statistics, ACTIVE_TIME, self.active_times(s), S)
         if model_statistics:
             model[STATISTICS] = model_statistics
 
-    def _calculate_model_statistics(self, model_statistics, name, values, units):
+    def _calculate_individual_statistics(self, model_statistics, name, values, units):
         n = len(values)
         if n:
             values = [value.value for value in values]
@@ -192,7 +196,7 @@ class ModelMixin:
         else:
             return None
 
-    def to_model(self, s, depth=0, statistics=False, time=None, own_models=True):
+    def to_model(self, s, depth=0, statistics=None, time=None, own_models=True):
         model = {TYPE: self.SIMPLE_NAME, DB: self.id, NAME: self.name}
         try:
             model.update({ADDED: self.fmt_time(self.time_added(s)),
@@ -201,11 +205,11 @@ class ModelMixin:
             pass  # not a subclass of statistics mixin
         if depth > 0:
             self._add_children(s, model, depth=depth-1, statistics=statistics, time=time, own_models=own_models)
-        if statistics:
-            try:
-                self._add_model_statistics(s, model)
-            except AttributeError:
-                pass  # not a statistics mixin
+        try:
+            if statistics == INDIVIDUAL:
+                self._add_individual_statistics(s, model)
+        except AttributeError:
+            log.debug(f'No {statistics} statistics for {self.SIMPLE_NAME}')
         return model
 
 
@@ -240,7 +244,7 @@ class KitGroup(ModelMixin, Base):
                 else:
                     raise Exception(f'Specify {mm(FORCE)} to create a new group ({name})')
 
-    def _add_children(self, s, model, depth=0, statistics=False, time=None, own_models=True):
+    def _add_children(self, s, model, depth=0, statistics=None, time=None, own_models=True):
         model[ITEMS] = [item.to_model(s, depth=depth, statistics=statistics, 
                                       time=time, own_models=own_models)
                         for item in self.items
@@ -307,7 +311,7 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
         s.delete(self)
         Composite.clean(s)
 
-    def _add_children(self, s, model, depth=0, statistics=False, time=None, own_models=True):
+    def _add_children(self, s, model, depth=0, statistics=None, time=None, own_models=True):
         model[COMPONENTS] = [component.to_model(s, depth=depth, statistics=statistics, 
                                                 time=time, own_models=own_models)
                              for component in self.components]
@@ -316,7 +320,7 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
                          for model in self.models
                          if time is None or inside_interval(model.time_added(s), time, model.time_expired(s))]
 
-    def to_model(self, s, depth=0, statistics=False, time=None, own_models=True):
+    def to_model(self, s, depth=0, statistics=None, time=None, own_models=True):
         model = super().to_model(s, depth=depth, statistics=statistics, time=time)
         model_ids = set(model.id for model in self.models)
         if own_models:
@@ -371,15 +375,47 @@ class KitComponent(ModelMixin, Base):
         if not self.models:
             s.delete(self)
 
-    def _add_children(self, s, model, depth=0, statistics=False, time=None, own_models=True):
-        model[MODELS] = [model.to_model(s, depth=depth, statistics=statistics, 
+    def _add_children(self, s, model, depth=0, statistics=None, time=None, own_models=True):
+        model_statistics = INDIVIDUAL if statistics == POPULATION else statistics
+        model[MODELS] = [model.to_model(s, depth=depth, statistics=model_statistics,
                                         time=time, own_models=own_models)
                          for model in self.models
                          if time is None or inside_interval(model.time_added(s), time, model.time_expired(s))]
+        if statistics == POPULATION:
+            self._add_population_statistics(model)
 
-    def to_model(self, s, depth=0, statistics=False, time=None, own_models=True):
+    def to_model(self, s, depth=0, statistics=None, time=None, own_models=True):
         # force all time, since this is constrained via the item if needed and, if not, helps prompts
         return super().to_model(s, depth=depth, statistics=statistics, time=time if statistics else None)
+
+    def _add_population_statistics(self, model):
+        # replace KitModel instances with populations.  so this doesn't just rewrite the statistics,
+        # it can actually rewrite the model
+        population_models = {}
+        for instance in model[MODELS]:
+            name = instance[NAME]
+            if name not in population_models:
+                population_models[name] = instance
+                for statistic in instance[STATISTICS]:
+                    statistic[N] = 1
+                    statistic[MEAN] = statistic[SUM]
+                    del statistic[SUM]
+                del instance[DB]
+                del instance[ADDED]
+                del instance[EXPIRED]
+            else:
+                population = population_models[NAME]
+                for instance_statistic in instance[STATISTICS]:
+                    population_statistic = population[STATISTICS]. \
+                        filter(lambda statistic: statistic[NAME] == instance_statistic[NAME])[0]
+                    population_statistic[N] += 1
+                    population_statistic[MEAN] += instance_statistic[MEAN]
+        model[MODELS] = []
+        for name in population_models:
+            population = population_models[name]
+            for statistic in population[STATISTICS]:
+                statistic[MEAN] /= statistic[N]
+            model[MODELS].append(population)
 
     def __str__(self):
         return f'KitComponent "{self.name}"'
@@ -526,7 +562,7 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
     def time_range(self, s):
         return None, None
 
-    def _add_children(self, s, model, depth=0, statistics=False, time=None, own_models=True):
+    def _add_children(self, s, model, depth=0, statistics=None, time=None, own_models=True):
         pass
 
     def __str__(self):

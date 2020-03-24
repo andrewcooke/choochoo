@@ -6,7 +6,7 @@ from .json import JsonResponse
 from ..commands.kit import finish, change
 from ..lib import local_date_to_time, now
 from ..sql import KitGroup, KitComponent
-from ..sql.tables.kit import MODELS, ITEMS, ITEM, COMPONENT, MODEL
+from ..sql.tables.kit import MODELS, ITEMS, ITEM, COMPONENT, MODEL, INDIVIDUAL, POPULATION
 
 log = getLogger(__name__)
 
@@ -22,19 +22,19 @@ class Kit:
 
     @staticmethod
     def read_snapshot(request, s, date):
-        groups = [group.to_model(s, depth=3, statistics=True, time=local_date_to_time(date))
+        groups = [group.to_model(s, depth=3, statistics=INDIVIDUAL, time=local_date_to_time(date))
                   for group in s.query(KitGroup).order_by(KitGroup.name).all()]
         return JsonResponse(groups)
 
     @staticmethod
     def read_edit(request, s):
-        data = [group.to_model(s, depth=3, statistics=False, time=now(), own_models=False)
+        data = [group.to_model(s, depth=3, statistics=None, time=now(), own_models=False)
                 for group in s.query(KitGroup).order_by(KitGroup.name).all()]
         return JsonResponse(data)
 
     @staticmethod
     def read_statistics(request, s):
-        components = [component.to_model(s, depth=3, statistics=True)
+        components = [component.to_model(s, depth=3, statistics=POPULATION)
                       for component in s.query(KitComponent).order_by(KitComponent.name).all()]
         return JsonResponse(components)
 

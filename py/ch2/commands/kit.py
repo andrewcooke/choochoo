@@ -9,7 +9,7 @@ from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now
 from ..lib.date import format_minutes
 from ..lib.tree import to_tree, to_csv
 from ..sql import PipelineType
-from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, N
+from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, N, INDIVIDUAL
 from ..sql.tables.source import Composite
 from ..sql.types import long_cls
 from ..stats.calculate.kit import KitCalculator
@@ -205,9 +205,9 @@ def to_label_name_dates_csv(model):
 
 def statistics(s, name, csv=False, output=stdout):
     if name:
-        models = [get_name(s, name, require=True).to_model(s, depth=3, statistics=True)]
+        models = [get_name(s, name, require=True).to_model(s, depth=3, statistics=INDIVIDUAL)]
     else:
-        models = [group.to_model(s, depth=3, statistics=True)
+        models = [group.to_model(s, depth=3, statistics=INDIVIDUAL)
                   for group in s.query(KitGroup).order_by(KitGroup.name).all()]
     driver = to_csv if csv else to_tree
     format = to_stats_csv if csv else to_stats

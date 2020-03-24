@@ -8,7 +8,7 @@ from ch2.commands.kit import start, change, statistics, finish, show, undo
 from ch2.config import default
 from ch2.diary.model import TYPE
 from ch2.sql import KitModel, KitItem, KitComponent, PipelineType
-from ch2.sql.tables.kit import get_name, KitGroup, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS
+from ch2.sql.tables.kit import get_name, KitGroup, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS, INDIVIDUAL
 from ch2.stats.names import ACTIVE_DISTANCE
 from ch2.stats.pipeline import run_pipeline
 
@@ -89,7 +89,7 @@ class TestKit(TestCase):
             run_pipeline(sys, db, PipelineType.STATISTIC, like=['%Kit%'], n_cpu=1)
 
             with db.session_context() as s:
-                bike = get_name(s, 'bike').to_model(s, depth=3, statistics=True)
+                bike = get_name(s, 'bike').to_model(s, depth=3, statistics=INDIVIDUAL)
                 self.assertEqual(bike[TYPE], KitGroup.SIMPLE_NAME)
                 self.assertEqual(bike[NAME], 'bike')
                 self.assertEqual(len(bike[ITEMS]), 3)
