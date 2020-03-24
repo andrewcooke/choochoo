@@ -5,6 +5,7 @@ import {FMT_DAY} from "../../../constants";
 import {differenceInCalendarDays, format, formatDistance, parse} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
 import {setIds} from "../../functions";
+import StatisticsValues from "./elements/StatisticsValues";
 
 
 const useStyles = makeStyles(theme => ({
@@ -21,33 +22,6 @@ const useStyles = makeStyles(theme => ({
         marginTop: theme.spacing(2),
     },
 }));
-
-
-function NamedValue(props) {
-    const {name, value, units, xs=3} = props;
-    return (<Grid item xs={xs}>
-        <InputLabel shrink>{name}</InputLabel>
-        <FormatValueUnits value={value} units={units}/>
-    </Grid>);
-}
-
-
-function Statistic(props) {
-    const {statistic} = props;
-    return (<>
-        <Grid item xs={3}><Text>{statistic.name}</Text></Grid>
-        {Object.keys(statistic).
-            filter(key => ! ['n', 'name', 'units', 'id'].includes(key)).
-            map((key, id) =>
-                <NamedValue xs={3} name={key} value={statistic[key]} units={statistic.units} key={id}/>)}
-    </>)
-}
-
-
-function StatisticsValues(props) {
-    const {statistics} = props;
-    return statistics.map(statistic => <Statistic statistic={statistic} key={statistic.id}/>);
-}
 
 
 function ModelStatistics(props) {
