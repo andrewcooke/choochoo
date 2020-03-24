@@ -110,6 +110,7 @@ def summaries(*args): return ','.join(args)
 
 
 BPM = 'bpm'
+D = 'd'
 DEG = 'deg'
 FF = 'FF'
 H = 'h'

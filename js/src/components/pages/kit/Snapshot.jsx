@@ -36,11 +36,10 @@ function Statistic(props) {
     const {statistic} = props;
     return (<>
         <Grid item xs={3}><Text>{statistic.name}</Text></Grid>
-        <NamedValue xs={1} name='n' value={statistic.n}/>
         {Object.keys(statistic).
             filter(key => ! ['n', 'name', 'units', 'id'].includes(key)).
             map((key, id) =>
-                <NamedValue xs={2} name={key} value={statistic[key]} units={statistic.units} key={id}/>)}
+                <NamedValue xs={3} name={key} value={statistic[key]} units={statistic.units} key={id}/>)}
     </>)
 }
 
@@ -51,46 +50,30 @@ function StatisticsValues(props) {
 }
 
 
-function Added(props) {
-
-    const {added, datetime} = props;
-    const classes = useStyles();
-
-    const date = parse(added, FMT_DAY, new Date());
-    const age = differenceInCalendarDays(datetime, date);
-    const readable = age > 7 ? ` (${formatDistance(date, datetime)})` : '';
-
-    return (<>
-        <Grid item xs={3}><Text>Added</Text></Grid>
-        <Grid item xs={3}><Text>{added}</Text></Grid>
-        <Grid item xs={6} className={classes.left}>
-            <InputLabel shrink>age</InputLabel>
-            <Text>{age}d {readable}</Text>
-        </Grid>
-    </>);
-}
-
-
 function ModelStatistics(props) {
 
     const {model, component, datetime} = props;
     const classes = useStyles();
+    const have_statistics = 'statistics' in model;
+    const n = have_statistics ? Math.max(...model['statistics'].map(statistic => statistic['n'])) : 0;
 
     return (<>
         <Grid item xs={12} className={classes.h3}>
-            <Typography variant='h3'>{model.name} / {component.name}</Typography>
+            <Typography variant='h3'>{model.name} / {component.name} {n ? `/ ${n} uses` : ''}</Typography>
         </Grid>
-        <Added added={model.added} datetime={datetime}/>
-        {'statistics' in model && <StatisticsValues statistics={model.statistics}/>}
+        {have_statistics && <StatisticsValues statistics={model.statistics}/>}
     </>);
 }
 
 
 function ItemStatistics(props) {
+
     const {item, group, datetime} = props;
-    return (<ColumnCard header={`${item.name} / ${group.name}`}>
-        <Added added={item.added} datetime={datetime}/>
-        {'statistics' in item && <StatisticsValues statistics={item.statistics}/>}
+    const have_statistics = 'statistics' in item;
+    const n = have_statistics ? Math.max(...item['statistics'].map(statistic => statistic['n'])) : 0;
+
+    return (<ColumnCard header={`${item.name} / ${group.name} ${n ? `/ ${n} uses` : ''}`}>
+        {have_statistics && <StatisticsValues statistics={item.statistics}/>}
         {item.components.map(
             component => component.models.map(
                 model => <ModelStatistics model={model} component={component} key={model.id}

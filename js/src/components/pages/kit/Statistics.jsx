@@ -33,11 +33,10 @@ function Statistic(props) {
     const {statistic} = props;
     return (<>
         <Grid item xs={3}><Text>{statistic.name}</Text></Grid>
-        <NamedValue xs={1} name='n' value={statistic.n}/>
         {Object.keys(statistic).
             filter(key => ! ['n', 'name', 'units', 'id'].includes(key)).
             map((key, id) =>
-                <NamedValue xs={2} name={key} value={statistic[key]} units={statistic.units} key={id}/>)}
+                <NamedValue xs={3} name={key} value={statistic[key]} units={statistic.units} key={id}/>)}
     </>)
 }
 
@@ -52,12 +51,14 @@ function ModelStatistics(props) {
 
     const {model} = props;
     const classes = useStyles();
+    const have_statistics = 'statistics' in model;
+    const n = have_statistics ? model['statistics'][0]['n'] : 0;
 
     return (<>
         <Grid item xs={12} className={classes.h3}>
-            <Typography variant='h3'>{model.name}</Typography>
+            <Typography variant='h3'>{model.name} {n ? `/ ${n}` : ''}</Typography>
         </Grid>
-        {'statistics' in model && <StatisticsValues statistics={model.statistics}/>}
+        {have_statistics && <StatisticsValues statistics={model.statistics}/>}
     </>);
 }
 

@@ -15,7 +15,7 @@ from ...diary.model import TYPE, DB, UNITS, VALUE
 from ...lib import now, time_to_local_time
 from ...lib.date import YMD
 from ...lib.utils import inside_interval
-from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s, AGE
+from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s, AGE, D
 
 log = getLogger(__name__)
 
@@ -175,8 +175,9 @@ class StatisticsMixin:
         model_statistics = []
         self._calculate_individual_statistics(model_statistics, ACTIVE_DISTANCE, self.active_distances(s), KM)
         self._calculate_individual_statistics(model_statistics, ACTIVE_TIME, self.active_times(s), S)
-        if model_statistics:
-            model[STATISTICS] = model_statistics
+        expire = self.time_expired(s) or now()
+        model_statistics.append({NAME: AGE, N: 1, SUM: (expire - self.time_added(s)).days, UNITS: D})
+        model[STATISTICS] = model_statistics
 
     def _calculate_individual_statistics(self, model_statistics, name, values, units):
         n = len(values)
@@ -409,7 +410,7 @@ class KitComponent(ModelMixin, Base):
                     population_statistic = population[STATISTICS]. \
                         filter(lambda statistic: statistic[NAME] == instance_statistic[NAME])[0]
                     population_statistic[N] += 1
-                    population_statistic[MEAN] += instance_statistic[MEAN]
+                    population_statistic[MEAN] += instance_statistic[SUM]
         model[MODELS] = []
         for name in population_models:
             population = population_models[name]
