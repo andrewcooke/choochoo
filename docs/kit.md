@@ -61,11 +61,11 @@ automatically:
 First, I will add my Cotic bike:
 
     > ch2 kit start bike cotic --force
-        INFO: Version 0.30.0
+        INFO: Version 0.30.1
         INFO: Using database at database.sql
         INFO: Using database at /home/andrew/.ch2/system-0-30.sql
      WARNING: Forcing creation of new group (bike)
-        INFO: Started bike cotic at 2020-03-15 19:14:05
+        INFO: Started bike cotic at 2020-03-24 21:45:11
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -75,7 +75,7 @@ this, because `bike` will already be known by the system..
 Now I have a bike I am going to add some inner tubes at various dates.
 
     > ch2 kit change cotic front-tube michelin 2019-01-01 --force
-        INFO: Version 0.30.0
+        INFO: Version 0.30.1
         INFO: Using database at database.sql
         INFO: Using database at /home/andrew/.ch2/system-0-30.sql
      WARNING: Forcing creation of new component (front-tube)
@@ -87,7 +87,7 @@ Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
     > ch2 kit change cotic front-tube michelin 2019-03-01
-        INFO: Version 0.30.0
+        INFO: Version 0.30.1
         INFO: Using database at database.sql
         INFO: Using database at /home/andrew/.ch2/system-0-30.sql
         INFO: Retired previous front-tube (michelin)
@@ -99,12 +99,12 @@ add the tubes in order - however they're added, the start and end
 times should align correctly.
 
     > ch2 kit change cotic front-tube vittoria
-        INFO: Version 0.30.0
+        INFO: Version 0.30.1
         INFO: Using database at database.sql
         INFO: Using database at /home/andrew/.ch2/system-0-30.sql
      WARNING: Model vittoria does not match any previous entries
         INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube vittoria at 2020-03-15 19:14:15
+        INFO: Changed cotic front-tube vittoria at 2020-03-24 21:45:21
 
 
 That's three different inner tubes on the front.  The last uses
@@ -114,30 +114,22 @@ command line as you do the work.
 Now we can see the statistics:
 
     > ch2 kit statistics front-tube
-        INFO: Version 0.30.0
+        INFO: Version 0.30.1
         INFO: Using database at database.sql
         INFO: Using database at /home/andrew/.ch2/system-0-30.sql
-    Item front-tube
-    +-Model michelin
-    | +-Lifetime
-    | | +-Count 2
-    | | +-Sum 439d 19h14m15s
-    | | +-Average 219d 21h37m07s
-    | | `-Median 219d 21h37m07s
-    | +-Active Time
-    | | +-Count 2
-    | | +-Sum 0s
-    | | +-Average 0s
-    | | `-Median 0s
-    | `-Active Distance
-    |   +-Count 2
-    |   +-Sum 0m
-    |   +-Average 0m
-    |   `-Median 0m
-    `-Model vittoria
-      +-Lifetime 3s
-      +-Active Time 0s
-      `-Active Distance 0m
+    component: front-tube
+    +-model: michelin
+    | `-Age
+    |   +-n: 1
+    |   `-sum: 59
+    +-model: michelin
+    | `-Age
+    |   +-n: 1
+    |   `-sum: 389
+    `-model: vittoria
+      `-Age
+        +-n: 1
+        `-sum: 0
 
 
 In this example (which is auto-generated from the commands) there were
