@@ -79,6 +79,7 @@ class WebServer:
             Rule('/api/kit/retire-item', endpoint=kit.write_retire_item, methods=('PUT',)),
             Rule('/api/kit/replace-model', endpoint=kit.write_replace_model, methods=('PUT',)),
             Rule('/api/kit/add-component', endpoint=kit.write_add_component, methods=('PUT',)),
+            Rule('/api/kit/add-group', endpoint=kit.write_add_group, methods=('PUT',)),
             Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=('GET', )),
             Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=('GET', )),
             Rule('/api/static/<path:path>', endpoint=static, methods=('GET', )),

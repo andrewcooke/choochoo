@@ -20,6 +20,7 @@ from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE
 log = getLogger(__name__)
 
 NAME = 'name'
+GROUP = 'group'
 ITEM = 'item'
 ITEMS = _s(ITEM)
 COMPONENT = 'component'

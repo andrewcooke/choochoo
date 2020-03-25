@@ -3,10 +3,10 @@ from logging import getLogger
 from werkzeug import Response
 
 from .json import JsonResponse
-from ..commands.kit import finish, change
+from ..commands.kit import finish, change, start
 from ..lib import local_date_to_time, now
 from ..sql import KitGroup, KitComponent
-from ..sql.tables.kit import MODELS, ITEMS, ITEM, COMPONENT, MODEL, INDIVIDUAL, POPULATION
+from ..sql.tables.kit import MODELS, ITEMS, ITEM, COMPONENT, MODEL, INDIVIDUAL, POPULATION, GROUP
 
 log = getLogger(__name__)
 
@@ -57,4 +57,11 @@ class Kit:
         data = request.json
         log.debug(data)
         change(s, data[ITEM], data[COMPONENT], data[MODEL], None, True, False)
+        return Response()
+
+    @staticmethod
+    def write_add_group(request, s):
+        data = request.json
+        log.debug(data)
+        start(s, data[GROUP], data[ITEM], None, True)
         return Response()
