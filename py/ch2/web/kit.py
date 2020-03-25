@@ -12,6 +12,11 @@ log = getLogger(__name__)
 
 
 class Kit:
+    '''
+    These are / should be very thin wrappers around the equivalent kit commands.
+    We don't try to implement all commands, just the basics.
+    If necessary, the user can drop down to the command line.
+    '''
 
     @staticmethod
     def _delete_item_models(groups):

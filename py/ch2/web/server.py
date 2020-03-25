@@ -69,12 +69,14 @@ class WebServer:
         static = Static('.static')
         jupyter = Jupyter(jcontrol)
         self.url_map = Map([
+
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=('GET',)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=('GET',)),
             Rule('/api/diary/active-months/<year>', endpoint=diary.read_active_months, methods=('GET',)),
             Rule('/api/diary/analysis-parameters', endpoint=diary.read_analysis_params, methods=('GET',)),
             Rule('/api/diary/statistics', endpoint=diary.write_statistics, methods=('PUT',)),
             Rule('/api/diary/<date>', endpoint=diary.read_diary, methods=('GET',)),
+
             Rule('/api/kit/edit', endpoint=kit.read_edit, methods=('GET', )),
             Rule('/api/kit/retire-item', endpoint=kit.write_retire_item, methods=('PUT',)),
             Rule('/api/kit/replace-model', endpoint=kit.write_replace_model, methods=('PUT',)),
@@ -82,9 +84,11 @@ class WebServer:
             Rule('/api/kit/add-group', endpoint=kit.write_add_group, methods=('PUT',)),
             Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=('GET', )),
             Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=('GET', )),
+
             Rule('/api/static/<path:path>', endpoint=static, methods=('GET', )),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=('GET', )),
             Rule('/api/<path:path>', endpoint=error(BadRequest), methods=('GET', 'PUT', 'POST')),
+
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
             Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',))
         ])
