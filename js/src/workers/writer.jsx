@@ -41,8 +41,8 @@ function write() {
         Object.entries(data).forEach(([key, value]) => {
             console.log(`write ${key}:${value}`);
         });
-        fetch('/api/statistics',
-            {method: 'post',
+        fetch('/api/diary/statistics',
+            {method: 'put',
                   headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
                   body: JSON.stringify(data)})
             .then((response) => {

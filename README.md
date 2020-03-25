@@ -21,8 +21,16 @@ documentation](https://andrewcooke.github.io/choochoo/).  This page
 contains only some images and a [Technical
 Overview](#technical-overview).
 
-Below are examples of some of the included Jupyter templates.  They
-can be displayed from the diary, the web interface, or via `ch2
+First, A couple of screenshots of the [responsive web
+interface](https://andrewcooke.github.io/choochoo/web-interface) from
+my phone:
+
+![](docs/web-1.png)
+
+![](docs/web-2.png)
+
+Next, below, are examples of some of the included Jupyter templates.
+They can be displayed from the diary, the web interface, or via `ch2
 jupyter` and provide an introduction to doing your own analysis.
 
 ![](docs/graphic-summary.png)
@@ -30,12 +38,6 @@ jupyter` and provide an introduction to doing your own analysis.
 ![](docs/graphic-similarity.png)
 
 ![](docs/calendar.png)
-
-A couple of screenshots of the responsive web interface from my phone:
-
-![](docs/web-1.png)
-
-![](docs/web-2.png)
 
 ## Technical Overview
 

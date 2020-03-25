@@ -29,11 +29,11 @@ export default function MenuButton(props) {
 
     const items = json.map(row => mkItem(row, handleClose));
 
-    return (<Grid item xs={4}>
-        <Button onClick={handleClick}>
+    return (<>
+        <Button variant='outlined' onClick={handleClick}>
             <MenuIcon className={classes.icon}/>
             <Text>{label}</Text>
         </Button>
         <Menu anchorEl={anchor} keepMounted open={Boolean(anchor)} onClose={handleClose}>{items}</Menu>
-    </Grid>);
+    </>);
 }

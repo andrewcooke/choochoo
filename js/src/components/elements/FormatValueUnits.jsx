@@ -1,22 +1,24 @@
 import React from "react";
 import {sprintf} from "sprintf-js";
-import Text from "../../../elements/Text";
+import Text from "./Text";
 
 
 export default function FormatValueUnits(props) {
-    const {value, units} = props;
+    const {value, units=''} = props;
     if (units === 's') {
         return <FormatSeconds value={value}/>
     } else if (['kmh⁻¹', 'km', '%'].includes(units)) {
-        return (<Text>{sprintf('%.1f', value)}{units}</Text>);
+        if (value >= 100) {
+            return (<Text>{sprintf('%d', value)}{units}</Text>);
+        } else {
+            return (<Text>{sprintf('%.1f', value)}{units}</Text>);
+        }
     } else if (['W', 'bpm', 'm'].includes(units)) {
         return (<Text>{sprintf('%d', value)}{units}</Text>);
     } else if (['FF', 'stp'].includes(units)) {
         return (<Text>{sprintf('%d', value)}</Text>);
-    } else if (units) {
-        return (<Text>{value}{units}</Text>);
     } else {
-        return (<Text>{value}</Text>);
+        return (<Text>{value}{units}</Text>);
     }
 }
 

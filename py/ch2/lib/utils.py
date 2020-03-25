@@ -121,7 +121,11 @@ def format_metres(dist):
     if dist < 1000:
         return str(int(dist)) + M
     else:
-        return f'{dist/1000:.1f}{KM}'
+        return format_km(dist / 1000)
+
+
+def format_km(dist):
+    return f'{dist:.1f}{KM}'
 
 
 def format_percent(pc):
@@ -155,3 +159,15 @@ def drop_trailing_slash(path):
     else:
         return path
 
+
+def inside_interval(lo, value, hi):
+    if lo is None:
+        if hi is None:
+            return True
+        else:
+            return value < hi
+    else:
+        if hi is None:
+            return lo <= value
+        else:
+            return lo <= value < hi

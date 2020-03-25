@@ -20,7 +20,6 @@ function Columns(props) {
     if (params === null) {
         return <Loading/>;  // undefined initial data
     } else {
-        console.log(params);
         return (<ColumnList>
             <ActivityDetails params={params}/>
             <CompareActivities params={params}/>
@@ -43,7 +42,7 @@ export default function Analysis(props) {
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/analysis-parameters')
+        fetch('/api/diary/analysis-parameters')
             .then(response => response.json())
             .then(json => setJson(json));
     }, [1]);

@@ -17,7 +17,6 @@ const useStyles = makeStyles(theme => ({
 export default function Schedule(props) {
 
     const {json, history} = props;
-    console.log(json);
 
     if (json === null) {
         return <Loading/>;  // undefined initial data
@@ -84,7 +83,7 @@ function Field(props) {
         return <SummaryField json={json}/>
     } else if (json.type === 'link') {
         if (json.tag === 'health') {
-            return <LinkButton href='jupyter/health'><Text>{json.value}</Text></LinkButton>
+            return <LinkButton href='api/jupyter/health'><Text>{json.value}</Text></LinkButton>
         } else if (json.tag === 'all-activities') {
             return <JupyterAllActivities json={json}/>
         } else {

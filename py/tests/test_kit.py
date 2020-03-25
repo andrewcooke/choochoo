@@ -1,11 +1,15 @@
-
+from io import StringIO
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
-from ch2.commands.args import bootstrap_file, m, V
-from ch2.commands.kit import start, change, statistics, finish, show, undo
+from ch2.commands.activities import activities
+from ch2.commands.args import bootstrap_file, m, V, mm, FAST, DEV, D
+from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.config import default
-from ch2.sql import KitModel, KitItem, KitComponent
+from ch2.diary.model import TYPE
+from ch2.sql import KitModel, KitItem, KitComponent, PipelineType
+from ch2.sql.tables.kit import get_name, KitGroup, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS, INDIVIDUAL
+from ch2.stats.pipeline import run_pipeline
 
 
 class TestKit(TestCase):
@@ -39,11 +43,111 @@ class TestKit(TestCase):
                 self.assertTrue('sram' in str(ctx.exception), ctx.exception)
                 start(s, 'bike', 'bowman', None, False)
                 change(s, 'bowman', 'chain', 'sram', None, False, True)
-                self.assertEqual(len(show(s, 'cotic', None)), 3)
-                self.assertEqual(len(statistics(s, 'bike')), 16)
-                self.assertEqual(len(statistics(s, 'cotic')), 20)
-                self.assertEqual(len(statistics(s, 'chain')), 33)
-                self.assertEqual(len(statistics(s, 'sram')), 16)
+                self.assert_command('''item: cotic  2020-03-24 - 
+`-component: chain
+  +-model: sram  2020-03-24 - 
+  +-model: kcm  2018-01-01 - 2018-04-01
+  +-model: sram  2018-05-01 - 2018-07-01
+  +-model: kcm  2018-07-01 - 2020-03-24
+  `-model: sram  2018-04-01 - 2018-05-01
+''', show, s, 'cotic', None)
+                self.assert_command('''group: bike
++-item: cotic
+| +-Age
+| | +-n: 1
+| | `-sum: 0
+| `-component: chain
+|   +-model: sram
+|   | `-Age
+|   |   +-n: 1
+|   |   `-sum: 0
+|   +-model: kcm
+|   | `-Age
+|   |   +-n: 1
+|   |   `-sum: 90
+|   +-model: sram
+|   | `-Age
+|   |   +-n: 1
+|   |   `-sum: 61
+|   +-model: kcm
+|   | `-Age
+|   |   +-n: 1
+|   |   `-sum: 632
+|   `-model: sram
+|     `-Age
+|       +-n: 1
+|       `-sum: 30
++-item: marin
+| `-Age
+|   +-n: 1
+|   `-sum: 0
+`-item: bowman
+  +-Age
+  | +-n: 1
+  | `-sum: 0
+  `-component: chain
+    `-model: sram
+      `-Age
+        +-n: 1
+        `-sum: 0
+''', statistics, s, 'bike')
+                self.assert_command('''item: cotic
++-Age
+| +-n: 1
+| `-sum: 0
+`-component: chain
+  +-model: sram
+  | `-Age
+  |   +-n: 1
+  |   `-sum: 0
+  +-model: kcm
+  | `-Age
+  |   +-n: 1
+  |   `-sum: 90
+  +-model: sram
+  | `-Age
+  |   +-n: 1
+  |   `-sum: 61
+  +-model: kcm
+  | `-Age
+  |   +-n: 1
+  |   `-sum: 632
+  `-model: sram
+    `-Age
+      +-n: 1
+      `-sum: 30
+''', statistics, s, 'cotic')
+                self.assert_command('''component: chain
++-model: sram
+| `-Age
+|   +-n: 1
+|   `-sum: 0
++-model: kcm
+| `-Age
+|   +-n: 1
+|   `-sum: 90
++-model: sram
+| `-Age
+|   +-n: 1
+|   `-sum: 61
++-model: kcm
+| `-Age
+|   +-n: 1
+|   `-sum: 632
++-model: sram
+| `-Age
+|   +-n: 1
+|   `-sum: 30
+`-model: sram
+  `-Age
+    +-n: 1
+    `-sum: 0
+''', statistics, s, 'chain')
+                self.assert_command('''model: sram
+`-Age
+  +-n: 1
+  `-sum: 0
+''', statistics, s, 'sram')
                 finish(s, 'bowman', None, False)
                 with self.assertRaises(Exception) as ctx:
                     finish(s, 'bowman', None, False)
@@ -55,3 +159,51 @@ class TestKit(TestCase):
                 self.assertEqual(len(KitModel.get_all(s, KitItem.get(s, 'cotic'), KitComponent.get(s, 'chain'))), 0)
                 undo(s, 'bowman', 'chain', 'sram', None, True)
                 self.assertFalse(KitComponent.get(s, 'chain', require=False))
+
+    def assert_command(self, text, cmd, *args):
+        args = list(args)
+        output = StringIO()
+        cmd(*args, output=output)
+        self.assertEqual(output.getvalue(), text)
+
+    def test_models(self):
+        with NamedTemporaryFile() as f:
+
+            args, sys, db = bootstrap_file(f, m(V), '5', configurator=default)
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+                                           'data/test/source/personal/2018-08-03-rec.fit',
+                                           m(D.upper())+'kit=cotic')
+            activities(args, sys, db)
+            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+                                           'data/test/source/personal/2018-08-27-rec.fit',
+                                           m(D.upper())+'kit=cotic')
+            activities(args, sys, db)
+            run_pipeline(sys, db, PipelineType.STATISTIC, like=['%Activity%'], n_cpu=1)
+
+            with db.session_context() as s:
+                start(s, 'bike', 'cotic', '2018-01-01', True)
+                start(s, 'bike', 'marin', '2018-01-01', False)
+                change(s, 'cotic', 'chain', 'sram', None, True, True)
+                change(s, 'cotic', 'chain', 'kcm', '2018-01-01', False, False)
+                change(s, 'cotic', 'chain', 'sram', '2018-05-01', False, False)
+                change(s, 'cotic', 'chain', 'kcm', '2018-07-01', False, False)
+                change(s, 'cotic', 'chain', 'sram', '2018-04-01', False, False)
+                start(s, 'bike', 'bowman', '2018-01-01', False)
+                change(s, 'bowman', 'chain', 'sram', None, False, True)
+
+            run_pipeline(sys, db, PipelineType.STATISTIC, like=['%Kit%'], n_cpu=1)
+
+            with db.session_context() as s:
+                bike = get_name(s, 'bike').to_model(s, depth=3, statistics=INDIVIDUAL, own_models=False)
+                self.assertEqual(bike[TYPE], KitGroup.SIMPLE_NAME)
+                self.assertEqual(bike[NAME], 'bike')
+                self.assertEqual(len(bike[ITEMS]), 3)
+                cotic = [item for item in bike[ITEMS] if item[NAME] == 'cotic'][0]
+                self.assertEqual(cotic[TYPE], KitItem.SIMPLE_NAME)
+                self.assertEqual(cotic[NAME], 'cotic')
+                self.assertEqual(len(cotic[COMPONENTS]), 1)
+                chain = cotic[COMPONENTS][0]
+                self.assertEqual(chain[TYPE], KitComponent.SIMPLE_NAME)
+                self.assertEqual(chain[NAME], 'chain')
+                self.assertEqual(len(chain[MODELS]), 6)
+                self.assertFalse(STATISTICS in bike)

@@ -12,6 +12,9 @@ const useStyles = makeStyles(theme => ({
             padding: theme.spacing(1),
         },
     },
+    align: {
+        alignItems: 'flex-end',
+    },
 }));
 
 
@@ -22,6 +25,6 @@ export default function ColumnCard(props) {
 
     return (<ListItem className={classes.listItem}><Card>
         {header !== null ? <Typography variant='h2'>{header}</Typography> : <></>}
-        <Grid container spacing={1}>{children}</Grid>
+        <Grid container spacing={1} className={classes.align}>{children}</Grid>
     </Card></ListItem>);
 }

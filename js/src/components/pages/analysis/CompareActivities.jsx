@@ -23,7 +23,7 @@ export default function CompareActivities(props) {
     const [compareTime, setCompareTime] = useState(last(compareTimes));
     if (! compareTimes.includes(compareTime)) setCompareTime(last(compareTimes));
 
-    const href = fmtHref('jupyter/compare_activities?local_time=%s&compare_time=%s&activity_group_name=%s',
+    const href = fmtHref('api/jupyter/compare_activities?local_time=%s&compare_time=%s&activity_group_name=%s',
         localTime, compareTime, group);
 
     return (<ActivityCard header='Compare Activities' href={href}>
