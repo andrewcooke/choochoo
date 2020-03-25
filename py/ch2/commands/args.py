@@ -18,7 +18,6 @@ DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
-TOPIC = 'topic'
 
 ACTIVITIES = 'activities'
 CONFIG = 'config'
@@ -29,10 +28,15 @@ FIT = 'fit'
 FIX_FIT = 'fix-fit'
 GARMIN = 'garmin'
 H, HELP = 'h', 'help'
+JUPYTER = 'jupyter'
+KIT = 'kit'
+MONITOR = 'monitor'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
+UNLOCK = 'unlock'
+WEB = 'web'
 
 ACTIVITY = 'activity'
 ACTIVITY_GROUP = 'activity-group'
@@ -88,10 +92,8 @@ HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
 INTERNAL = 'internal'
 ITEM = 'item'
-JUPYTER = 'jupyter'
 K = 'k'
 KARG = 'karg'
-KIT = 'kit'
 LABEL = 'label'
 LATITUDE = 'latitude'
 LIKE = 'like'
@@ -113,7 +115,6 @@ MAX_ROWS = 'max-rows'
 MAX_RECORD_LEN = 'max-record-len'
 MIN_SYNC_CNT = 'min-sync-cnt'
 MODEL = 'model'
-MONITOR = 'monitor'
 MONITOR_JOURNALS = 'monitor-journals'
 MONTH = 'month'
 MONTHS = 'months'
@@ -162,10 +163,10 @@ SYSTEM = 'system'
 TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
+TOPIC = 'topic'
 TUI = 'tui'
 UNDO = 'undo'
 UNLIKE = 'unlike'
-UNLOCK = 'unlock'
 USER = 'user'
 VALIDATE = 'validate'
 V, VERBOSITY = 'v', 'verbosity'
@@ -173,7 +174,6 @@ VALUE = 'value'
 VERSION = 'version'
 W, WARN = 'w', 'warn'
 WAYPOINTS = 'waypoints'
-WEB = 'web'
 WIDTH = 'width'
 WORKER = 'worker'
 YEAR = 'year'
@@ -254,29 +254,38 @@ def make_parser():
 
     subparsers = parser.add_subparsers(title='commands', dest=COMMAND)
 
-    activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
-    activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
-    activities.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
-    activities.add_argument(PATH, metavar='PATH', nargs='+',
-                            help='path to fit file(s)')
-    activities.add_argument(m(D.upper()), mm(DEFINE), action='append', default=[], metavar='NAME=VALUE', dest=DEFINE,
-                            help='statistic to be stored with the activities (can be repeated)')
-    activities.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE', dest=KARG,
-                            help='keyword argument to be passed to the pipelines (can be repeated)')
-    activities.add_argument(mm(WORKER), metavar='ID', type=int,
-                            help='internal use only (identifies sub-process workers)')
+    # high-level commands used daily
 
-    config = subparsers.add_parser(CONFIG,
-                                   help='configure the default database ' +
-                                        '(see docs for full configuration instructions)')
-    config_cmds = config.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    config_default = config_cmds.add_parser(DEFAULT, help="create default config")
-    config_default.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
-    config_check = config_cmds.add_parser(CHECK, help="check config")
-    config_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
-    config_check.add_argument(mm(no(CONFIG)), action='store_true', help='check database has no configuration')
-    config_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
-                              help='check database has no activity groups defined')
+    help = subparsers.add_parser(HELP, help='display help')
+    help.add_argument(TOPIC, nargs='?', metavar=TOPIC,
+                      help='the subject for help')
+
+    web = subparsers.add_parser(WEB, help='start the web interface')
+    web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+
+    def add_web_server_args(cmd):
+        cmd.add_argument(mm(BIND), default='localhost', help='bind address (default localhost)')
+        cmd.add_argument(mm(PORT), default=8000, type=int, help='port to use')
+
+    add_web_server_args(web_cmds.add_parser(START, help='start the web server'))
+    web_cmds.add_parser(STOP, help='stop the web server')
+    web_cmds.add_parser(STATUS, help='display status of web server')
+    add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
+
+    diary = subparsers.add_parser(DIARY, help='daily diary and summary')
+    diary.add_argument(DATE, metavar='DATE', nargs='?',
+                       help='an optional date to display (default is today)')
+    diary.add_argument(mm(FAST), action='store_true',
+                       help='skip update of statistics on exit')
+    diary_summary = diary.add_mutually_exclusive_group()
+    diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
+                               help='show monthly summary')
+    diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
+                               help='show yearly summary')
+    diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
+                               help='show summary for given schedule')
+
+    # low-level commands used often
 
     constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constant_cmds = constant.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
@@ -306,31 +315,116 @@ def make_parser():
     constant_remove.add_argument(NAME, metavar='NAME', help='name')
     constant_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
 
-    diary = subparsers.add_parser(DIARY, help='daily diary and summary')
-    diary.add_argument(DATE, metavar='DATE', nargs='?',
-                       help='an optional date to display (default is today)')
-    diary.add_argument(mm(FAST), action='store_true',
-                       help='skip update of statistics on exit')
-    diary_summary = diary.add_mutually_exclusive_group()
-    diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
-                               help='show monthly summary')
-    diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
-                               help='show yearly summary')
-    diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-                               help='show summary for given schedule')
+    jupyter = subparsers.add_parser(JUPYTER, help='access jupyter')
+    jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    jupyter_cmds.add_parser(LIST, help='list available templates')
+    jupyter_show = jupyter_cmds.add_parser(SHOW, help='display a template (starting server if needed)')
+    jupyter_show.add_argument(NAME, help='the template name')
+    jupyter_show.add_argument(ARG, nargs='*', help='template arguments')
+    jupyter_cmds.add_parser(START, help='start a background service')
+    jupyter_cmds.add_parser(STOP, help='stop the background service')
+    jupyter_cmds.add_parser(STATUS, help='display status of background service')
+    jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
 
-    diary2 = subparsers.add_parser(DIARY, help='daily diary and summary')
-    diary2.add_argument(DATE, metavar='DATE', nargs='?',
-                        help='an optional date to display (default is today)')
-    diary2.add_argument(mm(FAST), action='store_true',
-                        help='skip update of statistics on exit')
-    diary2_summary = diary2.add_mutually_exclusive_group()
-    diary2_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
-                                help='show monthly summary')
-    diary2_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
-                                help='show yearly summary')
-    diary2_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-                                help='show summary for given schedule')
+    kit = subparsers.add_parser(KIT, help='manage kit')
+    kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)')
+    kit_start.add_argument(GROUP, help='item group (bike, shoe, etc)')
+    kit_start.add_argument(ITEM, help='item name (cotic, adidas, etc)')
+    kit_start.add_argument(DATE, nargs='?', help='when created (default now)')
+    kit_start.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new group')
+    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item')
+    kit_finish.add_argument(ITEM, help='item name')
+    kit_finish.add_argument(DATE, nargs='?', help='when to retire (default now)')
+    kit_finish.add_argument(mm(FORCE), action='store_true', help='confirm change of existing date')
+    kit_delete = kit_cmds.add_parser(DELETE, help='remove all entries for an item or group')
+    kit_delete.add_argument(NAME, help='item or group to delete')
+    kit_delete.add_argument(mm(FORCE), action='store_true', help='confirm group deletion')
+    kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)')
+    kit_change.add_argument(ITEM, help='item name (cotic, adidas, etc)')
+    kit_change.add_argument(COMPONENT, help='component type (chain, laces, etc)')
+    kit_change.add_argument(MODEL, help='model description')
+    kit_change.add_argument(DATE, nargs='?', help='when changed (default now)')
+    kit_change.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new component')
+    kit_change.add_argument(mm(START), action='store_true', help='set default date to start of item')
+    kit_undo = kit_cmds.add_parser(UNDO, help='remove a change')
+    kit_undo.add_argument(ITEM, help='item name')
+    kit_undo.add_argument(COMPONENT, help='component type')
+    kit_undo.add_argument(MODEL, help='model description')
+    kit_undo.add_argument(DATE, nargs='?', help='active date (to disambiguate models; default now)')
+    kit_undo.add_argument(mm(ALL), action='store_true', help='remove all models (rather than single date)')
+    kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
+    kit_show.add_argument(NAME, nargs='?', help='group or item to display (default all)')
+    kit_show.add_argument(DATE, nargs='?', help='when to display (default now)')
+    kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
+    kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
+    kit_statistics.add_argument(NAME, nargs='?', help='group, item, component or model')
+    kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
+    kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
+    kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
+    kit_dump.add_argument(mm(CMD), help='command to use instead of ch2')
+
+    # low-level commands use rarely
+
+    config = subparsers.add_parser(CONFIG,
+                                   help='configure the default database ' +
+                                        '(see docs for full configuration instructions)')
+    config_cmds = config.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    config_default = config_cmds.add_parser(DEFAULT, help="create default config")
+    config_default.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
+    config_check = config_cmds.add_parser(CHECK, help="check config")
+    config_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
+    config_check.add_argument(mm(no(CONFIG)), action='store_true', help='check database has no configuration')
+    config_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
+                              help='check database has no activity groups defined')
+
+    activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
+    activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
+    activities.add_argument(PATH, metavar='PATH', nargs='+',
+                            help='path to fit file(s)')
+    activities.add_argument(m(D.upper()), mm(DEFINE), action='append', default=[], metavar='NAME=VALUE', dest=DEFINE,
+                            help='statistic to be stored with the activities (can be repeated)')
+    activities.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE', dest=KARG,
+                            help='keyword argument to be passed to the pipelines (can be repeated)')
+    activities.add_argument(mm(WORKER), metavar='ID', type=int,
+                            help='internal use only (identifies sub-process workers)')
+
+    garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
+    garmin.add_argument(DIR, metavar='DIR',
+                        help='the directory where FIT files are stored')
+    garmin.add_argument(mm(USER), metavar='USER', required=True,
+                        help='garmin connect username')
+    garmin.add_argument(mm(PASS), metavar='PASSWORD', required=True,
+                        help='garmin connect password')
+    garmin.add_argument(mm(DATE), metavar='DATE', type=to_date,
+                        help='date to download')
+    garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
+
+    monitor = subparsers.add_parser(MONITOR, help='read monitor data')
+    monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
+    monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
+    monitor.add_argument(PATH, metavar='PATH', nargs='+',
+                         help='path to fit file(s)')
+    monitor.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
+                         help='keyword argument to be passed to the pipelines (can be repeated)')
+    monitor.add_argument(mm(WORKER), metavar='ID', type=int,
+                         help='internal use only (identifies sub-process workers)')
+
+    statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
+    statistics.add_argument(mm(FORCE), action='store_true',
+                            help='delete existing statistics')
+    statistics.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
+                            help='run only matching pipeline classes')
+    statistics.add_argument(mm(UNLIKE), action='append', default=[], metavar='PATTERN',
+                            help='exclude matching pipeline classes')
+    statistics.add_argument(START, metavar='START', nargs='?',
+                            help='optional start date')
+    statistics.add_argument(FINISH, metavar='FINISH', nargs='?',
+                            help='optional finish date (if start also given)')
+    statistics.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
+                            help='keyword argument to be passed to the pipelines (can be repeated)')
+    statistics.add_argument(mm(WORKER), metavar='ID', type=int,
+                            help='internal use only (identifies sub-process workers)')
 
     dump = subparsers.add_parser(DUMP, help='display database contents')  # todo - this one needs tests!
     dump_format = dump.add_mutually_exclusive_group()
@@ -494,80 +588,6 @@ def make_parser():
     fix_fit_params.add_argument(mm(MAX_DELTA_T), type=float, metavar='S',
                                 help='max number of seconds between timestamps')
 
-    garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
-    garmin.add_argument(DIR, metavar='DIR',
-                        help='the directory where FIT files are stored')
-    garmin.add_argument(mm(USER), metavar='USER', required=True,
-                        help='garmin connect username')
-    garmin.add_argument(mm(PASS), metavar='PASSWORD', required=True,
-                        help='garmin connect password')
-    garmin.add_argument(mm(DATE), metavar='DATE', type=to_date,
-                        help='date to download')
-    garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
-
-    help = subparsers.add_parser(HELP, help='display help')
-    help.add_argument(TOPIC, nargs='?', metavar=TOPIC,
-                      help='the subject for help')
-
-    jupyter = subparsers.add_parser(JUPYTER, help='access jupyter')
-    jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    jupyter_cmds.add_parser(LIST, help='list available templates')
-    jupyter_show = jupyter_cmds.add_parser(SHOW, help='display a template (starting server if needed)')
-    jupyter_show.add_argument(NAME, help='the template name')
-    jupyter_show.add_argument(ARG, nargs='*', help='template arguments')
-    jupyter_cmds.add_parser(START, help='start a background service')
-    jupyter_cmds.add_parser(STOP, help='stop the background service')
-    jupyter_cmds.add_parser(STATUS, help='display status of background service')
-    jupyter_cmds.add_parser(SERVICE, help='internal use only - use start/stop')
-
-    kit = subparsers.add_parser(KIT, help='manage kit')
-    kit_cmds = kit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    kit_start = kit_cmds.add_parser(START, help='define a new item (new bike, new shoe)')
-    kit_start.add_argument(GROUP, help='item group (bike, shoe, etc)')
-    kit_start.add_argument(ITEM, help='item name (cotic, adidas, etc)')
-    kit_start.add_argument(DATE, nargs='?', help='when created (default now)')
-    kit_start.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new group')
-    kit_finish = kit_cmds.add_parser(FINISH, help='retire an item')
-    kit_finish.add_argument(ITEM, help='item name')
-    kit_finish.add_argument(DATE, nargs='?', help='when to retire (default now)')
-    kit_finish.add_argument(mm(FORCE), action='store_true', help='confirm change of existing date')
-    kit_delete = kit_cmds.add_parser(DELETE, help='remove all entries for an item or group')
-    kit_delete.add_argument(NAME, help='item or group to delete')
-    kit_delete.add_argument(mm(FORCE), action='store_true', help='confirm group deletion')
-    kit_change = kit_cmds.add_parser(CHANGE, help='replace (or add) a part (wheel, innersole, etc)')
-    kit_change.add_argument(ITEM, help='item name (cotic, adidas, etc)')
-    kit_change.add_argument(COMPONENT, help='component type (chain, laces, etc)')
-    kit_change.add_argument(MODEL, help='model description')
-    kit_change.add_argument(DATE, nargs='?', help='when changed (default now)')
-    kit_change.add_argument(mm(FORCE), action='store_true', help='confirm creation of a new component')
-    kit_change.add_argument(mm(START), action='store_true', help='set default date to start of item')
-    kit_undo = kit_cmds.add_parser(UNDO, help='remove a change')
-    kit_undo.add_argument(ITEM, help='item name')
-    kit_undo.add_argument(COMPONENT, help='component type')
-    kit_undo.add_argument(MODEL, help='model description')
-    kit_undo.add_argument(DATE, nargs='?', help='active date (to disambiguate models; default now)')
-    kit_undo.add_argument(mm(ALL), action='store_true', help='remove all models (rather than single date)')
-    kit_show = kit_cmds.add_parser(SHOW, help='display kit data')
-    kit_show.add_argument(NAME, nargs='?', help='group or item to display (default all)')
-    kit_show.add_argument(DATE, nargs='?', help='when to display (default now)')
-    kit_show.add_argument(mm(CSV), action='store_true', help='CSV format')
-    kit_statistics = kit_cmds.add_parser(STATISTICS, help='display statistics')
-    kit_statistics.add_argument(NAME, nargs='?', help='group, item, component or model')
-    kit_statistics.add_argument(mm(CSV), action='store_true', help='CSV format')
-    kit_rebuild = kit_cmds.add_parser(REBUILD, help='rebuild database entries')
-    kit_dump = kit_cmds.add_parser(DUMP, help='dump to script')
-    kit_dump.add_argument(mm(CMD), help='command to use instead of ch2')
-
-    monitor = subparsers.add_parser(MONITOR, help='read monitor data')
-    monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
-    monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
-    monitor.add_argument(PATH, metavar='PATH', nargs='+',
-                         help='path to fit file(s)')
-    monitor.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
-                         help='keyword argument to be passed to the pipelines (can be repeated)')
-    monitor.add_argument(mm(WORKER), metavar='ID', type=int,
-                         help='internal use only (identifies sub-process workers)')
-
     noop = subparsers.add_parser(NO_OP,
                                  help='used within jupyter (no-op from cmd line)')
 
@@ -578,22 +598,6 @@ def make_parser():
     package_fit_profile.add_argument(m(W), mm(WARN), action='store_true',
                                      help='additional warning messages')
 
-    statistics = subparsers.add_parser(STATISTICS, help='(re-)generate statistics')
-    statistics.add_argument(mm(FORCE), action='store_true',
-                            help='delete existing statistics')
-    statistics.add_argument(mm(LIKE), action='append', default=[], metavar='PATTERN',
-                            help='run only matching pipeline classes')
-    statistics.add_argument(mm(UNLIKE), action='append', default=[], metavar='PATTERN',
-                            help='exclude matching pipeline classes')
-    statistics.add_argument(START, metavar='START', nargs='?',
-                            help='optional start date')
-    statistics.add_argument(FINISH, metavar='FINISH', nargs='?',
-                            help='optional finish date (if start also given)')
-    statistics.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
-                            help='keyword argument to be passed to the pipelines (can be repeated)')
-    statistics.add_argument(mm(WORKER), metavar='ID', type=int,
-                            help='internal use only (identifies sub-process workers)')
-
     test_schedule = subparsers.add_parser(TEST_SCHEDULE, help='print schedule locations in a calendar')
     test_schedule.add_argument(SCHEDULE, metavar='SCHEDULE',
                                help='schedule to test')
@@ -603,18 +607,6 @@ def make_parser():
                                help='number of months to display')
 
     unlock = subparsers.add_parser(UNLOCK, help='remove database locking')
-
-    web = subparsers.add_parser(WEB, help='start the web interface')
-    web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-
-    def add_web_server_args(cmd):
-        cmd.add_argument(mm(BIND), default='localhost', help='bind address (default localhost)')
-        cmd.add_argument(mm(PORT), default=8000, type=int, help='port to use')
-
-    add_web_server_args(web_cmds.add_parser(START, help='start the web server'))
-    web_cmds.add_parser(STOP, help='stop the web server')
-    web_cmds.add_parser(STATUS, help='display status of web server')
-    add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
 
     return parser
 
