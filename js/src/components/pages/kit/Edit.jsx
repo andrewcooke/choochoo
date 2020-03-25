@@ -185,20 +185,20 @@ function Introduction(props) {
         <Button onClick={onClick}>{help ? <ExpandLess/> : <ExpandMore/>}</Button>
     </Typography>);
 
+    // box needed below because grid has weird -4px indent
     return (<ColumnCardBase header={header}><Collapse in={help} timeout="auto" unmountOnExit>
-        <Text>
+        <Box mx='4px'><Text>
             <p>'Kit' is the equipment you use when training.
                 For me, for example, this tracks my bikes and their components.</p>
-            <p>Everything is divided into four levels:
-                <ul>
-                    <li>At the top are 'groups'. A group might be 'bike' or 'shoes', for example.</li>
-                    <li>Groups contain 'items', An item might be a particular bike.</li>
-                    <li>Items are made from 'components'. These are generic things like 'wheel' or 'chain',</li>
-                    <li>Finally, we have 'models' which are particular components.
-                        For example, a particular make of wheel, or a model of chain.
-                    </li>
-                </ul>
-            </p>
+            <p>Everything is divided into four levels:</p>
+            <ul>
+                <li>At the top are 'groups'. A group might be 'bike' or 'shoes', for example.</li>
+                <li>Groups contain 'items', An item might be a particular bike.</li>
+                <li>Items are made from 'components'. These are generic things like 'wheel' or 'chain',</li>
+                <li>Finally, we have 'models' which are particular components.
+                    For example, a particular make of wheel, or a model of chain.
+                </li>
+            </ul>
             <p>As your equipment changes over time you can change the current model,
                 replacing what was used with a new model.</p>
             <p>You should also specify the item (eg the bike) when uploading data, so that the system can track when
@@ -206,7 +206,7 @@ function Introduction(props) {
             <p>Using the options in the menu you can then see what kit you had at any particular time (a snapshot)
                 and how long particular models lasted (statistics).
                 So for me, tracking my bikes, I can see which models of chain last best, for example.</p>
-        </Text>
+        </Text></Box>
 
     </Collapse>
         <AddGroup groups={groups} update={update}/>
