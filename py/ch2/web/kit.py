@@ -5,7 +5,7 @@ from werkzeug import Response
 from .json import JsonResponse
 from ..commands.kit import finish, change, start
 from ..lib import local_date_to_time, now
-from ..sql import KitGroup, KitComponent
+from ..sql import KitGroup, KitComponent, KitItem
 from ..sql.tables.kit import MODELS, ITEMS, ITEM, COMPONENT, MODEL, INDIVIDUAL, POPULATION, GROUP
 
 log = getLogger(__name__)
@@ -42,6 +42,12 @@ class Kit:
         components = [component.to_model(s, depth=3, statistics=POPULATION)
                       for component in s.query(KitComponent).order_by(KitComponent.name).all()]
         return JsonResponse(components)
+
+    @staticmethod
+    def read_items(request, s):
+        items = [item.to_model(s, depth=0)
+                 for item in s.query(KitItem).order_by(KitItem.name).all()]
+        return JsonResponse(items)
 
     @staticmethod
     def write_retire_item(request, s):

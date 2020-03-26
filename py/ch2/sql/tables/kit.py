@@ -325,7 +325,7 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
     def to_model(self, s, depth=0, statistics=None, time=None, own_models=True):
         model = super().to_model(s, depth=depth, statistics=statistics, time=time)
         model_ids = set(model.id for model in self.models)
-        if own_models:
+        if own_models and COMPONENTS in model:
             for component in model[COMPONENTS]:
                 # restrict component's models to subset of own models
                 component[MODELS] = [model for model in component[MODELS] if model[DB] in model_ids]

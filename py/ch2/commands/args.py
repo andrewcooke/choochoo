@@ -36,6 +36,7 @@ PACKAGE_FIT_PROFILE = 'package-fit-profile'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
 UNLOCK = 'unlock'
+UPDATE = 'update'
 WEB = 'web'
 
 ACTIVITY = 'activity'
@@ -271,6 +272,8 @@ def make_parser():
     web_cmds.add_parser(STOP, help='stop the web server')
     web_cmds.add_parser(STATUS, help='display status of web server')
     add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
+
+    update = subparsers.add_parser(UPDATE, help='update with new data')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, metavar='DATE', nargs='?',
