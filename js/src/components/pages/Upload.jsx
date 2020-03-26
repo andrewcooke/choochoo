@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnList, Layout, Loading, MainMenu, ColumnCard} from "../elements";
-import {Button, Grid, TextField} from "@material-ui/core";
+import {ColumnList, Layout, Loading, MainMenu, ColumnCard, Text} from "../elements";
+import {Button, Grid, TextField, IconButton, Box} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
+import ClearIcon from '@material-ui/icons/Clear';
 
 
 const useStyles = makeStyles(theme => ({
@@ -18,7 +19,37 @@ const useStyles = makeStyles(theme => ({
     wide: {
         width: '100%',
     },
+    noPadding: {
+        padding: '0px',
+    },
+    baseline: {
+        alignItems: 'baseline',
+    },
 }));
+
+
+
+function FileList(props) {
+
+    const {files, onClick} = props;
+    const classes = useStyles();
+
+    if (files.length === 0) {
+        return <></>;
+    } else {
+        // don't understand why this is still generating the key warning
+        return files.map((file, index) => (<>
+            <Grid item xs={11} className={classes.baseline} key={`a${index}`}>
+                <Text key={`b${index}`}>{file.name}</Text>
+            </Grid>
+            <Grid item xs={1} className={classes.baseline} key={`c${index}`}>
+                <IconButton onClick={() => onClick(index)} className={classes.noPadding} key={`d${index}`}>
+                    <ClearIcon key={`e${index}`}/>
+                </IconButton>
+            </Grid>
+        </>));
+    }
+}
 
 
 function FileSelect(props) {
@@ -26,7 +57,7 @@ function FileSelect(props) {
     const {items} = props;
     const classes = useStyles();
     const [files, setFiles] = useState([]);
-    console.log(files);
+    const [kit, setKit] = useState([]);
 
     function onChange() {
         const input = document.getElementById('upload-input');
@@ -42,6 +73,12 @@ function FileSelect(props) {
         setFiles(newFiles);
     }
 
+    function deleteFile(index) {
+        let newFiles = [...files];
+        newFiles.splice(index, 1);
+        setFiles(newFiles);
+    }
+
     return (<>
         <Grid item xs={12}>
             <input accept='*/*' id='upload-input' multiple type='file' onChange={onChange} className={classes.input}/>
@@ -49,16 +86,15 @@ function FileSelect(props) {
                 <Button variant='outlined' component='span'>Select files</Button>
             </label>
         </Grid>
-        <Grid item xs={8}>
-            <p>file list</p>
-        </Grid>
+        <FileList files={files} onClick={deleteFile}/>
         <Grid item xs={12}>
             <Autocomplete multiple options={items.map(item => item.name)} filterSelectedOptions
                           className={classes.wide} size='small'
-                          renderInput={params => (<TextField {...params} variant='outlined' label='Kit'/>)}/>
+                          renderInput={params => (<TextField {...params} variant='outlined' label='Kit'/>)}
+                          onChange={(event, value) => setKit(value)}/>
         </Grid>
         <Grid item xs={12} className={classes.right}>
-            <Button variant='outlined' component='span' disabled={files.length === 0}>Upload</Button>
+                <Button variant='outlined' component='span' disabled={files.length === 0}>Upload</Button>
         </Grid>
     </>);
 }
