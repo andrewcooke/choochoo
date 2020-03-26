@@ -8,6 +8,6 @@ log = getLogger(__name__)
 class Upload:
 
     def __call__(self, request, s):
-        data = request.json
-        log.debug(data)
+        log.debug(request.form)
+        log.debug(request.files)
         return Response()
