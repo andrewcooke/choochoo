@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnList, Layout, Loading, MainMenu, ColumnCard, Text} from "../elements";
+import {ColumnList, Layout, Loading, MainMenu, ColumnCard, Text, ConfirmedWriteButton} from "../elements";
 import {Button, Grid, TextField, IconButton, Box} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
@@ -59,7 +59,7 @@ function FileSelect(props) {
     const [files, setFiles] = useState([]);
     const [kit, setKit] = useState([]);
 
-    function onChange() {
+    function addFiles() {
         const input = document.getElementById('upload-input');
         let newFiles = [...files];
         const names = files.map(file => file.name);
@@ -81,7 +81,7 @@ function FileSelect(props) {
 
     return (<>
         <Grid item xs={12}>
-            <input accept='*/*' id='upload-input' multiple type='file' onChange={onChange} className={classes.input}/>
+            <input accept='*/*' id='upload-input' multiple type='file' onChange={addFiles} className={classes.input}/>
             <label htmlFor='upload-input'>
                 <Button variant='outlined' component='span'>Select files</Button>
             </label>
@@ -94,7 +94,9 @@ function FileSelect(props) {
                           onChange={(event, value) => setKit(value)}/>
         </Grid>
         <Grid item xs={12} className={classes.right}>
-                <Button variant='outlined' component='span' disabled={files.length === 0}>Upload</Button>
+            <ConfirmedWriteButton disabled={files.length === 0} label='Upload'>
+                The ingest process will take some time.
+            </ConfirmedWriteButton>
         </Grid>
     </>);
 }

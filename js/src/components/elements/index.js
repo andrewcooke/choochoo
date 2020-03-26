@@ -2,6 +2,7 @@ export {default as Break} from './Break';
 export {default as Card} from './Card';
 export {default as ColumnCard, ColumnCardBase} from './ColumnCard';
 export {default as ColumnList} from './ColumnList';
+export {default as ConfirmedWriteButton} from './ConfirmedWriteButton';
 export {default as DateButtons, ActivityButtons} from './DateButtons';
 export {default as Empty} from './Empty';
 export {default as FormatValueUnits} from './FormatValueUnits';

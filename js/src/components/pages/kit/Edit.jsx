@@ -1,20 +1,16 @@
 import React, {useEffect, useState} from 'react';
-import {Break, ColumnCard, ColumnCardBase, ColumnList, Layout, Loading, MainMenu, Text} from "../../elements";
 import {
-    Box,
-    Button,
-    Collapse,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Grid,
-    TextField,
-    Typography,
-    useMediaQuery,
-    useTheme
-} from "@material-ui/core";
+    Break,
+    ColumnCard,
+    ColumnCardBase,
+    ColumnList,
+    ConfirmedWriteButton,
+    Layout,
+    Loading,
+    MainMenu,
+    Text
+} from "../../elements";
+import {Box, Button, Collapse, Grid, TextField, Typography} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
@@ -36,66 +32,9 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-function ConfirmedWriteButton(props) {
-
-    const {children, href, data={}, label, xs = 12, update=null, disabled=false} = props;
-    const classes = useStyles();
-    const [openConfirm, setOpenConfirm] = React.useState(false);
-    const [openWait, setOpenWait] = React.useState(false);
-    const theme = useTheme();
-    const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
-
-    function handleClickOpen() {
-        setOpenConfirm(true);
-    }
-
-    function handleWrite() {
-        setOpenWait(false);
-        if (update !== null) update();
-    }
-
-    function handleCancel() {
-        setOpenConfirm(false);
-    }
-
-    function handleOk() {
-        handleCancel();
-        setOpenWait(true);
-        fetch(href,
-            {method: 'put',
-                  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-                  body: JSON.stringify(data)})
-            .then(handleWrite)
-            .catch(handleWrite);
-    }
-
-    return (
-        <Grid item xs={xs} className={classes.right}>
-            <Button variant="outlined" onClick={handleClickOpen} disabled={disabled}>{label}</Button>
-            <Dialog fullScreen={fullScreen} open={openConfirm} onClose={handleCancel}>
-                <DialogTitle>{'Confirm modification?'}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>{children}</DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button autoFocus onClick={handleCancel}>Cancel</Button>
-                    <Button onClick={handleOk} autoFocus>OK</Button>
-                </DialogActions>
-            </Dialog>
-            <Dialog fullScreen={fullScreen} open={openWait}>
-                <DialogTitle>{'Please wait'}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>Saving data.</DialogContentText>
-                </DialogContent>
-            </Dialog>
-        </Grid>
-    );
-}
-
-
 function ModelShow(props) {
 
-    const {item, model, component, update} = props;
+    const {item, model, component, reload} = props;
     const classes = useStyles();
     const [newModel, setNewModel] = useState(model.name);
     const disabled = newModel === '';
@@ -110,7 +49,7 @@ function ModelShow(props) {
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Replace' disabled={disabled}
-                              href='/api/kit/replace-model' update={update}
+                              href='/api/kit/replace-model' reload={reload}
                               data={{'item': item.name, 'component': component.name, 'model': newModel}}>
             Adding a new model will replace the current value from today's date.
         </ConfirmedWriteButton>
@@ -120,7 +59,7 @@ function ModelShow(props) {
 
 function AddComponent(props) {
 
-    const {item, update, allComponents} = props;
+    const {item, reload, allComponents} = props;
     const [component, setComponent] = useState('');
     const [model, setModel] = useState('');
     const existing = item.components.map(component => component.name);
@@ -143,7 +82,7 @@ function AddComponent(props) {
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Add' disabled={disabled}
-                              href='/api/kit/add-component' update={update}
+                              href='/api/kit/add-component' reload={reload}
                               data={{'item': item.name, 'component': component, 'model': model}}>
             Adding a new component and model will extend this item from today's date.
         </ConfirmedWriteButton>
@@ -152,28 +91,28 @@ function AddComponent(props) {
 
 
 function ItemShow(props) {
-    const {item, group, update, allComponents} = props;
+    const {item, group, reload, allComponents} = props;
     let model_dbs = item.models.map(model => model.db);
     return (<ColumnCard>
         <Grid item xs={9}>
             <Typography variant='h2'>{item.name} / {group.name} / {item.added}</Typography>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Retire'
-                              href='/api/kit/retire-item' update={update} data={{'item': item.name}}>
+                              href='/api/kit/retire-item' reload={reload} data={{'item': item.name}}>
             Retiring this item will remove it and all components from today's date.
         </ConfirmedWriteButton>
         {item.components.map(
             component => component.models.filter(model => model_dbs.includes(model.db)).map(
                 model => <ModelShow item={item} model={model} component={component}
-                                    update={update} key={model.db}/>)).flat()}
-        <AddComponent item={item} update={update} allComponents={allComponents}/>
+                                    reload={reload} key={model.db}/>)).flat()}
+        <AddComponent item={item} reload={reload} allComponents={allComponents}/>
     </ColumnCard>);
 }
 
 
 function Introduction(props) {
 
-    const {groups, update} = props;
+    const {groups, reload} = props;
     const [help, setHelp] = useState(groups.length === 0);
 
     function onClick() {
@@ -209,14 +148,14 @@ function Introduction(props) {
         </Text></Box>
 
     </Collapse>
-        <AddGroup groups={groups} update={update}/>
+        <AddGroup groups={groups} reload={reload}/>
     </ColumnCardBase>);
 }
 
 
 function AddGroup(props) {
 
-    const {groups, update} = props;
+    const {groups, reload} = props;
     const [group, setGroup] = useState('');
     const [item, setItem] = useState('');
     const existingGroups = groups.map(component => component.name);
@@ -238,7 +177,7 @@ function AddGroup(props) {
                           renderInput={params => <TextField {...params} label='Item' variant='outlined'/>}/>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Add' disabled={disabled}
-                              href='/api/kit/add-group' update={update}
+                              href='/api/kit/add-group' reload={reload}
                               data={{'group': group, 'item': item}}>
             Adding a new group or item will help you track more kit use.
         </ConfirmedWriteButton>
@@ -248,7 +187,7 @@ function AddGroup(props) {
 
 function Columns(props) {
 
-    const {groups, update} = props;
+    const {groups, reload} = props;
 
     if (groups === null) {
         return <Loading/>;  // undefined initial data
@@ -257,10 +196,10 @@ function Columns(props) {
         groups.forEach(group => group.items.forEach(item => item.components.forEach(
             component => allComponents[component.name] = component.models)));
         return (<ColumnList>
-            <Introduction groups={groups} update={update}/>
+            <Introduction groups={groups} reload={reload}/>
             {groups.map(
                 group => group.items.map(
-                    item => <ItemShow item={item} group={group} update={update} key={item.db}
+                    item => <ItemShow item={item} group={group} reload={reload} key={item.db}
                                       allComponents={allComponents}/>)).flat()}
         </ColumnList>);
     }
@@ -273,7 +212,7 @@ export default function Edit(props) {
     const [json, setJson] = useState(null);
     const [edits, setEdits] = useState(0);
 
-    function update() {
+    function reload() {
         setEdits(edits + 1);
     }
 
@@ -286,7 +225,7 @@ export default function Edit(props) {
 
     return (
         <Layout navigation={<MainMenu kit/>}
-                content={<Columns groups={json} update={update}/>}
+                content={<Columns groups={json} reload={reload}/>}
                 match={match} title='Edit Kit'/>
     );
 }
