@@ -54,7 +54,7 @@ function FileList(props) {
 
 function FileSelect(props) {
 
-    const {items} = props;
+    const {items, reload} = props;
     const classes = useStyles();
     const [files, setFiles] = useState([]);
     const [kit, setKit] = useState([]);
@@ -94,7 +94,8 @@ function FileSelect(props) {
                           onChange={(event, value) => setKit(value)}/>
         </Grid>
         <Grid item xs={12} className={classes.right}>
-            <ConfirmedWriteButton disabled={files.length === 0} label='Upload'>
+            <ConfirmedWriteButton disabled={files.length === 0} label='Upload' href='/api/upload'
+                                  reload={reload} form={{'files': files, 'kit': kit}}>
                 The ingest process will take some time.
             </ConfirmedWriteButton>
         </Grid>
@@ -104,14 +105,14 @@ function FileSelect(props) {
 
 function Columns(props) {
 
-    const {items} = props;
+    const {items, reload} = props;
 
     if (items === null) {
         return <Loading/>;  // undefined initial data
     } else {
         return (<ColumnList>
             <ColumnCard>
-                <FileSelect items={items}/>
+                <FileSelect items={items} reload={reload}/>
             </ColumnCard>
         </ColumnList>);
     }
@@ -122,15 +123,18 @@ export default function Upload(props) {
 
     const {match} = props;
     const [json, setJson] = useState(null);
+    const [uploads, setUploads] = useState(0);
 
     useEffect(() => {
         setJson(null);
         fetch('/api/kit/items')
             .then(response => response.json())
             .then(json => setJson(json));
-    }, [1]);
+    }, [uploads]);
 
     return (
-        <Layout navigation={<MainMenu/>} content={<Columns items={json}/>} match={match} title='Upload'/>
+        <Layout navigation={<MainMenu/>}
+                content={<Columns items={json} reload={() => setUploads(uploads + 1)}/>}
+                match={match} title='Upload'/>
     );
 }

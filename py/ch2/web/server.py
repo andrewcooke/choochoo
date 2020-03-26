@@ -9,6 +9,7 @@ from .diary import Diary
 from .jupyter import Jupyter
 from .kit import Kit
 from .static import Static
+from .upload import Upload
 from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV
 from ..jupyter.server import JupyterController
 from ..lib.server import BaseController
@@ -67,6 +68,7 @@ class WebServer:
         diary = Diary()
         kit = Kit()
         static = Static('.static')
+        upload = Upload()
         jupyter = Jupyter(jcontrol)
         self.url_map = Map([
 
@@ -87,6 +89,7 @@ class WebServer:
             Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=('GET', )),
 
             Rule('/api/static/<path:path>', endpoint=static, methods=('GET', )),
+            Rule('/api/upload', endpoint=upload, methods=('PUT', )),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=('GET', )),
             Rule('/api/<path:path>', endpoint=error(BadRequest), methods=('GET', 'PUT', 'POST')),
 

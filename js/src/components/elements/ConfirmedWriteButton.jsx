@@ -21,12 +21,44 @@ const useStyles = makeStyles(theme => ({
 
 export default function ConfirmedWriteButton(props) {
 
-    const {children, href, data={}, label, xs=12, reload=null, disabled=false} = props;
+    const {children, href, json=null, form=null, label, xs=12, reload=null, disabled=false} = props;
     const classes = useStyles();
     const [openConfirm, setOpenConfirm] = React.useState(false);
     const [openWait, setOpenWait] = React.useState(false);
     const theme = useTheme();
     const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+    function appendToForm(form, name, value) {
+        if (Array.isArray(value)) {
+            value.forEach(subValue => appendToForm(form, name, subValue));
+        } else if (value instanceof File) {
+            form.append(name, value, value.name);
+        } else {
+            form.append(name, value);
+        }
+    }
+
+    function buildData() {
+        if (json !== null) {
+            const data = JSON.stringify(json);
+            console.log(`Sending JSON data ${data}`);
+            if (form !== null) console.warn(`Ignoring form data ${form}`);
+            return data;
+        } else if (form !== null) {
+            const data = new FormData();
+            Object.keys(form).forEach(key => appendToForm(data, key, form[key]));
+            console.log(`Sending form data ${data}`);
+            return data;
+        } else {
+            console.log('Sending empty data');
+        }
+    }
+
+    function buildRequest() {
+        const request = {method: 'put', body: buildData()};
+        if (json !== null) request['headers'] = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+        return request;
+    }
 
     function handleClickOpen() {
         setOpenConfirm(true);
@@ -44,10 +76,7 @@ export default function ConfirmedWriteButton(props) {
     function handleOk() {
         handleCancel();
         setOpenWait(true);
-        fetch(href,
-            {method: 'put',
-                headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-                body: JSON.stringify(data)})
+        fetch(href, buildRequest())
             .then(handleWrite)
             .catch(handleWrite);
     }

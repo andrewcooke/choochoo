@@ -50,7 +50,7 @@ function ModelShow(props) {
         </Grid>
         <ConfirmedWriteButton xs={3} label='Replace' disabled={disabled}
                               href='/api/kit/replace-model' reload={reload}
-                              data={{'item': item.name, 'component': component.name, 'model': newModel}}>
+                              json={{'item': item.name, 'component': component.name, 'model': newModel}}>
             Adding a new model will replace the current value from today's date.
         </ConfirmedWriteButton>
     </>);
@@ -83,7 +83,7 @@ function AddComponent(props) {
         </Grid>
         <ConfirmedWriteButton xs={3} label='Add' disabled={disabled}
                               href='/api/kit/add-component' reload={reload}
-                              data={{'item': item.name, 'component': component, 'model': model}}>
+                              json={{'item': item.name, 'component': component, 'model': model}}>
             Adding a new component and model will extend this item from today's date.
         </ConfirmedWriteButton>
     </>);
@@ -98,7 +98,7 @@ function ItemShow(props) {
             <Typography variant='h2'>{item.name} / {group.name} / {item.added}</Typography>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Retire'
-                              href='/api/kit/retire-item' reload={reload} data={{'item': item.name}}>
+                              href='/api/kit/retire-item' reload={reload} json={{'item': item.name}}>
             Retiring this item will remove it and all components from today's date.
         </ConfirmedWriteButton>
         {item.components.map(
@@ -178,7 +178,7 @@ function AddGroup(props) {
         </Grid>
         <ConfirmedWriteButton xs={3} label='Add' disabled={disabled}
                               href='/api/kit/add-group' reload={reload}
-                              data={{'group': group, 'item': item}}>
+                              json={{'group': group, 'item': item}}>
             Adding a new group or item will help you track more kit use.
         </ConfirmedWriteButton>
     </>);
@@ -212,10 +212,6 @@ export default function Edit(props) {
     const [json, setJson] = useState(null);
     const [edits, setEdits] = useState(0);
 
-    function reload() {
-        setEdits(edits + 1);
-    }
-
     useEffect(() => {
         setJson(null);
         fetch('/api/kit/edit')
@@ -225,7 +221,7 @@ export default function Edit(props) {
 
     return (
         <Layout navigation={<MainMenu kit/>}
-                content={<Columns groups={json} reload={reload}/>}
+                content={<Columns groups={json} reload={() => setEdits(edits + 1)}/>}
                 match={match} title='Edit Kit'/>
     );
 }
