@@ -89,35 +89,44 @@ def check_files(s, files):
                                 f'{time_to_local_time(file_hash.monitor_journal.start)}')
 
 
+def get_fit_data(name, items, file):
+    try:
+        records = MonitorReader.parse_records(file[DATA])
+        file[TIME] = MonitorReader.read_first_timestamp(name, records)
+        file[TYPE] = MONITOR
+        item_path = ''
+        log.debug(f'File {name} contains monitor data')
+    except Exception as e:
+        log_current_exception(traceback=False)
+        records = ActivityReader.parse_records(file[DATA])
+        file[TIME] = ActivityReader.read_first_timestamp(name, records)
+        file[SPORT] = ActivityReader.read_sport(name, records)
+        file[TYPE] = ACTIVITY
+        item_path = ':' + ','.join(items) if items else ''
+        log.debug(f'File {name} contains activity data')
+    return item_path
+
+
+def build_path(data_dir, item_path, file):
+    date = time_to_local_date(file[TIME])
+    file[DIR] = join(data_dir, file[TYPE], date.strftime(Y))
+    if SPORT in file: file[DIR] = join(file[DIR], file[SPORT])
+    file[PATH] = join(file[DIR], date.strftime(YMD) + item_path + DOT_FIT)
+    log.debug(f'Target directory is {file[DIR]}')
+
+
 def write_files(s, items, files):
     data_dir = Constant.get_single(s, DATA_DIR)
     for name in files:
         log.debug(f'Writing {name}')
         file = files[name]
         try:
-            try:
-                records = MonitorReader.parse_records(file[DATA])
-                file[TIME] = MonitorReader.read_first_timestamp(name, records)
-                file[TYPE] = MONITOR
-                item_path = ''
-                log.debug(f'File {name} contains monitor data')
-            except Exception as e:
-                log_current_exception(traceback=False)
-                records = ActivityReader.parse_records(file[DATA])
-                file[TIME] = ActivityReader.read_first_timestamp(name, records)
-                file[SPORT] = ActivityReader.read_sport(name, records)
-                file[TYPE] = ACTIVITY
-                item_path = ':' + ','.join(items) if items else ''
-                log.debug(f'File {name} contains activity data')
+            item_path = get_fit_data(name, items, file)
         except Exception as e:
             log_current_exception(traceback=False)
             raise Exception(f'Could not parse {name} as a fit file')
         try:
-            date = time_to_local_date(file[TIME])
-            file[DIR] = join(data_dir, file[TYPE], date.strftime(Y))
-            if SPORT in file: file[DIR] = join(file[DIR], file[SPORT])
-            file[PATH] = join(file[DIR], date.strftime(YMD) + item_path + DOT_FIT)
-            log.debug(f'Target directory is {file[DIR]}')
+            build_path(data_dir, item_path, file)
             if not exists(file[DIR]):
                 log.debug(f'Creating {file[DIR]}')
                 makedirs(file[DIR])
@@ -140,7 +149,7 @@ def upload_data(sys, db, files=None, items=tuple(), fast=False):
         check_files(s, files)
         write_files(s, items, files)
     if not fast:
-        run_activity_pipelines(sys, db, kit=True)
+        run_activity_pipelines(sys, db)
         # monitor download to data_dir
         # run_monitor_pipelines(sys, db)
         # run_statistic_pipelines(sys, db)

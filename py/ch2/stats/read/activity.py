@@ -31,7 +31,7 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, kit=False, **kargs):
+    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, kit=True, **kargs):
         from ...commands.upload import ACTIVITY
         self.define = define if define else {}
         self.kit = kit
