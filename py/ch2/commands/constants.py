@@ -19,17 +19,29 @@ def constants(args, system, db):
 
 Lists constants to stdout.
 
+    > ch2 constants add NAME
+
+Defines a new constant.
+
     > ch2 constants set NAME VALUE [DATE]
 
-Defines a new entry.  If date is omitted a single value is used for all time
-(so any previously defined values are deleted)
+Adds an entry for the constant.  If date is omitted a single value is used for all time
+(so any previously defined values are deleted).
+
+Note that adding / removing constants (ie their names) is separate from setting / deleting entries (ie their values).
 
     > ch2 constants delete NAME [DATE]
 
 Deletes an entry.
 
+    > ch2 constants remove NAME
+
+Remove a constant (the associated entries must have been deleted first).
+
 Names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and FTHR.Bike, for example.
 In such a case "entry" in the descriptions above may refer to multiple entries.
+
+TODO - Constraint handling is confused and confusing.
     '''
     name, cmd = args[NAME], args[SUB_COMMAND]
     with db.session_context() as s:

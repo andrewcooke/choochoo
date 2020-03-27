@@ -278,6 +278,8 @@ def make_parser():
     upload.add_argument(PATH, metavar='PATH', nargs='+', help='path to fit file(s) for activities')
     upload.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                         help='keyword argument to be passed to the pipelines (can be repeated)')
+    upload.add_argument(mm(FAST), action='store_true',
+                        help='skip activity and statistics (just copy files)')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, metavar='DATE', nargs='?',
@@ -387,11 +389,12 @@ def make_parser():
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
-    activities.add_argument(PATH, metavar='PATH', nargs='+', help='path to fit file(s)')
+    activities.add_argument(PATH, metavar='PATH', nargs='*', help='path to fit file(s)')
     activities.add_argument(mm(DEFINE), m(D.upper()), action='append', default=[], metavar='NAME=VALUE',
                             help='statistic to be stored with the activities (can be repeated)')
     activities.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                             help='keyword argument to be passed to the pipelines (can be repeated)')
+    activities.add_argument(mm(KIT), m(K), action='store_true', help='take kit from file name')
     activities.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 

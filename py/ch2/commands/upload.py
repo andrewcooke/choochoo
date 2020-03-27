@@ -2,20 +2,25 @@ from hashlib import md5
 from logging import getLogger
 from os.path import basename, join
 
+from .activities import run_activity_pipelines
+from ..diary.model import TYPE
 from ..lib.log import log_current_exception
-from ..commands.args import PATH, KIT
+from ..commands.args import PATH, KIT, FAST
 from ..lib.date import time_to_local_time, time_to_local_date, YMD, Y
 from ..sql import KitItem, FileHash, Constant
+from ..stats.names import TIME
 from ..stats.read.activity import ActivityReader
-
+from ..stats.read.monitor import MonitorReader
 
 log = getLogger(__name__)
 
 STREAM = 'stream'
 DATA = 'data'
 HASH = 'hash'
+ACTIVITY = 'activity'
+MONITOR = 'monitor'
 
-UPLOAD_DIR = 'Upload.Dir'
+DATA_DIR = 'Data.Dir'
 
 
 def upload(args, system, db):
@@ -37,7 +42,7 @@ new monitor data, and update statistics.
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     files = open_files(args[PATH])
-    upload_data(files=files, items=args[KIT])
+    upload_data(system, db, files=files, items=args[KIT], fast=args[FAST])
 
 
 def open_files(paths):
@@ -76,23 +81,30 @@ def check_files(s, files):
 
 def write_files(s, items, files):
     try:
-        dir = Constant.get(s, UPLOAD_DIR).at(s)
+        dir = Constant.get(s, DATA_DIR).at(s)
     except Exception as e:
         log_current_exception()
-        raise Exception(f'{UPLOAD_DIR} is not configured')
+        raise Exception(f'{DATA_DIR} is not configured')
     item_path = '-' + '-'.join(items) if items else ''
     for name in files:
         file = files[name]
         try:
             records = ActivityReader.read_records(file[DATA])
             sport = ActivityReader.read_sport(name, records)
-            time = ActivityReader.read_first_timestamp(name, records)
+            file[TIME] = ActivityReader.read_first_timestamp(name, records)
+            if file[TIME]:
+                files[TYPE] = ACTIVITY
+            else:
+                file[TIME] = MonitorReader.read_first_timestamp(name, records)
+                files[TYPE] = MONITOR
+            if not file[TIME]:
+                raise Exception('No timestamp')
         except Exception as e:
             log_current_exception()
             raise Exception(f'Could not parse {name} as a fit file')
         try:
-            date = time_to_local_date(time)
-            file[PATH] = join(dir, date.strftime(Y), sport, date.strftime(YMD) + item_path + '.fit')
+            date = time_to_local_date(file[TIME])
+            file[PATH] = join(dir, file[TYPE], date.strftime(Y), sport, date.strftime(YMD) + item_path + '.fit')
             with open(file[PATH], 'wb') as out:
                 log.debug(f'Writing {name} to {file[PATH]}')
                 out.write(file[DATA])
@@ -101,7 +113,7 @@ def write_files(s, items, files):
             raise Exception(f'Could not save {name} to {file[PATH]}')
 
 
-def upload_data(sys, db, files=None, items=tuple()):
+def upload_data(sys, db, files=None, items=tuple(), fast=False):
     # this expects files to be a map from names to streams
     if files is None:
         files = {}
@@ -109,3 +121,7 @@ def upload_data(sys, db, files=None, items=tuple()):
         check_items(s, items)
         check_files(s, files)
         write_files(s, items, files)
+    if not fast:
+        run_activity_pipelines(sys, db, kit=True)
+        # monitor
+        # statistics

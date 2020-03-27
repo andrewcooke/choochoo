@@ -150,12 +150,20 @@ class MonitorReader(MultiProcFitReader):
         self._delete_contained(s, start, finish, path)
         s.commit()
 
+    @staticmethod
+    def read_first_timestamp(path, records):
+        return MonitorReader._first(path, records, MONITORING_INFO_ATTR).value.timestamp
+
+    @staticmethod
+    def read_last_timestamp(path, records):
+        return MonitorReader._last(path, records, MONITORING_ATTR).value.timestamp
+
     def _read_data(self, s, file_scan):
 
-        records = self._read_fit_file(file_scan.path, merge_duplicates, fix_degrees, unpack_single_bytes)
+        records = self.read_fit_file(file_scan.path, merge_duplicates, fix_degrees, unpack_single_bytes)
 
-        first_timestamp = self._first(file_scan, records, MONITORING_INFO_ATTR).timestamp
-        last_timestamp = self._last(file_scan, records, MONITORING_ATTR).timestamp
+        first_timestamp = self.read_first_timestamp(file_scan.path, records)
+        last_timestamp = self.read_last_timestamp(file_scan.path, records)
         if first_timestamp == last_timestamp:
             log.debug('File %s is empty (no timespan)' % file_scan)
             raise AbortImportButMarkScanned()
