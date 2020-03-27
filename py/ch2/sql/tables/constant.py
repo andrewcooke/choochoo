@@ -2,15 +2,18 @@
 import datetime as dt
 from abc import ABC, abstractmethod
 from json import dumps, loads
+from logging import getLogger
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, Boolean, desc
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Source, SourceType
 from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
 from ..types import Cls, Json, lookup_cls
 from ...lib.date import local_date_to_time, format_time
+from ...lib.log import log_current_exception
+
+log = getLogger(__name__)
 
 
 class Constant(Source):
@@ -69,6 +72,19 @@ class Constant(Source):
         if constant is None and not none:
             raise Exception('Could not find Constant for %s' % name)
         return constant
+
+    @classmethod
+    def get_single(cls, s, name):
+        try:
+            constant = Constant.get(s, name)
+            if not constant.single:
+                log.warning(f'Constant {name} is not single')
+            value = constant.at(s).value
+            log.debug(f'{name} is {value}')
+            return value
+        except Exception as e:
+            log_current_exception(traceback=False)
+            raise Exception(f'{name} is not configured')
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.CONSTANT

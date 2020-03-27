@@ -9,16 +9,16 @@ from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERC
     SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG, KM
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
-from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG, DEFAULT
+from ...commands.args import ACTIVITIES, WORKER, mm, FORCE, VERBOSITY, LOG, DEFAULT
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
 from ...sql.database import Timestamp, StatisticJournalText
-from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
     StatisticJournalType, StatisticJournal
+from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
 from ...sql.utils import add
 from ...srtm.bilinear import bilinear_elevation_from_constant
 
@@ -32,6 +32,7 @@ log = getLogger(__name__)
 class ActivityReader(MultiProcFitReader):
 
     def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, **kargs):
+        from ...commands.upload import ACTIVITY
         self.define = define if define else {}
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
@@ -39,7 +40,7 @@ class ActivityReader(MultiProcFitReader):
                              in self._assert('record_to_db', record_to_db).items()]
         self.add_elevation = not any(name == ELEVATION for (field, name, units, type) in self.record_to_db)
         self.__ajournal = None  # save for coverage
-        super().__init__(*args, **kargs)
+        super().__init__(*args, sub_dir=ACTIVITY, **kargs)
 
     def _base_command(self):
         if self.define:
@@ -47,7 +48,7 @@ class ActivityReader(MultiProcFitReader):
         else:
             define = ''
         return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.db_path} ' \
-               f'{ACTIVITIES} {mm(WORKER)} {self.id} --{FAST} {mm(FORCE) if self.force else ""} {define}'
+               f'{ACTIVITIES} {mm(WORKER)} {self.id} {mm(FORCE) if self.force else ""} {define}'
 
     def _startup(self, s):
         super()._startup(s)
@@ -55,12 +56,12 @@ class ActivityReader(MultiProcFitReader):
 
     def _read_data(self, s, file_scan):
         log.info('Reading activity data from %s' % file_scan)
-        records = self.read_records(read_fit(file_scan.path))
+        records = self.parse_records(read_fit(file_scan.path))
         ajournal, activity_group, first_timestamp = self._create_activity(s, file_scan, records)
         return ajournal, (ajournal, activity_group, first_timestamp, file_scan, records)
 
     @staticmethod
-    def read_records(data):
+    def parse_records(data):
         return ActivityReader.read_fit_file(data, merge_duplicates, fix_degrees, no_bad_values)
 
     @staticmethod

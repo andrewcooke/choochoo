@@ -274,7 +274,8 @@ def make_parser():
     add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
 
     upload = subparsers.add_parser(UPLOAD, help='upload new activities')
-    upload.add_argument(mm(KIT), m(K), metavar='ITEM', nargs='+', help='it items associated with activities')
+    upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
+                        help='kit items associated with activities')
     upload.add_argument(PATH, metavar='PATH', nargs='+', help='path to fit file(s) for activities')
     upload.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                         help='keyword argument to be passed to the pipelines (can be repeated)')
@@ -411,9 +412,7 @@ def make_parser():
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
     monitor.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
-    monitor.add_argument(mm(FAST), action='store_true', help='do not calculate statistics')
-    monitor.add_argument(PATH, metavar='PATH', nargs='+',
-                         help='path to fit file(s)')
+    monitor.add_argument(PATH, metavar='PATH', nargs='*', help='path to fit file(s)')
     monitor.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                          help='keyword argument to be passed to the pipelines (can be repeated)')
     monitor.add_argument(mm(WORKER), metavar='ID', type=int,

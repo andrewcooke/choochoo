@@ -27,6 +27,7 @@ SPORT = 'sport'
 DIR = 'dir'
 
 DATA_DIR = 'Data.Dir'
+DOT_FIT = '.fit'
 
 
 def upload(args, system, db):
@@ -89,29 +90,24 @@ def check_files(s, files):
 
 
 def write_files(s, items, files):
-    try:
-        data_dir = Constant.get(s, DATA_DIR).at(s).value
-        log.debug(f'{DATA_DIR} is {data_dir}')
-    except Exception as e:
-        log_current_exception()
-        raise Exception(f'{DATA_DIR} is not configured')
+    data_dir = Constant.get_single(s, DATA_DIR)
     item_path = '-' + '-'.join(items) if items else ''
     for name in files:
         log.debug(f'Writing {name}')
         file = files[name]
         try:
-            records = ActivityReader.read_records(file[DATA])
-            file[TIME] = ActivityReader.read_first_timestamp(name, records)
-            if file[TIME]:
-                file[TYPE] = ACTIVITY
-                log.debug(f'File {name} contains an activity')
-                file[SPORT] = ActivityReader.read_sport(name, records)
-            else:
+            try:
+                records = MonitorReader.parse_records(file[DATA])
                 file[TIME] = MonitorReader.read_first_timestamp(name, records)
                 file[TYPE] = MONITOR
                 log.debug(f'File {name} contains monitor data')
-            if not file[TIME]:
-                raise Exception(f'No timestamp in {name}')
+            except Exception as e:
+                log_current_exception(traceback=False)
+                records = ActivityReader.parse_records(file[DATA])
+                file[TIME] = ActivityReader.read_first_timestamp(name, records)
+                file[SPORT] = ActivityReader.read_sport(name, records)
+                file[TYPE] = ACTIVITY
+                log.debug(f'File {name} contains activity data')
         except Exception as e:
             log_current_exception(traceback=False)
             raise Exception(f'Could not parse {name} as a fit file')
@@ -119,7 +115,7 @@ def write_files(s, items, files):
             date = time_to_local_date(file[TIME])
             file[DIR] = join(data_dir, file[TYPE], date.strftime(Y))
             if SPORT in file: file[DIR] = join(file[DIR], file[SPORT])
-            file[PATH] = join(file[DIR], date.strftime(YMD) + item_path + '.fit')
+            file[PATH] = join(file[DIR], date.strftime(YMD) + item_path + DOT_FIT)
             log.debug(f'Target directory is {file[DIR]}')
             if not exists(file[DIR]):
                 log.debug(f'Creating {file[DIR]}')
