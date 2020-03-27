@@ -395,7 +395,7 @@ def make_parser():
                             help='statistic to be stored with the activities (can be repeated)')
     activities.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                             help='keyword argument to be passed to the pipelines (can be repeated)')
-    activities.add_argument(mm(KIT), m(K), action='store_true', help='take kit from file name')
+    activities.add_argument(mm(no(KIT)), action='store_false', dest=KIT, help='ignore kit encoded in file name')
     activities.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 
@@ -639,7 +639,7 @@ def bootstrap_file(file, *args, configurator=None, post_config=None):
     return ns, sys, db
 
 
-def parse_pairs(pairs, convert=True):
+def parse_pairs(pairs, convert=True, multi=False, comma=False):
     # simple name, value pairs. owner and constraint supplied by command.
     d = {}
     if pairs is not None:
@@ -652,5 +652,15 @@ def parse_pairs(pairs, convert=True):
                         break
                     except ValueError:
                         pass
-            d[name] = value
+            if multi:
+                if name not in d:
+                    d[name] = []
+                d[name].append(value)
+            elif comma:
+                if name in d:
+                    d[name] = d[name] + ',' + value
+                else:
+                    d[name] = value
+            else:
+                d[name] = value
     return d

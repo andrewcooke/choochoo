@@ -91,7 +91,6 @@ def check_files(s, files):
 
 def write_files(s, items, files):
     data_dir = Constant.get_single(s, DATA_DIR)
-    item_path = '-' + '-'.join(items) if items else ''
     for name in files:
         log.debug(f'Writing {name}')
         file = files[name]
@@ -100,6 +99,7 @@ def write_files(s, items, files):
                 records = MonitorReader.parse_records(file[DATA])
                 file[TIME] = MonitorReader.read_first_timestamp(name, records)
                 file[TYPE] = MONITOR
+                item_path = ''
                 log.debug(f'File {name} contains monitor data')
             except Exception as e:
                 log_current_exception(traceback=False)
@@ -107,6 +107,7 @@ def write_files(s, items, files):
                 file[TIME] = ActivityReader.read_first_timestamp(name, records)
                 file[SPORT] = ActivityReader.read_sport(name, records)
                 file[TYPE] = ACTIVITY
+                item_path = ':' + ','.join(items) if items else ''
                 log.debug(f'File {name} contains activity data')
         except Exception as e:
             log_current_exception(traceback=False)

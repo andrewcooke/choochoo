@@ -28,7 +28,7 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     run_activity_pipelines(sys, db, paths=args[PATH], kit=args[KIT], force=args[FORCE],
                            worker=args[WORKER] is not None, id=args[WORKER],
-                           define=parse_pairs(args[DEFINE], convert=False), **parse_pairs(args[KARG]))
+                           define=parse_pairs(args[DEFINE], convert=False, comma=True), **parse_pairs(args[KARG]))
 
 
 def run_activity_pipelines(sys, db, paths=None, kit=False, force=False, worker=False, id=None, define=None, **kargs):
