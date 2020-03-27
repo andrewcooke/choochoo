@@ -29,6 +29,7 @@ class WebController(BaseController):
         self.__bind = args[BIND] if BIND in args else None
         self.__port = args[PORT] if BIND in args else None
         self.__dev = args[DEV]
+        self.__sys = sys
         self.__db = db
         self.__jupyter = JupyterController(args, sys)
 
@@ -40,7 +41,7 @@ class WebController(BaseController):
 
     def _run(self):
         self._sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self.__bind, self.__port), force=True)
-        run_simple(self.__bind, self.__port, WebServer(self.__db, self.__jupyter),
+        run_simple(self.__bind, self.__port, WebServer(self.__sys, self.__db, self.__jupyter),
                    use_debugger=self.__dev, use_reloader=self.__dev)
 
     def _cleanup(self):
@@ -63,12 +64,12 @@ def error(exception):
 
 class WebServer:
 
-    def __init__(self, db, jcontrol):
+    def __init__(self, sys, db, jcontrol):
         self.__db = db
         diary = Diary()
         kit = Kit()
         static = Static('.static')
-        upload = Upload()
+        upload = Upload(sys, db)
         jupyter = Jupyter(jcontrol)
         self.url_map = Map([
 

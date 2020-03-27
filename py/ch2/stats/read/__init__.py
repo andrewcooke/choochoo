@@ -62,19 +62,23 @@ class FitReaderMixin(LoaderMixin):
             loader.load()
         return loader  # returned so coverage can be accessed
 
-    def _read_fit_file(self, path, *options):
-        types, messages, records = filtered_records(read_fit(path))
+    @staticmethod
+    def read_fit_file(data, *options):
+        types, messages, records = filtered_records(data)
         return [record.as_dict(*options)
                 for _, _, record in sorted(records,
                                            key=lambda r: r[2].timestamp if r[2].timestamp else to_time(0.0))]
 
-    def _first(self, path, records, *names):
-        return self.__assert_contained(path, records, names, 0)
+    @staticmethod
+    def _first(path, records, *names):
+        return FitReaderMixin.assert_contained(path, records, names, 0)
 
-    def _last(self, path, records, *names):
-        return self.__assert_contained(path, records, names, -1)
+    @staticmethod
+    def _last(path, records, *names):
+        return FitReaderMixin.assert_contained(path, records, names, -1)
 
-    def __assert_contained(self, path, records, names, index):
+    @staticmethod
+    def assert_contained(path, records, names, index):
         try:
             return [record for record in records if record.name in names][index]
         except IndexError:

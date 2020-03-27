@@ -12,6 +12,7 @@ from ... import FatalException
 from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG, DEFAULT
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
+from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
 from ...sql.database import Timestamp, StatisticJournalText
 from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
@@ -54,23 +55,36 @@ class ActivityReader(MultiProcFitReader):
 
     def _read_data(self, s, file_scan):
         log.info('Reading activity data from %s' % file_scan)
-        records = self._read_fit_file(file_scan.path, merge_duplicates, fix_degrees, no_bad_values)
+        records = self.read_records(read_fit(file_scan.path))
         ajournal, activity_group, first_timestamp = self._create_activity(s, file_scan, records)
         return ajournal, (ajournal, activity_group, first_timestamp, file_scan, records)
 
-    def __read_sport(self, path, records):
+    @staticmethod
+    def read_records(data):
+        return ActivityReader.read_fit_file(data, merge_duplicates, fix_degrees, no_bad_values)
+
+    @staticmethod
+    def read_sport(path, records):
         try:
-            return self._first(path, records, 'sport').value.sport.lower()
+            return ActivityReader._first(path, records, 'sport').value.sport.lower()
         except AbortImportButMarkScanned:
             # alternative for some garmin devices (florian)
-            return self._first(path, records, 'session').value.sport.lower()
+            return ActivityReader._first(path, records, 'session').value.sport.lower()
+
+    @staticmethod
+    def read_first_timestamp(path, records):
+        return ActivityReader._first(path, records, 'event', 'record').value.timestamp
+
+    @staticmethod
+    def read_last_timestamp(path, records):
+        return ActivityReader._last(path, records, 'event', 'record').value.timestamp
 
     def _create_activity(self, s, file_scan, records):
-        first_timestamp = self._first(file_scan, records, 'event', 'record').value.timestamp
-        last_timestamp = self._last(file_scan, records, 'event', 'record').value.timestamp
+        first_timestamp = self.read_first_timestamp(file_scan.path, records)
+        last_timestamp = self.read_last_timestamp(file_scan.path, records)
         log.debug(f'Time range: {first_timestamp.timestamp()} - {last_timestamp.timestamp()}')
-        sport = self.__read_sport(file_scan, records)
-        activity_group = self._activity_group(s, file_scan, sport, self.sport_to_activity)
+        sport = self.read_sport(file_scan.path, records)
+        activity_group = self._activity_group(s, file_scan.path, sport, self.sport_to_activity)
         log.info(f'{activity_group} from {sport}')
         if self.force:
             self._delete_journals(s, activity_group, first_timestamp, last_timestamp, file_scan)
@@ -81,17 +95,17 @@ class ActivityReader(MultiProcFitReader):
                                           file_hash_id=file_scan.file_hash_id))
         return ajournal, activity_group, first_timestamp
 
-    def _activity_group(self, s, file_scan, sport, lookup):
+    def _activity_group(self, s, path, sport, lookup):
         if isinstance(lookup, str):
             return self._lookup_activity_group(s, lookup)
         if sport in lookup:
-            return self._activity_group(s, file_scan, sport, lookup[sport])
+            return self._activity_group(s, path, sport, lookup[sport])
         for key, value in self.define.items():
             if key in lookup and value in lookup[key]:
-                return self._activity_group(s, file_scan, sport, lookup[key][value])
+                return self._activity_group(s, path, sport, lookup[key][value])
         if DEFAULT in lookup:
-            return self._activity_group(s, file_scan, sport, lookup[DEFAULT])
-        log.warning('Unrecognised sport: "%s" in %s' % (sport, file_scan))
+            return self._activity_group(s, path, sport, lookup[DEFAULT])
+        log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
         if sport in (SPORT_GENERIC,):
             raise Exception(f'Ignoring {sport} entry')
         else:

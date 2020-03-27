@@ -3,7 +3,6 @@ from hashlib import md5
 from logging import getLogger
 from os import stat
 from shutil import get_terminal_size
-from time import time
 
 from sqlalchemy import desc
 

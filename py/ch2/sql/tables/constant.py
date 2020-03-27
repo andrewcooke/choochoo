@@ -64,11 +64,11 @@ class Constant(Source):
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def get(cls, s, name):
-        try:
-            return s.query(Constant).filter(Constant.name == name).one()
-        except NoResultFound:
+    def get(cls, s, name, none=False):
+        constant = s.query(Constant).filter(Constant.name == name).one_or_none()
+        if constant is None and not none:
             raise Exception('Could not find Constant for %s' % name)
+        return constant
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.CONSTANT

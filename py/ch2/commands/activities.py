@@ -8,7 +8,7 @@ def activities(args, system, db):
     '''
 ## activities
 
-    > ch2 activities PATH [PATH ...]
+    > ch2 activities [--kit ITEM [ITEM ...] --] PATH [PATH ...]
 
 Read activities data from FIT files.
 
@@ -16,9 +16,7 @@ Read activities data from FIT files.
 
     > ch2 activities -D kit=cotic ~/fit/2018-01-01.fit
 
-will load the give file and create an entry for the `Bike` statistic with value `Cotic Soul`
-(this particular variable is used to identify bike-specific parameters for power calculation,
-but arbitrary names and values can be used).
+will load the given file and associated the activity with the kit 'cotic'.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
