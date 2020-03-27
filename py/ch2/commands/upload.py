@@ -1,6 +1,8 @@
+
 from hashlib import md5
 from logging import getLogger
-from os.path import basename, join
+from os import makedirs
+from os.path import basename, join, exists, dirname
 
 from .activities import run_activity_pipelines
 from ..diary.model import TYPE
@@ -12,13 +14,17 @@ from ..stats.names import TIME
 from ..stats.read.activity import ActivityReader
 from ..stats.read.monitor import MonitorReader
 
+
 log = getLogger(__name__)
+
 
 STREAM = 'stream'
 DATA = 'data'
 HASH = 'hash'
 ACTIVITY = 'activity'
 MONITOR = 'monitor'
+SPORT = 'sport'
+DIR = 'dir'
 
 DATA_DIR = 'Data.Dir'
 
@@ -46,12 +52,12 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
 
 
 def open_files(paths):
-    # converts a list of paths to a map of file names to streams
+    # converts a list of paths to a map of file names to file dicts with open streams
     files = {}
     for path in paths:
         name = basename(path)
-        stream = open(path, 'r')
-        files[name] = stream
+        stream = open(path, 'rb')
+        files[name] = {STREAM: stream}
     return files
 
 
@@ -65,10 +71,13 @@ def check_files(s, files):
     # extends map with DATA and HASH
     for name in files:
         file = files[name]
+        log.debug(f'Reading {name}')
         file[DATA] = file[STREAM].read()
+        log.debug(f'Hashing {name}')
         hash = md5()
         hash.update(file[DATA])
         file[HASH] = hash.hexdigest()
+        log.debug(f'Hash of {name} is {file[HASH]}')
         file_hash = s.query(FileHash).filter(FileHash.md5 == file[HASH]).one_or_none()
         if file_hash:
             if file_hash.activity_journal:
@@ -81,36 +90,48 @@ def check_files(s, files):
 
 def write_files(s, items, files):
     try:
-        dir = Constant.get(s, DATA_DIR).at(s)
+        data_dir = Constant.get(s, DATA_DIR).at(s).value
+        log.debug(f'{DATA_DIR} is {data_dir}')
     except Exception as e:
         log_current_exception()
         raise Exception(f'{DATA_DIR} is not configured')
     item_path = '-' + '-'.join(items) if items else ''
     for name in files:
+        log.debug(f'Writing {name}')
         file = files[name]
         try:
             records = ActivityReader.read_records(file[DATA])
-            sport = ActivityReader.read_sport(name, records)
             file[TIME] = ActivityReader.read_first_timestamp(name, records)
             if file[TIME]:
-                files[TYPE] = ACTIVITY
+                file[TYPE] = ACTIVITY
+                log.debug(f'File {name} contains an activity')
+                file[SPORT] = ActivityReader.read_sport(name, records)
             else:
                 file[TIME] = MonitorReader.read_first_timestamp(name, records)
-                files[TYPE] = MONITOR
+                file[TYPE] = MONITOR
+                log.debug(f'File {name} contains monitor data')
             if not file[TIME]:
-                raise Exception('No timestamp')
+                raise Exception(f'No timestamp in {name}')
         except Exception as e:
-            log_current_exception()
+            log_current_exception(traceback=False)
             raise Exception(f'Could not parse {name} as a fit file')
         try:
             date = time_to_local_date(file[TIME])
-            file[PATH] = join(dir, file[TYPE], date.strftime(Y), sport, date.strftime(YMD) + item_path + '.fit')
+            file[DIR] = join(data_dir, file[TYPE], date.strftime(Y))
+            if SPORT in file: file[DIR] = join(file[DIR], file[SPORT])
+            file[PATH] = join(file[DIR], date.strftime(YMD) + item_path + '.fit')
+            log.debug(f'Target directory is {file[DIR]}')
+            if not exists(file[DIR]):
+                log.debug(f'Creating {file[DIR]}')
+                makedirs(file[DIR])
+            if exists(file[PATH]):
+                log.warning(f'Overwriting data at {file[PATH]}')
             with open(file[PATH], 'wb') as out:
                 log.debug(f'Writing {name} to {file[PATH]}')
                 out.write(file[DATA])
         except Exception as e:
-            log_current_exception()
-            raise Exception(f'Could not save {name} to {file[PATH]}')
+            log_current_exception(traceback=False)
+            raise Exception(f'Could not save {name}')
 
 
 def upload_data(sys, db, files=None, items=tuple(), fast=False):
@@ -123,5 +144,6 @@ def upload_data(sys, db, files=None, items=tuple(), fast=False):
         write_files(s, items, files)
     if not fast:
         run_activity_pipelines(sys, db, kit=True)
-        # monitor
-        # statistics
+        # monitor download to data_dir
+        # run_monitor_pipelines(sys, db)
+        # run_statistic_pipelines(sys, db)

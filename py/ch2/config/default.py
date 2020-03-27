@@ -8,6 +8,7 @@ from .database import Counter, add_statistics, add_activity_group, add_activity_
     add_activity_topic_field
 from .impulse import add_impulse, add_responses
 from .power import add_power_estimate
+from ..commands.upload import DATA_DIR
 from ..diary.model import TYPE, FLOAT, LO, HI, DP, SCORE, EDIT
 from ..lib.schedule import Schedule
 from ..msil2a.download import MSIL2A_DIR
@@ -171,6 +172,8 @@ def default(system, db, no_diary=False):
         add_constant(s, SRTM1_DIR, description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
         add_constant(s, MSIL2A_DIR, description='Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)',
+                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
+        add_constant(s, DATA_DIR, description='Directory containing uploaded data (the FIT files)',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
 
         if not no_diary:

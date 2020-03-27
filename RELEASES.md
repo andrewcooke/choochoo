@@ -4,6 +4,14 @@
 See [upgrade
 instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 
+### v0.31.0
+
+Moving towards a more integrated system, building on the modular 
+components that already exist.  A new command, `upload` copies data 
+to the `Data.Dir` (a new constant).  The `activities` command can
+read from this directory.  Together, this allows the user to upload
+data via the web interface and formalizes 'best practice' use. 
+
 ### v0.30.0
 
 Changed interval handling so that possibly incorrect values are marked
