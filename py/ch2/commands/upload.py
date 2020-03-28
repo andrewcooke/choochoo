@@ -5,6 +5,9 @@ from os import makedirs
 from os.path import basename, join, exists, dirname
 
 from .activities import run_activity_pipelines
+from .garmin import run_garmin
+from .monitor import run_monitor_pipelines
+from .statistics import run_statistic_pipelines
 from ..diary.model import TYPE
 from ..lib.log import log_current_exception
 from ..commands.args import PATH, KIT, FAST
@@ -68,17 +71,26 @@ def check_items(s, items):
             raise Exception(f'Kit item {item} does not exist')
 
 
-def check_files(s, files):
-    # extends map with DATA and HASH
+def read_files(files):
     for name in files:
         file = files[name]
         log.debug(f'Reading {name}')
         file[DATA] = file[STREAM].read()
+
+
+def hash_files(files):
+    for name in files:
+        file = files[name]
         log.debug(f'Hashing {name}')
         hash = md5()
         hash.update(file[DATA])
         file[HASH] = hash.hexdigest()
         log.debug(f'Hash of {name} is {file[HASH]}')
+
+
+def check_files(s, files):
+    for name in files:
+        file = files[name]
         file_hash = s.query(FileHash).filter(FileHash.md5 == file[HASH]).one_or_none()
         if file_hash:
             if file_hash.activity_journal:
@@ -89,12 +101,12 @@ def check_files(s, files):
                                 f'{time_to_local_time(file_hash.monitor_journal.start)}')
 
 
-def get_fit_data(name, items, file):
+def get_fit_data(name, file, items=None):
     try:
         records = MonitorReader.parse_records(file[DATA])
         file[TIME] = MonitorReader.read_first_timestamp(name, records)
         file[TYPE] = MONITOR
-        item_path = ''
+        extra = ':' + file[HASH][0:5]
         log.debug(f'File {name} contains monitor data')
     except Exception as e:
         log_current_exception(traceback=False)
@@ -102,9 +114,9 @@ def get_fit_data(name, items, file):
         file[TIME] = ActivityReader.read_first_timestamp(name, records)
         file[SPORT] = ActivityReader.read_sport(name, records)
         file[TYPE] = ACTIVITY
-        item_path = ':' + ','.join(items) if items else ''
+        extra = ':' + ','.join(items) if items else ''
         log.debug(f'File {name} contains activity data')
-    return item_path
+    return extra
 
 
 def build_path(data_dir, item_path, file):
@@ -115,18 +127,16 @@ def build_path(data_dir, item_path, file):
     log.debug(f'Target directory is {file[DIR]}')
 
 
-def write_files(s, items, files):
-    data_dir = Constant.get_single(s, DATA_DIR)
+def write_files(data_dir, files, items=None):
     for name in files:
-        log.debug(f'Writing {name}')
         file = files[name]
         try:
-            item_path = get_fit_data(name, items, file)
+            extra = get_fit_data(name, file, items)
         except Exception as e:
             log_current_exception(traceback=False)
             raise Exception(f'Could not parse {name} as a fit file')
         try:
-            build_path(data_dir, item_path, file)
+            build_path(data_dir, extra, file)
             if not exists(file[DIR]):
                 log.debug(f'Creating {file[DIR]}')
                 makedirs(file[DIR])
@@ -145,11 +155,17 @@ def upload_data(sys, db, files=None, items=tuple(), fast=False):
     if files is None:
         files = {}
     with db.session_context() as s:
+        data_dir = Constant.get_single(s, DATA_DIR)
         check_items(s, items)
+        read_files(files)
+        hash_files(files)
         check_files(s, files)
-        write_files(s, items, files)
+    write_files(data_dir, files, items)
     if not fast:
         run_activity_pipelines(sys, db)
-        # monitor download to data_dir
-        # run_monitor_pipelines(sys, db)
-        # run_statistic_pipelines(sys, db)
+        # run before and after so we know what exists before we update, and import what we read
+        run_monitor_pipelines(sys, db)
+        with db.session_context() as s:
+            run_garmin(s)
+        run_monitor_pipelines(sys, db)
+        run_statistic_pipelines(sys, db)

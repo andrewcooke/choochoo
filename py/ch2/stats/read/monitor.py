@@ -125,7 +125,7 @@ class MonitorReader(MultiProcFitReader):
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.start >= start,
                        MonitorJournal.finish <= finish).all():
-            log.warning(f'Replacing {mjournal.fit_file} ({mjournal.start} - {mjournal.finish}) with data from '
+            log.warning(f'Replacing data from {mjournal.start} to {mjournal.finish} with data from '
                         f'{path} ({start} - {finish}')
             s.delete(mjournal)
 

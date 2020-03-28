@@ -8,7 +8,7 @@ from ..stats.pipeline import run_pipeline
 log = getLogger(__name__)
 
 
-def monitor(args, system, db):
+def monitor(args, sys, db):
     '''
 ## monitor
 
@@ -18,5 +18,10 @@ Read monitor data from FIT files.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
-    run_pipeline(system, db, PipelineType.MONITOR, paths=args[PATH], force=args[FORCE],
-                 worker=args[WORKER] is not None, id=args[WORKER], **parse_pairs(args[KARG]))
+    run_monitor_pipelines(sys, db, paths=args[PATH], force=args[FORCE],
+                          worker=args[WORKER] is not None, id=args[WORKER], **parse_pairs(args[KARG]))
+
+
+def run_monitor_pipelines(sys, db, paths=None, force=False, worker=False, id=None, **kargs):
+    if paths is None: paths = []
+    run_pipeline(sys, db, PipelineType.MONITOR, paths=paths, force=force, worker=worker, id=id, **kargs)

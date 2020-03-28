@@ -276,7 +276,7 @@ def make_parser():
     upload = subparsers.add_parser(UPLOAD, help='upload new activities')
     upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
                         help='kit items associated with activities')
-    upload.add_argument(PATH, metavar='PATH', nargs='+', help='path to fit file(s) for activities')
+    upload.add_argument(PATH, metavar='PATH', nargs='+', default=[], help='path to fit file(s) for activities')
     upload.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                         help='keyword argument to be passed to the pipelines (can be repeated)')
     upload.add_argument(mm(FAST), action='store_true',
@@ -390,7 +390,7 @@ def make_parser():
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
-    activities.add_argument(PATH, metavar='PATH', nargs='*', help='path to fit file(s)')
+    activities.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s)')
     activities.add_argument(mm(DEFINE), m(D.upper()), action='append', default=[], metavar='NAME=VALUE',
                             help='statistic to be stored with the activities (can be repeated)')
     activities.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
@@ -400,14 +400,10 @@ def make_parser():
                             help='internal use only (identifies sub-process workers)')
 
     garmin = subparsers.add_parser(GARMIN, help='download monitor data from garmin connect')
-    garmin.add_argument(DIR, metavar='DIR',
-                        help='the directory where FIT files are stored')
-    garmin.add_argument(mm(USER), metavar='USER', required=True,
-                        help='garmin connect username')
-    garmin.add_argument(mm(PASS), metavar='PASSWORD', required=True,
-                        help='garmin connect password')
-    garmin.add_argument(mm(DATE), metavar='DATE', type=to_date,
-                        help='date to download')
+    garmin.add_argument(DIR, metavar='DIR', nargs='?', help='the directory where FIT files are stored')
+    garmin.add_argument(mm(USER), metavar='USER', help='garmin connect username')
+    garmin.add_argument(mm(PASS), metavar='PASSWORD', help='garmin connect password')
+    garmin.add_argument(mm(DATE), metavar='DATE', type=to_date, help='date to download')
     garmin.add_argument(mm(FORCE), action='store_true', help='allow longer date range')
 
     monitor = subparsers.add_parser(MONITOR, help='read monitor data')
