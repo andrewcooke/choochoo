@@ -23,14 +23,15 @@ log = getLogger(__name__)
 
 STREAM = 'stream'
 DATA = 'data'
+EXTRA = 'extra'
 HASH = 'hash'
 ACTIVITY = 'activity'
 MONITOR = 'monitor'
 SPORT = 'sport'
 DIR = 'dir'
+DOT_FIT = '.fit'
 
 DATA_DIR = 'Data.Dir'
-DOT_FIT = '.fit'
 
 
 def upload(args, system, db):
@@ -72,6 +73,7 @@ def check_items(s, items):
 
 
 def read_files(files):
+    # add DATA to dicts with STREAM
     for name in files:
         file = files[name]
         log.debug(f'Reading {name}')
@@ -79,6 +81,7 @@ def read_files(files):
 
 
 def hash_files(files):
+    # add HASH to discts with DATA
     for name in files:
         file = files[name]
         log.debug(f'Hashing {name}')
@@ -89,6 +92,7 @@ def hash_files(files):
 
 
 def check_files(s, files):
+    # HASH based check
     for name in files:
         file = files[name]
         file_hash = s.query(FileHash).filter(FileHash.md5 == file[HASH]).one_or_none()
@@ -102,11 +106,12 @@ def check_files(s, files):
 
 
 def get_fit_data(name, file, items=None):
+    # add TIME and TYPE and EXTRA (and maybe SPORT) given (fit) DATA
     try:
         records = MonitorReader.parse_records(file[DATA])
         file[TIME] = MonitorReader.read_first_timestamp(name, records)
         file[TYPE] = MONITOR
-        extra = ':' + file[HASH][0:5]
+        file[EXTRA] = ':' + file[HASH][0:5]
         log.debug(f'File {name} contains monitor data')
     except Exception as e:
         log_current_exception(traceback=False)
@@ -114,16 +119,16 @@ def get_fit_data(name, file, items=None):
         file[TIME] = ActivityReader.read_first_timestamp(name, records)
         file[SPORT] = ActivityReader.read_sport(name, records)
         file[TYPE] = ACTIVITY
-        extra = ':' + ','.join(items) if items else ''
+        file[EXTRA] = ':' + ','.join(items) if items else ''
         log.debug(f'File {name} contains activity data')
-    return extra
 
 
-def build_path(data_dir, item_path, file):
+def build_path(data_dir, file):
+    # add PATH given TIME, TYPE, SPORT and EXTRA
     date = time_to_local_date(file[TIME])
     file[DIR] = join(data_dir, file[TYPE], date.strftime(Y))
     if SPORT in file: file[DIR] = join(file[DIR], file[SPORT])
-    file[PATH] = join(file[DIR], date.strftime(YMD) + item_path + DOT_FIT)
+    file[PATH] = join(file[DIR], date.strftime(YMD) + file[EXTRA] + DOT_FIT)
     log.debug(f'Target directory is {file[DIR]}')
 
 
@@ -131,12 +136,12 @@ def write_files(data_dir, files, items=None):
     for name in files:
         file = files[name]
         try:
-            extra = get_fit_data(name, file, items)
+            get_fit_data(name, file, items)
         except Exception as e:
             log_current_exception(traceback=False)
             raise Exception(f'Could not parse {name} as a fit file')
         try:
-            build_path(data_dir, extra, file)
+            build_path(data_dir, file)
             if not exists(file[DIR]):
                 log.debug(f'Creating {file[DIR]}')
                 makedirs(file[DIR])

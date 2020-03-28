@@ -276,7 +276,7 @@ def make_parser():
     upload = subparsers.add_parser(UPLOAD, help='upload new activities')
     upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
                         help='kit items associated with activities')
-    upload.add_argument(PATH, metavar='PATH', nargs='+', default=[], help='path to fit file(s) for activities')
+    upload.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s) for activities')
     upload.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                         help='keyword argument to be passed to the pipelines (can be repeated)')
     upload.add_argument(mm(FAST), action='store_true',
