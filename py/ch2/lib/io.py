@@ -9,6 +9,7 @@ from sqlalchemy import desc
 from .date import to_time
 from ..sql.tables.file import FileScan, FileHash
 
+
 log = getLogger(__name__)
 
 

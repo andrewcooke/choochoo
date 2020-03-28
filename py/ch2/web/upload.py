@@ -2,7 +2,7 @@ from logging import getLogger
 
 from werkzeug import Response
 
-from ..commands.upload import upload_data, STREAM
+from ..commands.upload import upload_files_and_update, STREAM, NAME
 
 log = getLogger(__name__)
 
@@ -14,7 +14,7 @@ class Upload:
         self._db = db
 
     def __call__(self, request, s):
-        files = {file.filename: {STREAM: file.stream} for file in request.files.getlist('files')}
+        files = [{NAME: file.filename, STREAM: file.stream} for file in request.files.getlist('files')]
         items = request.form.getlist('kit')
-        upload_data(self._system, self._db, files=files, items=items)
+        upload_files_and_update(self._system, self._db, files=files, items=items)
         return Response()

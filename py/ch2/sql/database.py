@@ -21,7 +21,7 @@ StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat,
 Segment, SegmentJournal
 Pipeline
 MonitorJournal
-Constant, SystemConstant, SystemProcess
+Constant, SystemConstant, Process
 ActivitySimilarity, ActivityNearby
 Timestamp
 

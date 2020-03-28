@@ -7,6 +7,7 @@ from requests import HTTPError
 from .args import DIR, USER, PASS, DATE, FORCE
 from ..lib.log import log_current_exception
 from ..fit.download.connect import GarminConnect
+from ..lib.workers import ProgressTree
 from ..sql import Constant
 from ..stats.read.monitor import missing_dates
 
@@ -39,7 +40,7 @@ https://www.garmin.com/en-US/account/datamanagement/
         run_garmin(s, dir, args[USER], args[PASS], dates, args[FORCE])
 
 
-def run_garmin(s, dir=None, user=None, password=None, dates=None, force=False):
+def run_garmin(s, dir=None, user=None, password=None, dates=None, force=False, progress=None):
     from .upload import DATA_DIR
     if not dates:
         dates = list(missing_dates(s, force=force))
@@ -52,13 +53,16 @@ def run_garmin(s, dir=None, user=None, password=None, dates=None, force=False):
     password = password or Constant.get_single(s, GARMIN_PASSWORD)
     connect = GarminConnect(log_response=False)
     connect.login(user, password)
+    local_progress = ProgressTree(len(dates), parent=progress)
     for repeat, date in enumerate(dates):
         if repeat:
             sleep(1)
         log.info('Downloading data for %s' % date)
         try:
             connect.get_monitoring_to_fit_file(date, dir, old_format)
+            local_progress.increment()
         except HTTPError:
             log_current_exception(traceback=False)
             log.info('End of data')
+            local_progress.complete()
             return

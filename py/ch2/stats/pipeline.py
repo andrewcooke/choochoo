@@ -9,7 +9,7 @@ from sqlalchemy import text
 from .load import StatisticJournalLoader
 from ..lib.date import format_seconds
 from ..lib.utils import short_str
-from ..lib.workers import Workers
+from ..lib.workers import Workers, ProgressTree
 from ..sql import Pipeline
 from ..sql.types import short_cls
 
@@ -19,8 +19,9 @@ MAX_REPEAT = 3
 NONE = object()
 
 
-def run_pipeline(system, db, type, like=tuple(), unlike=tuple(), id=None, **extra_kargs):
+def run_pipeline(system, db, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
     with db.session_context() as s:
+        local_progress = ProgressTree(Pipeline.count(s, type, like=like, unlike=unlike, id=id), parent=progress)
         for pipeline in Pipeline.all(s, type, like=like, unlike=unlike, id=id):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
@@ -30,6 +31,7 @@ def run_pipeline(system, db, type, like=tuple(), unlike=tuple(), id=None, **extr
             pipeline.cls(system, db, *pipeline.args, id=pipeline.id, **kargs).run()
             duration = time() - start
             log.info(f'Ran {short_cls(pipeline.cls)} in {format_seconds(duration)}')
+            local_progress.increment()
 
 
 class BasePipeline:

@@ -31,7 +31,8 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
                            define=parse_pairs(args[DEFINE], convert=False, comma=True), **parse_pairs(args[KARG]))
 
 
-def run_activity_pipelines(sys, db, paths=tuple(), kit=False, force=False, worker=False, id=None, define=None, **kargs):
+def run_activity_pipelines(sys, db, paths=tuple(), kit=False, force=False, worker=False, id=None, define=None,
+                           **kargs):
     if define is None: define = {}
     run_pipeline(sys, db, PipelineType.ACTIVITY, paths=paths, force=force, worker=worker, id=id,
                  define=define, kit=kit, **kargs)
