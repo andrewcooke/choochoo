@@ -1,5 +1,5 @@
 
-from hashlib import md5
+from hashlib import sha1
 from logging import getLogger
 from os import stat
 from shutil import get_terminal_size
@@ -26,7 +26,7 @@ def tui(command):
 
 # https://stackoverflow.com/a/3431838
 def file_hash(file_path):
-    hash = md5()
+    hash = sha1()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b''):
             hash.update(chunk)
@@ -34,7 +34,7 @@ def file_hash(file_path):
 
 
 def data_hash(data):
-    hash = md5()
+    hash = sha1()
     hash.update(data)
     return hash.hexdigest()
 
