@@ -25,11 +25,17 @@ def tui(command):
 
 
 # https://stackoverflow.com/a/3431838
-def md5_hash(file_path):
+def file_hash(file_path):
     hash = md5()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b''):
             hash.update(chunk)
+    return hash.hexdigest()
+
+
+def data_hash(data):
+    hash = md5()
+    hash.update(data)
     return hash.hexdigest()
 
 
@@ -40,14 +46,14 @@ def modified_file_scans(s, paths, owner, force=False):
     for path in paths:
 
         last_modified = to_time(stat(path).st_mtime)
-        hash = md5_hash(path)
+        hash = file_hash(path)
         file_scan_from_path = s.query(FileScan). \
             filter(FileScan.path == path,
                    FileScan.owner == owner).one_or_none()
 
         # get last scan and make sure it's up-to-date
         if file_scan_from_path:
-            if hash != file_scan_from_path.file_hash.md5:
+            if hash != file_scan_from_path.file_hash.hash:
                 log.warning('File at %s appears to have changed since last read on %s')
                 file_scan_from_path.file_hash = FileHash.get_or_add(s, hash)
                 file_scan_from_path.last_scan = 0.0
@@ -61,7 +67,7 @@ def modified_file_scans(s, paths, owner, force=False):
 
             file_scan_from_hash = s.query(FileScan).\
                 join(FileHash).\
-                filter(FileHash.md5 == hash,
+                filter(FileHash.hash == hash,
                        FileScan.owner == owner).\
                 order_by(desc(FileScan.last_scan)).limit(1).one()  # must exist as file_scan_from_path is a candidate
             if file_scan_from_hash.path != file_scan_from_path.path:

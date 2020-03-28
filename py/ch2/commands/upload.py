@@ -1,5 +1,4 @@
 
-from hashlib import md5
 from logging import getLogger
 from os import makedirs
 from os.path import basename, join, exists
@@ -11,6 +10,7 @@ from .statistics import run_statistic_pipelines
 from ..commands.args import PATH, KIT, FAST
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
+from ..lib.io import data_hash
 from ..lib.log import log_current_exception
 from ..sql import KitItem, FileHash, Constant
 from ..stats.names import TIME
@@ -84,9 +84,7 @@ def hash_files(files):
     for name in files:
         file = files[name]
         log.debug(f'Hashing {name}')
-        hash = md5()
-        hash.update(file[DATA])
-        file[HASH] = hash.hexdigest()
+        file[HASH] = data_hash(file[DATA])
         log.debug(f'Hash of {name} is {file[HASH]}')
 
 
@@ -94,7 +92,7 @@ def check_files(s, files):
     # HASH based check
     for name in files:
         file = files[name]
-        file_hash = s.query(FileHash).filter(FileHash.md5 == file[HASH]).one_or_none()
+        file_hash = s.query(FileHash).filter(FileHash.hash == file[HASH]).one_or_none()
         if file_hash:
             if file_hash.activity_journal:
                 raise Exception(f'File {name} is already associated with an activity on '

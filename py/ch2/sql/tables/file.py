@@ -17,13 +17,13 @@ class FileHash(Base):
     __tablename__ = 'file_hash'
 
     id = Column(Integer, primary_key=True)
-    md5 = Column(Text, nullable=False, index=True)
+    hash = Column(Text, nullable=False, index=True)
 
     @classmethod
-    def get_or_add(cls, s, md5):
-        instance = s.query(FileHash).filter(FileHash.md5 == md5).one_or_none()
+    def get_or_add(cls, s, hash):
+        instance = s.query(FileHash).filter(FileHash.hash == hash).one_or_none()
         if not instance:
-            instance = add(s, FileHash(md5=md5))
+            instance = add(s, FileHash(hash=hash))
         return instance
 
 
@@ -38,8 +38,8 @@ class FileScan(Base):
     file_hash = relationship('FileHash')
 
     @classmethod
-    def add(cls, s, path, owner, md5):
-        return add(s, FileScan(path=path, owner=owner, last_scan=to_time(0.0), file_hash=FileHash.get_or_add(s, md5)))
+    def add(cls, s, path, owner, hash):
+        return add(s, FileScan(path=path, owner=owner, last_scan=to_time(0.0), file_hash=FileHash.get_or_add(s, hash)))
 
     def __str__(self):
         return self.path
