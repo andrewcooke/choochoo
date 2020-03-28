@@ -2,21 +2,20 @@
 from hashlib import md5
 from logging import getLogger
 from os import makedirs
-from os.path import basename, join, exists, dirname
+from os.path import basename, join, exists
 
 from .activities import run_activity_pipelines
 from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
-from ..diary.model import TYPE
-from ..lib.log import log_current_exception
 from ..commands.args import PATH, KIT, FAST
-from ..lib.date import time_to_local_time, time_to_local_date, YMD, Y
+from ..diary.model import TYPE
+from ..lib.date import time_to_local_time, Y, YMDTHMS
+from ..lib.log import log_current_exception
 from ..sql import KitItem, FileHash, Constant
 from ..stats.names import TIME
 from ..stats.read.activity import ActivityReader
 from ..stats.read.monitor import MonitorReader
-
 
 log = getLogger(__name__)
 
@@ -125,10 +124,11 @@ def get_fit_data(name, file, items=None):
 
 def build_path(data_dir, file):
     # add PATH given TIME, TYPE, SPORT and EXTRA
-    date = time_to_local_date(file[TIME])
-    file[DIR] = join(data_dir, file[TYPE], date.strftime(Y))
+    date = time_to_local_time(file[TIME], fmt=YMDTHMS)
+    year = time_to_local_time(file[TIME], fmt=Y)
+    file[DIR] = join(data_dir, file[TYPE], year)
     if SPORT in file: file[DIR] = join(file[DIR], file[SPORT])
-    file[PATH] = join(file[DIR], date.strftime(YMD) + file[EXTRA] + DOT_FIT)
+    file[PATH] = join(file[DIR], date + file[EXTRA] + DOT_FIT)
     log.debug(f'Target directory is {file[DIR]}')
 
 
@@ -148,7 +148,7 @@ def write_files(data_dir, files, items=None):
             if exists(file[PATH]):
                 log.warning(f'Overwriting data at {file[PATH]}')
             with open(file[PATH], 'wb') as out:
-                log.debug(f'Writing {name} to {file[PATH]}')
+                log.info(f'Writing {name} to {file[PATH]}')
                 out.write(file[DATA])
         except Exception as e:
             log_current_exception(traceback=False)

@@ -1,13 +1,9 @@
 import React from 'react';
-import Drawer from '@material-ui/core/Drawer';
-import Hidden from '@material-ui/core/Hidden';
 import {makeStyles, useTheme} from '@material-ui/core/styles';
 import {drawerWidth} from '../../constants'
-import Divider from "@material-ui/core/Divider";
-import List from "@material-ui/core/List";
 import ListItemLink from "./ListItemLink";
-import {ListItemText} from "@material-ui/core";
-import ListItem from "@material-ui/core/ListItem";
+import {ListItemText, ListItemIcon, ListItem, List, Divider, Drawer, Hidden} from "@material-ui/core";
+import {HomeOutlined, Home} from "@material-ui/icons";
 
 
 const useStyles = makeStyles(theme => ({
@@ -33,14 +29,17 @@ function Content(props) {
         if (match.path !== '/') {
             return (
                 <List>
-                    <ListItemLink primaryTypographyProps={{variant: 'h1'}} primary='Choochoo' to='/'/>
+                    <ListItemLink primaryTypographyProps={{variant: 'h1'}}
+                                  icon={<Home/>} primary='Choochoo' to='/'/>
                 </List>
             )
         } else {
             return (
                 <List>
                     <ListItem>
-                        <ListItemText primaryTypographyProps={{variant: 'h1'}} primary='Choochoo'/>
+                        <ListItemIcon><HomeOutlined/></ListItemIcon>
+                        <ListItemText primaryTypographyProps={{variant: 'h1'}}
+                                      primary='Choochoo'/>
                     </ListItem>
                 </List>
             )
