@@ -132,16 +132,16 @@ class ProgressTree:
         progress = floor(100 * self.progress())
         log.info(f'Progress: {progress:3d}% (locally {local}%)')
 
-    def increment(self):
+    def increment(self, n=1):
         if self.__children:
             raise Exception('Incrementing a parent node')
-        self.__progress += 1
+        self.__progress += n
         if self.__progress > self.__size:
             raise Exception(f'Progress counter exceeded size {self.__progress}/{self.__size}')
         self._log_progress()
 
     def complete(self):
-        if self.__progress == self.__size:
+        if self.__size and self.__progress == self.__size:
             raise Exception('Progress already complete')
         self.__progress = self.__size
         self._log_progress()
