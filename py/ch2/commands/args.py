@@ -15,6 +15,7 @@ log = getLogger(__name__)
 CH2_VERSION = '0.31.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
+DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
 
 PROGNAME = 'ch2'
 COMMAND = 'command'
@@ -235,9 +236,9 @@ def make_parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(m(F), mm(DATABASE), default=f'~/.ch2/database-{DB_VERSION}.sql', metavar='PATH',
+    parser.add_argument(m(F), mm(DATABASE), default=f'~/.ch2/database-{DB_VERSION}{DB_EXTN}', metavar='PATH',
                         help='the file path containing the main database')
-    parser.add_argument(mm(SYSTEM), default=f'~/.ch2/system-{DB_VERSION}.sql', metavar='PATH',
+    parser.add_argument(mm(SYSTEM), default=f'~/.ch2/system-{DB_VERSION}{DB_EXTN}', metavar='PATH',
                         help='the file path containing the system database')
     parser.add_argument(mm(LOGS), default='~/.ch2/logs', metavar='DIR',
                         help='the directory for logs')

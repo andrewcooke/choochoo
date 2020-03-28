@@ -18,19 +18,19 @@ DO_DUMP=1
 # this section of the script copies diary and kit data across
 
 if ((DO_COPY)); then
-  echo "ensuring write-ahead file for $DB_DIR/database-$VER.sql is cleared"
+  echo "ensuring write-ahead file for $DB_DIR/database-$VER.db is cleared"
   echo "(should print 'delete')"
-  sqlite3 "$DB_DIR/database-$VER.sql" 'pragma journal_mode=delete' || { fuser "$DB_DIR/database-$VER.sql"; exit 1; }
-  echo "copying $DB_DIR/database-$VER.sql to $TMP_DIR/copy-$VER.sql"
-  rm -f "$DB_DIR/database-$VER-backup.sql"
-  cp "$DB_DIR/database-$VER.sql" "$DB_DIR/database-$VER-backup.sql"
-  rm -f "$TMP_DIR/copy-$VER.sql"
-  cp "$DB_DIR/database-$VER.sql" "$TMP_DIR/copy-$VER.sql"
+  sqlite3 "$DB_DIR/database-$VER.db" 'pragma journal_mode=delete' || { fuser "$DB_DIR/database-$VER.db"; exit 1; }
+  echo "copying $DB_DIR/database-$VER.db to $TMP_DIR/copy-$VER.db"
+  rm -f "$DB_DIR/database-$VER-backup.db"
+  cp "$DB_DIR/database-$VER.db" "$DB_DIR/database-$VER-backup.db"
+  rm -f "$TMP_DIR/copy-$VER.db"
+  cp "$DB_DIR/database-$VER.db" "$TMP_DIR/copy-$VER.db"
 fi
 
 if ((DO_DROP)); then
-  echo "dropping activity data from $TMP_DIR/copy-$VER.sql"
-  sqlite3 "$TMP_DIR/copy-$VER.sql" <<EOF
+  echo "dropping activity data from $TMP_DIR/copy-$VER.db"
+  sqlite3 "$TMP_DIR/copy-$VER.db" <<EOF
   pragma foreign_keys = on;
   -- don't delete topic and kit data, and keep composite for next step
   delete from source where type not in (3, 9, 10, 7, 11);
@@ -59,11 +59,11 @@ EOF
 fi
 
 if ((DO_DUMP)); then
-  echo "extracting data from $TMP_DIR/copy-$VER.sql to load into new database"
-  rm -f "$TMP_DIR/dump-$VER.sql"
+  echo "extracting data from $TMP_DIR/copy-$VER.db to load into new database"
+  rm -f "$TMP_DIR/dump-$VER.db"
   # .commands cannot be indented?!
-  sqlite3 "$TMP_DIR/copy-$VER.sql" <<EOF
-.output $TMP_DIR/dump-$VER.sql
+  sqlite3 "$TMP_DIR/copy-$VER.db" <<EOF
+.output $TMP_DIR/dump-$VER.db
 .mode insert source
 select * from source;
 .mode insert composite_source
@@ -109,18 +109,18 @@ select * from file_hash;
 EOF
 fi
 
-echo "creating new, empty database at $DB_DIR/database-$VER.sql"
+echo "creating new, empty database at $DB_DIR/database-$VER.db"
 echo "(should print warning config message)"
-rm -f "$DB_DIR/database-$VER.sql"
-rm -f "$DB_DIR/database-$DST.sql-shm"
-rm -f "$DB_DIR/database-$DST.sql-wal"
-rm -f "$DB_DIR/system-$DST.sql"
-rm -f "$DB_DIR/system-$DST.sql-shm"
-rm -f "$DB_DIR/system-$DST.sql-wal"
+rm -f "$DB_DIR/database-$VER.db"
+rm -f "$DB_DIR/database-$DST.db-shm"
+rm -f "$DB_DIR/database-$DST.db-wal"
+rm -f "$DB_DIR/system-$DST.db"
+rm -f "$DB_DIR/system-$DST.db-shm"
+rm -f "$DB_DIR/system-$DST.db-wal"
 dev/ch2 no-op
 
-echo "loading data into $DB_DIR/database-$VER.sql"
-sqlite3 "$DB_DIR/database-$VER.sql" < "$TMP_DIR/dump-$VER.sql"
+echo "loading data into $DB_DIR/database-$VER.db"
+sqlite3 "$DB_DIR/database-$VER.db" < "$TMP_DIR/dump-$VER.db"
 
 # this has to come after loading data to avoid uniqueness conflicts
 echo "adding default config"
@@ -129,7 +129,7 @@ dev/ch2 --dev config default --no-diary
 
 # you almost certainly want to change the following details
 
-echo "adding personal constants to $DB_DIR/database-$VER.sql"
+echo "adding personal constants to $DB_DIR/database-$VER.db"
 dev/ch2 --dev constants set FTHR.Bike 154
 dev/ch2 --dev constants set FTHR.MTB 154
 dev/ch2 --dev constants set FTHR.Road 154

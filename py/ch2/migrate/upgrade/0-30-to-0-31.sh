@@ -117,26 +117,26 @@ select * from file_hash;
 EOF
 fi
 
-echo "creating new, empty database at $DB_DIR/database-$DST.sql"
+echo "creating new, empty database at $DB_DIR/database-$DST.db"
 echo "(should print warning config message)"
-rm -f "$DB_DIR/database-$DST.sql"
-rm -f "$DB_DIR/database-$DST.sql-shm"
-rm -f "$DB_DIR/database-$DST.sql-wal"
-rm -f "$DB_DIR/system-$DST.sql"
-rm -f "$DB_DIR/system-$DST.sql-shm"
-rm -f "$DB_DIR/system-$DST.sql-wal"
+rm -f "$DB_DIR/database-$DST.db"
+rm -f "$DB_DIR/database-$DST.db-shm"
+rm -f "$DB_DIR/database-$DST.db-wal"
+rm -f "$DB_DIR/system-$DST.db"
+rm -f "$DB_DIR/system-$DST.db-shm"
+rm -f "$DB_DIR/system-$DST.db-wal"
 dev/ch2 no-op
 
-echo "loading data into $DB_DIR/database-$DST.sql"
-sqlite3 "$DB_DIR/database-$DST.sql" < "$TMP_DIR/dump-$SRC.sql"
+echo "loading data into $DB_DIR/database-$DST.db"
+sqlite3 "$DB_DIR/database-$DST.db" < "$TMP_DIR/dump-$SRC.sql"
 
-echo "adding default config to $DB_DIR/database-$DST.sql"
+echo "adding default config to $DB_DIR/database-$DST.db"
 dev/ch2 --dev config default --no-diary
 
 
 # you almost certainly want to change the following details
 
-echo "adding personal constants to $DB_DIR/database-$DST.sql"
+echo "adding personal constants to $DB_DIR/database-$DST.db"
 dev/ch2 --dev constants set FTHR.Bike 154
 dev/ch2 --dev constants set FTHR.MTB 154
 dev/ch2 --dev constants set FTHR.Road 154
