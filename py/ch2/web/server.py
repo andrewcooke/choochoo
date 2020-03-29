@@ -130,12 +130,21 @@ class WebServer:
     def have_error(self):
         return False
 
+    def have_busy(self):
+        return False
+
     def redirect_json_on(self, handler, *cases):
+
+        CASE_HANDLERS = {ERROR: self.have_error,
+                         BUSY: self.have_busy}
+
         def wrapper(*args, **kargs):
             for case in cases:
-                if case == ERROR and self.have_error():
-                    return JsonResponse({REDIRECT: '/error'})
+                if case in CASE_HANDLERS:
+                    if CASE_HANDLERS[case]():
+                        log.warning(f'Redirect for {case}')
+                        return JsonResponse({REDIRECT: '/error'})
                 else:
-                    log.warning(f'Unexpected case fore redirect: {case}')
+                    log.warning(f'Unexpected case for redirect: {case}')
             return JsonResponse({DATA: handler(*args, **kargs)})
         return wrapper
