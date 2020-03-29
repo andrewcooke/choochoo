@@ -48,7 +48,7 @@ class Kit:
     def read_items(request, s):
         items = [item.to_model(s, depth=0)
                  for item in s.query(KitItem).order_by(KitItem.name).all()]
-        return JsonResponse({'data': items})
+        return items
 
     @staticmethod
     def write_retire_item(request, s):

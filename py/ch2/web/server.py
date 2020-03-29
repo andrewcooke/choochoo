@@ -6,16 +6,27 @@ from werkzeug.routing import Map, Rule
 from werkzeug.wrappers.json import JSONMixin
 
 from .diary import Diary
+from .json import JsonResponse
 from .jupyter import Jupyter
 from .kit import Kit
 from .static import Static
 from .upload import Upload
-from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV
+from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, DATA
 from ..jupyter.server import JupyterController
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
+
 log = getLogger(__name__)
+
+
+REDIRECT = 'redirect'
+ERROR = 'error'
+BUSY = 'busy'
+
+GET = 'GET'
+PUT = 'PUT'
+POST = 'POST'
 
 
 class JSONRequest(Request, JSONMixin):
@@ -73,29 +84,29 @@ class WebServer:
         jupyter = Jupyter(jcontrol)
         self.url_map = Map([
 
-            Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=('GET',)),
-            Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=('GET',)),
-            Rule('/api/diary/active-months/<year>', endpoint=diary.read_active_months, methods=('GET',)),
-            Rule('/api/diary/analysis-parameters', endpoint=diary.read_analysis_params, methods=('GET',)),
-            Rule('/api/diary/statistics', endpoint=diary.write_statistics, methods=('PUT',)),
-            Rule('/api/diary/<date>', endpoint=diary.read_diary, methods=('GET',)),
+            Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=(GET,)),
+            Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),
+            Rule('/api/diary/active-months/<year>', endpoint=diary.read_active_months, methods=(GET,)),
+            Rule('/api/diary/analysis-parameters', endpoint=diary.read_analysis_params, methods=(GET,)),
+            Rule('/api/diary/statistics', endpoint=diary.write_statistics, methods=(PUT,)),
+            Rule('/api/diary/<date>', endpoint=diary.read_diary, methods=(GET,)),
 
-            Rule('/api/kit/edit', endpoint=kit.read_edit, methods=('GET', )),
-            Rule('/api/kit/retire-item', endpoint=kit.write_retire_item, methods=('PUT',)),
-            Rule('/api/kit/replace-model', endpoint=kit.write_replace_model, methods=('PUT',)),
-            Rule('/api/kit/add-component', endpoint=kit.write_add_component, methods=('PUT',)),
-            Rule('/api/kit/add-group', endpoint=kit.write_add_group, methods=('PUT',)),
-            Rule('/api/kit/items', endpoint=kit.read_items, methods=('GET', )),
-            Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=('GET', )),
-            Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=('GET', )),
+            Rule('/api/kit/edit', endpoint=kit.read_edit, methods=(GET, )),
+            Rule('/api/kit/retire-item', endpoint=kit.write_retire_item, methods=(PUT,)),
+            Rule('/api/kit/replace-model', endpoint=kit.write_replace_model, methods=(PUT,)),
+            Rule('/api/kit/add-component', endpoint=kit.write_add_component, methods=(PUT,)),
+            Rule('/api/kit/add-group', endpoint=kit.write_add_group, methods=(PUT,)),
+            Rule('/api/kit/items', endpoint=self.redirect_json_on(kit.read_items, ERROR, BUSY), methods=(GET,)),
+            Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=(GET, )),
+            Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=(GET, )),
 
-            Rule('/api/static/<path:path>', endpoint=static, methods=('GET', )),
-            Rule('/api/upload', endpoint=upload, methods=('PUT', )),
-            Rule('/api/jupyter/<template>', endpoint=jupyter, methods=('GET', )),
-            Rule('/api/<path:path>', endpoint=error(BadRequest), methods=('GET', 'PUT', 'POST')),
+            Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
+            Rule('/api/upload', endpoint=upload, methods=(PUT, )),
+            Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
+            Rule('/api/<path:path>', endpoint=error(BadRequest), methods=(GET, PUT, POST)),
 
-            Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',)),
-            Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=('GET',))
+            Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=(GET,)),
+            Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=(GET,))
         ])
 
     def dispatch_request(self, request):
@@ -115,3 +126,16 @@ class WebServer:
 
     def __call__(self, environ, start_response):
         return self.wsgi_app(environ, start_response)
+
+    def have_error(self):
+        return False
+
+    def redirect_json_on(self, handler, *cases):
+        def wrapper(*args, **kargs):
+            for case in cases:
+                if case == ERROR and self.have_error():
+                    return JsonResponse({REDIRECT: '/error'})
+                else:
+                    log.warning(f'Unexpected case fore redirect: {case}')
+            return JsonResponse({DATA: handler(*args, **kargs)})
+        return wrapper
