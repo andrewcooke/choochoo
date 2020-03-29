@@ -56,3 +56,11 @@ class System(DatabaseBase):
     def update_progress(self, name, **kargs):
         with self.session_context() as s:
             Progress.update(s, name, **kargs)
+
+    def get_percentage(self, name):
+        with self.session_context() as s:
+            return Progress.get_percentage(s, name)
+
+    def wait_for_progress(self, name, timeout=60):
+        with self.session_context() as s:
+            return Progress.wait_for_progress(s, name, timeout=timeout)

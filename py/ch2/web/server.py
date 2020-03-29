@@ -11,7 +11,7 @@ from .jupyter import Jupyter
 from .kit import Kit
 from .static import Static
 from .upload import Upload
-from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, DATA
+from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, DATA, UPLOAD
 from ..jupyter.server import JupyterController
 from ..lib.server import BaseController
 from ..sql import SystemConstant
@@ -76,6 +76,7 @@ def error(exception):
 class WebServer:
 
     def __init__(self, sys, db, jcontrol):
+        self.__sys = sys
         self.__db = db
         diary = Diary()
         kit = Kit()
@@ -96,7 +97,7 @@ class WebServer:
             Rule('/api/kit/replace-model', endpoint=kit.write_replace_model, methods=(PUT,)),
             Rule('/api/kit/add-component', endpoint=kit.write_add_component, methods=(PUT,)),
             Rule('/api/kit/add-group', endpoint=kit.write_add_group, methods=(PUT,)),
-            Rule('/api/kit/items', endpoint=self.redirect_json_on(kit.read_items, ERROR, BUSY), methods=(GET,)),
+            Rule('/api/kit/items', endpoint=self.check(kit.read_items, ERROR, BUSY), methods=(GET,)),
             Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=(GET, )),
             Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=(GET, )),
 
@@ -128,12 +129,16 @@ class WebServer:
         return self.wsgi_app(environ, start_response)
 
     def have_error(self):
-        return False
+        return None
 
     def have_busy(self):
-        return False
+        percentage = self.__sys.get_percentage(UPLOAD)
+        if percentage is None or percentage == 100:
+            return None
+        else:
+            return {REDIRECT: '/busy', 'reason': 'Upload in progress', 'progress': percentage}
 
-    def redirect_json_on(self, handler, *cases):
+    def check(self, handler, *cases):
 
         CASE_HANDLERS = {ERROR: self.have_error,
                          BUSY: self.have_busy}
@@ -141,9 +146,10 @@ class WebServer:
         def wrapper(*args, **kargs):
             for case in cases:
                 if case in CASE_HANDLERS:
-                    if CASE_HANDLERS[case]():
-                        log.warning(f'Redirect for {case}')
-                        return JsonResponse({REDIRECT: '/error'})
+                    response = CASE_HANDLERS[case]()
+                    if response:
+                        log.warning(f'Exception for {case}: {response}')
+                        return JsonResponse(response)
                 else:
                     log.warning(f'Unexpected case for redirect: {case}')
             return JsonResponse({DATA: handler(*args, **kargs)})

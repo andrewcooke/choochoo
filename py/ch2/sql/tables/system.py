@@ -1,7 +1,7 @@
 
 from logging import getLogger
 from os import getpid
-from time import time
+from time import time, sleep
 
 import psutil as ps
 from sqlalchemy import Column, Text, Integer, Float, UniqueConstraint
@@ -9,6 +9,7 @@ from sqlalchemy import Column, Text, Integer, Float, UniqueConstraint
 from ..support import SystemBase
 from ..types import Time, ShortCls
 from ..utils import add
+from ...lib import now
 
 log = getLogger(__name__)
 
@@ -111,12 +112,19 @@ class Process(SystemBase):
 # if we're given a delta time, the start time of the process and database records have to match
 # (or it's some other unrelated process because the process counter wrapped round)
 # if they don't match we return false because the original process is not running.
-def exists(pid, time, delta_seconds=3):
+def exists(pid, time, delta_seconds=3, zombie_seconds=10):
     if not ps.pid_exists(pid):
         log.debug(f'Process {pid} does not exist')
         return False
+    process = ps.Process(pid)
+    if process.status() == ps.STATUS_ZOMBIE:
+        try:
+            log.warning(f'Waiting for zombie {pid}')
+            process.wait(zombie_seconds)
+        except ps.TimeoutExpired:
+            log.debug(f'Timeout waiting for zombie {pid}')
+        return False
     elif delta_seconds:
-        process = ps.Process(pid)
         creation_ok = abs(process.create_time() - time.timestamp()) < delta_seconds
         if creation_ok:
             log.debug(f'Process {pid} still exists')
@@ -135,24 +143,50 @@ class Progress(SystemBase):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False, unique=True)
     pid = Column(Integer, nullable=False, index=True)
-    process_start = Column(Time, nullable=False)
-    progress = Column(Integer, nullable=False, default=0)
+    start = Column(Time, nullable=False)
+    percentage = Column(Integer, nullable=False, default=0)
     error = Column(Text, nullable=True)
 
     @classmethod
     def create(cls, s, name, delta_seconds=3):
         progress = s.query(Progress).filter(Progress.name == name).one_or_none()
         if progress:
-            if exists(progress.pid, progress.process_start, delta_seconds=delta_seconds):
+            if progress.percentage != 100 and exists(progress.pid, progress.start, delta_seconds=delta_seconds):
                 raise Exception(f'Progress {name} already exists (PID {progress.pid})')
             else:
+                log.debug(f'Removing old progress {name} / {progress.pid}')
                 s.delete(progress)
                 s.commit()
         us = ps.Process(getpid())
-        add(s, Progress(name=name, pid=us.pid, process_start=us.create_time()))
+        add(s, Progress(name=name, pid=us.pid, start=us.create_time()))
 
     @classmethod
     def update(cls, s, name, **kargs):
         progress = s.query(Progress).filter(Progress.name == name).one()
         for name in kargs:
             setattr(progress, name, kargs[name])
+
+    @classmethod
+    def get_percentage(cls, s, name, delta_seconds=3):
+        progress = s.query(Progress).filter(Progress.name == name).one_or_none()
+        if progress is None or not exists(progress.pid, progress.start, delta_seconds=delta_seconds):
+            log.debug(f'No percentage for {name}')
+            return None
+        else:
+            log.debug(f'Progress for {name} is {progress.percentage}%')
+            return progress.percentage
+
+    @classmethod
+    def wait_for_progress(cls, s, name, timeout=60, delta_seconds=3, pause=1):
+        log.debug(f'Waiting for progress {name}')
+        start = now()
+        original = s.query(Progress).filter(Progress.name == name).one_or_none()
+        if original and exists(original.pid, original.start):
+            return
+        while True:
+            sleep(pause)
+            progress = s.query(Progress).filter(Progress.name == name).one_or_none()
+            if progress != original:
+                return
+            elif (now() - start).total_seconds() >= timeout:
+                raise Exception(f'Did not find progress {name} before {timeout}s')
