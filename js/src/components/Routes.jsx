@@ -1,6 +1,6 @@
 import React from 'react';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
-import {Analysis, Diary, Upload, Welcome} from "./pages";
+import {Analysis, Diary, Upload, Welcome, Error} from "./pages";
 import {Edit, Snapshot, Statistics} from "./pages/kit";
 
 
@@ -9,6 +9,7 @@ export default function Routes() {
         <BrowserRouter>
             <Switch>
                 <Route path='/' exact={true} component={Welcome}/>
+                <Route path='/error' exact={true} component={Error}/>
                 <Route path='/analysis' exact={true} component={Analysis}/>
                 <Route path='/upload' exact={true} component={Upload}/>
                 <Route path='/kit/edit' exact={true} component={Edit}/>

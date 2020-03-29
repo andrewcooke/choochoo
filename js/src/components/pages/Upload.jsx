@@ -3,7 +3,8 @@ import {ColumnList, Layout, Loading, MainMenu, ColumnCard, Text, ConfirmedWriteB
 import {Button, Grid, TextField, IconButton, Box} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
-import ClearIcon from '@material-ui/icons/Clear';
+import {Clear} from '@material-ui/icons';
+import {handleGet} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -44,7 +45,7 @@ function FileList(props) {
             </Grid>
             <Grid item xs={1} className={classes.baseline} key={`c${index}`}>
                 <IconButton onClick={() => onClick(index)} className={classes.noPadding} key={`d${index}`}>
-                    <ClearIcon key={`e${index}`}/>
+                    <Clear key={`e${index}`}/>
                 </IconButton>
             </Grid>
         </>));
@@ -121,15 +122,13 @@ function Columns(props) {
 
 export default function Upload(props) {
 
-    const {match} = props;
+    const {match, history} = props;
     const [json, setJson] = useState(null);
     const [uploads, setUploads] = useState(0);
 
     useEffect(() => {
         setJson(null);
-        fetch('/api/kit/items')
-            .then(response => response.json())
-            .then(json => setJson(json));
+        fetch('/api/kit/items').then(handleGet(history, setJson));
     }, [uploads]);
 
     return (
