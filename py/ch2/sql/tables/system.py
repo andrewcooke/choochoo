@@ -147,6 +147,9 @@ class Progress(SystemBase):
     percentage = Column(Integer, nullable=False, default=0)
     error = Column(Text, nullable=True)
 
+    def __str__(self):
+        return f'Progress {self.name} / {self.pid}'
+
     @classmethod
     def create(cls, s, name, delta_seconds=3):
         progress = s.query(Progress).filter(Progress.name == name).one_or_none()
@@ -162,9 +165,13 @@ class Progress(SystemBase):
 
     @classmethod
     def update(cls, s, name, **kargs):
-        progress = s.query(Progress).filter(Progress.name == name).one()
+        progress = s.query(Progress).filter(Progress.name == name, Progress.pid == getpid()).one_or_none()
+        if not progress:
+            raise Exception(f'No existing progress for {name} / {getpid()}')
         for name in kargs:
-            setattr(progress, name, kargs[name])
+            value = kargs[name]
+            log.debug(f'Setting progress {name}={value}')
+            setattr(progress, name, value)
 
     @classmethod
     def get_percentage(cls, s, name, delta_seconds=3):
@@ -178,15 +185,25 @@ class Progress(SystemBase):
 
     @classmethod
     def wait_for_progress(cls, s, name, timeout=60, delta_seconds=3, pause=1):
+
+        def pid(progress):
+            if progress:
+                pid = progress.pid
+                s.expire(progress)
+                return pid
+
         log.debug(f'Waiting for progress {name}')
         start = now()
-        original = s.query(Progress).filter(Progress.name == name).one_or_none()
-        if original and exists(original.pid, original.start):
+        initial = s.query(Progress).filter(Progress.name == name).one_or_none()
+        log.debug(f'Initial progress: {initial}')
+        if initial and exists(initial.pid, initial.start):
             return
+        initial = pid(initial)
         while True:
             sleep(pause)
-            progress = s.query(Progress).filter(Progress.name == name).one_or_none()
-            if progress != original:
+            current = pid(s.query(Progress).filter(Progress.name == name).one_or_none())
+            log.debug(f'Comparing {initial} and {current}')
+            if current != initial:
                 return
             elif (now() - start).total_seconds() >= timeout:
                 raise Exception(f'Did not find progress {name} before {timeout}s')
