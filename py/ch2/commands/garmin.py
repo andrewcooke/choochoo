@@ -59,10 +59,9 @@ def run_garmin(s, dir=None, user=None, password=None, dates=None, force=False, p
             sleep(1)
         log.info('Downloading data for %s' % date)
         try:
-            connect.get_monitoring_to_fit_file(date, dir, old_format)
-            local_progress.increment()
+            with local_progress.increment_or_complete():
+                connect.get_monitoring_to_fit_file(date, dir, old_format)
         except HTTPError:
             log_current_exception(traceback=False)
             log.info('End of data')
-            local_progress.complete()
             return

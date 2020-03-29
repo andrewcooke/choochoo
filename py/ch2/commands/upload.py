@@ -7,12 +7,12 @@ from .activities import run_activity_pipelines
 from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
-from ..commands.args import PATH, KIT, FAST
+from ..commands.args import PATH, KIT, FAST, UPLOAD
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
 from ..lib.io import data_hash
 from ..lib.log import log_current_exception
-from ..lib.workers import ProgressTree
+from ..lib.workers import ProgressTree, SystemProgressTree
 from ..sql import KitItem, FileHash, Constant
 from ..stats.names import TIME
 from ..stats.read.activity import ActivityReader
@@ -152,16 +152,16 @@ def upload_files(db, files=tuple(), items=tuple(), progress=None):
         data_dir = Constant.get_single(s, DATA_DIR)
         check_items(s, items)
         for file in files:
-            read_file(file)
-            hash_file(file)
-            check_file(s, file)
-            write_file(data_dir, file, items)
-            local_progress.increment()
+            with local_progress.increment_or_complete():
+                read_file(file)
+                hash_file(file)
+                check_file(s, file)
+                write_file(data_dir, file, items)
 
 
 def upload_files_and_update(sys, db, files=tuple(), items=tuple(), fast=False):
     # this expects files to be a map from names to streams
-    progress = ProgressTree(1 if fast else 6)
+    progress = SystemProgressTree(sys, UPLOAD, 1 if fast else 6)
     upload_files(db, files=files, items=items, progress=progress)
     if not fast:
         run_activity_pipelines(sys, db, progress=progress)

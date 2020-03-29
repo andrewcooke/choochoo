@@ -1,5 +1,6 @@
 
 from abc import abstractmethod
+from contextlib import nullcontext
 from logging import getLogger
 from time import time
 
@@ -101,11 +102,12 @@ class MultiProcPipeline(BasePipeline):
         session.commit()
 
     def _run_all(self, s, missing, progress=None):
+        local_progress = progress.increment_or_complete() if progress else nullcontext()
         for missed in missing:
-            log.debug(f'Run {missed}')
-            self._run_one(s, missed)
-            if progress: progress.increment()
-            s.commit()
+            with local_progress:
+                log.debug(f'Run {missed}')
+                self._run_one(s, missed)
+                s.commit()
 
     def _startup(self, s):
         pass
@@ -172,8 +174,8 @@ class MultiProcPipeline(BasePipeline):
             start = finish + 1
             finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
             if start > finish: raise Exception('Bad chunking logic')
-            workers.run(self._args(missing, start, finish))
-            progress.increment(finish - start + 1)  # not great, but best we can do without database
+            with progress.increment_or_complete(finish - start + 1):
+                workers.run(self._args(missing, start, finish))
 
         workers.wait()
 

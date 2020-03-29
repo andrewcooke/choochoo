@@ -4,10 +4,11 @@ from os import getpid
 from time import time
 
 import psutil as ps
-from sqlalchemy import Column, Text, Integer, Float
+from sqlalchemy import Column, Text, Integer, Float, UniqueConstraint
 
 from ..support import SystemBase
 from ..types import Time, ShortCls
+from ..utils import add
 
 log = getLogger(__name__)
 
@@ -59,9 +60,9 @@ class Process(SystemBase):
     id = Column(Integer, primary_key=True)
     owner = Column(ShortCls, nullable=False, index=True)
     pid = Column(Integer, nullable=False, index=True)
+    start = Column(Time, nullable=False, default=time)
     command = Column(Text, nullable=True)
     log = Column(Text, nullable=True)
-    start = Column(Time, nullable=False, default=time)
 
     @classmethod
     def run(cls, s, owner, cmd, log_name):
@@ -72,20 +73,20 @@ class Process(SystemBase):
         return process
 
     @classmethod
-    def delete(cls, s, owner, pid, delta_time=3):
+    def delete(cls, s, owner, pid, delta_seconds=3):
         process = s.query(Process).filter(Process.owner == owner, Process.pid == pid).one()
-        process.__kill(delta_time=delta_time)
+        process.__kill(delta_seconds=delta_seconds)
         log.debug(f'Deleting process {process.pid}')
         s.delete(process)
         s.commit()
 
     @classmethod
-    def delete_all(cls, s, owner, delta_time=3):
+    def delete_all(cls, s, owner, delta_seconds=3):
         for process in s.query(Process).filter(Process.owner == owner).all():
             if process.pid == getpid():
                 log.debug(f'Not killing self (PID {process.pid})')
             else:
-                process.__kill(delta_time=delta_time)
+                process.__kill(delta_seconds=delta_seconds)
                 log.debug(f'Deleting process {process.pid}')
                 s.delete(process)
         s.commit()
@@ -98,25 +99,60 @@ class Process(SystemBase):
         cls.delete_all(s, owner)
         return False
 
-    def __still_running(self, delta_time=3):
-        if not ps.pid_exists(self.pid):
-            log.debug(f'PID {self.pid} does not exist')
-            return False
-        if not delta_time:
-            return True
-        # if we're given a delta time, the start time of the process and database records have to match
-        # (or it's some other unrelated process because the process counter wrapped round)
-        # if they don't match we return false because the original process is not running.
-        actual = ps.Process(self.pid).create_time()
-        saved = self.start.timestamp()
-        creation_ok = abs(actual - saved) < delta_time
-        if not creation_ok:
-            log.debug(f'Creation time for PID {self.pid} incorrect ({actual} / {saved})')
-        return creation_ok
+    def __still_running(self, delta_seconds=3):
+        return exists(self.pid, self.start, delta_seconds=delta_seconds)
 
-    def __kill(self, delta_time=3):
-        if self.__still_running(delta_time=delta_time):
+    def __kill(self, delta_seconds=3):
+        if self.__still_running(delta_seconds=delta_seconds):
             log.debug(f'Killing process {self.pid}')
             ps.Process(self.pid).kill()
 
 
+# if we're given a delta time, the start time of the process and database records have to match
+# (or it's some other unrelated process because the process counter wrapped round)
+# if they don't match we return false because the original process is not running.
+def exists(pid, time, delta_seconds=3):
+    if not ps.pid_exists(pid):
+        log.debug(f'Process {pid} does not exist')
+        return False
+    elif delta_seconds:
+        process = ps.Process(pid)
+        creation_ok = abs(process.create_time() - time.timestamp()) < delta_seconds
+        if creation_ok:
+            log.debug(f'Process {pid} still exists')
+        else:
+            log.debug(f'Creation time for process {pid} incorrect')
+        return creation_ok
+    else:
+        log.debug(f'Assuming process {pid} is same as expected')
+        return True   # if delta_seconds = 0 don't check, just assume same
+
+
+class Progress(SystemBase):
+
+    __tablename__ = 'progress'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False, unique=True)
+    pid = Column(Integer, nullable=False, index=True)
+    process_start = Column(Time, nullable=False)
+    progress = Column(Integer, nullable=False, default=0)
+    error = Column(Text, nullable=True)
+
+    @classmethod
+    def create(cls, s, name, delta_seconds=3):
+        progress = s.query(Progress).filter(Progress.name == name).one_or_none()
+        if progress:
+            if exists(progress.pid, progress.process_start, delta_seconds=delta_seconds):
+                raise Exception(f'Progress {name} already exists (PID {progress.pid})')
+            else:
+                s.delete(progress)
+                s.commit()
+        us = ps.Process(getpid())
+        add(s, Progress(name=name, pid=us.pid, process_start=us.create_time()))
+
+    @classmethod
+    def update(cls, s, name, **kargs):
+        progress = s.query(Progress).filter(Progress.name == name).one()
+        for name in kargs:
+            setattr(progress, name, kargs[name])

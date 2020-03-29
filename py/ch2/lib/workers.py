@@ -1,4 +1,4 @@
-
+from contextlib import contextmanager
 from logging import getLogger
 from os import getpid
 from sys import argv
@@ -145,3 +145,26 @@ class ProgressTree:
             raise Exception('Progress already complete')
         self.__progress = self.__size
         self._log_progress()
+
+    @contextmanager
+    def increment_or_complete(self, n=1):
+        try:
+            yield None
+            self.increment(n=n)
+        except:
+            self.complete()
+
+
+class SystemProgressTree(ProgressTree):
+
+    def __init__(self, system, name, size):
+        super().__init__(size)
+        self.system = system
+        self.name = name
+        system.create_progress(name)
+
+    def progress(self):
+        progress = super().progress()
+        self.system.update_progress(self.name, progress=floor(100 * progress))
+        return progress
+
