@@ -3,6 +3,7 @@ from logging import getLogger
 from werkzeug import Request, run_simple
 from werkzeug.exceptions import HTTPException, BadRequest
 from werkzeug.routing import Map, Rule
+from werkzeug.serving import WSGIRequestHandler
 from werkzeug.wrappers.json import JSONMixin
 
 from .diary import Diary
@@ -52,6 +53,8 @@ class WebController(BaseController):
 
     def _run(self):
         self._sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self.__bind, self.__port), force=True)
+        # https://stackoverflow.com/questions/10523879/how-to-make-flask-keep-ajax-http-connection-alive
+        WSGIRequestHandler.protocol_version = "HTTP/1.1"
         run_simple(self.__bind, self.__port, WebServer(self.__sys, self.__db, self.__jupyter),
                    use_debugger=self.__dev, use_reloader=self.__dev)
 

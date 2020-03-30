@@ -198,6 +198,8 @@ class Progress(SystemBase):
         log.debug(f'Initial progress: {initial}')
         if initial and exists(initial.pid, initial.start):
             return
+
+        # use PIDs so that we don't need to worry about expired objects
         initial = pid(initial)
         while True:
             sleep(pause)
