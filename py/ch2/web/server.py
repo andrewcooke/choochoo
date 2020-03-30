@@ -24,6 +24,8 @@ log = getLogger(__name__)
 REDIRECT = 'redirect'
 ERROR = 'error'
 BUSY = 'busy'
+REASON = 'reason'
+PERCENTAGE = 'percentage'
 
 GET = 'GET'
 PUT = 'PUT'
@@ -106,6 +108,7 @@ class WebServer:
 
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
             Rule('/api/upload', endpoint=upload, methods=(PUT, )),
+            Rule('/api/busy', endpoint=self.read_busy, methods=(GET, )),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
             Rule('/api/<path:path>', endpoint=error(BadRequest), methods=(GET, PUT, POST)),
 
@@ -131,6 +134,13 @@ class WebServer:
     def __call__(self, environ, start_response):
         return self.wsgi_app(environ, start_response)
 
+    def read_busy(self, request, s):
+        percentage = self.__sys.get_percentage(UPLOAD)
+        if percentage is None: percentage = 100
+        data = {REASON: 'Upload in progress' if percentage < 100 else 'Upload complete',
+                PERCENTAGE: percentage}
+        return JsonResponse(data)
+
     def have_error(self):
         return None
 
@@ -139,7 +149,7 @@ class WebServer:
         if percentage is None or percentage == 100:
             return None
         else:
-            return {REDIRECT: '/busy', 'reason': 'Upload in progress', 'progress': percentage}
+            return {REDIRECT: '/busy'}
 
     def check(self, handler, *cases):
 
