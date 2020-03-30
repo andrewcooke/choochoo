@@ -10,7 +10,6 @@ export {default as JupyterMenu} from './JupyterMenu';
 export {default as Measures} from './Measures';
 export {default as Months} from './Months';
 export {default as NearbyMenu} from './NearbyMenu';
-export {default as PercentBar} from './PercentBar';
 export {default as ScoreField} from './ScoreField';
 export {default as ShrimpField} from './ShrimpField';
 export {default as SummaryField} from './SummaryField';

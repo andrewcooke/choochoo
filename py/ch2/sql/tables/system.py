@@ -171,7 +171,10 @@ class Progress(SystemBase):
         for name in kargs:
             value = kargs[name]
             log.debug(f'Setting progress {name}={value}')
-            setattr(progress, name, value)
+            if hasattr(progress, name):
+                setattr(progress, name, value)
+            else:
+                raise AttributeError(name)
 
     @classmethod
     def get_percentage(cls, s, name, delta_seconds=3):

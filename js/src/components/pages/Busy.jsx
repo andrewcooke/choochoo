@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Grid} from "@material-ui/core";
-import {ColumnCard, ColumnList, Layout, Loading, MainMenu, P} from "../elements";
+import {ColumnCard, ColumnList, Layout, Loading, MainMenu, P, PercentBar} from "../elements";
 
 
 export default function Busy(props) {
@@ -24,11 +24,11 @@ export default function Busy(props) {
         content = (<ColumnList>
             <ColumnCard><Grid item xs={12}>
                 <P>{json.reason}</P>
-                <P>{json.percentage}</P>
+                <PercentBar percent={json.percentage} fraction={1}/>
             </Grid></ColumnCard>
         </ColumnList>);
         if (json.percentage !== 100) {
-            setTimeout(reload, 100);
+            setTimeout(reload, 1000);
         }
     } else {
         content = <Loading/>

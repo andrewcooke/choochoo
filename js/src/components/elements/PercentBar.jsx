@@ -31,10 +31,10 @@ const useStyles = makeStyles(theme => ({
 
 export default function PercentBar(props) {
 
-    const {percent, label, width=60, height=19, fraction=null} = props;
+    const {percent, label, width=60, height=19, fraction} = props;
     const classes = useStyles();
     const text = label ? label : percent.toFixed(0) + ' %';
-    const finalWidth = fraction === null ? sprintf('%d', width + 1) : sprintf('%d%%', 100 * fraction);
+    const finalWidth = fraction === undefined ? sprintf('%d', width + 1) : sprintf('%d%%', 100 * fraction);
 
     return (<svg width={finalWidth} height={0} className={classes.svg}>
         <g transform='translate(0.5, -15.5)'>

@@ -14,6 +14,7 @@ export {default as MainMenu} from './MainMenu';
 export {default as MenuButton} from './MenuButton';
 export {default as Navigation} from './Navigation';
 export {default as P} from './P';
+export {default as PercentBar} from './PercentBar';
 export {default as Picker} from './Picker';
 export {default as SideDrawer} from './SideDrawer';
 export {default as Text} from './Text';

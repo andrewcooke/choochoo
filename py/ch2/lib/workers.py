@@ -141,8 +141,6 @@ class ProgressTree:
         self._log_progress()
 
     def complete(self):
-        if self.__size and self.__progress == self.__size:
-            raise Exception('Progress already complete')
         self.__progress = self.__size
         self._log_progress()
 
@@ -151,8 +149,10 @@ class ProgressTree:
         try:
             yield None
             self.increment(n=n)
-        except:
+        except Exception as e:
+            log.debug(f'Completing on {type(e)}: {e}')
             self.complete()
+            raise
 
 
 class SystemProgressTree(ProgressTree):
@@ -165,6 +165,6 @@ class SystemProgressTree(ProgressTree):
 
     def progress(self):
         progress = super().progress()
-        self.system.update_progress(self.name, progress=floor(100 * progress))
+        self.system.update_progress(self.name, percentage=floor(100 * progress))
         return progress
 
