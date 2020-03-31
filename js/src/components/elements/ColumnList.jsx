@@ -18,7 +18,7 @@ const useStyles = makeStyles(theme => ({
 
 
 export default function ColumnList(props) {
-    const {children, ...rest} = props;
+    const {children, busy, ...rest} = props;
     const classes = useStyles();
-    return (<List className={classes.list} {...rest}>{children}</List>)
+    return (<List className={classes.list} {...rest}>{busy}{children}</List>)
 }

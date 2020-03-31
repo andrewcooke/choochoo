@@ -13,7 +13,7 @@ from ..lib.date import time_to_local_time, Y, YMDTHMS
 from ..lib.io import data_hash
 from ..lib.log import log_current_exception
 from ..lib.workers import ProgressTree, SystemProgressTree
-from ..sql import KitItem, FileHash, Constant
+from ..sql import KitItem, FileHash, Constant, ActivityJournal
 from ..stats.names import TIME
 from ..stats.read.activity import ActivityReader
 from ..stats.read.monitor import MonitorReader
@@ -161,7 +161,11 @@ def upload_files(db, files=tuple(), items=tuple(), progress=None):
 
 def upload_files_and_update(sys, db, files=tuple(), items=tuple(), fast=False):
     # this expects files to be a map from names to streams
-    progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [10])
+    with db.session_context() as s:
+        n = ActivityJournal.number_of_activities(s)
+        weight = min(1, n / 5)
+        log.debug(f'Weight statistics as {weight} ({n} entries)')
+    progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
     upload_files(db, files=files, items=items, progress=progress)
     if not fast:
         run_activity_pipelines(sys, db, progress=progress)

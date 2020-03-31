@@ -5,6 +5,7 @@ import {Edit, Snapshot, Statistics} from "./pages/kit";
 
 
 export default function Routes() {
+
     return (
         <BrowserRouter>
             <Switch>

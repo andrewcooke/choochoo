@@ -11,8 +11,12 @@ const useStyles = makeStyles(theme => ({
 
 
 export default function Loading(props) {
+    const {busy} = props;
     const classes = useStyles();
-    return (<Grid container alignItems='center' justify='center' className={classes.center}>
-        <CircularProgress/>
-    </Grid>);
+    return (<>
+        {busy}
+        <Grid container alignItems='center' justify='center' className={classes.center}>
+            <CircularProgress/>
+        </Grid>
+    </>);
 }

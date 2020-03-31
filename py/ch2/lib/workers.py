@@ -175,6 +175,6 @@ class SystemProgressTree(ProgressTree):
 
     def progress(self):
         progress = super().progress()
-        self.system.update_progress(self.name, percentage=floor(100 * progress))
+        self.system.update_progress(self.name, percent=floor(100 * progress))
         return progress
 

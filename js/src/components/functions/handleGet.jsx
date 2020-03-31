@@ -1,6 +1,18 @@
 
 
-export default function handleGet(history, onSuccess) {
+const BUSY_100 = {'message': 'Upload complete', percent: 100};
+
+
+export default function handleGet(history, percent, onData, onBusy) {
+
+    // busy logic is as follows:
+    // - initially percent is null
+    // - when a busy message is received. percent is set to some integer
+    // - eventually percent will reach 100 but that may (will) not arrive because the server then
+    //   thinks all is ok
+    // - so instead, we receive data
+    // - if we receive data and percent is not null, we set the 100% message
+    // - the busy dialog clears percent to null on OK
 
     return response => {
 
@@ -12,10 +24,15 @@ export default function handleGet(history, onSuccess) {
                 if (keys.includes('redirect')) {
                     console.log(`Redirect to ${json.redirect}`);
                     history.push(json.redirect);
+                } else if (keys.includes('busy')) {
+                    console.log('Received busy:');
+                    console.log(json.busy);
+                    onBusy(json.busy);
                 } else if (keys.includes('data')) {
                     console.log('Received data:');
                     console.log(json.data);
-                    onSuccess(json.data);
+                    if (percent !== null && percent < 100) onBusy(BUSY_100);
+                    onData(json.data);
                 } else {
                     throw new Error(`Unexpected response ${keys} / ${json}`);
                 }

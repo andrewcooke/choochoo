@@ -144,7 +144,7 @@ class Progress(SystemBase):
     name = Column(Text, nullable=False, unique=True)
     pid = Column(Integer, nullable=False, index=True)
     start = Column(Time, nullable=False)
-    percentage = Column(Integer, nullable=False, default=0)
+    percent = Column(Integer, nullable=False, default=0)
     error = Column(Text, nullable=True)
 
     def __str__(self):
@@ -154,7 +154,7 @@ class Progress(SystemBase):
     def create(cls, s, name, delta_seconds=3):
         progress = s.query(Progress).filter(Progress.name == name).one_or_none()
         if progress:
-            if progress.percentage != 100 and exists(progress.pid, progress.start, delta_seconds=delta_seconds):
+            if progress.percent != 100 and exists(progress.pid, progress.start, delta_seconds=delta_seconds):
                 raise Exception(f'Progress {name} already exists (PID {progress.pid})')
             else:
                 log.debug(f'Removing old progress {name} / {progress.pid}')
@@ -177,14 +177,14 @@ class Progress(SystemBase):
                 raise AttributeError(name)
 
     @classmethod
-    def get_percentage(cls, s, name, delta_seconds=3):
+    def get_percent(cls, s, name, delta_seconds=3):
         progress = s.query(Progress).filter(Progress.name == name).one_or_none()
         if progress is None or not exists(progress.pid, progress.start, delta_seconds=delta_seconds):
-            log.debug(f'No percentage for {name}')
+            log.debug(f'No percent for {name}')
             return None
         else:
-            log.debug(f'Progress for {name} is {progress.percentage}%')
-            return progress.percentage
+            log.debug(f'Progress for {name} is {progress.percent}%')
+            return progress.percent
 
     @classmethod
     def wait_for_progress(cls, s, name, timeout=60, delta_seconds=3, pause=1):

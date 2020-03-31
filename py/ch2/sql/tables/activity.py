@@ -86,6 +86,10 @@ class ActivityJournal(Source):
             order_by(ActivityJournal.start). \
             limit(1).one_or_none()
 
+    @classmethod
+    def number_of_activities(cls, s):
+        return s.query(ActivityJournal).count()
+
 
 class ActivityTimespan(Base):
 

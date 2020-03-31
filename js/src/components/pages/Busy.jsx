@@ -24,10 +24,10 @@ export default function Busy(props) {
         content = (<ColumnList>
             <ColumnCard><Grid item xs={12}>
                 <P>{json.reason}</P>
-                <PercentBar percent={json.percentage} fraction={1}/>
+                <PercentBar percent={json.percent} fraction={1}/>
             </Grid></ColumnCard>
         </ColumnList>);
-        if (json.percentage !== 100) {
+        if (json.percent !== 100) {
             setTimeout(reload, 1000);
         }
     } else {
