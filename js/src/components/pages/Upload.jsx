@@ -1,26 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {
-    ColumnCard,
-    ColumnList,
-    ConfirmedWriteButton,
-    Layout,
-    Loading,
-    MainMenu,
-    P,
-    PercentBar,
-    Text
-} from "../elements";
-import {
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Grid,
-    IconButton,
-    TextField
-} from "@material-ui/core";
+import {BusyDialog, ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, MainMenu, Text} from "../elements";
+import {Button, Grid, IconButton, TextField} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {Clear} from '@material-ui/icons';
@@ -144,39 +124,6 @@ function Columns(props) {
 }
 
 
-function BusyDialog(props) {
-
-    const {percent, setPercent, message, reload} = props;
-    const [open, setOpen] = useState(percent !== null);
-    const [okDisabled, setOkDisabled] = useState(percent === null || percent < 100);
-
-    function handleOk() {
-        console.log('OK clicked');
-        setPercent(null);
-        setOpen(false);
-        setOkDisabled(true);
-    }
-
-    console.log(`Busy current state: open ${open}; percent ${percent}; OK disabled ${okDisabled}`);
-    // i don't really understand why this line is needed
-    if (! open && (percent !== null && percent < 100)) setOpen(true);
-    if (open && percent !== 100) setTimeout(reload, 1000);
-
-    return (<Dialog open={open}>
-        <DialogTitle>Busy</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            <P>{message}</P>
-            <PercentBar percent={percent === null ? 100 : percent} fraction={1}/>
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button disabled={okDisabled} onClick={handleOk}>OK</Button>
-        </DialogActions>
-      </Dialog>);
-}
-
-
 export default function Upload(props) {
 
     const {match, history} = props;
@@ -190,14 +137,8 @@ export default function Upload(props) {
     }
 
     function setBusy(json) {
-        console.log('setBusy:');
-        console.log(json);
-        if (json === undefined) {  // special indication we're done from handleGet
-            if (busyPercent !== null && busyPercent < 100) setBusyPercent(100);
-        } else {
-            setBusyMessage(json.message);
-            setBusyPercent(json.percent);
-        }
+        setBusyMessage(json.message);
+        setBusyPercent(json.percent);
     }
 
     useEffect(() => {
@@ -205,9 +146,8 @@ export default function Upload(props) {
         fetch('/api/kit/items').then(handleGet(history, busyPercent, setItems, setBusy));
     }, [reads]);
 
-    console.log(`Percent ${busyPercent}`);
-
-    const busy = <BusyDialog percent={busyPercent} setPercent={setBusyPercent} message={busyMessage} reload={reload}/>;
+    const busy = <BusyDialog percent={busyPercent} setPercent={setBusyPercent} message={busyMessage}
+                             reload={reload}/>;
 
     return (
         <Layout navigation={<MainMenu/>}
