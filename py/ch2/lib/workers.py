@@ -102,13 +102,22 @@ def command_root():
 
 class ProgressTree:
 
-    def __init__(self, size, parent=None):
-        self.__size = size
+    def __init__(self, size_or_weights, parent=None):
+        if isinstance(size_or_weights, int):
+            self.__size = size_or_weights
+            self.__weights = [1] * size_or_weights
+        else:
+            self.__size = sum(size_or_weights)
+            self.__weights = size_or_weights
         self.__progress = 0
         self.__children = []
         self.__parent = parent
         if parent:
             parent.register(self)
+
+    def _build_weights(self, weights):
+        if isinstance(weights, int):
+            return [1/weights] * weights
 
     def register(self, child):
         self.__children.append(child)
@@ -117,7 +126,8 @@ class ProgressTree:
 
     def local_progress(self):
         if self.__children:
-            return sum(child.local_progress() for child in self.__children) / self.__size
+            return sum(child.local_progress() * weight
+                       for (child, weight) in zip(self.__children, self.__weights)) / self.__size
         else:
             return self.__progress / self.__size if self.__size else 1
 
@@ -157,8 +167,8 @@ class ProgressTree:
 
 class SystemProgressTree(ProgressTree):
 
-    def __init__(self, system, name, size):
-        super().__init__(size)
+    def __init__(self, system, name, size_or_weights):
+        super().__init__(size_or_weights)
         self.system = system
         self.name = name
         system.create_progress(name)

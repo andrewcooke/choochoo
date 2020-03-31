@@ -161,7 +161,7 @@ def upload_files(db, files=tuple(), items=tuple(), progress=None):
 
 def upload_files_and_update(sys, db, files=tuple(), items=tuple(), fast=False):
     # this expects files to be a map from names to streams
-    progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, 6)
+    progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [10])
     upload_files(db, files=files, items=items, progress=progress)
     if not fast:
         run_activity_pipelines(sys, db, progress=progress)
