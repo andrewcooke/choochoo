@@ -80,6 +80,11 @@ function FileSelect(props) {
         setFiles(newFiles);
     }
 
+    function onSubmit() {
+        setFiles([]);
+        reload();
+    }
+
     return (<>
         <Grid item xs={12}>
             <input accept='*/*' id='upload-input' multiple type='file' onChange={addFiles} className={classes.input}/>
@@ -96,7 +101,7 @@ function FileSelect(props) {
         </Grid>
         <Grid item xs={12} className={classes.right}>
             <ConfirmedWriteButton disabled={files.length === 0} label='Upload' href='/api/upload'
-                                  reload={reload} form={{'files': files, 'kit': kit}}>
+                                  reload={onSubmit} form={{'files': files, 'kit': kit}}>
                 The ingest process will take some time.
             </ConfirmedWriteButton>
         </Grid>
@@ -136,7 +141,6 @@ export default function Upload(props) {
     }
 
     useEffect(() => {
-        setItems(null);
         fetch('/api/kit/items').then(handleGet(history, setItems, busy, setBusy));
     }, [reads]);
 
