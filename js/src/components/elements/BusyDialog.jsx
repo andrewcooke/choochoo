@@ -7,28 +7,29 @@ export default function BusyDialog(props) {
 
     // see handleGet
 
-    const {percent, setPercent, message, reload} = props;
-    const [open, setOpen] = useState(percent !== null);
-    const [okDisabled, setOkDisabled] = useState(percent === null || percent < 100);
+    const {busy, setBusy, reload} = props;
+    const [open, setOpen] = useState(busy !== null);
+    const [okDisabled, setOkDisabled] = useState(busy === null || busy.percent < 100);
 
     function handleOk() {
         console.log('OK clicked');
-        setPercent(null);
+        setBusy(null);
         setOpen(false);
         setOkDisabled(true);
     }
 
-    console.log(`Busy current state: open ${open}; percent ${percent}; OK disabled ${okDisabled}`);
+    console.log(`Busy current state: open ${open}; OK disabled ${okDisabled}; busy:`);
+    console.log(busy);
     // i don't really understand why this line is needed
-    if (! open && (percent !== null && percent < 100)) setOpen(true);
-    if (open && percent !== 100) setTimeout(reload, 1000);
+    if (! open && (busy !== null && busy.percent < 100)) setOpen(true);
+    if (open && busy.percent !== 100) setTimeout(reload, 1000);
 
     return (<Dialog open={open}>
         <DialogTitle>Busy</DialogTitle>
         <DialogContent>
             <DialogContentText>
-                <P>{message}</P>
-                <PercentBar percent={percent === null ? 100 : percent} fraction={1}/>
+                <P>{busy === null ? '' : busy.message}</P>
+                <PercentBar percent={busy === null ? 100 : busy.percent} fraction={1}/>
             </DialogContentText>
         </DialogContent>
         <DialogActions>

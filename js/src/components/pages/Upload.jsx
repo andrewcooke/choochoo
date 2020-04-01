@@ -128,30 +128,22 @@ export default function Upload(props) {
 
     const {match, history} = props;
     const [items, setItems] = useState(null);
-    const [busyPercent, setBusyPercent] = useState(null);  // non-null indicates busy is 'active'
-    const [busyMessage, setBusyMessage] = useState(null);
+    const [busy, setBusy] = useState(null);
     const [reads, setReads] = useState(0);
 
     function reload() {
         setReads(reads + 1);
     }
 
-    function setBusy(json) {
-        setBusyMessage(json.message);
-        setBusyPercent(json.percent);
-    }
-
     useEffect(() => {
         setItems(null);
-        fetch('/api/kit/items').then(handleGet(history, busyPercent, setItems, setBusy));
+        fetch('/api/kit/items').then(handleGet(history, setItems, busy, setBusy));
     }, [reads]);
-
-    const busy = <BusyDialog percent={busyPercent} setPercent={setBusyPercent} message={busyMessage}
-                             reload={reload}/>;
 
     return (
         <Layout navigation={<MainMenu/>}
-                content={<Columns items={items} reload={reload} busy={busy}/>}
+                content={<Columns items={items} reload={reload}
+                                  busy={<BusyDialog busy={busy} setBusy={setBusy} reload={reload}/>}/>}
                 match={match} title='Upload'/>
     );
 }
