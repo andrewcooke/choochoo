@@ -1,8 +1,4 @@
 
-
-const BUSY_100 = {'message': 'Upload complete', percent: 100};
-
-
 export default function handleGet(history, setData, busy, setBusy) {
 
     // busy logic is as follows:
@@ -31,7 +27,13 @@ export default function handleGet(history, setData, busy, setBusy) {
                 } else if (keys.includes('data')) {
                     console.log('Received data:');
                     console.log(json.data);
-                    if (busy !== null && busy.percent < 100) setBusy(BUSY_100);
+                    if (busy !== null && busy.percent < 100) {
+                        // fill in final message
+                        let complete = {...busy};
+                        complete.message = complete.complete;
+                        complete.percent = 100;
+                        setBusy(complete);
+                    }
                     setData(json.data);
                 } else {
                     throw new Error(`Unexpected response ${keys} / ${json}`);
