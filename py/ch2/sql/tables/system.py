@@ -52,6 +52,7 @@ class SystemConstant(SystemBase):
     JUPYTER_URL = 'jupyter-url'
     JUPYTER_DIR = 'jupyter-dir'
     WEB_URL = 'web-url'
+    LAST_GARMIN = 'last-garmin'
 
 
 class Process(SystemBase):

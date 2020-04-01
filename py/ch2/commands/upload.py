@@ -157,13 +157,14 @@ def upload_files(db, files=tuple(), items=tuple(), progress=None):
                 hash_file(file)
                 check_file(s, file)
                 write_file(data_dir, file, items)
+        local_progress.complete()  # catch no files case
 
 
 def upload_files_and_update(sys, db, files=tuple(), items=tuple(), fast=False):
     # this expects files to be a map from names to streams
     with db.session_context() as s:
         n = ActivityJournal.number_of_activities(s)
-        weight = min(1, n / 5)
+        weight = max(1, n // 2)
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
     upload_files(db, files=files, items=items, progress=progress)
@@ -172,6 +173,6 @@ def upload_files_and_update(sys, db, files=tuple(), items=tuple(), fast=False):
         # run before and after so we know what exists before we update, and import what we read
         run_monitor_pipelines(sys, db, progress=progress)
         with db.session_context() as s:
-            run_garmin(s, progress=progress)
+            run_garmin(sys, s, progress=progress)
         run_monitor_pipelines(sys, db, progress=progress)
         run_statistic_pipelines(sys, db, progress=progress)

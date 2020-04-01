@@ -29,10 +29,10 @@ export default function handleGet(history, setData, busy, setBusy) {
                     console.log(json.data);
                     if (busy !== null && busy.percent < 100) {
                         // fill in final message
-                        let complete = {...busy};
-                        complete.message = complete.complete;
-                        complete.percent = 100;
-                        setBusy(complete);
+                        let copy = {...busy};
+                        copy.message = copy.complete;
+                        copy.percent = 100;
+                        setBusy(copy);
                     }
                     setData(json.data);
                 } else {

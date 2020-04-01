@@ -105,10 +105,10 @@ class ProgressTree:
     def __init__(self, size_or_weights, parent=None):
         if isinstance(size_or_weights, int):
             self.__size = size_or_weights
-            self.__weights = [1] * size_or_weights
+            self.__weights = [1] * self.__size
         else:
-            self.__size = sum(size_or_weights)
             self.__weights = size_or_weights
+            self.__size = sum(self.__weights)
         self.__progress = 0
         self.__children = []
         self.__parent = parent
@@ -126,8 +126,10 @@ class ProgressTree:
 
     def local_progress(self):
         if self.__children:
-            return sum(child.local_progress() * weight
-                       for (child, weight) in zip(self.__children, self.__weights)) / self.__size
+            progress = sum(child.local_progress() * weight
+                           for (child, weight) in zip(self.__children, self.__weights)) / self.__size
+            log.debug(f'progress {progress} from {[c.local_progress() for c in self.__children]} {self.__weights}')
+            return progress
         else:
             return self.__progress / self.__size if self.__size else 1
 
