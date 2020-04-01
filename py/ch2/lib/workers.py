@@ -6,7 +6,6 @@ from time import sleep, time
 
 from math import floor
 
-from ..sql import Process
 from ..sql.types import short_cls
 
 log = getLogger(__name__)

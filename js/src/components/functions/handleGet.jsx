@@ -1,5 +1,5 @@
 
-export default function handleGet(history, setData, busy, setBusy) {
+export default function handleGet(history, setData, busyState, setError) {
 
     // busy logic is as follows:
     // - initially busy is null
@@ -9,6 +9,17 @@ export default function handleGet(history, setData, busy, setBusy) {
     // - so instead, we receive data
     // - if we receive data and percent is not null, we set the 100% message
     // - the busy dialog clears busy to null on OK
+
+    // error logic:
+    // - if server traps an exception it sends an error
+    // - setError is called
+    // - error dialog is displayed
+    // - user either continues or reloads
+
+    // redirect logic:
+    // - if server sends a redirect we respond
+
+    const [busy, setBusy] = busyState;
 
     return response => {
 
@@ -24,6 +35,10 @@ export default function handleGet(history, setData, busy, setBusy) {
                     console.log('Received busy:');
                     console.log(json.busy);
                     setBusy(json.busy);
+                } else if (keys.includes('error')) {
+                    console.log('Received error:');
+                    console.log(json.error);
+                    setError(json.error);
                 } else if (keys.includes('data')) {
                     console.log('Received data:');
                     console.log(json.data);

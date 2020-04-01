@@ -1,6 +1,7 @@
 import React from 'react';
 import {makeStyles} from "@material-ui/core/styles";
 import {List} from "@material-ui/core";
+import BusyDialog from "./BusyDialog";
 
 
 const useStyles = makeStyles(theme => ({
@@ -18,7 +19,10 @@ const useStyles = makeStyles(theme => ({
 
 
 export default function ColumnList(props) {
-    const {children, busy, ...rest} = props;
+    const {children, busyState, reload, ...rest} = props;
     const classes = useStyles();
-    return (<List className={classes.list} {...rest}>{busy}{children}</List>)
+    return (<List className={classes.list} {...rest}>
+        <BusyDialog busyState={busyState} reload={reload}/>
+        {children}
+    </List>)
 }

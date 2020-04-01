@@ -111,15 +111,15 @@ function FileSelect(props) {
 
 function Columns(props) {
 
-    const {items, busy, reload} = props;
+    const {items, busyState, reload} = props;
 
     if (items === null) {
         return (<>
-            <Loading busy={busy}/>
+            <Loading busyState={busyState} reload={reload}/>
         </>);
     } else {
         return (<>
-            <ColumnList busy={busy}>
+            <ColumnList busyState={busyState} reload={reload}>
                 <ColumnCard>
                     <FileSelect items={items} reload={reload}/>
                 </ColumnCard>
@@ -133,7 +133,8 @@ export default function Upload(props) {
 
     const {match, history} = props;
     const [items, setItems] = useState(null);
-    const [busy, setBusy] = useState(null);
+    const busyState = useState(null);
+    const [error, setError] = useState(null);
     const [reads, setReads] = useState(0);
 
     function reload() {
@@ -141,13 +142,12 @@ export default function Upload(props) {
     }
 
     useEffect(() => {
-        fetch('/api/kit/items').then(handleGet(history, setItems, busy, setBusy));
+        fetch('/api/kit/items').then(handleGet(history, setItems, busyState, setError));
     }, [reads]);
 
     return (
         <Layout navigation={<MainMenu/>}
-                content={<Columns items={items} reload={reload}
-                                  busy={<BusyDialog busy={busy} setBusy={setBusy} reload={reload}/>}/>}
+                content={<Columns items={items} reload={reload} busyState={busyState}/>}
                 match={match} title='Upload'/>
     );
 }

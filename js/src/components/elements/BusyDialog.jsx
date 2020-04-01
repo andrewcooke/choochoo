@@ -7,7 +7,8 @@ export default function BusyDialog(props) {
 
     // see handleGet
 
-    const {busy, setBusy, reload} = props;
+    const {busyState, reload} = props;
+    const [busy, setBusy] = busyState;
     const [open, setOpen] = useState(busy !== null);
     const [okDisabled, setOkDisabled] = useState(busy === null || busy.percent < 100);
 

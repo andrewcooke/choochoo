@@ -139,8 +139,8 @@ class WebServer:
         percent = self.__sys.get_percent(UPLOAD)
         if percent is None: percent = 100
         # the client uses the complete message when the problem has passed
-        return {MESSAGE: 'Loading data and recalculating statistics',
-                COMPLETE: 'Data loaded',
+        return {MESSAGE: 'Loading data and recalculating statistics.',
+                COMPLETE: 'Data loaded and statistics updated.',
                 PERCENT: percent}
 
     def read_busy(self, request, s):

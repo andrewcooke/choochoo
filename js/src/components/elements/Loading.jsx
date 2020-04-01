@@ -1,6 +1,7 @@
 import React from 'react';
 import {CircularProgress, Grid} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
+import BusyDialog from "./BusyDialog";
 
 
 const useStyles = makeStyles(theme => ({
@@ -11,10 +12,10 @@ const useStyles = makeStyles(theme => ({
 
 
 export default function Loading(props) {
-    const {busy} = props;
+    const {busyState, reload} = props;
     const classes = useStyles();
     return (<>
-        {busy}
+        <BusyDialog busyState={busyState} reload={reload}/>
         <Grid container alignItems='center' justify='center' className={classes.center}>
             <CircularProgress/>
         </Grid>
