@@ -3,9 +3,9 @@ from logging import getLogger
 from werkzeug import Request, run_simple
 from werkzeug.exceptions import HTTPException, BadRequest
 from werkzeug.routing import Map, Rule
-from werkzeug.serving import WSGIRequestHandler
 from werkzeug.wrappers.json import JSONMixin
 
+from .analysis import Analysis
 from .diary import Diary
 from .json import JsonResponse
 from .jupyter import Jupyter
@@ -16,7 +16,6 @@ from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY,
 from ..jupyter.server import JupyterController
 from ..lib.server import BaseController
 from ..sql import SystemConstant
-
 
 log = getLogger(__name__)
 
@@ -56,8 +55,6 @@ class WebController(BaseController):
 
     def _run(self):
         self._sys.set_constant(SystemConstant.WEB_URL, 'http://%s:%d' % (self.__bind, self.__port), force=True)
-        # https://stackoverflow.com/questions/10523879/how-to-make-flask-keep-ajax-http-connection-alive
-        WSGIRequestHandler.protocol_version = "HTTP/1.1"
         run_simple(self.__bind, self.__port, WebServer(self.__sys, self.__db, self.__jupyter),
                    use_debugger=self.__dev, use_reloader=self.__dev)
 
@@ -86,24 +83,28 @@ class WebServer:
         self.__db = db
         diary = Diary()
         kit = Kit()
+        analysis = Analysis()
         static = Static('.static')
         upload = Upload(sys, db)
         jupyter = Jupyter(jcontrol)
         self.url_map = Map([
 
+            # used by the menu so unchecked
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=(GET,)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),
             Rule('/api/diary/active-months/<year>', endpoint=diary.read_active_months, methods=(GET,)),
-            Rule('/api/diary/analysis-parameters', endpoint=diary.read_analysis_params, methods=(GET,)),
+            # write so unchecked
             Rule('/api/diary/statistics', endpoint=diary.write_statistics, methods=(PUT,)),
-            Rule('/api/diary/<date>', endpoint=diary.read_diary, methods=(GET,)),
+            Rule('/api/diary/<date>', endpoint=self.check(diary.read_diary), methods=(GET,)),
+
+            Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
 
             Rule('/api/kit/edit', endpoint=kit.read_edit, methods=(GET, )),
             Rule('/api/kit/retire-item', endpoint=kit.write_retire_item, methods=(PUT,)),
             Rule('/api/kit/replace-model', endpoint=kit.write_replace_model, methods=(PUT,)),
             Rule('/api/kit/add-component', endpoint=kit.write_add_component, methods=(PUT,)),
             Rule('/api/kit/add-group', endpoint=kit.write_add_group, methods=(PUT,)),
-            Rule('/api/kit/items', endpoint=self.check(kit.read_items, ERROR, BUSY), methods=(GET,)),
+            Rule('/api/kit/items', endpoint=self.check(kit.read_items), methods=(GET,)),
             Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=(GET, )),
             Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=(GET, )),
 
@@ -146,29 +147,17 @@ class WebServer:
     def read_busy(self, request, s):
         return JsonResponse({BUSY: self.get_busy()})
 
-    def have_error(self):
-        return None
-
-    def have_busy(self):
-        busy = self.get_busy()
-        if busy[PERCENT] is None or busy[PERCENT] == 100:
-            return None
-        else:
-            return {BUSY: busy}
-
-    def check(self, handler, *cases):
-
-        CASE_HANDLERS = {ERROR: self.have_error,
-                         BUSY: self.have_busy}
+    def check(self, handler):
 
         def wrapper(*args, **kargs):
-            for case in cases:
-                if case in CASE_HANDLERS:
-                    response = CASE_HANDLERS[case]()
-                    if response:
-                        log.warning(f'Exception for {case}: {response}')
-                        return JsonResponse(response)
-                else:
-                    log.warning(f'Unexpected case for redirect: {case}')
-            return JsonResponse({DATA: handler(*args, **kargs)})
+            busy = self.get_busy()
+            if busy[PERCENT] is None or busy[PERCENT] == 100:
+                try:
+                    return JsonResponse({DATA: handler(*args, **kargs)})
+                except Exception as e:
+                    # maybe some errors are redirects?
+                    return JsonResponse({ERROR: str(e)})
+            else:
+                return JsonResponse({BUSY: busy})
+
         return wrapper

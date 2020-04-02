@@ -15,7 +15,7 @@ export default function Loading(props) {
     const {busyState, reload} = props;
     const classes = useStyles();
     return (<>
-        <BusyDialog busyState={busyState} reload={reload}/>
+        {busyState !== undefined && reload !== undefined ? <BusyDialog busyState={busyState} reload={reload}/> : null}
         <Grid container alignItems='center' justify='center' className={classes.center}>
             <CircularProgress/>
         </Grid>

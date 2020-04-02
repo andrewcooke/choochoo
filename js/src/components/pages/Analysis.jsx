@@ -11,16 +11,17 @@ import {
     SimilarActivities,
     SomeActivities
 } from "./analysis";
+import {handleGet} from "../functions";
 
 
 function Columns(props) {
 
-    const {params} = props;
+    const {params, busyState, reload} = props;
 
     if (params === null) {
-        return <Loading/>;  // undefined initial data
+        return <Loading busyState={busyState} reload={reload}/>;  // undefined initial data
     } else {
-        return (<ColumnList>
+        return (<ColumnList busyState={busyState} reload={reload}>
             <ActivityDetails params={params}/>
             <CompareActivities params={params}/>
             <AllActivities params={params}/>
@@ -38,16 +39,24 @@ function Columns(props) {
 export default function Analysis(props) {
 
     const {match} = props;
-    const [json, setJson] = useState(null);
+    const [params, setParams] = useState(null);
+    const busyState = useState(null);
+    const [error, setError] = useState(null);
+    const [reads, setReads] = useState(0);
+
+    function reload() {
+        setReads(reads + 1);
+    }
 
     useEffect(() => {
-        setJson(null);
-        fetch('/api/diary/analysis-parameters')
-            .then(response => response.json())
-            .then(json => setJson(json));
-    }, [1]);
+        setParams(null);
+        fetch('/api/analysis/parameters')
+            .then(handleGet(history, setParams, busyState, setError));
+    }, [reads]);
 
     return (
-        <Layout navigation={<MainMenu/>} content={<Columns params={json}/>} match={match} title='Analysis'/>
+        <Layout navigation={<MainMenu/>}
+                content={<Columns params={params} reload={reload} busyState={busyState}/>}
+                match={match} title='Analysis'/>
     );
 }

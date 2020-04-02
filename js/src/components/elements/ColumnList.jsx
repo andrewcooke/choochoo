@@ -22,7 +22,7 @@ export default function ColumnList(props) {
     const {children, busyState, reload, ...rest} = props;
     const classes = useStyles();
     return (<List className={classes.list} {...rest}>
-        <BusyDialog busyState={busyState} reload={reload}/>
+        {busyState !== undefined && reload !== undefined ? <BusyDialog busyState={busyState} reload={reload}/> : null}
         {children}
     </List>)
 }

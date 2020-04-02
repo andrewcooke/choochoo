@@ -28,7 +28,7 @@ class Diary:
             data = read_date(s, date)
         else:
             data = read_schedule(s, Schedule(schedule), date)
-        return JsonResponse(rewrite_db(list(data)))
+        return rewrite_db(list(data))
 
     def read_neighbour_activities(self, request, s, date):
         # used in the sidebar menu to advance/retreat to the next activity
@@ -47,18 +47,6 @@ class Diary:
     @staticmethod
     def read_active_months(request, s, year):
         return JsonResponse(active_months(s, year))
-
-    @staticmethod
-    def read_analysis_params(request, s):
-        # odds and sods used to set menus in jupyter URLs
-        latest = latest_activity(s)
-        result = {'activities_start': activities_start(s),
-                  'activities_finish': activities_finish(s),
-                  'activities_by_group': activities_by_group(s),
-                  'latest_activity_group': latest.activity_group.name if latest else None,
-                  'latest_activity_time': time_to_local_time(latest.start) if latest else None,
-                  'nearby_constraints': list(constraints(s))}
-        return JsonResponse(result)
 
     @staticmethod
     def write_statistics(request, s):

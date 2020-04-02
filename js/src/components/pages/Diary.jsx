@@ -6,6 +6,7 @@ import {List, ListItem} from '@material-ui/core';
 import {Day, Schedule} from './diary';
 import {Calendar, Months} from './diary/elements'
 import {FMT_DAY, FMT_MONTH, FMT_YEAR} from "../../constants";
+import {handleGet} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -113,21 +114,29 @@ export default function Diary(props) {
     const {ymdSelected, dateFmt, component} = classifyDate(date);
     const datetime = parse(date, dateFmt, new Date());
     const [json, setJson] = useState(null);
+    const busyState = useState(null);
+    const [error, setError] = useState(null);
+    const [reads, setReads] = useState(0);
+    // this gets loaded multiple times which is less than ideal
     const writer = new Worker('/api/static/writer.js');
+
+    function reload() {
+        setReads(reads + 1);
+    }
 
     useEffect(() => {
         setJson(null);
         fetch('/api/diary/' + date)
-            .then(response => response.json())
-            .then(json => setJson(json));
-    }, [date]);
+            .then(handleGet(history, setJson, busyState, setError));
+    }, [`${date} ${reads}`]);
 
     const navigation = (
         <DiaryMenu ymdSelected={ymdSelected} datetime={datetime} dateFmt={dateFmt} history={history}/>
     );
 
     return (
-        <Layout navigation={navigation} content={component({json, writer, history})} match={match}
-                title={`Diary: ${date}`}/>
+        <Layout navigation={navigation}
+                content={component({json, writer, history, reload, busyState})}
+                match={match} title={`Diary: ${date}`}/>
     );
 }
