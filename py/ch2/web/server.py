@@ -113,8 +113,9 @@ class WebServer:
             Rule('/api/upload', endpoint=upload, methods=(PUT, )),
             Rule('/api/busy', endpoint=self.read_busy, methods=(GET, )),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
-            Rule('/api/<path:path>', endpoint=error(BadRequest), methods=(GET, PUT, POST)),
+            Rule('/api/<path:_>', endpoint=error(BadRequest), methods=(GET, PUT, POST)),
 
+            # ignore path and serve index.html
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=(GET,)),
             Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=(GET,))
         ])
