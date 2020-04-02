@@ -99,14 +99,15 @@ class WebServer:
 
             Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
 
-            Rule('/api/kit/edit', endpoint=kit.read_edit, methods=(GET, )),
+            Rule('/api/kit/edit', endpoint=self.check(kit.read_edit), methods=(GET, )),
             Rule('/api/kit/retire-item', endpoint=kit.write_retire_item, methods=(PUT,)),
             Rule('/api/kit/replace-model', endpoint=kit.write_replace_model, methods=(PUT,)),
             Rule('/api/kit/add-component', endpoint=kit.write_add_component, methods=(PUT,)),
             Rule('/api/kit/add-group', endpoint=kit.write_add_group, methods=(PUT,)),
+            # used by upload
             Rule('/api/kit/items', endpoint=self.check(kit.read_items), methods=(GET,)),
-            Rule('/api/kit/statistics', endpoint=kit.read_statistics, methods=(GET, )),
-            Rule('/api/kit/<date>', endpoint=kit.read_snapshot, methods=(GET, )),
+            Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics), methods=(GET, )),
+            Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot), methods=(GET, )),
 
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
             Rule('/api/upload', endpoint=upload, methods=(PUT, )),

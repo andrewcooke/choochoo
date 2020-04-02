@@ -34,21 +34,18 @@ class Kit:
 
     @staticmethod
     def read_edit(request, s):
-        data = [group.to_model(s, depth=3, statistics=None, time=now(), own_models=False)
+        return [group.to_model(s, depth=3, statistics=None, time=now(), own_models=False)
                 for group in s.query(KitGroup).order_by(KitGroup.name).all()]
-        return JsonResponse(data)
 
     @staticmethod
     def read_statistics(request, s):
-        components = [component.to_model(s, depth=3, statistics=POPULATION)
-                      for component in s.query(KitComponent).order_by(KitComponent.name).all()]
-        return JsonResponse(components)
+        return [component.to_model(s, depth=3, statistics=POPULATION)
+                for component in s.query(KitComponent).order_by(KitComponent.name).all()]
 
     @staticmethod
     def read_items(request, s):
-        items = [item.to_model(s, depth=0)
-                 for item in s.query(KitItem).order_by(KitItem.name).all()]
-        return items
+        return [item.to_model(s, depth=0)
+                for item in s.query(KitItem).order_by(KitItem.name).all()]
 
     @staticmethod
     def write_retire_item(request, s):

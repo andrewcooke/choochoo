@@ -14,6 +14,7 @@ import {Box, Button, Collapse, Grid, TextField, Typography} from "@material-ui/c
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
+import {handleGet} from "../../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -187,15 +188,15 @@ function AddGroup(props) {
 
 function Columns(props) {
 
-    const {groups, reload} = props;
+    const {groups, busyState, reload} = props;
 
     if (groups === null) {
-        return <Loading/>;  // undefined initial data
+        return <Loading busyState={busyState} reload={reload}/>;
     } else {
         const allComponents = {};
         groups.forEach(group => group.items.forEach(item => item.components.forEach(
             component => allComponents[component.name] = component.models)));
-        return (<ColumnList>
+        return (<ColumnList busyState={busyState} reload={reload}>
             <Introduction groups={groups} reload={reload}/>
             {groups.map(
                 group => group.items.map(
@@ -208,20 +209,25 @@ function Columns(props) {
 
 export default function Edit(props) {
 
-    const {match} = props;
-    const [json, setJson] = useState(null);
+    const {match, history} = props;
+    const [groups, setGroups] = useState(null);
     const [edits, setEdits] = useState(0);
+    const busyState = useState(null);
+    const [error, setError] = useState(null);
+
+    function reload() {
+        setEdits(edits + 1);
+    }
 
     useEffect(() => {
-        setJson(null);
+        setGroups(null);
         fetch('/api/kit/edit')
-            .then(response => response.json())
-            .then(json => setJson(json));
+            .then(handleGet(history, setGroups, busyState, setError));
     }, [edits]);
 
     return (
         <Layout navigation={<MainMenu kit/>}
-                content={<Columns groups={json} reload={() => setEdits(edits + 1)}/>}
+                content={<Columns groups={groups} reload={reload} busyState={busyState}/>}
                 match={match} title='Edit Kit'/>
     );
 }

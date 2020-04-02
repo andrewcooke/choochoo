@@ -3,6 +3,7 @@ import React, {useEffect, useState} from "react";
 import {Grid, Typography, InputLabel} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import StatisticsValues from "./elements/StatisticsValues";
+import {handleGet} from "../../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -47,12 +48,12 @@ function ComponentStatistics(props) {
 
 function Columns(props) {
 
-    const {components, update} = props;
+    const {components, busyState, reload} = props;
 
     if (components === null) {
-        return <Loading/>;  // undefined initial data
+        return <Loading busyState={busyState} reload={reload}/>;  // undefined initial data
     } else {
-        return (<ColumnList>
+        return (<ColumnList busyState={busyState} reload={reload}>
             {components.map(component => <ComponentStatistics component={component} key={component.db}/>)}
         </ColumnList>);
     }
@@ -61,18 +62,25 @@ function Columns(props) {
 
 export default function Statistics(props) {
 
-    const {match} = props;
-    const [json, setJson] = useState(null);
+    const {match, history} = props;
+    const [components, setComponents] = useState(null);
+    const busyState = useState(null);
+    const [error, setError] = useState(null);
+    const [reads, setReads] = useState(0);
+
+    function reload() {
+        setReads(reads + 1);
+    }
 
     useEffect(() => {
-        setJson(null);
+        setComponents(null);
         fetch('/api/kit/statistics')
-            .then(response => response.json())
-            .then(json => setJson(json));
-    }, [1]);
+            .then(handleGet(history, setComponents, busyState, setError));
+    }, [reads]);
 
     return (
         <Layout navigation={<MainMenu kit/>}
-                content={<Columns components={json}/>} match={match} title='Kit Statistics'/>
+                content={<Columns components={components} reload={reload} busyState={busyState}/>}
+                match={match} title='Kit Statistics'/>
     );
 }

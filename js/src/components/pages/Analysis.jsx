@@ -38,7 +38,7 @@ function Columns(props) {
 
 export default function Analysis(props) {
 
-    const {match} = props;
+    const {match, history} = props;
     const [params, setParams] = useState(null);
     const busyState = useState(null);
     const [error, setError] = useState(null);
