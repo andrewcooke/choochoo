@@ -57,14 +57,14 @@ function ItemStatistics(props) {
 
 function Columns(props) {
 
-    const {groups, busyState, reload} = props;
+    const {groups} = props;
 
     if (groups === null) {
-        return <Loading busyState={busyState} reload={reload}/>;
+        return <Loading/>;
     } else {
         let id = 0;
         groups.forEach(group => id = setIds(group, id, ['items', 'components', 'models', 'statistics']));
-        return (<ColumnList busyState={busyState} reload={reload}>
+        return (<ColumnList>
             {groups.map(
                 group => group.items.map(
                     item => <ItemStatistics item={item} group={group} key={item.id}/>)).flat()}
@@ -116,7 +116,7 @@ export default function Snapshot(props) {
 
     return (
         <Layout navigation={<SnapshotMenu datetime={datetime} history={history}/>}
-                content={<Columns groups={groups} reload={reload} busyState={busyState}/>}
-                match={match} title={`Kit: ${date}`}/>
+                content={<Columns groups={groups}/>}
+                match={match} title={`Kit: ${date}`} reload={reload} busyState={busyState}/>
     );
 }

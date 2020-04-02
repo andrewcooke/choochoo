@@ -48,12 +48,12 @@ function ComponentStatistics(props) {
 
 function Columns(props) {
 
-    const {components, busyState, reload} = props;
+    const {components} = props;
 
     if (components === null) {
-        return <Loading busyState={busyState} reload={reload}/>;  // undefined initial data
+        return <Loading/>;  // undefined initial data
     } else {
-        return (<ColumnList busyState={busyState} reload={reload}>
+        return (<ColumnList>
             {components.map(component => <ComponentStatistics component={component} key={component.db}/>)}
         </ColumnList>);
     }
@@ -79,8 +79,7 @@ export default function Statistics(props) {
     }, [reads]);
 
     return (
-        <Layout navigation={<MainMenu kit/>}
-                content={<Columns components={components} reload={reload} busyState={busyState}/>}
-                match={match} title='Kit Statistics'/>
+        <Layout navigation={<MainMenu kit/>} content={<Columns components={components}/>}
+                match={match} title='Kit Statistics' reload={reload} busyState={busyState}/>
     );
 }

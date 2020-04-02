@@ -111,15 +111,15 @@ function FileSelect(props) {
 
 function Columns(props) {
 
-    const {items, busyState, reload} = props;
+    const {items, reload} = props;
 
     if (items === null) {
         return (<>
-            <Loading busyState={busyState} reload={reload}/>
+            <Loading/>
         </>);
     } else {
         return (<>
-            <ColumnList busyState={busyState} reload={reload}>
+            <ColumnList>
                 <ColumnCard>
                     <FileSelect items={items} reload={reload}/>
                 </ColumnCard>
@@ -146,8 +146,7 @@ export default function Upload(props) {
     }, [reads]);
 
     return (
-        <Layout navigation={<MainMenu/>}
-                content={<Columns items={items} reload={reload} busyState={busyState}/>}
-                match={match} title='Upload'/>
+        <Layout navigation={<MainMenu/>} content={<Columns items={items} reload={reload}/>}
+                match={match} title='Upload' reload={reload} busyState={busyState}/>
     );
 }

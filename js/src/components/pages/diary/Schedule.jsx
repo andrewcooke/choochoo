@@ -16,14 +16,14 @@ const useStyles = makeStyles(theme => ({
 
 export default function Schedule(props) {
 
-    const {json, history, reload, busyState} = props;
+    const {json, history} = props;
 
     if (json === null) {
-        return <Loading reload={reload} busyState={busyState}/>;  // undefined initial data
+        return <Loading/>;  // undefined initial data
     } else {
         setIds(json);
         // drop outer date label since we already have that in the page
-        return (<ColumnList reload={reload} busyState={busyState}>
+        return (<ColumnList>
             {json.slice(1).map(row => <TopLevelPaper json={row} history={history} key={row.id}/>)}
         </ColumnList>);
     }

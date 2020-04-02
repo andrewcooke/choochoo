@@ -188,15 +188,15 @@ function AddGroup(props) {
 
 function Columns(props) {
 
-    const {groups, busyState, reload} = props;
+    const {groups, reload} = props;
 
     if (groups === null) {
-        return <Loading busyState={busyState} reload={reload}/>;
+        return <Loading/>;
     } else {
         const allComponents = {};
         groups.forEach(group => group.items.forEach(item => item.components.forEach(
             component => allComponents[component.name] = component.models)));
-        return (<ColumnList busyState={busyState} reload={reload}>
+        return (<ColumnList>
             <Introduction groups={groups} reload={reload}/>
             {groups.map(
                 group => group.items.map(
@@ -227,7 +227,7 @@ export default function Edit(props) {
 
     return (
         <Layout navigation={<MainMenu kit/>}
-                content={<Columns groups={groups} reload={reload} busyState={busyState}/>}
-                match={match} title='Edit Kit'/>
+                content={<Columns groups={groups} reload={reload}/>}
+                match={match} title='Edit Kit' reload={reload} busyState={busyState}/>
     );
 }

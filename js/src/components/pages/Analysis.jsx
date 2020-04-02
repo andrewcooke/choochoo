@@ -16,12 +16,12 @@ import {handleGet} from "../functions";
 
 function Columns(props) {
 
-    const {params, busyState, reload} = props;
+    const {params} = props;
 
     if (params === null) {
-        return <Loading busyState={busyState} reload={reload}/>;  // undefined initial data
+        return <Loading/>;  // undefined initial data
     } else {
-        return (<ColumnList busyState={busyState} reload={reload}>
+        return (<ColumnList>
             <ActivityDetails params={params}/>
             <CompareActivities params={params}/>
             <AllActivities params={params}/>
@@ -56,7 +56,7 @@ export default function Analysis(props) {
 
     return (
         <Layout navigation={<MainMenu/>}
-                content={<Columns params={params} reload={reload} busyState={busyState}/>}
-                match={match} title='Analysis'/>
+                content={<Columns params={params}/>}
+                match={match} title='Analysis' reload={reload} busyState={busyState}/>
     );
 }

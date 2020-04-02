@@ -136,7 +136,7 @@ export default function Diary(props) {
 
     return (
         <Layout navigation={navigation}
-                content={component({json, writer, history, reload, busyState})}
-                match={match} title={`Diary: ${date}`}/>
+                content={component({json, writer, history})}
+                match={match} title={`Diary: ${date}`} reload={reload} busyState={busyState}/>
     );
 }
