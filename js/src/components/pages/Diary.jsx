@@ -115,7 +115,8 @@ export default function Diary(props) {
     const datetime = parse(date, dateFmt, new Date());
     const [json, setJson] = useState(null);
     const busyState = useState(null);
-    const [error, setError] = useState(null);
+    const errorState = useState(null);
+    const [error, setError] = errorState;
     const [reads, setReads] = useState(0);
     // this gets loaded multiple times which is less than ideal
     const writer = new Worker('/api/static/writer.js');
@@ -137,6 +138,7 @@ export default function Diary(props) {
     return (
         <Layout navigation={navigation}
                 content={component({json, writer, history})}
-                match={match} title={`Diary: ${date}`} reload={reload} busyState={busyState}/>
+                match={match} title={`Diary: ${date}`} reload={reload}
+                busyState={busyState} errorState={errorState}/>
     );
 }

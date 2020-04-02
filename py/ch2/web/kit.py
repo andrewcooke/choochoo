@@ -28,9 +28,8 @@ class Kit:
 
     @staticmethod
     def read_snapshot(request, s, date):
-        groups = [group.to_model(s, depth=3, statistics=INDIVIDUAL, time=local_date_to_time(date))
-                  for group in s.query(KitGroup).order_by(KitGroup.name).all()]
-        return JsonResponse(groups)
+        return [group.to_model(s, depth=3, statistics=INDIVIDUAL, time=local_date_to_time(date))
+                for group in s.query(KitGroup).order_by(KitGroup.name).all()]
 
     @staticmethod
     def read_edit(request, s):
@@ -52,25 +51,21 @@ class Kit:
         data = request.json
         log.debug(data)
         finish(s, data[ITEM], None, True)
-        return Response()
 
     @staticmethod
     def write_replace_model(request, s):
         data = request.json
         log.debug(data)
         change(s, data[ITEM], data[COMPONENT], data[MODEL], None, False, False)
-        return Response()
 
     @staticmethod
     def write_add_component(request, s):
         data = request.json
         log.debug(data)
         change(s, data[ITEM], data[COMPONENT], data[MODEL], None, True, False)
-        return Response()
 
     @staticmethod
     def write_add_group(request, s):
         data = request.json
         log.debug(data)
         start(s, data[GROUP], data[ITEM], None, True)
-        return Response()

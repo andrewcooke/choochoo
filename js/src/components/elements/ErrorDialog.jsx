@@ -15,6 +15,7 @@ export default function ErrorDialog(props) {
         console.log('OK clicked');
         setError(null);
         setOpen(false);
+        window.location.reload();
     }
 
     console.log(`Error current state: open ${open}; error:`);

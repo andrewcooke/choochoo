@@ -64,7 +64,6 @@ class Diary:
                 log.error(f'Could not save {key}:{value}: {e}')
         s.commit()
         log.info(f'Saved {n} values')
-        return Response()
 
 
 def parse_date(date):

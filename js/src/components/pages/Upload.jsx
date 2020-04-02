@@ -55,7 +55,7 @@ function FileList(props) {
 
 function FileSelect(props) {
 
-    const {items, reload, setError} = props;
+    const {items, filesState, reload, setError} = props;
     const classes = useStyles();
     const [files, setFiles] = useState([]);
     const [kit, setKit] = useState([]);
@@ -150,6 +150,7 @@ export default function Upload(props) {
     return (
         <Layout navigation={<MainMenu/>}
                 content={<Columns items={items} reload={reload} setError={setError}/>}
-                match={match} title='Upload' reload={reload} busyState={busyState} errorState={errorState}/>
+                match={match} title='Upload' reload={reload}
+                busyState={busyState} errorState={errorState}/>
     );
 }

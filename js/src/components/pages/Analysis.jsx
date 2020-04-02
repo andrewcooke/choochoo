@@ -41,7 +41,8 @@ export default function Analysis(props) {
     const {match, history} = props;
     const [params, setParams] = useState(null);
     const busyState = useState(null);
-    const [error, setError] = useState(null);
+    const errorState = useState(null);
+    const [error, setError] = errorState;
     const [reads, setReads] = useState(0);
 
     function reload() {
@@ -57,6 +58,7 @@ export default function Analysis(props) {
     return (
         <Layout navigation={<MainMenu/>}
                 content={<Columns params={params}/>}
-                match={match} title='Analysis' reload={reload} busyState={busyState}/>
+                match={match} title='Analysis' reload={reload}
+                busyState={busyState} errorState={errorState}/>
     );
 }

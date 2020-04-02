@@ -101,7 +101,8 @@ export default function Snapshot(props) {
     const datetime = parse(date, FMT_DAY, new Date());
     const [groups, setGroups] = useState(null);
     const busyState = useState(null);
-    const [error, setError] = useState(null);
+    const errorState = useState(null);
+    const [error, setError] = errorState;
     const [reads, setReads] = useState(0);
 
     function reload() {
@@ -117,6 +118,7 @@ export default function Snapshot(props) {
     return (
         <Layout navigation={<SnapshotMenu datetime={datetime} history={history}/>}
                 content={<Columns groups={groups}/>}
-                match={match} title={`Kit: ${date}`} reload={reload} busyState={busyState}/>
+                match={match} title={`Kit: ${date}`} reload={reload}
+                busyState={busyState} errorState={errorState}/>
     );
 }

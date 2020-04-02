@@ -1,8 +1,7 @@
 
-import psutil as ps
 from logging import getLogger
 
-from werkzeug import Response
+import psutil as ps
 
 from ..commands.args import mm, WEB, UPLOAD, TUI, LOG
 from ..commands.upload import upload_files_and_update, STREAM, NAME
@@ -30,4 +29,3 @@ class Upload:
         ps.Popen(args=cmd, shell=True)
         # wait so that the progress has time to kick in
         self._sys.wait_for_progress(UPLOAD)
-        return Response()

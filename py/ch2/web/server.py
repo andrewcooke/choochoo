@@ -93,17 +93,17 @@ class WebServer:
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=(GET,)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),
             Rule('/api/diary/active-months/<year>', endpoint=diary.read_active_months, methods=(GET,)),
-            # write so unchecked
-            Rule('/api/diary/statistics', endpoint=diary.write_statistics, methods=(PUT,)),
+
+            Rule('/api/diary/statistics', endpoint=self.check(diary.write_statistics), methods=(PUT,)),
             Rule('/api/diary/<date>', endpoint=self.check(diary.read_diary), methods=(GET,)),
 
             Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
 
             Rule('/api/kit/edit', endpoint=self.check(kit.read_edit), methods=(GET, )),
-            Rule('/api/kit/retire-item', endpoint=kit.write_retire_item, methods=(PUT,)),
-            Rule('/api/kit/replace-model', endpoint=kit.write_replace_model, methods=(PUT,)),
-            Rule('/api/kit/add-component', endpoint=kit.write_add_component, methods=(PUT,)),
-            Rule('/api/kit/add-group', endpoint=kit.write_add_group, methods=(PUT,)),
+            Rule('/api/kit/retire-item', endpoint=self.check(kit.write_retire_item), methods=(PUT,)),
+            Rule('/api/kit/replace-model', endpoint=self.check(kit.write_replace_model), methods=(PUT,)),
+            Rule('/api/kit/add-component', endpoint=self.check(kit.write_add_component), methods=(PUT,)),
+            Rule('/api/kit/add-group', endpoint=self.check(kit.write_add_group), methods=(PUT,)),
             # used by upload
             Rule('/api/kit/items', endpoint=self.check(kit.read_items), methods=(GET,)),
             Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics), methods=(GET, )),
