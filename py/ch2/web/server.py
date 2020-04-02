@@ -160,7 +160,8 @@ class WebServer:
                     return JsonResponse({DATA: data})
                 except Exception as e:
                     # maybe some errors are redirects?
-                    error = str(e)
+                    error = str(e).strip()
+                    if not error.endswith('.'): error += '.'
                     log.debug(f'Returning error: {error}')
                     return JsonResponse({ERROR: error})
             else:

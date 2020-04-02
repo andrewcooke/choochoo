@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@material-ui/core";
-import {P, PercentBar} from "./index";
+import {P} from "./index";
 
 
 export default function ErrorDialog(props) {
@@ -23,7 +23,7 @@ export default function ErrorDialog(props) {
     if (! open && error !== null) setOpen(true);
 
     return (<Dialog open={open}>
-        <DialogTitle>Ooopsie!</DialogTitle>
+        <DialogTitle>Oh Crap</DialogTitle>
         <DialogContent>
             <DialogContentText>
                 <P>{error}</P>
