@@ -6,6 +6,7 @@ export {default as ColumnList} from './ColumnList';
 export {default as ConfirmedWriteButton} from './ConfirmedWriteButton';
 export {default as DateButtons, ActivityButtons} from './DateButtons';
 export {default as Empty} from './Empty';
+export {default as ErrorDialog} from './ErrorDialog';
 export {default as FormatValueUnits} from './FormatValueUnits';
 export {default as Layout} from './Layout';
 export {default as LinkButton} from './LinkButton';

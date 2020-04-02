@@ -3,6 +3,7 @@ import {makeStyles} from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Navigation from "./Navigation";
 import BusyDialog from "./BusyDialog";
+import ErrorDialog from "./ErrorDialog";
 
 
 const useStyles = makeStyles(theme => ({
@@ -21,7 +22,7 @@ export default function Layout(props) {
 
     const classes = useStyles();
 
-    const {navigation, content, match, title, busyState, reload} = props;
+    const {navigation, content, match, title, busyState, reload, errorState} = props;
 
     return (
         <div className={classes.root}>
@@ -31,6 +32,8 @@ export default function Layout(props) {
                 <div className={classes.toolbar}/>
                 {busyState !== undefined && reload !== undefined ?
                     <BusyDialog busyState={busyState} reload={reload}/> : null}
+                {errorState !== undefined ?
+                    <ErrorDialog errorState={errorState}/> : null}
                 {content}
             </main>
         </div>

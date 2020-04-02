@@ -110,7 +110,7 @@ class WebServer:
             Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot), methods=(GET, )),
 
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
-            Rule('/api/upload', endpoint=upload, methods=(PUT, )),
+            Rule('/api/upload', endpoint=self.check(upload), methods=(PUT, )),
             Rule('/api/busy', endpoint=self.read_busy, methods=(GET, )),
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
             Rule('/api/<path:_>', endpoint=error(BadRequest), methods=(GET, PUT, POST)),
@@ -155,11 +155,16 @@ class WebServer:
             busy = self.get_busy()
             if busy[PERCENT] is None or busy[PERCENT] == 100:
                 try:
-                    return JsonResponse({DATA: handler(*args, **kargs)})
+                    data = handler(*args, **kargs)
+                    log.debug(f'Returning data: {data}')
+                    return JsonResponse({DATA: data})
                 except Exception as e:
                     # maybe some errors are redirects?
-                    return JsonResponse({ERROR: str(e)})
+                    error = str(e)
+                    log.debug(f'Returning error: {error}')
+                    return JsonResponse({ERROR: error})
             else:
+                log.debug(f'Returning busy: {busy}')
                 return JsonResponse({BUSY: busy})
 
         return wrapper

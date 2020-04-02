@@ -10,6 +10,7 @@ import {
     useTheme
 } from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
+import {handleGet} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -21,7 +22,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function ConfirmedWriteButton(props) {
 
-    const {children, href, json=null, form=null, label, xs=12, reload=null, disabled=false} = props;
+    const {children, href, json=null, form=null, label, xs=12, reload=null, disabled=false, setError} = props;
     const classes = useStyles();
     const [openConfirm, setOpenConfirm] = React.useState(false);
     const [openWait, setOpenWait] = React.useState(false);
@@ -64,9 +65,9 @@ export default function ConfirmedWriteButton(props) {
         setOpenConfirm(true);
     }
 
-    function handleWrite() {
+    function handleWrite(response) {
         setOpenWait(false);
-        if (reload !== null) reload();
+        handleGet(undefined, reload, undefined, setError)(response);
     }
 
     function handleCancel() {

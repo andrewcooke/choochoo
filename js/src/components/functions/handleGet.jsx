@@ -19,7 +19,7 @@ export default function handleGet(history, setData, busyState, setError) {
     // redirect logic:
     // - if server sends a redirect we respond
 
-    const [busy, setBusy] = busyState;
+    const [busy, setBusy] = busyState === undefined ? [undefined, undefined] : busyState;
 
     return response => {
 
@@ -38,16 +38,24 @@ export default function handleGet(history, setData, busyState, setError) {
                 } else if (keys.includes('error')) {
                     console.log('Received error:');
                     console.log(json.error);
-                    setError(json.error);
+                    if (setError === undefined) {
+                        console.log(`Ignoring error - undefined setError()`)
+                    } else {
+                        setError(json.error);
+                    }
                 } else if (keys.includes('data')) {
                     console.log('Received data:');
                     console.log(json.data);
                     if (busy !== null && busy.percent < 100) {
-                        // fill in final message
-                        let copy = {...busy};
-                        copy.message = copy.complete;
-                        copy.percent = 100;
-                        setBusy(copy);
+                        if (setBusy === undefined) {
+                            console.log(`Ignoring busy - undefined setBusy()`)
+                        } else {
+                            // fill in final message
+                            let copy = {...busy};
+                            copy.message = copy.complete;
+                            copy.percent = 100;
+                            setBusy(copy);
+                        }
                     }
                     setData(json.data);
                 } else {

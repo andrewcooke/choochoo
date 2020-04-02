@@ -55,7 +55,7 @@ function FileList(props) {
 
 function FileSelect(props) {
 
-    const {items, reload} = props;
+    const {items, reload, setError} = props;
     const classes = useStyles();
     const [files, setFiles] = useState([]);
     const [kit, setKit] = useState([]);
@@ -101,7 +101,8 @@ function FileSelect(props) {
         </Grid>
         <Grid item xs={12} className={classes.right}>
             <ConfirmedWriteButton disabled={files.length === 0} label='Upload' href='/api/upload'
-                                  reload={onSubmit} form={{'files': files, 'kit': kit}}>
+                                  reload={onSubmit} setError={setError}
+                                  form={{'files': files, 'kit': kit}}>
                 The ingest process will take some time.
             </ConfirmedWriteButton>
         </Grid>
@@ -111,7 +112,7 @@ function FileSelect(props) {
 
 function Columns(props) {
 
-    const {items, reload} = props;
+    const {items, reload, setError} = props;
 
     if (items === null) {
         return (<>
@@ -121,7 +122,7 @@ function Columns(props) {
         return (<>
             <ColumnList>
                 <ColumnCard>
-                    <FileSelect items={items} reload={reload}/>
+                    <FileSelect items={items} reload={reload} setError={setError}/>
                 </ColumnCard>
             </ColumnList>
         </>);
@@ -134,7 +135,8 @@ export default function Upload(props) {
     const {match, history} = props;
     const [items, setItems] = useState(null);
     const busyState = useState(null);
-    const [error, setError] = useState(null);
+    const errorState = useState(null);
+    const [error, setError] = errorState;
     const [reads, setReads] = useState(0);
 
     function reload() {
@@ -146,7 +148,8 @@ export default function Upload(props) {
     }, [reads]);
 
     return (
-        <Layout navigation={<MainMenu/>} content={<Columns items={items} reload={reload}/>}
-                match={match} title='Upload' reload={reload} busyState={busyState}/>
+        <Layout navigation={<MainMenu/>}
+                content={<Columns items={items} reload={reload} setError={setError}/>}
+                match={match} title='Upload' reload={reload} busyState={busyState} errorState={errorState}/>
     );
 }
