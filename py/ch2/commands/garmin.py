@@ -1,5 +1,6 @@
 
 from logging import getLogger
+from os.path import expanduser, normpath, realpath
 from time import sleep
 
 from requests import HTTPError
@@ -36,7 +37,7 @@ For bulk downloads use
 https://www.garmin.com/en-US/account/datamanagement/
     '''
     dates = [args[DATE]] if args[DATE] else []
-    dir = args.dir(DIR) if args[DIR] else None
+    dir = realpath(normpath(expanduser(DIR))) if args[DIR] else None
     with db.session_context() as s:
         run_garmin(sys, s, dir, args[USER], args[PASS], dates, args[FORCE])
 

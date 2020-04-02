@@ -19,7 +19,7 @@ def make_log(args):
         file_formatter = Formatter('%(levelname)-8s %(asctime)s: %(message)s')
         name = args[LOG] if LOG in args and args[LOG] else (
                 (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
-        path = join(args.dir(LOGS), name)
+        path = args.system_path(LOGS, name)
         file_handler = RotatingFileHandler(path, maxBytes=1e6, backupCount=10)
         file_handler.setLevel(DEBUG)
         file_handler.setFormatter(file_formatter)

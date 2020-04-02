@@ -1,3 +1,4 @@
+
 from logging import getLogger
 
 from werkzeug import Request, run_simple
@@ -12,10 +13,11 @@ from .jupyter import Jupyter
 from .kit import Kit
 from .static import Static
 from .upload import Upload
-from ..commands.args import TUI, LOG, DATABASE, SYSTEM, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, DATA, UPLOAD
+from ..commands.args import mm, BASE, TUI, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, DATA, UPLOAD
 from ..jupyter.server import JupyterController
 from ..lib.server import BaseController
 from ..sql import SystemConstant
+
 
 log = getLogger(__name__)
 
@@ -49,8 +51,8 @@ class WebController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
-        cmd = f'{ch2} --{VERBOSITY} {self._log_level} --{TUI} --{LOG} {log_name} --{DATABASE} {self._database} ' \
-              f'--{SYSTEM} {self._system} {WEB} {SERVICE} --{BIND} {self.__bind} --{PORT} {self.__port}'
+        cmd = f'{ch2} {mm(VERBOSITY)} {self._log_level} {mm(TUI)} {mm(LOG)} {log_name} {mm(BASE)} {self._base} ' \
+              f'{WEB} {SERVICE} {mm(BIND)} {self.__bind} {mm(PORT)} {self.__port}'
         return cmd, log_name
 
     def _run(self):
@@ -71,7 +73,7 @@ class WebController(BaseController):
 
 
 def error(exception):
-    def handler(*args, **kargs):
+    def handler(*args, **kwargs):
         raise exception()
     return handler
 

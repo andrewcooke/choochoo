@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 
 from . import *
 from .support import Base
-from ..commands.args import DATABASE, NamespaceWithVariables, NO_OP, make_parser
+from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DATA, DB_EXTN, ACTIVITY
 from ..lib.log import make_log
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
@@ -60,8 +60,8 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
 
 class DatabaseBase:
 
-    def __init__(self, key, table, base, args):
-        self.path = args.file(key)
+    def __init__(self, name, table, base, args):
+        self.path = args.system_path(DATA, name + DB_EXTN)
         log.info('Using database at %s' % self.path)
         self.engine = create_engine('sqlite:///%s' % self.path, echo=False)
         self.session = self._sessionmaker()
@@ -92,7 +92,7 @@ class DatabaseBase:
 class Database(DatabaseBase):
 
     def __init__(self, args):
-        super().__init__(DATABASE, Source, Base, args)
+        super().__init__(ACTIVITY, Source, Base, args)
 
     def no_data(self,):
         with self.session_context() as s:

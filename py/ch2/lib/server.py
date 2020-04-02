@@ -4,7 +4,8 @@ from logging import getLogger
 from time import sleep
 
 from .workers import command_root
-from ..commands.args import VERBOSITY, DATABASE, SYSTEM
+from ..commands.args import VERBOSITY, BASE
+
 
 log = getLogger(__name__)
 
@@ -13,8 +14,7 @@ class BaseController(ABC):
 
     def __init__(self, args, sys, server_cls, max_retries=5, retry_secs=3):
         self._log_level = args[VERBOSITY]
-        self._database = args[DATABASE]
-        self._system = args[SYSTEM]
+        self._base = args[BASE]
         self._sys = sys
         self.__server_cls = server_cls
         self.__max_retries = max_retries

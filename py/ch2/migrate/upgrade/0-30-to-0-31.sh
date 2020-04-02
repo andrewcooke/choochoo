@@ -4,27 +4,27 @@
 
 # you may want to change these variables
 
-DB_DIR=~/.ch2
+BASE_DIR=~/.ch2
 TMP_DIR=/tmp
 
 SRC='0-30'
 DST='0-31'
 
 # these allow you to skip parts of the logic if re-doing a migration (expert only)
-DO_COPY=1
-DO_DROP=1
-DO_DUMP=1
+DO_COPY=0
+DO_DROP=0
+DO_DUMP=0
 
 
 # this section of the script copies diary data and kit data across
 
 if ((DO_COPY)); then
-  echo "ensuring write-ahead file for $DB_DIR/database-$SRC.sql is cleared"
+  echo "ensuring write-ahead file for $BASE_DIR/database-$SRC.sql is cleared"
   echo "(should print 'delete')"
-  sqlite3 "$DB_DIR/database-$SRC.sql" 'pragma journal_mode=delete' || { echo 'database locked?'; exit 1; }
-  echo "copying $DB_DIR/database-$SRC.sql to $TMP_DIR/copy-$SRC.sql"
+  sqlite3 "$BASE_DIR/database-$SRC.sql" 'pragma journal_mode=delete' || { echo 'database locked?'; exit 1; }
+  echo "copying $BASE_DIR/database-$SRC.sql to $TMP_DIR/copy-$SRC.sql"
   rm -f "$TMP_DIR/copy-$SRC.sql"
-  cp "$DB_DIR/database-$SRC.sql" "$TMP_DIR/copy-$SRC.sql"
+  cp "$BASE_DIR/database-$SRC.sql" "$TMP_DIR/copy-$SRC.sql"
 fi
 
 if ((DO_DROP)); then
@@ -117,26 +117,21 @@ select * from file_hash;
 EOF
 fi
 
-echo "creating new, empty database at $DB_DIR/database-$DST.db"
+echo "creating new, empty directory at $BASE_DIR/$DST"
 echo "(should print warning config message)"
-rm -f "$DB_DIR/database-$DST.db"
-rm -f "$DB_DIR/database-$DST.db-shm"
-rm -f "$DB_DIR/database-$DST.db-wal"
-rm -f "$DB_DIR/system-$DST.db"
-rm -f "$DB_DIR/system-$DST.db-shm"
-rm -f "$DB_DIR/system-$DST.db-wal"
+rm -fr "$BASE_DIR/$DST"
 dev/ch2 no-op
 
-echo "loading data into $DB_DIR/database-$DST.db"
-sqlite3 "$DB_DIR/database-$DST.db" < "$TMP_DIR/dump-$SRC.sql"
+echo "loading data into $BASE_DIR/$DST/data/activity.db"
+sqlite3 "$BASE_DIR/$DST/data/activity.db" < "$TMP_DIR/dump-$SRC.sql"
 
-echo "adding default config to $DB_DIR/database-$DST.db"
+echo "adding default config to $BASE_DIR/$DST/data/activity.db"
 dev/ch2 --dev config default --no-diary
 
 
 # you almost certainly want to change the following details
 
-echo "adding personal constants to $DB_DIR/database-$DST.db"
+echo "adding personal constants to $BASE_DIR/$DST/data/activity.db"
 dev/ch2 --dev constants set FTHR.Bike 154
 dev/ch2 --dev constants set FTHR.MTB 154
 dev/ch2 --dev constants set FTHR.Road 154

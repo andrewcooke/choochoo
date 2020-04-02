@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from genericpath import exists
 from logging import getLogger
 from os import makedirs
-from os.path import dirname, expanduser, realpath, normpath
+from os.path import dirname, expanduser, realpath, normpath, join
 from re import sub
 from typing import Mapping
 
@@ -54,6 +54,7 @@ ALL = 'all'
 ALL_MESSAGES = 'all-messages'
 ALL_FIELDS = 'all-fields'
 ARG = 'arg'
+BASE = 'base'
 BIND = 'bind'
 BORDER = 'border'
 CHANGE = 'change'
@@ -187,9 +188,6 @@ def m(name): return '-' + name
 def no(name): return 'no-%s' % name
 
 
-MEMORY = ':memory:'
-
-
 class NamespaceWithVariables(Mapping):
 
     def __init__(self, ns):
@@ -202,28 +200,13 @@ class NamespaceWithVariables(Mapping):
             value = self._dict[sub('-', '_', name)]
         return value
 
-    def path(self, name, index=None):
-        # special case sqlite3 in-memory database
-        if self[name] == MEMORY: return self[name]
-        path = self[name]
-        if index is not None: path = path[index]
-        path = expanduser(path)
-        return realpath(normpath(path))
-
-    def file(self, name, index=None):
-        file = self.path(name, index=index)
-        # special case sqlite3 in-memory database
-        if file == MEMORY: return file
-        path = dirname(file)
-        if not exists(path):
-            makedirs(path)
-        return file
-
-    def dir(self, name, index=None):
-        path = self.path(name, index=index)
-        if not exists(path):
-            makedirs(path)
-        return path
+    def system_path(self, subdir, file=None):
+        dir = realpath(normpath(expanduser(join(self[BASE], DB_VERSION, subdir))))
+        if not exists(dir): makedirs(dir)
+        if file:
+            return join(dir, file)
+        else:
+            return dir
 
     def __iter__(self):
         return iter(self._dict)
@@ -236,20 +219,14 @@ def make_parser():
 
     parser = ArgumentParser(prog=PROGNAME)
 
-    parser.add_argument(m(F), mm(DATABASE), default=f'~/.ch2/database-{DB_VERSION}{DB_EXTN}', metavar='PATH',
-                        help='the file path containing the main database')
-    parser.add_argument(mm(SYSTEM), default=f'~/.ch2/system-{DB_VERSION}{DB_EXTN}', metavar='PATH',
-                        help='the file path containing the system database')
-    parser.add_argument(mm(LOGS), default='~/.ch2/logs', metavar='DIR',
-                        help='the directory for logs')
+    parser.add_argument(mm(BASE), default=f'~/.ch2', metavar='DIR',
+                        help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(LOG), metavar='FILE',
                         help='the file name for the log (command name by default)')
     parser.add_argument(m(V), mm(VERBOSITY), default=4, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(mm(TUI), action='store_true',
                         help='text user interface (no log to stdout)')
-    parser.add_argument(mm(NOTEBOOKS), default='~/.ch2/notebooks', metavar='DIR',
-                        help='the directory for notebooks (when jupyter starts)')
     parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
@@ -616,13 +593,33 @@ def make_parser():
     return parser
 
 
-def bootstrap_file(file, *args, configurator=None, post_config=None):
+# def bootstrap_file(file, *args, configurator=None, post_config=None):
+#
+#     from ..lib.log import make_log
+#     from ..sql.database import Database, connect
+#     from ..sql.system import System
+#
+#     args = [mm(DATABASE), file.name, mm(SYSTEM), ':memory:'] + list(args)
+#     if configurator:
+#         ns, db = connect(args)
+#         sys = System(ns)
+#         configurator(sys, db)
+#     args += post_config if post_config else []
+#     ns = NamespaceWithVariables(make_parser().parse_args(args))
+#     make_log(ns)
+#     db = Database(ns)
+#     sys = System(ns)
+#
+#     return ns, sys, db
+
+
+def bootstrap_dir(dir, *args, configurator=None, post_config=None):
 
     from ..lib.log import make_log
     from ..sql.database import Database, connect
     from ..sql.system import System
 
-    args = [mm(DATABASE), file.name, mm(SYSTEM), ':memory:'] + list(args)
+    args = [mm(BASE), dir] + list(args)
     if configurator:
         ns, db = connect(args)
         sys = System(ns)
