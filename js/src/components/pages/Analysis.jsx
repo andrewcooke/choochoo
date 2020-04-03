@@ -18,8 +18,8 @@ function Columns(props) {
 
     const {params} = props;
 
-    if (params === null) {
-        return <Loading/>;  // undefined initial data
+    if (params === null || params.activities_start === null) {
+        return <Loading/>;
     } else {
         return (<ColumnList>
             <ActivityDetails params={params}/>
@@ -57,7 +57,7 @@ export default function Analysis(props) {
 
     return (
         <Layout navigation={<MainMenu/>}
-                content={<Columns params={params}/>}
+                content={<Columns params={params} setError={setError}/>}
                 match={match} title='Analysis' reload={reload}
                 busyState={busyState} errorState={errorState}/>
     );

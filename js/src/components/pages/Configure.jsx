@@ -1,9 +1,9 @@
 import React from 'react';
-import {Grid} from "@material-ui/core";
+import {Grid, Link} from "@material-ui/core";
 import {ColumnCard, ColumnList, Layout, MainMenu, P} from "../elements";
 
 
-export default function Error(props) {
+export default function Configure(props) {
 
     const {match} = props;
 
@@ -11,12 +11,11 @@ export default function Error(props) {
 
     const content = (<ColumnList>
         <ColumnCard><Grid item xs={12}>
-            <P>Ooops!</P>
-            <P>(try checking the web service logs or the javascript console)</P>
+            <P>Configure.</P>
         </Grid></ColumnCard>
     </ColumnList>);
 
     return (
-        <Layout navigation={navigation} content={content} match={match} title='Error'/>
+        <Layout navigation={navigation} content={content} match={match} title='Configure'/>
     );
 }

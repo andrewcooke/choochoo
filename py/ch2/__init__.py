@@ -96,7 +96,7 @@ def main():
     db = Database(args)
     system = System(args)
     try:
-        if db.no_data() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE, HELP)):
+        if db.no_data() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE, HELP, WEB)):
             refuse_until_configured(db.path)
         elif command:
             command(args, system, db)

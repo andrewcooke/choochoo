@@ -12,8 +12,8 @@ export default function Welcome(props) {
     const content = (<ColumnList>
         <ColumnCard><Grid item xs={12}>
             <P>Welcome to Choochoo - an open, hackable and free training diary.</P>
-            <P>This is the web interface, which is under active development. Currently, you can read and modify diary
-                entries and run analysis templates in Jupyter. To get started select an option from the menu.</P>
+            <P>This is the web interface, which is under active development.
+                To get started select an option from the menu.</P>
             <P>For more information on Choochoo please see the <Link
                 href='https://andrewcooke.github.io/choochoo/'>documentation</Link> or <Link
                 href='https://github.com/andrewcooke/choochoo'>source</Link>. You can report bugs <Link

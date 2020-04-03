@@ -59,5 +59,6 @@ export default function MainMenu(props) {
             </List>
         </Collapse>
         <ListItemLink primary='Upload' to='/upload'/>
+        <ListItemLink primary='Configure' to='/configure'/>
     </List>);
 }

@@ -62,8 +62,8 @@ export default function handleGet(history, setData, busyState, setError) {
                     throw new Error(`Unexpected response ${keys} / ${json}`);
                 }
             } catch (e) {
-                console.log(e.message);
-                history.push('/error');
+                console.log(`Caught ${e}`)
+                setError(e.message);
             }
         }
 
