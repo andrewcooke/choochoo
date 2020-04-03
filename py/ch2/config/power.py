@@ -1,8 +1,11 @@
 
 from json import dumps
+from logging import getLogger
 
 from . import name_constant, add_enum_constant, set_constant, add_statistics
 from ..stats.calculate.power import Power, ExtendedPowerCalculator
+
+log = getLogger(__name__)
 
 POWER_ESTIMATE_CNAME = 'PowerEstimate'
 
@@ -14,6 +17,7 @@ def add_power_estimate(s, c, activity_group,
     '''
     Add the constants necessary to estimate power output.
     '''
+    log.debug(f'Adding power statistics for {activity_group.name}')
     activity_group_constraint = str(activity_group)
     power_name = name_constant(POWER_ESTIMATE_CNAME, activity_group)
     power = add_enum_constant(s, power_name, Power, single=False, constraint=activity_group_constraint,

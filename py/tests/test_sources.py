@@ -7,7 +7,7 @@ from unittest import TestCase
 from sqlalchemy.sql.functions import count
 
 from ch2.commands.args import m, V, bootstrap_file
-from ch2.config.personal import acooke
+from ch2.config.profile.personal import acooke
 from ch2.lib.date import to_date
 from ch2.sql.tables.source import Source, Interval
 from ch2.sql.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \

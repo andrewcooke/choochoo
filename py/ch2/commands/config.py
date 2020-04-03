@@ -1,8 +1,10 @@
 
 from logging import getLogger
 
-from .args import DIARY, no, SUB_COMMAND, DEFAULT, CHECK, DATA, CONFIG, ACTIVITY_GROUPS
-from ..config import default, ActivityGroup
+from .args import no, SUB_COMMAND, CHECK, DATA, CONFIG, ACTIVITY_GROUPS, LIST, PROFILE
+from ..commands.help import LengthFmt
+from ..config import ActivityGroup
+from ..config.utils import profiles, get_profile
 from ..sql.tables.statistic import StatisticName, StatisticJournal
 
 log = getLogger(__name__)
@@ -12,7 +14,7 @@ def config(args, system, db):
     '''
 ## config
 
-    > ch2 config default
+    > ch2 config load default
 
 Generate a simple initial configuration.
 
@@ -23,12 +25,12 @@ Please see the documentation at http://andrewcooke.github.io/choochoo - you have
 Check that the current database is empty.
     '''
     action = args[SUB_COMMAND]
-    if action == DEFAULT:
-        no_diary = args[no(DIARY)]
-        check(db, not no_diary, not no_diary, True)
-        default(system, db, no_diary=no_diary)
-    elif action == CHECK:
+    if action == CHECK:
         check(db, args[no(CONFIG)], args[no(DATA)], args[no(ACTIVITY_GROUPS)])
+    elif action == LIST:
+        list()
+    else:
+        load(system, db, args, args[PROFILE])
 
 
 def check(db, config, data, activity_groups):
@@ -42,3 +44,19 @@ def check(db, config, data, activity_groups):
         if activity_groups:
             if s.query(ActivityGroup).count():
                 raise Exception('The database already contains ActivityGroup entries')
+
+
+def list():
+    fmt = LengthFmt()
+    for name in profiles():
+        fn, spec = get_profile(name)
+        if fn.__doc__:
+            fmt.print_all(fn.__doc__)
+        else:
+            print(f' ## {name} - lacks docstring\n')
+
+
+def load(sys, db, args, profile):
+    fn, spec = get_profile(profile)
+    fn(sys, db, args)
+

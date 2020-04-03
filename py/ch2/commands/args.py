@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from genericpath import exists
 from logging import getLogger
 from os import makedirs
-from os.path import dirname, expanduser, realpath, normpath, join
+from os.path import expanduser, realpath, normpath, join
 from re import sub
 from typing import Mapping
 
@@ -31,6 +31,7 @@ GARMIN = 'garmin'
 H, HELP = 'h', 'help'
 JUPYTER = 'jupyter'
 KIT = 'kit'
+LOAD = 'load'
 MONITOR = 'monitor'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
@@ -136,6 +137,7 @@ P, PATTERN = 'p', 'pattern'
 PLAN = 'plan'
 PORT = 'port'
 PRINT = 'print'
+PROFILE = 'profile'
 PROFILE_VERSION = 'profile-version'
 PROTOCOL_VERSION = 'protocol-version'
 PWD = 'pwd'
@@ -358,13 +360,18 @@ def make_parser():
                                    help='configure the default database ' +
                                         '(see docs for full configuration instructions)')
     config_cmds = config.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    config_default = config_cmds.add_parser(DEFAULT, help="create default config")
-    config_default.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
     config_check = config_cmds.add_parser(CHECK, help="check config")
     config_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
     config_check.add_argument(mm(no(CONFIG)), action='store_true', help='check database has no configuration')
     config_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
                               help='check database has no activity groups defined')
+    config_list = config_cmds.add_parser(LIST, help="list available profiles")
+    config_load = config_cmds.add_parser(LOAD, help="configure using the given profile")
+    config_profiles = config_load.add_subparsers(title='profile', dest=PROFILE, required=True)
+    from ..config.utils import profiles
+    for name in profiles():
+        config_profile = config_profiles.add_parser(name)
+        config_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')

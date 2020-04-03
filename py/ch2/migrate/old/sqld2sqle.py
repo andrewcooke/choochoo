@@ -2,7 +2,7 @@
 from sqlite3 import connect, Row
 
 from ch2.commands.args import bootstrap_file, m, V
-from ch2.config.personal import acooke
+from ch2.config.profile.personal import acooke
 from ch2.lib.date import to_time
 from ch2.sql.utils import add
 from ch2.sql.tables.source import Source

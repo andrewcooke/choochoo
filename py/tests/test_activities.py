@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 from ch2.commands.activities import activities
 from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST
 from ch2.commands.constants import constants
-from ch2.config.default import default
+from ch2.config.profile.default import default
 from ch2.sql.tables.activity import ActivityJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName

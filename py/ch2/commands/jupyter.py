@@ -29,7 +29,7 @@ Stop the background server.
     '''
     cmd = args[SUB_COMMAND]
     if cmd == LIST:
-        print_list()
+        list()
     else:
         c = JupyterController(args, system)
         if cmd == STATUS:
@@ -47,7 +47,7 @@ Stop the background server.
             raise Exception(f'Unexpected command {cmd}')
 
 
-def print_list():
+def list():
     for name, (_, spec) in templates():
         args = ' '.join(spec.args)
         if spec.varargs:

@@ -69,6 +69,7 @@ def add_statistics(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
+    log.debug(f'Adding statistic pipeline {cls}')
     return add(s, Pipeline(cls=cls, type=PipelineType.STATISTIC, sort=sort, kargs=kargs))
 
 
@@ -85,6 +86,7 @@ def add_diary(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
+    log.debug(f'Adding diary pipeline {cls}')
     return add(s, Pipeline(cls=cls, type=PipelineType.DIARY, sort=sort, kargs=kargs))
 
 
@@ -100,6 +102,7 @@ def add_monitor(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
+    log.debug(f'Adding monitor pipeline {cls}')
     return add(s, Pipeline(cls=cls, type=PipelineType.MONITOR, sort=sort, kargs=kargs))
 
 
@@ -125,6 +128,7 @@ def add_activities(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
+    log.debug(f'Loading activity pipeline {cls}')
     return add(s, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
 
 
@@ -138,6 +142,7 @@ def add_constant(s, name, description=None, units=None, single=False,
     An example is FTHR, which you will only measure occasionally, but which is needed when calculating
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
+    log.debug(f'Adding constant {name}')
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=None,
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
@@ -159,6 +164,7 @@ def add_activity_constant(s, activity_group, name, description=None, units=None,
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=activity_group,
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
+    log.debug(f'Adding activity constant {name}')
     return add(s, Constant(statistic_name=statistic_name, name='%s.%s' % (name, activity_group.name), single=single))
 
 
@@ -294,6 +300,7 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
     Add a pipeline task (and related constant) to find nearby activities in a given geographic
     region (specified by latitude, longitude, width and height, all in degrees).
     '''
+    log.debug(f'Adding nearby statistics for {constraint} / {activity_group.name}')
     activity_group_constraint = str(activity_group)
     nearby_constraint = name_constant(constraint, activity_group)
     nearby_name = name_constant(constant, activity_group)
@@ -313,6 +320,7 @@ def add_loader_support(s):
     '''
     Add 'dummy' value used by loader.
     '''
+    log.debug('Adding dummy source')
     dummy_source = add(s, Dummy())
     dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source,
                                       statistic_journal_type=StatisticJournalType.STATISTIC))

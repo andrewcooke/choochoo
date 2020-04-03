@@ -3,7 +3,7 @@ from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 from ch2.commands.args import bootstrap_file, m, V, mm, DEV
-from ch2.config.default import default
+from ch2.config.profile.default import default
 from ch2.config.plan.british import twelve_week_improver
 from ch2.config.plan.exponential import exponential_time, exponential_distance
 from ch2.lib.date import to_date, add_date

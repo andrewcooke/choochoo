@@ -1,5 +1,6 @@
 
 from json import dumps
+from logging import getLogger
 
 from .database import add_statistics, add_enum_constant, set_constant, name_constant
 from ..sql import ActivityGroup
@@ -8,6 +9,8 @@ from ..stats.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..stats.calculate.response import Response, ResponseCalculator
 from ..stats.names import FITNESS_D, FATIGUE_D, ALL
 from ..stats.read.segment import SegmentReader
+
+log = getLogger(__name__)
 
 
 def add_impulse(s, c, activity_group):
@@ -40,20 +43,22 @@ def add_responses(s, c, fitness=((42, 1, 1),), fatigue=((7, 1, 5),)):
         name = FITNESS_D % days
         constant = name_constant(name, all)
         responses.append(constant)
-        fitness = add_enum_constant(s, constant, Response, single=True, constraint=all,
+        log.debug(f'Adding fitness {name}')
+        constant = add_enum_constant(s, constant, Response, single=True, constraint=all,
                                     description=f'Data needed to calculate the FF-model fitness for {days}d - ' +
                                     'see Response enum')
-        set_constant(s, fitness, dumps({'src_owner': short_cls(ImpulseCalculator),
+        set_constant(s, constant, dumps({'src_owner': short_cls(ImpulseCalculator),
                                         'dest_name': name, 'tau_days': days, 'start': start, 'scale': scale}))
 
     for days, start, scale in fatigue:
         name = FATIGUE_D % days
         constant = name_constant(name, all)
         responses.append(constant)
-        fitness = add_enum_constant(s, constant, Response, single=True, constraint=all,
+        log.debug(f'Adding fatigue {name}')
+        constant = add_enum_constant(s, constant, Response, single=True, constraint=all,
                                     description=f'Data needed to calculate the FF-model fatigue for {days}d - ' +
                                     'see Response enum')
-        set_constant(s, fitness, dumps({'src_owner': short_cls(ImpulseCalculator),
+        set_constant(s, constant, dumps({'src_owner': short_cls(ImpulseCalculator),
                                         'dest_name': name, 'tau_days': days, 'start': start, 'scale': scale}))
 
     add_statistics(s, ResponseCalculator, c, owner_in=short_cls(ImpulseCalculator), responses_ref=responses)

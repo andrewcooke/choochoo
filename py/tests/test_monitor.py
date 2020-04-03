@@ -8,7 +8,7 @@ import sqlalchemy.sql.functions as func
 
 from ch2 import monitor
 from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST
-from ch2.config.default import default
+from ch2.config.profile.default import default
 from ch2.lib.date import to_time, local_date_to_time
 from ch2.sql.tables.monitor import MonitorJournal
 from ch2.sql.tables.pipeline import PipelineType
