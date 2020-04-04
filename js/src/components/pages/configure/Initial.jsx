@@ -32,8 +32,8 @@ function Profiles(props) {
     const profiles = Object.keys(data.profiles).map(name => [name, data.profiles[name]]);
     const [anchor, setAnchor] = React.useState(null);
     const [profile, setProfile] = useState(profiles.findIndex(entry => entry[0] === 'default'));
-    const [text, setText] = useState(profiles[profile][1]);
-    console.log(data.profiles);
+
+    setTimeout(() => document.getElementById('description').innerHTML = profiles[profile][1], 0);
 
     function onButtonClick(event) {
         setAnchor(event.currentTarget);
@@ -45,7 +45,6 @@ function Profiles(props) {
 
     function onItemClick(index) {
         setProfile(index);
-        setText(profiles[index][1]);
         setAnchor(null);
     }
 
@@ -61,7 +60,7 @@ function Profiles(props) {
                         {entry[0].toUpperCase()}
                     </MenuItem>)}
         </Menu>
-        <Text>{text}</Text>
+        <Text><div id='description'/></Text>
     </Text></ColumnCard>)
 
 }

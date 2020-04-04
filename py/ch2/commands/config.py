@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from .args import no, SUB_COMMAND, CHECK, DATA, CONFIG, ACTIVITY_GROUPS, LIST, PROFILE
-from ..commands.help import Markdown
+from .help import Markdown
 from ..config import ActivityGroup
 from ..config.utils import profiles, get_profile
 from ..sql.tables.statistic import StatisticName, StatisticJournal

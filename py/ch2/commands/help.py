@@ -95,7 +95,24 @@ def parse(text):
         yield P, paragraph
 
 
+def filter(parser, yes=None, no=None):
+
+    def filtered(text):
+        for tag, value in parser(text):
+            if yes and tag in yes:
+                yield tag, value
+            elif no and tag not in no:
+                yield tag, value
+            else:
+                pass
+
+    return filtered
+
+
 class Formatter(ABC):
+
+    def __init__(self, parser=None):
+        self._parser = parser if parser else parse
 
     @abstractmethod
     def p(self, text):
@@ -118,7 +135,7 @@ class Formatter(ABC):
         raise NotImplementedError
 
     def format(self, text):
-        for tag, text in parse(text):
+        for tag, text in self._parser(text):
             if tag == P: yield from self.p(text)
             elif tag == LI: yield from self.li(text)
             elif tag == PRE: yield from self.pre(text)
@@ -134,7 +151,8 @@ class Formatter(ABC):
 
 class Markdown(Formatter):
 
-    def __init__(self, width=None, margin=1, delta=0):
+    def __init__(self, width=None, margin=1, delta=0, parser=None):
+        super().__init__(parser=parser)
         self._width = terminal_width(width) - margin
         self._margin = margin
         self._delta = delta
@@ -166,7 +184,8 @@ class Markdown(Formatter):
 
 class HTML(Formatter):
 
-    def __init__(self, delta=0):
+    def __init__(self, delta=0, parser=None):
+        super().__init__(parser=parser)
         self._delta = delta
         self._list = False
 

@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from ..json import JsonResponse
-from ...commands.help import HTML
+from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...config.utils import profiles
 from ...sql import Pipeline
 
@@ -27,7 +27,7 @@ class Configure:
         from ..server import DATA
 
         def fmt(text):
-            return HTML(delta=1).str(text)
+            return HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE))).str(text)
 
         fn_argspec_by_name = profiles()
         data = {PROFILES: {name: fmt(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
