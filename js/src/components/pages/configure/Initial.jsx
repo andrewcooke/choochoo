@@ -1,7 +1,70 @@
 import React, {useEffect, useState} from 'react';
-import {Grid, Link} from "@material-ui/core";
-import {ColumnCard, ColumnList, Layout, MainMenu, P, Loading} from "../../elements";
+import {Grid, Menu, MenuItem, Button} from "@material-ui/core";
+import {ColumnCard, ColumnList, Layout, MainMenu, P, Loading, Text} from "../../elements";
 import {handleGet} from "../../functions";
+import {Link} from "react-router-dom";
+
+
+function Directory(props) {
+
+    const {data} = props;
+
+    return (<ColumnCard header='Directories'><Text>
+        <p>Choochoo uses two separate directories for storage:</p>
+        <ul>
+            <li>Database, log files, and Jupyter notebooks are stored at<br/>
+                <pre>{data.directory}</pre>
+                This location can only be changed by specifying an alternative when
+                starting the web server:<br/>
+                <pre>ch2 --dir DIRECTORY web start</pre>
+            </li>
+            <li>Uploaded FITS files are stored in DATA_DIR which is
+                a <Link to='/configure/constants'>constant</Link> that can be configured later.
+            </li>
+        </ul>
+    </Text></ColumnCard>)
+}
+
+
+function Profiles(props) {
+
+    const {data} = props;
+    const profiles = Object.keys(data.profiles).map(name => [name, data.profiles[name]]);
+    const [anchor, setAnchor] = React.useState(null);
+    const [profile, setProfile] = useState(profiles.findIndex(entry => entry[0] === 'default'));
+    const [text, setText] = useState(profiles[profile][1]);
+    console.log(data.profiles);
+
+    function onButtonClick(event) {
+        setAnchor(event.currentTarget);
+    }
+
+    function onMenuClose() {
+        setAnchor(null);
+    }
+
+    function onItemClick(index) {
+        setProfile(index);
+        setText(profiles[index][1]);
+        setAnchor(null);
+    }
+
+    return (<ColumnCard header='Profiles'><Text>
+        <Text>
+            <p>Explanation here.</p>
+        </Text>
+        <Button variant='outlined' onClick={onButtonClick}>{profiles[profile][0]}</Button>
+        <Menu keepMounted open={Boolean(anchor)} onClose={onMenuClose} anchorEl={anchor}>
+            {profiles.map(
+                (entry, index) =>
+                    <MenuItem onClick={() => onItemClick(index)} selected={index === profile}>
+                        {entry[0].toUpperCase()}
+                    </MenuItem>)}
+        </Menu>
+        <Text>{text}</Text>
+    </Text></ColumnCard>)
+
+}
 
 
 function Columns(props) {
@@ -11,13 +74,17 @@ function Columns(props) {
     if (data === null) {
         return <Loading/>;
     } else if (data.configured) {
-        return (<ColumnList><ColumnCard><Grid item xs={12}>
-            <P>The initial configuration has already been made.</P>
-        </Grid></ColumnCard></ColumnList>);
+        return (<ColumnList>
+            <Directory data={data}/>
+            <ColumnCard><Grid item xs={12}>
+                <P>The initial configuration has already been made.</P>
+            </Grid></ColumnCard>
+        </ColumnList>);
     } else {
-        return (<ColumnList><ColumnCard><Grid item xs={12}>
-            <P>Hello handsome.</P>
-        </Grid></ColumnCard></ColumnList>);
+        return (<ColumnList>
+            <Directory data={data}/>
+            <Profiles data={data}/>
+        </ColumnList>);
     }
 }
 

@@ -202,8 +202,10 @@ class NamespaceWithVariables(Mapping):
             value = self._dict[sub('-', '_', name)]
         return value
 
-    def system_path(self, subdir, file=None):
-        dir = realpath(normpath(expanduser(join(self[BASE], DB_VERSION, subdir))))
+    def system_path(self, subdir=None, file=None):
+        dir = join(self[BASE], DB_VERSION)
+        if subdir: dir = join(dir, subdir)
+        dir = realpath(normpath(expanduser(dir)))
         if not exists(dir): makedirs(dir)
         if file:
             return join(dir, file)
