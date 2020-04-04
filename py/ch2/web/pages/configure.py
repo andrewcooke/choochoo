@@ -2,6 +2,7 @@
 from logging import getLogger
 
 from ..json import JsonResponse
+from ...commands.help import HTML
 from ...config.utils import profiles
 from ...sql import Pipeline
 
@@ -22,9 +23,14 @@ class Configure:
         return bool(s.query(Pipeline).count())
 
     def read_profiles(self, request, s):
+
         from ..server import DATA
+
+        def fmt(text):
+            return HTML(delta=1).str(text)
+
         fn_argspec_by_name = profiles()
-        data = {PROFILES: {name: fn_argspec_by_name[name][0].__doc__ for name in fn_argspec_by_name},
+        data = {PROFILES: {name: fmt(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
                 CONFIGURED: Configure.get_configured(s),
                 DIRECTORY: self.__base}
         return JsonResponse({DATA: data})

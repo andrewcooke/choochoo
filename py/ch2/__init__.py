@@ -30,7 +30,7 @@ from .commands.diary import diary
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
-from .commands.help import help, LengthFmt
+from .commands.help import help, Markdown
 from .commands.jupyter import jupyter
 from .commands.kit import kit
 from .commands.monitor import monitor
@@ -120,7 +120,7 @@ def main():
 def refuse_until_configured(path):
     dir = dirname(abspath(path))
     if len(glob(join(dir, '*'))) > 1:
-        LengthFmt().print_all('''
+        Markdown().print('''
 Welcome to Choochoo.
 
 There is no database available for this release, but you may have a database from a previous version.
@@ -130,7 +130,7 @@ please see the documentation at http://andrewcooke.github.io/choochoo/version-up
 Otherwise, you will need to configure the system.
 Please see the documentation at http://andrewcooke.github.io/choochoo''')
     else:
-        LengthFmt().print_all('''
+        Markdown().print('''
 Welcome to Choochoo.
 
 Before using the ch2 command you must configure the system.

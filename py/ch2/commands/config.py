@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from .args import no, SUB_COMMAND, CHECK, DATA, CONFIG, ACTIVITY_GROUPS, LIST, PROFILE
-from ..commands.help import LengthFmt
+from ..commands.help import Markdown
 from ..config import ActivityGroup
 from ..config.utils import profiles, get_profile
 from ..sql.tables.statistic import StatisticName, StatisticJournal
@@ -47,11 +47,11 @@ def check(db, config, data, activity_groups):
 
 
 def list():
-    fmt = LengthFmt()
+    fmt = Markdown()
     for name in profiles():
         fn, spec = get_profile(name)
         if fn.__doc__:
-            fmt.print_all(fn.__doc__)
+            fmt.print(fn.__doc__)
         else:
             print(f' ## {name} - lacks docstring\n')
 
