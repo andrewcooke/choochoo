@@ -144,7 +144,7 @@ export default function Upload(props) {
     }
 
     useEffect(() => {
-        fetch('/api/kit/items').then(handleGet(history, setItems, busyState, setError));
+        fetch('/api/kit/items').then(handleGet(history, setItems, setError, busyState));
     }, [reads]);
 
     return (

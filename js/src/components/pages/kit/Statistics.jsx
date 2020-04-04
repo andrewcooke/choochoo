@@ -76,7 +76,7 @@ export default function Statistics(props) {
     useEffect(() => {
         setComponents(null);
         fetch('/api/kit/statistics')
-            .then(handleGet(history, setComponents, busyState, setError));
+            .then(handleGet(history, setComponents, setError, busyState));
     }, [reads]);
 
     return (

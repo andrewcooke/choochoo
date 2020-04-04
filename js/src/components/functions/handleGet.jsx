@@ -1,5 +1,5 @@
 
-export default function handleGet(history, setData, busyState, setError) {
+export default function handleGet(history, setData, setError, busyState) {
 
     // busy logic is as follows:
     // - initially busy is null
@@ -19,7 +19,7 @@ export default function handleGet(history, setData, busyState, setError) {
     // redirect logic:
     // - if server sends a redirect we respond
 
-    const [busy, setBusy] = busyState === undefined ? [undefined, undefined] : busyState;
+    const [busy, setBusy] = busyState === undefined ? [null, undefined] : busyState;
 
     return response => {
 
@@ -31,7 +31,7 @@ export default function handleGet(history, setData, busyState, setError) {
                 if (keys.includes('redirect')) {
                     console.log(`Redirect to ${json.redirect}`);
                     history.push(json.redirect);
-                } else if (keys.includes('busy')) {
+                } else if (setBusy !== undefined && keys.includes('busy')) {
                     console.log('Received busy:');
                     console.log(json.busy);
                     setBusy(json.busy);

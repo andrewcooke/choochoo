@@ -128,7 +128,7 @@ export default function Diary(props) {
     useEffect(() => {
         setJson(null);
         fetch('/api/diary/' + date)
-            .then(handleGet(history, setJson, busyState, setError));
+            .then(handleGet(history, setJson, setError, busyState));
     }, [`${date} ${reads}`]);
 
     const navigation = (

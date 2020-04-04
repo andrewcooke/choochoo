@@ -52,12 +52,12 @@ export default function Analysis(props) {
     useEffect(() => {
         setParams(null);
         fetch('/api/analysis/parameters')
-            .then(handleGet(history, setParams, busyState, setError));
+            .then(handleGet(history, setParams, setError, busyState));
     }, [reads]);
 
     return (
         <Layout navigation={<MainMenu/>}
-                content={<Columns params={params} setError={setError}/>}
+                content={<Columns params={params}/>}
                 match={match} title='Analysis' reload={reload}
                 busyState={busyState} errorState={errorState}/>
     );

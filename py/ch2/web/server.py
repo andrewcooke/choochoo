@@ -6,22 +6,23 @@ from werkzeug.exceptions import HTTPException, BadRequest
 from werkzeug.routing import Map, Rule
 from werkzeug.wrappers.json import JSONMixin
 
-from .analysis import Analysis
-from .diary import Diary
 from .json import JsonResponse
-from .jupyter import Jupyter
-from .kit import Kit
+from .pages.analysis import Analysis
+from .pages.configure import Configure
+from .pages.diary import Diary
+from .pages.jupyter import Jupyter
+from .pages.kit import Kit
+from .pages.upload import Upload
 from .static import Static
-from .upload import Upload
-from ..commands.args import mm, BASE, TUI, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, DATA, UPLOAD
+from ..commands.args import mm, BASE, TUI, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, UPLOAD
 from ..jupyter.server import JupyterController
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
-
 log = getLogger(__name__)
 
 
+DATA = 'data'
 REDIRECT = 'redirect'
 ERROR = 'error'
 BUSY = 'busy'
@@ -83,23 +84,28 @@ class WebServer:
     def __init__(self, sys, db, jcontrol):
         self.__sys = sys
         self.__db = db
-        diary = Diary()
-        kit = Kit()
+
         analysis = Analysis()
+        configure = Configure()
+        diary = Diary()
+        jupyter = Jupyter(jcontrol)
+        kit = Kit()
         static = Static('.static')
         upload = Upload(sys, db)
-        jupyter = Jupyter(jcontrol)
+
         self.url_map = Map([
 
-            # used by the menu so unchecked
+            Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
+
+            Rule('/api/configure/profiles', endpoint=configure.read_profiles, methods=(GET,)),
+
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=(GET,)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),
             Rule('/api/diary/active-months/<year>', endpoint=diary.read_active_months, methods=(GET,)),
-
             Rule('/api/diary/statistics', endpoint=self.check(diary.write_statistics), methods=(PUT,)),
             Rule('/api/diary/<date>', endpoint=self.check(diary.read_diary), methods=(GET,)),
 
-            Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
+            Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
 
             Rule('/api/kit/edit', endpoint=self.check(kit.read_edit), methods=(GET, )),
             Rule('/api/kit/retire-item', endpoint=self.check(kit.write_retire_item), methods=(PUT,)),
@@ -112,9 +118,10 @@ class WebServer:
             Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot), methods=(GET, )),
 
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
+
             Rule('/api/upload', endpoint=self.check(upload), methods=(PUT, )),
+
             Rule('/api/busy', endpoint=self.read_busy, methods=(GET, )),
-            Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
             Rule('/api/<path:_>', endpoint=error(BadRequest), methods=(GET, PUT, POST)),
 
             # ignore path and serve index.html
@@ -153,11 +160,14 @@ class WebServer:
 
     def check(self, handler):
 
-        def wrapper(*args, **kargs):
+        def wrapper(request, s, *args, **kargs):
+            if not Configure.get_configured(s):
+                log.debug(f'Redirect (not configured)')
+                return JsonResponse({REDIRECT: '/configure/initial'})
             busy = self.get_busy()
             if busy[PERCENT] is None or busy[PERCENT] == 100:
                 try:
-                    data = handler(*args, **kargs)
+                    data = handler(request, s, *args, **kargs)
                     log.debug(f'Returning data: {data}')
                     return JsonResponse({DATA: data})
                 except Exception as e:

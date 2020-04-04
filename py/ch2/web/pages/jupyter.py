@@ -2,9 +2,8 @@ from logging import getLogger
 
 from werkzeug.utils import redirect
 
-from ..jupyter.load import create_notebook
-from ..jupyter.utils import get_template
-
+from ...jupyter.load import create_notebook
+from ...jupyter.utils import get_template
 
 log = getLogger(__name__)
 

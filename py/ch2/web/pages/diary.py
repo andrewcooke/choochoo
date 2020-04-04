@@ -2,17 +2,13 @@ import datetime as dt
 import time as t
 from logging import getLogger
 
-from werkzeug import Response
-
-from .json import JsonResponse
-from ..diary.database import read_date, read_schedule
-from ..diary.views.web import rewrite_db
-from ..lib import time_to_local_time
-from ..lib.schedule import Schedule
-from ..sql import ActivityJournal, StatisticJournal
-from ..stats.display.activity import active_days, active_months, latest_activity, activities_start, activities_finish, \
-    activities_by_group
-from ..stats.display.nearby import constraints
+from ..json import JsonResponse
+from ...diary.database import read_date, read_schedule
+from ...diary.views.web import rewrite_db
+from ...lib import time_to_local_time
+from ...lib.schedule import Schedule
+from ...sql import ActivityJournal, StatisticJournal
+from ...stats.display.activity import active_days, active_months
 
 log = getLogger(__name__)
 

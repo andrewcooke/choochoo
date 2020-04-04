@@ -21,7 +21,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function MainMenu(props) {
 
-    const {kit=false} = props;
+    const {kit=false, configure=false} = props;
     const classes = useStyles();
 
     const [openDiary, setOpenDiary] = useState(false);
@@ -32,6 +32,11 @@ export default function MainMenu(props) {
     const [openKit, setOpenKit] = useState(kit);
     const handleKitClick = () => {
         setOpenKit(!openKit);
+    };
+
+    const [openConfigure, setOpenConfigure] = useState(configure);
+    const handleConfigureClick = () => {
+        setOpenConfigure(!openConfigure);
     };
 
     return (<List component="nav" className={classes.root}>
@@ -59,6 +64,14 @@ export default function MainMenu(props) {
             </List>
         </Collapse>
         <ListItemLink primary='Upload' to='/upload'/>
-        <ListItemLink primary='Configure' to='/configure'/>
+        <ListItem button onClick={handleConfigureClick}>
+            <ListItemText primary='Configure'/>
+            {openConfigure ? <ExpandLess/> : <ExpandMore/>}
+        </ListItem>
+        <Collapse in={openConfigure} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding className={classes.nested}>
+                <ListItemLink primary='Initial' to={'/configure/initial'}/>
+            </List>
+        </Collapse>
     </List>);
 }

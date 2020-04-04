@@ -3,9 +3,9 @@ from logging import getLogger
 
 import psutil as ps
 
-from ..commands.args import mm, WEB, UPLOAD, TUI, LOG
-from ..commands.upload import upload_files_and_update, STREAM, NAME
-from ..lib.workers import command_root
+from ...commands.args import mm, WEB, UPLOAD, TUI, LOG
+from ...commands.upload import upload_files_and_update, STREAM, NAME
+from ...lib.workers import command_root
 
 log = getLogger(__name__)
 

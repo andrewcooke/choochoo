@@ -112,7 +112,7 @@ export default function Snapshot(props) {
     useEffect(() => {
         setGroups(null);
         fetch('/api/kit/' + date)
-            .then(handleGet(history, setGroups, busyState, setError));
+            .then(handleGet(history, setGroups, setError, busyState));
     }, [`${date} ${reads}`]);
 
     return (

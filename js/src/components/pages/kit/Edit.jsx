@@ -223,7 +223,7 @@ export default function Edit(props) {
     useEffect(() => {
         setGroups(null);
         fetch('/api/kit/edit')
-            .then(handleGet(history, setGroups, busyState, setError));
+            .then(handleGet(history, setGroups, setError, busyState));
     }, [edits]);
 
     return (
