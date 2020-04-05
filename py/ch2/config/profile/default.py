@@ -6,10 +6,10 @@ from ..config import Config
 log = getLogger(__name__)
 
 
-def default(sys, db, args):
+def default(sys, s, no_diary):
     '''
 ## default
 
 The default configuration with basic activity groups, diary topics and FF parameters.
     '''
-    Config(sys, db, args).load()
+    Config(sys, no_diary=no_diary).load(s)

@@ -367,13 +367,15 @@ def make_parser():
     config_check.add_argument(mm(no(CONFIG)), action='store_true', help='check database has no configuration')
     config_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
                               help='check database has no activity groups defined')
-    config_list = config_cmds.add_parser(LIST, help="list available profiles")
+    config_list = config_cmds.add_parser(LIST, help='list available profiles')
     config_load = config_cmds.add_parser(LOAD, help="configure using the given profile")
     config_profiles = config_load.add_subparsers(title='profile', dest=PROFILE, required=True)
     from ..config.utils import profiles
     for name in profiles():
         config_profile = config_profiles.add_parser(name)
         config_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
+    config_delete = config_cmds.add_parser(DELETE, help='delete current data')
+    config_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')

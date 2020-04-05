@@ -2,12 +2,15 @@
 from logging import getLogger
 
 from ..json import JsonResponse
+from ...commands.config import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...config.utils import profiles
+from ...lib.utils import restart_self
 from ...sql import Pipeline, SystemConstant
 
 log = getLogger(__name__)
 
+PROFILE = 'profile'
 PROFILES = 'profiles'
 CONFIGURED = 'configured'
 DIRECTORY = 'directory'
@@ -40,4 +43,9 @@ class Configure:
 
     def write_profile(self, request, s):
         data = request.json
-        log.debug(data)
+        load(self.__sys, s, False, data[PROFILE])
+
+    def delete(self, request, s):
+        delete(self.__sys, self.__base, True)
+        # now we need to restart because the dabatase connections exist
+        restart_self()

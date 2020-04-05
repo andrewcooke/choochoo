@@ -16,6 +16,7 @@ from .pages.upload import Upload
 from .static import Static
 from ..commands.args import mm, BASE, TUI, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, UPLOAD
 from ..jupyter.server import JupyterController
+from ..lib.log import log_current_exception
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
@@ -99,7 +100,8 @@ class WebServer:
             Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
 
             Rule('/api/configure/profiles', endpoint=configure.read_profiles, methods=(GET,)),
-            Rule('/api/configure/initial', endpoint=configure.write_profile, methods=(POST,)),
+            Rule('/api/configure/initial', endpoint=self.check(configure.write_profile, config=False), methods=(POST,)),
+            Rule('/api/configure/delete', endpoint=self.check(configure.delete, config=False), methods=(POST,)),
 
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=(GET,)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),
@@ -124,7 +126,7 @@ class WebServer:
             Rule('/api/upload', endpoint=self.check(upload), methods=(PUT, )),
 
             Rule('/api/busy', endpoint=self.read_busy, methods=(GET, )),
-            Rule('/api/<path:_>', endpoint=error(BadRequest), methods=(GET, PUT, POST)),
+            Rule('/api/<path:_>', endpoint=error(BadRequest)),
 
             # ignore path and serve index.html
             Rule('/<path:_>', defaults={'path': 'index.html'}, endpoint=static, methods=(GET,)),
@@ -162,10 +164,10 @@ class WebServer:
     def read_busy(self, request, s):
         return JsonResponse({BUSY: self.get_busy()})
 
-    def check(self, handler):
+    def check(self, handler, config=True):
 
         def wrapper(request, s, *args, **kargs):
-            if not self.__configure.is_configured():
+            if config and not self.__configure.is_configured():
                 log.debug(f'Redirect (not configured)')
                 return JsonResponse({REDIRECT: '/configure/initial'})
             busy = self.get_busy()
@@ -175,6 +177,7 @@ class WebServer:
                     log.debug(f'Returning data: {data}')
                     return JsonResponse({DATA: data})
                 except Exception as e:
+                    log_current_exception()
                     # maybe some errors are redirects?
                     error = str(e).strip()
                     if not error.endswith('.'): error += '.'

@@ -71,6 +71,8 @@ export default function MainMenu(props) {
         <Collapse in={openConfigure} timeout="auto" unmountOnExit>
             <List component="div" disablePadding className={classes.nested}>
                 <ListItemLink primary='Initial' to={'/configure/initial'}/>
+                <ListItemLink primary='Import' to={'/configure/import'}/>
+                <ListItemLink primary='Constants' to={'/configure/constants'}/>
             </List>
         </Collapse>
     </List>);

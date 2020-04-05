@@ -49,21 +49,12 @@ class Config:
     A class-based approach so that we can easily modify the config for different profiles.
     '''
 
-    def __init__(self, sys, db, args):
+    def __init__(self, sys, no_diary=False):
         self._sys = sys
-        self._db = db
-        self._read_args(args)
+        self._no_diary = no_diary
         self._activity_groups = {}
 
-    def _read_args(self, args):
-        self._no_diary = args[no(DIARY)]
-
-    def load(self):
-        with self._db.session_context() as s:
-            self._load_db(s)
-            self._load_sys(self._sys, s)  # note that s is a db session
-
-    def _load_db(self, s):
+    def load(self, s):
         # hopefully you won't need to over-ride this, but instead one of the more specific methods
         add_loader_support(s)  # required by standard statistics calculations
         self._load_specific_activity_groups(s)

@@ -23,7 +23,7 @@ const useStyles = makeStyles(theme => ({
 export default function ConfirmedWriteButton(props) {
 
     const {children, href, json=null, form=null, label, xs=12, reload=null, disabled=false, setError,
-           variant='outlined', method='put'} = props;
+           variant='outlined', method='put', onComplete} = props;
     const classes = useStyles();
     const [openConfirm, setOpenConfirm] = React.useState(false);
     const [openWait, setOpenWait] = React.useState(false);
@@ -68,7 +68,12 @@ export default function ConfirmedWriteButton(props) {
 
     function handleWrite(response) {
         setOpenWait(false);
-        handleJson(undefined, reload, undefined, setError)(response);
+        try {
+            handleJson(undefined, reload, undefined, setError)(response);
+        } catch (e) {
+            console.warn(e);
+        };
+        if (onComplete !== undefined) onComplete();
     }
 
     function handleCancel() {
@@ -99,7 +104,7 @@ export default function ConfirmedWriteButton(props) {
             <Dialog fullScreen={fullScreen} open={openWait}>
                 <DialogTitle>{'Please wait'}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>Saving data.</DialogContentText>
+                    <DialogContentText>Writing data.</DialogContentText>
                 </DialogContent>
             </Dialog>
         </Grid>

@@ -7,15 +7,20 @@ from ...sql import StatisticJournalType
 from ...stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
 
 
-def acooke(sys, db, args):
+def acooke(sys, s, no_diary):
     '''
 ## acooke
 
-This extends the default configuration with diary entries that I need.
+This extends the default configuration with:
+
+* Diary entries that I need
+* Additional activity groups selected on the kit used
+* Power estimates
+* An area around Santiago, Chile, for registering nearby activities
 
 Unlikely to be useful to others, but works as an example of how you can extend the code yourself.
     '''
-    ACooke(sys, db, args).load()
+    ACooke(sys, no_diary=no_diary).load(s)
 
 
 ROAD = 'Road'
