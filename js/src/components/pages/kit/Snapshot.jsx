@@ -4,7 +4,7 @@ import {Grid, InputLabel, List, ListItem, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
 import {differenceInCalendarDays, format, formatDistance, parse} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
-import {handleGet, setIds} from "../../functions";
+import {handleJson, setIds} from "../../functions";
 import StatisticsValues from "./elements/StatisticsValues";
 
 
@@ -112,7 +112,7 @@ export default function Snapshot(props) {
     useEffect(() => {
         setGroups(null);
         fetch('/api/kit/' + date)
-            .then(handleGet(history, setGroups, setError, busyState));
+            .then(handleJson(history, setGroups, setError, busyState));
     }, [`${date} ${reads}`]);
 
     return (

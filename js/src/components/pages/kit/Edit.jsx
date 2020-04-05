@@ -14,7 +14,7 @@ import {Box, Button, Collapse, Grid, TextField, Typography} from "@material-ui/c
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
-import {handleGet} from "../../functions";
+import {handleJson} from "../../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -223,7 +223,7 @@ export default function Edit(props) {
     useEffect(() => {
         setGroups(null);
         fetch('/api/kit/edit')
-            .then(handleGet(history, setGroups, setError, busyState));
+            .then(handleJson(history, setGroups, setError, busyState));
     }, [edits]);
 
     return (

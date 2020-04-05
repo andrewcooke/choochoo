@@ -1,5 +1,5 @@
 
-export default function handleGet(history, setData, setError, busyState) {
+export default function handleJson(history, setData, setError, busyState) {
 
     // busy logic is as follows:
     // - initially busy is null
@@ -23,7 +23,7 @@ export default function handleGet(history, setData, setError, busyState) {
 
     return response => {
 
-        function handleJson(json) {
+        function handler(json) {
             try {
                 console.log('JSON:');
                 console.log(json);
@@ -69,6 +69,6 @@ export default function handleGet(history, setData, setError, busyState) {
 
         console.log('Response:');
         console.log(response);
-        return response.json().then(handleJson);
+        return response.json().then(handler);
     }
 }

@@ -5,7 +5,7 @@ import {P, PercentBar} from "./index";
 
 export default function BusyDialog(props) {
 
-    // see handleGet
+    // see handleJson
 
     const {busyState, reload} = props;
     const [busy, setBusy] = busyState;

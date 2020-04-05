@@ -99,6 +99,7 @@ class WebServer:
             Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
 
             Rule('/api/configure/profiles', endpoint=configure.read_profiles, methods=(GET,)),
+            Rule('/api/configure/initial', endpoint=configure.write_profile, methods=(POST,)),
 
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=(GET,)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),
@@ -164,7 +165,7 @@ class WebServer:
     def check(self, handler):
 
         def wrapper(request, s, *args, **kargs):
-            if not self.__configure.get_configured():
+            if not self.__configure.is_configured():
                 log.debug(f'Redirect (not configured)')
                 return JsonResponse({REDIRECT: '/configure/initial'})
             busy = self.get_busy()

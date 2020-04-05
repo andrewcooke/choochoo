@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Grid, Menu, MenuItem} from "@material-ui/core";
 import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, MainMenu, P, Text} from "../../elements";
-import {handleGet} from "../../functions";
+import {handleJson} from "../../functions";
 import {Link} from "react-router-dom";
 
 
@@ -39,7 +39,9 @@ function Profiles(props) {
     const [anchor, setAnchor] = React.useState(null);
     const [profile, setProfile] = useState(profiles.findIndex(entry => entry[0] === 'default'));
 
-    setTimeout(() => document.getElementById('description').innerHTML = profiles[profile][1], 0);
+    // do this after the DOM has been created
+    setTimeout(() =>
+        document.getElementById('description').innerHTML = profiles[profile][1], 0);
 
     function onButtonClick(event) {
         setAnchor(event.currentTarget);
@@ -73,7 +75,7 @@ function Profiles(props) {
                 </Menu></p>
             <div id='description'/>
         </Text>
-        <ConfirmedWriteButton xs={3} label='Configure' variant='contained'
+        <ConfirmedWriteButton xs={3} label='Configure' variant='contained' method='post'
                               href='/api/configure/initial' reload={reload}
                               json={{'profile': profiles[profile][0]}}>
             Configuring the system will allow you to start uploading and analysing data.
@@ -93,7 +95,7 @@ function Columns(props) {
         return (<ColumnList>
             <Directory data={data}/>
             <ColumnCard><Grid item xs={12}>
-                <P>The initial configuration has already been made.</P>
+                <P>The initial configuration has already been made (version {data.version}).</P>
             </Grid></ColumnCard>
         </ColumnList>);
     } else {
@@ -125,7 +127,7 @@ export default function Initial(props) {
 
     useEffect(() => {
         fetch('/api/configure/profiles')
-            .then(handleGet(history, setData, setError));
+            .then(handleJson(history, setData, setError));
     }, [reads]);
 
     return (

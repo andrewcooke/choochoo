@@ -10,7 +10,7 @@ import {
     useTheme
 } from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
-import {handleGet} from "../functions";
+import {handleJson} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -23,7 +23,7 @@ const useStyles = makeStyles(theme => ({
 export default function ConfirmedWriteButton(props) {
 
     const {children, href, json=null, form=null, label, xs=12, reload=null, disabled=false, setError,
-           variant='outlined'} = props;
+           variant='outlined', method='put'} = props;
     const classes = useStyles();
     const [openConfirm, setOpenConfirm] = React.useState(false);
     const [openWait, setOpenWait] = React.useState(false);
@@ -57,7 +57,7 @@ export default function ConfirmedWriteButton(props) {
     }
 
     function buildRequest() {
-        const request = {method: 'put', body: buildData()};
+        const request = {method: method, body: buildData()};
         if (json !== null) request['headers'] = {'Accept': 'application/json', 'Content-Type': 'application/json'};
         return request;
     }
@@ -68,7 +68,7 @@ export default function ConfirmedWriteButton(props) {
 
     function handleWrite(response) {
         setOpenWait(false);
-        handleGet(undefined, reload, undefined, setError)(response);
+        handleJson(undefined, reload, undefined, setError)(response);
     }
 
     function handleCancel() {

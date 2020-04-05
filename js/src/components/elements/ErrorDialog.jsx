@@ -5,7 +5,7 @@ import {P} from "./index";
 
 export default function ErrorDialog(props) {
 
-    // see handleGet
+    // see handleJson
 
     const {errorState} = props;
     const [error, setError] = errorState;

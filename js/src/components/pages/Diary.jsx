@@ -6,7 +6,7 @@ import {List, ListItem} from '@material-ui/core';
 import {Day, Schedule} from './diary';
 import {Calendar, Months} from './diary/elements'
 import {FMT_DAY, FMT_MONTH, FMT_YEAR} from "../../constants";
-import {handleGet} from "../functions";
+import {handleJson} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -128,7 +128,7 @@ export default function Diary(props) {
     useEffect(() => {
         setJson(null);
         fetch('/api/diary/' + date)
-            .then(handleGet(history, setJson, setError, busyState));
+            .then(handleJson(history, setJson, setError, busyState));
     }, [`${date} ${reads}`]);
 
     const navigation = (

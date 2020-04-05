@@ -3,7 +3,7 @@ import React, {useEffect, useState} from "react";
 import {Grid, Typography, InputLabel} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import StatisticsValues from "./elements/StatisticsValues";
-import {handleGet} from "../../functions";
+import {handleJson} from "../../functions";
 
 
 const useStyles = makeStyles(theme => ({
@@ -76,7 +76,7 @@ export default function Statistics(props) {
     useEffect(() => {
         setComponents(null);
         fetch('/api/kit/statistics')
-            .then(handleGet(history, setComponents, setError, busyState));
+            .then(handleJson(history, setComponents, setError, busyState));
     }, [reads]);
 
     return (

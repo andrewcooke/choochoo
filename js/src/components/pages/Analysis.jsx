@@ -11,7 +11,7 @@ import {
     SimilarActivities,
     SomeActivities
 } from "./analysis";
-import {handleGet} from "../functions";
+import {handleJson} from "../functions";
 
 
 function Columns(props) {
@@ -52,7 +52,7 @@ export default function Analysis(props) {
     useEffect(() => {
         setParams(null);
         fetch('/api/analysis/parameters')
-            .then(handleGet(history, setParams, setError, busyState));
+            .then(handleJson(history, setParams, setError, busyState));
     }, [reads]);
 
     return (
