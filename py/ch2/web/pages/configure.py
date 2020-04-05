@@ -4,7 +4,7 @@ from logging import getLogger
 from ..json import JsonResponse
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...config.utils import profiles
-from ...sql import Pipeline
+from ...sql import Pipeline, SystemConstant
 
 log = getLogger(__name__)
 
@@ -15,12 +15,12 @@ DIRECTORY = 'directory'
 
 class Configure:
 
-    def __init__(self, base):
+    def __init__(self, sys, base):
+        self.__sys = sys
         self.__base = base
 
-    @staticmethod
-    def get_configured(s):
-        return bool(s.query(Pipeline).count())
+    def get_configured(self):
+        return bool(self.__sys.get_constant(SystemConstant.DB_VERSION, none=True))
 
     def read_profiles(self, request, s):
 
@@ -31,6 +31,6 @@ class Configure:
 
         fn_argspec_by_name = profiles()
         data = {PROFILES: {name: fmt(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
-                CONFIGURED: Configure.get_configured(s),
+                CONFIGURED: self.get_configured(),
                 DIRECTORY: self.__base}
         return JsonResponse({DATA: data})

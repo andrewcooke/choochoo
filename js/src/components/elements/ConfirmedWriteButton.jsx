@@ -22,7 +22,8 @@ const useStyles = makeStyles(theme => ({
 
 export default function ConfirmedWriteButton(props) {
 
-    const {children, href, json=null, form=null, label, xs=12, reload=null, disabled=false, setError} = props;
+    const {children, href, json=null, form=null, label, xs=12, reload=null, disabled=false, setError,
+           variant='outlined'} = props;
     const classes = useStyles();
     const [openConfirm, setOpenConfirm] = React.useState(false);
     const [openWait, setOpenWait] = React.useState(false);
@@ -84,7 +85,7 @@ export default function ConfirmedWriteButton(props) {
 
     return (
         <Grid item xs={xs} className={classes.right}>
-            <Button variant="outlined" onClick={handleClickOpen} disabled={disabled}>{label}</Button>
+            <Button variant={variant} onClick={handleClickOpen} disabled={disabled}>{label}</Button>
             <Dialog fullScreen={fullScreen} open={openConfirm} onClose={handleCancel}>
                 <DialogTitle>{'Confirm?'}</DialogTitle>
                 <DialogContent>

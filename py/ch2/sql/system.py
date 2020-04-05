@@ -1,3 +1,4 @@
+from logging import getLogger
 
 from sqlalchemy.orm import sessionmaker
 
@@ -6,11 +7,18 @@ from .support import SystemBase
 from .tables.system import Progress
 from ..commands.args import SYSTEM
 
+log = getLogger(__name__)
+
 
 class System(DatabaseBase):
 
     def __init__(self, args):
         super().__init__(SYSTEM, SystemConstant, SystemBase, args)
+        version = self.get_constant(SystemConstant.DB_VERSION, none=True)
+        if version:
+            log.info(f'Database version {version}')
+        else:
+            log.warning('Unconfigured')
 
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine, expire_on_commit=False)

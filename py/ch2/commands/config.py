@@ -1,13 +1,16 @@
 
 from logging import getLogger
 
-from .args import no, SUB_COMMAND, CHECK, DATA, CONFIG, ACTIVITY_GROUPS, LIST, PROFILE
+from .args import no, SUB_COMMAND, CHECK, DATA, CONFIG, ACTIVITY_GROUPS, LIST, PROFILE, DB_VERSION
 from .help import Markdown
 from ..config import ActivityGroup
 from ..config.utils import profiles, get_profile
+from ..sql import SystemConstant
 from ..sql.tables.statistic import StatisticName, StatisticJournal
 
 log = getLogger(__name__)
+
+BROKEN = 'broken'
 
 
 def config(args, system, db):
@@ -57,6 +60,10 @@ def list():
 
 
 def load(sys, db, args, profile):
+    version = sys.get_constant(SystemConstant.DB_VERSION, none=True)
+    if version:
+        raise Exception(f'System already configured with version {version}')
     fn, spec = get_profile(profile)
+    sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION + ' ' + BROKEN)
     fn(sys, db, args)
-
+    sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)

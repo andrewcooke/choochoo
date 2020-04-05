@@ -87,7 +87,7 @@ class WebServer:
         self.__db = db
 
         analysis = Analysis()
-        configure = Configure(base)
+        configure = Configure(sys, base)
         diary = Diary()
         jupyter = Jupyter(jcontrol)
         kit = Kit()
@@ -130,6 +130,8 @@ class WebServer:
             Rule('/', defaults={'path': 'index.html'}, endpoint=static, methods=(GET,))
         ])
 
+        self.__configure = configure
+
     def dispatch_request(self, request):
         adapter = self.url_map.bind_to_environ(request.environ)
         try:
@@ -162,7 +164,7 @@ class WebServer:
     def check(self, handler):
 
         def wrapper(request, s, *args, **kargs):
-            if not Configure.get_configured(s):
+            if not self.__configure.get_configured():
                 log.debug(f'Redirect (not configured)')
                 return JsonResponse({REDIRECT: '/configure/initial'})
             busy = self.get_busy()
