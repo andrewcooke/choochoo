@@ -9,7 +9,7 @@ from ..lib.date import format_date, time_to_local_date, to_time
 from ..lib.log import log_current_exception
 from ..lib.utils import clean_path
 from ..sql.database import ReflectedDatabase, StatisticName, ActivityTopic, StatisticJournalType, \
-    FileHash, ActivityTopicJournal
+    FileHash, ActivityTopicJournal, DiaryTopicJournal, DiaryTopic
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.utils import add
 
@@ -58,7 +58,52 @@ def build_source_path(args):
 
 
 def copy_diary(old, new):
-    log.info(f'Trying to copy diary topic data from {old} to {new}')
+    log.debug(f'Trying to copy diary topic data from {old} to {new}')
+    with old.session_context() as old_s:
+        for old_diary_topic in old_s.query(old.meta.tables['diary_topic']).all():
+            log.debug(f'Found old diary_topic {old_diary_topic}')
+            try:
+                with new.session_context() as new_s:
+                    new_diary_topic = new_s.query(DiaryTopic).filter(DiaryTopic.name == old_diary_topic.name).one()
+                    constraint = str(new_diary_topic)
+                copy_diary_topic_fields(old_s, old, old_diary_topic, new, constraint)
+            except:
+                log_current_exception(traceback=False)
+
+
+def copy_diary_topic_fields(old_s, old, old_diary_topic, new, constraint):
+    log.debug(f'Trying to copy diary_topic_fields for diary_topic {old_diary_topic}')
+    for old_diary_topic_field in old_s.query(old.meta.tables['diary_topic_field']). \
+            filter(old.meta.tables['diary_topic_field'].c.diary_topic_id ==
+                   (old_diary_topic.id if old_diary_topic else None)).all():
+        log.debug(f'Found old diary_topic_field {old_diary_topic_field}')
+        try:
+            statistic_name = old.meta.tables['statistic_name']
+            old_statistic_name = old_s.query(statistic_name). \
+                filter(statistic_name.c.id == old_diary_topic_field.statistic_name_id).one()
+            log.debug(f'Found old statistic_name {old_statistic_name}')
+            with new.session_context() as new_s:
+                new_statistic_name = match_statistic_name(old_statistic_name, new_s, DiaryTopic, constraint)
+                copy_diary_topic_journal_entries(old_s, old, old_statistic_name, new_s, new_statistic_name)
+        except:
+            log_current_exception(traceback=False)
+
+
+def copy_diary_topic_journal_entries(old_s, old, old_statistic_name, new_s, new_statistic_name):
+    log.debug(f'Trying to find statistic_journal entries for {old_statistic_name}')
+    statistic_journal = old.meta.tables['statistic_journal']
+    diary_topic_journal = old.meta.tables['diary_topic_journal']
+    for old_statistic_journal in old_s.query(statistic_journal). \
+            join(diary_topic_journal, statistic_journal.c.source_id == diary_topic_journal.c.id). \
+            filter(statistic_journal.c.statistic_name_id == old_statistic_name.id).all():
+        log.debug(f'Found old statistic_journal {old_statistic_journal}')
+        old_diary_topic_journal = old_s.query(diary_topic_journal). \
+            filter(diary_topic_journal.c.id == old_statistic_journal.source_id).one()
+        log.debug(f'Found old diary_topic_journal {old_diary_topic_journal}')
+        new_diary_topic_journal = DiaryTopicJournal.get_or_add(new_s, old_diary_topic_journal.date)
+        log.debug(f'Found new diary_topic_journal {new_diary_topic_journal}')
+        create_statistic_journal(old_s, old, old_statistic_name, old_statistic_journal,
+                                 new_s, new_statistic_name, new_diary_topic_journal)
 
 
 def copy_activity(old, new):
@@ -67,7 +112,7 @@ def copy_activity(old, new):
         copy_activity_topic_fields(old_s, old, None, new)
         for old_activity_topic in old_s.query(old.meta.tables['activity_topic']).all():
             log.debug(f'Found old activity_topic {old_activity_topic}')
-            copy_activity_topic_fields(old_s, old, old_activity_topic.id, new)
+            copy_activity_topic_fields(old_s, old, old_activity_topic, new)
 
 
 def copy_activity_topic_fields(old_s, old, old_activity_topic, new):
@@ -76,33 +121,34 @@ def copy_activity_topic_fields(old_s, old, old_activity_topic, new):
             filter(old.meta.tables['activity_topic_field'].c.activity_topic_id ==
                    (old_activity_topic.id if old_activity_topic else None)).all():
         log.debug(f'Found old activity_topic_field {old_activity_topic_field}')
-        statistic_name = old.meta.tables['statistic_name']
-        old_statistic_name = old_s.query(statistic_name). \
-            filter(statistic_name.c.id == old_activity_topic_field.statistic_name_id).one()
-        log.debug(f'Found old statistic_name {old_statistic_name}')
-        with new.session_context() as new_s:
-            try:
-                new_statistic_name = match_statistic_name(old_statistic_name, new_s)
+        try:
+            statistic_name = old.meta.tables['statistic_name']
+            old_statistic_name = old_s.query(statistic_name). \
+                filter(statistic_name.c.id == old_activity_topic_field.statistic_name_id).one()
+            log.debug(f'Found old statistic_name {old_statistic_name}')
+            with new.session_context() as new_s:
+                new_statistic_name = match_statistic_name(old_statistic_name, new_s, ActivityTopic,
+                                                          old_statistic_name.constraint)
                 copy_activity_topic_journal_entries(old_s, old, old_statistic_name, new_s, new_statistic_name)
-            except:
-                log_current_exception(traceback=False)
-                # should have been noted in log, so continue
+        except:
+            log_current_exception(traceback=False)
+            # should have been noted in log, so continue
 
 
-def match_statistic_name(old_statistic_name, new_s):
+def match_statistic_name(old_statistic_name, new_s, owner, constraint):
     try:
         log.debug(f'Trying to find new statistic_name for {old_statistic_name}')
         new_statistic_name = new_s.query(StatisticName). \
                 filter(StatisticName.name == old_statistic_name.name,
-                       StatisticName.owner == ActivityTopic,
-                       StatisticName.constraint == old_statistic_name.constraint,
+                       StatisticName.owner == owner,
+                       StatisticName.constraint == constraint,
                        StatisticName.statistic_journal_type == old_statistic_name.statistic_journal_type).one()
         log.debug(f'Found new statistic_name {new_statistic_name}')
         return new_statistic_name
     except NoResultFound:
         log.warning(f'No new equivalent to {old_statistic_name.name} '
                     f'({StatisticJournalType(old_statistic_name.statistic_journal_type).name}) '
-                    f'for {old_statistic_name.constraint}')
+                    f'for {owner} / {constraint}')
         raise Exception('No statistic_name')
 
 
