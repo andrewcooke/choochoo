@@ -60,18 +60,23 @@ def build_source_path(args):
 def copy_diary(old, new):
     log.debug(f'Trying to copy diary topic data from {old} to {new}')
     with old.session_context() as old_s:
-        for old_diary_topic in old_s.query(old.meta.tables['diary_topic']).all():
-            log.debug(f'Found old diary_topic {old_diary_topic}')
-            try:
-                with new.session_context() as new_s:
-                    new_diary_topic = new_s.query(DiaryTopic).filter(DiaryTopic.name == old_diary_topic.name).one()
-                    constraint = str(new_diary_topic)
-                copy_diary_topic_fields(old_s, old, old_diary_topic, new, constraint)
-            except:
-                log_current_exception(traceback=False)
+        diary_topic = old.meta.tables['diary_topic']
+        for old_diary_topic in old_s.query(diary_topic).filter(diary_topic.c.parent_id == None).all():
+            log.info(f'Found old (root) diary_topic {old_diary_topic}')
+            copy_diary_topic_fields(old_s, old, old_diary_topic, new)
 
 
-def copy_diary_topic_fields(old_s, old, old_diary_topic, new, constraint):
+def copy_diary_topic_fields(old_s, old, old_diary_topic, new):
+    try:
+        with new.session_context() as new_s:
+            new_diary_topic = new_s.query(DiaryTopic).filter(DiaryTopic.name == old_diary_topic.name).one()
+            constraint = str(new_diary_topic)
+        copy_diary_topic_fields_with_constraint(old_s, old, old_diary_topic, new, constraint)
+    except:
+        log_current_exception(traceback=False)
+
+
+def copy_diary_topic_fields_with_constraint(old_s, old, old_diary_topic, new, constraint):
     log.debug(f'Trying to copy diary_topic_fields for diary_topic {old_diary_topic}')
     for old_diary_topic_field in old_s.query(old.meta.tables['diary_topic_field']). \
             filter(old.meta.tables['diary_topic_field'].c.diary_topic_id ==
@@ -87,6 +92,11 @@ def copy_diary_topic_fields(old_s, old, old_diary_topic, new, constraint):
                 copy_diary_topic_journal_entries(old_s, old, old_statistic_name, new_s, new_statistic_name)
         except:
             log_current_exception(traceback=False)
+    parent_id = old_diary_topic.id
+    diary_topic = old.meta.tables['diary_topic']
+    for old_diary_topic in old_s.query(diary_topic).filter(diary_topic.c.parent_id == parent_id).all():
+        log.info(f'Found old diary_topic {old_diary_topic}')
+        copy_diary_topic_fields(old_s, old, old_diary_topic, new)
 
 
 def copy_diary_topic_journal_entries(old_s, old, old_statistic_name, new_s, new_statistic_name):
@@ -110,8 +120,9 @@ def copy_activity(old, new):
     log.debug(f'Trying to copy activity topic data from {old} to {new}')
     with old.session_context() as old_s:
         copy_activity_topic_fields(old_s, old, None, new)
-        for old_activity_topic in old_s.query(old.meta.tables['activity_topic']).all():
-            log.debug(f'Found old activity_topic {old_activity_topic}')
+        activity_topic = old.meta.tables['activity_topic']
+        for old_activity_topic in old_s.query(activity_topic).filter(activity_topic.c.parent_id == None).all():
+            log.info(f'Found old (root) activity_topic {old_activity_topic}')
             copy_activity_topic_fields(old_s, old, old_activity_topic, new)
 
 
@@ -132,7 +143,12 @@ def copy_activity_topic_fields(old_s, old, old_activity_topic, new):
                 copy_activity_topic_journal_entries(old_s, old, old_statistic_name, new_s, new_statistic_name)
         except:
             log_current_exception(traceback=False)
-            # should have been noted in log, so continue
+    if old_activity_topic:
+        parent_id = old_activity_topic.id
+        activity_topic = old.meta.tables['activity_topic']
+        for old_activity_topic in old_s.query(activity_topic).filter(activity_topic.c.parent_id == parent_id).all():
+            log.info(f'Found old activity_topic {old_activity_topic}')
+            copy_activity_topic_fields(old_s, old, old_activity_topic, new)
 
 
 def match_statistic_name(old_statistic_name, new_s, owner, constraint):
