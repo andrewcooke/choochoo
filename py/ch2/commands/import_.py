@@ -24,44 +24,7 @@ def import_(args, sys, db):
 
 Import diary entries from a previous version.
     '''
-    import_path(args, args[SOURCE], db)
-
-
-def build_source_path(args, source):
-    source = args[SOURCE]
-    database = ACTIVITY + DB_EXTN
-    if sep not in source:
-        path = args.system_path(file=database, version=source, create=False)
-        if exists(path):
-            log.info(f'{source} appears to be a version, using path {path}')
-            return path
-        else:
-            log.warning(f'{source} is not a version ({path})')
-    path = clean_path(source)
-    if exists(path) and isfile(path):
-        log.info(f'{source} exists at {path}')
-        return path
-    else:
-        log.warning(f'{source} is not a file ({path})')
-    path = join(path, database)
-    if exists(path) and isfile(path):
-        log.info(f'{source} exists at {path}')
-        return path
-    else:
-        log.warning(f'{source} is not a directory ({path})')
-    raise Exception(f'Could not find {source}')
-
-
-def import_path(args, source, new):
-    path = build_source_path(args, source)
-    old = ReflectedDatabase(path)
-    if not old.meta.tables:
-        raise Exception(f'No tables found in {path}')
-    log.info(f'Importing data from {path}')
-    record = Record()
-    import_diary(record, old, new)
-    import_activity(record, old, new)
-    return record.json()
+    import_path(Record(), args, args[SOURCE], db)
 
 
 class Record:
@@ -77,10 +40,49 @@ class Record:
     def loaded(self, msg):
         log.info(msg)
         self._loaded.append(msg)
+
+    def raise_(self, msg):
+        self.warning(msg)
+        raise Exception(msg)
         
     def json(self):
         return {'warnings': self._warnings,
                 'loaded': self._loaded}
+
+
+def import_path(record, args, source, new):
+    path = build_source_path(record, args, source)
+    old = ReflectedDatabase(path)
+    if not old.meta.tables:
+        record.raise_(f'No tables found in {path}')
+    log.info(f'Importing data from {path}')
+    import_diary(record, old, new)
+    import_activity(record, old, new)
+    return record.json()
+
+
+def build_source_path(record, args, source):
+    database = ACTIVITY + DB_EXTN
+    if sep not in source:
+        path = args.system_path(file=database, version=source, create=False)
+        if exists(path):
+            log.info(f'{source} appears to be a version, using path {path}')
+            return path
+        else:
+            log.warning(f'{source} is not a version ({path})')
+    path = clean_path(source)
+    if exists(path) and isfile(path):
+        log.info(f'{source} exists at {path}')
+        return path
+    else:
+        log.warning(f'{source} is not a database file ({path})')
+    path = join(path, database)
+    if exists(path) and isfile(path):
+        log.info(f'{source} exists at {path}')
+        return path
+    else:
+        log.warning(f'{source} is not a base directory ({path})')
+    record.raise_(f'Could not find {source}')
 
 
 def import_diary(record, old, new):
@@ -117,9 +119,8 @@ def copy_diary_topic_fields(record, old_s, old, old_diary_topic, new):
                     filter(DiaryTopic.name == old_diary_topic.name,
                            DiaryTopic.schedule == old_diary_topic.schedule).one()
             except NoResultFound:
-                record.warning(f'No new equivalent to diary topic {old_diary_topic.name} '
-                               f'(schedule {old_diary_topic.schedule})')
-                raise Exception('No diary_topic')
+                record.raise_(f'No new equivalent to diary topic {old_diary_topic.name} '
+                              f'(schedule {old_diary_topic.schedule})')
             constraint = str(new_diary_topic)
         copy_diary_topic_fields_with_constraint(record, old_s, old, old_diary_topic, new, constraint)
     except:
@@ -221,10 +222,9 @@ def match_statistic_name(record, old_statistic_name, new_s, owner, constraint):
         log.debug(f'Found new statistic_name {new_statistic_name}')
         return new_statistic_name
     except NoResultFound:
-        record.warning(f'No new equivalent to statistic {old_statistic_name.name} '
-                       f'({StatisticJournalType(old_statistic_name.statistic_journal_type).name}) '
-                       f'for {owner} / {constraint}')
-        raise Exception('No statistic_name')
+        record.raise_(f'No new equivalent to statistic {old_statistic_name.name} '
+                      f'({StatisticJournalType(old_statistic_name.statistic_journal_type).name}) '
+                      f'for {owner} / {constraint}')
 
 
 def copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, new_s, new_statistic_name):
