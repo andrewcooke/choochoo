@@ -58,7 +58,6 @@ def import_path(record, args, source, new):
     log.info(f'Importing data from {path}')
     import_diary(record, old, new)
     import_activity(record, old, new)
-    return record.json()
 
 
 def build_source_path(record, args, source):
