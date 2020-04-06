@@ -55,7 +55,7 @@ function Delete(props) {
             </Text></Grid>
             <Grid item xs={9}/>
             <ConfirmedWriteButton xs={3} label='Delete' variant='contained' method='post'
-                                  href='/api/configure/delete' reload={reload}
+                                  href='/api/configure/delete' setData={reload}
                                   json={{}} onComplete={onComplete}>
                 Some data can be recalculated from the FITS files (which are <b>not</b> deleted),
                 but you will lose any information entered directly into the diary.
@@ -99,7 +99,7 @@ function Profiles(props) {
         <Grid item xs={12}><Text><div id='description'/></Text></Grid>
         <Grid item xs={9}/>
         <ConfirmedWriteButton xs={3} label='Configure' variant='contained' method='post'
-                              href='/api/configure/initial' reload={reload}
+                              href='/api/configure/initial' setData={reload}
                               json={{'profile': profile}}>
             Configuring the system will allow you to start uploading and analysing data.
         </ConfirmedWriteButton>

@@ -101,7 +101,7 @@ function FileSelect(props) {
         </Grid>
         <Grid item xs={12} className={classes.right}>
             <ConfirmedWriteButton disabled={files.length === 0} label='Upload' href='/api/upload'
-                                  reload={onSubmit} setError={setError}
+                                  setData={onSubmit} setError={setError}
                                   form={{'files': files, 'kit': kit}}>
                 The ingest process will take some time.
             </ConfirmedWriteButton>

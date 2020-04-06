@@ -23,7 +23,7 @@ function Source(props) {
                               renderInput={params => <TextField {...params} label='Source' variant='outlined'/>}/>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Import' variant='contained' method='post'
-                              href='/api/configure/import' reload={reload}
+                              href='/api/configure/import' setData={reload}
                               json={{'version': version}}>
             Importing the data will preserve you diary entries from the previous install.
         </ConfirmedWriteButton>

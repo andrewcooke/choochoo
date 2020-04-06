@@ -22,7 +22,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function ConfirmedWriteButton(props) {
 
-    const {children, href, json=null, form=null, label, xs=12, reload=null, disabled=false, setError,
+    const {children, href, json=null, form=null, label, xs=12, setData=null, disabled=false, setError,
            variant='outlined', method='put', onComplete} = props;
     const classes = useStyles();
     const [openConfirm, setOpenConfirm] = React.useState(false);
@@ -69,7 +69,7 @@ export default function ConfirmedWriteButton(props) {
     function handleWrite(response) {
         setOpenWait(false);
         try {
-            handleJson(undefined, reload, undefined, setError)(response);
+            handleJson(undefined, setData, undefined, setError)(response);
         } catch (e) {
             console.warn(e);
         }

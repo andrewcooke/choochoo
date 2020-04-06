@@ -50,7 +50,7 @@ function ModelShow(props) {
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Replace' disabled={disabled}
-                              href='/api/kit/replace-model' reload={reload}
+                              href='/api/kit/replace-model' setData={reload}
                               json={{'item': item.name, 'component': component.name, 'model': newModel}}>
             Adding a new model will replace the current value from today's date.
         </ConfirmedWriteButton>
@@ -83,7 +83,7 @@ function AddComponent(props) {
                           renderInput={params => <TextField {...params} label='Model' variant='outlined'/>}/>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Add' disabled={disabled}
-                              href='/api/kit/add-component' reload={reload}
+                              href='/api/kit/add-component' setData={reload}
                               json={{'item': item.name, 'component': component, 'model': model}}>
             Adding a new component and model will extend this item from today's date.
         </ConfirmedWriteButton>
@@ -98,8 +98,8 @@ function ItemShow(props) {
         <Grid item xs={9}>
             <Typography variant='h2'>{item.name} / {group.name} / {item.added}</Typography>
         </Grid>
-        <ConfirmedWriteButton xs={3} label='Retire'
-                              href='/api/kit/retire-item' reload={reload} json={{'item': item.name}}>
+        <ConfirmedWriteButton xs={3} label='Retire' setData={reload}
+                              href='/api/kit/retire-item' json={{'item': item.name}}>
             Retiring this item will remove it and all components from today's date.
         </ConfirmedWriteButton>
         {item.components.map(
@@ -178,7 +178,7 @@ function AddGroup(props) {
                           renderInput={params => <TextField {...params} label='Item' variant='outlined'/>}/>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Add' disabled={disabled}
-                              href='/api/kit/add-group' reload={reload}
+                              href='/api/kit/add-group' setData={reload}
                               json={{'group': group, 'item': item}}>
             Adding a new group or item will help you track more kit use.
         </ConfirmedWriteButton>
