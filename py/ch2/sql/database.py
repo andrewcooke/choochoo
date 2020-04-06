@@ -53,7 +53,7 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
         # this can fail if another process is using the database
         cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
     except OperationalError as e:
-        log.debug("Optimize DB aborted (DB Likely still in use)")
+        log.debug("Optimize DB aborted (DB likely still in use)")
     finally:
         cursor.close()
 

@@ -1,7 +1,6 @@
-
+from collections import defaultdict
 from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler, WARNING
 from logging.handlers import RotatingFileHandler
-from os.path import join
 from sys import exc_info
 from traceback import format_tb
 
@@ -78,3 +77,32 @@ def log_current_exception(traceback=True):
     log.debug(f'Type: {t}')
     if traceback:
         log.debug('Traceback:\n' + ''.join(format_tb(tb)))
+
+
+def capture(logger):
+
+    def wrapper(self, msg):
+        name = logger.__name__
+        getattr(self.log, name)(msg)
+        self.record[name].append(msg)
+
+    return wrapper
+
+
+class Capture:
+
+    def __init__(self, log):
+        self.log = log
+        self.record = defaultdict(list)
+
+    @capture
+    def debug(self, msg): pass
+
+    @capture
+    def info(self, msg): pass
+
+    @capture
+    def warning(self, msg): pass
+
+    @capture
+    def error(self, msg): pass

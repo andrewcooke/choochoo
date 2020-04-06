@@ -42,7 +42,7 @@ class ACooke(Config):
                               schedule='2018-08-07/2d[1]')  # reminder to take meds on alternate days
 
         leg = add_child_diary_topic(s, injuries, 'Broken Femur LHS', c,
-                                    schedule='2018-03-11-2020-04-01')
+                                    schedule='d2018-03-11-2020-03-01')
         add_diary_topic_field(s, leg, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: TEXT})
         add_child_diary_topic(s, leg, 'Learn to manage tendon pain', c)  # aims added as child topics
         add_child_diary_topic(s, leg, 'Maintain fitness', c)
