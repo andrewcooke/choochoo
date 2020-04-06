@@ -88,7 +88,7 @@ class WebServer:
         self.__db = db
 
         analysis = Analysis()
-        configure = Configure(sys, base)
+        configure = Configure(sys, db, base)
         diary = Diary()
         jupyter = Jupyter(jcontrol)
         kit = Kit()
@@ -99,9 +99,10 @@ class WebServer:
 
             Rule('/api/analysis/parameters', endpoint=self.check(analysis.read_parameters), methods=(GET,)),
 
-            Rule('/api/configure/profiles', endpoint=configure.read_profiles, methods=(GET,)),
+            Rule('/api/configure/profiles', endpoint=self.check(configure.read_profiles, config=False), methods=(GET,)),
             Rule('/api/configure/initial', endpoint=self.check(configure.write_profile, config=False), methods=(POST,)),
             Rule('/api/configure/delete', endpoint=self.check(configure.delete, config=False), methods=(POST,)),
+            Rule('/api/configure/imported', endpoint=self.check(configure.read_imported), methods=(GET,)),
 
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=(GET,)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),

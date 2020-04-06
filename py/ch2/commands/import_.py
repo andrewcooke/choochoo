@@ -84,7 +84,7 @@ class Record:
 
 
 def import_diary(record, old, new):
-    if check_diary(record, new):
+    if not diary_imported(record, new):
         log.debug(f'Trying to copy diary topic data from {old} to {new}')
         with old.session_context() as old_s:
             diary_topic = old.meta.tables['diary_topic']
@@ -93,19 +93,20 @@ def import_diary(record, old, new):
                 copy_diary_topic_fields(record, old_s, old, old_diary_topic, new)
 
 
-def check_diary(record, new):
-    return check_journal(record, new, DiaryTopicJournal, 'Diary')
+def diary_imported(record, new):
+    return journal_imported(record, new, DiaryTopicJournal, 'Diary')
 
 
-def check_journal(record, new, cls, name):
+def journal_imported(record, new, cls, name):
+    # true if already installed
     with new.session_context() as new_s:
         if new_s.query(StatisticJournal). \
                 join(cls). \
                 filter(StatisticJournal.source_id == cls.id). \
                 count():
             record.warning(f'{name} topic entries already exist - old data must be imported first')
-            return False
-    return True
+            return True
+    return False
 
 
 def copy_diary_topic_fields(record, old_s, old, old_diary_topic, new):
@@ -129,8 +130,9 @@ def copy_diary_topic_fields_with_constraint(record, old_s, old, old_diary_topic,
     # this ignores the schedule on the diary_topic_field because it only copies statistics
     # i think this is ok?
     log.debug(f'Trying to copy diary_topic_fields for diary_topic {old_diary_topic}')
-    for old_diary_topic_field in old_s.query(old.meta.tables['diary_topic_field']). \
-            filter(old.meta.tables['diary_topic_field'].c.diary_topic_id ==
+    diary_topic_field = old.meta.tables['diary_topic_field']
+    for old_diary_topic_field in old_s.query(diary_topic_field). \
+            filter(diary_topic_field.c.diary_topic_id ==
                    (old_diary_topic.id if old_diary_topic else None)).all():
         log.debug(f'Found old diary_topic_field {old_diary_topic_field}')
         try:
@@ -168,7 +170,7 @@ def copy_diary_topic_journal_entries(record, old_s, old, old_statistic_name, new
 
 
 def import_activity(record, old, new):
-    if check_activity(record, new):
+    if not activity_imported(record, new):
         log.debug(f'Trying to copy activity topic data from {old} to {new}')
         with old.session_context() as old_s:
             copy_activity_topic_fields(record, old_s, old, None, new)
@@ -178,14 +180,15 @@ def import_activity(record, old, new):
                 copy_activity_topic_fields(record, old_s, old, old_activity_topic, new)
 
 
-def check_activity(record, new):
-    return check_journal(record, new, ActivityTopicJournal, 'Activity')
+def activity_imported(record, new):
+    return journal_imported(record, new, ActivityTopicJournal, 'Activity')
 
 
 def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
     log.debug(f'Trying to copy activity_topic_fields for activity_topic {old_activity_topic}')
-    for old_activity_topic_field in old_s.query(old.meta.tables['activity_topic_field']). \
-            filter(old.meta.tables['activity_topic_field'].c.activity_topic_id ==
+    activity_topic_field = old.meta.tables['activity_topic_field']
+    for old_activity_topic_field in old_s.query(activity_topic_field). \
+            filter(activity_topic_field.c.activity_topic_id ==
                    (old_activity_topic.id if old_activity_topic else None)).all():
         log.debug(f'Found old activity_topic_field {old_activity_topic_field}')
         try:

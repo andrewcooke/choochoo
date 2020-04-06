@@ -44,7 +44,7 @@ function Delete(props) {
     }
 
     return (<>
-        <ColumnCard header='Reset'><Text>
+        <ColumnCard header='Reset'>
             <Text>
                 <p>You can delete the base directory, removing all data in the database.</p>
             </Text>
@@ -54,7 +54,7 @@ function Delete(props) {
                 Some data can be recalculated from the FITS files (which are <b>not</b> deleted),
                 but you will lose any information entered directly into the diary.
             </ConfirmedWriteButton>
-        </Text></ColumnCard>
+        </ColumnCard>
         <Dialog fullScreen={fullScreen} open={wait}>
             <DialogTitle>{'Please wait'}</DialogTitle>
             <DialogContent>
@@ -89,7 +89,7 @@ function Profiles(props) {
         setAnchor(null);
     }
 
-    return (<ColumnCard header='Profiles'><Text>
+    return (<ColumnCard header='Profiles'>
         <Text>
             <p>Profiles allow you to choose how the system is configured.</p>
             <p>If you want a custom configuration you will need to add your own profile
@@ -113,7 +113,7 @@ function Profiles(props) {
                               json={{'profile': profiles[profile][0]}}>
             Configuring the system will allow you to start uploading and analysing data.
         </ConfirmedWriteButton>
-    </Text></ColumnCard>)
+    </ColumnCard>)
 }
 
 
