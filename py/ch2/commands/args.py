@@ -206,14 +206,7 @@ class NamespaceWithVariables(Mapping):
         return value
 
     def system_path(self, subdir=None, file=None, version=DB_VERSION, create=True):
-        dir = join(self[BASE], version)
-        if subdir: dir = join(dir, subdir)
-        dir = clean_path(dir)
-        if create and not exists(dir): makedirs(dir)
-        if file:
-            return join(dir, file)
-        else:
-            return dir
+        return base_system_path(self[BASE], subdir=subdir, file=file, version=version, create=create)
 
     def __iter__(self):
         return iter(self._dict)
@@ -223,6 +216,17 @@ class NamespaceWithVariables(Mapping):
 
     def clone_with(self, **kargs):
         pass
+
+
+def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=True):
+    dir = join(base, version)
+    if subdir: dir = join(dir, subdir)
+    dir = clean_path(dir)
+    if create and not exists(dir): makedirs(dir)
+    if file:
+        return join(dir, file)
+    else:
+        return dir
 
 
 def make_parser():

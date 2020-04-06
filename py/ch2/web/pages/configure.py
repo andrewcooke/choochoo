@@ -3,7 +3,7 @@ from logging import getLogger
 
 from ...commands.configure import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
-from ...commands.import_ import Record, diary_imported, activity_imported
+from ...commands.import_ import Record, diary_imported, activity_imported, available_versions, import_path
 from ...config.utils import profiles
 from ...lib.utils import restart_self
 from ...sql import SystemConstant
@@ -18,6 +18,9 @@ DIRECTORY = 'directory'
 VERSION = 'version'
 DIARY = 'diary'
 ACTIVITY = 'activity'
+IMPORTED = 'imported'
+VERSION = 'version'
+VERSIONS = 'versions'
 
 
 class Configure:
@@ -52,7 +55,16 @@ class Configure:
         # now we need to restart because the database connections exist
         restart_self()
 
-    def read_imported(self, request, s):
+    def read_import_status(self, request, s):
         record = Record()
-        return {DIARY: diary_imported(record, self.__db),
-                ACTIVITY: activity_imported(record, self.__db)}
+        return {IMPORTED: {DIARY: diary_imported(record, self.__db),
+                           ACTIVITY: activity_imported(record, self.__db)},
+                VERSIONS: available_versions(self.__base)}
+
+    def write_import(self, request, s):
+        data = request.json
+        log.debug(data)
+        record = Record()
+        import_path(record, self.__base, data[VERSION], self.__db)
+        return record.json()
+

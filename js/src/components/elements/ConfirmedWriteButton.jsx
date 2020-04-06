@@ -72,7 +72,7 @@ export default function ConfirmedWriteButton(props) {
             handleJson(undefined, reload, undefined, setError)(response);
         } catch (e) {
             console.warn(e);
-        };
+        }
         if (onComplete !== undefined) onComplete();
     }
 

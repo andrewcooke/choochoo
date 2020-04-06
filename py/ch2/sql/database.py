@@ -13,10 +13,12 @@ from .support import Base
 from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DATA, DB_EXTN, ACTIVITY
 from ..lib.log import make_log
 
+
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
 Source,  Interval, Dummy, Composite, CompositeComponent
 ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
 DiaryTopic, DiaryTopicJournal, DiaryTopicField,
+ActivityTopic, ActivityTopicJournal, ActivityTopicField,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticMeasure
 Segment, SegmentJournal
 Pipeline
@@ -24,6 +26,7 @@ MonitorJournal
 Constant, SystemConstant, Process
 ActivitySimilarity, ActivityNearby
 Timestamp
+
 
 log = getLogger(__name__)
 

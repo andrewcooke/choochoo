@@ -1,10 +1,10 @@
-
+from glob import glob
 from logging import getLogger
-from os.path import sep, exists, join, isfile
+from os.path import sep, exists, join, isfile, basename, dirname
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from .args import SOURCE, ACTIVITY, DB_EXTN
+from .args import SOURCE, ACTIVITY, DB_EXTN, DB_VERSION, base_system_path
 from ..lib.date import format_date, time_to_local_date, to_time
 from ..lib.log import log_current_exception
 from ..lib.utils import clean_path
@@ -50,8 +50,8 @@ class Record:
                 'loaded': self._loaded}
 
 
-def import_path(record, args, source, new):
-    path = build_source_path(record, args, source)
+def import_path(record, base, source, new):
+    path = build_source_path(record, base, source)
     old = ReflectedDatabase(path)
     if not old.meta.tables:
         record.raise_(f'No tables found in {path}')
@@ -60,10 +60,10 @@ def import_path(record, args, source, new):
     import_activity(record, old, new)
 
 
-def build_source_path(record, args, source):
+def build_source_path(record, base, source):
     database = ACTIVITY + DB_EXTN
     if sep not in source:
-        path = args.system_path(file=database, version=source, create=False)
+        path = base_system_path(base, file=database, version=source, create=False)
         if exists(path):
             log.info(f'{source} appears to be a version, using path {path}')
             return path
@@ -277,3 +277,14 @@ def any_attr(instance, *names):
         if hasattr(instance, name):
             return getattr(instance, name)
     raise AttributeError(f'No {names} in {instance} ({type(instance)})')
+
+
+def available_versions(base):
+    versions = []
+    if base.endswith(DB_VERSION): base = dirname(base)
+    log.debug(f'Looking for previous versions under {base}')
+    versions.extend(basename(candidate) for candidate in glob(join(base, '[0-9]-[0-9]*'))
+                    if basename(candidate) != DB_VERSION)
+    versions.extend(candidate for candidate in glob(join(base, '**/database-[0-9]*-[0-9]*.sql'), recursive=True))
+    versions.extend(candidate for candidate in glob(join(base, '**/database-[0-9]*-[0-9]*.db'), recursive=True))
+    return versions
