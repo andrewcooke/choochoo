@@ -3,11 +3,12 @@ from argparse import ArgumentParser
 from genericpath import exists
 from logging import getLogger
 from os import makedirs
-from os.path import expanduser, realpath, normpath, join
+from os.path import join
 from re import sub
 from typing import Mapping
 
 from ..lib.date import to_date, to_time
+from ..lib.utils import clean_path
 
 log = getLogger(__name__)
 
@@ -21,7 +22,7 @@ PROGNAME = 'ch2'
 COMMAND = 'command'
 
 ACTIVITIES = 'activities'
-CONFIG = 'config'
+CONFIGURE = 'configure'
 CONSTANTS = 'constants'
 DIARY = 'diary'
 DUMP = 'dump'
@@ -94,6 +95,7 @@ GREP = 'grep'
 GROUP = 'group'
 HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
+IMPORT = 'import'
 INTERNAL = 'internal'
 ITEM = 'item'
 K = 'k'
@@ -156,6 +158,7 @@ SCHEDULE = 'schedule'
 SHOW = 'show'
 SINGLE = 'single'
 SLICES = 'slices'
+SOURCE = 'source'
 SOURCE_ID = 'source-id'
 START = 'start'
 STATISTIC_NAMES = 'statistic-names'
@@ -202,11 +205,11 @@ class NamespaceWithVariables(Mapping):
             value = self._dict[sub('-', '_', name)]
         return value
 
-    def system_path(self, subdir=None, file=None):
-        dir = join(self[BASE], DB_VERSION)
+    def system_path(self, subdir=None, file=None, version=DB_VERSION, create=True):
+        dir = join(self[BASE], version)
         if subdir: dir = join(dir, subdir)
-        dir = realpath(normpath(expanduser(dir)))
-        if not exists(dir): makedirs(dir)
+        dir = clean_path(dir)
+        if create and not exists(dir): makedirs(dir)
         if file:
             return join(dir, file)
         else:
@@ -217,6 +220,9 @@ class NamespaceWithVariables(Mapping):
 
     def __len__(self):
         return len(self.__dict__)
+
+    def clone_with(self, **kargs):
+        pass
 
 
 def make_parser():
@@ -243,7 +249,7 @@ def make_parser():
     help.add_argument(TOPIC, nargs='?', metavar=TOPIC,
                       help='the subject for help')
 
-    web = subparsers.add_parser(WEB, help='start the web interface')
+    web = subparsers.add_parser(WEB, help='the web interface (probably all you need)')
     web_cmds = web.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
 
     def add_web_server_args(cmd):
@@ -255,7 +261,7 @@ def make_parser():
     web_cmds.add_parser(STATUS, help='display status of web server')
     add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
 
-    upload = subparsers.add_parser(UPLOAD, help='upload new activities')
+    upload = subparsers.add_parser(UPLOAD, help='upload data (calls activities, monitor, statistics)')
     upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
                         help='kit items associated with activities')
     upload.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s) for activities')
@@ -358,24 +364,25 @@ def make_parser():
 
     # low-level commands use rarely
 
-    config = subparsers.add_parser(CONFIG,
-                                   help='configure the default database ' +
-                                        '(see docs for full configuration instructions)')
-    config_cmds = config.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    config_check = config_cmds.add_parser(CHECK, help="check config")
-    config_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
-    config_check.add_argument(mm(no(CONFIG)), action='store_true', help='check database has no configuration')
-    config_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
+    configure = subparsers.add_parser(CONFIGURE, help='configure the database')
+    configure_cmds = configure.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    configure_check = configure_cmds.add_parser(CHECK, help="check config")
+    configure_check.add_argument(mm(no(DATA)), action='store_true', help='check database has no data loaded')
+    configure_check.add_argument(mm(no(CONFIGURE)), action='store_true', help='check database has no configuration')
+    configure_check.add_argument(mm(no(ACTIVITY_GROUPS)), action='store_true',
                               help='check database has no activity groups defined')
-    config_list = config_cmds.add_parser(LIST, help='list available profiles')
-    config_load = config_cmds.add_parser(LOAD, help="configure using the given profile")
-    config_profiles = config_load.add_subparsers(title='profile', dest=PROFILE, required=True)
+    configure_list = configure_cmds.add_parser(LIST, help='list available profiles')
+    configure_load = configure_cmds.add_parser(LOAD, help="configure using the given profile")
+    configure_profiles = configure_load.add_subparsers(title='profile', dest=PROFILE, required=True)
     from ..config.utils import profiles
     for name in profiles():
-        config_profile = config_profiles.add_parser(name)
-        config_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
-    config_delete = config_cmds.add_parser(DELETE, help='delete current data')
-    config_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
+        configure_profile = configure_profiles.add_parser(name)
+        configure_profile.add_argument(mm(no(DIARY)), action='store_true', help='skip diary creation (for migration)')
+    configure_delete = configure_cmds.add_parser(DELETE, help='delete current data')
+    configure_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
+
+    import_ = subparsers.add_parser(IMPORT, help='copy diary entries from a previous version')
+    import_.add_argument(SOURCE, help='version or path to import')
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')

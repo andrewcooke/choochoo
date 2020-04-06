@@ -13,7 +13,7 @@ from ..commands.upload import DATA_DIR
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
 from ..msil2a.download import MSIL2A_DIR
-from ..sql import DiaryTopicJournal, StatisticJournalType
+from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR
 from ..stats.calculate.achievement import AchievementCalculator
@@ -210,6 +210,9 @@ class Config:
         # the fields in the diary that are displayed for each activity
         for activity_group in self._all_groups_but_all():
             c = Counter()
+            add_activity_topic_field(s, None, ActivityTopicField.NAME, c, StatisticJournalType.TEXT,
+                                     activity_group, model={TYPE: EDIT})
+            # note that these have empty toic parents because they are children of the entry itself
             if activity_group.name != SWIM:
                 add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
                                          activity_group, model={TYPE: EDIT})

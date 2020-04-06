@@ -1,18 +1,17 @@
 
 from logging import getLogger
-from os.path import expanduser, normpath, realpath
 from time import sleep
 
 from requests import HTTPError
 
 from .args import DIR, USER, PASS, DATE, FORCE
-from ..lib import now, to_time, local_time_to_time, time_to_local_time
-from ..lib.log import log_current_exception
 from ..fit.download.connect import GarminConnect
+from ..lib import now, local_time_to_time, time_to_local_time
+from ..lib.log import log_current_exception
+from ..lib.utils import clean_path
 from ..lib.workers import ProgressTree
 from ..sql import Constant, SystemConstant
 from ..stats.read.monitor import missing_dates
-
 
 log = getLogger(__name__)
 
@@ -37,7 +36,7 @@ For bulk downloads use
 https://www.garmin.com/en-US/account/datamanagement/
     '''
     dates = [args[DATE]] if args[DATE] else []
-    dir = realpath(normpath(expanduser(DIR))) if args[DIR] else None
+    dir = clean_path(DIR) if args[DIR] else None
     with db.session_context() as s:
         run_garmin(sys, s, dir, args[USER], args[PASS], dates, args[FORCE])
 

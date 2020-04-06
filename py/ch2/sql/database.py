@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from sqlite3 import OperationalError
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, MetaData
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
@@ -60,14 +60,11 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
 
 class DatabaseBase:
 
-    def __init__(self, name, table, base, args):
-        self.path = args.system_path(DATA, name + DB_EXTN)
+    def __init__(self, path):
+        self.path = path
         log.info('Using database at %s' % self.path)
         self.engine = create_engine('sqlite:///%s' % self.path, echo=False)
         self.session = self._sessionmaker()
-        if self.no_schema(table):
-            log.info('Creating tables')
-            base.metadata.create_all(self.engine)
 
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine)
@@ -88,8 +85,20 @@ class DatabaseBase:
         finally:
             session.close()
 
+    def __str__(self):
+        return f'{self.__class__.__name__} at {self.path}'
 
-class Database(DatabaseBase):
+
+class MappedDatabase(DatabaseBase):
+
+    def __init__(self, name, table, base, args):
+        super().__init__(args.system_path(DATA, name + DB_EXTN))
+        if self.no_schema(table):
+            log.info('Creating tables')
+            base.metadata.create_all(self.engine)
+
+
+class Database(MappedDatabase):
 
     def __init__(self, args):
         super().__init__(ACTIVITY, Source, Base, args)
@@ -117,4 +126,12 @@ def connect(args):
     make_log(ns)
     db = Database(ns)
     return ns, db
+
+
+class ReflectedDatabase(DatabaseBase):
+
+    def __init__(self, path):
+        super().__init__(path)
+        self.meta = MetaData()
+        self.meta.reflect(bind=self.engine)
 

@@ -4,7 +4,7 @@ from os.path import join, exists
 from shutil import rmtree
 from time import sleep
 
-from .args import no, mm, SUB_COMMAND, CHECK, DATA, CONFIG, ACTIVITY_GROUPS, LIST, PROFILE, DB_VERSION, \
+from .args import no, mm, SUB_COMMAND, CHECK, DATA, CONFIGURE, ACTIVITY_GROUPS, LIST, PROFILE, DB_VERSION, \
     DIARY, DELETE, FORCE
 from .help import Markdown
 from ..config import ActivityGroup
@@ -17,23 +17,23 @@ log = getLogger(__name__)
 BROKEN = 'broken'
 
 
-def config(args, sys, db):
+def configure(args, sys, db):
     '''
-## config
+## configure
 
-    > ch2 config load default
+    > ch2 configure load default
 
 Generate a simple initial configuration.
 
 Please see the documentation at http://andrewcooke.github.io/choochoo - you have a lot more options!
 
-    > ch2 config check --no-config --no-data
+    > ch2 configure check --no-config --no-data
 
 Check that the current database is empty.
     '''
     action = args[SUB_COMMAND]
     if action == CHECK:
-        check(db, args[no(CONFIG)], args[no(DATA)], args[no(ACTIVITY_GROUPS)])
+        check(db, args[no(CONFIGURE)], args[no(DATA)], args[no(ACTIVITY_GROUPS)])
     elif action == LIST:
         list()
     elif action == DELETE:
@@ -71,9 +71,11 @@ def load(sys, s, no_diary, profile):
     if version:
         raise Exception(f'System already configured with version {version}')
     fn, spec = get_profile(profile)
+    log.info(f'Loading profile {profile}')
     sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION + ' ' + BROKEN)
     fn(sys, s, no_diary)
     sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
+    log.info(f'Profile {profile} loaded successfully')
 
 
 def delete(sys, base, force):

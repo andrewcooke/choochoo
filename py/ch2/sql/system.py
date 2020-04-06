@@ -2,7 +2,7 @@ from logging import getLogger
 
 from sqlalchemy.orm import sessionmaker
 
-from .database import DatabaseBase, SystemConstant, Process
+from .database import SystemConstant, Process, MappedDatabase
 from .support import SystemBase
 from .tables.system import Progress
 from ..commands.args import SYSTEM
@@ -10,7 +10,7 @@ from ..commands.args import SYSTEM
 log = getLogger(__name__)
 
 
-class System(DatabaseBase):
+class System(MappedDatabase):
 
     def __init__(self, args):
         super().__init__(SYSTEM, SystemConstant, SystemBase, args)

@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from ..json import JsonResponse
-from ...commands.config import load, delete
+from ...commands.configure import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...config.utils import profiles
 from ...lib.utils import restart_self

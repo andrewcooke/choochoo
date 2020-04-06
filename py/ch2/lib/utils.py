@@ -3,7 +3,7 @@ from collections import defaultdict
 from itertools import zip_longest, groupby
 from logging import getLogger
 from os import getpid, close, execl, execle
-from os.path import split
+from os.path import split, realpath, normpath, expanduser
 from pprint import PrettyPrinter
 from sys import executable, argv
 
@@ -199,3 +199,7 @@ def restart_self():
     log.info(f'Restarting {python} {args}')
     execl(python, python, *args)
     # no need to exit as we do not return
+
+
+def clean_path(path):
+    return realpath(normpath(expanduser(path)))
