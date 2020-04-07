@@ -160,6 +160,7 @@ class Config:
         add_diary(s, MonitorDiary, c)
         # these tie-in to the constants used in add_impulse()
         fitness, fatigue = self._ff_parameters()
+        all = self._activity_groups[ALL]
         add_diary(s, ResponseDiary, c,
                   fitness=[name_constant(FITNESS_D % days, all) for (days, _, _) in fitness],
                   fatigue=[name_constant(FATIGUE_D % days, all) for (days, _, _) in fatigue])

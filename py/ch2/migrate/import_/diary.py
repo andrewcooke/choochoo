@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import journal_imported, match_statistic_name, create_statistic_journal
+from . import journal_imported, match_statistic_name, copy_statistic_journal
 from ...sql import DiaryTopic, DiaryTopicJournal
 from ...lib.log import log_current_exception
 
@@ -79,7 +79,7 @@ def copy_diary_topic_journal_entries(record, old_s, old, old_statistic_name, new
         log.debug(f'Found old diary_topic_journal {old_diary_topic_journal}')
         new_diary_topic_journal = DiaryTopicJournal.get_or_add(new_s, old_diary_topic_journal.date)
         log.debug(f'Found new diary_topic_journal {new_diary_topic_journal}')
-        create_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
-                                 new_s, new_statistic_name, new_diary_topic_journal)
+        copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
+                               new_s, new_statistic_name, new_diary_topic_journal)
 
 

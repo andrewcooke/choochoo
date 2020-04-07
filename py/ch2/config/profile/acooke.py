@@ -71,6 +71,11 @@ class ACooke(Config):
                 SPORT_SWIMMING: SWIM,
                 SPORT_WALKING: WALK}
 
+    def _ff_parameters(self):
+        fitness = ((42, 1, 1),)
+        fatigue = ((7, 1, 5),)
+        return fitness, fatigue
+
     def _load_standard_statistics(self, s, c):
         super()._load_standard_statistics(s, c)
 

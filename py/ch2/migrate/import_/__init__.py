@@ -65,8 +65,8 @@ def match_statistic_name(record, old_statistic_name, new_s, owner, constraint):
                       f'for {short_cls(owner)} / {constraint}')
 
 
-def create_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
-                             new_s, new_statistic_name, new_activity_topic_journal):
+def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
+                           new_s, new_statistic_name, source, name=None):
     journals = {StatisticJournalType.INTEGER.value: old.meta.tables['statistic_journal_integer'],
                 StatisticJournalType.FLOAT.value: old.meta.tables['statistic_journal_float'],
                 StatisticJournalType.TEXT.value: old.meta.tables['statistic_journal_text']}
@@ -76,9 +76,11 @@ def create_statistic_journal(record, old_s, old, old_statistic_name, old_statist
     new_value = add(new_s,
                     STATISTIC_JOURNAL_CLASSES[StatisticJournalType(new_statistic_name.statistic_journal_type)](
                         value=old_value.value, time=old_statistic_journal.time, statistic_name=new_statistic_name,
-                        source=new_activity_topic_journal))
+                        source=source))
+    new_s.commit()  # avoid logging below if error
     date = format_date(time_to_local_date(to_time(new_value.time)))
-    record.loaded(f'Statistic {new_value.value} at {date} for {new_statistic_name.name}')
+    name = name if name else new_statistic_name.name
+    record.loaded(f'Statistic {new_value.value} at {date} for {name}')
 
 
 def any_attr(instance, *names):

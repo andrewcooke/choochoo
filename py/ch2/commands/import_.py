@@ -5,6 +5,7 @@ from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path
 from ..lib.utils import clean_path
 from ..migrate.import_ import Record
 from ..migrate.import_.activity import import_activity
+from ..migrate.import_.constant import import_constant
 from ..migrate.import_.diary import import_diary
 from ..migrate.import_.kit import import_kit
 from ..sql.database import ReflectedDatabase
@@ -32,6 +33,7 @@ def import_path(record, base, source, new):
     import_diary(record, old, new)
     import_activity(record, old, new)
     import_kit(record, old, new)
+    import_constant(record, old, new)
 
 
 def build_source_path(record, base, source):

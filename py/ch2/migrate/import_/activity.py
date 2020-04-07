@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from . import journal_imported, match_statistic_name, create_statistic_journal, any_attr
+from . import journal_imported, match_statistic_name, copy_statistic_journal, any_attr
 from ...lib.log import log_current_exception
 from ...sql import ActivityTopicJournal, FileHash, ActivityTopic
 
@@ -61,8 +61,8 @@ def copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, 
             filter(activity_topic_journal.c.id == old_statistic_journal.source_id).one()
         log.debug(f'Found old activity_topic_journal {old_activity_topic_journal}')
         new_activity_topic_journal = create_activity_topic_journal(record, old_s, old, old_activity_topic_journal, new_s)
-        create_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
-                                 new_s, new_statistic_name, new_activity_topic_journal)
+        copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
+                               new_s, new_statistic_name, new_activity_topic_journal)
 
 
 def create_activity_topic_journal(record, old_s, old, old_activity_topic_journal, new_s):
