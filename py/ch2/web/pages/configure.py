@@ -3,9 +3,13 @@ from logging import getLogger
 
 from ...commands.configure import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
-from ...commands.import_ import Record, diary_imported, activity_imported, available_versions, import_path
+from ...commands.import_ import Record, import_path
 from ...config.utils import profiles
 from ...lib.utils import restart_self
+from ...migrate.import_ import available_versions
+from ...migrate.import_.activity import activity_imported
+from ...migrate.import_.diary import diary_imported
+from ...migrate.import_.kit import kit_imported
 from ...sql import SystemConstant
 
 log = getLogger(__name__)
@@ -21,6 +25,7 @@ ACTIVITY = 'activity'
 IMPORTED = 'imported'
 VERSION = 'version'
 VERSIONS = 'versions'
+KIT = 'kit'
 
 
 class Configure:
@@ -58,7 +63,8 @@ class Configure:
     def read_import_status(self, request, s):
         record = Record()
         return {IMPORTED: {DIARY: diary_imported(record, self.__db),
-                           ACTIVITY: activity_imported(record, self.__db)},
+                           ACTIVITY: activity_imported(record, self.__db),
+                           KIT: kit_imported(record, self.__db)},
                 VERSIONS: available_versions(self.__base)}
 
     def write_import(self, request, s):

@@ -10,8 +10,6 @@ function Directory(props) {
 
     const {data} = props;
 
-    console.log('directory', data);
-
     return (<ColumnCard header='Directories'><Grid item xs={12}><Text>
         <p>Choochoo uses two separate directories for storage:</p>
         <ul>
@@ -40,8 +38,6 @@ function Delete(props) {
     const {data, reload} = props;
     const [wait, setWait] = useState(false);
 
-    console.log('delete');
-
     function onComplete() {
         console.log('complete');
         setWait(true);
@@ -51,7 +47,8 @@ function Delete(props) {
     return (<>
         <ColumnCard header='Reset'>
             <Grid item xs={12}><Text>
-                <p>You can delete the base directory, removing all data in the database.</p>
+                <p>You can delete the base directory, removing all data in the database,
+                    along with old logs and jupyter notebooks.</p>
             </Text></Grid>
             <Grid item xs={9}/>
             <ConfirmedWriteButton xs={3} label='Delete' variant='contained' method='post'
