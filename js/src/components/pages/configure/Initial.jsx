@@ -24,11 +24,9 @@ function Directory(props) {
             </li>
         </ul>
         <p>If you configure the system incorrectly you can start over by deleting the
-            base directory.  You will not lose the FIT files containing your
-            activities, which can be reloaded, but you <b>will</b> lose any diary
-            entries you have added.  To avoid this you can use the scripts in the
-            ch2.migrate.reload package.  Hopefully this will become simpler in a
-            future release.</p>
+            base directory.  Activity data can be recovered from FIT files, but any
+            new user data will be lost (although old user data, from a previous version,
+            can be imported if the previous database exists).</p>
     </Text></Grid></ColumnCard>)
 }
 
@@ -110,7 +108,7 @@ function ConfiguredYes(props) {
 
     return (<ColumnList>
         <ColumnCard header='Configured'><Grid item xs={12}><Text>
-            <P>The initial system is configured (version {data.version}).</P>
+            <P>The system is configured (version {data.version}).</P>
         </Text></Grid></ColumnCard>
         <Directory data={data}/>
         <Delete reload={reload}/>

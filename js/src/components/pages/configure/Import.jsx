@@ -79,12 +79,16 @@ function Columns(props) {
         const enabled = Object.values(data.imported).every(value => !value);
         return (<ColumnList>
             <ColumnCard header='Introduction'><Grid item xs={12}><Text>
-                <p>After a new configuration you can import diary and activity topics
-                    (the information you enter manually via the diary) from a previous version.</p>
+                <p>Choochoo manages three kinds of data: activity data from FIT files; user data
+                    entered by hand (via the web, command line and diary); and calculated statistics.</p>
+                <p>When you update to a new database, activity data can be re-read from FIT files
+                    and statistics can be re-calculated.  User data, however, must be copied across
+                    from the previous version.</p>
+                <p>User data includes diary topics (user data associated with a given date),
+                    activity topics (user data associated with a particular activity),
+                    and kit details.</p>
                 <p>Note that these data must be imported <b>before</b> any new data are entered manually,
                     to avoid conflicts.</p>
-                <p>Activity data, which is read from FIT files, will be re-read automatically when
-                    new activities are uploaded.</p>
             </Text></Grid></ColumnCard>
             {results === null ? <Status imported={data.imported}/> : null}
             {results === null && enabled ? <Source versions={data.versions} setResults={setResults}/> : null}
@@ -113,6 +117,6 @@ export default function Import(props) {
     return (
         <Layout navigation={<MainMenu configure/>}
                 content={<Columns data={data} resultsState={resultsState}/>}
-                match={match} title='Import Old Data' errorState={errorState}/>
+                match={match} title='Import User Data' errorState={errorState}/>
     );
 }
