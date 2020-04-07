@@ -12,6 +12,8 @@ from ..sql.database import ReflectedDatabase, StatisticName, ActivityTopic, Stat
     FileHash, ActivityTopicJournal, DiaryTopicJournal, DiaryTopic, StatisticJournal
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.utils import add
+from ..sql.types import short_cls
+
 
 log = getLogger(__name__)
 
@@ -223,7 +225,7 @@ def match_statistic_name(record, old_statistic_name, new_s, owner, constraint):
     except NoResultFound:
         record.raise_(f'No new equivalent to statistic {old_statistic_name.name} '
                       f'({StatisticJournalType(old_statistic_name.statistic_journal_type).name}) '
-                      f'for {owner} / {constraint}')
+                      f'for {short_cls(owner)} / {constraint}')
 
 
 def copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, new_s, new_statistic_name):
@@ -268,7 +270,7 @@ def create_statistic_journal(record, old_s, old, old_statistic_name, old_statist
                         value=old_value.value, time=old_statistic_journal.time, statistic_name=new_statistic_name,
                         source=new_activity_topic_journal))
     date = format_date(time_to_local_date(to_time(new_value.time)))
-    record.loaded(f'Copied value {new_value.value} at {date} for {new_statistic_name.name}')
+    record.loaded(f'{new_value.value} at {date} for {new_statistic_name.name}')
 
 
 def any_attr(instance, *names):
@@ -283,8 +285,14 @@ def available_versions(base):
     versions = []
     if base.endswith(DB_VERSION): base = dirname(base)
     log.debug(f'Looking for previous versions under {base}')
-    versions.extend(basename(candidate) for candidate in glob(join(base, '[0-9]-[0-9]*'))
-                    if basename(candidate) != DB_VERSION)
-    versions.extend(candidate for candidate in glob(join(base, '**/database-[0-9]*-[0-9]*.sql'), recursive=True))
-    versions.extend(candidate for candidate in glob(join(base, '**/database-[0-9]*-[0-9]*.db'), recursive=True))
+    append(versions, (basename(candidate) for candidate in glob(join(base, '[0-9]-[0-9]*'))
+                      if basename(candidate) != DB_VERSION))
+    append(versions, glob(join(base, '**/database-[0-9]*-[0-9]*.sql'), recursive=True))
+    append(versions, glob(join(base, '**/database-[0-9]*-[0-9]*.db'), recursive=True))
     return versions
+
+
+def append(versions, glob):
+    for version in sorted(glob, reverse=True):
+        log.debug(version)
+        versions.append(version)

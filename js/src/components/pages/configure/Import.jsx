@@ -5,9 +5,38 @@ import {Autocomplete} from "@material-ui/lab";
 import {TextField, Grid} from "@material-ui/core";
 
 
+function Warnings(props) {
+    const {warnings} = props;
+    return (<ColumnCard header='Warnings'>
+        <Grid item xs={12}><Text><ul>
+            {warnings.map(warning => (<li>{warning}</li>))}
+        </ul></Text></Grid>
+    </ColumnCard>);
+}
+
+
+function Loaded(props) {
+    const {loaded} = props;
+    return (<ColumnCard header='Loaded'>
+        <Grid item xs={12}><Text><ul>
+            {loaded.map(entry => (<li>{entry}</li>))}
+        </ul></Text></Grid>
+    </ColumnCard>);
+}
+
+
+function Results(props) {
+    const {results} = props;
+    return (<>
+        {results.warnings.length > 0 ? <Warnings warnings={results.warnings}/> : null}
+        {results.loaded.length > 0 ? <Loaded loaded={results.loaded}/> : null}
+        </>);
+}
+
+
 function Source(props) {
 
-    const {versions, reload} = props;
+    const {versions, reload, setResults} = props;
     const [version, setVersion] = useState(versions.length > 0 ? versions[0] : null);
 
     return (<ColumnCard header='Source'>
@@ -19,11 +48,11 @@ function Source(props) {
         </Text></Grid>
         <Grid item xs={9}>
             <Autocomplete options={versions} label='Source' freeSolo value={version}
-                              onInputChange={(event, value) => setVersion(value)}
-                              renderInput={params => <TextField {...params} label='Source' variant='outlined'/>}/>
+                          onInputChange={(event, value) => setVersion(value)}
+                          renderInput={params => <TextField {...params} label='Source' variant='outlined'/>}/>
         </Grid>
         <ConfirmedWriteButton xs={3} label='Import' variant='contained' method='post'
-                              href='/api/configure/import' setData={reload}
+                              href='/api/configure/import' setData={setResults}
                               json={{'version': version}}>
             Importing the data will preserve you diary entries from the previous install.
         </ConfirmedWriteButton>
@@ -46,18 +75,19 @@ function Status(props) {
         <Grid item xs={12}><Text>
             <ul id='description'/>
         </Text></Grid>
-    </ColumnCard>)
+    </ColumnCard>);
 }
 
 
 function Columns(props) {
 
-    const {data} = props;
+    const {data, resultsState} = props;
+    const [results, setResults] = resultsState;
 
     if (data === null) {
         return <Loading/>;
     } else {
-        const enabled = Object.values(data.imported).every(value => ! value);
+        const enabled = Object.values(data.imported).every(value => !value);
         return (<ColumnList>
             <ColumnCard header='Introduction'><Grid item xs={12}><Text>
                 <p>After a new configuration you can import diary and activity topics
@@ -67,8 +97,9 @@ function Columns(props) {
                 <p>Activity data, which is read from FIT files, will be re-read automatically when
                     new activities are uploaded.</p>
             </Text></Grid></ColumnCard>
-            <Status imported={data.imported}/>
-            {enabled ? <Source versions={data.versions}/> : null}
+            {results === null ? <Status imported={data.imported}/> : null}
+            {results === null && enabled ? <Source versions={data.versions} setResults={setResults}/> : null}
+            {results !== null ? <Results results={results}/> : null}
         </ColumnList>);
     }
 }
@@ -78,6 +109,7 @@ export default function Import(props) {
 
     const {match, history} = props;
     const [data, setData] = useState(null);
+    const resultsState = useState(null);
     const errorState = useState(null);
     const [error, setError] = errorState;
 
@@ -91,7 +123,7 @@ export default function Import(props) {
 
     return (
         <Layout navigation={<MainMenu configure/>}
-                content={<Columns data={data}/>}
+                content={<Columns data={data} resultsState={resultsState}/>}
                 match={match} title='Import Old Data' errorState={errorState}/>
     );
 }
