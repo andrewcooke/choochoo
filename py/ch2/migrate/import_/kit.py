@@ -2,6 +2,7 @@
 from logging import getLogger
 
 from ...lib import format_date, time_to_local_date, to_time
+from ...lib.log import log_current_exception
 from ...sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \
     StatisticJournalType
 from ...sql.utils import add
@@ -12,10 +13,14 @@ log = getLogger(__name__)
 
 def import_kit(record, old, new):
     if not kit_imported(record, new):
-        with old.session_context() as old_s:
-            with new.session_context() as new_s:
-                copy_components(record, old_s, old, new_s)
-                copy_tree(record, old_s, old, new_s)
+        try:
+            with old.session_context() as old_s:
+                with new.session_context() as new_s:
+                    copy_components(record, old_s, old, new_s)
+                    copy_tree(record, old_s, old, new_s)
+        except Exception as e:
+            log_current_exception()
+            record.warning(f'Aborting kit import: {e}')
 
 
 def kit_imported(record, new):

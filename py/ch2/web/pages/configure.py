@@ -8,6 +8,7 @@ from ...config.utils import profiles
 from ...lib.utils import restart_self
 from ...migrate.import_ import available_versions
 from ...migrate.import_.activity import activity_imported
+from ...migrate.import_.constant import constant_imported
 from ...migrate.import_.diary import diary_imported
 from ...migrate.import_.kit import kit_imported
 from ...sql import SystemConstant
@@ -26,6 +27,7 @@ IMPORTED = 'imported'
 VERSION = 'version'
 VERSIONS = 'versions'
 KIT = 'kit'
+CONSTANT = 'constant'
 
 
 class Configure:
@@ -64,7 +66,8 @@ class Configure:
         record = Record()
         return {IMPORTED: {DIARY: diary_imported(record, self.__db),
                            ACTIVITY: activity_imported(record, self.__db),
-                           KIT: kit_imported(record, self.__db)},
+                           KIT: kit_imported(record, self.__db),
+                           CONSTANT: constant_imported(record, self.__db)},
                 VERSIONS: available_versions(self.__base)}
 
     def write_import(self, request, s):

@@ -32,7 +32,7 @@ function Source(props) {
         <Grid item xs={12}><Text>
             <p>Enter below the source for data to import.</p>
             <p>This can be a version number
-                (installed in the same base directory as the current install)
+                (if sharing the same directory structure as the current install)
                 or a database file.</p>
         </Text></Grid>
         <Grid item xs={9}>
@@ -63,6 +63,8 @@ function Status(props) {
     return (<ColumnCard header='Status'>
         <Grid item xs={12}><Text>
             <ul id='description'/>
+            <p>Constants can be imported whenever there are unset values;
+                other data must be completely unset.</p>
         </Text></Grid>
     </ColumnCard>);
 }
@@ -76,7 +78,8 @@ function Columns(props) {
     if (data === null) {
         return <Loading/>;
     } else {
-        const enabled = Object.values(data.imported).every(value => !value);
+        const enabled = Object.values(data.imported).some(value => !value);
+        console.log(enabled, results);
         return (<ColumnList>
             <ColumnCard header='Introduction'><Grid item xs={12}><Text>
                 <p>Choochoo manages three kinds of data: activity data from FIT files; user data

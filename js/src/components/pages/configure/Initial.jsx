@@ -13,9 +13,10 @@ function Directory(props) {
     return (<ColumnCard header='Directories'><Grid item xs={12}><Text>
         <p>Choochoo uses two separate directories for storage:</p>
         <ul>
-            <li>Database, log files, and Jupyter notebooks are stored in the base directory:<br/>
+            <li>Database, log files, and Jupyter notebooks are stored below the base
+                directory by version number:<br/>
                 <pre>{data.directory}</pre>
-                This location can only be changed by specifying an alternative when
+                The base directory can be changed by specifying an alternative when
                 starting the web server:<br/>
                 <pre>ch2 --base DIRECTORY web start</pre>
             </li>
@@ -23,10 +24,6 @@ function Directory(props) {
                 a <Link to='/configure/constants'>constant</Link> that can be configured later.
             </li>
         </ul>
-        <p>If you configure the system incorrectly you can start over by deleting the
-            base directory.  Activity data can be recovered from FIT files, but any
-            new user data will be lost (although old user data, from a previous version,
-            can be imported if the previous database exists).</p>
     </Text></Grid></ColumnCard>)
 }
 
@@ -45,8 +42,12 @@ function Delete(props) {
     return (<>
         <ColumnCard header='Reset'>
             <Grid item xs={12}><Text>
-                <p>You can delete the base directory, removing all data in the database,
+                <p>You can delete the current version from the base directory,
+                    removing all data in the database,
                     along with old logs and jupyter notebooks.</p>
+                <p>Activity data can then imported from FIT files (assuming they were saved to DATA_DIR).
+                    In most cases, user data from a previous version can also be imported
+                    (assuming the previous database still exists).</p>
             </Text></Grid>
             <Grid item xs={9}/>
             <ConfirmedWriteButton xs={3} label='Delete' variant='contained' method='post'
