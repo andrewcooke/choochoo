@@ -2,7 +2,7 @@
 from ..config import Config, WALK, SWIM, RUN
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby
 from ..power import add_power_estimate
-from ...diary.model import TYPE, TEXT
+from ...diary.model import TYPE, EDIT
 from ...sql import StatisticJournalType
 from ...stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
 
@@ -37,13 +37,13 @@ class ACooke(Config):
         injuries = add_diary_topic(s, 'Injuries', c)
 
         ms = add_child_diary_topic(s, injuries, 'Multiple Sclerosis', c)
-        add_diary_topic_field(s, ms, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: TEXT})
+        add_diary_topic_field(s, ms, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
         add_child_diary_topic(s, ms, 'Betaferon', c,
                               schedule='2018-08-07/2d[1]')  # reminder to take meds on alternate days
 
         leg = add_child_diary_topic(s, injuries, 'Broken Femur LHS', c,
                                     schedule='d2018-03-11-2020-03-01')
-        add_diary_topic_field(s, leg, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: TEXT})
+        add_diary_topic_field(s, leg, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
         add_child_diary_topic(s, leg, 'Learn to manage tendon pain', c)  # aims added as child topics
         add_child_diary_topic(s, leg, 'Maintain fitness', c)
         add_child_diary_topic(s, leg, 'Visit UK', c, schedule='-2018-08-11')
