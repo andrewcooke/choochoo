@@ -1,35 +1,24 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, MainMenu, Text} from "../../elements";
+import {
+    ColumnCard,
+    ColumnList,
+    ConfirmedWriteButton,
+    Layout,
+    Loading,
+    MainMenu,
+    ScrollableListCard,
+    Text
+} from "../../elements";
 import {handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
-import {TextField, Grid} from "@material-ui/core";
-
-
-function Warnings(props) {
-    const {warnings} = props;
-    return (<ColumnCard header='Warnings'>
-        <Grid item xs={12}><Text><ul>
-            {warnings.map(warning => (<li>{warning}</li>))}
-        </ul></Text></Grid>
-    </ColumnCard>);
-}
-
-
-function Loaded(props) {
-    const {loaded} = props;
-    return (<ColumnCard header='Loaded'>
-        <Grid item xs={12}><Text><ul>
-            {loaded.map(entry => (<li>{entry}</li>))}
-        </ul></Text></Grid>
-    </ColumnCard>);
-}
+import {Grid, TextField} from "@material-ui/core";
 
 
 function Results(props) {
     const {results} = props;
     return (<>
-        {results.warnings.length > 0 ? <Warnings warnings={results.warnings}/> : null}
-        {results.loaded.length > 0 ? <Loaded loaded={results.loaded}/> : null}
+        {results.warnings.length > 0 ? <ScrollableListCard header='Warnings' list={results.warnings}/> : null}
+        {results.loaded.length > 0 ? <ScrollableListCard header='Loaded' list={results.loaded}/> : null}
         </>);
 }
 
