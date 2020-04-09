@@ -1,6 +1,10 @@
 from json import dumps
+from logging import getLogger
 
 from werkzeug import Response
+
+
+log = getLogger(__name__)
 
 
 class JsonResponse(Response):

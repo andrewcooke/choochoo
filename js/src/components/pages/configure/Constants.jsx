@@ -96,18 +96,23 @@ function UndatedValue(props) {
 
 function emptyCopy(constant) {
     const extra = {...constant};
+    console.log('extra');
     if (constant.values.length > 0) {
-        if (isComposite(constant.values[0])) {
-            extra.values = [{...constant.values[0]}];
+        if (constant.composite) {
+            console.log('composite', extra);
+            extra.values = [{value: {...constant.values[0].value}, time: constant.values[0].time}];
             Object.keys(extra.values[0].value).forEach(
-                name => extra.values[0].value[name] = (isString(extra.values[0].value[name]) ? '' : 0));
+                name => extra.values[0].value[name] = isString(extra.values[0].value[name]) ? '' : 0);
         } else {
-            extra.values = [''];
+            console.log('single', extra);
+            extra.values = [{value: '', time: format(new Date(), FMT_DAY_TIME)}];
         }
     } else {
+        console.log('empty', extra);
         extra.values = [{value: ''}];
     }
     extra.values[0].time = format(new Date(), FMT_DAY_TIME);
+    console.log('done', extra);
     return extra;
 }
 
@@ -122,6 +127,8 @@ function DatedConstant(props) {
     const [newConstant, setNewConstant] = constantState;
     const extraState = useState(emptyCopy(constant));
     const [extra, setExtra] = extraState;
+
+    console.log('DatedConstant', newConstant);
 
     return (<ColumnCard header={constant.name}>
         <Grid item xs={12}><P>{constant.description}</P></Grid>
