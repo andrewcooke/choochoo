@@ -128,7 +128,7 @@ class Config:
         for group in self._impulse_groups():
             add_impulse(s, c, group)
             add_activity_constant(s, group, FTHR,
-                                  description=f'Heart rate at functional threshold (group.name)',
+                                  description=f'Heart rate at functional threshold for {group.name}',
                                   units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_climb(s)  # default climb calculator
         fitness, fatigue = self._ff_parameters()

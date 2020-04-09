@@ -84,12 +84,12 @@ function Columns(props) {
             <ColumnCard header='Introduction'><Grid item xs={12}><Text>
                 <p>Choochoo manages three kinds of data: activity data from FIT files; user data
                     entered by hand (via the web, command line and diary); and calculated statistics.</p>
-                <p>When you update to a new database, activity data can be re-read from FIT files
+                <p>When you update to a new database activity data can be re-read from FIT files
                     and statistics can be re-calculated.  User data, however, must be copied across
                     from the previous version.</p>
                 <p>User data includes diary topics (user data associated with a given date),
                     activity topics (user data associated with a particular activity),
-                    and kit details.</p>
+                    kit details, and constant values.</p>
                 <p>Note that these data must be imported <b>before</b> any new data are entered manually,
                     to avoid conflicts.</p>
             </Text></Grid></ColumnCard>
@@ -110,7 +110,7 @@ export default function Import(props) {
     const [error, setError] = errorState;
 
     useEffect(() => {
-        fetch('/api/configure/import-status')
+        fetch('/api/configure/import')
             .then(handleJson(history, setData, setError))
             .catch(reason => {
                 console.warn('configure/profiles:', reason);

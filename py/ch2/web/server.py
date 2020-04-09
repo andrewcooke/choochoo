@@ -102,8 +102,10 @@ class WebServer:
             Rule('/api/configure/profiles', endpoint=self.check(configure.read_profiles, config=False), methods=(GET,)),
             Rule('/api/configure/initial', endpoint=self.check(configure.write_profile, config=False), methods=(POST,)),
             Rule('/api/configure/delete', endpoint=self.check(configure.delete, config=False), methods=(POST,)),
-            Rule('/api/configure/import-status', endpoint=self.check(configure.read_import_status), methods=(GET,)),
+            Rule('/api/configure/import', endpoint=self.check(configure.read_import), methods=(GET,)),
             Rule('/api/configure/import', endpoint=self.check(configure.write_import), methods=(POST,)),
+            Rule('/api/configure/constants', endpoint=self.check(configure.read_constants), methods=(GET,)),
+            Rule('/api/configure/constant', endpoint=self.check(configure.write_constant), methods=(PUT,)),
 
             Rule('/api/diary/neighbour-activities/<date>', endpoint=diary.read_neighbour_activities, methods=(GET,)),
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),

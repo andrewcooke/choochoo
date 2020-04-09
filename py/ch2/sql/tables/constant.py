@@ -124,4 +124,3 @@ class ValidateNamedTuple(Validate):
             raise ValidateError('Could not create %s from "%s" for "%s": %s' %
                                 (self.__tuple_cls, value, constant.name, e))
 
-

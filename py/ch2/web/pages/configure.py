@@ -1,33 +1,39 @@
-
+from json import loads
 from logging import getLogger
 
 from ...commands.configure import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import Record, import_path
 from ...config.utils import profiles
+from ...lib import time_to_local_time
 from ...lib.utils import restart_self
 from ...migrate.import_ import available_versions
 from ...migrate.import_.activity import activity_imported
 from ...migrate.import_.constant import constant_imported
 from ...migrate.import_.diary import diary_imported
 from ...migrate.import_.kit import kit_imported
-from ...sql import SystemConstant
+from ...sql import SystemConstant, Constant, StatisticJournal
 
 log = getLogger(__name__)
 
 
+ACTIVITY = 'activity'
+CONFIGURED = 'configured'
+CONSTANT = 'constant'
+DESCRIPTION = 'description'
+DIARY = 'diary'
+DIRECTORY = 'directory'
+IMPORTED = 'imported'
+KIT = 'kit'
+NAME = 'name'
 PROFILE = 'profile'
 PROFILES = 'profiles'
-CONFIGURED = 'configured'
-DIRECTORY = 'directory'
-VERSION = 'version'
-DIARY = 'diary'
-ACTIVITY = 'activity'
-IMPORTED = 'imported'
+SINGLE = 'single'
+TIME = 'time'
+VALUE = 'value'
+VALUES = 'values'
 VERSION = 'version'
 VERSIONS = 'versions'
-KIT = 'kit'
-CONSTANT = 'constant'
 
 
 class Configure:
@@ -62,7 +68,7 @@ class Configure:
         # now we need to restart because the database connections exist
         restart_self()
 
-    def read_import_status(self, request, s):
+    def read_import(self, request, s):
         record = Record()
         return {IMPORTED: {DIARY: diary_imported(record, self.__db),
                            ACTIVITY: activity_imported(record, self.__db),
@@ -77,3 +83,21 @@ class Configure:
         import_path(record, self.__base, data[VERSION], self.__db)
         return record.json()
 
+    def read_constants(self, request, s):
+        return [self.read_constant(s, constant)
+                for constant in s.query(Constant).order_by(Constant.name).all()]
+
+    def read_constant(self, s, constant):
+        as_json = bool(constant.validate_cls)
+        values = [{TIME: time_to_local_time(statistic.time),
+                   VALUE: loads(statistic.value) if as_json else statistic.value}
+                  for statistic in s.query(StatisticJournal).
+                      filter(StatisticJournal.source_id == constant.id).all()]
+        return {NAME: constant.name,
+                SINGLE: constant.single,
+                DESCRIPTION: constant.statistic_name.description,
+                VALUES: values}
+
+    def write_constant(self, request, s):
+        data = request.json
+        log.debug(data)
