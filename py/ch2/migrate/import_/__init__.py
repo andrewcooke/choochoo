@@ -6,6 +6,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from ...commands.args import DB_VERSION
 from ...lib import format_date, time_to_local_date, to_time
+from ...lib.utils import clean_path
 from ...sql import StatisticJournal, StatisticName, StatisticJournalType
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.types import short_cls
@@ -93,6 +94,7 @@ def any_attr(instance, *names):
 
 def available_versions(base):
     versions = []
+    base = clean_path(base)
     if base.endswith(DB_VERSION): base = dirname(base)
     log.debug(f'Looking for previous versions under {base}')
     append(versions, (basename(candidate) for candidate in glob(join(base, '[0-9]-[0-9]*'))

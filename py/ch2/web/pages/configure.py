@@ -1,11 +1,12 @@
 from json import loads
 from logging import getLogger
 
+from ...commands.args import base_system_path
 from ...commands.configure import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
 from ...commands.import_ import Record, import_path
 from ...config.utils import profiles
-from ...lib import time_to_local_time
+from ...lib import time_to_local_time, local_time_to_time
 from ...lib.utils import restart_self
 from ...migrate.import_ import available_versions
 from ...migrate.import_.activity import activity_imported
@@ -29,6 +30,7 @@ NAME = 'name'
 PROFILE = 'profile'
 PROFILES = 'profiles'
 SINGLE = 'single'
+STATISTIC = 'statistic'
 TIME = 'time'
 VALUE = 'value'
 VALUES = 'values'
@@ -61,10 +63,10 @@ class Configure:
 
     def write_profile(self, request, s):
         data = request.json
-        load(self.__sys, s, False, data[PROFILE])
+        load(self.__sys, s, self.__base, False, data[PROFILE])
 
     def delete(self, request, s):
-        delete(self.__sys, self.__base, True)
+        delete(self.__sys, base_system_path(self.__base), True)
         # now we need to restart because the database connections exist
         restart_self()
 
@@ -78,20 +80,19 @@ class Configure:
 
     def write_import(self, request, s):
         data = request.json
-        log.debug(data)
         record = Record()
         import_path(record, self.__base, data[VERSION], self.__db)
         return record.json()
 
     def read_constants(self, request, s):
-        html = HTML()
         return [self.read_constant(s, constant)
                 for constant in s.query(Constant).order_by(Constant.name).all()]
 
     def read_constant(self, s, constant):
         as_json = bool(constant.validate_cls)
         values = [{TIME: time_to_local_time(statistic.time),
-                   VALUE: loads(statistic.value) if as_json else statistic.value}
+                   VALUE: loads(statistic.value) if as_json else statistic.value,
+                   STATISTIC: statistic.id}
                   for statistic in s.query(StatisticJournal).
                       filter(StatisticJournal.source_id == constant.id).all()]
         return {NAME: constant.name,
@@ -102,3 +103,19 @@ class Configure:
     def write_constant(self, request, s):
         data = request.json
         log.debug(data)
+        constant = Constant.get(s, data[NAME])
+        value = data[VALUES][0][VALUE]
+        time = data[VALUES][0][TIME]
+        statistic_journal_id = data[VALUES][0][STATISTIC]
+        if statistic_journal_id:
+            journal = s.query(StatisticJournal). \
+                filter(StatisticJournal.id == statistic_journal_id,
+                       StatisticJournal.source_id == constant.id).one()
+            journal.set(value)
+            if not constant.single:
+                journal.time = local_time_to_time(time)
+        else:
+            if constant.single and time:
+                log.warning(f'Ignoring time for {constant.name}')
+                time = 0.0
+            constant.add_value(s, value, time=time)

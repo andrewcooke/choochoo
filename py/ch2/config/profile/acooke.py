@@ -1,6 +1,7 @@
-from ..config import Config, WALK, SWIM, RUN
+from ..config import Config, WALK, SWIM, RUN, BIKE
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby, add_enum_constant
 from ..power import add_power_estimate
+from ...commands.args import DEFAULT
 from ...diary.model import TYPE, EDIT
 from ...sql import StatisticJournalType
 from ...stats.calculate.power import Bike
@@ -64,8 +65,9 @@ class ACooke(Config):
         return {SPORT_CYCLING: {
                     'kit': {
                         'cotic': MTB,
-                        'bowman': ROAD
-                    }
+                        'bowman': ROAD,
+                    },
+                    DEFAULT: BIKE,
                 },
                 SPORT_RUNNING: RUN,
                 SPORT_SWIMMING: SWIM,

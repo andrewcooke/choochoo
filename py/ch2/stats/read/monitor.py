@@ -118,8 +118,8 @@ class MonitorReader(MultiProcFitReader):
         return MonitorLoader(s, **kargs)
 
     def _base_command(self):
-        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.db_path} ' \
-               f'{MONITOR} {mm(WORKER)} {self.id} {mm(FORCE) if self.force else ""}'
+        force = mm(FORCE) if self.force else ""
+        return f'{MONITOR} {force}'
 
     def _delete_contained(self, s, start, finish, path):
         for mjournal in s.query(MonitorJournal). \
@@ -193,8 +193,7 @@ class MonitorReader(MultiProcFitReader):
                                    self.sport_to_activity_group[sport], mjournal, steps,
                                    record.timestamp, StatisticJournalInteger)
                     except KeyError:
-                        raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
-                                             'See sport_to_activity in ch2.config.default.py')
+                        raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
 
     def _shutdown(self, s):
         super()._shutdown(s)

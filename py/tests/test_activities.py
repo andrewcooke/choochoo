@@ -5,7 +5,7 @@ from unittest import TestCase
 from sqlalchemy.sql.functions import count
 
 from ch2.commands.activities import activities
-from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST
+from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST, BASE
 from ch2.commands.constants import constants
 from ch2.config.profile.default import default
 from ch2.sql.tables.activity import ActivityJournal
@@ -41,7 +41,7 @@ class TestActivities(TestCase):
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
-            run_pipeline(sys, db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
 
@@ -66,7 +66,7 @@ class TestActivities(TestCase):
         with NamedTemporaryFile() as f:
             args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
-            run_pipeline(sys, db, PipelineType.ACTIVITY, paths=paths, force=True)
+            run_pipeline(sys, db, args[BASE], PipelineType.ACTIVITY, paths=paths, force=True)
 
     def __assert_basic_stats(self, s):
         for name in [ACTIVE_DISTANCE, ACTIVE_TIME]:
@@ -85,7 +85,7 @@ class TestActivities(TestCase):
                                       'data/test/source/private/florian.fit')
             activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 self.__assert_basic_stats(s)
@@ -99,7 +99,7 @@ class TestActivities(TestCase):
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
             activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 self.__assert_basic_stats(s)
@@ -113,7 +113,7 @@ class TestActivities(TestCase):
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
             activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 stat = s.query(StatisticJournal). \
@@ -130,7 +130,7 @@ class TestActivities(TestCase):
                                                f'data/test/source/other/{src}')
                 activities(args, sys, db)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
-                run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
+                run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, n_cpu=1)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
                 with db.session_context() as s:
                     self.__assert_basic_stats(s)

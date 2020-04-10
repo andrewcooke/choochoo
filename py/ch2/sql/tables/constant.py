@@ -10,7 +10,7 @@ from sqlalchemy.orm import relationship
 from .source import Source, SourceType
 from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
 from ..types import Cls, Json, lookup_cls
-from ...lib.date import local_date_to_time, format_time
+from ...lib.date import local_date_to_time, format_time, to_time
 from ...lib.log import log_current_exception
 
 log = getLogger(__name__)
@@ -48,7 +48,7 @@ class Constant(Source):
         if date:
             time = local_date_to_time(date)
         if time and self.single:
-            raise Exception('%s was given time %s but is not time-variable' % (self, format_time(time)))
+            raise Exception('%s was given time %s but is not time-variable' % (self, format_time(to_time(time))))
         sjournal = STATISTIC_JOURNAL_CLASSES[self.statistic_name.statistic_journal_type](
             statistic_name=self.statistic_name, source=self, value=value, time=time)
         self.validate(sjournal)
@@ -78,7 +78,7 @@ class Constant(Source):
         try:
             constant = Constant.get(s, name)
             if not constant.single:
-                log.warning(f'Constant {name} is not single')
+                raise Exception(f'Constant {name} is not single')
             value = constant.at(s).value
             log.debug(f'{name} is {value}')
             return value

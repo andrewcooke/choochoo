@@ -30,7 +30,7 @@ function Directory(props) {
                 starting the web server:<br/>
                 <pre>ch2 --base DIRECTORY web start</pre>
             </li>
-            <li>Uploaded FITS files are stored in DATA_DIR which is
+            <li>Uploaded FITS files are stored in Data.Dir which is
                 a <Link to='/configure/constants'>constant</Link> that can be configured later.
             </li>
         </ul>
@@ -55,7 +55,7 @@ function Delete(props) {
                 <p>You can delete the current version from the base directory,
                     removing all data in the database,
                     along with old logs and jupyter notebooks.</p>
-                <p>Activity data can then imported from FIT files (assuming they were saved to DATA_DIR).
+                <p>Activity data can then imported from FIT files (assuming they were saved to Data.Dir).
                     In most cases, user data from a previous version can also be imported
                     (assuming the previous database still exists).</p>
             </Text></Grid>

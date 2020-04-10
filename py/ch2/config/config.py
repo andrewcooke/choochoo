@@ -8,7 +8,7 @@ from .database import add_loader_support, add_activity_group, add_activities, Co
     add_activity_topic_field
 from .impulse import add_impulse
 from .impulse import add_responses
-from ..commands.args import DIARY, no, base_system_path, DATA
+from ..commands.args import base_system_path
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..commands.upload import DATA_DIR
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
@@ -38,6 +38,7 @@ from ..stats.read.segment import SegmentReader
 
 log = getLogger(__name__)
 
+DATA = 'permanent'
 
 BIKE = 'Bike'
 RUN = 'Run'
@@ -199,13 +200,13 @@ If the database is deleted the uploaded data remain and can be imported into a n
         add_constant(s, GARMIN_USER, None,
                      description='''
 User for Garmin.
-If set, monitor data (daile steps, heart rate) are downloaded from Garmin.
+If set, monitor data (daily steps, heart rate) are downloaded from Garmin.
 ''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
         add_constant(s, GARMIN_PASSWORD, None,
                      description='''
 Password for Garmin.
-This is stored as plaintext on the server (and visible here), 
+This is stored as plaintext on the server (and visible here)
 so do not use an important password that applies to many accounts.
 ''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)

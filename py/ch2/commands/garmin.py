@@ -53,16 +53,17 @@ def run_garmin(sys, s, dir=None, user=None, password=None, dates=None, force=Fal
             log.info('No missing data to download')
             return
 
+        old_format = bool(dir)
+        dir = dir or Constant.get_single(s, DATA_DIR)
+        user = user or Constant.get_single(s, GARMIN_USER)
+        password = password or Constant.get_single(s, GARMIN_PASSWORD)
+
         last = sys.get_constant(SystemConstant.LAST_GARMIN, none=True)
         if last and (now() - local_time_to_time(last)).total_seconds() < 12 * 60 * 60:
             log.info(f'Too soon since previous call ({last}; 12 hours minimum)')
             return
         sys.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
 
-        old_format = bool(dir)
-        dir = dir or Constant.get_single(s, DATA_DIR)
-        user = user or Constant.get_single(s, GARMIN_USER)
-        password = password or Constant.get_single(s, GARMIN_PASSWORD)
         connect = GarminConnect(log_response=False)
         connect.login(user, password)
 

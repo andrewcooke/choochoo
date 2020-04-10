@@ -23,6 +23,8 @@ from ..sql import SystemConstant
 log = getLogger(__name__)
 
 
+MAX_MSG = 1000
+
 DATA = 'data'
 REDIRECT = 'redirect'
 ERROR = 'error'
@@ -46,7 +48,7 @@ class WebController(BaseController):
         super().__init__(args, sys, WebServer, max_retries=max_retries, retry_secs=retry_secs)
         self.__bind = args[BIND] if BIND in args else None
         self.__port = args[PORT] if BIND in args else None
-        self.__base = args.system_path()
+        self.__base = args[BASE]
         self.__dev = args[DEV]
         self.__sys = sys
         self.__db = db
@@ -93,7 +95,7 @@ class WebServer:
         jupyter = Jupyter(jcontrol)
         kit = Kit()
         static = Static('.static')
-        upload = Upload(sys, db)
+        upload = Upload(sys, db, base)
 
         self.url_map = Map([
 
@@ -178,7 +180,10 @@ class WebServer:
             if busy[PERCENT] is None or busy[PERCENT] == 100:
                 try:
                     data = handler(request, s, *args, **kargs)
-                    log.debug(f'Returning data: {data}')
+                    msg = f'Returning data: {data}'
+                    if len(msg) > MAX_MSG:
+                        msg = msg[:MAX_MSG-20] + ' ... ' + msg[-10:]
+                    log.debug(msg)
                     return JsonResponse({DATA: data})
                 except Exception as e:
                     log_current_exception()

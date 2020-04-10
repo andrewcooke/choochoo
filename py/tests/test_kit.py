@@ -3,7 +3,7 @@ from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 from ch2.commands.activities import activities
-from ch2.commands.args import bootstrap_file, m, V, mm, FAST, DEV, D
+from ch2.commands.args import bootstrap_file, m, V, mm, FAST, DEV, D, BASE
 from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.config import default
 from ch2.diary.model import TYPE
@@ -178,7 +178,7 @@ class TestKit(TestCase):
                                            'data/test/source/personal/2018-08-27-rec.fit',
                                            m(D.upper())+'kit=cotic')
             activities(args, sys, db)
-            run_pipeline(sys, db, PipelineType.STATISTIC, like=['%Activity%'], n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, like=['%Activity%'], n_cpu=1)
 
             with db.session_context() as s:
                 start(s, 'bike', 'cotic', '2018-01-01', True)
@@ -191,7 +191,7 @@ class TestKit(TestCase):
                 start(s, 'bike', 'bowman', '2018-01-01', False)
                 change(s, 'bowman', 'chain', 'sram', None, False, True)
 
-            run_pipeline(sys, db, PipelineType.STATISTIC, like=['%Kit%'], n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, like=['%Kit%'], n_cpu=1)
 
             with db.session_context() as s:
                 bike = get_name(s, 'bike').to_model(s, depth=3, statistics=INDIVIDUAL, own_models=False)

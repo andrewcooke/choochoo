@@ -6,25 +6,25 @@ from time import sleep, time
 
 from math import floor
 
+from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
+
 DELTA_TIME = 3
 SLEEP_TIME = 1
 REPORT_TIME = 60
-LOG = 'log'
-LIKE = 'like'
 
 
 class Workers:
 
-    def __init__(self, system, n_parallel, owner, cmd):
+    def __init__(self, system, base, n_parallel, owner, cmd):
         self.__system = system
         self.n_parallel = n_parallel
         self.owner = owner
         self.cmd = cmd
         self.__workers_to_logs = {}  # map from Popen to log index
-        self.ch2 = command_root()
+        self.ch2 = f'{command_root()} {mm(BASE)} {base} {mm(VERBOSITY)} 0'
         self.clear_all()
 
     def clear_all(self):
@@ -33,11 +33,11 @@ class Workers:
             self.__system.delete_process(self.owner, worker.pid)
         self.__system.delete_all_processes(self.owner)
 
-    def run(self, args):
+    def run(self, id, args):
         self.wait(self.n_parallel - 1)
         log_index = self._free_log_index()
         log_name = f'{short_cls(self.owner)}.{log_index}.{LOG}'
-        cmd = (self.cmd + ' ' + args).format(log=log_name, ch2=self.ch2)
+        cmd = self.ch2 + f' {mm(LOG)} {log_name} {self.cmd} {mm(WORKER)} {id} {args}'
         worker = self.__system.run_process(self.owner, cmd, log_name)
         self.__workers_to_logs[worker] = log_index
 

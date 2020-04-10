@@ -55,7 +55,7 @@ function FileList(props) {
 
 function FileSelect(props) {
 
-    const {items, filesState, reload, setError} = props;
+    const {items, reload, setError} = props;
     const classes = useStyles();
     const [files, setFiles] = useState([]);
     const [kit, setKit] = useState([]);
@@ -85,6 +85,10 @@ function FileSelect(props) {
         reload();
     }
 
+    const empty = files.length === 0 ? (<Grid item xs={12}><Text><p>
+        Upload with no files selected will rescan existing data.
+    </p></Text></Grid>) : null;
+
     return (<>
         <Grid item xs={12}>
             <input accept='*/*' id='upload-input' multiple type='file' onChange={addFiles} className={classes.input}/>
@@ -99,8 +103,9 @@ function FileSelect(props) {
                           renderInput={params => (<TextField {...params} variant='outlined' label='Kit'/>)}
                           onChange={(event, value) => setKit(value)}/>
         </Grid>
+        {empty}
         <Grid item xs={12} className={classes.right}>
-            <ConfirmedWriteButton disabled={files.length === 0} label='Upload' href='/api/upload'
+            <ConfirmedWriteButton label='Upload' href='/api/upload'
                                   setData={onSubmit} setError={setError}
                                   form={{'files': files, 'kit': kit}}>
                 The ingest process will take some time.

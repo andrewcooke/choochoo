@@ -7,7 +7,7 @@ from .activities import run_activity_pipelines
 from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
-from ..commands.args import PATH, KIT, FAST, UPLOAD
+from ..commands.args import PATH, KIT, FAST, UPLOAD, BASE
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
 from ..lib.io import data_hash
@@ -55,7 +55,7 @@ new monitor data, and update statistics.
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     files = list(open_files(args[PATH]))
-    upload_files_and_update(system, db, files=files, items=args[KIT], fast=args[FAST])
+    upload_files_and_update(system, db, args[BASE], files=files, items=args[KIT], fast=args[FAST])
 
 
 def open_files(paths):
@@ -161,7 +161,7 @@ def upload_files(db, files=tuple(), items=tuple(), progress=None):
         local_progress.complete()  # catch no files case
 
 
-def upload_files_and_update(sys, db, files=tuple(), items=tuple(), fast=False):
+def upload_files_and_update(sys, db, base, files=tuple(), items=tuple(), fast=False):
     # this expects files to be a map from names to streams
     with db.session_context() as s:
         n = ActivityJournal.number_of_activities(s)
@@ -170,10 +170,10 @@ def upload_files_and_update(sys, db, files=tuple(), items=tuple(), fast=False):
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
     upload_files(db, files=files, items=items, progress=progress)
     if not fast:
-        run_activity_pipelines(sys, db, progress=progress)
+        run_activity_pipelines(sys, db, base, progress=progress)
         # run before and after so we know what exists before we update, and import what we read
-        run_monitor_pipelines(sys, db, progress=progress)
+        run_monitor_pipelines(sys, db, base, progress=progress)
         with db.session_context() as s:
             run_garmin(sys, s, progress=progress)
-        run_monitor_pipelines(sys, db, progress=progress)
-        run_statistic_pipelines(sys, db, progress=progress)
+        run_monitor_pipelines(sys, db, base, progress=progress)
+        run_statistic_pipelines(sys, db, base, progress=progress)

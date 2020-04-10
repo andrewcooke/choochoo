@@ -7,7 +7,7 @@ from unittest import TestCase
 import sqlalchemy.sql.functions as func
 
 from ch2 import monitor
-from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST
+from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST, BASE
 from ch2.config.profile.default import default
 from ch2.lib.date import to_time, local_date_to_time
 from ch2.sql.tables.monitor import MonitorJournal
@@ -30,7 +30,7 @@ class TestMonitor(TestCase):
                                       'monitor', mm(FAST), 'data/test/source/personal/25822184777.fit')
             monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
@@ -48,7 +48,7 @@ class TestMonitor(TestCase):
                                           'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
             run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
@@ -81,7 +81,7 @@ class TestMonitor(TestCase):
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 # steps
@@ -108,7 +108,7 @@ class TestMonitor(TestCase):
                                       'monitor', mm(FAST), 'data/test/source/other/37140810636.fit')
             monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
-            run_pipeline(sys, db, PipelineType.STATISTIC, n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()

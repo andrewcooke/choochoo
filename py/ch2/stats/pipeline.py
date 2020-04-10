@@ -8,6 +8,7 @@ from psutil import cpu_count
 from sqlalchemy import text
 
 from .load import StatisticJournalLoader
+from ..commands.args import BASE
 from ..lib.date import format_seconds
 from ..lib.utils import short_str
 from ..lib.workers import Workers, ProgressTree
@@ -20,7 +21,7 @@ MAX_REPEAT = 3
 NONE = object()
 
 
-def run_pipeline(system, db, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
+def run_pipeline(system, db, base, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
     with db.session_context() as s:
         local_progress = ProgressTree(Pipeline.count(s, type, like=like, unlike=unlike, id=id), parent=progress)
         for pipeline in Pipeline.all(s, type, like=like, unlike=unlike, id=id):
@@ -29,7 +30,7 @@ def run_pipeline(system, db, type, like=tuple(), unlike=tuple(), id=None, progre
             log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
             start = time()
-            pipeline.cls(system, db, *pipeline.args, id=pipeline.id, progress=local_progress, **kargs).run()
+            pipeline.cls(system, db, *pipeline.args, base=base, id=pipeline.id, progress=local_progress, **kargs).run()
             duration = time() - start
             log.info(f'Ran {short_cls(pipeline.cls)} in {format_seconds(duration)}')
 
@@ -49,10 +50,11 @@ class BasePipeline:
 
 class MultiProcPipeline(BasePipeline):
 
-    def __init__(self, system, db, *args, owner_out=None, force=False, progress=None,
+    def __init__(self, system, db, *args, base=None, owner_out=None, force=False, progress=None,
                  overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self.__system = system
         self.__db = db
+        self.__base = base
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
         self.__progress = progress
@@ -102,9 +104,10 @@ class MultiProcPipeline(BasePipeline):
         session.commit()
 
     def _run_all(self, s, missing, progress=None):
-        local_progress = progress.increment_or_complete() if progress else nullcontext()
+        local_progress = progress.increment_or_complete if progress else nullcontext
+        log.debug('context %s' % local_progress)
         for missed in missing:
-            with local_progress:
+            with local_progress():
                 log.debug(f'Run {missed}')
                 self._run_one(s, missed)
                 s.commit()
@@ -168,14 +171,14 @@ class MultiProcPipeline(BasePipeline):
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(self.__system, n_parallel, self.owner_out, self._base_command())
+        workers = Workers(self.__system, self.__base, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1
             finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
             if start > finish: raise Exception('Bad chunking logic')
             with progress.increment_or_complete(finish - start + 1):
-                workers.run(self._args(missing, start, finish))
+                workers.run(self.id, self._args(missing, start, finish))
 
         workers.wait()
 
@@ -186,6 +189,7 @@ class MultiProcPipeline(BasePipeline):
 
     @abstractmethod
     def _base_command(self):
+        # this should start with the worker ID
         raise NotImplementedError()
 
     @property

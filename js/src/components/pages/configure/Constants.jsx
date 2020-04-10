@@ -99,16 +99,17 @@ function emptyCopy(constant) {
     const extra = {...constant};
     if (constant.values.length > 0) {
         if (constant.composite) {
-            extra.values = [{value: {...constant.values[0].value}, time: constant.values[0].time}];
+            extra.values = [{value: {...constant.values[0].value}, statistic: 0}];
             Object.keys(extra.values[0].value).forEach(
                 name => extra.values[0].value[name] = isString(extra.values[0].value[name]) ? '' : 0);
         } else {
-            extra.values = [{value: '', time: format(new Date(), FMT_DAY_TIME)}];
+            extra.values = [{value: '', statistic: 0}];
         }
     } else {
-        extra.values = [{value: ''}];
+        extra.values = [{value: '', statistic: 0}];
     }
     extra.values[0].time = format(new Date(), FMT_DAY_TIME);
+    console.log('extra', extra);
     return extra;
 }
 
@@ -137,13 +138,13 @@ function DatedConstant(props) {
             <DatedValue index={index} constantState={constantState}/>)}
         <ConfirmedWriteButton xs={SAVE_WIDTH} label='Save' disabled={newConstant === constant}
                               href='/api/configure/constant' setData={reload}
-                              json={{'constant': convertTypes(newConstant)}}>
+                              json={convertTypes(newConstant)}>
             Modifying the constant will change how data are processed.
         </ConfirmedWriteButton>
         <DatedValue constantState={extraState}/>
         <ConfirmedWriteButton xs={SAVE_WIDTH} label='Add' disabled={extra.values[0].value === ''}
                               href='/api/configure/constant' setData={reload}
-                              json={{'constant': convertTypes(extra)}}>
+                              json={convertTypes(extra)}>
             Adding a new value for the constant will change how data are processed.
         </ConfirmedWriteButton>
     </ColumnCard>);
@@ -154,7 +155,7 @@ function UndatedConstant(props) {
 
     const {constant, reload} = props;
     if (constant.values.length === 0) {
-        constant.values.push({value: '', time: format(new Date(), FMT_DAY_TIME)});
+        constant.values.push({value: '', time: format(new Date(), FMT_DAY_TIME), statistic: 0});
     }
     const constantState = useState(constant);
     const [newConstant, setNewConstant] = constantState;
@@ -164,7 +165,7 @@ function UndatedConstant(props) {
         <UndatedValue constantState={constantState}/>
         <ConfirmedWriteButton xs={SAVE_WIDTH} label='Save' disabled={newConstant === constant}
                               href='/api/configure/constant' setData={reload}
-                              json={{'constant': convertTypes(newConstant)}}>
+                              json={convertTypes(newConstant)}>
             Modifying the constant will change how data are processed.
         </ConfirmedWriteButton>
     </ColumnCard>);
@@ -186,7 +187,7 @@ function Columns(props) {
                     So, for example, if you defined your FTHR in April, and then again in October,
                     the value from April would be used to calculate fitness and fatigue for May.</p>
                 <p>Constants generally define low-level details that you probably don't want to change.&nbsp;
-                    <b>Consider them an 'advanced' feature.</b>&nbsp;
+                    <b>Consider them an advanced feature.</b>&nbsp;
                     Future releases will move the more commonly used features to dedicated,
                     easier-to-use, pages.</p>
             </TextCard>

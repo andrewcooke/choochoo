@@ -12,16 +12,17 @@ log = getLogger(__name__)
 
 class Upload:
 
-    def __init__(self, sys, db):
+    def __init__(self, sys, db, base):
         self._sys = sys
         self._db = db
+        self._base = base
 
     def __call__(self, request, s):
         files = [{NAME: file.filename, STREAM: file.stream} for file in request.files.getlist('files')]
         items = request.form.getlist('kit')
         # we do this in two stages
         # first, immediate saving of files while web browser waiting for response
-        upload_files_and_update(self._sys, self._db, files=files, items=items, fast=True)
+        upload_files_and_update(self._sys, self._db, self._base, files=files, items=items, fast=True)
         # second, start rest of ingest process in background
         # tui to avoid stdout appearing on web service output
         cmd = f'{command_root()} -v5 {mm(TUI)} {mm(LOG)} {WEB}-{UPLOAD}.log {UPLOAD}'

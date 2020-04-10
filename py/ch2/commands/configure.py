@@ -78,10 +78,10 @@ def load(sys, s, base, no_diary, profile):
     log.info(f'Profile {profile} loaded successfully')
 
 
-def delete(sys, base, force):
+def delete(sys, path, force):
     if not force:
         raise Exception(f'If you really want to delete all your data from {base} add {mm(FORCE)}')
-    data = join(base, DATA)
+    data = join(path, DATA)
     log.debug(f'Checking {data}')
     if not exists(data):
         raise Exception(f'The directory {data} does not exist')
@@ -89,7 +89,7 @@ def delete(sys, base, force):
     if not version:
         log.info(f'Deleting unconfigured system')
     for _ in range(3):
-        log.warning(f'Deleting {base}')
+        log.warning(f'Deleting {path}')
         sleep(1)
-    rmtree(base)
+    rmtree(path)
 

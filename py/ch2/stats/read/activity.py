@@ -9,7 +9,7 @@ from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERC
     SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG, KM
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
-from ...commands.args import ACTIVITIES, WORKER, mm, FORCE, VERBOSITY, LOG, DEFAULT, KIT
+from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -45,13 +45,12 @@ class ActivityReader(MultiProcFitReader):
 
     def _base_command(self):
         if self.define:
-            define = ' '.join(f'-D "{name}={value}"' for name, value in self.define.items()) + ' -- '
+            define = ' '.join(f'{mm(DEFINE)} "{name}={value}"' for name, value in self.define.items()) + ' -- '
         else:
             define = ''
-        kit = ' ' + mm(KIT) if self.kit else ''
         force = ' ' + mm(FORCE) if self.force else ''
-        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.db_path} ' \
-               f'{ACTIVITIES} {mm(WORKER)} {self.id} {force}{define}{kit}'
+        nokit = ' ' + mm(no(KIT)) if not self.kit else ''
+        return f'{ACTIVITIES}{force}{define}{nokit}'
 
     def _startup(self, s):
         super()._startup(s)
@@ -60,7 +59,7 @@ class ActivityReader(MultiProcFitReader):
     def _build_define(self, path):
         define = dict(self.define)
         if self.kit:
-            pattern = re.compile(r'.*\d\d\d\d-\d\d-\d\d:([\w,]+).fit')
+            pattern = re.compile(r'.*\d\d\d\d-\d\d-\d\d.*:([\w,]+).fit')
             match = pattern.match(path)
             if match:
                 log.debug(f'Adding {KIT}={match.group(1)} to definitions')
@@ -128,8 +127,7 @@ class ActivityReader(MultiProcFitReader):
         if sport in (SPORT_GENERIC,):
             raise Exception(f'Ignoring {sport} entry')
         else:
-            raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
-                                 'See sport_to_activity in ch2.config.default.py')
+            raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
 
     def _lookup_activity_group(self, s, name):
         activity_group = ActivityGroup.from_name(s, name, optional=True)

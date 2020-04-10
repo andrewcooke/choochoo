@@ -209,7 +209,7 @@ class Progress(SystemBase):
         while True:
             sleep(pause)
             current = pid(s.query(Progress).filter(Progress.name == name).one_or_none())
-            log.debug(f'Comparing {initial} and {current}')
+            log.debug(f'Waiting for PID - comparing {initial} and {current}')
             if current != initial:
                 return
             elif (now() - start).total_seconds() >= timeout:
