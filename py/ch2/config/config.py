@@ -117,9 +117,8 @@ class Config:
         # for example, fitness with two different timescales:
         # fitness = ((42, 1, 1), (21, 1, 2))
         # https://andrewcooke.github.io/choochoo/ff-fitting
-        # default is empty - none calculated
-        fitness = tuple()
-        fatigue = tuple()
+        fitness = ((42, 1, 1),)
+        fatigue = ((7, 1, 5),)
         return fitness, fatigue
 
     def _impulse_groups(self):
