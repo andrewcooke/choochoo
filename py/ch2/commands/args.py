@@ -219,7 +219,8 @@ class NamespaceWithVariables(Mapping):
 
 
 def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=True):
-    dir = join(base, version)
+    dir = base
+    if version: dir = join(dir, version)
     if subdir: dir = join(dir, subdir)
     dir = clean_path(dir)
     if create and not exists(dir): makedirs(dir)

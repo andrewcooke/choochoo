@@ -1,4 +1,5 @@
 
+
 from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
@@ -7,7 +8,7 @@ from .database import add_loader_support, add_activity_group, add_activities, Co
     add_activity_topic_field
 from .impulse import add_impulse
 from .impulse import add_responses
-from ..commands.args import DIARY, no
+from ..commands.args import DIARY, no, base_system_path, DATA
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..commands.upload import DATA_DIR
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
@@ -49,8 +50,9 @@ class Config:
     A class-based approach so that we can easily modify the config for different profiles.
     '''
 
-    def __init__(self, sys, no_diary=False):
+    def __init__(self, sys, base, no_diary=False):
         self._sys = sys
+        self._base = base
         self._no_diary = no_diary
         self._activity_groups = {}
 
@@ -124,11 +126,18 @@ class Config:
         # activity groups that should have impulses calculated (ie that will contribute to FF statistics)
         return self._all_groups_but_all()
 
-    def _load_ff_statistics(self, s, c):
+    def _load_ff_statistics(self, s, c, default_fthr=154):
         for group in self._impulse_groups():
             add_impulse(s, c, group)
-            add_activity_constant(s, group, FTHR,
-                                  description=f'Heart rate at functional threshold for {group.name}',
+            # we need a value here for various UI reasons.  might as well use my own value...
+            add_activity_constant(s, group, FTHR, default_fthr,
+                                  description=f'''
+Heart rate (in bpm) at functional threshold for activities in the {group.name} group.
+
+Your FTHR is the highest sustained heart rate you can maintain for long periods (an hour).
+It is used to calculate how hard you are working (the Impulse) and, from that, 
+your FF-model parameters (fitness and fatigue).
+''',
                                   units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_climb(s)  # default climb calculator
         fitness, fatigue = self._ff_parameters()
@@ -175,15 +184,31 @@ class Config:
 
     def _load_constants(self, s):
         # these are just the names, they still need values.
-        add_constant(s, SRTM1_DIR, description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
+        add_constant(s, SRTM1_DIR, base_system_path(self._base, version=DATA, subdir='srtm1', create=False),
+                     description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
-        add_constant(s, MSIL2A_DIR, description='Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)',
+        add_constant(s, MSIL2A_DIR, base_system_path(self._base, version=DATA, subdir='msil2a', create=False),
+                     description='Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
-        add_constant(s, DATA_DIR, description='Directory containing uploaded data (the FIT files)',
+        add_constant(s, DATA_DIR, base_system_path(self._base, version=DATA, subdir='fit', create=False),
+                     description='''
+Directory for uploaded data (the FIT files).
+Data are stored here and then read into the database.
+If the database is deleted the uploaded data remain and can be imported into a new database.
+''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
-        add_constant(s, GARMIN_USER, description='Default user for garmin command',
+        add_constant(s, GARMIN_USER, None,
+                     description='''
+User for Garmin.
+If set, monitor data (daile steps, heart rate) are downloaded from Garmin.
+''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
-        add_constant(s, GARMIN_PASSWORD, description='Default password for garmin command',
+        add_constant(s, GARMIN_PASSWORD, None,
+                     description='''
+Password for Garmin.
+This is stored as plaintext on the server (and visible here), 
+so do not use an important password that applies to many accounts.
+''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
 
     def _load_diary_topics(self, s, c):

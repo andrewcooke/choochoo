@@ -21,3 +21,4 @@ export {default as Picker} from './Picker';
 export {default as ScrollableListCard} from './ScrollableListCard';
 export {default as SideDrawer} from './SideDrawer';
 export {default as Text} from './Text';
+export {default as TextCard} from './TextCard';

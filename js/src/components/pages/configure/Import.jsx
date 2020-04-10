@@ -7,7 +7,8 @@ import {
     Loading,
     MainMenu,
     ScrollableListCard,
-    Text
+    Text,
+    TextCard
 } from "../../elements";
 import {handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
@@ -81,7 +82,7 @@ function Columns(props) {
         const enabled = Object.values(data.imported).some(value => !value);
         console.log(enabled, results);
         return (<ColumnList>
-            <ColumnCard header='Introduction'><Grid item xs={12}><Text>
+            <TextCard header='Introduction'>
                 <p>Choochoo manages three kinds of data: activity data from FIT files; user data
                     entered by hand (via the web, command line and diary); and calculated statistics.</p>
                 <p>When you update to a new database activity data can be re-read from FIT files
@@ -92,7 +93,7 @@ function Columns(props) {
                     kit details, and constant values.</p>
                 <p>Note that these data must be imported <b>before</b> any new data are entered manually,
                     to avoid conflicts.</p>
-            </Text></Grid></ColumnCard>
+            </TextCard>
             {results === null ? <Status imported={data.imported}/> : null}
             {results === null && enabled ? <Source versions={data.versions} setResults={setResults}/> : null}
             {results !== null ? <Results results={results}/> : null}

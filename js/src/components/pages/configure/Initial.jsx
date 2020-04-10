@@ -1,6 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField} from "@material-ui/core";
-import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, MainMenu, P, Text} from "../../elements";
+import {
+    ColumnCard,
+    ColumnList,
+    ConfirmedWriteButton,
+    Layout,
+    Loading,
+    MainMenu,
+    P,
+    Text,
+    TextCard
+} from "../../elements";
 import {handleJson} from "../../functions";
 import {Link} from "react-router-dom";
 import {Autocomplete} from "@material-ui/lab";
@@ -122,12 +132,12 @@ function ConfiguredNo(props) {
     const {data ,reload} = props;
 
     return (<ColumnList>
-        <ColumnCard header='Introduction'><Grid item xs={12}><Text>
+        <TextCard header='Introduction'>
             <p>A freshly installed system does not 'know' what to do.  The initial
                 configuration defines pipelines for loading data, calculating statistics,
                 and displaying results, as well as defining what entries are present in
                 the diary.</p>
-        </Text></Grid></ColumnCard>
+        </TextCard>
         <Directory data={data}/>
         <Profiles data={data} reload={reload}/>
     </ColumnList>);

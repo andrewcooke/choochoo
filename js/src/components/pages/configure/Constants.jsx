@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, MainMenu, P} from "../../elements";
+import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, MainMenu, TextCard} from "../../elements";
 import {handleJson} from "../../functions";
-import {Grid, TextField, Paper} from "@material-ui/core";
+import {Grid, Paper, TextField} from "@material-ui/core";
 import {FMT_DAY_TIME} from "../../../constants";
 import format from 'date-fns/format';
 import {makeStyles} from "@material-ui/core/styles";
@@ -16,17 +16,17 @@ const useStyles = makeStyles(theme => ({
 
 
 function isString(value) {
-    return value instanceof String || typeof(value) === typeof('string')
+    return value instanceof String || typeof (value) === typeof ('string')
 }
 
 
 function isNumber(value) {
-    return ! isNaN(value);
+    return !isNaN(value);
 }
 
 
 function isComposite(value) {
-    return ! (isString(value) || isNumber(value));
+    return !(isString(value) || isNumber(value));
 }
 
 
@@ -36,13 +36,13 @@ const SAVE_WIDTH = 2;
 
 function Field(props) {
     const {label, value, setValue} = props;
-    return (<TextField label={label} value={value} onChange={event => setValue(event.target.value)} fullWidth />);
+    return (<TextField label={label} value={value} onChange={event => setValue(event.target.value)} fullWidth/>);
 }
 
 
 function Value(props) {
 
-    const {constantState, index=0} = props;
+    const {constantState, index = 0} = props;
     const [constant, setConstant] = constantState;
     const value = constant.values[index].value;
 
@@ -56,11 +56,11 @@ function Value(props) {
                    }}/>));
     } else {
         return (<Field label='Value' value={value}
-                      setValue={value => {
-                          const copy = {...constant};
-                          copy.values[index].value = value;
-                          setConstant(copy);
-                      }}/>);
+                       setValue={value => {
+                           const copy = {...constant};
+                           copy.values[index].value = value;
+                           setConstant(copy);
+                       }}/>);
     }
 }
 
@@ -73,7 +73,7 @@ function DatedValue(props) {
 
     return (<Grid item xs={EDIT_WIDTH}><Paper variant='outlined' className={classes.paper}>
         <Value constantState={constantState} index={index}/>
-        <DateTimePicker value={constant.values[index].time}
+        <DateTimePicker value={constant.values[index].time} format={FMT_DAY_TIME}
                         onChange={time => {
                             const copy = {...constant};
                             copy.values[index].time = time;
@@ -85,7 +85,7 @@ function DatedValue(props) {
 
 function UndatedValue(props) {
 
-    const {constantState, index=0} = props;
+    const {constantState, index = 0} = props;
     const classes = useStyles();
 
     return (<Grid item xs={EDIT_WIDTH}><Paper variant='outlined' className={classes.paper}>
@@ -95,43 +95,44 @@ function UndatedValue(props) {
 
 
 function emptyCopy(constant) {
+    // need to take care here to do deep copy
     const extra = {...constant};
-    console.log('extra');
     if (constant.values.length > 0) {
         if (constant.composite) {
-            console.log('composite', extra);
             extra.values = [{value: {...constant.values[0].value}, time: constant.values[0].time}];
             Object.keys(extra.values[0].value).forEach(
                 name => extra.values[0].value[name] = isString(extra.values[0].value[name]) ? '' : 0);
         } else {
-            console.log('single', extra);
             extra.values = [{value: '', time: format(new Date(), FMT_DAY_TIME)}];
         }
     } else {
-        console.log('empty', extra);
         extra.values = [{value: ''}];
     }
     extra.values[0].time = format(new Date(), FMT_DAY_TIME);
-    console.log('done', extra);
     return extra;
+}
+
+
+function Description(props) {
+    const {constant} = props;
+    const unique_id = `description-${constant.name}`;
+    setTimeout(() => document.getElementById(unique_id).innerHTML = constant.description);
+    return (<Grid item xs={12}>
+        <div id={unique_id}/>
+    </Grid>);
 }
 
 
 function DatedConstant(props) {
 
     const {constant, reload} = props;
-    if (constant.values.length === 0) {
-        constant.values.push({value: '', time: format(new Date(), FMT_DAY_TIME)});
-    }
     const constantState = useState(constant);
     const [newConstant, setNewConstant] = constantState;
     const extraState = useState(emptyCopy(constant));
     const [extra, setExtra] = extraState;
 
-    console.log('DatedConstant', newConstant);
-
     return (<ColumnCard header={constant.name}>
-        <Grid item xs={12}><P>{constant.description}</P></Grid>
+        <Description constant={constant}/>
         {newConstant.values.map((entry, index) =>
             <DatedValue index={index} constantState={constantState}/>)}
         <ConfirmedWriteButton xs={SAVE_WIDTH} label='Save' disabled={newConstant === constant}
@@ -140,9 +141,9 @@ function DatedConstant(props) {
             Modifying the constant will change how data are processed.
         </ConfirmedWriteButton>
         <DatedValue constantState={extraState}/>
-        <ConfirmedWriteButton xs={SAVE_WIDTH} label='Add'
+        <ConfirmedWriteButton xs={SAVE_WIDTH} label='Add' disabled={extra.values[0].value === ''}
                               href='/api/configure/constant' setData={reload}
-                              json={{'constant': convertTypes(newConstant)}}>
+                              json={{'constant': convertTypes(extra)}}>
             Adding a new value for the constant will change how data are processed.
         </ConfirmedWriteButton>
     </ColumnCard>);
@@ -159,7 +160,7 @@ function UndatedConstant(props) {
     const [newConstant, setNewConstant] = constantState;
 
     return (<ColumnCard header={constant.name}>
-        <Grid item xs={12}><P>{constant.description}</P></Grid>
+        <Description constant={constant}/>
         <UndatedValue constantState={constantState}/>
         <ConfirmedWriteButton xs={SAVE_WIDTH} label='Save' disabled={newConstant === constant}
                               href='/api/configure/constant' setData={reload}
@@ -178,6 +179,17 @@ function Columns(props) {
         return <Loading/>;
     } else {
         return (<ColumnList>
+            <TextCard header='Introduction'>
+                <p>Constants are user-defined values that modify processing.</p>
+                <p>Despite their name, some constants can be defined for multiple times.
+                    The value used for any particular calculation will be the next-earliest value.
+                    So, for example, if you defined your FTHR in April, and then again in October,
+                    the value from April would be used to calculate fitness and fatigue for May.</p>
+                <p>Constants generally define low-level details that you probably don't want to change.&nbsp;
+                    <b>Consider them an 'advanced' feature.</b>&nbsp;
+                    Future releases will move the more commonly used features to dedicated,
+                    easier-to-use, pages.</p>
+            </TextCard>
             {constants.map(constant =>
                 constant.single ?
                     <UndatedConstant constant={constant} reload={reload}/> :
@@ -231,7 +243,7 @@ export default function Constants(props) {
     }, [edits]);
 
     return (
-        <Layout navigation={<MainMenu kit/>}
+        <Layout navigation={<MainMenu configure/>}
                 content={<Columns constants={constants} reload={reload}/>}
                 match={match} title='Edit Constants' reload={reload}
                 errorState={errorState}/>

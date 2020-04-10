@@ -1,13 +1,13 @@
-
 from ..config import Config, WALK, SWIM, RUN
-from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby
+from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby, add_enum_constant
 from ..power import add_power_estimate
 from ...diary.model import TYPE, EDIT
 from ...sql import StatisticJournalType
+from ...stats.calculate.power import Bike
 from ...stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
 
 
-def acooke(sys, s, no_diary):
+def acooke(sys, s, base, no_diary):
     '''
 ## acooke
 
@@ -20,7 +20,7 @@ This extends the default configuration with:
 
 Unlikely to be useful to others, but works as an example of how you can extend the code yourself.
     '''
-    ACooke(sys, no_diary=no_diary).load(s)
+    ACooke(sys, base, no_diary=no_diary).load(s)
 
 
 ROAD = 'Road'
@@ -84,6 +84,16 @@ class ACooke(Config):
 
         for name in (MTB, ROAD):
             add_power_estimate(s, c, self._activity_groups[name], vary='')
+        for (name, value) in (('Power.cotic', {'cda': 0.42, 'crr': 0.0055, 'weight': 12}),
+                              ('Power.bowman', {'cda': 0.42, 'crr': 0.0055, 'weight': 8})):
+            add_enum_constant(s, name, Bike, value, single=True, description='''
+Parameters to calculate power when using this bike.
+
+The parameter name must match the kit name (see the PowerEstimate constants). 
+* Cda is the product of coefficient of drag and frontal area (units m2).
+* Crr is the coefficient of rolling resistance.
+* Weight is the bike weight (kg).
+''')
 
     def _load_statistics_pipeline(self, s, c):
         super()._load_statistics_pipeline(s, c)

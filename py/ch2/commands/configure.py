@@ -5,7 +5,7 @@ from shutil import rmtree
 from time import sleep
 
 from .args import no, mm, SUB_COMMAND, CHECK, DATA, CONFIGURE, ACTIVITY_GROUPS, LIST, PROFILE, DB_VERSION, \
-    DIARY, DELETE, FORCE
+    DIARY, DELETE, FORCE, BASE
 from .help import Markdown
 from ..config import ActivityGroup
 from ..config.utils import profiles, get_profile
@@ -40,7 +40,7 @@ Check that the current database is empty.
         delete(sys, args.system_path(), args[FORCE])
     else:
         with db.session_context() as s:
-            load(sys, s, args[no(DIARY)], args[PROFILE])
+            load(sys, s, args[BASE], args[no(DIARY)], args[PROFILE])
 
 
 def check(db, config, data, activity_groups):
@@ -66,14 +66,14 @@ def list():
             print(f' ## {name} - lacks docstring\n')
 
 
-def load(sys, s, no_diary, profile):
+def load(sys, s, base, no_diary, profile):
     version = sys.get_constant(SystemConstant.DB_VERSION, none=True)
     if version:
         raise Exception(f'System already configured with version {version}')
     fn, spec = get_profile(profile)
     log.info(f'Loading profile {profile}')
     sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION + ' ' + BROKEN)
-    fn(sys, s, no_diary)
+    fn(sys, s, base, no_diary)
     sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
     log.info(f'Profile {profile} loaded successfully')
 

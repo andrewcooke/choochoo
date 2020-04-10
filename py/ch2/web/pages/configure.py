@@ -1,4 +1,3 @@
-import re
 from json import loads
 from logging import getLogger
 
@@ -43,18 +42,18 @@ class Configure:
         self.__sys = sys
         self.__db = db
         self.__base = base
+        self.__html = HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE)))
 
     def is_configured(self):
         return bool(self.__sys.get_constant(SystemConstant.DB_VERSION, none=True))
 
+    def html(self, text):
+        return self.__html.str(text)
+
     def read_profiles(self, request, s):
-
-        def fmt(text):
-            return HTML(delta=1, parser=filter(parse, yes=(P, LI, PRE))).str(text)
-
         fn_argspec_by_name = profiles()
         version = self.__sys.get_constant(SystemConstant.DB_VERSION, none=True)
-        data = {PROFILES: {name: fmt(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
+        data = {PROFILES: {name: self.html(fn_argspec_by_name[name][0].__doc__) for name in fn_argspec_by_name},
                 CONFIGURED: bool(version),
                 DIRECTORY: self.__base}
         if data[CONFIGURED]: data[VERSION] = version
@@ -85,6 +84,7 @@ class Configure:
         return record.json()
 
     def read_constants(self, request, s):
+        html = HTML()
         return [self.read_constant(s, constant)
                 for constant in s.query(Constant).order_by(Constant.name).all()]
 
@@ -96,7 +96,7 @@ class Configure:
                       filter(StatisticJournal.source_id == constant.id).all()]
         return {NAME: constant.name,
                 SINGLE: constant.single,
-                DESCRIPTION: constant.statistic_name.description,
+                DESCRIPTION: self.html(constant.statistic_name.description),
                 VALUES: values}
 
     def write_constant(self, request, s):
