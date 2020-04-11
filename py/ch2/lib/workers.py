@@ -127,7 +127,6 @@ class ProgressTree:
         if self.__children:
             progress = sum(child.local_progress() * weight
                            for (child, weight) in zip(self.__children, self.__weights)) / self.__size
-            log.debug(f'progress {progress} from {[c.local_progress() for c in self.__children]} {self.__weights}')
             return progress
         else:
             return self.__progress / self.__size if self.__size else 1

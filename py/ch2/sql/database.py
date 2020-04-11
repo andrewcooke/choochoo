@@ -63,10 +63,13 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
 
 class DatabaseBase:
 
-    def __init__(self, path):
+    def __init__(self, path, read_only=False):
         self.path = path
         log.info('Using database at %s' % self.path)
-        self.engine = create_engine('sqlite:///%s' % self.path, echo=False)
+        uri = f'sqlite:///{path}'
+        if read_only: uri += '?mode=ro'
+        log.debug(f'Connecting to {uri}')
+        self.engine = create_engine(uri, echo=False)
         self.session = self._sessionmaker()
 
     def _sessionmaker(self):
@@ -94,8 +97,8 @@ class DatabaseBase:
 
 class MappedDatabase(DatabaseBase):
 
-    def __init__(self, name, table, base, args):
-        super().__init__(args.system_path(DATA, name + DB_EXTN))
+    def __init__(self, name, table, base, args, **kargs):
+        super().__init__(args.system_path(DATA, name + DB_EXTN), **kargs)
         if self.no_schema(table):
             log.info('Creating tables')
             base.metadata.create_all(self.engine)
@@ -133,8 +136,8 @@ def connect(args):
 
 class ReflectedDatabase(DatabaseBase):
 
-    def __init__(self, path):
-        super().__init__(path)
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
         self.meta = MetaData()
         self.meta.reflect(bind=self.engine)
 

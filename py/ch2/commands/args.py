@@ -267,6 +267,7 @@ def make_parser():
     add_web_server_args(web_cmds.add_parser(SERVICE, help='internal use only - use start/stop'))
 
     upload = subparsers.add_parser(UPLOAD, help='upload data (calls activities, monitor, statistics)')
+    upload.add_argument(mm(FORCE), action='store_true', help='reprocess existing data')
     upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
                         help='kit items associated with activities')
     upload.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s) for activities')

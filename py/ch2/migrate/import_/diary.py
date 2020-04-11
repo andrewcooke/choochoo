@@ -1,5 +1,6 @@
 
 from logging import getLogger
+from types import SimpleNamespace
 
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -37,7 +38,13 @@ def copy_diary_topic_fields(record, old_s, old, old_diary_topic, new):
             constraint = str(new_diary_topic)
         copy_diary_topic_fields_with_constraint(record, old_s, old, old_diary_topic, new, constraint)
     except:
+        # do we want to generalize this?  also, is there a neater way of mutating a copy?
         log_current_exception()
+        if old_diary_topic.parent_id is None and old_diary_topic.name == 'Status':
+            record.warning(f'Trying again with Status changed to Diary')
+            copy = old_diary_topic._asdict()
+            copy.update(name='Diary')
+            copy_diary_topic_fields(record, old_s, old, SimpleNamespace(**copy), new)
 
 
 def copy_diary_topic_fields_with_constraint(record, old_s, old, old_diary_topic, new, constraint):

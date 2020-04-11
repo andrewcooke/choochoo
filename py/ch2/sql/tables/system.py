@@ -79,7 +79,7 @@ class Process(SystemBase):
     def delete(cls, s, owner, pid, delta_seconds=3):
         process = s.query(Process).filter(Process.owner == owner, Process.pid == pid).one()
         process.__kill(delta_seconds=delta_seconds)
-        log.debug(f'Deleting process {process.pid}')
+        log.debug(f'Deleting record for process {process.pid}')
         s.delete(process)
         s.commit()
 
@@ -90,7 +90,7 @@ class Process(SystemBase):
                 log.debug(f'Not killing self (PID {process.pid})')
             else:
                 process.__kill(delta_seconds=delta_seconds)
-                log.debug(f'Deleting process {process.pid}')
+                log.debug(f'Deleting record for process {process.pid}')
                 s.delete(process)
         s.commit()
 

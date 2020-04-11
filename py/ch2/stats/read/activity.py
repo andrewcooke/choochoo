@@ -179,9 +179,9 @@ class ActivityReader(MultiProcFitReader):
 
     def _load_define(self, s, define, ajournal):
         for name, value in define.items():
-            log.debug(f'Setting {name}={value}')
+            log.debug(f'Setting {name} = {value}')
             StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
-                                         ajournal, value, ajournal.start)
+                                     ajournal, value, ajournal.start)
 
     @staticmethod
     def _save_name(s, ajournal, file_scan):

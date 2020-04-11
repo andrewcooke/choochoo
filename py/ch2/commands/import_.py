@@ -26,7 +26,7 @@ Import diary entries from a previous version.
 
 def import_path(record, base, source, new):
     path = build_source_path(record, base, source)
-    old = ReflectedDatabase(path)
+    old = ReflectedDatabase(path, read_only=True)
     if not old.meta.tables:
         record.raise_(f'No tables found in {path}')
     log.info(f'Importing data from {path}')
