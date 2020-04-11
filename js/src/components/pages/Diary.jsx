@@ -109,7 +109,7 @@ function classifyDate(date) {
 
 export default function Diary(props) {
 
-    const {match, history} = props;
+    const {match, history, writer} = props;
     const {date} = match.params;
     const {ymdSelected, dateFmt, component} = classifyDate(date);
     const datetime = parse(date, dateFmt, new Date());
@@ -118,8 +118,6 @@ export default function Diary(props) {
     const errorState = useState(null);
     const [error, setError] = errorState;
     const [reads, setReads] = useState(0);
-    // this gets loaded multiple times which is less than ideal
-    const writer = new Worker('/api/static/writer.js');
 
     function reload() {
         setReads(reads + 1);

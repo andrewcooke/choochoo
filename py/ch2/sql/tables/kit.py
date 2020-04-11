@@ -211,7 +211,7 @@ class ModelMixin:
             if statistics == INDIVIDUAL:
                 self._add_individual_statistics(s, model)
         except AttributeError:
-            log.debug(f'No {statistics} statistics for {self.SIMPLE_NAME}')
+            log.debug(f'No {statistics} statistics for {self.SIMPLE_NAME} {self.name}')
         return model
 
 

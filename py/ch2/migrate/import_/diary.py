@@ -40,6 +40,7 @@ def copy_diary_topic_fields(record, old_s, old, old_diary_topic, new):
     except:
         # do we want to generalize this?  also, is there a neater way of mutating a copy?
         log_current_exception()
+        # topic name change 0-30 -> 0-31
         if old_diary_topic.parent_id is None and old_diary_topic.name == 'Status':
             record.warning(f'Trying again with Status changed to Diary')
             copy = old_diary_topic._asdict()

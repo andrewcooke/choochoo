@@ -71,6 +71,7 @@ def create_activity_topic_journal(record, old_s, old, old_activity_topic_journal
     old_file_hash = old_s.query(file_hash). \
         filter(file_hash.c.id == old_activity_topic_journal.file_hash_id).one()
     log.debug(f'Found old file_hash {old_file_hash}')
+    # column name change 0-29 - 0-30 ?
     new_file_hash = FileHash.get_or_add(new_s, any_attr(old_file_hash, 'hash', 'md5'))
     log.debug(f'Found new file_hash {new_file_hash}')
     new_activity_topic_journal = ActivityTopicJournal.get_or_add(new_s, new_file_hash)

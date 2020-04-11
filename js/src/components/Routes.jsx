@@ -7,6 +7,8 @@ import {Initial, Import, Constants} from "./pages/configure";
 
 export default function Routes() {
 
+    const writer = new Worker('/api/static/writer.js');
+
     return (
         <BrowserRouter>
             <Switch>
@@ -19,7 +21,8 @@ export default function Routes() {
                 <Route path='/kit/edit' exact={true} component={Edit}/>
                 <Route path='/kit/statistics' exact={true} component={Statistics}/>
                 <Route path='/kit/:date' exact={true} component={Snapshot}/>
-                <Route path='/:date' exact={true} component={Diary}/>
+                <Route path='/:date' exact={true}
+                       render={(props) => <Diary {...props} writer={writer}/>}/>
             </Switch>
         </BrowserRouter>
     );
