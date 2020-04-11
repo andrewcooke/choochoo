@@ -183,12 +183,15 @@ your FF-model parameters (fitness and fatigue).
         add_monitor(s, MonitorReader, c, sport_to_activity=sport_to_activity)
 
     def _load_constants(self, s):
-        # these are just the names, they still need values.
         add_constant(s, SRTM1_DIR, base_system_path(self._base, version=DATA, subdir='srtm1', create=False),
-                     description='Directory containing STRM1 hgt files for elevations (see http://dwtkns.com/srtm30m)',
-                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
-        add_constant(s, MSIL2A_DIR, base_system_path(self._base, version=DATA, subdir='msil2a', create=False),
-                     description='Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)',
+                     description='''
+Directory containing STRM1 hgt files for elevations.
+
+These data are used to give improved values when using GPS elevation.
+You must create the directory and populate it with suitable files from http://dwtkns.com/srtm30m.
+If the directory or files are missing the raw GPS elevation will be used.
+This is noted as a warning in the logs (along with the name of the missing file).
+''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
         add_constant(s, DATA_DIR, base_system_path(self._base, version=DATA, subdir='fit', create=False),
                      description='''

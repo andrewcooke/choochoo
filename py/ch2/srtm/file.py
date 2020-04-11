@@ -9,9 +9,11 @@ from zipfile import ZipFile
 
 import numpy as np
 
+from ..lib.log import log_current_exception
 from ..sql import Constant
 
 log = getLogger(__name__)
+
 
 SRTM1_DIR = 'SRTM1.Dir'
 SAMPLES = 3601
@@ -26,8 +28,6 @@ EXTN = '.SRTMGL1.hgt.zip'
 
 @lru_cache(4)  # 4 means our tests are quick (and should tile a local patch)
 def cached_file_reader(dir, flat, flon):
-    if not exists(dir):
-        raise Exception('SRTM1 directory %s missing' % dir)
     # https://wiki.openstreetmap.org/wiki/SRTM
     # The official 3-arc-second and 1-arc-second data for versions 2.1 and 3.0 are divided into 1°×1° data tiles.
     # The tiles are distributed as zip files containing HGT files labeled with the coordinate of the southwest cell.
@@ -37,19 +37,19 @@ def cached_file_reader(dir, flat, flon):
     hgt_path = join(dir, hgt_file)
     zip_path = join(dir, root + EXTN)
     if exists(hgt_path):
-        log.debug('Reading %s' % hgt_path)
+        log.debug(f'Reading {hgt_path}')
         with open(hgt_path, 'rb') as input:
             data = input.read()
     elif exists(zip_path):
-        log.debug('Reading %s' % zip_path)
+        log.debug(f'Reading {zip_path}')
         with open(zip_path, 'rb') as input:
             zip = ZipFile(input)
-            log.debug('Found %s' % zip.filelist)
+            log.debug(f'Found {zip.filelist}')
             data = zip.open(hgt_file).read()
     else:
         # i tried automating download, but couldn't get ouath2 to work
-        log.warning('Download %s' % BASE_URL + root + EXTN)
-        raise Exception('Missing %s' % hgt_file)
+        log.warning(f'Download {BASE_URL + root + EXTN}')
+        raise Exception(f'Missing {hgt_file}')
     return np.flip(np.frombuffer(data, np.dtype('>i2'), SAMPLES * SAMPLES).reshape((SAMPLES, SAMPLES)), 0)
 
 
@@ -68,7 +68,9 @@ class ElevationSupport:
 def elevation_from_constant(s, interp, dir_name=SRTM1_DIR):
     try:
         dir = Constant.get(s, dir_name).at(s).value
+        if not exists(dir): raise Exception(f'SRTM1 directory {dir} missing')
     except:
-        log.warning('STRM1 config - define %s in constants for elevation data' % dir_name)
+        log_current_exception(traceback=False)
+        log.warning(f'STRM1 config - define {dir_name} in constants for elevation data')
         dir = None
     return interp(dir)

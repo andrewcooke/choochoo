@@ -1,8 +1,10 @@
-from ..config import Config, WALK, SWIM, RUN, BIKE
-from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby, add_enum_constant
+from ..config import Config, WALK, SWIM, RUN, BIKE, DATA
+from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby, add_enum_constant, \
+    add_constant
 from ..power import add_power_estimate
-from ...commands.args import DEFAULT
+from ...commands.args import DEFAULT, base_system_path
 from ...diary.model import TYPE, EDIT
+from ...msil2a.download import MSIL2A_DIR
 from ...sql import StatisticJournalType
 from ...stats.calculate.power import Bike
 from ...stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
@@ -99,4 +101,15 @@ The parameter name must match the kit name (see the PowerEstimate constants).
 
         for name in (MTB, ROAD, WALK):
             add_nearby(s, c, self._activity_groups[name], 'Santiago', -33.4, -70.4, fraction=0.1, border=150)
+
+    def _load_constants(self, s):
+        super()._load_constants(s)
+        add_constant(s, MSIL2A_DIR, base_system_path(self._base, version=DATA, subdir='msil2a', create=False),
+                     description='''
+Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)
+
+This can be used to generate background images for plots.
+I used the data in an experiment to generate 3D plots, but it wasn't very successful.
+''',
+                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
 

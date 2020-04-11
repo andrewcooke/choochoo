@@ -270,7 +270,7 @@ def make_parser():
     upload.add_argument(mm(KIT), m(K), action='append', default=[], metavar='ITEM',
                         help='kit items associated with activities')
     upload.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s) for activities')
-    upload.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
+    upload.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                         help='keyword argument to be passed to the pipelines (can be repeated)')
     upload.add_argument(mm(FAST), action='store_true',
                         help='skip activity and statistics (just copy files)')
@@ -394,7 +394,7 @@ def make_parser():
     activities.add_argument(PATH, metavar='PATH', nargs='*', default=[], help='path to fit file(s)')
     activities.add_argument(mm(DEFINE), m(D.upper()), action='append', default=[], metavar='NAME=VALUE',
                             help='statistic to be stored with the activities (can be repeated)')
-    activities.add_argument(mm(KARG), action='append', default=[], metavar='NAME=VALUE',
+    activities.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                             help='keyword argument to be passed to the pipelines (can be repeated)')
     activities.add_argument(mm(no(KIT)), action='store_false', dest=KIT, help='ignore kit encoded in file name')
     activities.add_argument(mm(WORKER), metavar='ID', type=int,
