@@ -18,8 +18,8 @@ import {Grid, TextField} from "@material-ui/core";
 function Results(props) {
     const {results} = props;
     return (<>
-        {results.warnings.length > 0 ? <ScrollableListCard header='Warnings' list={results.warnings}/> : null}
-        {results.loaded.length > 0 ? <ScrollableListCard header='Loaded' list={results.loaded}/> : null}
+        {results.warning.length > 0 ? <ScrollableListCard header='Warnings' list={results.warning}/> : null}
+        {results.info.length > 0 ? <ScrollableListCard header='Loaded' list={results.info}/> : null}
         </>);
 }
 

@@ -1,10 +1,11 @@
-from collections import defaultdict
+from contextlib import contextmanager
 from logging import getLogger, DEBUG, Formatter, INFO, StreamHandler, WARNING
 from logging.handlers import RotatingFileHandler
 from sys import exc_info
 from traceback import format_tb
 
 from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, TUI
+
 
 log = getLogger(__name__)
 
@@ -78,3 +79,34 @@ def log_current_exception(traceback=True):
     if traceback:
         log.debug('Traceback:\n' + ''.join(format_tb(tb)))
 
+
+class Record:
+
+    def __init__(self, log):
+        self._log = log
+        self._warning = []
+        self._info = []
+
+    def warning(self, msg):
+        self._log.warning(msg)
+        self._warning.append(msg)
+
+    def info(self, msg):
+        self._log.info(msg)
+        self._info.append(msg)
+
+    def raise_(self, msg):
+        self.warning(msg)
+        raise Exception(msg)
+
+    @contextmanager
+    def record_exceptions(self):
+        try:
+            yield
+        except Exception as e:
+            self.warning(e)
+            raise
+
+    def json(self):
+        return {'warning': self._warning,
+                'info': self._info}

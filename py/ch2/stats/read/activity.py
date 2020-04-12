@@ -14,6 +14,7 @@ from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
+from ...lib.io import split_fit_path
 from ...sql.database import Timestamp, StatisticJournalText
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
@@ -59,11 +60,10 @@ class ActivityReader(MultiProcFitReader):
     def _build_define(self, path):
         define = dict(self.define)
         if self.kit:
-            pattern = re.compile(r'.*\d\d\d\d-\d\d-\d\d.*:([\w,]+).fit')
-            match = pattern.match(path)
-            if match:
-                log.debug(f'Adding {KIT}={match.group(1)} to definitions')
-                define[KIT] = match.group(1)
+            _, kit = split_fit_path(path)
+            if kit:
+                log.debug(f'Adding {KIT}={kit} to definitions')
+                define[KIT] = kit
             else:
                 log.debug(f'No kit in {path}')
         return define

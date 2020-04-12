@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField} from "@material-ui/core";
+import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField, Link} from "@material-ui/core";
 import {
     ColumnCard,
     ColumnList,
@@ -12,7 +12,7 @@ import {
     TextCard
 } from "../../elements";
 import {handleJson} from "../../functions";
-import {Link} from "react-router-dom";
+import {Link as RouterLink} from "react-router-dom";
 import {Autocomplete} from "@material-ui/lab";
 
 
@@ -31,7 +31,8 @@ function Directory(props) {
                 <pre>ch2 --base DIRECTORY web start</pre>
             </li>
             <li>Uploaded FITS files are stored in Data.Dir which is
-                a <Link to='/configure/constants'>constant</Link> that can be configured later.
+                a <Link component={RouterLink} to='/configure/constants'>constant</Link>&nbsp;
+                that can be configured later.
             </li>
         </ul>
     </Text></Grid></ColumnCard>)

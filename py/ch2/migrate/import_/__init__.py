@@ -15,29 +15,6 @@ from ...sql.utils import add
 log = getLogger(__name__)
 
 
-class Record:
-
-    def __init__(self):
-        self._warnings = []
-        self._loaded = []
-
-    def warning(self, msg):
-        log.warning(msg)
-        self._warnings.append(msg)
-
-    def loaded(self, msg):
-        log.info(msg)
-        self._loaded.append(msg)
-
-    def raise_(self, msg):
-        self.warning(msg)
-        raise Exception(msg)
-
-    def json(self):
-        return {'warnings': self._warnings,
-                'loaded': self._loaded}
-
-
 def journal_imported(record, new, cls, name):
     # true if already installed
     with new.session_context() as new_s:
@@ -81,7 +58,7 @@ def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic
     new_s.commit()  # avoid logging below if error
     date = format_date(time_to_local_date(to_time(new_value.time)))
     name = name if name else new_statistic_name.name
-    record.loaded(f'Statistic {new_value.value} at {date} for {name}')
+    record.info(f'Statistic {new_value.value} at {date} for {name}')
 
 
 def any_attr(instance, *names):

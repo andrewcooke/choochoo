@@ -1,4 +1,4 @@
-
+from glob import glob
 from logging import getLogger
 from math import sqrt
 from os import makedirs
@@ -8,14 +8,15 @@ from .activities import run_activity_pipelines
 from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
-from ..commands.args import PATH, KIT, FAST, UPLOAD, BASE, FORCE
+from ..commands.args import PATH, KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
-from ..lib.io import data_hash
-from ..lib.log import log_current_exception
+from ..lib.io import data_hash, split_fit_path
+from ..lib.log import log_current_exception, Record
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..sql import KitItem, FileHash, Constant, ActivityJournal
 from ..stats.names import TIME
+from ..stats.read import AbortImportButMarkScanned
 from ..stats.read.activity import ActivityReader
 from ..stats.read.monitor import MonitorReader
 
@@ -43,8 +44,23 @@ def upload(args, system, db):
 
     > ch2 upload --kit ITEM [ITEM...] -- PATH [PATH ...]
 
-Upload activities from FIT files, storing the data in the file system and adding appropriate entries to the database.
-Monitor data are also checked and loaded, and statistics updated.
+Upload FIT files, storing the data in the permanent store (Data.Dir) on file system.
+Optionally (if not --fast), scan the files and appropriate entries to the database.
+Both monitor and activity files are accepted.
+
+Files are checked for duplication on uploading (before being scanned).
+
+If the uploaded file is mapped to a file path that already exists then we check the following cases:
+* If the hash matches then the new data are discarded (duplicate).
+* If the hash is different, it is an error (to avoid losing activity diary entries which are keyed by hash).
+
+If the uploaded file has a hash that matches a file already read into the database, but the file path does not match,
+then it is an error (internal error with inconsistent naming or duplicate data).
+
+If --unsafe is given then files whose hashes match existing files are simply ignored.
+This allows data downloaded en massed from Garmin to be uploaded ignoring already-uploaded data (with kit).
+
+In short, hashes should map 1-to-1 to file names and to activities, and it is an error if they do not.
 
 ### Examples
 
@@ -55,9 +71,14 @@ new monitor data, and update statistics.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
+    record = Record(log)
     nfiles, files = open_files(args[PATH])
-    upload_files_and_update(system, db, args[BASE], files=files, nfiles=nfiles, 
-                            force=args[FORCE], items=args[KIT], fast=args[FAST])
+    upload_files_and_update(record, system, db, args[BASE], files=files, nfiles=nfiles,
+                            force=args[FORCE], items=args[KIT], fast=args[FAST], unsafe=args[UNSAFE])
+
+
+class SkipFile(Exception):
+    pass
 
 
 def open_files(paths):
@@ -68,6 +89,7 @@ def open_files(paths):
         # use an iterator here to avoid opening too many files at once
         for path in paths:
             name = basename(path)
+            log.debug(f'Reading {path}')
             stream = open(path, 'rb')
             yield {STREAM: stream, NAME: name}
 
@@ -94,34 +116,68 @@ def hash_file(file):
     log.debug(f'Hash of {file[NAME]} is {file[HASH]}')
 
 
-def check_file(s, file):
-    # HASH based check
-    file_hash = s.query(FileHash).filter(FileHash.hash == file[HASH]).one_or_none()
-    if file_hash:
-        if file_hash.activity_journal:
-            raise Exception(f'File {file[NAME]} is already associated with an activity on '
-                            f'{time_to_local_time(file_hash.activity_journal.start)}')
-        if file_hash.monitor_journal:
-            raise Exception(f'File {file[NAME]} is already associated with a monitor data for '
-                            f'{time_to_local_time(file_hash.monitor_journal.start)}')
+def check_path(file, unsafe=False):
+    path, name = file[PATH], file[NAME]
+    gpath, _ = split_fit_path(path)
+    match = glob(gpath)
+    if match:
+        path2 = match[0]
+        log.debug(f'A file already exists at {path2}')
+        with open(path2, 'rb') as input:
+            hash = data_hash(input.read())
+            if hash == file[HASH] and path == path2:
+                raise SkipFile(f'Duplicate file {name} at {path2}')
+            else:
+                msg = f'File {name} for {path} does not match the file already at {path2} (different hash or kit)'
+                if unsafe:
+                    raise SkipFile(msg)
+                else:
+                    raise Exception(msg)
+    log.debug(f'File {name} cleared for path {path}')
 
 
-def get_fit_data(file, items=None):
-    # add TIME and TYPE and EXTRA (and maybe SPORT) given (fit) DATA and NAME
+def check_hash(s, file, unsafe):
+    hash, path, name = file[HASH], file[PATH], file[NAME]
+    file_hash = s.query(FileHash).filter(FileHash.hash == hash).one_or_none()
+    if file_hash and file_hash.file_scan:
+        log.debug(f'A file was already scanned with hash {hash}')
+        scanned_path = file_hash.file_scan.path
+        if scanned_path == path:
+            # should never happen because would be caught in check_path
+            raise SkipFile(f'Duplicate file {name} at {path}')
+        else:
+            msg = f'File {name} for {path} matches the file already at {scanned_path} (same hash)'
+            if unsafe:
+                raise SkipFile(msg)
+            else:
+                raise Exception(msg)
+    log.debug(f'File {name} cleared for hash {hash}')
+
+
+def check_file(s, file, unsafe=False):
+    check_path(file, unsafe=unsafe)
+    check_hash(s, file, unsafe=unsafe)
+
+
+def parse_fit_data(file, items=None):
     try:
-        records = MonitorReader.parse_records(file[DATA])
-        file[TIME] = MonitorReader.read_first_timestamp(file[NAME], records)
-        file[TYPE] = MONITOR
-        file[EXTRA] = ':' + file[HASH][0:5]
-        log.debug(f'File {file[NAME]} contains monitor data')
+        # add TIME and TYPE and EXTRA (and maybe SPORT) given (fit) DATA and NAME
+        try:
+            records = MonitorReader.parse_records(file[DATA])
+            file[TIME] = MonitorReader.read_first_timestamp(file[NAME], records)
+            file[TYPE] = MONITOR
+            file[EXTRA] = ':' + file[HASH][0:5]
+            log.debug(f'File {file[NAME]} contains monitor data')
+        except AbortImportButMarkScanned:
+            records = ActivityReader.parse_records(file[DATA])
+            file[TIME] = ActivityReader.read_first_timestamp(file[NAME], records)
+            file[SPORT] = ActivityReader.read_sport(file[NAME], records)
+            file[TYPE] = ACTIVITY
+            file[EXTRA] = '-' + ','.join(items) if items else ''
+            log.debug(f'File {file[NAME]} contains activity data')
     except Exception as e:
         log_current_exception(traceback=False)
-        records = ActivityReader.parse_records(file[DATA])
-        file[TIME] = ActivityReader.read_first_timestamp(file[NAME], records)
-        file[SPORT] = ActivityReader.read_sport(file[NAME], records)
-        file[TYPE] = ACTIVITY
-        file[EXTRA] = ':' + ','.join(items) if items else ''
-        log.debug(f'File {file[NAME]} contains activity data')
+        raise Exception(f'Could not parse {file[NAME]} as a fit file')
 
 
 def build_path(data_dir, file):
@@ -134,14 +190,8 @@ def build_path(data_dir, file):
     log.debug(f'Target directory is {file[DIR]}')
 
 
-def write_file(data_dir, file, items=None):
+def write_file(file):
     try:
-        get_fit_data(file, items)
-    except Exception as e:
-        log_current_exception(traceback=False)
-        raise Exception(f'Could not parse {file[NAME]} as a fit file')
-    try:
-        build_path(data_dir, file)
         if not exists(file[DIR]):
             log.debug(f'Creating {file[DIR]}')
             makedirs(file[DIR])
@@ -155,31 +205,42 @@ def write_file(data_dir, file, items=None):
         raise Exception(f'Could not save {file[NAME]}')
 
 
-def upload_files(db, files=tuple(), nfiles=None, items=tuple(), progress=None):
+def upload_files(record, db, files=tuple(), nfiles=None, items=tuple(), progress=None, unsafe=False):
     try:
         local_progress = ProgressTree(len(files), parent=progress)
     except TypeError:
         local_progress = ProgressTree(nfiles, parent=progress)
-    with db.session_context() as s:
-        data_dir = Constant.get_single(s, DATA_DIR)
-        check_items(s, items)
-        for file in files:
-            with local_progress.increment_or_complete():
-                read_file(file)
-                hash_file(file)
-                check_file(s, file)
-                write_file(data_dir, file, items)
-        local_progress.complete()  # catch no files case
+    with record.record_exceptions():
+        with db.session_context() as s:
+            data_dir = Constant.get_single(s, DATA_DIR)
+            check_items(s, items)
+            for file in files:
+                with local_progress.increment_or_complete():
+                    try:
+                        read_file(file)
+                        hash_file(file)
+                        parse_fit_data(file, items=items)
+                        build_path(data_dir, file)
+                        check_file(s, file, unsafe)
+                        write_file(file)
+                        record.info(f'Uploaded {file[NAME]} to {file[PATH]}')
+                    except SkipFile as e:
+                        record.warning(e)
+            local_progress.complete()  # catch no files case
 
 
-def upload_files_and_update(sys, db, base, files=tuple(), nfiles=None, force=False, items=tuple(), fast=False):
+def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=None, force=False, items=tuple(),
+                            fast=False, unsafe=False):
     # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
+    if unsafe:
+        record.warning('Unsafe option enabled')
     with db.session_context() as s:
         n = ActivityJournal.number_of_activities(s)
         weight = 1 if force else max(1, int(sqrt(n)))
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
-    upload_files(db, files=files, nfiles=nfiles, items=items, progress=progress)
+    upload_files(record, db, files=files, nfiles=nfiles, items=items, progress=progress, unsafe=unsafe)
+    # todo - add record to pipelines?
     if not fast:
         run_activity_pipelines(sys, db, base, force=force, progress=progress)
         # run before and after so we know what exists before we update, and import what we read

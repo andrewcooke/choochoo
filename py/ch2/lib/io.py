@@ -1,4 +1,5 @@
 
+import re
 from hashlib import sha1
 from logging import getLogger
 from os import stat
@@ -83,3 +84,14 @@ def modified_file_scans(s, paths, owner, force=False):
 
     s.commit()
     return modified
+
+
+def split_fit_path(path):
+    # returns glob and kit
+    pattern = re.compile(r'(.*\d\d\d\d-\d\d-\d\d.*)-([\w,]+).fit')
+    match = pattern.match(path)
+    if match:
+        return match.group(1) + '*.fit', match.group(2)
+    else:
+        return path[:-4] + '*' + path[-4:], None
+

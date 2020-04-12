@@ -32,18 +32,18 @@ def copy_components(record, old_s, old, new_s):
     component = old.meta.tables['kit_component']
     for old_component in old_s.query(component).all():
         add(new_s, KitComponent(name=old_component.name))
-        record.loaded(f'Component {old_component.name}')
+        record.info(f'Component {old_component.name}')
 
 
 def copy_tree(record, old_s, old, new_s):
     group = old.meta.tables['kit_group']
     for old_group in old_s.query(group).all():
         new_group = add(new_s, KitGroup(name=old_group.name))
-        record.loaded(f'Group {old_group.name}')
+        record.info(f'Group {old_group.name}')
         item = old.meta.tables['kit_item']
         for old_item in old_s.query(item).filter(item.c.group_id == old_group.id).all():
             new_item = add(new_s, KitItem(name=old_item.name, group=new_group))
-            record.loaded(f'Item {old_item.name}')
+            record.info(f'Item {old_item.name}')
             copy_statistics(record, old_s, old, old_item, new_s, new_item)
             model = old.meta.tables['kit_model']
             component = old.meta.tables['kit_component']
@@ -51,7 +51,7 @@ def copy_tree(record, old_s, old, new_s):
                 old_component = old_s.query(component).filter(component.c.id == old_model.component_id).one()
                 new_component = new_s.query(KitComponent).filter(KitComponent.name == old_component.name).one()
                 new_model = add(new_s, KitModel(name=old_model.name, item=new_item, component=new_component))
-                record.loaded(f'Model {old_model.name}')
+                record.info(f'Model {old_model.name}')
                 copy_statistics(record, old_s, old, old_model, new_s, new_model)
 
 
@@ -71,4 +71,4 @@ def copy_statistics(record, old_s, old, old_source, new_s, new_source):
             add(new_s, StatisticJournalTimestamp(source=new_source, time=old_timestamp.time,
                                                  statistic_name=new_statistic_name))
             date = format_date(time_to_local_date(to_time(old_timestamp.time)))
-            record.loaded(f'Statistic {name} at {date} for {old_source.name}')
+            record.info(f'Statistic {name} at {date} for {old_source.name}')

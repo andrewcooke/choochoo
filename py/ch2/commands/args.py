@@ -175,6 +175,7 @@ TOPIC = 'topic'
 TUI = 'tui'
 UNDO = 'undo'
 UNLIKE = 'unlike'
+UNSAFE = 'unsafe'
 USER = 'user'
 VALIDATE = 'validate'
 V, VERBOSITY = 'v', 'verbosity'
@@ -275,6 +276,8 @@ def make_parser():
                         help='keyword argument to be passed to the pipelines (can be repeated)')
     upload.add_argument(mm(FAST), action='store_true',
                         help='skip activity and statistics (just copy files)')
+    upload.add_argument(mm(UNSAFE), action='store_true',
+                        help='ignore duplicate files')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, metavar='DATE', nargs='?',

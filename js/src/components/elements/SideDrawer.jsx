@@ -51,7 +51,6 @@ function Content(props) {
             <div className={classes.toolbar}>
                 <Back/>
             </div>
-            <Divider/>
             {content}
         </>
     );

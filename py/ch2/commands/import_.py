@@ -3,7 +3,7 @@ from os.path import sep, exists, join, isfile
 
 from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path
 from ..lib.utils import clean_path
-from ..migrate.import_ import Record
+from ..lib.log import Record
 from ..migrate.import_.activity import import_activity
 from ..migrate.import_.constant import import_constant
 from ..migrate.import_.diary import import_diary
@@ -21,7 +21,7 @@ def import_(args, sys, db):
 
 Import diary entries from a previous version.
     '''
-    import_path(Record(), args, args[SOURCE], db)
+    import_path(Record(log), args, args[SOURCE], db)
 
 
 def import_path(record, base, source, new):

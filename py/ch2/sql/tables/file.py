@@ -1,6 +1,6 @@
 
 from sqlalchemy import Column, Text, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
 from ..types import Time, ShortCls
@@ -35,7 +35,7 @@ class FileScan(Base):
     owner = Column(ShortCls, nullable=False, primary_key=True)
     last_scan = Column(Time, nullable=False)
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
-    file_hash = relationship('FileHash')
+    file_hash = relationship('FileHash', backref=backref('file_hash', uselist=False))
 
     @classmethod
     def add(cls, s, path, owner, hash):
