@@ -4,8 +4,11 @@ from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_f
 from ..power import add_power_estimate
 from ...commands.args import DEFAULT, base_system_path
 from ...diary.model import TYPE, EDIT
+from ...lib import to_time, time_to_local_date
 from ...msil2a.download import MSIL2A_DIR
-from ...sql import StatisticJournalType
+from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
+from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
+from ...sql.utils import add
 from ...stats.calculate.power import Bike
 from ...stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
 
@@ -113,3 +116,10 @@ I used the data in an experiment to generate 3D plots, but it wasn't very succes
 ''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
 
+    def _post(self, s):
+        super()._post(s)
+        # set a default weight for early power calculations
+        weight = s.query(StatisticName).filter(StatisticName.name == 'Weight', StatisticName.owner == DiaryTopic).one()
+        diary = add(s, DiaryTopicJournal(date=time_to_local_date(to_time(0.0))))
+        add(s, STATISTIC_JOURNAL_CLASSES[weight.statistic_journal_type](
+            value=65.0, time=0.0, statistic_name=weight, source=diary))

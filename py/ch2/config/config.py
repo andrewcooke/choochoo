@@ -13,7 +13,6 @@ from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..commands.upload import DATA_DIR
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
-from ..msil2a.download import MSIL2A_DIR
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR
@@ -59,6 +58,7 @@ class Config:
 
     def load(self, s):
         # hopefully you won't need to over-ride this, but instead one of the more specific methods
+        self._pre(s)
         add_loader_support(s)  # required by standard statistics calculations
         self._load_specific_activity_groups(s)
         self._load_activity_group(s, ALL, 'All activities')  # referenced in FF calculations
@@ -70,6 +70,17 @@ class Config:
         if not self._no_diary:
             self._load_diary_topics(s, Counter())
             self._load_activity_topics(s, Counter())
+            self._post_diary(s)
+        self._post(s)
+
+    def _pre(self, s):
+        pass
+
+    def _post_diary(self, s):
+        pass
+
+    def _post(self, s):
+        pass
 
     def _load_specific_activity_groups(self, s):
         # statistic rankings (best of month etc) are calculated per group
@@ -216,7 +227,7 @@ so do not use an important password that applies to many accounts.
 
     def _load_diary_topics(self, s, c):
         # the fields you see every day in the diary
-        diary = add_diary_topic(s, 'Diary', c)
+        diary = add_diary_topic(s, 'Status', c)
         add_diary_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
                               model={TYPE: EDIT})
         add_diary_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,

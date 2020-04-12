@@ -7,7 +7,7 @@ from time import sleep
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, TUI, LOG, DIR
+from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, TUI, LOG, BASE
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
@@ -49,7 +49,7 @@ class JupyterController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} {self._log_level} {mm(TUI)} {mm(LOG)} {log_name} {mm(DIR)} {self._dir} ' \
+        cmd = f'{ch2} {mm(VERBOSITY)} {self._log_level} {mm(TUI)} {mm(LOG)} {log_name} {mm(BASE)} {self._base} ' \
               f'{JUPYTER} {SERVICE}'
         return cmd, log_name
 

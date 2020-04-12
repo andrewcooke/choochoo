@@ -1,5 +1,6 @@
 
 from logging import getLogger
+from math import sqrt
 from os import makedirs
 from os.path import basename, join, exists
 
@@ -165,7 +166,7 @@ def upload_files_and_update(sys, db, base, files=tuple(), force=False, items=tup
     # this expects files to be a map from names to streams
     with db.session_context() as s:
         n = ActivityJournal.number_of_activities(s)
-        weight = max(1, n // 2)
+        weight = 1 if force else max(1, int(sqrt(n)))
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
     upload_files(db, files=files, items=items, progress=progress)
@@ -177,6 +178,6 @@ def upload_files_and_update(sys, db, base, files=tuple(), force=False, items=tup
             try:
                 run_garmin(sys, s, progress=progress)
             except Exception as e:
-                log.warning(f'Could not get data from armin: {e}')
+                log.warning(f'Could not get data from Garmin: {e}')
         run_monitor_pipelines(sys, db, base, force=force, progress=progress)
         run_statistic_pipelines(sys, db, base, force=force, progress=progress)

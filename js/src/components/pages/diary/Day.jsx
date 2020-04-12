@@ -65,9 +65,11 @@ function childrenFromRest(head, rest, writer, level, history) {
 
 
 function TopLevelPaper(props) {
+
     const {writer, json, history} = props;
     const [head, ...rest] = json;
     const children = childrenFromRest(head.tag, rest, writer, 3, history);
+
     return (<ColumnCard header={head.value}>{children}</ColumnCard>);
 }
 

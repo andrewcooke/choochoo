@@ -6,6 +6,7 @@ from re import split
 
 import numpy as np
 import pandas as pd
+from sqlalchemy import not_
 
 from . import DataFrameCalculatorMixin, ActivityJournalCalculatorMixin, MultiProcCalculator
 from ..load import StatisticJournalLoader
@@ -17,7 +18,7 @@ from ...data.power import add_differentials, add_energy_budget, add_loss_estimat
     add_power_estimate, PowerException, evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
 from ...lib.data import reftuple, MissingReference
 from ...lib.log import log_current_exception
-from ...sql import StatisticJournalFloat, Constant, Timestamp
+from ...sql import StatisticJournalFloat, Constant, Timestamp, ActivityGroup
 
 log = getLogger(__name__)
 
@@ -42,10 +43,20 @@ class BasicPowerCalculator(PowerCalculator):
     Currently the 'bike' attribute of 'power' is defined as '${Constant:Power.${SegmentReader:kit}}'.
     '''
 
-    def __init__(self, *args, power=None, caloric_eff=0.25, **kargs):
+    def __init__(self, *args, power=None, caloric_eff=0.25, activity_group_name=None, **kargs):
         self.power_ref = power
         self.caloric_eff = caloric_eff
+        self.activity_group_name = activity_group_name
         super().__init__(*args, **kargs)
+
+    def _missing(self, s):
+        existing_ids = s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out)
+        q = s.query(self._journal_type.start). \
+            filter(not_(self._journal_type.id.in_(existing_ids.cte()))). \
+            order_by(self._journal_type.start)
+        if self.activity_group_name:
+            q = q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group_name)
+        return [row[0] for row in self._delimit_query(q)]
 
     def _set_power(self, s, ajournal):
         power = Power(**loads(Constant.get(s, self.power_ref).at(s).value))

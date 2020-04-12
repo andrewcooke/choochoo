@@ -11,7 +11,7 @@ POWER_ESTIMATE_CNAME = 'PowerEstimate'
 
 def add_power_estimate(s, c, activity_group,
                        bike='${Constant:Power.${SegmentReader:kit}:None}',
-                       rider_weight='${DiaryTopic:Weight:DiaryTopic \"Diary\" (d)}',
+                       rider_weight='${DiaryTopic:Weight:DiaryTopic \"Status\" (d)}',
                        vary='wind_speed, wind_heading, slope'):
     '''
     Add the constants necessary to estimate power output.
@@ -32,4 +32,5 @@ For example, ${SegmentReader:kit} is the kit specified when the activity is uplo
 * Vary is an experimental parameter to select what attributes of the ride are modelled (leave blank).
 ''')
     add_statistics(s, ExtendedPowerCalculator, c, owner_in='[unused - data via activity_statistics]',
-                   power=name_constant(POWER_ESTIMATE_CNAME, activity_group))
+                   power=name_constant(POWER_ESTIMATE_CNAME, activity_group),
+                   activity_group_name=activity_group.name)

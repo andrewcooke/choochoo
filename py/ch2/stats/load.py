@@ -96,6 +96,9 @@ class StatisticJournalLoader:
         rowid, count = dummy.id + 1, 0
         for type in self.__staging:
             log.debug('Loading %d values for type %s' % (len(self.__staging[type]), short_cls(type)))
+            for i in range(min(5, len(self.__staging[type]))):
+                sjournal = self.__staging[type][i]
+                log.debug(f'Example: {sjournal.value} at {sjournal.time}')
             for sjournal in self.__staging[type]:
                 sjournal.id = rowid
                 rowid += 1

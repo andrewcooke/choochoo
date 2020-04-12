@@ -256,7 +256,7 @@ def load_notebook(name, vars):
     return Token.to_notebook(tokens)
 
 
-def create_notebook(template, notebook_dir, database_path, args, kargs):
+def create_notebook(template, notebook_dir, args, kargs):
 
     if hasattr(template, '_original'):  # drop wrapper
         template = template._original
