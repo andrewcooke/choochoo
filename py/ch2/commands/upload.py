@@ -55,16 +55,23 @@ new monitor data, and update statistics.
 
 Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
-    files = list(open_files(args[PATH]))
-    upload_files_and_update(system, db, args[BASE], files=files, force=args[FORCE], items=args[KIT], fast=args[FAST])
+    nfiles, files = open_files(args[PATH])
+    upload_files_and_update(system, db, args[BASE], files=files, nfiles=nfiles, 
+                            force=args[FORCE], items=args[KIT], fast=args[FAST])
 
 
 def open_files(paths):
     # converts a list of paths to a map of file names to file dicts with open streams
-    for path in paths:
-        name = basename(path)
-        stream = open(path, 'rb')
-        yield {STREAM: stream, NAME: name}
+    n = len(paths)
+
+    def files():
+        # use an iterator here to avoid opening too many files at once
+        for path in paths:
+            name = basename(path)
+            stream = open(path, 'rb')
+            yield {STREAM: stream, NAME: name}
+
+    return n, files()
 
 
 def check_items(s, items):
@@ -81,7 +88,7 @@ def read_file(file):
 
 
 def hash_file(file):
-    # add HASH to discts with DATA
+    # add HASH to dicts with DATA
     log.debug(f'Hashing {file[NAME]}')
     file[HASH] = data_hash(file[DATA])
     log.debug(f'Hash of {file[NAME]} is {file[HASH]}')
@@ -95,7 +102,7 @@ def check_file(s, file):
             raise Exception(f'File {file[NAME]} is already associated with an activity on '
                             f'{time_to_local_time(file_hash.activity_journal.start)}')
         if file_hash.monitor_journal:
-            raise Exception(f'File {file[NAME]} is already associated with an monitor data for '
+            raise Exception(f'File {file[NAME]} is already associated with a monitor data for '
                             f'{time_to_local_time(file_hash.monitor_journal.start)}')
 
 
@@ -148,8 +155,11 @@ def write_file(data_dir, file, items=None):
         raise Exception(f'Could not save {file[NAME]}')
 
 
-def upload_files(db, files=tuple(), items=tuple(), progress=None):
-    local_progress = ProgressTree(len(files), parent=progress)
+def upload_files(db, files=tuple(), nfiles=None, items=tuple(), progress=None):
+    try:
+        local_progress = ProgressTree(len(files), parent=progress)
+    except TypeError:
+        local_progress = ProgressTree(nfiles, parent=progress)
     with db.session_context() as s:
         data_dir = Constant.get_single(s, DATA_DIR)
         check_items(s, items)
@@ -162,14 +172,14 @@ def upload_files(db, files=tuple(), items=tuple(), progress=None):
         local_progress.complete()  # catch no files case
 
 
-def upload_files_and_update(sys, db, base, files=tuple(), force=False, items=tuple(), fast=False):
-    # this expects files to be a map from names to streams
+def upload_files_and_update(sys, db, base, files=tuple(), nfiles=None, force=False, items=tuple(), fast=False):
+    # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
     with db.session_context() as s:
         n = ActivityJournal.number_of_activities(s)
         weight = 1 if force else max(1, int(sqrt(n)))
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
-    upload_files(db, files=files, items=items, progress=progress)
+    upload_files(db, files=files, nfiles=nfiles, items=items, progress=progress)
     if not fast:
         run_activity_pipelines(sys, db, base, force=force, progress=progress)
         # run before and after so we know what exists before we update, and import what we read

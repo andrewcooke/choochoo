@@ -137,6 +137,11 @@ class Config:
         # activity groups that should have impulses calculated (ie that will contribute to FF statistics)
         return self._all_groups_but_all()
 
+    def _load_power_statistics(self, s, c):
+        # after elevation and before ff etc
+        # defaults is none because configuration is complex
+        pass
+
     def _load_ff_statistics(self, s, c, default_fthr=154):
         for group in self._impulse_groups():
             add_impulse(s, c, group)
@@ -169,8 +174,10 @@ your FF-model parameters (fitness and fatigue).
         add_statistics(s, SummaryCalculator, c, schedule=Schedule.normalize('m'))
 
     def _load_statistics_pipeline(self, s, c):
+        # order is important here because some pipelines expect values created by others
         # this converts RAW_ELEVATION to ELEVATION, if needed
         add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')
+        self._load_power_statistics(s, c)
         self._load_ff_statistics(s, c)
         self._load_standard_statistics(s, c)
         self._load_summary_statistics(s, c)

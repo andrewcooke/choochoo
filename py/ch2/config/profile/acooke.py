@@ -78,12 +78,9 @@ class ACooke(Config):
                 SPORT_SWIMMING: SWIM,
                 SPORT_WALKING: WALK}
 
-    def _load_standard_statistics(self, s, c):
-        super()._load_standard_statistics(s, c)
-
+    def _load_power_statistics(self, s, c):
         # add power estimates for the two bikes
         # (note that this comes after standard stats, but before summary, achievements, etc).
-
         for name in (MTB, ROAD):
             add_power_estimate(s, c, self._activity_groups[name], vary='')
         for (name, value) in (('Power.cotic', {'cda': 0.42, 'crr': 0.0055, 'weight': 12}),
@@ -99,9 +96,7 @@ The parameter name must match the kit name (see the PowerEstimate constants).
 
     def _load_statistics_pipeline(self, s, c):
         super()._load_statistics_pipeline(s, c)
-
         # define spatial regions for nearby routes etc
-
         for name in (MTB, ROAD, WALK):
             add_nearby(s, c, self._activity_groups[name], 'Santiago', -33.4, -70.4, fraction=0.1, border=150)
 

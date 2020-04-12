@@ -46,11 +46,8 @@ Lists available topics.
     from .. import COMMANDS
     if args[TOPIC] in COMMANDS:
         Markdown().print(COMMANDS[args[TOPIC]].__doc__)
-        # LengthFmt().print_all(COMMANDS[args[TOPIC]].__doc__)
     else:
-        # import pdb; pdb.set_trace()
         Markdown().print(commands(COMMANDS))
-        # LengthFmt().print_all(commands(COMMANDS))
 
 
 BR = 'BR'
