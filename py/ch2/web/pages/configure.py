@@ -4,7 +4,7 @@ from logging import getLogger
 from ...commands.args import base_system_path
 from ...commands.configure import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
-from ...commands.import_ import import_path
+from ...commands.upgrade import upgrade_path
 from ...lib.log import Record
 from ...config.utils import profiles
 from ...lib import time_to_local_time, local_time_to_time
@@ -71,7 +71,7 @@ class Configure:
         # now we need to restart because the database connections exist
         restart_self()
 
-    def read_import(self, request, s):
+    def read_upgrade(self, request, s):
         record = Record(log)
         return {IMPORTED: {DIARY: diary_imported(record, self.__db),
                            ACTIVITY: activity_imported(record, self.__db),
@@ -79,10 +79,10 @@ class Configure:
                            CONSTANT: constant_imported(record, self.__db)},
                 VERSIONS: available_versions(self.__base)}
 
-    def write_import(self, request, s):
+    def write_upgrade(self, request, s):
         data = request.json
         record = Record(log)
-        import_path(record, self.__base, data[VERSION], self.__db)
+        upgrade_path(record, self.__base, data[VERSION], self.__db)
         return record.json()
 
     def read_constants(self, request, s):

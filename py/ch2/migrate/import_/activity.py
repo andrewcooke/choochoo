@@ -8,7 +8,7 @@ from ...sql import ActivityTopicJournal, FileHash, ActivityTopic
 log = getLogger(__name__)
 
 
-def import_activity(record, old, new):
+def upgrade_activity(record, old, new):
     if not activity_imported(record, new):
         log.debug(f'Trying to copy activity topic data from {old} to {new}')
         with old.session_context() as old_s:

@@ -13,7 +13,7 @@ const useStyles = makeStyles(theme => ({
         stroke: theme.palette.text.secondary,
     },
     barForeground: {
-        fill: theme.palette.text.secondary,
+        fill: theme.palette.primary.dark,
         fillOpacity: 0.2,
         stroke: 'none',
     },

@@ -11,7 +11,7 @@ from ...lib.log import log_current_exception
 log = getLogger(__name__)
 
 
-def import_diary(record, old, new):
+def upgrade_diary(record, old, new):
     if not diary_imported(record, new):
         log.debug(f'Trying to copy diary topic data from {old} to {new}')
         with old.session_context() as old_s:

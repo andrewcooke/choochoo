@@ -91,7 +91,7 @@ function Columns(props) {
                 <p>User data includes diary topics (user data associated with a given date),
                     activity topics (user data associated with a particular activity),
                     kit details, and constant values.</p>
-                <p>Note that these data must be imported <b>before</b> any new data are entered manually,
+                <p>Note that these data must be upgraded <b>before</b> any new data are entered manually,
                     to avoid conflicts.</p>
             </TextCard>
             {results === null ? <Status imported={data.imported}/> : null}
@@ -102,7 +102,7 @@ function Columns(props) {
 }
 
 
-export default function Import(props) {
+export default function Upgrade(props) {
 
     const {match, history} = props;
     const [data, setData] = useState(null);
@@ -111,7 +111,7 @@ export default function Import(props) {
     const [error, setError] = errorState;
 
     useEffect(() => {
-        fetch('/api/configure/import')
+        fetch('/api/configure/upgrade')
             .then(handleJson(history, setData, setError))
             .catch(reason => {
                 console.warn('configure/profiles:', reason);
@@ -121,6 +121,6 @@ export default function Import(props) {
     return (
         <Layout navigation={<MainMenu configure/>}
                 content={<Columns data={data} resultsState={resultsState}/>}
-                match={match} title='Import User Data' errorState={errorState}/>
+                match={match} title='Upgrade User Data' errorState={errorState}/>
     );
 }

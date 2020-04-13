@@ -11,7 +11,7 @@ from ...stats.names import KIT_ADDED, KIT_RETIRED
 log = getLogger(__name__)
 
 
-def import_kit(record, old, new):
+def upgrade_kit(record, old, new):
     if not kit_imported(record, new):
         try:
             with old.session_context() as old_s:

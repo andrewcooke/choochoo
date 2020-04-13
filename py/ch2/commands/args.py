@@ -39,6 +39,7 @@ PACKAGE_FIT_PROFILE = 'package-fit-profile'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
 UNLOCK = 'unlock'
+UPGRADE = 'upgrade'
 UPLOAD = 'upload'
 WEB = 'web'
 
@@ -95,7 +96,6 @@ GREP = 'grep'
 GROUP = 'group'
 HEADER_SIZE = 'header-size'
 HEIGHT = 'height'
-IMPORT = 'import'
 INTERNAL = 'internal'
 ITEM = 'item'
 K = 'k'
@@ -278,6 +278,8 @@ def make_parser():
                         help='skip activity and statistics (just copy files)')
     upload.add_argument(mm(UNSAFE), action='store_true',
                         help='ignore duplicate files')
+    upload.add_argument(mm(DELETE), action='store_true',
+                        help='delete source on success')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, metavar='DATE', nargs='?',
@@ -390,8 +392,8 @@ def make_parser():
     configure_delete = configure_cmds.add_parser(DELETE, help='delete current data')
     configure_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
 
-    import_ = subparsers.add_parser(IMPORT, help='copy diary entries from a previous version')
-    import_.add_argument(SOURCE, help='version or path to import')
+    upgrade = subparsers.add_parser(UPGRADE, help='copy diary entries from a previous version')
+    upgrade.add_argument(SOURCE, help='version or path to import')
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
