@@ -1,25 +1,28 @@
+
 from glob import glob
 from logging import getLogger
-from math import sqrt
-from os import makedirs
+from os import makedirs, unlink
 from os.path import basename, join, exists
+from time import sleep
+
+from math import sqrt
 
 from .activities import run_activity_pipelines
 from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
-from ..commands.args import PATH, KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE
+from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
 from ..lib.io import data_hash, split_fit_path
 from ..lib.log import log_current_exception, Record
+from ..lib.utils import clean_path
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..sql import KitItem, FileHash, Constant, ActivityJournal
 from ..stats.names import TIME
 from ..stats.read import AbortImportButMarkScanned
 from ..stats.read.activity import ActivityReader
 from ..stats.read.monitor import MonitorReader
-
 
 log = getLogger(__name__)
 
@@ -34,6 +37,8 @@ MONITOR = 'monitor'
 SPORT = 'sport'
 DIR = 'dir'
 DOT_FIT = '.fit'
+READ_PATH = 'read-path'
+WRITE_PATH = 'write-path'
 
 DATA_DIR = 'Data.Dir'
 
@@ -73,8 +78,8 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
     '''
     record = Record(log)
     nfiles, files = open_files(args[PATH])
-    upload_files_and_update(record, system, db, args[BASE], files=files, nfiles=nfiles,
-                            force=args[FORCE], items=args[KIT], fast=args[FAST], unsafe=args[UNSAFE])
+    upload_files_and_update(record, system, db, args[BASE], files=files, nfiles=nfiles, force=args[FORCE],
+                            items=args[KIT], fast=args[FAST], unsafe=args[UNSAFE], delete=args[DELETE])
 
 
 class SkipFile(Exception):
@@ -88,10 +93,11 @@ def open_files(paths):
     def files():
         # use an iterator here to avoid opening too many files at once
         for path in paths:
+            path = clean_path(path)
             name = basename(path)
             log.debug(f'Reading {path}')
             stream = open(path, 'rb')
-            yield {STREAM: stream, NAME: name}
+            yield {STREAM: stream, NAME: name, READ_PATH: path}
 
     return n, files()
 
@@ -117,7 +123,7 @@ def hash_file(file):
 
 
 def check_path(file, unsafe=False):
-    path, name = file[PATH], file[NAME]
+    path, name = file[WRITE_PATH], file[NAME]
     gpath, _ = split_fit_path(path)
     match = glob(gpath)
     if match:
@@ -137,7 +143,7 @@ def check_path(file, unsafe=False):
 
 
 def check_hash(s, file, unsafe):
-    hash, path, name = file[HASH], file[PATH], file[NAME]
+    hash, path, name = file[HASH], file[WRITE_PATH], file[NAME]
     file_hash = s.query(FileHash).filter(FileHash.hash == hash).one_or_none()
     if file_hash and file_hash.file_scan:
         log.debug(f'A file was already scanned with hash {hash}')
@@ -186,7 +192,7 @@ def build_path(data_dir, file):
     year = time_to_local_time(file[TIME], fmt=Y)
     file[DIR] = join(data_dir, file[TYPE], year)
     if SPORT in file: file[DIR] = join(file[DIR], file[SPORT])
-    file[PATH] = join(file[DIR], date + file[EXTRA] + DOT_FIT)
+    file[WRITE_PATH] = join(file[DIR], date + file[EXTRA] + DOT_FIT)
     log.debug(f'Target directory is {file[DIR]}')
 
 
@@ -195,24 +201,35 @@ def write_file(file):
         if not exists(file[DIR]):
             log.debug(f'Creating {file[DIR]}')
             makedirs(file[DIR])
-        if exists(file[PATH]):
-            log.warning(f'Overwriting data at {file[PATH]}')
-        with open(file[PATH], 'wb') as out:
-            log.info(f'Writing {file[NAME]} to {file[PATH]}')
+        if exists(file[WRITE_PATH]):
+            log.warning(f'Overwriting data at {file[WRITE_PATH]}')
+        with open(file[WRITE_PATH], 'wb') as out:
+            log.info(f'Writing {file[NAME]} to {file[WRITE_PATH]}')
             out.write(file[DATA])
     except Exception as e:
         log_current_exception(traceback=False)
         raise Exception(f'Could not save {file[NAME]}')
 
 
-def upload_files(record, db, files=tuple(), nfiles=None, items=tuple(), progress=None, unsafe=False):
+def delete_file(file, data_dir):
+    if READ_PATH in file:
+        if file[READ_PATH].startswith(data_dir):
+            log.warning(f'Not deleting {file[NAME]} as located within Data.Dir ({file[READ_PATH]})')
+        else:
+            for _ in range(3):
+                log.warning(f'Deleting {file[NAME]} from {file[READ_PATH]}')
+                sleep(1)
+            unlink(file[READ_PATH])
+
+
+def upload_files(record, db, files=tuple(), nfiles=None, items=tuple(), progress=None, unsafe=False, delete=False):
     try:
         local_progress = ProgressTree(len(files), parent=progress)
     except TypeError:
         local_progress = ProgressTree(nfiles, parent=progress)
     with record.record_exceptions():
         with db.session_context() as s:
-            data_dir = Constant.get_single(s, DATA_DIR)
+            data_dir = clean_path(Constant.get_single(s, DATA_DIR))
             check_items(s, items)
             for file in files:
                 with local_progress.increment_or_complete():
@@ -223,14 +240,15 @@ def upload_files(record, db, files=tuple(), nfiles=None, items=tuple(), progress
                         build_path(data_dir, file)
                         check_file(s, file, unsafe)
                         write_file(file)
-                        record.info(f'Uploaded {file[NAME]} to {file[PATH]}')
+                        record.info(f'Uploaded {file[NAME]} to {file[WRITE_PATH]}')
+                        if delete: delete_file(file, data_dir)
                     except SkipFile as e:
                         record.warning(e)
             local_progress.complete()  # catch no files case
 
 
 def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=None, force=False, items=tuple(),
-                            fast=False, unsafe=False):
+                            fast=False, unsafe=False, delete=False):
     # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
     if unsafe:
         record.warning('Unsafe option enabled')
@@ -239,7 +257,7 @@ def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=None, f
         weight = 1 if force else max(1, int(sqrt(n)))
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
-    upload_files(record, db, files=files, nfiles=nfiles, items=items, progress=progress, unsafe=unsafe)
+    upload_files(record, db, files=files, nfiles=nfiles, items=items, progress=progress, unsafe=unsafe, delete=delete)
     # todo - add record to pipelines?
     if not fast:
         run_activity_pipelines(sys, db, base, force=force, progress=progress)
