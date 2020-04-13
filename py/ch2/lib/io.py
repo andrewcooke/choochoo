@@ -47,6 +47,7 @@ def modified_file_scans(s, paths, owner, force=False):
 
     for path in paths:
 
+        # log.debug(f'Scanning {path}')
         last_modified = to_time(stat(path).st_mtime)
         hash = file_hash(path)
         file_scan_from_path = s.query(FileScan). \
@@ -60,7 +61,6 @@ def modified_file_scans(s, paths, owner, force=False):
                 file_scan_from_path.file_hash = FileHash.get_or_add(s, hash)
                 file_scan_from_path.last_scan = 0.0
         else:
-            # need to_time here because it's not roundtripped via the database to convert for use below
             file_scan_from_path = FileScan.add(s, path, owner, hash)
             s.flush()  # want this to appear in queries below
 

@@ -35,7 +35,8 @@ class FileScan(Base):
     owner = Column(ShortCls, nullable=False, primary_key=True)
     last_scan = Column(Time, nullable=False)
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
-    file_hash = relationship('FileHash', backref=backref('file_hash', uselist=False))
+    file_hash = relationship('FileHash', backref=backref('file_scan', cascade='all, delete-orphan',
+                                                         passive_deletes=True, uselist=False))
 
     @classmethod
     def add(cls, s, path, owner, hash):

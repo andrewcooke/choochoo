@@ -6,6 +6,7 @@ from os import getpid, close, execl, execle
 from os.path import split, realpath, normpath, expanduser
 from pprint import PrettyPrinter
 from sys import executable, argv
+from time import sleep
 
 from psutil import Process
 
@@ -203,3 +204,10 @@ def restart_self():
 
 def clean_path(path):
     return realpath(normpath(expanduser(path)))
+
+
+def slow_warning(msg, n=3, pause=1):
+    for _ in range(3):
+        log.warning(msg)
+        sleep(pause)
+

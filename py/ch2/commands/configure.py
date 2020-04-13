@@ -9,6 +9,7 @@ from .args import no, mm, SUB_COMMAND, CHECK, DATA, CONFIGURE, ACTIVITY_GROUPS, 
 from .help import Markdown
 from ..config import ActivityGroup
 from ..config.utils import profiles, get_profile
+from ..lib.utils import slow_warning
 from ..sql import SystemConstant
 from ..sql.tables.statistic import StatisticName, StatisticJournal
 
@@ -88,8 +89,6 @@ def delete(sys, path, force):
     version = sys.get_constant(SystemConstant.DB_VERSION, none=True)
     if not version:
         log.info(f'Deleting unconfigured system')
-    for _ in range(3):
-        log.warning(f'Deleting {path}')
-        sleep(1)
+    slow_warning(f'Deleting {path}')
     rmtree(path)
 
