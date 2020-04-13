@@ -17,10 +17,6 @@ const useStyles = makeStyles(theme => ({
         fillOpacity: 0.2,
         stroke: 'none',
     },
-    barLine: {
-        stroke: theme.palette.text.secondary,
-        strokeWidth: 0.75,
-    },
     barText: {
         fontSize: 11,
         fill: theme.palette.text.secondary,
@@ -41,7 +37,6 @@ export default function PercentBar(props) {
             <rect width='100%' height={height} className={classes.barBackground}/>
             <rect width={sprintf('%d%%', percent)} height={height} className={classes.barForeground}/>
             <text x={3} y={height - 6} className={classes.barText}>{text}</text>
-            {/* <line x1={x} x2={x} y1={0} y2={height} className={classes.barLine}/> */}
         </g>
     </svg>);
 }

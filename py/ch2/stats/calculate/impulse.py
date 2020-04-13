@@ -1,10 +1,11 @@
 
-import numpy as np
 from collections import namedtuple
 from json import loads
 from logging import getLogger
 
-from . import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+import numpy as np
+
+from . import MultiProcCalculator, DataFrameCalculatorMixin, ActivityGroupCalculatorMixin
 from ..names import FTHR, HEART_RATE, HR_ZONE, ALL, HR_IMPULSE_10, SUM
 from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10
@@ -16,7 +17,7 @@ log = getLogger(__name__)
 HRImpulse = namedtuple('HRImpulse', 'gamma, zero, one, max_secs')
 
 
-class ImpulseCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, impulse_ref=None, **kargs):
         self.impulse_ref = self._assert('impulse_ref', impulse_ref)

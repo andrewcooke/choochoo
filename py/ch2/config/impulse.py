@@ -36,7 +36,8 @@ Data needed to calculate the FF-model impulse from heart rate zones.
 Once the impulse is calculated it is summed with a decay to find fitness and fatigue
 (see Fitness and Fatigue constants). 
 ''')
-    add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(SegmentReader), impulse_ref=hr_impulse_name)
+    add_statistics(s, ImpulseCalculator, c, owner_in=short_cls(SegmentReader), impulse_ref=hr_impulse_name,
+                   activity_group_name=activity_group.name)
 
 
 def add_responses(s, c, fitness=((42, 1, 1),), fatigue=((7, 1, 5),)):

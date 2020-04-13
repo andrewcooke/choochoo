@@ -10,7 +10,7 @@ from ...commands.args import STATISTICS, WORKER, mm, VERBOSITY, LOG
 from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date
 from ...lib.log import log_current_exception
 from ...lib.schedule import Schedule
-from ...sql import ActivityJournal, Interval, Timestamp, StatisticJournal, StatisticName, SegmentJournal
+from ...sql import ActivityJournal, Interval, Timestamp, StatisticJournal, StatisticName, SegmentJournal, ActivityGroup
 from ...sql.types import long_cls
 from ...sql.utils import add
 
@@ -109,6 +109,22 @@ class JournalCalculatorMixin:
 class ActivityJournalCalculatorMixin(JournalCalculatorMixin):
 
     _journal_type = ActivityJournal
+
+
+class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
+
+    def __init__(self, *args, activity_group_name=None, **kargs):
+        super().__init__(*args, **kargs)
+        self.activity_group_name = activity_group_name
+
+    def _missing(self, s):
+        existing_ids = s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out)
+        q = s.query(self._journal_type.start). \
+            filter(not_(self._journal_type.id.in_(existing_ids.cte()))). \
+            order_by(self._journal_type.start)
+        if self.activity_group_name:
+            q = q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group_name)
+        return [row[0] for row in self._delimit_query(q)]
 
 
 class SegmentJournalCalculatorMixin(JournalCalculatorMixin):
