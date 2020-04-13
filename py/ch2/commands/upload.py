@@ -13,7 +13,7 @@ from .statistics import run_statistic_pipelines
 from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, REPLACE, mm
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
-from ..lib.io import data_hash, split_fit_path
+from ..lib.io import data_hash, split_fit_path, touch
 from ..lib.log import log_current_exception, Record
 from ..lib.utils import clean_path, slow_warning
 from ..lib.workers import ProgressTree, SystemProgressTree
@@ -132,10 +132,12 @@ def check_path(file, unsafe=False):
         log.debug(f'A file already exists at {path2}')
         with open(path2, 'rb') as input:
             hash = data_hash(input.read())
-            if hash == file[HASH] and path == path2:
-                raise SkipFile(f'Duplicate file {name} at {path2}')
-            elif REPLACES in file and path2 in file[REPLACES]:
+            if REPLACES in file and path2 in file[REPLACES]:
                 log.warning(f'Ignoring conflict at {path2} because {mm(REPLACE)}')
+            elif hash == file[HASH] and path == path2:
+                # touch in case we deleted the activity and need to read again
+                touch(path)
+                raise SkipFile(f'Duplicate file {name} at {path2}')
             else:
                 msg = f'File {name} for {path} does not match the file already at {path2} (different hash or kit)'
                 if unsafe:
@@ -152,6 +154,8 @@ def check_hash(s, file, unsafe):
         log.debug(f'A file was already scanned with hash {hash}')
         scanned_path = file_hash.file_scan.path
         if scanned_path == path:
+            # touch in case we deleted the activity and need to read again
+            touch(path)
             # should never happen because would be caught in check_path
             raise SkipFile(f'Duplicate file {name} at {path}')
         elif REPLACES in file and scanned_path in file[REPLACES]:

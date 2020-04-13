@@ -105,10 +105,8 @@ class MultiProcPipeline(BasePipeline):
 
     def _run_all(self, s, missing, progress=None):
         local_progress = progress.increment_or_complete if progress else nullcontext
-        log.debug('context %s' % local_progress)
         for missed in missing:
             with local_progress():
-                log.debug(f'Run {missed}')
                 self._run_one(s, missed)
                 s.commit()
 

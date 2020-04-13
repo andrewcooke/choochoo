@@ -3,6 +3,7 @@ import re
 from hashlib import sha1
 from logging import getLogger
 from os import stat
+from pathlib import Path
 from shutil import get_terminal_size
 
 from sqlalchemy import desc
@@ -95,3 +96,6 @@ def split_fit_path(path):
     else:
         return path[:-4] + '*' + path[-4:], None
 
+
+def touch(path):
+    Path(path).touch()
