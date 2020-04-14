@@ -9,6 +9,8 @@ and [technical
 docs](https://andrewcooke.github.io/choochoo/technical).
 
 [![web diary](docs/teasers/web-diary-sq.png)](docs/teasers/web-diary.png)
+[![jupyter details](docs/teasers/jupyter-details-sq.png)](docs/teasers/jupyter-details.png)
+
 [![text here](docs/square.png)](docs/index.md)
 
 ![](docs/square.png)
