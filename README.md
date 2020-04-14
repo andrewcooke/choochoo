@@ -8,7 +8,7 @@ Please see [getting started](https://andrewcooke.github.io/choochoo/)
 and [technical
 docs](https://andrewcooke.github.io/choochoo/technical).
 
-[![text here](docs/square.png)](docs/index.md)
+[![web diary](docs/teasers/web-diary-sq.png)](docs/teasers/web-diary.png)
 [![text here](docs/square.png)](docs/index.md)
 
 ![](docs/square.png)
