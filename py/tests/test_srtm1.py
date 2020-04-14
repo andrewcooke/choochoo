@@ -1,10 +1,10 @@
 
 from contextlib import contextmanager
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from ch2 import constants
-from ch2.commands.args import bootstrap_file, V, m, DEV, mm
+from ch2.commands.args import bootstrap_dir, V, m, DEV, mm, FORCE
 from ch2.config import default, getLogger
 from ch2.srtm.bilinear import bilinear_elevation_from_constant
 from ch2.srtm.file import SRTM1_DIR
@@ -18,18 +18,20 @@ class TestSortem(TestCase):
 
     @contextmanager
     def bilinear(self):
-        with NamedTemporaryFile() as f:
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1')
+        with TemporaryDirectory() as f:
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1',
+                                          mm(FORCE))
             constants(args, sys, db)
             with db.session_context() as s:
                 yield bilinear_elevation_from_constant(s)
 
     @contextmanager
     def spline(self, smooth=0):
-        with NamedTemporaryFile() as f:
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1')
+        with TemporaryDirectory() as f:
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', SRTM1_DIR, '/home/andrew/archive/srtm1',
+                                          mm(FORCE))
             constants(args, sys, db)
             with db.session_context() as s:
                 yield spline_elevation_from_constant(s, smooth=smooth)

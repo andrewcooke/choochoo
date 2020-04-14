@@ -1,13 +1,13 @@
 
 from logging import getLogger
 from subprocess import run
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from sqlalchemy.sql.functions import count
 
-from ch2.commands.args import m, V, bootstrap_file
-from ch2.config.profile.personal import acooke
+from ch2.commands.args import m, V, bootstrap_dir
+from ch2.config.profile.acooke import acooke
 from ch2.lib.date import to_date
 from ch2.sql.tables.source import Source, Interval
 from ch2.sql.tables.statistic import StatisticJournalText, StatisticJournal, StatisticJournalFloat, StatisticName, \
@@ -27,9 +27,9 @@ class TestSources(TestCase):
 
     def test_sources(self):
 
-        with NamedTemporaryFile() as f:
+        with TemporaryDirectory() as f:
 
-            args, sys, db = bootstrap_file(f, m(V), '5', configurator=acooke)
+            args, sys, db = bootstrap_dir(f, m(V), '5', configurator=acooke)
 
             with db.session_context() as s:
 
@@ -37,7 +37,7 @@ class TestSources(TestCase):
 
                 journal = add(s, DiaryTopicJournal(date='2018-09-29'))
                 cache = journal.cache(s)
-                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
+                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Status').one()
                 fields = diary.fields
                 self.assertEqual(len(fields), 6, list(enumerate(map(str, fields))))
                 self.assertEqual(fields[0].statistic_name.name, 'Notes')
@@ -54,7 +54,7 @@ class TestSources(TestCase):
 
                 journal = DiaryTopicJournal.get_or_add(s, '2018-09-29')
                 cache = journal.cache(s)
-                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
+                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Status').one()
                 fields = diary.fields
                 self.assertEqual(len(fields), 6, list(enumerate(map(str, fields))))
                 self.assertEqual(fields[0].statistic_name.name, 'Notes')
@@ -72,17 +72,19 @@ class TestSources(TestCase):
 
                 # check the summary stats
 
-                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Diary').one()
-                weight = s.query(StatisticJournal).join(StatisticName). \
-                    filter(StatisticName.owner == diary, StatisticName.name == 'Weight').one()
-                self.assertEqual(weight.value, 64.5)
-                self.assertEqual(len(weight.measures), 2, weight.measures)
-                self.assertEqual(weight.measures[0].rank, 1)
-                self.assertEqual(weight.measures[0].percentile, 100, weight.measures[0].percentile)
+                diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Status').one()
+                weights = s.query(StatisticJournal).join(StatisticName). \
+                               filter(StatisticName.owner == diary, StatisticName.name == 'Weight'). \
+                               order_by(StatisticJournal.time).all()
+                self.assertEqual(len(weights), 2)
+                self.assertEqual(weights[1].value, 64.5)
+                self.assertEqual(len(weights[1].measures), 2, weights[1].measures)
+                self.assertEqual(weights[1].measures[0].rank, 1)
+                self.assertEqual(weights[1].measures[0].percentile, 100, weights[1].measures[0].percentile)
                 n = s.query(count(StatisticJournalFloat.id)).scalar()
-                self.assertEqual(n, 5, n)
+                self.assertEqual(n, 6, n)
                 n = s.query(count(StatisticJournalInteger.id)).scalar()
-                self.assertEqual(n, 4, n)
+                self.assertEqual(n, 10, n)
                 m_avg = s.query(StatisticJournalFloat).join(StatisticName). \
                     filter(StatisticName.name == 'Avg/Month Weight').one()
                 self.assertEqual(m_avg.value, 64.5)
@@ -100,18 +102,17 @@ class TestSources(TestCase):
                 journal = DiaryTopicJournal.get_or_add(s, '2018-09-29')
                 s.delete(journal)
 
-            run('sqlite3 %s ".dump"' % f.name, shell=True)
-
             with db.session_context() as s:
 
                 # check the delete cascade
 
-                self.assertEqual(s.query(count(DiaryTopicJournal.id)).scalar(), 0)
+                self.assertEqual(s.query(count(DiaryTopicJournal.id)).scalar(), 1)
                 # this should be zero because the Intervals were automatically deleted
+                # (well, now +1 because there's an original default weight)
                 for source in s.query(Source).all():
                     print(source)
                 for journal in s.query(StatisticJournal).all():
                     print(journal)
-                self.assertEqual(s.query(count(Source.id)).scalar(), 25, list(map(str, s.query(Source).all())))  # constants
-                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 14, s.query(count(StatisticJournalText.id)).scalar())
-                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 20, s.query(count(StatisticJournal.id)).scalar())
+                self.assertEqual(s.query(count(Source.id)).scalar(), 31, list(map(str, s.query(Source).all())))  # constants
+                self.assertEqual(s.query(count(StatisticJournalText.id)).scalar(), 19, s.query(count(StatisticJournalText.id)).scalar())
+                self.assertEqual(s.query(count(StatisticJournal.id)).scalar(), 32, s.query(count(StatisticJournal.id)).scalar())

@@ -2,10 +2,9 @@
 from logging import getLogger
 from os.path import join, exists
 from shutil import rmtree
-from time import sleep
 
-from .args import no, mm, SUB_COMMAND, CHECK, DATA, CONFIGURE, ACTIVITY_GROUPS, LIST, PROFILE, DB_VERSION, \
-    DIARY, DELETE, FORCE, BASE
+from .args import no, mm, SUB_COMMAND, CHECK, DATA, CONFIGURE, ACTIVITY_GROUPS, LIST, PROFILE, DIARY, DELETE, FORCE, \
+    BASE
 from .help import Markdown
 from ..config import ActivityGroup
 from ..config.utils import profiles, get_profile
@@ -14,8 +13,6 @@ from ..sql import SystemConstant
 from ..sql.tables.statistic import StatisticName, StatisticJournal
 
 log = getLogger(__name__)
-
-BROKEN = 'broken'
 
 
 def configure(args, sys, db):
@@ -73,9 +70,7 @@ def load(sys, s, base, no_diary, profile):
         raise Exception(f'System already configured with version {version}')
     fn, spec = get_profile(profile)
     log.info(f'Loading profile {profile}')
-    sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION + ' ' + BROKEN)
     fn(sys, s, base, no_diary)
-    sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
     log.info(f'Profile {profile} loaded successfully')
 
 

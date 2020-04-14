@@ -8,12 +8,12 @@ from .database import add_loader_support, add_activity_group, add_activities, Co
     add_activity_topic_field
 from .impulse import add_impulse
 from .impulse import add_responses
-from ..commands.args import base_system_path
+from ..commands.args import base_system_path, DB_VERSION
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..commands.upload import DATA_DIR
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
-from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField
+from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR
 from ..stats.calculate.achievement import AchievementCalculator
@@ -38,11 +38,13 @@ from ..stats.read.segment import SegmentReader
 log = getLogger(__name__)
 
 DATA = 'permanent'
+BROKEN = 'broken'
 
 BIKE = 'Bike'
 RUN = 'Run'
 SWIM = 'Swim'
 WALK = 'Walk'
+
 
 
 class Config:
@@ -74,13 +76,13 @@ class Config:
         self._post(s)
 
     def _pre(self, s):
-        pass
+        self._sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION + ' ' + BROKEN)
 
     def _post_diary(self, s):
         pass
 
     def _post(self, s):
-        pass
+        self._sys.set_constant(SystemConstant.DB_VERSION, DB_VERSION, force=True)
 
     def _load_specific_activity_groups(self, s):
         # statistic rankings (best of month etc) are calculated per group

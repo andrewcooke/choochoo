@@ -1,10 +1,10 @@
 
 import pandas as pd
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from ch2 import activities, constants
-from ch2.commands.args import bootstrap_file, mm, DEV, FAST, V, m
+from ch2.commands.args import bootstrap_dir, mm, DEV, FAST, V, m
 from ch2.config import default, getLogger
 from ch2.data import activity_statistics, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
     ELEVATION, SPEED, CADENCE, HEART_RATE, TIME, TIMESPAN_ID
@@ -15,16 +15,13 @@ log = getLogger(__name__)
 class TestPower(TestCase):
 
     def test_constant(self):
-        with NamedTemporaryFile() as f:
 
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+        with TemporaryDirectory() as f:
 
-            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
-            constants(args, sys, db)
-            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'show', 'FTHR.%')
-            constants(args, sys, db)
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                           'activities', mm(FAST), 'data/test/source/personal/2018-03-04-qdp.fit')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
+                                          'data/test/source/personal/2018-03-04-qdp.fit')
             activities(args, sys, db)
 
             with db.session_context() as s:
