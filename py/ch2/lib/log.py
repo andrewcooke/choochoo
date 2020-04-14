@@ -10,16 +10,22 @@ from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, TUI
 log = getLogger(__name__)
 
 
-def make_log(args):
+def make_log_from_args(args):
+
+    name = args[LOG] if LOG in args and args[LOG] else (
+            (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
+    path = args.system_path(LOGS, name)
+
+    make_log(path, verbosity=args[VERBOSITY], tui=args[TUI])
+
+
+def make_log(path, verbosity=4, tui=False):
 
     if not getLogger('ch2').handlers:
 
-        level = 10 * (6 - args[VERBOSITY])
+        level = 10 * (6 - verbosity)
 
         file_formatter = Formatter('%(levelname)-8s %(asctime)s: %(message)s')
-        name = args[LOG] if LOG in args and args[LOG] else (
-                (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
-        path = args.system_path(LOGS, name)
         file_handler = RotatingFileHandler(path, maxBytes=1e6, backupCount=10)
         file_handler.setLevel(DEBUG)
         file_handler.setFormatter(file_formatter)
@@ -57,7 +63,7 @@ def make_log(args):
         xlog.setLevel(DEBUG)
         xlog.addHandler(file_handler)
 
-        if not args[TUI]:
+        if not tui:
             stderr_formatter = Formatter('%(levelname)8s: %(message)s')
             stderr_handler = StreamHandler()
             stderr_handler.setLevel(level)

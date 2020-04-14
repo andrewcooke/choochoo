@@ -1,7 +1,7 @@
 
 import datetime as dt
 from tempfile import TemporaryDirectory
-from unittest import TestCase
+from tests import LogTestCase
 
 from sqlalchemy.sql.functions import count
 
@@ -14,7 +14,7 @@ from ch2.sql.utils import add
 log = getLogger(__name__)
 
 
-class TestTimestamp(TestCase):
+class TestTimestamp(LogTestCase):
 
     def test_set(self):
         with TemporaryDirectory() as f:

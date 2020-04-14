@@ -1,8 +1,8 @@
 
-from tempfile import NamedTemporaryFile
-from unittest import TestCase
+from tempfile import TemporaryDirectory
+from tests import LogTestCase
 
-from ch2.commands.args import bootstrap_file, m, V, mm, DEV
+from ch2.commands.args import bootstrap_dir, m, V, mm, DEV
 from ch2.config.profile.default import default
 from ch2.config.plan.british import twelve_week_improver
 from ch2.config.plan.exponential import exponential_time, exponential_distance
@@ -10,11 +10,11 @@ from ch2.lib.date import to_date, add_date
 from ch2.sql.tables.topic import DiaryTopic
 
 
-class TestPlan(TestCase):
+class TestPlan(LogTestCase):
 
     def test_british(self):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             plan = twelve_week_improver('2018-07-25')
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -30,8 +30,8 @@ class TestPlan(TestCase):
                     print(child)
 
     def test_exponential_time(self):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             plan = exponential_time('Time test', '2d[2]', '20M', 5, '2018-07-25', '3m')
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -44,8 +44,8 @@ class TestPlan(TestCase):
                     print(child)
 
     def test_exponential_distance(self):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             plan = exponential_distance('Distance test', 'w[mon,wed,fri]', '20km', 5, '2018-07-25', '1m')
             plan.create(db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)

@@ -627,7 +627,7 @@ def make_parser():
 
 def bootstrap_dir(base, *args, configurator=None, post_config=None):
 
-    from ..lib.log import make_log
+    from ..lib.log import make_log_from_args
     from ..sql.database import Database, connect
     from ..sql.system import System
 
@@ -639,7 +639,7 @@ def bootstrap_dir(base, *args, configurator=None, post_config=None):
             configurator(sys, s, base)
     args += post_config if post_config else []
     ns = NamespaceWithVariables(make_parser().parse_args(args))
-    make_log(ns)
+    make_log_from_args(ns)
     db = Database(ns)
     sys = System(ns)
 

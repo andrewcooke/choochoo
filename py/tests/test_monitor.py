@@ -1,13 +1,12 @@
 
 from logging import getLogger
 from subprocess import run
-from tempfile import NamedTemporaryFile
-from unittest import TestCase
+from tempfile import TemporaryDirectory
 
 import sqlalchemy.sql.functions as func
 
 from ch2 import monitor
-from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST, BASE
+from ch2.commands.args import bootstrap_dir, m, V, DEV, mm, BASE
 from ch2.config.profile.default import default
 from ch2.lib.date import to_time, local_date_to_time
 from ch2.sql.tables.monitor import MonitorJournal
@@ -16,40 +15,39 @@ from ch2.sql.tables.statistic import StatisticJournal, StatisticName
 from ch2.stats.calculate.monitor import MonitorCalculator
 from ch2.stats.names import REST_HR, DAILY_STEPS
 from ch2.stats.pipeline import run_pipeline
+from tests import LogTestCase
 
 log = getLogger(__name__)
 
 
-class TestMonitor(TestCase):
+class TestMonitor(LogTestCase):
 
     def test_monitor(self):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5')
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                      'monitor', mm(FAST), 'data/test/source/personal/25822184777.fit')
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV),
+                                      'monitor', 'data/test/source/personal/25822184777.fit')
             monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 123)
+                self.assertEqual(n, 122)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
     def test_values(self):
-        with NamedTemporaryFile() as f:
-            bootstrap_file(f, m(V), '5')
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+        with TemporaryDirectory() as f:
+            bootstrap_dir(f, m(V), '5')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             for file in ('24696157869', '24696160481', '24696163486'):
-                args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                          'monitor', mm(FAST),
-                                          'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
+                args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV),
+                                          'monitor', 'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, force=True, start='2018-01-01', n_cpu=1)
-            run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 mjournals = s.query(MonitorJournal).order_by(MonitorJournal.start).all()
                 assert mjournals[2].start == to_time('2018-09-06 15:06:00'), mjournals[2].start
@@ -72,12 +70,11 @@ class TestMonitor(TestCase):
     FILES = ('25505915679', '25519562859', '25519565531', '25532154264', '25539076032', '25542112328')
 
     def generic_bug(self, files):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5')
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             for file in files:
-                args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                               'monitor', mm(FAST),
+                args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'monitor',
                                                'data/test/source/personal/andrew@acooke.org_%s.fit' % file)
                 monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -101,17 +98,17 @@ class TestMonitor(TestCase):
 
     # issue 6
     def test_empty_data(self):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5')
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                      'monitor', mm(FAST), 'data/test/source/other/37140810636.fit')
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV),
+                                      'monitor', 'data/test/source/other/37140810636.fit')
             monitor(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 30)
+                self.assertEqual(n, 29)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)

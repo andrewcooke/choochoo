@@ -1,6 +1,6 @@
 
 from tempfile import TemporaryDirectory
-from unittest import TestCase
+from tests import LogTestCase
 
 from sqlalchemy.sql.functions import count
 
@@ -13,9 +13,10 @@ from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
 from ch2.stats.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
 from ch2.stats.pipeline import run_pipeline
+from tests import LogTestCase
 
 
-class TestActivities(TestCase):
+class TestActivities(LogTestCase):
 
     def test_activities(self):
 

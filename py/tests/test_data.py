@@ -1,14 +1,14 @@
 from json import loads
-from tempfile import NamedTemporaryFile
-from unittest import TestCase
+from tempfile import TemporaryDirectory
+from tests import LogTestCase
 
-from ch2.commands.args import bootstrap_file, m, V
+from ch2.commands.args import bootstrap_dir, m, V
 from ch2.lib.data import MutableAttr, reftuple
 from ch2.sql import StatisticJournalFloat, StatisticJournalText, Source
 from ch2.sql.tables.source import SourceType
 
 
-class TestData(TestCase):
+class TestData(LogTestCase):
 
     def test_attr(self):
         d = MutableAttr()
@@ -21,8 +21,8 @@ class TestData(TestCase):
         Power = reftuple('Power', 'bike, weight')
         power = Power('${Bike}', '${Weight}')
 
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5')
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5')
             with db.session_context() as s:
                 source = Source(type=SourceType.SOURCE)
                 s.add(source)

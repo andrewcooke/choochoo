@@ -1,6 +1,6 @@
 
 from logging import getLogger
-from unittest import TestCase
+from tests import LogTestCase
 
 from ch2.data import session
 from ch2.data.constraint import constraint, build_activity_query
@@ -8,7 +8,7 @@ from ch2.data.constraint import constraint, build_activity_query
 log = getLogger(__name__)
 
 
-class TestConstraints(TestCase):
+class TestConstraints(LogTestCase):
 
     def test_example(self):
         # test requires existing database with stats

@@ -2,7 +2,7 @@
 from logging import getLogger
 from subprocess import run
 from tempfile import TemporaryDirectory
-from unittest import TestCase
+from tests import LogTestCase
 
 from sqlalchemy.sql.functions import count
 
@@ -23,7 +23,7 @@ log = getLogger(__name__)
 # so we configure a database then load some data, calculate some stats,
 # and see if everything works as expected.
 
-class TestSources(TestCase):
+class TestSources(LogTestCase):
 
     def test_sources(self):
 

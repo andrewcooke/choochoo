@@ -1,4 +1,4 @@
-from unittest import TestCase
+from tests import LogTestCase
 
 from sqlalchemy import Column, Integer, ForeignKey, create_engine
 from sqlalchemy.event import listen
@@ -57,7 +57,7 @@ class Other(Base):
     id = Column(Integer, primary_key=True)
 
 
-class TestInheritance(TestCase):
+class TestInheritance(LogTestCase):
 
     def database(self):
         db = Database()

@@ -1,5 +1,4 @@
 from os.path import join
-from unittest import TestCase
 
 from ch2.commands.args import RECORDS
 from ch2.fit.fix import fix
@@ -7,9 +6,10 @@ from ch2.fit.format.tokens import FileHeader
 from ch2.fit.profile.profile import read_fit
 from ch2.fit.summary import summarize
 from ch2.lib.tests import OutputMixin
+from tests import LogTestCase
 
 
-class TestFixFit(TestCase, OutputMixin):
+class TestFixFit(LogTestCase, OutputMixin):
 
     def setUp(self):
         self.test_dir = 'data/test'

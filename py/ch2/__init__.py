@@ -42,7 +42,7 @@ from .commands.unlock import unlock
 from .commands.upload import upload
 from .commands.web import web
 from .lib.io import tui
-from .lib.log import make_log, log_current_exception
+from .lib.log import make_log_from_args, log_current_exception
 from .sql.database import Database
 from .sql.system import System
 
@@ -91,7 +91,7 @@ def main():
     if command and hasattr(command, 'tui') and command.tui:
         ns.tui = True
     args = NamespaceWithVariables(ns)
-    make_log(args)
+    make_log_from_args(args)
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')

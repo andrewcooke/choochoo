@@ -1,7 +1,7 @@
 
 import pandas as pd
 from tempfile import TemporaryDirectory
-from unittest import TestCase
+from tests import LogTestCase
 
 from ch2 import activities, constants
 from ch2.commands.args import bootstrap_dir, mm, DEV, FAST, V, m
@@ -12,7 +12,7 @@ from ch2.data import activity_statistics, LATITUDE, LONGITUDE, SPHERICAL_MERCATO
 log = getLogger(__name__)
 
 
-class TestPower(TestCase):
+class TestPower(LogTestCase):
 
     def test_constant(self):
 

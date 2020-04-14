@@ -1,11 +1,11 @@
 
-from unittest import TestCase
+from tests import LogTestCase
 
 from ch2.data import session, std_health_statistics
 from ch2.stats.names import REST_HR
 
 
-class TestHealthBug(TestCase):
+class TestHealthBug(LogTestCase):
 
     def test_health_bug(self):
         '''

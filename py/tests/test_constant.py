@@ -1,11 +1,11 @@
 
 from logging import getLogger
-from tempfile import NamedTemporaryFile
-from unittest import TestCase
+from tempfile import TemporaryDirectory
+from tests import LogTestCase
 
 from sqlalchemy.sql.functions import count
 
-from ch2.commands.args import bootstrap_file, m, V, DEV, mm
+from ch2.commands.args import bootstrap_dir, m, V, DEV, mm, FORCE
 from ch2.commands.constants import constants
 from ch2.config.profile.default import default
 from ch2.sql.tables.constant import Constant
@@ -13,18 +13,19 @@ from ch2.sql.tables.constant import Constant
 log = getLogger(__name__)
 
 
-class TestConstant(TestCase):
+class TestConstant(LogTestCase):
 
     def test_constant(self):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5')
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             with db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
-                self.assertEqual(n, 22)
-            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
+                self.assertEqual(n, 15)
+            args, sys, db = bootstrap_dir(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154', mm(FORCE))
             constants(args, sys, db)
             with db.session_context() as s:
                 n = s.query(count(Constant.id)).scalar()
-                self.assertEqual(n, 22)
+                self.assertEqual(n, 15)
                 # todo - maybe test for value?
+                # todo - now that this is defined anyway, change the test?

@@ -11,7 +11,7 @@ from sqlalchemy.sql.functions import count
 from . import *
 from .support import Base
 from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DATA, DB_EXTN, ACTIVITY
-from ..lib.log import make_log
+from ..lib.log import make_log_from_args
 
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
@@ -129,7 +129,7 @@ def connect(args):
         args = []
     args.append(NO_OP)
     ns = NamespaceWithVariables(make_parser().parse_args(args))
-    make_log(ns)
+    make_log_from_args(ns)
     db = Database(ns)
     return ns, db
 

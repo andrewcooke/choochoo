@@ -1,13 +1,15 @@
 
 import datetime as dt
-from unittest import TestCase
+import logging
+from importlib import reload
+from tests import LogTestCase
 
 from ch2.fit.format.read import filtered_records
 from ch2.fit.profile.profile import read_fit
 from ch2.lib.date import to_time, format_time, local_time_to_time, time_to_local_time
 
 
-class TestDate(TestCase):
+class TestDate(LogTestCase):
 
     def test_to_datetime(self):
         self.assertEqual(format_time(to_time('2810-09-21 13:24:01')), '2810-09-21 13:24:01')

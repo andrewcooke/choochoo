@@ -1,7 +1,7 @@
 
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
-from unittest import TestCase
+from tests import LogTestCase
 
 from ch2 import constants
 from ch2.commands.args import bootstrap_dir, V, m, DEV, mm, FORCE
@@ -14,7 +14,7 @@ log = getLogger(__name__)
 ARCSEC = 1/3600
 
 
-class TestSortem(TestCase):
+class TestSortem(LogTestCase):
 
     @contextmanager
     def bilinear(self):

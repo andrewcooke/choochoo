@@ -1,12 +1,12 @@
 
 import datetime as dt
-from unittest import TestCase
+from tests import LogTestCase
 
 from ch2.lib.date import to_date
 from ch2.lib.schedule import Schedule, DateOrdinals, POS_INFINITY
 
 
-class TestRepeating(TestCase):
+class TestRepeating(LogTestCase):
 
     def assert_str(self, x1, s):
         s1 = str(x1)

@@ -1,27 +1,32 @@
 from io import StringIO
-from tempfile import NamedTemporaryFile
-from unittest import TestCase
+from tempfile import TemporaryDirectory
 
 from ch2.commands.activities import activities
-from ch2.commands.args import bootstrap_file, m, V, mm, FAST, DEV, D, BASE
+from ch2.commands.args import bootstrap_dir, m, V, mm, DEV, D, BASE
 from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.config import default
 from ch2.diary.model import TYPE
+from ch2.lib import now, local_date_to_time
 from ch2.sql import KitModel, KitItem, KitComponent, PipelineType
 from ch2.sql.tables.kit import get_name, KitGroup, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS, INDIVIDUAL
 from ch2.stats.pipeline import run_pipeline
+from tests import LogTestCase
 
 
-class TestKit(TestCase):
+def days(date):
+    return (now() - local_date_to_time(date)).days
+
+
+class TestKit(LogTestCase):
 
     def test_bikes(self):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5', configurator=default)
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5', configurator=default)
             with db.session_context() as s:
                 with self.assertRaises(Exception) as ctx:
-                    start(s, 'bike', 'cotic', None, False)
+                    start(s, 'bike', 'cotic', '2020-03-24', False)
                 self.assertTrue('--force' in str(ctx.exception), ctx.exception)
-                start(s, 'bike', 'cotic', None, True)
+                start(s, 'bike', 'cotic', '2020-03-24', True)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)
                 with self.assertRaises(Exception) as ctx:
                     start(s, 'xxxx', 'marin', None, False)
@@ -51,16 +56,16 @@ class TestKit(TestCase):
   +-model: kcm  2018-07-01 - 2020-03-24
   `-model: sram  2018-04-01 - 2018-05-01
 ''', show, s, 'cotic', None)
-                self.assert_command('''group: bike
+                self.assert_command(f'''group: bike
 +-item: cotic
 | +-Age
 | | +-n: 1
-| | `-sum: 0
+| | `-sum: {days('2020-03-24')}
 | `-component: chain
 |   +-model: sram
 |   | `-Age
 |   |   +-n: 1
-|   |   `-sum: 0
+|   |   `-sum: {days('2020-03-24')}
 |   +-model: kcm
 |   | `-Age
 |   |   +-n: 1
@@ -72,7 +77,7 @@ class TestKit(TestCase):
 |   +-model: kcm
 |   | `-Age
 |   |   +-n: 1
-|   |   `-sum: 632
+|   |   `-sum: 631
 |   `-model: sram
 |     `-Age
 |       +-n: 1
@@ -91,15 +96,15 @@ class TestKit(TestCase):
         +-n: 1
         `-sum: 0
 ''', statistics, s, 'bike')
-                self.assert_command('''item: cotic
+                self.assert_command(f'''item: cotic
 +-Age
 | +-n: 1
-| `-sum: 0
+| `-sum: {days('2020-03-24')}
 `-component: chain
   +-model: sram
   | `-Age
   |   +-n: 1
-  |   `-sum: 0
+  |   `-sum: {days('2020-03-24')}
   +-model: kcm
   | `-Age
   |   +-n: 1
@@ -111,17 +116,17 @@ class TestKit(TestCase):
   +-model: kcm
   | `-Age
   |   +-n: 1
-  |   `-sum: 632
+  |   `-sum: 631
   `-model: sram
     `-Age
       +-n: 1
       `-sum: 30
 ''', statistics, s, 'cotic')
-                self.assert_command('''component: chain
+                self.assert_command(f'''component: chain
 +-model: sram
 | `-Age
 |   +-n: 1
-|   `-sum: 0
+|   `-sum: {days('2020-03-24')}
 +-model: kcm
 | `-Age
 |   +-n: 1
@@ -133,7 +138,7 @@ class TestKit(TestCase):
 +-model: kcm
 | `-Age
 |   +-n: 1
-|   `-sum: 632
+|   `-sum: 631
 +-model: sram
 | `-Age
 |   +-n: 1
@@ -143,10 +148,10 @@ class TestKit(TestCase):
     +-n: 1
     `-sum: 0
 ''', statistics, s, 'chain')
-                self.assert_command('''model: sram
+                self.assert_command(f'''model: sram
 `-Age
   +-n: 1
-  `-sum: 0
+  `-sum: {days('2020-03-24')}
 ''', statistics, s, 'sram')
                 finish(s, 'bowman', None, False)
                 with self.assertRaises(Exception) as ctx:
@@ -167,14 +172,14 @@ class TestKit(TestCase):
         self.assertEqual(output.getvalue(), text)
 
     def test_models(self):
-        with NamedTemporaryFile() as f:
+        with TemporaryDirectory() as f:
 
-            args, sys, db = bootstrap_file(f, m(V), '5', configurator=default)
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+            args, sys, db = bootstrap_dir(f, m(V), '5', configurator=default)
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
                                            'data/test/source/personal/2018-08-03-rec.fit',
                                            m(D.upper())+'kit=cotic')
             activities(args, sys, db)
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
                                            'data/test/source/personal/2018-08-27-rec.fit',
                                            m(D.upper())+'kit=cotic')
             activities(args, sys, db)
