@@ -11,3 +11,4 @@ docs](https://andrewcooke.github.io/choochoo/technical).
 [![web diary](docs/teasers/web-diary-sq.png)](docs/teasers/web-diary.png)
 [![jupyter details](docs/teasers/jupyter-details-sq.png)](docs/teasers/jupyter-details.png)
 [![web kit statistics](docs/teasers/web-kit-statistics-sq.png)](docs/teasers/web-kit-statistics.png)
+[![jupyter calendar](docs/teasers/jupyter-calendar-sq.png)](docs/teasers/jupyter-calendar.png)
