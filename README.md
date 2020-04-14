@@ -9,6 +9,7 @@ and [technical
 docs](https://andrewcooke.github.io/choochoo/technical).
 
 [![text here](docs/square.png)](docs/index.md)
+[![text here](docs/square.png)](docs/index.md)
 
 ![](docs/square.png)
 ![](docs/square.png)
