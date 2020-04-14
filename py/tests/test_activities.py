@@ -1,11 +1,11 @@
 
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from sqlalchemy.sql.functions import count
 
 from ch2.commands.activities import activities
-from ch2.commands.args import bootstrap_file, m, V, DEV, mm, FAST, BASE
+from ch2.commands.args import m, V, DEV, mm, FAST, BASE, bootstrap_dir, FORCE
 from ch2.commands.constants import constants
 from ch2.config.profile.default import default
 from ch2.sql.tables.activity import ActivityJournal
@@ -19,24 +19,18 @@ class TestActivities(TestCase):
 
     def test_activities(self):
 
-        with NamedTemporaryFile() as f:
+        with TemporaryDirectory() as base:
 
-            args, sys, db = bootstrap_file(f, m(V), '5')
+            bootstrap_dir(base, m(V), '5')
 
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+            bootstrap_dir(base, m(V), '5', mm(DEV), configurator=default)
 
-            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'FTHR.%', '154')
+            args, sys, db = bootstrap_dir(base, m(V), '5', 'constants', 'set', 'SRTM1.dir',
+                                          '/home/andrew/archive/srtm1', mm(FORCE))
             constants(args, sys, db)
 
-            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'show', 'FTHR.%')
-            constants(args, sys, db)
-
-            args, sys, db = bootstrap_file(f, m(V), '5', 'constants', 'set', 'SRTM1.dir',
-                                      '/home/andrew/archive/srtm1')
-            constants(args, sys, db)
-
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
-                                      'data/test/source/personal/2018-08-27-rec.fit')
+            args, sys, db = bootstrap_dir(base, m(V), '5', mm(DEV), 'activities',
+                                          'data/test/source/personal/2018-08-27-rec.fit')
             activities(args, sys, db)
 
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -54,7 +48,7 @@ class TestActivities(TestCase):
                     join(StatisticName). \
                     filter(StatisticName.name == ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
-                # WHY does this jump aroud?
+                # WHY does this jump around?
                 n = s.query(count(StatisticJournal.id)).scalar()
                 # self.assertEqual(50403, n)
                 self.assertTrue(n > 30000)
@@ -63,8 +57,8 @@ class TestActivities(TestCase):
                 self.assertNotEqual(journal.start, journal.finish)
 
     def test_segment_bug(self):
-        with NamedTemporaryFile() as f:
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
+        with TemporaryDirectory() as f:
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
             paths = ['/home/andrew/archive/fit/bike/cotic/2016-07-27-pm-z4.fit']
             run_pipeline(sys, db, args[BASE], PipelineType.ACTIVITY, paths=paths, force=True)
 
@@ -77,12 +71,11 @@ class TestActivities(TestCase):
             self.assertTrue(stat, f'No value for {name}')
 
     def test_florian(self):
-        with NamedTemporaryFile() as f:
-            bootstrap_file(f, m(V), '5')
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                      'activities', mm(FAST),
-                                      'data/test/source/private/florian.fit')
+        with TemporaryDirectory() as f:
+            bootstrap_dir(f, m(V), '5')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
+                                          'data/test/source/private/florian.fit')
             activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, n_cpu=1)
@@ -91,11 +84,10 @@ class TestActivities(TestCase):
                 self.__assert_basic_stats(s)
 
     def test_michael(self):
-        with NamedTemporaryFile() as f:
-            bootstrap_file(f, m(V), '5')
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args,sys,  db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                      'activities', mm(FAST),
+        with TemporaryDirectory() as f:
+            bootstrap_dir(f, m(V), '5')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args,sys,  db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
                                       'data/test/source/other/2019-05-09-051352-Running-iWatchSeries3.fit')
             activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -105,11 +97,10 @@ class TestActivities(TestCase):
                 self.__assert_basic_stats(s)
 
     def test_heart_alarms(self):
-        with NamedTemporaryFile() as f:
-            bootstrap_file(f, m(V), '5')
-            bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-            args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV),
-                                      'activities', mm(FAST),
+        with TemporaryDirectory() as f:
+            bootstrap_dir(f, m(V), '5')
+            bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+            args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
                                       'data/test/source/personal/2016-07-19-mpu-s-z2.fit')
             activities(args, sys, db)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
@@ -123,10 +114,10 @@ class TestActivities(TestCase):
 
     def test_920(self):
         for src in '920xt-2019-05-16_19-42-54.fit', '920xt-2019-05-16_19-42-54.fit':
-            with NamedTemporaryFile() as f:
-                bootstrap_file(f, m(V), '5')
-                bootstrap_file(f, m(V), '5', mm(DEV), configurator=default)
-                args, sys, db = bootstrap_file(f, m(V), '5', mm(DEV), 'activities', mm(FAST),
+            with TemporaryDirectory() as f:
+                bootstrap_dir(f, m(V), '5')
+                bootstrap_dir(f, m(V), '5', mm(DEV), configurator=default)
+                args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
                                                f'data/test/source/other/{src}')
                 activities(args, sys, db)
                 # run('sqlite3 %s ".dump"' % f.name, shell=True)

@@ -625,37 +625,18 @@ def make_parser():
     return parser
 
 
-# def bootstrap_file(file, *args, configurator=None, post_config=None):
-#
-#     from ..lib.log import make_log
-#     from ..sql.database import Database, connect
-#     from ..sql.system import System
-#
-#     args = [mm(DATABASE), file.name, mm(SYSTEM), ':memory:'] + list(args)
-#     if configurator:
-#         ns, db = connect(args)
-#         sys = System(ns)
-#         configurator(sys, db)
-#     args += post_config if post_config else []
-#     ns = NamespaceWithVariables(make_parser().parse_args(args))
-#     make_log(ns)
-#     db = Database(ns)
-#     sys = System(ns)
-#
-#     return ns, sys, db
-
-
-def bootstrap_dir(dir, *args, configurator=None, post_config=None):
+def bootstrap_dir(base, *args, configurator=None, post_config=None):
 
     from ..lib.log import make_log
     from ..sql.database import Database, connect
     from ..sql.system import System
 
-    args = [mm(BASE), dir] + list(args)
+    args = [mm(BASE), base] + list(args)
     if configurator:
         ns, db = connect(args)
         sys = System(ns)
-        configurator(sys, db)
+        with db.session_context() as s:
+            configurator(sys, s, base)
     args += post_config if post_config else []
     ns = NamespaceWithVariables(make_parser().parse_args(args))
     make_log(ns)

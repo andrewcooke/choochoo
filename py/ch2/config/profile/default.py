@@ -6,7 +6,7 @@ from ..config import Config
 log = getLogger(__name__)
 
 
-def default(sys, s, base, no_diary):
+def default(sys, s, base, no_diary=False):
     '''
 ## default
 

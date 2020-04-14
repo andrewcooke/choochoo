@@ -13,7 +13,7 @@ from ...stats.calculate.power import Bike
 from ...stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
 
 
-def acooke(sys, s, base, no_diary):
+def acooke(sys, s, base, no_diary=False):
     '''
 ## acooke
 
