@@ -46,7 +46,7 @@ def run_garmin(sys, s, dir=None, base=None, user=None, password=None, dates=None
 
     if not dates: dates = list(missing_dates(s, force=force))
     local_progress = ProgressTree(len(dates), parent=progress)
-    if (base and dir) or not (base or dir):
+    if not (base or dir):
         raise Exception('Provide one of base or dir')
 
     try:
