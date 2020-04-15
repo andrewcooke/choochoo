@@ -46,7 +46,7 @@ class BaseController(ABC):
         while not self._sys.exists_any_process(self.__server_cls):
             retries += 1
             if retries > self.__max_retries:
-                raise Exception('Jupyter server did not start')
+                raise Exception('Server did not start')
             sleep(self.__retry_secs)
         sleep(5)  # extra wait...
         log.info('Service started')

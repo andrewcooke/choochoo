@@ -1,8 +1,12 @@
 
 import webbrowser
+from logging import getLogger
 
 from .args import SUB_COMMAND, SERVICE, STOP, START, STATUS
 from ..web.server import WebController
+
+
+log = getLogger(__name__)
 
 
 def web(args, system, db):
@@ -30,5 +34,6 @@ Stop the server.
     elif cmd == START:
         controller.start(restart=True)
         webbrowser.open(controller.connection_url(), autoraise=False)
+        log.info(controller.connection_url())
     elif cmd == STOP:
         controller.stop()
