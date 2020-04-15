@@ -13,7 +13,7 @@ from ..lib.utils import clean_path
 log = getLogger(__name__)
 
 # this can be modified during development.  it will be reset from setup.py on release.
-CH2_VERSION = '0.31.6'
+CH2_VERSION = '0.31.7'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
