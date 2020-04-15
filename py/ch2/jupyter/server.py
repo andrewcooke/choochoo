@@ -7,7 +7,7 @@ from time import sleep
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, TUI, LOG, BASE
+from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, TUI, LOG, BASE, base_system_path
 from ..lib.server import BaseController
 from ..sql import SystemConstant
 
@@ -39,12 +39,10 @@ class JupyterController(BaseController):
 
     def __init__(self, args, sys, max_retries=5, retry_secs=3):
         super().__init__(args, sys, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
-        self.__notebooks = args.system_path(NOTEBOOKS)
 
     def _status(self, running):
         if running:
             print(f'    {self.connection_url()}')
-            print(f'    {self.notebook_dir()}')
         print()
 
     def _build_cmd_and_log(self, ch2):
@@ -55,15 +53,13 @@ class JupyterController(BaseController):
 
     def _cleanup(self):
         self._sys.delete_constant(SystemConstant.JUPYTER_URL)
-        self._sys.delete_constant(SystemConstant.JUPYTER_DIR)
 
     def connection_url(self):
         self.start()
         return self._sys.get_constant(SystemConstant.JUPYTER_URL)
 
-    def notebook_dir(self):
-        self.start()
-        return self._sys.get_constant(SystemConstant.JUPYTER_DIR)
+    def base_dir(self):
+        return self._base
 
     def _run(self):
 
@@ -72,7 +68,8 @@ class JupyterController(BaseController):
         def start():
             log.info('Starting Jupyter server in separate thread')
             asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
-            JupyterServer.launch_instance(['--notebook-dir', self.__notebooks], started=started)
+            notebook_dir = base_system_path(self._base, subdir=NOTEBOOKS)
+            JupyterServer.launch_instance(['--notebook-dir', notebook_dir], started=started)
 
         t = Thread(target=start)
         t.daemon = True
@@ -85,7 +82,6 @@ class JupyterController(BaseController):
             sleep(1)
 
         self._sys.set_constant(SystemConstant.JUPYTER_URL, JupyterServer._instance.connection_url, force=True)
-        self._sys.set_constant(SystemConstant.JUPYTER_DIR, self.__notebooks, force=True)
 
         log.info('Jupyter server started')
         while True:

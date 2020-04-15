@@ -48,7 +48,7 @@ Stop the background server.
 
 
 def list():
-    for name, (_, spec) in templates():
+    for name, (_, spec) in templates().items():
         args = ' '.join(spec.args)
         if spec.varargs:
             if args: args += ' '
