@@ -111,7 +111,7 @@ def cumulative_plot(nx, ny, y, source, other=None, ylo=None, yhi=None, output_ba
 
 
 def add_climbs(f, climbs, source):
-    if f is not None:
+    if f is not None and present(climbs, CLIMB_DISTANCE):
         for time, climb in climbs.loc[~pd.isna(climbs[CLIMB_DISTANCE])].iterrows():
             i = source.index.get_loc(time, method='nearest')
             x = source[DISTANCE_KM].iloc[i]
@@ -124,7 +124,7 @@ def add_climbs(f, climbs, source):
 
 
 def add_climb_zones(f, climbs, source):
-    if f is not None:
+    if f is not None and present(climbs, CLIMB_DISTANCE):
         for time, climb in climbs.loc[~pd.isna(climbs[CLIMB_DISTANCE])].iterrows():
             i = source.index.get_loc(time, method='nearest')
             right = source[DISTANCE_KM].iloc[i]
