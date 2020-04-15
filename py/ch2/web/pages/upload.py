@@ -5,6 +5,7 @@ import psutil as ps
 
 from ...commands.args import mm, WEB, UPLOAD, TUI, LOG
 from ...commands.upload import upload_files_and_update, STREAM, NAME
+from ...lib.log import Record
 from ...lib.workers import command_root
 
 log = getLogger(__name__)
@@ -22,7 +23,7 @@ class Upload:
         items = request.form.getlist('kit')
         # we do this in two stages
         # first, immediate saving of files while web browser waiting for response
-        upload_files_and_update(self._sys, self._db, self._base, files=files, items=items, fast=True)
+        upload_files_and_update(Record(log), self._sys, self._db, self._base, files=files, items=items, fast=True)
         # second, start rest of ingest process in background
         # tui to avoid stdout appearing on web service output
         cmd = f'{command_root()} -v5 {mm(TUI)} {mm(LOG)} {WEB}-{UPLOAD}.log {UPLOAD}'

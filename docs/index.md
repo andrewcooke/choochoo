@@ -31,10 +31,32 @@ want, as long as you change the commands that follow appropriately.
 
     > ch2 web start
 
-## More Here
+Here, if you give `--base DIR`, then data will be stored in `DIR`.
+Otherwise, it is stored in `.ch2` your home directory.
 
-This doc in development; I need to do an initial release of 0-31 to
-write more.
+## Initial Configuration
+
+Within the web site (which should have opened in your brower), select
+`Configure/Install` in the left-hand menu.  Read the page and then,
+hopefully, click `CONFIGURE`.
+
+## Upgrade User Data
+
+If you have a previous install you can copy across data to the new
+version via the `Configure/Upgrade` page.
+
+## Constants
+
+On `Configure/Constants` you can edit various system constants.  For
+now, apart from FTHR values and the Garmin username / password (if you
+want to download monitor data), you probably want to leave these
+alone.
+
+## Upload
+
+Once the system is configured you can upload activity data (FIT files)
+via the `Upload` page.  If you are just starting, ignore `Kit` for the
+moment, select a file, and click `UPLOAD`.
 
 ## More Information
 
