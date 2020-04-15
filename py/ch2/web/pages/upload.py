@@ -3,7 +3,7 @@ from logging import getLogger
 
 import psutil as ps
 
-from ...commands.args import mm, WEB, UPLOAD, TUI, LOG
+from ...commands.args import mm, WEB, UPLOAD, TUI, LOG, BASE
 from ...commands.upload import upload_files_and_update, STREAM, NAME
 from ...lib.log import Record
 from ...lib.workers import command_root
@@ -26,7 +26,7 @@ class Upload:
         upload_files_and_update(Record(log), self._sys, self._db, self._base, files=files, items=items, fast=True)
         # second, start rest of ingest process in background
         # tui to avoid stdout appearing on web service output
-        cmd = f'{command_root()} -v5 {mm(TUI)} {mm(LOG)} {WEB}-{UPLOAD}.log {UPLOAD}'
+        cmd = f'{command_root()} -v5 {mm(TUI)} {mm(BASE)} {self._base} {mm(LOG)} {WEB}-{UPLOAD}.log {UPLOAD}'
         log.info(f'Starting {cmd}')
         ps.Popen(args=cmd, shell=True)
         # wait so that the progress has time to kick in

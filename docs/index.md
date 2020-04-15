@@ -37,7 +37,7 @@ Otherwise, it is stored in `.ch2` your home directory.
 ## Initial Configuration
 
 Within the web site (which should have opened in your brower), select
-`Configure/Install` in the left-hand menu.  Read the page and then,
+`Configure/Initial` in the left-hand menu.  Read the page and then,
 hopefully, click `CONFIGURE`.
 
 ## Upgrade User Data
