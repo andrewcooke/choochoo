@@ -73,7 +73,7 @@ Once installed the system must be configured.
 A basic configuration can be generated with the `config`
 command:
 
-    > ch2 config default
+    > ch2 config load default
 
 (if you are using source you may need to type `dev/ch2` instead of
 `ch2` - I'll assume that's obvious from now on).

@@ -4,4 +4,4 @@ include ch2/web/static/writer.js
 include ch2/web/static/bundle.js
 include ch2/web/static/writer.js.gz
 include ch2/web/static/bundle.js.gz
-recursive-include ch2/migraine *.sh
+recursive-include ch2/migrate *.sh
