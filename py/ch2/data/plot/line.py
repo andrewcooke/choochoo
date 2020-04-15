@@ -338,31 +338,34 @@ def multi_plot(nx, ny, x, ys, source, colors, alphas=None, x_range=None, y_label
 
 
 def add_multi_line_at_index(f, x, ys, source, colors, alphas=None, dash='dotted', index=-1):
-    if alphas is None: alphas = [0.5 for y in ys]
-    for y, color, alpha in zip(ys, colors, alphas):
-        f.line(x=x, y=source[y].loc[source[y].notna()].iloc[index],
-               source=source, color=color, alpha=alpha, line_dash=dash)
+    if f:
+        if alphas is None: alphas = [0.5 for y in ys]
+        for y, color, alpha in zip(ys, colors, alphas):
+            f.line(x=x, y=source[y].loc[source[y].notna()].iloc[index],
+                   source=source, color=color, alpha=alpha, line_dash=dash)
 
 
 def add_band(f, x, ylo, yhi, source, color, alpha=0.3, y_range_name='default'):
-    band = Band(base=x, lower=ylo, upper=yhi, source=ColumnDataSource(source),
-                fill_color=color, fill_alpha=alpha, line_width=1, line_color=color,
-                y_range_name=y_range_name)
-    f.add_layout(band)
+    if f:
+        band = Band(base=x, lower=ylo, upper=yhi, source=ColumnDataSource(source),
+                    fill_color=color, fill_alpha=alpha, line_width=1, line_color=color,
+                    y_range_name=y_range_name)
+        f.add_layout(band)
 
 
 def add_curve(f, x, y, source, group_size=30, color='black', alpha=1, smooth=1, y_range_name='default'):
-    # https://scikit-learn.org/stable/auto_examples/linear_model/plot_polynomial_interpolation.html
-    source = source[[x, y]].dropna()
-    degree = min(10, max(1, len(source) // group_size))
-    log.debug(f'Fitting polynomial of degree {degree} (ridge alpha {smooth})')
-    xf = source[x].values.astype('float64')
-    nxf = (xf - xf[0]) / (xf[1] - xf[0])
-    nxf2 = nxf[:, np.newaxis]
-    y2 = source[y].values[:, np.newaxis]
-    model = make_pipeline(PolynomialFeatures(degree), Ridge(alpha=smooth))
-    model.fit(nxf2, y2)
-    f.line(source[x], model.predict(nxf2)[:, 0], color=color, alpha=alpha, y_range_name=y_range_name)
+    if f:
+        # https://scikit-learn.org/stable/auto_examples/linear_model/plot_polynomial_interpolation.html
+        source = source[[x, y]].dropna()
+        degree = min(10, max(1, len(source) // group_size))
+        log.debug(f'Fitting polynomial of degree {degree} (ridge alpha {smooth})')
+        xf = source[x].values.astype('float64')
+        nxf = (xf - xf[0]) / (xf[1] - xf[0])
+        nxf2 = nxf[:, np.newaxis]
+        y2 = source[y].values[:, np.newaxis]
+        model = make_pipeline(PolynomialFeatures(degree), Ridge(alpha=smooth))
+        model.fit(nxf2, y2)
+        f.line(source[x], model.predict(nxf2)[:, 0], color=color, alpha=alpha, y_range_name=y_range_name)
 
 
 def htile(maps, n):
