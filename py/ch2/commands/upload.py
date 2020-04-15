@@ -2,7 +2,7 @@
 from glob import glob
 from logging import getLogger
 from os import makedirs, unlink
-from os.path import basename, join, exists
+from os.path import basename, join, exists, dirname
 
 from math import sqrt
 
@@ -10,14 +10,15 @@ from .activities import run_activity_pipelines
 from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
-from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, REPLACE, mm
+from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, REPLACE, mm, base_system_path, \
+    PERMANENT
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
 from ..lib.io import data_hash, split_fit_path, touch
 from ..lib.log import log_current_exception, Record
 from ..lib.utils import clean_path, slow_warning
 from ..lib.workers import ProgressTree, SystemProgressTree
-from ..sql import KitItem, FileHash, Constant, ActivityJournal, Source, FileScan
+from ..sql import KitItem, FileHash, ActivityJournal, Source, FileScan
 from ..stats.names import TIME
 from ..stats.read import AbortImportButMarkScanned
 from ..stats.read.activity import ActivityReader
@@ -39,8 +40,6 @@ DOT_FIT = '.fit'
 READ_PATH = 'read-path'
 WRITE_PATH = 'write-path'
 REPLACES = 'replaces'
-
-DATA_DIR = 'Data.Dir'
 
 
 def upload(args, system, db):
@@ -80,7 +79,7 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
     nfiles, files = open_files(args[PATH])
     upload_files_and_update(record, system, db, args[BASE], files=files, nfiles=nfiles, force=args[FORCE],
                             items=args[KIT], fast=args[FAST], unsafe=args[UNSAFE], delete=args[DELETE],
-                            replace=[REPLACE])
+                            replace=args[REPLACE])
 
 
 class SkipFile(Exception):
@@ -233,9 +232,10 @@ def remove_previous_files(file):
 
 def write_file(file):
     try:
-        if not exists(file[DIR]):
-            log.debug(f'Creating {file[DIR]}')
-            makedirs(file[DIR])
+        dir = dirname(file[WRITE_PATH])
+        if not exists(dir):
+            log.debug(f'Creating {dir}')
+            makedirs(dir)
         if exists(file[WRITE_PATH]):
             log.warning(f'Overwriting data at {file[WRITE_PATH]}')
         with open(file[WRITE_PATH], 'wb') as out:
@@ -255,15 +255,15 @@ def delete_file(file, data_dir):
             unlink(file[READ_PATH])
 
 
-def upload_files(record, db, files=tuple(), nfiles=None, items=tuple(), progress=None, unsafe=False, delete=False,
-                 replace=False):
+def upload_files(record, db, base, files=tuple(), nfiles=None, items=tuple(), progress=None,
+                 unsafe=False, delete=False, replace=False):
     try:
         local_progress = ProgressTree(len(files), parent=progress)
     except TypeError:
         local_progress = ProgressTree(nfiles, parent=progress)
     with record.record_exceptions():
         with db.session_context() as s:
-            data_dir = clean_path(Constant.get_single(s, DATA_DIR))
+            data_dir = base_system_path(base, version=PERMANENT)
             check_items(s, items)
             for file in files:
                 with local_progress.increment_or_complete():
@@ -293,8 +293,8 @@ def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=None, f
         weight = 1 if force else max(1, int(sqrt(n)))
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
-    upload_files(record, db, files=files, nfiles=nfiles, items=items, progress=progress, unsafe=unsafe, delete=delete,
-                 replace=replace)
+    upload_files(record, db, base, files=files, nfiles=nfiles, items=items, progress=progress,
+                 unsafe=unsafe, delete=delete, replace=replace)
     # todo - add record to pipelines?
     if not fast:
         run_activity_pipelines(sys, db, base, force=force, progress=progress)

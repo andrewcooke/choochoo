@@ -18,6 +18,8 @@ CH2_VERSION = '0.31.0'
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
 
+PERMANENT = 'permanent'
+
 PROGNAME = 'ch2'
 COMMAND = 'command'
 

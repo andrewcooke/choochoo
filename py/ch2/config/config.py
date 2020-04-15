@@ -8,9 +8,8 @@ from .database import add_loader_support, add_activity_group, add_activities, Co
     add_activity_topic_field
 from .impulse import add_impulse
 from .impulse import add_responses
-from ..commands.args import base_system_path, DB_VERSION
+from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
-from ..commands.upload import DATA_DIR
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant
@@ -37,7 +36,6 @@ from ..stats.read.segment import SegmentReader
 
 log = getLogger(__name__)
 
-DATA = 'permanent'
 BROKEN = 'broken'
 
 BIKE = 'Bike'
@@ -203,7 +201,7 @@ your FF-model parameters (fitness and fatigue).
         add_monitor(s, MonitorReader, c, sport_to_activity=sport_to_activity)
 
     def _load_constants(self, s):
-        add_constant(s, SRTM1_DIR, base_system_path(self._base, version=DATA, subdir='srtm1', create=False),
+        add_constant(s, SRTM1_DIR, base_system_path(self._base, version=PERMANENT, subdir='srtm1', create=False),
                      description='''
 Directory containing STRM1 hgt files for elevations.
 
@@ -211,13 +209,6 @@ These data are used to give improved values when using GPS elevation.
 You must create the directory and populate it with suitable files from http://dwtkns.com/srtm30m.
 If the directory or files are missing the raw GPS elevation will be used.
 This is noted as a warning in the logs (along with the name of the missing file).
-''',
-                     single=True, statistic_journal_type=StatisticJournalType.TEXT)
-        add_constant(s, DATA_DIR, base_system_path(self._base, version=DATA, subdir='fit', create=False),
-                     description='''
-Directory for uploaded data (the FIT files).
-Data are stored here and then read into the database.
-If the database is deleted the uploaded data remain and can be imported into a new database.
 ''',
                      single=True, statistic_journal_type=StatisticJournalType.TEXT)
         add_constant(s, GARMIN_USER, None,

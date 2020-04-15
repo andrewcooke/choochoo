@@ -54,7 +54,7 @@ class MultiProcPipeline(BasePipeline):
                  overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self.__system = system
         self.__db = db
-        self.__base = base
+        self.base = base
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
         self.__progress = progress
@@ -169,7 +169,7 @@ class MultiProcPipeline(BasePipeline):
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(self.__system, self.__base, n_parallel, self.owner_out, self._base_command())
+        workers = Workers(self.__system, self.base, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1

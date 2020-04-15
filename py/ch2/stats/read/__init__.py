@@ -7,6 +7,7 @@ from time import time
 
 from ..pipeline import MultiProcPipeline, LoaderMixin
 from ... import FatalException
+from ...commands.args import base_system_path, PERMANENT
 from ...fit.format.read import filtered_records
 from ...lib.date import to_time
 from ...lib.io import modified_file_scans
@@ -39,9 +40,9 @@ class FitReaderMixin(LoaderMixin):
         pass
 
     def _expand_paths(self, s, paths):
-        from ...commands.upload import DATA_DIR, DOT_FIT
+        from ...commands.upload import DOT_FIT
         if paths: return paths
-        data_dir = Constant.get_single(s, DATA_DIR)
+        data_dir = base_system_path(self.base, version=PERMANENT)
         if self.sub_dir:
             data_dir = join(data_dir, self.sub_dir)
         else:

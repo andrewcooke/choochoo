@@ -4,7 +4,7 @@ from time import sleep
 
 from requests import HTTPError
 
-from .args import DIR, USER, PASS, DATE, FORCE
+from .args import DIR, USER, PASS, DATE, FORCE, base_system_path, PERMANENT, BASE
 from ..fit.download.connect import GarminConnect
 from ..lib import now, local_time_to_time, time_to_local_time
 from ..lib.log import log_current_exception
@@ -38,15 +38,16 @@ https://www.garmin.com/en-US/account/datamanagement/
     dates = [args[DATE]] if args[DATE] else []
     dir = clean_path(DIR) if args[DIR] else None
     with db.session_context() as s:
-        run_garmin(sys, s, dir, args[USER], args[PASS], dates, args[FORCE])
+        run_garmin(sys, s, dir=dir, base=args[BASE],
+                   user=args[USER], password=args[PASS], dates=dates, force=args[FORCE])
 
 
-def run_garmin(sys, s, dir=None, user=None, password=None, dates=None, force=False, progress=None):
-
-    from .upload import DATA_DIR
+def run_garmin(sys, s, dir=None, base=None, user=None, password=None, dates=None, force=False, progress=None):
 
     if not dates: dates = list(missing_dates(s, force=force))
     local_progress = ProgressTree(len(dates), parent=progress)
+    if (base and dir) or not (base or dir):
+        raise Exception('Provide one of base or dir')
 
     try:
         if not dates:
@@ -54,7 +55,7 @@ def run_garmin(sys, s, dir=None, user=None, password=None, dates=None, force=Fal
             return
 
         old_format = bool(dir)
-        dir = dir or Constant.get_single(s, DATA_DIR)
+        data_dir = dir or base_system_path(base, version=PERMANENT)
         user = user or Constant.get_single(s, GARMIN_USER)
         password = password or Constant.get_single(s, GARMIN_PASSWORD)
 
@@ -73,7 +74,7 @@ def run_garmin(sys, s, dir=None, user=None, password=None, dates=None, force=Fal
             log.info('Downloading data for %s' % date)
             try:
                 with local_progress.increment_or_complete():
-                    connect.get_monitoring_to_fit_file(date, dir, old_format)
+                    connect.get_monitoring_to_fit_file(date, data_dir, old_format=old_format)
             except HTTPError:
                 log_current_exception(traceback=False)
                 log.info('End of data')

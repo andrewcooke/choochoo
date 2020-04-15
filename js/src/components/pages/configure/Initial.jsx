@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField, Link} from "@material-ui/core";
+import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField} from "@material-ui/core";
 import {
     ColumnCard,
     ColumnList,
@@ -12,7 +12,6 @@ import {
     TextCard
 } from "../../elements";
 import {handleJson} from "../../functions";
-import {Link as RouterLink} from "react-router-dom";
 import {Autocomplete} from "@material-ui/lab";
 
 
@@ -20,22 +19,14 @@ function Directory(props) {
 
     const {data} = props;
 
-    return (<ColumnCard header='Directories'><Grid item xs={12}><Text>
-        <p>Choochoo uses two separate directories for storage:</p>
-        <ul>
-            <li>Database, log files, and Jupyter notebooks are stored below the base
-                directory by version number:<br/>
-                <pre>{data.directory}</pre>
-                The base directory can be changed by specifying an alternative when
-                starting the web server:<br/>
-                <pre>ch2 --base DIRECTORY web start</pre>
-            </li>
-            <li>Uploaded FITS files are stored in Data.Dir which is
-                a <Link component={RouterLink} to='/configure/constants'>constant</Link>&nbsp;
-                that can be configured later.
-            </li>
-        </ul>
-    </Text></Grid></ColumnCard>)
+    return (<TextCard header='Directories'>
+        <p>Choochoo stores all files below the "base" directory, which you can choose
+            when starting the web server:<br/>
+            <pre>ch2 --base BASE web start</pre></p>
+        <p>Under this, uploaded FIT files are stored in the <code>permanent</code> subdirectory,
+            while the database is stored under a subdirectory that corresponds to the current version.
+            So installing a new version does not replace the FIT files, which can be re-loaded.</p>
+    </TextCard>)
 }
 
 
@@ -56,7 +47,8 @@ function Delete(props) {
                 <p>You can delete the current version from the base directory,
                     removing all data in the database,
                     along with old logs and jupyter notebooks.</p>
-                <p>Activity data can then imported from FIT files (assuming they were saved to Data.Dir).
+                <p>Activity data can then read from FIT files
+                    (assuming they were saved to <code>permanent</code>).
                     In most cases, user data from a previous version can also be imported
                     (assuming the previous database still exists).</p>
             </Text></Grid>
@@ -65,7 +57,8 @@ function Delete(props) {
                                   href='/api/configure/delete' setData={reload}
                                   json={{}} onComplete={onComplete}>
                 Some data can be recalculated from the FITS files (which are <b>not</b> deleted),
-                but you will lose any information entered directly into the diary.
+                or from a previous database version,
+                but you will lose any information entered directly into <b>this</b> version of the diary.
             </ConfirmedWriteButton>
         </ColumnCard>
         <Dialog fullScreen={fullScreen} open={wait}>
