@@ -1,4 +1,4 @@
-
+import re
 from logging import getLogger
 from os.path import splitext, basename
 
@@ -9,15 +9,17 @@ from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERC
     SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG, KM
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
-from ...commands.args import ACTIVITIES, WORKER, FAST, mm, FORCE, VERBOSITY, LOG, DEFAULT
+from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
+from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
+from ...lib.io import split_fit_path
 from ...sql.database import Timestamp, StatisticJournalText
-from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
 from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
     StatisticJournalType, StatisticJournal
+from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
 from ...sql.utils import add
 from ...srtm.bilinear import bilinear_elevation_from_constant
 
@@ -30,48 +32,76 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, **kargs):
+    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, kit=True, **kargs):
+        from ...commands.upload import ACTIVITY
         self.define = define if define else {}
+        self.kit = kit
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (name, units, type)
                              in self._assert('record_to_db', record_to_db).items()]
         self.add_elevation = not any(name == ELEVATION for (field, name, units, type) in self.record_to_db)
         self.__ajournal = None  # save for coverage
-        super().__init__(*args, **kargs)
+        super().__init__(*args, sub_dir=ACTIVITY, **kargs)
 
     def _base_command(self):
         if self.define:
-            define = ' '.join(f'-D "{name}={value}"' for name, value in self.define.items()) + ' -- '
+            define = ' '.join(f'{mm(DEFINE)} "{name}={value}"' for name, value in self.define.items()) + ' -- '
         else:
             define = ''
-        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.db_path} ' \
-               f'{ACTIVITIES} {mm(WORKER)} {self.id} --{FAST} {mm(FORCE) if self.force else ""} {define}'
+        force = ' ' + mm(FORCE) if self.force else ''
+        nokit = ' ' + mm(no(KIT)) if not self.kit else ''
+        return f'{ACTIVITIES}{force}{define}{nokit}'
 
     def _startup(self, s):
         super()._startup(s)
         self.__oracle = bilinear_elevation_from_constant(s)
 
+    def _build_define(self, path):
+        define = dict(self.define)
+        if self.kit:
+            _, kit = split_fit_path(path)
+            if kit:
+                log.debug(f'Adding {KIT}={kit} to definitions')
+                define[KIT] = kit
+            else:
+                log.debug(f'No kit in {path}')
+        return define
+
     def _read_data(self, s, file_scan):
         log.info('Reading activity data from %s' % file_scan)
-        records = self._read_fit_file(file_scan.path, merge_duplicates, fix_degrees, no_bad_values)
-        ajournal, activity_group, first_timestamp = self._create_activity(s, file_scan, records)
-        return ajournal, (ajournal, activity_group, first_timestamp, file_scan, records)
+        records = self.parse_records(read_fit(file_scan.path))
+        define = self._build_define(file_scan.path)
+        ajournal, activity_group, first_timestamp = self._create_activity(s, file_scan, define, records)
+        return ajournal, (ajournal, activity_group, first_timestamp, file_scan, define, records)
 
-    def __read_sport(self, path, records):
+    @staticmethod
+    def parse_records(data):
+        return ActivityReader.read_fit_file(data, merge_duplicates, fix_degrees, no_bad_values)
+
+    @staticmethod
+    def read_sport(path, records):
         try:
-            return self._first(path, records, 'sport').value.sport.lower()
+            return ActivityReader._first(path, records, 'sport').value.sport.lower()
         except AbortImportButMarkScanned:
             # alternative for some garmin devices (florian)
-            return self._first(path, records, 'session').value.sport.lower()
+            return ActivityReader._first(path, records, 'session').value.sport.lower()
 
-    def _create_activity(self, s, file_scan, records):
-        first_timestamp = self._first(file_scan, records, 'event', 'record').value.timestamp
-        last_timestamp = self._last(file_scan, records, 'event', 'record').value.timestamp
+    @staticmethod
+    def read_first_timestamp(path, records):
+        return ActivityReader._first(path, records, 'event', 'record').value.timestamp
+
+    @staticmethod
+    def read_last_timestamp(path, records):
+        return ActivityReader._last(path, records, 'event', 'record').value.timestamp
+
+    def _create_activity(self, s, file_scan, define, records):
+        first_timestamp = self.read_first_timestamp(file_scan.path, records)
+        last_timestamp = self.read_last_timestamp(file_scan.path, records)
         log.debug(f'Time range: {first_timestamp.timestamp()} - {last_timestamp.timestamp()}')
-        sport = self.__read_sport(file_scan, records)
-        activity_group = self._activity_group(s, file_scan, sport, self.sport_to_activity)
-        log.info(f'{activity_group} from {sport}')
+        sport = self.read_sport(file_scan.path, records)
+        activity_group = self._activity_group(s, file_scan.path, sport, self.sport_to_activity, define)
+        log.info(f'{activity_group} from {sport} / {define}')
         if self.force:
             self._delete_journals(s, activity_group, first_timestamp, last_timestamp, file_scan)
         else:
@@ -81,22 +111,23 @@ class ActivityReader(MultiProcFitReader):
                                           file_hash_id=file_scan.file_hash_id))
         return ajournal, activity_group, first_timestamp
 
-    def _activity_group(self, s, file_scan, sport, lookup):
+    def _activity_group(self, s, path, sport, lookup, define):
+        log.debug(f'Current lookup: {lookup}; sport: {sport}; define: {define}')
         if isinstance(lookup, str):
             return self._lookup_activity_group(s, lookup)
         if sport in lookup:
-            return self._activity_group(s, file_scan, sport, lookup[sport])
-        for key, value in self.define.items():
-            if key in lookup and value in lookup[key]:
-                return self._activity_group(s, file_scan, sport, lookup[key][value])
+            return self._activity_group(s, path, sport, lookup[sport], define)
+        for key, values in define.items():
+            for value in values.split(','):
+                if key in lookup and value in lookup[key]:
+                    return self._activity_group(s, path, sport, lookup[key][value], define)
         if DEFAULT in lookup:
-            return self._activity_group(s, file_scan, sport, lookup[DEFAULT])
-        log.warning('Unrecognised sport: "%s" in %s' % (sport, file_scan))
+            return self._activity_group(s, path, sport, lookup[DEFAULT], define)
+        log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
         if sport in (SPORT_GENERIC,):
             raise Exception(f'Ignoring {sport} entry')
         else:
-            raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
-                                 'See sport_to_activity in ch2.config.default.py')
+            raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
 
     def _lookup_activity_group(self, s, name):
         activity_group = ActivityGroup.from_name(s, name, optional=True)
@@ -146,11 +177,11 @@ class ActivityReader(MultiProcFitReader):
             log.warning(f'Repeated scan of file {file_scan.path}')
             raise Exception(file_scan.path)  # this should not happen since hash is checked before import
 
-    def _load_define(self, s, ajournal):
-        for name, value in self.define.items():
-            log.debug(f'Setting {name}={value}')
+    def _load_define(self, s, define, ajournal):
+        for name, value in define.items():
+            log.debug(f'Setting {name} = {value}')
             StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
-                                         ajournal, value, ajournal.start)
+                                     ajournal, value, ajournal.start)
 
     @staticmethod
     def _save_name(s, ajournal, file_scan):
@@ -186,9 +217,9 @@ class ActivityReader(MultiProcFitReader):
 
     def _load_data(self, s, loader, data):
 
-        ajournal, activity_group, first_timestamp, file_scan, records = data
+        ajournal, activity_group, first_timestamp, file_scan, define, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
-        self._load_define(s, ajournal)
+        self._load_define(s, define, ajournal)
         self._save_name(s, ajournal, file_scan)
         self.__ajournal = ajournal
 

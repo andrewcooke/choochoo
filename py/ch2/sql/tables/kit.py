@@ -20,6 +20,7 @@ from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE
 log = getLogger(__name__)
 
 NAME = 'name'
+GROUP = 'group'
 ITEM = 'item'
 ITEMS = _s(ITEM)
 COMPONENT = 'component'
@@ -210,7 +211,7 @@ class ModelMixin:
             if statistics == INDIVIDUAL:
                 self._add_individual_statistics(s, model)
         except AttributeError:
-            log.debug(f'No {statistics} statistics for {self.SIMPLE_NAME}')
+            log.debug(f'No {statistics} statistics for {self.SIMPLE_NAME} {self.name}')
         return model
 
 
@@ -324,7 +325,7 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
     def to_model(self, s, depth=0, statistics=None, time=None, own_models=True):
         model = super().to_model(s, depth=depth, statistics=statistics, time=time)
         model_ids = set(model.id for model in self.models)
-        if own_models:
+        if own_models and COMPONENTS in model:
             for component in model[COMPONENTS]:
                 # restrict component's models to subset of own models
                 component[MODELS] = [model for model in component[MODELS] if model[DB] in model_ids]

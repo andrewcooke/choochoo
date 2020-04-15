@@ -4,7 +4,7 @@ from logging import getLogger
 
 from urwid import MainLoop, connect_signal
 
-from .args import DATE, SCHEDULE, FAST, mm
+from .args import DATE, SCHEDULE, FAST, mm, BASE
 from ..diary.database import read_date, COMPARE_LINKS, read_schedule
 from ..diary.views.urwid import build, layout_date, layout_schedule
 from ..jupyter.server import set_controller, JupyterController
@@ -46,7 +46,7 @@ To exit, alt-q (or, without saving, alt-x).
 Display a summary for the month / year / schedule.
     '''
     set_controller(JupyterController(args, system))
-    date, schedule = args[DATE], args[SCHEDULE]
+    date, schedule, base = args[DATE], args[SCHEDULE], args[BASE]
     if not date:
         date = dt.date.today()
     else:
@@ -73,7 +73,7 @@ Display a summary for the month / year / schedule.
         MainLoop(DailyDiary(db, date), palette=PALETTE).run()
         if not args[FAST]:
             print('\n  Please wait while statistics are updated...')
-            run_pipeline(system, db, PipelineType.STATISTIC)
+            run_pipeline(system, db, base, PipelineType.STATISTIC)
             print(f'  ...done (thanks! - use {mm(FAST)} to avoid this, if the risk is worth it)\n')
 
 

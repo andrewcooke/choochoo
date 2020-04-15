@@ -4,7 +4,7 @@ import {Grid, InputLabel, List, ListItem, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
 import {differenceInCalendarDays, format, formatDistance, parse} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
-import {setIds} from "../../functions";
+import {handleJson, setIds} from "../../functions";
 import StatisticsValues from "./elements/StatisticsValues";
 
 
@@ -26,7 +26,7 @@ const useStyles = makeStyles(theme => ({
 
 function ModelStatistics(props) {
 
-    const {model, component, datetime} = props;
+    const {model, component} = props;
     const classes = useStyles();
     const have_statistics = 'statistics' in model;
     const n = have_statistics ? Math.max(...model['statistics'].map(statistic => statistic['n'])) : 0;
@@ -42,7 +42,7 @@ function ModelStatistics(props) {
 
 function ItemStatistics(props) {
 
-    const {item, group, datetime} = props;
+    const {item, group} = props;
     const have_statistics = 'statistics' in item;
     const n = have_statistics ? Math.max(...item['statistics'].map(statistic => statistic['n'])) : 0;
 
@@ -50,25 +50,24 @@ function ItemStatistics(props) {
         {have_statistics && <StatisticsValues statistics={item.statistics}/>}
         {item.components.map(
             component => component.models.map(
-                model => <ModelStatistics model={model} component={component} key={model.id}
-                                          datetime={datetime}/>)).flat()}
+                model => <ModelStatistics model={model} component={component} key={model.id}/>)).flat()}
     </ColumnCard>);
 }
 
 
 function Columns(props) {
 
-    const {groups, datetime} = props;
+    const {groups} = props;
 
     if (groups === null) {
-        return <Loading/>;  // undefined initial data
+        return <Loading/>;
     } else {
         let id = 0;
         groups.forEach(group => id = setIds(group, id, ['items', 'components', 'models', 'statistics']));
         return (<ColumnList>
             {groups.map(
                 group => group.items.map(
-                    item => <ItemStatistics item={item} group={group} key={item.id} datetime={datetime}/>)).flat()}
+                    item => <ItemStatistics item={item} group={group} key={item.id}/>)).flat()}
         </ColumnList>);
     }
 }
@@ -100,17 +99,26 @@ export default function Snapshot(props) {
     const {match, history} = props;
     const {date} = match.params;
     const datetime = parse(date, FMT_DAY, new Date());
-    const [json, setJson] = useState(null);
+    const [groups, setGroups] = useState(null);
+    const busyState = useState(null);
+    const errorState = useState(null);
+    const [error, setError] = errorState;
+    const [reads, setReads] = useState(0);
+
+    function reload() {
+        setReads(reads + 1);
+    }
 
     useEffect(() => {
-        setJson(null);
+        setGroups(null);
         fetch('/api/kit/' + date)
-            .then(response => response.json())
-            .then(json => setJson(json));
-    }, [date]);
+            .then(handleJson(history, setGroups, setError, busyState));
+    }, [`${date} ${reads}`]);
 
     return (
         <Layout navigation={<SnapshotMenu datetime={datetime} history={history}/>}
-                content={<Columns groups={json} datetime={datetime}/>} match={match} title={`Kit: ${date}`}/>
+                content={<Columns groups={groups}/>}
+                match={match} title={`Kit: ${date}`} reload={reload}
+                busyState={busyState} errorState={errorState}/>
     );
 }

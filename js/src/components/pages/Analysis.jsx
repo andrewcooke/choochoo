@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnList, Layout, Loading, MainMenu} from "../elements";
+import {ColumnCard, ColumnList, Layout, Loading, MainMenu} from "../elements";
 import {
     ActivityDetails,
     AllActivities,
@@ -11,6 +11,7 @@ import {
     SimilarActivities,
     SomeActivities
 } from "./analysis";
+import {handleJson} from "../functions";
 
 
 function Columns(props) {
@@ -18,7 +19,11 @@ function Columns(props) {
     const {params} = props;
 
     if (params === null) {
-        return <Loading/>;  // undefined initial data
+        return <Loading/>;
+    }else if (params.activities_start === null) {
+        return (<ColumnList>
+            <ColumnCard header='No Data'/>
+        </ColumnList>);
     } else {
         return (<ColumnList>
             <ActivityDetails params={params}/>
@@ -37,17 +42,27 @@ function Columns(props) {
 
 export default function Analysis(props) {
 
-    const {match} = props;
-    const [json, setJson] = useState(null);
+    const {match, history} = props;
+    const [params, setParams] = useState(null);
+    const busyState = useState(null);
+    const errorState = useState(null);
+    const [error, setError] = errorState;
+    const [reads, setReads] = useState(0);
+
+    function reload() {
+        setReads(reads + 1);
+    }
 
     useEffect(() => {
-        setJson(null);
-        fetch('/api/diary/analysis-parameters')
-            .then(response => response.json())
-            .then(json => setJson(json));
-    }, [1]);
+        setParams(null);
+        fetch('/api/analysis/parameters')
+            .then(handleJson(history, setParams, setError, busyState));
+    }, [reads]);
 
     return (
-        <Layout navigation={<MainMenu/>} content={<Columns params={json}/>} match={match} title='Analysis'/>
+        <Layout navigation={<MainMenu/>}
+                content={<Columns params={params}/>}
+                match={match} title='Analysis' reload={reload}
+                busyState={busyState} errorState={errorState}/>
     );
 }

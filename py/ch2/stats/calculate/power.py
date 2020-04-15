@@ -7,7 +7,7 @@ from re import split
 import numpy as np
 import pandas as pd
 
-from . import DataFrameCalculatorMixin, ActivityJournalCalculatorMixin, MultiProcCalculator
+from . import DataFrameCalculatorMixin, MultiProcCalculator, ActivityGroupCalculatorMixin
 from ..load import StatisticJournalLoader
 from ..names import *
 from ...data import activity_statistics, present, linear_resample_time
@@ -27,7 +27,7 @@ Bike = namedtuple('Bike', 'cda, crr, weight')
 
 
 # used as common owner
-class PowerCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class PowerCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, owner_out=PowerCalculator, **kargs)
@@ -42,7 +42,7 @@ class BasicPowerCalculator(PowerCalculator):
     Currently the 'bike' attribute of 'power' is defined as '${Constant:Power.${SegmentReader:kit}}'.
     '''
 
-    def __init__(self, *args, power=None, caloric_eff=0.25, **kargs):
+    def __init__(self, *args, power=None, caloric_eff=0.25, activity_group_name=None, **kargs):
         self.power_ref = power
         self.caloric_eff = caloric_eff
         super().__init__(*args, **kargs)

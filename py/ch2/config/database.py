@@ -1,4 +1,3 @@
-
 from json import dumps
 from logging import getLogger
 from re import sub
@@ -69,6 +68,7 @@ def add_statistics(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
+    log.debug(f'Adding statistic pipeline {cls}')
     return add(s, Pipeline(cls=cls, type=PipelineType.STATISTIC, sort=sort, kargs=kargs))
 
 
@@ -85,6 +85,7 @@ def add_diary(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
+    log.debug(f'Adding diary pipeline {cls}')
     return add(s, Pipeline(cls=cls, type=PipelineType.DIARY, sort=sort, kargs=kargs))
 
 
@@ -100,6 +101,7 @@ def add_monitor(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
+    log.debug(f'Adding monitor pipeline {cls}')
     return add(s, Pipeline(cls=cls, type=PipelineType.MONITOR, sort=sort, kargs=kargs))
 
 
@@ -125,11 +127,13 @@ def add_activities(s, cls, sort, **kargs):
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
+    log.debug(f'Loading activity pipeline {cls}')
     return add(s, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
 
 
-def add_constant(s, name, description=None, units=None, single=False,
-                 statistic_journal_type=StatisticJournalType.INTEGER):
+def add_constant(s, name, value, description=None, units=None, single=False,
+                 statistic_journal_type=StatisticJournalType.INTEGER,
+                 time=0.0):
     '''
     Add a constant (not associated with an activity).
 
@@ -138,18 +142,24 @@ def add_constant(s, name, description=None, units=None, single=False,
     An example is FTHR, which you will only measure occasionally, but which is needed when calculating
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
+    log.debug(f'Adding constant {name}')
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=None,
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
-    return add(s, Constant(statistic_name=statistic_name, name=name, single=single))
+    constant = add(s, Constant(statistic_name=statistic_name, name=name, single=single))
+    if value:
+        constant.add_value(s, value, time=time)
+    else:
+        log.warning(f'No value for constant {name}')
+    return constant
 
 
-def add_activity_constant(s, activity_group, name, description=None, units=None, single=False,
-                          statistic_journal_type=StatisticJournalType.INTEGER):
+def add_activity_constant(s, activity_group, name, value, description=None, units=None, single=False,
+                          statistic_journal_type=StatisticJournalType.INTEGER, time=0.0):
     '''
     Add a constant associated with an activity.
 
-    Configuring a constant allows the user to supply a value later, using the `ch2 constant` command.
+    Configuring a constant allows the user to modify a value later, using the `ch2 constant` command.
     This can be useful for values that don't vary often, and so aren't worth adding to the diary.
     An example is FTHR, which you will only measure occasionally, but which is needed when calculating
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
@@ -159,19 +169,31 @@ def add_activity_constant(s, activity_group, name, description=None, units=None,
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=activity_group,
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
-    return add(s, Constant(statistic_name=statistic_name, name='%s.%s' % (name, activity_group.name), single=single))
+    log.debug(f'Adding activity constant {name}')
+    constant = add(s, Constant(statistic_name=statistic_name, name='%s.%s' % (name, activity_group.name),
+                               single=single))
+    if value:
+        constant.add_value(s, value, time=time)
+    else:
+        log.warning(f'No value for constant {name}')
+    return constant
 
 
-def add_enum_constant(s, name, enum, constraint=None, description=None, units=None, single=False):
+def add_enum_constant(s, name, enum, value, constraint=None, description=None, units=None, single=False, time=0.0):
     '''
     Add a constant that is a JSON encoded enum.  This is validated before saving.
     '''
     statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=constraint,
                                           units=units, description=description,
                                           statistic_journal_type=StatisticJournalType.TEXT))
-    return add(s, Constant(statistic_name=statistic_name, name=name, single=single,
-                           validate_cls=ValidateNamedTuple,
-                           validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)}))
+    constant = add(s, Constant(statistic_name=statistic_name, name=name, single=single,
+                               validate_cls=ValidateNamedTuple,
+                               validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)}))
+    if value:
+        constant.add_value(s, dumps(value), time=time)
+    else:
+        log.warning(f'No value for constant {name}')
+    return constant
 
 
 def set_constant(s, constant, value, time=None, date=None):
@@ -294,15 +316,27 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
     Add a pipeline task (and related constant) to find nearby activities in a given geographic
     region (specified by latitude, longitude, width and height, all in degrees).
     '''
+    log.debug(f'Adding nearby statistics for {constraint} / {activity_group.name}')
     activity_group_constraint = str(activity_group)
     nearby_constraint = name_constant(constraint, activity_group)
     nearby_name = name_constant(constant, activity_group)
-    nearby = add_enum_constant(s, nearby_name, Nearby, single=True, constraint=activity_group_constraint,
-                               description='Data needed to calculate nearby activities - see Nearby enum')
-    set_constant(s, nearby, dumps({'constraint': nearby_constraint, 'activity_group': activity_group.name,
-                                   'border': border, 'start': start, 'finish': finish,
-                                   'latitude': latitude, 'longitude': longitude,
-                                   'height': height, 'width': width, 'fraction': fraction}))
+    add_enum_constant(s, nearby_name, Nearby,
+                      {'constraint': nearby_constraint, 'activity_group': activity_group.name,
+                       'border': border, 'start': start, 'finish': finish,
+                       'latitude': latitude, 'longitude': longitude,
+                       'height': height, 'width': width, 'fraction': fraction},
+                      single=True, constraint=activity_group_constraint, description='''
+A region over which activities are candidates to be 'near' each other.  
+This does not mean that all activities in this area are near to each other - 
+only that activities outside will not be considered as candidates.
+* Constraint is the name of the region.
+* Activity_group identifies which activities are considered.
+* Border is the radius (m) around GPS points for them to 'overlap' ('nearby' routes have a large number of 'ovelapping' points).
+* Start and finish are dates between which the region is used.
+* Latitude and longitude define the centre of the region (degrees).
+* Height and width define the size of the region (degrees).
+* Fraction reduces the number of points used to match two activities (increasing processing speed).
+''')
     add_statistics(s, SimilarityCalculator, sort, nearby=nearby_name,
                    owner_in=short_cls(ActivityCalculator), owner_out=short_cls(SimilarityCalculator))
     add_statistics(s, NearbyCalculator, sort, constraint=nearby_constraint,
@@ -313,6 +347,7 @@ def add_loader_support(s):
     '''
     Add 'dummy' value used by loader.
     '''
+    log.debug('Adding dummy source')
     dummy_source = add(s, Dummy())
     dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source,
                                       statistic_journal_type=StatisticJournalType.STATISTIC))

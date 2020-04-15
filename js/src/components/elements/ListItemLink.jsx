@@ -1,13 +1,11 @@
 import React from 'react';
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
+import {ListItem, ListItemIcon, ListItemText} from "@material-ui/core";
 import {Link} from "react-router-dom";
 
 
 export default function ListItemLink(props) {
 
-    const {icon, primary, to, ...rest} = props;
+    const {icon=null, primary, to, ...rest} = props;
 
     const renderLink = React.useMemo(
         () => React.forwardRef(
@@ -19,7 +17,7 @@ export default function ListItemLink(props) {
     return (
         <li>
             <ListItem button component={renderLink}>
-                {icon ? <ListItemIcon>{icon}</ListItemIcon> : null}
+                {icon !== null ? <ListItemIcon>{icon}</ListItemIcon> : null}
                 <ListItemText primary={primary} {...rest}/>
             </ListItem>
         </li>

@@ -5,11 +5,13 @@ import time as t
 from calendar import monthrange
 
 
+Y = '%Y'
 YM = '%Y-%m'
 YMD = '%Y-%m-%d'
 HMS = '%H:%M:%S'
 HM = '%H:%M'
 YMD_HMS = YMD + ' ' + HMS
+YMDTHMS = YMD + 'T' + HMS
 YMD_HM = YMD + ' ' + HM
 
 ALL_DATE_FORMATS = ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',

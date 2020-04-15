@@ -13,7 +13,7 @@ export default function FormatValueUnits(props) {
         } else {
             return (<Text>{sprintf('%.1f', value)}{units}</Text>);
         }
-    } else if (['W', 'bpm', 'm'].includes(units)) {
+    } else if (['W', 'bpm', 'm', 'kJ', 'kCal'].includes(units)) {
         return (<Text>{sprintf('%d', value)}{units}</Text>);
     } else if (['FF', 'stp'].includes(units)) {
         return (<Text>{sprintf('%d', value)}</Text>);

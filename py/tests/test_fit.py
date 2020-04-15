@@ -1,8 +1,6 @@
-
 from glob import glob
 from logging import getLogger
 from os.path import basename, join, exists
-from unittest import TestCase
 
 from ch2.commands.args import FIELDS, TABLES, GREP
 from ch2.fit.format.read import filtered_records
@@ -11,11 +9,12 @@ from ch2.fit.profile.fields import DynamicField
 from ch2.fit.profile.profile import read_external_profile, read_fit
 from ch2.fit.summary import summarize, summarize_csv, summarize_tables
 from ch2.lib.tests import OutputMixin, HEX_ADDRESS, EXC_HDR_CHK, sub_extn, EXC_FLD, sub_dir, RNM_UNKNOWN, ROUND_DISTANCE
+from tests import LogTestCase
 
 log = getLogger(__name__)
 
 
-class TestFit(TestCase, OutputMixin):
+class TestFit(LogTestCase, OutputMixin):
 
     # some of these tests depend on the width of the window they are run in!  :(
     # (use 80 chars until fixed)

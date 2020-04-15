@@ -1,6 +1,6 @@
 import React from 'react';
 import {makeStyles} from "@material-ui/core/styles";
-import {Box, Grid, ListItem, Typography} from "@material-ui/core";
+import {Grid, ListItem, Typography} from "@material-ui/core";
 import Card from "./Card";
 
 
@@ -18,13 +18,22 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-export default function ColumnCard(props) {
+export function ColumnCardBase(props) {
 
     const {header=null, children} = props;
     const classes = useStyles();
 
     return (<ListItem className={classes.listItem}><Card>
-        {header !== null ? <Typography variant='h2'>{header}</Typography> : <></>}
+        {header !== null ? header : <></>}
         <Grid container spacing={1} className={classes.align}>{children}</Grid>
     </Card></ListItem>);
+}
+
+
+export default function ColumnCard(props) {
+    const {header = null, children} = props;
+    return (<ColumnCardBase
+        header={header !== null ? <Typography variant='h2'>{header}</Typography> : header}>
+        {children}
+    </ColumnCardBase>);
 }

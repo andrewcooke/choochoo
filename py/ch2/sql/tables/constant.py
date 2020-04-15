@@ -2,15 +2,18 @@
 import datetime as dt
 from abc import ABC, abstractmethod
 from json import dumps, loads
+from logging import getLogger
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, Boolean, desc
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Source, SourceType
 from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
 from ..types import Cls, Json, lookup_cls
-from ...lib.date import local_date_to_time, format_time
+from ...lib.date import local_date_to_time, format_time, to_time
+from ...lib.log import log_current_exception
+
+log = getLogger(__name__)
 
 
 class Constant(Source):
@@ -45,7 +48,7 @@ class Constant(Source):
         if date:
             time = local_date_to_time(date)
         if time and self.single:
-            raise Exception('%s was given time %s but is not time-variable' % (self, format_time(time)))
+            raise Exception('%s was given time %s but is not time-variable' % (self, format_time(to_time(time))))
         sjournal = STATISTIC_JOURNAL_CLASSES[self.statistic_name.statistic_journal_type](
             statistic_name=self.statistic_name, source=self, value=value, time=time)
         self.validate(sjournal)
@@ -64,11 +67,24 @@ class Constant(Source):
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def get(cls, s, name):
-        try:
-            return s.query(Constant).filter(Constant.name == name).one()
-        except NoResultFound:
+    def get(cls, s, name, none=False):
+        constant = s.query(Constant).filter(Constant.name == name).one_or_none()
+        if constant is None and not none:
             raise Exception('Could not find Constant for %s' % name)
+        return constant
+
+    @classmethod
+    def get_single(cls, s, name):
+        try:
+            constant = Constant.get(s, name)
+            if not constant.single:
+                raise Exception(f'Constant {name} is not single')
+            value = constant.at(s).value
+            log.debug(f'{name} is {value}')
+            return value
+        except Exception as e:
+            log_current_exception(traceback=False)
+            raise Exception(f'{name} is not configured')
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.CONSTANT
@@ -107,5 +123,4 @@ class ValidateNamedTuple(Validate):
         except Exception as e:
             raise ValidateError('Could not create %s from "%s" for "%s": %s' %
                                 (self.__tuple_cls, value, constant.name, e))
-
 

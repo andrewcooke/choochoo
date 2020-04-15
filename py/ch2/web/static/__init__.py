@@ -47,7 +47,6 @@ class Static:
     def parse_path(self, path):
         package = self.__package
         head, tail = split(path)
-        log.debug(f'{path} -> {head}, {tail}')
         if not tail:
             raise Exception(f'{path} is a directory')
         if tail == '__init__.py':

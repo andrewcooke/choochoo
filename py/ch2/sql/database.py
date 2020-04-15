@@ -3,27 +3,30 @@ from contextlib import contextmanager
 from logging import getLogger
 from sqlite3 import OperationalError
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, MetaData
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
 
 from . import *
 from .support import Base
-from ..commands.args import DATABASE, NamespaceWithVariables, NO_OP, make_parser
-from ..lib.log import make_log
+from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DATA, DB_EXTN, ACTIVITY
+from ..lib.log import make_log_from_args
+
 
 # mention these so they are "created" (todo - is this needed? missing tables seem to get created anyway)
 Source,  Interval, Dummy, Composite, CompositeComponent
 ActivityGroup, ActivityJournal, ActivityTimespan, ActivityBookmark
 DiaryTopic, DiaryTopicJournal, DiaryTopicField,
+ActivityTopic, ActivityTopicJournal, ActivityTopicField,
 StatisticName, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, StatisticJournalText, StatisticMeasure
 Segment, SegmentJournal
 Pipeline
 MonitorJournal
-Constant, SystemConstant, SystemProcess
+Constant, SystemConstant, Process
 ActivitySimilarity, ActivityNearby
 Timestamp
+
 
 log = getLogger(__name__)
 
@@ -53,21 +56,21 @@ def analyze_pragma_on_close(dbapi_con, _con_record):
         # this can fail if another process is using the database
         cursor.execute("PRAGMA optimize;")  # https://www.sqlite.org/pragma.html#pragma_optimize
     except OperationalError as e:
-        log.debug("Optimize DB aborted (DB Likely still in use)")
+        log.debug("Optimize DB aborted (DB likely still in use)")
     finally:
         cursor.close()
 
 
 class DatabaseBase:
 
-    def __init__(self, key, table, base, args):
-        self.path = args.file(key)
+    def __init__(self, path, read_only=False):
+        self.path = path
         log.info('Using database at %s' % self.path)
-        self.engine = create_engine('sqlite:///%s' % self.path, echo=False)
+        uri = f'sqlite:///{path}'
+        if read_only: uri += '?mode=ro'
+        log.debug(f'Connecting to {uri}')
+        self.engine = create_engine(uri, echo=False)
         self.session = self._sessionmaker()
-        if self.no_schema(table):
-            log.info('Creating tables')
-            base.metadata.create_all(self.engine)
 
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine)
@@ -88,11 +91,23 @@ class DatabaseBase:
         finally:
             session.close()
 
+    def __str__(self):
+        return f'{self.__class__.__name__} at {self.path}'
 
-class Database(DatabaseBase):
+
+class MappedDatabase(DatabaseBase):
+
+    def __init__(self, name, table, base, args, **kargs):
+        super().__init__(args.system_path(DATA, name + DB_EXTN), **kargs)
+        if self.no_schema(table):
+            log.info('Creating tables')
+            base.metadata.create_all(self.engine)
+
+
+class Database(MappedDatabase):
 
     def __init__(self, args):
-        super().__init__(DATABASE, Source, Base, args)
+        super().__init__(ACTIVITY, Source, Base, args)
 
     def no_data(self,):
         with self.session_context() as s:
@@ -114,7 +129,15 @@ def connect(args):
         args = []
     args.append(NO_OP)
     ns = NamespaceWithVariables(make_parser().parse_args(args))
-    make_log(ns)
+    make_log_from_args(ns)
     db = Database(ns)
     return ns, db
+
+
+class ReflectedDatabase(DatabaseBase):
+
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+        self.meta = MetaData()
+        self.meta.reflect(bind=self.engine)
 

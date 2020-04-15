@@ -10,8 +10,9 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MAX_MEAN_PE_M_AN
     CLIMB_DISTANCE, CLIMB_ELEVATION, MAX_MED_HR_M_ANY, MIN_KM_TIME_ANY
 from ...lib import local_time_to_time
 from ...lib.log import log_current_exception
-from ...sql import ActivityJournal, Timestamp, StatisticName, StatisticJournal, Achievement
+from ...sql import ActivityJournal, Timestamp, StatisticName, StatisticJournal, Achievement, ActivityGroup
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournalFloat
+from ...sql.types import short_cls
 from ...sql.utils import add
 
 log = getLogger(__name__)
@@ -75,9 +76,9 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
             for (days, period, period_score) in [(50 * 365, 'of all time', 10),
                                                  (365, 'in a year', 5),
                                                  (30, 'in 30 days', 1)]:
-                rank, achievement = self._check(s, activity_journal, superlative, statistic_name, days, period)
+                rank, achievement, all = self._check(s, activity_journal, superlative, statistic_name, days, period)
                 if achievement:
-                    score = statistic_score + period_score - rank
+                    score = statistic_score + period_score - rank + (4 if all else 0)
                     log.debug(f'{achievement}/{score}')
                     add(s, Achievement(text=achievement, sort=score, activity_journal=activity_journal))
                     break  # if month, also week
@@ -97,6 +98,7 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
 
     def _check(self, s, activity_journal, superlative, statistic_name, days, period):
         try:
+            group = self.parse_group(statistic_name)
             # 4 so we know something worse
             best_values = self._build_query(s, activity_journal, statistic_name, days).limit(4).all()
             best_values = [x[0] for x in best_values]
@@ -105,13 +107,22 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
                 description = adjective % superlative
                 # +1 below so we don't give prizes for last
                 if len(best_values) > rank+1 and current_value == best_values[rank]:
-                    achievement = f'{description} {lower(statistic_name.name)} {period}'
+                    achievement = f'{description} {lower(statistic_name.name)} {period} (for {group})'
                     achievement = achievement[0].upper() + achievement[1:]
-                    return rank, achievement
+                    return rank, achievement, group == 'all'
         except Exception as e:
             log.warning(f'No achievement for {statistic_name}: {e}')
             log_current_exception()
-        return 0, None
+        return 0, None, False
+
+    @staticmethod
+    def parse_group(statistic_name):
+        # activity group is encoded into the statistic name constraint
+        constraint = statistic_name.constraint
+        if constraint.startswith(short_cls(ActivityGroup)):
+            return lower(constraint.split('"')[1])
+        else:
+            return 'all'
 
 
 def lower(text):

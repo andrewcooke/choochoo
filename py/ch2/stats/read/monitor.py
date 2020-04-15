@@ -5,16 +5,16 @@ from logging import getLogger
 import numpy as np
 import pandas as pd
 from sqlalchemy import desc, and_, or_, distinct, func, select
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import count
 
 from ..load import StatisticJournalLoader
 from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE
 from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import MONITOR, WORKER, FAST, mm, FORCE, VERBOSITY, LOG, DEFAULT
+from ...commands.args import MONITOR, WORKER, mm, FORCE, VERBOSITY, LOG, DEFAULT
 from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
+from ...fit.profile.profile import read_fit
 from ...lib.date import time_to_local_date, format_time
 from ...sql.database import StatisticJournalType, ActivityGroup
 from ...sql.tables.monitor import MonitorJournal
@@ -92,8 +92,9 @@ NEW_STEPS = _new(STEPS)
 class MonitorReader(MultiProcFitReader):
 
     def __init__(self, *args, sport_to_activity=None, **kargs):
+        from ...commands.upload import MONITOR
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
-        super().__init__(*args, **kargs)
+        super().__init__(*args, sub_dir=MONITOR, **kargs)
 
     def _startup(self, s):
         self.sport_to_activity_group = {label: group for label, group in self._expand_activities(s)}
@@ -117,14 +118,14 @@ class MonitorReader(MultiProcFitReader):
         return MonitorLoader(s, **kargs)
 
     def _base_command(self):
-        return f'{{ch2}} --{VERBOSITY} 0 --{LOG} {{log}} -f {self.db_path} ' \
-               f'{MONITOR} {mm(WORKER)} {self.id} --{FAST} {mm(FORCE) if self.force else ""}'
+        force = mm(FORCE) if self.force else ""
+        return f'{MONITOR} {force}'
 
     def _delete_contained(self, s, start, finish, path):
         for mjournal in s.query(MonitorJournal). \
                 filter(MonitorJournal.start >= start,
                        MonitorJournal.finish <= finish).all():
-            log.warning(f'Replacing {mjournal.fit_file} ({mjournal.start} - {mjournal.finish}) with data from '
+            log.warning(f'Replacing data from {mjournal.start} to {mjournal.finish} with data from '
                         f'{path} ({start} - {finish}')
             s.delete(mjournal)
 
@@ -150,12 +151,22 @@ class MonitorReader(MultiProcFitReader):
         self._delete_contained(s, start, finish, path)
         s.commit()
 
+    @staticmethod
+    def parse_records(data):
+        return MonitorReader.read_fit_file(data, merge_duplicates, fix_degrees, unpack_single_bytes)
+
+    @staticmethod
+    def read_first_timestamp(path, records):
+        return MonitorReader._first(path, records, MONITORING_INFO_ATTR).value.timestamp
+
+    @staticmethod
+    def read_last_timestamp(path, records):
+        return MonitorReader._last(path, records, MONITORING_ATTR).value.timestamp
+
     def _read_data(self, s, file_scan):
-
-        records = self._read_fit_file(file_scan.path, merge_duplicates, fix_degrees, unpack_single_bytes)
-
-        first_timestamp = self._first(file_scan, records, MONITORING_INFO_ATTR).timestamp
-        last_timestamp = self._last(file_scan, records, MONITORING_ATTR).timestamp
+        records = self.parse_records(read_fit(file_scan.path))
+        first_timestamp = self.read_first_timestamp(file_scan.path, records)
+        last_timestamp = self.read_last_timestamp(file_scan.path, records)
         if first_timestamp == last_timestamp:
             log.debug('File %s is empty (no timespan)' % file_scan)
             raise AbortImportButMarkScanned()
@@ -182,8 +193,7 @@ class MonitorReader(MultiProcFitReader):
                                    self.sport_to_activity_group[sport], mjournal, steps,
                                    record.timestamp, StatisticJournalInteger)
                     except KeyError:
-                        raise FatalException(f'There is no group configured for {sport} entries in the FIT file. '
-                                             'See sport_to_activity in ch2.config.default.py')
+                        raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
 
     def _shutdown(self, s):
         super()._shutdown(s)

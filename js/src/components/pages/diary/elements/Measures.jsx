@@ -1,5 +1,5 @@
 import React from 'react';
-import PercentBar from './PercentBar';
+import {PercentBar} from '../../../elements';
 import {barWidth} from "../../../functions";
 
 

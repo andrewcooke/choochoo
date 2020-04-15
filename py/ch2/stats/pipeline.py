@@ -1,5 +1,6 @@
 
 from abc import abstractmethod
+from contextlib import nullcontext
 from logging import getLogger
 from time import time
 
@@ -7,9 +8,10 @@ from psutil import cpu_count
 from sqlalchemy import text
 
 from .load import StatisticJournalLoader
+from ..commands.args import BASE
 from ..lib.date import format_seconds
 from ..lib.utils import short_str
-from ..lib.workers import Workers
+from ..lib.workers import Workers, ProgressTree
 from ..sql import Pipeline
 from ..sql.types import short_cls
 
@@ -19,15 +21,16 @@ MAX_REPEAT = 3
 NONE = object()
 
 
-def run_pipeline(system, db, type, like=tuple(), unlike=tuple(), id=None, **extra_kargs):
+def run_pipeline(system, db, base, type, like=tuple(), unlike=tuple(), id=None, progress=None, **extra_kargs):
     with db.session_context() as s:
+        local_progress = ProgressTree(Pipeline.count(s, type, like=like, unlike=unlike, id=id), parent=progress)
         for pipeline in Pipeline.all(s, type, like=like, unlike=unlike, id=id):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
             log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
             start = time()
-            pipeline.cls(system, db, *pipeline.args, id=pipeline.id, **kargs).run()
+            pipeline.cls(system, db, *pipeline.args, base=base, id=pipeline.id, progress=local_progress, **kargs).run()
             duration = time() - start
             log.info(f'Ran {short_cls(pipeline.cls)} in {format_seconds(duration)}')
 
@@ -47,12 +50,14 @@ class BasePipeline:
 
 class MultiProcPipeline(BasePipeline):
 
-    def __init__(self, system, db, *args, owner_out=None, force=False,
+    def __init__(self, system, db, *args, base=None, owner_out=None, force=False, progress=None,
                  overhead=1, cost_calc=20, cost_write=1, n_cpu=None, worker=None, id=None, **kargs):
         self.__system = system
         self.__db = db
+        self.__base = base
         self.owner_out = owner_out or self  # the future owner of any calculated statistics
         self.force = force  # force re-processing
+        self.__progress = progress
         self.overhead = overhead  # next three args are used to decide if workers are needed
         self.cost_calc = cost_calc  # see _cost_benefit for full details
         self.cost_write = cost_write  # defaults guarantee a single thread
@@ -75,16 +80,19 @@ class MultiProcPipeline(BasePipeline):
 
             if self.worker:
                 log.debug('Worker, so execute directly')
-                self._run_all(s, missing)
-            elif not missing:
-                log.info(f'No missing data for {short_cls(self)}')
+                self._run_all(s, missing, None)
             else:
-                self.__flush_wal(s)
-                n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
-                if n_parallel < 2 or len(missing) == 1:
-                    self._run_all(s, missing)
+                local_progress = ProgressTree(len(missing), parent=self.__progress)
+                if not missing:
+                    log.info(f'No missing data for {short_cls(self)}')
+                    local_progress.complete()
                 else:
-                    self.__spawn(s, missing, n_total, n_parallel)
+                    self.__flush_wal(s)
+                    n_total, n_parallel = self.__cost_benefit(missing, self.n_cpu)
+                    if n_parallel < 2 or len(missing) == 1:
+                        self._run_all(s, missing, local_progress)
+                    else:
+                        self.__spawn(s, missing, n_total, n_parallel, local_progress)
             self._shutdown(s)
 
     def __flush_wal(self, session):
@@ -95,11 +103,12 @@ class MultiProcPipeline(BasePipeline):
         log.debug('Cleared WAL')
         session.commit()
 
-    def _run_all(self, s, missing):
+    def _run_all(self, s, missing, progress=None):
+        local_progress = progress.increment_or_complete if progress else nullcontext
         for missed in missing:
-            log.debug(f'Run {missed}')
-            self._run_one(s, missed)
-            s.commit()
+            with local_progress():
+                self._run_one(s, missed)
+                s.commit()
 
     def _startup(self, s):
         pass
@@ -154,19 +163,21 @@ class MultiProcPipeline(BasePipeline):
         log.info(f'Threads: {n_total}/{n_parallel}')
         return n_total, n_parallel
 
-    def __spawn(self, s, missing, n_total, n_parallel):
+    def __spawn(self, s, missing, n_total, n_parallel, progress):
 
         # unfortunately we have to do things with contiguous dates, which may introduce systematic
         # errors in our timing estimates
 
         n_missing = len(missing)
-        workers = Workers(self.__system, n_parallel, self.owner_out, self._base_command())
+        workers = Workers(self.__system, self.__base, n_parallel, self.owner_out, self._base_command())
         start, finish = None, -1
         for i in range(n_total):
             start = finish + 1
             finish = int(0.5 + (i+1) * (n_missing-1) / n_total)
             if start > finish: raise Exception('Bad chunking logic')
-            workers.run(self._args(missing, start, finish))
+            with progress.increment_or_complete(finish - start + 1):
+                workers.run(self.id, self._args(missing, start, finish))
+
         workers.wait()
 
     # as a general rule, _missing and _args should be implemented together
@@ -176,6 +187,7 @@ class MultiProcPipeline(BasePipeline):
 
     @abstractmethod
     def _base_command(self):
+        # this should start with the worker ID
         raise NotImplementedError()
 
     @property

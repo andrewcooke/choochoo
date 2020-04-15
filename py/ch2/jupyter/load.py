@@ -12,7 +12,6 @@ import nbformat as nb
 import nbformat.v4 as nbv
 from nbformat.sign import NotebookNotary
 
-from ..commands.args import DATABASE
 from .server import get_controller
 
 log = getLogger(__name__)
@@ -142,6 +141,7 @@ class Code(TextToken):
         self._text = sub(r'#(%.*)', r'\1', self._text)
 
     def _fix_session(self):
+        # todo - wtf does this do?
         r_session = compile(r'((?:^|^.*\s)session\s*\()([^)]*)(\).*$)', DOTALL)
         m_session = r_session.match(self._text)
         if m_session:
@@ -150,12 +150,6 @@ class Code(TextToken):
             m_f = r_f.search(args)
             if m_f:
                 log.warning(f'Template session() includes database path {m_f.group(1)}')
-            elif DATABASE not in self._vars:
-                raise Exception('No database location available')
-            elif args:
-                args = args[:-1] + f' -f {self._vars[DATABASE]}' + args[-1]
-            else:
-                args = f'"-f {self._vars[DATABASE]}"'
             self._text = m_session.group(1) + args + m_session.group(3)
 
     def to_cell(self):
@@ -262,7 +256,7 @@ def load_notebook(name, vars):
     return Token.to_notebook(tokens)
 
 
-def create_notebook(template, notebook_dir, database_path, args, kargs):
+def create_notebook(template, notebook_dir, args, kargs):
 
     if hasattr(template, '_original'):  # drop wrapper
         template = template._original
@@ -274,7 +268,6 @@ def create_notebook(template, notebook_dir, database_path, args, kargs):
     all_args = sub(sep, '-', all_args)
 
     vars = dict(kargs)
-    vars[DATABASE] = database_path
     spec = getfullargspec(template)
     for name, value in zip_longest(spec.args, args):
         if name:

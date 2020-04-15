@@ -1,16 +1,17 @@
 
 from abc import abstractmethod
+from glob import iglob
 from logging import getLogger
+from os.path import join
 from time import time
 
 from ..pipeline import MultiProcPipeline, LoaderMixin
 from ... import FatalException
 from ...fit.format.read import filtered_records
-from ...fit.profile.profile import read_fit
 from ...lib.date import to_time
 from ...lib.io import modified_file_scans
 from ...lib.log import log_current_exception
-from ...sql import Timestamp
+from ...sql import Timestamp, Constant
 
 log = getLogger(__name__)
 
@@ -25,8 +26,9 @@ class AbortImportButMarkScanned(AbortImport):
 
 class FitReaderMixin(LoaderMixin):
 
-    def __init__(self, *args, paths=None, **kargs):
+    def __init__(self, *args, paths=None, sub_dir=None, **kargs):
         self.paths = paths
+        self.sub_dir = sub_dir
         super().__init__(*args, **kargs)
 
     def _delete(self, s):
@@ -36,8 +38,18 @@ class FitReaderMixin(LoaderMixin):
         # (without force, overlapping activities trigger an error)
         pass
 
+    def _expand_paths(self, s, paths):
+        from ...commands.upload import DATA_DIR, DOT_FIT
+        if paths: return paths
+        data_dir = Constant.get_single(s, DATA_DIR)
+        if self.sub_dir:
+            data_dir = join(data_dir, self.sub_dir)
+        else:
+            log.warning('No sub_dir defined - will scan entire tree')
+        return iglob(join(data_dir, '**/*' + DOT_FIT), recursive=True)
+
     def _missing(self, s):
-        return modified_file_scans(s, self.paths, self.owner_out, self.force)
+        return modified_file_scans(s, self._expand_paths(s, self.paths), self.owner_out, self.force)
 
     def _run_one(self, s, file_scan):
         try:
@@ -62,24 +74,29 @@ class FitReaderMixin(LoaderMixin):
             loader.load()
         return loader  # returned so coverage can be accessed
 
-    def _read_fit_file(self, path, *options):
-        types, messages, records = filtered_records(read_fit(path))
+    @staticmethod
+    def read_fit_file(data, *options):
+        types, messages, records = filtered_records(data)
         return [record.as_dict(*options)
                 for _, _, record in sorted(records,
                                            key=lambda r: r[2].timestamp if r[2].timestamp else to_time(0.0))]
 
-    def _first(self, path, records, *names):
-        return self.__assert_contained(path, records, names, 0)
+    @staticmethod
+    def _first(path, records, *names):
+        return FitReaderMixin.assert_contained(path, records, names, 0)
 
-    def _last(self, path, records, *names):
-        return self.__assert_contained(path, records, names, -1)
+    @staticmethod
+    def _last(path, records, *names):
+        return FitReaderMixin.assert_contained(path, records, names, -1)
 
-    def __assert_contained(self, path, records, names, index):
+    @staticmethod
+    def assert_contained(path, records, names, index):
         try:
             return [record for record in records if record.name in names][index]
         except IndexError:
-            log.debug(f'No {names} entry(s) in {path}')
-            raise AbortImportButMarkScanned()
+            msg = f'No {names} entry(s) in {path}'
+            log.debug(msg)
+            raise AbortImportButMarkScanned(msg)
 
     @abstractmethod
     def _read_data(self, s, file_scan):

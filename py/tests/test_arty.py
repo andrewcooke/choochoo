@@ -2,13 +2,13 @@
 from math import sqrt
 from random import uniform, gauss, seed, randrange
 from time import time
-from unittest import TestCase
+from tests import LogTestCase
 
 from ch2.rtree.spherical import Global
 from ch2.rtree.tree import CLRTree, MatchType, CQRTree, CERTree, LQRTree
 
 
-class TestArty(TestCase):
+class TestArty(LogTestCase):
 
     def known_points(self, tree):
         tree.add([(0, 0)], '0')

@@ -1,16 +1,14 @@
 
 import asyncio
 from logging import getLogger
-from os import makedirs
 from threading import Thread, Event
 from time import sleep
 
 from notebook.notebookapp import NotebookApp
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from ..commands.args import NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, DATABASE, TUI, LOG, SYSTEM
+from ..commands.args import mm, NOTEBOOKS, JUPYTER, SERVICE, VERBOSITY, TUI, LOG, BASE
 from ..lib.server import BaseController
-from ..lib.workers import command_root
 from ..sql import SystemConstant
 
 log = getLogger(__name__)
@@ -41,7 +39,7 @@ class JupyterController(BaseController):
 
     def __init__(self, args, sys, max_retries=5, retry_secs=3):
         super().__init__(args, sys, JupyterServer, max_retries=max_retries, retry_secs=retry_secs)
-        self.__notebooks = args[NOTEBOOKS]
+        self.__notebooks = args.system_path(NOTEBOOKS)
 
     def _status(self, running):
         if running:
@@ -51,8 +49,8 @@ class JupyterController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'jupyter-service.log'
-        cmd = f'{ch2} --{VERBOSITY} {self._log_level} --{TUI} --{LOG} {log_name} --{DATABASE} {self._database} ' \
-              f'--{SYSTEM} {self._system} --{NOTEBOOKS} {self.__notebooks} {JUPYTER} {SERVICE}'
+        cmd = f'{ch2} {mm(VERBOSITY)} {self._log_level} {mm(TUI)} {mm(LOG)} {log_name} {mm(BASE)} {self._base} ' \
+              f'{JUPYTER} {SERVICE}'
         return cmd, log_name
 
     def _cleanup(self):
@@ -67,12 +65,7 @@ class JupyterController(BaseController):
         self.start()
         return self._sys.get_constant(SystemConstant.JUPYTER_DIR)
 
-    def database_path(self):
-        return self._database
-
     def _run(self):
-        log.debug(f'Creating {self.__notebooks}')
-        makedirs(self.__notebooks, exist_ok=True)
 
         started = Event()
 

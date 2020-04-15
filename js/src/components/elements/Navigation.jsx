@@ -37,7 +37,7 @@ export default function Navigation(props) {
 
     return (
         <>
-            <AppBar position="fixed" className={classes.appBar}>
+            <AppBar position="fixed" className={classes.appBar} color='primary'>
                 <Toolbar>
                     <IconButton color="inherit" aria-label="open drawer" edge="start"
                                 onClick={handleDrawerToggle} className={classes.menuButton}>

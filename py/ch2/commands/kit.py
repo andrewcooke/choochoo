@@ -2,7 +2,7 @@ from logging import getLogger
 from sys import stdout
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
-    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE
+    START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, BASE
 from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
     is_local_time
@@ -70,9 +70,9 @@ Statistics for shoes:
 Names can be chosen at will (there is nothing hard-coded about 'bike', 'chain', 'cotic', etc),
 but in general must be unique.  They can contain spaces if quoted.
     '''
-    cmd = args[SUB_COMMAND]
+    cmd, base = args[SUB_COMMAND], args[BASE]
     if cmd == REBUILD:
-        rebuild(system, db)
+        rebuild(system, db, base)
     else:
         with db.session_context() as s:
             if cmd == START:
@@ -149,8 +149,8 @@ def undo(s, item, component, model, date, all):
     component_instance.delete_if_unused(s)
 
 
-def rebuild(system, db):
-    run_pipeline(system, db, PipelineType.STATISTIC, force=True, like=[long_cls(KitCalculator)])
+def rebuild(system, db, base):
+    run_pipeline(system, db, base, PipelineType.STATISTIC, force=True, like=[long_cls(KitCalculator)])
 
 
 def show(s, name, date, csv=None, output=stdout):

@@ -2,17 +2,13 @@ import datetime as dt
 import time as t
 from logging import getLogger
 
-from werkzeug import Response
-
-from .json import JsonResponse
-from ..diary.database import read_date, read_schedule
-from ..diary.views.web import rewrite_db
-from ..lib import time_to_local_time
-from ..lib.schedule import Schedule
-from ..sql import ActivityJournal, StatisticJournal
-from ..stats.display.activity import active_days, active_months, latest_activity, activities_start, activities_finish, \
-    activities_by_group
-from ..stats.display.nearby import constraints
+from ..json import JsonResponse
+from ...diary.database import read_date, read_schedule
+from ...diary.views.web import rewrite_db
+from ...lib import time_to_local_time
+from ...lib.schedule import Schedule
+from ...sql import ActivityJournal, StatisticJournal
+from ...stats.display.activity import active_days, active_months
 
 log = getLogger(__name__)
 
@@ -28,7 +24,7 @@ class Diary:
             data = read_date(s, date)
         else:
             data = read_schedule(s, Schedule(schedule), date)
-        return JsonResponse(rewrite_db(list(data)))
+        return rewrite_db(list(data))
 
     def read_neighbour_activities(self, request, s, date):
         # used in the sidebar menu to advance/retreat to the next activity
@@ -49,18 +45,6 @@ class Diary:
         return JsonResponse(active_months(s, year))
 
     @staticmethod
-    def read_analysis_params(request, s):
-        # odds and sods used to set menus in jupyter URLs
-        latest = latest_activity(s)
-        result = {'activities_start': activities_start(s),
-                  'activities_finish': activities_finish(s),
-                  'activities_by_group': activities_by_group(s),
-                  'latest_activity_group': latest.activity_group.name if latest else None,
-                  'latest_activity_time': time_to_local_time(latest.start) if latest else None,
-                  'nearby_constraints': list(constraints(s))}
-        return JsonResponse(result)
-
-    @staticmethod
     def write_statistics(request, s):
         # used to write modified fields back to the database
         data = request.json
@@ -76,7 +60,6 @@ class Diary:
                 log.error(f'Could not save {key}:{value}: {e}')
         s.commit()
         log.info(f'Saved {n} values')
-        return Response()
 
 
 def parse_date(date):

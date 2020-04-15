@@ -4,6 +4,7 @@ from logging import getLogger, NullHandler
 from os.path import abspath, dirname, join
 from sys import version_info
 
+
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
 
@@ -20,16 +21,17 @@ class FatalException(Exception):
 
 from .commands.activities import activities
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
-    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIG, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB
+    PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIGURE, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, UPGRADE
 from .commands.constants import constants
 from .commands.dump import dump
-from .commands.config import config
+from .commands.configure import configure
 from .commands.diary import diary
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
-from .commands.help import help, LengthFmt
+from .commands.help import help, Markdown
+from .commands.upgrade import upgrade
 from .commands.jupyter import jupyter
 from .commands.kit import kit
 from .commands.monitor import monitor
@@ -37,9 +39,10 @@ from .commands.package_fit_profile import package_fit_profile
 from .commands.statistics import statistics
 from .commands.test_schedule import test_schedule
 from .commands.unlock import unlock
+from .commands.upload import upload
 from .commands.web import web
 from .lib.io import tui
-from .lib.log import make_log, log_current_exception
+from .lib.log import make_log_from_args, log_current_exception
 from .sql.database import Database
 from .sql.system import System
 
@@ -59,7 +62,7 @@ at the command line.
 
 COMMANDS = {ACTIVITIES: activities,
             CONSTANTS: constants,
-            CONFIG: config,
+            CONFIGURE: configure,
             DIARY: diary,
             DUMP: dump,
             FIT: fit,
@@ -74,6 +77,8 @@ COMMANDS = {ACTIVITIES: activities,
             PACKAGE_FIT_PROFILE: package_fit_profile,
             TEST_SCHEDULE: test_schedule,
             UNLOCK: unlock,
+            UPGRADE: upgrade,
+            UPLOAD: upload,
             WEB: web
             }
 
@@ -86,14 +91,14 @@ def main():
     if command and hasattr(command, 'tui') and command.tui:
         ns.tui = True
     args = NamespaceWithVariables(ns)
-    make_log(args)
+    make_log_from_args(args)
     log.info('Version %s' % CH2_VERSION)
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
     db = Database(args)
     system = System(args)
     try:
-        if db.no_data() and (not command or command_name not in (CONFIG, PACKAGE_FIT_PROFILE, HELP)):
+        if db.no_data() and (not command or command_name not in (CONFIGURE, PACKAGE_FIT_PROFILE, HELP, WEB)):
             refuse_until_configured(db.path)
         elif command:
             command(args, system, db)
@@ -117,7 +122,7 @@ def main():
 def refuse_until_configured(path):
     dir = dirname(abspath(path))
     if len(glob(join(dir, '*'))) > 1:
-        LengthFmt().print_all('''
+        Markdown().print('''
 Welcome to Choochoo.
 
 There is no database available for this release, but you may have a database from a previous version.
@@ -127,7 +132,7 @@ please see the documentation at http://andrewcooke.github.io/choochoo/version-up
 Otherwise, you will need to configure the system.
 Please see the documentation at http://andrewcooke.github.io/choochoo''')
     else:
-        LengthFmt().print_all('''
+        Markdown().print('''
 Welcome to Choochoo.
 
 Before using the ch2 command you must configure the system.
@@ -139,4 +144,4 @@ To generate a default configuration use the command
     %s %s
 
 NOTE: The default configuration is only an example.  Please see the docs
-for more details.''' % (PROGNAME, CONFIG))
+for more details.''' % (PROGNAME, CONFIGURE))

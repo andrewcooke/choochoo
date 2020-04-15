@@ -1,66 +1,41 @@
 
-Choochoo helps you plan, collect, process and analyse training data.
+# Getting Started
 
-Data are combined from three sources:
+## Python Install
 
-  * [FIT files](fit-files), both for activities and monitoring (ie
-    steps, heart rate).  The latter can be downloaded from Garmin.
+Check you have Python 3.7 or later installed:
 
-  * Text entry via a '[diary](daily-use)' that runs in the terminal.
+    > python --version
+    Python 3.7.4
 
-  * Direct commands (eg [tracking equipment changes](kit)).
+If not, install as appropriate.  On some systems you may need to use
+`python3` or `python3.7`.
 
-Data are combined in an SQLite database that can be accessed via SQL
-or as Panda data frames.  The database is easy to copy to safe storage
-and allows you to read and process the data within your own programs.
+## Create a Virtual Environment
 
-The data can be processed via 'pipelines'.  Existing calculations
-include [power estimation](cda), [fitness/fatigue](impulse) and
-summary values (eg ranking, top value per month).  If you develop your
-own calculations (as Python code) then these can be added as a
-'pipeline' and run automatically on new data.
+We will install all Python dependencies in a virtual environment so
+that they are independet from other Python programs.
 
-Display and analysis of data via [Jupyter](data-analysis) is
-supported, with an embedded Jupyter server and pre-written templates
-for common operations (eg [data for an activity](summary), [similar
-routes](nearby)).
+This will create a directory called `env` in the current directory.
+You can create this wherever you want, and give it whatever name you
+want, as long as you change the commands that follow appropriately.
 
-The diary configuration (ie what fields are displayed) is very
-flexible and can be used to present [training plans](training-plans).
-Indeed, the whole system (diary fields, pipelines, activiy groups,
-equipment tracking, etc) can be configured via the database.  A
-[default configuration](configuration) is provided, but this can be
-modified or replaced.
+    > python -m venv env
+    > source env/bin/activate
 
-One omission that may be important to some people is the lack of
-support for power meters.
+## Install Choochoo
 
-# Contents
+    > pip install choochoo
 
-* Manual
-  * [Getting Started](getting-started)
-  * [Web Interface](web-interface)
-  * [Daily Use](daily-use)
-  * [Data Analysis](data-analysis)
-  * [Command Summmary](command-summary)
-* Reference
-  * [Configuration](configuration)
-  * [Data Model](data-model)
-  * [Schedules](schedules)
-  * [Training Plans](training-plans)
-  * [Reading FIT Files](fit-files)
-  * [Repairing FIT Files](fix-fit)
-  * [FIT Cookbook](fit-cookbook)
-  * [Segments](segments)
-  * [Scaled Heart Rate Impulse - SHRIMP](impulse)
-  * [Fitting SHRIMP Decay](ff-fitting)
-  * [Nearby Activities](nearby)
-  * [Graphic Summary](summary)
-  * [Elevation](elevation)
-  * [Detecting Climbs](climbs)
-  * [Measuring Power and CdA](cda)
-  * [Tracking Equipment](kit)
-  * [Version Upgrades](version-upgrades)
-* Development
-  * [Spatial Search](rtree)
-  * [Other Projects](other-projects)
+## Start the Web Server
+
+    > ch2 web start
+
+## More Here
+
+This doc in development; I need to do an initial release of 0-31 to
+write more.
+
+## More Information
+
+[Technical documentation](technical)

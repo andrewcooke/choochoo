@@ -1,9 +1,20 @@
+
 from collections import defaultdict
 from itertools import zip_longest, groupby
-from os.path import split
+from logging import getLogger
+from os import getpid, close, execl, execle
+from os.path import split, realpath, normpath, expanduser
 from pprint import PrettyPrinter
+from sys import executable, argv
+from time import sleep
+
+from psutil import Process
 
 from ..stats.names import M, KM, PC, W
+
+
+log = getLogger(__name__)
+
 
 PALETTE_RAINBOW = [
     ('plain', 'light gray', 'black'), ('plain-focus', 'white', 'black'),
@@ -171,3 +182,32 @@ def inside_interval(lo, value, hi):
             return lo <= value
         else:
             return lo <= value < hi
+
+
+def restart_self():
+    # https://stackoverflow.com/questions/11329917/restart-python-script-from-within-itself
+    log.info('Shutting down')
+    try:
+        p = Process(getpid())
+        for handler in p.open_files() + p.connections():
+            close(handler.fd)
+    except Exception as e:
+        log.warning(e)
+    python = executable
+    args = argv
+    # weird hack that i don't understand
+    args = ['-m', 'ch2'] + args[1:]
+    log.info(f'Restarting {python} {args}')
+    execl(python, python, *args)
+    # no need to exit as we do not return
+
+
+def clean_path(path):
+    return realpath(normpath(expanduser(path)))
+
+
+def slow_warning(msg, n=3, pause=1):
+    for _ in range(3):
+        log.warning(msg)
+        sleep(pause)
+

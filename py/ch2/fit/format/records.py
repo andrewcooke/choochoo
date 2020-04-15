@@ -169,14 +169,8 @@ class Values:
         self.__attr = attr
 
     def __getattr__(self, name):
-        try:
-            (values, units) = getattr(self.__attr, name)
-            return values[0]
-        except:
-            if self.__or_none:
-                return None
-            else:
-                raise
+        (values, units) = getattr(self.__attr, name)
+        return values[0]
 
 
 class DictRecord(Record):

@@ -1,7 +1,7 @@
 
 import datetime as dt
 from logging import getLogger
-from unittest import TestCase
+from tests import LogTestCase
 
 import sqlalchemy as s
 from sqlalchemy.orm import sessionmaker
@@ -44,7 +44,7 @@ class DataWidget(WidgetWrap):
         super().__init__(Filler(Pile([self.integer, self.text]), valign='top'))
 
 
-class TestSqueal(TestCase):
+class TestSqueal(LogTestCase):
 
     def test_bind(self):
 

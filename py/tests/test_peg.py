@@ -1,11 +1,11 @@
 
-from unittest import TestCase
+from tests import LogTestCase
 
 from ch2.data.constraint import constraint
 from ch2.lib.peg import literal, drop, sequence, choice, pattern
 
 
-class TestPeg(TestCase):
+class TestPeg(LogTestCase):
 
     def test_literal(self):
         self.assertEqual(list(literal('ab')('abc')), [(['ab'], 'c')])

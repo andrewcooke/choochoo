@@ -1,8 +1,7 @@
 import React from 'react';
 import {Grid, InputLabel} from "@material-ui/core";
-import {Text} from '../../../elements';
+import {Text, PercentBar} from '../../../elements';
 import {makeStyles} from "@material-ui/core/styles";
-import PercentBar from "./PercentBar";
 import barWidth from "../../../functions/barWidth";
 
 

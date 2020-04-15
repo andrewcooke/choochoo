@@ -11,7 +11,7 @@ from .segment import Segment, SegmentJournal
 from .source import Source, Interval, NoStatistics, Dummy, Composite, CompositeComponent
 from .statistic import StatisticName, StatisticJournalFloat, StatisticJournalText, StatisticJournalInteger, \
     StatisticJournalTimestamp, StatisticJournal, StatisticMeasure, StatisticJournalType
-from .system import SystemConstant, SystemProcess
+from .system import SystemConstant, Process
 from .timestamp import Timestamp
 from .topic import DiaryTopicJournal, DiaryTopic, DiaryTopicField, ActivityTopicJournal, ActivityTopic, \
     ActivityTopicField
