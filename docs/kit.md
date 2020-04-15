@@ -61,11 +61,10 @@ automatically:
 First, I will add my Cotic bike:
 
     > ch2 kit start bike cotic --force
-        INFO: Version 0.30.1
-        INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/system-0-30.sql
-     WARNING: Forcing creation of new group (bike)
-        INFO: Started bike cotic at 2020-03-24 21:45:11
+    usage: ch2 [-h] [--base DIR] [--log FILE] [-v VERBOSITY] [--tui] [--dev] [-V]
+               {help,web,upload,diary,constants,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,no-op,package-fit-profile,test-schedule,unlock}
+               ...
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'diary', 'constants', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'no-op', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 We're introducing a completely new *group* (bike) and so the `--force`
@@ -75,23 +74,20 @@ this, because `bike` will already be known by the system..
 Now I have a bike I am going to add some inner tubes at various dates.
 
     > ch2 kit change cotic front-tube michelin 2019-01-01 --force
-        INFO: Version 0.30.1
-        INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/system-0-30.sql
-     WARNING: Forcing creation of new component (front-tube)
-     WARNING: Model michelin does not match any previous entries
-        INFO: Changed cotic front-tube michelin at 2019-01-01
+    usage: ch2 [-h] [--base DIR] [--log FILE] [-v VERBOSITY] [--tui] [--dev] [-V]
+               {help,web,upload,diary,constants,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,no-op,package-fit-profile,test-schedule,unlock}
+               ...
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'diary', 'constants', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'no-op', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 Again the system catches the first use of `front-tube` so we flag that
 it is OK with `--force`.
 
     > ch2 kit change cotic front-tube michelin 2019-03-01
-        INFO: Version 0.30.1
-        INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/system-0-30.sql
-        INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube michelin at 2019-03-01
+    usage: ch2 [-h] [--base DIR] [--log FILE] [-v VERBOSITY] [--tui] [--dev] [-V]
+               {help,web,upload,diary,constants,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,no-op,package-fit-profile,test-schedule,unlock}
+               ...
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'diary', 'constants', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'no-op', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 Previous tubes are *retired* as new ones are added.  You don't need to
@@ -99,12 +95,10 @@ add the tubes in order - however they're added, the start and end
 times should align correctly.
 
     > ch2 kit change cotic front-tube vittoria
-        INFO: Version 0.30.1
-        INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/system-0-30.sql
-     WARNING: Model vittoria does not match any previous entries
-        INFO: Retired previous front-tube (michelin)
-        INFO: Changed cotic front-tube vittoria at 2020-03-24 21:45:21
+    usage: ch2 [-h] [--base DIR] [--log FILE] [-v VERBOSITY] [--tui] [--dev] [-V]
+               {help,web,upload,diary,constants,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,no-op,package-fit-profile,test-schedule,unlock}
+               ...
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'diary', 'constants', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'no-op', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 That's three different inner tubes on the front.  The last uses
@@ -114,22 +108,10 @@ command line as you do the work.
 Now we can see the statistics:
 
     > ch2 kit statistics front-tube
-        INFO: Version 0.30.1
-        INFO: Using database at database.sql
-        INFO: Using database at /home/andrew/.ch2/system-0-30.sql
-    component: front-tube
-    +-model: michelin
-    | `-Age
-    |   +-n: 1
-    |   `-sum: 59
-    +-model: michelin
-    | `-Age
-    |   +-n: 1
-    |   `-sum: 389
-    `-model: vittoria
-      `-Age
-        +-n: 1
-        `-sum: 0
+    usage: ch2 [-h] [--base DIR] [--log FILE] [-v VERBOSITY] [--tui] [--dev] [-V]
+               {help,web,upload,diary,constants,jupyter,kit,configure,upgrade,activities,garmin,monitor,statistics,dump,fit,fix-fit,no-op,package-fit-profile,test-schedule,unlock}
+               ...
+    ch2: error: argument command: invalid choice: 'database.sql' (choose from 'help', 'web', 'upload', 'diary', 'constants', 'jupyter', 'kit', 'configure', 'upgrade', 'activities', 'garmin', 'monitor', 'statistics', 'dump', 'fit', 'fix-fit', 'no-op', 'package-fit-profile', 'test-schedule', 'unlock')
 
 
 In this example (which is auto-generated from the commands) there were
