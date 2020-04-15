@@ -8,11 +8,12 @@ instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 
 Moving towards a more integrated system, building on the modular
 components that already exist.  A new command, `upload` copies data to
-the `Data.Dir` (a new constant).  The `activities` command can read
-from this directory.  Together, this allows the user to upload data
-via the (extended) web interface and formalizes 'best practice' use.
-Another new command, `upgrade` copies data from a previous install and
-replaces the migration scripts.
+the `permanent` subdirectory of the `base` directory (a new concept,
+can be provided to most commands via `--base`).  The `activities`
+command can read from this directory.  This allows the user to upload
+data via the (extended) web interface and formalizes 'best practice'
+use.  Another new command, `upgrade` copies data from a previous
+install and replaces the migration scripts.
 
 ### v0.30.0
 
