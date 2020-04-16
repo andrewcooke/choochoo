@@ -10,6 +10,9 @@ from ...stats.names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, AC
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_BACKEND):
+    # avoid range errors
+    if len(source[ACTIVE_TIME].dropna()) < 2:
+        return None
     groups = [group for statistic, group in related_statistics(source, ACTIVE_TIME)]
     if not groups:
         # original monochrome plot
