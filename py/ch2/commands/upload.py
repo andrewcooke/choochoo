@@ -10,7 +10,7 @@ from .activities import run_activity_pipelines
 from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
-from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, REPLACE, mm, base_system_path, \
+from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, mm, base_system_path, \
     PERMANENT
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
@@ -18,7 +18,7 @@ from ..lib.io import data_hash, split_fit_path, touch
 from ..lib.log import log_current_exception, Record
 from ..lib.utils import clean_path, slow_warning
 from ..lib.workers import ProgressTree, SystemProgressTree
-from ..sql import KitItem, FileHash, ActivityJournal, Source, FileScan
+from ..sql import KitItem, FileHash, ActivityJournal, Source, FileScan, MonitorJournal
 from ..stats.names import TIME
 from ..stats.read import AbortImportButMarkScanned
 from ..stats.read.activity import ActivityReader
@@ -39,7 +39,6 @@ DIR = 'dir'
 DOT_FIT = '.fit'
 READ_PATH = 'read-path'
 WRITE_PATH = 'write-path'
-REPLACES = 'replaces'
 
 
 def upload(args, system, db):
@@ -78,8 +77,7 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
     record = Record(log)
     nfiles, files = open_files(args[PATH])
     upload_files_and_update(record, system, db, args[BASE], files=files, nfiles=nfiles, force=args[FORCE],
-                            items=args[KIT], fast=args[FAST], unsafe=args[UNSAFE], delete=args[DELETE],
-                            replace=args[REPLACE])
+                            items=args[KIT], fast=args[FAST], unsafe=args[UNSAFE], delete=args[DELETE])
 
 
 class SkipFile(Exception):
@@ -94,10 +92,13 @@ def open_files(paths):
         # use an iterator here to avoid opening too many files at once
         for path in paths:
             path = clean_path(path)
-            name = basename(path)
-            log.debug(f'Reading {path}')
-            stream = open(path, 'rb')
-            yield {STREAM: stream, NAME: name, READ_PATH: path}
+            if exists(path):
+                name = basename(path)
+                log.debug(f'Reading {path}')
+                stream = open(path, 'rb')
+                yield {STREAM: stream, NAME: name, READ_PATH: path}
+            else:
+                log.warning(f'File no longer exists at {path}')
 
     return n, files()
 
@@ -131,9 +132,7 @@ def check_path(file, unsafe=False):
         log.debug(f'A file already exists at {path2}')
         with open(path2, 'rb') as input:
             hash = data_hash(input.read())
-            if REPLACES in file and path2 in file[REPLACES]:
-                log.warning(f'Ignoring conflict at {path2} because {mm(REPLACE)}')
-            elif hash == file[HASH] and path == path2:
+            if hash == file[HASH] and path == path2:
                 # touch in case we deleted the activity and need to read again
                 touch(path)
                 raise SkipFile(f'Duplicate file {name} at {path2}')
@@ -146,7 +145,7 @@ def check_path(file, unsafe=False):
     log.debug(f'File {name} cleared for path {path}')
 
 
-def check_hash(s, file, unsafe):
+def check_hash(s, file, unsafe=False):
     hash, path, name = file[HASH], file[WRITE_PATH], file[NAME]
     file_hash = s.query(FileHash).filter(FileHash.hash == hash).one_or_none()
     if file_hash and file_hash.file_scan:
@@ -157,8 +156,6 @@ def check_hash(s, file, unsafe):
             touch(path)
             # should never happen because would be caught in check_path
             raise SkipFile(f'Duplicate file {name} at {path}')
-        elif REPLACES in file and scanned_path in file[REPLACES]:
-            log.warning(f'Ignoring conflict at {scanned_path} because {mm(REPLACE)}')
         else:
             msg = f'File {name} for {path} matches the file already at {scanned_path} (same hash)'
             if unsafe:
@@ -180,6 +177,7 @@ def parse_fit_data(file, items=None):
             records = MonitorReader.parse_records(file[DATA])
             file[TIME] = MonitorReader.read_first_timestamp(file[NAME], records)
             file[TYPE] = MONITOR
+            # don't use '-' here or it will be treated as kit in path matching
             file[EXTRA] = ':' + file[HASH][0:5]
             log.debug(f'File {file[NAME]} contains monitor data')
         except AbortImportButMarkScanned:
@@ -204,32 +202,6 @@ def build_path(data_dir, file):
     log.debug(f'Target directory is {file[DIR]}')
 
 
-def remove_previous_activity(s, file):
-    activity_journal = s.query(ActivityJournal).filter(ActivityJournal.start == file[TIME]).one_or_none()
-    if not activity_journal:
-        log.warning(f'No previous activity matching {file[NAME]}')
-    else:
-        # delete after reading (could be same as READ_PATH and we might fail to write)
-        file[REPLACES] = [clean_path(row[0]) for row in
-                          s.query(FileScan.path).join(FileHash).
-                              filter(FileHash.id == activity_journal.file_hash_id).all()]
-        log.debug(f'Found replacements {file[REPLACES]}')
-        source = s.query(Source).filter(Source.id == activity_journal.id).one()
-        slow_warning(f'Deleting activity at {time_to_local_time(activity_journal.start)}')
-        s.delete(source)
-        s.commit()
-
-
-def remove_previous_files(file):
-    if REPLACES in file:
-        for path in file[REPLACES]:
-            if path == file[WRITE_PATH]:
-                log.warning(f'Not deleting {path} since wrote to same location ({mm(REPLACE)})')
-            else:
-                slow_warning(f'Deleting {path}')
-                unlink(path)
-
-
 def write_file(file):
     try:
         dir = dirname(file[WRITE_PATH])
@@ -251,12 +223,12 @@ def delete_file(file, data_dir):
         if file[READ_PATH].startswith(data_dir):
             log.warning(f'Not deleting {file[NAME]} as located within Data.Dir ({file[READ_PATH]})')
         else:
-            slow_warning(f'Deleting {file[NAME]} from {file[READ_PATH]}')
+            slow_warning(f'Deleting file {file[NAME]} from {file[READ_PATH]}', n=1, pause=0.001)
             unlink(file[READ_PATH])
 
 
 def upload_files(record, db, base, files=tuple(), nfiles=None, items=tuple(), progress=None,
-                 unsafe=False, delete=False, replace=False):
+                 unsafe=False, delete=False):
     try:
         local_progress = ProgressTree(len(files), parent=progress)
     except TypeError:
@@ -272,19 +244,17 @@ def upload_files(record, db, base, files=tuple(), nfiles=None, items=tuple(), pr
                         hash_file(file)
                         parse_fit_data(file, items=items)
                         build_path(data_dir, file)
-                        if replace: remove_previous_activity(s, file)
-                        check_file(s, file, unsafe)
+                        check_file(s, file, unsafe=unsafe)
                         write_file(file)
                         record.info(f'Uploaded {file[NAME]} to {file[WRITE_PATH]}')
                         if delete: delete_file(file, data_dir)
-                        if replace: remove_previous_files(file)
                     except SkipFile as e:
                         record.warning(e)
             local_progress.complete()  # catch no files case
 
 
 def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=None, force=False, items=tuple(),
-                            fast=False, unsafe=False, delete=False, replace=False):
+                            fast=False, unsafe=False, delete=False):
     # this expects files to be a list of maps from name to stream (or an iterator, if nfiles provided)
     if unsafe:
         record.warning('Unsafe option enabled')
@@ -294,7 +264,7 @@ def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=None, f
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
     upload_files(record, db, base, files=files, nfiles=nfiles, items=items, progress=progress,
-                 unsafe=unsafe, delete=delete, replace=replace)
+                 unsafe=unsafe, delete=delete)
     # todo - add record to pipelines?
     if not fast:
         run_activity_pipelines(sys, db, base, force=force, progress=progress)

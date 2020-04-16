@@ -149,7 +149,6 @@ RAW = 'raw'
 REBUILD = 'rebuild'
 RECORDS = 'records'
 REMOVE = 'remove'
-REPLACE = 'replace'
 RETIRE = 'retire'
 ROOT = 'root'
 RUN = 'run'
@@ -283,8 +282,6 @@ def make_parser():
                         help='ignore duplicate files')
     upload.add_argument(mm(DELETE), action='store_true',
                         help='delete source on success')
-    upload.add_argument(mm(REPLACE), action='store_true',
-                        help='replace existing activity')
 
     diary = subparsers.add_parser(DIARY, help='daily diary and summary')
     diary.add_argument(DATE, metavar='DATE', nargs='?',
