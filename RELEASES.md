@@ -15,9 +15,9 @@ data via the (extended) web interface and formalizes 'best practice'
 use.  Another new command, `upgrade` copies data from a previous
 install and replaces the migration scripts.
 
-**Warning** - versions 0.31.0 to 0.31.8 will NOT correctly update
-activity diary entries across versions.  Please use an earlier or
-later release.
+**Warning** - versions 0.31.0 to 0.31.8 (inclusive) will NOT correctly
+update activity diary entries across versions.  Please use an earlier
+or later release.
 
 ### v0.30.0
 
