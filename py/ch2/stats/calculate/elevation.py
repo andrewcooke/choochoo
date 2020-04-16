@@ -2,8 +2,8 @@
 from logging import getLogger
 
 from . import ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator
-from ..names import RAW_ELEVATION, ELEVATION, DISTANCE, M, GRADE, PC
-from ...data.elevation import fix_elevation
+from ..names import RAW_ELEVATION, ELEVATION, DISTANCE, M, GRADE, PC, ALTITUDE
+from ...data.elevation import smooth_elevation
 from ...data.frame import activity_statistics, present
 from ...sql import StatisticJournalFloat
 
@@ -18,7 +18,7 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
 
     def _read_dataframe(self, s, ajournal):
         try:
-            df = activity_statistics(s, DISTANCE, RAW_ELEVATION, ELEVATION,
+            df = activity_statistics(s, DISTANCE, RAW_ELEVATION, ELEVATION, ALTITUDE,
                                      activity_journal=ajournal, with_timespan=True)
             return df
         except Exception as e:
@@ -26,11 +26,19 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
             raise
 
     def _calculate_stats(self, s, ajournal, df):
-        return fix_elevation(df, smooth=self.smooth)
+        if not present(df, ELEVATION):
+            if present(df, RAW_ELEVATION):
+                df = smooth_elevation(df, smooth=self.smooth)
+            elif present(df, ALTITUDE):
+                log.warning(f'Using {ALTITUDE} as {ELEVATION}')
+                df[ELEVATION] = df[ALTITUDE]
+            return df
 
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():
-            loader.add(ELEVATION, M, None, ajournal.activity_group, ajournal, row[ELEVATION], time,
-                       StatisticJournalFloat)
-            loader.add(GRADE, PC, None, ajournal.activity_group, ajournal, row[GRADE], time,
-                       StatisticJournalFloat)
+            if ELEVATION in row:
+                loader.add(ELEVATION, M, None, ajournal.activity_group, ajournal, row[ELEVATION], time,
+                           StatisticJournalFloat)
+            if GRADE in row:
+                loader.add(GRADE, PC, None, ajournal.activity_group, ajournal, row[GRADE], time,
+                           StatisticJournalFloat)

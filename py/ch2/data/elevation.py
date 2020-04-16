@@ -1,12 +1,18 @@
 
+from logging import getLogger
+
 from scipy.interpolate import UnivariateSpline
 
 from .frame import present
 from ..stats.names import ELEVATION, DISTANCE, RAW_ELEVATION, GRADE
 
 
-def fix_elevation(df, smooth=4):
+log = getLogger(__name__)
+
+
+def smooth_elevation(df, smooth=4):
     if not present(df, ELEVATION):
+        log.debug(f'Smoothing {RAW_ELEVATION} to get {ELEVATION}')
         unique = df.loc[~df[DISTANCE].isna() & ~df[RAW_ELEVATION].isna(),
                         [DISTANCE, RAW_ELEVATION]].drop_duplicates(DISTANCE)
         # the smoothing factor is from eyeballing results only.  maybe it should be a parameter.

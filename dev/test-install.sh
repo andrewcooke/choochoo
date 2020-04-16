@@ -4,9 +4,6 @@
 VERSION=`grep 'version=' py/setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\.[0-9]\+\)'.*/\1/"`
 echo "VERSION=$VERSION"
 
-# enable ** globbing
-shopt -s globstar
-
 dev/killall.sh
 cd /tmp
 rm -fr ch2
