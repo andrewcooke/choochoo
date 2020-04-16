@@ -1,6 +1,6 @@
 
 import re
-from hashlib import sha1
+from hashlib import md5
 from logging import getLogger
 from os import stat
 from pathlib import Path
@@ -29,7 +29,7 @@ def tui(command):
 
 # https://stackoverflow.com/a/3431838
 def file_hash(file_path):
-    hash = sha1()
+    hash = md5()
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b''):
             hash.update(chunk)
@@ -37,7 +37,7 @@ def file_hash(file_path):
 
 
 def data_hash(data):
-    hash = sha1()
+    hash = md5()
     hash.update(data)
     return hash.hexdigest()
 

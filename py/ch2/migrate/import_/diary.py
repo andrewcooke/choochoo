@@ -38,7 +38,6 @@ def copy_diary_topic_fields(record, old_s, old, old_diary_topic, new):
             constraint = str(new_diary_topic)
         copy_diary_topic_fields_with_constraint(record, old_s, old, old_diary_topic, new, constraint)
     except:
-        # do we want to generalize this?  also, is there a neater way of mutating a copy?
         log_current_exception()
 
 
