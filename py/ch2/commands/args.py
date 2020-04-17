@@ -40,6 +40,7 @@ NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
+THUMBNAIL = 'thumbnail'
 UNLOCK = 'unlock'
 UPGRADE = 'upgrade'
 UPLOAD = 'upload'
@@ -600,6 +601,11 @@ def make_parser():
                                 help='maximum number of bytes to drop in a single gap')
     fix_fit_params.add_argument(mm(MAX_DELTA_T), type=float, metavar='S',
                                 help='max number of seconds between timestamps')
+
+    thumbnail = subparsers.add_parser(THUMBNAIL,
+                                      help='generate a thumbnail map of an activity')
+    thumbnail.add_argument(ACTIVITY, metavar='ACTIVITY',
+                           help='an activity ID or date')
 
     noop = subparsers.add_parser(NO_OP,
                                  help='used within jupyter (no-op from cmd line)')
