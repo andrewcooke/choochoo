@@ -10,7 +10,7 @@ from .activities import run_activity_pipelines
 from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
-from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, mm, base_system_path, \
+from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, base_system_path, \
     PERMANENT
 from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
@@ -18,7 +18,7 @@ from ..lib.io import data_hash, split_fit_path, touch
 from ..lib.log import log_current_exception, Record
 from ..lib.utils import clean_path, slow_warning
 from ..lib.workers import ProgressTree, SystemProgressTree
-from ..sql import KitItem, FileHash, ActivityJournal, Source, FileScan, MonitorJournal
+from ..sql import KitItem, FileHash, ActivityJournal
 from ..stats.names import TIME
 from ..stats.read import AbortImportButMarkScanned
 from ..stats.read.activity import ActivityReader
@@ -132,10 +132,18 @@ def check_path(file, unsafe=False):
         log.debug(f'A file already exists at {path2}')
         with open(path2, 'rb') as input:
             hash = data_hash(input.read())
-            if hash == file[HASH] and path == path2:
-                # touch in case we deleted the activity and need to read again
-                touch(path)
-                raise SkipFile(f'Duplicate file {name} at {path2}')
+            if hash == file[HASH]:
+                if path == path2:
+                    # touch in case we deleted the activity and need to read again
+                    touch(path)
+                    raise SkipFile(f'Duplicate file {name} at {path2}')
+                else:
+                    # the base path is the same, and the hash is the same, but the kit has changed
+                    # we probably want to delete the old file
+                    log.warning(f'Will delete previous file at {path2} (replacing with {path})')
+                    # we don't actually delete it, because what if write fails
+                    file[DELETE] = path2
+                    # continue processing because we need to write the new file
             else:
                 msg = f'File {name} for {path} does not match the file already at {path2} (different hash or kit)'
                 if unsafe:
@@ -218,13 +226,18 @@ def write_file(file):
         raise Exception(f'Could not save {file[NAME]}')
 
 
-def delete_file(file, data_dir):
+def delete_input_once_loaded(file, data_dir):
     if READ_PATH in file:
         if file[READ_PATH].startswith(data_dir):
             log.warning(f'Not deleting {file[NAME]} as located within Data.Dir ({file[READ_PATH]})')
         else:
             slow_warning(f'Deleting file {file[NAME]} from {file[READ_PATH]}', n=1, pause=0.001)
             unlink(file[READ_PATH])
+
+
+def delete_old_kit(file):
+    slow_warning(f'Deleting file {file[DELETE]} (changed kit)', n=1, pause=0.001)
+    unlink(file[DELETE])
 
 
 def upload_files(record, db, base, files=tuple(), nfiles=None, items=tuple(), progress=None,
@@ -247,7 +260,8 @@ def upload_files(record, db, base, files=tuple(), nfiles=None, items=tuple(), pr
                         check_file(s, file, unsafe=unsafe)
                         write_file(file)
                         record.info(f'Uploaded {file[NAME]} to {file[WRITE_PATH]}')
-                        if delete: delete_file(file, data_dir)
+                        if delete: delete_input_once_loaded(file, data_dir)
+                        if DELETE in file: delete_old_kit(file)
                     except SkipFile as e:
                         record.warning(e)
             local_progress.complete()  # catch no files case

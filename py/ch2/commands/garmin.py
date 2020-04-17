@@ -63,7 +63,6 @@ def run_garmin(sys, s, dir=None, base=None, user=None, password=None, dates=None
         if last and (now() - local_time_to_time(last)).total_seconds() < 12 * 60 * 60:
             log.info(f'Too soon since previous call ({last}; 12 hours minimum)')
             return
-        sys.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
 
         connect = GarminConnect(log_response=False)
         connect.login(user, password)
@@ -78,6 +77,7 @@ def run_garmin(sys, s, dir=None, base=None, user=None, password=None, dates=None
             except HTTPError:
                 log_current_exception(traceback=False)
                 log.info('End of data')
+                sys.set_constant(SystemConstant.LAST_GARMIN, time_to_local_time(now()), True)
                 return
 
     finally:
