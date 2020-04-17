@@ -85,7 +85,7 @@ def make_figure(xs, ys, side, grid, cm, border):
     ax.set_xticks(ticks)
     ax.set_yticks(ticks)
     ax.tick_params(labelbottom=False, labelleft=False, length=0)
-    ax.grid(axis='both', color='grey')
+    ax.grid(axis='both', color='#535353')
     ax.set_xlim([-lim, lim])
     ax.set_ylim([-lim, lim])
     ax.set_aspect(aspect='equal', adjustable='box')
