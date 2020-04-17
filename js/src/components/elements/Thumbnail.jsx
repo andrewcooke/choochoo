@@ -1,0 +1,15 @@
+import React, {useEffect, useState} from 'react';
+
+
+export default function Thumbnail(props) {
+    const {activity_id, className} = props;
+    const [image, setImage] = useState(null);
+
+    useEffect(() => {
+        fetch('/api/thumbnail/' + activity_id)
+            .then(response => response.blob())
+            .then(setImage);
+    }, [activity_id]);
+
+    return (image === null ? <p>?</p> : <img src={URL.createObjectURL(image)} className={className}/>)
+}

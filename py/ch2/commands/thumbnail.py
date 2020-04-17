@@ -38,11 +38,10 @@ def parse_activity(s, text):
         return s.query(ActivityJournal). \
             filter(ActivityJournal.start <= time,
                    ActivityJournal.finish >= time).one().id
-    except Exception as e1:
+    except ValueError:
         try:
-            log_current_exception(traceback=False)
             return int(text)
-        except Exception as e2:
+        except ValueError:
             raise Exception(f'Could not find {text} as an activity date or parse as an ID')
 
 
@@ -91,12 +90,12 @@ def make_figure(xs, ys, side, grid, cm, border):
     ax.set_ylim([-lim, lim])
     ax.set_aspect(aspect='equal', adjustable='box')
     ax.plot(xs, ys, color='white')
-    ax.plot([xs[0]], [ys[0]], marker='o', color='green', markersize=cm)
-    ax.plot([xs[-1]], [ys[-1]], marker='o', color='red', markersize=cm)
+    ax.plot([xs[0]], [ys[0]], marker='o', color='green', markersize=cm*1.5)
+    ax.plot([xs[-1]], [ys[-1]], marker='o', color='red', markersize=cm*1.5)
     return fig
 
 
-def fig_from_df(df, grid=10, cm=2, border=0.2):
+def fig_from_df(df, grid=10, cm=1.5, border=0.2):
     points = [Point.from_latitude_longitude(lat, lon).meters for _, (lat, lon) in df.iterrows()]
     xs, ys, side = normalize(points)
     return make_figure(xs, ys, side, grid, cm, border)

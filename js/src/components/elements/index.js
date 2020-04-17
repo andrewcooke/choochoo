@@ -22,3 +22,4 @@ export {default as ScrollableListCard} from './ScrollableListCard';
 export {default as SideDrawer} from './SideDrawer';
 export {default as Text} from './Text';
 export {default as TextCard} from './TextCard';
+export {default as Thumbnail} from './Thumbnail';

@@ -14,7 +14,7 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {ColumnCard, ColumnList, LinkButton, Loading, Text} from "../../elements";
+import {ColumnCard, ColumnList, LinkButton, Loading, Text, Thumbnail} from "../../elements";
 import {setIds} from "../../functions";
 
 
@@ -25,6 +25,9 @@ const useStyles = makeStyles(theme => ({
     },
     center: {
         textAlign: 'center',
+    },
+    img: {
+        marginBottom: '-5px',
     },
 }));
 
@@ -39,39 +42,36 @@ export default function Day(props) {
         setIds(json);
         // drop outer date label since we already have that in the page
         return (<ColumnList>
-            {json.slice(1).map(row =>
-                row[0].tag === 'activity' ?
-                    <Activity writer={writer} json={row} history={history} key={row.id}/> :
-                    <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
+            {json.slice(1).map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
         </ColumnList>);
     }
 }
 
 
 function childrenFromRest(head, rest, writer, level, history) {
+
+    const classes = useStyles();
     let children = [];
-    rest.forEach((row) => {
+
+    rest.forEach((row, index) => {
         if (Array.isArray(row)) {
-            if (head === 'shrimp') {
+            if (head.tag === 'shrimp') {
                 children.push(<ShrimpField json={row} key={row.id}/>);
-            } else if (head === 'hr-zones-time') {
+            } else if (head.tag === 'hr-zones-time') {
                 children.push(<HRZoneField json={row} key={row.id}/>);
             } else {
                 children.push(<Header writer={writer} json={row} level={level} history={history} key={row.id}/>);
             }
         } else {
-            children.push(<Field writer={writer} json={row} key={row.id}/>);
+            if (head.tag === 'activity' && index === 0 && row.label === 'Name' && row.type === 'edit') {
+                children.push(<EditField writer={writer} json={row} xs={10}/>);
+                children.push(<Grid item xs={2}><Thumbnail activity_id={head.db} className={classes.img}/></Grid>);
+            } else {
+                children.push(<Field writer={writer} json={row} key={row.id}/>);
+            }
         }
     });
     return children;
-}
-
-
-function Activity(props) {
-    return (<>
-        <p>poop</p>
-        <TopLevelPaper {...props}/>
-        </>)
 }
 
 
@@ -79,7 +79,7 @@ function TopLevelPaper(props) {
 
     const {writer, json, history} = props;
     const [head, ...rest] = json;
-    const children = childrenFromRest(head.tag, rest, writer, 3, history);
+    const children = childrenFromRest(head, rest, writer, 3, history);
 
     return (<ColumnCard header={head.value}>{children}</ColumnCard>);
 }
@@ -93,7 +93,7 @@ function Header(props) {
 
     const children = head.tag === 'jupyter-activity' ?
         <JupyterActivity json={rest}/> :
-        childrenFromRest(head.tag, rest, writer, level + 1, history);
+        childrenFromRest(head, rest, writer, level + 1, history);
 
     if (head.tag === 'climb') {
         return (<ClimbField json={json}/>);
