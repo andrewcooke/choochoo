@@ -96,7 +96,7 @@ def make_figure(xs, ys, side, grid, cm, border):
     return fig
 
 
-def fig_from_df(df, grid=5, cm=2, border=0.2):
+def fig_from_df(df, grid=10, cm=2, border=0.2):
     points = [Point.from_latitude_longitude(lat, lon).meters for _, (lat, lon) in df.iterrows()]
     xs, ys, side = normalize(points)
     return make_figure(xs, ys, side, grid, cm, border)

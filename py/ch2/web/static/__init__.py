@@ -1,21 +1,16 @@
-from collections import defaultdict
+
 from importlib.resources import read_binary
 from logging import getLogger
-from os.path import split, sep, splitext
+from os.path import split, sep
 
 from werkzeug import Response
 
+from ch2.web.pages.base import ContentType
 
 log = getLogger(__name__)
 
 
-class Static:
-
-    CONTENT_TYPE = defaultdict(lambda: 'text/plain', {
-        'js': 'text/javascript',
-        'html': 'text/html',
-        'css': 'text/css'
-    })
+class Static(ContentType):
 
     def __init__(self, package):
         if package.startswith('.'):
@@ -56,9 +51,3 @@ class Static:
         if head:
             package += '.' + '.'.join(head.split(sep))
         return package, tail
-
-    def set_content_type(self, response, name):
-        ext = splitext(name)[1].lower()
-        if ext:
-            ext = ext[1:]
-        response.content_type = self.CONTENT_TYPE[ext]

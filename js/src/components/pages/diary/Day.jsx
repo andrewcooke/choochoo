@@ -39,7 +39,10 @@ export default function Day(props) {
         setIds(json);
         // drop outer date label since we already have that in the page
         return (<ColumnList>
-            {json.slice(1).map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
+            {json.slice(1).map(row =>
+                row[0].tag === 'activity' ?
+                    <Activity writer={writer} json={row} history={history} key={row.id}/> :
+                    <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
         </ColumnList>);
     }
 }
@@ -61,6 +64,14 @@ function childrenFromRest(head, rest, writer, level, history) {
         }
     });
     return children;
+}
+
+
+function Activity(props) {
+    return (<>
+        <p>poop</p>
+        <TopLevelPaper {...props}/>
+        </>)
 }
 
 

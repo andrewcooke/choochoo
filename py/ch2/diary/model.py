@@ -90,8 +90,10 @@ def edit(label, value, db=None):
 
 # --- immutable types
 
-def text(value: object, tag: object = None) -> object:
-    return {TYPE: TEXT, VALUE: value, TAG: to_tag(tag or value)}
+def text(value: object, tag: object=None, db=None):
+    text = {TYPE: TEXT, VALUE: value, TAG: to_tag(tag or value)}
+    if db: text[DB] = db
+    return text
 
 
 def value(label, value, tag=None, units=None, measures=None):

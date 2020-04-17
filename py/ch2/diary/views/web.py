@@ -1,6 +1,6 @@
 
 from ..model import DB
-from ...sql import StatisticJournal
+from ...sql import StatisticJournal, Source
 
 
 def str_or_none(x):
@@ -13,7 +13,7 @@ def rewrite_db(model):
     else:
         if DB in model:
             db = model[DB]
-            if isinstance(db, StatisticJournal):
+            if hasattr(db, 'id'):
                 model[DB] = db.id
             else:  # links have tuples
                 model[DB] = [x if str_or_none(x) else x.id for x in db]

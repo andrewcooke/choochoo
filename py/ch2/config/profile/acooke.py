@@ -46,7 +46,7 @@ class ACooke(Config):
         ms = add_child_diary_topic(s, injuries, 'Multiple Sclerosis', c)
         add_diary_topic_field(s, ms, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
         add_child_diary_topic(s, ms, 'Betaferon', c,
-                              schedule='2018-08-07/2d[1]')  # reminder to take meds on alternate days
+                              schedule='2018-08-08/2d[1]')  # reminder to take meds on alternate days
 
         leg = add_child_diary_topic(s, injuries, 'Broken Femur LHS', c,
                                     schedule='d2018-03-11-2020-03-01')

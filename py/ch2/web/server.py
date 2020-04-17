@@ -8,6 +8,7 @@ from werkzeug.wrappers.json import JSONMixin
 
 from .json import JsonResponse
 from .pages.analysis import Analysis
+from .pages.base import Base, Thumbnail
 from .pages.configure import Configure
 from .pages.diary import Diary
 from .pages.jupyter import Jupyter
@@ -96,6 +97,7 @@ class WebServer:
         kit = Kit()
         static = Static('.static')
         upload = Upload(sys, db, base)
+        thumbnail = Thumbnail(base)
 
         self.url_map = Map([
 
@@ -127,6 +129,7 @@ class WebServer:
             Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics), methods=(GET, )),
             Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot), methods=(GET, )),
 
+            Rule('/api/thumbnail/<activity>', endpoint=thumbnail, methods=(GET, )),
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
 
             Rule('/api/upload', endpoint=self.check(upload), methods=(PUT, )),

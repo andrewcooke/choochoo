@@ -1,3 +1,4 @@
+
 from logging import getLogger
 from re import search
 
@@ -12,11 +13,10 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY,
     ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _delta, M, S, \
     PERCENT_IN_Z_ANY, \
     KM, PC
-from ..read.segment import SegmentReader
 from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
 from ...diary.model import text, value, optional_text, from_field
-from ...lib.date import format_seconds, time_to_local_time, to_time, HMS, local_date_to_time, to_date, MONTH, add_date, \
+from ...lib.date import time_to_local_time, to_time, local_date_to_time, to_date, MONTH, add_date, \
     time_to_local_date, YMD, YEAR, YM, DAY, HM, format_minutes, YMD_HM
 from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
     ActivityTopicField
@@ -30,7 +30,7 @@ class ActivityDiary(JournalDiary):
         super().__init__(*args, **kargs)
 
     def _read_journal_date(self, s, ajournal, date):
-        yield text(self.__title(s, ajournal), tag='activity')
+        yield text(self.__title(s, ajournal), tag='activity', db=ajournal)
         yield from self.__read_activity_topics(s, ajournal, date)
         yield from self.__read_details(s, ajournal, date)
 
