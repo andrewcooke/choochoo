@@ -112,12 +112,13 @@ class Record:
         raise Exception(msg)
 
     @contextmanager
-    def record_exceptions(self):
+    def record_exceptions(self, catch=False):
         try:
             yield
         except Exception as e:
             self.warning(e)
-            raise
+            if not catch:
+                raise
 
     def json(self):
         return {'warning': self._warning,

@@ -24,6 +24,7 @@ PROGNAME = 'ch2'
 COMMAND = 'command'
 
 ACTIVITIES = 'activities'
+CHECK = 'check'
 CONFIGURE = 'configure'
 CONSTANTS = 'constants'
 DIARY = 'diary'
@@ -90,6 +91,7 @@ F = 'f'
 FAST = 'fast'
 FIELD = 'field'
 FIELDS = 'fields'
+FIX = 'fix'
 FINISH = 'finish'
 FIX_CHECKSUM = 'fix-checksum'
 FIX_HEADER = 'fix-header'
@@ -329,6 +331,9 @@ def make_parser(with_noop=False):
     constant_remove = constant_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)')
     constant_remove.add_argument(NAME, metavar='NAME', help='name')
     constant_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
+
+    check = subparsers.add_parser(CHECK, help='check (and optionally fix) system')
+    check.add_argument(mm(FIX), action='store_true', help='correct errors when possible')
 
     jupyter = subparsers.add_parser(JUPYTER, help='access jupyter')
     jupyter_cmds = jupyter.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)

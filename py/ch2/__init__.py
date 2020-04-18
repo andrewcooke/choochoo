@@ -4,6 +4,8 @@ from logging import getLogger, NullHandler
 from os.path import abspath, dirname, join
 from sys import version_info
 
+from .commands.check import check
+
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
 
@@ -21,7 +23,7 @@ class FatalException(Exception):
 from .commands.activities import activities
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIGURE, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, UPGRADE, THUMBNAIL
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, UPGRADE, THUMBNAIL, CHECK
 from .commands.constants import constants
 from .commands.dump import dump
 from .commands.configure import configure
@@ -61,6 +63,7 @@ at the command line.
 
 
 COMMANDS = {ACTIVITIES: activities,
+            CHECK: check,
             CONSTANTS: constants,
             CONFIGURE: configure,
             DIARY: diary,

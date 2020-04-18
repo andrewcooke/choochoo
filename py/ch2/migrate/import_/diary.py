@@ -22,7 +22,7 @@ def upgrade_diary(record, old, new):
 
 
 def diary_imported(record, new):
-    return journal_imported(record, new, DiaryTopicJournal, 'Diary')
+    return journal_imported(record, new, DiaryTopicJournal, 'Diary', allow_time_zero=True)
 
 
 def copy_diary_topic_fields(record, old_s, old, old_diary_topic, new):

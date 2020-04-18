@@ -15,13 +15,15 @@ from ...sql.utils import add
 log = getLogger(__name__)
 
 
-def journal_imported(record, new, cls, name):
+def journal_imported(record, new, cls, name, allow_time_zero=False):
     # true if already installed
     with new.session_context() as new_s:
-        if new_s.query(StatisticJournal). \
+        q = new_s.query(StatisticJournal). \
                 join(cls). \
-                filter(StatisticJournal.source_id == cls.id). \
-                count():
+                filter(StatisticJournal.source_id == cls.id)
+        if allow_time_zero:
+            q = q.filter(StatisticJournal.time > 0.0)
+        if q.count():
             record.warning(f'{name} topic entries already exist - old data must be imported first')
             return True
     return False

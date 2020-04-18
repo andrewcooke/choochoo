@@ -31,6 +31,7 @@ class FileScan(Base):
 
     __tablename__ = 'file_scan'
 
+    # todo - add id?
     path = Column(Text, nullable=False, primary_key=True)
     owner = Column(ShortCls, nullable=False, primary_key=True)
     last_scan = Column(Time, nullable=False)
