@@ -66,11 +66,18 @@ def make_log(path, verbosity=4, tui=False):
         xlog.addHandler(file_handler)
 
         if not tui:
-            stderr_formatter = ColoredFormatter('%(levelname)8s: %(message_log_color)s%(message)s',
+            stderr_formatter = ColoredFormatter('%(log_color)s%(levelname)8s: %(message_log_color)s%(message)s',
+                                                log_colors={'DEBUG': 'white',
+                                                            'INFO': 'white',
+                                                            'WARNING': 'white',
+                                                            'ERROR': 'white',
+                                                            'CRITICAL': 'white'},
                                                 secondary_log_colors={'message':
-                                                    {'WARNING': 'yellow',
-                                                     'ERROR': 'red',
-                                                     'CRITICAL': 'red'}})
+                                                    {'DEBUG': 'yellow',
+                                                     'INFO': 'white',
+                                                     'WARNING': 'cyan',
+                                                     'ERROR': 'bold_red',
+                                                     'CRITICAL': 'bold_red'}})
             stderr_handler = StreamHandler()
             stderr_handler.setLevel(level)
             stderr_handler.setFormatter(stderr_formatter)

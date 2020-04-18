@@ -4,8 +4,6 @@ from logging import getLogger, NullHandler
 from os.path import abspath, dirname, join
 from sys import version_info
 
-from .commands.check import check
-
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
 
@@ -23,8 +21,9 @@ class FatalException(Exception):
 from .commands.activities import activities
 from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAME, HELP, DEV, DIARY, FIT, \
     PACKAGE_FIT_PROFILE, ACTIVITIES, NO_OP, CONFIGURE, CONSTANTS, STATISTICS, TEST_SCHEDULE, MONITOR, GARMIN, \
-    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, UPGRADE, THUMBNAIL, CHECK
+    UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, UPGRADE, THUMBNAIL, CHECK, SEARCH
 from .commands.constants import constants
+from .commands.check import check
 from .commands.dump import dump
 from .commands.configure import configure
 from .commands.diary import diary
@@ -37,6 +36,7 @@ from .commands.jupyter import jupyter
 from .commands.kit import kit
 from .commands.monitor import monitor
 from .commands.package_fit_profile import package_fit_profile
+from .commands.search import search
 from .commands.statistics import statistics
 from .commands.test_schedule import test_schedule
 from .commands.thumbnail import thumbnail
@@ -78,6 +78,7 @@ COMMANDS = {ACTIVITIES: activities,
             STATISTICS: statistics,
             NO_OP: no_op,
             PACKAGE_FIT_PROFILE: package_fit_profile,
+            SEARCH: search,
             TEST_SCHEDULE: test_schedule,
             THUMBNAIL: thumbnail,
             UNLOCK: unlock,

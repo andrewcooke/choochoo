@@ -24,6 +24,7 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'bokeh',
                      'cachetools',
                      'colorama',
+                     'colorlog',
                      'jupyter',
                      'matplotlib',
                      'numpy',

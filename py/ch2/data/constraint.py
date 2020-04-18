@@ -1,11 +1,16 @@
 
+import datetime as dt
+from logging import getLogger
 from re import escape
 
-from sqlalchemy import select, or_, and_, union
+from sqlalchemy import select, union, intersect
 
-from .frame import _tables
+from ..lib import local_time_to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
-from ..sql import ActivityJournal, StatisticName, StatisticJournalType
+from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal
+from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
+
+log = getLogger(__name__)
 
 
 def pat(regexp, trans=None):
@@ -40,28 +45,30 @@ def flip(l):
     return [(name, {'=': '=', '!=': '!=', '<': '>', '>': '<', '>=': '<=', '<=': '>='}[op], value)]
 
 
-name = pat(r'(\w(?:\s*\w)*)')
-
-number = choice(pat(r'(-?\d+)', int), pat(r'([-+]?\d*\.?\d+)(?:[eE]([-+]?\d+))?', unexp))
-
+AND, OR = '&', '|'
+name = pat(r'(\w(?:\s*\w)*(?::(?:\w(?:\s*\w)*)?)?)')
+number = choice(pat(r'(-?\d+)', lambda x: [int(i) for i in x]),
+                pat(r'(-?\d*\.\d+)', lambda x: [float(i) for i in x]),
+                pat(r'(-?\d+\.\d*)', lambda x: [float(i) for i in x]),
+                pat(r'([-+]?\d*\.?\d+)[eE]([-+]?\d+)', unexp))
 string = choice(pat(r'"((?:[^"\\]|\\.)*)"'), pat(r"'((?:[^'\\]|\\.)*)'"))
-
-value = choice(number, string)
+date = r'\d{4}-\d{2}-\d{2}'
+time = r'\d{2}(?::\d{2}(?::\d{2})?)?'
+datetime = pat('(' + date + '(?:[T ]' + time + ')?)', lambda x: [local_time_to_time(t) for t in x])
+value = choice(number, string, datetime)
 
 operator = choice(*[lit(cmp) for cmp in ['=', '!=', '<', '>', '<=', '>=']])
-
 comparison = choice(join(name, operator, value), transform(join(value, operator, name), flip))
 
 term = Recursive()
 
 and_comparison = Recursive()
-and_comparison.calls(choice(term, join(term, lit('&'), term)))
+and_comparison.calls(choice(term, join(term, lit(AND), term)))
 
 or_comparison = Recursive()
-or_comparison.calls(choice(and_comparison, join(and_comparison, lit('|'), or_comparison)))
+or_comparison.calls(choice(and_comparison, join(and_comparison, lit(OR), or_comparison)))
 
 parens = transform(sequence(drop(lit('(')), or_comparison, drop(lit(')'))))
-
 term.calls(choice(comparison, parens))
 
 constraint = single(exhaustive(choice(or_comparison, parens)))
@@ -69,51 +76,73 @@ constraint = single(exhaustive(choice(or_comparison, parens)))
 
 def constrained_activities(s, query):
     ast = constraint(query)[0]
+    log.debug(f'AST: {ast}')
     q = build_activity_query(s, ast)
+    log.debug(f'Query: {q}')
     return list(q)
 
 
 def build_activity_query(s, ast):
-    t = _tables()
-    constraints = build_constraints(s, t, ast)
-    return s.query(ActivityJournal).filter(ActivityJournal.id.in_(constraints)).order_by(ActivityJournal.start)
+    constraints = build_constraints(s, ast)
+    return s.query(ActivityJournal). \
+        filter(ActivityJournal.id.in_(constraints)). \
+        order_by(ActivityJournal.start)
 
 
-def build_constraints(s, t, ast):
+def build_constraints(s, ast):
     l, op, r = ast
-    if op in '&|':
-        lcte = build_constraints(s, t, l)
-        rcte = build_constraints(s, t, r)
-        return build_join(t, op, lcte, rcte)
+    if op in (AND, OR):
+        lcte = build_constraints(s, l)
+        rcte = build_constraints(s, r)
+        return build_join(op, lcte, rcte)
     else:
-        return build_comparisons(s, t, ast)
+        return build_comparisons(s, ast)
 
 
-def build_join(t, op, lcte, rcte):
-    if op == '|':
-        return select([t.aj.c.id]).where(or_(t.aj.c.id.in_(lcte), t.aj.c.id.in_(rcte)))
+def build_join(op, lcte, rcte):
+    if op == OR:
+        return union(lcte, rcte).select()
     else:
-        return select([t.aj.c.id]).where(and_(t.aj.c.id.in_(lcte), t.aj.c.id.in_(rcte)))
+        return intersect(lcte, rcte).select()
 
 
-def build_comparisons(s, t, ast):
+def build_comparisons(s, ast):
     name, op, value = ast
-    comparisons = [build_comparison(t, statistic_name, op, value)
-                   for statistic_name in s.query(StatisticName).filter(StatisticName.name == name).all()]
+    if ':' in name:
+        sname, gname = name.split(':', 1)
+        if gname.lower() in ('none', 'null'):
+            statistic_names = s.query(StatisticName). \
+                filter(StatisticName.name.like(sname),
+                       StatisticName.constraint == None).all()
+        else:
+            activity_groups = s.query(ActivityGroup).filter(ActivityGroup.name.like(gname)).all()
+            if not activity_groups:
+                raise Exception(f'No activity group matches {gname}')
+            statistic_names = s.query(StatisticName). \
+                filter(StatisticName.name.like(sname),
+                       StatisticName.constraint.in_(activity_groups)).all()
+    else:
+        log.warning(f'{name} is unconstrained (to restrict to a particular group use {name}:Group)')
+        statistic_names = s.query(StatisticName).filter(StatisticName.name.like(name)).all()
+    if not statistic_names:
+        raise Exception(f'No statistic name matches {name}')
+    comparisons = [build_comparison(statistic_name, op, value) for statistic_name in statistic_names]
     if len(comparisons) == 1:
         return comparisons[0]
     else:
-        return union(*comparisons)
+        return union(*comparisons).select()
 
 
-def build_comparison(t, statistic_name, op, value):
-    if statistic_name.statistic_journal_type == StatisticJournalType.INTEGER:
-        table = t.sji
-    elif statistic_name.statistic_journal_type == StatisticJournalType.FLOAT:
-        table = t.sjf
-    else:
-        table = t.sjs
-    q = select([t.sj.c.source_id]).select_from(t.sj.join(table)).where(t.sj.c.statistic_name_id == statistic_name.id)
+def build_comparison(statistic_name, op, value):
+    table = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type].__table__
+    sj = StatisticJournal.__table__
+    q = select([sj.c.source_id]).select_from(sj.join(table)).where(sj.c.statistic_name_id == statistic_name.id)
     attr = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}[op]
-    q = q.where(getattr(table.c.value, attr)(value))
+    if statistic_name.statistic_journal_type == StatisticJournalType.TIMESTAMP:
+        if not isinstance(value, dt.datetime):
+            raise Exception(f'{statistic_name.name} is a timestamp, but {value} is not a date')
+        column = sj.c.time
+    else:
+        column = table.c.value
+    q = q.where(getattr(column, attr)(value))
     return q

@@ -149,6 +149,7 @@ PROFILE = 'profile'
 PROFILE_VERSION = 'profile-version'
 PROTOCOL_VERSION = 'protocol-version'
 PWD = 'pwd'
+QUERY = 'query'
 RAW = 'raw'
 REBUILD = 'rebuild'
 RECORDS = 'records'
@@ -301,6 +302,7 @@ def make_parser(with_noop=False):
                                help='show summary for given schedule')
 
     search = subparsers.add_parser(SEARCH, help='search activities')
+    search.add_argument(QUERY, metavar='QUERY', help='conditions to constrain search')
 
     # low-level commands used often
 
