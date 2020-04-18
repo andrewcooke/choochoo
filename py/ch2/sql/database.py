@@ -128,7 +128,7 @@ def connect(args):
     else:
         args = []
     args.append(NO_OP)
-    ns = NamespaceWithVariables(make_parser().parse_args(args))
+    ns = NamespaceWithVariables(make_parser(with_noop=True).parse_args(args))
     make_log_from_args(ns)
     db = Database(ns)
     return ns, db

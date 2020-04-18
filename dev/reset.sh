@@ -30,7 +30,6 @@ echo -e "\ndeleting $BASE"
 rm -fr $BASE
 
 echo -e "\nreinstalling"
-dev/ch2 no-op
 dev/ch2 --dev configure load acooke
 
 echo -e "\nupgrading old data"

@@ -38,6 +38,7 @@ LOAD = 'load'
 MONITOR = 'monitor'
 NO_OP = 'no-op'
 PACKAGE_FIT_PROFILE = 'package-fit-profile'
+SEARCH = 'search'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
 THUMBNAIL = 'thumbnail'
@@ -234,7 +235,7 @@ def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=Tr
         return dir
 
 
-def make_parser():
+def make_parser(with_noop=False):
 
     parser = ArgumentParser(prog=PROGNAME)
 
@@ -296,6 +297,8 @@ def make_parser():
                                help='show yearly summary')
     diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
                                help='show summary for given schedule')
+
+    search = subparsers.add_parser(SEARCH, help='search activities')
 
     # low-level commands used often
 
@@ -607,8 +610,9 @@ def make_parser():
     thumbnail.add_argument(ACTIVITY, metavar='ACTIVITY',
                            help='an activity ID or date')
 
-    noop = subparsers.add_parser(NO_OP,
-                                 help='used within jupyter (no-op from cmd line)')
+    if with_noop:
+        noop = subparsers.add_parser(NO_OP,
+                                     help='used within jupyter (no-op from cmd line)')
 
     package_fit_profile = subparsers.add_parser(PACKAGE_FIT_PROFILE,
                                                 help='parse and save the global fit profile (dev only)')

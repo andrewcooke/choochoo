@@ -6,7 +6,7 @@ from re import split
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, backref, reconstructor
+from sqlalchemy.orm import relationship, backref, reconstructor, synonym
 from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
@@ -391,19 +391,14 @@ class StatisticJournalText(StatisticJournal):
 
 class StatisticJournalTimestamp(StatisticJournal):
 
-    # todo - could value take value from time?
-
     __tablename__ = 'statistic_journal_timestamp'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
+    value = synonym('time')
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.TIMESTAMP
     }
-
-    def __init__(self, **kargs):
-        super().__init__(**kargs)
-        self.value = None
 
     @reconstructor
     def init_on_load(self):
