@@ -4,6 +4,8 @@ from logging.handlers import RotatingFileHandler
 from sys import exc_info
 from traceback import format_tb
 
+from colorlog import ColoredFormatter
+
 from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, TUI
 
 
@@ -64,7 +66,11 @@ def make_log(path, verbosity=4, tui=False):
         xlog.addHandler(file_handler)
 
         if not tui:
-            stderr_formatter = Formatter('%(levelname)8s: %(message)s')
+            stderr_formatter = ColoredFormatter('%(levelname)8s: %(message_log_color)s%(message)s',
+                                                secondary_log_colors={'message':
+                                                    {'WARNING': 'yellow',
+                                                     'ERROR': 'red',
+                                                     'CRITICAL': 'red'}})
             stderr_handler = StreamHandler()
             stderr_handler.setLevel(level)
             stderr_handler.setFormatter(stderr_formatter)

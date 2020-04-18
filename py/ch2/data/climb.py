@@ -55,6 +55,7 @@ def find_climbs(df, params=Climb()):
                 climb[CLIMB_CATEGORY] = CLIMB_CATEGORIES[height]
             else:
                 break
+        log.debug(climb)
         yield climb
 
 

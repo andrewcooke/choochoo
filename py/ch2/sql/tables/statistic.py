@@ -436,18 +436,20 @@ class StatisticMeasure(Base):
 STATISTIC_JOURNAL_CLASSES = {
     StatisticJournalType.INTEGER: StatisticJournalInteger,
     StatisticJournalType.FLOAT: StatisticJournalFloat,
-    StatisticJournalType.TEXT: StatisticJournalText
+    StatisticJournalType.TEXT: StatisticJournalText,
+    StatisticJournalType.TIMESTAMP: StatisticJournalTimestamp
 }
 
 STATISTIC_JOURNAL_TYPES = {
     StatisticJournalInteger: StatisticJournalType.INTEGER,
     StatisticJournalFloat: StatisticJournalType.FLOAT,
-    StatisticJournalText: StatisticJournalType.TEXT
+    StatisticJournalText: StatisticJournalType.TEXT,
+    StatisticJournalTimestamp: StatisticJournalType.TIMESTAMP
 }
 
 TYPE_TO_JOURNAL_CLASS = {
     int: StatisticJournalInteger,
     float: StatisticJournalFloat,
-    str: StatisticJournalText
+    str: StatisticJournalText,
+    dt.datetime: StatisticJournalTimestamp
 }
-

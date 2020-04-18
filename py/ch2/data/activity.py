@@ -9,7 +9,7 @@ from .frame import linear_resample, median_dt, present, linear_resample_time
 from ..lib.log import log_current_exception
 from ..stats.names import HEART_RATE, MAX_MED_HR_M, POWER_ESTIMATE, ACTIVE_DISTANCE, ACTIVE_TIME, \
     ACTIVE_SPEED, TIMESPAN_ID, TIME, DISTANCE, MIN_KM_TIME, MED_KM_TIME, PERCENT_IN_Z, TIME_IN_Z, HR_ZONE, \
-    MAX_MEAN_PE_M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DIRECTION, ASPECT_RATIO
+    MAX_MEAN_PE_M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DIRECTION, ASPECT_RATIO, START, FINISH
 
 log = getLogger(__name__)
 
@@ -31,6 +31,12 @@ def active_stats(df):
         stats[ACTIVE_TIME] += (slice.index.max() - slice.index.min()).total_seconds()
     stats[ACTIVE_SPEED] = 3600 * stats[ACTIVE_DISTANCE] / stats[ACTIVE_TIME]
     return stats
+
+
+def copy_times(ajournal):
+    return {START: ajournal.start,
+            FINISH: ajournal.finish,
+            TIME: (ajournal.finish - ajournal.start).total_seconds()}
 
 
 def times_for_distance(df, km=None, delta=0.01):  # all units of km

@@ -9,14 +9,14 @@ from ..names import ELEVATION, DISTANCE, M, POWER_ESTIMATE, HEART_RATE, ACTIVE_D
     TIME_IN_Z_ANY, MAX_MED_HR_M_ANY, W, BPM, MAX_MEAN_PE_M_ANY, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
     CLIMB_GRADIENT, TOTAL_CLIMB, HR_ZONE, TIME, like, MEAN_POWER_ESTIMATE, ENERGY_ESTIMATE, SPHERICAL_MERCATOR_X, \
     SPHERICAL_MERCATOR_Y, DIRECTION, DEG, ASPECT_RATIO, FITNESS_D_ANY, FATIGUE_D_ANY, _delta, FF, CLIMB_POWER, \
-    CLIMB_CATEGORY, KM
+    CLIMB_CATEGORY, KM, ALL, START, FINISH
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
-    direction_stats
+    direction_stats, copy_times
 from ...data.climb import find_climbs, Climb, add_climb_stats
 from ...data.frame import activity_statistics, present, statistics
 from ...data.response import response_stats
 from ...lib.log import log_current_exception
-from ...sql import StatisticJournalFloat, Constant, StatisticJournalText
+from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, ActivityGroup, StatisticJournalTimestamp
 from ...stats.calculate.power import PowerCalculator
 
 log = getLogger(__name__)
@@ -44,6 +44,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
     def _calculate_stats(self, s, ajournal, df):
         adf, sdf = df
         stats, climbs = {}, None
+        stats.update(copy_times(ajournal))
         stats.update(active_stats(adf))
         stats.update(self.__average_power(s, ajournal, stats[ACTIVE_TIME]))
         stats.update(times_for_distance(adf))
@@ -67,8 +68,17 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
             return {MEAN_POWER_ESTIMATE: 0}
 
     def _copy_results(self, s, ajournal, loader, data):
+        all = ActivityGroup.from_name(s, ALL)
         df, stats, climbs = data
+        self.__copy(ajournal, loader, stats, START, None, None, ajournal.start, type=StatisticJournalTimestamp, group=all)
+        self.__copy(ajournal, loader, stats, START, None, None, ajournal.start, type=StatisticJournalTimestamp)
+        self.__copy(ajournal, loader, stats, FINISH, None, None, ajournal.start, type=StatisticJournalTimestamp, group=all)
+        self.__copy(ajournal, loader, stats, FINISH, None, None, ajournal.start, type=StatisticJournalTimestamp)
+        self.__copy(ajournal, loader, stats, TIME, S, summaries(MAX, SUM, MSR), ajournal.start, group=all)
+        self.__copy(ajournal, loader, stats, TIME, S, summaries(MAX, SUM, MSR), ajournal.start)
+        self.__copy(ajournal, loader, stats, ACTIVE_DISTANCE, KM, summaries(MAX, CNT, SUM, MSR), ajournal.start, group=all)
         self.__copy(ajournal, loader, stats, ACTIVE_DISTANCE, KM, summaries(MAX, CNT, SUM, MSR), ajournal.start)
+        self.__copy(ajournal, loader, stats, ACTIVE_TIME, S, summaries(MAX, SUM, MSR), ajournal.start, group=all)
         self.__copy(ajournal, loader, stats, ACTIVE_TIME, S, summaries(MAX, SUM, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, ACTIVE_SPEED, KMH, summaries(MAX, AVG, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, MEAN_POWER_ESTIMATE, W, summaries(MAX, AVG, MSR), ajournal.start)
@@ -91,8 +101,9 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
                 self.__copy(ajournal, loader, climb, CLIMB_TIME, S, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_GRADIENT, PC, summaries(MAX, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_POWER, W, summaries(MAX, MSR), climb[TIME])
-                self.__copy(ajournal, loader, climb, CLIMB_CATEGORY, None, None, climb[TIME],
-                            type=StatisticJournalText)
+                if CLIMB_CATEGORY in climb:
+                    self.__copy(ajournal, loader, climb, CLIMB_CATEGORY, None, None, climb[TIME],
+                                type=StatisticJournalText)
         if stats:
             log.warning(f'Unsaved statistics: {list(stats.keys())}')
 
@@ -100,10 +111,13 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         for name in like(pattern, stats):
             self.__copy(ajournal, loader, stats, name, units, summary, time, type=type)
 
-    def __copy(self, ajournal, loader, stats, name, units, summary, time, type=StatisticJournalFloat):
+    def __copy(self, ajournal, loader, stats, name, units, summary, time, type=StatisticJournalFloat,
+               group=None):
+        used_group = group or ajournal.activity_group
         try:
-            loader.add(name, units, summary, ajournal.activity_group, ajournal, stats[name], time, type)
-            del stats[name]
+            loader.add(name, units, summary, used_group, ajournal, stats[name], time, type)
+            # not completely transparent, but if group specified it's additional and before default
+            if not group: del stats[name]
         except:
             log.warning(f'Failed to load {name}')
             log_current_exception(traceback=False)
