@@ -6,7 +6,7 @@ from traceback import format_tb
 
 from colorlog import ColoredFormatter
 
-from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, COLOR, DARK, LIGHT
+from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, COLOR, DARK, LIGHT, DEV
 
 log = getLogger(__name__)
 
@@ -19,8 +19,9 @@ def make_log_from_args(args):
     name = args[LOG] if LOG in args and args[LOG] else (
             (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
     path = args.system_path(LOGS, name)
+    verbosity = 5 if args[DEV] else args[VERBOSITY]
 
-    make_log(path, verbosity=args[VERBOSITY])
+    make_log(path, verbosity=verbosity)
 
 
 def make_log(path, verbosity=4):
