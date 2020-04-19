@@ -1,6 +1,8 @@
 import React from "react";
 import {sprintf} from "sprintf-js";
 import Text from "./Text";
+import {FMT_DAY_TIME} from "../../constants";
+import {format} from 'date-fns';
 
 
 export default function FormatValueUnits(props) {
@@ -17,6 +19,8 @@ export default function FormatValueUnits(props) {
         return (<Text>{sprintf('%d', value)}{units}</Text>);
     } else if (['FF', 'stp'].includes(units)) {
         return (<Text>{sprintf('%d', value)}</Text>);
+    } else if (units === 'date') {
+        return (<Text>{format(value, FMT_DAY_TIME)}</Text>);
     } else {
         return (<Text>{value}{units}</Text>);
     }

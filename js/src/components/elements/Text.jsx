@@ -3,9 +3,9 @@ import {Typography} from "@material-ui/core";
 
 
 export default function Text(props) {
-    const {children, secondary=false} = props;
+    const {children, secondary=false, variant='body1'} = props;
     const colour = secondary ? 'textSecondary' : 'textPrimary';
-    return (<Typography variant='body1' color={colour} component='span'>
+    return (<Typography variant={variant} color={colour} component='span'>
         {children}
     </Typography>)
 }

@@ -2,7 +2,7 @@ from logging import getLogger
 
 from .args import QUERY
 from ..data import constrained_activities
-from ..diary.model import DB
+from ..diary.model import DB, VALUE, UNITS
 from ..lib import time_to_local_time
 from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic
 from ..stats.calculate.activity import ActivityCalculator
@@ -46,17 +46,24 @@ def expand_activity(s, activity_journal):
         filter(ActivityJournal.id == activity_journal.id).one()
     NAME = ActivityTopicField.NAME
 
-    def format(value):
-        if value:
-            return value.formatted()
+    def format(statistic):
+        if statistic:
+            return {VALUE: statistic.value, UNITS: statistic.statistic_name.units}
+        else:
+            return None
+
+    def value(statistic):
+        if statistic:
+            return statistic.value
         else:
             return None
 
     return {DB: activity_journal.id,
-            GROUP.lower(): activity_journal.activity_group.name,
-            NAME.lower(): format(StatisticJournal.for_source(s, topic_journal.id, NAME,
-                                                             ActivityTopic, activity_journal.activity_group)),
-            START.lower(): time_to_local_time(activity_journal.start),
+            NAME.lower(): {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, NAME,
+                                                                    ActivityTopic, activity_journal.activity_group)),
+                           UNITS: None},
+            GROUP.lower(): {VALUE: activity_journal.activity_group.name, UNITS: None},
+            START.lower(): {VALUE: time_to_local_time(activity_journal.start), UNITS: 'date'},
             TIME.lower(): format(StatisticJournal.for_source(s, activity_journal.id, ACTIVE_TIME,
                                                              ActivityCalculator, activity_journal.activity_group)),
             DISTANCE.lower(): format(StatisticJournal.for_source(s, activity_journal.id, ACTIVE_DISTANCE,
