@@ -34,13 +34,14 @@ Generate a thumbnail map of the activity route.
 
 def parse_activity(s, text):
     try:
-        time = local_time_to_time(text)
-        return s.query(ActivityJournal). \
-            filter(ActivityJournal.start <= time,
-                   ActivityJournal.finish >= time).one().id
+        return int(text)
     except ValueError:
         try:
-            return int(text)
+            time = local_time_to_time(text)
+            log.debug(f'{time}')
+            return s.query(ActivityJournal). \
+                filter(ActivityJournal.start <= time,
+                       ActivityJournal.finish >= time).one().id
         except ValueError:
             raise Exception(f'Could not find {text} as an activity date or parse as an ID')
 

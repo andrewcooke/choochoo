@@ -53,11 +53,11 @@ def expand_activity(s, activity_journal):
             return None
 
     return {DB: activity_journal.id,
-            GROUP: activity_journal.activity_group.name,
-            NAME: format(StatisticJournal.for_source(s, topic_journal.id, NAME, ActivityTopic,
-                                                     activity_journal.activity_group)),
-            START: time_to_local_time(activity_journal.start),
-            TIME: format(StatisticJournal.for_source(s, activity_journal.id, ACTIVE_TIME, ActivityCalculator,
-                                                     activity_journal.activity_group)),
-            DISTANCE: format(StatisticJournal.for_source(s, activity_journal.id, ACTIVE_DISTANCE, ActivityCalculator,
-                                                         activity_journal.activity_group))}
+            GROUP.lower(): activity_journal.activity_group.name,
+            NAME.lower(): format(StatisticJournal.for_source(s, topic_journal.id, NAME,
+                                                             ActivityTopic, activity_journal.activity_group)),
+            START.lower(): time_to_local_time(activity_journal.start),
+            TIME.lower(): format(StatisticJournal.for_source(s, activity_journal.id, ACTIVE_TIME,
+                                                             ActivityCalculator, activity_journal.activity_group)),
+            DISTANCE.lower(): format(StatisticJournal.for_source(s, activity_journal.id, ACTIVE_DISTANCE,
+                                                                 ActivityCalculator, activity_journal.activity_group))}

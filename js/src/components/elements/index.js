@@ -18,6 +18,8 @@ export {default as Navigation} from './Navigation';
 export {default as P} from './P';
 export {default as PercentBar} from './PercentBar';
 export {default as Picker} from './Picker';
+export {default as Search} from './Search';
+export {default as SearchResult} from './SearchResult';
 export {default as ScrollableListCard} from './ScrollableListCard';
 export {default as SideDrawer} from './SideDrawer';
 export {default as Text} from './Text';
