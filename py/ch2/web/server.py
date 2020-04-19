@@ -7,13 +7,14 @@ from werkzeug.routing import Map, Rule
 from werkzeug.wrappers.json import JSONMixin
 
 from .json import JsonResponse
-from .pages.analysis import Analysis
-from .pages.base import Base, Thumbnail
-from .pages.configure import Configure
-from .pages.diary import Diary
-from .pages.jupyter import Jupyter
-from .pages.kit import Kit
-from .pages.upload import Upload
+from .servlets.analysis import Analysis
+from .servlets.base import Base, Thumbnail
+from .servlets.configure import Configure
+from .servlets.diary import Diary
+from .servlets.jupyter import Jupyter
+from .servlets.kit import Kit
+from .servlets.search import Search
+from .servlets.upload import Upload
 from .static import Static
 from ..commands.args import mm, BASE, TUI, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, UPLOAD
 from ..jupyter.server import JupyterController

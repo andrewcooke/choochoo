@@ -16,7 +16,7 @@ from ..utils import add
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import sigfig
-from ...stats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF
+from ...stats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM
 
 log = getLogger(__name__)
 
@@ -347,6 +347,11 @@ class StatisticJournalFloat(StatisticJournal):
                 return '%.1f km' % (self.value / 1000)
             else:
                 return '%d m' % int(self.value)
+        elif units == KM:
+            if self.value > 2:
+                return '%.1f km' % self.value
+            else:
+                return '%d m' % int(self.value * 1000)
         elif units == S:
             return format_seconds(self.value)
         elif units in (KMH, PC, KG, W, KJ):
@@ -383,10 +388,11 @@ class StatisticJournalText(StatisticJournal):
     def formatted(self):
         if self.value is None:
             return None
-        if not self.units:
+        units = self.statistic_name.units
+        if not units:
             return '%s' % self.value
         else:
-            return '%s %s' % (self.value, self.units)
+            return '%s %s' % (self.value, units)
 
 
 class StatisticJournalTimestamp(StatisticJournal):
