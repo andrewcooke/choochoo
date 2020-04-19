@@ -44,7 +44,7 @@ from .commands.unlock import unlock
 from .commands.upload import upload
 from .commands.web import web
 from .lib.io import tui
-from .lib.log import make_log_from_args, log_current_exception
+from .lib.log import make_log_from_args, log_current_exception, set_log_color
 from .sql.database import Database
 from .sql.system import System
 
@@ -101,12 +101,13 @@ def main():
     if version_info < (3, 7):
         raise Exception('Please user Python 3.7 or more recent')
     db = Database(args)
-    system = System(args)
+    sys = System(args)
+    set_log_color(args, sys)
     try:
         if db.no_data() and (not command or command_name not in (CONFIGURE, PACKAGE_FIT_PROFILE, HELP, WEB)):
             refuse_until_configured(db.path)
         elif command:
-            command(args, system, db)
+            command(args, sys, db)
         else:
             log.debug('If you are seeing the "No command given" error during development ' +
                       'you may have forgotten to set the command name via `set_defaults()`.')

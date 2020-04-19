@@ -68,12 +68,14 @@ BORDER = 'border'
 CHANGE = 'change'
 CHECK = 'check'
 CMD = 'cmd'
+COLOR = 'color'
 COMPACT = 'compact'
 COMPONENT = 'component'
 CONSTRAINT = 'constraint'
 CONTEXT = 'context'
 CSV = 'csv'
 D = 'd'
+DARK = 'dark'
 DATA = 'data'
 DATABASE = 'database'
 DATE = 'date'
@@ -108,6 +110,7 @@ K = 'k'
 KARG = 'karg'
 LABEL = 'label'
 LATITUDE = 'latitude'
+LIGHT = 'light'
 LIKE = 'like'
 LIMIT_BYTES = 'limit-bytes'
 LIMIT_RECORDS = 'limit-records'
@@ -138,6 +141,7 @@ NEW = 'new'
 NOT = 'not'
 NOTEBOOKS = 'notebooks'
 O, OUTPUT = 'o', 'output'
+OFF = 'off'
 OWNER = 'owner'
 PASS = 'pass'
 PATH = 'path'
@@ -151,6 +155,7 @@ PROTOCOL_VERSION = 'protocol-version'
 PWD = 'pwd'
 QUERY = 'query'
 RAW = 'raw'
+READ_ONLY = 'read-only'
 REBUILD = 'rebuild'
 RECORDS = 'records'
 REMOVE = 'remove'
@@ -238,14 +243,24 @@ def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=Tr
         return dir
 
 
+def color(color):
+    if color.lower() not in (LIGHT, DARK, OFF):
+        raise Exception(f'Bad color: {color} ({LIGHT}|{DARK}|{OFF})')
+    return color
+
+
 def make_parser(with_noop=False):
 
     parser = ArgumentParser(prog=PROGNAME)
 
     parser.add_argument(mm(BASE), default=f'~/.ch2', metavar='DIR',
                         help='the base directory for data (default ~/.ch2)')
+    parser.add_argument(mm(READ_ONLY), action='store_true',
+                        help='read-only database')
     parser.add_argument(mm(LOG), metavar='FILE',
                         help='the file name for the log (command name by default)')
+    parser.add_argument(mm(COLOR), type=color,
+                        help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF} (CAPS to save)')
     parser.add_argument(m(V), mm(VERBOSITY), default=4, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
     parser.add_argument(mm(TUI), action='store_true',

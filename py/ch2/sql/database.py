@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 
 from . import *
 from .support import Base
-from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DATA, DB_EXTN, ACTIVITY
+from ..commands.args import NamespaceWithVariables, NO_OP, make_parser, DATA, DB_EXTN, ACTIVITY, READ_ONLY
 from ..lib.log import make_log_from_args
 
 
@@ -67,8 +67,9 @@ class DatabaseBase:
         self.path = path
         log.info('Using database at %s' % self.path)
         uri = f'sqlite:///{path}'
-        if read_only: uri += '?mode=ro'
-        log.debug(f'Connecting to {uri}')
+        if read_only:
+            log.warning('Read-only database')
+            uri += '?mode=ro'
         self.engine = create_engine(uri, echo=False)
         self.session = self._sessionmaker()
 
@@ -98,6 +99,7 @@ class DatabaseBase:
 class MappedDatabase(DatabaseBase):
 
     def __init__(self, name, table, base, args, **kargs):
+        if args[READ_ONLY]: kargs.update({'read_only': True})
         super().__init__(args.system_path(DATA, name + DB_EXTN), **kargs)
         if self.no_schema(table):
             log.info('Creating tables')

@@ -6,10 +6,12 @@ from traceback import format_tb
 
 from colorlog import ColoredFormatter
 
-from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, TUI
-
+from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, TUI, COLOR, DARK, LIGHT
 
 log = getLogger(__name__)
+
+STDERR_HANDLER = None
+LOG_COLOR = 'log-color'
 
 
 def make_log_from_args(args):
@@ -22,6 +24,8 @@ def make_log_from_args(args):
 
 
 def make_log(path, verbosity=4, tui=False):
+
+    global STDERR_HANDLER
 
     if not getLogger('ch2').handlers:
 
@@ -66,26 +70,53 @@ def make_log(path, verbosity=4, tui=False):
         xlog.addHandler(file_handler)
 
         if not tui:
-            stderr_formatter = ColoredFormatter('%(log_color)s%(levelname)8s: %(message_log_color)s%(message)s',
-                                                log_colors={'DEBUG': 'white',
+            stderr_formatter = Formatter('%(levelname)8s: %(message)s')
+            STDERR_HANDLER = StreamHandler()
+            STDERR_HANDLER.setLevel(level)
+            STDERR_HANDLER.setFormatter(stderr_formatter)
+            blog.addHandler(STDERR_HANDLER)
+            tlog.addHandler(STDERR_HANDLER)
+            wlog.addHandler(STDERR_HANDLER)
+            clog.addHandler(STDERR_HANDLER)
+            xlog.addHandler(STDERR_HANDLER)
+
+
+def set_log_color(args, sys):
+    color = args[COLOR]
+    if color and color == color.upper():
+        sys.set_constant(LOG_COLOR, color.lower(), force=True)
+        color = None
+    if color is None:
+        color = sys.get_constant(LOG_COLOR, none=True)
+    if STDERR_HANDLER and color:
+        if color.lower() == LIGHT:
+            STDERR_HANDLER.setFormatter(
+                ColoredFormatter('%(log_color)s%(levelname)8s: %(message_log_color)s%(message)s',
+                                 log_colors={'DEBUG': 'black',
+                                             'INFO': 'black',
+                                             'WARNING': 'black',
+                                             'ERROR': 'black',
+                                             'CRITICAL': 'black'},
+                                 secondary_log_colors={'message':
+                                                           {'DEBUG': 'yellow',
+                                                            'INFO': 'black',
+                                                            'WARNING': 'blue',
+                                                            'ERROR': 'bold_red',
+                                                            'CRITICAL': 'bold_red'}}))
+        elif color.lower() == DARK:
+            STDERR_HANDLER.setFormatter(
+                ColoredFormatter('%(log_color)s%(levelname)8s: %(message_log_color)s%(message)s',
+                                 log_colors={'DEBUG': 'white',
+                                             'INFO': 'white',
+                                             'WARNING': 'white',
+                                             'ERROR': 'white',
+                                             'CRITICAL': 'white'},
+                                 secondary_log_colors={'message':
+                                                           {'DEBUG': 'yellow',
                                                             'INFO': 'white',
-                                                            'WARNING': 'white',
-                                                            'ERROR': 'white',
-                                                            'CRITICAL': 'white'},
-                                                secondary_log_colors={'message':
-                                                    {'DEBUG': 'yellow',
-                                                     'INFO': 'white',
-                                                     'WARNING': 'cyan',
-                                                     'ERROR': 'bold_red',
-                                                     'CRITICAL': 'bold_red'}})
-            stderr_handler = StreamHandler()
-            stderr_handler.setLevel(level)
-            stderr_handler.setFormatter(stderr_formatter)
-            blog.addHandler(stderr_handler)
-            tlog.addHandler(stderr_handler)
-            wlog.addHandler(stderr_handler)
-            clog.addHandler(stderr_handler)
-            xlog.addHandler(stderr_handler)
+                                                            'WARNING': 'cyan',
+                                                            'ERROR': 'bold_red',
+                                                            'CRITICAL': 'bold_red'}}))
 
 
 def log_current_exception(traceback=True):
