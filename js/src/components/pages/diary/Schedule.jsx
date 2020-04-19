@@ -4,6 +4,8 @@ import {JupyterActivity, ShrimpField, SummaryField, JupyterAllActivities} from "
 import {makeStyles} from "@material-ui/core/styles";
 import {Break, ColumnCard, ColumnList, LinkButton, Loading, Text, Search} from "../../elements";
 import {setIds} from '../../functions';
+import {addMonths, addYears, format} from 'date-fns';
+import {FMT_DAY} from "../../../constants";
 
 
 const useStyles = makeStyles(theme => ({
@@ -16,7 +18,15 @@ const useStyles = makeStyles(theme => ({
 
 export default function Schedule(props) {
 
-    const {json, history} = props;
+    const {json, history, datetime: start, ymdSelected} = props;
+
+    let finish;
+    if (ymdSelected === 0) {
+        finish = addYears(start, 1);
+    } else {
+        finish = addMonths(start, 1);
+    }
+    const query = `start >= ${format(start, FMT_DAY)} and start < ${format(finish, FMT_DAY)}`;
 
     if (json === null) {
         return <Loading/>;  // undefined initial data
@@ -24,7 +34,7 @@ export default function Schedule(props) {
         setIds(json);
         // drop outer date label since we already have that in the page
         return (<ColumnList>
-            <Search query='name="Corral%"'/>
+            <Search query={query}/>
             {json.slice(1).map(row => <TopLevelPaper json={row} history={history} key={row.id}/>)}
         </ColumnList>);
     }

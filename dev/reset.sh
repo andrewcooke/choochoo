@@ -30,7 +30,7 @@ echo -e "\ndeleting $BASE"
 rm -fr $BASE
 
 echo -e "\nreinstalling"
-dev/ch2 --dev configure load acooke
+dev/ch2 --dev --color DARK configure load acooke
 
 echo -e "\nupgrading old data"
 dev/ch2 --dev upgrade $TEMP

@@ -94,7 +94,7 @@ def main():
     command_name = ns.command if hasattr(ns, COMMAND) else None
     command = COMMANDS[command_name] if command_name in COMMANDS else None
     if command and hasattr(command, 'tui') and command.tui:
-        ns.tui = True
+        ns.verbose = 0
     args = NamespaceWithVariables(ns)
     make_log_from_args(args)
     log.info('Version %s' % CH2_VERSION)

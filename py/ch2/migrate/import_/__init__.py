@@ -64,7 +64,6 @@ def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic
 
 
 def any_attr(instance, *names):
-    log.debug(dir(instance))
     for name in names:
         if hasattr(instance, name):
             return getattr(instance, name)

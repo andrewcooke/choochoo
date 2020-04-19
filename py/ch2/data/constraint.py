@@ -126,22 +126,21 @@ def build_comparisons(s, ast):
             statistic_names = s.query(StatisticName). \
                 filter(StatisticName.name.like(sname),
                        StatisticName.constraint.in_(activity_groups)).all()
+        if not statistic_names:
+            raise Exception(f'No statistic name matches {name}')
+        comparisons = [build_comparison_orm(statistic_name, op, value) for statistic_name in statistic_names]
     else:
         log.warning(f'{name} is unconstrained (to restrict to a particular group use {name}:Group)')
-        statistic_names = s.query(StatisticName).filter(StatisticName.name.like(name)).all()
-    if not statistic_names:
-        raise Exception(f'No statistic name matches {name}')
-    comparisons = [build_comparison(statistic_name, op, value) for statistic_name in statistic_names]
+        comparisons = [build_comparison_sql(s, name, op, value)]
     if len(comparisons) == 1:
         return comparisons[0]
     else:
         return union(*comparisons).select()
 
 
-def build_comparison(statistic_name, op, value):
+def check_column(statistic_name, op, value):
     table = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type].__table__
     sj = StatisticJournal.__table__
-    q = select([sj.c.source_id]).select_from(sj.join(table)).where(sj.c.statistic_name_id == statistic_name.id)
     attr = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}[op]
     if statistic_name.statistic_journal_type == StatisticJournalType.TIMESTAMP:
         if not isinstance(value, dt.datetime):
@@ -156,6 +155,29 @@ def build_comparison(statistic_name, op, value):
         if not (isinstance(value, int) or isinstance(value, float)):
             raise Exception(f'{statistic_name.name} is numerical, but {value} is not a number')
         column = table.c.value
+    return sj, table, attr, column
+
+
+def build_comparison_orm(statistic_name, op, value):
+    sj, table, attr, column = check_column(statistic_name, op, value)
     log.debug(f'{statistic_name.name}/{statistic_name.constraint} ({statistic_name.id}) {attr} {value!r}')
-    q = q.where(getattr(column, attr)(value))
-    return q
+    return select([sj.c.source_id]). \
+        select_from(sj.join(table)). \
+        where(sj.c.statistic_name_id == statistic_name.id). \
+        where(getattr(column, attr)(value))
+
+
+def build_comparison_sql(s, name, op, value):
+    statistic_names = s.query(StatisticName).filter(StatisticName.name.like(name)).all()
+    if not statistic_names: raise Exception(f'No statistic name matches {name}')
+    statistic_types = set(statistic_name.statistic_journal_type for statistic_name in statistic_names)
+    if len(statistic_types) > 1:
+        for statistic_name in statistic_names: log.debug(f'{statistic_name.name}/{statistic_name.constraint}')
+        raise Exception(f'{name} matches multiple statistics with different types; '
+                        f'use a more specific name ({name}:group)')
+    sj, table, attr, column = check_column(statistic_names[0], op, value)
+    sn = StatisticName.__table__
+    return select([sj.c.source_id]). \
+        select_from(sj.join(table).join(sn)). \
+        where(sn.c.name.like(name)). \
+        where(getattr(column, attr)(value))

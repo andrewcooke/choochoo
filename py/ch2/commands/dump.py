@@ -46,7 +46,8 @@ Will print HR-related statistics from the start of 2018 for the given activity g
             name = args[NAME]
             if name in globals():
                 table = globals()[name]
-                if issubclass(table, Base):
+                log.debug(f'Found {table}/{type(table)}')
+                if issubclass(table.__class__, Base.__class__):
                     frame = df(s.query(table))
                 else:
                     raise Exception('%s is not a mapped table' % name)
