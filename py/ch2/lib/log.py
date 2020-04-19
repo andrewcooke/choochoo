@@ -6,7 +6,7 @@ from traceback import format_tb
 
 from colorlog import ColoredFormatter
 
-from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, TUI, COLOR, DARK, LIGHT
+from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, COLOR, DARK, LIGHT
 
 log = getLogger(__name__)
 
@@ -20,10 +20,10 @@ def make_log_from_args(args):
             (args[COMMAND] if COMMAND in args and args[COMMAND] else PROGNAME) + f'.{LOG}')
     path = args.system_path(LOGS, name)
 
-    make_log(path, verbosity=args[VERBOSITY], tui=args[TUI])
+    make_log(path, verbosity=args[VERBOSITY])
 
 
-def make_log(path, verbosity=4, tui=False):
+def make_log(path, verbosity=4):
 
     global STDERR_HANDLER
 
@@ -69,7 +69,7 @@ def make_log(path, verbosity=4, tui=False):
         xlog.setLevel(DEBUG)
         xlog.addHandler(file_handler)
 
-        if not tui:
+        if verbosity:
             stderr_formatter = Formatter('%(levelname)8s: %(message)s')
             STDERR_HANDLER = StreamHandler()
             STDERR_HANDLER.setLevel(level)

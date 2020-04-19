@@ -13,7 +13,6 @@ log = getLogger(__name__)
 class BaseController(ABC):
 
     def __init__(self, args, sys, server_cls, max_retries=5, retry_secs=3):
-        self._log_level = args[VERBOSITY]
         self._base = args[BASE]
         self._sys = sys
         self.__server_cls = server_cls

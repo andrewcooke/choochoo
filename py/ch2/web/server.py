@@ -8,7 +8,7 @@ from werkzeug.wrappers.json import JSONMixin
 
 from .json import JsonResponse
 from .servlets.analysis import Analysis
-from .servlets.base import Base, Thumbnail
+from .servlets.base import Thumbnail
 from .servlets.configure import Configure
 from .servlets.diary import Diary
 from .servlets.jupyter import Jupyter
@@ -16,7 +16,7 @@ from .servlets.kit import Kit
 from .servlets.search import Search
 from .servlets.upload import Upload
 from .static import Static
-from ..commands.args import mm, BASE, TUI, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, UPLOAD
+from ..commands.args import mm, BASE, LOG, WEB, SERVICE, VERBOSITY, BIND, PORT, DEV, UPLOAD
 from ..jupyter.server import JupyterController
 from ..lib.log import log_current_exception
 from ..lib.server import BaseController
@@ -58,7 +58,7 @@ class WebController(BaseController):
 
     def _build_cmd_and_log(self, ch2):
         log_name = 'web-service.log'
-        cmd = f'{ch2} {mm(VERBOSITY)} {self._log_level} {mm(TUI)} {mm(LOG)} {log_name} {mm(BASE)} {self._base} ' \
+        cmd = f'{ch2} {mm(VERBOSITY)} 0 {mm(LOG)} {log_name} {mm(BASE)} {self._base} ' \
               f'{WEB} {SERVICE} {mm(BIND)} {self.__bind} {mm(PORT)} {self.__port}'
         return cmd, log_name
 

@@ -184,7 +184,6 @@ TABLE = 'table'
 TABLES = 'tables'
 TOKENS = 'tokens'
 TOPIC = 'topic'
-TUI = 'tui'
 UNDO = 'undo'
 UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
@@ -256,15 +255,13 @@ def make_parser(with_noop=False):
     parser.add_argument(mm(BASE), default=f'~/.ch2', metavar='DIR',
                         help='the base directory for data (default ~/.ch2)')
     parser.add_argument(mm(READ_ONLY), action='store_true',
-                        help='read-only database')
+                        help='read-only database (so errors on write)')
     parser.add_argument(mm(LOG), metavar='FILE',
                         help='the file name for the log (command name by default)')
     parser.add_argument(mm(COLOR), type=color,
                         help=f'pretty stdout log - {LIGHT}|{DARK}|{OFF} (CAPS to save)')
     parser.add_argument(m(V), mm(VERBOSITY), default=4, type=int, metavar='VERBOSITY',
                         help='output level for stderr (0: silent; 5:noisy)')
-    parser.add_argument(mm(TUI), action='store_true',
-                        help='text user interface (no log to stdout)')
     parser.add_argument(mm(DEV), action='store_true', help='show stack trace on error')
     parser.add_argument(m(V.upper()), mm(VERSION), action='version', version=CH2_VERSION,
                         help='display version and exit')
