@@ -11,7 +11,14 @@ def search(args, system, db):
     '''
 ## search
 
-    > ch2 search
+    > ch2 search QUERY
+
+This searches for activities.
+
+The query syntax is similar to SQL, but element names are statistic names.
+The name can include the activity group (start:bike) and SQL wildcards (%fitness).
+
+Negation and NULL values are not supported.
 
 This is still in development.
     '''

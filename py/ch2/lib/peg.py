@@ -23,7 +23,7 @@ def transform(parser, transform=lambda l: l):
             try:
                 yield transform(result), rest
             except:  # allow filtering of inconsistent results (eg parse int)
-                log.debug(f'{transform} failed to transform {result!r}')
+                # log.debug(f'{transform} failed to transform {result!r}')
                 pass
     return _parser
 
@@ -53,16 +53,29 @@ def choice(*parsers):
     return _parser
 
 
+def repeat(parser, min=1, max=None):
+    def _recurse(count, results, string):
+        if count >= min:
+            yield results, string
+            if max is None or count < max:
+                for result, rest in parser(string):
+                    yield from _recurse(count + 1, results + result, rest)
+    def _parser(string):
+        yield from _recurse(0, [], string)
+    return _parser
+
+
 # only returns matching groups
 def pattern(regexp):
     r = compile(regexp)
     def _parser(string):
         m = r.match(string)
         if m:
-            log.debug(f'{regexp} parsed {string!r} as {m.groups()}')
+            # log.debug(f'{regexp} parsed {string!r} as {m.groups()}')
             yield list(m.groups()), string[m.end():]
         else:
-            log.debug(f'{regexp} failed to parse {string!r}')
+            # log.debug(f'{regexp} failed to parse {string!r}')
+            pass
     return _parser
 
 

@@ -3,11 +3,12 @@ import datetime as dt
 from logging import getLogger
 from re import escape
 
-from sqlalchemy import select, union, intersect
+from sqlalchemy import select, union, intersect, or_
 
 from ..lib import local_time_to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
-from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal
+from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal, FileHash, \
+    ActivityTopicJournal
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 
 log = getLogger(__name__)
@@ -45,8 +46,9 @@ def flip(l):
     return [(name, {'=': '=', '!=': '!=', '<': '>', '>': '<', '>=': '<=', '<=': '>='}[op], value)]
 
 
-AND, OR = '&', '|'
+AND, OR = 'and', 'or'
 name = pat(r'(\w(?:\s*\w)*(?::(?:\w(?:\s*\w)*)?)?)')
+# important that the different value types are exclusive to avoid ambiguities
 number = choice(pat(r'(-?\d+)', lambda x: [int(i) for i in x]),
                 pat(r'(-?\d*\.\d+)', lambda x: [float(i) for i in x]),
                 pat(r'(-?\d+\.\d*)', lambda x: [float(i) for i in x]),
@@ -63,7 +65,7 @@ comparison = choice(join(name, operator, value), transform(join(value, operator,
 term = Recursive()
 
 and_comparison = Recursive()
-and_comparison.calls(choice(term, join(term, lit(AND), term)))
+and_comparison.calls(choice(term, join(term, lit(AND), and_comparison)))
 
 or_comparison = Recursive()
 or_comparison.calls(choice(and_comparison, join(and_comparison, lit(OR), or_comparison)))
@@ -79,13 +81,16 @@ def constrained_activities(s, query):
     log.debug(f'AST: {ast}')
     q = build_activity_query(s, ast)
     log.debug(f'Query: {q}')
-    return list(q)
+    return q.all()
 
 
 def build_activity_query(s, ast):
-    constraints = build_constraints(s, ast)
+    constraints = build_constraints(s, ast).cte()
     return s.query(ActivityJournal). \
-        filter(ActivityJournal.id.in_(constraints)). \
+        join(FileHash). \
+        join(ActivityTopicJournal). \
+        filter(or_(ActivityJournal.id.in_(constraints),
+                   ActivityTopicJournal.id.in_(constraints))). \
         order_by(ActivityJournal.start)
 
 
@@ -142,7 +147,15 @@ def build_comparison(statistic_name, op, value):
         if not isinstance(value, dt.datetime):
             raise Exception(f'{statistic_name.name} is a timestamp, but {value} is not a date')
         column = sj.c.time
-    else:
+    elif statistic_name.statistic_journal_type == StatisticJournalType.TEXT:
+        if not isinstance(value, str):
+            raise Exception(f'{statistic_name.name} is textual, but {value} is not a string')
         column = table.c.value
+        if op == '=': attr = 'like'
+    else:
+        if not (isinstance(value, int) or isinstance(value, float)):
+            raise Exception(f'{statistic_name.name} is numerical, but {value} is not a number')
+        column = table.c.value
+    log.debug(f'{statistic_name.name}/{statistic_name.constraint} ({statistic_name.id}) {attr} {value!r}')
     q = q.where(getattr(column, attr)(value))
     return q

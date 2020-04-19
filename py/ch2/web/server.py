@@ -98,6 +98,7 @@ class WebServer:
         static = Static('.static')
         upload = Upload(sys, db, base)
         thumbnail = Thumbnail(base)
+        search = Search()
 
         self.url_map = Map([
 
@@ -124,13 +125,13 @@ class WebServer:
             Rule('/api/kit/replace-model', endpoint=self.check(kit.write_replace_model), methods=(PUT,)),
             Rule('/api/kit/add-component', endpoint=self.check(kit.write_add_component), methods=(PUT,)),
             Rule('/api/kit/add-group', endpoint=self.check(kit.write_add_group), methods=(PUT,)),
-            # used by upload
             Rule('/api/kit/items', endpoint=self.check(kit.read_items), methods=(GET,)),
             Rule('/api/kit/statistics', endpoint=self.check(kit.read_statistics), methods=(GET, )),
             Rule('/api/kit/<date>', endpoint=self.check(kit.read_snapshot), methods=(GET, )),
 
             Rule('/api/thumbnail/<activity>', endpoint=thumbnail, methods=(GET, )),
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
+            Rule('/api/search/<query>', endpoint=search, methods=(GET, )),
 
             Rule('/api/upload', endpoint=self.check(upload), methods=(PUT, )),
 
