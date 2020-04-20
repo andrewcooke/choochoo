@@ -98,7 +98,7 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
 
     def _check(self, s, activity_journal, superlative, statistic_name, days, period):
         try:
-            group = self.parse_group(statistic_name)
+            group = lower(statistic_name.constraint) if statistic_name.constraint else 'all'
             # 4 so we know something worse
             best_values = self._build_query(s, activity_journal, statistic_name, days).limit(4).all()
             best_values = [x[0] for x in best_values]
@@ -114,15 +114,6 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
             log.warning(f'No achievement for {statistic_name}: {e}')
             log_current_exception()
         return 0, None, False
-
-    @staticmethod
-    def parse_group(statistic_name):
-        # activity group is encoded into the statistic name constraint
-        constraint = statistic_name.constraint
-        if constraint.startswith(short_cls(ActivityGroup)):
-            return lower(constraint.split('"')[1])
-        else:
-            return 'all'
 
 
 def lower(text):

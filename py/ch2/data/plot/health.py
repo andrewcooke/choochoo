@@ -18,14 +18,14 @@ def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_
         # original monochrome plot
         return multi_dot_plot(nx, ny, TIME, [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM], source,
                               ['black', 'grey'], alphas=[1, 0.5], x_range=x_range, rescale=True)
-    times = [f'{ACTIVE_TIME} ({group})' for group in groups]
-    distances = [f'{ACTIVE_DISTANCE} ({group})' for group in groups]
+    times = [f'{ACTIVE_TIME} : {group}' for group in groups]
+    distances = [f'{ACTIVE_DISTANCE} : {group}' for group in groups]
     time_y_range = make_range(source[ACTIVE_TIME_H])
     distance_y_range = make_range(source[ACTIVE_DISTANCE_KM])
     colours = list(evenly_spaced_hues(len(groups)))
     tooltip_names = [ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, ACTIVITY_GROUP, LOCAL_TIME]
-    tooltip_names += [name for name in like(_delta(FITNESS_D_ANY), source.columns) if '(' not in name]
-    tooltip_names += [name for name in like(_delta(FATIGUE_D_ANY), source.columns) if '(' not in name]
+    tooltip_names += [name for name in like(_delta(FITNESS_D_ANY), source.columns) if ':' not in name]
+    tooltip_names += [name for name in like(_delta(FATIGUE_D_ANY), source.columns) if ':' not in name]
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),

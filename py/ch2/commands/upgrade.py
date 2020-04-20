@@ -1,7 +1,8 @@
 from logging import getLogger
 from os.path import sep, exists, join, isfile
 
-from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path
+from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, BASE
+from .upload import DATA
 from ..lib.utils import clean_path
 from ..lib.log import Record
 from ..migrate.import_.activity import upgrade_activity
@@ -21,7 +22,7 @@ def upgrade(args, sys, db):
 
 Import diary entries from a previous version.
     '''
-    upgrade_path(Record(log), args, args[SOURCE], db)
+    upgrade_path(Record(log), args[BASE], args[SOURCE], db)
 
 
 def upgrade_path(record, base, source, new):
@@ -45,7 +46,7 @@ def build_source_path(record, base, source):
 
     database = ACTIVITY + DB_EXTN
     if sep not in source:
-        path = base_system_path(base, file=database, version=source, create=False)
+        path = base_system_path(base, subdir=DATA, file=database, version=source, create=False)
         if exists(path):
             log.info(nice_msg(f'{source} appears to be a version', source, path))
             return path

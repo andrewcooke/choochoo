@@ -117,14 +117,14 @@ def build_comparisons(s, ast):
         sname, gname = name.split(':', 1)
         if gname.lower() in ('none', 'null'):
             statistic_names = s.query(StatisticName). \
-                filter(StatisticName.name.like(sname),
+                filter(StatisticName.name.ilike(sname),
                        StatisticName.constraint == None).all()
         else:
-            activity_groups = s.query(ActivityGroup).filter(ActivityGroup.name.like(gname)).all()
+            activity_groups = s.query(ActivityGroup).filter(ActivityGroup.name.ilike(gname)).all()
             if not activity_groups:
                 raise Exception(f'No activity group matches {gname}')
             statistic_names = s.query(StatisticName). \
-                filter(StatisticName.name.like(sname),
+                filter(StatisticName.name.ilike(sname),
                        StatisticName.constraint.in_(activity_groups)).all()
         if not statistic_names:
             raise Exception(f'No statistic name matches {name}')
@@ -150,7 +150,7 @@ def check_column(statistic_name, op, value):
         if not isinstance(value, str):
             raise Exception(f'{statistic_name.name} is textual, but {value} is not a string')
         column = table.c.value
-        if op == '=': attr = 'like'
+        if op == '=': attr = 'ilike'
     else:
         if not (isinstance(value, int) or isinstance(value, float)):
             raise Exception(f'{statistic_name.name} is numerical, but {value} is not a number')
@@ -160,7 +160,7 @@ def check_column(statistic_name, op, value):
 
 def build_comparison_orm(statistic_name, op, value):
     sj, table, attr, column = check_column(statistic_name, op, value)
-    log.debug(f'{statistic_name.name}/{statistic_name.constraint} ({statistic_name.id}) {attr} {value!r}')
+    log.debug(f'{statistic_name.name} : {statistic_name.constraint} ({statistic_name.id}) {attr} {value!r}')
     return select([sj.c.source_id]). \
         select_from(sj.join(table)). \
         where(sj.c.statistic_name_id == statistic_name.id). \
@@ -168,16 +168,16 @@ def build_comparison_orm(statistic_name, op, value):
 
 
 def build_comparison_sql(s, name, op, value):
-    statistic_names = s.query(StatisticName).filter(StatisticName.name.like(name)).all()
+    statistic_names = s.query(StatisticName).filter(StatisticName.name.ilike(name)).all()
     if not statistic_names: raise Exception(f'No statistic name matches {name}')
     statistic_types = set(statistic_name.statistic_journal_type for statistic_name in statistic_names)
     if len(statistic_types) > 1:
-        for statistic_name in statistic_names: log.debug(f'{statistic_name.name}/{statistic_name.constraint}')
+        for statistic_name in statistic_names: log.debug(f'{statistic_name.name}:{statistic_name.constraint}')
         raise Exception(f'{name} matches multiple statistics with different types; '
                         f'use a more specific name ({name}:group)')
     sj, table, attr, column = check_column(statistic_names[0], op, value)
     sn = StatisticName.__table__
     return select([sj.c.source_id]). \
         select_from(sj.join(table).join(sn)). \
-        where(sn.c.name.like(name)). \
+        where(sn.c.name.ilike(name)). \
         where(getattr(column, attr)(value))

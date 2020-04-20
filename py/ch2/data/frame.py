@@ -201,7 +201,7 @@ def _activity_statistics(s, *statistics, owner=None, constraint=None, start=None
 
     t = _tables()
     ttj = _type_to_journal(t)
-    labels = [name.name if counts[name.name] == 1 else f'{name.name} ({name.constraint})' for name in names]
+    labels = [name.name if counts[name.name] == 1 else f'{name.name}:{name.constraint}' for name in names]
     tables = [ttj[name.statistic_journal_type] for name in names]
     time_select = select([distinct(t.sj.c.time).label("time")]).select_from(t.sj). \
         where(and_(t.sj.c.statistic_name_id.in_([n.id for n in names]),
@@ -346,7 +346,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
         stats = merge_to_hour(stats, stats_2)
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, _delta(FITNESS_D_ANY), _delta(FATIGUE_D_ANY), *extra,
                          start=start, finish=finish)
-    stats_3 = coallesce_groups(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
+    stats_3 = coallesce(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
     stats_3 = coallesce_like(stats_3, _delta(FITNESS), _delta(FATIGUE))
     stats = merge_to_hour(stats, stats_3)
     stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
@@ -357,7 +357,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
     return stats
 
 
-def nearby_activities(s, local_time=None, time=None, activity_journal=None, activity_group_name=None):
+def nearby_activities(s, local_time=None, time=None, activity_group_name=None):
     activity_journal = _activity_journal(s, local_time=local_time, time=time,
                                          activity_group_name=activity_group_name)
     return nearby_any_time(s, activity_journal)
@@ -399,7 +399,7 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
     ttj = _type_to_journal(t)
     names = statistic_names(s, *statistics, owner=owner, constraint=constraint, check=check)
     counts = Counter(name.name for name in names)
-    labels = [name.name if counts[name.name] == 1 else f'{name.name} ({name.constraint})' for name in names]
+    labels = [name.name if counts[name.name] == 1 else f'{name.name} : {name.constraint}' for name in names]
     tables = [ttj[name.statistic_journal_type] for name in names]
     if local_start:
         if start: raise Exception('Provide only one of start, local_start')
@@ -517,13 +517,13 @@ def groups_by_time(s, start=None, finish=None):
 
 
 def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
-              unpack=r'({statistic}) \(([^\)]+)\)', pack='{statistic} ({constraint})'):
+              unpack=r'({statistic})\s*:\s*([^\)]+)', pack='{statistic} : {constraint}'):
     '''
     Combine statistics with more than one constraint.
 
     When multiple statistics with the same name are requested, they are distinguished by their constraint.
     This is often the activity group.  So if you request 'Active Time' for multiple groups you will get
-    'Active Time (ActivityGroup "Ride")' etc.
+    'Active Time (Ride)' etc.
 
     This function combines these into a single column (in the example, 'Active Time'), while also optionally
     extracting the constraint into a separate column.
@@ -548,20 +548,11 @@ def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
     return df
 
 
-def coallesce_groups(df, *statistics, mixed=MIXED):
-    '''
-    As coallesce, but extract only the activity group's name (eg 'Ride').
-    '''
-    return coallesce(df, *statistics, constraint_label=ACTIVITY_GROUP, mixed=mixed,
-                     unpack=r'({statistic}) \(ActivityGroup "([^\"]+)"\)',
-                     pack='{statistic} (ActivityGroup "{constraint}")')
+def coallesce_like(df, *statistics):
+    return coallesce(df, *statistics, unpack=r'({statistic}.*?)\s*:\s*([^\)]+)')
 
 
-def coallesce_like(df, *statistics, **kargs):
-    return coallesce(df, *statistics, unpack=r'({statistic}.*?)\s+\(([^\)]+)\)')
-
-
-def related_statistics(df, statistic, unpack=r'({statistic}) \(([^\)]+)\)'):
+def related_statistics(df, statistic, unpack=r'({statistic})\s*:\s*([^\)]+)'):
     rx = compile(unpack.format(statistic=statistic))
     for column in df.columns:
         m = rx.match(column)

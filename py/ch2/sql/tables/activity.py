@@ -20,7 +20,7 @@ class ActivityGroup(Base):
     sort = Column(Sort, nullable=False, server_default='')
 
     def __str__(self):
-        return 'ActivityGroup "%s"' % self.name
+        return self.name
 
     @classmethod
     def from_name(cls, s, name, optional=False):

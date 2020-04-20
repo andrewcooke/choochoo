@@ -13,7 +13,7 @@ from ..lib.utils import clean_path
 log = getLogger(__name__)
 
 # this can be modified during development.  it will be reset from setup.py on release.
-CH2_VERSION = '0.31.9'
+CH2_VERSION = '0.32.0'
 # new database on minor releases.  not sure this will always be a good idea.  we will see.
 DB_VERSION = '-'.join(CH2_VERSION.split('.')[:2])
 DB_EXTN = '.db'   # used to use .sql but auto-complete for sqlite3 didn't work
@@ -316,6 +316,8 @@ def make_parser(with_noop=False):
 
     search = subparsers.add_parser(SEARCH, help='search activities')
     search.add_argument(QUERY, metavar='QUERY', help='conditions to constrain search')
+    search.add_argument(mm(SHOW), metavar='NAME', help='show value from matching activities')
+    search.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching activities')
 
     # low-level commands used often
 
