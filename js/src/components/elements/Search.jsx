@@ -7,7 +7,7 @@ import Loading from "./Loading";
 
 export default function Search(props) {
 
-    const {query} = props;
+    const {query, history} = props;
     const [json, setJson] = useState(null);
 
     console.log(json);
@@ -32,5 +32,5 @@ export default function Search(props) {
         setJson(copy);
     }
 
-    return (json === null ? <Loading/> : json.map(row => <SearchResult json={row} sort={sort}/>))
+    return (json === null ? <Loading/> : json.map(row => <SearchResult json={row} sort={sort} history={history}/>))
 }

@@ -34,7 +34,7 @@ export default function Schedule(props) {
         setIds(json);
         // drop outer date label since we already have that in the page
         return (<ColumnList>
-            <Search query={query}/>
+            <Search query={query} history={history}/>
             {json.slice(1).map(row => <TopLevelPaper json={row} history={history} key={row.id}/>)}
         </ColumnList>);
     }
