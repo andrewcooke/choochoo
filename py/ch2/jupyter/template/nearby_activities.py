@@ -48,8 +48,9 @@ def nearby_activities(constraint):
         for j, source_id in enumerate(source_ids):
             b = 2 * pi * j / n_source_ids
             dxb, dyb = offset_b * sin(b), offset_b * cos(b)
+            activity_journal = s.query(ActivityJournal).filter(ActivityJournal.id == source_id).one()
             stats = activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                                     activity_journal=ActivityJournal.from_id(s, source_id))
+                                        activity_journal=activity_journal)
             f.line(x=stats[SPHERICAL_MERCATOR_X] + dxa + dxb, y=stats[SPHERICAL_MERCATOR_Y] + dya + dyb,
                    color=palette[i], line_width=1.5, line_dash='dotted')
             if x_max is None:

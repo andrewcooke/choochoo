@@ -287,8 +287,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
                                 local_time=local_time, time=time, activity_journal=activity_journal,
                                 activity_group_name=activity_group_name, with_timespan=with_timespan)
 
-    stats[DISTANCE_KM] = stats[DISTANCE]/1000
-    stats[SPEED_KMH] = stats[SPEED] * 3.6
+    stats.rename(columns={DISTANCE: DISTANCE_KM}, inplace=True)
     stats[MED_SPEED_KMH] = stats[SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
     if present(stats, CADENCE):
         stats[MED_CADENCE] = stats[CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()

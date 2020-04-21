@@ -316,7 +316,8 @@ def make_parser(with_noop=False):
 
     search = subparsers.add_parser(SEARCH, help='search activities')
     search.add_argument(QUERY, metavar='QUERY', help='conditions to constrain search')
-    search.add_argument(mm(SHOW), metavar='NAME', help='show value from matching activities')
+    search.add_argument(mm(SHOW), metavar='NAME', nargs='+',
+                        help='show value from matching activities')
     search.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching activities')
 
     # low-level commands used often

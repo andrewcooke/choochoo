@@ -181,3 +181,27 @@ def build_comparison_sql(s, name, op, value):
         select_from(sj.join(table).join(sn)). \
         where(sn.c.name.ilike(name)). \
         where(getattr(column, attr)(value))
+
+
+def parse_qname(qname):
+    '''A qualified name (for a statistic) has the form NAME:GROUP with optional spaces where:
+
+    NAME (with no qualifier) means 'match any constraint'
+    NAME: (colon but no value) means 'match the group of the current activity'
+    NAME:null or NAME:none (any case) means 'match a constraint of None'
+    NAME:GROUP means 'match the given group'
+
+    This code returns (name, group) where group is False, True and None for the first three cases above, respectively.
+    '''
+    if ':' in qname:
+        name, group = qname.split(':')
+        name, group = name.strip(), group.strip()
+        if group:
+            if group.lower() in ('none', 'null'):
+                group = None
+        else:
+            group = True
+    else:
+        name, group = qname.strip(), False
+    log.debug(f'Parsed {qname} as {name}:{group}')
+    return name, group

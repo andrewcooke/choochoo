@@ -55,6 +55,12 @@ class ActivityJournal(Source):
     def time_range(self, s):
         return self.start, self.finish
 
+    def get_named(self, s, qname, owner=None):
+        from ...sql import StatisticJournal, StatisticName
+        name, group = split_qname(qname)
+        q = s.query(StatisticJournal).join(StatisticName).filter(StatisticName.name == name)
+        if group: q = q.filter(StatisticName.constraint == group)
+
     @classmethod
     def at_date(cls, s, date):
         day = local_date_to_time(date)
@@ -65,10 +71,6 @@ class ActivityJournal(Source):
     def at_local_time(cls, s, local_time):
         time = local_time_to_time(local_time)
         return s.query(ActivityJournal).filter(ActivityJournal.start == time).one()
-
-    @classmethod
-    def from_id(cls, s, id):
-        return s.query(ActivityJournal).filter(ActivityJournal.id == id).one()
 
     @classmethod
     def before_local_time(cls, s, local_time):
