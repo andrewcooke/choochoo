@@ -36,14 +36,16 @@ def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_
     f.extra_y_ranges = {ACTIVE_DISTANCE: distance_y_range}
     f.add_layout(LinearAxis(y_range_name=ACTIVE_DISTANCE, axis_label=f'dots - {ACTIVE_DISTANCE_KM}'), 'right')
     plotter = comb_plotter()
-    for time, colour in zip(times, colours):
+    for time, colour, group in zip(times, colours, groups):
         time_h = _slash(time, H)
         source[time_h] = source[time] / 3600
+        source[ACTIVITY_GROUP] = group
         plotter(f, x=TIME, y=time_h, source=source, color=colour, alpha=1)
     plotter = dot_plotter()
-    for distance, colour in zip(distances, colours):
+    for distance, colour, group in zip(distances, colours, groups):
         distance_km = _slash(distance, KM)
         source[distance_km] = source[distance] / 1000
+        source[ACTIVITY_GROUP] = group
         plotter(f, x=TIME, y=distance_km, source=source, color=colour, alpha=1, name='with_hover',
                 y_range_name=ACTIVE_DISTANCE)
     f.xaxis.axis_label = TIME

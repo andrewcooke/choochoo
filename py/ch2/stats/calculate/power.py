@@ -87,7 +87,7 @@ class BasicPowerCalculator(PowerCalculator):
             for name, units, summary in fields:
                 if not pd.isnull(row[name]):
                     loader.add(name, units, summary, ajournal.activity_group, ajournal, row[name], time,
-                               StatisticJournalFloat)
+                               StatisticJournalFloat, description='The estimated power.')
 
     def __add_total_energy(self, s, ajournal, loader, ldf):
         if present(ldf, POWER_ESTIMATE):
@@ -95,9 +95,10 @@ class BasicPowerCalculator(PowerCalculator):
             ldf.loc[ldf['tmp'].isna(), ['tmp']] = 0
             energy = np.trapz(y=ldf['tmp'], x=ldf.index.astype(np.int64) / 1e12)
             loader.add(ENERGY_ESTIMATE, KJ, MAX, ajournal.activity_group, ajournal, energy, ajournal.start,
-                       StatisticJournalFloat)
+                       StatisticJournalFloat, 'The estimated total energy expended.')
             loader.add(CALORIE_ESTIMATE, KCAL, MAX, ajournal.activity_group, ajournal,
-                       energy * 0.239006 / self.caloric_eff, ajournal.start, StatisticJournalFloat)
+                       energy * 0.239006 / self.caloric_eff, ajournal.start, StatisticJournalFloat,
+                       'The estimated calories burnt.')
             ldf.drop(columns=['tmp'], inplace=True)
 
 

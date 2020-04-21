@@ -62,7 +62,8 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
                     else:
                         new_type = StatisticJournalInteger
                     # constraint is statistic_name so that we distinguish between stats of the same name
-                    loader.add(name, units, None, statistic_name, interval, value, start, new_type)
+                    loader.add(name, units, None, statistic_name, interval, value, start, new_type,
+                               description=self._describe(statistic_name, summary, interval))
         # add and commit these here - what else can we do?
         log.debug(f'Adding {len(measures)} measures')
         for measure in measures:
@@ -103,6 +104,15 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
                        sj.c.time < finish_time))
 
         return next(s.connection().execute(stmt))[0], units
+
+    def _describe(self, statistic_name, summary, interval):
+        adjective = {MAX: 'highest', MIN: 'lowest', SUM: 'total', CNT: 'number of', AVG: 'average'}[summary]
+        period = interval.schedule.describe().lower()
+        if period == 'all':
+            period = period + ' time'
+        else:
+            period = 'one ' + period
+        return f'The {adjective} {statistic_name.name} over {period}.'
 
     def _calculate_measures(self, s, statistic_name, order_asc, start_time, finish_time, interval, measures):
 

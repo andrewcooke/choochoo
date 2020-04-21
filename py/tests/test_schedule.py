@@ -161,3 +161,10 @@ class TestRepeating(LogTestCase):
             Schedule('d[1mon]')
         with self.assertRaisesRegex(Exception, r'Repetition and offset not supported by extended frames'):
             Schedule('2x')
+
+    def test_describe(self):
+        self.assertEqual(Schedule('d').describe(), 'Day')
+        self.assertEqual(Schedule('m').describe(), 'Month')
+        self.assertEqual(Schedule('y').describe(), 'Year')
+        self.assertEqual(Schedule('x').describe(), 'All')
+        self.assertEqual(Schedule('x[fri]2018-07-06-').describe(), 'Extended[fri]')

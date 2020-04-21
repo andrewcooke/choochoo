@@ -298,7 +298,7 @@ def create_notebook(template, base, args, kargs):
     # https://testnb.readthedocs.io/en/latest/security.html
     NotebookNotary().sign(notebook)
     if exists(path):
-        log.warning(f'Deleting old version of {path}')
+        log.debug(f'Deleting old version of {path}')
         unlink(path)
     with open(path, 'w') as out:
         log.info(f'Writing {template} to {path}')

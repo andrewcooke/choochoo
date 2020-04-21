@@ -517,7 +517,7 @@ def groups_by_time(s, start=None, finish=None):
 
 
 def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
-              unpack=r'({statistic})\s*:\s*([^\)]+)', pack='{statistic} : {constraint}'):
+              unpack=r'({statistic})\s*:\s*([^:]+)', pack='{statistic} : {constraint}'):
     '''
     Combine statistics with more than one constraint.
 
@@ -549,10 +549,10 @@ def coallesce(df, *statistics, constraint_label=None, mixed=MIXED,
 
 
 def coallesce_like(df, *statistics):
-    return coallesce(df, *statistics, unpack=r'({statistic}.*?)\s*:\s*([^\)]+)')
+    return coallesce(df, *statistics, unpack=r'({statistic}.*?)\s*:\s*([^:]+)')
 
 
-def related_statistics(df, statistic, unpack=r'({statistic})\s*:\s*([^\)]+)'):
+def related_statistics(df, statistic, unpack=r'({statistic})\s*:\s*([^:]+)'):
     rx = compile(unpack.format(statistic=statistic))
     for column in df.columns:
         m = rx.match(column)

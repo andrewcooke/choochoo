@@ -1,5 +1,6 @@
 
 import datetime as dt
+from collections import defaultdict
 from json import loads
 from logging import getLogger
 
@@ -70,16 +71,16 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
     def _copy_results(self, s, ajournal, loader, data):
         all = ActivityGroup.from_name(s, ALL)
         df, stats, climbs = data
-        self.__copy(ajournal, loader, stats, START, None, None, ajournal.start, type=StatisticJournalTimestamp, group=all)
-        self.__copy(ajournal, loader, stats, START, None, None, ajournal.start, type=StatisticJournalTimestamp)
-        self.__copy(ajournal, loader, stats, FINISH, None, None, ajournal.start, type=StatisticJournalTimestamp, group=all)
-        self.__copy(ajournal, loader, stats, FINISH, None, None, ajournal.start, type=StatisticJournalTimestamp)
-        self.__copy(ajournal, loader, stats, TIME, S, summaries(MAX, SUM, MSR), ajournal.start, group=all)
-        self.__copy(ajournal, loader, stats, TIME, S, summaries(MAX, SUM, MSR), ajournal.start)
-        self.__copy(ajournal, loader, stats, ACTIVE_DISTANCE, KM, summaries(MAX, CNT, SUM, MSR), ajournal.start, group=all)
-        self.__copy(ajournal, loader, stats, ACTIVE_DISTANCE, KM, summaries(MAX, CNT, SUM, MSR), ajournal.start)
-        self.__copy(ajournal, loader, stats, ACTIVE_TIME, S, summaries(MAX, SUM, MSR), ajournal.start, group=all)
-        self.__copy(ajournal, loader, stats, ACTIVE_TIME, S, summaries(MAX, SUM, MSR), ajournal.start)
+        self.__copy(ajournal, loader, stats, START, None, None, ajournal.start, type=StatisticJournalTimestamp,
+                    extra_group=all)
+        self.__copy(ajournal, loader, stats, FINISH, None, None, ajournal.start, type=StatisticJournalTimestamp,
+                    extra_group=all)
+        self.__copy(ajournal, loader, stats, TIME, S, summaries(MAX, SUM, MSR), ajournal.start,
+                    extra_group=all)
+        self.__copy(ajournal, loader, stats, ACTIVE_DISTANCE, KM, summaries(MAX, CNT, SUM, MSR), ajournal.start,
+                    extra_group=all)
+        self.__copy(ajournal, loader, stats, ACTIVE_TIME, S, summaries(MAX, SUM, MSR), ajournal.start,
+                    extra_group=all)
         self.__copy(ajournal, loader, stats, ACTIVE_SPEED, KMH, summaries(MAX, AVG, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, MEAN_POWER_ESTIMATE, W, summaries(MAX, AVG, MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, DIRECTION, DEG, None, ajournal.start)
@@ -94,7 +95,8 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         self.__copy_all(ajournal, loader, stats, _delta(FITNESS_D_ANY), FF, summaries(MAX, MSR), ajournal.start)
         if climbs:
             loader.add(TOTAL_CLIMB, M, summaries(MAX, MSR), ajournal.activity_group, ajournal,
-                       sum(climb[CLIMB_ELEVATION] for climb in climbs), ajournal.start, StatisticJournalFloat)
+                       sum(climb[CLIMB_ELEVATION] for climb in climbs), ajournal.start, StatisticJournalFloat,
+                       description=DESCRIPTIONS[TOTAL_CLIMB])
             for climb in sorted(climbs, key=lambda climb: climb[TIME]):
                 self.__copy(ajournal, loader, climb, CLIMB_ELEVATION, M, summaries(MAX, SUM, MSR), climb[TIME])
                 self.__copy(ajournal, loader, climb, CLIMB_DISTANCE, KM, summaries(MAX, SUM, MSR), climb[TIME])
@@ -108,16 +110,47 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
             log.warning(f'Unsaved statistics: {list(stats.keys())}')
 
     def __copy_all(self, ajournal, loader, stats, pattern, units, summary, time, type=StatisticJournalFloat):
+        description = DESCRIPTIONS[pattern]
         for name in like(pattern, stats):
-            self.__copy(ajournal, loader, stats, name, units, summary, time, type=type)
+            self.__copy(ajournal, loader, stats, name, units, summary, time, type=type, description=description)
 
     def __copy(self, ajournal, loader, stats, name, units, summary, time, type=StatisticJournalFloat,
-               group=None):
-        used_group = group or ajournal.activity_group
-        try:
-            loader.add(name, units, summary, used_group, ajournal, stats[name], time, type)
-            # not completely transparent, but if group specified it's additional and before default
-            if not group: del stats[name]
-        except:
-            log.warning(f'Failed to load {name}')
-            log_current_exception(traceback=False)
+               extra_group=None, description=None):
+        if not description: description = DESCRIPTIONS[name]
+        groups = [ajournal.activity_group]
+        if extra_group: groups += [extra_group]
+        for group in groups:
+            try:
+                loader.add(name, units, summary, group, ajournal, stats[name], time, type, description=description)
+            except:
+                log.warning(f'Failed to load {name}')
+                log_current_exception(traceback=False)
+        del stats[name]
+
+
+DESCRIPTIONS = defaultdict(lambda: None, {
+    START: '''The start time for the activity.''',
+    FINISH: '''The finish time for the activity.''',
+    TIME: '''The total duration of the activity.''',
+    ACTIVE_DISTANCE: '''The total distance travelled while active (ie not paused).''',
+    ACTIVE_TIME: '''The total time while active (ie not paused).''',
+    ACTIVE_SPEED: '''The average speed while active (ie not paused).''',
+    MEAN_POWER_ESTIMATE: '''The average estimated power.''',
+    DIRECTION: '''The angular direction (clockwise from North) of the mid-point of teh activity relative to the start.''',
+    ASPECT_RATIO: f'''The relative extent of the activity along and across the {DIRECTION}.''',
+    MIN_KM_TIME_ANY: '''The shortest time required to cover the given distance.''',
+    MED_KM_TIME_ANY: '''The median(typical) time required to cover the given distance.''',
+    PERCENT_IN_Z_ANY: '''The percentage of time in the given HR zone.''',
+    TIME_IN_Z_ANY: '''The total time in the given HR zone.''',
+    MAX_MED_HR_M_ANY: '''The highest median HR in the given interval.''',
+    MAX_MEAN_PE_M_ANY: '''The highest average power estimate in the given interval.''',
+    _delta(FATIGUE_D_ANY): '''The change (over the activity) in the SHRIMP Fatigue parameter.''',
+    _delta(FITNESS_D_ANY): '''The change (over the activity) in the SHRIMP Fitness parameter.''',
+    TOTAL_CLIMB: '''The total height climbed in the detected climbs (only).''',
+    CLIMB_ELEVATION: '''The difference in elevation between start and end of the climb.''',
+    CLIMB_DISTANCE: '''The distance travelled during the climb''',
+    CLIMB_TIME: '''The time spent on the climb.''',
+    CLIMB_GRADIENT: '''The average inclination of the climb (elevation / distance).''',
+    CLIMB_POWER: '''The average estimated power during the climb.''',
+    CLIMB_CATEGORY: '''The climb category.'''
+})

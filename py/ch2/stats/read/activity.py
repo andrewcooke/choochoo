@@ -262,7 +262,8 @@ class ActivityReader(MultiProcFitReader):
                             value = value[0][0]
                             if units == KM:  # internally everything uses M
                                 value /= 1000
-                            loader.add(name, units, None, activity_group, ajournal, value, timestamp, type)
+                            loader.add(name, units, None, activity_group, ajournal, value, timestamp, type,
+                                       description=f'The value of field {field} in the FIT record.')
                             if name == LATITUDE:
                                 lat = value
                             elif name == LONGITUDE:
@@ -272,14 +273,15 @@ class ActivityReader(MultiProcFitReader):
                     if lat is not None and lon is not None:
                         x, y = Point.from_latitude_longitude(lat, lon).meters
                         loader.add(SPHERICAL_MERCATOR_X, M, None, activity_group, ajournal, x, timestamp,
-                                   StatisticJournalFloat)
+                                   StatisticJournalFloat, description='The WGS84 X coordinate')
                         loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal, y, timestamp,
-                                   StatisticJournalFloat)
+                                   StatisticJournalFloat, description='The WGS84 Y coordinate')
                         if self.add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
                             if elevation:
                                 loader.add(RAW_ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
-                                           StatisticJournalFloat)
+                                           StatisticJournalFloat,
+                                           description='The elevation from SRTM1 at this location')
                 else:
                     log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
                                 (file_scan.path, record.value.timestamp))

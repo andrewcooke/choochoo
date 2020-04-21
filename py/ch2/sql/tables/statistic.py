@@ -159,10 +159,12 @@ class StatisticJournal(Base):
             return 'StatisticJournal base'
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial, type):
-        statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, owner, constraint)
-        journal = STATISTIC_JOURNAL_CLASSES[type](
-                statistic_name=statistic_name, source=source, value=value, time=time, serial=serial)
+    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial, type,
+            description=None):
+        statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, owner, constraint,
+                                                      description=description)
+        journal = STATISTIC_JOURNAL_CLASSES[type](statistic_name=statistic_name, source=source,
+                                                  value=value, time=time, serial=serial)
         s.add(journal)
         return journal
 
@@ -312,9 +314,9 @@ class StatisticJournalInteger(StatisticJournal):
         self.value = value if value is None else int(value)
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None, description=None):
         return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
-                           StatisticJournalType.INTEGER)
+                           StatisticJournalType.INTEGER, description=description)
 
 
 class StatisticJournalFloat(StatisticJournal):
@@ -328,9 +330,9 @@ class StatisticJournalFloat(StatisticJournal):
         self.value = value if value is None else float(value)
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None, description=None):
         return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
-                           StatisticJournalType.FLOAT)
+                           StatisticJournalType.FLOAT, description=description)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.FLOAT
@@ -377,9 +379,9 @@ class StatisticJournalText(StatisticJournal):
         self.value = value if value is None else str(value)
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None):
+    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None, description=None):
         return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
-                           StatisticJournalType.TEXT)
+                           StatisticJournalType.TEXT, description=description)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.TEXT
@@ -412,9 +414,9 @@ class StatisticJournalTimestamp(StatisticJournal):
         self.value = None
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, time, serial=None):
+    def add(cls, s, name, units, summary, owner, constraint, source, time, serial=None, description=None):
         statistic_name = StatisticName.add_if_missing(s, name, StatisticJournalType.TIMESTAMP,
-                                                      units, summary, owner, constraint)
+                                                      units, summary, owner, constraint, description=description)
         journal = StatisticJournalTimestamp(statistic_name=statistic_name, source=source, time=time, serial=serial)
         s.add(journal)
         return journal

@@ -47,20 +47,24 @@ def match_statistic_name(record, old_statistic_name, new_s, owner, constraint):
 
 def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
                            new_s, new_statistic_name, source, name=None):
-    journals = {StatisticJournalType.INTEGER.value: old.meta.tables['statistic_journal_integer'],
-                StatisticJournalType.FLOAT.value: old.meta.tables['statistic_journal_float'],
-                StatisticJournalType.TEXT.value: old.meta.tables['statistic_journal_text']}
-    journal = journals[old_statistic_name.statistic_journal_type]
-    old_value = old_s.query(journal).filter(journal.c.id == old_statistic_journal.id).one()
-    log.debug(f'Resolved old statistic_journal {old_value}')
-    new_value = add(new_s,
-                    STATISTIC_JOURNAL_CLASSES[StatisticJournalType(new_statistic_name.statistic_journal_type)](
-                        value=old_value.value, time=old_statistic_journal.time, statistic_name=new_statistic_name,
-                        source=source))
-    new_s.commit()  # avoid logging below if error
-    date = format_date(time_to_local_date(to_time(new_value.time)))
     name = name if name else new_statistic_name.name
-    record.info(f'Statistic {new_value.value} at {date} for {name}')
+    old_journals = {StatisticJournalType.INTEGER.value: old.meta.tables['statistic_journal_integer'],
+                    StatisticJournalType.FLOAT.value: old.meta.tables['statistic_journal_float'],
+                    StatisticJournalType.TEXT.value: old.meta.tables['statistic_journal_text']}
+    old_journal = old_journals[old_statistic_name.statistic_journal_type]
+    old_value = old_s.query(old_journal).filter(old_journal.c.id == old_statistic_journal.id).one()
+    log.debug(f'Resolved old statistic_journal {old_value}')
+    new_journal = STATISTIC_JOURNAL_CLASSES[StatisticJournalType(new_statistic_name.statistic_journal_type)]
+    # we allow these to exist so need to check
+    if not old_statistic_journal.time and new_s.query(new_journal).filter(new_journal.time == 0.0).count():
+        log.warning(f'Value already exists for {name} at zero time')
+    else:
+        new_value = add(new_s,
+                        new_journal(value=old_value.value, time=old_statistic_journal.time,
+                                    statistic_name=new_statistic_name, source=source))
+        new_s.commit()  # avoid logging below if error
+        date = format_date(time_to_local_date(to_time(new_value.time)))
+        record.info(f'Statistic {new_value.value} at {date} for {name}')
 
 
 def any_attr(instance, *names):

@@ -148,7 +148,8 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
                 for time, value in result.iteritems():
                     while sources and time >= sources[0][0]:
                         source = sources.pop(0)[1]
-                    loader.add(response.dest_name, None, None, None, source, value, time, StatisticJournalFloat)
+                    loader.add(response.dest_name, None, None, None, source, value, time, StatisticJournalFloat,
+                               description=f'The SHRIMP response for a decay of {response.tau_days} days')
                 loader.load()
 
     def __read_coverage(self, s):

@@ -29,16 +29,21 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
         if not present(df, ELEVATION):
             if present(df, RAW_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)
+                description = 'The smoothed SRTM1 elevation.'
             elif present(df, ALTITUDE):
                 log.warning(f'Using {ALTITUDE} as {ELEVATION}')
                 df[ELEVATION] = df[ALTITUDE]
-            return df
+                description = f'A copy of {ALTITUDE}'
+            return df, description
+        else:
+            return None
 
-    def _copy_results(self, s, ajournal, loader, df):
+    def _copy_results(self, s, ajournal, loader, stats):
+        df, description = stats
         for time, row in df.iterrows():
             if ELEVATION in row:
                 loader.add(ELEVATION, M, None, ajournal.activity_group, ajournal, row[ELEVATION], time,
-                           StatisticJournalFloat)
+                           StatisticJournalFloat, description=description)
             if GRADE in row:
                 loader.add(GRADE, PC, None, ajournal.activity_group, ajournal, row[GRADE], time,
-                           StatisticJournalFloat)
+                           StatisticJournalFloat, description='The gradient of the smoothed SRTM1 elevation.')

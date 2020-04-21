@@ -134,6 +134,9 @@ class Schedule:
     def __str__(self):
         return '%s%s%s' % (self.__str_offset(), self.__str_locations(), self.__str_ranges())
 
+    def __eq__(self, other):
+        return isinstance(other, Schedule) and str(other) == str(self)
+
     def __str_offset(self):
         repeat = '%d' % self.repeat if self.repeat > 1 else ''
         if self.offset:

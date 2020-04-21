@@ -48,19 +48,21 @@ class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, 
         return stats
 
     def _copy_results(self, s, ajournal, loader, stats):
+        hr_description = 'The SHRIMP HR zone.'
+        impulse_description = 'The SHRIMP HT impulse over 10 seconds.'
         for time, row in stats.iterrows():
             if not np.isnan(row[HR_ZONE]):
                 loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, row[HR_ZONE], time,
-                           StatisticJournalFloat)
+                           StatisticJournalFloat, description=hr_description)
             if not np.isnan(row[HR_IMPULSE_10]):
                 # load a copy to the activity group as well as to all so that we can extract / display
                 # easily in, for example, std_activity_statistics
                 loader.add(HR_IMPULSE_10, None, None, ajournal.activity_group, ajournal,
-                           row[HR_IMPULSE_10], time, StatisticJournalFloat)
+                           row[HR_IMPULSE_10], time, StatisticJournalFloat, description=impulse_description)
                 # copy for global FF statistics
                 loader.add(HR_IMPULSE_10, None, None, self.all, ajournal,
-                           row[HR_IMPULSE_10], time, StatisticJournalFloat)
+                           row[HR_IMPULSE_10], time, StatisticJournalFloat, description=impulse_description)
         # if there are no values, add a single null so we don't re-process
         if not loader:
             loader.add(HR_ZONE, None, SUM, ajournal.activity_group, ajournal, None, ajournal.start,
-                       StatisticJournalFloat)
+                       StatisticJournalFloat, description=hr_description)

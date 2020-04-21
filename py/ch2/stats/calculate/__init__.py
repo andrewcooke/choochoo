@@ -141,9 +141,12 @@ class DataFrameCalculatorMixin(LoaderMixin):
                 # data may be structured (doesn't have to be simply a dataframe)
                 data = self._read_dataframe(s, source)
                 stats = self._calculate_stats(s, source, data)
-                loader = self._get_loader(s)
-                self._copy_results(s, source, loader, stats)
-                loader.load()
+                if stats is not None:
+                    loader = self._get_loader(s)
+                    self._copy_results(s, source, loader, stats)
+                    loader.load()
+                else:
+                    raise Exception('No stats')
             except Exception as e:
                 log.warning(f'No statistics on {time_or_date}: {e}')
                 log_current_exception()
