@@ -101,3 +101,5 @@ def check_activity_diary_inconsistent_groups(record, db):
 # check whether all activity topics entries have an activity for the file hash
 
 # all activity diary entries have corresponding activity - fix group
+
+# check for activity without GPS datya (lyn in 2018)

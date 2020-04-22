@@ -99,7 +99,10 @@ def make_figure(xs, ys, side, grid, cm, border):
 # TODO - no need to calculate X + Y from lat / lon - they are already in the database
 def fig_from_df(df, grid=10, cm=1.5, border=0.2):
     points = [Point.from_latitude_longitude(lat, lon).meters for _, (lat, lon) in df.iterrows()]
-    xs, ys, side = normalize(points)
+    if points:
+        xs, ys, side = normalize(points)
+    else:
+        xs, ys, side = [0, 0], [0, 0], 1
     return make_figure(xs, ys, side, grid, cm, border)
 
 
