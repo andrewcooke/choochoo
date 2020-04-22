@@ -115,32 +115,30 @@ def build_join(op, lcte, rcte):
 def build_comparisons(s, ast):
     qname, op, value = ast
     name, group = parse_qname(qname)
-    q = s.query(StatisticJournal.source_id). \
-        join(StatisticName). \
-        filter(StatisticName.name.ilike(name))
     if isinstance(value, str):
-        q = add_value(q, op, value, StatisticJournalType.TEXT, {'=': 'ilike'})
+        q = get_journal_source_id(s, name, op, value, StatisticJournalType.TEXT, {'=': 'ilike'})
         return add_group(q, group)
     elif isinstance(value, dt.datetime):
-        q = add_value(q, op, value, StatisticJournalType.TIMESTAMP)
+        q = get_journal_source_id(s, name, op, value, StatisticJournalType.TIMESTAMP)
         return add_group(q, group)
     else:
-        qint = add_value(q, op, value, StatisticJournalType.INTEGER)
+        qint = get_journal_source_id(s, name, op, value, StatisticJournalType.INTEGER)
         qint = add_group(qint, group)
-        qfloat = add_value(q, op, value, StatisticJournalType.FLOAT)
+        qfloat = get_journal_source_id(s, name, op, value, StatisticJournalType.FLOAT)
         qfloat = add_group(qfloat, group)
         return union(qint, qfloat).select()
 
 
-def add_value(q, op, value, type, update_attrs=None):
+def get_journal_source_id(s, name, op, value, type, update_attrs=None):
     attrs = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}
     if update_attrs:
         attrs.update(update_attrs)
     attr = attrs[op]
     journal = STATISTIC_JOURNAL_CLASSES[type]
-    return q.filter(StatisticName.statistic_journal_type == type). \
-        join(journal). \
-        filter(getattr(StatisticJournalText.value, attr)(value))
+    return s.query(journal.source_id). \
+        join(StatisticName). \
+        filter(StatisticName.name.ilike(name),
+               getattr(journal.value, attr)(value))
 
 
 def add_group(q, group):
