@@ -27,7 +27,7 @@ def search(args, system, db):
 This searches for activities.
 
 The query syntax is similar to SQL, but element names are statistic names.
-The name can include the activity group (start:bike) and SQL wildcards (%fitness).
+The name can include the activity group (start:bike) and SQL wildcards (%fitness%).
 
 Negation and NULL values are not supported.
 

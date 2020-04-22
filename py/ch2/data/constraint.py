@@ -3,12 +3,13 @@ import datetime as dt
 from logging import getLogger
 from re import escape
 
-from sqlalchemy import select, union, intersect, or_
+from sqlalchemy import union, intersect, or_
 
 from ..lib import local_time_to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
 from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal, FileHash, \
-    ActivityTopicJournal
+    ActivityTopicJournal, StatisticJournalText, Source
+from ..sql.tables.source import SourceType
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 
 log = getLogger(__name__)
@@ -112,97 +113,66 @@ def build_join(op, lcte, rcte):
 
 
 def build_comparisons(s, ast):
-    # TODO _ brokwn
-    name, op, value = ast
-    if ':' in name:
-        sname, gname = name.split(':', 1)
-        if gname.lower() in ('none', 'null'):
-            statistic_names = s.query(StatisticName). \
-                filter(StatisticName.name.ilike(sname),
-                       StatisticName.activity_group == None).all()
-        else:
-            activity_groups = s.query(ActivityGroup).filter(ActivityGroup.name.ilike(gname)).all()
-            if not activity_groups:
-                raise Exception(f'No activity group matches {gname}')
-            statistic_names = s.query(StatisticName). \
-                filter(StatisticName.name.ilike(sname),
-                       StatisticName.activity_group.in_(activity_groups)).all()
-        if not statistic_names:
-            raise Exception(f'No statistic name matches {name}')
-        comparisons = [build_comparison_orm(statistic_name, op, value) for statistic_name in statistic_names]
+    qname, op, value = ast
+    name, group = parse_qname(qname)
+    q = s.query(StatisticJournal.source_id). \
+        join(StatisticName). \
+        filter(StatisticName.name.ilike(name))
+    if isinstance(value, str):
+        q = add_value(q, op, value, StatisticJournalType.TEXT, {'=': 'ilike'})
+        return add_group(q, group)
+    elif isinstance(value, dt.datetime):
+        q = add_value(q, op, value, StatisticJournalType.TIMESTAMP)
+        return add_group(q, group)
     else:
-        log.warning(f'{name} is unconstrained (to restrict to a particular group use {name}:Group)')
-        comparisons = [build_comparison_sql(s, name, op, value)]
-    if len(comparisons) == 1:
-        return comparisons[0]
+        qint = add_value(q, op, value, StatisticJournalType.INTEGER)
+        qint = add_group(qint, group)
+        qfloat = add_value(q, op, value, StatisticJournalType.FLOAT)
+        qfloat = add_group(qfloat, group)
+        return union(qint, qfloat).select()
+
+
+def add_value(q, op, value, type, update_attrs=None):
+    attrs = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}
+    if update_attrs:
+        attrs.update(update_attrs)
+    attr = attrs[op]
+    journal = STATISTIC_JOURNAL_CLASSES[type]
+    return q.filter(StatisticName.statistic_journal_type == type). \
+        join(journal). \
+        filter(getattr(StatisticJournalText.value, attr)(value))
+
+
+def add_group(q, group):
+    if group:
+        return q.join(ActivityGroup, StatisticName.activity_group_id == ActivityGroup.id). \
+            filter(ActivityGroup.name.ilike(group))
+    elif group is None:
+        return q
     else:
-        return union(*comparisons).select()
-
-
-def check_column(statistic_name, op, value):
-    table = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type].__table__
-    sj = StatisticJournal.__table__
-    attr = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}[op]
-    if statistic_name.statistic_journal_type == StatisticJournalType.TIMESTAMP:
-        if not isinstance(value, dt.datetime):
-            raise Exception(f'{statistic_name.name} is a timestamp, but {value} is not a date')
-        column = sj.c.time
-    elif statistic_name.statistic_journal_type == StatisticJournalType.TEXT:
-        if not isinstance(value, str):
-            raise Exception(f'{statistic_name.name} is textual, but {value} is not a string')
-        column = table.c.value
-        if op == '=': attr = 'ilike'
-    else:
-        if not (isinstance(value, int) or isinstance(value, float)):
-            raise Exception(f'{statistic_name.name} is numerical, but {value} is not a number')
-        column = table.c.value
-    return sj, table, attr, column
-
-
-def build_comparison_orm(statistic_name, op, value):
-    sj, table, attr, column = check_column(statistic_name, op, value)
-    log.debug(f'{statistic_name} ({statistic_name.id}) {attr} {value!r}')
-    return select([sj.c.source_id]). \
-        select_from(sj.join(table)). \
-        where(sj.c.statistic_name_id == statistic_name.id). \
-        where(getattr(column, attr)(value))
-
-
-def build_comparison_sql(s, name, op, value):
-    statistic_names = s.query(StatisticName).filter(StatisticName.name.ilike(name)).all()
-    if not statistic_names: raise Exception(f'No statistic name matches {name}')
-    statistic_types = set(statistic_name.statistic_journal_type for statistic_name in statistic_names)
-    if len(statistic_types) > 1:
-        for statistic_name in statistic_names: log.debug(f'{statistic_name}')
-        raise Exception(f'{name} matches multiple statistics with different types; '
-                        f'use a more specific name ({name}:group)')
-    sj, table, attr, column = check_column(statistic_names[0], op, value)
-    sn = StatisticName.__table__
-    return select([sj.c.source_id]). \
-        select_from(sj.join(table).join(sn)). \
-        where(sn.c.name.ilike(name)). \
-        where(getattr(column, attr)(value))
+        qaj = q.join(ActivityJournal). \
+            filter(ActivityJournal.id == StatisticJournal.source_id,
+                   ActivityJournal.activity_group_id == StatisticName.activity_group_id)
+        qatj = q.join(ActivityTopicJournal). \
+            join(FileHash, ActivityTopicJournal.file_hash_id == FileHash.id). \
+            join(ActivityJournal, ActivityJournal.file_hash_id == FileHash.id). \
+            filter(ActivityTopicJournal.id == StatisticJournal.source_id,
+                   ActivityJournal.activity_group_id == StatisticName.activity_group_id)
+        return union(qaj, qatj).select()
 
 
 def parse_qname(qname):
-    '''A qualified name (for a statistic) has the form NAME:GROUP with optional spaces where:
+    '''
+    A qualified name (for a statistic) has the form NAME:GROUP with optional spaces where:
 
-    NAME (with no qualifier) means 'match any constraint'
-    NAME: (colon but no value) means 'match the group of the current activity'
-    NAME:null or NAME:none (any case) means 'match a constraint of None'
-    NAME:GROUP means 'match the given group'
-
-    This code returns (name, group) where group is False, True and None for the first three cases above, respectively.
+    NAME (with no qualifier) means 'match the group of the current activity' - returned as None
+    NAME: (colon but no value) means 'match any constraint' - returned as ''
+    NAME:GROUP means 'match the given group' - returned as the name
     '''
     if ':' in qname:
         name, group = qname.split(':')
         name, group = name.strip(), group.strip()
-        if group:
-            if group.lower() in ('none', 'null'):
-                group = None
-        else:
-            group = True
     else:
-        name, group = qname.strip(), False
+        name, group = qname.strip(), None
     log.debug(f'Parsed {qname} as {name}:{group}')
     return name, group
