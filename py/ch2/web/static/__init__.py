@@ -5,7 +5,7 @@ from os.path import split, sep
 
 from werkzeug import Response
 
-from ..servlets.base import ContentType
+from ..servlets import ContentType
 
 log = getLogger(__name__)
 

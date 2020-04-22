@@ -8,7 +8,7 @@ from werkzeug.wrappers.json import JSONMixin
 
 from .json import JsonResponse
 from .servlets.analysis import Analysis
-from .servlets.base import Thumbnail
+from .servlets.thumbnail import Thumbnail
 from .servlets.configure import Configure
 from .servlets.diary import Diary
 from .servlets.jupyter import Jupyter

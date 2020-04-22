@@ -118,3 +118,4 @@ def save_to_cache(base, s, activity_id):
         fig = fig_from_df(df)
         fig.savefig(path, transparent=True)
     log.info(f'Thumbnail in {path}')
+    return path

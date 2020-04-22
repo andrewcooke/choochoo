@@ -288,7 +288,7 @@ class StatisticJournal(Base):
                            Interval.owner == interval_owner,
                            StatisticName.owner == statistic_owner,
                            StatisticName.activity_group == statistic_group). \
-                    order_by(StatisticName.activity_group,  # order places summary stats from same source together
+                    order_by(StatisticName.activity_group_id,  # order places summary stats from same source together
                              StatisticName.name).all()
 
     @classmethod
