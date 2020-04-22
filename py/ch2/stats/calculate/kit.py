@@ -2,6 +2,7 @@
 from logging import getLogger
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin
+from ...lib.log import log_current_exception
 from ...sql import StatisticJournal, Timestamp
 from ...sql.tables.kit import expand_item
 
@@ -27,6 +28,7 @@ class KitCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator):
                             kit_instance.add_use(s, ajournal.start, source=ajournal, owner=self.owner_out)
                             log.debug(f'Added usage for {kit_instance}')
                     except Exception as e:
+                        log_current_exception(traceback=True)
                         log.warning(f'Could not add statistics for {kit_name}: {e}')
             else:
                 log.debug(f'No kit defined for this activity ({time})')

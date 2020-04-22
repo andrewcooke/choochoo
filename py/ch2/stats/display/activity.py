@@ -41,7 +41,7 @@ class ActivityDiary(JournalDiary):
         for field in s.query(ActivityTopicField). \
                 join(StatisticName). \
                 filter(ActivityTopicField.activity_topic == None,
-                       StatisticName.constraint == ajournal.activity_group). \
+                       StatisticName.activity_group == ajournal.activity_group). \
                 order_by(ActivityTopicField.sort).all():
             yield from_field(field, cache[field])
         for topic in s.query(ActivityTopic). \
@@ -56,7 +56,7 @@ class ActivityDiary(JournalDiary):
         if topic.description: yield text(topic.description)
         log.debug(f'topic id {topic.id}; fields {topic.fields}')
         for field in topic.fields:
-            if field.statistic_name.constraint == str(topic.activity_group):
+            if field.statistic_name.activity_group == topic.activity_group:
                 yield from_field(field, cache[field])
         for child in topic.children:
             if child.activity_group == topic.activity_group and child.schedule.at_location(date):
@@ -83,7 +83,7 @@ class ActivityDiary(JournalDiary):
             filter(StatisticJournal.time == ajournal.start,
                    StatisticName.name.like(PERCENT_IN_Z_ANY),
                    StatisticName.owner == ActivityCalculator,
-                   StatisticName.constraint == ajournal.activity_group) \
+                   StatisticName.activity_group == ajournal.activity_group) \
             .order_by(StatisticName.name).all()
         if percent_times:
             for zone, percent_time in reversed(list(enumerate((time.value for time in percent_times), start=1))):
@@ -136,7 +136,7 @@ class ActivityDiary(JournalDiary):
             filter(StatisticJournal.time == ajournal.start,
                    StatisticName.name.like(template),
                    StatisticName.owner == ActivityCalculator,
-                   StatisticName.constraint == ajournal.activity_group).order_by(StatisticName.name).all()
+                   StatisticName.activity_group == ajournal.activity_group).order_by(StatisticName.name).all()
         for sjournal in self.__sort_journals(sjournals):
             if sjournal.value > 0:  # avoid zero power and anything else with silly value
                 yield value(search(re, sjournal.statistic_name.name).group(1), sjournal.value,
@@ -175,7 +175,7 @@ class ActivityDiary(JournalDiary):
                 yield s.query(StatisticName). \
                     filter(StatisticName.name == name,
                            StatisticName.owner == ActivityCalculator,
-                           StatisticName.constraint == group).one()
+                           StatisticName.activity_group == group).one()
             except NoResultFound:
                 log.warning(f'Missing "{name}" in database')
 
@@ -184,7 +184,7 @@ class ActivityDiary(JournalDiary):
         return s.query(StatisticName). \
             filter(StatisticName.name.like(name),
                    StatisticName.owner == ActivityCalculator,
-                   StatisticName.constraint == group).all()
+                   StatisticName.activity_group == group).all()
 
     def __read_schedule_fields(self, s, start, schedule, group):
         for name in self.__names(s, group, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,

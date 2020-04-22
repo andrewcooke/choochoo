@@ -113,7 +113,7 @@ class ActivityJournalCalculatorMixin(JournalCalculatorMixin):
 
 class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
 
-    def __init__(self, *args, activity_group_name=None, **kargs):
+    def __init__(self, *args, activity_group=None, **kargs):
         super().__init__(*args, **kargs)
         self.activity_group_name = activity_group_name
 

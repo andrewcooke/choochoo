@@ -83,7 +83,7 @@ def show_activities(s, activities, show):
                 activity_group = ActivityGroup.from_name(s, agroup)
                 query = s.query(StatisticJournal). \
                     join(StatisticName). \
-                    filter(StatisticName.constraint == activity_group,
+                    filter(StatisticName.activity_group == activity_group,
                            StatisticName.name == sname,
                            StatisticJournal.source == activity)
             else:
@@ -92,5 +92,5 @@ def show_activities(s, activities, show):
                     filter(StatisticName.name == full_name,
                            StatisticJournal.source == activity)
             for journal in query.all():
-                print(f'  {journal.statistic_name.name}:{journal.statistic_name.constraint} = {journal.value}')
+                print(f'  {journal.statistic_name} = {journal.value}')
 

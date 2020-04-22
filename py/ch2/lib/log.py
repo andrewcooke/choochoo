@@ -128,7 +128,7 @@ def log_current_exception(traceback=True):
         pass
     log.debug(f'Type: {t}')
     if traceback:
-        log.debug('Traceback:\n' + ''.join(format_tb(tb)))
+        log.warning('Traceback:\n' + ''.join(format_tb(tb)))
 
 
 class Record:

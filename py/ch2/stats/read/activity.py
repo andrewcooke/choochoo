@@ -6,7 +6,7 @@ from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
-    SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG, KM
+    SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG, KM, HEART_RATE, _cov
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
 from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
@@ -130,7 +130,7 @@ class ActivityReader(MultiProcFitReader):
             raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
 
     def _lookup_activity_group(self, s, name):
-        activity_group = ActivityGroup.from_name(s, name, optional=True)
+        activity_group = ActivityGroup.from_name(s, name)
         if not activity_group:
             activities = s.query(ActivityGroup).all()
             if activities:
@@ -192,7 +192,7 @@ class ActivityReader(MultiProcFitReader):
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
                 filter(StatisticName.name == ActivityTopicField.NAME,
-                       StatisticName.constraint == ajournal.activity_group,
+                       StatisticName.activity_group == ajournal.activity_group,
                        StatisticName.owner == ActivityTopic,
                        ActivityTopicField.activity_topic_id == None).one_or_none():
             add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
@@ -208,7 +208,7 @@ class ActivityReader(MultiProcFitReader):
                 join(StatisticName). \
                 filter(StatisticJournal.source == source,
                        StatisticName.owner == ActivityTopic,
-                       StatisticName.constraint == ajournal.activity_group,
+                       StatisticName.activity_group == ajournal.activity_group,
                        StatisticName.name == ActivityTopicField.NAME). \
                 one_or_none():
             value = splitext(basename(file_scan.path))[0]
@@ -303,8 +303,7 @@ class ActivityReader(MultiProcFitReader):
 
     def _read(self, s, path):
         loader = super()._read(s, path)
-        for (name, constraint), percent in loader.coverage_percentages():
-            StatisticJournalFloat.add(s, COVERAGE, PC, summaries(MIN, AVG), self.owner_out,
-                                      f'{name} / {constraint.name}', self.__ajournal, percent,
-                                      self.__ajournal.start)
+        for (name, activity_group), percent in loader.coverage_percentages():
+            StatisticJournalFloat.add(s, _cov(name), PC, summaries(MIN, AVG), self.owner_out,
+                                      activity_group, self.__ajournal, percent, self.__ajournal.start)
         s.commit()

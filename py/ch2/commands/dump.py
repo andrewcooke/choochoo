@@ -5,7 +5,7 @@ import pandas as pd
 
 from .args import SUB_COMMAND, START, FINISH, NAMES, \
     OWNER, CONSTRAINT, SCHEDULE, SOURCE_ID, STATISTIC_QUARTILES, PRINT, FORMAT, \
-    CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS
+    CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS, GROUP
 from ..data import df, statistics, statistic_quartiles
 from ..sql import *
 from ..sql.support import Base
@@ -35,7 +35,7 @@ For full options see `ch2 data -h` and `ch2 data COMMAND -h`
 
 Will print the contents of the StatisticName table in CSV format.
 
-    > ch2 dump statistics '%HR%' --constraint 'ActivityGroup "Bike"' --start 2018-01-01
+    > ch2 dump statistics '%HR%' --group Bike --start 2018-01-01
 
 Will print HR-related statistics from the start of 2018 for the given activity group.
     '''
@@ -55,12 +55,12 @@ Will print HR-related statistics from the start of 2018 for the given activity g
                 raise Exception('%s does not exist' % name)
         elif args[SUB_COMMAND] == STATISTICS:
             frame = statistics(s, *args[NAMES], start=args[START], finish=args[FINISH],
-                               owner=args[OWNER], constraint=args[CONSTRAINT],
-                               schedule=args[SCHEDULE], source_ids=args[SOURCE_ID])
+                               owner=args[OWNER], activity_group=args[GROUP],
+                               sources=[Source.from_id(s, int(id)) for id in args[SOURCE_ID]])
         elif args[SUB_COMMAND] == STATISTIC_QUARTILES:
             frame = statistic_quartiles(s, *args[NAMES], start=args[START], finish=args[FINISH],
-                                        owner=args[OWNER], constraint=args[CONSTRAINT],
-                                        schedule=args[SCHEDULE], source_ids=args[SOURCE_ID])
+                                        owner=args[OWNER], activity_group=args[GROUP], schedule=args[SCHEDULE],
+                                        sources=[Source.from_id(s, int(id)) for id in args[SOURCE_ID]])
         else:
             raise Exception('Unexpected %s: %s' % (SUB_COMMAND, args[SUB_COMMAND]))
 

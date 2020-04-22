@@ -11,12 +11,12 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
 from ..support import Base
-from ..types import Time, ShortCls, NullStr
+from ..types import Time, ShortCls
 from ..utils import add
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.date import format_seconds, local_date_to_time
 from ...lib.utils import sigfig
-from ...stats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM
+from ...stats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM, ALL
 
 log = getLogger(__name__)
 
@@ -30,17 +30,14 @@ class StatisticName(Base):
     description = Column(Text)
     units = Column(Text)
     summary = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
-    # we need to disambiguate statistics with the same name.
-    # this is done by (1) "owner" (typically the source of the data) and
-    # (2) by some additional (optional) constraint used by the owner (typically)
-    # (eg activity_group.id so that the same statistic can be used across different activities)
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
-    constraint = Column(NullStr)
+    activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=False)
+    activity_group = relationship('ActivityGroup')
     statistic_journal_type = Column(Integer, nullable=False)  # StatisticJournalType
-    UniqueConstraint(name, owner, constraint)
+    UniqueConstraint(name, owner, activity_group_id)
 
     def __str__(self):
-        return '"%s" (%s/%s)' % (self.name, self.owner, self.constraint)
+        return '%s : %s (%s)' % (self.name, self.activity_group.name if self.activity_group else None, self.owner)
 
     @property
     def summaries(self):
@@ -50,16 +47,18 @@ class StatisticName(Base):
             return []
 
     @classmethod
-    def add_if_missing(cls, s, name, type, units, summary, owner, constraint, description=None):
+    def add_if_missing(cls, s, name, type, units, summary, owner, activity_group=ALL, description=None):
+        from .activity import ActivityGroup
+        activity_group = ActivityGroup.from_name(s, activity_group)
         s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint)
+                   StatisticName.activity_group == activity_group)  # allows instances
         statistic_name = q.one_or_none()
         if not statistic_name:
             statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner,
-                                                  constraint=constraint, statistic_journal_type=type,
+                                                  activity_group=activity_group, statistic_journal_type=type,
                                                   description=description))
             try:
                 s.flush()
@@ -88,32 +87,34 @@ class StatisticName(Base):
         return statistic_name
 
     @classmethod
-    def from_name(cls, s, name, owner, constaint=None):
+    def from_name(cls, s, name, owner, activity_group=ALL):
+        from .activity import ActivityGroup
         return s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constaint).one()
+                   StatisticName.activity_group == ActivityGroup.from_name(s, activity_group)).one()
 
     @classmethod
-    def parse(cls, name, default_owner=None, default_constraint=None):
+    def parse(cls, name, default_owner=None, default_activity_group=None):
+        # TODO - no longer have None
         '''
         This parses the standard, extended format for naming statistics.  It is one to three fields, separated by ':'.
-        These are one of 'name', 'owner:name', or 'owner:name:constraint'.
+        These are one of 'name', 'owner:name', or 'owner:name:activity_group'.
         Currently this is used only by reftuple which itself is used only in the power pipeline configuration.
         '''
-        parts, owner, constraint = name.split(':'), None, None
+        parts, owner, activity_group = name.split(':'), None, None
         if len(parts) == 1:
             name = parts[0]
         elif len(parts) == 2:
             owner, name = parts
         else:
-            owner, name, constraint = parts
+            owner, name, activity_group = parts
         if not owner: owner = default_owner
         if not owner:
             raise Exception(f'Missing owner for {name}')
-        if not constraint: constraint = default_constraint
-        if constraint == 'None': constraint = None
-        return owner, name, constraint
+        if not activity_group: activity_group = default_activity_group
+        if activity_group == 'None': activity_group = None
+        return owner, name, activity_group
 
 
 class StatisticJournalType(IntEnum):
@@ -159,10 +160,10 @@ class StatisticJournal(Base):
             return 'StatisticJournal base'
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial, type,
+    def add(cls, s, name, units, summary, owner, activity_group, source, value, time, serial, type,
             description=None):
-        statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, owner, constraint,
-                                                      description=description)
+        statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, owner,
+                                                      activity_group=activity_group, description=description)
         journal = STATISTIC_JOURNAL_CLASSES[type](statistic_name=statistic_name, source=source,
                                                   value=value, time=time, serial=serial)
         s.add(journal)
@@ -214,7 +215,7 @@ class StatisticJournal(Base):
             return None
 
     @classmethod
-    def at_date(cls, s, date, name, owner, constraint, source_id=None):
+    def at_date(cls, s, date, name, owner, activity_group, source_id=None):
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
         q = s.query(StatisticJournal).join(StatisticName). \
@@ -222,80 +223,80 @@ class StatisticJournal(Base):
                    StatisticJournal.time >= start,
                    StatisticJournal.time < finish,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint)
+                   StatisticName.activity_group == activity_group)
         if source_id is not None:
             q = q.filter(StatisticJournal.source_id == source_id)
         return q.one_or_none()
 
     @classmethod
-    def at(cls, s, time, name, owner, constraint):
+    def at(cls, s, time, name, owner, activity_group):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time == time,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint).one_or_none()
+                   StatisticName.activity_group == activity_group).one_or_none()
 
     @classmethod
-    def at_like(cls, s, time, name, owner, constraint):
+    def at_like(cls, s, time, name, owner, activity_group):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name.like(name),
                    StatisticJournal.time == time,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint).all()
+                   StatisticName.activity_group == activity_group).all()
 
     @classmethod
-    def before(cls, s, time, name, owner, constraint):
+    def before(cls, s, time, name, owner, activity_group):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time <= time,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint). \
+                   StatisticName.activity_group == activity_group). \
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def before_not_null(cls, s, time, name, owner, constraint):
+    def before_not_null(cls, s, time, name, owner, activity_group):
         try:
             statistic_name = s.query(StatisticName). \
                 filter(StatisticName.name == name,
                        StatisticName.owner == owner,
-                       StatisticName.constraint == constraint).one()
+                       StatisticName.activity_group == activity_group).one()
         except NoResultFound:
-            raise Exception(f'The statistic name "{name}" (owner {owner}, constraint {constraint}) '
+            raise Exception(f'The statistic name "{name}" (owner {owner}, activity_group {activity_group}) '
                             'is undefined in the database')
-        cls = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
-        return s.query(cls). \
-            filter(cls.statistic_name == statistic_name,
-                   cls.time <= time,
-                   cls.value != None). \
-            order_by(desc(cls.time)).limit(1).one_or_none()
+        journal = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+        return s.query(journal). \
+            filter(journal.statistic_name == statistic_name,
+                   journal.time <= time,
+                   journal.value != None). \
+            order_by(desc(journal.time)).limit(1).one_or_none()
 
     @classmethod
-    def after(cls, s, time, name, owner, constraint):
+    def after(cls, s, time, name, owner, activity_group):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= time,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint). \
+                   StatisticName.activity_group == activity_group). \
             order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def at_interval(cls, s, start, schedule, statistic_owner, statistic_constraint, interval_owner):
+    def at_interval(cls, s, start, schedule, statistic_owner, statistic_group, interval_owner):
         return s.query(StatisticJournal).join(StatisticName, Interval). \
                     filter(StatisticJournal.statistic_name_id == StatisticName.id,
                            Interval.schedule == schedule,
                            Interval.start == start,
                            Interval.owner == interval_owner,
                            StatisticName.owner == statistic_owner,
-                           StatisticName.constraint == statistic_constraint). \
-                    order_by(StatisticName.constraint,  # order places summary stats from same source together
+                           StatisticName.activity_group == statistic_group). \
+                    order_by(StatisticName.activity_group,  # order places summary stats from same source together
                              StatisticName.name).all()
 
     @classmethod
-    def for_source(cls, s, source_id, name, owner, constraint):
+    def for_source(cls, s, source_id, name, owner, activity_group):
         return s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
-                   StatisticName.constraint == constraint,
+                   StatisticName.activity_group == activity_group,
                    StatisticJournal.source_id == source_id).one_or_none()
 
 
@@ -314,8 +315,8 @@ class StatisticJournalInteger(StatisticJournal):
         self.value = value if value is None else int(value)
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None, description=None):
-        return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
+    def add(cls, s, name, units, summary, owner, activity_group, source, value, time, serial=None, description=None):
+        return super().add(s, name, units, summary, owner, activity_group, source, value, time, serial,
                            StatisticJournalType.INTEGER, description=description)
 
 
@@ -330,8 +331,8 @@ class StatisticJournalFloat(StatisticJournal):
         self.value = value if value is None else float(value)
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None, description=None):
-        return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
+    def add(cls, s, name, units, summary, owner, activity_group, source, value, time, serial=None, description=None):
+        return super().add(s, name, units, summary, owner, activity_group, source, value, time, serial,
                            StatisticJournalType.FLOAT, description=description)
 
     __mapper_args__ = {
@@ -379,8 +380,8 @@ class StatisticJournalText(StatisticJournal):
         self.value = value if value is None else str(value)
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, value, time, serial=None, description=None):
-        return super().add(s, name, units, summary, owner, constraint, source, value, time, serial,
+    def add(cls, s, name, units, summary, owner, activity_group, source, value, time, serial=None, description=None):
+        return super().add(s, name, units, summary, owner, activity_group, source, value, time, serial,
                            StatisticJournalType.TEXT, description=description)
 
     __mapper_args__ = {
@@ -414,9 +415,10 @@ class StatisticJournalTimestamp(StatisticJournal):
         self.value = None
 
     @classmethod
-    def add(cls, s, name, units, summary, owner, constraint, source, time, serial=None, description=None):
+    def add(cls, s, name, units, summary, owner, activity_group, source, time, serial=None, description=None):
         statistic_name = StatisticName.add_if_missing(s, name, StatisticJournalType.TIMESTAMP,
-                                                      units, summary, owner, constraint, description=description)
+                                                      units, summary, owner,
+                                                      activity_group=activity_group, description=description)
         journal = StatisticJournalTimestamp(statistic_name=statistic_name, source=source, time=time, serial=serial)
         s.add(journal)
         return journal

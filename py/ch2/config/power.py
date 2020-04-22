@@ -10,7 +10,7 @@ POWER_ESTIMATE_CNAME = 'PowerEstimate'
 
 
 def add_power_estimate(s, c, activity_group,
-                       bike='${Constant:Power.${SegmentReader:kit}:None}',
+                       bike='${Constant:Power.${SegmentReader:kit}:All}',
                        rider_weight='${DiaryTopic:Weight:DiaryTopic \"Status\" (d)}',
                        vary='wind_speed, wind_heading, slope'):
     '''
@@ -21,7 +21,7 @@ def add_power_estimate(s, c, activity_group,
     power_name = name_constant(POWER_ESTIMATE_CNAME, activity_group)
     add_enum_constant(s, power_name, Power,
                       {'bike': bike, 'rider_weight': rider_weight, 'vary': vary},
-                      single=False, constraint=activity_group_constraint, description='''
+                      single=False, activity_group=activity_group_constraint, description='''
 Parameters used in estimating power.
 
 These are complex and reference other statistics.  
@@ -33,4 +33,4 @@ For example, ${SegmentReader:kit} is the kit specified when the activity is uplo
 ''')
     add_statistics(s, ExtendedPowerCalculator, c, owner_in='[unused - data via activity_statistics]',
                    power=name_constant(POWER_ESTIMATE_CNAME, activity_group),
-                   activity_group_name=activity_group.name)
+                   activity_group=activity_group.name)

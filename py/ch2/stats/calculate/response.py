@@ -17,7 +17,7 @@ from ...sql import ActivityGroup
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...sql.utils import add
-from ...stats.names import _src, ALL, HR_IMPULSE_10, COVERAGE, HEART_RATE
+from ...stats.names import _src, ALL, HR_IMPULSE_10, COVERAGE, HEART_RATE, _cov
 from ...stats.pipeline import LoaderMixin
 
 log = getLogger(__name__)
@@ -148,14 +148,12 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
                 for time, value in result.iteritems():
                     while sources and time >= sources[0][0]:
                         source = sources.pop(0)[1]
-                    loader.add(response.dest_name, None, None, None, source, value, time, StatisticJournalFloat,
+                    loader.add(response.dest_name, None, None, ALL, source, value, time, StatisticJournalFloat,
                                description=f'The SHRIMP response for a decay of {response.tau_days} days')
                 loader.load()
 
     def __read_coverage(self, s):
-        names = s.query(StatisticName).\
-            filter(StatisticName.name == COVERAGE).\
-            filter(StatisticName.constraint.like(HEART_RATE + ' / %')).all()
+        names = s.query(StatisticName).filter(StatisticName.name == _cov(HEART_RATE)).all()
         coverages = statistics(s, *names, owner=SegmentReader, check=False)
         coverages = coverages.loc[:].replace(0, np.nan)
         coverages.fillna(axis='columns', method='bfill', inplace=True)
@@ -165,7 +163,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         return coverages
 
     def __read_data(self, s):
-        hr10 = statistics(s, HR_IMPULSE_10, constraint=ActivityGroup.from_name(s, ALL),
+        hr10 = statistics(s, HR_IMPULSE_10, activity_group=ActivityGroup.from_name(s, ALL),
                           owner=self.owner_in, with_sources=True, check=False)
         coverage = self.__read_coverage(s)
         coverage.reindex(index=hr10.index, method='nearest', copy=False)

@@ -27,7 +27,7 @@ class TestPower(LogTestCase):
             with db.session_context() as s:
                 stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
                                             DISTANCE, ELEVATION, SPEED, CADENCE, HEART_RATE,
-                                            local_time='2018-03-04 07:16:33', activity_group_name='Bike',
+                                            local_time='2018-03-04 07:16:33', activity_group='Bike',
                                             with_timespan=True)
                 stats.describe()
 

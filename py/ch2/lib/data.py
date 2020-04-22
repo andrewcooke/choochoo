@@ -102,12 +102,12 @@ def reftuple(name, *args, **kargs):
 
     class klass(namedtuple(name, *args, **kargs)):
 
-        def expand(self, s, time, default_owner=None, default_constraint=None):
+        def expand(self, s, time, default_owner=None, default_activity_group=None):
             instance = self
             for name in self._fields:
                 value = getattr(instance, name)
                 log.debug(f'Expanding {name}: {value} at {time}')
-                value = expand(s, value, time, default_owner=default_owner, default_constraint=default_constraint)
+                value = expand(s, value, time, default_owner=default_owner, default_activity_group=default_activity_group)
                 log.debug(f'Setting {name} = {value}')
                 instance = instance._replace(**{name: value})
             return instance
@@ -194,7 +194,7 @@ def bookend(df, column=BOOKMARK):
     return pd.concat([g.head(1), g.tail(1)]).drop_duplicates().sort_index()
 
 
-def expand(s, text, before, vars=None, default_owner=None, default_constraint=None):
+def expand(s, text, before, vars=None, default_owner=None, default_activity_group=None):
     '''
     Recursively expand any ${name} occurrences in the text using vars (if given) and database.
 
@@ -214,11 +214,11 @@ def expand(s, text, before, vars=None, default_owner=None, default_constraint=No
             owner = None
             value = vars[name]
         else:
-            owner, statistic, constraint = StatisticName.parse(name, default_owner=default_owner,
-                                                               default_constraint=default_constraint)
-            value = StatisticJournal.before_not_null(s, before, statistic, owner, constraint)
+            owner, statistic, activity_group = StatisticName.parse(name, default_owner=default_owner,
+                                                                   default_activity_group=default_activity_group)
+            value = StatisticJournal.before_not_null(s, before, statistic, owner, activity_group)
         if value is None:
-            raise Exception(f'No value defined for {name} ({owner}:{statistic}:{constraint}) before {before}')
+            raise Exception(f'No value defined for {name} ({owner}:{statistic}:{activity_group}) before {before}')
         elif left == '' and right == '':
             text = value.value
             match = None

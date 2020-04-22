@@ -74,7 +74,7 @@ class ActivityTopic(Base, Topic):
     __tablename__ = 'activity_topic'
 
     parent_id = Column(Integer, ForeignKey('activity_topic.id'), nullable=True)
-    activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=True)
+    activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=True)
     activity_group = relationship('ActivityGroup')
 
     @declared_attr

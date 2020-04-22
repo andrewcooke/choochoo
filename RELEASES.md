@@ -4,6 +4,13 @@
 See [upgrade
 instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 
+### v0.32.0
+
+Schema for statistic names changed from textual 'constraint' to
+foreign key relation to activity group.  This cleans up the database,
+but has some downsides (mainly, that diary topics must have unique
+names).  It also helps the new search work.
+
 ### v0.31.0
 
 Moving towards a more integrated system, building on the modular

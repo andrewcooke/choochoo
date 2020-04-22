@@ -5,6 +5,7 @@ from sqlite3 import OperationalError
 
 from sqlalchemy import create_engine, event, MetaData
 from sqlalchemy.engine import Engine
+from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.functions import count
 
@@ -142,4 +143,3 @@ class ReflectedDatabase(DatabaseBase):
         super().__init__(*args, **kargs)
         self.meta = MetaData()
         self.meta.reflect(bind=self.engine)
-

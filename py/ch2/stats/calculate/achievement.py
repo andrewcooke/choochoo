@@ -98,7 +98,7 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
 
     def _check(self, s, activity_journal, superlative, statistic_name, days, period):
         try:
-            group = lower(statistic_name.constraint) if statistic_name.constraint else 'all'
+            group = statistic_name.activity_group.name if statistic_name.activity_group else 'all'
             # 4 so we know something worse
             best_values = self._build_query(s, activity_journal, statistic_name, days).limit(4).all()
             best_values = [x[0] for x in best_values]

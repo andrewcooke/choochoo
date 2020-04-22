@@ -129,9 +129,9 @@ class SimilarityCalculator(UniProcCalculator):
 
         agroup = ActivityGroup.from_name(s, self.nearby.activity_group)
         lat = s.query(StatisticName.id). \
-            filter(StatisticName.name == LATITUDE, StatisticName.constraint == agroup).scalar()
+            filter(StatisticName.name == LATITUDE, StatisticName.activity_group == agroup).scalar()
         lon = s.query(StatisticName.id). \
-            filter(StatisticName.name == LONGITUDE, StatisticName.constraint == agroup).scalar()
+            filter(StatisticName.name == LONGITUDE, StatisticName.activity_group == agroup).scalar()
         
         if not lat or not lon:
             log.warning(f'No {LATITUDE} or {LONGITUDE} in database for {agroup}')

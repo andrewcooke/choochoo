@@ -9,7 +9,7 @@ from ..sql.tables.constant import ValidateNamedTuple
 from ..sql.types import long_cls, short_cls
 from ..stats.calculate.activity import ActivityCalculator
 from ..stats.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
-from ..stats.names import DUMMY
+from ..stats.names import DUMMY, ALL
 from ..urwid.fields.topic import Integer
 
 log = getLogger(__name__)
@@ -132,7 +132,7 @@ def add_activities(s, cls, sort, **kargs):
 
 
 def add_constant(s, name, value, description=None, units=None, single=False,
-                 statistic_journal_type=StatisticJournalType.INTEGER,
+                 statistic_journal_type=StatisticJournalType.INTEGER, activity_group=ALL,
                  time=0.0):
     '''
     Add a constant (not associated with an activity).
@@ -143,7 +143,8 @@ def add_constant(s, name, value, description=None, units=None, single=False,
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
     log.debug(f'Adding constant {name}')
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=None,
+    statistic_name = add(s, StatisticName(name=name, owner=Constant,
+                                          activity_group=ActivityGroup.from_name(s, activity_group),
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
     constant = add(s, Constant(statistic_name=statistic_name, name=name, single=single))
@@ -166,7 +167,7 @@ def add_activity_constant(s, activity_group, name, value, description=None, unit
     '''
     if activity_group.id is None:
         s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=activity_group,
+    statistic_name = add(s, StatisticName(name=name, owner=Constant, activity_group=activity_group,
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
     log.debug(f'Adding activity constant {name}')
@@ -179,11 +180,13 @@ def add_activity_constant(s, activity_group, name, value, description=None, unit
     return constant
 
 
-def add_enum_constant(s, name, enum, value, constraint=None, description=None, units=None, single=False, time=0.0):
+def add_enum_constant(s, name, enum, value,
+                      activity_group=ALL, description=None, units=None, single=False, time=0.0):
     '''
     Add a constant that is a JSON encoded enum.  This is validated before saving.
     '''
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=constraint,
+    statistic_name = add(s, StatisticName(name=name, owner=Constant,
+                                          activity_group=ActivityGroup.from_name(s, activity_group),
                                           units=units, description=description,
                                           statistic_journal_type=StatisticJournalType.TEXT))
     constant = add(s, Constant(statistic_name=statistic_name, name=name, single=single,
@@ -254,9 +257,9 @@ def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, un
     '''
     if diary_topic.id is None:
         s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=DiaryTopic, constraint=diary_topic,
-                                          statistic_journal_type=type, description=description,
-                                          units=units, summary=summary))
+    statistic_name = add(s, StatisticName(name=name, owner=DiaryTopic, statistic_journal_type=type,
+                                          description=description, units=units, summary=summary,
+                                          activity_group=ActivityGroup.from_name(s, ALL)))
     if model is None: model = {}
     field = add(s, DiaryTopicField(diary_topic=diary_topic, sort=sort, model=model, schedule=schedule,
                                    statistic_name=statistic_name))
@@ -304,7 +307,7 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group
         s.flush()
     # cannot simply add as this is also called during loading
     statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, ActivityTopic,
-                                                  activity_group, description=description)
+                                                  activity_group=activity_group, description=description)
     if model is None: model = {}
     return add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,
                                      statistic_name=statistic_name))
@@ -317,7 +320,6 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
     region (specified by latitude, longitude, width and height, all in degrees).
     '''
     log.debug(f'Adding nearby statistics for {constraint} / {activity_group.name}')
-    activity_group_constraint = str(activity_group)
     nearby_constraint = name_constant(constraint, activity_group)
     nearby_name = name_constant(constant, activity_group)
     add_enum_constant(s, nearby_name, Nearby,
@@ -325,7 +327,7 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
                        'border': border, 'start': start, 'finish': finish,
                        'latitude': latitude, 'longitude': longitude,
                        'height': height, 'width': width, 'fraction': fraction},
-                      single=True, constraint=activity_group_constraint, description='''
+                      single=True, activity_group=activity_group, description='''
 A region over which activities are candidates to be 'near' each other.  
 This does not mean that all activities in this area are near to each other - 
 only that activities outside will not be considered as candidates.
@@ -350,4 +352,5 @@ def add_loader_support(s):
     log.debug('Adding dummy source')
     dummy_source = add(s, Dummy())
     dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source,
+                                      activity_group=ActivityGroup.from_name(s, ALL),
                                       statistic_journal_type=StatisticJournalType.STATISTIC))

@@ -130,9 +130,9 @@ STEPS_UNITS = 'stp'
 W = 'W'
 
 
+def _cov(name): return f'Cov {name}'  # coverage
 def _delta(name): return f'Δ {name}'
 def _avg(name): return f'Avg {name}'
-def _cor(name): return f'Cor {name}'
 def _slash(name, units): return f'{name} / {units}'
 def _log(name): return f'Log {name}'
 def _sqr(name): return f'{name}{POW_2}'
@@ -171,7 +171,6 @@ DELTA_DISTANCE = _delta(DISTANCE)
 DELTA_ELEVATION = _delta(ELEVATION)
 DELTA_SPEED = _delta(SPEED)
 DELTA_ENERGY = _delta(ENERGY)
-COR_HEART_RATE = _cor(HEART_RATE)
 
 ACTIVE_DISTANCE_KM = _slash(ACTIVE_DISTANCE, KM)
 ACTIVE_TIME_H = _slash(ACTIVE_TIME, H)

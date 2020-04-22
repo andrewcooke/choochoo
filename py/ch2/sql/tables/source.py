@@ -82,6 +82,10 @@ class Source(Base):
         if start is not None:
             Interval.mark_dirty_times(s, start, finish)
 
+    @classmethod
+    def from_id(cls, s, id):
+        return s.query(Source).filter(Source.id == id).one()
+
 
 @listens_for(Session, 'before_flush')
 def before_flush(session, context, instances):

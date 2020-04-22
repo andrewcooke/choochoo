@@ -59,9 +59,9 @@ class Config:
     def load(self, s):
         # hopefully you won't need to over-ride this, but instead one of the more specific methods
         self._pre(s)
+        self._load_activity_group(s, ALL, 'All activities')  # a widely used default
         add_loader_support(s)  # required by standard statistics calculations
         self._load_specific_activity_groups(s)
-        self._load_activity_group(s, ALL, 'All activities')  # referenced in FF calculations
         self._load_activities_pipeline(s, Counter())
         self._load_statistics_pipeline(s, Counter())
         self._load_diary_pipeline(s, Counter())

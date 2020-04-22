@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from ..commands.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
-    SHOW, REMOVE, CONSTRAINT, DESCRIPTION, SINGLE, VALIDATE
+    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, GROUP
 from ..sql.tables.constant import Constant, ValidateNamedTuple
 from ..sql.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType
 from ..sql.types import lookup_cls
@@ -40,13 +40,11 @@ Remove a constant (the associated entries must have been deleted first).
 
 Names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and FTHR.Bike, for example.
 In such a case "entry" in the descriptions above may refer to multiple entries.
-
-TODO - Constraint handling is confused and confusing.
     '''
     name, cmd = args[NAME], args[SUB_COMMAND]
     with db.session_context() as s:
         if cmd == ADD:
-            add_constant(s, name, constraint=args[CONSTRAINT], description=args[DESCRIPTION],
+            add_constant(s, name, activity_group=args[GROUP], description=args[DESCRIPTION],
                          single=args[SINGLE], validate=args[VALIDATE])
         else:
             if name:
@@ -85,17 +83,17 @@ def constants_like(s, name):
     return constants
 
 
-def add_constant(s, name, constraint=None, description=None, single=False, validate=None):
+def add_constant(s, name, activity_group=None, description=None, single=False, validate=None):
     if s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == Constant,
-                   StatisticName.constraint == constraint).one_or_none():
-        raise Exception(f'Constant {name} (constraint {constraint}) already exists')
+                   StatisticName.activity_group == activity_group).one_or_none():
+        raise Exception(f'Constant {name} (activity group {activity_group}) already exists')
     validate_cls, validate_args, validate_kargs = None, [], {}
     if validate:
         lookup_cls(validate)
         validate_cls, validate_kargs = ValidateNamedTuple, {'tuple_cls': validate}
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, constraint=constraint,
+    statistic_name = add(s, StatisticName(name=name, owner=Constant, activity_group=activity_group,
                                           units=None, description=description,
                                           statistic_journal_type=StatisticJournalType.TEXT))
     add(s, Constant(statistic_name=statistic_name, name=name, single=single,

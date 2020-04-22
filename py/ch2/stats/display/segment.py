@@ -57,7 +57,7 @@ class SegmentDiary(Reader):
         for name in names:
             sname = s.query(StatisticName). \
                 filter(StatisticName.name == name,
-                       StatisticName.constraint == segment,
+                       StatisticName.activity_group == segment,
                        StatisticName.owner == SegmentCalculator).one_or_none()
             if sname:
                 yield sname

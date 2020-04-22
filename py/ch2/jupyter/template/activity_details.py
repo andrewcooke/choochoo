@@ -30,9 +30,9 @@ def activity_details(local_time, activity_group_name):
 
     s = session('-v2')
 
-    activity = std_activity_statistics(s, local_time=local_time, activity_group_name=activity_group_name)
+    activity = std_activity_statistics(s, local_time=local_time, activity_group=activity_group_name)
     details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, local_time=local_time,
-                                  activity_group_name=activity_group_name)
+                                  activity_group=activity_group_name)
     health = std_health_statistics(s)
     hr_zones = hr_zones_from_database(s, local_time, activity_group_name)
 

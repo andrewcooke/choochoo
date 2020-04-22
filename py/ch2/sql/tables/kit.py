@@ -15,7 +15,7 @@ from ...diary.model import TYPE, DB, UNITS, VALUE
 from ...lib import now, time_to_local_time
 from ...lib.date import YMD
 from ...lib.utils import inside_interval
-from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s, AGE, D
+from ...stats.names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s, AGE, D, ALL
 
 log = getLogger(__name__)
 
@@ -96,7 +96,9 @@ class StatisticsMixin:
     '''
 
     def _base_statistic_query(self, s, statistic, *sources, owner=None):
+        from .activity import ActivityGroup
         sources = (self,) + sources
+        all = ActivityGroup.from_name(ALL)
         subq = s.query(Composite.id.label('composite_id'))
         for source in sources:
             cc = aliased(CompositeComponent)
@@ -106,7 +108,7 @@ class StatisticsMixin:
             join(StatisticName). \
             outerjoin(subq, subq.c.composite_id == StatisticJournal.source_id). \
             filter(StatisticName.name == statistic,
-                   StatisticName.constraint == None)
+                   StatisticName.activity_group == all)
         if len(sources) == 1:
             q = q.filter(or_(StatisticJournal.source == self, subq.c.composite_id != None))
         else:

@@ -31,7 +31,7 @@ class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, 
     def _read_dataframe(self, s, ajournal):
         try:
             heart_rate_df = activity_statistics(s, HEART_RATE, activity_journal=ajournal)
-            fthr_df = statistics(s, FTHR, constraint=ajournal.activity_group)
+            fthr_df = statistics(s, FTHR, activity_group=ajournal.activity_group)
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
             raise
@@ -64,5 +64,5 @@ class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, 
                            row[HR_IMPULSE_10], time, StatisticJournalFloat, description=impulse_description)
         # if there are no values, add a single null so we don't re-process
         if not loader:
-            loader.add(HR_ZONE, None, SUM, ajournal.activity_group, ajournal, None, ajournal.start,
+            loader.add(HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,
                        StatisticJournalFloat, description=hr_description)

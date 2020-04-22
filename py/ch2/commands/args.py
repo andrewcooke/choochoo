@@ -322,33 +322,33 @@ def make_parser(with_noop=False):
 
     # low-level commands used often
 
-    constant = subparsers.add_parser(CONSTANTS, help='set and examine constants')
-    constant_cmds = constant.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    constant_show = constant_cmds.add_parser(SHOW, help='show a value (or all values)')
-    constant_show.add_argument(NAME, nargs='?', metavar='NAME', help='name (omit for all)')
-    constant_show.add_argument(DATE, nargs='?', metavar='DATE',
+    constants = subparsers.add_parser(CONSTANTS, help='set and examine constants')
+    constants_cmds = constants.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    constants_show = constants_cmds.add_parser(SHOW, help='show a value (or all values)')
+    constants_show.add_argument(NAME, nargs='?', metavar='NAME', help='name (omit for all)')
+    constants_show.add_argument(DATE, nargs='?', metavar='DATE',
                                help='date of value to show (omit for all)')
-    constant_add = constant_cmds.add_parser(ADD, help='add a new constant')
-    constant_add.add_argument(NAME, metavar='NAME', help='name')
-    constant_add.add_argument(CONSTRAINT, nargs='?', metavar='CONSTRAINT',
-                              help='constraint (eg activity group)')
-    constant_add.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
-    constant_add.add_argument(mm(DESCRIPTION), help='optional description')
-    constant_add.add_argument(mm(VALIDATE), help='optional validation class')
-    constant_set = constant_cmds.add_parser(SET, help='set or modify a value')
-    constant_set.add_argument(NAME, metavar='NAME', help='name')
-    constant_set.add_argument(VALUE, metavar='VALUE', help='value')
-    constant_set.add_argument(DATE, nargs='?', metavar='DATE',
+    constants_add = constants_cmds.add_parser(ADD, help='add a new constant')
+    constants_add.add_argument(NAME, metavar='NAME', help='name')
+    constants_add.add_argument(GROUP, nargs='?', metavar='GROUP',
+                              help='activity group (optional)')
+    constants_add.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
+    constants_add.add_argument(mm(DESCRIPTION), help='optional description')
+    constants_add.add_argument(mm(VALIDATE), help='optional validation class')
+    constants_set = constants_cmds.add_parser(SET, help='set or modify a value')
+    constants_set.add_argument(NAME, metavar='NAME', help='name')
+    constants_set.add_argument(VALUE, metavar='VALUE', help='value')
+    constants_set.add_argument(DATE, nargs='?', metavar='DATE',
                               help='date when measured (omit for all time)')
-    constant_set.add_argument(mm(FORCE), action='store_true', help='allow over-writing existing values')
-    constant_delete = constant_cmds.add_parser(DELETE, help='delete a value (or all values)')
-    constant_delete.add_argument(NAME, metavar='NAME', help='name')
-    constant_delete.add_argument(DATE, nargs='?', metavar='DATE',
+    constants_set.add_argument(mm(FORCE), action='store_true', help='allow over-writing existing values')
+    constants_delete = constants_cmds.add_parser(DELETE, help='delete a value (or all values)')
+    constants_delete.add_argument(NAME, metavar='NAME', help='name')
+    constants_delete.add_argument(DATE, nargs='?', metavar='DATE',
                                  help='date of value to delete (omit for all)')
-    constant_delete.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
-    constant_remove = constant_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)')
-    constant_remove.add_argument(NAME, metavar='NAME', help='name')
-    constant_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
+    constants_delete.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
+    constants_remove = constants_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)')
+    constants_remove.add_argument(NAME, metavar='NAME', help='name')
+    constants_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')
 
     check = subparsers.add_parser(CHECK, help='check (and optionally fix) system')
     check.add_argument(mm(FIX), action='store_true', help='correct errors when possible')
@@ -482,10 +482,8 @@ def make_parser(with_noop=False):
     dump_statistics.add_argument(mm(FINISH), metavar='TIME', help='finish time')
     dump_statistics.add_argument(mm(OWNER), metavar='OWNER',
                                  help='typically the class that created the data')
-    dump_statistics.add_argument(mm(CONSTRAINT), metavar='CONSTRAINT',
-                                 help='a value that makes the name unique (eg activity group)')
-    dump_statistics.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-                                 help='the schedule on which some statistics are calculated')
+    dump_statistics.add_argument(mm(GROUP), metavar='GROUP',
+                                 help='activity group')
     dump_statistics.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
                                  help='the source ID for the statistic (can be repeated)')
     dump_statistic_quartiles = dump_sub.add_parser(STATISTIC_QUARTILES)
@@ -494,8 +492,8 @@ def make_parser(with_noop=False):
     dump_statistic_quartiles.add_argument(mm(FINISH), metavar='TIME', help='finish time')
     dump_statistic_quartiles.add_argument(mm(OWNER), metavar='OWNER',
                                           help='typically the class that created the data')
-    dump_statistic_quartiles.add_argument(mm(CONSTRAINT), metavar='CONSTRAINT',
-                                          help='a value that makes the name unique (eg activity group)')
+    dump_statistic_quartiles.add_argument(mm(GROUP), metavar='GROUP',
+                                          help='activity group')
     dump_statistic_quartiles.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
                                           help='the schedule on which some statistics are calculated')
     dump_statistic_quartiles.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,

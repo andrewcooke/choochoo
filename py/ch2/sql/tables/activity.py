@@ -23,9 +23,11 @@ class ActivityGroup(Base):
         return self.name
 
     @classmethod
-    def from_name(cls, s, name, optional=False):
-        if optional:
-            return s.query(ActivityGroup).filter(ActivityGroup.name.ilike(name)).one_or_none()
+    def from_name(cls, s, name):
+        if not name:
+            raise Exception('Missing activity group')
+        if isinstance(name, ActivityGroup):
+            return name  # allow callers to already have an instance
         else:
             return s.query(ActivityGroup).filter(ActivityGroup.name.ilike(name)).one()
 
@@ -35,7 +37,7 @@ class ActivityJournal(Source):
     __tablename__ = 'activity_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    activity_group_id = Column(Integer, ForeignKey('activity_group.id'), nullable=False)
+    activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=False)
     activity_group = relationship('ActivityGroup')
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
     file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
@@ -59,7 +61,7 @@ class ActivityJournal(Source):
         from ...sql import StatisticJournal, StatisticName
         name, group = split_qname(qname)
         q = s.query(StatisticJournal).join(StatisticName).filter(StatisticName.name == name)
-        if group: q = q.filter(StatisticName.constraint == group)
+        if group: q = q.filter(StatisticName.activity_group == group)
 
     @classmethod
     def at_date(cls, s, date):

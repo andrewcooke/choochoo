@@ -160,13 +160,13 @@ def climbs_for_activity(s, ajournal):
         filter(StatisticName.name == TOTAL_CLIMB,
                StatisticJournal.time == ajournal.start,
                StatisticName.owner == ActivityCalculator,
-               StatisticName.constraint == ajournal.activity_group).order_by(StatisticJournal.time).one_or_none()
+               StatisticName.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).one_or_none()
     statistics = s.query(StatisticJournal).join(StatisticName). \
         filter(StatisticName.name.like('Climb %'),
                StatisticJournal.time >= ajournal.start,
                StatisticJournal.time <= ajournal.finish,
                StatisticName.owner == ActivityCalculator,
-               StatisticName.constraint == ajournal.activity_group).order_by(StatisticJournal.time).all()
+               StatisticName.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).all()
     return total, sorted((dict((statistic.statistic_name.name, statistic) for statistic in climb_statistics)
                           for _, climb_statistics in groupby(statistics, key=lambda statistic: statistic.time)),
                          key=lambda climb: climb[CLIMB_ELEVATION].value, reverse=True)
@@ -187,7 +187,7 @@ def add_climb_stats(df, climbs):
 #     start = time()
 #     date = '2017-05-28 10:28:13'  # 1495103293
 #     s = session('-v5')
-#     df = activity_statistics(s, DISTANCE, ELEVATION, local_time=date, activity_group_name='Bike', with_timespan=False)
+#     df = activity_statistics(s, DISTANCE, ELEVATION, local_time=date, activity_group='Bike', with_timespan=False)
 #     print(list(find_climbs(df)))
 #     print(time() - start)
 

@@ -63,7 +63,7 @@ for row in old.execute('''select date, notes, rest_heart_rate, sleep, mood, weat
 def injury_notes(old_name, new_name):
     injury_id = next(old.execute('''select id from injury where name like ?''', [old_name]))[0]
     topic = s.query(DiaryTopic).filter(DiaryTopic.name == new_name).one()
-    notes = s.query(StatisticName).filter(StatisticName.name == 'Notes', StatisticName.constraint == topic.id).one()
+    notes = s.query(StatisticName).filter(StatisticName.name == 'Notes', StatisticName.activity_group == topic.id).one()
     for row in old.execute('''select date, notes from injury_diary where injury_id = ?''', [injury_id]):
         if row['notes']:
             # print(row['notes'], len(row['notes']))

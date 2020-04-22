@@ -115,7 +115,7 @@ def add_climbs(f, climbs, source):
         for time, climb in climbs.loc[~pd.isna(climbs[CLIMB_DISTANCE])].iterrows():
             i = source.index.get_loc(time, method='nearest')
             x = source[DISTANCE_KM].iloc[i]
-            x = (x - climb[CLIMB_DISTANCE] / 1000, x)
+            x = (x - climb[CLIMB_DISTANCE], x)
             y = source[ELEVATION_M].iloc[i]
             y = (y - climb[CLIMB_ELEVATION], y)
             f.line(x=x, y=y, color='red', line_width=5, alpha=0.2)
@@ -128,7 +128,7 @@ def add_climb_zones(f, climbs, source):
         for time, climb in climbs.loc[~pd.isna(climbs[CLIMB_DISTANCE])].iterrows():
             i = source.index.get_loc(time, method='nearest')
             right = source[DISTANCE_KM].iloc[i]
-            left = right - climb[CLIMB_DISTANCE] / 1000
+            left = right - climb[CLIMB_DISTANCE]
             top = f.y_range.end
             bottom = f.y_range.start
             f.quad(top=top, bottom=bottom, left=left, right=right, color='red', alpha=0.05)

@@ -42,7 +42,7 @@ class BasicPowerCalculator(PowerCalculator):
     Currently the 'bike' attribute of 'power' is defined as '${Constant:Power.${SegmentReader:kit}}'.
     '''
 
-    def __init__(self, *args, power=None, caloric_eff=0.25, activity_group_name=None, **kargs):
+    def __init__(self, *args, power=None, caloric_eff=0.25, activity_group=None, **kargs):
         self.power_ref = power
         self.caloric_eff = caloric_eff
         super().__init__(*args, **kargs)
@@ -50,7 +50,7 @@ class BasicPowerCalculator(PowerCalculator):
     def _set_power(self, s, ajournal):
         power = Power(**loads(Constant.get(s, self.power_ref).at(s).value))
         # default owner is constant since that's what users can tweak
-        self.power = power.expand(s, ajournal.start, default_owner=Constant, default_constraint=ajournal.activity_group)
+        self.power = power.expand(s, ajournal.start, default_owner=Constant, default_activity_group=ajournal.activity_group)
         log.debug(f'Power: {self.power_ref}: {self.power}')
 
     def _read_dataframe(self, s, ajournal):

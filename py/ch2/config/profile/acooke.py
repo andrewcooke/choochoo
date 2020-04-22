@@ -44,13 +44,13 @@ class ACooke(Config):
         injuries = add_diary_topic(s, 'Injuries', c)
 
         ms = add_child_diary_topic(s, injuries, 'Multiple Sclerosis', c)
-        add_diary_topic_field(s, ms, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
+        add_diary_topic_field(s, ms, 'MS Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
         add_child_diary_topic(s, ms, 'Betaferon', c,
                               schedule='2018-08-08/2d[1]')  # reminder to take meds on alternate days
 
         leg = add_child_diary_topic(s, injuries, 'Broken Femur LHS', c,
                                     schedule='d2018-03-11-2020-03-01')
-        add_diary_topic_field(s, leg, 'Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
+        add_diary_topic_field(s, leg, 'Leg Notes', c, StatisticJournalType.TEXT, model={TYPE: EDIT})
         add_child_diary_topic(s, leg, 'Learn to manage tendon pain', c)  # aims added as child topics
         add_child_diary_topic(s, leg, 'Maintain fitness', c)
         add_child_diary_topic(s, leg, 'Visit UK', c, schedule='-2018-08-11')

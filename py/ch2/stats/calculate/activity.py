@@ -116,16 +116,19 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
 
     def __copy(self, ajournal, loader, stats, name, units, summary, time, type=StatisticJournalFloat,
                extra_group=None, description=None):
-        if not description: description = DESCRIPTIONS[name]
-        groups = [ajournal.activity_group]
-        if extra_group: groups += [extra_group]
-        for group in groups:
-            try:
-                loader.add(name, units, summary, group, ajournal, stats[name], time, type, description=description)
-            except:
-                log.warning(f'Failed to load {name}')
-                log_current_exception(traceback=False)
-        del stats[name]
+        if name in stats:
+            if not description: description = DESCRIPTIONS[name]
+            groups = [ajournal.activity_group]
+            if extra_group: groups += [extra_group]
+            for group in groups:
+                try:
+                    loader.add(name, units, summary, group, ajournal, stats[name], time, type, description=description)
+                except:
+                    log.warning(f'Failed to load {name}')
+                    log_current_exception(traceback=False)
+            del stats[name]
+        else:
+            log.warning(f'Did not calculate {name}')
 
 
 DESCRIPTIONS = defaultdict(lambda: None, {
