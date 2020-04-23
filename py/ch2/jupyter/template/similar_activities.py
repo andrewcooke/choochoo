@@ -7,10 +7,10 @@ from ch2.jupyter.decorator import template
 
 
 @template
-def similar_activities(local_time, activity_group_name):
+def similar_activities(local_time, activity_group):
 
     f'''
-    # Similar Activities: {local_time.split()[0]} ({activity_group_name})
+    # Similar Activities: {local_time.split()[0]} ({activity_group})
     '''
 
     '''
@@ -30,7 +30,7 @@ def similar_activities(local_time, activity_group_name):
                                              ACTIVE_DISTANCE, ACTIVE_TIME,
                                              activity_journal=similar[0])
                          for similar in nearby_activities(s, local_time=local_time,
-                                                          activity_group=activity_group_name))
+                                                          activity_group=activity_group))
             if len(data[SPHERICAL_MERCATOR_X].dropna()) > 10]
 
     print(f'Found {len(maps)} activities')

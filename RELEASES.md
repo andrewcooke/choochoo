@@ -7,7 +7,7 @@ instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
 ### v0.32.0
 
 Schema for statistic names changed from textual 'constraint' to
-foreign key relation to activity group.  This cleans up the database,
+foreign key relation on activity group.  This cleans up the database,
 but has some downsides (mainly, that diary topics must have unique
 names).  It also helps the new search work.
 

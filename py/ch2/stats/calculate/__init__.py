@@ -115,15 +115,15 @@ class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
 
     def __init__(self, *args, activity_group=None, **kargs):
         super().__init__(*args, **kargs)
-        self.activity_group_name = activity_group_name
+        self.activity_group = activity_group
 
     def _missing(self, s):
         existing_ids = s.query(Timestamp.source_id).filter(Timestamp.owner == self.owner_out)
         q = s.query(self._journal_type.start). \
             filter(not_(self._journal_type.id.in_(existing_ids.cte()))). \
             order_by(self._journal_type.start)
-        if self.activity_group_name:
-            q = q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group_name)
+        if self.activity_group:
+            q = q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group)
         return [row[0] for row in self._delimit_query(q)]
 
 

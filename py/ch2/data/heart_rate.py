@@ -42,8 +42,8 @@ def edwards(hr, max_hr):
     return max(0, int(10 * (1 - (max_hr - hr) / max_hr)) - 4)
 
 
-def hr_zones_from_database(s, local_time, activity_group_name):
-    activity_group = ActivityGroup.from_name(s, activity_group_name)
+def hr_zones_from_database(s, local_time, activity_group):
+    activity_group = ActivityGroup.from_name(s, activity_group)
     fthr = StatisticJournal.before(s, to_time(local_time), FTHR, Constant, activity_group)
     if fthr:
         return hr_zones(fthr.value)

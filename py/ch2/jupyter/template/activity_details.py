@@ -12,10 +12,10 @@ from ch2.lib import *
 
 
 @template
-def activity_details(local_time, activity_group_name):
+def activity_details(local_time, activity_group):
 
     f'''
-    # Activity Details: {local_time} ({activity_group_name})
+    # Activity Details: {local_time} ({activity_group})
     '''
 
     '''
@@ -30,11 +30,11 @@ def activity_details(local_time, activity_group_name):
 
     s = session('-v2')
 
-    activity = std_activity_statistics(s, local_time=local_time, activity_group=activity_group_name)
+    activity = std_activity_statistics(s, local_time=local_time, activity_group=activity_group)
     details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, local_time=local_time,
-                                  activity_group=activity_group_name)
+                                  activity_group=activity_group)
     health = std_health_statistics(s)
-    hr_zones = hr_zones_from_database(s, local_time, activity_group_name)
+    hr_zones = hr_zones_from_database(s, local_time, activity_group)
 
     f'''
     ## Activity Plots

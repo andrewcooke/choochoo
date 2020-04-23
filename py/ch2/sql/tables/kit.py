@@ -98,7 +98,7 @@ class StatisticsMixin:
     def _base_statistic_query(self, s, statistic, *sources, owner=None):
         from .activity import ActivityGroup
         sources = (self,) + sources
-        all = ActivityGroup.from_name(ALL)
+        all = ActivityGroup.from_name(s, ALL)
         subq = s.query(Composite.id.label('composite_id'))
         for source in sources:
             cc = aliased(CompositeComponent)

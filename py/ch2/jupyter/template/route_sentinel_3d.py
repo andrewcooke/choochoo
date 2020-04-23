@@ -10,10 +10,10 @@ from ch2.jupyter.decorator import template
 
 
 @template
-def route_sentinel_3d(user, passwd, local_time, activity_group_name):
+def route_sentinel_3d(user, passwd, local_time, activity_group):
 
     f'''
-    # Route : {local_time} ({activity_group_name})
+    # Route : {local_time} ({activity_group})
 
     Generate a 3D landscape with the route marked in red.
     The terrain image is taken from Sentinel satellite data.
@@ -31,7 +31,7 @@ def route_sentinel_3d(user, passwd, local_time, activity_group_name):
 
     s = session('-v2')
 
-    api, products, bbox, df = query_activity(s, user, passwd, local_time, activity_group_name)
+    api, products, bbox, df = query_activity(s, user, passwd, local_time, activity_group)
     download_paths = cached_download(s, api, products)
 
     '''

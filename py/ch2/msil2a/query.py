@@ -10,8 +10,8 @@ from ..stats.names import LATITUDE, LONGITUDE
 log = getLogger(__name__)
 
 
-def query_activity(s, user, passwd, local_time, activity_group_name, margin=0.1):
-    df = activity_statistics(s, LATITUDE, LONGITUDE, local_time=local_time, activity_group=activity_group_name)
+def query_activity(s, user, passwd, local_time, activity_group, margin=0.1):
+    df = activity_statistics(s, LATITUDE, LONGITUDE, local_time=local_time, activity_group=activity_group)
     df = df.dropna()
     footprint = MultiPoint(df.apply(lambda row: (row[LONGITUDE], row[LATITUDE]), axis='columns')).convex_hull
     minx, miny, maxx, maxy = footprint.bounds

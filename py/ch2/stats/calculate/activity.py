@@ -16,6 +16,7 @@ from ...data.activity import active_stats, times_for_distance, hrz_stats, max_me
 from ...data.climb import find_climbs, Climb, add_climb_stats
 from ...data.frame import activity_statistics, present, statistics
 from ...data.response import response_stats
+from ...lib import time_to_local_time
 from ...lib.log import log_current_exception
 from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, ActivityGroup, StatisticJournalTimestamp
 from ...stats.calculate.power import PowerCalculator
@@ -128,7 +129,8 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
                     log_current_exception(traceback=False)
             del stats[name]
         else:
-            log.warning(f'Did not calculate {name}')
+            log.warning(f'Did not calculate {name} '
+                        f'({time_to_local_time(ajournal.time)} / {ajournal.activity_group.name}')
 
 
 DESCRIPTIONS = defaultdict(lambda: None, {

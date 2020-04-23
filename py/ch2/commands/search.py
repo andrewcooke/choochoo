@@ -24,13 +24,24 @@ def search(args, system, db):
     > ch2 search QUERY [--show NAME ...] [--set NAME=VALUE]
 
 This searches for activities.
+Once a matching activity is found additional statistics can be displayed (--show)
+and a single value modified (--set).
 
 The query syntax is similar to SQL, but element names are statistic names.
 The name can include the activity group (start:bike) and SQL wildcards (%fitness%).
+A name of the form "name:" matches any activity group;
+"name" matches the activity group of the matched activity
+(usually what is needed - the main exception is some statistics defined for group All).
 
+String values must be quoted.
 Negation and NULL values are not supported.
+Nor is comparison between values (only between a name and a value).
 
-This is still in development.
+### Example
+
+    > ch2 search 'name="Wrong Name"' --set 'name=Right Name'
+
+Note the different handling of strings for searching and setting (sorry).
     '''
     query, show, set = args[QUERY], args[SHOW], args[SET]
     if not show: show = [ACTIVE_TIME, ACTIVE_DISTANCE]
