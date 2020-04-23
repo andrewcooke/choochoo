@@ -1,5 +1,6 @@
 
 import datetime as dt
+from logging import getLogger
 
 from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc
 from sqlalchemy.orm import relationship, backref
@@ -8,6 +9,8 @@ from .source import Source, SourceType
 from ..support import Base
 from ..types import Time, Sort, ShortCls, NullStr
 from ...lib.date import format_time, local_date_to_time, local_time_to_time
+
+log = getLogger(__name__)
 
 
 class ActivityGroup(Base):
@@ -58,10 +61,29 @@ class ActivityJournal(Source):
         return self.start, self.finish
 
     def get_named(self, s, qname, owner=None):
-        from ...sql import StatisticJournal, StatisticName
-        name, group = split_qname(qname)
-        q = s.query(StatisticJournal).join(StatisticName).filter(StatisticName.name == name)
-        if group: q = q.filter(StatisticName.activity_group == group)
+        from .. import StatisticJournal, StatisticName
+        from ...data.constraint import parse_qname
+        name, group = parse_qname(qname)
+        q = s.query(StatisticJournal). \
+            join(ActivityJournal). \
+            join(StatisticName). \
+            filter(StatisticName.name.ilike(name),
+                   StatisticJournal.source_id == self.id)
+        if owner: q = q.filter(StatisticName.owner == owner)
+        if group: q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+        elif group is None: q = q.join(ActivityGroup).filter(ActivityGroup.id == ActivityJournal.activity_group_id)
+        return q.all()
+
+    def get_all_named(self, s, qname, owner=None):
+        return self.get_named(s, qname, owner=owner) + \
+               self.get_activity_topic_journal(s).get_named(s, qname, owner=owner)
+
+    def get_activity_topic_journal(self, s):
+        from .. import ActivityTopicJournal, FileHash
+        return s.query(ActivityTopicJournal). \
+            join(FileHash). \
+            join(ActivityJournal). \
+            filter(ActivityJournal.id == self.id).one()
 
     @classmethod
     def at_date(cls, s, date):

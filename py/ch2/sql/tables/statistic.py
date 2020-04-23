@@ -6,6 +6,7 @@ from re import split
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref, reconstructor, synonym
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -14,7 +15,7 @@ from ..support import Base
 from ..types import Time, ShortCls
 from ..utils import add
 from ...diary.model import TYPE, MEASURES, SCHEDULES
-from ...lib.date import format_seconds, local_date_to_time
+from ...lib.date import format_seconds, local_date_to_time, time_to_local_time
 from ...lib.utils import sigfig
 from ...stats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM, ALL
 
@@ -409,11 +410,6 @@ class StatisticJournalTimestamp(StatisticJournal):
         'polymorphic_identity': StatisticJournalType.TIMESTAMP
     }
 
-    @reconstructor
-    def init_on_load(self):
-        # we need a value attribute so that the API is constant across all journal instances
-        self.value = None
-
     @classmethod
     def add(cls, s, name, units, summary, owner, activity_group, source, time, serial=None, description=None):
         statistic_name = StatisticName.add_if_missing(s, name, StatisticJournalType.TIMESTAMP,
@@ -422,6 +418,9 @@ class StatisticJournalTimestamp(StatisticJournal):
         journal = StatisticJournalTimestamp(statistic_name=statistic_name, source=source, time=time, serial=serial)
         s.add(journal)
         return journal
+
+    def formatted(self):
+        return time_to_local_time(self.value)
 
 
 class StatisticMeasure(Base):

@@ -146,17 +146,17 @@ def add_group(q, group):
         return q.join(ActivityGroup, StatisticName.activity_group_id == ActivityGroup.id). \
             filter(ActivityGroup.name.ilike(group))
     elif group is None:
-        return q
-    else:
         qaj = q.join(ActivityJournal). \
             filter(ActivityJournal.id == StatisticJournal.source_id,
                    ActivityJournal.activity_group_id == StatisticName.activity_group_id)
         qatj = q.join(ActivityTopicJournal). \
-            join(FileHash, ActivityTopicJournal.file_hash_id == FileHash.id). \
-            join(ActivityJournal, ActivityJournal.file_hash_id == FileHash.id). \
+            join(FileHash). \
+            join(ActivityJournal). \
             filter(ActivityTopicJournal.id == StatisticJournal.source_id,
                    ActivityJournal.activity_group_id == StatisticName.activity_group_id)
         return union(qaj, qatj).select()
+    else:
+        return q
 
 
 def parse_qname(qname):

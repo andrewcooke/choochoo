@@ -4,8 +4,7 @@ from .args import QUERY, SHOW, SET
 from ..data import constrained_activities
 from ..diary.model import DB, VALUE, UNITS
 from ..lib import time_to_local_time
-from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic, \
-    StatisticName, ActivityGroup
+from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic
 from ..stats.calculate.activity import ActivityCalculator
 from ..stats.names import TIME, START, ACTIVE_TIME, DISTANCE, ACTIVE_DISTANCE, GROUP
 
@@ -37,7 +36,7 @@ This is still in development.
     if not show: show = [ACTIVE_TIME, ACTIVE_DISTANCE]
     with db.session_context() as s:
         activities = constrained_activities(s, query)
-        show_activities(s, activities, show)
+        process_activities(s, activities, show, set)
 
 
 def expanded_activities(s, query):
@@ -73,24 +72,29 @@ def expand_activity(s, activity_journal):
                                                          ActivityCalculator, activity_journal.activity_group))}
 
 
-def show_activities(s, activities, show):
+def display(data):
+    if data:
+        value = data[0].formatted()
+        if len(data) > 1: value += '...'
+        return value
+    else:
+        return '-'
+
+
+def process_activities(s, activities, show, set):
+    if set:
+        name, value = [x.strip() for x in set.split('=', 1)]
     for activity in activities:
-        expanded = expand_activity(s, activity)
-        print(f'{expanded[start][VALUE]}  {expanded[name][VALUE]}:{expanded[group][VALUE]}')
-        for full_name in show:
-            if ':' in full_name:
-                sname, agroup = full_name.split(':')
-                activity_group = ActivityGroup.from_name(s, agroup)
-                query = s.query(StatisticJournal). \
-                    join(StatisticName). \
-                    filter(StatisticName.activity_group == activity_group,
-                           StatisticName.name == sname,
-                           StatisticJournal.source == activity)
-            else:
-                query = s.query(StatisticJournal). \
-                    join(StatisticName). \
-                    filter(StatisticName.name == full_name,
-                           StatisticJournal.source == activity)
-            for journal in query.all():
-                print(f'  {journal.statistic_name} = {journal.value}')
+        log.debug(activity.id)
+        print(f'{display(activity.get_named(s, START, owner=ActivityCalculator))}  {activity.activity_group.name}  '
+              f'{display(activity.get_all_named(s, ActivityTopicField.NAME, owner=ActivityTopic))}')
+        for qname in show:
+            for result in activity.get_all_named(s, qname):
+                print(f'  {result.statistic_name.name} = {result.formatted()}')
+        if set:
+            for result in activity.get_all_named(s, name):
+                before = result.formatted()
+                result.set(value)
+                after = result.formatted()
+            print(f'  {name}: {before!r} -> {after!r}')
 

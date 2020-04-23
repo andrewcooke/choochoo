@@ -1,4 +1,3 @@
-
 import datetime as dt
 from json import dumps
 from logging import getLogger
@@ -70,7 +69,6 @@ class DiaryTopic(Base, Topic):
 
 
 class ActivityTopic(Base, Topic):
-
     __tablename__ = 'activity_topic'
 
     parent_id = Column(Integer, ForeignKey('activity_topic.id'), nullable=True)
@@ -87,7 +85,6 @@ class ActivityTopic(Base, Topic):
 
 
 class TopicField:
-
     id = Column(Integer, primary_key=True)
     sort = Column(Sort, nullable=False, server_default='0')
     model = Column(Json, nullable=False, server_default=dumps({}))
@@ -103,7 +100,6 @@ class TopicField:
 
 
 class DiaryTopicField(Base, TopicField):
-
     # diary topic fields are associated with statistics whose constraints are the diary topic.
     # this lets us use the same name under different 'headings'.
 
@@ -122,7 +118,6 @@ class DiaryTopicField(Base, TopicField):
 
 
 class ActivityTopicField(Base, TopicField):
-
     # activity topic fields are associated with statistics whose constraints are the activity group.
     # this correlates to some extent with the activity topic, which is also specific to an activity group
     # (so you will never see a field for group X if it has parent activity for group Y).
@@ -168,7 +163,6 @@ class Cache:
 
 
 class DiaryTopicJournal(Source):
-
     __tablename__ = 'diary_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
@@ -219,7 +213,6 @@ class DiaryTopicJournal(Source):
 
 
 class ActivityTopicJournal(Source):
-
     __tablename__ = 'activity_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
@@ -230,6 +223,26 @@ class ActivityTopicJournal(Source):
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY_TOPIC
     }
+
+    def get_named(self, s, qname, owner=None):
+        from ...sql import StatisticJournal, StatisticName, ActivityGroup, FileHash, ActivityJournal
+        from ...data.constraint import parse_qname
+        name, group = parse_qname(qname)
+        q = s.query(StatisticJournal). \
+            join(ActivityTopicJournal). \
+            join(StatisticName). \
+            filter(StatisticName.name.ilike(name),
+                   StatisticJournal.source_id == self.id)
+        if owner:
+            q = q.filter(StatisticName.owner == owner)
+        if group:
+            q = q.join(FileHash).join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+        elif group is None:
+            q = q.join(ActivityGroup). \
+                join(FileHash). \
+                join(ActivityJournal). \
+                filter(ActivityGroup.id == ActivityJournal.activity_group_id)
+        return q.all()
 
     @classmethod
     def get_or_add(cls, s, file_hash):
