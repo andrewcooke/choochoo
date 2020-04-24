@@ -134,6 +134,10 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
     def _run_one(self, s, missed):
         data = self.__read_data(s)
         if HR_IMPULSE_10 in data.columns and COVERAGE in data.columns:
+            # coverage is calculated by the loader and seems to reflect records that have location data but not
+            # HR data.  so i guess it makes sense to scale.
+            # i don't remember why / when i added this - it might have been when using an optical monitor?
+            # it seems like a relatively small effect in most cases.
             data.loc[now()] = {HR_IMPULSE_10: 0.0, _src(HR_IMPULSE_10): None, COVERAGE: 100}
             data[SCALED] = data[HR_IMPULSE_10] * 100 / data[COVERAGE]
             all_sources = list(self.__make_sources(s, data))
@@ -146,6 +150,8 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
                 loader = self._get_loader(s, add_serial=False)
                 source, sources = None, list(all_sources)
                 for time, value in result.iteritems():
+                    # the sources are much more spread out than the response, which is calculated every hour so
+                    # that it is smooth.  so we only increment the source when necessary.
                     while sources and time >= sources[0][0]:
                         source = sources.pop(0)[1]
                     loader.add(response.dest_name, None, None, ALL, source, value, time, StatisticJournalFloat,
@@ -156,9 +162,12 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         names = s.query(StatisticName).filter(StatisticName.name == _cov(HEART_RATE)).all()
         coverages = statistics(s, *names, owner=SegmentReader, check=False)
         coverages = coverages.loc[:].replace(0, np.nan)
+        # extends the coverage across columns in both directions, so all columns are the same
+        # (MTB contains entries from MTB, Road and Walk, for example)
         coverages.fillna(axis='columns', method='bfill', inplace=True)
         coverages.fillna(axis='columns', method='ffill', inplace=True)
         if not coverages.empty:
+            # since all are the same, just take one
             coverages = coverages.iloc[:, [0]].rename(columns={coverages.columns[0]: COVERAGE})
         return coverages
 
@@ -166,6 +175,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         hr10 = statistics(s, HR_IMPULSE_10, activity_group=ActivityGroup.from_name(s, ALL),
                           owner=self.owner_in, with_sources=True, check=False)
         coverage = self.__read_coverage(s)
+        # reindex and expand the coverage so we have a value at each impulse measurement
         coverage.reindex(index=hr10.index, method='nearest', copy=False)
         data = hr10.join(coverage, how='outer')
         if HR_IMPULSE_10 in data.columns and COVERAGE in data.columns:
@@ -175,6 +185,8 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         return data
 
     def __make_sources(self, s, data):
+        # this chains forwards from zero, adding a new composite for each new impulse source.
+        # in theory we could reconstruct only missing entries.
         log.info('Creating sources')
         name = _src(HR_IMPULSE_10)
         prev = add(s, Composite(n_components=0))

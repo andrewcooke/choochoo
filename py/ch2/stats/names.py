@@ -11,6 +11,7 @@ ACTIVITY = 'Activity'
 ACTIVITY_GROUP = 'Activity Group'
 AIR_SPEED = 'Air Speed'
 ALL = 'All'
+ANY_ALL = '% All'
 ALTITUDE = 'Altitude'
 ASPECT_RATIO = 'Aspect Ratio'
 BOOKMARK = 'Bookmark'
@@ -36,6 +37,8 @@ DETRENDED_HEART_RATE = 'Detrended Heart Rate'
 DIRECTION = 'Direction'
 DISTANCE = 'Distance'
 DUMMY = 'Dummy'
+EARNED_D = 'Earned %d'
+EARNED_D_ANY= 'Earned %'
 ELEVATION = 'Elevation'
 ENERGY = 'Energy'
 ENERGY_ESTIMATE = 'Energy Estimate'
@@ -74,8 +77,12 @@ MIN_KM_TIME_ANY = 'Min % Time'
 MIXED = 'Mixed'
 PERCENT_IN_Z = 'Percent in Z%d'
 PERCENT_IN_Z_ANY = 'Percent in Z%'
+PLATEAU_D = 'Plateau %d'
+PLATEAU_D_ANY = 'Plateau %'
 POWER_ESTIMATE = 'Power Estimate'
 PREDICTED_HEART_RATE = 'Predicted Heart Rate'
+RECOVERY_D = 'Recovery %d'
+RECOVERY_D_ANY = 'Recovery %'
 SEGMENT_TIME = 'Segment Time'
 SEGMENT_DISTANCE = 'Segment Distance'
 SEGMENT_HEART_RATE = 'Segment Heart Rate'
@@ -148,11 +155,14 @@ def _med(name): return f'Med{MED_WINDOW} {name}'
 def like(pattern, names):
     return list(_like(pattern, names))
 
-def _like(pattern, names):
+def _like(pattern, names, test=True):
     matcher = re.compile(re.sub('%', '.+', pattern))
     for name in names:
-        if matcher.match(name):
+        if bool(matcher.match(name)) == test:
             yield name
+
+def unlike(pattern, names):
+    return list(_like(pattern, names, test=False))
 
 
 LO_REST_HR = _lo(REST_HR)

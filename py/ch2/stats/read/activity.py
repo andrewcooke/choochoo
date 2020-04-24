@@ -1,4 +1,3 @@
-import re
 from logging import getLogger
 from os.path import splitext, basename
 
@@ -6,7 +5,7 @@ from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
 from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
-    SPORT_GENERIC, COVERAGE, PC, MIN, summaries, AVG, KM, HEART_RATE, _cov
+    SPORT_GENERIC, PC, MIN, summaries, AVG, KM, _cov
 from ..read import MultiProcFitReader, AbortImportButMarkScanned
 from ... import FatalException
 from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no

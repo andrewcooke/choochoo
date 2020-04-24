@@ -12,7 +12,7 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY,
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
     ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _delta, M, S, \
     PERCENT_IN_Z_ANY, \
-    KM, PC
+    KM, PC, EARNED_D_ANY, RECOVERY_D_ANY
 from ...data.climb import climbs_for_activity
 from ...diary.database import summary_column
 from ...diary.model import text, value, optional_text, from_field
@@ -104,7 +104,7 @@ class ActivityDiary(JournalDiary):
                 yield value(sjournal.statistic_name.name, sjournal.value,
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
-        for name in (_delta(FITNESS_D_ANY), _delta(FATIGUE_D_ANY)):
+        for name in (_delta(FITNESS_D_ANY), _delta(FATIGUE_D_ANY), EARNED_D_ANY, RECOVERY_D_ANY):
             for sjournal in StatisticJournal.at_like(s, ajournal.start, name, ActivityCalculator,
                                                      ajournal.activity_group):
                 yield value(sjournal.statistic_name.name, sjournal.value,

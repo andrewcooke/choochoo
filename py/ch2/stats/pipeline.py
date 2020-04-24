@@ -27,7 +27,9 @@ def run_pipeline(system, db, base, type, like=tuple(), unlike=tuple(), id=None, 
         for pipeline in Pipeline.all(s, type, like=like, unlike=unlike, id=id):
             kargs = dict(pipeline.kargs)
             kargs.update(extra_kargs)
-            log.info(f'Running {short_cls(pipeline.cls)}({short_str(pipeline.args)}, {short_str(kargs)}')
+            msg = f'Running {short_cls(pipeline.cls)}'
+            if 'activity_group' in kargs: msg += f' ({kargs["activity_group"]})'
+            log.info(msg)
             log.debug(f'Running {pipeline.cls}({pipeline.args}, {kargs})')
             start = time()
             pipeline.cls(system, db, *pipeline.args, base=base, id=pipeline.id, progress=local_progress, **kargs).run()
