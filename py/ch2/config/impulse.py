@@ -2,7 +2,7 @@ from json import dumps
 from logging import getLogger
 
 from .database import add_statistics, add_enum_constant, set_constant, name_constant
-from ..sql import ActivityGroup
+from ..sql import ActivityGroup, Pipeline
 from ..sql.types import short_cls
 from ..stats.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..stats.calculate.response import Response, ResponseCalculator

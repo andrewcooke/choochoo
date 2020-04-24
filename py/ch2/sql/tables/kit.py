@@ -149,7 +149,7 @@ class StatisticsMixin:
         else:
             source = self
         owner = owner or self
-        return StatisticJournalTimestamp.add(s, statistic, None, None, owner, None, source, time,
+        return StatisticJournalTimestamp.add(s, statistic, None, None, owner, ALL, source, time,
                                              description='A timestamp for tracking kit use.')
 
     def time_added(self, s):

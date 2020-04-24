@@ -26,6 +26,7 @@ def activity_imported(record, new):
 def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
     log.debug(f'Trying to copy activity_topic_fields for activity_topic {old_activity_topic}')
     activity_topic_field = old.meta.tables['activity_topic_field']
+    activity_group = old.meta.tables['activity_group']
     for old_activity_topic_field in old_s.query(activity_topic_field). \
             filter(activity_topic_field.c.activity_topic_id ==
                    (old_activity_topic.id if old_activity_topic else None)).all():
@@ -36,7 +37,8 @@ def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
                 filter(statistic_name.c.id == old_activity_topic_field.statistic_name_id).one()
             log.debug(f'Found old statistic_name {old_statistic_name}')
             try:
-                old_activity_group = old_statistic_name.activity_group
+                old_activity_group = old_s.query(activity_group). \
+                    filter(activity_group.c.id == old_statistic_name.activity_group_id).one().name
             except AttributeError:
                 old_activity_group = old_statistic_name.constraint
             with new.session_context() as new_s:

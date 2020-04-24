@@ -50,7 +50,8 @@ class BasicPowerCalculator(PowerCalculator):
     def _set_power(self, s, ajournal):
         power = Power(**loads(Constant.get(s, self.power_ref).at(s).value))
         # default owner is constant since that's what users can tweak
-        self.power = power.expand(s, ajournal.start, default_owner=Constant, default_activity_group=ajournal.activity_group)
+        self.power = power.expand(s, ajournal.start, default_owner=Constant,
+                                  default_activity_group=ajournal.activity_group.name)
         log.debug(f'Power: {self.power_ref}: {self.power}')
 
     def _read_dataframe(self, s, ajournal):
@@ -66,8 +67,8 @@ class BasicPowerCalculator(PowerCalculator):
         except MissingReference as e:
             log.warning(f'Power configuration incorrect ({e})')
         except Exception as e:
-            log.warning(f'Failed to generate statistics for power: {e}')
-            raise
+            log.warning(f'Failed to generate statistics for power ({ajournal.activity_group.name}): {e}')
+            log_current_exception(traceback=False)
 
     def _calculate_stats(self, s, ajournal, dfs):
         df, ldf = dfs
@@ -137,7 +138,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
                 self._copy_results(s, source, loader, stats)
                 loader.load()
             except Exception as e:
-                log.warning(f'No statistics on {time_or_date}')
+                log.error(f'No statistics on {time_or_date}')
                 log_current_exception()
 
     def __varying(self):

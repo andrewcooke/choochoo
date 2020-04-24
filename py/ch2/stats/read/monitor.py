@@ -8,7 +8,7 @@ from sqlalchemy import desc, and_, or_, distinct, func, select
 from sqlalchemy.sql.functions import count
 
 from ..load import StatisticJournalLoader
-from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE
+from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE, ALL
 from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
 from ... import FatalException
 from ...commands.args import MONITOR, WORKER, mm, FORCE, VERBOSITY, LOG, DEFAULT
@@ -87,6 +87,7 @@ class MonitorLoader(StatisticJournalLoader):
 
 
 NEW_STEPS = _new(STEPS)
+STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 
 class MonitorReader(MultiProcFitReader):
@@ -184,14 +185,16 @@ class MonitorReader(MultiProcFitReader):
         first_timestamp, last_timestamp, mjournal, records = data
         for record in records:
             if HEART_RATE_ATTR in record.data and record.data[HEART_RATE_ATTR][0][0]:
-                loader.add(HEART_RATE, BPM, None, None, mjournal, record.data[HEART_RATE_ATTR][0][0],
-                           record.timestamp, StatisticJournalInteger)
+                loader.add(HEART_RATE, BPM, None, ALL, mjournal, record.data[HEART_RATE_ATTR][0][0],
+                           record.timestamp, StatisticJournalInteger,
+                           description='''The instantaneous heart rate.''')
             if STEPS_ATTR in record.data:
                 for (sport, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
                     try:
                         loader.add(CUMULATIVE_STEPS, STEPS_UNITS, None,
                                    self.sport_to_activity_group[sport], mjournal, steps,
-                                   record.timestamp, StatisticJournalInteger)
+                                   record.timestamp, StatisticJournalInteger,
+                                   description='''The number of steps in a day to this point in time.''')
                     except KeyError:
                         raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
 
@@ -234,8 +237,7 @@ class MonitorReader(MultiProcFitReader):
     def _write_diff(self, s, df, activity_group_id):
         activity_group = s.query(ActivityGroup).filter(ActivityGroup.id == activity_group_id).one()
         steps = StatisticName.add_if_missing(s, STEPS, StatisticJournalType.INTEGER, STEPS_UNITS, None,
-                                             self.owner_out, activity_group,
-                                             description='''The number of steps in a day''')
+                                             self.owner_out, activity_group, description=STEPS_DESCRIPTION)
         times = df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):
             n = s.query(func.count(StatisticJournal.id)). \
@@ -248,5 +250,5 @@ class MonitorReader(MultiProcFitReader):
         loader = StatisticJournalLoader(s, owner=self.owner_out)
         for time, row in df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
             loader.add(STEPS, STEPS_UNITS, None, activity_group, row[SOURCE], int(row[NEW_STEPS]),
-                       time, StatisticJournalInteger, description='''The number of steps in a day''')
+                       time, StatisticJournalInteger, description=STEPS_DESCRIPTION)
         loader.load()

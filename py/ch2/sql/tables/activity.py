@@ -28,7 +28,7 @@ class ActivityGroup(Base):
     @classmethod
     def from_name(cls, s, name):
         if not name:
-            raise Exception('Missing activity group')
+            raise Exception('Missing activity group (None)')
         if isinstance(name, ActivityGroup):
             return name  # allow callers to already have an instance
         else:

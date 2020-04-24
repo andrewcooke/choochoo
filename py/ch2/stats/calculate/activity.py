@@ -130,7 +130,7 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
             del stats[name]
         else:
             log.warning(f'Did not calculate {name} '
-                        f'({time_to_local_time(ajournal.time)} / {ajournal.activity_group.name}')
+                        f'({time_to_local_time(ajournal.start)} / {ajournal.activity_group.name}')
 
 
 DESCRIPTIONS = defaultdict(lambda: None, {

@@ -148,7 +148,7 @@ class DataFrameCalculatorMixin(LoaderMixin):
                 else:
                     raise Exception('No stats')
             except Exception as e:
-                log.warning(f'No statistics on {time_or_date}: {e}')
+                log.error(f'No statistics on {time_or_date}: {e}')
                 log_current_exception()
 
     @abstractmethod
@@ -179,7 +179,7 @@ class DirectCalculatorMixin(LoaderMixin):
                 self._calculate_results(s, source, data, loader)
                 loader.load()
             except Exception as e:
-                log.warning(f'No statistics on {time_or_date}: {e}')
+                log.error(f'No statistics on {time_or_date}: {e}')
                 log_current_exception()
 
     @abstractmethod
@@ -251,7 +251,7 @@ class IntervalCalculatorMixin(LoaderMixin):
             self._calculate_results(s, interval, data, loader)
             loader.load()
         except Exception as e:
-            log.warning(f'No statistics for {missing} due to error ({e})')
+            log.error(f'No statistics for {missing} due to error ({e})')
             log_current_exception()
 
     @abstractmethod

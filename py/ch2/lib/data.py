@@ -9,9 +9,8 @@ from string import ascii_letters
 
 import pandas as pd
 from binascii import hexlify
-from sqlalchemy.orm.exc import NoResultFound
 
-from ..stats.names import BOOKMARK
+from ..stats.names import BOOKMARK, ALL
 
 log = getLogger(__name__)
 
@@ -102,7 +101,7 @@ def reftuple(name, *args, **kargs):
 
     class klass(namedtuple(name, *args, **kargs)):
 
-        def expand(self, s, time, default_owner=None, default_activity_group=None):
+        def expand(self, s, time, default_owner=None, default_activity_group=ALL):
             instance = self
             for name in self._fields:
                 value = getattr(instance, name)
@@ -194,14 +193,14 @@ def bookend(df, column=BOOKMARK):
     return pd.concat([g.head(1), g.tail(1)]).drop_duplicates().sort_index()
 
 
-def expand(s, text, before, vars=None, default_owner=None, default_activity_group=None):
+def expand(s, text, before, vars=None, default_owner=None, default_activity_group=ALL):
     '''
     Recursively expand any ${name} occurrences in the text using vars (if given) and database.
 
     May be too much magic going on here - can return objects, values as well as strings.
     '''
 
-    from ..sql import StatisticName, StatisticJournal
+    from ..sql import StatisticName, StatisticJournal, ActivityGroup
 
     if vars is None: vars = {}
     pattern = compile(r'(.*)\${([^}]+)}(.*)')
@@ -216,7 +215,8 @@ def expand(s, text, before, vars=None, default_owner=None, default_activity_grou
         else:
             owner, statistic, activity_group = StatisticName.parse(name, default_owner=default_owner,
                                                                    default_activity_group=default_activity_group)
-            value = StatisticJournal.before_not_null(s, before, statistic, owner, activity_group)
+            value = StatisticJournal.before_not_null(s, before, statistic, owner,
+                                                     ActivityGroup.from_name(s, activity_group))
         if value is None:
             raise Exception(f'No value defined for {name} ({owner}:{statistic}:{activity_group}) before {before}')
         elif left == '' and right == '':

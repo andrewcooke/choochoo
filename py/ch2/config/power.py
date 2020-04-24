@@ -9,19 +9,18 @@ log = getLogger(__name__)
 POWER_ESTIMATE_CNAME = 'PowerEstimate'
 
 
-def add_power_estimate(s, c, activity_group,
-                       bike='${Constant:Power.${SegmentReader:kit}:All}',
-                       rider_weight='${DiaryTopic:Weight:DiaryTopic \"Status\" (d)}',
+def add_power_estimate(s, c, activity_group, bike=None,
+                       rider_weight='${DiaryTopic:Weight:All}',
                        vary='wind_speed, wind_heading, slope'):
     '''
     Add the constants necessary to estimate power output.
     '''
     log.debug(f'Adding power statistics for {activity_group.name}')
-    activity_group_constraint = str(activity_group)
+    if not bike: bike = '${Constant:Power.${SegmentReader:kit:%s}:All}' % activity_group.name
     power_name = name_constant(POWER_ESTIMATE_CNAME, activity_group)
     add_enum_constant(s, power_name, Power,
                       {'bike': bike, 'rider_weight': rider_weight, 'vary': vary},
-                      single=False, activity_group=activity_group_constraint, description='''
+                      single=False, activity_group=activity_group.name, description='''
 Parameters used in estimating power.
 
 These are complex and reference other statistics.  

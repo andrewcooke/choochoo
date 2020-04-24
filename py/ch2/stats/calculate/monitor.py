@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 
 from . import MultiProcCalculator
 from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, \
-    MSR, LO_REST_HR, HI_REST_HR
+    MSR, LO_REST_HR, HI_REST_HR, ALL
 from ..pipeline import LoaderMixin
 from ...lib import local_date_to_time, time_to_local_date, to_date, format_date
 from ...lib.log import log_current_exception
@@ -111,7 +111,7 @@ class MonitorCalculator(LoaderMixin, MultiProcCalculator):
             loader.load()
             self._prev_loader = loader
         except Exception as e:
-            log.warning(f'No statistics for {start} - {finish}: ({e})')
+            log.error(f'No statistics for {start} - {finish}: ({e})')
             log_current_exception()
 
     def _read_data(self, s, start, finish):
@@ -149,10 +149,12 @@ class MonitorCalculator(LoaderMixin, MultiProcCalculator):
     def _calculate_results(self, s, source, data, loader, start):
         rest_heart_rate, daily_steps = data
         for name, value in rest_heart_rate:
-            loader.add(name, BPM, summaries(AVG, CNT, MIN, MSR) if name == REST_HR else None, None, source, value,
-                       start, StatisticJournalInteger)
-        loader.add(DAILY_STEPS, STEPS_UNITS, summaries(SUM, AVG, CNT, MAX, MSR), None, source, daily_steps,
-                   start, StatisticJournalInteger)
+            loader.add(name, BPM, summaries(AVG, CNT, MIN, MSR) if name == REST_HR else None, ALL, source, value,
+                       start, StatisticJournalInteger,
+                       description='''An estimate of the resting HR.''' if name == REST_HR
+                       else '''A bound on the resting HR.''')
+        loader.add(DAILY_STEPS, STEPS_UNITS, summaries(SUM, AVG, CNT, MAX, MSR), ALL, source, daily_steps,
+                   start, StatisticJournalInteger, description='''The number of steps in a day.''')
 
     def _args(self, missing, start, finish):
         start, finish = format_date(missing[start]), format_date(missing[finish])

@@ -39,7 +39,7 @@ class BasePipeline:
 
     def __init__(self, *args, **kargs):
         if args or kargs:
-            log.warning(f'Unused ({type(self)}): {args} {list(kargs.keys())}')
+            log.warning(f'Unused pipeline argument(s) for {short_cls(self)}: {args} {list(kargs.keys())}')
 
     def _assert(self, name, value):
         if value is None:

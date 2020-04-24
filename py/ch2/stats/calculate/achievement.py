@@ -63,7 +63,7 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
             try:
                 self._calculate_stats(s, activity_journal)
             except Exception as e:
-                log.warning(f'No statistics on {time_or_date}: {e}')
+                log.error(f'No statistics on {time_or_date}: {e}')
                 log_current_exception()
 
     def _calculate_stats(self, s, activity_journal):

@@ -42,5 +42,9 @@ dev/ch2 --dev --color DARK configure load acooke || { echo -e "\ninstall failed"
 echo -e "\nupgrading old data"
 dev/ch2 --dev upgrade $OLD_VERSION || { echo -e "\nupgrade failed"; exit 3; }
 
+if [ -e dev/set-constants.sh ]; then
+    dev/set-constants.sh
+fi
+
 echo -e "\nrebuilding"
 dev/ch2 --dev upload || { echo -e "\nupload failed"; exit 4; }
