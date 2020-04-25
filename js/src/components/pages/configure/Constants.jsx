@@ -246,7 +246,7 @@ export default function Constants(props) {
     return (
         <Layout navigation={<MainMenu configure/>}
                 content={<Columns constants={constants} reload={reload}/>}
-                match={match} title='Edit Constants' reload={reload}
+                match={match} title='Edit Constants' reload={reload} history={history}
                 errorState={errorState}/>
     );
 }

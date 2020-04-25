@@ -22,6 +22,6 @@ export default function Welcome(props) {
     </ColumnList>);
 
     return (
-        <Layout navigation={navigation} content={content} match={match} title='Welcome'/>
+        <Layout navigation={navigation} content={content} match={match} title='Welcome' history={history}/>
     );
 }

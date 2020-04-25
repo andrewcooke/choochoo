@@ -21,11 +21,11 @@ export default function Layout(props) {
 
     const classes = useStyles();
 
-    const {navigation, content, match, title, busyState, reload, errorState} = props;
+    const {navigation, content, match, title, busyState, reload, history, errorState} = props;
 
     return (
         <div className={classes.root}>
-            <Navigation content={navigation} match={match} title={title}/>
+            <Navigation content={navigation} match={match} title={title} history={history}/>
             <main className={classes.content}>
                 <div className={classes.toolbar}/>
                 {busyState !== undefined && reload !== undefined ?

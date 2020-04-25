@@ -117,6 +117,7 @@ class WebServer:
             Rule('/api/diary/active-days/<month>', endpoint=diary.read_active_days, methods=(GET,)),
             Rule('/api/diary/active-months/<year>', endpoint=diary.read_active_months, methods=(GET,)),
             Rule('/api/diary/statistics', endpoint=self.check(diary.write_statistics), methods=(PUT,)),
+            Rule('/api/diary/latest', endpoint=diary.read_latest, methods=(GET,)),
             Rule('/api/diary/<date>', endpoint=self.check(diary.read_diary), methods=(GET,)),
 
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),

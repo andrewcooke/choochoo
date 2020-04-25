@@ -62,7 +62,7 @@ export default function Analysis(props) {
     return (
         <Layout navigation={<MainMenu/>}
                 content={<Columns params={params}/>}
-                match={match} title='Analysis' reload={reload}
+                match={match} title='Analysis' reload={reload} history={history}
                 busyState={busyState} errorState={errorState}/>
     );
 }

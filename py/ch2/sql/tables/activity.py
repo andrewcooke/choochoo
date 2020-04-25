@@ -98,7 +98,7 @@ class ActivityJournal(Source):
 
     @classmethod
     def before_local_time(cls, s, local_time):
-        time = local_date_to_time(local_time)
+        time = local_time_to_time(local_time)
         return s.query(ActivityJournal). \
             filter(ActivityJournal.start < time). \
             order_by(desc(ActivityJournal.start)). \
@@ -106,7 +106,7 @@ class ActivityJournal(Source):
 
     @classmethod
     def after_local_time(cls, s, local_time):
-        time = local_date_to_time(local_time)
+        time = local_time_to_time(local_time)
         return s.query(ActivityJournal). \
             filter(ActivityJournal.start >= (time + dt.timedelta(days=1))). \
             order_by(ActivityJournal.start). \

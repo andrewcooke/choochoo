@@ -176,7 +176,7 @@ export default function Initial(props) {
 
     return (
         <Layout navigation={<MainMenu configure/>}
-                content={<Columns data={data} reload={reload}/>}
+                content={<Columns data={data} reload={reload}/>} history={history}
                 match={match} title='Initial Configuration' errorState={errorState}/>
     );
 }

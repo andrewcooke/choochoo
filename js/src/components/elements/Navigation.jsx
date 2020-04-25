@@ -1,12 +1,10 @@
 import React from 'react';
-import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
-import IconButton from '@material-ui/core/IconButton';
+import {AppBar, Toolbar, IconButton, Typography} from '@material-ui/core';
 import MenuIcon from '@material-ui/icons/Menu';
-import Typography from '@material-ui/core/Typography';
 import SideDrawer from './SideDrawer'
 import {makeStyles} from '@material-ui/core/styles';
 import {drawerWidth} from '../../constants'
+import Latest from "./Latest";
 
 
 const useStyles = makeStyles(theme => ({
@@ -22,12 +20,15 @@ const useStyles = makeStyles(theme => ({
             display: 'none',
         },
     },
+    toolbar: {
+        justifyContent: 'space-between',
+    },
 }));
 
 
 export default function Navigation(props) {
 
-    const {content, match, title} = props;
+    const {content, match, title, history} = props;
     const classes = useStyles();
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -38,7 +39,7 @@ export default function Navigation(props) {
     return (
         <>
             <AppBar position="fixed" className={classes.appBar} color='primary'>
-                <Toolbar>
+                <Toolbar className={classes.toolbar}>
                     <IconButton color="inherit" aria-label="open drawer" edge="start"
                                 onClick={handleDrawerToggle} className={classes.menuButton}>
                         <MenuIcon/>
@@ -46,6 +47,7 @@ export default function Navigation(props) {
                     <Typography variant='h1' noWrap>
                         {title}
                     </Typography>
+                <Latest history={history}/>
                 </Toolbar>
             </AppBar>
             <SideDrawer mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle}

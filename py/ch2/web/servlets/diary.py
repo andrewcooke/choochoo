@@ -6,6 +6,7 @@ from ..json import JsonResponse
 from ...diary.database import read_date, read_schedule
 from ...diary.views.web import rewrite_db
 from ...lib import time_to_local_time
+from ...lib.date import now_local, time_to_local_date, format_date
 from ...lib.schedule import Schedule
 from ...sql import ActivityJournal, StatisticJournal
 from ...stats.display.activity import active_days, active_months
@@ -43,6 +44,12 @@ class Diary:
     @staticmethod
     def read_active_months(request, s, year):
         return JsonResponse(active_months(s, year))
+
+    @staticmethod
+    def read_latest(request, s):
+        latest = ActivityJournal.before_local_time(s, now_local())
+        if latest: latest = format_date(time_to_local_date(latest.start))
+        return JsonResponse(latest)
 
     @staticmethod
     def write_statistics(request, s):

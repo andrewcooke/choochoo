@@ -155,7 +155,7 @@ export default function Upload(props) {
     return (
         <Layout navigation={<MainMenu/>}
                 content={<Columns items={items} reload={reload} setError={setError}/>}
-                match={match} title='Upload' reload={reload}
+                match={match} title='Upload' reload={reload} history={history}
                 busyState={busyState} errorState={errorState}/>
     );
 }

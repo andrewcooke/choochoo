@@ -81,7 +81,7 @@ export default function Statistics(props) {
 
     return (
         <Layout navigation={<MainMenu kit/>} content={<Columns components={components}/>}
-                match={match} title='Kit Statistics' reload={reload}
+                match={match} title='Kit Statistics' reload={reload} history={history}
                 busyState={busyState} errorState={errorState}/>
     );
 }

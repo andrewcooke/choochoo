@@ -120,7 +120,7 @@ export default function Upgrade(props) {
 
     return (
         <Layout navigation={<MainMenu configure/>}
-                content={<Columns data={data} resultsState={resultsState}/>}
+                content={<Columns data={data} resultsState={resultsState}/>} history={history}
                 match={match} title='Upgrade User Data' errorState={errorState}/>
     );
 }

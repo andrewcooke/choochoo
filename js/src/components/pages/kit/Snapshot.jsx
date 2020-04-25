@@ -118,7 +118,7 @@ export default function Snapshot(props) {
     return (
         <Layout navigation={<SnapshotMenu datetime={datetime} history={history}/>}
                 content={<Columns groups={groups}/>}
-                match={match} title={`Kit: ${date}`} reload={reload}
+                match={match} title={`Kit: ${date}`} reload={reload} history={history}
                 busyState={busyState} errorState={errorState}/>
     );
 }

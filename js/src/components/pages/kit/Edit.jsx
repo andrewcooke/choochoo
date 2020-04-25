@@ -229,7 +229,7 @@ export default function Edit(props) {
     return (
         <Layout navigation={<MainMenu kit/>}
                 content={<Columns groups={groups} reload={reload}/>}
-                match={match} title='Edit Kit' reload={reload}
+                match={match} title='Edit Kit' reload={reload} history={history}
                 busyState={busyState} errorState={errorState}/>
     );
 }

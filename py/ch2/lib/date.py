@@ -185,6 +185,10 @@ def now():
     return dt.datetime.now(tz=dt.timezone.utc)
 
 
+def now_local():
+    return time_to_local_time(now())
+
+
 def time_to_local_date(time):
     time = to_time(time)
     ptime = p.DateTime(*time.timetuple()[:6], tzinfo=dt.timezone.utc).in_timezone(p.tz.get_local_timezone())
