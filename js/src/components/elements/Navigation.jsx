@@ -4,8 +4,9 @@ import MenuIcon from '@material-ui/icons/Menu';
 import SideDrawer from './SideDrawer'
 import {makeStyles} from '@material-ui/core/styles';
 import {drawerWidth} from '../../constants'
-import Latest from "./Latest";
+import LatestIcon from "./LatestIcon";
 import Menu from "../Menu";
+import UploadIcon from "./UploadIcon";
 
 
 const useStyles = makeStyles(theme => ({
@@ -48,7 +49,10 @@ export default function Navigation(props) {
                     <Typography variant='h1' noWrap>
                         {title}
                     </Typography>
-                <Latest/>
+                    <span>
+                        <UploadIcon/>
+                        <LatestIcon/>
+                    </span>
                 </Toolbar>
             </AppBar>
             <SideDrawer mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} content={<Menu/>}/>

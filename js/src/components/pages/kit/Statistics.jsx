@@ -1,6 +1,6 @@
-import {Layout, MainMenu, Loading, ColumnCard, FormatValueUnits, Text, ColumnList} from "../../elements";
+import {ColumnCard, ColumnList, Layout, Loading} from "../../elements";
 import React, {useEffect, useState} from "react";
-import {Grid, Typography, InputLabel} from "@material-ui/core";
+import {Grid, Typography} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import StatisticsValues from "./elements/StatisticsValues";
 import {handleJson} from "../../functions";

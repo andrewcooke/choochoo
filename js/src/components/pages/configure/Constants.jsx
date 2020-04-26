@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, MainMenu, TextCard} from "../../elements";
+import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, TextCard} from "../../elements";
 import {handleJson} from "../../functions";
 import {Grid, Paper, TextField} from "@material-ui/core";
 import {FMT_DAY_TIME} from "../../../constants";

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, Layout, Loading, MainMenu} from "../elements";
+import {ColumnCard, ColumnList, Layout, Loading} from "../elements";
 import {
     ActivityDetails,
     AllActivities,

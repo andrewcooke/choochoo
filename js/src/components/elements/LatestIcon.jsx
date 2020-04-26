@@ -4,7 +4,7 @@ import {Event} from '@material-ui/icons';
 import {useHistory} from 'react-router-dom';
 
 
-export default function Latest(props) {
+export default function LatestIcon(props) {
 
     const history = useHistory();
 
@@ -21,7 +21,7 @@ export default function Latest(props) {
             then(updateHistory);
     }
 
-    return (<Tooltip title='Latest activity' placement='left'>
+    return (<Tooltip title='Latest activity' placement='top'>
         <IconButton color="inherit" onClick={onClick}>
             <Event/>
         </IconButton>

@@ -1,13 +1,9 @@
 import React from 'react';
 import {Grid, Link} from "@material-ui/core";
-import {ColumnCard, ColumnList, Layout, MainMenu, P} from "../elements";
+import {ColumnCard, ColumnList, Layout, P} from "../elements";
 
 
 export default function Welcome(props) {
-
-    const {match, history} = props;
-
-    const navigation = <MainMenu/>;
 
     const content = (<ColumnList>
         <ColumnCard><Grid item xs={12}>

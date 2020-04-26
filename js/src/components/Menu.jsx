@@ -88,6 +88,7 @@ export default function Menu(props) {
                 </List>
             </Collapse>
             <ListItemLink primary='Analysis' to='/analysis'/>
+            <ListItemLink primary='Search' to='/search'/>
             <ListItem button onClick={() => {closeAll(); setKitOpen(!kitOpen);}}>
                 <ListItemText primary='Kit'/>
                 {kitOpen ? <ExpandLess/> : <ExpandMore/>}

@@ -7,7 +7,6 @@ import {
     ConfirmedWriteButton,
     Layout,
     Loading,
-    MainMenu,
     Text
 } from "../../elements";
 import {Box, Button, Collapse, Grid, TextField, Typography} from "@material-ui/core";
