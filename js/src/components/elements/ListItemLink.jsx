@@ -15,11 +15,9 @@ export default function ListItemLink(props) {
     );
 
     return (
-        <li>
-            <ListItem button component={renderLink}>
-                {icon !== null ? <ListItemIcon>{icon}</ListItemIcon> : null}
-                <ListItemText primary={primary} {...rest}/>
-            </ListItem>
-        </li>
+        <ListItem button component={renderLink}>
+            <ListItemText primary={primary} {...rest}/>
+            {icon !== null ? <ListItemIcon>{icon}</ListItemIcon> : null}
+        </ListItem>
     );
 }

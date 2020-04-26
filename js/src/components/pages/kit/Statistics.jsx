@@ -62,7 +62,7 @@ function Columns(props) {
 
 export default function Statistics(props) {
 
-    const {match, history} = props;
+    const {history} = props;
     const [components, setComponents] = useState(null);
     const busyState = useState(null);
     const errorState = useState(null);
@@ -80,8 +80,8 @@ export default function Statistics(props) {
     }, [reads]);
 
     return (
-        <Layout navigation={<MainMenu kit/>} content={<Columns components={components}/>}
-                match={match} title='Kit Statistics' reload={reload} history={history}
-                busyState={busyState} errorState={errorState}/>
+        <Layout title='Kit Statistics'
+                content={<Columns components={components}/>}
+                reload={reload} busyState={busyState} errorState={errorState}/>
     );
 }

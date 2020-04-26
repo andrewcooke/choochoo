@@ -20,6 +20,7 @@ export default function ErrorDialog(props) {
 
     console.log(`Error current state: open ${open}; error:`);
     console.log(error);
+
     if (! open && error !== null) setOpen(true);
 
     return (<Dialog open={open}>

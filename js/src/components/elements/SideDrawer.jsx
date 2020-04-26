@@ -59,7 +59,7 @@ function Content(props) {
 
 export default function SideDrawer(props) {
 
-    const {container, content, mobileOpen, handleDrawerToggle, match} = props;
+    const {container, content, mobileOpen, handleDrawerToggle} = props;
 
     const classes = useStyles();
     const theme = useTheme();
@@ -77,7 +77,7 @@ export default function SideDrawer(props) {
                         ModalProps={{
                             keepMounted: true, // Better open performance on mobile.
                         }}>
-                    <Content match={match} content={content}/>
+                    {content}
                 </Drawer>
             </Hidden>
             <Hidden mdDown implementation="css">
@@ -86,7 +86,7 @@ export default function SideDrawer(props) {
                         paper: classes.drawerPaper,
                     }}
                     variant="permanent" open>
-                    <Content match={match} content={content}/>
+                    {content}
                 </Drawer>
             </Hidden>
         </nav>

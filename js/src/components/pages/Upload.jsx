@@ -137,7 +137,7 @@ function Columns(props) {
 
 export default function Upload(props) {
 
-    const {match, history} = props;
+    const {history} = props;
     const [items, setItems] = useState(null);
     const busyState = useState(null);
     const errorState = useState(null);
@@ -153,9 +153,8 @@ export default function Upload(props) {
     }, [reads]);
 
     return (
-        <Layout navigation={<MainMenu/>}
+        <Layout title='Upload'
                 content={<Columns items={items} reload={reload} setError={setError}/>}
-                match={match} title='Upload' reload={reload} history={history}
-                busyState={busyState} errorState={errorState}/>
+                reload={reload} busyState={busyState} errorState={errorState}/>
     );
 }

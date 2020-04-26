@@ -104,7 +104,7 @@ function Columns(props) {
 
 export default function Upgrade(props) {
 
-    const {match, history} = props;
+    const {history} = props;
     const [data, setData] = useState(null);
     const resultsState = useState(null);
     const errorState = useState(null);
@@ -119,8 +119,8 @@ export default function Upgrade(props) {
     }, [1]);
 
     return (
-        <Layout navigation={<MainMenu configure/>}
-                content={<Columns data={data} resultsState={resultsState}/>} history={history}
-                match={match} title='Upgrade User Data' errorState={errorState}/>
+        <Layout title='Upgrade User Data'
+                content={<Columns data={data} resultsState={resultsState}/>}
+                errorState={errorState}/>
     );
 }

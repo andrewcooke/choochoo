@@ -32,22 +32,6 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
-export default function Day(props) {
-
-    const {writer, json, history} = props;
-
-    if (json === null) {
-        return <Loading/>;  // undefined initial data
-    } else {
-        setIds(json);
-        // drop outer date label since we already have that in the page
-        return (<ColumnList>
-            {json.slice(1).map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
-        </ColumnList>);
-    }
-}
-
-
 function childrenFromRest(head, rest, writer, level, history) {
 
     const classes = useStyles();
@@ -141,5 +125,21 @@ function Field(props) {
         return (<Grid item xs={4}>
             <Text>Unsupported type: {JSON.stringify(json)}</Text>
         </Grid>);
+    }
+}
+
+
+export default function Day(props) {
+
+    const {writer, json, history} = props;
+
+    if (json === null) {
+        return <Loading/>;  // undefined initial data
+    } else {
+        setIds(json);
+        // drop outer date label since we already have that in the page
+        return (<ColumnList>
+            {json.slice(1).map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
+        </ColumnList>);
     }
 }

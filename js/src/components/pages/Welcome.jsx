@@ -5,7 +5,7 @@ import {ColumnCard, ColumnList, Layout, MainMenu, P} from "../elements";
 
 export default function Welcome(props) {
 
-    const {match} = props;
+    const {match, history} = props;
 
     const navigation = <MainMenu/>;
 
@@ -22,6 +22,6 @@ export default function Welcome(props) {
     </ColumnList>);
 
     return (
-        <Layout navigation={navigation} content={content} match={match} title='Welcome' history={history}/>
+        <Layout title='Welcome' content={content}/>
     );
 }

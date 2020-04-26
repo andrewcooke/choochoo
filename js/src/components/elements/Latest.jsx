@@ -1,11 +1,12 @@
 import React from "react";
 import {IconButton, Tooltip} from "@material-ui/core";
 import {Event} from '@material-ui/icons';
+import {useHistory} from 'react-router-dom';
 
 
 export default function Latest(props) {
 
-    const {history} = props;
+    const history = useHistory();
 
     function updateHistory(date) {
         console.log('latest', date)

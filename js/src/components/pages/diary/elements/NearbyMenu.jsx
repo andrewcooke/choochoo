@@ -26,5 +26,7 @@ export default function NearbyMenu(props) {
         return (<MenuItem onClick={onClick} key={row.id}>{row.value}</MenuItem>);
     }
 
-    return (<Grid item xs={4} className={classes.center}><MenuButton json={rest} label={head.value} mkItem={mkItem}/></Grid>);
+    return (<Grid item xs={4} className={classes.center}>
+        <MenuButton json={rest} label={head.value} mkItem={mkItem}/>
+    </Grid>);
 }

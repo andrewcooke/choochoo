@@ -5,6 +5,7 @@ import SideDrawer from './SideDrawer'
 import {makeStyles} from '@material-ui/core/styles';
 import {drawerWidth} from '../../constants'
 import Latest from "./Latest";
+import Menu from "../Menu";
 
 
 const useStyles = makeStyles(theme => ({
@@ -28,7 +29,7 @@ const useStyles = makeStyles(theme => ({
 
 export default function Navigation(props) {
 
-    const {content, match, title, history} = props;
+    const {title} = props;
     const classes = useStyles();
     const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -47,11 +48,10 @@ export default function Navigation(props) {
                     <Typography variant='h1' noWrap>
                         {title}
                     </Typography>
-                <Latest history={history}/>
+                <Latest/>
                 </Toolbar>
             </AppBar>
-            <SideDrawer mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle}
-                        content={content} match={match}/>
+            <SideDrawer mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} content={<Menu/>}/>
         </>
     )
 }

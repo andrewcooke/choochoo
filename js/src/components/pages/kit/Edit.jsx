@@ -209,7 +209,7 @@ function Columns(props) {
 
 export default function Edit(props) {
 
-    const {match, history} = props;
+    const {history} = props;
     const [groups, setGroups] = useState(null);
     const [edits, setEdits] = useState(0);
     const busyState = useState(null);
@@ -227,9 +227,8 @@ export default function Edit(props) {
     }, [edits]);
 
     return (
-        <Layout navigation={<MainMenu kit/>}
+        <Layout title='Edit Kit'
                 content={<Columns groups={groups} reload={reload}/>}
-                match={match} title='Edit Kit' reload={reload} history={history}
-                busyState={busyState} errorState={errorState}/>
+                reload={reload} busyState={busyState} errorState={errorState}/>
     );
 }
