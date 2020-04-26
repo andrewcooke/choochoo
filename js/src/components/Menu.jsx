@@ -1,12 +1,12 @@
 import React, {useState} from 'react';
-import {Collapse, List, ListItem, ListItemText} from "@material-ui/core";
+import {List} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
-import {ExpandLess, ExpandMore, KeyboardArrowRight} from "@material-ui/icons";
-import {ListItemLink, ListItemButton} from "./elements";
+import {KeyboardArrowRight} from "@material-ui/icons";
+import {ListItemButton, ListItemLink} from "./elements";
 import format from 'date-fns/format';
-import {FMT_DAY, FMT_MONTH, FMT_YEAR} from "../constants";
-import {useLocation, useHistory} from 'react-router-dom';
-import DiaryMenu from "./menu/DiaryMenu";
+import {FMT_DAY, FMT_MONTH} from "../constants";
+import {useHistory, useLocation} from 'react-router-dom';
+import {DiaryMenu, ListItemExpand} from "./menu";
 
 
 const useStyles = makeStyles(theme => ({
@@ -14,9 +14,6 @@ const useStyles = makeStyles(theme => ({
         width: '100%',
         maxWidth: 360,
         backgroundColor: theme.palette.background.paper,
-    },
-    nested: {
-        paddingLeft: theme.spacing(4),
     },
 }));
 
@@ -55,63 +52,48 @@ export default function Menu(props) {
     } else {
         return (<List component="nav" className={classes.list}>
             <ListItemLink primary='Choochoo' to='/'/>
-            <ListItem button onClick={() => {closeAll(); setDiaryOpen(!diaryOpen);}}>
-                <ListItemText primary='Diary'/>
-                {diaryOpen > 0 ? <ExpandLess/> : <ExpandMore/>}
-            </ListItem>
-            <Collapse in={diaryOpen} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding className={classes.nested}>
-                    <ListItemButton primary='Day' onClick={() => {
-                        setDiaryOpen(2);
-                        if (!isDay(location)) history.push('/' + format(new Date(), FMT_DAY));
-                    }} icon={<KeyboardArrowRight/>}/>
-                    <ListItemButton primary='Month' onClick={() => {
-                        setDiaryOpen(2);
-                        if (!isMonth(location)) {
-                            if (isDay(location)) {
-                                history.push(location.split('-').slice(0, 2).join('-'));
-                            } else {
-                                history.push('/' + format(new Date(), FMT_MONTH));
-                            }
+            <ListItemExpand label='Diary' isExpanded={diaryOpen > 0}
+                            onClick={() => {closeAll(); setDiaryOpen(diaryOpen > 0 ? 0 : 1);}}>
+                <ListItemButton primary='Day' onClick={() => {
+                    setDiaryOpen(2);
+                    if (!isDay(location)) history.push('/' + format(new Date(), FMT_DAY));
+                }} icon={<KeyboardArrowRight/>}/>
+                <ListItemButton primary='Month' onClick={() => {
+                    setDiaryOpen(2);
+                    if (!isMonth(location)) {
+                        if (isDay(location)) {
+                            history.push(location.split('-').slice(0, 2).join('-'));
+                        } else {
+                            history.push('/' + format(new Date(), FMT_MONTH));
                         }
-                    }} icon={<KeyboardArrowRight/>}/>
-                    <ListItemButton primary='Year' onClick={() => {
-                        setDiaryOpen(2);
-                        if (!isYear(location)) {
-                            if (isDay(location) || isMonth(location)) {
-                                history.push(location.split('-').slice(0, 1).join('-'));
-                            } else {
-                                history.push('/' + format(new Date(), FMT_Year));
-                            }
+                    }
+                }} icon={<KeyboardArrowRight/>}/>
+                <ListItemButton primary='Year' onClick={() => {
+                    setDiaryOpen(2);
+                    if (!isYear(location)) {
+                        if (isDay(location) || isMonth(location)) {
+                            history.push(location.split('-').slice(0, 1).join('-'));
+                        } else {
+                            history.push('/' + format(new Date(), FMT_Year));
                         }
-                    }} icon={<KeyboardArrowRight/>}/>
-                </List>
-            </Collapse>
+                    }
+                }} icon={<KeyboardArrowRight/>}/>
+            </ListItemExpand>
             <ListItemLink primary='Analysis' to='/analysis'/>
             <ListItemLink primary='Search' to='/search'/>
-            <ListItem button onClick={() => {closeAll(); setKitOpen(!kitOpen);}}>
-                <ListItemText primary='Kit'/>
-                {kitOpen ? <ExpandLess/> : <ExpandMore/>}
-            </ListItem>
-            <Collapse in={kitOpen} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding className={classes.nested}>
-                    <ListItemLink primary='Snapshot' to={'/kit/' + format(new Date(), FMT_DAY)}/>
-                    <ListItemLink primary='Edit' to={'/kit/edit'}/>
-                    <ListItemLink primary='Statistics' to={'/kit/statistics'}/>
-                </List>
-            </Collapse>
             <ListItemLink primary='Upload' to='/upload'/>
-            <ListItem button onClick={() => {closeAll(); setConfigureOpen(!configureOpen);}}>
-                <ListItemText primary='Configure'/>
-                {configureOpen ? <ExpandLess/> : <ExpandMore/>}
-            </ListItem>
-            <Collapse in={configureOpen} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding className={classes.nested}>
-                    <ListItemLink primary='Initial' to={'/configure/initial'}/>
-                    <ListItemLink primary='Upgrade' to={'/configure/upgrade'}/>
-                    <ListItemLink primary='Constants' to={'/configure/constants'}/>
-                </List>
-            </Collapse>
+            <ListItemExpand label='Kit' isExpanded={kitOpen}
+                            onClick={() => {closeAll(); setKitOpen(!kitOpen);}}>
+                <ListItemLink primary='Snapshot' to={'/kit/' + format(new Date(), FMT_DAY)}/>
+                <ListItemLink primary='Edit' to={'/kit/edit'}/>
+                <ListItemLink primary='Statistics' to={'/kit/statistics'}/>
+            </ListItemExpand>
+            <ListItemExpand label='Configure' isExpanded={configureOpen}
+                            onClick={() => {closeAll(); setConfigureOpen(!configureOpen);}}>
+                <ListItemLink primary='Initial' to={'/configure/initial'}/>
+                <ListItemLink primary='Upgrade' to={'/configure/upgrade'}/>
+                <ListItemLink primary='Constants' to={'/configure/constants'}/>
+            </ListItemExpand>
         </List>);
     }
 }

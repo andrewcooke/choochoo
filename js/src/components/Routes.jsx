@@ -1,6 +1,6 @@
 import React from 'react';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
-import {Analysis, Diary, Upload, Welcome} from "./pages";
+import {Analysis, Diary, Upload, Welcome, Search} from "./pages";
 import {Edit, Snapshot, Statistics} from "./pages/kit";
 import {Initial, Upgrade, Constants} from "./pages/configure";
 
@@ -14,6 +14,7 @@ export default function Routes() {
             <Switch>
                 <Route path='/' exact={true} component={Welcome}/>
                 <Route path='/analysis' exact={true} component={Analysis}/>
+                <Route path='/search' exact={true} component={Search}/>
                 <Route path='/configure/initial' exact={true} component={Initial}/>
                 <Route path='/configure/upgrade' exact={true} component={Upgrade}/>
                 <Route path='/configure/constants' exact={true} component={Constants}/>
