@@ -1,2 +1,2 @@
-import {default as Menu} from './Menu';
-import {default as Routes} from './Routes';
+export {default as Menu} from './Menu';
+export {default as Routes} from './Routes';
