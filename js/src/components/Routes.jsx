@@ -7,6 +7,7 @@ import {Initial, Upgrade, Constants} from "./pages/configure";
 
 export default function Routes() {
 
+    // load this once - if it's inside Diary then it is reloaded on each view
     const writer = new Worker('/api/static/writer.js');
 
     return (

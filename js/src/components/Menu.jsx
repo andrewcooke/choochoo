@@ -3,7 +3,7 @@ import {List} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {KeyboardArrowRight} from "@material-ui/icons";
 import {ListItemButton, ListItemLink} from "./elements";
-import format from 'date-fns/format';
+import {format} from 'date-fns';
 import {FMT_DAY, FMT_MONTH} from "../constants";
 import {useHistory, useLocation} from 'react-router-dom';
 import {DiaryMenu, ListItemExpand} from "./menu";
@@ -29,12 +29,12 @@ export default function Menu(props) {
     const location = useLocation().pathname;
     const history = useHistory();
 
-    const isDiary = match(/\/\d+(-\d+(-\d+)?)?/);
-    const isDay = match(/\/\d+-\d+-\d+/);
+    const isDiary = match(/\/\d+(-\d+(-\d+)?)?$/);
+    const isDay = match(/\/\d+-\d+-\d+$/);
     const isMonth = match(/\/\d+-\d+$/);
     const isYear = match(/\/\d+$/);
-    const isKit = match(/\/kit\/.*/);
-    const isConfigure = match(/\/configure\/.*/);
+    const isKit = match(/\/kit\/.*$/);
+    const isConfigure = match(/\/configure\/.*$/);
 
     // diary is 0 for closed, 1 for open d/m/y and 2 for dedicated menu
     const [diaryOpen, setDiaryOpen] = useState(isDiary(location) ? 2 : 0);
