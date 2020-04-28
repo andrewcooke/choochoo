@@ -80,9 +80,43 @@ constraint = single(exhaustive(choice(or_comparison, parens)))
 def constrained_activities(s, query):
     ast = constraint(query)[0]
     log.debug(f'AST: {ast}')
+    check_constraints(s, ast)
+    log.debug('Checked constraints')
     q = build_activity_query(s, ast)
     log.debug(f'Query: {q}')
     return q.all()
+
+
+def check_constraints(s, ast):
+    l, op, r = ast
+    if op in (AND, OR):
+        check_constraints(s, l)
+        check_constraints(s, r)
+    else:
+        check_constraint(s, ast)
+
+
+def infer_types(value):
+    if isinstance(value, str): return [StatisticJournalType.TEXT]
+    if isinstance(value, dt.datetime): return [StatisticJournalType.TIMESTAMP]
+    return [StatisticJournalType.FLOAT, StatisticJournalType.INTEGER]
+
+
+def check_constraint(s, ast):
+    qname, op, value = ast
+    name, group = parse_qname(qname)
+    q = s.query(StatisticName.id). \
+        filter(StatisticName.name.ilike(name),
+               StatisticName.statistic_journal_type.in_(infer_types(value)))
+    if group:
+        q = q.join(ActivityGroup).filter(ActivityGroup.name == group)
+    if not q.count():
+        raise Exception(f'No match for statistic {qname} with type {value.__class__.__name__}')
+    if not s.query(StatisticJournal). \
+            join(Source). \
+            filter(StatisticJournal.statistic_name_id.in_(q),
+                   Source.type.in_([SourceType.ACTIVITY, SourceType.ACTIVITY_TOPIC])).count():
+        raise Exception(f'Statistic {qname} exists but is not associated with any activity data')
 
 
 def build_activity_query(s, ast):

@@ -25,8 +25,10 @@ class Search:
     def query_activity(request, s, query):
         try:
             advanced = parse_bool(request.args.get('advanced', 'false'), default=None)
+            log.info(f'{"advanced " if advanced else ""}query: {query}')
             return JsonResponse({RESULTS: expand_activities(s, unified_search(s, query, advanced=advanced))})
         except Exception as e:
+            log.warning(e)
             return JsonResponse({ERROR: str(e)})
 
     @staticmethod
