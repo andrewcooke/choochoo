@@ -74,7 +74,9 @@ export default function Menu(props) {
                         if (isDay(location) || isMonth(location)) {
                             history.push(location.split('-').slice(0, 1).join('-'));
                         } else {
-                            history.push('/' + format(new Date(), FMT_YEAR));
+                            // weird bug - undefined ref for FMT_YEAR
+                            history.push('/' + format(new Date(), 'yyyy'));
+                            // history.push('/' + format(new Date(), FMT_YEAR));
                         }
                     }
                 }} icon={<KeyboardArrowRight/>}/>

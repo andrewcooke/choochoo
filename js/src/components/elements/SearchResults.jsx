@@ -31,8 +31,8 @@ export default function SearchResults(props) {
     }
 
     function sort(key, reverse = false) {
-        let copy = json.slice();
-        copy.sort((a, b) => a[key].units === null ?
+        let copy = {results: json.results.slice()};
+        copy.results.sort((a, b) => a[key].units === null ?
             a[key].value.localeCompare(b[key].value) :
             (a[key].value - b[key].value) * (reverse ? -1 : 1));
         setJson(copy);

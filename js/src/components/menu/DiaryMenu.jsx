@@ -71,7 +71,7 @@ export default function DiaryMenu(props) {
     const classes = useStyles();
     // the number of - in the url (so year alone is 0, month is 1 and day is 2)
     const ymdSelected = (location.match(/-/g) || []).length;
-    const dateFmt = {0: FMT_YEAR, 1: FMT_MONTH, 2:FMT_DAY}[ymdSelected];
+    const dateFmt = {0: FMT_YEAR, 1: FMT_MONTH, 2: FMT_DAY}[ymdSelected];
     const datetime = parse(location.substring(1), dateFmt, new Date());
     const date = format(datetime, dateFmt);
 
