@@ -36,6 +36,8 @@ from ..stats.read.segment import SegmentReader
 
 log = getLogger(__name__)
 
+NOTES = 'Notes'
+
 BROKEN = 'broken'
 
 BIKE = 'Bike'
@@ -257,7 +259,7 @@ so do not use an important password that applies to many accounts.
                 add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
                                          activity_group, model={TYPE: EDIT},
                                          description='Route recorded by user in diary.')
-            add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
+            add_activity_topic_field(s, None, NOTES, c, StatisticJournalType.TEXT,
                                      activity_group, model={TYPE: EDIT},
                                      description='Activity notes recorded by user in diary.')
 

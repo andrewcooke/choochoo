@@ -1,10 +1,14 @@
 from logging import getLogger
 
-from .args import QUERY, SHOW, SET
+from sqlalchemy import intersect, or_
+
+from .args import QUERY, SHOW, SET, ADVANCED
+from ..config.config import NOTES
 from ..data import constrained_activities
 from ..diary.model import DB, VALUE, UNITS
 from ..lib import time_to_local_time
-from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic
+from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic, \
+    StatisticJournalText, StatisticName
 from ..stats.calculate.activity import ActivityCalculator
 from ..stats.names import TIME, START, ACTIVE_TIME, DISTANCE, ACTIVE_DISTANCE, GROUP
 
@@ -21,33 +25,42 @@ def search(args, system, db):
     '''
 ## search
 
-    > ch2 search QUERY [--show NAME ...] [--set NAME=VALUE]
+    > ch2 search [-a|--advanced] QUERY [--show NAME ...] [--set NAME=VALUE]
 
 This searches for activities.
 Once a matching activity is found additional statistics can be displayed (--show)
 and a single value modified (--set).
 
-The query syntax is similar to SQL, but element names are statistic names.
+Simple searches (without --advanced) look for matches of all given words in the
+name and notes fields for the activity.
+
+The advanced syntax is similar to SQL, but element names are statistic names.
 The name can include the activity group (start:bike) and SQL wildcards (%fitness%).
 A name of the form "name:" matches any activity group;
 "name" matches the activity group of the matched activity
 (usually what is needed - the main exception is some statistics defined for group All).
 
-String values must be quoted.
-Negation and NULL values are not supported.
-Nor is comparison between values (only between a name and a value).
+For advanced searches string values must be quoted, negation and NULL values are not supported,
+and comparison must be between a name and a value (not two names).
 
 ### Example
 
-    > ch2 search 'name="Wrong Name"' --set 'name=Right Name'
+    > ch2 search --advanced 'name="Wrong Name"' --set 'name=Right Name'
 
 Note the different handling of strings for searching and setting (sorry).
     '''
-    query, show, set = args[QUERY], args[SHOW], args[SET]
+    query, show, set, advanced = args[QUERY], args[SHOW], args[SET], args[ADVANCED]
     if not show: show = [ACTIVE_TIME, ACTIVE_DISTANCE]
     with db.session_context() as s:
-        activities = constrained_activities(s, query)
+        activities = unified_search(s, query, advanced=advanced)
         process_activities(s, activities, show, set)
+
+
+def unified_search(s, query, advanced=True):
+    if advanced:
+        return constrained_activities(s, query)
+    else:
+        return simple_activity_search(s, query)
 
 
 def expanded_activities(s, query):
@@ -109,3 +122,53 @@ def process_activities(s, activities, show, set):
                 after = result.formatted()
             print(f'  {name}: {before!r} -> {after!r}')
 
+
+def parse(query):
+    word, quote = '', None
+    for c in query:
+        if c == ' ':
+            if quote:
+                word += c
+            else:
+                if word:
+                    yield word
+                    word = ''
+        elif c == quote:
+            quote = None
+            yield word
+            word = ''
+        elif not word and c in ('"', "'"):
+            quote = c
+        else:
+            word += c
+    if quote:
+        raise Exception('Unbalanced quote')
+    if word:
+        yield word
+
+
+def word_query(s, ids, word):
+    return s.query(StatisticJournalText.source_id). \
+        filter(StatisticJournalText.statistic_name_id.in_(ids),
+               StatisticJournalText.value.ilike('%' + word + '%'))
+
+
+def simple_activity_search(s, query):
+    words = list(parse(query))
+    log.debug(f'Parsed {query} as {words}')
+    words_query = None
+    ids = [id[0] for id in s.query(StatisticName.id).
+        filter(StatisticName.name.in_([NOTES, ActivityTopicField.NAME]),
+               StatisticName.owner == ActivityTopic).all()]
+    for word in words:
+        if words_query is not None:
+            words_query = intersect(words_query, word_query(s, ids, word)).select()
+        else:
+            words_query = word_query(s, ids, word)
+    q = s.query(ActivityJournal). \
+        join(FileHash). \
+        join(ActivityTopicJournal). \
+        filter(or_(ActivityJournal.id.in_(words_query),
+                   ActivityTopicJournal.id.in_(words_query)))
+    log.debug(q)
+    return q.all()

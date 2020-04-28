@@ -48,6 +48,7 @@ UPGRADE = 'upgrade'
 UPLOAD = 'upload'
 WEB = 'web'
 
+A = 'a'
 ACTIVITY = 'activity'
 ACTIVITY_GROUP = 'activity-group'
 ACTIVITY_GROUPS = 'activity-groups'
@@ -55,6 +56,7 @@ ACTIVITY_JOURNALS = 'activity-journals'
 ACTIVITY_JOURNAL_ID = 'activity-journal-id'
 ADD = 'add'
 ADD_HEADER = 'add-header'
+ADVANCED = 'advanced'
 AFTER = 'after'
 AFTER_BYTES = 'after-bytes'
 AFTER_RECORDS = 'after-records'
@@ -315,7 +317,9 @@ def make_parser(with_noop=False):
                                help='show summary for given schedule')
 
     search = subparsers.add_parser(SEARCH, help='search activities')
-    search.add_argument(QUERY, metavar='QUERY', help='conditions to constrain search')
+    search.add_argument(QUERY, metavar='QUERY', help='search terms')
+    search.add_argument(m(A), mm(ADVANCED), action='store_true',
+                        help='advanced search (similar to SQL)')
     search.add_argument(mm(SHOW), metavar='NAME', nargs='+',
                         help='show value from matching activities')
     search.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching activities')
