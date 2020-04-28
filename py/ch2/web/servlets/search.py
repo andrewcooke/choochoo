@@ -15,13 +15,19 @@ DESCRIPTION = 'description'
 GROUPS = 'groups'
 UNITS = 'units'
 
+RESULTS = 'results'
+ERROR = 'error'
+
 
 class Search:
 
     @staticmethod
     def query_activity(request, s, query):
-        advanced = parse_bool(request.args.get('advanced', 'false'), default=None)
-        return JsonResponse(expand_activities(s, unified_search(s, query, advanced=advanced)))
+        try:
+            advanced = parse_bool(request.args.get('advanced', 'false'), default=None)
+            return JsonResponse({RESULTS: expand_activities(s, unified_search(s, query, advanced=advanced))})
+        except Exception as e:
+            return JsonResponse({ERROR: str(e)})
 
     @staticmethod
     def read_activity_terms(request, s):

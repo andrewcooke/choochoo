@@ -3,12 +3,27 @@ import SearchResult from "./SearchResult";
 import {FMT_DAY_TIME} from "../../constants";
 import {parse} from 'date-fns';
 import Loading from "./Loading";
+import TextCard from "./TextCard";
+
+
+function SearchError(props) {
+    const {error} = props;
+    return <TextCard header='Error'>
+        <p>{error}</p>
+    </TextCard>
+}
 
 
 export default function SearchResults(props) {
 
     const {query, advanced = true} = props;
     const [json, setJson] = useState(null);
+
+    function fixDate(json) {
+        console.log('json 2', json);
+        if (json !== null && json.results !== undefined) json.results = json.results.map(parseDate)
+        return json;
+    }
 
     function parseDate(row) {
         row.start.value = parse(row.start.value, FMT_DAY_TIME, new Date());
@@ -28,16 +43,24 @@ export default function SearchResults(props) {
             if (json !== null) setJson(null);
             fetch('/api/search/activity/' + encodeURIComponent(query) + '?advanced=' + advanced)
                 .then(response => response.json())
-                .then(response => response.map(parseDate))
+                .then(fixDate)
                 .then(setJson);
         }
     }, [query]);
+
+    console.log('json 1', json);
 
     if (query === null || query === '') {
         return null
     } else if (json === null) {
         return <Loading small/>
+    } else if (json.results !== undefined) {
+        if (json.results.length) {
+            return json.results.map(row => <SearchResult json={row} sort={sort}/>);
+        } else {
+            return <SearchError error='No matches.'/>
+        }
     } else {
-        return json.map(row => <SearchResult json={row} sort={sort}/>);
+        return <SearchError error={json.error}/>
     }
 }
