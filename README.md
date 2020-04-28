@@ -14,3 +14,4 @@ docs](https://andrewcooke.github.io/choochoo/technical).
 [![jupyter calendar](docs/teasers/jupyter-calendar-sq.png)](docs/teasers/jupyter-calendar.png)
 [![web analysis](docs/teasers/web-analysis-sq.png)](docs/teasers/web-analysis.png)
 [![jupyter all activities](docs/teasers/jupyter-all-activities-sq.png)](docs/teasers/jupyter-all-activities.png)
+[![search](docs/teasers/search-sq.png)](docs/teasers/search.png)
