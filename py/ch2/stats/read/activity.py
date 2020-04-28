@@ -179,8 +179,12 @@ class ActivityReader(MultiProcFitReader):
     def _load_define(self, s, define, ajournal):
         for name, value in define.items():
             log.debug(f'Setting {name} = {value}')
+            if name == KIT:
+                description = 'Kit used in activity.'
+            else:
+                description = 'Attribute defined on reading activity.'
             StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
-                                     ajournal, value, ajournal.start)
+                                     ajournal, value, ajournal.start, description=description)
 
     @staticmethod
     def _save_name(s, ajournal, file_scan):
@@ -195,7 +199,8 @@ class ActivityReader(MultiProcFitReader):
                        StatisticName.owner == ActivityTopic,
                        ActivityTopicField.activity_topic_id == None).one_or_none():
             add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
-                                     ajournal.activity_group, model={TYPE: EDIT})
+                                     ajournal.activity_group, model={TYPE: EDIT},
+                                     description=ActivityTopicField.NAME_DESCRIPTION)
         # second, do we already have a journal for this file, or do we need to add one?
         source = s.query(ActivityTopicJournal). \
             filter(ActivityTopicJournal.file_hash_id == file_scan.file_hash_id). \
@@ -304,5 +309,6 @@ class ActivityReader(MultiProcFitReader):
         loader = super()._read(s, path)
         for (name, activity_group), percent in loader.coverage_percentages():
             StatisticJournalFloat.add(s, _cov(name), PC, summaries(MIN, AVG), self.owner_out,
-                                      activity_group, self.__ajournal, percent, self.__ajournal.start)
+                                      activity_group, self.__ajournal, percent, self.__ajournal.start,
+                                      description=f'Coverage (% of FIT records with data) for {name}.')
         s.commit()

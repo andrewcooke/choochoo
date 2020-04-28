@@ -44,7 +44,6 @@ SWIM = 'Swim'
 WALK = 'Walk'
 
 
-
 class Config:
     '''
     A class-based approach so that we can easily modify the config for different profiles.
@@ -229,21 +228,21 @@ so do not use an important password that applies to many accounts.
         # the fields you see every day in the diary
         diary = add_diary_topic(s, 'Status', c)
         add_diary_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
-                              model={TYPE: EDIT})
+                              model={TYPE: EDIT}, description='Daily notes recorded by user in diary.')
         add_diary_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,
-                              units='kg', summary='[avg],[msr]',
+                              units='kg', summary='[avg],[msr]', description='Weight recorded by user in diary.',
                               model={TYPE: FLOAT, LO: 50, HI: 100, DP: 1})
         add_diary_topic_field(s, diary, 'Sleep', c, StatisticJournalType.FLOAT,
-                              units='h', summary='[avg]',
+                              units='h', summary='[avg]', description='Sleep time recorded by user in diary.',
                               model={TYPE: FLOAT, LO: 0, HI: 24, DP: 1})
         add_diary_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
-                              summary='[avg]',
+                              summary='[avg]', description='Mood recorded by user in diary.',
                               model={TYPE: SCORE})
         add_diary_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
-                              summary='[cnt]',
+                              summary='[cnt]', description='Medication recorded by user in diary.',
                               model={TYPE: EDIT})
         add_diary_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
-                              summary='[cnt]',
+                              summary='[cnt]', description='Weather recorded by user in diary.',
                               model={TYPE: EDIT})
 
     def _load_activity_topics(self, s, c):
@@ -251,13 +250,16 @@ so do not use an important password that applies to many accounts.
         for activity_group in self._all_groups_but_all():
             c = Counter()
             add_activity_topic_field(s, None, ActivityTopicField.NAME, c, StatisticJournalType.TEXT,
-                                     activity_group, model={TYPE: EDIT})
+                                     activity_group, model={TYPE: EDIT},
+                                     description=ActivityTopicField.NAME_DESCRIPTION)
             # note that these have empty toic parents because they are children of the entry itself
             if activity_group.name != SWIM:
                 add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
-                                         activity_group, model={TYPE: EDIT})
+                                         activity_group, model={TYPE: EDIT},
+                                         description='Route recorded by user in diary.')
             add_activity_topic_field(s, None, 'Notes', c, StatisticJournalType.TEXT,
-                                     activity_group, model={TYPE: EDIT})
+                                     activity_group, model={TYPE: EDIT},
+                                     description='Activity notes recorded by user in diary.')
 
     def _load_sys(self, sys, s):
         # finally, update the timezone

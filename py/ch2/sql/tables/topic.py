@@ -123,6 +123,7 @@ class ActivityTopicField(Base, TopicField):
     # (so you will never see a field for group X if it has parent activity for group Y).
 
     NAME = 'Name'
+    NAME_DESCRIPTION = 'The title for the activity.'
 
     __tablename__ = 'activity_topic_field'
 
