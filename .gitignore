@@ -15,7 +15,7 @@ dist
 *.lock
 */_site
 */.sass-cache
-dev/update.sh
 node_modules
 \#*
 .#*
+dev/set-constants.sh

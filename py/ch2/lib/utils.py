@@ -211,3 +211,11 @@ def slow_warning(msg, n=3, pause=1):
         log.warning(msg)
         sleep(pause)
 
+
+def parse_bool(text, default=False):
+    if not text: return default
+    ltext = text.strip().lower()
+    if ltext in ('y', 't', 'yes', 'true'): return True
+    if ltext in ('n', 'f', 'no', 'false'): return False
+    if default is None: raise Exception(f'Cannot parse {text} as a boolean')
+    return default

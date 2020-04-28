@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, Layout, Loading, Text} from "../elements";
+import {ColumnCard, ColumnList, Layout, Loading, Text, SearchResults} from "../elements";
 import {Button, Checkbox, Collapse, FormControlLabel, Grid, IconButton, TextField, Typography} from "@material-ui/core";
 import {makeStyles} from "@material-ui/styles";
 import {ExpandLess, ExpandMore} from "@material-ui/icons";
@@ -81,33 +81,23 @@ function BasicHelp(props) {
 }
 
 
-function SearchResult(props) {
-
-    const {result} = props;
-
-    return (<ColumnCard>
-        {result}
-    </ColumnCard>);
-}
-
-
 function SearchBox(props) {
 
-    const {setResult, advancedState} = props;
+    const {advancedState, queryState} = props;
     const [advanced, setAdvanced] = advancedState;
+    const [query, setQuery] = queryState;
+    const [localQuery, setLocalQuery] = useState(query);
     const expandedState = useState(true);
-    const [query, setQuery] = useState('');
     const classes = useStyles();
-
-    function onSearch() {
-        fetch('/api/search/activity/' + encodeURIComponent(query) + '?advanced=' + advanced).
-            then(response => response.json).
-            then(setResult(response));
-    }
 
     return (<ColumnCard>
         <Grid item xs={12}>
-            <TextField label='Query' value={query} onChange={event => setQuery(event.target.value)} fullWidth/>
+            <TextField label='Query' value={localQuery}
+                       onChange={event => setLocalQuery(event.target.value)}
+                       onKeyPress={event => {
+                           if (event.key === 'Enter') setQuery(localQuery);
+                       }}
+                       fullWidth/>
         </Grid>
         <Grid item xs={6}>
             <FormControlLabel
@@ -115,7 +105,7 @@ function SearchBox(props) {
                 label='Advanced'/>
         </Grid>
         <Grid item xs={6} className={classes.right}>
-            <Button variant='contained' onClick={onSearch}>Search</Button>
+            <Button variant='contained' onClick={() => setQuery(localQuery)}>Search</Button>
         </Grid>
         {advanced ? <AdvancedHelp expandedState={expandedState}/> : <BasicHelp/>}
     </ColumnCard>);
@@ -124,14 +114,15 @@ function SearchBox(props) {
 
 export default function Search(props) {
 
-    const [result, setResult] = useState(null);
-    const termsState = useState(null);
+    const queryState = useState('');
+    const [query, setQuery] = queryState;
     const advancedState = useState(false);
     const [advanced, setAdvanced] = advancedState;
+    const termsState = useState(null);
 
     const content = (<ColumnList>
-        <SearchBox setResult={setResult} advancedState={advancedState}/>
-        {result !== null ? <SearchResult result={result}/> : null}
+        <SearchBox advancedState={advancedState} queryState={queryState}/>
+        <SearchResults query={query} advanced={advanced}/>
         {advanced ? <SearchTerms termsState={termsState}/> : null}
     </ColumnList>);
 

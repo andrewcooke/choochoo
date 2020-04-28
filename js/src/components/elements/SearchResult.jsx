@@ -7,6 +7,7 @@ import Text from "./Text";
 import {format} from 'date-fns'
 import {FMT_DAY, FMT_DAY_TIME} from "../../constants";
 import {makeStyles} from "@material-ui/styles";
+import {useHistory} from 'react-router-dom';
 
 
 const useStyles = makeStyles(theme => ({
@@ -24,7 +25,8 @@ const useStyles = makeStyles(theme => ({
 
 export default function SearchResult(props) {
 
-    const {json, sort, history} = props;
+    const {json, sort} = props;
+    const history = useHistory();
     const classes = useStyles();
 
     function onClick() {

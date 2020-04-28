@@ -2,7 +2,7 @@ import React from 'react';
 import {Grid, Typography} from "@material-ui/core";
 import {JupyterActivity, ShrimpField, SummaryField, JupyterAllActivities} from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {Break, ColumnCard, ColumnList, LinkButton, Loading, Text, Search} from "../../elements";
+import {Break, ColumnCard, ColumnList, LinkButton, Loading, Text, SearchResults} from "../../elements";
 import {setIds} from '../../functions';
 import {addMonths, addYears, format} from 'date-fns';
 import {FMT_DAY} from "../../../constants";
@@ -34,7 +34,7 @@ export default function Schedule(props) {
         setIds(json);
         // drop outer date label since we already have that in the page
         return (<ColumnList>
-            <Search query={query} history={history}/>
+            <SearchResults query={query}/>
             {json.slice(1).map(row => <TopLevelPaper json={row} history={history} key={row.id}/>)}
         </ColumnList>);
     }

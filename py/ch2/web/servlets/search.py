@@ -3,10 +3,10 @@ from logging import getLogger
 from sqlalchemy import func
 
 from ..json import JsonResponse
-from ...commands.search import expanded_activities
-from ...sql import StatisticName, ActivityGroup, ActivityJournal, StatisticJournal, Source
+from ...commands.search import expand_activities, unified_search
+from ...lib.utils import parse_bool
+from ...sql import StatisticName, ActivityGroup, StatisticJournal, Source
 from ...sql.tables.source import SourceType
-
 
 log = getLogger(__name__)
 
@@ -20,7 +20,8 @@ class Search:
 
     @staticmethod
     def query_activity(request, s, query):
-        return JsonResponse(expanded_activities(s, query))
+        advanced = parse_bool(request.args.get('advanced', 'false'), default=None)
+        return JsonResponse(expand_activities(s, unified_search(s, query, advanced=advanced)))
 
     @staticmethod
     def read_activity_terms(request, s):

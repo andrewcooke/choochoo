@@ -63,8 +63,8 @@ def unified_search(s, query, advanced=True):
         return simple_activity_search(s, query)
 
 
-def expanded_activities(s, query):
-    return [expand_activity(s, activity) for activity in constrained_activities(s, query)]
+def expand_activities(s, activities):
+    return [expand_activity(s, activity) for activity in activities]
 
 
 def expand_activity(s, activity_journal):
