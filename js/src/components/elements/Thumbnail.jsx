@@ -7,7 +7,7 @@ export default function Thumbnail(props) {
     const [image, setImage] = useState(null);
 
     useEffect(() => {
-        fetch('/api/thumbnail/' + activity_id)
+        fetch('/api/thumbnail/' + encodeURIComponent(activity_id))
             .then(response => response.blob())
             .then(setImage);
     }, [activity_id]);

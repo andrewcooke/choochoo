@@ -120,6 +120,9 @@ class WebServer:
             Rule('/api/diary/latest', endpoint=diary.read_latest, methods=(GET,)),
             Rule('/api/diary/<date>', endpoint=self.check(diary.read_diary), methods=(GET,)),
 
+            Rule('/api/search/activity/<query>', endpoint=search.query_activity, methods=(GET,)),
+            Rule('/api/search/activity-terms', endpoint=search.read_activity_terms, methods=(GET,)),
+
             Rule('/api/jupyter/<template>', endpoint=jupyter, methods=(GET, )),
 
             Rule('/api/kit/edit', endpoint=self.check(kit.read_edit), methods=(GET, )),
@@ -133,7 +136,6 @@ class WebServer:
 
             Rule('/api/thumbnail/<activity>', endpoint=thumbnail, methods=(GET, )),
             Rule('/api/static/<path:path>', endpoint=static, methods=(GET, )),
-            Rule('/api/search/<query>', endpoint=search, methods=(GET, )),
 
             Rule('/api/upload', endpoint=self.check(upload), methods=(PUT, )),
 

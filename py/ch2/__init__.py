@@ -4,6 +4,8 @@ from logging import getLogger, NullHandler
 from os.path import abspath, dirname, join
 from sys import version_info
 
+from sqlite3 import enable_callback_tracebacks
+
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
 
@@ -102,6 +104,7 @@ def main():
         raise Exception('Please user Python 3.7 or more recent')
     db = Database(args)
     sys = System(args)
+    enable_callback_tracebacks(True)  # experimental - wondering what this does / whether it is useful?
     set_log_color(args, sys)
     try:
         if db.no_data() and (not command or command_name not in (CONFIGURE, PACKAGE_FIT_PROFILE, HELP, WEB)):
