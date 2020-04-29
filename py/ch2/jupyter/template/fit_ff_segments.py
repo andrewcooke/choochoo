@@ -8,6 +8,7 @@ from ch2.data.plot.utils import evenly_spaced_hues
 from ch2.data.response import *
 from ch2.lib.utils import group_to_dict
 from ch2.sql import *
+from ch2.stats.read.activity import ActivityReader
 from ch2.stats.read.segment import SegmentReader
 from ch2.jupyter.decorator import template
 
@@ -46,7 +47,7 @@ def fit_ff_segments(group, *segment_names):
     segments = [s.query(Segment).filter(Segment.name == segment_name).one() for segment_name in segment_names]
     for segment in segments:
         print(segment.name, segment.distance)
-    kit_statistic = StatisticName.from_name(s, 'kit', SegmentReader, ActivityGroup.from_name(s, group))
+    kit_statistic = StatisticName.from_name(s, ActivityReader.KIT, SegmentReader, ActivityGroup.from_name(s, group))
     journals_by_kit_by_segment = \
         {segment: group_to_dict(s.query(StatisticJournalText.value, SegmentJournal).
                                 join(ActivityJournal, SegmentJournal.activity_journal_id == ActivityJournal.id).

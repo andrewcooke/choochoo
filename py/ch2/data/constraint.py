@@ -3,7 +3,7 @@ import datetime as dt
 from logging import getLogger
 from re import escape
 
-from sqlalchemy import union, intersect, or_
+from sqlalchemy import union, intersect, or_, not_
 
 from ..lib import local_time_to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
@@ -150,7 +150,7 @@ def build_comparisons(s, ast):
     qname, op, value = ast
     name, group = parse_qname(qname)
     if isinstance(value, str):
-        q = get_journal_source_id(s, name, op, value, StatisticJournalType.TEXT, {'=': 'ilike'})
+        q = get_journal_source_id(s, name, op, value, StatisticJournalType.TEXT, {'=': 'ilike', '!=': 'nlike'})
         return add_group(q, group)
     elif isinstance(value, dt.datetime):
         q = get_journal_source_id(s, name, op, value, StatisticJournalType.TIMESTAMP)
@@ -169,10 +169,13 @@ def get_journal_source_id(s, name, op, value, type, update_attrs=None):
         attrs.update(update_attrs)
     attr = attrs[op]
     journal = STATISTIC_JOURNAL_CLASSES[type]
-    return s.query(journal.source_id). \
+    q = s.query(journal.source_id). \
         join(StatisticName). \
-        filter(StatisticName.name.ilike(name),
-               getattr(journal.value, attr)(value))
+        filter(StatisticName.name.ilike(name))
+    if attr == 'nlike':  # no way to neagte like in a single attribute
+        return q.filter(not_(journal.value.ilike(value)))
+    else:
+        return q.filter(getattr(journal.value, attr)(value))
 
 
 def add_group(q, group):

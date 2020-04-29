@@ -1,6 +1,7 @@
 
 from logging import getLogger
 
+from ch2.stats.read.activity import ActivityReader
 from ..lib.date import to_time
 from ..sql import ActivityBookmark, ActivityGroup, StatisticName
 from ..sql.database import connect
@@ -37,7 +38,7 @@ class CoastingBookmark:
         cadence_statistic = StatisticName.from_name(s, 'Cadence', SegmentReader, group)
         distance_statistic = StatisticName.from_name(s, 'Distance', SegmentReader, group)
         speed_statistic = StatisticName.from_name(s, 'Speed', SegmentReader, group)
-        kit_statistic = StatisticName.from_name(s, 'kit', SegmentReader, group)
+        kit_statistic = StatisticName.from_name(s, ActivityReader.Kit, SegmentReader, group)
         s.execute('PRAGMA automatic_index=OFF;')
         for row in s.execute('''
 select t.activity_journal_id, s.time, f.time

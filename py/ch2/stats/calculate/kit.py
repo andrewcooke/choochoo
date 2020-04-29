@@ -2,6 +2,7 @@
 from logging import getLogger
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin
+from ..read.activity import ActivityReader
 from ...lib.log import log_current_exception
 from ...sql import StatisticJournal, Timestamp
 from ...sql.tables.kit import expand_item
@@ -19,7 +20,8 @@ class KitCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator):
     def _run_one(self, s, time):
         ajournal = self._get_source(s, time)
         with Timestamp(owner=self.owner_out, source=ajournal).on_success(s):
-            kit = StatisticJournal.for_source(s, ajournal.id, 'kit', self.owner_in, ajournal.activity_group)
+            kit = StatisticJournal.for_source(s, ajournal.id, ActivityReader.KIT, self.owner_in,
+                                              ajournal.activity_group)
             if kit:
                 log.debug(f'Read {kit.value} at {time} / {ajournal.activity_group.name}')
                 for kit_name in kit.value.split(','):

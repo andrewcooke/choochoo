@@ -12,6 +12,7 @@ from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.utils import add
 from ...stats.calculate.power import Bike
 from ...stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
+from ...stats.read.activity import ActivityReader
 
 
 def acooke(sys, s, base, no_diary=False):
@@ -69,7 +70,7 @@ class ACooke(Config):
         # (cotic and bowman are kit items added via kit commands)
 
         return {SPORT_CYCLING: {
-                    'kit': {
+                    ActivityReader.KIT: {
                         'cotic': MTB,
                         'bowman': ROAD,
                     },

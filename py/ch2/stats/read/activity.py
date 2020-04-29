@@ -31,6 +31,8 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
+    KIT = 'Kit'
+
     def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, kit=True, **kargs):
         from ...commands.upload import ACTIVITY
         self.define = define if define else {}
@@ -61,10 +63,10 @@ class ActivityReader(MultiProcFitReader):
         if self.kit:
             _, kit = split_fit_path(path)
             if kit:
-                log.debug(f'Adding {KIT}={kit} to definitions')
-                define[KIT] = kit
+                log.debug(f'Adding {ActivityReader.KIT}={kit} to definitions')
+                define[ActivityReader.KIT] = kit
             else:
-                log.debug(f'No kit in {path}')
+                log.debug(f'No {ActivityReader.KIT} in {path}')
         return define
 
     def _read_data(self, s, file_scan):
