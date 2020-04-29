@@ -156,7 +156,9 @@ class Record:
             yield
         except Exception as e:
             self.warning(e)
-            if not catch:
+            if catch:
+                log_current_exception()
+            else:
                 raise
 
     def json(self):
