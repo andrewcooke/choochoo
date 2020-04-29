@@ -5,6 +5,7 @@ from sqlalchemy import intersect, or_
 from .args import QUERY, SHOW, SET, ADVANCED
 from ..config.config import NOTES
 from ..data import constrained_activities
+from ..data.constraint import constraint, check_constraint
 from ..diary.model import DB, VALUE, UNITS
 from ..lib import time_to_local_time
 from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic, \
@@ -45,12 +46,11 @@ and comparison must be between a name and a value (not two names).
 
 ### Example
 
-    > ch2 search --advanced 'name="Wrong Name"' --set 'name=Right Name'
+    > ch2 search --advanced 'name="Wrong Name"' --set 'name="Right Name"'
 
-Note the different handling of strings for searching and setting (sorry).
     '''
     query, show, set, advanced = args[QUERY], args[SHOW], args[SET], args[ADVANCED]
-    if not show: show = [ACTIVE_TIME, ACTIVE_DISTANCE]
+    if not show and not set: show = [ACTIVE_TIME, ACTIVE_DISTANCE]
     with db.session_context() as s:
         activities = unified_search(s, query, advanced=advanced)
         process_activities(s, activities, show, set)
@@ -105,9 +105,16 @@ def display(data):
         return '-'
 
 
+def parse_set(s, set):
+    name, op, value = constraint(set)[0]
+    if op != '=': raise Exception(f'{set} must be simple assignment')
+    check_constraint(s, (name, op, value))
+    return name, value
+
+
 def process_activities(s, activities, show, set):
     if set:
-        name, value = [x.strip() for x in set.split('=', 1)]
+        name, value = parse_set(s, set)
     for activity in activities:
         log.debug(activity.id)
         print(f'{display(activity.get_named(s, START, owner=ActivityCalculator))}  {activity.activity_group.name}  '
