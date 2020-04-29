@@ -1,5 +1,6 @@
 
 from collections import defaultdict
+from contextlib import contextmanager
 from itertools import zip_longest, groupby
 from logging import getLogger
 from os import getpid, close, execl, execle
@@ -10,6 +11,7 @@ from time import sleep
 
 from psutil import Process
 
+from .date import now, format_seconds
 from ..stats.names import M, KM, PC, W
 
 
@@ -219,3 +221,11 @@ def parse_bool(text, default=False):
     if ltext in ('n', 'f', 'no', 'false'): return False
     if default is None: raise Exception(f'Cannot parse {text} as a boolean')
     return default
+
+
+@contextmanager
+def timing(label):
+    start = now()
+    yield
+    seconds = (now() - start).total_seconds()
+    log.debug(f'Time for {label}: {seconds:.1f}s')

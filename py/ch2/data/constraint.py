@@ -7,6 +7,7 @@ from sqlalchemy import union, intersect, or_, not_
 
 from ..lib import local_time_to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
+from ..lib.utils import timing
 from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal, FileHash, \
     ActivityTopicJournal, StatisticJournalText, Source
 from ..sql.tables.source import SourceType
@@ -78,13 +79,17 @@ constraint = single(exhaustive(choice(or_comparison, parens)))
 
 
 def constrained_activities(s, query):
-    ast = constraint(query)[0]
+    with timing('parse AST'):
+        ast = constraint(query)[0]
     log.debug(f'AST: {ast}')
-    check_constraints(s, ast)
+    with timing('check AST'):
+        check_constraints(s, ast)
     log.debug('Checked constraints')
-    q = build_activity_query(s, ast)
+    with timing('build SQL'):
+        q = build_activity_query(s, ast)
     log.debug(f'Query: {q}')
-    return q.all()
+    with timing('execute SQL'):
+        return q.all()
 
 
 def check_constraints(s, ast):
@@ -109,7 +114,7 @@ def check_constraint(s, ast):
         filter(StatisticName.name.ilike(name),
                StatisticName.statistic_journal_type.in_(infer_types(value)))
     if group:
-        q = q.join(ActivityGroup).filter(ActivityGroup.name == group)
+        q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
     if not q.count():
         raise Exception(f'No match for statistic {qname} with type {value.__class__.__name__}')
     if not s.query(StatisticJournal). \
@@ -122,10 +127,7 @@ def check_constraint(s, ast):
 def build_activity_query(s, ast):
     constraints = build_constraints(s, ast).cte()
     return s.query(ActivityJournal). \
-        join(FileHash). \
-        join(ActivityTopicJournal). \
-        filter(or_(ActivityJournal.id.in_(constraints),
-                   ActivityTopicJournal.id.in_(constraints))). \
+        filter(ActivityJournal.id.in_(constraints)). \
         order_by(ActivityJournal.start)
 
 
@@ -150,50 +152,49 @@ def build_comparisons(s, ast):
     qname, op, value = ast
     name, group = parse_qname(qname)
     if isinstance(value, str):
-        q = get_journal_source_id(s, name, op, value, StatisticJournalType.TEXT, {'=': 'ilike', '!=': 'nlike'})
-        return add_group(q, group)
+        return get_activity_journal_ids(s, name, op, value, group,
+                                        StatisticJournalType.TEXT, {'=': 'ilike', '!=': 'nlike'})
     elif isinstance(value, dt.datetime):
-        q = get_journal_source_id(s, name, op, value, StatisticJournalType.TIMESTAMP)
-        return add_group(q, group)
+        return get_activity_journal_ids(s, name, op, value, group, StatisticJournalType.TIMESTAMP)
     else:
-        qint = get_journal_source_id(s, name, op, value, StatisticJournalType.INTEGER)
-        qint = add_group(qint, group)
-        qfloat = get_journal_source_id(s, name, op, value, StatisticJournalType.FLOAT)
-        qfloat = add_group(qfloat, group)
+        qint = get_activity_journal_ids(s, name, op, value, group, StatisticJournalType.INTEGER)
+        qfloat = get_activity_journal_ids(s, name, op, value, group, StatisticJournalType.FLOAT)
         return union(qint, qfloat).select()
 
 
-def get_journal_source_id(s, name, op, value, type, update_attrs=None):
+def get_activity_journal_ids(s, name, op, value, group, type, update_attrs=None):
+    statistic_journals = \
+        get_statistic_journals(s, name, op, value, group, type, update_attrs=update_attrs).cte()
+    via_activity_journal = s.query(ActivityJournal.id). \
+        join(statistic_journals, ActivityJournal.id == statistic_journals.c.source_id)
+    if group is None:
+        via_activity_journal = \
+            via_activity_journal.filter(ActivityJournal.activity_group_id == statistic_journals.c.activity_group_id)
+    via_topic_journal = s.query(ActivityJournal.id). \
+        join(ActivityTopicJournal, ActivityTopicJournal.file_hash_id == ActivityJournal.file_hash_id). \
+        join(statistic_journals, ActivityTopicJournal.id == statistic_journals.c.source_id)
+    if group is None:
+        via_topic_journal = \
+            via_topic_journal.filter(ActivityJournal.activity_group_id == statistic_journals.c.activity_group_id)
+    return union(via_activity_journal, via_topic_journal).select()
+
+
+def get_statistic_journals(s, name, op, value, group, type, update_attrs=None):
     attrs = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}
     if update_attrs:
         attrs.update(update_attrs)
     attr = attrs[op]
-    journal = STATISTIC_JOURNAL_CLASSES[type]
-    q = s.query(journal.source_id). \
+    statistic_journal = STATISTIC_JOURNAL_CLASSES[type]
+    q = s.query(statistic_journal.source_id, StatisticName.activity_group_id). \
         join(StatisticName). \
         filter(StatisticName.name.ilike(name))
-    if attr == 'nlike':  # no way to neagte like in a single attribute
-        return q.filter(not_(journal.value.ilike(value)))
+    if attr == 'nlike':  # no way to negate like in a single attribute
+        q = q.filter(not_(statistic_journal.value.ilike(value)))
     else:
-        return q.filter(getattr(journal.value, attr)(value))
-
-
-def add_group(q, group):
+        q = q.filter(getattr(statistic_journal.value, attr)(value))
     if group:
-        return q.join(ActivityGroup, StatisticName.activity_group_id == ActivityGroup.id). \
-            filter(ActivityGroup.name.ilike(group))
-    elif group is None:
-        qaj = q.join(ActivityJournal). \
-            filter(ActivityJournal.id == StatisticJournal.source_id,
-                   ActivityJournal.activity_group_id == StatisticName.activity_group_id)
-        qatj = q.join(ActivityTopicJournal). \
-            join(FileHash). \
-            join(ActivityJournal). \
-            filter(ActivityTopicJournal.id == StatisticJournal.source_id,
-                   ActivityJournal.activity_group_id == StatisticName.activity_group_id)
-        return union(qaj, qatj).select()
-    else:
-        return q
+        q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+    return q
 
 
 def parse_qname(qname):
