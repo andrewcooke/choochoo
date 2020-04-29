@@ -96,28 +96,29 @@ def check_inconsistent_groups_activity_journal_v_topic_statistics(record, db):
                 join(ActivityJournal, ActivityTopicJournal.file_hash_id == ActivityJournal.file_hash_id). \
                 filter(StatisticName.activity_group_id != ActivityJournal.activity_group_id). \
                 order_by(ActivityJournal.start)
+            # log.debug(q)
             for name, activity, journal in q.all():
-                alternates = ', '.join(j.value for j in s.query(StatisticJournal).
-                                       join(StatisticName).
-                                       join(ActivityTopicJournal,
-                                            StatisticJournal.source_id == ActivityTopicJournal.id).
-                                       join(ActivityJournal,
-                                            ActivityJournal.file_hash_id == ActivityTopicJournal.file_hash_id).
-                                       filter(StatisticName.name == name.name,
-                                              StatisticName.activity_group_id == ActivityJournal.activity_group_id,
-                                              ActivityJournal == activity).all())
-                if alternates:
+                q = s.query(StatisticJournal). \
+                    join(StatisticName, StatisticName.id == StatisticJournal.statistic_name_id). \
+                    join(ActivityTopicJournal, StatisticJournal.source_id == ActivityTopicJournal.id). \
+                    join(ActivityJournal, ActivityJournal.file_hash_id == ActivityTopicJournal.file_hash_id). \
+                    filter(StatisticName.name == name.name,
+                           StatisticName.activity_group_id == ActivityJournal.activity_group_id,
+                           ActivityJournal.id == activity.id)
+                # log.debug(q)
+                alternate = q.one_or_none()
+                if alternate:
                     record.warning(f'Activity on {time_to_local_time(activity.start)} '
                                    f'for group {activity.activity_group.name} '
                                    f'is associated with journal statistic {name.name} '
                                    f'for group {name.activity_group.name} '
-                                   f'with value {journal.value} and alternative(s) {alternates}')
+                                   f'with value {journal.value} and correct alternative {alternate.value}')
                 else:
                     record.warning(f'Activity on {time_to_local_time(activity.start)} '
                                    f'for group {activity.activity_group.name} '
                                    f'is associated with journal statistic {name.name} '
                                    f'for group {name.activity_group.name} '
-                                   f'with value {journal.value} and no alternatives')
+                                   f'with value {journal.value} and no alternative')
 
 
 def check_activity_topic_mutiple_groups(record, db):
@@ -138,9 +139,6 @@ def check_activity_topic_mutiple_groups(record, db):
                 if ',' in groups:
                     record.warning(f'Activity topic journal for {time_to_local_time(journal.start)} '
                                    f'is associated with multiple groups: {groups}')
-
-
-
 
 # add flag fix to fix things
 

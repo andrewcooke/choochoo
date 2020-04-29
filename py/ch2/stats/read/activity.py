@@ -192,8 +192,8 @@ class ActivityReader(MultiProcFitReader):
     def _save_name(s, ajournal, file_scan):
         from ...config import add_activity_topic_field
         log.debug('Saving name')
-        # first, do we have the 'Name' field defined for all activities?
-        # this should be triggered at most once if it was not already defined
+        # first, do we have the 'Name' field defined?
+        # this should be triggered at most once per group if it was not already defined
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
                 filter(StatisticName.name == ActivityTopicField.NAME,
@@ -215,8 +215,7 @@ class ActivityReader(MultiProcFitReader):
                 filter(StatisticJournal.source == source,
                        StatisticName.owner == ActivityTopic,
                        StatisticName.activity_group == ajournal.activity_group,
-                       StatisticName.name == ActivityTopicField.NAME). \
-                one_or_none():
+                       StatisticName.name == ActivityTopicField.NAME).one_or_none():
             value = splitext(basename(file_scan.path))[0]
             StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic, ajournal.activity_group,
                                      source, value, ajournal.start)
