@@ -10,9 +10,8 @@ from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MAX_MEAN_PE_M_AN
     CLIMB_DISTANCE, CLIMB_ELEVATION, MAX_MED_HR_M_ANY, MIN_KM_TIME_ANY
 from ...lib import local_time_to_time
 from ...lib.log import log_current_exception
-from ...sql import ActivityJournal, Timestamp, StatisticName, StatisticJournal, Achievement, ActivityGroup
+from ...sql import ActivityJournal, Timestamp, StatisticName, StatisticJournal, Achievement
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournalFloat
-from ...sql.types import short_cls
 from ...sql.utils import add
 
 log = getLogger(__name__)

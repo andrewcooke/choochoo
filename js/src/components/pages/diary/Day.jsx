@@ -26,8 +26,15 @@ const useStyles = makeStyles(theme => ({
     center: {
         textAlign: 'center',
     },
-    img: {
+    right: {
+        textAlign: 'right',
+    },
+     img: {
         marginBottom: '-5px',
+    },
+    title: {
+        background: theme.palette.secondary.dark,
+        paddingBottom: '0px',
     },
 }));
 
@@ -59,13 +66,41 @@ function childrenFromRest(head, rest, writer, level, history) {
 }
 
 
+function Title(props) {
+
+    const {header} = props;
+    const classes = useStyles();
+    const match = header.match(/^(.*\))\s*(.*)$/)
+    console.log('match', match)
+
+    return <ColumnCard className={classes.title}>
+        <Grid item xs={10}><Typography variant='h2' component='span'>{match[1]}</Typography></Grid>
+        <Grid item xs={2} className={classes.right}><Typography variant='h2' component='span'>{match[2]}</Typography></Grid>
+    </ColumnCard>
+}
+
+
 function TopLevelPaper(props) {
 
     const {writer, json, history} = props;
     const [head, ...rest] = json;
-    const children = childrenFromRest(head, rest, writer, 3, history);
 
-    return (<ColumnCard header={head.value}>{children}</ColumnCard>);
+    if (head.tag === 'activities') {
+        // splice each activity into the top level
+        return rest.map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>);
+    } else if (head.tag === 'activity-title') {
+        return (<Title header={head.value}/>);
+    } else {
+        const children = head.tag === 'jupyter-activity' ?
+            <JupyterActivity json={rest}/> :
+            childrenFromRest(head, rest, writer, 3, history);
+        // we drop the title for these
+        if (['activity', 'achievements', 'nearbys'].includes(head.tag)) {
+            return (<ColumnCard>{children}</ColumnCard>);
+        } else {
+            return (<ColumnCard header={head.value}>{children}</ColumnCard>);
+        }
+    }
 }
 
 

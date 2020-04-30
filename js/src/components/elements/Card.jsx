@@ -21,10 +21,11 @@ const useStyles = makeStyles(theme => ({
 
 export default function Card(props) {
 
-    const {children} = props;
+    const {children, className, ...rest} = props;
     const classes = useStyles();
 
-    return (<Paper className={classes.paper}><Box mb={1}>
+    // https://stackoverflow.com/questions/46066675/how-to-add-multiple-classes-in-material-ui-using-the-classes-props
+    return (<Paper {...rest} className={`${classes.paper} ${className}`}><Box mb={1}>
         {children}
     </Box></Paper>);
 }

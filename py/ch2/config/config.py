@@ -13,7 +13,7 @@ from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant
-from ..sql.types import short_cls
+from ..sql.types import short_cls, long_cls
 from ..srtm.file import SRTM1_DIR
 from ..stats.calculate.achievement import AchievementCalculator
 from ..stats.calculate.activity import ActivityCalculator
@@ -23,12 +23,12 @@ from ..stats.calculate.monitor import MonitorCalculator
 from ..stats.calculate.response import ResponseCalculator
 from ..stats.calculate.segment import SegmentCalculator
 from ..stats.calculate.summary import SummaryCalculator
-from ..stats.display.achievement import AchievementDiary
-from ..stats.display.activity import ActivityDiary
+from ..stats.display.achievement import AchievementDiary, AchievementDelegate
+from ..stats.display.activity import ActivityDiary, ActivityDelegate, ActivityReader
 from ..stats.display.monitor import MonitorDiary
-from ..stats.display.nearby import NearbyDiary
+from ..stats.display.nearby import NearbyDiary, NearbyDelegate
 from ..stats.display.response import ResponseDiary
-from ..stats.display.segment import SegmentDiary
+from ..stats.display.segment import SegmentDiary, SegmentDelegate
 from ..stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, \
     FATIGUE_D, LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL
 from ..stats.read.monitor import MonitorReader
@@ -193,9 +193,11 @@ your FF-model parameters (fitness and fatigue).
                   fitness=[name_constant(FITNESS_D % days, all) for (days, _, _) in fitness],
                   fatigue=[name_constant(FATIGUE_D % days, all) for (days, _, _) in fatigue])
         add_diary(s, AchievementDiary, c)
-        add_diary(s, ActivityDiary, c)
-        add_diary(s, SegmentDiary, c)
-        add_diary(s, NearbyDiary, c)
+        add_diary(s, ActivityReader, c,
+                  delegates=[long_cls(delegate) for delegate in self._activity_diary_delegates()])
+
+    def _activity_diary_delegates(self):
+        return [AchievementDelegate, ActivityDelegate, SegmentDelegate, NearbyDelegate]
 
     def _load_monitor_pipeline(self, s, c):
         sport_to_activity = self._sport_to_activity()

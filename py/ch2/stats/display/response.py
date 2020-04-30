@@ -6,8 +6,8 @@ from sqlalchemy import asc, desc
 
 from . import Reader
 from ..calculate.response import Response, ResponseCalculator
-from ...diary.model import text, optional_text, value
-from ...lib.date import local_date_to_time, to_time
+from ...diary.model import text, optional_text, value, link
+from ...lib.date import local_date_to_time, to_time, format_date
 from ...lib.schedule import Schedule
 from ...sql.tables.constant import Constant
 from ...sql.tables.statistic import StatisticJournal, StatisticName, TYPE_TO_JOURNAL_CLASS
@@ -27,6 +27,7 @@ class ResponseDiary(Reader):
     def _read_schedule(self, s, date, schedule):
         for response in self.fitness + self.fatigue:
             yield from self._read_single(s, date, schedule, response, schedule.frame_type == 'd')
+        yield link('Health', db=(format_date(date),))
 
     def _read_single(self, s, date, schedule, constant_name, display_range, ranges=('all', '90d', '30d')):
         start_time = local_date_to_time(schedule.start_of_frame(date))

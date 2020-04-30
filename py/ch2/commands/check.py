@@ -33,7 +33,7 @@ def check_activity_diary(record, db):
     check_activity_diary_missing_files(record, db)
     check_inconsistent_groups_activity_journal_v_topic(record, db)
     check_inconsistent_groups_activity_journal_v_topic_statistics(record, db)
-    check_activity_topic_mutiple_groups(record, db)
+    check_activity_topic_multiple_groups(record, db)
 
 
 def check_activity_diary_missing_files(record, db):
@@ -121,7 +121,7 @@ def check_inconsistent_groups_activity_journal_v_topic_statistics(record, db):
                                    f'with value {journal.value} and no alternative')
 
 
-def check_activity_topic_mutiple_groups(record, db):
+def check_activity_topic_multiple_groups(record, db):
     with record.record_exceptions(catch=True):
         with db.session_context() as s:
             q = s.query(func.group_concat(ActivityGroup.name.distinct()), ActivityTopicJournal). \

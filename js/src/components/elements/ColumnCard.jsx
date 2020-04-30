@@ -20,10 +20,10 @@ const useStyles = makeStyles(theme => ({
 
 export function ColumnCardBase(props) {
 
-    const {header=null, children} = props;
+    const {header=null, variant, className, children} = props;
     const classes = useStyles();
 
-    return (<ListItem className={classes.listItem}><Card>
+    return (<ListItem className={classes.listItem}><Card variant={variant} className={className}>
         {header !== null ? header : <></>}
         <Grid container spacing={1} className={classes.align}>{children}</Grid>
     </Card></ListItem>);
@@ -31,8 +31,8 @@ export function ColumnCardBase(props) {
 
 
 export default function ColumnCard(props) {
-    const {header = null, children} = props;
-    return (<ColumnCardBase
+    const {header = null, variant, children, className} = props;
+    return (<ColumnCardBase variant={variant} className={className}
         header={header !== null ? <Typography variant='h2'>{header}</Typography> : header}>
         {children}
     </ColumnCardBase>);

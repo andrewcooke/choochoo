@@ -116,7 +116,6 @@ def process_activities(s, activities, show, set):
     if set:
         name, value = parse_set(s, set)
     for activity in activities:
-        log.debug(activity.id)
         print(f'{display(activity.get_named(s, START, owner=ActivityCalculator))}  {activity.activity_group.name}  '
               f'{display(activity.get_all_named(s, ActivityTopicField.NAME, owner=ActivityTopic))}')
         for qname in show:
@@ -127,7 +126,7 @@ def process_activities(s, activities, show, set):
                 before = result.formatted()
                 result.set(value)
                 after = result.formatted()
-            print(f'  {name}: {before!r} -> {after!r}')
+                log.info(f'  {result.statistic_name}: {before!r} -> {after!r}')
 
 
 def parse(query):

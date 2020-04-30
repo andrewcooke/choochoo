@@ -22,8 +22,6 @@ def read_date(s, date):
     topics = list(read_date_diary_topics(s, date))
     if topics: yield topics
     yield from read_pipeline(s, date)
-    gui = list(read_gui(s, date))
-    if gui: yield gui
     yield list(read_database_health(s, date))
 
 

@@ -320,7 +320,7 @@ def make_parser(with_noop=False):
     search.add_argument(QUERY, metavar='QUERY', help='search terms')
     search.add_argument(m(A), mm(ADVANCED), action='store_true',
                         help='advanced search (similar to SQL)')
-    search.add_argument(mm(SHOW), metavar='NAME', nargs='+',
+    search.add_argument(mm(SHOW), metavar='NAME', action='append', default=[], nargs='+',
                         help='show value from matching activities')
     search.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching activities')
 

@@ -42,13 +42,27 @@ class Reader(BasePipeline):
 
     @abstractmethod
     def _read_schedule(self, s, date, schedule):
-        raise NotImplementedError(self.__class__)
+        raise NotImplementedError(self.__class__.__name__)
         yield
 
     @abstractmethod
     def _read_date(self, s, date):
-        raise NotImplementedError(self.__class__)
+        raise NotImplementedError(self.__class__.__name__)
         yield
+
+
+class ActivityJournalDelegate:
+
+    @abstractmethod
+    def read_journal_date(self, s, ajournal, date):
+        raise NotImplementedError(self.__class__.__name__)
+        yield
+
+    @abstractmethod
+    def read_schedule(self, s, date, schedule):
+        raise NotImplementedError(self.__class__.__name__)
+        yield
+
 
 
 class JournalDiary(Reader):
