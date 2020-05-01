@@ -1,7 +1,7 @@
 from logging import getLogger
 from re import sub
 
-from .. import ActivityJournalDelegate
+from ..display import ActivityJournalDelegate
 from ...calculate.segment import SegmentCalculator
 from ....names import SEGMENT_TIME, SEGMENT_HEART_RATE
 from ....diary.database import summary_column

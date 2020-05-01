@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from . import Displayer
+from .display import Displayer
 from ..calculate.monitor import MonitorCalculator
 from ...names import REST_HR, DAILY_STEPS
 from ...diary.database import summary_column

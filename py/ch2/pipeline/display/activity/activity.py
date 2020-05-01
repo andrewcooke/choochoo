@@ -11,13 +11,10 @@ from ....diary.model import optional_text, text, from_field, value
 from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date, \
     log_current_exception
 from ....lib.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YEAR, YM, DAY
-from ....names import MIN_KM_TIME_ANY, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, MAX_MEAN_PE_M_ANY, PERCENT_IN_Z_ANY, \
-    ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEAN_POWER_ESTIMATE, _delta, FITNESS_D_ANY, FATIGUE_D_ANY, EARNED_D_ANY, \
-    RECOVERY_D_ANY, ENERGY_ESTIMATE, CALORIE_ESTIMATE, M, CLIMB_ELEVATION, CLIMB_DISTANCE, KM, CLIMB_TIME, S, \
-    CLIMB_GRADIENT, PC, TOTAL_CLIMB
+from ....names import *
 from ...calculate.activity import ActivityCalculator
 from ...calculate.power import PowerCalculator
-from .. import Displayer, ActivityJournalDelegate
+from ..display import Displayer, ActivityJournalDelegate
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
     ActivityTopic, StatisticJournal
 from ....sql.types import lookup_cls

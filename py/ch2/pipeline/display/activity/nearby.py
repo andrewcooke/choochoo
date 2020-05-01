@@ -3,7 +3,7 @@ from sqlalchemy import or_, desc, distinct
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import min
 
-from .. import ActivityJournalDelegate
+from ..display import ActivityJournalDelegate
 from ....diary.model import text, link, optional_text
 from ....lib.date import to_time, time_to_local_time
 from ....sql import ActivityJournal, ActivitySimilarity, ActivityNearby

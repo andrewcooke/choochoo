@@ -4,7 +4,7 @@ from json import loads
 
 from sqlalchemy import asc, desc
 
-from . import Displayer
+from .display import Displayer
 from ..calculate.response import Response, ResponseCalculator
 from ...diary.model import text, optional_text, value, link
 from ...lib.date import local_date_to_time, to_time, format_date

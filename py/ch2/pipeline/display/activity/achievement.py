@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy import desc
 
-from .. import ActivityJournalDelegate
+from ..display import ActivityJournalDelegate
 from ....diary.model import optional_text, text
 from ....sql import Achievement
 

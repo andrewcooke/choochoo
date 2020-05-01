@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy.sql.functions import count
 
-from . import Displayer
+from .display import Displayer
 from ...diary.model import value, optional_text, text
 from ...sql import Interval
 

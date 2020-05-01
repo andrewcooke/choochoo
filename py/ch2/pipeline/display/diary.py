@@ -3,7 +3,7 @@ from logging import getLogger
 
 from sqlalchemy import or_
 
-from . import Displayer
+from .display import Displayer
 from ..calculate.summary import SummaryCalculator
 from ...diary.model import text, from_field, optional_text, value, trim_no_stats
 from ...sql import DiaryTopicJournal, DiaryTopic, StatisticJournal
