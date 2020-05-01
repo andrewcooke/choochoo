@@ -7,9 +7,6 @@ from os.path import join
 from re import sub
 from typing import Mapping
 
-from ..lib.date import to_date, to_time
-from ..lib.utils import clean_path
-
 log = getLogger(__name__)
 
 # this can be modified during development.  it will be reset from setup.py on release.
@@ -233,6 +230,9 @@ class NamespaceWithVariables(Mapping):
 
 
 def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=True):
+
+    from ch2.lib.utils import clean_path
+
     dir = base
     if version: dir = join(dir, version)
     if subdir: dir = join(dir, subdir)
@@ -251,6 +251,8 @@ def color(color):
 
 
 def make_parser(with_noop=False):
+
+    from ..lib import to_date, to_time
 
     parser = ArgumentParser(prog=PROGNAME)
 
@@ -681,6 +683,9 @@ def bootstrap_dir(base, *args, configurator=None, post_config=None):
 
 
 def parse_pairs(pairs, convert=True, multi=False, comma=False):
+
+    from ..lib import to_time
+
     # simple name, value pairs. owner and constraint supplied by command.
     d = {}
     if pairs is not None:

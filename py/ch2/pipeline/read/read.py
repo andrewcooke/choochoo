@@ -4,13 +4,13 @@ from logging import getLogger
 from os.path import join
 from time import time
 
-from .. import FatalException
-from ..lib import log_current_exception, to_time
-from ..commands.args import base_system_path, PERMANENT
-from ..fit.format.read import filtered_records
-from ..lib.io import modified_file_scans
-from ..sql import Timestamp
-from ..pipeline import MultiProcPipeline, LoaderMixin
+from ch2 import FatalException
+from ch2.commands.args import base_system_path, PERMANENT
+from ch2.fit.format.read import filtered_records
+from ch2.lib import to_time, log_current_exception
+from ch2.lib.io import modified_file_scans
+from ch2.pipeline.pipeline import LoaderMixin, MultiProcPipeline
+from ch2.sql import Timestamp
 
 log = getLogger(__name__)
 

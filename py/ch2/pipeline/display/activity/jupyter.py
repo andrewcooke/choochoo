@@ -1,6 +1,6 @@
 
-from . import ActivityJournalDelegate
 from .nearby import fmt_nearby, nearby_any_time
+from .. import ActivityJournalDelegate
 from ....diary.model import text, link, optional_text, COMPARE_LINKS
 from ....lib import time_to_local_time
 from ....lib.date import format_date

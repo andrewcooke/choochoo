@@ -4,7 +4,7 @@ from logging import getLogger
 
 from ...lib import log_current_exception, to_date, local_date_to_time
 from ...sql import Pipeline, PipelineType, ActivityGroup, ActivityJournal
-from .. import BasePipeline
+from ..pipeline import BasePipeline
 
 log = getLogger(__name__)
 

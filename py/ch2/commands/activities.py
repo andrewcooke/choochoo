@@ -1,7 +1,7 @@
 
 from ..commands.args import PATH, FORCE, parse_pairs, DEFINE, KARG, WORKER, KIT, BASE
 from ..sql import PipelineType
-from ..pipeline import run_pipeline
+from ..pipeline.pipeline import run_pipeline
 
 
 def activities(args, sys, db):

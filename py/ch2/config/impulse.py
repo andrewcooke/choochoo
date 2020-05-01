@@ -4,7 +4,7 @@ from .database import add_statistics, add_enum_constant, name_constant
 from ..names import FITNESS_D, FATIGUE_D, ALL
 from ..pipeline.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..pipeline.calculate.response import Response, ResponseCalculator
-from ..read.segment import SegmentReader
+from ch2.pipeline.read.segment import SegmentReader
 from ..sql import ActivityGroup
 from ..sql.types import short_cls
 

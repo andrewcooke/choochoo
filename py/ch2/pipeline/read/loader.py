@@ -6,10 +6,10 @@ from time import sleep
 from sqlalchemy.exc import IntegrityError
 
 from .waypoint import make_waypoint
-from ..commands.args import UNLOCK
-from ..sql import StatisticJournal, StatisticName, Dummy, Interval
-from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
-from ..sql.types import short_cls
+from ...commands.args import UNLOCK
+from ...sql import StatisticJournal, StatisticName, Dummy, Interval
+from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
+from ...sql.types import short_cls
 
 log = getLogger(__name__)
 

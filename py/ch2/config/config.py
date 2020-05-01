@@ -22,7 +22,7 @@ from ..pipeline.calculate.monitor import MonitorCalculator
 from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.segment import SegmentCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
-from ..pipeline.display.activity import ActivityDisplayer, ActivityDelegate
+from ..pipeline.display.activity.activity import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.activity.achievement import AchievementDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
 from ..pipeline.display.activity.nearby import NearbyDelegate
@@ -31,8 +31,8 @@ from ..pipeline.display.database import DatabaseDisplayer
 from ..pipeline.display.diary import DiaryDisplayer
 from ..pipeline.display.monitor import MonitorDisplayer
 from ..pipeline.display.response import ResponseDisplayer
-from ..read.monitor import MonitorReader
-from ..read.segment import SegmentReader
+from ..pipeline.read.monitor import MonitorReader
+from ..pipeline.read.segment import SegmentReader
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant
 from ..sql.types import short_cls, long_cls
 from ..srtm.file import SRTM1_DIR

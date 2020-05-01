@@ -2,8 +2,8 @@
 from logging import getLogger
 
 from ..lib.date import to_time
-from ..read.activity import ActivityReader
-from ..read.segment import SegmentReader
+from ch2.pipeline.read.activity import ActivityReader
+from ch2.pipeline.read.segment import SegmentReader
 from ..sql import ActivityBookmark, ActivityGroup, StatisticName
 from ..sql.database import connect
 

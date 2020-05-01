@@ -18,11 +18,11 @@ from ..lib.io import data_hash, split_fit_path, touch
 from ..lib.log import log_current_exception, Record
 from ..lib.utils import clean_path, slow_warning
 from ..lib.workers import ProgressTree, SystemProgressTree
+from ..pipeline.read.read import AbortImportButMarkScanned
 from ..sql import KitItem, FileHash, ActivityJournal
 from ..names import TIME
-from ..read import AbortImportButMarkScanned
-from ..read.activity import ActivityReader
-from ..read.monitor import MonitorReader
+from ch2.pipeline.read.activity import ActivityReader
+from ch2.pipeline.read.monitor import MonitorReader
 
 log = getLogger(__name__)
 

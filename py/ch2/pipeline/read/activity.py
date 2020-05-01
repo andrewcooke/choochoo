@@ -4,23 +4,23 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
-from . import AbortImportButMarkScanned, MultiProcFitReader
-from .. import FatalException
-from ..commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
-from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
+from .read import AbortImportButMarkScanned, MultiProcFitReader
+from ... import FatalException
+from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
+from ...names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
     SPORT_GENERIC, PC, MIN, summaries, AVG, KM, _cov
-from ..diary.model import TYPE, EDIT
-from ..fit.format.records import fix_degrees, merge_duplicates, no_bad_values
-from ..fit.profile.profile import read_fit
-from ..lib.date import to_time
-from ..lib.io import split_fit_path
-from ..sql.database import Timestamp, StatisticJournalText
-from ..sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
-from ..sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
+from ...diary.model import TYPE, EDIT
+from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
+from ...fit.profile.profile import read_fit
+from ...lib.date import to_time
+from ...lib.io import split_fit_path
+from ...sql.database import Timestamp, StatisticJournalText
+from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
+from ...sql.tables.statistic import StatisticJournalFloat, STATISTIC_JOURNAL_CLASSES, StatisticName, \
     StatisticJournalType, StatisticJournal
-from ..sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
-from ..sql.utils import add
-from ..srtm.bilinear import bilinear_elevation_from_constant
+from ...sql.tables.topic import ActivityTopicField, ActivityTopic, ActivityTopicJournal
+from ...sql.utils import add
+from ...srtm.bilinear import bilinear_elevation_from_constant
 
 log = getLogger(__name__)
 

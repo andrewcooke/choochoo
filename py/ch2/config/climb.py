@@ -1,7 +1,6 @@
-from json import dumps
 from logging import getLogger
 
-from . import name_constant, add_enum_constant, set_constant
+from .database import add_enum_constant
 from ..data.climb import Climb, MAX_CLIMB_GRADIENT, MIN_CLIMB_GRADIENT, MAX_CLIMB_REVERSAL, \
     MIN_CLIMB_ELEVATION
 

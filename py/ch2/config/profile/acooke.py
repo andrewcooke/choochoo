@@ -9,7 +9,7 @@ from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
 from ...msil2a.download import MSIL2A_DIR
 from ...pipeline.calculate.power import Bike
-from ...read.activity import ActivityReader
+from ch2.pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.utils import add

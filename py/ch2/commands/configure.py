@@ -6,10 +6,9 @@ from shutil import rmtree
 from .args import no, mm, SUB_COMMAND, CHECK, DATA, CONFIGURE, ACTIVITY_GROUPS, LIST, PROFILE, DIARY, DELETE, FORCE, \
     BASE
 from .help import Markdown
-from ..config import ActivityGroup
 from ..config.utils import profiles, get_profile
 from ..lib.utils import slow_warning
-from ..sql import SystemConstant
+from ..sql import SystemConstant, ActivityGroup
 from ..sql.tables.statistic import StatisticName, StatisticJournal
 
 log = getLogger(__name__)

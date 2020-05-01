@@ -3,7 +3,7 @@ from logging import getLogger
 
 from ..commands.args import PATH, FORCE, FAST, WORKER, parse_pairs, KARG, BASE
 from ..sql.tables.pipeline import PipelineType
-from ..pipeline import run_pipeline
+from ..pipeline.pipeline import run_pipeline
 
 log = getLogger(__name__)
 

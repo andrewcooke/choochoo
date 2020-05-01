@@ -19,7 +19,7 @@ from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
-from ..pipeline import run_pipeline
+from ..pipeline.pipeline import run_pipeline
 from ..pipeline.display.activity.nearby import NEARBY_LINKS
 from ..sql import PipelineType, DiaryTopicJournal, ActivityJournal
 from ..sql.database import StatisticJournal

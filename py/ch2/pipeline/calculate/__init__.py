@@ -9,7 +9,7 @@ from ...lib.schedule import Schedule
 from ...sql import Timestamp, StatisticName, StatisticJournal, ActivityJournal, ActivityGroup, SegmentJournal, Interval
 from ...sql.types import long_cls
 from ...sql.utils import add
-from .. import MultiProcPipeline, UniProcPipeline, LoaderMixin
+from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
 
 log = getLogger(__name__)
 

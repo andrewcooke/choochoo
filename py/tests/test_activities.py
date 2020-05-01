@@ -11,7 +11,7 @@ from ch2.sql.tables.activity import ActivityJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
 from ch2.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
-from ch2.pipeline import run_pipeline
+from ch2.pipeline.pipeline import run_pipeline
 from tests import LogTestCase
 
 

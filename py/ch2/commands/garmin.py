@@ -11,7 +11,7 @@ from ..lib.log import log_current_exception
 from ..lib.utils import clean_path
 from ..lib.workers import ProgressTree
 from ..sql import Constant, SystemConstant
-from ..read.monitor import missing_dates
+from ch2.pipeline.read.monitor import missing_dates
 
 log = getLogger(__name__)
 

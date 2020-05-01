@@ -2,7 +2,8 @@
 from logging import getLogger
 
 from ...lib import time_to_local_time
-from ...pipeline.display.activity import activities_start, activities_finish, latest_activity, activities_by_group
+from ...pipeline.display.activity.activity import activities_start, activities_finish, latest_activity, \
+    activities_by_group
 from ...pipeline.display.activity.nearby import constraints
 
 log = getLogger(__name__)

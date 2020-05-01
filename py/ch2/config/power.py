@@ -1,6 +1,7 @@
+
 from logging import getLogger
 
-from . import name_constant, add_enum_constant, add_statistics
+from .database import name_constant, add_enum_constant, add_statistics
 from ..pipeline.calculate.power import Power, ExtendedPowerCalculator
 
 log = getLogger(__name__)
