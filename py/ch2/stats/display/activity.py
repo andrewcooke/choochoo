@@ -6,7 +6,7 @@ from re import search
 from sqlalchemy import or_, distinct, desc, asc
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import JournalDiary, Reader, ActivityJournalDelegate
+from . import JournalDiary, Displayer, ActivityJournalDelegate
 from ..calculate.activity import ActivityCalculator
 from ..calculate.power import PowerCalculator
 from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
@@ -27,7 +27,7 @@ from ...sql.types import lookup_cls
 log = getLogger(__name__)
 
 
-class ActivityReader(Reader):
+class ActivityDisplayer(Displayer):
 
     def __init__(self, *args, delegates=None, **kargs):
         if not delegates: raise Exception(f'{self.__class__.__name__} must be configured with delegates')
@@ -44,8 +44,11 @@ class ActivityReader(Reader):
                            ActivityJournal.start < finish,
                            ActivityJournal.activity_group == activity_group). \
                     order_by(ActivityJournal.start).all():
-                yield [text(self.__title(s, ajournal), tag='activity-title', db=ajournal)]
-                yield from self._read_journal_date(s, ajournal, date)
+                yield list(self._single_activity(s, ajournal, date))
+
+    def _single_activity(self, s, ajournal, date):
+        yield text(self.__title(s, ajournal), tag='activity-title', db=ajournal)
+        yield from self._read_journal_date(s, ajournal, date)
 
     @staticmethod
     def __title(s, ajournal):
@@ -58,8 +61,11 @@ class ActivityReader(Reader):
         for delegate in self.__delegates:
             try:
                 log.debug(f'Calling {delegate}')
-                entry = list(delegate.read_journal_date(s, ajournal, date))
-                if entry: yield entry
+                if delegate.interpolate:
+                    yield from delegate.read_journal_date(s, ajournal, date)
+                else:
+                    entry = list(delegate.read_journal_date(s, ajournal, date))
+                    if entry: yield entry
             except Exception as e:
                 log.warning(f'Error calling {delegate}')
                 log_current_exception(traceback=True)
@@ -78,10 +84,16 @@ class ActivityReader(Reader):
 
 class ActivityDelegate(ActivityJournalDelegate):
 
+    def __init__(self):
+        super().__init__(interpolate=True)
+
     def read_journal_date(self, s, ajournal, date):
+        yield list(self._read_journal_topics(s, ajournal, date))
+        yield from self.__read_details(s, ajournal, date)
+
+    def _read_journal_topics(self, s, ajournal, date):
         yield text('Activity', db=ajournal)
         yield from self.__read_activity_topics(s, ajournal, date)
-        yield from self.__read_details(s, ajournal, date)
 
     def __read_activity_topics(self, s, ajournal, date):
         tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash)
@@ -250,9 +262,14 @@ class ActivityDiary(JournalDiary):
         super().__init__(*args, **kargs)
 
     def _read_journal_date(self, s, ajournal, date):
+        yield list(self._read_journal_topics(s, ajournal, date))
         yield text(self.__title(s, ajournal), tag='activity', db=ajournal)
         yield from self.__read_activity_topics(s, ajournal, date)
         yield from self.__read_details(s, ajournal, date)
+
+    def _read_journal_topics(self, s, ajournal, date):
+        yield text(self.__title(s, ajournal), tag='activity', db=ajournal)
+        yield from self.__read_activity_topics(s, ajournal, date)
 
     def __read_activity_topics(self, s, ajournal, date):
         tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash)

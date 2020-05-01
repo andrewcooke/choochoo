@@ -20,13 +20,13 @@ def read_pipeline(session, date, schedule=None):
     for pipeline in Pipeline.all(session, PipelineType.DIARY):
         log.info(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
         instance = pipeline.cls(*pipeline.args, **pipeline.kargs)
-        if isinstance(instance, Reader):
+        if isinstance(instance, Displayer):
             data = list(instance.read(session, date, schedule=schedule))
             if data:
                 yield data
 
 
-class Reader(BasePipeline):
+class Displayer(BasePipeline):
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
@@ -53,6 +53,9 @@ class Reader(BasePipeline):
 
 class ActivityJournalDelegate:
 
+    def __init__(self, interpolate=False):
+        self.interpolate = interpolate
+
     @abstractmethod
     def read_journal_date(self, s, ajournal, date):
         raise NotImplementedError(self.__class__.__name__)
@@ -65,7 +68,7 @@ class ActivityJournalDelegate:
 
 
 
-class JournalDiary(Reader):
+class JournalDiary(Displayer):
 
     def _read_date(self, s, date):
         start = local_date_to_time(date)

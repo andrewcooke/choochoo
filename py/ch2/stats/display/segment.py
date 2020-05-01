@@ -3,7 +3,7 @@ import datetime as dt
 from logging import getLogger
 from re import sub
 
-from . import Reader, ActivityJournalDelegate
+from . import Displayer, ActivityJournalDelegate
 from ..calculate.segment import SegmentCalculator
 from ..names import SEGMENT_TIME, SEGMENT_HEART_RATE
 from ...diary.database import summary_column
@@ -60,7 +60,7 @@ class SegmentDelegate(ActivityJournalDelegate):
                 yield sname
 
 
-class SegmentDiary(Reader):
+class SegmentDiary(Displayer):
 
     @optional_text('Segments')
     def _read_date(self, s, date):

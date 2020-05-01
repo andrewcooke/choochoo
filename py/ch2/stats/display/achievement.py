@@ -4,7 +4,7 @@ import datetime as dt
 
 from sqlalchemy import desc
 
-from ..display import Reader, ActivityJournalDelegate
+from ..display import Displayer, ActivityJournalDelegate
 from ...diary.model import optional_text, text
 from ...lib import local_date_to_time
 from ...sql import ActivityGroup, ActivityJournal, Achievement
@@ -32,7 +32,7 @@ class AchievementDelegate(ActivityJournalDelegate):
         yield
 
 
-class AchievementDiary(Reader):
+class AchievementDiary(Displayer):
 
     @optional_text('Achievements')
     def _read_date(self, s, date):

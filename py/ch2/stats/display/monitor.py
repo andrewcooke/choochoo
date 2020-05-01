@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from . import Reader
+from . import Displayer
 from ..calculate.monitor import MonitorCalculator
 from ..names import REST_HR, DAILY_STEPS
 from ...diary.database import summary_column
@@ -11,7 +11,7 @@ from ...sql.tables.statistic import StatisticJournal, StatisticName
 log = getLogger(__name__)
 
 
-class MonitorDiary(Reader):
+class MonitorDisplayer(Displayer):
 
     @optional_text('Monitor')
     def _read_date(self, s, date):

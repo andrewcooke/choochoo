@@ -4,7 +4,7 @@ from json import loads
 
 from sqlalchemy import asc, desc
 
-from . import Reader
+from . import Displayer
 from ..calculate.response import Response, ResponseCalculator
 from ...diary.model import text, optional_text, value, link
 from ...lib.date import local_date_to_time, to_time, format_date
@@ -13,7 +13,7 @@ from ...sql.tables.constant import Constant
 from ...sql.tables.statistic import StatisticJournal, StatisticName, TYPE_TO_JOURNAL_CLASS
 
 
-class ResponseDiary(Reader):
+class ResponseDisplayer(Displayer):
 
     def __init__(self, *args, fitness=None, fatigue=None, **kargs):
         self.fitness = self._assert('fitness', fitness)

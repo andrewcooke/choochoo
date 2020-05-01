@@ -80,30 +80,6 @@ function Title(props) {
 }
 
 
-function TopLevelPaper(props) {
-
-    const {writer, json, history} = props;
-    const [head, ...rest] = json;
-
-    if (head.tag === 'activities') {
-        // splice each activity into the top level
-        return rest.map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>);
-    } else if (head.tag === 'activity-title') {
-        return (<Title header={head.value}/>);
-    } else {
-        const children = head.tag === 'jupyter-activity' ?
-            <JupyterActivity json={rest}/> :
-            childrenFromRest(head, rest, writer, 3, history);
-        // we drop the title for these
-        if (['activity', 'achievements', 'nearbys'].includes(head.tag)) {
-            return (<ColumnCard>{children}</ColumnCard>);
-        } else {
-            return (<ColumnCard header={head.value}>{children}</ColumnCard>);
-        }
-    }
-}
-
-
 function Header(props) {
 
     const {writer, json, level, history} = props;
@@ -160,6 +136,33 @@ function Field(props) {
         return (<Grid item xs={4}>
             <Text>Unsupported type: {JSON.stringify(json)}</Text>
         </Grid>);
+    }
+}
+
+
+function TopLevelPaper(props) {
+
+    const {writer, json, history} = props;
+    const [head, ...rest] = json;
+
+    if (['diary', 'activities'].includes(head.tag)) {
+        // splice into the top level
+        return rest.map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>);
+    } else if (head.tag === 'activity-title') {
+        return (<>
+            <Title header={head.value}/>
+            {rest.map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
+        </>);
+    } else {
+        const children = head.tag === 'jupyter-activity' ?
+            <JupyterActivity json={rest}/> :
+            childrenFromRest(head, rest, writer, 3, history);
+        // we drop the title for these
+        if (['activity', 'achievements', 'nearbys'].includes(head.tag)) {
+            return (<ColumnCard>{children}</ColumnCard>);
+        } else {
+            return (<ColumnCard header={head.value}>{children}</ColumnCard>);
+        }
     }
 }
 

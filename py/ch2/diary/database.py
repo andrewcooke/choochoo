@@ -19,8 +19,6 @@ COMPARE_LINKS = 'compare-links'
 
 def read_date(s, date):
     yield text(date.strftime('%Y-%m-%d - %A'), tag='title')
-    topics = list(read_date_diary_topics(s, date))
-    if topics: yield topics
     yield from read_pipeline(s, date)
     yield list(read_database_health(s, date))
 
