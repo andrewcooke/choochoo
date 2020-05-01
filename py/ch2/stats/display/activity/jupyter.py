@@ -1,9 +1,9 @@
 
-from . import ActivityJournalDelegate
-from .nearby import fmt_nearby, nearby_any_time
-from ...diary.model import text, link, optional_text, COMPARE_LINKS
-from ...lib import time_to_local_time
-from ...lib.date import format_date
+from ch2.stats.display import ActivityJournalDelegate
+from ch2.stats.display.activity.nearby import fmt_nearby, nearby_any_time
+from ch2.diary.model import text, link, optional_text, COMPARE_LINKS
+from ch2.lib import time_to_local_time
+from ch2.lib.date import format_date
 
 
 class JupyterDelegate(ActivityJournalDelegate):

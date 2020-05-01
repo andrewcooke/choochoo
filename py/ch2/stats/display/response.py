@@ -4,13 +4,13 @@ from json import loads
 
 from sqlalchemy import asc, desc
 
-from . import Displayer
-from ..calculate.response import Response, ResponseCalculator
-from ...diary.model import text, optional_text, value, link
-from ...lib.date import local_date_to_time, to_time, format_date
-from ...lib.schedule import Schedule
-from ...sql.tables.constant import Constant
-from ...sql.tables.statistic import StatisticJournal, StatisticName, TYPE_TO_JOURNAL_CLASS
+from ch2.stats.display import Displayer
+from ch2.stats.calculate.response import Response, ResponseCalculator
+from ch2.diary.model import text, optional_text, value, link
+from ch2.lib.date import local_date_to_time, to_time, format_date
+from ch2.lib.schedule import Schedule
+from ch2.sql.tables.constant import Constant
+from ch2.sql.tables.statistic import StatisticJournal, StatisticName, TYPE_TO_JOURNAL_CLASS
 
 
 class ResponseDisplayer(Displayer):

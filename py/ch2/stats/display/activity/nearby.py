@@ -3,10 +3,10 @@ from sqlalchemy import or_, desc, distinct
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import min
 
-from . import JournalDiary, ActivityJournalDelegate
-from ...diary.model import text, link, optional_text
-from ...lib.date import to_time, time_to_local_time
-from ...sql import ActivityJournal, ActivitySimilarity, ActivityNearby
+from ch2.stats.display import JournalDiary, ActivityJournalDelegate
+from ch2.diary.model import text, link, optional_text
+from ch2.lib.date import to_time, time_to_local_time
+from ch2.sql import ActivityJournal, ActivitySimilarity, ActivityNearby
 
 NEARBY_LINKS = 'nearby-links'
 

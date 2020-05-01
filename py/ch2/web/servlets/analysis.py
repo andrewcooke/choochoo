@@ -4,7 +4,7 @@ from logging import getLogger
 from ...lib import time_to_local_time
 from ...stats.display.activity import latest_activity, activities_start, activities_finish, \
     activities_by_group
-from ...stats.display.nearby import constraints
+from ch2.stats.display.activity.nearby import constraints
 
 log = getLogger(__name__)
 

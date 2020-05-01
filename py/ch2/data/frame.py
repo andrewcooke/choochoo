@@ -18,13 +18,12 @@ from ..sql import StatisticName, StatisticJournal, StatisticJournalInteger, Acti
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..sql.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
     Composite, CompositeComponent, ActivityNearby
-from ..stats.display.nearby import nearby_any_time
 from ..stats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, HEART_RATE_BPM, \
-    MED_HEART_RATE_BPM, GRADE, GRADE_PC, BOOKMARK, DISTANCE_KM, SPEED_KMH, MED_SPEED_KMH, MED_HR_IMPULSE_10, \
+    MED_HEART_RATE_BPM, GRADE, GRADE_PC, BOOKMARK, DISTANCE_KM, MED_SPEED_KMH, MED_HR_IMPULSE_10, \
     MED_CADENCE, ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
     ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, \
-    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP, MIXED, ACTIVITY_GROUP, LO_REST_HR, \
+    DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, GROUP, MIXED, LO_REST_HR, \
     HI_REST_HR, _delta, FATIGUE, FITNESS
 
 log = getLogger(__name__)
@@ -357,6 +356,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
 
 
 def nearby_activities(s, local_time=None, time=None, activity_group=None):
+    from ..stats.display.activity.nearby import nearby_any_time
     activity_journal = _activity_journal(s, local_time=local_time, time=time,
                                          activity_group=activity_group)
     return nearby_any_time(s, activity_journal)

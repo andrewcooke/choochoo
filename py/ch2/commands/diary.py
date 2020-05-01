@@ -21,7 +21,7 @@ from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
 from ..sql import PipelineType, DiaryTopicJournal, ActivityJournal
 from ..sql.database import StatisticJournal
-from ..stats.display.nearby import NEARBY_LINKS
+from ch2.stats.display.activity.nearby import NEARBY_LINKS
 from ..stats.pipeline import run_pipeline
 from ..urwid.tui.factory import Factory
 from ..urwid.tui.tabs import TabList

@@ -23,14 +23,15 @@ from ..stats.calculate.monitor import MonitorCalculator
 from ..stats.calculate.response import ResponseCalculator
 from ..stats.calculate.segment import SegmentCalculator
 from ..stats.calculate.summary import SummaryCalculator
-from ..stats.display.achievement import AchievementDelegate
 from ..stats.display.activity import ActivityDelegate, ActivityDisplayer
+from ..stats.display.activity.achievement import AchievementDelegate
+from ..stats.display.activity.jupyter import JupyterDelegate
+from ..stats.display.activity.nearby import NearbyDelegate
+from ..stats.display.activity.segment import SegmentDelegate
 from ..stats.display.database import DatabaseDisplayer
-from ..stats.display.jupyter import JupyterDelegate
+from ..stats.display.diary import DiaryDisplayer
 from ..stats.display.monitor import MonitorDisplayer
-from ..stats.display.nearby import NearbyDelegate
 from ..stats.display.response import ResponseDisplayer
-from ..stats.display.segment import SegmentDelegate
 from ..stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, \
     FATIGUE_D, LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL
 from ..stats.read.monitor import MonitorReader
@@ -187,6 +188,7 @@ your FF-model parameters (fitness and fatigue).
         add_statistics(s, AchievementCalculator, c, owner_in=short_cls(SegmentReader))
 
     def _load_diary_pipeline(self, s, c):
+        add_diary(s, DiaryDisplayer, c)
         add_diary(s, MonitorDisplayer, c)
         # these tie-in to the constants used in add_impulse()
         fitness, fatigue = self._ff_parameters()

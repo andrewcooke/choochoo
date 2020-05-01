@@ -6,23 +6,23 @@ from re import search
 from sqlalchemy import or_, distinct, desc, asc
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import Displayer, ActivityJournalDelegate
-from ..calculate.activity import ActivityCalculator
-from ..calculate.power import PowerCalculator
-from ..names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
+from .. import Displayer, ActivityJournalDelegate
+from ...calculate.activity import ActivityCalculator
+from ...calculate.power import PowerCalculator
+from ...names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
     CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
     ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _delta, M, S, \
     PERCENT_IN_Z_ANY, \
     KM, PC, EARNED_D_ANY, RECOVERY_D_ANY
-from ...data.climb import climbs_for_activity
-from ...diary.database import summary_column
-from ...diary.model import text, value, optional_text, from_field
-from ...lib.date import time_to_local_time, to_time, local_date_to_time, to_date, MONTH, add_date, \
+from ....data.climb import climbs_for_activity
+from ....diary.database import summary_column
+from ....diary.model import text, value, optional_text, from_field
+from ....lib.date import time_to_local_time, to_time, local_date_to_time, to_date, MONTH, add_date, \
     time_to_local_date, YMD, YEAR, YM, DAY, HM, format_minutes, YMD_HM
-from ...lib.log import log_current_exception
-from ...sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
+from ....lib.log import log_current_exception
+from ....sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
     ActivityTopicField
-from ...sql.types import lookup_cls
+from ....sql.types import lookup_cls
 
 log = getLogger(__name__)
 
@@ -277,7 +277,7 @@ def active_months(s, year):
 
 def activities_date(s, order, add_days=0):
     time = s.query(ActivityJournal.start). \
-                order_by(order(ActivityJournal.start)).limit(1).one_or_none()
+        order_by(order(ActivityJournal.start)).limit(1).one_or_none()
     if time:
         time = add_date(time_to_local_date(time[0]), (add_days, DAY))
         return time.strftime(YMD)

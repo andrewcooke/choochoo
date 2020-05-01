@@ -4,10 +4,10 @@ import datetime as dt
 
 from sqlalchemy import desc
 
-from ..display import Displayer, ActivityJournalDelegate
-from ...diary.model import optional_text, text
-from ...lib import local_date_to_time
-from ...sql import ActivityGroup, ActivityJournal, Achievement
+from ch2.stats.display import Displayer, ActivityJournalDelegate
+from ch2.diary.model import optional_text, text
+from ch2.lib import local_date_to_time
+from ch2.sql import ActivityGroup, ActivityJournal, Achievement
 
 log = getLogger(__name__)
 
