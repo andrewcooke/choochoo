@@ -5,8 +5,8 @@ from bokeh.plotting import figure
 from .line import multi_dot_plot, dot_plotter, comb_plotter, DEFAULT_BACKEND
 from .utils import make_range, evenly_spaced_hues, tooltip
 from ..frame import related_statistics
-from ..names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME, _slash, \
-    H, KM, ACTIVITY_GROUP, like, _delta, FITNESS_D_ANY, FATIGUE_D_ANY
+from ...names import ACTIVE_TIME, ACTIVE_DISTANCE, TIME, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, LOCAL_TIME, _slash, H, KM, \
+    ACTIVITY_GROUP, like, _delta, FITNESS_D_ANY, FATIGUE_D_ANY
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_BACKEND):

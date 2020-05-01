@@ -10,7 +10,7 @@ from .args import ACTIVITY, base_system_path, THUMBNAIL, BASE
 from ..data import activity_statistics
 from ..lib import local_time_to_time
 from ..sql import ActivityJournal
-from ..data.names import LONGITUDE, LATITUDE
+from ..names import LONGITUDE, LATITUDE
 
 
 log = getLogger(__name__)

@@ -12,7 +12,7 @@ from ch2.sql.tables.monitor import MonitorJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticName
 from ch2.pipeline.calculate.monitor import MonitorCalculator
-from ch2.data.names import REST_HR, DAILY_STEPS
+from ch2.names import REST_HR, DAILY_STEPS
 from ch2.pipeline import run_pipeline
 from tests import LogTestCase
 

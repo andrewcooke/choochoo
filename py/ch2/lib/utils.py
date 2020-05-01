@@ -12,7 +12,7 @@ from time import sleep
 from psutil import Process
 
 from .date import now
-from ..data.names import M, KM, PC, W
+from ..names import M, KM, PC, W
 
 
 log = getLogger(__name__)

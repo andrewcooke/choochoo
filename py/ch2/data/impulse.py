@@ -5,7 +5,7 @@ import pandas as pd
 from .heart_rate import BC_ZONES
 from ..lib.data import interpolate_freq
 from ..lib.date import to_time
-from .names import HEART_RATE, FTHR, HR_ZONE, HR_IMPULSE_10
+from ..names import HEART_RATE, FTHR, HR_ZONE, HR_IMPULSE_10
 
 
 def hr_zone(heart_rate_df, fthr_df, pc_fthr_zones=BC_ZONES, heart_rate=HEART_RATE, hr_zone=HR_ZONE):

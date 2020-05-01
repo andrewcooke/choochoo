@@ -10,7 +10,7 @@ from string import ascii_letters
 import pandas as pd
 from binascii import hexlify
 
-from ..data.names import BOOKMARK, ALL
+from ..names import ALL, BOOKMARK
 
 log = getLogger(__name__)
 

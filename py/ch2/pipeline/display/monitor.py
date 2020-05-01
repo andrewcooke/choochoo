@@ -3,7 +3,7 @@ from logging import getLogger
 
 from . import Displayer
 from ..calculate.monitor import MonitorCalculator
-from ...data.names import REST_HR, DAILY_STEPS
+from ...names import REST_HR, DAILY_STEPS
 from ...diary.database import summary_column
 from ...diary.model import value, optional_text
 from ...sql.tables.statistic import StatisticJournal, StatisticName

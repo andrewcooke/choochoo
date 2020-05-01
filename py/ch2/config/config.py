@@ -10,8 +10,8 @@ from .impulse import add_impulse
 from .impulse import add_responses
 from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
-from ..data.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, \
-    FATIGUE_D, LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL
+from ..names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, FATIGUE_D, \
+    LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
 from ..pipeline.calculate.achievement import AchievementCalculator

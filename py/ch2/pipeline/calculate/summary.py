@@ -6,7 +6,7 @@ from sqlalchemy import func, inspect, and_, select
 from sqlalchemy.sql.functions import coalesce
 
 from . import MultiProcCalculator, IntervalCalculatorMixin
-from ...data.names import MAX, MIN, SUM, CNT, AVG, MSR
+from ...names import MAX, MIN, SUM, CNT, AVG, MSR
 from ...lib.date import local_date_to_time
 from ...sql.tables.source import Interval
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \

@@ -7,7 +7,7 @@ from os.path import dirname, basename, join
 from sqlalchemy.orm.exc import NoResultFound
 
 from ...commands.args import DB_VERSION
-from ...data.names import ALL
+from ...names import ALL
 from ...lib import format_date, time_to_local_date, to_time
 from ...lib.utils import clean_path
 from ...sql import StatisticJournal, StatisticName, StatisticJournalType, ActivityGroup

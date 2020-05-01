@@ -11,7 +11,7 @@ from bokeh.palettes import *
 from math import pi
 
 from .utils import tooltip, evenly_spaced_hues
-from ..names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _delta, FITNESS_D_ANY, \
+from ...names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _delta, FITNESS_D_ANY, \
     GROUP
 from ...lib.data import linscale
 from ...lib.date import time_to_local_time, YMD

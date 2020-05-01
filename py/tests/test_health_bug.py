@@ -2,7 +2,7 @@
 from tests import LogTestCase
 
 from ch2.data import session, std_health_statistics
-from ch2.data.names import REST_HR
+from ch2.names import REST_HR
 
 
 class TestHealthBug(LogTestCase):

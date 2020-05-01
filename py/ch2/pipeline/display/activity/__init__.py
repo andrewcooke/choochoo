@@ -9,7 +9,7 @@ from .. import Displayer, ActivityJournalDelegate
 from ...calculate.activity import ActivityCalculator
 from ...calculate.power import PowerCalculator
 from ....data.climb import climbs_for_activity
-from ....data.names import MIN_KM_TIME_ANY, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, MAX_MEAN_PE_M_ANY, PERCENT_IN_Z_ANY, \
+from ....names import MIN_KM_TIME_ANY, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, MAX_MEAN_PE_M_ANY, PERCENT_IN_Z_ANY, \
     ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEAN_POWER_ESTIMATE, _delta, FITNESS_D_ANY, FATIGUE_D_ANY, EARNED_D_ANY, \
     RECOVERY_D_ANY, ENERGY_ESTIMATE, CALORIE_ESTIMATE, M, CLIMB_ELEVATION, CLIMB_DISTANCE, KM, CLIMB_TIME, S, \
     CLIMB_GRADIENT, PC, TOTAL_CLIMB

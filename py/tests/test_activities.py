@@ -10,7 +10,7 @@ from ch2.config.profile.default import default
 from ch2.sql.tables.activity import ActivityJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
-from ch2.data.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
+from ch2.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
 from ch2.pipeline import run_pipeline
 from tests import LogTestCase
 

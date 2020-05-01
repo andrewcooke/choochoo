@@ -13,7 +13,7 @@ from .source import Interval
 from ..support import Base
 from ..types import Time, ShortCls
 from ..utils import add
-from ...data.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM, ALL
+from ...names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM, ALL
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.date import format_seconds, local_date_to_time, time_to_local_time
 from ...lib.utils import sigfig

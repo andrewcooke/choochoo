@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 
 from . import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
+from ...names import *
 from ...data import activity_statistics, present, linear_resample_time
 from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
-from ...data.names import *
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate, PowerException, \
     evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
 from ...lib import log_current_exception

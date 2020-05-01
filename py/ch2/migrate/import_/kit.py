@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from ...data.names import KIT_ADDED, KIT_RETIRED
+from ...names import KIT_ADDED, KIT_RETIRED
 from ...lib import format_date, time_to_local_date, to_time
 from ...lib.log import log_current_exception
 from ...sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \

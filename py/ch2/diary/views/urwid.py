@@ -6,7 +6,7 @@ from re import compile, sub
 
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding, connect_signal
 
-from ...data.names import S, W, PC
+from ...names import S, W, PC
 from ...diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
     LINK, INTEGER, DB, value, text, COMPARE_LINKS
 from ...lib import format_seconds

@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 from scipy import optimize
 
 from .lib import decay_params, inplace_decay
-from .names import FITNESS_D_ANY, FATIGUE_D_ANY, like, _delta, FITNESS, RECOVERY_D, EARNED_D, PLATEAU_D
+from ..names import FITNESS_D_ANY, FATIGUE_D_ANY, like, _delta, FITNESS, RECOVERY_D, EARNED_D, PLATEAU_D
 
 log = getLogger(__name__)
 

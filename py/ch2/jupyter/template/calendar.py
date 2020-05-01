@@ -4,7 +4,7 @@ from bokeh.io import output_file
 from ch2.data import *
 from ch2.data.plot.calendar import *
 from ch2.lib import *
-from ch2.data.names import _delta
+from ch2.names import _delta
 from ch2.jupyter.decorator import template
 
 

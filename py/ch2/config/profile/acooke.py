@@ -4,7 +4,7 @@ from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_f
     add_constant
 from ..power import add_power_estimate
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
-from ...data.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
+from ...names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
 from ...msil2a.download import MSIL2A_DIR

@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from .database import add_statistics, add_enum_constant, name_constant
-from ..data.names import FITNESS_D, FATIGUE_D, ALL
+from ..names import FITNESS_D, FATIGUE_D, ALL
 from ..pipeline.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..pipeline.calculate.response import Response, ResponseCalculator
 from ..read.segment import SegmentReader

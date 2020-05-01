@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from . import MultiProcCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
-from ...data.names import SEGMENT_TIME, S, summaries, MIN, MSR, CNT, HEART_RATE, SEGMENT_HEART_RATE, BPM, MAX
+from ...names import SEGMENT_TIME, S, summaries, MIN, MSR, CNT, HEART_RATE, SEGMENT_HEART_RATE, BPM, MAX
 from ...data import activity_statistics, present, linear_resample_time
 from ...sql import SegmentJournal, StatisticJournalFloat
 

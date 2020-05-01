@@ -12,7 +12,7 @@ from .loader import StatisticJournalLoader
 from .. import FatalException
 from ..commands.args import MONITOR, mm, FORCE, DEFAULT
 from ..data.frame import _tables
-from ..data.names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE, ALL
+from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE, ALL
 from ..fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ..fit.profile.profile import read_fit
 from ..lib.date import time_to_local_date, format_time

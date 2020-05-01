@@ -3,7 +3,7 @@ from logging import getLogger
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import func
 
-from ..data.names import ALL
+from ..names import ALL
 from ..lib import time_to_local_time
 from ..lib.log import Record
 from ..sql import ActivityTopicJournal, FileHash, FileScan, StatisticJournal, ActivityTopic, ActivityTopicField, \

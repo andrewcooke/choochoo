@@ -4,7 +4,7 @@ from logging import getLogger
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ...data.elevation import smooth_elevation
 from ...data.frame import activity_statistics, present
-from ...data.names import RAW_ELEVATION, ELEVATION, DISTANCE, M, GRADE, PC, ALTITUDE
+from ...names import RAW_ELEVATION, ELEVATION, DISTANCE, M, GRADE, PC, ALTITUDE
 from ...sql import StatisticJournalFloat
 
 log = getLogger(__name__)

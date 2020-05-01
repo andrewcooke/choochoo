@@ -3,7 +3,7 @@ from re import sub
 
 from . import ActivityJournalDelegate
 from ...calculate.segment import SegmentCalculator
-from ....data.names import SEGMENT_TIME, SEGMENT_HEART_RATE
+from ....names import SEGMENT_TIME, SEGMENT_HEART_RATE
 from ....diary.database import summary_column
 from ....diary.model import value, text, optional_text
 from ....sql.tables import SegmentJournal, Segment, StatisticJournal, StatisticName

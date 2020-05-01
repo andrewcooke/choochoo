@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 from . import AbortImportButMarkScanned, MultiProcFitReader
 from .. import FatalException
 from ..commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
-from ..data.names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
+from ..names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
     SPORT_GENERIC, PC, MIN, summaries, AVG, KM, _cov
 from ..diary.model import TYPE, EDIT
 from ..fit.format.records import fix_degrees, merge_duplicates, no_bad_values

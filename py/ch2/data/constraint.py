@@ -3,13 +3,13 @@ import datetime as dt
 from logging import getLogger
 from re import escape
 
-from sqlalchemy import union, intersect, or_, not_
+from sqlalchemy import union, intersect, not_
 
 from ..lib import local_time_to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
 from ..lib.utils import timing
-from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal, FileHash, \
-    ActivityTopicJournal, StatisticJournalText, Source
+from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal, \
+    ActivityTopicJournal, Source
 from ..sql.tables.source import SourceType
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 

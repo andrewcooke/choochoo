@@ -9,7 +9,7 @@ import numpy as np
 from .frame import linear_resample, present
 from ..lib.data import nearest_index, get_index_loc
 from ..sql import StatisticName, StatisticJournal
-from .names import _delta, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
+from ..names import _delta, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
     CLIMB_GRADIENT, CLIMB_POWER, POWER_ESTIMATE, CLIMB_CATEGORY
 
 log = getLogger(__name__)

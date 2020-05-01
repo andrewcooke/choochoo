@@ -2,7 +2,7 @@ from json import dumps
 from logging import getLogger
 from re import sub
 
-from ..data.names import DUMMY, ALL
+from ..names import DUMMY, ALL
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \

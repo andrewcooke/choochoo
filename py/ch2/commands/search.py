@@ -11,7 +11,7 @@ from ..lib import time_to_local_time
 from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic, \
     StatisticJournalText, StatisticName
 from ..pipeline.calculate.activity import ActivityCalculator
-from ..data.names import TIME, START, ACTIVE_TIME, DISTANCE, ACTIVE_DISTANCE, GROUP
+from ..names import TIME, START, ACTIVE_TIME, DISTANCE, ACTIVE_DISTANCE, GROUP
 
 log = getLogger(__name__)
 
