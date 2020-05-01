@@ -43,29 +43,6 @@ class NearbyDelegate(ActivityJournalDelegate):
                 yield [text(title, tag=NEARBY_LINKS)] + links
 
 
-class NearbyDiary(JournalDiary):
-
-    def _read_schedule(self, s, date, schedule):
-        yield from []
-
-    @optional_text('Nearby', tag='nearbys')
-    def _read_journal_date(self, s, ajournal, date):
-        for constraint in constraints(s):
-            results = list(self.__read_constraint(s, ajournal, constraint))
-            if results: yield [text(constraint, tag='nearby')] + results
-
-    def __read_constraint(self, s, ajournal, c):
-        for title, callback, fmt in (('Any Time', nearby_any_time,
-                                      lambda x: link(fmt_nearby(*x), db=(time_to_local_time(x[0].start),))),
-                                     ('Earlier', nearby_earlier,
-                                      lambda x: link(fmt_nearby(*x), db=(time_to_local_time(x[0].start),))),
-                                     ('All', constraint,
-                                      lambda x: link(_fmt_time(x.start), db=(time_to_local_time(x.start),)))):
-            links = [fmt(result) for result in callback(s, ajournal, c)]
-            if links:
-                yield [text(title, tag=NEARBY_LINKS)] + links
-
-
 def constraints(s):
     yield from (c[0] for c in
                 s.query(distinct(ActivitySimilarity.constraint)).

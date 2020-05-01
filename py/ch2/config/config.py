@@ -23,13 +23,14 @@ from ..stats.calculate.monitor import MonitorCalculator
 from ..stats.calculate.response import ResponseCalculator
 from ..stats.calculate.segment import SegmentCalculator
 from ..stats.calculate.summary import SummaryCalculator
-from ..stats.display.achievement import AchievementDiary, AchievementDelegate
-from ..stats.display.activity import ActivityDiary, ActivityDelegate, ActivityDisplayer
+from ..stats.display.achievement import AchievementDelegate
+from ..stats.display.activity import ActivityDelegate, ActivityDisplayer
+from ..stats.display.database import DatabaseDisplayer
 from ..stats.display.jupyter import JupyterDelegate
 from ..stats.display.monitor import MonitorDisplayer
-from ..stats.display.nearby import NearbyDiary, NearbyDelegate
+from ..stats.display.nearby import NearbyDelegate
 from ..stats.display.response import ResponseDisplayer
-from ..stats.display.segment import SegmentDiary, SegmentDelegate
+from ..stats.display.segment import SegmentDelegate
 from ..stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, \
     FATIGUE_D, LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL
 from ..stats.read.monitor import MonitorReader
@@ -195,6 +196,7 @@ your FF-model parameters (fitness and fatigue).
                   fatigue=[name_constant(FATIGUE_D % days, all) for (days, _, _) in fatigue])
         add_diary(s, ActivityDisplayer, c,
                   delegates=[long_cls(delegate) for delegate in self._activity_diary_delegates()])
+        add_diary(s, DatabaseDisplayer, c)
 
     def _activity_diary_delegates(self):
         return [AchievementDelegate, ActivityDelegate, SegmentDelegate, NearbyDelegate, JupyterDelegate]

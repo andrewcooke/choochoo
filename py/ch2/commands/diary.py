@@ -5,7 +5,8 @@ from logging import getLogger
 from urwid import MainLoop, connect_signal
 
 from .args import DATE, SCHEDULE, FAST, mm, BASE
-from ..diary.database import read_date, COMPARE_LINKS, read_schedule
+from ..diary.database import read_date, read_schedule
+from ..diary.model import COMPARE_LINKS
 from ..diary.views.urwid import build, layout_date, layout_schedule
 from ..jupyter.server import set_controller, JupyterController
 from ..jupyter.template.activity_details import activity_details
@@ -13,12 +14,12 @@ from ..jupyter.template.all_activities import all_activities
 from ..jupyter.template.compare_activities import compare_activities
 from ..jupyter.template.health import health
 from ..jupyter.template.similar_activities import similar_activities
-from ..lib.date import to_date, time_to_local_date, time_to_local_time, local_time_to_time
+from ..lib.date import to_date, local_time_to_time
 from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
-from ..sql import PipelineType, DiaryTopicJournal, ActivityJournal, Interval
+from ..sql import PipelineType, DiaryTopicJournal, ActivityJournal
 from ..sql.database import StatisticJournal
 from ..stats.display.nearby import NEARBY_LINKS
 from ..stats.pipeline import run_pipeline

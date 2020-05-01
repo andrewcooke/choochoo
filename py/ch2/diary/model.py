@@ -25,6 +25,9 @@ All leaf nodes have a 'tag' attribute that is intended as a machine-readable sem
 needs exceptional processing I will try to maintain these even if the text of a node changes, for example).
 '''
 
+
+COMPARE_LINKS = 'compare-links'
+
 # diary and general
 DB = 'db'
 DP = 'dp'

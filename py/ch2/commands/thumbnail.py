@@ -29,7 +29,7 @@ Generate a thumbnail map of the activity route.
     with db.session_context() as s:
         activity_id = parse_activity(s, args[ACTIVITY])
         # display(s, activity_id)
-        save_to_cache(args[BASE], s, activity_id)
+        create_in_cache(args[BASE], s, activity_id)
 
 
 def parse_activity(s, text):
@@ -91,7 +91,7 @@ def make_figure(xs, ys, side, grid, cm, border):
     ax.set_ylim([-lim, lim])
     ax.set_aspect(aspect='equal', adjustable='box')
     ax.plot(xs, ys, color='white')
-    ax.plot([xs[0]], [ys[0]], marker='o', color='green', markersize=cm*1.5)
+    ax.plot([xs[0]], [ys[0]], marker='o', color='green', markersize=cm*3)
     ax.plot([xs[-1]], [ys[-1]], marker='o', color='red', markersize=cm*1.5)
     return fig
 
@@ -113,7 +113,7 @@ def display(s, activity_id):
     show()
 
 
-def save_to_cache(base, s, activity_id):
+def create_in_cache(base, s, activity_id):
     path = base_system_path(base, subdir=THUMBNAIL, file=f'{activity_id}.png')
     if not exists(path):
         df = read_activity(s, activity_id)

@@ -6,9 +6,8 @@ from re import compile, sub
 
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding, connect_signal
 
-from ch2.diary.database import COMPARE_LINKS
 from ch2.diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
-    LINK, INTEGER, DB, value, text
+    LINK, INTEGER, DB, value, text, COMPARE_LINKS
 from ch2.lib import format_seconds
 from ch2.lib.utils import format_watts, format_percent, format_metres
 from ch2.stats.display.nearby import NEARBY_LINKS

@@ -5,7 +5,7 @@ from werkzeug.wrappers import ETagResponseMixin
 
 from . import ContentType
 from ...commands.args import base_system_path, THUMBNAIL
-from ...commands.thumbnail import parse_activity, save_to_cache
+from ...commands.thumbnail import parse_activity, create_in_cache
 
 log = getLogger(__name__)
 
@@ -21,7 +21,7 @@ class Thumbnail(ContentType):
 
     def __call__(self, request, s, activity):
         activity_id = parse_activity(s, activity)
-        file = save_to_cache(self._base, s, activity_id)
+        file = create_in_cache(self._base, s, activity_id)
         try:
             path = base_system_path(self._base, subdir=THUMBNAIL, file=file)
             log.debug(f'Reading {path}')

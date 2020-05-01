@@ -73,10 +73,7 @@ function Header(props) {
     const [head, ...rest] = json;
     const classes = useStyles();
 
-    const children = head.tag === 'jupyter-activity' ?
-        <JupyterActivity json={rest}/> :
-        childrenFromRest(head.tag, rest, level + 1, history);
-
+    const children = childrenFromRest(head.tag, rest, level + 1, history);
     return (<>
         <Grid item xs={4} className={classes.grid}>
             <Typography variant={'h' + level}>{head.value}</Typography>
