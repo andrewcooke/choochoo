@@ -3,12 +3,11 @@ import datetime as dt
 
 from IPython.core.display import display
 from bokeh.io import output_file
-from bokeh.layouts import column, row, gridplot
+from bokeh.layouts import row, gridplot
 from bokeh.plotting import show
 
 from ch2.data import *
 from ch2.lib import *
-from ch2.stats.names import _log
 from ch2.jupyter.decorator import template
 
 

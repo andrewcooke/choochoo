@@ -9,7 +9,7 @@ from rasterio.plot import reshape_as_image
 from scipy.ndimage import shift
 from skimage.draw import polygon_perimeter
 
-from ch2.stats.names import LATITUDE, LONGITUDE
+from ..data.names import LATITUDE, LONGITUDE
 
 log = getLogger(__name__)
 

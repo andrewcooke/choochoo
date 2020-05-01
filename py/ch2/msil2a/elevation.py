@@ -3,7 +3,7 @@ from logging import getLogger
 
 import numpy as np
 
-from ch2.lib.image import xy_to_latlon, extract_rgb, create_image
+from ..lib.image import xy_to_latlon, extract_rgb, create_image
 from ..srtm.bilinear import bilinear_elevation_from_constant
 
 log = getLogger(__name__)

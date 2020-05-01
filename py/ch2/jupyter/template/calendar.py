@@ -1,11 +1,10 @@
 
 from bokeh.io import output_file
-from bokeh.palettes import magma
 
 from ch2.data import *
 from ch2.data.plot.calendar import *
 from ch2.lib import *
-from ch2.stats.names import _delta
+from ch2.data.names import _delta
 from ch2.jupyter.decorator import template
 
 

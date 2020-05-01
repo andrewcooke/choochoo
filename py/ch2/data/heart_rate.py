@@ -3,7 +3,7 @@ from math import exp
 
 from ..lib import to_time
 from ..sql import StatisticJournal, Constant, ActivityGroup
-from ..stats.names import FTHR
+from .names import FTHR
 
 # values from british cycling online calculator
 # these are upper limits

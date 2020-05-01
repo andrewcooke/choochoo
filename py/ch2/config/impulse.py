@@ -1,13 +1,12 @@
-from json import dumps
 from logging import getLogger
 
-from .database import add_statistics, add_enum_constant, set_constant, name_constant
-from ..sql import ActivityGroup, Pipeline
+from .database import add_statistics, add_enum_constant, name_constant
+from ..data.names import FITNESS_D, FATIGUE_D, ALL
+from ..pipeline.calculate.impulse import HRImpulse, ImpulseCalculator
+from ..pipeline.calculate.response import Response, ResponseCalculator
+from ..read.segment import SegmentReader
+from ..sql import ActivityGroup
 from ..sql.types import short_cls
-from ..stats.calculate.impulse import HRImpulse, ImpulseCalculator
-from ..stats.calculate.response import Response, ResponseCalculator
-from ..stats.names import FITNESS_D, FATIGUE_D, ALL
-from ..stats.read.segment import SegmentReader
 
 log = getLogger(__name__)
 

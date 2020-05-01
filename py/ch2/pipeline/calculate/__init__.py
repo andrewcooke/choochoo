@@ -1,18 +1,15 @@
-
 from abc import abstractmethod
 from logging import getLogger
 
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
-from ...commands.args import STATISTICS, WORKER, mm, VERBOSITY, LOG
-from ...lib.date import local_time_to_time, time_to_local_time, format_date, to_date
-from ...lib.log import log_current_exception
+from ...lib import local_time_to_time, time_to_local_time, to_date, format_date
 from ...lib.schedule import Schedule
-from ...sql import ActivityJournal, Interval, Timestamp, StatisticJournal, StatisticName, SegmentJournal, ActivityGroup
+from ...sql import Timestamp, StatisticName, StatisticJournal, ActivityJournal, ActivityGroup, SegmentJournal, Interval
 from ...sql.types import long_cls
 from ...sql.utils import add
+from .. import MultiProcPipeline, UniProcPipeline, LoaderMixin
 
 log = getLogger(__name__)
 

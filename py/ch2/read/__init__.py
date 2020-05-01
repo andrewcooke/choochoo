@@ -1,18 +1,16 @@
-
 from abc import abstractmethod
 from glob import iglob
 from logging import getLogger
 from os.path import join
 from time import time
 
+from .. import FatalException
+from ..lib import log_current_exception, to_time
+from ..commands.args import base_system_path, PERMANENT
+from ..fit.format.read import filtered_records
+from ..lib.io import modified_file_scans
+from ..sql import Timestamp
 from ..pipeline import MultiProcPipeline, LoaderMixin
-from ... import FatalException
-from ...commands.args import base_system_path, PERMANENT
-from ...fit.format.read import filtered_records
-from ...lib.date import to_time
-from ...lib.io import modified_file_scans
-from ...lib.log import log_current_exception
-from ...sql import Timestamp, Constant
 
 log = getLogger(__name__)
 

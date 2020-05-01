@@ -1,13 +1,10 @@
-
 import datetime as dt
 from abc import abstractmethod
 from logging import getLogger
 
-from ...lib.date import local_date_to_time, to_date
-from ...lib.log import log_current_exception
-from ...sql import ActivityGroup, ActivityJournal
-from ...sql.tables.pipeline import Pipeline, PipelineType
-from ...stats.pipeline import BasePipeline
+from ...lib import log_current_exception, to_date, local_date_to_time
+from ...sql import Pipeline, PipelineType, ActivityGroup, ActivityJournal
+from .. import BasePipeline
 
 log = getLogger(__name__)
 
@@ -65,7 +62,6 @@ class ActivityJournalDelegate:
     def read_schedule(self, s, date, schedule):
         raise NotImplementedError(self.__class__.__name__)
         yield
-
 
 
 class JournalDiary(Displayer):

@@ -3,9 +3,9 @@ from logging import getLogger
 
 from .model import text, value
 from ..lib.date import YMD
+from ..pipeline.calculate.summary import SummaryCalculator
+from ..pipeline.display import read_pipeline
 from ..sql import StatisticJournal
-from ..stats.calculate.summary import SummaryCalculator
-from ..stats.display import read_pipeline
 
 log = getLogger(__name__)
 

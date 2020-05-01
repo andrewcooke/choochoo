@@ -1,19 +1,19 @@
+import re
 from collections import namedtuple
 from glob import glob
 from logging import getLogger
 from os.path import dirname, basename, join
-import re
 
 from sqlalchemy.orm.exc import NoResultFound
 
 from ...commands.args import DB_VERSION
+from ...data.names import ALL
 from ...lib import format_date, time_to_local_date, to_time
 from ...lib.utils import clean_path
 from ...sql import StatisticJournal, StatisticName, StatisticJournalType, ActivityGroup
 from ...sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ...sql.types import short_cls
 from ...sql.utils import add
-from ...stats.names import ALL
 
 log = getLogger(__name__)
 

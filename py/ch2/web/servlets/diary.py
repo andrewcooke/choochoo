@@ -9,7 +9,7 @@ from ...lib import time_to_local_time
 from ...lib.date import now_local, time_to_local_date, format_date
 from ...lib.schedule import Schedule
 from ...sql import ActivityJournal, StatisticJournal
-from ...stats.display.activity import active_days, active_months
+from ...pipeline.display.activity import active_days, active_months
 
 log = getLogger(__name__)
 

@@ -1,12 +1,11 @@
 
 from logging import getLogger
 
-from ch2.stats.read.activity import ActivityReader
 from ..lib.date import to_time
+from ..read.activity import ActivityReader
+from ..read.segment import SegmentReader
 from ..sql import ActivityBookmark, ActivityGroup, StatisticName
 from ..sql.database import connect
-from ..stats.read.segment import SegmentReader
-
 
 log = getLogger(__name__)
 

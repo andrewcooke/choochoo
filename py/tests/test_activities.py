@@ -1,18 +1,17 @@
 
 from tempfile import TemporaryDirectory
-from tests import LogTestCase
 
 from sqlalchemy.sql.functions import count
 
 from ch2.commands.activities import activities
-from ch2.commands.args import m, V, DEV, mm, FAST, BASE, bootstrap_dir, FORCE
+from ch2.commands.args import m, V, DEV, mm, BASE, bootstrap_dir, FORCE
 from ch2.commands.constants import constants
 from ch2.config.profile.default import default
 from ch2.sql.tables.activity import ActivityJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
-from ch2.stats.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
-from ch2.stats.pipeline import run_pipeline
+from ch2.data.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
+from ch2.pipeline import run_pipeline
 from tests import LogTestCase
 
 

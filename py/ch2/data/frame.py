@@ -18,7 +18,7 @@ from ..sql import StatisticName, StatisticJournal, StatisticJournalInteger, Acti
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..sql.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
     Composite, CompositeComponent, ActivityNearby
-from ..stats.names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, HEART_RATE_BPM, \
+from .names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, HEART_RATE_BPM, \
     MED_HEART_RATE_BPM, GRADE, GRADE_PC, BOOKMARK, DISTANCE_KM, MED_SPEED_KMH, MED_HR_IMPULSE_10, \
     MED_CADENCE, ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, \
     TIMESPAN_ID, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, \
@@ -321,7 +321,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
 
 def std_health_statistics(s, *extra, start=None, finish=None):
 
-    from ..stats.calculate.monitor import MonitorCalculator
+    from ..pipeline.calculate.monitor import MonitorCalculator
 
     def merge_to_hour(stats, extra):
         return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
@@ -356,7 +356,7 @@ def std_health_statistics(s, *extra, start=None, finish=None):
 
 
 def nearby_activities(s, local_time=None, time=None, activity_group=None):
-    from ..stats.display.activity.nearby import nearby_any_time
+    from ..pipeline.display.activity.nearby import nearby_any_time
     activity_journal = _activity_journal(s, local_time=local_time, time=time,
                                          activity_group=activity_group)
     return nearby_any_time(s, activity_journal)

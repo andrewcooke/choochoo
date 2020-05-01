@@ -1,6 +1,5 @@
 
 from logging import getLogger
-from subprocess import run
 from tempfile import TemporaryDirectory
 from tests import LogTestCase
 
@@ -14,7 +13,7 @@ from ch2.sql.tables.statistic import StatisticJournalText, StatisticJournal, Sta
     StatisticJournalInteger, StatisticJournalType
 from ch2.sql.tables.topic import DiaryTopicJournal, DiaryTopic
 from ch2.sql.utils import add
-from ch2.stats.calculate.summary import SummaryCalculator
+from ch2.pipeline.calculate.summary import SummaryCalculator
 
 log = getLogger(__name__)
 

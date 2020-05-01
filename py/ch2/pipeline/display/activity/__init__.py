@@ -1,27 +1,24 @@
-
 import datetime as dt
 from logging import getLogger
 from re import search
 
-from sqlalchemy import or_, distinct, desc, asc
+from sqlalchemy import or_, distinct, asc, desc
 from sqlalchemy.orm.exc import NoResultFound
 
 from .. import Displayer, ActivityJournalDelegate
 from ...calculate.activity import ActivityCalculator
 from ...calculate.power import PowerCalculator
-from ...names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, CLIMB_ELEVATION, \
-    CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME, TOTAL_CLIMB, MIN_KM_TIME_ANY, CALORIE_ESTIMATE, \
-    ENERGY_ESTIMATE, MEAN_POWER_ESTIMATE, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, FATIGUE_D_ANY, _delta, M, S, \
-    PERCENT_IN_Z_ANY, \
-    KM, PC, EARNED_D_ANY, RECOVERY_D_ANY
 from ....data.climb import climbs_for_activity
+from ....data.names import MIN_KM_TIME_ANY, MED_KM_TIME_ANY, MAX_MED_HR_M_ANY, MAX_MEAN_PE_M_ANY, PERCENT_IN_Z_ANY, \
+    ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEAN_POWER_ESTIMATE, _delta, FITNESS_D_ANY, FATIGUE_D_ANY, EARNED_D_ANY, \
+    RECOVERY_D_ANY, ENERGY_ESTIMATE, CALORIE_ESTIMATE, M, CLIMB_ELEVATION, CLIMB_DISTANCE, KM, CLIMB_TIME, S, \
+    CLIMB_GRADIENT, PC, TOTAL_CLIMB
 from ....diary.database import summary_column
-from ....diary.model import text, value, optional_text, from_field
-from ....lib.date import time_to_local_time, to_time, local_date_to_time, to_date, MONTH, add_date, \
-    time_to_local_date, YMD, YEAR, YM, DAY, HM, format_minutes, YMD_HM
-from ....lib.log import log_current_exception
-from ....sql import ActivityGroup, ActivityJournal, StatisticJournal, StatisticName, ActivityTopic, ActivityTopicJournal, \
-    ActivityTopicField
+from ....diary.model import optional_text, text, from_field, value
+from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date
+from ....lib.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YEAR, YM, DAY, log_current_exception
+from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
+    ActivityTopic, StatisticJournal
 from ....sql.types import lookup_cls
 
 log = getLogger(__name__)

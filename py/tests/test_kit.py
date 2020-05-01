@@ -9,7 +9,7 @@ from ch2.diary.model import TYPE
 from ch2.lib import now, local_date_to_time
 from ch2.sql import KitModel, KitItem, KitComponent, PipelineType
 from ch2.sql.tables.kit import get_name, KitGroup, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS, INDIVIDUAL
-from ch2.stats.pipeline import run_pipeline
+from ch2.pipeline import run_pipeline
 from tests import LogTestCase
 
 

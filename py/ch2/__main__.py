@@ -1,5 +1,5 @@
 
-from ch2 import main
+from . import main
 
 main()
 

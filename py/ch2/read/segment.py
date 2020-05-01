@@ -1,20 +1,20 @@
 
 from itertools import groupby
 from logging import getLogger
-from math import sqrt, ceil
 
+from math import sqrt, ceil
 from pygeotile.point import Point
 
 from .activity import ActivityReader
-from ..waypoint import filter_none
-from ...rtree import MatchType
-from ...rtree.spherical import LocalTangent, SQRTree, Global
-from ...lib.date import to_time, format_time
-from ...lib.utils import sign
-from ...sql.database import Timestamp
-from ...sql.tables.activity import ActivityGroup
-from ...sql.tables.segment import Segment, SegmentJournal
-from ...sql.utils import add
+from .waypoint import filter_none
+from ..lib.date import to_time, format_time
+from ..lib.utils import sign
+from ..rtree import MatchType
+from ..rtree.spherical import LocalTangent, SQRTree, Global
+from ..sql.database import Timestamp
+from ..sql.tables.activity import ActivityGroup
+from ..sql.tables.segment import Segment, SegmentJournal
+from ..sql.utils import add
 
 log = getLogger(__name__)
 

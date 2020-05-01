@@ -6,7 +6,6 @@ from bokeh.layouts import column
 from bokeh.plotting import show
 
 from ch2.data import *
-from ch2.stats.names import _log
 from ch2.jupyter.decorator import template
 
 

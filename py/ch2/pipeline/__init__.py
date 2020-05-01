@@ -1,4 +1,3 @@
-
 from abc import abstractmethod
 from contextlib import nullcontext
 from logging import getLogger
@@ -7,11 +6,9 @@ from time import time
 from psutil import cpu_count
 from sqlalchemy import text
 
-from .load import StatisticJournalLoader
-from ..commands.args import BASE
-from ..lib.date import format_seconds
-from ..lib.utils import short_str
-from ..lib.workers import Workers, ProgressTree
+from ..lib import format_seconds
+from ..lib.workers import ProgressTree, Workers
+from ..read.loader import StatisticJournalLoader
 from ..sql import Pipeline
 from ..sql.types import short_cls
 

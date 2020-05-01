@@ -19,10 +19,10 @@ from ..lib.log import log_current_exception, Record
 from ..lib.utils import clean_path, slow_warning
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..sql import KitItem, FileHash, ActivityJournal
-from ..stats.names import TIME
-from ..stats.read import AbortImportButMarkScanned
-from ..stats.read.activity import ActivityReader
-from ..stats.read.monitor import MonitorReader
+from ..data.names import TIME
+from ..read import AbortImportButMarkScanned
+from ..read.activity import ActivityReader
+from ..read.monitor import MonitorReader
 
 log = getLogger(__name__)
 

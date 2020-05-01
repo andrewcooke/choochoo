@@ -1,6 +1,5 @@
 
 from logging import getLogger
-from subprocess import run
 from tempfile import TemporaryDirectory
 
 import sqlalchemy.sql.functions as func
@@ -12,9 +11,9 @@ from ch2.lib.date import to_time, local_date_to_time
 from ch2.sql.tables.monitor import MonitorJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticName
-from ch2.stats.calculate.monitor import MonitorCalculator
-from ch2.stats.names import REST_HR, DAILY_STEPS
-from ch2.stats.pipeline import run_pipeline
+from ch2.pipeline.calculate.monitor import MonitorCalculator
+from ch2.data.names import REST_HR, DAILY_STEPS
+from ch2.pipeline import run_pipeline
 from tests import LogTestCase
 
 log = getLogger(__name__)

@@ -5,10 +5,10 @@ from logging import getLogger
 
 import numpy as np
 
-from . import MultiProcCalculator, DataFrameCalculatorMixin, ActivityGroupCalculatorMixin
-from ..names import FTHR, HEART_RATE, HR_ZONE, ALL, HR_IMPULSE_10, SUM
+from . import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10
+from ...data.names import FTHR, HEART_RATE, HR_ZONE, ALL, HR_IMPULSE_10
 from ...sql import Constant, StatisticJournalFloat, ActivityGroup
 
 log = getLogger(__name__)

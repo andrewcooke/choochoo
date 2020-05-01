@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from ..stats.load import StatisticJournalLoader
+from ..read.loader import StatisticJournalLoader
 
 log = getLogger(__name__)
 

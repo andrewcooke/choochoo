@@ -3,18 +3,18 @@ from sys import stdout
 
 from .args import SUB_COMMAND, GROUP, ITEM, DATE, FORCE, COMPONENT, MODEL, STATISTICS, NAME, SHOW, CSV, \
     START, CHANGE, FINISH, DELETE, mm, UNDO, ALL, REBUILD, DUMP, KIT, CMD, VALUE, BASE
+from ..data.names import KM, S, _s
 from ..diary.model import TYPE, UNITS
 from ..lib import time_to_local_time, local_time_or_now, local_time_to_time, now, format_km, \
     is_local_time
 from ..lib.date import format_minutes
 from ..lib.tree import to_tree, to_csv
+from ..pipeline import run_pipeline
+from ..pipeline.calculate.kit import KitCalculator
 from ..sql import PipelineType
 from ..sql.tables.kit import KitGroup, KitItem, KitComponent, KitModel, get_name, ADDED, EXPIRED, N, INDIVIDUAL
 from ..sql.tables.source import Composite
 from ..sql.types import long_cls
-from ..stats.calculate.kit import KitCalculator
-from ..stats.names import KM, S, _s
-from ..stats.pipeline import run_pipeline
 
 log = getLogger(__name__)
 

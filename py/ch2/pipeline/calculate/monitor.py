@@ -6,11 +6,10 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import count
 
 from . import MultiProcCalculator
-from ..names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, \
+from ...data.names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, \
     MSR, LO_REST_HR, HI_REST_HR, ALL
-from ..pipeline import LoaderMixin
-from ...lib import local_date_to_time, time_to_local_date, to_date, format_date
-from ...lib.log import log_current_exception
+from .. import LoaderMixin
+from ...lib import local_date_to_time, time_to_local_date, to_date, format_date, log_current_exception
 from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal, Composite, \
     CompositeComponent, Source
 from ...sql.utils import add

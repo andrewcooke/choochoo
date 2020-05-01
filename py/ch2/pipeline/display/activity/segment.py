@@ -1,16 +1,12 @@
-
-import datetime as dt
 from logging import getLogger
 from re import sub
 
-from ch2.stats.display import Displayer, ActivityJournalDelegate
-from ch2.stats.calculate.segment import SegmentCalculator
-from ch2.stats.names import SEGMENT_TIME, SEGMENT_HEART_RATE
-from ch2.diary.database import summary_column
-from ch2.diary.model import value, text, optional_text
-from ch2.lib.date import local_date_to_time
-from ch2.sql.tables.segment import SegmentJournal, Segment
-from ch2.sql.tables.statistic import StatisticJournal, StatisticName
+from . import ActivityJournalDelegate
+from ...calculate.segment import SegmentCalculator
+from ....data.names import SEGMENT_TIME, SEGMENT_HEART_RATE
+from ....diary.database import summary_column
+from ....diary.model import value, text, optional_text
+from ....sql.tables import SegmentJournal, Segment, StatisticJournal, StatisticName
 
 log = getLogger(__name__)
 

@@ -1,10 +1,8 @@
 
 import datetime as dt
 from calendar import day_abbr, month_abbr
-from colorsys import hsv_to_rgb
 from logging import getLogger
 
-import numpy as np
 import pandas as pd
 from bokeh.io import show
 from bokeh.models import Rect, ColumnDataSource, Circle, Arc, MultiLine, SaveTool, HoverTool, Label, Plot, Range1d, \
@@ -13,10 +11,10 @@ from bokeh.palettes import *
 from math import pi
 
 from .utils import tooltip, evenly_spaced_hues
-from ...lib.data import linscale
-from ...lib.date import time_to_local_time, YMD, to_time
-from ...stats.names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _delta, FITNESS_D_ANY, \
+from ..names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _delta, FITNESS_D_ANY, \
     GROUP
+from ...lib.data import linscale
+from ...lib.date import time_to_local_time, YMD
 
 log = getLogger(__name__)
 

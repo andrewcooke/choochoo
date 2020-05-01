@@ -6,6 +6,7 @@ from time import sleep, time
 
 from math import floor
 
+import ch2.pipeline.calculate
 from ..commands.args import mm, BASE, VERBOSITY, WORKER, LOG
 from ..sql.types import short_cls
 
@@ -53,7 +54,7 @@ class Workers:
                 if worker.returncode is not None:
                     if worker.returncode:
                         msg = f'Command "{process.command}" exited with return code {worker.returncode} ' + \
-                              f'see {process.log} for more info'
+                              f'see {ch2.pipeline.calculate.log} for more info'
                         log.warning(msg)
                         self.clear_all()
                         raise Exception(msg)

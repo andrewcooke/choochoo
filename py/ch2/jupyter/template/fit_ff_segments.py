@@ -8,8 +8,8 @@ from ch2.data.plot.utils import evenly_spaced_hues
 from ch2.data.response import *
 from ch2.lib.utils import group_to_dict
 from ch2.sql import *
-from ch2.stats.read.activity import ActivityReader
-from ch2.stats.read.segment import SegmentReader
+from ch2.read.activity import ActivityReader
+from ch2.read.segment import SegmentReader
 from ch2.jupyter.decorator import template
 
 

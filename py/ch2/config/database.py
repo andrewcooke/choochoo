@@ -2,15 +2,13 @@ from json import dumps
 from logging import getLogger
 from re import sub
 
+from ..data.names import DUMMY, ALL
+from ..pipeline.calculate.activity import ActivityCalculator
+from ..pipeline.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     DiaryTopic, DiaryTopicField, Dummy, ActivityTopic, ActivityTopicField
-from ..sql.database import connect
 from ..sql.tables.constant import ValidateNamedTuple
 from ..sql.types import long_cls, short_cls
-from ..stats.calculate.activity import ActivityCalculator
-from ..stats.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
-from ..stats.names import DUMMY, ALL
-from ..urwid.fields.topic import Integer
 
 log = getLogger(__name__)
 NEARBY_CNAME = 'Nearby'
@@ -47,7 +45,7 @@ def add(s, instance):
     You likely don't need this - see the more specific helpers below.
 
     The instance can of any class that subclasses the Field class from SQLAlchemy.
-    In practice, that means most classes in the ch2.sql.tables mdoule.
+    In practice, that means most classes in the ch2.sql.tables module.
     However, only some classes make sense in the context of a configuration, and
     more specific helpers probably already exist for those.
     '''

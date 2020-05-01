@@ -4,7 +4,7 @@ from bokeh.io import show, output_file
 from bokeh.plotting import figure
 
 from ch2.data import *
-from ch2.stats.read.monitor import MonitorReader
+from ch2.read.monitor import MonitorReader
 from ch2.jupyter.decorator import template
 
 

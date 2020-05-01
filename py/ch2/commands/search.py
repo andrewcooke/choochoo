@@ -10,8 +10,8 @@ from ..diary.model import DB, VALUE, UNITS
 from ..lib import time_to_local_time
 from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic, \
     StatisticJournalText, StatisticName
-from ..stats.calculate.activity import ActivityCalculator
-from ..stats.names import TIME, START, ACTIVE_TIME, DISTANCE, ACTIVE_DISTANCE, GROUP
+from ..pipeline.calculate.activity import ActivityCalculator
+from ..data.names import TIME, START, ACTIVE_TIME, DISTANCE, ACTIVE_DISTANCE, GROUP
 
 log = getLogger(__name__)
 

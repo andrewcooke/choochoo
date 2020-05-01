@@ -6,18 +6,17 @@ from re import split
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import relationship, backref, reconstructor, synonym
+from sqlalchemy.orm import relationship, backref, synonym
 from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
 from ..support import Base
 from ..types import Time, ShortCls
 from ..utils import add
+from ...data.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM, ALL
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.date import format_seconds, local_date_to_time, time_to_local_time
 from ...lib.utils import sigfig
-from ...stats.names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM, ALL
 
 log = getLogger(__name__)
 

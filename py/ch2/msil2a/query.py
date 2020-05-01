@@ -5,7 +5,7 @@ from sentinelsat import SentinelAPI
 from shapely.geometry import MultiPoint, box
 
 from ..data import activity_statistics
-from ..stats.names import LATITUDE, LONGITUDE
+from ..data.names import LATITUDE, LONGITUDE
 
 log = getLogger(__name__)
 

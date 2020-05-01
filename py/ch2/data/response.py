@@ -2,15 +2,14 @@
 import datetime as dt
 import re
 from logging import getLogger
-from math import exp
 
 import numpy as np
+from math import exp
 from pandas import DataFrame, Series
 from scipy import optimize
 
-from ch2.data.lib import decay_params
-from . import inplace_decay
-from ..stats.names import FITNESS_D_ANY, FATIGUE_D_ANY, like, _delta, FITNESS, RECOVERY_D, EARNED_D, PLATEAU_D
+from .lib import decay_params, inplace_decay
+from .names import FITNESS_D_ANY, FATIGUE_D_ANY, like, _delta, FITNESS, RECOVERY_D, EARNED_D, PLATEAU_D
 
 log = getLogger(__name__)
 

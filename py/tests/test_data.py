@@ -34,6 +34,6 @@ class TestData(LogTestCase):
             self.assertEqual(p.bike['mass'], 42)
 
     def test_types(self):
-        from ch2.stats.calculate.power import Power, Bike
+        from ch2.pipeline.calculate.power import Power, Bike
         self.assertEqual(Bike.__module__, 'ch2.stats.calculate.power')
         self.assertEqual(Power.__module__, 'ch2.stats.calculate.power')

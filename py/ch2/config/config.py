@@ -10,32 +10,32 @@ from .impulse import add_impulse
 from .impulse import add_responses
 from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
+from ..data.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, \
+    FATIGUE_D, LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
+from ..pipeline.calculate.achievement import AchievementCalculator
+from ..pipeline.calculate.activity import ActivityCalculator
+from ..pipeline.calculate.elevation import ElevationCalculator
+from ..pipeline.calculate.kit import KitCalculator
+from ..pipeline.calculate.monitor import MonitorCalculator
+from ..pipeline.calculate.response import ResponseCalculator
+from ..pipeline.calculate.segment import SegmentCalculator
+from ..pipeline.calculate.summary import SummaryCalculator
+from ..pipeline.display.activity import ActivityDisplayer, ActivityDelegate
+from ..pipeline.display.activity.achievement import AchievementDelegate
+from ..pipeline.display.activity.jupyter import JupyterDelegate
+from ..pipeline.display.activity.nearby import NearbyDelegate
+from ..pipeline.display.activity.segment import SegmentDelegate
+from ..pipeline.display.database import DatabaseDisplayer
+from ..pipeline.display.diary import DiaryDisplayer
+from ..pipeline.display.monitor import MonitorDisplayer
+from ..pipeline.display.response import ResponseDisplayer
+from ..read.monitor import MonitorReader
+from ..read.segment import SegmentReader
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant
 from ..sql.types import short_cls, long_cls
 from ..srtm.file import SRTM1_DIR
-from ..stats.calculate.achievement import AchievementCalculator
-from ..stats.calculate.activity import ActivityCalculator
-from ..stats.calculate.elevation import ElevationCalculator
-from ..stats.calculate.kit import KitCalculator
-from ..stats.calculate.monitor import MonitorCalculator
-from ..stats.calculate.response import ResponseCalculator
-from ..stats.calculate.segment import SegmentCalculator
-from ..stats.calculate.summary import SummaryCalculator
-from ..stats.display.activity import ActivityDelegate, ActivityDisplayer
-from ..stats.display.activity.achievement import AchievementDelegate
-from ..stats.display.activity.jupyter import JupyterDelegate
-from ..stats.display.activity.nearby import NearbyDelegate
-from ..stats.display.activity.segment import SegmentDelegate
-from ..stats.display.database import DatabaseDisplayer
-from ..stats.display.diary import DiaryDisplayer
-from ..stats.display.monitor import MonitorDisplayer
-from ..stats.display.response import ResponseDisplayer
-from ..stats.names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, \
-    FATIGUE_D, LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL
-from ..stats.read.monitor import MonitorReader
-from ..stats.read.segment import SegmentReader
 
 log = getLogger(__name__)
 

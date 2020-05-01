@@ -9,16 +9,16 @@ from math import log10
 from sqlalchemy.sql.functions import count
 
 from . import UniProcCalculator
-from ..read.segment import SegmentReader
 from ...data.frame import statistics
+from ...data.names import _src, ALL, HR_IMPULSE_10, COVERAGE, HEART_RATE, _cov
 from ...data.response import sum_to_hour, calc_response
 from ...lib.date import round_hour, to_time, local_date_to_time, now
+from ...pipeline import LoaderMixin
+from ...read.segment import SegmentReader
 from ...sql import ActivityGroup
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...sql.utils import add
-from ...stats.names import _src, ALL, HR_IMPULSE_10, COVERAGE, HEART_RATE, _cov
-from ...stats.pipeline import LoaderMixin
 
 log = getLogger(__name__)
 

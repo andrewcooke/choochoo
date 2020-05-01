@@ -9,7 +9,7 @@ import numpy as np
 from .frame import linear_resample, present
 from ..lib.data import nearest_index, get_index_loc
 from ..sql import StatisticName, StatisticJournal
-from ..stats.names import _delta, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
+from .names import _delta, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
     CLIMB_GRADIENT, CLIMB_POWER, POWER_ESTIMATE, CLIMB_CATEGORY
 
 log = getLogger(__name__)
@@ -154,7 +154,7 @@ def search(df, params=Climb()):
 
 def climbs_for_activity(s, ajournal):
 
-    from ..stats.calculate.activity import ActivityCalculator
+    from ..pipeline.calculate.activity import ActivityCalculator
 
     total = s.query(StatisticJournal).join(StatisticName). \
         filter(StatisticName.name == TOTAL_CLIMB,

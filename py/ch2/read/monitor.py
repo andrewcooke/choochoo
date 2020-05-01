@@ -7,19 +7,19 @@ import pandas as pd
 from sqlalchemy import desc, and_, or_, distinct, func, select
 from sqlalchemy.sql.functions import count
 
-from ..load import StatisticJournalLoader
-from ..names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE, ALL
-from ..read import AbortImportButMarkScanned, AbortImport, MultiProcFitReader
-from ... import FatalException
-from ...commands.args import MONITOR, WORKER, mm, FORCE, VERBOSITY, LOG, DEFAULT
-from ...data.frame import _tables
-from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
-from ...fit.profile.profile import read_fit
-from ...lib.date import time_to_local_date, format_time
-from ...sql.database import StatisticJournalType, ActivityGroup
-from ...sql.tables.monitor import MonitorJournal
-from ...sql.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
-from ...sql.utils import add
+from . import AbortImport, AbortImportButMarkScanned, MultiProcFitReader
+from .loader import StatisticJournalLoader
+from .. import FatalException
+from ..commands.args import MONITOR, mm, FORCE, DEFAULT
+from ..data.frame import _tables
+from ..data.names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE, ALL
+from ..fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
+from ..fit.profile.profile import read_fit
+from ..lib.date import time_to_local_date, format_time
+from ..sql.database import StatisticJournalType, ActivityGroup
+from ..sql.tables.monitor import MonitorJournal
+from ..sql.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
+from ..sql.utils import add
 
 log = getLogger(__name__)
 

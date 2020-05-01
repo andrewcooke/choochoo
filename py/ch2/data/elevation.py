@@ -4,7 +4,7 @@ from logging import getLogger
 from scipy.interpolate import UnivariateSpline
 
 from .frame import present
-from ..stats.names import ELEVATION, DISTANCE, RAW_ELEVATION, GRADE
+from .names import ELEVATION, DISTANCE, RAW_ELEVATION, GRADE
 
 
 log = getLogger(__name__)

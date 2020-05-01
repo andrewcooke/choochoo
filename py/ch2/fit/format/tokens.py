@@ -8,8 +8,8 @@ from struct import unpack, pack
 from .records import LazyRecord, merge_duplicates
 from ..profile.fields import TypedField, TIMESTAMP_GLOBAL_TYPE, DynamicField, CompositeField
 from ..profile.types import timestamp_to_time, time_to_timestamp
+from ...data.names import S
 from ...lib.data import WarnDict, tohex
-from ...stats.names import S
 
 log = getLogger(__name__)
 FIELD_DESCRIPTION = 206

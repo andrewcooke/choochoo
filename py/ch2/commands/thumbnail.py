@@ -9,9 +9,8 @@ from pygeotile.point import Point
 from .args import ACTIVITY, base_system_path, THUMBNAIL, BASE
 from ..data import activity_statistics
 from ..lib import local_time_to_time
-from ..lib.log import log_current_exception
 from ..sql import ActivityJournal
-from ..stats.names import LONGITUDE, LATITUDE
+from ..data.names import LONGITUDE, LATITUDE
 
 
 log = getLogger(__name__)

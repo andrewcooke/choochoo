@@ -3,7 +3,7 @@ from logging import getLogger
 
 from .args import FORCE, LIKE, FINISH, START, WORKER, parse_pairs, KARG, UNLIKE, BASE
 from ..sql.tables.pipeline import PipelineType
-from ..stats.pipeline import run_pipeline
+from ..pipeline import run_pipeline
 
 log = getLogger(__name__)
 

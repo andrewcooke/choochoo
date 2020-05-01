@@ -1,12 +1,12 @@
 
 from logging import getLogger
 
+from ...data.names import KIT_ADDED, KIT_RETIRED
 from ...lib import format_date, time_to_local_date, to_time
 from ...lib.log import log_current_exception
 from ...sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \
     StatisticJournalType
 from ...sql.utils import add
-from ...stats.names import KIT_ADDED, KIT_RETIRED
 
 log = getLogger(__name__)
 

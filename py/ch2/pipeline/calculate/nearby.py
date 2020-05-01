@@ -9,7 +9,7 @@ from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
 from . import UniProcCalculator
-from ..names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
+from ...data.names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
 from ...rtree import MatchType
 from ...rtree.spherical import SQRTree
 from ...lib.date import to_time, local_date_to_time

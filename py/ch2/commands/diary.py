@@ -19,10 +19,10 @@ from ..lib.io import tui
 from ..lib.schedule import Schedule
 from ..lib.utils import PALETTE
 from ..lib.widgets import DateSwitcher
+from ..pipeline import run_pipeline
+from ..pipeline.display.activity.nearby import NEARBY_LINKS
 from ..sql import PipelineType, DiaryTopicJournal, ActivityJournal
 from ..sql.database import StatisticJournal
-from ch2.stats.display.activity.nearby import NEARBY_LINKS
-from ..stats.pipeline import run_pipeline
 from ..urwid.tui.factory import Factory
 from ..urwid.tui.tabs import TabList
 

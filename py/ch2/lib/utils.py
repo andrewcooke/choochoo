@@ -3,7 +3,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from itertools import zip_longest, groupby
 from logging import getLogger
-from os import getpid, close, execl, execle
+from os import getpid, close, execl
 from os.path import split, realpath, normpath, expanduser
 from pprint import PrettyPrinter
 from sys import executable, argv
@@ -11,8 +11,8 @@ from time import sleep
 
 from psutil import Process
 
-from .date import now, format_seconds
-from ..stats.names import M, KM, PC, W
+from .date import now
+from ..data.names import M, KM, PC, W
 
 
 log = getLogger(__name__)
