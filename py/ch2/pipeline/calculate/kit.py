@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from . import MultiProcCalculator, ActivityJournalCalculatorMixin
-from ch2.pipeline.read.activity import ActivityReader
+from ..read.activity import ActivityReader
 from ...lib.log import log_current_exception
 from ...sql import StatisticJournal, Timestamp
 from ...sql.tables.kit import expand_item

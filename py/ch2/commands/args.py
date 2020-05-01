@@ -231,7 +231,7 @@ class NamespaceWithVariables(Mapping):
 
 def base_system_path(base, subdir=None, file=None, version=DB_VERSION, create=True):
 
-    from ch2.lib.utils import clean_path
+    from ..lib.utils import clean_path
 
     dir = base
     if version: dir = join(dir, version)

@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from ch2.pipeline.read.loader import StatisticJournalLoader
+from ..pipeline.read.loader import StatisticJournalLoader
 
 log = getLogger(__name__)
 
