@@ -10,6 +10,9 @@ const useStyles = makeStyles(theme => ({
         verticalAlign: 'middle',
         color: theme.palette.text.disabled, /* secondary isn't visible */
     },
+    button: {
+        width: '100%',
+    },
 }));
 
 
@@ -30,7 +33,7 @@ export default function MenuButton(props) {
     const items = json.map(row => mkItem(row, handleClose));
 
     return (<>
-        <Button variant='outlined' onClick={handleClick}>
+        <Button variant='outlined' onClick={handleClick} className={classes.button}>
             <MenuIcon className={classes.icon}/>
             <Text>{label}</Text>
         </Button>

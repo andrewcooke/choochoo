@@ -10,7 +10,7 @@ export default function SomeActivities(props) {
     const [constraint, setConstraint] = useState('');
     const href = fmtHref('api/jupyter/some_activities?constraint=%s', constraint);
 
-    return (<ActivityCard header='Some Activities' href={href}>
+    return (<ActivityCard header='Some Activities' pad={8} href={href}>
         <Grid item xs={12}><Text>
             <p>Thumbnail maps of activities that match the query.</p>
             <p>Example queries:</p>

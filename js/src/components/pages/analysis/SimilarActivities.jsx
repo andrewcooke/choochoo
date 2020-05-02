@@ -20,7 +20,7 @@ export default function SimilarActivities(props) {
         setDatetime(datetimes[datetimes.length - 1])
     }
 
-    return (<ActivityCard header='Similar Activities' displayWidth={5} href={href}>
+    return (<ActivityCard header='Similar Activities' pad={1} href={href}>
         <Grid item xs={12}><Text>
             <p>Thumbnail maps of nearby activities.</p>
         </Text></Grid>

@@ -14,15 +14,15 @@ import {handleJson} from "../functions";
 
 
 const useStyles = makeStyles(theme => ({
-    right: {
-        textAlign: 'right',
+    button: {
+        width: '100%',
     },
 }));
 
 
 export default function ConfirmedWriteButton(props) {
 
-    const {children, href, json=null, form=null, label, xs=12, setData=null, disabled=false, setError,
+    const {children, href, json=null, form=null, label, xs=4, pad, setData=null, disabled=false, setError,
            variant='outlined', method='put', onComplete} = props;
     const classes = useStyles();
     const [openConfirm, setOpenConfirm] = React.useState(false);
@@ -88,9 +88,11 @@ export default function ConfirmedWriteButton(props) {
             .catch(handleWrite);
     }
 
-    return (
-        <Grid item xs={xs} className={classes.right}>
-            <Button variant={variant} onClick={handleClickOpen} disabled={disabled}>{label}</Button>
+    return (<>
+        {pad === undefined ?  null : <Grid item xs={pad}/>}
+        <Grid item xs={xs}>
+            <Button variant={variant} className={classes.button}
+                    onClick={handleClickOpen} disabled={disabled}>{label}</Button>
             <Dialog fullScreen={fullScreen} open={openConfirm} onClose={handleCancel}>
                 <DialogTitle>{'Confirm?'}</DialogTitle>
                 <DialogContent>
@@ -108,7 +110,7 @@ export default function ConfirmedWriteButton(props) {
                 </DialogContent>
             </Dialog>
         </Grid>
-    );
+    </>);
 }
 
 

@@ -26,7 +26,7 @@ export default function CompareActivities(props) {
     const href = fmtHref('api/jupyter/compare_activities?local_time=%s&compare_time=%s&activity_group=%s',
         localTime, compareTime, group);
 
-    return (<ActivityCard header='Compare Activities' href={href}>
+    return (<ActivityCard header='Compare Activities' pad={8} href={href}>
         <Grid item xs={12}><Text>
             <p>Graphical details for two activities, superimposed.</p>
         </Text></Grid>

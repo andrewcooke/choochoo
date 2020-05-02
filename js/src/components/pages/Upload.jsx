@@ -11,11 +11,8 @@ const useStyles = makeStyles(theme => ({
     input: {
         display: 'none',
     },
-    center: {
-        textAlign: 'center',
-    },
-    right: {
-        textAlign: 'right',
+    button: {
+        width: '100%',
     },
     wide: {
         width: '100%',
@@ -90,12 +87,13 @@ function FileSelect(props) {
     </p></Text></Grid>) : null;
 
     return (<>
-        <Grid item xs={12}>
+        <Grid item xs={4}>
             <input accept='*/*' id='upload-input' multiple type='file' onChange={addFiles} className={classes.input}/>
             <label htmlFor='upload-input'>
-                <Button variant='outlined' component='span'>Select files</Button>
+                <Button variant='outlined' className={classes.button} component='span'>Select files</Button>
             </label>
         </Grid>
+        <Grid item xs={8}/>
         <FileList files={files} onClick={deleteFile}/>
         <Grid item xs={12}>
             <Autocomplete multiple options={items.map(item => item.name)} filterSelectedOptions
@@ -104,13 +102,11 @@ function FileSelect(props) {
                           onChange={(event, value) => setKit(value)}/>
         </Grid>
         {empty}
-        <Grid item xs={12} className={classes.right}>
-            <ConfirmedWriteButton label='Upload' href='/api/upload'
-                                  setData={onSubmit} setError={setError}
-                                  form={{'files': files, 'kit': kit}}>
-                The ingest process will take some time.
-            </ConfirmedWriteButton>
-        </Grid>
+        <ConfirmedWriteButton label='Upload' href='/api/upload' variant='contained' pad={8}
+                              setData={onSubmit} setError={setError}
+                              form={{'files': files, 'kit': kit}}>
+            The ingest process will take some time.
+        </ConfirmedWriteButton>
     </>);
 }
 

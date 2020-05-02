@@ -12,11 +12,12 @@ const useStyles = makeStyles(theme => ({
 
 
 export default function ActivityCard(props) {
-    const {header, href, displayWidth=12, children} = props;
+    const {header, href, pad, children} = props;
     const classes = useStyles();
     return (<ColumnCard header={header}>
         {children}
-        <Grid item xs={displayWidth} className={classes.right}>
+        {pad === undefined ?  null : <Grid item xs={pad}/>}
+        <Grid item xs={4} className={classes.right}>
             <LinkButton href={href}>Display</LinkButton>
         </Grid>
     </ColumnCard>);

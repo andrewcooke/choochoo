@@ -20,7 +20,7 @@ export default function ActivityDetails(props) {
         setDatetime(datetimes[datetimes.length - 1])
     }
 
-    return (<ActivityCard header='Activity Details' displayWidth={5} href={href}>
+    return (<ActivityCard header='Activity Details' pad={1} href={href}>
         <Grid item xs={12}><Text>
             <p>Graphical details for the given activity.</p>
         </Text></Grid>

@@ -13,7 +13,7 @@ export default function NearbyActivities(props) {
     const [constraint, setConstraint] = useState(params.nearby_constraints[0]);
     const href = fmtHref('api/jupyter/nearby_activities?constraint=%s', constraint);
 
-    return (<ActivityCard header='Nearby Activities' displayWidth={6} href={href}>
+    return (<ActivityCard header='Nearby Activities' pad={2} href={href}>
         <Grid item xs={12}><Text>
             <p>A plot of activity routes within the contraint area, grouped by similarity.</p>
         </Text></Grid>

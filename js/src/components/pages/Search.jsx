@@ -6,8 +6,8 @@ import {ExpandLess, ExpandMore} from "@material-ui/icons";
 
 
 const useStyles = makeStyles(theme => ({
-    right: {
-        textAlign: 'right',
+    button: {
+        width: '100%',
     },
 }));
 
@@ -104,8 +104,10 @@ function SearchBox(props) {
                 control={<Checkbox checked={advanced} onChange={event => setAdvanced(event.target.checked)}/>}
                 label='Advanced'/>
         </Grid>
-        <Grid item xs={6} className={classes.right}>
-            <Button variant='contained' onClick={() => setQuery(localQuery)}>Search</Button>
+        <Grid xs={2}/>
+        <Grid item xs={4}>
+            <Button variant='contained' className={classes.button}
+                    onClick={() => setQuery(localQuery)}>Search</Button>
         </Grid>
         {advanced ? <AdvancedHelp expandedState={expandedState}/> : <BasicHelp/>}
     </ColumnCard>);

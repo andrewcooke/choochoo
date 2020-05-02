@@ -42,8 +42,7 @@ function Delete(props) {
                     In most cases, user data from a previous version can also be imported
                     (assuming the previous database still exists).</p>
             </Text></Grid>
-            <Grid item xs={9}/>
-            <ConfirmedWriteButton xs={3} label='Delete' variant='contained' method='post'
+            <ConfirmedWriteButton xs={4} pad={8} label='Delete' variant='contained' method='post'
                                   href='/api/configure/delete' setData={reload}
                                   json={{}} onComplete={onComplete}>
                 Some data can be recalculated from the FITS files (which are <b>not</b> deleted),

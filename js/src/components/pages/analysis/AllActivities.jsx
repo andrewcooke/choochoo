@@ -16,7 +16,7 @@ export default function AllActivities(props) {
     const href = fmtHref('api/jupyter/all_activities?start=%s&finish=%s', start, finish);
 
     // the addDay increments below are weird, but work.  bug in picker?  or i just don't understand.
-    return (<ActivityCard header='All Activities' displayWidth={6} href={href}>
+    return (<ActivityCard header='All Activities' pad={2} href={href}>
         <Grid item xs={12}><Text>
             <p>Thumbnail maps for each route between the start and finish dates.</p>
         </Text></Grid>
