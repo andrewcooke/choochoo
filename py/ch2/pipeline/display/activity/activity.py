@@ -15,6 +15,7 @@ from ....names import *
 from ...calculate.activity import ActivityCalculator
 from ...calculate.power import PowerCalculator
 from ..display import Displayer, ActivityJournalDelegate
+from ....names import _delta
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
     ActivityTopic, StatisticJournal, Pipeline, PipelineType
 from ....sql.types import lookup_cls

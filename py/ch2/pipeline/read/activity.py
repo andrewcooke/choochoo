@@ -190,7 +190,7 @@ class ActivityReader(MultiProcFitReader):
 
     @staticmethod
     def _save_name(s, ajournal, file_scan):
-        from ...config import add_activity_topic_field
+        from ...config.database import add_activity_topic_field
         log.debug('Saving name')
         # first, do we have the 'Name' field defined?
         # this should be triggered at most once per group if it was not already defined
@@ -200,7 +200,7 @@ class ActivityReader(MultiProcFitReader):
                        StatisticName.activity_group == ajournal.activity_group,
                        StatisticName.owner == ActivityTopic,
                        ActivityTopicField.activity_topic_id == None).one_or_none():
-            add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
+           add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
                                      ajournal.activity_group, model={TYPE: EDIT},
                                      description=ActivityTopicField.NAME_DESCRIPTION)
         # second, do we already have a journal for this file, or do we need to add one?

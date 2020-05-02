@@ -4,12 +4,13 @@ from logging import getLogger
 from sqlalchemy import not_
 from sqlalchemy.sql.functions import count
 
-from ...lib import local_time_to_time, time_to_local_time, to_date, format_date
+from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
+from ...commands.args import STATISTICS
+from ...lib import local_time_to_time, time_to_local_time, to_date, format_date, log_current_exception
 from ...lib.schedule import Schedule
 from ...sql import Timestamp, StatisticName, StatisticJournal, ActivityJournal, ActivityGroup, SegmentJournal, Interval
 from ...sql.types import long_cls
 from ...sql.utils import add
-from ..pipeline import MultiProcPipeline, UniProcPipeline, LoaderMixin
 
 log = getLogger(__name__)
 

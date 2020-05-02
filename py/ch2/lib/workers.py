@@ -54,7 +54,7 @@ class Workers:
                 if worker.returncode is not None:
                     if worker.returncode:
                         msg = f'Command "{process.command}" exited with return code {worker.returncode} ' + \
-                              f'see {ch2.pipeline.pipeline.log} for more info'
+                              f'see {process.log} for more info'
                         log.warning(msg)
                         self.clear_all()
                         raise Exception(msg)

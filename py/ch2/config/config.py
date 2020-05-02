@@ -5,7 +5,7 @@ from logging import getLogger
 from .climb import add_climb, CLIMB_CNAME
 from .database import add_loader_support, add_activity_group, add_activities, Counter, add_statistics, add_displayer, \
     name_constant, add_monitor, add_activity_constant, add_constant, add_diary_topic, add_diary_topic_field, \
-    add_activity_topic_field
+    add_activity_topic_field, add_activity_displayer_delegate
 from .impulse import add_impulse
 from .impulse import add_responses
 from ..commands.args import base_system_path, DB_VERSION, PERMANENT
