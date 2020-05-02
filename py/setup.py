@@ -42,7 +42,6 @@ Source and screenshots on [github](https://github.com/andrewcooke/choochoo).
                      'shapely',
                      'sklearn',
                      'sqlalchemy',
-                     'textblob',
                      'urwid',
                      'werkzeug',
                      ],

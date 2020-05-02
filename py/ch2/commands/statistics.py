@@ -27,5 +27,5 @@ Delete statistics after the date (or all, if omitted) and then generate new valu
 
 def run_statistic_pipelines(sys, db, base, force=False, like=tuple(), unlike=tuple(), start=None, finish=None,
                             worker=False, id=None, **kargs):
-    run_pipeline(sys, db, base, PipelineType.STATISTIC, force=force, like=like, unlike=unlike, start=start, finish=finish,
+    run_pipeline(sys, db, base, PipelineType.CALCULATE, force=force, like=like, unlike=unlike, start=start, finish=finish,
                  worker=worker, id=id, **kargs)

@@ -3,7 +3,7 @@
 from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
-from .database import add_loader_support, add_activity_group, add_activities, Counter, add_statistics, add_diary, \
+from .database import add_loader_support, add_activity_group, add_activities, Counter, add_statistics, add_displayer, \
     name_constant, add_monitor, add_activity_constant, add_constant, add_diary_topic, add_diary_topic_field, \
     add_activity_topic_field
 from .impulse import add_impulse
@@ -188,19 +188,21 @@ your FF-model parameters (fitness and fatigue).
         add_statistics(s, AchievementCalculator, c, owner_in=short_cls(SegmentReader))
 
     def _load_diary_pipeline(self, s, c):
-        add_diary(s, DiaryDisplayer, c)
-        add_diary(s, MonitorDisplayer, c)
+        add_displayer(s, DiaryDisplayer, c)
+        add_displayer(s, MonitorDisplayer, c)
         # these tie-in to the constants used in add_impulse()
         fitness, fatigue = self._ff_parameters()
         all = self._activity_groups[ALL]
-        add_diary(s, ResponseDisplayer, c,
-                  fitness=[name_constant(FITNESS_D % days, all) for (days, _, _) in fitness],
-                  fatigue=[name_constant(FATIGUE_D % days, all) for (days, _, _) in fatigue])
-        add_diary(s, ActivityDisplayer, c,
-                  delegates=[long_cls(delegate) for delegate in self._activity_diary_delegates()])
-        add_diary(s, DatabaseDisplayer, c)
+        add_displayer(s, ResponseDisplayer, c,
+                      fitness=[name_constant(FITNESS_D % days, all) for (days, _, _) in fitness],
+                      fatigue=[name_constant(FATIGUE_D % days, all) for (days, _, _) in fatigue])
+        add_displayer(s, ActivityDisplayer, c)
+        c2 = Counter()
+        for delegate in self._activity_displayer_delegates():
+            add_activity_displayer_delegate(s, delegate, c2)
+        add_displayer(s, DatabaseDisplayer, c)
 
-    def _activity_diary_delegates(self):
+    def _activity_displayer_delegates(self):
         return [AchievementDelegate, ActivityDelegate, SegmentDelegate, NearbyDelegate, JupyterDelegate]
 
     def _load_monitor_pipeline(self, s, c):

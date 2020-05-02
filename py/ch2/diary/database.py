@@ -35,7 +35,7 @@ def read_pipeline(session, date, schedule=None):
     schedule only sent for summary views.
     '''
     date = to_date(date)   # why is this needed?
-    for pipeline in Pipeline.all(session, PipelineType.DIARY):
+    for pipeline in Pipeline.all(session, PipelineType.DISPLAY):
         log.info(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
         instance = pipeline.cls(*pipeline.args, **pipeline.kargs)
         if isinstance(instance, Displayer):

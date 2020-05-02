@@ -150,7 +150,7 @@ def undo(s, item, component, model, date, all):
 
 
 def rebuild(system, db, base):
-    run_pipeline(system, db, base, PipelineType.STATISTIC, force=True, like=[long_cls(KitCalculator)])
+    run_pipeline(system, db, base, PipelineType.CALCULATE, force=True, like=[long_cls(KitCalculator)])
 
 
 def show(s, name, date, csv=None, output=stdout):

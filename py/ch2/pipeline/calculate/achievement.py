@@ -4,7 +4,7 @@ from re import compile
 
 from sqlalchemy import desc, asc
 
-from . import MultiProcCalculator, ActivityJournalCalculatorMixin
+from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin
 from .activity import ActivityCalculator
 from ...names import ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MAX_MEAN_PE_M_ANY, FITNESS_D_ANY, _delta, TOTAL_CLIMB, \
     CLIMB_DISTANCE, CLIMB_ELEVATION, MAX_MED_HR_M_ANY, MIN_KM_TIME_ANY

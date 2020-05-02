@@ -34,7 +34,7 @@ class Displayer(BasePipeline):
         yield
 
 
-class ActivityJournalDelegate:
+class ActivityJournalDelegate(BasePipeline):
 
     def __init__(self, interpolate=False):
         self.interpolate = interpolate

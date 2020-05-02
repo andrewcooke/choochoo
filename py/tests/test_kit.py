@@ -183,7 +183,7 @@ class TestKit(LogTestCase):
                                            'data/test/source/personal/2018-08-27-rec.fit',
                                            m(D.upper())+'kit=cotic')
             activities(args, sys, db)
-            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, like=['%Activity%'], n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
 
             with db.session_context() as s:
                 start(s, 'bike', 'cotic', '2018-01-01', True)
@@ -196,7 +196,7 @@ class TestKit(LogTestCase):
                 start(s, 'bike', 'bowman', '2018-01-01', False)
                 change(s, 'bowman', 'chain', 'sram', None, False, True)
 
-            run_pipeline(sys, db, args[BASE], PipelineType.STATISTIC, like=['%Kit%'], n_cpu=1)
+            run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, like=['%Kit%'], n_cpu=1)
 
             with db.session_context() as s:
                 bike = get_name(s, 'bike').to_model(s, depth=3, statistics=INDIVIDUAL, own_models=False)

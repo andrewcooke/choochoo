@@ -6,7 +6,7 @@ from logging import getLogger
 
 from sqlalchemy import desc
 
-from . import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from .power import PowerCalculator
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times

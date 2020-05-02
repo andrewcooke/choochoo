@@ -34,5 +34,5 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
 def run_activity_pipelines(sys, db, base, paths=tuple(), kit=True, force=False, worker=False, id=None, define=None,
                            **kargs):
     if define is None: define = {}
-    run_pipeline(sys, db, base, PipelineType.ACTIVITY, paths=paths, force=force, worker=worker, id=id,
+    run_pipeline(sys, db, base, PipelineType.READ_ACTIVITY, paths=paths, force=force, worker=worker, id=id,
                  define=define, kit=kit, **kargs)

@@ -53,13 +53,22 @@ def add(s, instance):
     return instance
 
 
+def add_activity_group(s, name, sort, description=None):
+    '''
+    Add an activity type to the configuration.
+
+    These are used to group activities (and related statistics).
+    So typical entries might be for cycling, running, etc.
+    '''
+    return add(s, ActivityGroup(name=name, sort=sort, description=description))
+
+
 def add_statistics(s, cls, sort, **kargs):
     '''
     Add a class to the statistics pipeline.
 
     The pipeline classes are invoked when the diary is modified and when activities are added.
     They detect new data and calculate appropriate statistics.
-    See the ch2.stats module for examples.
 
     The sort argument fixes the order in which the classes are instantiated and called and can
     be an integer or a callable (that returns an integer) like Counter above.
@@ -67,24 +76,38 @@ def add_statistics(s, cls, sort, **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     log.debug(f'Adding statistic pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.STATISTIC, sort=sort, kargs=kargs))
+    return add(s, Pipeline(cls=cls, type=PipelineType.CALCULATE, sort=sort, kargs=kargs))
 
 
-def add_diary(s, cls, sort, **kargs):
+def add_displayer(s, cls, sort, **kargs):
     '''
     Add a class to the diary pipeline.
 
     The pipeline classes are invoked when the diary is displayed.
     They generate display classes for activity statistics (and similar)
-    See the ch2.stats module for examples.
 
     The sort argument fixes the order in which the classes are instantiated and called and can
     be an integer or a callable (that returns an integer) like Counter above.
 
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
-    log.debug(f'Adding diary pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.DIARY, sort=sort, kargs=kargs))
+    log.debug(f'Adding displayer pipeline {cls}')
+    return add(s, Pipeline(cls=cls, type=PipelineType.DISPLAY, sort=sort, kargs=kargs))
+
+
+def add_activity_displayer_delegate(s, cls, sort, **kargs):
+    '''
+    Add a class to the activity displayer pipeline.
+
+    The pipeline classes are invoked when the diary is displayed, for each activity.
+
+    The sort argument fixes the order in which the classes are instantiated and called and can
+    be an integer or a callable (that returns an integer) like Counter above.
+
+    The kargs are passed to the constructor and so can be used to customize the processing.
+    '''
+    log.debug(f'Adding activity displayer pipeline {cls}')
+    return add(s, Pipeline(cls=cls, type=PipelineType.DISPLAY_ACTIVITY, sort=sort, kargs=kargs))
 
 
 def add_monitor(s, cls, sort, **kargs):
@@ -100,17 +123,7 @@ def add_monitor(s, cls, sort, **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     log.debug(f'Adding monitor pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.MONITOR, sort=sort, kargs=kargs))
-
-
-def add_activity_group(s, name, sort, description=None):
-    '''
-    Add an activity type to the configuration.
-
-    These are used to group activities (and related statistics).
-    So typical entries might be for cycling, running, etc.
-    '''
-    return add(s, ActivityGroup(name=name, sort=sort, description=description))
+    return add(s, Pipeline(cls=cls, type=PipelineType.READ_MONITOR, sort=sort, kargs=kargs))
 
 
 def add_activities(s, cls, sort, **kargs):
@@ -126,7 +139,7 @@ def add_activities(s, cls, sort, **kargs):
     The kargs are passed to the constructor and so can be used to customize the processing.
     '''
     log.debug(f'Loading activity pipeline {cls}')
-    return add(s, Pipeline(cls=cls, type=PipelineType.ACTIVITY, sort=sort, kargs=kargs))
+    return add(s, Pipeline(cls=cls, type=PipelineType.READ_ACTIVITY, sort=sort, kargs=kargs))
 
 
 def add_constant(s, name, value, description=None, units=None, single=False,

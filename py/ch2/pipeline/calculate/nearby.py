@@ -8,7 +8,7 @@ from random import uniform
 from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
-from . import UniProcCalculator
+from .calculate import UniProcCalculator
 from ...names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
 from ...rtree import MatchType
 from ...rtree.spherical import SQRTree

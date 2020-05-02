@@ -16,18 +16,13 @@ from ...calculate.activity import ActivityCalculator
 from ...calculate.power import PowerCalculator
 from ..display import Displayer, ActivityJournalDelegate
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
-    ActivityTopic, StatisticJournal
+    ActivityTopic, StatisticJournal, Pipeline, PipelineType
 from ....sql.types import lookup_cls
 
 log = getLogger(__name__)
 
 
 class ActivityDisplayer(Displayer):
-
-    def __init__(self, *args, delegates=None, **kargs):
-        if not delegates: raise Exception(f'{self.__class__.__name__} must be configured with delegates')
-        self.__delegates = [lookup_cls(delegate)() for delegate in delegates]
-        super().__init__(*args, **kargs)
 
     @optional_text('Activities')
     def _read_date(self, s, date):
@@ -53,34 +48,32 @@ class ActivityDisplayer(Displayer):
                                      ajournal.activity_group.name)
 
     def _read_journal_date(self, s, ajournal, date):
-        for delegate in self.__delegates:
+        for pipeline in Pipeline.all_instances(s, PipelineType.DISPLAY_ACTIVITY):
             try:
-                log.debug(f'Calling {delegate}')
-                if delegate.interpolate:
-                    yield from delegate.read_journal_date(s, ajournal, date)
+                if pipeline.interpolate:
+                    yield from pipeline.read_journal_date(s, ajournal, date)
                 else:
-                    entry = list(delegate.read_journal_date(s, ajournal, date))
+                    entry = list(pipeline.read_journal_date(s, ajournal, date))
                     if entry: yield entry
             except Exception as e:
-                log.warning(f'Error calling {delegate}')
+                log.warning(f'Error calling {pipeline}')
                 log_current_exception(traceback=True)
 
     @optional_text('Activities')
     def _read_schedule(self, s, date, schedule):
-        for delegate in self.__delegates:
+        for pipeline in Pipeline.all_instances(s, PipelineType.DISPLAY_ACTIVITY):
             try:
-                log.debug(f'Calling {delegate}')
-                entry = list(delegate.read_schedule(s, date, schedule))
+                entry = list(pipeline.read_schedule(s, date, schedule))
                 if entry: yield entry
             except Exception as e:
-                log.warning(f'Error calling {delegate}')
+                log.warning(f'Error calling {pipeline}')
                 log_current_exception(traceback=True)
 
 
 class ActivityDelegate(ActivityJournalDelegate):
 
-    def __init__(self):
-        super().__init__(interpolate=True)
+    def __init__(self, *args, **kargs):
+        super().__init__(interpolate=True, *args, **kargs)
 
     def read_journal_date(self, s, ajournal, date):
         yield list(self._read_journal_topics(s, ajournal, date))

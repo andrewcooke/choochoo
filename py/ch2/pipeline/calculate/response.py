@@ -8,7 +8,7 @@ import numpy as np
 from math import log10
 from sqlalchemy.sql.functions import count
 
-from . import UniProcCalculator
+from .calculate import UniProcCalculator
 from ...data.frame import statistics
 from ...names import _src, ALL, HR_IMPULSE_10, COVERAGE, HEART_RATE, _cov
 from ...data.response import sum_to_hour, calc_response

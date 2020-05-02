@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from . import MultiProcCalculator, ActivityJournalCalculatorMixin
+from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin
 from ..read.activity import ActivityReader
 from ...lib.log import log_current_exception
 from ...sql import StatisticJournal, Timestamp

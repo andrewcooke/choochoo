@@ -1,19 +1,23 @@
 
 from enum import IntEnum
 from json import dumps
+from logging import getLogger
 
 from sqlalchemy import Column, Integer, not_, or_
 
 from ..support import Base
 from ..types import Cls, Json, Sort
 
+log = getLogger(__name__)
+
 
 class PipelineType(IntEnum):
 
-    STATISTIC = 0
-    DIARY = 1
-    ACTIVITY = 2
-    MONITOR = 3
+    CALCULATE = 0
+    DISPLAY = 1
+    DISPLAY_ACTIVITY = 4
+    READ_ACTIVITY = 2
+    READ_MONITOR = 3
 
 
 class Pipeline(Base):
@@ -50,6 +54,12 @@ class Pipeline(Base):
                 msg += f' with ID={id}'
             raise Exception(msg)
         yield from pipelines
+        
+    @classmethod
+    def all_instances(cls, s, type, like=tuple(), unlike=tuple(), id=None):
+        for pipeline in cls.all(s, type, like=like, unlike=unlike, id=id):
+            log.debug(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
+            yield pipeline.cls(*pipeline.args, **pipeline.kargs)
 
     @classmethod
     def count(cls, s, type, like=tuple(), unlike=tuple(), id=None):

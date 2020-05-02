@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from . import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ...data.elevation import smooth_elevation
 from ...data.frame import activity_statistics, present
 from ...names import RAW_ELEVATION, ELEVATION, DISTANCE, M, GRADE, PC, ALTITUDE

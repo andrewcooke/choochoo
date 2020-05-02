@@ -8,6 +8,7 @@ pip install --upgrade pip
 pip install bokeh
 pip install cachetools
 pip install colorama
+pip install colorlog
 pip install jupyter
 pip install matplotlib
 pip install numpy
@@ -25,10 +26,8 @@ pip install sentinelsat
 pip install shapely
 pip install sklearn
 pip install sqlalchemy
-pip install textblob
 pip install urwid
 pip install werkzeug
-pip install colorlog
 
 pip install setuptools wheel twine
 pip install s-tui

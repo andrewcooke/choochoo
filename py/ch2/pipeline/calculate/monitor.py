@@ -5,7 +5,7 @@ from logging import getLogger
 from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import count
 
-from . import MultiProcCalculator
+from .calculate import MultiProcCalculator
 from ...names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR, \
     LO_REST_HR, HI_REST_HR, ALL
 from ..pipeline import LoaderMixin

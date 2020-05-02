@@ -24,4 +24,4 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
 
 def run_monitor_pipelines(sys, db, base, paths=None, force=False, worker=False, id=None, **kargs):
     if paths is None: paths = []
-    run_pipeline(sys, db, base, PipelineType.MONITOR, paths=paths, force=force, worker=worker, id=id, **kargs)
+    run_pipeline(sys, db, base, PipelineType.READ_MONITOR, paths=paths, force=force, worker=worker, id=id, **kargs)
