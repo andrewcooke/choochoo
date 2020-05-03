@@ -1,4 +1,7 @@
 
+import log from "loglevel";
+
+
 export default function handleJson(history, setData, setError, busyState) {
 
     // busy logic is as follows:
@@ -25,30 +28,29 @@ export default function handleJson(history, setData, setError, busyState) {
 
         function handler(json) {
             try {
-                console.log('JSON:');
-                console.log(json);
+                log.debug('JSON:', json);
                 const keys = Object.keys(json);
                 if (keys.includes('redirect')) {
-                    console.log(`Redirect to ${json.redirect}`);
+                    log.debug(`Redirect to ${json.redirect}`);
                     history.push(json.redirect);
                 } else if (setBusy !== undefined && keys.includes('busy')) {
-                    console.log('Received busy:');
-                    console.log(json.busy);
+                    log.debug('Received busy:');
+                    log.debug(json.busy);
                     setBusy(json.busy);
                 } else if (keys.includes('error')) {
-                    console.log('Received error:');
-                    console.log(json.error);
+                    log.debug('Received error:');
+                    log.debug(json.error);
                     if (setError === undefined) {
-                        console.log(`Ignoring error - undefined setError()`)
+                        log.debug(`Ignoring error - undefined setError()`)
                     } else {
                         setError(json.error);
                     }
                 } else if (keys.includes('data')) {
-                    console.log('Received data:');
-                    console.log(json.data);
+                    log.debug('Received data:');
+                    log.debug(json.data);
                     if (busy !== null && busy.percent < 100) {
                         if (setBusy === undefined) {
-                            console.log(`Ignoring busy - undefined setBusy()`)
+                            log.debug(`Ignoring busy - undefined setBusy()`)
                         } else {
                             // fill in final message
                             let copy = {...busy};
@@ -62,13 +64,13 @@ export default function handleJson(history, setData, setError, busyState) {
                     throw new Error(`Unexpected response ${keys} / ${json}`);
                 }
             } catch (e) {
-                console.log(`Caught ${e}`)
+                log.debug(`Caught ${e}`)
                 setError(e.message);
             }
         }
 
-        console.log('Response:');
-        console.log(response);
+        log.debug('Response:');
+        log.debug(response);
         return response.json().then(handler);
     }
 }

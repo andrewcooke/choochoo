@@ -73,7 +73,6 @@ function Title(props) {
     const {header} = props;
     const classes = useStyles();
     const match = header.match(/^(.*\))\s*(.*)$/)
-    console.log('match', match)
 
     return <ColumnCard className={classes.title}>
         <Grid item xs={10}><Typography variant='h2' component='span'>{match[1]}</Typography></Grid>

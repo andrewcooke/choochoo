@@ -1,5 +1,8 @@
 
-// a worker tat receives dictionaries and sends them to the server.
+import log from "loglevel";
+
+
+// a worker that receives dictionaries and sends them to the server.
 // data are accumulated and only sent when there's a pause in updates
 // (so that editing doesn't result in a constant stream of posts).
 
@@ -29,17 +32,17 @@ function queue(event) {
 function write() {
 
     function onError(response) {
-        response.text().then((msg) => console.log(msg));
+        response.text().then((msg) => log.error(msg));
     }
 
     function onSuccess(response) {
         data = {};
-        console.log('written');
+        log.debug('written');
     }
 
     if (Object.keys(data).length > 0) {
         Object.entries(data).forEach(([key, value]) => {
-            console.log(`write ${key}:${value}`);
+            log.debug(`write ${key}:${value}`);
         });
         fetch('/api/diary/statistics',
             {method: 'put',

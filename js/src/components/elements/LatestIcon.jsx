@@ -9,7 +9,6 @@ export default function LatestIcon(props) {
     const history = useHistory();
 
     function updateHistory(date) {
-        console.log('latest', date)
         if (date !== null) {
             history.push('/' + date)
         }

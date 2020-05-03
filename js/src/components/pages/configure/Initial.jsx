@@ -3,6 +3,7 @@ import {Dialog, DialogContent, DialogContentText, DialogTitle, Grid, TextField} 
 import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, P, Text, TextCard} from "../../elements";
 import {handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
+import log from "loglevel";
 
 
 function Directory(props) {
@@ -26,7 +27,6 @@ function Delete(props) {
     const [wait, setWait] = useState(false);
 
     function onComplete() {
-        console.log('complete');
         setWait(true);
         reload();
     }
@@ -157,8 +157,8 @@ export default function Initial(props) {
         fetch('/api/configure/profiles')
             .then(handleJson(history, setData, setError))
             .catch(reason => {
-                console.warn('configure/profiles:', reason);
-                console.log('will retry in 1s')
+                log.warn('configure/profiles:', reason);
+                log.debug('will retry in 1s')
                 setTimeout(reload, 1000);
             });
     }, [reads]);

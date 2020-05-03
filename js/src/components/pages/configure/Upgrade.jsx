@@ -12,6 +12,7 @@ import {
 import {handleJson} from "../../functions";
 import {Autocomplete} from "@material-ui/lab";
 import {Grid, TextField} from "@material-ui/core";
+import log from "loglevel";
 
 
 function Results(props) {
@@ -79,7 +80,6 @@ function Columns(props) {
         return <Loading/>;
     } else {
         const enabled = Object.values(data.imported).some(value => !value);
-        console.log(enabled, results);
         return (<ColumnList>
             <TextCard header='Introduction'>
                 <p>Choochoo manages three kinds of data: activity data from FIT files; user data
@@ -113,7 +113,7 @@ export default function Upgrade(props) {
         fetch('/api/configure/upgrade')
             .then(handleJson(history, setData, setError))
             .catch(reason => {
-                console.warn('configure/profiles:', reason);
+                log.warn('configure/profiles:', reason);
             });
     }, [1]);
 

@@ -109,7 +109,6 @@ function emptyCopy(constant) {
         extra.values = [{value: '', statistic: 0}];
     }
     extra.values[0].time = format(new Date(), FMT_DAY_TIME);
-    console.log('extra', extra);
     return extra;
 }
 

@@ -19,14 +19,9 @@ const useStyles = makeStyles(theme => ({
 
 export default function JupyterActivity(props) {
 
-    console.log('JA', props);
-
     const {json} = props;
     const [, head, ...rest] = json[0];
     const classes = useStyles();
-
-    console.log('head', head);
-    console.log('rest', rest);
 
     const details = fmtHref('api/jupyter/activity_details?local_time=%s&activity_group=%s',
                             head.db[0], head.db[2]);

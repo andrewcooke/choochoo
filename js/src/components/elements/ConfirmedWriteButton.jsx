@@ -43,16 +43,16 @@ export default function ConfirmedWriteButton(props) {
     function buildData() {
         if (json !== null) {
             const data = JSON.stringify(json);
-            console.log(`Sending JSON data ${data}`);
+            log.debug(`Sending JSON data ${data}`);
             if (form !== null) console.warn(`Ignoring form data ${form}`);
             return data;
         } else if (form !== null) {
             const data = new FormData();
             Object.keys(form).forEach(key => appendToForm(data, key, form[key]));
-            console.log(`Sending form data ${data}`);
+            log.debug(`Sending form data ${data}`);
             return data;
         } else {
-            console.log('Sending empty data');
+            log.debug('Sending empty data');
         }
     }
 

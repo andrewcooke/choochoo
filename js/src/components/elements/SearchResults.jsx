@@ -20,7 +20,6 @@ export default function SearchResults(props) {
     const [json, setJson] = useState(null);
 
     function fixDate(json) {
-        console.log('json 2', json);
         if (json !== null && json.results !== undefined) json.results = json.results.map(parseDate)
         return json;
     }
@@ -47,8 +46,6 @@ export default function SearchResults(props) {
                 .then(setJson);
         }
     }, [query]);
-
-    console.log('json 1', json);
 
     if (query === null || query === '') {
         return null
