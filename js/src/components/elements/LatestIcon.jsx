@@ -21,7 +21,7 @@ export default function LatestIcon(props) {
             then(updateHistory);
     }
 
-    return (<Tooltip title='Latest activity' placement='top'>
+    return (<Tooltip title='Latest activity' placement='bottom'>
         <IconButton color="inherit" onClick={onClick}>
             <Event/>
         </IconButton>

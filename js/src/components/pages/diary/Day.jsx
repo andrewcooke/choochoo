@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Grid, Typography} from "@material-ui/core";
 import {
     ClimbField,
@@ -14,8 +14,10 @@ import {
     ValueField
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
-import {ColumnCard, ColumnList, LinkButton, Loading, Text, Thumbnail} from "../../elements";
-import {setIds} from "../../functions";
+import {ColumnCard, ColumnList, Layout, LinkButton, Loading, Text, Thumbnail} from "../../elements";
+import {handleJson, setIds} from "../../functions";
+import {parse} from "date-fns";
+import {FMT_DAY} from "../../../constants";
 
 
 const useStyles = makeStyles(theme => ({
@@ -167,7 +169,7 @@ function TopLevelPaper(props) {
 }
 
 
-export default function Day(props) {
+function Content(props) {
 
     const {writer, json, history} = props;
 
@@ -180,4 +182,33 @@ export default function Day(props) {
             {json.slice(1).map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
         </ColumnList>);
     }
+}
+
+
+export default function Day(props) {
+
+    const {match, history, writer} = props;
+    const {date} = match.params;
+    const datetime = parse(date, FMT_DAY, new Date());
+    const [json, setJson] = useState(null);
+    const busyState = useState(null);
+    const errorState = useState(null);
+    const [error, setError] = errorState;
+    const [reads, setReads] = useState(0);
+
+    function reload() {
+        setReads(reads + 1);
+    }
+
+    useEffect(() => {
+        setJson(null);
+        fetch('/api/diary/' + date)
+            .then(handleJson(history, setJson, setError, busyState));
+    }, [date, reads]);
+
+    return (
+        <Layout title={`Diary: ${date}`}
+                content={<Content writer={writer} json={json} history={history}/>}
+                reload={reload} busyState={busyState} errorState={errorState}/>
+    );
 }

@@ -12,7 +12,7 @@ export default function UploadIcon(props) {
         history.push('/upload')
     }
 
-    return (<Tooltip title='Upload' placement='top'>
+    return (<Tooltip title='Upload' placement='bottom'>
         <IconButton color="inherit" onClick={onClick}>
             <Publish/>
         </IconButton>

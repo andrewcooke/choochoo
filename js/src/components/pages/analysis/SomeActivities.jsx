@@ -13,9 +13,9 @@ export default function SomeActivities(props) {
     return (<ActivityCard header='Some Activities' pad={8} href={href}>
         <Grid item xs={12}><Text>
             <p>Thumbnail maps of activities that match the query.</p>
-            <p>Example queries:</p>
-            <p>Active Distance &gt; 50 & Active Distance &lt; 100</p>
-            <p>(more here)</p>
+            <p>Example query:</p>
+            <p>Active Distance &gt; 50 and Active Distance &lt; 100</p>
+            <p>(the same syntax as advanced Search, but with Jupyter based plotting).</p>
         </Text></Grid>
         <Grid item xs={12}>
             <TextField label='Constraint' value={constraint}
