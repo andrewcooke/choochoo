@@ -32,7 +32,7 @@ class TestPeg(LogTestCase):
         self.assertEqual(list(constraint('Active Distance > 10')), [('Active Distance', '>', 10.0)])
 
     def test_term(self):
-        self.assertEqual(list(constraint('a = "b" & (c <= 2 | 1.2 > e)')),
-                         [(('a', '=', 'b'), '&', (('c', '<=', 2.0), '|', ('e', '<', 1.2)))])
-        self.assertEqual(list(constraint('a = "b" & c <= 2 | 1.2 > e')),
-                         [((('a', '=', 'b'), '&', ('c', '<=', 2.0)), '|', ('e', '<', 1.2))])
+        self.assertEqual(list(constraint('a = "b" and (c <= 2 or 1.2 > e)')),
+                         [(('a', '=', 'b'), 'and', (('c', '<=', 2.0), 'or', ('e', '<', 1.2)))])
+        self.assertEqual(list(constraint('a = "b" and c <= 2 or 1.2 > e')),
+                         [((('a', '=', 'b'), 'and', ('c', '<=', 2.0)), 'or', ('e', '<', 1.2))])

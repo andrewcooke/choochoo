@@ -4,12 +4,12 @@ from tempfile import TemporaryDirectory
 from ch2.commands.activities import activities
 from ch2.commands.args import bootstrap_dir, m, V, mm, DEV, D, BASE
 from ch2.commands.kit import start, change, finish, show, undo, statistics
-from ch2.config import default
+from ch2.config.profile.default import default
 from ch2.diary.model import TYPE
 from ch2.lib import now, local_date_to_time
+from ch2.pipeline.pipeline import run_pipeline
 from ch2.sql import KitModel, KitItem, KitComponent, PipelineType
 from ch2.sql.tables.kit import get_name, KitGroup, NAME, ITEMS, COMPONENTS, MODELS, STATISTICS, INDIVIDUAL
-from ch2.pipeline.pipeline import run_pipeline
 from tests import LogTestCase
 
 

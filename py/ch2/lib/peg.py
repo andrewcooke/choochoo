@@ -1,4 +1,4 @@
-
+from itertools import zip_longest
 from logging import getLogger
 from re import compile
 
@@ -107,7 +107,10 @@ def single(parser):
     Require and return a single result.
     '''
     def _parser(string):
-        results = list(parser(string))
+        results = sorted(list(parser(string)))
+        if results:
+            # unique non-hashable values (assuming sorted)
+            results = [x for (x, y) in zip_longest(results, results[1:]) if x != y]
         if not results:
             raise Exception(f'Could not parse {string}')
         elif len(results) != 1:

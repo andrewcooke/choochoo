@@ -11,12 +11,12 @@ const useStyles = makeStyles(theme => ({
 
 
 export default function LinkButton(props) {
-    const {href, children, disabled=false} = props;
+    const {href, children, disabled=false, variant='outlined'} = props;
     const classes = useStyles();
     function onClick() {
         window.open(href, '_blank')
     }
-    return (<Button variant='outlined' onClick={onClick} disabled={disabled} className={classes.button}>
+    return (<Button variant={variant} onClick={onClick} disabled={disabled} className={classes.button}>
         {children}
     </Button>);
 }

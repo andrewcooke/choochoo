@@ -1,17 +1,18 @@
+from logging import getLogger
 from tempfile import TemporaryDirectory
-from tests import LogTestCase
 
 from ch2 import activities
-from ch2.commands.args import bootstrap_dir, mm, DEV, FAST, V, m
-from ch2.config import default, getLogger
+from ch2.commands.args import bootstrap_dir, mm, DEV, V, m
+from ch2.config.profile.default import default
 from ch2.diary.database import read_date
 from ch2.diary.model import LABEL, VALUE
 from ch2.lib import to_date
+from tests import LogTestCase
 
 log = getLogger(__name__)
 
 
-class TestPower(LogTestCase):
+class TestModel(LogTestCase):
 
     def test_constant(self):
         with TemporaryDirectory() as f:
@@ -22,8 +23,10 @@ class TestPower(LogTestCase):
             activities(args, sys, db)
             with db.session_context() as s:
                 model = list(read_date(s, to_date('2018-03-04')))
-                print(model, len(model))
-                [title, diary, achievements, activity, jupyter, database] = model
+                for i, x in enumerate(model):
+                    print(i, x)
+                [title, diary, shrimp, activity, database] = model
+                activity = activity[1][2]  # multiple now supported
                 print(activity)
                 name = activity[1]
                 print(name)

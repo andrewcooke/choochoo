@@ -64,11 +64,14 @@ class TestActivities(LogTestCase):
 
     def __assert_basic_stats(self, s):
         for name in [ACTIVE_DISTANCE, ACTIVE_TIME]:
-            stat = s.query(StatisticJournal). \
-                join(StatisticName). \
-                filter(StatisticName.name == name).one_or_none()
-            print(f'{name} = {stat}')
-            self.assertTrue(stat, f'No value for {name}')
+            count = 0
+            for stat in s.query(StatisticJournal). \
+                    join(StatisticName). \
+                    filter(StatisticName.name == name).all():
+                count += 1
+                print(f'{name} = {stat}')
+                self.assertTrue(stat, f'No value for {name}')
+            self.assertTrue(count > 0)
 
     def test_florian(self):
         with TemporaryDirectory() as f:
@@ -107,10 +110,10 @@ class TestActivities(LogTestCase):
             run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, n_cpu=1)
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
-                stat = s.query(StatisticJournal). \
-                    join(StatisticName). \
-                    filter(StatisticName.name == ACTIVE_DISTANCE).one()
-                self.assertGreater(stat.value, 30)
+                for stat in s.query(StatisticJournal). \
+                        join(StatisticName). \
+                        filter(StatisticName.name == ACTIVE_DISTANCE).all():
+                    self.assertGreater(stat.value, 30)
 
     def test_920(self):
         for src in '920xt-2019-05-16_19-42-54.fit', '920xt-2019-05-16_19-42-54.fit':

@@ -1,14 +1,15 @@
 
 from contextlib import contextmanager
+from logging import getLogger
 from tempfile import TemporaryDirectory
-from tests import LogTestCase
 
 from ch2 import constants
 from ch2.commands.args import bootstrap_dir, V, m, DEV, mm, FORCE
-from ch2.config import default, getLogger
+from ch2.config.profile.default import default
 from ch2.srtm.bilinear import bilinear_elevation_from_constant
 from ch2.srtm.file import SRTM1_DIR
 from ch2.srtm.spline import spline_elevation_from_constant
+from tests import LogTestCase
 
 log = getLogger(__name__)
 ARCSEC = 1/3600

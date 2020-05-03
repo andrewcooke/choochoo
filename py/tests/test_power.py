@@ -1,13 +1,14 @@
+from logging import getLogger
 
 import pandas as pd
 from tempfile import TemporaryDirectory
-from tests import LogTestCase
 
 from ch2 import activities, constants
 from ch2.commands.args import bootstrap_dir, mm, DEV, FAST, V, m
-from ch2.config import default, getLogger
 from ch2.data import activity_statistics, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
     ELEVATION, SPEED, CADENCE, HEART_RATE, TIME, TIMESPAN_ID
+from ch2.config.profile.default import default
+from tests import LogTestCase
 
 log = getLogger(__name__)
 
