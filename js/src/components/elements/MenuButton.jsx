@@ -30,7 +30,7 @@ export default function MenuButton(props) {
         setAnchor(null);
     };
 
-    const items = json.map(row => mkItem(row, handleClose));
+    const items = json.map((row, i) => mkItem(row, handleClose, i));
 
     return (<>
         <Button variant='outlined' onClick={handleClick} className={classes.button}>

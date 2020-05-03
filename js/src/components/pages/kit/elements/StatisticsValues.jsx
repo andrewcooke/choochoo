@@ -17,13 +17,13 @@ function Statistic(props) {
     return (<>
         {Object.keys(statistic).
         filter(key => ! ['n', 'name', 'units', 'id'].includes(key)).
-        map((key, index) =>
-            <NamedValue xs={4} name={statistic.name} value={statistic[key]} units={statistic.units} key={index}/>)}
+        map((key, i) =>
+            <NamedValue xs={4} name={statistic.name} value={statistic[key]} units={statistic.units} key={i}/>)}
     </>)
 }
 
 
 export default function StatisticsValues(props) {
     const {statistics} = props;
-    return statistics.map((statistic, index) => <Statistic statistic={statistic} key={index}/>);
+    return statistics.map((statistic, i) => <Statistic statistic={statistic} key={i}/>);
 }

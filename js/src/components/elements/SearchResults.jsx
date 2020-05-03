@@ -53,7 +53,7 @@ export default function SearchResults(props) {
         return <Loading small/>
     } else if (json.results !== undefined) {
         if (json.results.length) {
-            return json.results.map(row => <SearchResult json={row} sort={sort}/>);
+            return json.results.map((row, i) => <SearchResult json={row} sort={sort} key={i}/>);
         } else {
             return <SearchError error='No matches.'/>
         }

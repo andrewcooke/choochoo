@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {ColumnCard, ColumnList, DateButtons, FormatValueUnits, Layout, Loading, Picker, Text} from "../../elements";
-import {Grid, InputLabel, List, ListItem, Typography} from "@material-ui/core";
+import {ColumnCard, ColumnList, DateButtons, Layout, Loading, Picker} from "../../elements";
+import {Grid, List, ListItem, Typography} from "@material-ui/core";
 import {FMT_DAY} from "../../../constants";
-import {differenceInCalendarDays, format, formatDistance, parse} from 'date-fns';
+import {format} from 'date-fns';
 import {makeStyles} from "@material-ui/core/styles";
-import {handleJson, setIds} from "../../functions";
+import {handleJson} from "../../functions";
 import StatisticsValues from "./elements/StatisticsValues";
 
 
@@ -47,10 +47,10 @@ function ItemStatistics(props) {
     const n = have_statistics ? Math.max(...item['statistics'].map(statistic => statistic['n'])) : 0;
 
     return (<ColumnCard header={`${item.name} / ${group.name} ${n ? `/ ${n} uses` : ''}`}>
-        {have_statistics && <StatisticsValues statistics={item.statistics}/>}
+        {have_statistics && <StatisticsValues statistics={item.statistics} key='x'/>}
         {item.components.map(
-            component => component.models.map(
-                model => <ModelStatistics model={model} component={component} key={model.id}/>)).flat()}
+            (component, i) => component.models.map(
+                (model, j) => <ModelStatistics model={model} component={component} key={[i,j]}/>)).flat()}
     </ColumnCard>);
 }
 
@@ -62,12 +62,10 @@ function Columns(props) {
     if (groups === null) {
         return <Loading/>;
     } else {
-        let id = 0;
-        groups.forEach(group => id = setIds(group, id, ['items', 'components', 'models', 'statistics']));
         return (<ColumnList>
             {groups.map(
-                group => group.items.map(
-                    item => <ItemStatistics item={item} group={group} key={item.id}/>)).flat()}
+                (group, i) => group.items.map(
+                    (item, j) => <ItemStatistics item={item} group={group} key={[i,j]}/>)).flat()}
         </ColumnList>);
     }
 }

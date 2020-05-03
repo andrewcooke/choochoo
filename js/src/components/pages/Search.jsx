@@ -42,7 +42,7 @@ function SearchTerms(props) {
     }, [1]);
 
     return (<ColumnCard header='Available Statistic Names'>
-        {terms === null ? <Loading/> : terms.map(term => <SearchTerm term={term}/>)}
+        {terms === null ? <Loading/> : terms.map((term, i) => <SearchTerm term={term} key={i}/>)}
     </ColumnCard>);
 }
 
@@ -104,7 +104,7 @@ function SearchBox(props) {
                 control={<Checkbox checked={advanced} onChange={event => setAdvanced(event.target.checked)}/>}
                 label='Advanced'/>
         </Grid>
-        <Grid xs={2}/>
+        <Grid item xs={2}/>
         <Grid item xs={4}>
             <Button variant='contained' className={classes.button}
                     onClick={() => setQuery(localQuery)}>Search</Button>

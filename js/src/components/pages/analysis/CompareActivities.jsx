@@ -33,20 +33,20 @@ export default function CompareActivities(props) {
         <Grid item xs={2}>
             <InputLabel shrink>Group</InputLabel>
             <Select onChange={event => setGroup(event.target.value)} value={group}>
-                {Object.keys(params.activities_by_group).map(group =>
-                    <MenuItem value={group} key={group}>{group}</MenuItem>)}
+                {Object.keys(params.activities_by_group).map((group, i) =>
+                    <MenuItem value={group} key={i}>{group}</MenuItem>)}
             </Select>
         </Grid>
         <Grid item xs={5}>
             <InputLabel shrink>Reference Time</InputLabel>
             <Select onChange={event => setLocalTime(event.target.value)} value={localTime}>
-                {localTimes.map(time => <MenuItem value={time} key={time}>{time}</MenuItem>)}
+                {localTimes.map((time, i) => <MenuItem value={time} key={i}>{time}</MenuItem>)}
             </Select>
         </Grid>
         <Grid item xs={5}>
             <InputLabel shrink>Compare Time</InputLabel>
             <Select onChange={event => setCompareTime(event.target.value)} value={compareTime}>
-                {compareTimes.map(time => <MenuItem value={time} key={time}>{time}</MenuItem>)}
+                {compareTimes.map((time, i) => <MenuItem value={time} key={i}>{time}</MenuItem>)}
             </Select>
         </Grid>
     </ActivityCard>);

@@ -25,10 +25,10 @@ export default function Months(props) {
     } else {
         return (<Grid container>
             {range(0, 12).map(
-                month => {
+                (month, i) => {
                     const date = sprintf('%s-%02d', year, month+1);
                     const disabled = !active.includes(date);
-                    return <Grid item xs={width} key={month}>
+                    return <Grid item xs={width} key={i}>
                         <Button className={classes.button} onClick={() => onChange(date)} disabled={disabled}>
                             {names[month]}
                         </Button>

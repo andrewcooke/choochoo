@@ -38,7 +38,7 @@ function dayOfWeek(date) {
 function CalendarDays(props) {
     const classes = useStyles();
     return (<tr>{['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(
-        (day, key) => <td className={classes.tdDay} key={key}>{day}</td>
+        (day, i) => <td className={classes.tdDay} key={i}>{day}</td>
     )}</tr>);
 }
 
@@ -50,16 +50,16 @@ function CalendarWeek(props) {
 
     return (<tr>
         {range(start, Math.min(start+7, finish+1)).map(
-            day => {
+            (day, i) => {
                 const date = sprintf('%s-%02d', month, day);
                 const disabled = ! active.includes(date);
                 return day > 0 ?
-                    <td className={classes.tdDate} key={day}>
+                    <td className={classes.tdDate} key={i}>
                         <Button className={classes.button} onClick={() => onChange(date)} disabled={disabled}>
                             {day + ''}
                         </Button>
                     </td> :
-                    <td key={day}/>;
+                    <td key={i+0.5}/>;
             }
         )}
     </tr>)
@@ -80,8 +80,8 @@ export default function Calendar(props) {
         return (<table className={classes.table}><tbody>
         <CalendarDays/>
         {range(1-start, days, 7).map(
-            start => <CalendarWeek start={start} finish={days} month={month} active={active} key={start}
-                                   onChange={onChange}/>)}
+            (start, i) => <CalendarWeek start={start} finish={days} month={month} active={active} key={i}
+                                        onChange={onChange}/>)}
         </tbody></table>)
     }
 }

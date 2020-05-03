@@ -20,8 +20,8 @@ export default function NearbyActivities(props) {
         <Grid item xs={6}>
             <InputLabel shrink>Group</InputLabel>
             <Select onChange={event => setConstraint(event.target.value)} value={constraint}>
-                {params.nearby_constraints.map(constraint =>
-                    <MenuItem value={constraint} key={constraint}>{constraint}</MenuItem>)}
+                {params.nearby_constraints.map((constraint, i) =>
+                    <MenuItem value={constraint} key={i}>{constraint}</MenuItem>)}
             </Select>
         </Grid>
     </ActivityCard>);

@@ -102,9 +102,9 @@ function ItemShow(props) {
             Retiring this item will remove it and all components from today's date.
         </ConfirmedWriteButton>
         {item.components.map(
-            component => component.models.filter(model => model_dbs.includes(model.db)).map(
-                model => <ModelShow item={item} model={model} component={component}
-                                    reload={reload} key={model.db}/>)).flat()}
+            (component, i) => component.models.filter(model => model_dbs.includes(model.db)).map(
+                (model, j) => <ModelShow item={item} model={model} component={component}
+                                         reload={reload} key={[i,j]}/>)).flat()}
         <AddComponent item={item} reload={reload} allComponents={allComponents}/>
     </ColumnCard>);
 }
@@ -198,8 +198,8 @@ function Columns(props) {
         return (<ColumnList>
             <Introduction groups={groups} reload={reload}/>
             {groups.map(
-                group => group.items.map(
-                    item => <ItemShow item={item} group={group} reload={reload} key={item.db}
+                (group, i) => group.items.map(
+                    (item, j) => <ItemShow item={item} group={group} reload={reload} key={[i,j]}
                                       allComponents={allComponents}/>)).flat()}
         </ColumnList>);
     }

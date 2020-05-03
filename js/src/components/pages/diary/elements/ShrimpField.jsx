@@ -23,10 +23,10 @@ export default function ShrimpField(prop) {
     const [label, from, to, arrow, ...stats] = json;
     const classes = useStyles();
 
-    const bars = stats.map((entry, id) => {
+    const bars = stats.map((entry, i) => {
         const [tag, lo, hi] = entry;
         const percent = 100 * (to.value - lo.value) / (hi.value - lo.value);
-        return (<PercentBar percent={percent} label={tag.tag} key={id} fraction={barWidth(stats)}/>);
+        return (<PercentBar percent={percent} label={tag.tag} key={i} fraction={barWidth(stats)}/>);
     });
 
     return (<>

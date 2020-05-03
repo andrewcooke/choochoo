@@ -15,7 +15,7 @@ import {
 } from "./elements";
 import {makeStyles} from "@material-ui/core/styles";
 import {ColumnCard, ColumnList, Layout, LinkButton, Loading, Text, Thumbnail} from "../../elements";
-import {handleJson, setIds} from "../../functions";
+import {handleJson} from "../../functions";
 import {parse} from "date-fns";
 import {FMT_DAY} from "../../../constants";
 
@@ -46,21 +46,23 @@ function childrenFromRest(head, rest, writer, level, history) {
     const classes = useStyles();
     let children = [];
 
-    rest.forEach((row, index) => {
+    rest.forEach((row, i) => {
         if (Array.isArray(row)) {
             if (head.tag === 'shrimp') {
-                children.push(<ShrimpField json={row} key={row.id}/>);
+                children.push(<ShrimpField json={row} key={i}/>);
             } else if (head.tag === 'hr-zones-time') {
-                children.push(<HRZoneField json={row} key={row.id}/>);
+                children.push(<HRZoneField json={row} key={i}/>);
             } else {
-                children.push(<Header writer={writer} json={row} level={level} history={history} key={row.id}/>);
+                children.push(<Header writer={writer} json={row} level={level} history={history} key={i}/>);
             }
         } else {
-            if (head.tag === 'activity' && index === 0 && row.label === 'Name' && row.type === 'edit') {
-                children.push(<EditField writer={writer} json={row} xs={10}/>);
-                children.push(<Grid item xs={2}><Thumbnail activity_id={head.db} className={classes.img}/></Grid>);
+            if (head.tag === 'activity' && i === 0 && row.label === 'Name' && row.type === 'edit') {
+                children.push(<EditField writer={writer} json={row} xs={10} key={i}/>);
+                children.push(<Grid item xs={2} key={i+0.5}>
+                    <Thumbnail activity_id={head.db} className={classes.img}/>
+                </Grid>);
             } else {
-                children.push(<Field writer={writer} json={row} key={row.id}/>);
+                children.push(<Field writer={writer} json={row} key={i}/>);
             }
         }
     });
@@ -148,11 +150,11 @@ function TopLevelPaper(props) {
 
     if (['diary', 'activities'].includes(head.tag)) {
         // splice into the top level
-        return rest.map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>);
+        return rest.map((row, i) => <TopLevelPaper writer={writer} json={row} history={history} key={i}/>);
     } else if (head.tag === 'activity-title') {
         return (<>
             <Title header={head.value}/>
-            {rest.map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
+            {rest.map((row, i) => <TopLevelPaper writer={writer} json={row} history={history} key={i}/>)}
         </>);
     } else {
         const children = head.tag === 'jupyter-activity' ?
@@ -175,10 +177,9 @@ function Content(props) {
     if (json === null) {
         return <Loading/>;  // undefined initial data
     } else {
-        setIds(json);
         // drop outer date label since we already have that in the page
         return (<ColumnList>
-            {json.slice(1).map(row => <TopLevelPaper writer={writer} json={row} history={history} key={row.id}/>)}
+            {json.slice(1).map((row, i) => <TopLevelPaper writer={writer} json={row} history={history} key={i}/>)}
         </ColumnList>);
     }
 }

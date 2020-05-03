@@ -36,13 +36,13 @@ function FileList(props) {
         return <></>;
     } else {
         // don't understand why this is still generating the key warning
-        return files.map((file, index) => (<>
-            <Grid item xs={11} className={classes.baseline} key={`a${index}`}>
-                <Text key={`b${index}`}>{file.name}</Text>
+        return files.map((file, i) => (<>
+            <Grid item xs={11} className={classes.baseline} key={i}>
+                <Text>{file.name}</Text>
             </Grid>
-            <Grid item xs={1} className={classes.baseline} key={`c${index}`}>
-                <IconButton onClick={() => onClick(index)} className={classes.noPadding} key={`d${index}`}>
-                    <Clear key={`e${index}`}/>
+            <Grid item xs={1} className={classes.baseline} key={i+0.5}>
+                <IconButton onClick={() => onClick(i)} className={classes.noPadding}>
+                    <Clear/>
                 </IconButton>
             </Grid>
         </>));

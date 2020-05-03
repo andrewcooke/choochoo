@@ -1,9 +1,8 @@
 import React from 'react';
 import {Grid, Typography} from "@material-ui/core";
-import {JupyterActivity, ShrimpField, SummaryField, JupyterAllActivities} from "./index";
+import {JupyterAllActivities, ShrimpField, SummaryField} from "./index";
 import {makeStyles} from "@material-ui/core/styles";
-import {Break, ColumnCard, ColumnList, LinkButton, Loading, Text, SearchResults} from "../../../elements";
-import {setIds} from '../../../functions';
+import {Break, ColumnCard, ColumnList, LinkButton, Loading, SearchResults, Text} from "../../../elements";
 import {addMonths, addYears, format} from 'date-fns';
 import {FMT_DAY} from "../../../../constants";
 
@@ -18,16 +17,16 @@ const useStyles = makeStyles(theme => ({
 
 function childrenFromRest(head, rest, level, history) {
     let children = [];
-    rest.forEach((row) => {
+    rest.forEach((row, i) => {
         if (Array.isArray(row)) {
             if (head === 'shrimp') {
-                children.push(<ShrimpField json={row} key={row.id}/>);
+                children.push(<ShrimpField json={row} key={i}/>);
             } else {
-                children.push(<Break/>);
-                children.push(<Header json={row} level={level} history={history} key={row.id}/>);
+                children.push(<Break key={i}/>);
+                children.push(<Header json={row} level={level} history={history} key={i+0.5}/>);
             }
         } else {
-            children.push(<Field json={row} key={row.id}/>);
+            children.push(<Field json={row} key={i}/>);
         }
     });
     return children;
@@ -95,11 +94,10 @@ export default function Schedule(props) {
     if (json === null) {
         return <Loading/>;  // undefined initial data
     } else {
-        setIds(json);
         // drop outer date label since we already have that in the page
         return (<ColumnList>
             <SearchResults query={query}/>
-            {json.slice(1).map(row => <TopLevelPaper json={row} history={history} key={row.id}/>)}
+            {json.slice(1).map((row, i) => <TopLevelPaper json={row} history={history} key={i}/>)}
         </ColumnList>);
     }
 }

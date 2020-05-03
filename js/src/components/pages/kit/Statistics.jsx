@@ -41,7 +41,7 @@ function ModelStatistics(props) {
 function ComponentStatistics(props) {
     const {component} = props;
     return (<ColumnCard header={component.name}>
-        {component.models.map((model, index) => <ModelStatistics model={model} key={index}/>)}
+        {component.models.map((model, i) => <ModelStatistics model={model} key={i}/>)}
     </ColumnCard>);
 }
 
@@ -54,7 +54,7 @@ function Columns(props) {
         return <Loading/>;  // undefined initial data
     } else {
         return (<ColumnList>
-            {components.map(component => <ComponentStatistics component={component} key={component.db}/>)}
+            {components.map((component, i) => <ComponentStatistics component={component} key={i}/>)}
         </ColumnList>);
     }
 }

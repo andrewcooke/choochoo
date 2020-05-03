@@ -47,13 +47,13 @@ function Value(props) {
     const value = constant.values[index].value;
 
     if (constant.composite) {
-        return Object.keys(value).map(name => (
+        return Object.keys(value).map((name, i) => (
             <Field label={name} value={value[name]}
                    setValue={value => {
                        const copy = {...constant};
                        copy.values[index].value[name] = value;
                        setConstant(copy);
-                   }}/>));
+                   }} key={i}/>));
     } else {
         return (<Field label='Value' value={value}
                        setValue={value => {
@@ -133,8 +133,8 @@ function DatedConstant(props) {
 
     return (<ColumnCard header={constant.name}>
         <Description constant={constant}/>
-        {newConstant.values.map((entry, index) =>
-            <DatedValue index={index} constantState={constantState}/>)}
+        {newConstant.values.map((entry, i) =>
+            <DatedValue index={i} constantState={constantState} key={i}/>)}
         <ConfirmedWriteButton xs={SAVE_WIDTH} label='Save' disabled={newConstant === constant}
                               href='/api/configure/constant' setData={reload}
                               json={convertTypes(newConstant)}>
@@ -190,10 +190,10 @@ function Columns(props) {
                     Future releases will move the more commonly used features to dedicated,
                     easier-to-use, pages.</p>
             </TextCard>
-            {constants.map(constant =>
+            {constants.map((constant, i) =>
                 constant.single ?
-                    <UndatedConstant constant={constant} reload={reload}/> :
-                    <DatedConstant constant={constant} reload={reload}/>)}
+                    <UndatedConstant constant={constant} reload={reload} key={i}/> :
+                    <DatedConstant constant={constant} reload={reload} key={i}/>)}
         </ColumnList>);
     }
 }

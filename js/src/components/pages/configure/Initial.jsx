@@ -12,8 +12,8 @@ function Directory(props) {
 
     return (<TextCard header='Directories'>
         <p>Choochoo stores all files below the "base" directory, which you can choose
-            when starting the web server:<br/>
-            <pre>ch2 --base BASE web start</pre></p>
+            when starting the web server:</p>
+        <pre>ch2 --base BASE web start</pre>
         <p>Under this, uploaded FIT files are stored in the <code>permanent</code> subdirectory,
             while the database is stored under a subdirectory that corresponds to the current version.
             So installing a new version does not replace the FIT files, which can be re-loaded.</p>

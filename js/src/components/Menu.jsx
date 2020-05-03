@@ -19,7 +19,7 @@ const useStyles = makeStyles(theme => ({
 
 
 function match(pattern) {
-    return location => location.match(pattern);
+    return location => location.match(pattern) !== null;
 }
 
 

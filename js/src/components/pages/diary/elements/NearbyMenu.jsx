@@ -17,13 +17,13 @@ export default function NearbyMenu(props) {
     const [head, ...rest] = json;
     const classes = useStyles();
 
-    function mkItem(row, handleClose) {
+    function mkItem(row, handleClose, i) {
         const date = row.db[0].split(' ')[0];
         function onClick() {
             handleClose();
             history.push('/' + date);
         }
-        return (<MenuItem onClick={onClick} key={row.id}>{row.value}</MenuItem>);
+        return (<MenuItem onClick={onClick} key={i}>{row.value}</MenuItem>);
     }
 
     return (<Grid item xs={4} className={classes.center}>
