@@ -4,13 +4,14 @@ from logging import getLogger
 from sys import stdout
 import re
 
-from .args import TOPIC, HELP, PROGNAME, m, H, VERSION
+from .args import TOPIC, HELP, PROGNAME, m
 from ..lib.io import terminal_width
 
 log = getLogger(__name__)
 
 
 def commands(COMMANDS):
+    from .args import H
     return '''
 Thank-you for using Choochoo.  Please send feedback to andrew@acooke.org
 

@@ -305,18 +305,19 @@ def make_parser(with_noop=False):
     upload.add_argument(mm(DELETE), action='store_true',
                         help='delete source on success')
 
-    diary = subparsers.add_parser(DIARY, help='daily diary and summary')
-    diary.add_argument(DATE, metavar='DATE', nargs='?',
-                       help='an optional date to display (default is today)')
-    diary.add_argument(mm(FAST), action='store_true',
-                       help='skip update of statistics on exit')
-    diary_summary = diary.add_mutually_exclusive_group()
-    diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
-                               help='show monthly summary')
-    diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
-                               help='show yearly summary')
-    diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-                               help='show summary for given schedule')
+    # replaced by web interface(?)
+    # diary = subparsers.add_parser(DIARY, help='daily diary and summary')
+    # diary.add_argument(DATE, metavar='DATE', nargs='?',
+    #                    help='an optional date to display (default is today)')
+    # diary.add_argument(mm(FAST), action='store_true',
+    #                    help='skip update of statistics on exit')
+    # diary_summary = diary.add_mutually_exclusive_group()
+    # diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
+    #                            help='show monthly summary')
+    # diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
+    #                            help='show yearly summary')
+    # diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
+    #                            help='show summary for given schedule')
 
     search = subparsers.add_parser(SEARCH, help='search activities')
     search.add_argument(QUERY, metavar='QUERY', help='search terms')
