@@ -179,5 +179,5 @@ DESCRIPTIONS = defaultdict(lambda: None, {
     CLIMB_TIME: '''The time spent on the climb.''',
     CLIMB_GRADIENT: '''The average inclination of the climb (elevation / distance).''',
     CLIMB_POWER: '''The average estimated power during the climb.''',
-    CLIMB_CATEGORY: '''The climb category.'''
+    CLIMB_CATEGORY: '''The climb category (text, "4" to "1" and "HC").'''
 })
