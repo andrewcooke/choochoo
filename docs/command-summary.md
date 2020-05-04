@@ -4,8 +4,9 @@
 * [help](#help)
 * [web](#web)
 * [upload](#upload)
-* [diary](#diary)
+* [search](#search)
 * [constants](#constants)
+* [check](#check)
 * [jupyter](#jupyter)
 * [kit](#kit)
 * [configure](#configure)
@@ -17,7 +18,7 @@
 * [dump](#dump)
 * [fit](#fit)
 * [fix-fit](#fix-fit)
-* [no-op](#no-op)
+* [thumbnail](#thumbnail)
 * [package-fit-profile](#package-fit-profile)
 * [test-schedule](#test-schedule)
 * [unlock](#unlock)
@@ -94,20 +95,30 @@ Note: When using bash use `shopt -s globstar` to enable ** globbing.
 
 
 
-## diary
+## search
 
-    > ch2 diary [DATE]
+    > ch2 search [-a|--advanced] QUERY [--show NAME ...] [--set NAME=VALUE]
 
-The date can be an absolute day or the number of days previous. So `ch2 diary 
-1` selects yesterday.
+This searches for activities. Once a matching activity is found additional 
+statistics can be displayed (--show) and a single value modified (--set).
 
-Display the daily diary. Enter information here.
+Simple searches (without --advanced) look for matches of all given words in 
+the name and notes fields for the activity.
 
-To exit, alt-q (or, without saving, alt-x).
+The advanced syntax is similar to SQL, but element names are statistic names. 
+The name can include the activity group (start:bike) and SQL wildcards 
+(%fitness%). A name of the form "name:" matches any activity group; "name" 
+matches the activity group of the matched activity (usually what is needed - 
+the main exception is some statistics defined for group All).
 
-    > ch2 diary (--month | --year | --schedule SCHEDULE) [DATE}
+For advanced searches string values must be quoted, negation and NULL values 
+are not supported, and comparison must be between a name and a value (not two 
+names).
 
-Display a summary for the month / year / schedule.
+### Example
+
+    > ch2 search --advanced 'name="Wrong Name"' --set 'name="Right Name"'
+
 
 
 
@@ -141,7 +152,13 @@ Names can be matched by SQL patterns. So FTHR.% matches both FTHR.Run and
 FTHR.Bike, for example. In such a case "entry" in the descriptions above may 
 refer to multiple entries.
 
-TODO - Constraint handling is confused and confusing.
+
+
+## check
+
+    > ch2 check
+
+This is still in development.
 
 
 
@@ -322,7 +339,7 @@ For full options see `ch2 data -h` and `ch2 data COMMAND -h`
 
 Will print the contents of the StatisticName table in CSV format.
 
-    > ch2 dump statistics '%HR%' --constraint 'ActivityGroup "Bike"' --start 2018-01-01
+    > ch2 dump statistics '%HR%' --group Bike --start 2018-01-01
 
 Will print HR-related statistics from the start of 2018 for the given activity 
 group.
@@ -399,10 +416,12 @@ header and checksum values.
 
 
 
-## no-op
+## thumbnail
 
-This is used internally when accessing data in Jupyter or configuring the 
-system at the command line.
+    > ch2 thumbnail ACTIVITY-ID
+    > ch2 thumbnail DATE
+
+Generate a thumbnail map of the activity route.
 
 
 
