@@ -1,9 +1,6 @@
 
 ## Latest Changes
 
-See [upgrade
-instructions](https://andrewcooke.github.io/choochoo/version-upgrades).
-
 ### v0.32.0
 
 Schema for statistic names changed from textual 'constraint' to
