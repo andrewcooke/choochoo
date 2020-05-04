@@ -64,7 +64,6 @@ is still changing rapidly they may be out of date or incomplete.
   * [Detecting Climbs](climbs)
   * [Measuring Power and CdA](cda)
   * [Tracking Equipment](kit)
-  * [Version Upgrades](version-upgrades)
 * Development
   * [Spatial Search](rtree)
   * [Other Projects](other-projects)
