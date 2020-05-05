@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {ColumnCard, ColumnList, ConfirmedWriteButton, Layout, Loading, Text} from "../elements";
-import {Button, Grid, IconButton, TextField} from "@material-ui/core";
+import {Button, Grid, IconButton, TextField, FormControlLabel, Checkbox} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {Autocomplete} from "@material-ui/lab";
 import {Clear} from '@material-ui/icons';
@@ -56,6 +56,7 @@ function FileSelect(props) {
     const classes = useStyles();
     const [files, setFiles] = useState([]);
     const [kit, setKit] = useState([]);
+    const [force, setForce] = useState(false);
 
     function addFiles() {
         const input = document.getElementById('upload-input');
@@ -83,8 +84,12 @@ function FileSelect(props) {
     }
 
     const empty = files.length === 0 ? (<Grid item xs={12}><Text><p>
-        Upload with no files selected will rescan existing data.
+        Upload with no files selected will still run the processing pipeline
+        (calculating missing or stale statistics).
     </p></Text></Grid>) : null;
+
+    const warning = force ? 'Reprocessing all data will take a long time.' :
+        'The ingest process will take some time.';
 
     return (<>
         <Grid item xs={8}>
@@ -101,10 +106,15 @@ function FileSelect(props) {
         </Grid>
         <FileList files={files} onClick={deleteFile}/>
         {empty}
-        <ConfirmedWriteButton label='Upload' href='/api/upload' variant='contained' pad={8}
+        <Grid item xs={8}>
+            <FormControlLabel
+                control={<Checkbox checked={force} onChange={event => setForce(event.target.checked)}/>}
+                label='Reprocess all data'/>
+        </Grid>
+        <ConfirmedWriteButton label='Upload' href='/api/upload' variant='contained'
                               setData={onSubmit} setError={setError}
-                              form={{'files': files, 'kit': kit}}>
-            The ingest process will take some time.
+                              form={{'files': files, 'kit': kit, 'force': force}}>
+            {warning}
         </ConfirmedWriteButton>
     </>);
 }
