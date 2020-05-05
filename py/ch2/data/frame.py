@@ -320,18 +320,18 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
 
 def std_health_statistics(s, *extra, local_start=None, local_finish=None):
 
-    from ..pipeline.calculate.monitor import MonitorCalculator
+    from ..pipeline.calculate.heart_rate import RestHRCalculator
 
     def merge_to_hour(stats, extra):
         return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
                            how='outer', left_index=True, right_index=True)
     
     # avoid x statistics some time in first day
-    start = local_date_to_time(local_start) or \
+    start = local_date_to_time(local_start, none=True) or \
             s.query(StatisticJournal.time).filter(StatisticJournal.time >
                                                   local_date_to_time(to_date('1970-01-03'))) \
         .order_by(asc(StatisticJournal.time)).limit(1).scalar()
-    finish = local_date_to_time(local_finish) or \
+    finish = local_date_to_time(local_finish, none=True) or \
              s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
 
@@ -339,8 +339,7 @@ def std_health_statistics(s, *extra, local_start=None, local_finish=None):
     if present(stats_1, FITNESS_D_ANY, pattern=True):
         stats_1 = stats_1.resample('1h').mean()
         stats = merge_to_hour(stats, stats_1)
-    stats_2 = statistics(s, LO_REST_HR, REST_HR, HI_REST_HR, start=start, finish=finish, owner=MonitorCalculator,
-                         check=False)
+    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=RestHRCalculator, check=False)
     if present(stats_2, REST_HR):
         stats = merge_to_hour(stats, stats_2)
     stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, _delta(FITNESS_D_ANY), _delta(FATIGUE_D_ANY), *extra,
@@ -403,10 +402,10 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
     tables = [ttj[name.statistic_journal_type] for name in names]
     if local_start:
         if start: raise Exception('Provide only one of start, local_start')
-        start = local_time_to_time(local_start)
+        start = local_date_to_time(local_start)
     if local_finish:
         if finish: raise Exception('Provide only one of finish, local_finish')
-        finish = local_time_to_time(local_finish)
+        finish = local_date_to_time(local_finish)
     time_select = select([distinct(t.sj.c.time).label("time")]).select_from(t.sj). \
         where(t.sj.c.statistic_name_id.in_([n.id for n in names]))
     if start:

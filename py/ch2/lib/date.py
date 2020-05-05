@@ -134,14 +134,16 @@ def format_minutes(seconds):
 # are only exposed as strings.
 
 
-def local_date_to_time(date):
+def local_date_to_time(date, none=False):
+    if none and date is None: return None
     date = to_date(date)
     ptime = p.DateTime(year=date.year, month=date.month, day=date.day,
                        tzinfo=p.tz.get_local_timezone()).in_timezone(dt.timezone.utc)
     return dt.datetime(*ptime.timetuple()[:6], tzinfo=dt.timezone.utc)
 
 
-def time_to_local_time(time, fmt=None):
+def time_to_local_time(time, fmt=None, none=False):
+    if none and time is None: return None
     if fmt:
         return time.astimezone(tz=None).strftime(fmt)
     else:
@@ -152,7 +154,8 @@ def time_to_local_time(time, fmt=None):
             return local_time
 
 
-def local_time_to_time(time):
+def local_time_to_time(time, none=False):
+    if none and time is None: return None
     for format in ALL_DATE_FORMATS:
         try:
             return dt.datetime.strptime(time, format).replace(

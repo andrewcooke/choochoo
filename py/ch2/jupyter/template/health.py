@@ -43,6 +43,5 @@ def health():
     atd = std_distance_time_plot(900, 200, health, x_range=ff.x_range)
     shr = multi_plot(900, 200, TIME, [DAILY_STEPS, REST_HR], health, ['grey', 'red'], alphas=[1, 0.5],
                      x_range=ff.x_range, rescale=True, plotters=[bar_plotter(dt.timedelta(hours=20)), dot_plotter()])
-    add_band(shr, TIME, LO_REST_HR, HI_REST_HR, health, 'red', alpha=0.1, y_range_name=REST_HR)
     add_curve(shr, TIME, REST_HR, health, color='red', y_range_name=REST_HR)
     show(column(ff, atd, shr))

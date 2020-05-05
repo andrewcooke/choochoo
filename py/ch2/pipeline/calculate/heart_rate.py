@@ -6,7 +6,7 @@ from scipy.signal import find_peaks
 
 from .calculate import MultiProcCalculator, IntervalCalculatorMixin
 from ...data import statistics
-from ...lib import local_time_to_time, format_date
+from ...lib import format_date, local_date_to_time
 from ...names import HEART_RATE, ALL, REST_HR, BPM, summaries, MIN, MSR
 from ...sql import StatisticJournalInteger
 
@@ -14,6 +14,14 @@ log = getLogger(__name__)
 
 
 class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
+
+    '''
+    used to calculate rest HR from quartiles, but it was never clear we had *the* rest value rather
+    than some general lower value.
+
+    this way - by looking for the first peak that's not noise - we are finding something that perhaps
+    is more meaningful.  it's a low heart rate that you spent a fair amount of time at.
+    '''
 
     def __init__(self, *args, owner_in='[unused]', schedule='d', **kargs):
         super().__init__(*args, owner_in=owner_in, schedule=schedule, **kargs)
@@ -27,11 +35,12 @@ class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         peaks, _ = find_peaks(hist)
         for peak in peaks:
             rest_hr = hist.index[peak].left
-            measurements = hist.ilco[rest_hr]
+            measurements = hist.loc[rest_hr]
             if measurements > len(df) * 0.01:
                 log.debug(f'Rest HR is {rest_hr} with {measurements} values')
-                loader.add(REST_HR, BPM, summaries(MIN, MSR), ALL, interval, rest_hr,
-                           local_time_to_time(interval.start), StatisticJournalInteger,
+                # conversion to int as value above is numpy int64
+                loader.add(REST_HR, BPM, summaries(MIN, MSR), ALL, interval, int(rest_hr),
+                           local_date_to_time(interval.start), StatisticJournalInteger,
                            'The rest heart rate')
                 return
             else:
