@@ -327,10 +327,12 @@ def std_health_statistics(s, *extra, start=None, finish=None):
                            how='outer', left_index=True, right_index=True)
     
     # avoid x statistics some time in first day
-    start = start or s.query(StatisticJournal.time).filter(StatisticJournal.time >
-                                                           local_date_to_time(to_date('1970-01-03'))) \
+    start = local_date_to_time(start) or \
+            s.query(StatisticJournal.time).filter(StatisticJournal.time >
+                                                  local_date_to_time(to_date('1970-01-03'))) \
         .order_by(asc(StatisticJournal.time)).limit(1).scalar()
-    finish = finish or s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
+    finish = local_date_to_time(finish) or \
+             s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
 
     stats_1 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, start=start, finish=finish, check=False)

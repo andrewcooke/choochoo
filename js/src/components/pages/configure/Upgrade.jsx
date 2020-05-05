@@ -83,15 +83,15 @@ function Columns(props) {
         return (<ColumnList>
             <TextCard header='Introduction'>
                 <p>Choochoo manages three kinds of data: activity data from FIT files; user data
-                    entered by hand (via the web, command line and diary); and calculated statistics.</p>
-                <p>When you update to a new database activity data can be re-read from FIT files
+                    entered by hand (via the web and command line); and calculated statistics.</p>
+                <p>When you update to a new database activity data can be re-read FIT files
                     and statistics can be re-calculated.  User data, however, must be copied across
                     from the previous version.</p>
                 <p>User data includes diary topics (associated with a given date),
                     activity topics (associated with a particular activity),
                     kit details, and constant values.</p>
-                <p>Note that these data must be upgraded <b>before</b> any new data are entered manually,
-                    to avoid conflicts.</p>
+                <p>To avoid conflicts these data must be upgraded <b>before</b> any new data are entered
+                    manually.</p>
             </TextCard>
             {results === null ? <Status imported={data.imported}/> : null}
             {results === null && enabled ? <Source versions={data.versions} setResults={setResults}/> : null}

@@ -34,10 +34,17 @@ export default function SearchResult(props) {
         history.push('/' + date);
     }
 
+    function onAuxClick() {
+        const date = format(json.start.value, FMT_DAY);
+        window.open('/' + date, '_blank');
+    }
+
     return (<ColumnCard>
         <Grid item xs={2}>
             <Tooltip title='Display diary entry' placement='top'>
-                <Link onClick={onClick}><Thumbnail activity_id={json.db} className={classes.img}/></Link>
+                <Link onClick={onClick} onAuxClick={onAuxClick}>
+                    <Thumbnail activity_id={json.db} className={classes.img}/>
+                </Link>
             </Tooltip>
         </Grid>
         <Grid container item xs={10}>
