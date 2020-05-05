@@ -318,7 +318,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
     return stats
 
 
-def std_health_statistics(s, *extra, start=None, finish=None):
+def std_health_statistics(s, *extra, local_start=None, local_finish=None):
 
     from ..pipeline.calculate.monitor import MonitorCalculator
 
@@ -327,11 +327,11 @@ def std_health_statistics(s, *extra, start=None, finish=None):
                            how='outer', left_index=True, right_index=True)
     
     # avoid x statistics some time in first day
-    start = local_date_to_time(start) or \
+    start = local_date_to_time(local_start) or \
             s.query(StatisticJournal.time).filter(StatisticJournal.time >
                                                   local_date_to_time(to_date('1970-01-03'))) \
         .order_by(asc(StatisticJournal.time)).limit(1).scalar()
-    finish = local_date_to_time(finish) or \
+    finish = local_date_to_time(local_finish) or \
              s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
 

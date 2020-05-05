@@ -17,6 +17,7 @@ from ..lib.schedule import Schedule
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
+from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.monitor import MonitorCalculator
 from ..pipeline.calculate.response import ResponseCalculator
@@ -167,6 +168,7 @@ your FF-model parameters (fitness and fatigue).
         add_statistics(s, ActivityCalculator, c, owner_in=short_cls(ResponseCalculator), climb=CLIMB_CNAME)
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
+        add_statistics(s, RestHRCalculator, c, owner_in=short_cls(MonitorReader))
         add_statistics(s, KitCalculator, c, owner_in=short_cls(SegmentReader))
 
     def _load_summary_statistics(self, s, c):

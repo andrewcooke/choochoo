@@ -8,7 +8,7 @@ from sqlalchemy import desc, and_, or_, distinct, func, select
 from sqlalchemy.sql.functions import count
 
 from .read import AbortImport, AbortImportButMarkScanned, MultiProcFitReader
-from .loader import StatisticJournalLoader
+from ..loader import StatisticJournalLoader
 from ... import FatalException
 from ...commands.args import MONITOR, mm, FORCE, DEFAULT
 from ...data.frame import _tables

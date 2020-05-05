@@ -6,7 +6,7 @@ from time import time
 from psutil import cpu_count
 from sqlalchemy import text
 
-from .read.loader import StatisticJournalLoader
+from .loader import StatisticJournalLoader
 from ..lib import format_seconds
 from ..lib.workers import ProgressTree, Workers
 from ..sql import Pipeline

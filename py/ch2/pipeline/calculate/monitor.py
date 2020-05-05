@@ -147,11 +147,11 @@ class MonitorCalculator(LoaderMixin, MultiProcCalculator):
 
     def _calculate_results(self, s, source, data, loader, start):
         rest_heart_rate, daily_steps = data
-        for name, value in rest_heart_rate:
-            loader.add(name, BPM, summaries(AVG, CNT, MIN, MSR) if name == REST_HR else None, ALL, source, value,
-                       start, StatisticJournalInteger,
-                       description='''An estimate of the resting HR.''' if name == REST_HR
-                       else '''A bound on the resting HR.''')
+        # for name, value in rest_heart_rate:
+        #     loader.add(name, BPM, summaries(AVG, CNT, MIN, MSR) if name == REST_HR else None, ALL, source, value,
+        #                start, StatisticJournalInteger,
+        #                description='''An estimate of the resting HR.''' if name == REST_HR
+        #                else '''A bound on the resting HR.''')
         loader.add(DAILY_STEPS, STEPS_UNITS, summaries(SUM, AVG, CNT, MAX, MSR), ALL, source, daily_steps,
                    start, StatisticJournalInteger, description='''The number of steps in a day.''')
 

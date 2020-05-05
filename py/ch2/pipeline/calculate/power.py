@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .calculate import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
-from ...names import *
+from ..loader import StatisticJournalLoader
 from ...data import activity_statistics, present, linear_resample_time
 from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
@@ -16,7 +16,7 @@ from ...data.power import add_differentials, add_energy_budget, add_loss_estimat
     evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
 from ...lib import log_current_exception
 from ...lib.data import reftuple, MissingReference
-from ..read.loader import StatisticJournalLoader
+from ...names import *
 from ...sql import StatisticJournalFloat, Constant, Timestamp
 
 log = getLogger(__name__)
