@@ -155,20 +155,24 @@ class Markdown(Formatter):
         self._margin = margin
         self._delta = delta
 
-    def p(self, text):
-        line = ''
+    def _chunks(self, text, first, rest=None):
+        if rest is None: rest = first
+        line = first
         for word in re.sub(r' +', ' ', text).split(' '):
-            if not line: line = ' ' * self._margin
-            else: line += ' '
+            if line not in (first, rest):
+                line += ' '
             if len(line + word) > self._width:
                 yield line
-                line = ' ' * self._margin + word
+                line = rest + word
             else:
                 line += word
         if line: yield line
 
+    def p(self, text):
+        yield from self._chunks(text, ' ' * self._margin)
+
     def li(self, text):
-        yield (' ' * self._margin) + '* ' + text
+        yield from self._chunks(text, (' ' * self._margin) + '* ', (' ' * self._margin) + '  ')
 
     def pre(self, text):
         yield (' ' * self._margin) + '    ' + text

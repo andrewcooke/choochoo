@@ -4,16 +4,17 @@ from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
 from .database import add_loader_support, add_activity_group, add_activities, Counter, add_statistics, add_displayer, \
-    name_constant, add_monitor, add_activity_constant, add_constant, add_diary_topic, add_diary_topic_field, \
+    add_monitor, add_activity_constant, add_constant, add_diary_topic, add_diary_topic_field, \
     add_activity_topic_field, add_activity_displayer_delegate
 from .impulse import add_impulse
 from .impulse import add_responses
 from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
-from ..names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, FATIGUE_D, \
-    LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
+from ..names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, FATIGUE_D, \
+    LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL, summaries, AVG, MSR, \
+    CNT
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
@@ -23,8 +24,8 @@ from ..pipeline.calculate.monitor import MonitorCalculator
 from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.segment import SegmentCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
-from ..pipeline.display.activity.activity import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.activity.achievement import AchievementDelegate
+from ..pipeline.display.activity.activity import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
 from ..pipeline.display.activity.nearby import NearbyDelegate
 from ..pipeline.display.activity.segment import SegmentDelegate
@@ -35,7 +36,7 @@ from ..pipeline.display.response import ResponseDisplayer
 from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.segment import SegmentReader
 from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant
-from ..sql.types import short_cls, long_cls
+from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR
 
 log = getLogger(__name__)
@@ -148,12 +149,12 @@ class Config:
         pass
 
     def _load_ff_statistics(self, s, c, default_fthr=154):
-        for group in self._impulse_groups():
-            add_impulse(s, c, group)
+        for activity_group in self._impulse_groups():
+            add_impulse(s, c, activity_group)
             # we need a value here for various UI reasons.  might as well use my own value...
-            add_activity_constant(s, group, FTHR, default_fthr,
+            add_activity_constant(s, activity_group, FTHR, default_fthr,
                                   description=f'''
-Heart rate (in bpm) at functional threshold for activities in the {group.name} group.
+Heart rate (in bpm) at functional threshold for activities in the {activity_group.name} group.
 
 Your FTHR is the highest sustained heart rate you can maintain for long periods (an hour).
 It is used to calculate how hard you are working (the Impulse) and, from that, 
@@ -195,8 +196,8 @@ your FF-model parameters (fitness and fatigue).
         # these tie-in to the constants used in add_impulse()
         fitness, fatigue = self._ff_parameters()
         add_displayer(s, ResponseDisplayer, c,
-                      fitness=[name_constant(s, FITNESS_D % days) for (days, _, _) in fitness],
-                      fatigue=[name_constant(s, FATIGUE_D % days) for (days, _, _) in fatigue])
+                      fitness=[FITNESS_D % days for (days, _, _) in fitness],
+                      fatigue=[FATIGUE_D % days for (days, _, _) in fatigue])
         add_displayer(s, ActivityDisplayer, c)
         c2 = Counter()
         for delegate in self._activity_displayer_delegates():
@@ -241,19 +242,20 @@ so do not use an important password that applies to many accounts.
         add_diary_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
                               model={TYPE: EDIT}, description='Daily notes recorded by user in diary.')
         add_diary_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,
-                              units='kg', summary='[avg],[msr]', description='Weight recorded by user in diary.',
+                              units='kg', summary=summaries(AVG, MSR),
+                              description='Weight recorded by user in diary.',
                               model={TYPE: FLOAT, LO: 50, HI: 100, DP: 1})
         add_diary_topic_field(s, diary, 'Sleep', c, StatisticJournalType.FLOAT,
-                              units='h', summary='[avg]', description='Sleep time recorded by user in diary.',
+                              units='h', summary=AVG, description='Sleep time recorded by user in diary.',
                               model={TYPE: FLOAT, LO: 0, HI: 24, DP: 1})
         add_diary_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
-                              summary='[avg]', description='Mood recorded by user in diary.',
+                              summary=AVG, description='Mood recorded by user in diary.',
                               model={TYPE: SCORE})
         add_diary_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
-                              summary='[cnt]', description='Medication recorded by user in diary.',
+                              summary=CNT, description='Medication recorded by user in diary.',
                               model={TYPE: EDIT})
         add_diary_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
-                              summary='[cnt]', description='Weather recorded by user in diary.',
+                              summary=CNT, description='Weather recorded by user in diary.',
                               model={TYPE: EDIT})
 
     def _load_activity_topics(self, s, c):

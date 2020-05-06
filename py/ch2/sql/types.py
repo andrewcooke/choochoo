@@ -3,6 +3,7 @@ import datetime as dt
 from json import dumps, loads
 from logging import getLogger
 from pydoc import locate
+from re import sub
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
@@ -112,20 +113,6 @@ def short_cls(cls):
     return cls
 
 
-class Str(TypeDecorator):
-
-    impl = Text
-
-    def process_literal_param(self, value, dialect):
-        if value is None:
-            return value
-        if isinstance(value, int):
-            raise Exception('Passing primary key instead of class?')
-        return str(value)
-
-    process_bind_param = process_literal_param
-
-
 class NullStr(TypeDecorator):
     '''
     None (NULL) values are converted to 'None'.
@@ -197,5 +184,40 @@ class Sort(TypeDecorator):
         if callable(value):
             value = value()
         return value
+
+    process_bind_param = process_literal_param
+
+
+def name(name, none=True):
+    if name is None and none:
+        return None
+    name = name.strip().lower()
+    name = sub(r'\s+', '_', name)
+    name = sub(r'[^a-z0-9]', '_', name)
+    name = sub(r'^(\d)', r'_\1', name)
+    name = sub(r'_+', '_', name)
+    return name
+
+
+class Name(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, value, dialect):
+        return name(value)
+
+    process_bind_param = process_literal_param
+
+
+class QualifiedName(TypeDecorator):
+
+    impl = Text
+
+    def process_literal_param(self, value, dialect):
+        if value and ':' in value:
+            left, right = value.rsplit(':', 1)
+            return name(left) + ':' + name(right)
+        else:
+            return name(value)
 
     process_bind_param = process_literal_param

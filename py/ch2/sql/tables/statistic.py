@@ -11,7 +11,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
 from ..support import Base
-from ..types import Time, ShortCls
+from ..types import Time, ShortCls, name
 from ..utils import add
 from ...names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM, ALL
 from ...diary.model import TYPE, MEASURES, SCHEDULES
@@ -29,7 +29,7 @@ class StatisticName(Base):
     name = Column(Text, nullable=False, index=True)  # simple, displayable name
     description = Column(Text)
     units = Column(Text)
-    summary = Column(Text)  # '[max]', '[min]' etc - can be multiple values but each in square brackets
+    summary = Column(Text)  # max, min, etc - comma separated list
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
     activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=False)
     activity_group = relationship('ActivityGroup')
@@ -41,8 +41,8 @@ class StatisticName(Base):
 
     @property
     def summaries(self):
-        if self.summary:
-            return [x.lower() for x in split(r'[\s,]*(\[[^\]]+\])[\s ]*', self.summary) if x]
+        if self.summary.strip():
+            return [name(x) for x in self.summary.split(',')]
         else:
             return []
 

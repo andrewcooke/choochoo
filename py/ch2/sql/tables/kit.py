@@ -2,20 +2,21 @@
 from collections import defaultdict
 from logging import getLogger
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, desc, or_
+from sqlalchemy import Column, Integer, ForeignKey, desc, or_
 from sqlalchemy.orm import relationship, aliased, backref
 from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Source, SourceType, Composite, CompositeComponent
 from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestamp
 from ..support import Base
+from ..types import Name
 from ..utils import add
 from ...commands.args import FORCE, mm
-from ...names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s, AGE, D, ALL
 from ...diary.model import TYPE, DB, UNITS
 from ...lib import now, time_to_local_time
 from ...lib.date import YMD
 from ...lib.utils import inside_interval
+from ...names import KIT_ADDED, KIT_RETIRED, KIT_USED, ACTIVE_TIME, ACTIVE_DISTANCE, KM, S, _s, AGE, D, ALL
 
 log = getLogger(__name__)
 
@@ -48,6 +49,9 @@ difficult design decisions here.
   * tie-in with activities to get active time / distance
 in the end, what drove the design was the commands (see commands/kit.py) - trying to keep them as simple as possible.
 unfortunately that pushed some extra complexity into the data model (eg to guarantee all names unique).
+
+update: later, decided to force all names to lowercase.  this fits with my own use and makes it easier to match.
+similarly with activity groups. 
 '''
 
 
@@ -63,9 +67,9 @@ def get_name(s, name, classes=None, require=False):
         raise Exception(f'Cannot find "{name}"')
 
 
-def assert_name_does_not_exist(s, name, use):
+def assert_name_does_not_exist(s, name):
     instance = get_name(s, name)
-    if instance and not isinstance(instance, use):
+    if instance:
         raise Exception(f'The name "{name}" is already used for a {type(instance).SIMPLE_NAME}')
 
 
@@ -227,14 +231,14 @@ class KitGroup(ModelMixin, Base):
     SIMPLE_NAME = 'group'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, index=True, unique=True)
+    name = Column(Name, nullable=False, index=True, unique=True)
 
     @classmethod
     def get_or_add(cls, s, name, force=False):
         try:
             return s.query(KitGroup).filter(KitGroup.name == name).one()
         except NoResultFound:
-            assert_name_does_not_exist(s, name, KitGroup)
+            assert_name_does_not_exist(s, name)
             if force:
                 log.warning(f'Forcing creation of new group ({name})')
                 return add(s, KitGroup(name=name))
@@ -270,7 +274,7 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     group_id = Column(Integer, ForeignKey('kit_group.id', ondelete='cascade'), nullable=False, index=True)
     group = relationship('KitGroup', backref=backref('items', passive_deletes=True))
-    name = Column(Text, nullable=False, index=True, unique=True)
+    name = Column(Name, nullable=False, index=True, unique=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ITEM
@@ -282,7 +286,7 @@ class KitItem(ModelMixin, StatisticsMixin, Source):
         if s.query(KitItem).filter(KitItem.name == name).count():
             raise Exception(f'Item {name} of group {group.name} already exists')
         else:
-            assert_name_does_not_exist(s, name, KitItem)
+            assert_name_does_not_exist(s, name)
             item = add(s, KitItem(group=group, name=name))
             item._add_statistics(s, date)
             return item
@@ -347,7 +351,7 @@ class KitComponent(ModelMixin, Base):
     SIMPLE_NAME = 'component'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, index=True)
+    name = Column(Name, nullable=False, index=True)
 
     @classmethod
     def get(cls, s, name, require=True):
@@ -361,7 +365,7 @@ class KitComponent(ModelMixin, Base):
         try:
             return s.query(KitComponent).filter(KitComponent.name == name).one()
         except NoResultFound:
-            assert_name_does_not_exist(s, name, KitComponent)
+            assert_name_does_not_exist(s, name)
             if force:
                 log.warning(f'Forcing creation of new component ({name})')
                 return add(s, KitComponent(name=name))
@@ -439,7 +443,7 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
     item = relationship('KitItem', foreign_keys=[item_id], backref=backref('models', passive_deletes=True))
     component_id = Column(Integer, ForeignKey('kit_component.id', ondelete='cascade'), nullable=False, index=True)
     component = relationship('KitComponent', backref=backref('models', passive_deletes=True))
-    name = Column(Text, nullable=False, index=True)
+    name = Column(Name, nullable=False, index=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.MODEL
@@ -468,7 +472,7 @@ class KitModel(ModelMixin, StatisticsMixin, Source):
     def _add_instance(cls, s, item, component, name):
         # TODO - restrict name to a particular component
         if not s.query(KitModel).filter(KitModel.name == name).count():
-            assert_name_does_not_exist(s, name, KitModel)
+            assert_name_does_not_exist(s, name)
             log.warning(f'Model {name} does not match any previous entries')
         return add(s, KitModel(item=item, component=component, name=name))
 

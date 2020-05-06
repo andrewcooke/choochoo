@@ -4,12 +4,12 @@ from abc import ABC, abstractmethod
 from json import dumps, loads
 from logging import getLogger
 
-from sqlalchemy import Column, Integer, ForeignKey, Text, Boolean, desc
+from sqlalchemy import Column, Integer, ForeignKey, Boolean, desc
 from sqlalchemy.orm import relationship
 
 from .source import Source, SourceType
 from .statistic import STATISTIC_JOURNAL_CLASSES, StatisticJournal
-from ..types import Cls, Json, lookup_cls
+from ..types import Cls, Json, lookup_cls, QualifiedName
 from ...lib.date import local_date_to_time, format_time, to_time
 from ...lib.log import log_current_exception
 
@@ -22,7 +22,7 @@ class Constant(Source):
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     # this could be the statistic_name or it could contain more info related to constraint
-    name = Column(Text, nullable=False, index=True)
+    name = Column(QualifiedName, nullable=False, index=True)
     # todo - this ondelete cascade could cause problems with orphaned sources
     # don't think it's needed anyway, since statistic_name entries are not deleted?
     statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)
@@ -32,12 +32,12 @@ class Constant(Source):
     validate_args = Column(Json, nullable=False, server_default=dumps(()))
     validate_kargs = Column(Json, nullable=False, server_default=dumps({}))
 
-    def validate(self, sjournal):
+    def validate(self, s, sjournal):
         if self.validate_cls:
             if self.validate_args is None or self.validate_kargs is None:
                 raise Exception('Missing args or kargs for %s' % self)
             validate = self.validate_cls(*self.validate_args, **self.validate_kargs)
-            validate.validate(self, sjournal)
+            validate.validate(s, self, sjournal)
 
     def add_value(self, s, value, time=None, date=None):
         from ..utils import add
@@ -51,7 +51,7 @@ class Constant(Source):
             raise Exception('%s was given time %s but is not time-variable' % (self, format_time(to_time(time))))
         sjournal = STATISTIC_JOURNAL_CLASSES[self.statistic_name.statistic_journal_type](
             statistic_name=self.statistic_name, source=self, value=value, time=time)
-        self.validate(sjournal)
+        self.validate(s, sjournal)
         return add(s, sjournal)
 
     def at(self, s, time=None, date=None):
@@ -97,7 +97,7 @@ class Constant(Source):
 class Validate(ABC):
 
     @abstractmethod
-    def validate(self, constant, sjournal):
+    def validate(self, s, constant, sjournal):
         raise NotImplementedError()
 
 
@@ -111,7 +111,7 @@ class ValidateNamedTuple(Validate):
             raise Exception('Add tuple_cls to validator_kargs')
         self.__tuple_cls = lookup_cls(tuple_cls)
 
-    def validate(self, constant, sjournal):
+    def validate(self, s, constant, sjournal):
         try:
             value = loads(sjournal.value)
         except Exception as e:

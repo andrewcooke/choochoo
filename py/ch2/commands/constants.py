@@ -1,8 +1,9 @@
 
 from logging import getLogger
 
-from ..commands.args import DATE, NAME, VALUE, DELETE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
-    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, GROUP
+from .help import Markdown
+from ..commands.args import DATE, NAME, VALUE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
+    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, GROUP, UNSET
 from ..sql.tables.constant import Constant, ValidateNamedTuple
 from ..sql.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType
 from ..sql.types import lookup_cls
@@ -30,13 +31,18 @@ Adds an entry for the constant.  If date is omitted a single value is used for a
 
 Note that adding / removing constants (ie their names) is separate from setting / deleting entries (ie their values).
 
-    > ch2 constants delete NAME [DATE]
+    > ch2 constants unset NAME [DATE]
 
 Deletes an entry.
 
     > ch2 constants remove NAME
 
 Remove a constant (the associated entries must have been deleted first).
+
+### Names
+
+A constant name is a token (lower case letters, digits and underscores) optionally followed by a colon and
+the name of an activity group.
 
 Names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and FTHR.Bike, for example.
 In such a case "entry" in the descriptions above may refer to multiple entries.
@@ -61,7 +67,7 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
                 date = args[DATE]
                 if cmd == SET:
                     set_constants(s, constants, date, args[VALUE], args[FORCE])
-                elif cmd == DELETE:
+                elif cmd == UNSET:
                     if not date and not args[FORCE]:
                         raise Exception(f'Use {mm(FORCE)} to delete all entries for a Constant')
                     delete_constants(s, constants, date)
@@ -151,7 +157,8 @@ def print_constants(s, constants, name, date):
         if not date:
             description = constant.statistic_name.description \
                 if constant.statistic_name.description else '[no description]'
-            print(f'{constant.name}: {description}')
+            print(f'{constant.name}')
+            Markdown().print(description)
             if name:  # only print values if we're not listing all
                 found = False
                 for journal in s.query(StatisticJournal).join(StatisticName, Constant). \

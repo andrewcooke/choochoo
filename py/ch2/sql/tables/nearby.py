@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, ForeignKey, Float, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
-from ..types import Str, NullStr
+from ..types import NullStr
 
 
 class ActivitySimilarity(Base):

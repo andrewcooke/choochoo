@@ -229,3 +229,10 @@ def timing(label):
     yield
     seconds = (now() - start).total_seconds()
     log.debug(f'Time for {label}: {seconds:.1f}s')
+
+
+def clean(token, none=False):
+    if token is None and none:
+        return None
+    else:
+        return token.strip().lower()

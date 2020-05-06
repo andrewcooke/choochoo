@@ -186,6 +186,7 @@ TOPIC = 'topic'
 UNDO = 'undo'
 UNLIKE = 'unlike'
 UNSAFE = 'unsafe'
+UNSET = 'unset'
 USER = 'user'
 VALIDATE = 'validate'
 V, VERBOSITY = 'v', 'verbosity'
@@ -337,8 +338,6 @@ def make_parser(with_noop=False):
                                help='date of value to show (omit for all)')
     constants_add = constants_cmds.add_parser(ADD, help='add a new constant')
     constants_add.add_argument(NAME, metavar='NAME', help='name')
-    constants_add.add_argument(GROUP, nargs='?', metavar='GROUP',
-                              help='activity group (optional)')
     constants_add.add_argument(mm(SINGLE), action='store_true', help='allow only a single (constant) value')
     constants_add.add_argument(mm(DESCRIPTION), help='optional description')
     constants_add.add_argument(mm(VALIDATE), help='optional validation class')
@@ -348,11 +347,11 @@ def make_parser(with_noop=False):
     constants_set.add_argument(DATE, nargs='?', metavar='DATE',
                               help='date when measured (omit for all time)')
     constants_set.add_argument(mm(FORCE), action='store_true', help='allow over-writing existing values')
-    constants_delete = constants_cmds.add_parser(DELETE, help='delete a value (or all values)')
-    constants_delete.add_argument(NAME, metavar='NAME', help='name')
-    constants_delete.add_argument(DATE, nargs='?', metavar='DATE',
+    constants_unset = constants_cmds.add_parser(UNSET, help='delete a value (or all values)')
+    constants_unset.add_argument(NAME, metavar='NAME', help='name')
+    constants_unset.add_argument(DATE, nargs='?', metavar='DATE',
                                  help='date of value to delete (omit for all)')
-    constants_delete.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
+    constants_unset.add_argument(mm(FORCE), action='store_true', help='allow deletion of all values')
     constants_remove = constants_cmds.add_parser(REMOVE, help='remove a constant (after deleting all values)')
     constants_remove.add_argument(NAME, metavar='NAME', help='name')
     constants_remove.add_argument(mm(FORCE), action='store_true', help='allow remove of multiple constants')

@@ -100,20 +100,19 @@ TIME_IN_Z_ANY = 'Time in Z%'
 TIMESPAN_ID = 'Timespan ID'
 TOTAL_CLIMB = 'Total Climb'
 
+SPORT_MAP = 'SportMap'
 SPORT_CYCLING = 'cycling'
 SPORT_RUNNING = 'running'
 SPORT_SWIMMING = 'swimming'
 SPORT_WALKING = 'walking'
 SPORT_GENERIC = 'generic'
 
-# todo - there is no need for these silly square brackets - remove?
-# ahhh. something about allowing parsing with splitting on commas?
-MAX = '[max]'
-MIN = '[min]'
-CNT = '[cnt]'
-AVG = '[avg]'
-SUM = '[sum]'
-MSR = '[msr]'   # measure (separate table, less efficient)
+MAX = 'max'
+MIN = 'min'
+CNT = 'cnt'
+AVG = 'avg'
+SUM = 'sum'
+MSR = 'msr'   # measure (separate table, less efficient)
 def summaries(*args): return ','.join(args)
 
 

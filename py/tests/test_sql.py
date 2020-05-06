@@ -9,7 +9,7 @@ from urwid import WidgetWrap, Pile, Edit, Filler
 
 from ch2.sql.binders import Binder
 from ch2.sql.support import Base
-from ch2.sql.types import Date
+from ch2.sql.types import Date, name
 from ch2.urwid.tui.widgets import Integer
 
 log = getLogger(__name__)
@@ -113,3 +113,12 @@ class TestSqueal(LogTestCase):
         session.commit()
         data = session.query(Data).filter(Data.integer == 42).one()
         self.assertEqual(data.date, dt.date(2018, 7, 1))
+
+
+class TestName(LogTestCase):
+
+    def test_tokenzie(self):
+        self.assertEqual(name('ABC 123 *^%'), 'abc_123_')
+        self.assertEqual(name('****'), '_')
+        self.assertEqual(name('123'), '_123')
+        self.assertEqual(name('Fitness 7d'), 'fitness_7d')

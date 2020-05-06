@@ -182,7 +182,7 @@ def add_activity_constant(s, activity_group, name, value, description=None, unit
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
     log.debug(f'Adding activity constant {name}')
-    constant = add(s, Constant(statistic_name=statistic_name, name='%s.%s' % (name, activity_group.name),
+    constant = add(s, Constant(statistic_name=statistic_name, name=name_constant(statistic_name),
                                single=single))
     if value:
         constant.add_value(s, value, time=time)
@@ -200,7 +200,7 @@ def add_enum_constant(s, name, enum, value,
                                           activity_group=ActivityGroup.from_name(s, activity_group),
                                           units=units, description=description,
                                           statistic_journal_type=StatisticJournalType.TEXT))
-    constant_name = name_constant(s, name, activity_group)
+    constant_name = name_constant(statistic_name)
     constant = add(s, Constant(statistic_name=statistic_name, name=constant_name, single=single,
                                validate_cls=ValidateNamedTuple,
                                validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)}))
@@ -218,16 +218,15 @@ def set_constant(s, constant, value, time=None, date=None):
     constant.add_value(s, value, time=time, date=date)
 
 
-def name_constant(s, short_name, activity_group=ALL):
+def name_constant(statistic_name):
     '''
     Constants typically combine a name with an activity group (because they're specific to a
     particular activity).
     '''
-    name = sub(r'\s+', '', short_name)
-    if activity_group:
-        activity_group = ActivityGroup.from_name(s, activity_group)
-        if activity_group.name != ALL: name = '%s.%s' % (name, sub(r'\s+', '', activity_group.name))
-    return name
+    if statistic_name.activity_group.name == ALL:
+        return statistic_name.name
+    else:
+        return statistic_name.name + ':' + statistic_name.activity_group.name
 
 
 def add_diary_topic(s, name, sort, description=None, schedule=None):
@@ -333,9 +332,8 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
     region (specified by latitude, longitude, width and height, all in degrees).
     '''
     log.debug(f'Adding nearby statistics for {constraint} / {activity_group.name}')
-    nearby_constraint = name_constant(s, constraint, activity_group)
     constant = add_enum_constant(s, constant, Nearby,
-                      {'constraint': nearby_constraint, 'activity_group': activity_group.name,
+                      {'constraint': constraint, 'activity_group': activity_group.name,
                        'border': border, 'start': start, 'finish': finish,
                        'latitude': latitude, 'longitude': longitude,
                        'height': height, 'width': width, 'fraction': fraction},
@@ -353,7 +351,7 @@ only that activities outside will not be considered as candidates.
 ''')
     add_statistics(s, SimilarityCalculator, sort, nearby=constant.name,
                    owner_in=short_cls(ActivityCalculator), owner_out=short_cls(SimilarityCalculator))
-    add_statistics(s, NearbyCalculator, sort, constraint=nearby_constraint,
+    add_statistics(s, NearbyCalculator, sort, constraint=constraint, activity_group=activity_group.name,
                    owner_in=short_cls(SimilarityCalculator), owner_out=short_cls(NearbyCalculator))
 
 
