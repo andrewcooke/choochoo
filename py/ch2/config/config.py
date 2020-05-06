@@ -114,7 +114,7 @@ class Config:
     def _record_to_db(self):
         # the mapping from FIT fields to database entries
         # you really don't want to alter this unless you know what you are doing...
-        # todo - does this need to depend on activity group?
+        # todo - should this depend on activity group?
         return {'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
                 'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
                 'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
@@ -194,10 +194,9 @@ your FF-model parameters (fitness and fatigue).
         add_displayer(s, MonitorDisplayer, c)
         # these tie-in to the constants used in add_impulse()
         fitness, fatigue = self._ff_parameters()
-        all = self._activity_groups[ALL]
         add_displayer(s, ResponseDisplayer, c,
-                      fitness=[name_constant(FITNESS_D % days, all) for (days, _, _) in fitness],
-                      fatigue=[name_constant(FATIGUE_D % days, all) for (days, _, _) in fatigue])
+                      fitness=[name_constant(s, FITNESS_D % days) for (days, _, _) in fitness],
+                      fatigue=[name_constant(s, FATIGUE_D % days) for (days, _, _) in fatigue])
         add_displayer(s, ActivityDisplayer, c)
         c2 = Counter()
         for delegate in self._activity_displayer_delegates():

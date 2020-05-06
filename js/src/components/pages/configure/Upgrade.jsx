@@ -84,7 +84,7 @@ function Columns(props) {
             <TextCard header='Introduction'>
                 <p>Choochoo manages three kinds of data: activity data from FIT files; user data
                     entered by hand (via the web and command line); and calculated statistics.</p>
-                <p>When you update to a new database activity data can be re-read FIT files
+                <p>When you update to a new database activity data can be re-read from FIT files
                     and statistics can be re-calculated.  User data, however, must be copied across
                     from the previous version.</p>
                 <p>User data includes diary topics (associated with a given date),

@@ -112,7 +112,6 @@ class ValidateNamedTuple(Validate):
         self.__tuple_cls = lookup_cls(tuple_cls)
 
     def validate(self, constant, sjournal):
-        value = None
         try:
             value = loads(sjournal.value)
         except Exception as e:
@@ -123,4 +122,5 @@ class ValidateNamedTuple(Validate):
         except Exception as e:
             raise ValidateError('Could not create %s from "%s" for "%s": %s' %
                                 (self.__tuple_cls, value, constant.name, e))
+
 
