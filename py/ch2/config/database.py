@@ -1,8 +1,6 @@
 from json import dumps
 from logging import getLogger
-from re import sub
 
-from ..names import DUMMY, ALL
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalculator
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
@@ -11,7 +9,8 @@ from ..sql.tables.constant import ValidateNamedTuple
 from ..sql.types import long_cls, short_cls
 
 log = getLogger(__name__)
-NEARBY_CNAME = 'Nearby'
+
+NEARBY_CNAME = 'nearby'
 
 
 class Counter:
@@ -143,7 +142,7 @@ def add_activities(s, cls, sort, **kargs):
 
 
 def add_constant(s, name, value, description=None, units=None, single=False,
-                 statistic_journal_type=StatisticJournalType.INTEGER, activity_group=ALL,
+                 statistic_journal_type=StatisticJournalType.INTEGER, activity_group=ActivityGroup.ALL,
                  time=0.0):
     '''
     Add a constant (not associated with an activity).
@@ -182,7 +181,7 @@ def add_activity_constant(s, activity_group, name, value, description=None, unit
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
     log.debug(f'Adding activity constant {name}')
-    constant = add(s, Constant(statistic_name=statistic_name, name=name_constant(statistic_name),
+    constant = add(s, Constant(statistic_name=statistic_name, name=statistic_name.qualified_name,
                                single=single))
     if value:
         constant.add_value(s, value, time=time)
@@ -192,7 +191,7 @@ def add_activity_constant(s, activity_group, name, value, description=None, unit
 
 
 def add_enum_constant(s, name, enum, value,
-                      activity_group=ALL, description=None, units=None, single=False, time=0.0):
+                      activity_group=ActivityGroup.ALL, description=None, units=None, single=False, time=0.0):
     '''
     Add a constant that is a JSON encoded enum.  This is validated before saving.
     '''
@@ -200,9 +199,8 @@ def add_enum_constant(s, name, enum, value,
                                           activity_group=ActivityGroup.from_name(s, activity_group),
                                           units=units, description=description,
                                           statistic_journal_type=StatisticJournalType.TEXT))
-    constant_name = name_constant(statistic_name)
-    constant = add(s, Constant(statistic_name=statistic_name, name=constant_name, single=single,
-                               validate_cls=ValidateNamedTuple,
+    constant = add(s, Constant(statistic_name=statistic_name, name=statistic_name.qualified_name,
+                               single=single, validate_cls=ValidateNamedTuple,
                                validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)}))
     if value:
         constant.add_value(s, dumps(value), time=time)
@@ -216,17 +214,6 @@ def set_constant(s, constant, value, time=None, date=None):
     Set a constant value.
     '''
     constant.add_value(s, value, time=time, date=date)
-
-
-def name_constant(statistic_name):
-    '''
-    Constants typically combine a name with an activity group (because they're specific to a
-    particular activity).
-    '''
-    if statistic_name.activity_group.name == ALL:
-        return statistic_name.name
-    else:
-        return statistic_name.name + ':' + statistic_name.activity_group.name
 
 
 def add_diary_topic(s, name, sort, description=None, schedule=None):
@@ -271,7 +258,7 @@ def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, un
         s.flush()
     statistic_name = add(s, StatisticName(name=name, owner=DiaryTopic, statistic_journal_type=type,
                                           description=description, units=units, summary=summary,
-                                          activity_group=ActivityGroup.from_name(s, ALL)))
+                                          activity_group=ActivityGroup.from_name(s, ActivityGroup.ALL)))
     if model is None: model = {}
     field = add(s, DiaryTopicField(diary_topic=diary_topic, sort=sort, model=model, schedule=schedule,
                                    statistic_name=statistic_name))
@@ -361,6 +348,6 @@ def add_loader_support(s):
     '''
     log.debug('Adding dummy source')
     dummy_source = add(s, Dummy())
-    dummy_name = add(s, StatisticName(name=DUMMY, owner=dummy_source,
-                                      activity_group=ActivityGroup.from_name(s, ALL),
+    dummy_name = add(s, StatisticName(name=Dummy.DUMMY, owner=dummy_source,
+                                      activity_group=ActivityGroup.from_name(s, ActivityGroup.ALL),
                                       statistic_journal_type=StatisticJournalType.STATISTIC))

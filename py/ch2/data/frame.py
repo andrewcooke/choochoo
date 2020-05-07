@@ -18,12 +18,7 @@ from ..sql import StatisticName, StatisticJournal, StatisticJournalInteger, Acti
     StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
 from ..sql.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
     Composite, CompositeComponent, ActivityNearby
-from ..names import DELTA_TIME, HEART_RATE, _src, FITNESS_D_ANY, FATIGUE_D_ANY, like, HEART_RATE_BPM, \
-    MED_HEART_RATE_BPM, GRADE, GRADE_PC, BOOKMARK, DISTANCE_KM, MED_SPEED_KMH, MED_HR_IMPULSE_10, MED_CADENCE, \
-    ELEVATION_M, CLIMB_MS, ACTIVE_TIME_H, ACTIVE_DISTANCE_KM, MED_POWER_ESTIMATE_W, TIMESPAN_ID, LATITUDE, LONGITUDE, \
-    SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, MED_WINDOW, ELEVATION, SPEED, HR_ZONE, HR_IMPULSE_10, \
-    ALTITUDE, CADENCE, TIME, LOCAL_TIME, REST_HR, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, POWER_ESTIMATE, INDEX, \
-    GROUP, MIXED, LO_REST_HR, HI_REST_HR, _delta, FATIGUE, FITNESS
+from ..names import Names, Titles, Units, MED_WINDOW, _delta, _src, like
 
 log = getLogger(__name__)
 
@@ -161,7 +156,7 @@ _activity_journal = activity_journal
 
 
 def _add_bookmark(bookmark, df):
-    df[BOOKMARK] = bookmark.id
+    df[Names.BOOKMARK] = bookmark.id
     return df
 
 
@@ -218,20 +213,20 @@ def _activity_statistics(s, *statistics, owner=None, bookmark_constraint=None, s
                    for name, table in zip(names, tables)]
     # don't call this TIME because even though it's moved to index it somehow blocks the later addition
     # of a TIME column (eg when plotting health statistics)
-    selects = [time_select.c.time.label(INDEX)] + \
+    selects = [time_select.c.time.label(Names.INDEX)] + \
               [sub.c.value.label(label) for sub, label in zip(sub_selects, labels)]
     sources = time_select
     for sub in sub_selects:
         sources = sources.outerjoin(sub, time_select.c.time == sub.c.time)
     if with_timespan:
-        selects += [t.at.c.id.label(TIMESPAN_ID)]
+        selects += [t.at.c.id.label(Names.TIMESPAN_ID)]
         sources = sources.outerjoin(t.at,
                                     and_(t.at.c.start <= time_select.c.time,
                                          t.at.c.finish > time_select.c.time,
                                          t.at.c.activity_journal_id == activity_journal.id))
     sql = select(selects).select_from(sources)
     # log.debug(sql)
-    return pd.read_sql_query(sql=sql, con=s.connection(), index_col=INDEX)
+    return pd.read_sql_query(sql=sql, con=s.connection(), index_col=Names.INDEX)
 
 
 def statistic_quartiles(s, *statistics, start=None, finish=None, owner=None, activity_group=None, sources=None,
@@ -279,41 +274,42 @@ MIN_PERIODS = 1
 def std_activity_statistics(s, local_time=None, time=None, activity_journal=None, activity_group=None,
                             with_timespan=True):
 
-    stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE,
-                                ELEVATION, SPEED, HEART_RATE, HR_ZONE, HR_IMPULSE_10, ALTITUDE, GRADE, CADENCE,
-                                POWER_ESTIMATE,
+    stats = activity_statistics(s, Names.LATITUDE, Names.LONGITUDE, Names.SPHERICAL_MERCATOR_X,
+                                Names.SPHERICAL_MERCATOR_Y, Names.DISTANCE, Names.ELEVATION, Names.SPEED,
+                                Names.HEART_RATE, Names.HR_ZONE, Names.HR_IMPULSE_10, Names.ALTITUDE, Names.GRADE,
+                                Names.CADENCE, Names.POWER_ESTIMATE,
                                 local_time=local_time, time=time, activity_journal=activity_journal,
                                 activity_group=activity_group, with_timespan=with_timespan)
 
-    stats.rename(columns={DISTANCE: DISTANCE_KM}, inplace=True)
-    stats[MED_SPEED_KMH] = stats[SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
-    if present(stats, CADENCE):
-        stats[MED_CADENCE] = stats[CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    if present(stats, HEART_RATE):
-        stats.rename(columns={HEART_RATE: HEART_RATE_BPM}, inplace=True)
-        stats[MED_HEART_RATE_BPM] = stats[HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-        stats[MED_HR_IMPULSE_10] = stats[HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    if present(stats, POWER_ESTIMATE):
-        stats[MED_POWER_ESTIMATE_W] = stats[POWER_ESTIMATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
-    if present(stats, ELEVATION):
-        stats.rename(columns={ELEVATION: ELEVATION_M}, inplace=True)
-        stats.rename(columns={GRADE: GRADE_PC}, inplace=True)
+    stats.rename(columns={Names.DISTANCE: Names.DISTANCE_KM}, inplace=True)
+    stats[Names.MED_SPEED_KMH] = stats[Names.SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
+    if present(stats, Names.CADENCE):
+        stats[Names.MED_CADENCE] = stats[Names.CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    if present(stats, Names.HEART_RATE):
+        stats.rename(columns={Names.HEART_RATE: Names.HEART_RATE_BPM}, inplace=True)
+        stats[Names.MED_HEART_RATE_BPM] = stats[Names.HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+        stats[Names.MED_HR_IMPULSE_10] = stats[Names.HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    if present(stats, Names.POWER_ESTIMATE):
+        stats[Names.MED_POWER_ESTIMATE_W] = stats[Names.POWER_ESTIMATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
+    if present(stats, Names.ELEVATION):
+        stats.rename(columns={Names.ELEVATION: Names.ELEVATION_M}, inplace=True)
+        stats.rename(columns={Names.GRADE: Names.GRADE_PC}, inplace=True)
 
     if with_timespan:
-        timespans = stats[TIMESPAN_ID].dropna().unique()
-    if present(stats, HR_IMPULSE_10):
-        stats[KEEP] = pd.notna(stats[HR_IMPULSE_10])
+        timespans = stats[Names.TIMESPAN_ID].dropna().unique()
+    if present(stats, Names.HR_IMPULSE_10):
+        stats[KEEP] = pd.notna(stats[Names.HR_IMPULSE_10])
         stats.interpolate(method='time', inplace=True)
         stats = stats.loc[stats[KEEP] == True].drop(columns=[KEEP])
     else:
         stats = linear_resample_time(stats, dt=10, add_time=False)
     if with_timespan:
-        stats = stats.loc[stats[TIMESPAN_ID].isin(timespans)]
+        stats = stats.loc[stats[Names.TIMESPAN_ID].isin(timespans)]
 
-    if present(stats, ELEVATION_M):
-        stats[CLIMB_MS] = stats[ELEVATION_M].diff() * 0.1
-    stats[TIME] = pd.to_datetime(stats.index)
-    stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), HMS))
+    if present(stats, Names.ELEVATION_M):
+        stats[Names.CLIMB_MS] = stats[Names.ELEVATION_M].diff() * 0.1
+    stats[Names.TIME] = pd.to_datetime(stats.index)
+    stats[Names.LOCAL_TIME] = stats[Names.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), HMS))
 
     return stats
 
@@ -335,22 +331,23 @@ def std_health_statistics(s, *extra, local_start=None, local_finish=None):
              s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
 
-    stats_1 = statistics(s, FITNESS_D_ANY, FATIGUE_D_ANY, start=start, finish=finish, check=False)
-    if present(stats_1, FITNESS_D_ANY, pattern=True):
+    stats_1 = statistics(s, Names.FITNESS_D_ANY, Names.FATIGUE_D_ANY, start=start, finish=finish, check=False)
+    if present(stats_1, Names.FITNESS_D_ANY, pattern=True):
         stats_1 = stats_1.resample('1h').mean()
         stats = merge_to_hour(stats, stats_1)
-    stats_2 = statistics(s, REST_HR, start=start, finish=finish, owner=RestHRCalculator, check=False)
-    if present(stats_2, REST_HR):
+    stats_2 = statistics(s, Names.REST_HR, start=start, finish=finish, owner=RestHRCalculator, check=False)
+    if present(stats_2, Names.REST_HR):
         stats = merge_to_hour(stats, stats_2)
-    stats_3 = statistics(s, DAILY_STEPS, ACTIVE_TIME, ACTIVE_DISTANCE, _delta(FITNESS_D_ANY), _delta(FATIGUE_D_ANY), *extra,
+    stats_3 = statistics(s, Names.DAILY_STEPS, Names.ACTIVE_TIME, Names.ACTIVE_DISTANCE,
+                         _delta(Names.FITNESS_D_ANY), _delta(Names.FATIGUE_D_ANY), *extra,
                          start=start, finish=finish)
-    stats_3 = coallesce(stats_3, ACTIVE_TIME, ACTIVE_DISTANCE)
-    stats_3 = coallesce_like(stats_3, _delta(FITNESS), _delta(FATIGUE))
+    stats_3 = coallesce(stats_3, Names.ACTIVE_TIME, Names.ACTIVE_DISTANCE)
+    stats_3 = coallesce_like(stats_3, _delta(Names.FITNESS), _delta(Names.FATIGUE))
     stats = merge_to_hour(stats, stats_3)
-    stats[ACTIVE_TIME_H] = stats[ACTIVE_TIME] / 3600
-    stats[ACTIVE_DISTANCE_KM] = stats[ACTIVE_DISTANCE] / 1000
-    stats[TIME] = pd.to_datetime(stats.index)
-    stats[LOCAL_TIME] = stats[TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
+    stats[Names.ACTIVE_TIME_H] = stats[Names.ACTIVE_TIME] / 3600
+    stats[Names.ACTIVE_DISTANCE_KM] = stats[Names.ACTIVE_DISTANCE] / 1000
+    stats[Names.TIME] = pd.to_datetime(stats.index)
+    stats[Names.LOCAL_TIME] = stats[Names.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     return stats
 
@@ -429,7 +426,7 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
     sub_selects = [sub_select(name, table) for name, table in zip(names, tables)]
     # don't call this TIME because even though it's moved to index it somehow blocks the later addition
     # of a TIME column (eg when plotting health statistics)
-    selects = [time_select.c.time.label(INDEX)] + \
+    selects = [time_select.c.time.label(Names.INDEX)] + \
               [sub.c.value.label(label) for sub, label in zip(sub_selects, labels)]
     if with_sources:
         selects += [sub.c.source_id.label(_src(label)) for sub, label in zip(sub_selects, labels)]
@@ -437,7 +434,7 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
     for sub in sub_selects:
         sources = sources.outerjoin(sub, time_select.c.time == sub.c.time)
     sql = select(selects).select_from(sources)
-    return pd.read_sql_query(sql=sql, con=s.connection(), index_col=INDEX)
+    return pd.read_sql_query(sql=sql, con=s.connection(), index_col=Names.INDEX)
 
 
 def present(df, *names, pattern=False):
@@ -485,7 +482,7 @@ def median_dt(df):
 
 def linear_resample_time(df, start=None, finish=None, dt=None, with_timespan=False, keep_nan=True, add_time=True):
     log.debug(f'Linear resample with index {type(df.index)}, columns {df.columns}')
-    if with_timespan is None: with_timespan = TIMESPAN_ID in df.columns
+    if with_timespan is None: with_timespan = Names.TIMESPAN_ID in df.columns
     dt = dt or median_dt(df)
     start = start or df.index.min()
     finish = finish or df.index.max()
@@ -495,27 +492,27 @@ def linear_resample_time(df, start=None, finish=None, dt=None, with_timespan=Fal
     ldf.interpolate(method='index', limit_area='inside', inplace=True)
     ldf = ldf.loc[ldf[KEEP] == True].drop(columns=[KEEP])
     if add_time:
-        ldf[TIME] = ldf.index
-        ldf[DELTA_TIME] = ldf[TIME].diff()
+        ldf[Names.TIME] = ldf.index
+        ldf[Names.DELTA_TIME] = ldf[Names.TIME].diff()
     if with_timespan:
         if keep_nan:
-            ldf.loc[~ldf[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())] = np.nan
+            ldf.loc[~ldf[Names.TIMESPAN_ID].isin(df[Names.TIMESPAN_ID].unique())] = np.nan
         else:
-            ldf = ldf.loc[ldf[TIMESPAN_ID].isin(df[TIMESPAN_ID].unique())]
+            ldf = ldf.loc[ldf[Names.TIMESPAN_ID].isin(df[Names.TIMESPAN_ID].unique())]
     return ldf
 
 
 def groups_by_time(s, start=None, finish=None):
-    q = s.query(ActivityJournal.start.label(INDEX), ActivityNearby.group.label(GROUP)). \
+    q = s.query(ActivityJournal.start.label(Names.INDEX), ActivityNearby.group.label(Names.GROUP)). \
         filter(ActivityNearby.activity_journal_id == ActivityJournal.id)
     if start:
         q = q.filter(ActivityJournal.start >= start)
     if finish:
         q = q.filter(ActivityJournal.start < finish)
-    return pd.read_sql_query(sql=q.statement, con=s.connection(), index_col=INDEX)
+    return pd.read_sql_query(sql=q.statement, con=s.connection(), index_col=Names.INDEX)
 
 
-def coallesce(df, *statistics, activity_group_label=None, mixed=MIXED,
+def coallesce(df, *statistics, activity_group_label=None, mixed=Names.MIXED,
               unpack=r'({statistic})\s*:\s*([^:]+)', pack='{statistic} : {activity_group}'):
     '''
     Combine statistics with more than one constraint.

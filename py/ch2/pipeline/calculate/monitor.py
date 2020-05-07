@@ -6,18 +6,17 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import count
 
 from .calculate import MultiProcCalculator
-from ...names import STEPS, REST_HR, HEART_RATE, DAILY_STEPS, BPM, STEPS_UNITS, summaries, SUM, AVG, CNT, MIN, MAX, MSR, \
-    LO_REST_HR, HI_REST_HR, ALL
+from ...names import Titles, Names, summaries, Summaries as S, Units
 from ..pipeline import LoaderMixin
 from ...lib import local_date_to_time, time_to_local_date, to_date, format_date, log_current_exception
 from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal, Composite, \
-    CompositeComponent, Source
+    CompositeComponent, Source, ActivityGroup
 from ...sql.utils import add
 
 log = getLogger(__name__)
 
 QUARTER_DAY = 6 * 60 * 60
-REST_HR_PERCENTILES = {LO_REST_HR: 5, REST_HR: 10, HI_REST_HR: 15}
+# REST_HR_PERCENTILES = {LO_REST_HR: 5, REST_HR: 10, HI_REST_HR: 15}
 
 
 class MonitorCalculator(LoaderMixin, MultiProcCalculator):
@@ -115,28 +114,28 @@ class MonitorCalculator(LoaderMixin, MultiProcCalculator):
 
     def _read_data(self, s, start, finish):
         rest_heart_rate = []
-        midpt = start + 0.5 * (finish - start)
-        m0 = s.query(func.avg(func.abs(StatisticJournalInteger.time - midpt))).join(StatisticName). \
-            filter(StatisticName.name == HEART_RATE,
-                   StatisticName.owner == self.owner_in,
-                   StatisticJournalInteger.time < finish,
-                   StatisticJournalInteger.time >= start,
-                   StatisticJournalInteger.value > 0).scalar()
-        log.debug('M0: %s' % m0)
-        if m0 and abs(m0 - QUARTER_DAY) < 0.25 * QUARTER_DAY:  # not evenly sampled
-            all_hr = sorted([row[0] for row in s.query(StatisticJournalInteger.value).join(StatisticName). \
-                filter(StatisticName.name == HEART_RATE,
-                       StatisticName.owner == self.owner_in,
-                       StatisticJournalInteger.time < finish,
-                       StatisticJournalInteger.time >= start,
-                       StatisticJournalInteger.value > 0).all()])
-            n = len(all_hr)
-            if n > 10:
-                rest_heart_rate = [(name, all_hr[n // pc]) for name, pc in REST_HR_PERCENTILES.items()]
-        if not rest_heart_rate:
-            log.info(f'Insufficient coverage for {REST_HR} for {start} - {finish}')
+        # midpt = start + 0.5 * (finish - start)
+        # m0 = s.query(func.avg(func.abs(StatisticJournalInteger.time - midpt))).join(StatisticName). \
+        #     filter(StatisticName.name == HEART_RATE,
+        #            StatisticName.owner == self.owner_in,
+        #            StatisticJournalInteger.time < finish,
+        #            StatisticJournalInteger.time >= start,
+        #            StatisticJournalInteger.value > 0).scalar()
+        # log.debug('M0: %s' % m0)
+        # if m0 and abs(m0 - QUARTER_DAY) < 0.25 * QUARTER_DAY:  # not evenly sampled
+        #     all_hr = sorted([row[0] for row in s.query(StatisticJournalInteger.value).join(StatisticName). \
+        #         filter(StatisticName.name == HEART_RATE,
+        #                StatisticName.owner == self.owner_in,
+        #                StatisticJournalInteger.time < finish,
+        #                StatisticJournalInteger.time >= start,
+        #                StatisticJournalInteger.value > 0).all()])
+        #     n = len(all_hr)
+        #     if n > 10:
+        #         rest_heart_rate = [(name, all_hr[n // pc]) for name, pc in REST_HR_PERCENTILES.items()]
+        # if not rest_heart_rate:
+        #     log.info(f'Insufficient coverage for {REST_HR} for {start} - {finish}')
         daily_steps = s.query(func.sum(StatisticJournalInteger.value)).join(StatisticName). \
-            filter(StatisticName.name == STEPS,
+            filter(StatisticName.name == Names.STEPS,
                    StatisticName.owner == self.owner_in,
                    StatisticJournalInteger.time < finish,
                    StatisticJournalInteger.time >= start).scalar()
@@ -152,8 +151,9 @@ class MonitorCalculator(LoaderMixin, MultiProcCalculator):
         #                start, StatisticJournalInteger,
         #                description='''An estimate of the resting HR.''' if name == REST_HR
         #                else '''A bound on the resting HR.''')
-        loader.add(DAILY_STEPS, STEPS_UNITS, summaries(SUM, AVG, CNT, MAX, MSR), ALL, source, daily_steps,
-                   start, StatisticJournalInteger, description='''The number of steps in a day.''')
+        loader.add(Titles.DAILY_STEPS, Units.STEPS_UNITS, summaries(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
+                   ActivityGroup.ALL, source, daily_steps, start, StatisticJournalInteger,
+                   description='''The number of steps in a day.''')
 
     def _args(self, missing, start, finish):
         start, finish = format_date(missing[start]), format_date(missing[finish])

@@ -7,8 +7,8 @@ from scipy.signal import find_peaks
 from .calculate import MultiProcCalculator, IntervalCalculatorMixin
 from ...data import statistics
 from ...lib import format_date, local_date_to_time
-from ...names import HEART_RATE, ALL, REST_HR, BPM, summaries, MIN, MSR
-from ...sql import StatisticJournalInteger
+from ...names import Titles, summaries, Summaries as S, Units
+from ...sql import StatisticJournalInteger, ActivityGroup
 
 log = getLogger(__name__)
 
@@ -27,7 +27,7 @@ class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         super().__init__(*args, owner_in=owner_in, schedule=schedule, **kargs)
 
     def _read_data(self, s, interval):
-        return statistics(s, HEART_RATE, activity_group=ALL,
+        return statistics(s, HEART_RATE, activity_group=ActivityGroup.ALL,
                           local_start=interval.start, local_finish=interval.finish)
 
     def _calculate_results(self, s, interval, df, loader):
@@ -39,8 +39,8 @@ class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             if measurements > len(df) * 0.01:
                 log.debug(f'Rest HR is {rest_hr} with {measurements} values')
                 # conversion to int as value above is numpy int64
-                loader.add(REST_HR, BPM, summaries(MIN, MSR), ALL, interval, int(rest_hr),
-                           local_date_to_time(interval.start), StatisticJournalInteger,
+                loader.add(Titles.REST_HR, Units.BPM, summaries(S.MIN, S.MSR), ActivityGroup.ALL, interval,
+                           int(rest_hr), local_date_to_time(interval.start), StatisticJournalInteger,
                            'The rest heart rate')
                 return
             else:

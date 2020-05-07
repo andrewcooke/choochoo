@@ -11,15 +11,9 @@ from ..lib import time_to_local_time
 from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic, \
     StatisticJournalText, StatisticName
 from ..pipeline.calculate.activity import ActivityCalculator
-from ..names import TIME, START, ACTIVE_TIME, DISTANCE, ACTIVE_DISTANCE, GROUP
+from ..names import Names
 
 log = getLogger(__name__)
-
-name = ActivityTopicField.NAME.lower()
-group = GROUP.lower()
-start = START.lower()
-time = TIME.lower()
-distance = DISTANCE.lower()
 
 
 def search(args, system, db):
@@ -50,7 +44,7 @@ and comparison must be between a name and a value (not two names).
 
     '''
     query, show, set, advanced = args[QUERY], args[SHOW], args[SET], args[ADVANCED]
-    if not show and not set: show = [ACTIVE_TIME, ACTIVE_DISTANCE]
+    if not show and not set: show = [Names.ACTIVE_TIME, Names.ACTIVE_DISTANCE]
     with db.session_context() as s:
         activities = unified_search(s, query, advanced=advanced)
         process_activities(s, activities, show, set)
@@ -85,15 +79,15 @@ def expand_activity(s, activity_journal):
             return None
 
     return {DB: activity_journal.id,
-            name: {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, ActivityTopicField.NAME,
+            'name': {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, ActivityTopicField.NAME,
                                                             ActivityTopic, activity_journal.activity_group)),
                    UNITS: None},
-            group: {VALUE: activity_journal.activity_group.name, UNITS: None},
-            start: {VALUE: time_to_local_time(activity_journal.start), UNITS: 'date'},
-            time: format(StatisticJournal.for_source(s, activity_journal.id, ACTIVE_TIME,
-                                                     ActivityCalculator, activity_journal.activity_group)),
-            distance: format(StatisticJournal.for_source(s, activity_journal.id, ACTIVE_DISTANCE,
-                                                         ActivityCalculator, activity_journal.activity_group))}
+            'group': {VALUE: activity_journal.activity_group.name, UNITS: None},
+            'start': {VALUE: time_to_local_time(activity_journal.start), UNITS: 'date'},
+            'time': format(StatisticJournal.for_source(s, activity_journal.id, Names.ACTIVE_TIME,
+                                                       ActivityCalculator, activity_journal.activity_group)),
+            'distance': format(StatisticJournal.for_source(s, activity_journal.id, Names.ACTIVE_DISTANCE,
+                                                           ActivityCalculator, activity_journal.activity_group))}
 
 
 def display(data):
@@ -116,7 +110,8 @@ def process_activities(s, activities, show, set):
     if set:
         name, value = parse_set(s, set)
     for activity in activities:
-        print(f'{display(activity.get_named(s, START, owner=ActivityCalculator))}  {activity.activity_group.name}  '
+        print(f'{display(activity.get_named(s, Names.START, owner=ActivityCalculator))}  '
+              f'{activity.activity_group.name}  '
               f'{display(activity.get_all_named(s, ActivityTopicField.NAME, owner=ActivityTopic))}')
         for qname in show:
             for result in activity.get_all_named(s, qname):

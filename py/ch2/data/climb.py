@@ -9,8 +9,7 @@ import numpy as np
 from .frame import linear_resample, present
 from ..lib.data import nearest_index, get_index_loc
 from ..sql import StatisticName, StatisticJournal
-from ..names import _delta, ELEVATION, DISTANCE, TOTAL_CLIMB, TIME, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_TIME, \
-    CLIMB_GRADIENT, CLIMB_POWER, POWER_ESTIMATE, CLIMB_CATEGORY
+from ..names import _delta, Names, Titles
 
 log = getLogger(__name__)
 
@@ -37,22 +36,22 @@ Climb = namedtuple('Climb', 'phi, min_elevation, min_gradient, max_gradient, max
 
 
 def find_climbs(df, params=Climb()):
-    df = df.drop_duplicates(subset=[DISTANCE])
-    by_dist = df.set_index(df[DISTANCE])
+    df = df.drop_duplicates(subset=[Names.DISTANCE])
+    by_dist = df.set_index(df[Names.DISTANCE])
     by_dist = linear_resample(by_dist, quantise=False)
     for dlo, dhi in find_climb_distances(by_dist, params=params):
-        tlo, thi = nearest_index(df, DISTANCE, dlo), nearest_index(df, DISTANCE, dhi)
+        tlo, thi = nearest_index(df, Names.DISTANCE, dlo), nearest_index(df, Names.DISTANCE, dhi)
         log.debug(f'Found climb from {tlo} - {thi} ({dlo}km - {dhi}km)')
-        up = df[ELEVATION].loc[thi] - df[ELEVATION].loc[tlo]
-        along = df[DISTANCE].loc[thi] - df[DISTANCE].loc[tlo]
-        climb = {TIME: thi,
-                 CLIMB_ELEVATION: up,
-                 CLIMB_DISTANCE: along,
-                 CLIMB_TIME: (thi - tlo).total_seconds(),
-                 CLIMB_GRADIENT: PERCENT * up / along}
+        up = df[Names.ELEVATION].loc[thi] - df[Names.ELEVATION].loc[tlo]
+        along = df[Names.DISTANCE].loc[thi] - df[Names.DISTANCE].loc[tlo]
+        climb = {Titles.TIME: thi,
+                 Titles.CLIMB_ELEVATION: up,
+                 Titles.CLIMB_DISTANCE: along,
+                 Titles.CLIMB_TIME: (thi - tlo).total_seconds(),
+                 Titles.CLIMB_GRADIENT: PERCENT * up / along}
         for height in sorted(CLIMB_CATEGORIES.keys()):
             if up >= height:
-                climb[CLIMB_CATEGORY] = CLIMB_CATEGORIES[height]
+                climb[Titles.CLIMB_CATEGORY] = CLIMB_CATEGORIES[height]
             else:
                 break
         log.debug(climb)
@@ -60,7 +59,7 @@ def find_climbs(df, params=Climb()):
 
 
 def find_climb_distances(df, params=Climb()):
-    mn, mx = df[ELEVATION].min(), df[ELEVATION].max()
+    mn, mx = df[Names.ELEVATION].min(), df[Names.ELEVATION].max()
     if mx - mn > params.min_elevation:
         score, lo, hi = biggest_climb(df, params=params)
         if score:
@@ -82,7 +81,7 @@ def split(df, lo, hi, inside=True):
 
 
 def contiguous(df, params=Climb()):
-    up = df[ELEVATION].iloc[-1] - df[ELEVATION].iloc[0]
+    up = df[Names.ELEVATION].iloc[-1] - df[Names.ELEVATION].iloc[0]
     if up >= params.min_elevation:
         down, lo, hi = biggest_reversal(df)
         if down and down > params.max_reversal * up:
@@ -106,12 +105,12 @@ def first_or_none(generator):
 def biggest_reversal(df):
     max_elevation, max_indices, d = 0, (None, None), df.index[1] - df.index[0]
     for offset in range(1, len(df)-1):
-        df[_delta(ELEVATION)] = df[ELEVATION].diff(-offset)
-        if present(df, _delta(ELEVATION)):
-            d_elevation = df[_delta(ELEVATION)].dropna().max()
+        df[_delta(Names.ELEVATION)] = df[Names.ELEVATION].diff(-offset)
+        if present(df, _delta(Names.ELEVATION)):
+            d_elevation = df[_delta(Names.ELEVATION)].dropna().max()
             if d_elevation > max_elevation:
                 max_elevation = d_elevation
-                hi = df.loc[df[_delta(ELEVATION)] == max_elevation].index[0]  # break ties
+                hi = df.loc[df[_delta(Names.ELEVATION)] == max_elevation].index[0]  # break ties
                 lo = df.index[get_index_loc(df, hi) + offset]
                 max_indices = (lo, hi)
     return max_elevation, max_indices[0], max_indices[1]
@@ -137,13 +136,13 @@ def search(df, params=Climb()):
     # use times (indices) rather than ilocs because we're subdividing the data
     max_score, max_indices, d = 0, (None, None), df.index[1] - df.index[0]
     for offset in range(len(df)-1, 0, -1):
-        df[_delta(ELEVATION)] = df[ELEVATION].diff(offset)
+        df[_delta(Names.ELEVATION)] = df[Names.ELEVATION].diff(offset)
         d_distance = d * offset
         min_elevation = max(params.min_elevation, params.min_gradient * d_distance / PERCENT)
-        if df[_delta(ELEVATION)].max() > min_elevation:  # avoid some work
+        if df[_delta(Names.ELEVATION)].max() > min_elevation:  # avoid some work
             # factor of 1000 below to convert km to m
-            df[SCORE] = (df[_delta(ELEVATION)] / (1000 * d_distance)) ** params.phi
-            score = df.loc[df[_delta(ELEVATION)] > min_elevation, SCORE].max()
+            df[SCORE] = (df[_delta(Names.ELEVATION)] / (1000 * d_distance)) ** params.phi
+            score = df.loc[df[_delta(Names.ELEVATION)] > min_elevation, SCORE].max()
             if not np.isnan(score) and score > max_score:
                 max_score = score
                 hi = df.loc[df[SCORE] == max_score].index[0]  # arbitrarily pick one if tied (error here w item())
@@ -157,29 +156,29 @@ def climbs_for_activity(s, ajournal):
     from ..pipeline.calculate.activity import ActivityCalculator
 
     total = s.query(StatisticJournal).join(StatisticName). \
-        filter(StatisticName.name == TOTAL_CLIMB,
+        filter(StatisticName.name == Names.TOTAL_CLIMB,
                StatisticJournal.time == ajournal.start,
                StatisticName.owner == ActivityCalculator,
                StatisticName.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).one_or_none()
     statistics = s.query(StatisticJournal).join(StatisticName). \
-        filter(StatisticName.name.like('Climb %'),
+        filter(StatisticName.name.like(Names.CLIMB_ANY),
                StatisticJournal.time >= ajournal.start,
                StatisticJournal.time <= ajournal.finish,
                StatisticName.owner == ActivityCalculator,
                StatisticName.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).all()
     return total, sorted((dict((statistic.statistic_name.name, statistic) for statistic in climb_statistics)
                           for _, climb_statistics in groupby(statistics, key=lambda statistic: statistic.time)),
-                         key=lambda climb: climb[CLIMB_ELEVATION].value, reverse=True)
+                         key=lambda climb: climb[Titles.CLIMB_ELEVATION].value, reverse=True)
 
 
 def add_climb_stats(df, climbs):
     for climb in climbs:
-        finish = climb[TIME]
-        start = finish - dt.timedelta(seconds=climb[CLIMB_TIME])
-        if POWER_ESTIMATE in df.columns:
-            climb[CLIMB_POWER] = df.loc[start:finish, [POWER_ESTIMATE]].mean()
+        finish = climb[Titles.TIME]
+        start = finish - dt.timedelta(seconds=climb[Titles.CLIMB_TIME])
+        if Names.POWER_ESTIMATE in df.columns:
+            climb[Titles.CLIMB_POWER] = df.loc[start:finish, [Names.POWER_ESTIMATE]].mean()
         else:
-            log.warning(f'Missing {POWER_ESTIMATE} in climb data')
+            log.warning(f'Missing {Names.POWER_ESTIMATE} in climb data')
 
 
 # if __name__ == '__main__':

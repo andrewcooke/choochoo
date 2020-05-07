@@ -10,7 +10,7 @@ from .args import ACTIVITY, base_system_path, THUMBNAIL, BASE
 from ..data import activity_statistics
 from ..lib import local_time_to_time
 from ..sql import ActivityJournal
-from ..names import LONGITUDE, LATITUDE
+from ..names import Names
 
 
 log = getLogger(__name__)
@@ -48,7 +48,7 @@ def parse_activity(s, text):
 def read_activity(s, activity_id, decimate=10):
     try:
         activity_journal = s.query(ActivityJournal).filter(ActivityJournal.id == activity_id).one()
-        df = activity_statistics(s, LATITUDE, LONGITUDE, activity_journal=activity_journal)
+        df = activity_statistics(s, Names.LATITUDE, Names.LONGITUDE, activity_journal=activity_journal)
         return df.iloc[::decimate, :]
     except:
         raise Exception(f'{activity_id} is not a valid activity ID')

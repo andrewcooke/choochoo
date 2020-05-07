@@ -15,7 +15,7 @@ from ..sql import Constant
 log = getLogger(__name__)
 
 
-SRTM1_DIR = 'SRTM1.Dir'
+SRTM1_DIR_CNAME = 'srtm1_dir'
 SAMPLES = 3601
 # from view-source:http://dwtkns.com/srtm30m/
 BASE_URL = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11/'
@@ -65,7 +65,7 @@ class ElevationSupport:
         return flat, flon, self._reader(self._dir, flat, flon)
 
 
-def elevation_from_constant(s, interp, dir_name=SRTM1_DIR):
+def elevation_from_constant(s, interp, dir_name=SRTM1_DIR_CNAME):
     try:
         dir = Constant.get(s, dir_name).at(s).value
         if not exists(dir): raise Exception(f'SRTM1 directory {dir} missing')

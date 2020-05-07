@@ -10,7 +10,7 @@ from string import ascii_letters
 import pandas as pd
 from binascii import hexlify
 
-from ..names import ALL, BOOKMARK
+from ..names import Titles
 
 log = getLogger(__name__)
 
@@ -101,7 +101,9 @@ def reftuple(name, *args, **kargs):
 
     class klass(namedtuple(name, *args, **kargs)):
 
-        def expand(self, s, time, default_owner=None, default_activity_group=ALL):
+        from ..sql import ActivityGroup
+
+        def expand(self, s, time, default_owner=None, default_activity_group=ActivityGroup.ALL):
             instance = self
             for name in self._fields:
                 value = getattr(instance, name)
@@ -187,13 +189,13 @@ def left_interpolate(left, right, **kargs):
     return both.loc[both[tmp] == True].drop(columns=[tmp])
 
 
-def bookend(df, column=BOOKMARK):
+def bookend(df, column=Titles.BOOKMARK):
     # https://stackoverflow.com/questions/53927414/get-only-the-first-and-last-rows-of-each-group-with-pandas
     g = df.groupby(column)
     return pd.concat([g.head(1), g.tail(1)]).drop_duplicates().sort_index()
 
 
-def expand(s, text, before, vars=None, default_owner=None, default_activity_group=ALL):
+def expand(s, text, before, vars=None, default_owner=None, default_activity_group=None):
     '''
     Recursively expand any ${name} occurrences in the text using vars (if given) and database.
 
@@ -202,6 +204,7 @@ def expand(s, text, before, vars=None, default_owner=None, default_activity_grou
 
     from ..sql import StatisticName, StatisticJournal, ActivityGroup
 
+    if default_activity_group is None: default_activity_group = ActivityGroup.ALL
     if vars is None: vars = {}
     pattern = compile(r'(.*)\${([^}]+)}(.*)')
 

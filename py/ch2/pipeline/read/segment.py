@@ -82,7 +82,7 @@ class SegmentReader(ActivityReader):
             sjournal = add(s, SegmentJournal(segment_id=segment.id, activity_journal=ajournal,
                                              start=start_time, finish=finish_time))
             log.info('Added %s for %s - %s' %
-                           (segment.name, format_time(start_time), format_time(finish_time)))
+                     (segment.name, format_time(start_time), format_time(finish_time)))
             s.commit()  # needed to get id on sjournal (and let other workers in)
             # since source is sjournal we cannot use on_success
             Timestamp.set(s, self, constraint=segment, source=sjournal)

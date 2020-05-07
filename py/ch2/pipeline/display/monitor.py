@@ -3,7 +3,7 @@ from logging import getLogger
 
 from .display import Displayer
 from ..calculate.monitor import MonitorCalculator
-from ...names import REST_HR, DAILY_STEPS
+from ...names import Names
 from ...diary.database import summary_column
 from ...diary.model import value, optional_text
 from ...sql.tables.statistic import StatisticJournal, StatisticName
@@ -15,7 +15,7 @@ class MonitorDisplayer(Displayer):
 
     @optional_text('Monitor')
     def _read_date(self, s, date):
-        for field in self.__read_fields(s, date, DAILY_STEPS, REST_HR):
+        for field in self.__read_fields(s, date, Names.DAILY_STEPS, Names.REST_HR):
             yield value(field.statistic_name.name, field.value,
                         units=field.statistic_name.units, measures=field.measures_as_model(date))
 
@@ -28,7 +28,7 @@ class MonitorDisplayer(Displayer):
 
     @optional_text('Monitor')
     def _read_schedule(self, s, date, schedule):
-        for name in self.__names(s, DAILY_STEPS, REST_HR):
+        for name in self.__names(s, Names.DAILY_STEPS, Names.REST_HR):
             column = list(summary_column(s, schedule, date, name))
             if column:
                 yield column

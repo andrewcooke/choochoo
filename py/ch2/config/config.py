@@ -12,9 +12,7 @@ from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
-from ..names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING, FITNESS_D, FTHR, BPM, FATIGUE_D, \
-    LATITUDE, DEG, LONGITUDE, HEART_RATE, SPEED, DISTANCE, KM, MS, ALTITUDE, CADENCE, RPM, M, ALL, summaries, AVG, MSR, \
-    CNT
+from ..names import Names, Titles, summaries, Sports, Units, Summaries
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
@@ -35,9 +33,9 @@ from ..pipeline.display.monitor import MonitorDisplayer
 from ..pipeline.display.response import ResponseDisplayer
 from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.segment import SegmentReader
-from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant
+from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant, ActivityGroup
 from ..sql.types import short_cls
-from ..srtm.file import SRTM1_DIR
+from ..srtm.file import SRTM1_DIR_CNAME
 
 log = getLogger(__name__)
 
@@ -65,7 +63,7 @@ class Config:
     def load(self, s):
         # hopefully you won't need to over-ride this, but instead one of the more specific methods
         self._pre(s)
-        self._load_activity_group(s, ALL, 'All activities')  # a widely used default
+        self._load_activity_group(s, ActivityGroup.ALL, 'All activities')  # a widely used default
         add_loader_support(s)  # required by standard statistics calculations
         self._load_specific_activity_groups(s)
         self._load_activities_pipeline(s, Counter())
@@ -104,25 +102,25 @@ class Config:
         # more complex mapping is supported using kits (see acooke configuration),
         # but the top level must be a FIT field value for it to be recognized for monitor data
         # (which uses defaults only).
-        return {SPORT_CYCLING: BIKE,
-                SPORT_RUNNING: RUN,
-                SPORT_SWIMMING: SWIM,
-                SPORT_WALKING: WALK}
+        return {Sports.SPORT_CYCLING: BIKE,
+                Sports.SPORT_RUNNING: RUN,
+                Sports.SPORT_SWIMMING: SWIM,
+                Sports.SPORT_WALKING: WALK}
 
     def _all_groups_but_all(self):
-        return [group for group in self._activity_groups.values() if group.name != ALL]
+        return [group for group in self._activity_groups.values() if group.name != ActivityGroup.ALL]
 
     def _record_to_db(self):
         # the mapping from FIT fields to database entries
         # you really don't want to alter this unless you know what you are doing...
         # todo - should this depend on activity group?
-        return {'position_lat': (LATITUDE, DEG, StatisticJournalType.FLOAT),
-                'position_long': (LONGITUDE, DEG, StatisticJournalType.FLOAT),
-                'heart_rate': (HEART_RATE, BPM, StatisticJournalType.INTEGER),
-                'enhanced_speed': (SPEED, MS, StatisticJournalType.FLOAT),
-                'distance': (DISTANCE, KM, StatisticJournalType.FLOAT),
-                'enhanced_altitude': (ALTITUDE, M, StatisticJournalType.FLOAT),
-                'cadence': (CADENCE, RPM, StatisticJournalType.INTEGER)}
+        return {'position_lat': (Names.LATITUDE, Units.DEG, StatisticJournalType.FLOAT),
+                'position_long': (Names.LONGITUDE, Units.DEG, StatisticJournalType.FLOAT),
+                'heart_rate': (Names.HEART_RATE, Units.BPM, StatisticJournalType.INTEGER),
+                'enhanced_speed': (Names.SPEED, Units.MS, StatisticJournalType.FLOAT),
+                'distance': (Names.DISTANCE, Units.KM, StatisticJournalType.FLOAT),
+                'enhanced_altitude': (Names.ALTITUDE, Units.M, StatisticJournalType.FLOAT),
+                'cadence': (Names.CADENCE, Units.RPM, StatisticJournalType.INTEGER)}
 
     def _load_activities_pipeline(self, s, c):
         sport_to_activity = self._sport_to_activity()
@@ -152,7 +150,7 @@ class Config:
         for activity_group in self._impulse_groups():
             add_impulse(s, c, activity_group)
             # we need a value here for various UI reasons.  might as well use my own value...
-            add_activity_constant(s, activity_group, FTHR, default_fthr,
+            add_activity_constant(s, activity_group, Names.FTHR, default_fthr,
                                   description=f'''
 Heart rate (in bpm) at functional threshold for activities in the {activity_group.name} group.
 
@@ -160,7 +158,7 @@ Your FTHR is the highest sustained heart rate you can maintain for long periods 
 It is used to calculate how hard you are working (the Impulse) and, from that, 
 your FF-model parameters (fitness and fatigue).
 ''',
-                                  units=BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+                                  units=Units.BPM, statistic_journal_type=StatisticJournalType.INTEGER)
         add_climb(s)  # default climb calculator
         fitness, fatigue = self._ff_parameters()
         add_responses(s, c, fitness=fitness, fatigue=fatigue)
@@ -196,8 +194,8 @@ your FF-model parameters (fitness and fatigue).
         # these tie-in to the constants used in add_impulse()
         fitness, fatigue = self._ff_parameters()
         add_displayer(s, ResponseDisplayer, c,
-                      fitness=[FITNESS_D % days for (days, _, _) in fitness],
-                      fatigue=[FATIGUE_D % days for (days, _, _) in fatigue])
+                      fitness=[Titles.FITNESS_D % days for (days, _, _) in fitness],
+                      fatigue=[Titles.FATIGUE_D % days for (days, _, _) in fatigue])
         add_displayer(s, ActivityDisplayer, c)
         c2 = Counter()
         for delegate in self._activity_displayer_delegates():
@@ -212,7 +210,7 @@ your FF-model parameters (fitness and fatigue).
         add_monitor(s, MonitorReader, c, sport_to_activity=sport_to_activity)
 
     def _load_constants(self, s):
-        add_constant(s, SRTM1_DIR, base_system_path(self._base, version=PERMANENT, subdir='srtm1', create=False),
+        add_constant(s, SRTM1_DIR_CNAME, base_system_path(self._base, version=PERMANENT, subdir='srtm1', create=False),
                      description='''
 Directory containing STRM1 hgt files for elevations.
 
@@ -242,20 +240,20 @@ so do not use an important password that applies to many accounts.
         add_diary_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
                               model={TYPE: EDIT}, description='Daily notes recorded by user in diary.')
         add_diary_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,
-                              units='kg', summary=summaries(AVG, MSR),
+                              units='kg', summary=summaries(Summaries.AVG, Summaries.MSR),
                               description='Weight recorded by user in diary.',
                               model={TYPE: FLOAT, LO: 50, HI: 100, DP: 1})
         add_diary_topic_field(s, diary, 'Sleep', c, StatisticJournalType.FLOAT,
-                              units='h', summary=AVG, description='Sleep time recorded by user in diary.',
+                              units='h', summary=Summaries.AVG, description='Sleep time recorded by user in diary.',
                               model={TYPE: FLOAT, LO: 0, HI: 24, DP: 1})
         add_diary_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
-                              summary=AVG, description='Mood recorded by user in diary.',
+                              summary=Summaries.AVG, description='Mood recorded by user in diary.',
                               model={TYPE: SCORE})
         add_diary_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
-                              summary=CNT, description='Medication recorded by user in diary.',
+                              summary=Summaries.CNT, description='Medication recorded by user in diary.',
                               model={TYPE: EDIT})
         add_diary_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
-                              summary=CNT, description='Weather recorded by user in diary.',
+                              summary=Summaries.CNT, description='Weather recorded by user in diary.',
                               model={TYPE: EDIT})
 
     def _load_activity_topics(self, s, c):

@@ -4,10 +4,10 @@ from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_f
     add_constant
 from ..power import add_power_estimate
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
-from ...names import SPORT_CYCLING, SPORT_RUNNING, SPORT_SWIMMING, SPORT_WALKING
+from ...names import Sports
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
-from ...msil2a.download import MSIL2A_DIR
+from ...msil2a.download import MSIL2A_DIR_CNAME
 from ...pipeline.calculate.power import Bike
 from ...pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
@@ -69,16 +69,16 @@ class ACooke(Config):
         # map the additional groups above based on kit use
         # (cotic and bowman are kit items added via kit commands)
 
-        return {SPORT_CYCLING: {
+        return {Sports.SPORT_CYCLING: {
                     ActivityReader.KIT: {
                         'cotic': MTB,
                         'bowman': ROAD,
                     },
                     DEFAULT: BIKE,
                 },
-                SPORT_RUNNING: RUN,
-                SPORT_SWIMMING: SWIM,
-                SPORT_WALKING: WALK}
+                Sports.SPORT_RUNNING: RUN,
+                Sports.SPORT_SWIMMING: SWIM,
+                Sports.SPORT_WALKING: WALK}
 
     def _load_power_statistics(self, s, c):
         # add power estimates for the two bikes
@@ -104,7 +104,7 @@ The parameter name must match the kit name (see the PowerEstimate constants).
 
     def _load_constants(self, s):
         super()._load_constants(s)
-        add_constant(s, MSIL2A_DIR, base_system_path(self._base, version=PERMANENT, subdir='msil2a', create=False),
+        add_constant(s, MSIL2A_DIR_CNAME, base_system_path(self._base, version=PERMANENT, subdir='msil2a', create=False),
                      description='''
 Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)
 

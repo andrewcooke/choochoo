@@ -11,8 +11,7 @@ from bokeh.palettes import *
 from math import pi
 
 from .utils import tooltip, evenly_spaced_hues
-from ...names import LOCAL_TIME, DIRECTION, ASPECT_RATIO, ACTIVE_DISTANCE, TOTAL_CLIMB, like, _delta, FITNESS_D_ANY, \
-    GROUP
+from ...names import Names, _delta, like
 from ...lib.data import linscale
 from ...lib.date import time_to_local_time, YMD
 
@@ -93,7 +92,7 @@ class Calendar:
 
     @staticmethod
     def _set_date(df):
-        df.loc[:, LOCAL_TIME] = df.index.map(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
+        df.loc[:, Names.LOCAL_TIME] = df.index.map(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     @staticmethod
     def _set_xy(df, start, finish, border_day, border_month, delta_year):
@@ -157,42 +156,42 @@ class Calendar:
 
     def std_distance(self):
         self.background('square', fill_alpha=0, line_alpha=1, color='lightgrey')
-        self.set_size(ACTIVE_DISTANCE, min=0.1)
+        self.set_size(Names.ACTIVE_DISTANCE, min=0.1)
         self.foreground('square', fill_alpha=1, line_alpha=0, color='black')
         self.show()
 
     def std_distance_climb_direction(self):
         self.background('circle', fill_alpha=1, line_alpha=0, color='#F0F0F0')
-        self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.1)
-        self.set_palette(TOTAL_CLIMB, K2R, gamma=0.3)  # more red
+        self.set_size(Names.ACTIVE_DISTANCE, min=0.2, max=1.1)
+        self.set_palette(Names.TOTAL_CLIMB, K2R, gamma=0.3)  # more red
         self.foreground('circle', fill_alpha=1, line_alpha=0)
         self.foreground('circle', fill_alpha=0, line_alpha=1, color='grey')
-        self.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.2)
+        self.set_arc(Names.DIRECTION, Names.ASPECT_RATIO, delta_radius=0.2)
         self.foreground('arc', fill_alpha=0, line_alpha=1, color='black')
         self.show()
 
     def std_distance_fitness_direction(self):
-        fitness = sorted(like(_delta(FITNESS_D_ANY), self._df.columns))[0]
+        fitness = sorted(like(_delta(Names.FITNESS_D_ANY), self._df.columns))[0]
         self.background('circle', fill_alpha=0, line_alpha=1, color='lightgrey')
-        self.set_size(ACTIVE_DISTANCE, min=0.2, max=1.1)
+        self.set_size(Names.ACTIVE_DISTANCE, min=0.2, max=1.1)
         self.set_palette(fitness, B2R, gamma=0.7)
         self.foreground('circle', fill_alpha=1, line_alpha=0)
-        self.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.2)
+        self.set_arc(Names.DIRECTION, Names.ASPECT_RATIO, delta_radius=0.2)
         self.foreground('arc', fill_alpha=0, line_alpha=1)
         self.show()
 
     def std_group_distance_climb_direction(self):
-        n = int(self._df[GROUP].max()) + 1
+        n = int(self._df[Names.GROUP].max()) + 1
         palette = list(evenly_spaced_hues(n, saturation=0.2, stagger=7))
         self.background('square', fill_alpha=0, line_alpha=1, color='#F0F0F0')
-        self.set_palette(GROUP, palette)
+        self.set_palette(Names.GROUP, palette)
         self.set_constant(CALENDAR_SIZE, 1)
         self.foreground('square', fill_alpha=1, line_alpha=0)
-        self.set_size(ACTIVE_DISTANCE, min=0.2, max=0.8)
-        self.set_palette(TOTAL_CLIMB, K2W, gamma=0.3)
+        self.set_size(Names.ACTIVE_DISTANCE, min=0.2, max=0.8)
+        self.set_palette(Names.TOTAL_CLIMB, K2W, gamma=0.3)
         self.foreground('circle', fill_alpha=1, line_alpha=0)
         self.foreground('circle', fill_alpha=0, line_alpha=1, color='black')
-        self.set_arc(DIRECTION, ASPECT_RATIO, delta_radius=0.2)
+        self.set_arc(Names.DIRECTION, Names.ASPECT_RATIO, delta_radius=0.2)
         self.foreground('arc', fill_alpha=0, line_alpha=1, color='black')
         self.show()
 

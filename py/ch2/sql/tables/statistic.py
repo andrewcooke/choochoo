@@ -2,7 +2,6 @@
 import datetime as dt
 from enum import IntEnum
 from logging import getLogger
-from re import split
 
 from sqlalchemy import Column, Integer, ForeignKey, Text, UniqueConstraint, Float, desc, asc, Index
 from sqlalchemy.exc import IntegrityError
@@ -11,12 +10,12 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .source import Interval
 from ..support import Base
-from ..types import Time, ShortCls, name
+from ..types import Time, ShortCls, Name, name_and_title, simple_name
 from ..utils import add
-from ...names import KMH, PC, BPM, STEPS_UNITS, S, M, KG, W, KCAL, KJ, FF, KM, ALL
 from ...diary.model import TYPE, MEASURES, SCHEDULES
 from ...lib.date import format_seconds, local_date_to_time, time_to_local_time
 from ...lib.utils import sigfig
+from ...names import Units
 
 log = getLogger(__name__)
 
@@ -26,7 +25,8 @@ class StatisticName(Base):
     __tablename__ = 'statistic_name'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, nullable=False, index=True)  # simple, displayable name
+    name = Column(Name, nullable=False, index=True)
+    title = Column(Text, nullable=False)
     description = Column(Text)
     units = Column(Text)
     summary = Column(Text)  # max, min, etc - comma separated list
@@ -36,19 +36,39 @@ class StatisticName(Base):
     statistic_journal_type = Column(Integer, nullable=False)  # StatisticJournalType
     UniqueConstraint(name, owner, activity_group_id)
 
+    def __init__(self, **kargs):
+        super().__init__(**name_and_title(kargs))
+
     def __str__(self):
         return '%s : %s (%s)' % (self.name, self.activity_group.name if self.activity_group else None, self.owner)
 
     @property
+    def qualified_name(self):
+        from .. import ActivityGroup
+        if self.activity_group.name != ActivityGroup.ALL:
+            return self.name + ':' + self.activity_group.name
+        else:
+            return self.name
+
+    @property
+    def qualified_title(self):
+        from .. import ActivityGroup
+        if self.activity_group.name != ActivityGroup.ALL:
+            return self.title + ' : ' + self.activity_group.title
+        else:
+            return self.title
+
+    @property
     def summaries(self):
         if self.summary.strip():
-            return [name(x) for x in self.summary.split(',')]
+            return [simple_name(x) for x in self.summary.split(',')]
         else:
             return []
 
     @classmethod
-    def add_if_missing(cls, s, name, type, units, summary, owner, activity_group=ALL, description=None):
+    def add_if_missing(cls, s, name, type, units, summary, owner, activity_group=None, description=None):
         from .activity import ActivityGroup
+        if activity_group is None: activity_group = ActivityGroup.ALL
         activity_group = ActivityGroup.from_name(s, activity_group)
         s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
@@ -87,8 +107,9 @@ class StatisticName(Base):
         return statistic_name
 
     @classmethod
-    def from_name(cls, s, name, owner, activity_group=ALL):
+    def from_name(cls, s, name, owner, activity_group=None):
         from .activity import ActivityGroup
+        if activity_group is None: activity_group = ActivityGroup.ALL
         return s.query(StatisticName). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
@@ -175,16 +196,16 @@ class StatisticJournal(Base):
         units = self.statistic_name.units
         if not units:
             return '%d' % self.value
-        elif units == M:
+        elif units == Units.M:
             if self.value > 2000:
                 return '%d km' % (self.value / 1000)
             else:
                 return '%d m' % self.value
-        elif units == S:
+        elif units == Units.S:
             return format_seconds(self.value)
-        elif units in (KMH, PC, BPM, STEPS_UNITS, W, KJ):
+        elif units in (Units.KMH, Units.PC, Units.BPM, Units.STEPS_UNITS, Units.W, Units.KJ):
             return '%d %s' % (self.value, units)
-        elif units == KCAL:
+        elif units == Units.KCAL:
             return '%s %s' % (sigfig(self.value, 2), units)
         else:
             return '%d %s' % (self.value, units)
@@ -345,25 +366,25 @@ class StatisticJournalFloat(StatisticJournal):
         units = self.statistic_name.units
         if not units:
             return '%f' % self.value
-        elif units == M:
+        elif units == Units.M:
             if self.value > 2000:
                 return '%.1f km' % (self.value / 1000)
             else:
                 return '%d m' % int(self.value)
-        elif units == KM:
+        elif units == Units.KM:
             if self.value > 2:
                 return '%.1f km' % self.value
             else:
                 return '%d m' % int(self.value * 1000)
-        elif units == S:
+        elif units == Units.S:
             return format_seconds(self.value)
-        elif units in (KMH, PC, KG, W, KJ):
+        elif units in (Units.KMH, Units.PC, Units.KG, Units.W, Units.KJ):
             return '%.1f %s' % (self.value, units)
-        elif units == KCAL:
+        elif units == Units.KCAL:
             return '%s %s' % (sigfig(self.value, 2), units)
-        elif units in (BPM, STEPS_UNITS):
+        elif units in (Units.BPM, Units.STEPS_UNITS):
             return '%d %s' % (int(self.value), units)
-        elif units == FF:
+        elif units == Units.FF:
             return '%d' % int(self.value)
         else:
             return '%s %s' % (self.value, units)

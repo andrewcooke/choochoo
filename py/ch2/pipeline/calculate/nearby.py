@@ -9,7 +9,7 @@ from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
 from .calculate import UniProcCalculator
-from ...names import LONGITUDE, LATITUDE, ACTIVE_DISTANCE
+from ...names import Names
 from ...rtree import MatchType
 from ...rtree.spherical import SQRTree
 from ...lib.date import to_time, local_date_to_time
@@ -129,12 +129,12 @@ class SimilarityCalculator(UniProcCalculator):
 
         agroup = ActivityGroup.from_name(s, self.nearby.activity_group)
         lat = s.query(StatisticName.id). \
-            filter(StatisticName.name == LATITUDE, StatisticName.activity_group == agroup).scalar()
+            filter(StatisticName.name == Names.LATITUDE, StatisticName.activity_group == agroup).scalar()
         lon = s.query(StatisticName.id). \
-            filter(StatisticName.name == LONGITUDE, StatisticName.activity_group == agroup).scalar()
+            filter(StatisticName.name == Names.LONGITUDE, StatisticName.activity_group == agroup).scalar()
         
         if not lat or not lon:
-            log.warning(f'No {LATITUDE} or {LONGITUDE} in database for {agroup}')
+            log.warning(f'No {Names.LATITUDE} or {Names.LONGITUDE} in database for {agroup}')
             return
 
         sj_lat = inspect(StatisticJournal).local_table
@@ -178,7 +178,7 @@ class SimilarityCalculator(UniProcCalculator):
         distances = dict((s.source.id, s.value)
                          for s in s.query(StatisticJournalFloat).
                          join(StatisticName).
-                         filter(StatisticName.name == ACTIVE_DISTANCE,
+                         filter(StatisticName.name == Names.ACTIVE_DISTANCE,
                                 StatisticName.owner == self.owner_in).all())  # todo - another owner
         n = 0
         for lo in affected_ids:

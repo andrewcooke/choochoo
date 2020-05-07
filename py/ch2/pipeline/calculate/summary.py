@@ -6,7 +6,7 @@ from sqlalchemy import func, inspect, and_, select
 from sqlalchemy.sql.functions import coalesce
 
 from .calculate import MultiProcCalculator, IntervalCalculatorMixin
-from ...names import MAX, MIN, SUM, CNT, AVG, MSR
+from ...names import Summaries as S
 from ...lib.date import local_date_to_time
 from ...sql.tables.source import Interval
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
@@ -50,14 +50,14 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         for statistic_name in data:
             summaries = statistic_name.summaries
             for summary in summaries:
-                value, units = self._calculate_value(s, statistic_name, summary, MIN in summaries,
+                value, units = self._calculate_value(s, statistic_name, summary, S.MIN in summaries,
                                                      start, finish, interval, measures)
                 if value is not None:
                     name = self.fmt_name(statistic_name.name, summary, self.schedule)
                     # we need to infer the type
-                    if summary in (MAX, MIN, SUM):
+                    if summary in (S.MAX, S.MIN, S.SUM):
                         new_type = TYPE_TO_JOURNAL_CLASS[type(value)]
-                    elif summary in (AVG,):
+                    elif summary in (S.AVG,):
                         new_type = StatisticJournalFloat
                     else:
                         new_type = StatisticJournalInteger
@@ -79,18 +79,18 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         units = statistic_name.units
         values = coalesce(sjf.c.value, sji.c.value, sjt.c.value)
 
-        if summary == MAX:
+        if summary == S.MAX:
             result = func.max(values)
-        elif summary == MIN:
+        elif summary == S.MIN:
             result = func.min(values)
-        elif summary == SUM:
+        elif summary == S.SUM:
             result = func.sum(values)
-        elif summary == CNT:
+        elif summary == S.CNT:
             result = func.count(values)
             units = None
-        elif summary == AVG:
+        elif summary == S.AVG:
             result = func.avg(values)
-        elif summary == MSR:
+        elif summary == S.MSR:
             self._calculate_measures(s, statistic_name, order_asc, start_time, finish_time, interval, measures)
             return None, None
         else:
@@ -105,7 +105,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         return next(s.connection().execute(stmt))[0], units
 
     def _describe(self, statistic_name, summary, interval):
-        adjective = {MAX: 'highest', MIN: 'lowest', SUM: 'total', CNT: 'number of', AVG: 'average'}[summary]
+        adjective = {S.MAX: 'highest', S.MIN: 'lowest', S.SUM: 'total', S.CNT: 'number of', S.AVG: 'average'}[summary]
         period = interval.schedule.describe().lower()
         if period == 'all':
             period = period + ' time'

@@ -12,13 +12,11 @@ from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
 from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, base_system_path, \
     PERMANENT
-from ..diary.model import TYPE
 from ..lib.date import time_to_local_time, Y, YMDTHMS
 from ..lib.io import data_hash, split_fit_path, touch
 from ..lib.log import log_current_exception, Record
 from ..lib.utils import clean_path, slow_warning
 from ..lib.workers import ProgressTree, SystemProgressTree
-from ..names import TIME
 from ..pipeline.read.activity import ActivityReader
 from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.read import AbortImportButMarkScanned
@@ -27,6 +25,8 @@ from ..sql import KitItem, FileHash, ActivityJournal
 log = getLogger(__name__)
 
 
+TYPE = 'type'
+TIME = 'time'
 STREAM = 'stream'
 DATA = 'data'
 EXTRA = 'extra'

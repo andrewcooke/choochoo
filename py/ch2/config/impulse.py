@@ -1,15 +1,16 @@
 from logging import getLogger
 
 from .database import add_statistics, add_enum_constant
-from ..names import FITNESS_D, FATIGUE_D, ALL
+from ..names import Titles, Names
 from ..pipeline.calculate.impulse import HRImpulse, ImpulseCalculator
 from ..pipeline.calculate.response import Response, ResponseCalculator
 from ..pipeline.read.segment import SegmentReader
+from ..sql import ActivityGroup
 from ..sql.types import short_cls
 
 log = getLogger(__name__)
 
-HR_IMPULSE_CNAME = 'HRImpulse'
+HR_IMPULSE_CNAME = 'hr_impulse'
 
 
 def add_impulse(s, c, activity_group):
@@ -44,12 +45,12 @@ def add_responses(s, c, fitness=((42, 1, 1),), fatigue=((7, 1, 5),)):
     responses = []
 
     for days, start, scale in fitness:
-        name = FITNESS_D % days
+        name = Names.FITNESS_D % days
         log.debug(f'Adding fitness {name}')
         constant = add_enum_constant(s, name, Response,
                                      {'src_owner': short_cls(ImpulseCalculator),
                                       'dest_name': name, 'tau_days': days, 'start': start, 'scale': scale},
-                                     single=True, activity_group=ALL, description=f'''
+                                     single=True, activity_group=ActivityGroup.ALL, description=f'''
 Data needed to calculate the FF-model fitness for {days} days.
 * Src_owner is the process that generated the input data (ImpulseCalculator calculates the HR impulses).
 * Dest_name is the statistic name where the results are stored.
@@ -60,12 +61,12 @@ Data needed to calculate the FF-model fitness for {days} days.
         responses.append(constant.name)
 
     for days, start, scale in fatigue:
-        name = FATIGUE_D % days
+        name = Names.FATIGUE_D % days
         log.debug(f'Adding fatigue {name}')
         constant = add_enum_constant(s, name, Response,
                                      {'src_owner': short_cls(ImpulseCalculator),
                                       'dest_name': name, 'tau_days': days, 'start': start, 'scale': scale},
-                                     single=True, activity_group=ALL, description=f'''
+                                     single=True, activity_group=ActivityGroup.ALL, description=f'''
 Data needed to calculate the FF-model fatigue for {days} days.
 * Src_owner is the process that generated the input data (ImpulseCalculator calculates the HR impulses).
 * Dest_name is the statistic name where the results are stored.

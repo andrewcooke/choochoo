@@ -7,8 +7,9 @@ from sqlalchemy.orm import relationship, backref
 
 from .source import Source, SourceType
 from ..support import Base
-from ..types import Time, Sort, ShortCls, NullStr, Name
+from ..types import Time, Sort, ShortCls, NullStr, Name, name_and_title, simple_name
 from ...lib.date import format_time, local_date_to_time, local_time_to_time
+from ...names import Titles
 
 log = getLogger(__name__)
 
@@ -17,10 +18,16 @@ class ActivityGroup(Base):
 
     __tablename__ = 'activity_group'
 
+    ALL = simple_name(Titles.ALL)
+
     id = Column(Integer, primary_key=True)
-    name = Column(Name, nullable=False)
+    name = Column(Name, nullable=False, index=True)
+    title = Column(Text, nullable=False)
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Sort, nullable=False)
+
+    def __init__(self, **kargs):
+        super().__init__(**name_and_title(kargs))
 
     def __str__(self):
         return self.name

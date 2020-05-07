@@ -7,9 +7,6 @@ from re import sub
 
 from sqlalchemy import TypeDecorator, Integer, Float, Text
 
-from ..lib.date import to_time, to_date
-from ..lib.schedule import Schedule
-
 log = getLogger(__name__)
 
 
@@ -18,6 +15,7 @@ class Date(TypeDecorator):
     impl = Integer
 
     def process_literal_param(self, date, dialect):
+        from ..lib.date import to_date
         if date is None:
             return date
         return to_date(date).toordinal()
@@ -38,6 +36,7 @@ class Time(TypeDecorator):
     impl = Float
 
     def process_literal_param(self, time, dialect):
+        from ..lib.date import to_time
         if time is None:
             return time
         else:
@@ -148,6 +147,7 @@ class Sched(TypeDecorator):
     impl = Text
 
     def process_literal_param(self, sched, dialect):
+        from ..lib.schedule import Schedule
         if sched is None:
             return sched
         if not isinstance(sched, Schedule):
@@ -157,6 +157,7 @@ class Sched(TypeDecorator):
     process_bind_param = process_literal_param
 
     def process_result_value(self, value, dialect):
+        from ..lib.schedule import Schedule
         if value is None:
             return None
         return Schedule(value)
@@ -165,6 +166,7 @@ class Sched(TypeDecorator):
 class OpenSched(Sched):
 
     def process_literal_param(self, sched, dialect):
+        from ..lib.schedule import Schedule
         if sched is None:
             return sched
         if not isinstance(sched, Schedule):
@@ -188,7 +190,7 @@ class Sort(TypeDecorator):
     process_bind_param = process_literal_param
 
 
-def name(name, none=True):
+def simple_name(name, none=True):
     if name is None and none:
         return None
     name = name.strip().lower()
@@ -204,7 +206,7 @@ class Name(TypeDecorator):
     impl = Text
 
     def process_literal_param(self, value, dialect):
-        return name(value)
+        return simple_name(value)
 
     process_bind_param = process_literal_param
 
@@ -216,8 +218,31 @@ class QualifiedName(TypeDecorator):
     def process_literal_param(self, value, dialect):
         if value and ':' in value:
             left, right = value.rsplit(':', 1)
-            return name(left) + ':' + name(right)
+            return simple_name(left) + ':' + simple_name(right)
         else:
-            return name(value)
+            return simple_name(value)
 
     process_bind_param = process_literal_param
+
+
+NAME = 'name'
+TITLE = 'title'
+
+
+def name_and_title(kargs):
+    '''
+    allow one or the other to be specified, with special treatment for name only to support legacy code.
+    '''
+    if NAME in kargs:
+        name = kargs[NAME]
+        if TITLE not in kargs:
+            kargs[TITLE] = name
+            kargs[NAME] = simple_name(name)
+        else:
+            if kargs[NAME] != simple_name(name):
+                raise Exception(f'Non-simple name: {name}')
+    elif TITLE in kargs:
+        kargs[NAME] = simple_name(kargs[TITLE])
+    else:
+        raise Exception(f'Provide {NAME} ot {TITLE}')
+    return kargs

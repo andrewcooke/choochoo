@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import count
 
 from .calculate import UniProcCalculator
 from ...data.frame import statistics
-from ...names import _src, ALL, HR_IMPULSE_10, COVERAGE, HEART_RATE, _cov
+from ...names import _src, Names, Titles, _cov
 from ...data.response import sum_to_hour, calc_response
 from ...lib.date import round_hour, to_time, local_date_to_time, now
 from ..pipeline import LoaderMixin
@@ -116,7 +116,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
                    CompositeComponent.input_source_id != None)
         unused = s.query(count(StatisticJournal.id)). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-            filter(StatisticName.name == HR_IMPULSE_10,
+            filter(StatisticName.name == Names.HR_IMPULSE_10,
                    StatisticName.owner == self.owner_in,
                    ~StatisticJournal.source_id.in_(inputs))
         log.debug(unused)
@@ -133,13 +133,13 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
 
     def _run_one(self, s, missed):
         data = self.__read_data(s)
-        if HR_IMPULSE_10 in data.columns and COVERAGE in data.columns:
+        if Names.HR_IMPULSE_10 in data.columns and Names.COVERAGE in data.columns:
             # coverage is calculated by the loader and seems to reflect records that have location data but not
             # HR data.  so i guess it makes sense to scale.
             # i don't remember why / when i added this - it might have been when using an optical monitor?
             # it seems like a relatively small effect in most cases.
-            data.loc[now()] = {HR_IMPULSE_10: 0.0, _src(HR_IMPULSE_10): None, COVERAGE: 100}
-            data[SCALED] = data[HR_IMPULSE_10] * 100 / data[COVERAGE]
+            data.loc[now()] = {Names.HR_IMPULSE_10: 0.0, _src(Names.HR_IMPULSE_10): None, Names.COVERAGE: 100}
+            data[SCALED] = data[Names.HR_IMPULSE_10] * 100 / data[Names.COVERAGE]
             all_sources = list(self.__make_sources(s, data))
             for response in self.responses:
                 log.info(f'Creating values for {response.dest_name}')
@@ -154,12 +154,13 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
                     # that it is smooth.  so we only increment the source when necessary.
                     while sources and time >= sources[0][0]:
                         source = sources.pop(0)[1]
-                    loader.add(response.dest_name, None, None, ALL, source, value, time, StatisticJournalFloat,
+                    loader.add(response.dest_name, None, None, ActivityGroup.ALL, source, value, time,
+                               StatisticJournalFloat,
                                description=f'The SHRIMP response for a decay of {response.tau_days} days')
                 loader.load()
 
     def __read_coverage(self, s):
-        names = s.query(StatisticName).filter(StatisticName.name == _cov(HEART_RATE)).all()
+        names = s.query(StatisticName).filter(StatisticName.name == _cov(Names.HEART_RATE)).all()
         coverages = statistics(s, *names, owner=SegmentReader, check=False)
         coverages = coverages.loc[:].replace(0, np.nan)
         # extends the coverage across columns in both directions, so all columns are the same
@@ -168,27 +169,27 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
         coverages.fillna(axis='columns', method='ffill', inplace=True)
         if not coverages.empty:
             # since all are the same, just take one
-            coverages = coverages.iloc[:, [0]].rename(columns={coverages.columns[0]: COVERAGE})
+            coverages = coverages.iloc[:, [0]].rename(columns={coverages.columns[0]: Names.COVERAGE})
         return coverages
 
     def __read_data(self, s):
-        hr10 = statistics(s, HR_IMPULSE_10, activity_group=ActivityGroup.from_name(s, ALL),
+        hr10 = statistics(s, Names.HR_IMPULSE_10, activity_group=ActivityGroup.from_name(s, ActivityGroup.ALL),
                           owner=self.owner_in, with_sources=True, check=False)
         coverage = self.__read_coverage(s)
         # reindex and expand the coverage so we have a value at each impulse measurement
         coverage.reindex(index=hr10.index, method='nearest', copy=False)
         data = hr10.join(coverage, how='outer')
-        if HR_IMPULSE_10 in data.columns and COVERAGE in data.columns:
-            data.loc[:, [HR_IMPULSE_10]] = data.loc[:, [HR_IMPULSE_10]].fillna(0.0,)
-            data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='ffill')
-            data.loc[:, [COVERAGE]] = data.loc[:, [COVERAGE]].fillna(axis='index', method='bfill')
+        if Names.HR_IMPULSE_10 in data.columns and Names.COVERAGE in data.columns:
+            data.loc[:, [Names.HR_IMPULSE_10]] = data.loc[:, [Names.HR_IMPULSE_10]].fillna(0.0,)
+            data.loc[:, [Names.COVERAGE]] = data.loc[:, [Names.COVERAGE]].fillna(axis='index', method='ffill')
+            data.loc[:, [Names.COVERAGE]] = data.loc[:, [Names.COVERAGE]].fillna(axis='index', method='bfill')
         return data
 
     def __make_sources(self, s, data):
         # this chains forwards from zero, adding a new composite for each new impulse source.
         # in theory we could reconstruct only missing entries.
         log.info('Creating sources')
-        name = _src(HR_IMPULSE_10)
+        name = _src(Names.HR_IMPULSE_10)
         prev = add(s, Composite(n_components=0))
         yield to_time(0.0), prev
         # find times where the source changes

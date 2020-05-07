@@ -13,7 +13,7 @@ from ..sql import Constant
 log = getLogger(__name__)
 
 
-MSIL2A_DIR = 'MSIL2A.Dir'
+MSIL2A_DIR_CNAME = 'msil2a_dir'
 
 
 def clean_and_group_products(products):
@@ -94,7 +94,7 @@ def download_missing(api, products, data_dir, download_dir='/tmp'):
         raise Exception(f'Some downloads triggered LTA ({", ".join(lta.keys())})')
 
 
-def cached_download(s, api, products, dir_name=MSIL2A_DIR):
+def cached_download(s, api, products, dir_name=MSIL2A_DIR_CNAME):
     '''
     The products (a dict) are the result if a query to SentinelAPI.  They describe various candidate files.
     We assume that products at nearby times need to be combined so must be downloaded together.

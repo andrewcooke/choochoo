@@ -197,6 +197,8 @@ class Dummy(Source):
 
     __tablename__ = 'dummy_source'
 
+    DUMMY = 'Dummy'
+
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
 
     __mapper_args__ = {

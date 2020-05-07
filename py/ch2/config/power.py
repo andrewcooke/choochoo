@@ -6,7 +6,7 @@ from ..pipeline.calculate.power import Power, ExtendedPowerCalculator
 
 log = getLogger(__name__)
 
-POWER_ESTIMATE_CNAME = 'PowerEstimate'
+POWER_ESTIMATE_CNAME = 'power_estimate'
 
 
 def add_power_estimate(s, c, activity_group, bike=None,

@@ -6,7 +6,7 @@ from re import compile, sub
 
 from urwid import Pile, Text, Filler, Edit, Columns, Frame, Divider, Padding, connect_signal
 
-from ...names import S, W, PC
+from ...names import Units
 from ...diary.model import TYPE, VALUE, TEXT, DP, HI, LO, FLOAT, UNITS, SCORE, LABEL, EDIT, MEASURES, SCHEDULES, TAG, \
     LINK, INTEGER, DB, value, text, COMPARE_LINKS
 from ...lib import format_seconds
@@ -85,11 +85,11 @@ def layout(model, f, active, before, after, leaf):
 
 
 def fmt_value_units(model):
-    if model[UNITS] == S:
+    if model[UNITS] == Units.S:
         return [format_seconds(model[VALUE])]
-    elif model[UNITS] == W:
+    elif model[UNITS] == Units.W:
         return [format_watts(model[VALUE])]
-    elif model[UNITS] == PC:
+    elif model[UNITS] == Units.PC:
         return [format_percent(model[VALUE])]
     else:
         text = []

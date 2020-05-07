@@ -15,7 +15,7 @@ from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
 from ...lib.date import time_to_local_date, format_time
-from ...names import HEART_RATE, BPM, STEPS, STEPS_UNITS, CUMULATIVE_STEPS, _new, TIME, SOURCE, ALL
+from ...names import Names, Titles, _new, Units
 from ...sql.database import StatisticJournalType, ActivityGroup
 from ...sql.tables.monitor import MonitorJournal
 from ...sql.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
@@ -63,14 +63,14 @@ class MonitorLoader(StatisticJournalLoader):
         dummy = super()._preload()
         try:
             for name in self._s.query(StatisticName). \
-                    filter(StatisticName.name == CUMULATIVE_STEPS,
+                    filter(StatisticName.name == Names.CUMULATIVE_STEPS,
                            StatisticName.owner == self._owner).all():
                 n = self._s.query(count(StatisticJournal.id)). \
                     filter(StatisticJournal.statistic_name == name,
                            StatisticJournal.time >= self.start,
                            StatisticJournal.time <= self.finish).scalar()
                 if n and self.start and self.finish:
-                    log.warning(f'Deleting {n} overlapping {CUMULATIVE_STEPS}')
+                    log.warning(f'Deleting {n} overlapping {Names.CUMULATIVE_STEPS}')
                     self._s.query(StatisticJournal). \
                         filter(StatisticJournal.statistic_name == name,
                                StatisticJournal.time >= self.start,
@@ -86,7 +86,7 @@ class MonitorLoader(StatisticJournalLoader):
         prev.value = max(prev.value, instance.value)
 
 
-NEW_STEPS = _new(STEPS)
+NEW_STEPS = _new(Names.STEPS)
 STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 
@@ -185,13 +185,13 @@ class MonitorReader(MultiProcFitReader):
         first_timestamp, last_timestamp, mjournal, records = data
         for record in records:
             if HEART_RATE_ATTR in record.data and record.data[HEART_RATE_ATTR][0][0]:
-                loader.add(HEART_RATE, BPM, None, ALL, mjournal, record.data[HEART_RATE_ATTR][0][0],
-                           record.timestamp, StatisticJournalInteger,
+                loader.add(Titles.HEART_RATE, Units.BPM, None, ActivityGroup.ALL, mjournal,
+                           record.data[HEART_RATE_ATTR][0][0], record.timestamp, StatisticJournalInteger,
                            description='''The instantaneous heart rate.''')
             if STEPS_ATTR in record.data:
                 for (sport, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
                     try:
-                        loader.add(CUMULATIVE_STEPS, STEPS_UNITS, None,
+                        loader.add(Titles.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
                                    self.sport_to_activity_group[sport], mjournal, steps,
                                    record.timestamp, StatisticJournalInteger,
                                    description='''The number of steps in a day to this point in time.''')
@@ -209,19 +209,20 @@ class MonitorReader(MultiProcFitReader):
     def _step_activity_group_ids(self, s):
         return [row[0] for row in s.query(distinct(ActivityGroup.id)).
             join(StatisticName).
-            filter(StatisticName.name == CUMULATIVE_STEPS,
+            filter(StatisticName.name == Names.CUMULATIVE_STEPS,
                    StatisticName.owner == self.owner_out).all()]
 
     def _read_diff(self, s, activity_group_id):
         t = _tables()
         qs = select([t.sj.c.time.label("time"), t.sji.c.value.label("steps")]). \
             select_from(t.sj.join(t.sn).join(t.sji)). \
-            where(and_(t.sn.c.name == STEPS, t.sn.c.activity_group_id == activity_group_id,
+            where(and_(t.sn.c.name == Names.STEPS, t.sn.c.activity_group_id == activity_group_id,
                        t.sn.c.owner == self.owner_out)).alias("steps")
-        q = select([t.sj.c.time.label(TIME), t.sj.c.source_id.label(SOURCE), t.sji.c.value.label(CUMULATIVE_STEPS),
-                    qs.c.steps.label(STEPS)]). \
+        q = select([t.sj.c.time.label(Names.TIME), t.sj.c.source_id.label(Names.SOURCE),
+                    t.sji.c.value.label(Names.CUMULATIVE_STEPS),
+                    qs.c.steps.label(Names.STEPS)]). \
             select_from(t.sj.join(t.sn).join(t.sji).outerjoin(qs, t.sj.c.time == qs.c.time)). \
-            where(and_(t.sn.c.name == CUMULATIVE_STEPS, t.sn.c.activity_group_id == activity_group_id,
+            where(and_(t.sn.c.name == Names.CUMULATIVE_STEPS, t.sn.c.activity_group_id == activity_group_id,
                        t.sn.c.owner == self.owner_out)). \
             order_by(t.sj.c.time)
         # log.debug(q)
@@ -229,26 +230,26 @@ class MonitorReader(MultiProcFitReader):
         return df
 
     def _calculate_diff(self, df):
-        df[NEW_STEPS] = df[CUMULATIVE_STEPS].diff()
-        df.loc[df[NEW_STEPS] < 0, NEW_STEPS] = df[CUMULATIVE_STEPS]
-        df.loc[df[NEW_STEPS].isna(), NEW_STEPS] = df[CUMULATIVE_STEPS]
+        df[NEW_STEPS] = df[Names.CUMULATIVE_STEPS].diff()
+        df.loc[df[NEW_STEPS] < 0, NEW_STEPS] = df[Names.CUMULATIVE_STEPS]
+        df.loc[df[NEW_STEPS].isna(), NEW_STEPS] = df[Names.CUMULATIVE_STEPS]
         return df
 
     def _write_diff(self, s, df, activity_group_id):
         activity_group = s.query(ActivityGroup).filter(ActivityGroup.id == activity_group_id).one()
-        steps = StatisticName.add_if_missing(s, STEPS, StatisticJournalType.INTEGER, STEPS_UNITS, None,
+        steps = StatisticName.add_if_missing(s, Titles.STEPS, StatisticJournalType.INTEGER, Units.STEPS_UNITS, None,
                                              self.owner_out, activity_group, description=STEPS_DESCRIPTION)
-        times = df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[STEPS].isna()].index.astype(np.int64) / 1e9
+        times = df.loc[(df[NEW_STEPS] != df[Names.STEPS]) & ~df[Names.STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):
             n = s.query(func.count(StatisticJournal.id)). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).scalar()
-            log.warning(f'Deleting {n} {STEPS}/{activity_group} entries')
+            log.warning(f'Deleting {n} {Names.STEPS}/{activity_group} entries')
             s.query(StatisticJournal.id). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).delete(synchronize_session=False)
         loader = StatisticJournalLoader(s, owner=self.owner_out)
-        for time, row in df.loc[(df[NEW_STEPS] != df[STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
-            loader.add(STEPS, STEPS_UNITS, None, activity_group, row[SOURCE], int(row[NEW_STEPS]),
+        for time, row in df.loc[(df[NEW_STEPS] != df[Names.STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
+            loader.add(Titles.STEPS, Units.STEPS_UNITS, None, activity_group, row[Names.SOURCE], int(row[NEW_STEPS]),
                        time, StatisticJournalInteger, description=STEPS_DESCRIPTION)
         loader.load()

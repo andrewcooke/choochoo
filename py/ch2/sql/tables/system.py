@@ -49,10 +49,10 @@ class SystemConstant(SystemBase):
         s.commit()
 
     TIMEZONE = 'timezone'
-    JUPYTER_URL = 'jupyter-url'
-    WEB_URL = 'web-url'
-    LAST_GARMIN = 'last-garmin'
-    DB_VERSION = 'db-version'
+    JUPYTER_URL = 'jupyter_url'
+    WEB_URL = 'web_url'
+    LAST_GARMIN = 'last_garmin'
+    DB_VERSION = 'db_version'
 
 
 class Process(SystemBase):

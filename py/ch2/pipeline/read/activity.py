@@ -7,8 +7,7 @@ from sqlalchemy.sql.functions import count
 from .read import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
 from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
-from ...names import LATITUDE, LONGITUDE, M, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, ELEVATION, RAW_ELEVATION, \
-    SPORT_GENERIC, PC, MIN, summaries, AVG, KM, _cov
+from ...names import Titles, Units, _cov, Sports, summaries, Summaries as S
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -38,10 +37,10 @@ class ActivityReader(MultiProcFitReader):
         self.define = define if define else {}
         self.kit = kit
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
-        self.record_to_db = [(field, name, units, STATISTIC_JOURNAL_CLASSES[type])
-                             for field, (name, units, type)
+        self.record_to_db = [(field, title, units, STATISTIC_JOURNAL_CLASSES[type])
+                             for field, (title, units, type)
                              in self._assert('record_to_db', record_to_db).items()]
-        self.add_elevation = not any(name == ELEVATION for (field, name, units, type) in self.record_to_db)
+        self.add_elevation = not any(title == Titles.ELEVATION for (field, title, units, type) in self.record_to_db)
         self.__ajournal = None  # save for coverage
         super().__init__(*args, sub_dir=ACTIVITY, **kargs)
 
@@ -125,7 +124,7 @@ class ActivityReader(MultiProcFitReader):
         if DEFAULT in lookup:
             return self._activity_group(s, path, sport, lookup[DEFAULT], define)
         log.warning('Unrecognised sport: "%s" in %s' % (sport, path))
-        if sport in (SPORT_GENERIC,):
+        if sport in (Sports.SPORT_GENERIC,):
             raise Exception(f'Ignoring {sport} entry')
         else:
             raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
@@ -259,33 +258,33 @@ class ActivityReader(MultiProcFitReader):
                 if record.value.timestamp > last_timestamp:
                     lat, lon, timestamp = None, None, record.value.timestamp
                     # customizable loader
-                    for field, name, units, type in self.record_to_db:
+                    for field, title, units, type in self.record_to_db:
                         value = record.data.get(field, None)
                         if logged < 3:
-                            log.debug(f'{name} = {value}')
+                            log.debug(f'{title} = {value}')
                         if value is not None:
                             value = value[0][0]
-                            if units == KM:  # internally everything uses M
+                            if units == Units.KM:  # internally everything uses M
                                 value /= 1000
-                            loader.add(name, units, None, activity_group, ajournal, value, timestamp, type,
+                            loader.add(title, units, None, activity_group, ajournal, value, timestamp, type,
                                        description=f'The value of field {field} in the FIT record.')
-                            if name == LATITUDE:
+                            if title == Titles.LATITUDE:
                                 lat = value
-                            elif name == LONGITUDE:
+                            elif title == Titles.LONGITUDE:
                                 lon = value
                     logged += 1
                     # values derived from lat/lon
                     if lat is not None and lon is not None:
                         x, y = Point.from_latitude_longitude(lat, lon).meters
-                        loader.add(SPHERICAL_MERCATOR_X, M, None, activity_group, ajournal, x, timestamp,
+                        loader.add(Titles.SPHERICAL_MERCATOR_X, Units.M, None, activity_group, ajournal, x, timestamp,
                                    StatisticJournalFloat, description='The WGS84 X coordinate')
-                        loader.add(SPHERICAL_MERCATOR_Y, M, None, activity_group, ajournal, y, timestamp,
+                        loader.add(Titles.SPHERICAL_MERCATOR_Y, Units.M, None, activity_group, ajournal, y, timestamp,
                                    StatisticJournalFloat, description='The WGS84 Y coordinate')
                         if self.add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
                             if elevation:
-                                loader.add(RAW_ELEVATION, M, None, activity_group, ajournal, elevation, timestamp,
-                                           StatisticJournalFloat,
+                                loader.add(Titles.RAW_ELEVATION, Units.M, None, activity_group, ajournal, elevation,
+                                           timestamp, StatisticJournalFloat,
                                            description='The elevation from SRTM1 at this location')
                 else:
                     log.warning('Ignoring duplicate record data for %s at %s - some data may be missing' %
@@ -308,8 +307,8 @@ class ActivityReader(MultiProcFitReader):
 
     def _read(self, s, path):
         loader = super()._read(s, path)
-        for (name, activity_group), percent in loader.coverage_percentages():
-            StatisticJournalFloat.add(s, _cov(name), PC, summaries(MIN, AVG), self.owner_out,
+        for (title, activity_group), percent in loader.coverage_percentages():
+            StatisticJournalFloat.add(s, _cov(title), Units.PC, summaries(S.MIN, S.AVG), self.owner_out,
                                       activity_group, self.__ajournal, percent, self.__ajournal.start,
-                                      description=f'Coverage (% of FIT records with data) for {name}.')
+                                      description=f'Coverage (% of FIT records with data) for {title}.')
         s.commit()

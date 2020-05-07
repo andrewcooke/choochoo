@@ -7,7 +7,6 @@ from os.path import dirname, basename, join
 from sqlalchemy.orm.exc import NoResultFound
 
 from ...commands.args import DB_VERSION
-from ...names import ALL
 from ...lib import format_date, time_to_local_date, to_time
 from ...lib.utils import clean_path
 from ...sql import StatisticJournal, StatisticName, StatisticJournalType, ActivityGroup
@@ -35,7 +34,7 @@ def journal_imported(record, new, cls, name, allow_time_zero=False):
 def match_statistic_name(record, old_statistic_name, new_s, owner, activity_group):
     extract = re.compile('ActivityGroup "(.*)"')  # old style constraint
     if activity_group and extract.match(activity_group): activity_group = extract.match(activity_group).group(1)
-    if not activity_group: activity_group = ALL
+    if not activity_group: activity_group = ActivityGroup.ALL
     try:
         log.debug(f'Trying to find new statistic_name for {old_statistic_name} ({owner})')
         new_statistic_name = new_s.query(StatisticName). \

@@ -5,7 +5,7 @@ dev/shutdown.sh > /dev/null
 
 BASE=~/.ch2
 
-NEW_VERSION=`grep 'version=' py/setup.py | sed -e "s/.*version='\([0-9]\+\.[0-9]\+\)\.[0-9]\+'.*/\1/"`
+NEW_VERSION=`grep 'CH2_VERSION =' py/ch2/commands/args.py | sed -e "s/.*CH2_VERSION *= *'\([0-9]\+\.[0-9]\+\)\.[0-9]\+'.*/\1/"`
 NEW_VERSION=`echo $NEW_VERSION | sed -e s/\\\\./-/g`
 echo -e "\nNEW_VERSION=$NEW_VERSION"
 
@@ -22,6 +22,8 @@ NEW_BASE=$BASE/$NEW_VERSION
 echo -e "\nNEW_BASE=$NEW_BASE"
 OLD_BASE=$BASE/$OLD_VERSION
 echo -e "\nOLD_BASE=$OLD_BASE"
+
+sleep 10
 
 ACTIVITY=$NEW_BASE/data/activity.db
 if [ -f $ACTIVITY ]; then
