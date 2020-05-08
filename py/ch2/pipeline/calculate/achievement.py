@@ -105,7 +105,7 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
                 description = adjective % superlative
                 # +1 below so we don't give prizes for last
                 if len(best_values) > rank+1 and current_value == best_values[rank]:
-                    achievement = f'{description} {lower(statistic_name.name)} {period} (for {group})'
+                    achievement = f'{description} {lower(statistic_name.title)} {period} (for {group})'
                     achievement = achievement[0].upper() + achievement[1:]
                     return rank, achievement, group == 'all'
         except Exception as e:

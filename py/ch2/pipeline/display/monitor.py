@@ -16,7 +16,7 @@ class MonitorDisplayer(Displayer):
     @optional_text('Monitor')
     def _read_date(self, s, date):
         for field in self.__read_fields(s, date, Names.DAILY_STEPS, Names.REST_HR):
-            yield value(field.statistic_name.name, field.value,
+            yield value(field.statistic_name.title, field.value,
                         units=field.statistic_name.units, measures=field.measures_as_model(date))
 
     @staticmethod

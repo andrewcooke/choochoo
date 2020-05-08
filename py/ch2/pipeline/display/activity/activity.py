@@ -142,30 +142,28 @@ class ActivityDelegate(ActivityJournalDelegate):
         for name in (N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.ACTIVE_SPEED, N.MEAN_POWER_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityCalculator, ajournal.activity_group)
             if sjournal:
-                yield value(sjournal.statistic_name.name, sjournal.value,
+                yield value(sjournal.statistic_name.title, sjournal.value,
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
         for name in (N._delta(N.FITNESS_D_ANY), N._delta(N.FATIGUE_D_ANY),
                      N.EARNED_D_ANY, N.RECOVERY_D_ANY):
             for sjournal in StatisticJournal.at_like(s, ajournal.start, name, ActivityCalculator,
                                                      ajournal.activity_group):
-                yield value(sjournal.statistic_name.name, sjournal.value,
+                yield value(sjournal.statistic_name.title, sjournal.value,
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
         for name in (N.ENERGY_ESTIMATE, N.CALORIE_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, PowerCalculator, ajournal.activity_group)
             if sjournal:
-                yield value(sjournal.statistic_name.name, sjournal.value,
+                yield value(sjournal.statistic_name.title, sjournal.value,
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
 
     @classmethod
     def __sjournal_as_value(cls, sjournal, date=None):
         measures = sjournal.measures_as_model(date) if date else None
-        name = sjournal.statistic_name.title
-        value = sjournal.value
-        units = sjournal.statistic_name.units
-        return value(name, value, units=units, measures=measures)
+        return value(sjournal.statistic_name.title, sjournal.value,
+                     units=sjournal.statistic_name.units, measures=measures)
 
     @classmethod
     def __climb_as_value(cls, climb, key, date=None):
@@ -191,20 +189,20 @@ class ActivityDelegate(ActivityJournalDelegate):
                    StatisticName.activity_group == ajournal.activity_group).order_by(StatisticName.name).all()
         for sjournal in self.__sort_journals(sjournals):
             if sjournal.value > 0:  # avoid zero power and anything else with silly value
-                yield value(search(re, sjournal.statistic_name.name).group(1), sjournal.value,
+                yield value(search(re, sjournal.statistic_name.title).group(1), sjournal.value,
                             units=sjournal.statistic_name.units, measures=sjournal.measures_as_model(date))
 
     @staticmethod
     def __sort_journals(sjournals):
         return sorted(sjournals,
                       # order by integer embedded in name
-                      key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic_name.name).group(1)))
+                      key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic_name.title).group(1)))
 
     @staticmethod
     def __sort_names(statistic_names):
         return sorted(statistic_names,
                       # order by integer embedded in name
-                      key=lambda statistic_name: int(search(r'(\d+)', statistic_name.name).group(1)))
+                      key=lambda statistic_name: int(search(r'(\d+)', statistic_name.title).group(1)))
 
     @optional_text('Activities', tag='activity')
     def read_schedule(self, s, date, schedule):
