@@ -174,7 +174,6 @@ SOURCE_ID = 'source-id'
 START = 'start'
 STATISTIC_NAMES = 'statistic-names'
 STATISTIC_JOURNALS = 'statistic-journals'
-STATISTIC_QUARTILES = 'statistic-quartiles'
 STATUS = 'status'
 STOP = 'stop'
 SUB_COMMAND = 'sub-command'
@@ -492,18 +491,6 @@ def make_parser(with_noop=False):
                                  help='activity group')
     dump_statistics.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
                                  help='the source ID for the statistic (can be repeated)')
-    dump_statistic_quartiles = dump_sub.add_parser(STATISTIC_QUARTILES)
-    dump_statistic_quartiles.add_argument(NAMES, nargs='*', metavar='NAME', help='statistic names')
-    dump_statistic_quartiles.add_argument(mm(START), metavar='TIME', help='start time')
-    dump_statistic_quartiles.add_argument(mm(FINISH), metavar='TIME', help='finish time')
-    dump_statistic_quartiles.add_argument(mm(OWNER), metavar='OWNER',
-                                          help='typically the class that created the data')
-    dump_statistic_quartiles.add_argument(mm(GROUP), metavar='GROUP',
-                                          help='activity group')
-    dump_statistic_quartiles.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-                                          help='the schedule on which some statistics are calculated')
-    dump_statistic_quartiles.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
-                                          help='the source ID for the statistic (can be repeated)')
     dump_table = dump_sub.add_parser(TABLE)
     dump_table.add_argument(NAME, metavar='NAME', help='table name')
     dump.set_defaults(format=PRINT)

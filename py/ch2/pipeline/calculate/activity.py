@@ -7,7 +7,10 @@ from logging import getLogger
 from sqlalchemy import desc
 
 from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .elevation import ElevationCalculator
+from .impulse import ImpulseCalculator
 from .power import PowerCalculator
+from ..read.segment import SegmentReader
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times
 from ...data.climb import find_climbs, Climb, add_climb_stats
@@ -33,10 +36,12 @@ class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixi
         try:
             adf = activity_statistics(s, N.DISTANCE, N.ELEVATION, N.HEART_RATE, N.HR_ZONE,
                                       N.POWER_ESTIMATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
+                                      owners=(SegmentReader, ElevationCalculator, ImpulseCalculator,
+                                              PowerCalculator),
                                       activity_journal=ajournal, with_timespan=True, check=False)
             start, finish = ajournal.start - dt.timedelta(hours=1), ajournal.finish + dt.timedelta(hours=1)
             sdf = statistics(s, N.FATIGUE_D_ANY, N.FITNESS_D_ANY, start=start, finish=finish,
-                             owner=self.owner_in, check=False)
+                             owners=(self.owner_in,), check=False)
             prev = s.query(ActivityJournal). \
                 filter(ActivityJournal.start < ajournal.start). \
                 order_by(desc(ActivityJournal.start)). \

@@ -161,7 +161,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
 
     def __read_coverage(self, s):
         names = s.query(StatisticName).filter(StatisticName.name == N._cov(N.HEART_RATE)).all()
-        coverages = statistics(s, *names, owner=SegmentReader, check=False)
+        coverages = statistics(s, *names, owners=(SegmentReader,), check=False)
         coverages = coverages.loc[:].replace(0, np.nan)
         # extends the coverage across columns in both directions, so all columns are the same
         # (MTB contains entries from MTB, Road and Walk, for example)
@@ -174,7 +174,7 @@ class ResponseCalculator(LoaderMixin, UniProcCalculator):
 
     def __read_data(self, s):
         hr10 = statistics(s, N.HR_IMPULSE_10, activity_group=ActivityGroup.from_name(s, ActivityGroup.ALL),
-                          owner=self.owner_in, with_sources=True, check=False)
+                          owners=(self.owner_in,), with_sources=True, check=False)
         coverage = self.__read_coverage(s)
         # reindex and expand the coverage so we have a value at each impulse measurement
         coverage.reindex(index=hr10.index, method='nearest', copy=False)

@@ -1,6 +1,6 @@
 
 from .constraint import constrained_activities
-from .frame import df, session, statistics, statistic_quartiles, activity_statistics, std_activity_statistics, \
+from .frame import df, session, statistics, activity_statistics, std_activity_statistics, \
     std_health_statistics, nearby_activities, bookmarks, statistic_names, statistics, present, linear_resample_time, \
     groups_by_time, coallesce, transform, drop_empty, coallesce_like
 from .heart_rate import *

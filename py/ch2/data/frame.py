@@ -54,20 +54,6 @@ def _add_constraint(q, attribute, value, key):
     return q
 
 
-def _collect_statistics(s, names, owner=None, activity_group=None):
-    if not names:
-        names = ['%']
-    statistic_ids, statistic_names = set(), set()
-    for name in names:
-        q = s.query(StatisticName).filter(StatisticName.name.like(name))
-        q = _add_constraint(q, StatisticName.owner, owner, name)
-        q = _add_constraint(q, StatisticName.activity_group, ActivityGroup.from_name(s, activity_group), name)
-        for statistic_name in q.all():
-            statistic_ids.add(statistic_name.id)
-            statistic_names.add(statistic_name.name)
-    return statistic_names, statistic_ids
-
-
 def _tables():
     return kargs_to_attr(sj=inspect(StatisticJournal).local_table,
                          sn=inspect(StatisticName).local_table,
@@ -160,7 +146,7 @@ def _add_bookmark(bookmark, df):
     return df
 
 
-def activity_statistics(s, *statistics, start=None, finish=None, owner=None, bookmark_constraint=None,
+def activity_statistics(s, *statistics, start=None, finish=None, owners=None,
                         local_time=None, time=None, bookmarks=None, activity_journal=None,
                         activity_group=None, with_timespan=False, check=True):
 
@@ -168,20 +154,18 @@ def activity_statistics(s, *statistics, start=None, finish=None, owner=None, boo
         if start or finish or local_time or time or activity_journal or activity_group:
             raise Exception('Cannot use bookmarks with additional activity constraints')
         return pd.concat(_add_bookmark(bookmark,
-                                       _activity_statistics(s, *statistics, owner=owner,
-                                                            bookmark_constraint=bookmark_constraint,
+                                       _activity_statistics(s, *statistics, owners=owners,
                                                             start=bookmark.start, finish=bookmark.finish,
                                                             activity_journal=bookmark.activity_journal,
                                                             with_timespan=with_timespan, check=check))
                          for bookmark in bookmarks)
     else:
-        return _activity_statistics(s, *statistics, owner=owner, bookmark_constraint=bookmark_constraint,
-                                    start=start, finish=finish,
+        return _activity_statistics(s, *statistics, owners=owners, start=start, finish=finish,
                                     local_time=local_time, time=time, activity_journal=activity_journal,
                                     activity_group=activity_group, with_timespan=with_timespan, check=check)
 
 
-def _activity_statistics(s, *statistics, owner=None, bookmark_constraint=None, start=None, finish=None,
+def _activity_statistics(s, *statistics, owners=None, start=None, finish=None,
                          local_time=None, time=None, activity_journal=None,
                          activity_group=None, with_timespan=False, check=True):
 
@@ -189,7 +173,7 @@ def _activity_statistics(s, *statistics, owner=None, bookmark_constraint=None, s
                                          time=time, activity_group=activity_group)
     if activity_group is None:
         activity_group = activity_journal.activity_group
-    names = statistic_names(s, *statistics, owner=owner, activity_group=activity_group, check=check)
+    names = statistic_names(s, *statistics, owners=owners, activity_group=activity_group, check=check)
     counts = Counter(name.name for name in names)
 
     t = _tables()
@@ -227,46 +211,6 @@ def _activity_statistics(s, *statistics, owner=None, bookmark_constraint=None, s
     sql = select(selects).select_from(sources)
     # log.debug(sql)
     return pd.read_sql_query(sql=sql, con=s.connection(), index_col=N.INDEX)
-
-
-def statistic_quartiles(s, *statistics, start=None, finish=None, owner=None, activity_group=None, sources=None,
-                        schedule=None):
-
-    # todo - rewrite using new approach
-
-    statistic_names, statistic_ids = _collect_statistics(s, statistics, owner, activity_group)
-    q = s.query(StatisticMeasure). \
-        join(StatisticJournal, StatisticMeasure.statistic_journal_id == StatisticJournal.id). \
-        join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-        join(Source, StatisticJournal.source_id == Source.id). \
-        filter(StatisticName.id.in_(statistic_ids)). \
-        filter(StatisticMeasure.quartile != None)
-    if start:
-        q = q.filter(StatisticJournal.time >= start)
-    if finish:
-        q = q.filter(StatisticJournal.time <= finish)
-    if sources is not None:
-        q = q.filter(StatisticJournal.source.in_(sources))
-    if schedule:
-        q = q.join((Interval, StatisticMeasure.source_id == Interval.id)). \
-            filter(Interval.schedule == schedule)
-    log.debug(q)
-
-    raw_data = defaultdict(lambda: defaultdict(lambda: [0] * 5))
-    for measure in q.all():
-        raw_data[measure.source.start][measure.statistic_journal.statistic_name.name][measure.quartile] = \
-            measure.statistic_journal.value
-    data, times = defaultdict(list), []
-    for time in sorted(raw_data.keys()):
-        times.append(time)
-        sub_data = raw_data[time]
-        for statistic in statistic_names:
-            if statistic in sub_data:
-                data[statistic].append(sub_data[statistic])
-            else:
-                data[statistic].append(None)
-
-    return pd.DataFrame(data, index=times)
 
 
 MIN_PERIODS = 1
@@ -335,7 +279,7 @@ def std_health_statistics(s, *extra, local_start=None, local_finish=None):
     if present(stats_1, N.FITNESS_D_ANY, pattern=True):
         stats_1 = stats_1.resample('1h').mean()
         stats = merge_to_hour(stats, stats_1)
-    stats_2 = statistics(s, N.REST_HR, start=start, finish=finish, owner=RestHRCalculator, check=False)
+    stats_2 = statistics(s, N.REST_HR, start=start, finish=finish, owners=(RestHRCalculator,), check=False)
     if present(stats_2, N.REST_HR):
         stats = merge_to_hour(stats, stats_2)
     stats_3 = statistics(s, N.DAILY_STEPS, N.ACTIVE_TIME, N.ACTIVE_DISTANCE,
@@ -365,13 +309,13 @@ def bookmarks(s, constraint, owner=CoastingBookmark):
                ActivityBookmark.constraint == constraint).all()
 
 
-def statistic_names(s, *statistics, owner=None, activity_group=None, check=True):
+def statistic_names(s, *statistics, owners=tuple(), activity_group=None, check=True):
     unresolved = [statistic for statistic in statistics if not isinstance(statistic, StatisticName)]
     if unresolved:
         q = s.query(StatisticName). \
             filter(or_(StatisticName.name.like(statistic) for statistic in unresolved))
-        if owner:
-            q = q.filter(StatisticName.owner == owner)
+        if owners:
+            q = q.filter(StatisticName.owner.in_(owners))
         if activity_group:
             q = q.filter(StatisticName.activity_group == ActivityGroup.from_name(s, activity_group))
         resolved = q.all()
@@ -390,10 +334,10 @@ def _type_to_journal(t):
 
 
 def statistics(s, *statistics, start=None, finish=None, local_start=None, local_finish=None,
-               owner=None, activity_group=None, sources=None, with_sources=False, check=True):
+               owners=tuple(), activity_group=None, sources=None, with_sources=False, check=True):
     t = _tables()
     ttj = _type_to_journal(t)
-    names = statistic_names(s, *statistics, owner=owner, activity_group=activity_group, check=check)
+    names = statistic_names(s, *statistics, owners=owners, activity_group=activity_group, check=check)
     counts = Counter(name.name for name in names)
     labels = [name.name if counts[name.name] == 1 else f'{name.name} : {name.activity_group}' for name in names]
     tables = [ttj[name.statistic_journal_type] for name in names]

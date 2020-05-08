@@ -3,10 +3,9 @@ from logging import getLogger
 
 import pandas as pd
 
-from .args import SUB_COMMAND, START, FINISH, NAMES, \
-    OWNER, CONSTRAINT, SCHEDULE, SOURCE_ID, STATISTIC_QUARTILES, PRINT, FORMAT, \
+from .args import SUB_COMMAND, START, FINISH, NAMES, OWNER, SOURCE_ID, PRINT, FORMAT, \
     CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS, GROUP
-from ..data import df, statistics, statistic_quartiles
+from ..data import df, statistics
 from ..sql import *
 from ..sql.support import Base
 
@@ -57,10 +56,6 @@ Will print HR-related statistics from the start of 2018 for the given activity g
             frame = statistics(s, *args[NAMES], start=args[START], finish=args[FINISH],
                                owner=args[OWNER], activity_group=args[GROUP],
                                sources=[Source.from_id(s, int(id)) for id in args[SOURCE_ID]])
-        elif args[SUB_COMMAND] == STATISTIC_QUARTILES:
-            frame = statistic_quartiles(s, *args[NAMES], start=args[START], finish=args[FINISH],
-                                        owner=args[OWNER], activity_group=args[GROUP], schedule=args[SCHEDULE],
-                                        sources=[Source.from_id(s, int(id)) for id in args[SOURCE_ID]])
         else:
             raise Exception('Unexpected %s: %s' % (SUB_COMMAND, args[SUB_COMMAND]))
 
