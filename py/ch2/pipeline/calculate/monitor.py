@@ -6,7 +6,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import count
 
 from .calculate import MultiProcCalculator
-from ...names import Titles, Names, summaries, Summaries as S, Units
+from ...names import Titles, Names, Summaries as S, Units
 from ..pipeline import LoaderMixin
 from ...lib import local_date_to_time, time_to_local_date, to_date, format_date, log_current_exception
 from ...sql import MonitorJournal, StatisticJournalInteger, StatisticName, StatisticJournal, Composite, \
@@ -151,7 +151,7 @@ class MonitorCalculator(LoaderMixin, MultiProcCalculator):
         #                start, StatisticJournalInteger,
         #                description='''An estimate of the resting HR.''' if name == REST_HR
         #                else '''A bound on the resting HR.''')
-        loader.add(Titles.DAILY_STEPS, Units.STEPS_UNITS, summaries(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
+        loader.add(Titles.DAILY_STEPS, Units.STEPS_UNITS, S.join(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
                    ActivityGroup.ALL, source, daily_steps, start, StatisticJournalInteger,
                    description='''The number of steps in a day.''')
 

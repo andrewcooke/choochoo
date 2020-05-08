@@ -7,7 +7,7 @@ from math import atan2, cos, sin, sqrt, pi
 
 from .frame import linear_resample, median_dt, present, linear_resample_time
 from ..lib.log import log_current_exception
-from ..names import Names, Titles, Units, Summaries
+from ..names import Names, Titles
 
 log = getLogger(__name__)
 
@@ -22,19 +22,19 @@ def round_km():
 
 
 def active_stats(df):
-    stats = {Titles.ACTIVE_DISTANCE: 0, Titles.ACTIVE_TIME: 0, Titles.ACTIVE_SPEED: 0}
+    stats = {Names.ACTIVE_DISTANCE: 0, Names.ACTIVE_TIME: 0, Names.ACTIVE_SPEED: 0}
     for timespan in df[Names.TIMESPAN_ID].dropna().unique():
         slice = df.loc[df[Names.TIMESPAN_ID] == timespan]
-        stats[Titles.ACTIVE_DISTANCE] += slice[Names.DISTANCE].max() - slice[Names.DISTANCE].min()
-        stats[Titles.ACTIVE_TIME] += (slice.index.max() - slice.index.min()).total_seconds()
-    stats[Titles.ACTIVE_SPEED] = 3600 * stats[Titles.ACTIVE_DISTANCE] / stats[Titles.ACTIVE_TIME]
+        stats[Names.ACTIVE_DISTANCE] += slice[Names.DISTANCE].max() - slice[Names.DISTANCE].min()
+        stats[Names.ACTIVE_TIME] += (slice.index.max() - slice.index.min()).total_seconds()
+    stats[Names.ACTIVE_SPEED] = 3600 * stats[Names.ACTIVE_DISTANCE] / stats[Names.ACTIVE_TIME]
     return stats
 
 
 def copy_times(ajournal):
-    return {Titles.START: ajournal.start,
-            Titles.FINISH: ajournal.finish,
-            Titles.TIME: (ajournal.finish - ajournal.start).total_seconds()}
+    return {Names.START: ajournal.start,
+            Names.FINISH: ajournal.finish,
+            Names.TIME: (ajournal.finish - ajournal.start).total_seconds()}
 
 
 def times_for_distance(df, km=None, delta=0.01):  # all units of km
@@ -49,8 +49,8 @@ def times_for_distance(df, km=None, delta=0.01):  # all units of km
             n = target / delta
             dlt4d = lt4d.diff(periods=n).dropna()
             if present(dlt4d, Names.TIME):
-                stats[Titles.MIN_KM_TIME % target] = dlt4d[Names.TIME].min()
-                stats[Titles.MED_KM_TIME % target] = dlt4d[Names.TIME].median()
+                stats[Names.MIN_KM_TIME % target] = dlt4d[Names.TIME].min()
+                stats[Names.MED_KM_TIME % target] = dlt4d[Names.TIME].median()
     except Exception as e:
         log.warning(f'No Time for Distance stats: {e}')
     return stats
@@ -65,14 +65,14 @@ def hrz_stats(df, zones=None):
             dt, total = median_dt(ldf), hrz.sum()
             for interval, count in hrz.iteritems():
                 zone = interval.left
-                stats[Titles.PERCENT_IN_Z % zone] = 100 * count / total
-                stats[Titles.TIME_IN_Z % zone] = dt * count
+                stats[Names.PERCENT_IN_Z % zone] = 100 * count / total
+                stats[Names.TIME_IN_Z % zone] = dt * count
     except Exception as e:
         log.warning(f'No HR stats: {e}')
     return stats
 
 
-def max_mean_stats(df, params=((Names.POWER_ESTIMATE, Titles.MAX_MEAN_PE_M),), mins=None, delta=10, zero=0):
+def max_mean_stats(df, params=((Names.POWER_ESTIMATE, Names.MAX_MEAN_PE_M),), mins=None, delta=10, zero=0):
     stats, mins = {}, mins or MAX_MINUTES
     try:
         ldf = linear_resample_time(df, dt=delta, with_timespan=True, keep_nan=True)
@@ -93,7 +93,7 @@ def max_mean_stats(df, params=((Names.POWER_ESTIMATE, Titles.MAX_MEAN_PE_M),), m
     return stats
 
 
-def max_med_stats(df, params=((Names.HEART_RATE, Titles.MAX_MED_HR_M),), mins=None, delta=10, gap=0.01):
+def max_med_stats(df, params=((Names.HEART_RATE, Names.MAX_MED_HR_M),), mins=None, delta=10, gap=0.01):
     stats, mins = {}, mins or MAX_MINUTES
     try:
         ldf_all = linear_resample_time(df, dt=delta, with_timespan=False, add_time=False)
@@ -148,17 +148,8 @@ def direction_stats(df):
                 df.loc[:, 'u'] = df['dx'] * cos(theta) + df['dy'] * sin(theta)
                 df.loc[:, 'v'] = df['dy'] * cos(theta) - df['dx'] * sin(theta)
                 # convert from angle anti-clock from x axis to bearing
-                stats[Titles.DIRECTION] = 90 - 180 * theta / pi
-                stats[Titles.ASPECT_RATIO] = df['v'].std() / df['u'].std()
+                stats[Names.DIRECTION] = 90 - 180 * theta / pi
+                stats[Names.ASPECT_RATIO] = df['v'].std() / df['u'].std()
     except Exception as e:
         log.warning(f'No Direction stats: {e}')
     return stats
-
-
-# if __name__ == '__main__':
-#     from . import *
-#     date = '2017-02-07 07:18:50'
-#     s = session('-v5')
-#     df = activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-#                              local_time=date, activity_group='Bike', with_timespan=True)
-#     print(direction_stats(df))

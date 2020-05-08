@@ -5,20 +5,18 @@ from re import search
 from sqlalchemy import or_, distinct, asc, desc
 from sqlalchemy.orm.exc import NoResultFound
 
+from ..display import Displayer, ActivityJournalDelegate
+from ...calculate.activity import ActivityCalculator
+from ...calculate.power import PowerCalculator
 from ....data.climb import climbs_for_activity
 from ....diary.database import summary_column
 from ....diary.model import optional_text, text, from_field, value
 from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date, \
     log_current_exception
 from ....lib.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YEAR, YM, DAY
-from ....names import *
-from ...calculate.activity import ActivityCalculator
-from ...calculate.power import PowerCalculator
-from ..display import Displayer, ActivityJournalDelegate
-from ....names import _delta
+from ....names import Names as N
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
     ActivityTopic, StatisticJournal, Pipeline, PipelineType
-from ....sql.types import lookup_cls
 
 log = getLogger(__name__)
 
@@ -120,10 +118,10 @@ class ActivityDelegate(ActivityJournalDelegate):
         if active_data: yield [text('Activity Statistics')] + active_data
         climbs = list(self.__read_climbs(s, ajournal, date))
         if climbs: yield [text('Climbs')] + climbs
-        for (title, template, re) in (('Min Time', MIN_KM_TIME_ANY, r'(\d+km)'),
-                                      ('Med Time', MED_KM_TIME_ANY, r'(\d+km)'),
-                                      ('Max Med Heart Rate', MAX_MED_HR_M_ANY, r'(\d+m)'),
-                                      ('Max Mean Power Estimate', MAX_MEAN_PE_M_ANY, r'(\d+m)')):
+        for (title, template, re) in (('Min Time', N.MIN_KM_TIME_ANY, r'(\d+km)'),
+                                      ('Med Time', N.MED_KM_TIME_ANY, r'(\d+km)'),
+                                      ('Max Med Heart Rate', N.MAX_MED_HR_M_ANY, r'(\d+m)'),
+                                      ('Max Mean Power Estimate', N.MAX_MEAN_PE_M_ANY, r'(\d+m)')):
             model = list(self.__read_template(s, ajournal, template, re, date))
             if model: yield [text(title)] + model
 
@@ -131,7 +129,7 @@ class ActivityDelegate(ActivityJournalDelegate):
     def __read_zones(s, ajournal):
         percent_times = s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticJournal.time == ajournal.start,
-                   StatisticName.name.like(PERCENT_IN_Z_ANY),
+                   StatisticName.name.like(N.PERCENT_IN_Z_ANY),
                    StatisticName.owner == ActivityCalculator,
                    StatisticName.activity_group == ajournal.activity_group) \
             .order_by(StatisticName.name).all()
@@ -141,38 +139,49 @@ class ActivityDelegate(ActivityJournalDelegate):
 
     @staticmethod
     def __read_active_data(s, ajournal, date):
-        for name in (ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED, MEAN_POWER_ESTIMATE):
+        for name in (N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.ACTIVE_SPEED, N.MEAN_POWER_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, ActivityCalculator, ajournal.activity_group)
             if sjournal:
                 yield value(sjournal.statistic_name.name, sjournal.value,
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
-        for name in (_delta(FITNESS_D_ANY), _delta(FATIGUE_D_ANY), EARNED_D_ANY, RECOVERY_D_ANY):
+        for name in (N._delta(N.FITNESS_D_ANY), N._delta(N.FATIGUE_D_ANY),
+                     N.EARNED_D_ANY, N.RECOVERY_D_ANY):
             for sjournal in StatisticJournal.at_like(s, ajournal.start, name, ActivityCalculator,
                                                      ajournal.activity_group):
                 yield value(sjournal.statistic_name.name, sjournal.value,
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
-        for name in (ENERGY_ESTIMATE, CALORIE_ESTIMATE):
+        for name in (N.ENERGY_ESTIMATE, N.CALORIE_ESTIMATE):
             sjournal = StatisticJournal.at(s, ajournal.start, name, PowerCalculator, ajournal.activity_group)
             if sjournal:
                 yield value(sjournal.statistic_name.name, sjournal.value,
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
 
-    @staticmethod
-    def __read_climbs(s, ajournal, date):
+    @classmethod
+    def __sjournal_as_value(cls, sjournal, date=None):
+        measures = sjournal.measures_as_model(date) if date else None
+        name = sjournal.statistic_name.title
+        value = sjournal.value
+        units = sjournal.statistic_name.units
+        return value(name, value, units=units, measures=measures)
+
+    @classmethod
+    def __climb_as_value(cls, climb, key, date=None):
+        return cls.__sjournal_as_value(climb[key], date=date)
+
+    @classmethod
+    def __read_climbs(cls, s, ajournal, date):
         total, climbs = climbs_for_activity(s, ajournal)
         if total:
-            yield value('Total', total.value, measures=total.measures_as_model(date), units=M, tag='total-climb')
+            yield cls.__sjournal_as_value(total)
             for climb in climbs:
                 yield [text('Climb'),
-                       # todo - why are units hardcoded here?  already caused one bug when switched distance to km
-                       value('Elevation', climb[CLIMB_ELEVATION].value, units=M,
-                             measures=climb[CLIMB_ELEVATION].measures_as_model(date)),
-                       value('Distance', climb[CLIMB_DISTANCE].value, units=KM),
-                       value('Time', climb[CLIMB_TIME].value, units=S),
-                       value('Gradient', climb[CLIMB_GRADIENT].value, units=PC)]
+                       cls.__climb_as_value(climb, N.CLIMB_ELEVATION, date=date),
+                       cls.__climb_as_value(climb, N.CLIMB_DISTANCE),
+                       cls.__climb_as_value(climb, N.CLIMB_TIME),
+                       cls.__climb_as_value(climb, N.CLIMB_GRADIENT)]
 
     def __read_template(self, s, ajournal, template, re, date):
         sjournals = s.query(StatisticJournal).join(StatisticName). \
@@ -204,7 +213,7 @@ class ActivityDelegate(ActivityJournalDelegate):
                 join(ActivityJournal, ActivityJournal.activity_group_id == ActivityGroup.id). \
                 join(StatisticJournal, StatisticJournal.source_id == ActivityJournal.id). \
                 join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-                filter(StatisticName.name == ACTIVE_TIME,
+                filter(StatisticName.name == N.ACTIVE_TIME,
                        StatisticJournal.time >= start,
                        StatisticJournal.time < finish).all():
             fields = list(self.__read_schedule_fields(s, date, schedule, group))
@@ -230,17 +239,18 @@ class ActivityDelegate(ActivityJournalDelegate):
                    StatisticName.activity_group == group).all()
 
     def __read_schedule_fields(self, s, start, schedule, group):
-        for name in self.__names(s, group, ACTIVE_DISTANCE, ACTIVE_TIME, ACTIVE_SPEED,
-                                 TOTAL_CLIMB, CLIMB_ELEVATION, CLIMB_DISTANCE, CLIMB_GRADIENT, CLIMB_TIME):
+        for name in self.__names(s, group, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.ACTIVE_SPEED,
+                                 N.TOTAL_CLIMB, N.CLIMB_ELEVATION, N.CLIMB_DISTANCE,
+                                 N.CLIMB_GRADIENT, N.CLIMB_TIME):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
-        for name in self.__sort_names(self.__names_like(s, group, MIN_KM_TIME_ANY)):
+        for name in self.__sort_names(self.__names_like(s, group, N.MIN_KM_TIME_ANY)):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
-        for name in self.__sort_names(self.__names_like(s, group, MED_KM_TIME_ANY)):
+        for name in self.__sort_names(self.__names_like(s, group, N.MED_KM_TIME_ANY)):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
-        for name in self.__sort_names(self.__names_like(s, group, MAX_MED_HR_M_ANY)):
+        for name in self.__sort_names(self.__names_like(s, group, N.MAX_MED_HR_M_ANY)):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
 

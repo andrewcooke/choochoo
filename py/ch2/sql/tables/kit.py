@@ -16,7 +16,7 @@ from ...diary.model import TYPE, DB, UNITS
 from ...lib import now, time_to_local_time
 from ...lib.date import YMD
 from ...lib.utils import inside_interval
-from ...names import Titles, Names, Units, _s
+from ...names import Titles, Names, Units
 from .activity import ActivityGroup
 
 log = getLogger(__name__)
@@ -24,11 +24,11 @@ log = getLogger(__name__)
 NAME = 'name'
 GROUP = 'group'
 ITEM = 'item'
-ITEMS = _s(ITEM)
+ITEMS = Names._s(ITEM)
 COMPONENT = 'component'
-COMPONENTS = _s(COMPONENT)
+COMPONENTS = Names._s(COMPONENT)
 MODEL = 'model'
-MODELS = _s(MODEL)
+MODELS = Names._s(MODEL)
 STATISTICS = 'statistics'
 N = 'n'
 SUM = 'sum'

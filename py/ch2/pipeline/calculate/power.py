@@ -86,7 +86,7 @@ class BasicPowerCalculator(PowerCalculator):
                               (Titles.HEADING, Units.DEG, None))):
         df, ldf = dfs
         self.__add_total_energy(s, ajournal, loader, ldf)
-        df = interpolate_to_index(df, ldf, *(field[0] for field in fields))
+        df = interpolate_to_index(df, ldf, *(simple_name(field[0]) for field in fields))
         for time, row in df.iterrows():
             for title, units, summary in fields:
                 name = simple_name(title)
@@ -179,8 +179,8 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             # slope is BPM / W; 1/slope is W/BPM = W/PM = WM = 60Ws
             vary = self.__varying()
             if 'slope' in vary:
-                loader.add(Titles.POWER_HR, Units.J, Summaries.AVG, ajournal.activity_group, ajournal, 60 / model.slope, ajournal.start,
-                           StatisticJournalFloat)
+                loader.add(Titles.POWER_HR, Units.J, Summaries.AVG, ajournal.activity_group, ajournal,
+                           60 / model.slope, ajournal.start, StatisticJournalFloat)
             if 'delay' in vary:
                 loader.add(Titles.POWER_HR_LAG, Units.S, Summaries.AVG, ajournal.activity_group, ajournal, model.delay,
                            ajournal.start, StatisticJournalFloat)

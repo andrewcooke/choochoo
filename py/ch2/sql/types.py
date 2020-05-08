@@ -190,12 +190,18 @@ class Sort(TypeDecorator):
     process_bind_param = process_literal_param
 
 
-def simple_name(name, none=True):
+def simple_name(name, none=True, strip=True):
+    from ch2.names import POW_2, POW_M1
+    # allows % and ? for LIKE and templates
     if name is None and none:
         return None
-    name = name.strip().lower()
+    name = name.replace(POW_2, '_2')
+    name = name.replace(POW_M1, '_1')
+    name = name.replace('Δ', 'd_')
+    if strip: name = name.strip()
+    name = name.lower()
     name = sub(r'\s+', '_', name)
-    name = sub(r'[^a-z0-9]', '_', name)
+    name = sub(r'[^a-z0-9%?]', '_', name)
     name = sub(r'^(\d)', r'_\1', name)
     name = sub(r'_+', '_', name)
     return name

@@ -65,7 +65,7 @@ class DiaryDisplayer(Displayer):
     def __summary_column(self, s, schedule, start, name):
         journals = StatisticJournal.at_interval(s, start, schedule, SummaryCalculator, name, SummaryCalculator)
         for named, journal in enumerate(journal for journal in journals if journal.value != 0):
-            summary, period, name = SummaryCalculator.parse_name(journal.statistic_name.name)
+            summary, period, name = SummaryCalculator.parse_title(journal.statistic_name.title)
             if not named:
                 yield text(name)
             yield value(summary, journal.value, units=journal.statistic_name.units)

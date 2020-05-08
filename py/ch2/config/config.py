@@ -12,7 +12,7 @@ from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
-from ..names import Names, Titles, summaries, Sports, Units, Summaries
+from ..names import Names, Titles, Sports, Units, Summaries as S
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
@@ -114,13 +114,13 @@ class Config:
         # the mapping from FIT fields to database entries
         # you really don't want to alter this unless you know what you are doing...
         # todo - should this depend on activity group?
-        return {'position_lat': (Names.LATITUDE, Units.DEG, StatisticJournalType.FLOAT),
-                'position_long': (Names.LONGITUDE, Units.DEG, StatisticJournalType.FLOAT),
-                'heart_rate': (Names.HEART_RATE, Units.BPM, StatisticJournalType.INTEGER),
-                'enhanced_speed': (Names.SPEED, Units.MS, StatisticJournalType.FLOAT),
-                'distance': (Names.DISTANCE, Units.KM, StatisticJournalType.FLOAT),
-                'enhanced_altitude': (Names.ALTITUDE, Units.M, StatisticJournalType.FLOAT),
-                'cadence': (Names.CADENCE, Units.RPM, StatisticJournalType.INTEGER)}
+        return {'position_lat': (Titles.LATITUDE, Units.DEG, StatisticJournalType.FLOAT),
+                'position_long': (Titles.LONGITUDE, Units.DEG, StatisticJournalType.FLOAT),
+                'heart_rate': (Titles.HEART_RATE, Units.BPM, StatisticJournalType.INTEGER),
+                'enhanced_speed': (Titles.SPEED, Units.MS, StatisticJournalType.FLOAT),
+                'distance': (Titles.DISTANCE, Units.KM, StatisticJournalType.FLOAT),
+                'enhanced_altitude': (Titles.ALTITUDE, Units.M, StatisticJournalType.FLOAT),
+                'cadence': (Titles.CADENCE, Units.RPM, StatisticJournalType.INTEGER)}
 
     def _load_activities_pipeline(self, s, c):
         sport_to_activity = self._sport_to_activity()
@@ -240,20 +240,20 @@ so do not use an important password that applies to many accounts.
         add_diary_topic_field(s, diary, 'Notes', c, StatisticJournalType.TEXT,
                               model={TYPE: EDIT}, description='Daily notes recorded by user in diary.')
         add_diary_topic_field(s, diary, 'Weight', c, StatisticJournalType.FLOAT,
-                              units='kg', summary=summaries(Summaries.AVG, Summaries.MSR),
+                              units='kg', summary=S.join(S.AVG, S.MSR),
                               description='Weight recorded by user in diary.',
                               model={TYPE: FLOAT, LO: 50, HI: 100, DP: 1})
         add_diary_topic_field(s, diary, 'Sleep', c, StatisticJournalType.FLOAT,
-                              units='h', summary=Summaries.AVG, description='Sleep time recorded by user in diary.',
+                              units='h', summary=S.AVG, description='Sleep time recorded by user in diary.',
                               model={TYPE: FLOAT, LO: 0, HI: 24, DP: 1})
         add_diary_topic_field(s, diary, 'Mood', c, StatisticJournalType.FLOAT,
-                              summary=Summaries.AVG, description='Mood recorded by user in diary.',
+                              summary=S.AVG, description='Mood recorded by user in diary.',
                               model={TYPE: SCORE})
         add_diary_topic_field(s, diary, 'Medication', c, StatisticJournalType.TEXT,
-                              summary=Summaries.CNT, description='Medication recorded by user in diary.',
+                              summary=S.CNT, description='Medication recorded by user in diary.',
                               model={TYPE: EDIT})
         add_diary_topic_field(s, diary, 'Weather', c, StatisticJournalType.TEXT,
-                              summary=Summaries.CNT, description='Weather recorded by user in diary.',
+                              summary=S.CNT, description='Weather recorded by user in diary.',
                               model={TYPE: EDIT})
 
     def _load_activity_topics(self, s, c):

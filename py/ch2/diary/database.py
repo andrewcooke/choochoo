@@ -5,7 +5,7 @@ from .model import text, value
 from ..lib import to_date
 from ..lib.date import YMD
 from ..pipeline.calculate.summary import SummaryCalculator
-from ..pipeline.display.display import log, Displayer
+from ..pipeline.display.display import Displayer
 from ..sql import StatisticJournal, Pipeline, PipelineType
 
 log = getLogger(__name__)
@@ -24,7 +24,7 @@ def read_schedule(s, schedule, date):
 def summary_column(s, schedule, start, name):
     journals = StatisticJournal.at_interval(s, start, schedule, SummaryCalculator, name, SummaryCalculator)
     for named, journal in enumerate(journal for journal in journals if journal.value != 0):
-        summary, period, name = SummaryCalculator.parse_name(journal.statistic_name.name)
+        summary, period, name = SummaryCalculator.parse_title(journal.statistic_name.title)
         if not named:
             yield text(name)
         yield value(summary, journal.value, units=journal.statistic_name.units)

@@ -4,24 +4,7 @@ from ch2.sql.types import simple_name
 
 POW_M1 = '\u207b\u00b9'
 POW_2 = '\u00b2'
-
-
-def summaries(*args): return ','.join(args)
-
-def _cov(name): return f'Cov {name}'  # coverage
-def _delta(name): return f'Δ {name}'
-def _avg(name): return f'Avg {name}'
-def _slash(name, units): return f'{name} / {units}'
-def _log(name): return f'Log {name}'
-def _sqr(name): return f'{name}{POW_2}'
-def _new(name): return f'New {name}'
-def _src(name): return f'Src {name}'
-def _lo(name): return f'Lo {name}'
-def _hi(name): return f'Hi {name}'
-def _s(name): return f'{name}s'
-
 MED_WINDOW = '60s'
-def _med(name): return f'Med{MED_WINDOW} {name}'
 
 
 class Units:
@@ -46,7 +29,46 @@ class Units:
     W = 'W'
 
 
-class Titles:
+class TitlesBase:
+
+    @staticmethod
+    def _cov(name): return f'Cov {name}'  # coverage
+
+    @staticmethod
+    def _delta(name): return f'Δ {name}'
+
+    @staticmethod
+    def _avg(name): return f'Avg {name}'
+
+    @staticmethod
+    def _slash(name, units): return f'{name} / {units}'
+
+    @staticmethod
+    def _log(name): return f'Log {name}'
+
+    @staticmethod
+    def _sqr(name): return f'{name}{POW_2}'
+
+    @staticmethod
+    def _new(name): return f'New {name}'
+
+    @staticmethod
+    def _src(name): return f'Src {name}'
+
+    @staticmethod
+    def _lo(name): return f'Lo {name}'
+
+    @staticmethod
+    def _hi(name): return f'Hi {name}'
+
+    @staticmethod
+    def _s(name): return f'{name}s'
+
+    @staticmethod
+    def _med(name): return f'Med{MED_WINDOW} {name}'
+
+
+class Titles(TitlesBase):
 
     AGE = 'Age'
     ACTIVE_DISTANCE = 'Active Distance'
@@ -145,43 +167,43 @@ class Titles:
     TIMESPAN_ID = 'Timespan ID'
     TOTAL_CLIMB = 'Total Climb'
 
-    LO_REST_HR = _lo(REST_HR)
-    HI_REST_HR = _hi(REST_HR)
+    LO_REST_HR = TitlesBase._lo(REST_HR)
+    HI_REST_HR = TitlesBase._hi(REST_HR)
 
-    AIR_SPEED_2 = _sqr(AIR_SPEED)
-    AVG_AIR_SPEED_2 = _avg(AIR_SPEED_2)
-    DELTA_AIR_SPEED_2 = _delta(AIR_SPEED_2)
+    AIR_SPEED_2 = TitlesBase._sqr(AIR_SPEED)
+    AVG_AIR_SPEED_2 = TitlesBase._avg(AIR_SPEED_2)
+    DELTA_AIR_SPEED_2 = TitlesBase._delta(AIR_SPEED_2)
 
-    SPEED_2 = _sqr(SPEED)
-    AVG_SPEED_2 = _avg(SPEED_2)
-    DELTA_SPEED_2 = _delta(SPEED_2)
+    SPEED_2 = TitlesBase._sqr(SPEED)
+    AVG_SPEED_2 = TitlesBase._avg(SPEED_2)
+    DELTA_SPEED_2 = TitlesBase._delta(SPEED_2)
 
-    DELTA_TIME = _delta(TIME)
-    DELTA_DISTANCE = _delta(DISTANCE)
-    DELTA_ELEVATION = _delta(ELEVATION)
-    DELTA_SPEED = _delta(SPEED)
-    DELTA_ENERGY = _delta(ENERGY)
+    DELTA_TIME = TitlesBase._delta(TIME)
+    DELTA_DISTANCE = TitlesBase._delta(DISTANCE)
+    DELTA_ELEVATION = TitlesBase._delta(ELEVATION)
+    DELTA_SPEED = TitlesBase._delta(SPEED)
+    DELTA_ENERGY = TitlesBase._delta(ENERGY)
 
-    ACTIVE_DISTANCE_KM = _slash(ACTIVE_DISTANCE, Units.KM)
-    ACTIVE_TIME_H = _slash(ACTIVE_TIME, Units.H)
-    CLIMB_MS = _slash(CLIMB, Units.MS)
-    DISTANCE_KM = _slash(DISTANCE, Units.KM)
-    ELEVATION_M = _slash(ELEVATION, Units.M)
-    GRADE_PC = _slash(GRADE, Units.PC)
-    HEART_RATE_BPM = _slash(HEART_RATE, Units.BPM)
-    SPEED_KMH = _slash(SPEED, Units.KMH)
-    POWER_ESTIMATE_W = _slash(POWER_ESTIMATE, Units.W)
+    ACTIVE_DISTANCE_KM = TitlesBase._slash(ACTIVE_DISTANCE, Units.KM)
+    ACTIVE_TIME_H = TitlesBase._slash(ACTIVE_TIME, Units.H)
+    CLIMB_MS = TitlesBase._slash(CLIMB, Units.MS)
+    DISTANCE_KM = TitlesBase._slash(DISTANCE, Units.KM)
+    ELEVATION_M = TitlesBase._slash(ELEVATION, Units.M)
+    GRADE_PC = TitlesBase._slash(GRADE, Units.PC)
+    HEART_RATE_BPM = TitlesBase._slash(HEART_RATE, Units.BPM)
+    SPEED_KMH = TitlesBase._slash(SPEED, Units.KMH)
+    POWER_ESTIMATE_W = TitlesBase._slash(POWER_ESTIMATE, Units.W)
 
-    MED_SPEED_KMH = _med(SPEED_KMH)
-    MED_HEART_RATE_BPM = _med(HEART_RATE_BPM)
-    MED_HR_IMPULSE_10 = _med(HR_IMPULSE_10)
-    MED_CADENCE = _med(CADENCE)
-    MED_POWER_ESTIMATE_W = _med(POWER_ESTIMATE_W)
+    MED_SPEED_KMH = TitlesBase._med(SPEED_KMH)
+    MED_HEART_RATE_BPM = TitlesBase._med(HEART_RATE_BPM)
+    MED_HR_IMPULSE_10 = TitlesBase._med(HR_IMPULSE_10)
+    MED_CADENCE = TitlesBase._med(CADENCE)
+    MED_POWER_ESTIMATE_W = TitlesBase._med(POWER_ESTIMATE_W)
 
     POWER_HR = 'Power / HR'
     POWER_HR_LAG = 'Power / HR Lag'
     HR_DRIFT = 'HR Drift'
-    LOG_HR_DRIFT = _log('HR Drift')
+    LOG_HR_DRIFT = TitlesBase._log('HR Drift')
     IDLE_HR = 'Idle HR'
     WIND_SPEED = 'Wind Speed'
     WIND_HEADING = 'Wind Heading'
@@ -206,12 +228,15 @@ class Summaries:
     SUM = 'sum'
     MSR = 'msr'   # measure (separate table, less efficient)
 
+    @staticmethod
+    def join(*args): return ','.join(args)
+
 
 def like(pattern, names):
     return list(_like(pattern, names))
 
 def _like(pattern, names, test=True):
-    matcher = re.compile(re.sub('%', '.+', pattern))
+    matcher = re.compile(pattern.replace('%', '.+'))
     for name in names:
         if bool(matcher.match(name)) == test:
             yield name
@@ -220,13 +245,28 @@ def unlike(pattern, names):
     return list(_like(pattern, names, test=False))
 
 
+def titles_for_names(title_pattern, names):
+    title_left, title_right = title_pattern.split('%')
+    name_left, name_right = simple_name(title_pattern).split('%')
+    pattern = re.compile(f'{name_left}(.+){name_right}')
+    for name in names:
+        match = pattern.match(name)
+        if match:
+            yield title_left + match.group(1) + title_right
+
+
 class NamesMeta(type):
 
-    def __getattr__(self, item):
-        if item[0].upper() == item[0]:
-            return simple_name(self.__dict__[item])
+    def __getattribute__(cls, item):
+        value = type.__getattribute__(cls, item)
+        if item[0].isalpha() and item[0].upper() == item[0]:
+            return simple_name(value)
+        elif len(item) > 1 and item[0] == '_' and item[1].isalpha():
+            def wrapper(*args):
+                return simple_name(value(*args))
+            return wrapper
         else:
-            return super().__getattr__(item)
+            return value
 
 
 class Names(Titles, metaclass=NamesMeta): pass

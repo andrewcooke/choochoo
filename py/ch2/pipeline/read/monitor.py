@@ -15,7 +15,7 @@ from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
 from ...lib.date import time_to_local_date, format_time
-from ...names import Names, Titles, _new, Units
+from ...names import Names, Titles, Units
 from ...sql.database import StatisticJournalType, ActivityGroup
 from ...sql.tables.monitor import MonitorJournal
 from ...sql.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
@@ -86,7 +86,7 @@ class MonitorLoader(StatisticJournalLoader):
         prev.value = max(prev.value, instance.value)
 
 
-NEW_STEPS = _new(Names.STEPS)
+NEW_STEPS = Names._new(Names.STEPS)
 STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 
@@ -226,7 +226,7 @@ class MonitorReader(MultiProcFitReader):
                        t.sn.c.owner == self.owner_out)). \
             order_by(t.sj.c.time)
         # log.debug(q)
-        df = pd.read_sql_query(sql=q, con=s.connection(), index_col=TIME)
+        df = pd.read_sql_query(sql=q, con=s.connection(), index_col=Names.TIME)
         return df
 
     def _calculate_diff(self, df):

@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 from .read import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
 from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
-from ...names import Titles, Units, _cov, Sports, summaries, Summaries as S
+from ...names import Titles as T, Units, Sports, Summaries as S
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -40,7 +40,7 @@ class ActivityReader(MultiProcFitReader):
         self.record_to_db = [(field, title, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (title, units, type)
                              in self._assert('record_to_db', record_to_db).items()]
-        self.add_elevation = not any(title == Titles.ELEVATION for (field, title, units, type) in self.record_to_db)
+        self.add_elevation = not any(title == T.ELEVATION for (field, title, units, type) in self.record_to_db)
         self.__ajournal = None  # save for coverage
         super().__init__(*args, sub_dir=ACTIVITY, **kargs)
 
@@ -268,22 +268,22 @@ class ActivityReader(MultiProcFitReader):
                                 value /= 1000
                             loader.add(title, units, None, activity_group, ajournal, value, timestamp, type,
                                        description=f'The value of field {field} in the FIT record.')
-                            if title == Titles.LATITUDE:
+                            if title == T.LATITUDE:
                                 lat = value
-                            elif title == Titles.LONGITUDE:
+                            elif title == T.LONGITUDE:
                                 lon = value
                     logged += 1
                     # values derived from lat/lon
                     if lat is not None and lon is not None:
                         x, y = Point.from_latitude_longitude(lat, lon).meters
-                        loader.add(Titles.SPHERICAL_MERCATOR_X, Units.M, None, activity_group, ajournal, x, timestamp,
+                        loader.add(T.SPHERICAL_MERCATOR_X, Units.M, None, activity_group, ajournal, x, timestamp,
                                    StatisticJournalFloat, description='The WGS84 X coordinate')
-                        loader.add(Titles.SPHERICAL_MERCATOR_Y, Units.M, None, activity_group, ajournal, y, timestamp,
+                        loader.add(T.SPHERICAL_MERCATOR_Y, Units.M, None, activity_group, ajournal, y, timestamp,
                                    StatisticJournalFloat, description='The WGS84 Y coordinate')
                         if self.add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
                             if elevation:
-                                loader.add(Titles.RAW_ELEVATION, Units.M, None, activity_group, ajournal, elevation,
+                                loader.add(T.RAW_ELEVATION, Units.M, None, activity_group, ajournal, elevation,
                                            timestamp, StatisticJournalFloat,
                                            description='The elevation from SRTM1 at this location')
                 else:
@@ -308,7 +308,7 @@ class ActivityReader(MultiProcFitReader):
     def _read(self, s, path):
         loader = super()._read(s, path)
         for (title, activity_group), percent in loader.coverage_percentages():
-            StatisticJournalFloat.add(s, _cov(title), Units.PC, summaries(S.MIN, S.AVG), self.owner_out,
+            StatisticJournalFloat.add(s, T._cov(title), Units.PC, S.join(S.MIN, S.AVG), self.owner_out,
                                       activity_group, self.__ajournal, percent, self.__ajournal.start,
                                       description=f'Coverage (% of FIT records with data) for {title}.')
         s.commit()

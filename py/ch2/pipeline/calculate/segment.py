@@ -2,7 +2,7 @@
 from logging import getLogger
 
 from .calculate import MultiProcCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
-from ...names import Names, Titles, Summaries as S, summaries, Units
+from ...names import Names, Titles, Summaries as S, Units
 from ...data import activity_statistics, present, linear_resample_time
 from ...sql import SegmentJournal, StatisticJournalFloat
 
@@ -30,8 +30,8 @@ class SegmentCalculator(SegmentJournalCalculatorMixin, DataFrameCalculatorMixin,
 
     def _copy_results(self, s, ajournal, loader, stats):
         sjournal = stats[SJOURNAL]
-        loader.add(Titles.SEGMENT_TIME, Units.S, summaries(S.MIN, S.CNT, S.MSR), sjournal.segment, sjournal,
+        loader.add(Titles.SEGMENT_TIME, Units.S, S.join(S.MIN, S.CNT, S.MSR), sjournal.segment, sjournal,
                    stats[Names.SEGMENT_TIME], sjournal.start, StatisticJournalFloat)
         if Titles.SEGMENT_HEART_RATE in stats:
-            loader.add(Titles.SEGMENT_HEART_RATE, Units.BPM, summaries(S.MAX, S.CNT, S.MSR), sjournal.segment,
+            loader.add(Titles.SEGMENT_HEART_RATE, Units.BPM, S.join(S.MAX, S.CNT, S.MSR), sjournal.segment,
                        sjournal, stats[Titles.SEGMENT_HEART_RATE], sjournal.start, StatisticJournalFloat)

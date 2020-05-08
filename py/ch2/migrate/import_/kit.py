@@ -1,9 +1,9 @@
 
 from logging import getLogger
 
-from ...names import Names, Titles
 from ...lib import format_date, time_to_local_date, to_time
 from ...lib.log import log_current_exception
+from ...names import Titles
 from ...sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \
     StatisticJournalType
 from ...sql.utils import add
@@ -59,16 +59,16 @@ def copy_statistics(record, old_s, old, old_source, new_s, new_source):
     statistic_name = old.meta.tables['statistic_name']
     statistic_journal = old.meta.tables['statistic_journal']
     statistic_journal_timestamp = old.meta.tables['statistic_journal_timestamp']
-    for name in (Titles.KIT_ADDED, Titles.KIT_RETIRED):
+    for title in (Titles.KIT_ADDED, Titles.KIT_RETIRED):
         old_timestamp = old_s.query(statistic_journal). \
             join(statistic_journal_timestamp). \
             join(statistic_name). \
-            filter(statistic_name.c.name.ilike(name),
+            filter(statistic_name.c.name.ilike(title),
                    statistic_journal.c.source_id == old_source.id).one_or_none()
         if old_timestamp:
-            new_statistic_name = StatisticName.add_if_missing(new_s, name, StatisticJournalType.TIMESTAMP,
+            new_statistic_name = StatisticName.add_if_missing(new_s, title, StatisticJournalType.TIMESTAMP,
                                                               None, None, type(new_source))
             add(new_s, StatisticJournalTimestamp(source=new_source, time=old_timestamp.time,
                                                  statistic_name=new_statistic_name))
             date = format_date(time_to_local_date(to_time(old_timestamp.time)))
-            record.info(f'Statistic {name} at {date} for {old_source.name}')
+            record.info(f'Statistic matching {title} at {date} for {old_source.name}')

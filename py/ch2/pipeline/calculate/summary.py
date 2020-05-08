@@ -53,7 +53,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
                 value, units = self._calculate_value(s, statistic_name, summary, S.MIN in summaries,
                                                      start, finish, interval, measures)
                 if value is not None:
-                    name = self.fmt_name(statistic_name.name, summary, self.schedule)
+                    title = self.fmt_title(statistic_name.title, summary, self.schedule)
                     # we need to infer the type
                     if summary in (S.MAX, S.MIN, S.SUM):
                         new_type = TYPE_TO_JOURNAL_CLASS[type(value)]
@@ -61,7 +61,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
                         new_type = StatisticJournalFloat
                     else:
                         new_type = StatisticJournalInteger
-                    loader.add(name, units, None, statistic_name.activity_group, interval, value, start, new_type,
+                    loader.add(title, units, None, statistic_name.activity_group, interval, value, start, new_type,
                                description=self._describe(statistic_name, summary, interval))
         # add and commit these here - what else can we do?
         log.debug(f'Adding {len(measures)} measures')
@@ -138,12 +138,12 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         log.debug('Ranked %s' % statistic_name)
 
     @classmethod
-    def parse_name(cls, name):
+    def parse_title(cls, name):
         left, right = name.split(' ', 1)
         summary, period = left.split('/')
         return summary, period, right
 
     @classmethod
-    def fmt_name(cls, name, summary, schedule):
+    def fmt_title(cls, name, summary, schedule):
         title = summary[1:-1].capitalize()   # see parse_name
         return '%s/%s %s' % (title, schedule.describe(), name)

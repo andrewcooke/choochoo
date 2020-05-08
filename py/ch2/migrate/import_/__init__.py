@@ -70,7 +70,7 @@ def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic
                                     statistic_name=new_statistic_name, source=source))
         new_s.commit()  # avoid logging below if error
         date = format_date(time_to_local_date(to_time(new_value.time)))
-        record.info(f'Statistic {new_value.value} at {date} for {name}')
+        record.info(f'Statistic value {new_value.value} at {date} for {name}')
 
 
 def any_attr(instance, *names):

@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 from scipy import optimize
 
 from .lib import decay_params, inplace_decay
-from ..names import Titles, like, _delta, Names
+from ..names import Titles, like
 
 log = getLogger(__name__)
 
@@ -162,7 +162,7 @@ def response_stats(df, prev_secs):
         for name in like(pattern, df.columns):
             lower, higher = df[name][0], df[name][-1]
             delta = higher - lower
-            stats[_delta(name)] = delta
+            stats[Titles._delta(name)] = delta
             days = int(digits.search(name).group(1))
             tau = days * 24 * 60 * 60
             # this is the time needed for the value to return to where it was before the activity

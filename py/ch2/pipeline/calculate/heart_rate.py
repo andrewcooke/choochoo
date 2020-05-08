@@ -7,7 +7,7 @@ from scipy.signal import find_peaks
 from .calculate import MultiProcCalculator, IntervalCalculatorMixin
 from ...data import statistics
 from ...lib import format_date, local_date_to_time
-from ...names import Titles, summaries, Summaries as S, Units
+from ...names import Titles, Summaries as S, Units, Names
 from ...sql import StatisticJournalInteger, ActivityGroup
 
 log = getLogger(__name__)
@@ -27,11 +27,11 @@ class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         super().__init__(*args, owner_in=owner_in, schedule=schedule, **kargs)
 
     def _read_data(self, s, interval):
-        return statistics(s, HEART_RATE, activity_group=ActivityGroup.ALL,
+        return statistics(s, Names.HEART_RATE, activity_group=ActivityGroup.ALL,
                           local_start=interval.start, local_finish=interval.finish)
 
     def _calculate_results(self, s, interval, df, loader):
-        hist = pd.cut(df[HEART_RATE], np.arange(30, 90), right=False).value_counts(sort=False)
+        hist = pd.cut(df[Names.HEART_RATE], np.arange(30, 90), right=False).value_counts(sort=False)
         peaks, _ = find_peaks(hist)
         for peak in peaks:
             rest_hr = hist.index[peak].left
@@ -39,7 +39,7 @@ class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             if measurements > len(df) * 0.01:
                 log.debug(f'Rest HR is {rest_hr} with {measurements} values')
                 # conversion to int as value above is numpy int64
-                loader.add(Titles.REST_HR, Units.BPM, summaries(S.MIN, S.MSR), ActivityGroup.ALL, interval,
+                loader.add(Titles.REST_HR, Units.BPM, S.join(S.MIN, S.MSR), ActivityGroup.ALL, interval,
                            int(rest_hr), local_date_to_time(interval.start), StatisticJournalInteger,
                            'The rest heart rate')
                 return

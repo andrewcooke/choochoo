@@ -59,6 +59,9 @@ class StatisticJournalLoader:
         return bool(self.__staging)
 
     def load(self):
+        if not self.__start:
+            log.warning('No data to load')
+            return
         self._s.commit()
         dummy = self._preload()
         try:
