@@ -178,7 +178,7 @@ DESCRIPTIONS = defaultdict(lambda: None, {
     T.ACTIVE_TIME: '''The total time while active (ie not paused).''',
     T.ACTIVE_SPEED: '''The average speed while active (ie not paused).''',
     T.MEAN_POWER_ESTIMATE: '''The average estimated power.''',
-    T.DIRECTION: '''The angular direction (clockwise from North) of the mid-point of teh activity relative to the start.''',
+    T.DIRECTION: '''The angular direction (clockwise from North) of the mid-point of the activity relative to the start.''',
     T.ASPECT_RATIO: f'''The relative extent of the activity along and across the {T.DIRECTION}.''',
     T.MIN_KM_TIME_ANY: '''The shortest time required to cover the given distance.''',
     T.MED_KM_TIME_ANY: '''The median (typical) time required to cover the given distance.''',
