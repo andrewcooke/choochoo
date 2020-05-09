@@ -5,6 +5,7 @@ import pandas as pd
 from scipy.signal import find_peaks
 
 from .calculate import MultiProcCalculator, IntervalCalculatorMixin
+from ..pipeline import OwnerInMixin
 from ...data import statistics
 from ...lib import format_date, local_date_to_time
 from ...names import Titles, Summaries as S, Units, Names
@@ -13,7 +14,7 @@ from ...sql import StatisticJournalInteger, ActivityGroup
 log = getLogger(__name__)
 
 
-class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
+class RestHRCalculator(OwnerInMixin, IntervalCalculatorMixin, MultiProcCalculator):
 
     '''
     used to calculate rest HR from quartiles, but it was never clear we had *the* rest value rather
@@ -23,12 +24,13 @@ class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
     is more meaningful.  it's a low heart rate that you spent a fair amount of time at.
     '''
 
-    def __init__(self, *args, owner_in='[unused]', schedule='d', **kargs):
-        super().__init__(*args, owner_in=owner_in, schedule=schedule, **kargs)
+    def __init__(self, *args, schedule='d', **kargs):
+        super().__init__(*args, schedule=schedule, **kargs)
 
     def _read_data(self, s, interval):
         return statistics(s, Names.HEART_RATE, activity_group=ActivityGroup.ALL,
-                          local_start=interval.start, local_finish=interval.finish)
+                          local_start=interval.start, local_finish=interval.finish,
+                          owners=(self.owner_in,))
 
     def _calculate_results(self, s, interval, df, loader):
         hist = pd.cut(df[Names.HEART_RATE], np.arange(30, 90), right=False).value_counts(sort=False)

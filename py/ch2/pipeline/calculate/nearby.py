@@ -9,6 +9,7 @@ from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
 from .calculate import UniProcCalculator
+from ..pipeline import OwnerInMixin
 from ...names import Names
 from ...rtree import MatchType
 from ...rtree.spherical import SQRTree
@@ -23,7 +24,7 @@ Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish
                               'latitude, longitude, height, width, fraction')
 
 
-class SimilarityCalculator(UniProcCalculator):
+class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
 
     def __init__(self, *args, nearby=None, **kargs):
         self.nearby_ref = self._assert('nearby', nearby)
@@ -237,7 +238,7 @@ class NearbySimilarityDBSCAN(DBSCAN):
         return [x[0] for x in qlo.all()] + [x[0] for x in qhi.all()]
 
 
-class NearbyCalculator(UniProcCalculator):
+class NearbyCalculator(OwnerInMixin, UniProcCalculator):
 
     def __init__(self, *args, constraint=None, **kargs):
         self.constraint = self._assert('constraint', constraint)

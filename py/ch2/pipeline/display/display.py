@@ -11,9 +11,6 @@ log = getLogger(__name__)
 
 class Displayer(BasePipeline):
 
-    def __init__(self, *args, **kargs):
-        super().__init__(*args, **kargs)
-
     def read(self, s, date, schedule=None):
         try:
             if schedule:

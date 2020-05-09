@@ -136,7 +136,7 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
                 try:
                     stats = self._calculate_stats(s, source, data)
                 except PowerException as e:
-                    log.warning(f'Cannot use detailed power model; adding basic values only ({e})')
+                    log.debug(f'Cannot use detailed power model; adding basic values only ({e})')
                     loader = StatisticJournalLoader(s, self.owner_out)
                     stats = None, super()._calculate_stats(s, source, data)
                 self._copy_results(s, source, loader, stats)

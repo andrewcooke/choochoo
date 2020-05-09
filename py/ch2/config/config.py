@@ -175,18 +175,18 @@ your FF-model parameters (fitness and fatigue).
     def _load_statistics_pipeline(self, s, c):
         # order is important here because some pipelines expect values created by others
         # this converts RAW_ELEVATION to ELEVATION, if needed
-        add_statistics(s, ElevationCalculator, c, owner_in='[unused - data via activity_statistics]')
+        add_statistics(s, ElevationCalculator, c)
         self._load_power_statistics(s, c)
         self._load_ff_statistics(s, c)
         self._load_standard_statistics(s, c)
         self._load_summary_statistics(s, c)
-        add_statistics(s, AchievementCalculator, c, owner_in=short_cls(SegmentReader))
+        add_statistics(s, AchievementCalculator, c, owner_in=short_cls(ActivityCalculator))
 
     def _load_diary_pipeline(self, s, c):
         add_displayer(s, DiaryDisplayer, c)
         add_displayer(s, MonitorDisplayer, c)
         # prefix ties in to the ff statistics config
-        add_displayer(s, ResponseDisplayer, c, prefix=Names.DEFAULT)
+        add_displayer(s, ResponseDisplayer, c, owner_in=short_cls(ResponseCalculator), prefix=Names.DEFAULT)
         add_displayer(s, ActivityDisplayer, c)
         c2 = Counter()
         for delegate in self._activity_displayer_delegates():

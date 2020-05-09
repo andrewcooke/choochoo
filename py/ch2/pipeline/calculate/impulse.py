@@ -6,6 +6,7 @@ from logging import getLogger
 import numpy as np
 
 from .calculate import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
+from ..pipeline import OwnerInMixin
 from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10
 from ...names import Names, Titles
@@ -17,7 +18,7 @@ log = getLogger(__name__)
 HRImpulse = namedtuple('HRImpulse', 'title, gamma, zero, one, max_secs')
 
 
-class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, prefix=None, impulse_constant=None, **kargs):
         self.impulse_constant_name = self._assert('impulse_constant', impulse_constant)
@@ -32,7 +33,8 @@ class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, 
 
     def _read_dataframe(self, s, ajournal):
         try:
-            heart_rate_df = activity_statistics(s, Names.HEART_RATE, activity_journal=ajournal)
+            heart_rate_df = activity_statistics(s, Names.HEART_RATE, activity_journal=ajournal,
+                                                owners=(self.owner_in,))
             fthr_df = statistics(s, Names.FTHR, activity_group=ajournal.activity_group)
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')

@@ -14,7 +14,7 @@ from ...data.frame import statistics
 from ...names import Names as N
 from ...data.response import sum_to_hour, calc_response
 from ...lib.date import round_hour, to_time, local_date_to_time, now
-from ..pipeline import LoaderMixin
+from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
 from ...sql import ActivityGroup
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
@@ -28,7 +28,7 @@ Response = namedtuple('Response', 'src_owner, title, tau_days, start, scale')
 SCALED = 'Scaled'
 
 
-class ResponseCalculator(LoaderMixin, UniProcCalculator):
+class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
     '''
     this is hard to do correctly, incrementally.
 

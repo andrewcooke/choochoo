@@ -10,6 +10,7 @@ from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin, Data
 from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
+from ..pipeline import OwnerInMixin
 from ..read.segment import SegmentReader
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times
@@ -26,7 +27,7 @@ from ...sql.types import simple_name
 log = getLogger(__name__)
 
 
-class ActivityCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, climb=None, **kargs):
         self.climb_ref = climb

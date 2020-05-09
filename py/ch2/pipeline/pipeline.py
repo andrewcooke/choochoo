@@ -207,3 +207,10 @@ class LoaderMixin:
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
         return StatisticJournalLoader(s, **kargs)
+
+
+class OwnerInMixin:
+
+    def __init__(self, *args, owner_in=None, **kargs):
+        self.owner_in = self._assert('owner_in', owner_in)
+        super().__init__(*args, **kargs)

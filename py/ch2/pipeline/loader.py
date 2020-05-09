@@ -172,7 +172,7 @@ class StatisticJournalLoader:
                 self.__counts[key] += 1
             elif instance.time == prev.time:
                 if instance.value == prev.value:
-                    log.warning(f'Skipping duplicate for {name}')
+                    log.debug(f'Skipping duplicate for {name}')
                 else:
                     self._resolve_duplicate(name, instance, prev)
             else:

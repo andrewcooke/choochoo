@@ -70,7 +70,7 @@ class MonitorLoader(StatisticJournalLoader):
                            StatisticJournal.time >= self.start,
                            StatisticJournal.time <= self.finish).scalar()
                 if n and self.start and self.finish:
-                    log.warning(f'Deleting {n} overlapping {Names.CUMULATIVE_STEPS}')
+                    log.debug(f'Deleting {n} overlapping {Names.CUMULATIVE_STEPS}')
                     self._s.query(StatisticJournal). \
                         filter(StatisticJournal.statistic_name == name,
                                StatisticJournal.time >= self.start,

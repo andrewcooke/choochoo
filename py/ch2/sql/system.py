@@ -18,7 +18,7 @@ class System(MappedDatabase):
         if version:
             log.info(f'Database version {version}')
         else:
-            log.warning('Unconfigured')
+            log.warning('Database unconfigured')
 
     def _sessionmaker(self):
         return sessionmaker(bind=self.engine, expire_on_commit=False)

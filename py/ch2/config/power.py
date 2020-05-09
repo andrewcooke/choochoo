@@ -28,5 +28,4 @@ For example, ${SegmentReader:kit} is the kit specified when the activity is uplo
 * Rider_weight is an expression that expends to read the weight from the diary.
 * Vary is an experimental parameter to select what attributes of the ride are modelled (leave blank).
 ''')
-    add_statistics(s, ExtendedPowerCalculator, c, owner_in='[unused - data via activity_statistics]',
-                   power=constant.name, activity_group=activity_group.name)
+    add_statistics(s, ExtendedPowerCalculator, c, power=constant.name, activity_group=activity_group.name)

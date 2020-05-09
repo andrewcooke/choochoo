@@ -26,9 +26,6 @@ def fuzz(n, q):
 
 class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, owner_in='[unused]', **kargs):
-        super().__init__(*args, owner_in=owner_in, **kargs)
-
     def _startup(self, s):
         Interval.clean(s)
 
@@ -114,7 +111,6 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         return f'The {adjective} {statistic_name.name} over {period}.'
 
     def _calculate_measures(self, s, statistic_name, order_asc, start_time, finish_time, interval, measures):
-
         data = sorted([x for x in
                        s.query(StatisticJournal).
                            filter(StatisticJournal.statistic_name == statistic_name,
@@ -122,7 +118,6 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
                                  StatisticJournal.time < finish_time).all()
                        if x is not None and x.value is not None],
                       key=lambda x: x.value, reverse=not order_asc)
-
         n, local_measures = len(data), []
         for rank, journal in enumerate(data, start=1):
             if n > 1:
@@ -145,5 +140,5 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
 
     @classmethod
     def fmt_title(cls, name, summary, schedule):
-        title = summary[1:-1].capitalize()   # see parse_name
+        title = summary.capitalize()
         return '%s/%s %s' % (title, schedule.describe(), name)

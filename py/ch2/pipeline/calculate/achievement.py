@@ -4,8 +4,8 @@ from re import compile
 
 from sqlalchemy import desc, asc
 
-from .activity import ActivityCalculator
 from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin
+from ..pipeline import OwnerInMixin
 from ...lib import local_time_to_time
 from ...lib.log import log_current_exception
 from ...names import Titles as T
@@ -16,7 +16,7 @@ from ...sql.utils import add
 log = getLogger(__name__)
 
 
-class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator):
+class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, MultiProcCalculator):
 
     def _delete(self, s):
         start, finish = self._start_finish(type=local_time_to_time)
@@ -37,16 +37,16 @@ class AchievementCalculator(ActivityJournalCalculatorMixin, MultiProcCalculator)
 
     def _build_table(self, s):
         table = []
-        self._append_like(table, s, 'fastest', 15, T.MIN_KM_TIME_ANY, ActivityCalculator)
-        self._append_like(table, s, 'longest', 10, T.ACTIVE_DISTANCE, ActivityCalculator)
-        self._append_like(table, s, 'longest', 10, T.ACTIVE_TIME, ActivityCalculator)
-        self._append_like(table, s, 'fastest', 10, T.ACTIVE_SPEED, ActivityCalculator)
-        self._append_like(table, s, 'highest', 3, T.MAX_MEAN_PE_M_ANY, ActivityCalculator)
-        self._append_like(table, s, 'highest', 10, T._delta(T.FITNESS_D_ANY), ActivityCalculator)
-        self._append_like(table, s, 'highest', 10, T.TOTAL_CLIMB, ActivityCalculator)
-        self._append_like(table, s, 'highest', 5, T.CLIMB_ELEVATION, ActivityCalculator)
-        self._append_like(table, s, 'highest', 5, T.CLIMB_DISTANCE, ActivityCalculator)
-        self._append_like(table, s, 'highest', 3, T.MAX_MED_HR_M_ANY, ActivityCalculator)
+        self._append_like(table, s, 'fastest', 15, T.MIN_KM_TIME_ANY, self.owner_in)
+        self._append_like(table, s, 'longest', 10, T.ACTIVE_DISTANCE, self.owner_in)
+        self._append_like(table, s, 'longest', 10, T.ACTIVE_TIME, self.owner_in)
+        self._append_like(table, s, 'fastest', 10, T.ACTIVE_SPEED, self.owner_in)
+        self._append_like(table, s, 'highest', 3, T.MAX_MEAN_PE_M_ANY, self.owner_in)
+        self._append_like(table, s, 'highest', 10, T._delta(T.FITNESS_D_ANY), self.owner_in)
+        self._append_like(table, s, 'highest', 10, T.TOTAL_CLIMB, self.owner_in)
+        self._append_like(table, s, 'highest', 5, T.CLIMB_ELEVATION, self.owner_in)
+        self._append_like(table, s, 'highest', 5, T.CLIMB_DISTANCE, self.owner_in)
+        self._append_like(table, s, 'highest', 3, T.MAX_MED_HR_M_ANY, self.owner_in)
         return table
 
     def _append_like(self, table, s, superlative, score, pattern, owner):

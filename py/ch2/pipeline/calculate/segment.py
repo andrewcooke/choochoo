@@ -2,6 +2,7 @@
 from logging import getLogger
 
 from .calculate import MultiProcCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
+from ..pipeline import OwnerInMixin
 from ...names import Names, Titles, Summaries as S, Units
 from ...data import activity_statistics, present, linear_resample_time
 from ...sql import SegmentJournal, StatisticJournalFloat
@@ -11,14 +12,15 @@ log = getLogger(__name__)
 SJOURNAL = 'sjournal'
 
 
-class SegmentCalculator(SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
+class SegmentCalculator(OwnerInMixin, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def _delete(self, s):
         super()._delete(s)
         SegmentJournal.clean(s)
 
     def _read_dataframe(self, s, sjournal):
-        return activity_statistics(s, Names.HEART_RATE, activity_journal=sjournal.activity_journal)
+        return activity_statistics(s, Names.HEART_RATE, activity_journal=sjournal.activity_journal,
+                                   owners=(self.owner_in,))
 
     def _calculate_stats(self, s, sjournal, df):
         stats = {Titles.SJOURNAL: sjournal,
