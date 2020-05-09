@@ -6,7 +6,7 @@ from ..pipeline.calculate.nearby import Nearby, SimilarityCalculator, NearbyCalc
 from ..sql import ActivityGroup, Constant, Pipeline, PipelineType, StatisticName, StatisticJournalType, \
     DiaryTopic, DiaryTopicField, Dummy, ActivityTopic, ActivityTopicField
 from ..sql.tables.constant import ValidateNamedTuple
-from ..sql.types import long_cls, short_cls
+from ..sql.types import long_cls, short_cls, simple_name
 
 log = getLogger(__name__)
 
@@ -141,48 +141,26 @@ def add_activities(s, cls, sort, **kargs):
     return add(s, Pipeline(cls=cls, type=PipelineType.READ_ACTIVITY, sort=sort, kargs=kargs))
 
 
-def add_constant(s, name, value, description=None, units=None, single=False,
+def add_constant(s, title, value, description=None, units=None, name=None,
                  statistic_journal_type=StatisticJournalType.INTEGER, activity_group=ActivityGroup.ALL,
-                 time=0.0):
+                 time=0.0, single=False, validate_cls=None, validate_args=None, validate_kargs=None):
     '''
-    Add a constant (not associated with an activity).
+    Add a constant (not associated with an activity group).
 
     Configuring a constant allows the user to supply a value later, using the `ch2 constant` command.
     This can be useful for values that don't vary often, and so aren't worth adding to the diary.
     An example is FTHR, which you will only measure occasionally, but which is needed when calculating
     activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
     '''
+    if name is None: name = simple_name(title)
     log.debug(f'Adding constant {name}')
-    statistic_name = add(s, StatisticName(name=name, owner=Constant,
+    statistic_name = add(s, StatisticName(name=name, title=title, owner=Constant,
                                           activity_group=ActivityGroup.from_name(s, activity_group),
                                           units=units, description=description,
                                           statistic_journal_type=statistic_journal_type))
-    constant = add(s, Constant(statistic_name=statistic_name, name=name, single=single))
-    if value:
-        constant.add_value(s, value, time=time)
-    else:
-        log.warning(f'No value for constant {name}')
-    return constant
-
-
-def add_activity_constant(s, activity_group, name, value, description=None, units=None, single=False,
-                          statistic_journal_type=StatisticJournalType.INTEGER, time=0.0):
-    '''
-    Add a constant associated with an activity.
-
-    Configuring a constant allows the user to modify a value later, using the `ch2 constant` command.
-    This can be useful for values that don't vary often, and so aren't worth adding to the diary.
-    An example is FTHR, which you will only measure occasionally, but which is needed when calculating
-    activity statistics (also, FTHR can vary by activity, which is why we add a constant per activity).
-    '''
-    if activity_group.id is None:
-        s.flush()
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, activity_group=activity_group,
-                                          units=units, description=description,
-                                          statistic_journal_type=statistic_journal_type))
-    log.debug(f'Adding activity constant {name}')
     constant = add(s, Constant(statistic_name=statistic_name, name=statistic_name.qualified_name,
-                               single=single))
+                               single=single, validate_cls=validate_cls,
+                               validate_args=validate_args, validate_kargs=validate_kargs))
     if value:
         constant.add_value(s, value, time=time)
     else:
@@ -190,23 +168,15 @@ def add_activity_constant(s, activity_group, name, value, description=None, unit
     return constant
 
 
-def add_enum_constant(s, name, enum, value,
-                      activity_group=ActivityGroup.ALL, description=None, units=None, single=False, time=0.0):
+def add_enum_constant(s, title, enum, value, description=None, units=None, single=False, name=None,
+                      activity_group=ActivityGroup.ALL, time=0.0):
     '''
     Add a constant that is a JSON encoded enum.  This is validated before saving.
     '''
-    statistic_name = add(s, StatisticName(name=name, owner=Constant,
-                                          activity_group=ActivityGroup.from_name(s, activity_group),
-                                          units=units, description=description,
-                                          statistic_journal_type=StatisticJournalType.TEXT))
-    constant = add(s, Constant(statistic_name=statistic_name, name=statistic_name.qualified_name,
-                               single=single, validate_cls=ValidateNamedTuple,
-                               validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)}))
-    if value:
-        constant.add_value(s, dumps(value), time=time)
-    else:
-        log.warning(f'No value for constant {name}')
-    return constant
+    return add_constant(s, title, dumps(value), description=description, units=units, name=name,
+                        statistic_journal_type=StatisticJournalType.TEXT, activity_group=activity_group,
+                        time=time, single=single, validate_cls=ValidateNamedTuple,
+                        validate_args=[], validate_kargs={'tuple_cls': long_cls(enum)})
 
 
 def set_constant(s, constant, value, time=None, date=None):

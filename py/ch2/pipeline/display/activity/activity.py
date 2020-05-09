@@ -173,7 +173,7 @@ class ActivityDelegate(ActivityJournalDelegate):
     def __read_climbs(cls, s, ajournal, date):
         total, climbs = climbs_for_activity(s, ajournal)
         if total:
-            yield cls.__sjournal_as_value(total)
+            yield cls.__sjournal_as_value(total, date=date)
             for climb in climbs:
                 yield [text('Climb'),
                        cls.__climb_as_value(climb, N.CLIMB_ELEVATION, date=date),

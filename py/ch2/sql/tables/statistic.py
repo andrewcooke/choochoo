@@ -66,7 +66,8 @@ class StatisticName(Base):
             return []
 
     @classmethod
-    def add_if_missing(cls, s, name, type, units, summary, owner, activity_group=None, description=None):
+    def add_if_missing(cls, s, name, type, units, summary, owner,
+                       activity_group=None, description=None, title=None):
         from .activity import ActivityGroup
         if activity_group is None: activity_group = ActivityGroup.ALL
         activity_group = ActivityGroup.from_name(s, activity_group)
@@ -79,7 +80,7 @@ class StatisticName(Base):
         if not statistic_name:
             statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner,
                                                   activity_group=activity_group, statistic_journal_type=type,
-                                                  description=description))
+                                                  description=description, title=title))
             try:
                 s.flush()
             except IntegrityError as e:  # worker may have created in parallel, so read

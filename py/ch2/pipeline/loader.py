@@ -128,7 +128,11 @@ class StatisticJournalLoader:
                    StatisticJournal.statistic_name == dummy_name).delete()
         s.commit()
 
-    def add(self, name, units, summary, activity_group, source, value, time, cls, description=None):
+    def add(self, name, units, summary, activity_group, source, value, time, cls,
+            description=None, title=None):
+
+        # note that name is used as title if title is None, and name is reduced to a simple name.
+        # so legacy code works correctly
 
         if self.__add_serial:
             if self.__last_time is None:
@@ -148,7 +152,7 @@ class StatisticJournalLoader:
             self.__statistic_name_cache[key] = \
                 StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
                                              units, summary, self._owner, activity_group=activity_group,
-                                             description=description)
+                                             description=description, title=title)
 
         try:
             source = source.id

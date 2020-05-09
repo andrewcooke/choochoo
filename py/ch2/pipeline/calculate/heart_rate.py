@@ -44,6 +44,6 @@ class RestHRCalculator(IntervalCalculatorMixin, MultiProcCalculator):
                            'The rest heart rate')
                 return
             else:
-                log.warning(f'Skipping rest HR at {rest_hr} because too few measurements ({measurements}/{len(df)})')
+                log.debug(f'Skipping rest HR at {rest_hr} because too few measurements ({measurements}/{len(df)})')
         log.warning(f'Unable to calculate rest HR at {format_date(interval.start)}')
 

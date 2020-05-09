@@ -14,19 +14,21 @@ from ...sql import Constant, StatisticJournalFloat, ActivityGroup
 log = getLogger(__name__)
 
 # constraint comes from constant
-HRImpulse = namedtuple('HRImpulse', 'gamma, zero, one, max_secs')
+HRImpulse = namedtuple('HRImpulse', 'title, gamma, zero, one, max_secs')
 
 
 class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, impulse_ref=None, **kargs):
-        self.impulse_ref = self._assert('impulse_ref', impulse_ref)
+    def __init__(self, *args, prefix=None, impulse_constant=None, **kargs):
+        self.impulse_constant_name = self._assert('impulse_constant', impulse_constant)
+        self.prefix = self._assert('prefix', prefix)
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
-        self.impulse = HRImpulse(**loads(Constant.get(s, self.impulse_ref).at(s).value))
+        self.impulse_constant = Constant.get(s, self.impulse_constant_name)
+        self.impulse = HRImpulse(**loads(self.impulse_constant.at(s).value))
         self.all = ActivityGroup.from_name(s, ActivityGroup.ALL)
-        log.debug('%s: %s' % (self.impulse_ref, self.impulse))
+        log.debug('%s: %s' % (self.impulse_constant, self.impulse))
 
     def _read_dataframe(self, s, ajournal):
         try:
@@ -49,7 +51,9 @@ class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, 
 
     def _copy_results(self, s, ajournal, loader, stats):
         hr_description = 'The SHRIMP HR zone.'
-        impulse_description = 'The SHRIMP HT impulse over 10 seconds.'
+        impulse_description = 'The SHRIMP HR impulse over 10 seconds.'
+        title = self.impulse.title
+        name = self.prefix + '_' + self.impulse_constant.short_name  # drop activity group as present elsewhere
         for time, row in stats.iterrows():
             if not np.isnan(row[Names.HR_ZONE]):
                 loader.add(Titles.HR_ZONE, None, None, ajournal.activity_group, ajournal, row[Names.HR_ZONE], time,
@@ -57,11 +61,11 @@ class ImpulseCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, 
             if not np.isnan(row[Names.HR_IMPULSE_10]):
                 # load a copy to the activity group as well as to all so that we can extract / display
                 # easily in, for example, std_activity_statistics
-                loader.add(Titles.HR_IMPULSE_10, None, None, ajournal.activity_group, ajournal,
-                           row[Names.HR_IMPULSE_10], time, StatisticJournalFloat, description=impulse_description)
+                loader.add(name, None, None, ajournal.activity_group, ajournal, row[Names.HR_IMPULSE_10], time,
+                           StatisticJournalFloat, description=impulse_description, title=title)
                 # copy for global FF statistics
-                loader.add(Titles.HR_IMPULSE_10, None, None, self.all, ajournal,
-                           row[Names.HR_IMPULSE_10], time, StatisticJournalFloat, description=impulse_description)
+                loader.add(name, None, None, self.all, ajournal, row[Names.HR_IMPULSE_10], time,
+                           StatisticJournalFloat, description=impulse_description, title=title)
         # if there are no values, add a single null so we don't re-process
         if not loader:
             loader.add(Titles.HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,

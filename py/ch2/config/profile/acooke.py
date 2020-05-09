@@ -1,7 +1,7 @@
 
 from ..config import Config, WALK, SWIM, RUN, BIKE
-from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby, add_enum_constant, \
-    add_constant
+from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby, \
+    add_enum_constant, add_constant
 from ..power import add_power_estimate
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
 from ...names import Sports

@@ -4,10 +4,9 @@ from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
 from .database import add_loader_support, add_activity_group, add_activities, Counter, add_statistics, add_displayer, \
-    add_monitor, add_activity_constant, add_constant, add_diary_topic, add_diary_topic_field, \
+    add_monitor, add_constant, add_diary_topic, add_diary_topic_field, \
     add_activity_topic_field, add_activity_displayer_delegate
-from .impulse import add_impulse
-from .impulse import add_responses
+from .impulse import add_responses, add_impulse
 from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
@@ -129,13 +128,8 @@ class Config:
                        sport_to_activity=sport_to_activity, record_to_db=record_to_db)
 
     def _ff_parameters(self):
-        # each is a list of (days, start, scale) tuples.
-        # for example, fitness with two different timescales:
-        # fitness = ((42, 1, 1), (21, 1, 2))
-        # https://andrewcooke.github.io/choochoo/ff-fitting
-        fitness = ((42, 1, 1),)
-        fatigue = ((7, 1, 5),)
-        return fitness, fatigue
+        return ((42, 1, 1, Titles.FITNESS_D % 42, 'fitness'),
+                (7, 1, 5, Titles.FATIGUE_D % 7, 'fatigue'))
 
     def _impulse_groups(self):
         # activity groups that should have impulses calculated (ie that will contribute to FF statistics)
@@ -150,18 +144,18 @@ class Config:
         for activity_group in self._impulse_groups():
             add_impulse(s, c, activity_group)
             # we need a value here for various UI reasons.  might as well use my own value...
-            add_activity_constant(s, activity_group, Names.FTHR, default_fthr,
-                                  description=f'''
+            add_constant(s, Titles.FTHR, default_fthr,
+                                        description=f'''
 Heart rate (in bpm) at functional threshold for activities in the {activity_group.name} group.
 
 Your FTHR is the highest sustained heart rate you can maintain for long periods (an hour).
 It is used to calculate how hard you are working (the Impulse) and, from that, 
 your FF-model parameters (fitness and fatigue).
 ''',
-                                  units=Units.BPM, statistic_journal_type=StatisticJournalType.INTEGER)
+                         activity_group=activity_group, units=Units.BPM,
+                         statistic_journal_type=StatisticJournalType.INTEGER)
         add_climb(s)  # default climb calculator
-        fitness, fatigue = self._ff_parameters()
-        add_responses(s, c, fitness=fitness, fatigue=fatigue)
+        add_responses(s, c, self._ff_parameters(), prefix=Names.DEFAULT)
 
     def _load_standard_statistics(self, s, c):
         add_statistics(s, ActivityCalculator, c, owner_in=short_cls(ResponseCalculator), climb=CLIMB_CNAME)
@@ -191,11 +185,8 @@ your FF-model parameters (fitness and fatigue).
     def _load_diary_pipeline(self, s, c):
         add_displayer(s, DiaryDisplayer, c)
         add_displayer(s, MonitorDisplayer, c)
-        # these tie-in to the constants used in add_impulse()
-        fitness, fatigue = self._ff_parameters()
-        add_displayer(s, ResponseDisplayer, c,
-                      fitness=[Titles.FITNESS_D % days for (days, _, _) in fitness],
-                      fatigue=[Titles.FATIGUE_D % days for (days, _, _) in fatigue])
+        # prefix ties in to the ff statistics config
+        add_displayer(s, ResponseDisplayer, c, prefix=Names.DEFAULT)
         add_displayer(s, ActivityDisplayer, c)
         c2 = Counter()
         for delegate in self._activity_displayer_delegates():
@@ -210,7 +201,8 @@ your FF-model parameters (fitness and fatigue).
         add_monitor(s, MonitorReader, c, sport_to_activity=sport_to_activity)
 
     def _load_constants(self, s):
-        add_constant(s, SRTM1_DIR_CNAME, base_system_path(self._base, version=PERMANENT, subdir='srtm1', create=False),
+        add_constant(s, SRTM1_DIR_CNAME,
+                     base_system_path(self._base, version=PERMANENT, subdir='srtm1', create=False),
                      description='''
 Directory containing STRM1 hgt files for elevations.
 

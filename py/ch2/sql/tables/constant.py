@@ -86,6 +86,13 @@ class Constant(Source):
             log_current_exception(traceback=False)
             raise Exception(f'{name} is not configured')
 
+    @property
+    def short_name(self):
+        if ':' in self.name:
+            return self.name.split(':')[0]
+        else:
+            return self.name
+
     __mapper_args__ = {
         'polymorphic_identity': SourceType.CONSTANT
     }

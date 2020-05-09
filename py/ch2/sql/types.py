@@ -233,22 +233,30 @@ class QualifiedName(TypeDecorator):
 
 NAME = 'name'
 TITLE = 'title'
+OWNER = 'owner'
 
 
 def name_and_title(kargs):
     '''
     allow one or the other to be specified, with special treatment for name only to support legacy code.
     '''
-    if NAME in kargs:
+
+    def add_owner(msg):
+        if OWNER in kargs: msg += f' (owner {short_cls(kargs[OWNER])})'
+        return msg
+
+    if kargs.get(NAME, None):  # not missing and not None
         name = kargs[NAME]
-        if TITLE not in kargs:
+        if not kargs.get(TITLE, None):
             kargs[TITLE] = name
+            log.warning(add_owner(f'Setting title from name "{name}"'))
             kargs[NAME] = simple_name(name)
         else:
             if kargs[NAME] != simple_name(name):
-                raise Exception(f'Non-simple name: {name}')
-    elif TITLE in kargs:
+                log.warning(add_owner(f'Unusual name ({name}) for title ({kargs[TITLE]})'))
+    elif kargs.get(TITLE, None):
+        log.debug(f'Setting name from title ({kargs[TITLE]})')
         kargs[NAME] = simple_name(kargs[TITLE])
     else:
-        raise Exception(f'Provide {NAME} ot {TITLE}')
+        raise Exception(f'Provide {NAME} or {TITLE}')
     return kargs

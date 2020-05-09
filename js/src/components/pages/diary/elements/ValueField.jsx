@@ -28,17 +28,8 @@ export default function ValueField(props) {
 }
 
 
-function CommonValueField(props) {
-    const {json} = props;
-    return (<>
-        <InputLabel shrink>{json.label}</InputLabel>
-        <FormatValueUnits value={json.value} units={json.units} tag={json.tag}/>
-    </>);
-}
-
-
 function SimpleValueField(props) {
-    return (<Grid item xs={6}>
+    return (<Grid item xs={12}>
         <CommonValueField {...props}/>
     </Grid>);
 }
@@ -58,3 +49,14 @@ function MeasuredValueField(props) {
         </Grid>
     </>);
 }
+
+
+function CommonValueField(props) {
+    const {json} = props;
+    return (<>
+        <InputLabel shrink>{json.label}</InputLabel>
+        <FormatValueUnits value={json.value} units={json.units} tag={json.tag}/>
+    </>);
+}
+
+
