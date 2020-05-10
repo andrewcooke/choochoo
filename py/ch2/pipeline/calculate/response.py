@@ -11,7 +11,7 @@ from sqlalchemy.sql.functions import count
 
 from .calculate import UniProcCalculator
 from ...data.frame import statistics
-from ...names import Names as N
+from ...names import Names as N, like
 from ...data.response import sum_to_hour, calc_response
 from ...lib.date import round_hour, to_time, local_date_to_time, now
 from ..pipeline import LoaderMixin, OwnerInMixin
@@ -25,7 +25,7 @@ log = getLogger(__name__)
 
 Response = namedtuple('Response', 'src_owner, title, tau_days, start, scale')
 
-SCALED = 'Scaled'
+SCALED = 'scaled'
 
 
 class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
@@ -58,22 +58,19 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
                 log.warning(f'Ignoring finish - will delete all impulses from {start} onwards')
             self._delete_from(s, start)
 
-    def _delete_from(self, s, start=None, inclusive=True):
+    def _delete_from(self, s, start=None):
         composite_ids = s.query(Composite.id). \
             join(StatisticJournal, Composite.id == StatisticJournal.source_id). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.owner == self.owner_out)
         if start:
-            if inclusive:
-                composite_ids = composite_ids.filter(StatisticJournal.time >= start)
-            else:
-                composite_ids = composite_ids.filter(StatisticJournal.time > start)
+            composite_ids = composite_ids.filter(StatisticJournal.time >= start)
         log.debug(f'Delete query: {composite_ids}')
         n = s.query(count(Source.id)). \
             filter(Source.id.in_(composite_ids)). \
             scalar()
         if n:
-            log.warning(f'Deleting {n} Composite sources ({start} onwards{" inclusive" if inclusive else ""})')
+            log.warning(f'Deleting {n} Composite sources ({start} onwards)')
             s.query(Source). \
                 filter(Source.id.in_(composite_ids)). \
                 delete(synchronize_session=False)
@@ -115,11 +112,10 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
             filter(StatisticName.owner == self.owner_out)
         inputs = s.query(CompositeComponent.input_source_id). \
             join(StatisticJournal, StatisticJournal.source_id == CompositeComponent.output_source_id). \
-            filter(StatisticJournal.statistic_name_id.in_(response_ids),
-                   CompositeComponent.input_source_id != None)
+            filter(StatisticJournal.statistic_name_id.in_(response_ids))
         unused = s.query(count(StatisticJournal.id)). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-            filter(StatisticName.name == N.HR_IMPULSE_10,
+            filter(StatisticName.name == self.prefix + '_' + N.HR_IMPULSE_10,
                    StatisticName.owner == self.owner_in,
                    ~StatisticJournal.source_id.in_(inputs))
         log.debug(unused)
@@ -178,20 +174,17 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
 
     def __read_hr10(self, s):
         statistic_name = self.prefix + '_' + N.HR_IMPULSE_10
-        df = statistics(s, statistic_name, with_sources=True, check=False)
-        src_df = df.filter(regex=r'^src_')
-        src = src_df.iloc[:, [0]].rename(columns={src_df.columns[0]: N._src(N.HR_IMPULSE_10)})
-        df.drop(columns=src_df.columns, inplace=True)
-        data = df.iloc[:, [0]].rename(columns={df.columns[0]: N.HR_IMPULSE_10})
-        hr10 = pd.concat([data, src], axis=1)
-        return hr10
+        df = statistics(s, statistic_name, with_sources=True, check=False, activity_group=ActivityGroup.ALL)
+        df.rename(columns={statistic_name: N.HR_IMPULSE_10,
+                           N._src(statistic_name): N._src(N.HR_IMPULSE_10)}, inplace=True)
+        return df
 
     def __read_data(self, s):
         hr10 = self.__read_hr10(s)
         coverage = self.__read_coverage(s)
         # reindex and expand the coverage so we have a value at each impulse measurement
-        coverage.reindex(index=hr10.index, method='nearest', copy=False)
-        data = hr10.join(coverage, how='outer')
+        coverage = coverage.reindex(index=hr10.index, method='nearest')
+        data = hr10.join(coverage, how='left')
         if N.HR_IMPULSE_10 in data.columns and N.COVERAGE in data.columns:
             data.loc[:, [N.HR_IMPULSE_10]] = data.loc[:, [N.HR_IMPULSE_10]].fillna(0.0,)
             data.loc[:, [N.COVERAGE]] = data.loc[:, [N.COVERAGE]].fillna(axis='index', method='ffill')
@@ -206,9 +199,10 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         prev = add(s, Composite(n_components=0))
         yield to_time(0.0), prev
         # find times where the source changes
-        for time, row in data.loc[data[name].ne(data[name].shift())].iterrows():
+        changes = data.loc[data[name].ne(data[name].shift())]
+        for time, row in changes.iterrows():
             id = row[name]
-            if id:
+            if not np.isnan(id):
                 composite = add(s, Composite(n_components=2))
                 add(s, CompositeComponent(input_source_id=id, output_source=composite))
             else:

@@ -119,9 +119,13 @@ class ActivityGroupCalculatorMixin(ActivityJournalCalculatorMixin):
         q = s.query(self._journal_type.start). \
             filter(not_(self._journal_type.id.in_(existing_ids.cte()))). \
             order_by(self._journal_type.start)
+        return [row[0] for row in self._delimit_query(q)]
+
+    def _delimit_query(self, q):
+        q = super()._delimit_query(q)
         if self.activity_group:
             q = q.join(ActivityGroup).filter(ActivityGroup.name == self.activity_group)
-        return [row[0] for row in self._delimit_query(q)]
+        return q
 
 
 class SegmentJournalCalculatorMixin(JournalCalculatorMixin):

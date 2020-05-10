@@ -221,9 +221,9 @@ class CompositeComponent(Base):
     __tablename__ = 'composite_component'
 
     id = Column(Integer, primary_key=True)
-    input_source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'))
+    input_source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
     input_source = relationship('Source', foreign_keys=[input_source_id])
-    output_source_id = Column(Integer, ForeignKey('composite_source.id', ondelete='cascade'))
+    output_source_id = Column(Integer, ForeignKey('composite_source.id', ondelete='cascade'), nullable=False)
     output_source = relationship('Composite', foreign_keys=[output_source_id])
     UniqueConstraint(output_source_id, input_source_id)  # ordered so output is a useful index
 
@@ -255,6 +255,7 @@ class Composite(Source):
              group_by(t.cmp.c.id)
         q2 = select([q1.c.id]).where(q1.c.target != q1.c.actual)
         q3 = select([count()]).select_from(q2)
+        log.debug(str(q3))
         n = s.connection().execute(q3).scalar()
         if n:
             log.warning(f'Deleting Composite entries due to missing components')
@@ -263,6 +264,7 @@ class Composite(Source):
                 q4 = t.src.delete().where(t.src.c.id.in_(q2.cte()))
                 s.connection().execute(q4)
                 total += n
+                log.debug(f'Deleted {n} sources (total {total})')
                 n = s.connection().execute(q3).scalar()
             log.warning(f'Deleted {total} Composite entries')
             s.commit()
