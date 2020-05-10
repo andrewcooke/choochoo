@@ -17,8 +17,8 @@ def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_
         # original monochrome plot
         return multi_dot_plot(nx, ny, N.TIME, [N.ACTIVE_TIME_H, N.ACTIVE_DISTANCE_KM], source,
                               ['black', 'grey'], alphas=[1, 0.5], x_range=x_range, rescale=True)
-    times = [f'{N.ACTIVE_TIME} : {group}' for group in groups]
-    distances = [f'{N.ACTIVE_DISTANCE} : {group}' for group in groups]
+    times = [f'{N.ACTIVE_TIME}:{group}' for group in groups]
+    distances = [f'{N.ACTIVE_DISTANCE}:{group}' for group in groups]
     time_y_range = make_range(source[N.ACTIVE_TIME_H])
     distance_y_range = make_range(source[N.ACTIVE_DISTANCE_KM])
     colours = list(evenly_spaced_hues(len(groups)))

@@ -177,17 +177,11 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         return coverages
 
     def __read_hr10(self, s):
-        statistic_names = s.query(StatisticName). \
-            join(ActivityGroup). \
-            filter(StatisticName.owner == self.owner_in,
-                   StatisticName.name.like(self.prefix + '%'),
-                   ActivityGroup.name.ilike(ActivityGroup.ALL)).all()
-        df = statistics(s, *statistic_names, with_sources=True, check=False)
+        statistic_name = self.prefix + '_' + N.HR_IMPULSE_10
+        df = statistics(s, statistic_name, with_sources=True, check=False)
         src_df = df.filter(regex=r'^src_')
-        src_df.fillna(axis='columns', method='bfill', inplace=True)
         src = src_df.iloc[:, [0]].rename(columns={src_df.columns[0]: N._src(N.HR_IMPULSE_10)})
         df.drop(columns=src_df.columns, inplace=True)
-        df.fillna(axis='columns', method='bfill', inplace=True)
         data = df.iloc[:, [0]].rename(columns={df.columns[0]: N.HR_IMPULSE_10})
         hr10 = pd.concat([data, src], axis=1)
         return hr10

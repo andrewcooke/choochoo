@@ -218,20 +218,30 @@ MIN_PERIODS = 1
 def std_activity_statistics(s, local_time=None, time=None, activity_journal=None, activity_group=None,
                             with_timespan=True):
 
+    from ..pipeline.calculate.elevation import ElevationCalculator
+    from ..pipeline.calculate.impulse import ImpulseCalculator
+    from ..pipeline.calculate.power import PowerCalculator
+    from ..pipeline.read.segment import SegmentReader
+
+    hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
     stats = activity_statistics(s, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
                                 N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION, N.SPEED,
-                                N.HEART_RATE, N.HR_ZONE, N.HR_IMPULSE_10, N.ALTITUDE, N.GRADE,
+                                N.HEART_RATE, N.HR_ZONE, hr_impulse_10, N.ALTITUDE, N.GRADE,
                                 N.CADENCE, N.POWER_ESTIMATE,
                                 local_time=local_time, time=time, activity_journal=activity_journal,
-                                activity_group=activity_group, with_timespan=with_timespan)
+                                activity_group=activity_group, with_timespan=with_timespan,
+                                owners=(SegmentReader, ImpulseCalculator, ElevationCalculator,
+                                        PowerCalculator))
 
     stats.rename(columns={N.DISTANCE: N.DISTANCE_KM}, inplace=True)
+    stats.rename(columns={hr_impulse_10: N.HR_IMPULSE_10}, inplace=True)
     stats[N.MED_SPEED_KMH] = stats[N.SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
     if present(stats, N.CADENCE):
         stats[N.MED_CADENCE] = stats[N.CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     if present(stats, N.HEART_RATE):
         stats.rename(columns={N.HEART_RATE: N.HEART_RATE_BPM}, inplace=True)
         stats[N.MED_HEART_RATE_BPM] = stats[N.HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    if present(stats, N.HR_IMPULSE_10):
         stats[N.MED_HR_IMPULSE_10] = stats[N.HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
     if present(stats, N.POWER_ESTIMATE):
         stats[N.MED_POWER_ESTIMATE_W] = stats[N.POWER_ESTIMATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
@@ -261,6 +271,7 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
 def std_health_statistics(s, *extra, local_start=None, local_finish=None):
 
     from ..pipeline.calculate.heart_rate import RestHRCalculator
+    from ..pipeline.calculate.response import ResponseCalculator
 
     def merge_to_hour(stats, extra):
         return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
@@ -275,8 +286,10 @@ def std_health_statistics(s, *extra, local_start=None, local_finish=None):
              s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
 
-    stats_1 = statistics(s, N.FITNESS_D_ANY, N.FATIGUE_D_ANY, start=start, finish=finish, check=False)
-    if present(stats_1, N.FITNESS_D_ANY, pattern=True):
+    stats_1 = statistics(s, N.DEFAULT_ANY, start=start, finish=finish, check=False, owners=(ResponseCalculator,))
+    if not stats_1.dropna().empty:
+        for column in like(N.DEFAULT_ANY, stats_1.columns):
+            stats_1.rename(columns={column: column.replace(N.DEFAULT + '_', '')}, inplace=True)
         stats_1 = stats_1.resample('1h').mean()
         stats = merge_to_hour(stats, stats_1)
     stats_2 = statistics(s, N.REST_HR, start=start, finish=finish, owners=(RestHRCalculator,), check=False)
@@ -323,7 +336,7 @@ def statistic_names(s, *statistics, owners=tuple(), activity_group=None, check=T
         resolved = []
     some = [statistic for statistic in statistics if isinstance(statistic, StatisticName)] + resolved
     if check and not some:
-        raise Exception(f'Found no statistics for {statistics} (owner {owner}; activity group {activity_group})')
+        raise Exception(f'Found no statistics for {statistics} (owners {owners}; activity group {activity_group})')
     return some
 
 
@@ -339,7 +352,7 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
     ttj = _type_to_journal(t)
     names = statistic_names(s, *statistics, owners=owners, activity_group=activity_group, check=check)
     counts = Counter(name.name for name in names)
-    labels = [name.name if counts[name.name] == 1 else f'{name.name} : {name.activity_group}' for name in names]
+    labels = [name.name if counts[name.name] == 1 else f'{name.name}:{name.activity_group}' for name in names]
     tables = [ttj[name.statistic_journal_type] for name in names]
     if local_start:
         if start: raise Exception('Provide only one of start, local_start')
@@ -457,7 +470,7 @@ def groups_by_time(s, start=None, finish=None):
 
 
 def coallesce(df, *statistics, activity_group_label=None, mixed=N.MIXED,
-              unpack=r'({statistic})\s*:\s*([^:]+)', pack='{statistic} : {activity_group}'):
+              unpack=r'({statistic})\s*:\s*([^:]+)', pack='{statistic}:{activity_group}'):
     '''
     Combine statistics with more than one constraint.
 

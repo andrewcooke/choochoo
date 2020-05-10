@@ -13,8 +13,9 @@ individual impulse calculations are each configured by a separate constant and a
 separate pipeline instance that does the work.  they are grouped by 'prefix' and specific to an
 activity group.  so within a prefix there should be no more than one impulse for each group.
 
-the pipeline class generates impulses named by the prefix + the constant.  so the configuration 
-for any impulse can be traced back.
+the pipeline class generates impulses named by the prefix + the constant, associated with the 
+activity group.  in addition, to group ALL, the same value is written with name prefix + 'hr_impulse_10'.
+this allows for easy plotting (a prefix of 'default' is assumed to exist).
 
 for each named impulse there are two statistics - one in the given activity group and one in ALL.
 

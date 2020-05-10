@@ -101,6 +101,7 @@ class Titles(TitlesBase):
     CUMULATIVE_STEPS_FINISH = 'Cumulative Steps Finish'
     DAILY_STEPS = 'Daily Steps'
     DEFAULT = 'Default'
+    DEFAULT_ANY = 'Default %'
     DELAYED_POWER = 'Delayed Power'
     DETRENDED_HEART_RATE = 'Detrended Heart Rate'
     DIRECTION = 'Direction'

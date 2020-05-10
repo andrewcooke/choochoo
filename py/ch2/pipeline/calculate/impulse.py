@@ -55,7 +55,8 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
         hr_description = 'The SHRIMP HR zone.'
         impulse_description = 'The SHRIMP HR impulse over 10 seconds.'
         title = self.impulse.title
-        name = self.prefix + '_' + self.impulse_constant.short_name  # drop activity group as present elsewhere
+        name_group = self.prefix + '_' + self.impulse_constant.short_name  # drop activity group as present elsewhere
+        name_all = self.prefix + '_' + Names.HR_IMPULSE_10
         for time, row in stats.iterrows():
             if not np.isnan(row[Names.HR_ZONE]):
                 loader.add(Titles.HR_ZONE, None, None, ajournal.activity_group, ajournal, row[Names.HR_ZONE], time,
@@ -63,10 +64,10 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
             if not np.isnan(row[Names.HR_IMPULSE_10]):
                 # load a copy to the activity group as well as to all so that we can extract / display
                 # easily in, for example, std_activity_statistics
-                loader.add(name, None, None, ajournal.activity_group, ajournal, row[Names.HR_IMPULSE_10], time,
+                loader.add(name_group, None, None, ajournal.activity_group, ajournal, row[Names.HR_IMPULSE_10], time,
                            StatisticJournalFloat, description=impulse_description, title=title)
                 # copy for global FF statistics
-                loader.add(name, None, None, self.all, ajournal, row[Names.HR_IMPULSE_10], time,
+                loader.add(name_all, None, None, self.all, ajournal, row[Names.HR_IMPULSE_10], time,
                            StatisticJournalFloat, description=impulse_description, title=title)
         # if there are no values, add a single null so we don't re-process
         if not loader:

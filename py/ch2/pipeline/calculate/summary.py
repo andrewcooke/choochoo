@@ -108,7 +108,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             period = period + ' time'
         else:
             period = 'one ' + period
-        return f'The {adjective} {statistic_name.name} over {period}.'
+        return f'The {adjective} {statistic_name.title} over {period}.'
 
     def _calculate_measures(self, s, statistic_name, order_asc, start_time, finish_time, interval, measures):
         data = sorted([x for x in
