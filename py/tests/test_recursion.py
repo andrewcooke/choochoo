@@ -165,6 +165,11 @@ class RecursiveTest(LogTestCase):
     def test_bug(self):
         '''
         so why does this work, without 'recursive'?
+
+        EDIT: the 'recursive' is optional in sqlite!  see the very last line at
+        https://www.sqlite.org/lang_with.html
+
+        damn.  and all that trouble to make a nice bug report.
         '''
         q_counts = self.session.query(Node.id.label('id'), count(Connect.input_id).label('count')). \
             outerjoin(Connect, Node.id == Connect.output_id). \
