@@ -63,10 +63,10 @@ class RecursiveTest(LogTestCase):
         '''
         construct the following graph:
         
-        1 --\ 
-            > 3 --> 5 -\
+        1 --\
+             > 3 --> 5 -\
         2 --/            > 7 --> 8 
-              4     6 -/
+               4     6 -/
               
         note that 4 is not connected to anything and that 5 has only one input, when it expects 2
         (not shown in the diagram above, but set below).
