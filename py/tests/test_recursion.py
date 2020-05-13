@@ -82,7 +82,7 @@ class RecursiveTest(LogTestCase):
         self.session.add(Connect(input_id=2, output_id=3))
         self.session.query(Node).filter(Node.id == 3).one().n_input = 2
         self.session.add(Connect(input_id=3, output_id=5))
-        self.session.query(Node).filter(Node.id == 5).one().n_input = 2  # wrong!  3 is not an input to 4
+        self.session.query(Node).filter(Node.id == 5).one().n_input = 2  # wrong!  4 is not an input to 5
         self.session.add(Connect(input_id=5, output_id=7))
         self.session.add(Connect(input_id=6, output_id=7))
         self.session.query(Node).filter(Node.id == 7).one().n_input = 2
