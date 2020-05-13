@@ -5,7 +5,7 @@ from logging import getLogger
 
 from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, select, Boolean
 from sqlalchemy.event import listens_for
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy.orm import Session, relationship, aliased
 from sqlalchemy.sql.functions import count
 
 from ..support import Base
@@ -247,27 +247,31 @@ class Composite(Source):
     def clean(cls, s):
         from ...data.frame import _tables
         t = _tables()
-        id, target, actual = t.cmp.c.id.label("id"), t.cmp.c.n_components.label('target'), count(t.cc.c.id).label('actual')
         # had horrible bug here when join condition was filter (ie 'where') rather than a condition in the join
         # (ie 'on') - the where version doesn't expand to nulls and so the count is wrong when zero.
-        q1 = select([id, target, actual]). \
-             select_from(t.cmp.outerjoin(t.cc, t.cmp.c.id == t.cc.c.output_source_id)). \
-             group_by(t.cmp.c.id)
-        q2 = select([q1.c.id]).where(q1.c.target != q1.c.actual)
-        q3 = select([count()]).select_from(q2)
-        log.debug(str(q3))
-        n = s.connection().execute(q3).scalar()
-        if n:
+        counts = select([t.cmp.c.id.label("id"),
+                         t.cmp.c.n_components.label('target'),
+                         count(t.cc.c.id).label('actual')]). \
+            select_from(t.cmp.outerjoin(t.cc, t.cmp.c.id == t.cc.c.output_source_id)). \
+            group_by(t.cmp.c.id)
+        unmatched = select([counts.c.id]).where(counts.c.target != counts.c.actual)
+        n = s.connection().execute(select([count()]).select_from(unmatched)).scalar()
+        while n:
             log.warning(f'Deleting Composite entries due to missing components')
-            total = 0
-            while n:
-                q4 = t.src.delete().where(t.src.c.id.in_(q2.cte()))
-                s.connection().execute(q4)
-                total += n
-                log.debug(f'Deleted {n} sources (total {total})')
-                n = s.connection().execute(q3).scalar()
-            log.warning(f'Deleted {total} Composite entries')
+            to_delete = unmatched.cte(recursive=True)
+            to_delete_alias = aliased(to_delete)
+            cc_alias = aliased(t.cc)
+            recursive = to_delete.union_all(
+                select([cc_alias.c.output_source_id.label('id')]).
+                    where(cc_alias.c.input_source_id == to_delete_alias.c.id)
+            )
+            delete = t.src.delete().where(t.src.c.id.in_(recursive))
+            log.debug('delete %s' % delete)
+            exit()
+            s.connection().execute(delete)
+            log.debug('Deletion complete')
             s.commit()
+            n = s.connection().execute(select([count()]).select_from(unmatched)).scalar()
 
     @classmethod
     def find(cls, s, *sources):

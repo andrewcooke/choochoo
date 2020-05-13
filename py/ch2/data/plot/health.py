@@ -9,6 +9,7 @@ from ...names import Names as N, like, Units
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_BACKEND):
+    import pdb; pdb.set_trace()
     # avoid range errors
     if len(source[N.ACTIVE_TIME].dropna()) < 2:
         return None

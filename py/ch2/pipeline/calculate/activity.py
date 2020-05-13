@@ -113,9 +113,9 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
                         S.join(S.MAX, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.MAX_MEAN_PE_M_ANY, Units.W,
                         S.join(S.MAX, S.MSR), ajournal.start)
-        self.__copy_all(ajournal, loader, stats, T._delta(T.FATIGUE_D_ANY), Units.FF,
+        self.__copy_all(ajournal, loader, stats, T._delta(T.DEFAULT_ANY), Units.FF,
                         S.join(S.MAX, S.MSR), ajournal.start, extra_group=all)
-        self.__copy_all(ajournal, loader, stats, T._delta(T.FITNESS_D_ANY), Units.FF,
+        self.__copy_all(ajournal, loader, stats, T._delta(T.DEFAULT_ANY), Units.FF,
                         S.join(S.MAX, S.MSR), ajournal.start, extra_group=all)
         self.__copy_all(ajournal, loader, stats, T.EARNED_D_ANY, Units.S,
                         S.join(S.MAX, S.MSR), ajournal.start, extra_group=all)

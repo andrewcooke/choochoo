@@ -270,6 +270,8 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
 
 def std_health_statistics(s, *extra, local_start=None, local_finish=None):
 
+    import pdb; pdb.set_trace()
+
     from ..pipeline.calculate.heart_rate import RestHRCalculator
     from ..pipeline.calculate.response import ResponseCalculator
 
@@ -302,7 +304,7 @@ def std_health_statistics(s, *extra, local_start=None, local_finish=None):
     stats_3 = coallesce_like(stats_3, N._delta(N.FITNESS), N._delta(N.FATIGUE))
     stats = merge_to_hour(stats, stats_3)
     stats[N.ACTIVE_TIME_H] = stats[N.ACTIVE_TIME] / 3600
-    stats[N.ACTIVE_DISTANCE_KM] = stats[N.ACTIVE_DISTANCE] / 1000
+    stats[N.ACTIVE_DISTANCE_KM] = stats[N.ACTIVE_DISTANCE]
     stats[N.TIME] = pd.to_datetime(stats.index)
     stats[N.LOCAL_TIME] = stats[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
@@ -474,9 +476,9 @@ def coallesce(df, *statistics, activity_group_label=None, mixed=N.MIXED,
     '''
     Combine statistics with more than one constraint.
 
-    When multiple statistics with the same name are requested, they are distinguished by their constraint.
-    This is often the activity group.  So if you request 'Active Time' for multiple groups you will get
-    'Active Time (Ride)' etc.
+    When multiple statistics with the same name are requested, they are distinguished by their
+    activity_group.  So if you request 'Active Time' for multiple groups you will get
+    'active_time:ride' etc.
 
     This function combines these into a single column (in the example, 'Active Time'), while also optionally
     extracting the constraint into a separate column.
