@@ -12,6 +12,7 @@ from ..support import Base
 from ..types import OpenSched, Date, ShortCls, short_cls
 from ..utils import add
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
+from ...lib.utils import timing
 
 log = getLogger(__name__)
 
@@ -245,33 +246,29 @@ class Composite(Source):
 
     @classmethod
     def clean(cls, s):
-        from ...data.frame import _tables
-        t = _tables()
-        # had horrible bug here when join condition was filter (ie 'where') rather than a condition in the join
-        # (ie 'on') - the where version doesn't expand to nulls and so the count is wrong when zero.
-        counts = select([t.cmp.c.id.label("id"),
-                         t.cmp.c.n_components.label('target'),
-                         count(t.cc.c.id).label('actual')]). \
-            select_from(t.cmp.outerjoin(t.cc, t.cmp.c.id == t.cc.c.output_source_id)). \
-            group_by(t.cmp.c.id)
-        unmatched = select([counts.c.id]).where(counts.c.target != counts.c.actual)
-        n = s.connection().execute(select([count()]).select_from(unmatched)).scalar()
-        while n:
-            log.warning(f'Deleting Composite entries due to missing components')
-            to_delete = unmatched.cte(recursive=True)
-            to_delete_alias = aliased(to_delete)
-            cc_alias = aliased(t.cc)
-            recursive = to_delete.union_all(
-                select([cc_alias.c.output_source_id.label('id')]).
-                    where(cc_alias.c.input_source_id == to_delete_alias.c.id)
-            )
-            delete = t.src.delete().where(t.src.c.id.in_(recursive))
-            log.debug('delete %s' % delete)
-            exit()
-            s.connection().execute(delete)
-            log.debug('Deletion complete')
-            s.commit()
-            n = s.connection().execute(select([count()]).select_from(unmatched)).scalar()
+        # see test_recursive
+        q_input_counts = s.query(Composite.id,
+                                 count(CompositeComponent.input_source_id).label('count')). \
+            outerjoin(CompositeComponent, CompositeComponent.output_source_id == Composite.id). \
+            group_by(Composite.id).cte()
+
+        q_bad_nodes = s.query(Composite.id). \
+            join(q_input_counts, q_input_counts.c.id == Composite.id). \
+            filter(Composite.n_components != q_input_counts.c.count)
+
+        if s.query(count(Composite.id)).filter(Composite.id.in_(q_bad_nodes)).scalar():
+            log.warning('Need to clean expired composite sources (may take some time)')
+            q_bad_nodes = q_bad_nodes.cte(recursive=True)
+            q_all_nodes = q_bad_nodes. \
+                union_all(s.query(Composite.id).
+                          join(CompositeComponent,
+                               CompositeComponent.output_source_id == Composite.id).
+                          join(q_bad_nodes,
+                               CompositeComponent.input_source_id == q_bad_nodes.c.id)).select()
+            log.debug(f'Executing {q_all_nodes}')
+            s.flush()
+            with timing('GC of composite sources'):
+                s.query(Source).filter(Source.id.in_(q_all_nodes)).delete(synchronize_session=False)
 
     @classmethod
     def find(cls, s, *sources):

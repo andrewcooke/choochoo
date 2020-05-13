@@ -75,6 +75,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
                 filter(Source.id.in_(composite_ids)). \
                 delete(synchronize_session=False)
             s.commit()
+            Composite.clean(s)
 
     def _missing(self, s):
         # clean out any gaps by unzipping the chained composites
