@@ -8,22 +8,21 @@ try to have a 'fluent interface' that allows progressive refinement through the 
 * modifying the dataframe
 '''
 
-from logging import getLogger
 import datetime as dt
+from logging import getLogger
 
+import pandas as pd
 from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct
 from sqlalchemy.sql import func
-import pandas as pd
 
-from ch2.lib.date import YMD, time_to_local_time
-from ch2.lib.utils import timing
-from ch2.pipeline.calculate.activity import ActivityCalculator
-from ch2.pipeline.calculate.monitor import MonitorCalculator
-from ch2.pipeline.calculate.segment import SegmentCalculator
-from ..lib import local_date_to_time, to_date
 from ..data import session
+from ..lib import local_date_to_time, to_date, time_to_local_time
 from ..lib.data import kargs_to_attr
+from ..lib.date import YMD
+from ..lib.utils import timing
 from ..names import Names as N, like
+from ..pipeline.calculate.activity import ActivityCalculator
+from ..pipeline.calculate.monitor import MonitorCalculator
 from ..sql import StatisticName, ActivityGroup, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, \
     StatisticJournalText, Interval, ActivityTimespan, ActivityJournal, Composite, CompositeComponent, Source, \
     StatisticJournalType
@@ -49,6 +48,15 @@ def _type_to_journal(t):
     return {StatisticJournalType.INTEGER: t.sji,
             StatisticJournalType.FLOAT: t.sjf,
             StatisticJournalType.TEXT: t.sjt}
+
+
+class _Qualified:
+
+    def format(self, statistic_name):
+        if statistic_name.activity_group.name == ActivityGroup.ALL:
+            return statistic_name.name
+        else:
+            return statistic_name.name + ':' + statistic_name.activity_group.name
 
 
 class Query:
@@ -121,6 +129,9 @@ class Query:
 
     def by_name_group(self, outer=False):
         return self.by('{statistic_name.name}:{statistic_name.activity_group}', outer=outer)
+
+    def by_qualified(self, outer=False):
+        return self.by(_Qualified(), outer=outer)
 
     def by(self, template, outer=False):
         return self.__build_query(template, outer=outer)
@@ -242,7 +253,7 @@ def std_health_statistics(s, freq='1h'):
     merge(Query(s).for_(N.REST_HR, owner=RestHRCalculator).by_name())
     merge(Query(s).for_(N.DAILY_STEPS, owner=MonitorCalculator).
           for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator).
-          like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_name_group())
+          like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_qualified())
 
     stats[N.ACTIVE_TIME_H] = stats[N.ACTIVE_TIME] / 3600
     stats[N.ACTIVE_DISTANCE_KM] = stats[N.ACTIVE_DISTANCE]
@@ -251,42 +262,6 @@ def std_health_statistics(s, freq='1h'):
 
     return stats
 
-'''
-    def merge_to_hour(stats, extra):
-        return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
-                           how='outer', left_index=True, right_index=True)
-
-    # avoid x statistics some time in first day
-    start = local_date_to_time(local_start, none=True) or \
-            s.query(StatisticJournal.time).filter(StatisticJournal.time >
-                                                  local_date_to_time(to_date('1970-01-03'))) \
-                .order_by(asc(StatisticJournal.time)).limit(1).scalar()
-    finish = local_date_to_time(local_finish, none=True) or \
-             s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
-    stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
-
-    stats_1 = statistics(s, N.DEFAULT_ANY, start=start, finish=finish, check=False, owners=(ResponseCalculator,))
-    if not stats_1.dropna().empty:
-        for column in like(N.DEFAULT_ANY, stats_1.columns):
-            stats_1.rename(columns={column: column.replace(N.DEFAULT + '_', '')}, inplace=True)
-        stats_1 = stats_1.resample('1h').mean()
-        stats = merge_to_hour(stats, stats_1)
-    stats_2 = statistics(s, N.REST_HR, start=start, finish=finish, owners=(RestHRCalculator,), check=False)
-    if present(stats_2, N.REST_HR):
-        stats = merge_to_hour(stats, stats_2)
-    stats_3 = statistics(s, N.DAILY_STEPS, N.ACTIVE_TIME, N.ACTIVE_DISTANCE,
-                         N._delta(N.FITNESS_D_ANY), N._delta(N.FATIGUE_D_ANY), *extra,
-                         start=start, finish=finish)
-    stats_3 = coallesce(stats_3, N.ACTIVE_TIME, N.ACTIVE_DISTANCE)
-    stats_3 = coallesce_like(stats_3, N._delta(N.FITNESS), N._delta(N.FATIGUE))
-    stats = merge_to_hour(stats, stats_3)
-    stats[N.ACTIVE_TIME_H] = stats[N.ACTIVE_TIME] / 3600
-    stats[N.ACTIVE_DISTANCE_KM] = stats[N.ACTIVE_DISTANCE]
-    stats[N.TIME] = pd.to_datetime(stats.index)
-    stats[N.LOCAL_TIME] = stats[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
-
-    return stats
-'''
 
 if __name__ == '__main__':
     s = session('-v4')

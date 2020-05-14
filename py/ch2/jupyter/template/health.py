@@ -8,6 +8,7 @@ from bokeh.plotting import show
 from ch2.data import *
 from ch2.jupyter.decorator import template
 from ch2.names import Names as N, like
+from ch2.data.query import std_health_statistics
 
 
 @template

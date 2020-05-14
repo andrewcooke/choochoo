@@ -32,7 +32,7 @@ want, as long as you change the commands that follow appropriately.
     > ch2 web start
 
 Here, if you give `--base DIR`, then data will be stored in `DIR`.
-Otherwise, it is stored in `.ch2` your home directory.
+Otherwise, it is stored in `.ch2` in your home directory.
 
 ## Initial Configuration
 

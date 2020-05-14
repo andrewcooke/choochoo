@@ -9,7 +9,6 @@ from ...names import Names as N, like, Units
 
 
 def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_BACKEND):
-    import pdb; pdb.set_trace()
     # avoid range errors
     if len(source[N.ACTIVE_TIME].dropna()) < 2:
         return None
@@ -44,7 +43,7 @@ def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_
     plotter = dot_plotter()
     for distance, colour, group in zip(distances, colours, groups):
         distance_km = N._slash(distance, Units.KM)
-        source[distance_km] = source[distance] / 1000
+        source[distance_km] = source[distance]
         source[N.ACTIVITY_GROUP] = group
         plotter(f, x=N.TIME, y=distance_km, source=source, color=colour, alpha=1, name='with_hover',
                 y_range_name=N.ACTIVE_DISTANCE)
