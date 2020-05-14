@@ -331,6 +331,7 @@ def make_parser(with_noop=False):
 
     constants = subparsers.add_parser(CONSTANTS, help='set and examine constants')
     constants_cmds = constants.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
+    constants_list = constants_cmds.add_parser(LIST, help='list all names')
     constants_show = constants_cmds.add_parser(SHOW, help='show a value (or all values)')
     constants_show.add_argument(NAME, nargs='?', metavar='NAME', help='name (omit for all)')
     constants_show.add_argument(DATE, nargs='?', metavar='DATE',

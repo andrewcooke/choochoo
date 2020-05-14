@@ -15,6 +15,7 @@ from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct
 from sqlalchemy.sql import func
 import pandas as pd
 
+from ch2.lib.date import YMD, time_to_local_time
 from ch2.lib.utils import timing
 from ch2.pipeline.calculate.activity import ActivityCalculator
 from ch2.pipeline.calculate.monitor import MonitorCalculator
@@ -242,6 +243,11 @@ def std_health_statistics(s, freq='1h'):
     merge(Query(s).for_(N.DAILY_STEPS, owner=MonitorCalculator).
           for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator).
           like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_name_group())
+
+    stats[N.ACTIVE_TIME_H] = stats[N.ACTIVE_TIME] / 3600
+    stats[N.ACTIVE_DISTANCE_KM] = stats[N.ACTIVE_DISTANCE]
+    stats[N.TIME] = pd.to_datetime(stats.index)
+    stats[N.LOCAL_TIME] = stats[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     return stats
 

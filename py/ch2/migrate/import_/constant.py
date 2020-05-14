@@ -1,4 +1,5 @@
 from logging import getLogger
+import re
 
 from . import copy_statistic_journal
 from ...lib.log import log_current_exception
@@ -40,8 +41,14 @@ def copy_constants(record, old_s, old, new):
             old_statistic_name = old_s.query(statistic_name). \
                 filter(statistic_name.c.id == old_constant.statistic_name_id).one()
             with new.session_context() as new_s:
-                new_constant = new_s.query(Constant). \
-                    filter(Constant.name == old_constant.name).one_or_none()
+                old_name = old_constant.name.lower()
+                new_constant = new_s.query(Constant).filter(Constant.name == old_name).one_or_none()
+                if not new_constant:
+                    idx = old_name.rfind('.')
+                    if idx != -1:
+                        old_name = old_name[:idx] + ':' + old_name[idx+1:]
+                        log.debug(f'Retrying with {old_name}')
+                        new_constant = new_s.query(Constant).filter(Constant.name == old_name).one_or_none()
                 if new_constant:
                     copy_constant(record, old_s, old, old_constant, old_statistic_name, new_s, new_constant)
                 else:

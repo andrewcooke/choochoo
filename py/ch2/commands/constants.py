@@ -3,7 +3,7 @@ from logging import getLogger
 
 from .help import Markdown
 from ..commands.args import DATE, NAME, VALUE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
-    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, GROUP, UNSET
+    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, GROUP, UNSET, LIST
 from ..sql.tables.constant import Constant, ValidateNamedTuple
 from ..sql.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType
 from ..sql.types import lookup_cls
@@ -16,9 +16,13 @@ def constants(args, system, db):
     '''
 ## constants
 
+    > ch2 constants list
+
+Lists constant names on stdout.
+
     > ch2 constants show [NAME [DATE]]
 
-Lists constants to stdout.
+Shows constant names, descriptions, and values (if NAME is given) on stdout.
 
     > ch2 constants add NAME
 
@@ -47,7 +51,8 @@ the name of an activity group.
 Names can be matched by SQL patterns.  So FTHR.% matches both FTHR.Run and FTHR.Bike, for example.
 In such a case "entry" in the descriptions above may refer to multiple entries.
     '''
-    name, cmd = args[NAME], args[SUB_COMMAND]
+    cmd = args[SUB_COMMAND]
+    name = None if cmd == LIST else args[NAME]
     with db.session_context() as s:
         if cmd == ADD:
             add_constant(s, name, activity_group=args[GROUP], description=args[DESCRIPTION],
@@ -64,15 +69,15 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
                     raise Exception(f'Use {mm(FORCE)} to remove multiple constants')
                 remove_constants(s, constants)
             else:
-                date = args[DATE]
+                date = None if cmd == LIST else args[DATE]
                 if cmd == SET:
                     set_constants(s, constants, date, args[VALUE], args[FORCE])
                 elif cmd == UNSET:
                     if not date and not args[FORCE]:
                         raise Exception(f'Use {mm(FORCE)} to delete all entries for a Constant')
                     delete_constants(s, constants, date)
-                elif cmd == SHOW:
-                    print_constants(s, constants, name, date)
+                elif cmd in (SHOW, LIST):
+                    print_constants(s, constants, name, date, names_only=(cmd == LIST))
 
 
 def constants_like(s, name):
@@ -147,7 +152,7 @@ def delete_constants(s, constants, date):
                 s.delete(journal)
 
 
-def print_constants(s, constants, name, date):
+def print_constants(s, constants, name, date, names_only=False):
     if not constants:
         constants = s.query(Constant).order_by(Constant.name).all()
         if not constants:
@@ -155,19 +160,20 @@ def print_constants(s, constants, name, date):
     print()
     for constant in constants:
         if not date:
-            description = constant.statistic_name.description \
-                if constant.statistic_name.description else '[no description]'
             print(f'{constant.name}')
-            Markdown().print(description)
-            if name:  # only print values if we're not listing all
-                found = False
-                for journal in s.query(StatisticJournal).join(StatisticName, Constant). \
-                        filter(Constant.id == constant.id).order_by(StatisticJournal.time).all():
-                    print(f'{journal.time}: {journal.value}')
-                    found = True
-                if not found:
-                    log.warning(f'No values found for {constant.name}')
-            print()
+            if not names_only:
+                description = constant.statistic_name.description \
+                    if constant.statistic_name.description else '[no description]'
+                Markdown().print(description)
+                if name:  # only print values if we're not listing all
+                    found = False
+                    for journal in s.query(StatisticJournal).join(StatisticName, Constant). \
+                            filter(Constant.id == constant.id).order_by(StatisticJournal.time).all():
+                        print(f'{journal.time}: {journal.value}')
+                        found = True
+                    if not found:
+                        log.warning(f'No values found for {constant.name}')
+                print()
         else:
             journal = constant.at(s, date=date)
             if journal:
