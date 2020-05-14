@@ -270,8 +270,6 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
 
 def std_health_statistics(s, *extra, local_start=None, local_finish=None):
 
-    import pdb; pdb.set_trace()
-
     from ..pipeline.calculate.heart_rate import RestHRCalculator
     from ..pipeline.calculate.response import ResponseCalculator
 

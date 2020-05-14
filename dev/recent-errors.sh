@@ -32,4 +32,4 @@ find $BASE/logs -mmin -$MIN -type f -print0 | while read -d $'\0' file; do
 done
 echo
 
-sort -r $TMP | cut -d ' ' -f 3- | more
+sort -r $TMP | cut -d ' ' -f 3-

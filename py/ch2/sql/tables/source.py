@@ -3,9 +3,9 @@ from abc import abstractmethod
 from enum import IntEnum
 from logging import getLogger
 
-from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, select, Boolean
+from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, Boolean
 from sqlalchemy.event import listens_for
-from sqlalchemy.orm import Session, relationship, aliased
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql.functions import count
 
 from ..support import Base

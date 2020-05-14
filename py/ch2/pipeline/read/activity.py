@@ -11,7 +11,7 @@ from ...names import Titles as T, Units, Sports, Summaries as S
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
-from ...lib.date import to_time
+from ...lib.date import to_time, time_to_local_time
 from ...lib.io import split_fit_path
 from ...sql.database import Timestamp, StatisticJournalText
 from ...sql.tables.activity import ActivityGroup, ActivityJournal, ActivityTimespan
@@ -219,13 +219,22 @@ class ActivityReader(MultiProcFitReader):
             StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic, ajournal.activity_group,
                                      source, value, ajournal.start)
 
+    def _check_overlap(self, s, start, finish, ajournal):
+        overlap = s.query(ActivityJournal). \
+            filter(ActivityJournal.finish >= start,
+                   ActivityJournal.start <= finish,
+                   ActivityJournal.id != ajournal.id).first()
+        if overlap:
+            def fmt(ajournal):
+                return f'{ajournal} {ajournal.file_hash.file_scan.path}'
+            log.error(f'Overlapping activities: {fmt(ajournal)} / {fmt(overlap)}')
+            raise Exception(f'Overlapping activities: '
+                            f'{time_to_local_time(ajournal.start)} / {time_to_local_time(overlap.start)}')
+
     def _load_data(self, s, loader, data):
 
         ajournal, activity_group, first_timestamp, file_scan, define, records = data
         timespan, warned, logged, last_timestamp = None, 0, 0, to_time(0.0)
-        self._load_define(s, define, ajournal)
-        self._save_name(s, ajournal, file_scan)
-        self.__ajournal = ajournal
 
         log.debug(f'Loading {self.record_to_db}')
 
@@ -239,6 +248,12 @@ class ActivityReader(MultiProcFitReader):
         have_timespan = any(is_event(record, 'start') for record in records)
         only_records = list(filter(lambda x: x.name == 'record', records))
         final_timestamp = only_records[-1].timestamp
+
+        self._check_overlap(s, first_timestamp, final_timestamp, ajournal)
+        self._load_define(s, define, ajournal)
+        self._save_name(s, ajournal, file_scan)
+        self.__ajournal = ajournal
+
         if not have_timespan:
             first_timestamp = only_records[0].timestamp
             log.warning('Experimental handling of data without timespans')

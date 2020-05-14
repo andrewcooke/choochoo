@@ -1,5 +1,3 @@
-
-import pandas as pd
 import datetime as dt
 from collections import namedtuple
 from json import loads
@@ -7,15 +5,16 @@ from logging import getLogger
 
 import numpy as np
 from math import log10
+from sqlalchemy import distinct
 from sqlalchemy.sql.functions import count
 
 from .calculate import UniProcCalculator
-from ...data.frame import statistics
-from ...names import Names as N, like
-from ...data.response import sum_to_hour, calc_response
-from ...lib.date import round_hour, to_time, local_date_to_time, now
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
+from ...data.frame import statistics
+from ...data.response import sum_to_hour, calc_response
+from ...lib.date import round_hour, to_time, local_date_to_time, now
+from ...names import Names as N
 from ...sql import ActivityGroup
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
@@ -81,8 +80,8 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         # clean out any gaps by unzipping the chained composites
         Composite.clean(s)
         # range we expect data for
-        missing_sources = self.__missing_sources(s)
         finish = round_hour(dt.datetime.now(tz=dt.timezone.utc), up=True)
+        missing_sources = self.__missing_sources(s)
         missing_recent = any(self.__missing_recent(s, constant.short_name, finish)
                              for constant in self.response_constants)
         if missing_recent or missing_sources:
@@ -114,15 +113,25 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         inputs = s.query(CompositeComponent.input_source_id). \
             join(StatisticJournal, StatisticJournal.source_id == CompositeComponent.output_source_id). \
             filter(StatisticJournal.statistic_name_id.in_(response_ids))
-        unused = s.query(count(StatisticJournal.id)). \
+        unused = s.query(count(distinct(StatisticJournal.source_id))). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
             filter(StatisticName.name == self.prefix + '_' + N.HR_IMPULSE_10,
                    StatisticName.owner == self.owner_in,
                    ~StatisticJournal.source_id.in_(inputs))
-        log.debug(unused)
-        log.debug(f'owner_in: {self.owner_in}')
-        log.debug(f'owner_out: {self.owner_out}')
-        return unused.scalar()
+        missing = unused.scalar()
+        if missing:
+            if missing > 10:
+                log.debug(f'Many ({missing}) missing')
+            else:
+                unused = s.query(Source). \
+                    join(StatisticJournal). \
+                    join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
+                    filter(StatisticName.name == self.prefix + '_' + N.HR_IMPULSE_10,
+                           StatisticName.owner == self.owner_in,
+                           ~StatisticJournal.source_id.in_(inputs))
+                for source in unused.all():
+                    log.debug(f'Missing {source}')
+        return missing
 
     def __start(self, s):
         # avoid constants defined at time 0
@@ -153,8 +162,12 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
                 for time, value in result.iteritems():
                     # the sources are much more spread out than the response, which is calculated every hour so
                     # that it is smooth.  so we only increment the source when necessary.
+                    skipped = 0
                     while sources and time >= sources[0][0]:
                         source = sources.pop(0)[1]
+                        skipped += 1
+                        if skipped > 1:
+                            log.warning(f'Skipping multiple sources at {time}')
                     loader.add(name, None, None, ActivityGroup.ALL, source, value, time,
                                StatisticJournalFloat, title=response.title,
                                description=f'The SHRIMP response for a decay of {response.tau_days} days')
