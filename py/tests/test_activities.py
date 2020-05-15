@@ -10,7 +10,7 @@ from ch2.config.profile.default import default
 from ch2.sql.tables.activity import ActivityJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticJournalFloat, StatisticName
-from ch2.names import RAW_ELEVATION, ELEVATION, ACTIVE_DISTANCE, ACTIVE_TIME
+from ch2.data import Names as N
 from ch2.pipeline.pipeline import run_pipeline
 from tests import LogTestCase
 
@@ -42,11 +42,11 @@ class TestActivities(LogTestCase):
             with db.session_context() as s:
                 n_raw = s.query(count(StatisticJournalFloat.id)). \
                     join(StatisticName). \
-                    filter(StatisticName.name == RAW_ELEVATION).scalar()
+                    filter(StatisticName.name == N.RAW_ELEVATION).scalar()
                 self.assertEqual(2099, n_raw)
                 n_fix = s.query(count(StatisticJournalFloat.id)). \
                     join(StatisticName). \
-                    filter(StatisticName.name == ELEVATION).scalar()
+                    filter(StatisticName.name == N.ELEVATION).scalar()
                 self.assertEqual(2099, n_fix)
                 # WHY does this jump around?
                 n = s.query(count(StatisticJournal.id)).scalar()
@@ -63,7 +63,7 @@ class TestActivities(LogTestCase):
             run_pipeline(sys, db, args[BASE], PipelineType.READ_ACTIVITY, paths=paths, force=True)
 
     def __assert_basic_stats(self, s):
-        for name in [ACTIVE_DISTANCE, ACTIVE_TIME]:
+        for name in [N.ACTIVE_DISTANCE, N.ACTIVE_TIME]:
             count = 0
             for stat in s.query(StatisticJournal). \
                     join(StatisticName). \
@@ -112,7 +112,7 @@ class TestActivities(LogTestCase):
             with db.session_context() as s:
                 for stat in s.query(StatisticJournal). \
                         join(StatisticName). \
-                        filter(StatisticName.name == ACTIVE_DISTANCE).all():
+                        filter(StatisticName.name == N.ACTIVE_DISTANCE).all():
                     self.assertGreater(stat.value, 30)
 
     def test_920(self):

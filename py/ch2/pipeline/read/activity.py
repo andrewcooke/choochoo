@@ -6,7 +6,7 @@ from sqlalchemy.sql.functions import count
 
 from .read import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
-from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no
+from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no, FILENAME_KIT
 from ...names import Titles as T, Units, Sports, Summaries as S
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
@@ -30,12 +30,13 @@ log = getLogger(__name__)
 
 class ActivityReader(MultiProcFitReader):
 
-    KIT = 'Kit'
+    KIT = 'kit'
 
-    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, kit=True, **kargs):
+    def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, filename_kit=True,
+                 **kargs):
         from ...commands.upload import ACTIVITY
         self.define = define if define else {}
-        self.kit = kit
+        self.filename_kit = filename_kit
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
         self.record_to_db = [(field, title, units, STATISTIC_JOURNAL_CLASSES[type])
                              for field, (title, units, type)
@@ -50,7 +51,7 @@ class ActivityReader(MultiProcFitReader):
         else:
             define = ''
         force = ' ' + mm(FORCE) if self.force else ''
-        nokit = ' ' + mm(no(KIT)) if not self.kit else ''
+        nokit = ' ' + mm(no(KIT)) if not self.filename_kit else ''
         return f'{ACTIVITIES}{force}{define}{nokit}'
 
     def _startup(self, s):
@@ -59,9 +60,13 @@ class ActivityReader(MultiProcFitReader):
 
     def _build_define(self, path):
         define = dict(self.define)
-        if self.kit:
+        if self.filename_kit:
             _, kit = split_fit_path(path)
             if kit:
+                if ActivityReader.KIT in define and define[ActivityReader.KIT] != kit:
+                    log.warning(f'Changing {ActivityReader.KIT} from {define[ActivityReader.KIT]} '
+                                f'(given on command line) to {kit} (inferred from file name.  '
+                                f'Use {mm(no(FILENAME_KIT))} to discard filename value.')
                 log.debug(f'Adding {ActivityReader.KIT}={kit} to definitions')
                 define[ActivityReader.KIT] = kit
             else:
@@ -216,8 +221,8 @@ class ActivityReader(MultiProcFitReader):
                        StatisticName.activity_group == ajournal.activity_group,
                        StatisticName.name == ActivityTopicField.NAME).one_or_none():
             value = splitext(basename(file_scan.path))[0]
-            StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic, ajournal.activity_group,
-                                     source, value, ajournal.start)
+            StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic,
+                                     ajournal.activity_group, source, value, ajournal.start)
 
     def _check_overlap(self, s, start, finish, ajournal):
         overlap = s.query(ActivityJournal). \

@@ -7,16 +7,16 @@ from re import compile
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import inspect, select, and_, or_, distinct, asc, desc
+from sqlalchemy import inspect, select, and_, or_, distinct
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.functions import coalesce
 
 from .coasting import CoastingBookmark
 from ..lib.data import kargs_to_attr
-from ..lib.date import local_time_to_time, time_to_local_time, YMD, HMS, to_date, local_date_to_time
+from ..lib.date import local_time_to_time, time_to_local_time, HMS, local_date_to_time
 from ..names import Names as N, MED_WINDOW, like
 from ..sql import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
-    StatisticJournalFloat, StatisticJournalText, Interval, StatisticMeasure, Source
+    StatisticJournalFloat, StatisticJournalText, Interval, Source
 from ..sql.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
     Composite, CompositeComponent, ActivityNearby
 
@@ -40,20 +40,6 @@ def session(*args):
     return db.session()
 
 
-def _add_constraint(q, attribute, value, key):
-    if value is not None:
-        if isinstance(value, Mapping):
-            if key in value:
-                q = q.filter(attribute == value[key])
-        elif isinstance(value, str):
-            q = q.filter(attribute == value)
-        elif isinstance(value, Sequence):
-            q = q.filter(attribute.in_(value))
-        else:
-            q = q.filter(attribute == value)
-    return q
-
-
 def _tables():
     return kargs_to_attr(sj=inspect(StatisticJournal).local_table,
                          sn=inspect(StatisticName).local_table,
@@ -66,48 +52,6 @@ def _tables():
                          cmp=inspect(Composite).local_table,
                          cc=inspect(CompositeComponent).local_table,
                          src=inspect(Source).local_table)
-
-
-def _build_statistic_journal_query(statistic_ids, start, finish, source_ids, schedule):
-
-    # use more efficient expression interface and exploit the fact that
-    # alternative journal types will be null in an outer join.
-
-    t = _tables()
-
-    q = select([t.sn.c.name, t.sj.c.time, coalesce(t.sjf.c.value, t.sji.c.value, t.sjt.c.value)]). \
-        select_from(t.sj.join(t.sn).outerjoin(t.sjf).outerjoin(t.sji).outerjoin(t.sjt)). \
-        where(t.sn.c.id.in_(statistic_ids))
-    if start:
-        q = q.where(t.sj.c.time >= start)
-    if finish:
-        q = q.where(t.sj.c.time <= finish)
-    if source_ids is not None:  # avoid testing DataFrame sequences as bools
-        # int() to convert numpy types
-        q = q.where(t.sj.c.source_id.in_(int(id) for id in source_ids))
-    if schedule:
-        q = q.join(t.inv).where(t.inv.c.schedule == schedule)
-    q = q.order_by(t.sj.c.time)
-    return q
-
-
-class MissingData(Exception): pass
-
-
-def make_pad(data, times, statistic_names, quiet=False):
-    err_cnt = defaultdict(lambda: 0)
-
-    def pad():
-        nonlocal data, times
-        n = len(times)
-        for name in statistic_names:
-            if len(data[name]) != n:
-                err_cnt[name] += 1
-                if err_cnt[name] <= 1 and not quiet:
-                    log.warning('Missing %s at %s (single warning)' % (name, times[-1]))
-                data[name].append(None)
-
-    return pad
 
 
 def activity_journal(s, activity_journal=None, local_time=None, time=None, activity_group=None):
@@ -264,47 +208,6 @@ def std_activity_statistics(s, local_time=None, time=None, activity_journal=None
         stats[N.CLIMB_MS] = stats[N.ELEVATION_M].diff() * 0.1
     stats[N.TIME] = pd.to_datetime(stats.index)
     stats[N.LOCAL_TIME] = stats[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), HMS))
-
-    return stats
-
-
-def std_health_statistics(s, *extra, local_start=None, local_finish=None):
-
-    from ..pipeline.calculate.heart_rate import RestHRCalculator
-    from ..pipeline.calculate.response import ResponseCalculator
-
-    def merge_to_hour(stats, extra):
-        return stats.merge(extra.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30)),
-                           how='outer', left_index=True, right_index=True)
-    
-    # avoid x statistics some time in first day
-    start = local_date_to_time(local_start, none=True) or \
-            s.query(StatisticJournal.time).filter(StatisticJournal.time >
-                                                  local_date_to_time(to_date('1970-01-03'))) \
-        .order_by(asc(StatisticJournal.time)).limit(1).scalar()
-    finish = local_date_to_time(local_finish, none=True) or \
-             s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
-    stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq='1h'))
-
-    stats_1 = statistics(s, N.DEFAULT_ANY, start=start, finish=finish, check=False, owners=(ResponseCalculator,))
-    if not stats_1.dropna().empty:
-        for column in like(N.DEFAULT_ANY, stats_1.columns):
-            stats_1.rename(columns={column: column.replace(N.DEFAULT + '_', '')}, inplace=True)
-        stats_1 = stats_1.resample('1h').mean()
-        stats = merge_to_hour(stats, stats_1)
-    stats_2 = statistics(s, N.REST_HR, start=start, finish=finish, owners=(RestHRCalculator,), check=False)
-    if present(stats_2, N.REST_HR):
-        stats = merge_to_hour(stats, stats_2)
-    stats_3 = statistics(s, N.DAILY_STEPS, N.ACTIVE_TIME, N.ACTIVE_DISTANCE,
-                         N._delta(N.FITNESS_D_ANY), N._delta(N.FATIGUE_D_ANY), *extra,
-                         start=start, finish=finish)
-    stats_3 = coallesce(stats_3, N.ACTIVE_TIME, N.ACTIVE_DISTANCE)
-    stats_3 = coallesce_like(stats_3, N._delta(N.FITNESS), N._delta(N.FATIGUE))
-    stats = merge_to_hour(stats, stats_3)
-    stats[N.ACTIVE_TIME_H] = stats[N.ACTIVE_TIME] / 3600
-    stats[N.ACTIVE_DISTANCE_KM] = stats[N.ACTIVE_DISTANCE]
-    stats[N.TIME] = pd.to_datetime(stats.index)
-    stats[N.LOCAL_TIME] = stats[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     return stats
 
@@ -522,11 +425,3 @@ def drop_empty(df):
         if df[column].dropna().empty:
             df = df.drop(columns=[column])
     return df
-
-
-if __name__ == '__main__':
-    s = session('-v5')
-    # activity = std_activity_statistics(s, local_time='2018-08-03 11:52:13', activity_group='Bike')
-    # print(activity.describe())
-    health = std_health_statistics(s)
-    print(health.describe())

@@ -1,13 +1,12 @@
 from logging import getLogger
-
-import pandas as pd
 from tempfile import TemporaryDirectory
 
-from ch2 import activities, constants
-from ch2.commands.args import bootstrap_dir, mm, DEV, FAST, V, m
-from ch2.data import activity_statistics, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, \
-    ELEVATION, SPEED, CADENCE, HEART_RATE, TIME, TIMESPAN_ID
+import pandas as pd
+
+from ch2 import activities
+from ch2.commands.args import bootstrap_dir, mm, DEV, V, m
 from ch2.config.profile.default import default
+from ch2.data import activity_statistics, Names as N
 from tests import LogTestCase
 
 log = getLogger(__name__)
@@ -26,8 +25,9 @@ class TestPower(LogTestCase):
             activities(args, sys, db)
 
             with db.session_context() as s:
-                stats = activity_statistics(s, LATITUDE, LONGITUDE, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                                            DISTANCE, ELEVATION, SPEED, CADENCE, HEART_RATE,
+                stats = activity_statistics(s, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
+                                            N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION, N.SPEED,
+                                            N.CADENCE, N.HEART_RATE,
                                             local_time='2018-03-04 07:16:33', activity_group='Bike',
                                             with_timespan=True)
                 stats.describe()
@@ -39,5 +39,5 @@ class TestPower(LogTestCase):
                 both = stats.join(even, how='outer', sort=True)
                 both.interpolate(method='index', limit_area='inside', inplace=True)
                 both = both.loc[both['keep'] == True].drop(columns=['keep'])
-                both = both.loc[both[TIMESPAN_ID].isin(stats[TIMESPAN_ID].unique())]
+                both = both.loc[both[N.TIMESPAN_ID].isin(stats[N.TIMESPAN_ID].unique())]
                 both.describe()

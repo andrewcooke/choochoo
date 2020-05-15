@@ -261,11 +261,3 @@ def std_health_statistics(s, freq='1h'):
     stats[N.LOCAL_TIME] = stats[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
     return stats
-
-
-if __name__ == '__main__':
-    s = session('-v4')
-    # Query(s).for_(N.HEART_RATE, N.ACTIVE_DISTANCE, activity_group='all').by_name()
-    df = std_health_statistics(s)
-    print(df.describe())
-    print(df.columns)

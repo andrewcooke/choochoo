@@ -1,7 +1,6 @@
 
 import datetime as dt
 from logging import getLogger
-from tests import LogTestCase
 
 import sqlalchemy as s
 from sqlalchemy.orm import sessionmaker
@@ -9,8 +8,9 @@ from urwid import WidgetWrap, Pile, Edit, Filler
 
 from ch2.sql.binders import Binder
 from ch2.sql.support import Base
-from ch2.sql.types import Date, name
+from ch2.sql.types import Date, simple_name
 from ch2.urwid.tui.widgets import Integer
+from tests import LogTestCase
 
 log = getLogger(__name__)
 
@@ -118,7 +118,7 @@ class TestSqueal(LogTestCase):
 class TestName(LogTestCase):
 
     def test_tokenzie(self):
-        self.assertEqual(name('ABC 123 *^%'), 'abc_123_')
-        self.assertEqual(name('****'), '_')
-        self.assertEqual(name('123'), '_123')
-        self.assertEqual(name('Fitness 7d'), 'fitness_7d')
+        self.assertEqual(simple_name('ABC 123 *^%'), 'abc_123_%')  # support for like
+        self.assertEqual(simple_name('****'), '_')
+        self.assertEqual(simple_name('123'), '_123')
+        self.assertEqual(simple_name('Fitness 7d'), 'fitness_7d')

@@ -92,6 +92,7 @@ F = 'f'
 FAST = 'fast'
 FIELD = 'field'
 FIELDS = 'fields'
+FILENAME_KIT = 'filename-kit'
 FIX = 'fix'
 FINISH = 'finish'
 FIX_CHECKSUM = 'fix-checksum'
@@ -437,7 +438,8 @@ def make_parser(with_noop=False):
                             help='statistic to be stored with the activities (can be repeated)')
     activities.add_argument(m(K.upper()), mm(KARG), action='append', default=[], metavar='NAME=VALUE',
                             help='keyword argument to be passed to the pipelines (can be repeated)')
-    activities.add_argument(mm(no(KIT)), action='store_false', dest=KIT, help='ignore kit encoded in file name')
+    activities.add_argument(mm(no(FILENAME_KIT)), action='store_false', dest=FILENAME_KIT,
+                            help='ignore kit encoded in file name')
     activities.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
 

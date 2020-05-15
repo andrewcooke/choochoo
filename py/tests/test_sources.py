@@ -39,8 +39,8 @@ class TestSources(LogTestCase):
                 diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Status').one()
                 fields = diary.fields
                 self.assertEqual(len(fields), 6, list(enumerate(map(str, fields))))
-                self.assertEqual(fields[0].statistic_name.name, 'Notes')
-                self.assertEqual(fields[1].statistic_name.name, 'Weight', str(fields[1]))
+                self.assertEqual(fields[0].statistic_name.name, 'notes')
+                self.assertEqual(fields[1].statistic_name.name, 'weight', str(fields[1]))
                 statistics = [cache[field] for field in fields]
                 for statistic in statistics:
                     self.assertTrue(statistic.value is None, statistics)
@@ -56,8 +56,8 @@ class TestSources(LogTestCase):
                 diary = s.query(DiaryTopic).filter(DiaryTopic.name == 'Status').one()
                 fields = diary.fields
                 self.assertEqual(len(fields), 6, list(enumerate(map(str, fields))))
-                self.assertEqual(fields[0].statistic_name.name, 'Notes')
-                self.assertEqual(fields[1].statistic_name.name, 'Weight', str(fields[1]))
+                self.assertEqual(fields[0].statistic_name.name, 'notes')
+                self.assertEqual(fields[1].statistic_name.name, 'weight', str(fields[1]))
                 statistics = [cache[field] for field in fields]
                 self.assertEqual(statistics[1].value, 64.5)
                 self.assertEqual(statistics[1].type, StatisticJournalType.FLOAT)

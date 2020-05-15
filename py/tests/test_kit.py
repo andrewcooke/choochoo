@@ -2,7 +2,7 @@ from io import StringIO
 from tempfile import TemporaryDirectory
 
 from ch2.commands.activities import activities
-from ch2.commands.args import bootstrap_dir, m, V, mm, DEV, D, BASE
+from ch2.commands.args import bootstrap_dir, m, V, mm, DEV, D, BASE, no, KIT, FILENAME_KIT
 from ch2.commands.kit import start, change, finish, show, undo, statistics
 from ch2.config.profile.default import default
 from ch2.diary.model import TYPE
@@ -177,11 +177,11 @@ class TestKit(LogTestCase):
             args, sys, db = bootstrap_dir(f, m(V), '5', configurator=default)
             args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
                                            'data/test/source/personal/2018-08-03-rec.fit',
-                                           m(D.upper())+'kit=cotic')
+                                           m(D.upper())+'kit=cotic', mm(no(FILENAME_KIT)))
             activities(args, sys, db)
             args, sys, db = bootstrap_dir(f, m(V), '5', mm(DEV), 'activities',
                                            'data/test/source/personal/2018-08-27-rec.fit',
-                                           m(D.upper())+'kit=cotic')
+                                           m(D.upper())+'kit=cotic', mm(no(FILENAME_KIT)))
             activities(args, sys, db)
             run_pipeline(sys, db, args[BASE], PipelineType.CALCULATE, like=['%Activity%'], n_cpu=1)
 

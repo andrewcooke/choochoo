@@ -12,8 +12,8 @@ from ch2.sql.tables.monitor import MonitorJournal
 from ch2.sql.tables.pipeline import PipelineType
 from ch2.sql.tables.statistic import StatisticJournal, StatisticName
 from ch2.pipeline.calculate.monitor import MonitorCalculator
-from ch2.names import REST_HR, DAILY_STEPS
 from ch2.pipeline.pipeline import run_pipeline
+from ch2.data import Names as N
 from tests import LogTestCase
 
 log = getLogger(__name__)
@@ -33,7 +33,7 @@ class TestMonitor(LogTestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 121)
+                self.assertEqual(n, 125)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
 
@@ -55,16 +55,9 @@ class TestMonitor(LogTestCase):
                     filter(StatisticJournal.time >= local_date_to_time('2018-09-06'),
                            StatisticJournal.time < local_date_to_time('2018-09-07'),
                            StatisticName.owner == MonitorCalculator,
-                           StatisticName.name == DAILY_STEPS).one()
+                           StatisticName.name == N.DAILY_STEPS).one()
                 # connect has 12757 for this date,
                 self.assertEqual(summary.value, 12757)
-                # heart rate
-                summary = s.query(StatisticJournal).join(StatisticName). \
-                    filter(StatisticJournal.time >= local_date_to_time('2018-09-06'),
-                           StatisticJournal.time < local_date_to_time('2018-09-07'),
-                           StatisticName.owner == MonitorCalculator,
-                           StatisticName.name == REST_HR).one()
-                self.assertEqual(summary.value, 45)
 
     FILES = ('25505915679', '25519562859', '25519565531', '25532154264', '25539076032', '25542112328')
 
@@ -85,7 +78,7 @@ class TestMonitor(LogTestCase):
                     filter(StatisticJournal.time >= local_date_to_time('2018-10-07'),
                            StatisticJournal.time < local_date_to_time('2018-10-08'),
                            StatisticName.owner == MonitorCalculator,
-                           StatisticName.name == DAILY_STEPS).one()
+                           StatisticName.name == N.DAILY_STEPS).one()
                 # connect has 3031 for this date.
                 self.assertEqual(summary.value, 3031)
 
@@ -108,6 +101,6 @@ class TestMonitor(LogTestCase):
             # run('sqlite3 %s ".dump"' % f.name, shell=True)
             with db.session_context() as s:
                 n = s.query(func.count(StatisticJournal.id)).scalar()
-                self.assertEqual(n, 28)
+                self.assertEqual(n, 32)
                 mjournal = s.query(MonitorJournal).one()
                 self.assertNotEqual(mjournal.start, mjournal.finish)
