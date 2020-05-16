@@ -14,6 +14,7 @@ import pandas as pd
 from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct
 from sqlalchemy.sql import func
 
+from ch2.pipeline.read.segment import SegmentReader
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
 from ..lib.data import kargs_to_attr
@@ -61,13 +62,21 @@ class _Qualified:
 
 class Query:
 
-    def __init__(self, s):
+    def __init__(self, s, activity_group=None):
         self.__session = s
+        self.__default_activity_group = activity_group
         self.__statistic_names = []
         self.__start = None
         self.__finish = None
         self.__activity_journal = None
         self.__with_timespan_id = False
+
+    def __with_default(self, activity_group):
+        if not activity_group:
+            activity_group = self.__default_activity_group
+        elif self.__default_activity_group and activity_group != self.__default_activity_group:
+            log.warning(f'Changing activity group {self.__default_activity_group} -> {activity_group}')
+        return activity_group
 
     def __check(self, statistic_names, activity_group, owner):
         if not (statistic_names or activity_group or owner):
@@ -76,6 +85,7 @@ class Query:
         return f'{", ".join(statistic_names)}; {activity_group}; {owner}'
 
     def for_(self, *statistic_names, activity_group=None, owner=None):
+        activity_group = self.__with_default(activity_group)
         msg = self.__check(statistic_names, activity_group, owner)
         q = self.__session.query(StatisticName)
         if statistic_names:
@@ -87,9 +97,11 @@ class Query:
                 q = q.join(ActivityGroup).filter(ActivityGroup.name == activity_group)
         if owner:
             q = q.filter(StatisticName.owner == owner)
+        log.debug(q)
         return self.append(q.all(), expected_count=len(statistic_names), msg=msg)
 
     def like(self, *statistic_names, activity_group=None, owner=None):
+        activity_group = self.__with_default(activity_group)
         msg = self.__check(statistic_names, activity_group, owner)
         q = self.__session.query(StatisticName)
         if statistic_names:
@@ -103,7 +115,7 @@ class Query:
             q = q.filter(StatisticName.owner.ilike(owner))
         return self.append(q.all(), msg=msg)
 
-    def append(self, statistic_names, expected_count=None, msg='no diagnostocs'):
+    def append(self, statistic_names, expected_count=None, msg='no diagnostics'):
         if not statistic_names:
             log.warning(f'Appending no statistic names ({msg})')
         elif expected_count is not None and len(statistic_names) != expected_count:
@@ -121,11 +133,12 @@ class Query:
 
     def from_(self, start=None, finish=None, activity_journal=None, activity_group=None,
               with_timespan_id=False):
+        activity_group = self.__with_default(activity_group)
         self.__start = start
         self.__finish = finish
         if activity_journal:
             if not isinstance(activity_journal, ActivityJournal):
-                activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
+                activity_journal = ActivityJournal.at(self.__session, activity_journal, activity_group=activity_group)
             self.__activity_journal = activity_journal
         if with_timespan_id:
             if not self.__activity_journal: raise Exception('Timespan ID only available with activity journal')
@@ -170,10 +183,10 @@ class Query:
         incomplete
         '''
 
-        sj = T.sj.alias()
+        sj = T.sj.copy()
         selects, aliases = [sj.c.time.label(N.INDEX)], []
         for statistic_name in self.__statistic_names:
-            alias = J[statistic_name.statistic_journal_type].alias()
+            alias = J[statistic_name.statistic_journal_type].copy()
             aliases.append(alias)
             selects.append(func.sum(alias.c.value).label(template.format(statistic_name=statistic_name)))
 
@@ -246,18 +259,18 @@ class QueryData:
             self.df.rename(columns={column: column.replace(prefix, '')}, inplace=True)
         return self
     
-    def transform(self, name, scale=1, median=None):
+    def transform(self, name, scale=1.0, median=None):
         if scale != 1:
             self.df[name] = self.df[name] * scale
         if median:
             self.df[name] = self.df[name].rolling(median, min_periods=1).median()
 
-    def __rename(self, name, new_name, scale=1, median=None):
+    def __rename(self, name, new_name, scale=1.0, median=None):
         log.debug(f'{name} -> {new_name}')
         self.df.rename(columns={name: new_name}, inplace=True)
         self.transform(new_name, scale=scale, median=median)
 
-    def __alias(self, name, new_name, scale=1.0, median=None):
+    def __copy(self, name, new_name, scale=1.0, median=None):
         log.debug(f'{name} <-> {new_name}')
         self.df[new_name] = self.df[name]
         self.transform(new_name, scale=scale, median=median)
@@ -273,8 +286,8 @@ class QueryData:
     def rename(self, map, scale=1.0, median=None):
         return self.__with_names_values(self.__rename, map, scale=scale, median=median)
 
-    def alias(self, map, scale=1.0, median=None):
-        return self.__with_names_values(self.__alias, map, scale=scale, median=median)
+    def copy(self, map, scale=1.0, median=None):
+        return self.__with_names_values(self.__copy, map, scale=scale, median=median)
 
     def __with_names_units(self, op, names):
         for name in names:
@@ -290,11 +303,11 @@ class QueryData:
     def rename_all_with_units(self):
         return self.__with_names_units(self.__rename, self.__statistic_names.keys())
 
-    def alias_with_units(self, *names):
-        return self.__with_names_units(self.__alias, names)
+    def copy_with_units(self, *names):
+        return self.__with_names_units(self.__copy, names)
 
-    def alias_all_with_units(self):
-        return self.__with_names_units(self.__alias, self.__statistic_names.keys())
+    def copy_all_with_units(self):
+        return self.__with_names_units(self.__copy, self.__statistic_names.keys())
 
     def into(self, df, tolerance, interpolate=False):
         if self:
@@ -334,7 +347,7 @@ def std_health_statistics(s, freq='1h'):
         for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
         like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_qualified(). \
         rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
-        alias({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1/3600). \
+        copy({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1 / 3600). \
         into(stats, tolerance='30m')
 
     return stats
@@ -357,9 +370,9 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
                           owner=SegmentReader, activity_group=activity_journal.activity_group). \
         from_(activity_journal=activity_journal, with_timespan_id=True).by_name(). \
         rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
-        alias({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
-        alias({N.HEART_RATE_BPM: N.MED_HEART_RATE_BPM}, median=MED_WINDOW). \
-        alias({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW).df
+        copy({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
+        copy({N.HEART_RATE_BPM: N.MED_HEART_RATE_BPM}, median=MED_WINDOW). \
+        copy({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW).df
 
     stats = Query(s).for_(N.ELEVATION, N.GRADE,
                           owner=ElevationCalculator, activity_group=activity_journal.activity_group). \
@@ -376,7 +389,7 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
                           owner=PowerCalculator, activity_group=activity_journal.activity_group). \
         from_(activity_journal=activity_journal).by_name(). \
         rename_all_with_units(). \
-        alias({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
+        copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
         into(stats, tolerance='1s')
 
     set_times_from_index(stats)
@@ -387,12 +400,20 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 if __name__ == '__main__':
     s = session('-v5')
 
-    df = std_activity_statistics(s, '2020-05-15')
-    print(df)
-    print(df.describe())
-    print(df.columns)
+    # df = std_activity_statistics(s, '2020-05-15')
+    # print(df)
+    # print(df.describe())
+    # print(df.columns)
+    #
+    # df = std_health_statistics(s)
+    # print(df)
+    # print(df.describe())
+    # print(df.columns)
 
-    df = std_health_statistics(s)
+    df = Query(s).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator, activity_group='road'). \
+        like(N.CLIMB_ANY, owner=ActivityCalculator, activity_group='road'). \
+        from_(activity_journal='2020-05-15', activity_group='road'). \
+        by_name().rename_all_with_units().df
     print(df)
     print(df.describe())
     print(df.columns)

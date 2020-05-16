@@ -1,7 +1,6 @@
 
 import datetime as dt
-from collections import defaultdict, Counter
-from collections.abc import Mapping, Sequence
+from collections import Counter
 from logging import getLogger
 from re import compile
 
@@ -9,12 +8,11 @@ import numpy as np
 import pandas as pd
 from sqlalchemy import inspect, select, and_, or_, distinct
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.sql.functions import coalesce
 
 from .coasting import CoastingBookmark
 from ..lib.data import kargs_to_attr
-from ..lib.date import local_time_to_time, time_to_local_time, HMS, local_date_to_time
-from ..names import Names as N, MED_WINDOW, like
+from ..lib.date import local_time_to_time, local_date_to_time
+from ..names import Names as N, like
 from ..sql import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, Source
 from ..sql.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, StatisticJournalType, \
@@ -131,13 +129,13 @@ def _activity_statistics(s, *statistics, owners=None, start=None, finish=None,
         time_select = time_select.where(t.sj.c.time >= start)
     if finish:
         time_select = time_select.where(t.sj.c.time <= finish)
-    time_select = time_select.order_by("time").alias("sub_time")  # order here avoids extra index
+    time_select = time_select.order_by("time").copy("sub_time")  # order here avoids extra index
     sub_selects = [select([table.c.value, t.sj.c.time]).
                        select_from(t.sj.join(table)).
                        where(and_(t.sj.c.statistic_name_id == name.id,
                                   t.sj.c.source_id == activity_journal.id)).
                        order_by(t.sj.c.time).  # this doesn't affect plan but seems to speed up query
-                       alias(f'sub_{name.name}_{name.activity_group}_{name.owner}')
+                       copy(f'sub_{name.name}_{name.activity_group}_{name.owner}')
                    for name, table in zip(names, tables)]
     # don't call this TIME because even though it's moved to index it somehow blocks the later addition
     # of a TIME column (eg when plotting health statistics)
@@ -155,61 +153,6 @@ def _activity_statistics(s, *statistics, owners=None, start=None, finish=None,
     sql = select(selects).select_from(sources)
     # log.debug(sql)
     return pd.read_sql_query(sql=sql, con=s.connection(), index_col=N.INDEX)
-
-
-MIN_PERIODS = 1
-
-def std_activity_statistics(s, local_time=None, time=None, activity_journal=None, activity_group=None,
-                            with_timespan=True):
-
-    from ..pipeline.calculate.elevation import ElevationCalculator
-    from ..pipeline.calculate.impulse import ImpulseCalculator
-    from ..pipeline.calculate.power import PowerCalculator
-    from ..pipeline.read.segment import SegmentReader
-
-    hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
-    stats = activity_statistics(s, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
-                                N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION, N.SPEED,
-                                N.HEART_RATE, N.HR_ZONE, hr_impulse_10, N.ALTITUDE, N.GRADE,
-                                N.CADENCE, N.POWER_ESTIMATE,
-                                local_time=local_time, time=time, activity_journal=activity_journal,
-                                activity_group=activity_group, with_timespan=with_timespan,
-                                owners=(SegmentReader, ImpulseCalculator, ElevationCalculator,
-                                        PowerCalculator))
-
-    stats.rename(columns={N.DISTANCE: N.DISTANCE_KM}, inplace=True)
-    stats.rename(columns={hr_impulse_10: N.HR_IMPULSE_10}, inplace=True)
-    stats[N.MED_SPEED_KMH] = stats[N.SPEED].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
-    if present(stats, N.CADENCE):
-        stats[N.MED_CADENCE] = stats[N.CADENCE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    if present(stats, N.HEART_RATE):
-        stats.rename(columns={N.HEART_RATE: N.HEART_RATE_BPM}, inplace=True)
-        stats[N.MED_HEART_RATE_BPM] = stats[N.HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    if present(stats, N.HR_IMPULSE_10):
-        stats[N.MED_HR_IMPULSE_10] = stats[N.HR_IMPULSE_10].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    if present(stats, N.POWER_ESTIMATE):
-        stats[N.MED_POWER_ESTIMATE_W] = stats[N.POWER_ESTIMATE].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
-    if present(stats, N.ELEVATION):
-        stats.rename(columns={N.ELEVATION: N.ELEVATION_M}, inplace=True)
-        stats.rename(columns={N.GRADE: N.GRADE_PC}, inplace=True)
-
-    if with_timespan:
-        timespans = stats[N.TIMESPAN_ID].dropna().unique()
-    if present(stats, N.HR_IMPULSE_10):
-        stats[KEEP] = pd.notna(stats[N.HR_IMPULSE_10])
-        stats.interpolate(method='time', inplace=True)
-        stats = stats.loc[stats[KEEP] == True].drop(columns=[KEEP])
-    else:
-        stats = linear_resample_time(stats, dt=10, add_time=False)
-    if with_timespan:
-        stats = stats.loc[stats[N.TIMESPAN_ID].isin(timespans)]
-
-    if present(stats, N.ELEVATION_M):
-        stats[N.CLIMB_MS] = stats[N.ELEVATION_M].diff() * 0.1
-    stats[N.TIME] = pd.to_datetime(stats.index)
-    stats[N.LOCAL_TIME] = stats[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), HMS))
-
-    return stats
 
 
 def nearby_activities(s, local_time=None, time=None, activity_group=None):
@@ -269,7 +212,7 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
         time_select = time_select.where(t.sj.c.time >= start)
     if finish:
         time_select = time_select.where(t.sj.c.time <= finish)
-    time_select = time_select.order_by("time").alias("sub_time")  # order here avoids extra index
+    time_select = time_select.order_by("time").copy("sub_time")  # order here avoids extra index
 
     def sub_select(name, table):
         selects = [table.c.value, t.sj.c.time]
@@ -281,7 +224,7 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
         if sources:
             q = q.where(t.sj.c.source_id.in_(source.id for source in sources))
         # order_by doesn't affect plan but seems to speed up query
-        return q.order_by(t.sj.c.time).alias(f'sub_{name.name}_{name.activity_group}')
+        return q.order_by(t.sj.c.time).copy(f'sub_{name.name}_{name.activity_group}')
 
     sub_selects = [sub_select(name, table) for name, table in zip(names, tables)]
     # don't call this TIME because even though it's moved to index it somehow blocks the later addition

@@ -125,7 +125,8 @@ class ActivityJournal(Source):
         q = s.query(ActivityJournal).filter(ActivityJournal.start == time)
         if activity_group:
             activity_group = ActivityGroup.from_name(s, activity_group)
-        return s.query(ActivityJournal).filter(ActivityJournal.start == time).one()
+            q = q.filter(ActivityJournal.activity_group_id == activity_group.id)
+        return q.one()
 
     @classmethod
     def before_local_time(cls, s, local_time):

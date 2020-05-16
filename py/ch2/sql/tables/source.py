@@ -277,7 +277,7 @@ class Composite(Source):
         t = _tables()
         q = s.query(Composite)
         for id in ids:
-            component = t.cc.alias()
+            component = t.cc.copy()
             q = q.join(component, Composite.id == component.c.output_source_id).\
                 filter(component.c.input_source_id == id)
         return q.one_or_none()
