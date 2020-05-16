@@ -245,29 +245,36 @@ class QueryData:
         for column in like(prefix + '%', self.df.columns):
             self.df.rename(columns={column: column.replace(prefix, '')}, inplace=True)
         return self
+    
+    def transform(self, name, scale=1, median=None):
+        if scale != 1:
+            self.df[name] = self.df[name] * scale
+        if median:
+            self.df[name] = self.df[name].rolling(median, min_periods=1).median()
 
-    def __rename(self, name, new_name):
+    def __rename(self, name, new_name, scale=1, median=None):
         log.debug(f'{name} -> {new_name}')
         self.df.rename(columns={name: new_name}, inplace=True)
+        self.transform(new_name, scale=scale, median=median)
 
-    def __alias(self, name, new_name):
+    def __alias(self, name, new_name, scale=1.0, median=None):
         log.debug(f'{name} <-> {new_name}')
         self.df[new_name] = self.df[name]
+        self.transform(new_name, scale=scale, median=median)
 
-    def __with_names_values(self, op, args, kargs):
-        for dict in list(args) + [kargs]:
-            for name, value in dict.items():
-                if present(self.df, name):
-                    op(name, value)
-                else:
-                    log.warning(f'Missing {name} in data')
+    def __with_names_values(self, op, map, scale=1.0, median=None):
+        for name, value in map.items():
+            if present(self.df, name):
+                op(name, value, scale=scale, median=median)
+            else:
+                log.warning(f'Missing {name} in data')
         return self
 
-    def rename(self, *args, **kargs):
-        return self.__with_names_values(self.__rename, args, kargs)
+    def rename(self, map, scale=1.0, median=None):
+        return self.__with_names_values(self.__rename, map, scale=scale, median=median)
 
-    def alias(self, *args, **kargs):
-        return self.__with_names_values(self.__alias, args, kargs)
+    def alias(self, map, scale=1.0, median=None):
+        return self.__with_names_values(self.__alias, map, scale=scale, median=median)
 
     def __with_names_units(self, op, names):
         for name in names:
@@ -326,14 +333,11 @@ def std_health_statistics(s, freq='1h'):
     stats = Query(s).for_(N.DAILY_STEPS, owner=MonitorCalculator). \
         for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
         like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_qualified(). \
-        rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE).into(stats, tolerance='30m')
-
-    stats[N.ACTIVE_TIME_H] = stats[N.ACTIVE_TIME_S] / 3600
+        rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
+        alias({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1/3600). \
+        into(stats, tolerance='30m')
 
     return stats
-
-
-MIN_PERIODS = 1
 
 
 def std_activity_statistics(s, activity_journal, activity_group=None):
@@ -352,7 +356,10 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
                           N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE,
                           owner=SegmentReader, activity_group=activity_journal.activity_group). \
         from_(activity_journal=activity_journal, with_timespan_id=True).by_name(). \
-        rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE).df
+        rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
+        alias({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
+        alias({N.HEART_RATE_BPM: N.MED_HEART_RATE_BPM}, median=MED_WINDOW). \
+        alias({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW).df
 
     stats = Query(s).for_(N.ELEVATION, N.GRADE,
                           owner=ElevationCalculator, activity_group=activity_journal.activity_group). \
@@ -368,16 +375,9 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
     stats = Query(s).for_(N.POWER_ESTIMATE,
                           owner=PowerCalculator, activity_group=activity_journal.activity_group). \
         from_(activity_journal=activity_journal).by_name(). \
-        rename_all_with_units().into(stats, tolerance='1s')
-
-    stats[N.MED_SPEED_KMH] = stats[N.SPEED_MS].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
-    if present(stats, N.HEART_RATE_BPM):
-        stats[N.MED_HEART_RATE_BPM] = stats[N.HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
-    if present(stats, N.POWER_ESTIMATE):
-        stats[N.MED_POWER_ESTIMATE_W] = \
-            stats[N.POWER_ESTIMATE_W].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
-    if present(stats, N.CADENCE_RPM):
-        stats[N.MED_CADENCE_RPM] = stats[N.CADENCE_RPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+        rename_all_with_units(). \
+        alias({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
+        into(stats, tolerance='1s')
 
     set_times_from_index(stats)
 
