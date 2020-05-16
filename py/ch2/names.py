@@ -189,18 +189,22 @@ class Titles(TitlesBase):
 
     ACTIVE_DISTANCE_KM = TitlesBase._slash(ACTIVE_DISTANCE, Units.KM)
     ACTIVE_TIME_H = TitlesBase._slash(ACTIVE_TIME, Units.H)
+    ACTIVE_TIME_S = TitlesBase._slash(ACTIVE_TIME, Units.S)
+    CADENCE_RPM = TitlesBase._slash(CADENCE, Units.RPM)
     CLIMB_MS = TitlesBase._slash(CLIMB, Units.MS)
     DISTANCE_KM = TitlesBase._slash(DISTANCE, Units.KM)
     ELEVATION_M = TitlesBase._slash(ELEVATION, Units.M)
     GRADE_PC = TitlesBase._slash(GRADE, Units.PC)
     HEART_RATE_BPM = TitlesBase._slash(HEART_RATE, Units.BPM)
+    REST_HR_BPM = TitlesBase._slash(REST_HR, Units.BPM)
     SPEED_KMH = TitlesBase._slash(SPEED, Units.KMH)
+    SPEED_MS = TitlesBase._slash(SPEED, Units.MS)
     POWER_ESTIMATE_W = TitlesBase._slash(POWER_ESTIMATE, Units.W)
 
     MED_SPEED_KMH = TitlesBase._med(SPEED_KMH)
     MED_HEART_RATE_BPM = TitlesBase._med(HEART_RATE_BPM)
     MED_HR_IMPULSE_10 = TitlesBase._med(HR_IMPULSE_10)
-    MED_CADENCE = TitlesBase._med(CADENCE)
+    MED_CADENCE_RPM = TitlesBase._med(CADENCE_RPM)
     MED_POWER_ESTIMATE_W = TitlesBase._med(POWER_ESTIMATE_W)
 
     POWER_HR = 'Power / HR'

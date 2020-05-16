@@ -8,24 +8,24 @@ try to have a 'fluent interface' that allows progressive refinement through the 
 * modifying the dataframe
 '''
 
-import datetime as dt
 from logging import getLogger
 
 import pandas as pd
 from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct
 from sqlalchemy.sql import func
 
-from ..data import session
+from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
 from ..lib.data import kargs_to_attr
 from ..lib.date import YMD
 from ..lib.utils import timing
-from ..names import Names as N, like
+from ..names import Names as N, like, MED_WINDOW
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.monitor import MonitorCalculator
 from ..sql import StatisticName, ActivityGroup, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, \
     StatisticJournalText, Interval, ActivityTimespan, ActivityJournal, Composite, CompositeComponent, Source, \
     StatisticJournalType
+from ..sql.types import simple_name
 
 log = getLogger(__name__)
 
@@ -67,6 +67,7 @@ class Query:
         self.__start = None
         self.__finish = None
         self.__activity_journal = None
+        self.__with_timespan_id = False
 
     def __check(self, statistic_names, activity_group, owner):
         if not (statistic_names or activity_group or owner):
@@ -81,7 +82,7 @@ class Query:
             q = q.filter(StatisticName.name.in_(statistic_names))
         if activity_group:
             if isinstance(activity_group, ActivityGroup):
-                q = q.join(ActivityGroup).filter(ActivityGroup == activity_group)
+                q = q.join(ActivityGroup).filter(ActivityGroup.id == activity_group.id)
             else:
                 q = q.join(ActivityGroup).filter(ActivityGroup.name == activity_group)
         if owner:
@@ -95,7 +96,7 @@ class Query:
             q = q.filter(or_(*[StatisticName.name.ilike(statistic_name) for statistic_name in statistic_names]))
         if activity_group:
             if isinstance(activity_group, ActivityGroup):
-                q = q.join(ActivityGroup).filter(ActivityGroup == activity_group)
+                q = q.join(ActivityGroup).filter(ActivityGroup.id == activity_group.id)
             else:
                 q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(activity_group))
         if owner:
@@ -118,10 +119,17 @@ class Query:
     def __bool__(self):
         return bool(self.__statistic_names)
 
-    def from_(self, start=None, finish=None, activity_journal=None):
+    def from_(self, start=None, finish=None, activity_journal=None, activity_group=None,
+              with_timespan_id=False):
         self.__start = start
         self.__finish = finish
-        self.__activity_journal = activity_journal  # todo date?
+        if activity_journal:
+            if not isinstance(activity_journal, ActivityJournal):
+                activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
+            self.__activity_journal = activity_journal
+        if with_timespan_id:
+            if not self.__activity_journal: raise Exception('Timespan ID only available with activity journal')
+        self.__with_timespan_id = with_timespan_id
         return self
 
     def by_name(self, outer=False):
@@ -152,8 +160,7 @@ class Query:
             query = self.__build_query_outer(T, J, template)
         else:
             query = self.__build_query_time(T, J, template)
-        log.debug(query)
-        return QueryData(self.__session, query)
+        return QueryData(self.__session, query, self.__statistic_names)
 
     def __build_query_outer(self, T, J, template):
         '''
@@ -178,7 +185,7 @@ class Query:
         query = select(selects).select_from(source).group_by(sj.c.time).order_by(sj.c.time)
         if self.__start: query = query.where(sj.c.time >= self.__start)
         if self.__finish: query = query.where(sj.c.time < self.__finish)
-        if self.__activity_journal: query = query.where(sj.c.source == self.__activity_journal.id)
+        if self.__activity_journal: query = query.where(sj.c.source_id == self.__activity_journal.id)
 
         return query
 
@@ -193,6 +200,7 @@ class Query:
             where(T.sj.c.statistic_name_id.in_([statistic_name.id for statistic_name in self.__statistic_names]))
         if self.__start: time_select = time_select.where(T.sj.c.time >= self.__start)
         if self.__finish: time_select = time_select.where(T.sj.c.time < self.__finish)
+        if self.__activity_journal: time_select = time_select.where(T.sj.c.source_id == self.__activity_journal.id)
         time_select = time_select.order_by('time').alias('sub_time')  # order here avoids extra index
 
         def statistic_select(statistic_name):
@@ -205,12 +213,19 @@ class Query:
             label = template.format(statistic_name=statistic_name)
             return query, label
 
+        all_selects = [time_select.c.time.label(N.INDEX)]
         statistic_selects = [statistic_select(statistic_name) for statistic_name in self.__statistic_names]
-        all_selects = [time_select.c.time.label(N.INDEX)] + \
-             [query.c.value.label(label) for query, label in statistic_selects]
+        all_selects += [query.c.value.label(label) for query, label in statistic_selects]
         source = time_select
         for query, _ in statistic_selects:
             source = source.outerjoin(query, time_select.c.time == query.c.time)
+        if self.__with_timespan_id:
+            all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
+            source = source.outerjoin(T.at,
+                                      and_(T.at.c.start <= time_select.c.time,
+                                           T.at.c.finish > time_select.c.time,
+                                           T.at.c.activity_journal_id == self.__activity_journal.id))
+
         query = select(all_selects).select_from(source)
 
         return query
@@ -218,9 +233,10 @@ class Query:
 
 class QueryData:
 
-    def __init__(self, session, query):
+    def __init__(self, session, query, statistic_names):
         with timing('query'):
             self.df = pd.read_sql_query(sql=query, con=session.connection(), index_col=N.INDEX)
+        self.__statistic_names = {statistic_name.name: statistic_name for statistic_name in statistic_names}
 
     def __bool__(self):
         return not self.df.dropna(how='all').empty
@@ -229,6 +245,63 @@ class QueryData:
         for column in like(prefix + '%', self.df.columns):
             self.df.rename(columns={column: column.replace(prefix, '')}, inplace=True)
         return self
+
+    def __rename(self, name, new_name):
+        log.debug(f'{name} -> {new_name}')
+        self.df.rename(columns={name: new_name}, inplace=True)
+
+    def __alias(self, name, new_name):
+        log.debug(f'{name} <-> {new_name}')
+        self.df[new_name] = self.df[name]
+
+    def __with_names_values(self, op, args, kargs):
+        for dict in list(args) + [kargs]:
+            for name, value in dict.items():
+                if present(self.df, name):
+                    op(name, value)
+                else:
+                    log.warning(f'Missing {name} in data')
+        return self
+
+    def rename(self, *args, **kargs):
+        return self.__with_names_values(self.__rename, args, kargs)
+
+    def alias(self, *args, **kargs):
+        return self.__with_names_values(self.__alias, args, kargs)
+
+    def __with_names_units(self, op, names):
+        for name in names:
+            statistic_name = self.__statistic_names[simple_name(name)]
+            new_name = N._slash(name, statistic_name.units)
+            if name == statistic_name.name: new_name = simple_name(new_name)
+            op(name, new_name)
+        return self
+
+    def rename_with_units(self, *names):
+        return self.__with_names_units(self.__rename, names)
+
+    def rename_all_with_units(self):
+        return self.__with_names_units(self.__rename, self.__statistic_names.keys())
+
+    def alias_with_units(self, *names):
+        return self.__with_names_units(self.__alias, names)
+
+    def alias_all_with_units(self):
+        return self.__with_names_units(self.__alias, self.__statistic_names.keys())
+
+    def into(self, df, tolerance, interpolate=False):
+        if self:
+            extra = self.df
+            if interpolate: extra = extra.interpolate(method='time')
+            extra = extra.reindex(df.index, method='nearest', tolerance=tolerance)
+            return df.merge(extra, how='left', left_index=True, right_index=True)
+        else:
+            return df
+
+
+def set_times_from_index(df):
+    df[N.TIME] = pd.to_datetime(df.index)
+    df[N.LOCAL_TIME] = df[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
 
 def std_health_statistics(s, freq='1h'):
@@ -242,22 +315,84 @@ def std_health_statistics(s, freq='1h'):
     finish = s.query(StatisticJournal.time).order_by(desc(StatisticJournal.time)).limit(1).scalar()
 
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq=freq))
+    set_times_from_index(stats)
 
-    def merge(extra):
-        nonlocal stats
-        if extra:
-            extra = extra.df.reindex(stats.index, method='nearest', tolerance=dt.timedelta(minutes=30))
-            stats = stats.merge(extra, how='left', left_index=True, right_index=True)
+    stats = Query(s).like(N.DEFAULT_ANY, owner=ResponseCalculator).by_name().drop_prefix(N.DEFAULT + '_'). \
+        into(stats, tolerance='30m')
 
-    merge(Query(s).like(N.DEFAULT_ANY, owner=ResponseCalculator).by_name().drop_prefix(N.DEFAULT + '_'))
-    merge(Query(s).for_(N.REST_HR, owner=RestHRCalculator).by_name())
-    merge(Query(s).for_(N.DAILY_STEPS, owner=MonitorCalculator).
-          for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator).
-          like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_qualified())
+    stats = Query(s).for_(N.REST_HR, owner=RestHRCalculator).by_name(). \
+        rename_all_with_units().into(stats, tolerance='30m')
 
-    stats[N.ACTIVE_TIME_H] = stats[N.ACTIVE_TIME] / 3600
-    stats[N.ACTIVE_DISTANCE_KM] = stats[N.ACTIVE_DISTANCE]
-    stats[N.TIME] = pd.to_datetime(stats.index)
-    stats[N.LOCAL_TIME] = stats[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
+    stats = Query(s).for_(N.DAILY_STEPS, owner=MonitorCalculator). \
+        for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
+        like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_qualified(). \
+        rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE).into(stats, tolerance='30m')
+
+    stats[N.ACTIVE_TIME_H] = stats[N.ACTIVE_TIME_S] / 3600
 
     return stats
+
+
+MIN_PERIODS = 1
+
+
+def std_activity_statistics(s, activity_journal, activity_group=None):
+
+    # the choice of which values have units is somewhat arbitrary, but less so than it was...
+
+    from ..pipeline.calculate.elevation import ElevationCalculator
+    from ..pipeline.calculate.impulse import ImpulseCalculator
+    from ..pipeline.calculate.power import PowerCalculator
+    from ..pipeline.read.segment import SegmentReader
+
+    if not isinstance(activity_journal, ActivityJournal):
+        activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
+
+    stats = Query(s).for_(N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
+                          N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE,
+                          owner=SegmentReader, activity_group=activity_journal.activity_group). \
+        from_(activity_journal=activity_journal, with_timespan_id=True).by_name(). \
+        rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE).df
+
+    stats = Query(s).for_(N.ELEVATION, N.GRADE,
+                          owner=ElevationCalculator, activity_group=activity_journal.activity_group). \
+        from_(activity_journal=activity_journal).by_name(). \
+        rename_all_with_units().into(stats, tolerance='1s')
+
+    hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
+    stats = Query(s).for_(N.HR_ZONE, hr_impulse_10,
+                          owner=ImpulseCalculator, activity_group=activity_journal.activity_group). \
+        from_(activity_journal=activity_journal).by_name().drop_prefix(N.DEFAULT + '_'). \
+        into(stats, tolerance='10s', interpolate=True)
+
+    stats = Query(s).for_(N.POWER_ESTIMATE,
+                          owner=PowerCalculator, activity_group=activity_journal.activity_group). \
+        from_(activity_journal=activity_journal).by_name(). \
+        rename_all_with_units().into(stats, tolerance='1s')
+
+    stats[N.MED_SPEED_KMH] = stats[N.SPEED_MS].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median() * 3.6
+    if present(stats, N.HEART_RATE_BPM):
+        stats[N.MED_HEART_RATE_BPM] = stats[N.HEART_RATE_BPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+    if present(stats, N.POWER_ESTIMATE):
+        stats[N.MED_POWER_ESTIMATE_W] = \
+            stats[N.POWER_ESTIMATE_W].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median().clip(lower=0)
+    if present(stats, N.CADENCE_RPM):
+        stats[N.MED_CADENCE_RPM] = stats[N.CADENCE_RPM].rolling(MED_WINDOW, min_periods=MIN_PERIODS).median()
+
+    set_times_from_index(stats)
+
+    return stats
+
+
+if __name__ == '__main__':
+    s = session('-v5')
+
+    df = std_activity_statistics(s, '2020-05-15')
+    print(df)
+    print(df.describe())
+    print(df.columns)
+
+    df = std_health_statistics(s)
+    print(df)
+    print(df.describe())
+    print(df.columns)

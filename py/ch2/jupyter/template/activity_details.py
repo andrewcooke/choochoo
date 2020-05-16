@@ -31,7 +31,7 @@ def activity_details(local_time, activity_group):
 
     s = session('-v2')
 
-    activity = std_activity_statistics(s, local_time=local_time, activity_group=activity_group)
+    activity = std_activity_statistics(s, activity_journal=local_time, activity_group=activity_group)
     details = activity_statistics(s, 'Climb %', N.ACTIVE_TIME, N.ACTIVE_DISTANCE,
                                   local_time=local_time, activity_group=activity_group)
     health = std_health_statistics(s)
@@ -53,25 +53,30 @@ def activity_details(local_time, activity_group):
     sp = comparison_line_plot(700, 200, N.DISTANCE_KM, N.MED_SPEED_KMH, activity, ylo=0)
     add_climb_zones(sp, details, activity)
     sp_c = cumulative_plot(200, 200, N.MED_SPEED_KMH, activity, ylo=0)
+    xrange = sp.x_range if sp else None
 
-    el = comparison_line_plot(700, 200, N.DISTANCE_KM, N.ELEVATION_M, activity, x_range=sp.x_range)
+    el = comparison_line_plot(700, 200, N.DISTANCE_KM, N.ELEVATION_M, activity, x_range=xrange)
     add_climbs(el, details, activity)
     el_c = cumulative_plot(200, 200, N.CLIMB_MS, activity)
+    xrange = xrange or (el.x_range if el else None)
 
-    hri = comparison_line_plot(700, 200, N.DISTANCE_KM, N.HR_IMPULSE_10, activity, ylo=0, x_range=sp.x_range)
+    hri = comparison_line_plot(700, 200, N.DISTANCE_KM, N.HR_IMPULSE_10, activity, ylo=0, x_range=xrange)
     add_climb_zones(hri, details, activity)
     hri_c = cumulative_plot(200, 200, N.HR_IMPULSE_10, activity, ylo=0)
+    xrange = xrange or (hri.x_range if hri else None)
 
-    hr = comparison_line_plot(700, 200, N.DISTANCE_KM, N.HEART_RATE_BPM, activity, x_range=sp.x_range)
+    hr = comparison_line_plot(700, 200, N.DISTANCE_KM, N.HEART_RATE_BPM, activity, x_range=xrange)
     add_hr_zones(hr, activity, N.DISTANCE_KM, hr_zones)
     add_climb_zones(hr, details, activity)
     hr_c = cumulative_plot(200, 200, N.HEART_RATE_BPM, activity)
+    xrange = xrange or (hr.x_range if hr else None)
 
-    pw = comparison_line_plot(700, 200, N.DISTANCE_KM, N.MED_POWER_ESTIMATE_W, activity, ylo=0, x_range=sp.x_range)
+    pw = comparison_line_plot(700, 200, N.DISTANCE_KM, N.MED_POWER_ESTIMATE_W, activity, ylo=0, x_range=xrange)
     add_climb_zones(pw, details, activity)
     pw_c = cumulative_plot(200, 200, N.MED_POWER_ESTIMATE_W, activity, ylo=0)
+    xrange = xrange or (pw.x_range if pw else None)
 
-    cd = comparison_line_plot(700, 200, N.DISTANCE_KM, N.MED_CADENCE, activity, ylo=0, x_range=sp.x_range)
+    cd = comparison_line_plot(700, 200, N.DISTANCE_KM, N.MED_CADENCE_RPM, activity, ylo=0, x_range=xrange)
     add_climb_zones(cd, details, activity)
     hr_h = histogram_plot(200, 200, N.HR_ZONE, activity, xlo=1, xhi=5)
 
@@ -83,7 +88,7 @@ def activity_details(local_time, activity_group):
 
     map = map_plot(400, 400, activity)
     m_el = map_intensity_signed(200, 200, activity, N.GRADE_PC, ranges=map, power=0.5)
-    m_sp = map_intensity(200, 200, activity, N.SPEED_KMH, ranges=map, power=2)
+    m_sp = map_intensity(200, 200, activity, N.MED_SPEED_KMH, ranges=map, power=2)
     m_hr = map_intensity(200, 200, activity, N.HR_IMPULSE_10, ranges=map)
     m_pw = map_intensity(200, 200, activity, N.MED_POWER_ESTIMATE_W, ranges=map)
     show(row(map, gridplot([[m_el, m_sp], [m_hr, m_pw]], toolbar_location='right')))

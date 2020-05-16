@@ -191,12 +191,12 @@ class Sort(TypeDecorator):
 
 
 def simple_name(name, none=True, strip=True):
-    from ch2.names import POW_2, POW_M1
     # allows % and ? for LIKE and templates
+    from ch2.names import POW_2, POW_M1
     if name is None and none:
         return None
-    name = name.replace(POW_2, '_2')
-    name = name.replace(POW_M1, '_1')
+    name = name.replace(POW_2, '2')
+    name = name.replace(POW_M1, '')  # ms^-1 -> ms which is standard convention
     name = name.replace('Δ', 'd_')
     if strip: name = name.strip()
     name = name.lower()

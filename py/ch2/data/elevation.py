@@ -25,7 +25,7 @@ def smooth_elevation(df, smooth=4):
         # 2 - no guarantee of consistency between routes (or even on the same routine retracing a path)
         spline = UnivariateSpline(unique[Names.DISTANCE], unique[Names.RAW_ELEVATION], s=len(unique) * smooth)
         df[Names.ELEVATION] = spline(df[Names.DISTANCE])
-        df[Names.GRADE] = (spline.derivative()(df[Names.DISTANCE]) * 100)  # two step to use rolling from pandas
+        df[Names.GRADE] = (spline.derivative()(df[Names.DISTANCE]) / 10)  # distance in km
         df[Names.GRADE] = df[Names.GRADE].rolling(5, center=True).median().ffill().bfill()
         # avoid extrapolation / interpolation
         df.loc[df[Names.RAW_ELEVATION].isna(), [Names.ELEVATION]] = None
