@@ -4,7 +4,7 @@ from os.path import splitext, basename
 from pygeotile.point import Point
 from sqlalchemy.sql.functions import count
 
-from .read import AbortImportButMarkScanned, MultiProcFitReader
+from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
 from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no, FILENAME_KIT
 from ...names import Titles as T, Units, Sports, Summaries as S

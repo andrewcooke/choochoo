@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .display import Displayer
+from .utils import Displayer
 from ..calculate.monitor import MonitorCalculator
 from ...names import Names
 from ...diary.database import summary_column

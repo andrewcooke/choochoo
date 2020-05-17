@@ -277,3 +277,6 @@ class NamesMeta(type):
 
 
 class Names(Titles, metaclass=NamesMeta): pass
+
+
+T, N = Titles, Names

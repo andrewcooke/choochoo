@@ -8,7 +8,7 @@ from random import uniform
 from sqlalchemy import inspect, select, alias, and_, distinct, func, not_, or_
 from sqlalchemy.sql.functions import count
 
-from .calculate import UniProcCalculator
+from .utils import UniProcCalculator
 from ..pipeline import OwnerInMixin
 from ...names import Names
 from ...rtree import MatchType

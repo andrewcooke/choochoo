@@ -15,7 +15,7 @@ from ch2.jupyter.decorator import template
 def compare_activities(local_time, compare_time, activity_group):
 
     f'''
-    # Compare Activities: {local_time.split()[0]} v {compare_time.split()[0]} ({activity_group})
+    # Compare Activities: {local_time} v {compare_time} ({activity_group})
     '''
 
     '''
@@ -30,18 +30,19 @@ def compare_activities(local_time, compare_time, activity_group):
 
     s = session('-v2')
 
-    activity = std_activity_statistics(s, local_time=local_time, activity_group=activity_group)
-    compare = std_activity_statistics(s, local_time=compare_time, activity_group=activity_group)
-    details = activity_statistics(s, 'Climb %', ACTIVE_TIME, ACTIVE_DISTANCE, local_time=local_time,
-                                  activity_group=activity_group)
+    activity = std_activity_statistics(s, activity_journal=local_time, activity_group=activity_group)
+    compare = std_activity_statistics(s, activity_journal=compare_time, activity_group=activity_group)
     health = std_health_statistics(s)
     hr_zones = hr_zones_from_database(s, local_time, activity_group)
+    climbs = Statistics(s, activity_group).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
+        like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal=local_time). \
+        by_name().rename_all_with_units().df
 
     f'''
     ## Activity Plots
     
-    The black line shows data from {local_time.split()[0]}, 
-    the grey line from {compare_time.split()[0]}. 
+    The black line shows data from {local_time}, 
+    the grey line from {compare_time}. 
     To the right of each plot of data against distance is a related plot of cumulative data
     (except the last, cadence, which isn't useful and so replaced by HR zones).
     Green and red areas indicate differences between the two dates. 
@@ -53,28 +54,28 @@ def compare_activities(local_time, compare_time, activity_group):
     output_file(filename='/dev/null')
 
     sp = comparison_line_plot(700, 200, DISTANCE_KM, MED_SPEED_KMH, activity, other=compare, ylo=0)
-    add_climb_zones(sp, details, activity)
+    add_climb_zones(sp, climbs, activity)
     sp_c = cumulative_plot(200, 200, MED_SPEED_KMH, activity, other=compare, ylo=0)
 
     el = comparison_line_plot(700, 200, DISTANCE_KM, ELEVATION_M, activity, other=compare, x_range=sp.x_range)
-    add_climbs(el, details, activity)
+    add_climbs(el, climbs, activity)
     el_c = cumulative_plot(200, 200, CLIMB_MS, activity, other=compare)
 
     hri = comparison_line_plot(700, 200, DISTANCE_KM, HR_IMPULSE_10, activity, other=compare, ylo=0, x_range=sp.x_range)
-    add_climb_zones(hri, details, activity)
+    add_climb_zones(hri, climbs, activity)
     hri_c = cumulative_plot(200, 200, HR_IMPULSE_10, activity, other=compare, ylo=0)
 
     hr = comparison_line_plot(700, 200, DISTANCE_KM, HEART_RATE_BPM, activity, other=compare, x_range=sp.x_range)
     add_hr_zones(hr, activity, DISTANCE_KM, hr_zones)
-    add_climb_zones(hr, details, activity)
+    add_climb_zones(hr, climbs, activity)
     hr_c = cumulative_plot(200, 200, HEART_RATE_BPM, activity, other=compare)
 
     pw = comparison_line_plot(700, 200, DISTANCE_KM, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0, x_range=sp.x_range)
-    add_climb_zones(pw, details, activity)
+    add_climb_zones(pw, climbs, activity)
     pw_c = cumulative_plot(200, 200, MED_POWER_ESTIMATE_W, activity, other=compare, ylo=0)
 
     cd = comparison_line_plot(700, 200, DISTANCE_KM, MED_CADENCE, activity, other=compare, ylo=0, x_range=sp.x_range)
-    add_climb_zones(cd, details, activity)
+    add_climb_zones(cd, climbs, activity)
     hr_h = histogram_plot(200, 200, HR_ZONE, activity, xlo=1, xhi=5)
 
     show(gridplot([[el, el_c], [sp, sp_c], [hri, hri_c], [hr, hr_c], [pw, pw_c], [cd, hr_h]]))
@@ -98,15 +99,15 @@ def compare_activities(local_time, compare_time, activity_group):
     Active time and distance exclude pauses.
     '''
 
-    details[[ACTIVE_TIME, ACTIVE_DISTANCE]].dropna(). \
+    climbs[[ACTIVE_TIME, ACTIVE_DISTANCE]].dropna(). \
         transform({ACTIVE_TIME: format_seconds, ACTIVE_DISTANCE: format_metres})
 
     '''
     Climbs are auto-detected and shown only for the main activity. They are included in the elevation plot above.
     '''
 
-    if present(details, CLIMB_TIME):
-        display(transform(details.filter(like='Climb').dropna(),
+    if present(climbs, CLIMB_TIME):
+        display(transform(climbs.filter(like='Climb').dropna(),
                           {CLIMB_TIME: format_seconds, CLIMB_ELEVATION: format_metres,
                            CLIMB_DISTANCE: format_km, CLIMB_GRADIENT: format_percent,
                            CLIMB_POWER: format_watts, CLIMB_CATEGORY: lambda x: x}))

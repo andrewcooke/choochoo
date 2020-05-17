@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .calculate import MultiProcCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
+from .utils import MultiProcCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ...names import Names, Titles, Summaries as S, Units
 from ...data import activity_statistics, present, linear_resample_time
@@ -37,3 +37,4 @@ class SegmentCalculator(OwnerInMixin, SegmentJournalCalculatorMixin, DataFrameCa
         if Titles.SEGMENT_HEART_RATE in stats:
             loader.add(Titles.SEGMENT_HEART_RATE, Units.BPM, S.join(S.MAX, S.CNT, S.MSR), sjournal.segment,
                        sjournal, stats[Titles.SEGMENT_HEART_RATE], sjournal.start, StatisticJournalFloat)
+

@@ -8,7 +8,7 @@ from pygeotile.point import Point
 
 from .args import ACTIVITY, base_system_path, THUMBNAIL, BASE
 from ..data import activity_statistics
-from ..data.query import Query
+from ..data.query import Statistics
 from ..lib import local_time_to_time
 from ..pipeline.read.segment import SegmentReader
 from ..sql import ActivityJournal, ActivityGroup
@@ -50,8 +50,8 @@ def parse_activity(s, text):
 def read_activity(s, activity_id, decimate=10):
     try:
         activity_journal = s.query(ActivityJournal).filter(ActivityJournal.id == activity_id).one()
-        df = Query(s).for_(Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y,
-                           activity_group=activity_journal.activity_group, owner=SegmentReader). \
+        df = Statistics(s).for_(Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y,
+                                activity_group=activity_journal.activity_group, owner=SegmentReader). \
             from_(activity_journal=activity_journal).by_name().df
         return df.iloc[::decimate, :]
     except:

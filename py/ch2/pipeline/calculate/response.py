@@ -8,7 +8,7 @@ from math import log10
 from sqlalchemy import distinct
 from sqlalchemy.sql.functions import count
 
-from .calculate import UniProcCalculator
+from .utils import UniProcCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
 from ...data.frame import statistics

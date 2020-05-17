@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin
+from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ..read.activity import ActivityReader
 from ...lib.log import log_current_exception

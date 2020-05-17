@@ -1,7 +1,7 @@
 
 from logging import getLogger
 
-from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ...data.elevation import smooth_elevation
 from ...data.frame import activity_statistics, present
 from ...names import Names, Titles, Units

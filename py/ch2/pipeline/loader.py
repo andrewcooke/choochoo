@@ -1,11 +1,10 @@
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from logging import getLogger
 from time import sleep
 
 from sqlalchemy.exc import IntegrityError
 
-from .read.waypoint import make_waypoint
 from ..commands.args import UNLOCK
 from ..sql import StatisticJournal, StatisticName, Dummy, Interval
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES, STATISTIC_JOURNAL_TYPES
@@ -206,3 +205,12 @@ class StatisticJournalLoader:
         total = max(self.__counts.values())
         for key, count in self.__counts.items():
             yield key, 100 * count / total
+
+
+def make_waypoint(names, extra=None):
+    names = list(names)
+    if extra:
+        names += [extra]
+    names = ['time'] + names
+    defaults = [None] * len(names)
+    return namedtuple('Waypoint', names, defaults=defaults)

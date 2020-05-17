@@ -3,7 +3,7 @@ import datetime as dt
 
 from sqlalchemy import asc, desc
 
-from .display import Displayer
+from .utils import Displayer
 from ..pipeline import OwnerInMixin
 from ...diary.model import text, optional_text, value, link
 from ...lib.date import local_date_to_time, to_time, format_date

@@ -5,7 +5,7 @@ from logging import getLogger
 
 import numpy as np
 
-from .calculate import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
+from .utils import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10

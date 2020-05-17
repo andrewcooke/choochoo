@@ -19,7 +19,7 @@ from ..lib.utils import clean_path, slow_warning
 from ..lib.workers import ProgressTree, SystemProgressTree
 from ..pipeline.read.activity import ActivityReader
 from ..pipeline.read.monitor import MonitorReader
-from ..pipeline.read.read import AbortImportButMarkScanned
+from ..pipeline.read.utils import AbortImportButMarkScanned
 from ..sql import KitItem, FileHash, ActivityJournal
 
 log = getLogger(__name__)

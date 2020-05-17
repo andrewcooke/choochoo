@@ -5,7 +5,7 @@ from logging import getLogger
 from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import count
 
-from .calculate import MultiProcCalculator
+from .utils import MultiProcCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ...lib import local_date_to_time, time_to_local_date, to_date, format_date, log_current_exception
 from ...names import Titles, Names, Summaries as S, Units

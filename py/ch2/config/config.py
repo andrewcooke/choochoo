@@ -1,5 +1,4 @@
 
-
 from logging import getLogger
 
 from .climb import add_climb, CLIMB_CNAME
@@ -22,7 +21,7 @@ from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.segment import SegmentCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.activity.achievement import AchievementDelegate
-from ..pipeline.display.activity.activity import ActivityDisplayer, ActivityDelegate
+from ..pipeline.display.activity.utils import ActivityDisplayer, ActivityDelegate
 from ..pipeline.display.activity.jupyter import JupyterDelegate
 from ..pipeline.display.activity.nearby import NearbyDelegate
 from ..pipeline.display.activity.segment import SegmentDelegate

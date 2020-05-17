@@ -4,7 +4,7 @@ from re import compile
 
 from sqlalchemy import desc, asc
 
-from .calculate import MultiProcCalculator, ActivityJournalCalculatorMixin
+from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ...lib import local_time_to_time
 from ...lib.log import log_current_exception

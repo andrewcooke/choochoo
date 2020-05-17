@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
 
-from .calculate import MultiProcCalculator, IntervalCalculatorMixin
+from .utils import MultiProcCalculator, IntervalCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ...data import statistics
 from ...lib import format_date, local_date_to_time

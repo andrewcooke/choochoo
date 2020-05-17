@@ -483,7 +483,7 @@ def make_parser(with_noop=False):
     dump.add_argument(mm(MAX_COLWIDTH), metavar='N', type=int, help='pandas max_colwidth attribute')
     dump.add_argument(mm(MAX_ROWS), metavar='N', type=int, help='pandas max_rows attribute')
     dump.add_argument(mm(WIDTH), metavar='N', type=int, help='pandas width attribute')
-    dump_sub = dump.add_subparsers(dest=SUB_COMMAND)
+    dump_sub = dump.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
     dump_statistics = dump_sub.add_parser(STATISTICS)
     dump_statistics.add_argument(NAMES, nargs='*', metavar='NAME', help='statistic names')
     dump_statistics.add_argument(mm(START), metavar='TIME', help='start time')

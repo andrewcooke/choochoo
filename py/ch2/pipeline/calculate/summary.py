@@ -5,7 +5,7 @@ from random import choice
 from sqlalchemy import func, inspect, and_, select
 from sqlalchemy.sql.functions import coalesce
 
-from .calculate import MultiProcCalculator, IntervalCalculatorMixin
+from .utils import MultiProcCalculator, IntervalCalculatorMixin
 from ...names import Summaries as S
 from ...lib.date import local_date_to_time
 from ...sql.tables.source import Interval

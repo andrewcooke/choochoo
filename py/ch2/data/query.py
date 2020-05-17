@@ -14,15 +14,12 @@ import pandas as pd
 from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct
 from sqlalchemy.sql import func
 
-from ch2.pipeline.read.segment import SegmentReader
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
 from ..lib.data import kargs_to_attr
 from ..lib.date import YMD
 from ..lib.utils import timing
 from ..names import Names as N, like, MED_WINDOW
-from ..pipeline.calculate.activity import ActivityCalculator
-from ..pipeline.calculate.monitor import MonitorCalculator
 from ..sql import StatisticName, ActivityGroup, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, \
     StatisticJournalText, Interval, ActivityTimespan, ActivityJournal, Composite, CompositeComponent, Source, \
     StatisticJournalType
@@ -60,7 +57,12 @@ class _Qualified:
             return statistic_name.name + ':' + statistic_name.activity_group.name
 
 
-class Query:
+class Statistics:
+
+    '''
+    This is the main interface for retrieving statistics from the database.
+    The code is full of examples that provide better documentation than I could write here.
+    '''
 
     def __init__(self, s, activity_group=None):
         self.__session = s
@@ -326,8 +328,7 @@ def set_times_from_index(df):
 
 def std_health_statistics(s, freq='1h'):
 
-    from ..pipeline.calculate.heart_rate import RestHRCalculator
-    from ..pipeline.calculate.response import ResponseCalculator
+    from ..pipeline import RestHRCalculator, ResponseCalculator, ActivityCalculator, MonitorCalculator
 
     start = s.query(StatisticJournal.time). \
         filter(StatisticJournal.time > local_date_to_time(to_date('1970-01-03'))). \
@@ -337,13 +338,13 @@ def std_health_statistics(s, freq='1h'):
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq=freq))
     set_times_from_index(stats)
 
-    stats = Query(s).like(N.DEFAULT_ANY, owner=ResponseCalculator).by_name().drop_prefix(N.DEFAULT + '_'). \
+    stats = Statistics(s).like(N.DEFAULT_ANY, owner=ResponseCalculator).by_name().drop_prefix(N.DEFAULT + '_'). \
         into(stats, tolerance='30m')
 
-    stats = Query(s).for_(N.REST_HR, owner=RestHRCalculator).by_name(). \
+    stats = Statistics(s).for_(N.REST_HR, owner=RestHRCalculator).by_name(). \
         rename_all_with_units().into(stats, tolerance='30m')
 
-    stats = Query(s).for_(N.DAILY_STEPS, owner=MonitorCalculator). \
+    stats = Statistics(s).for_(N.DAILY_STEPS, owner=MonitorCalculator). \
         for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
         like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_qualified(). \
         rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
@@ -365,28 +366,28 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
     if not isinstance(activity_journal, ActivityJournal):
         activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
 
-    stats = Query(s).for_(N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
-                          N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE,
-                          owner=SegmentReader, activity_group=activity_journal.activity_group). \
+    stats = Statistics(s).for_(N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
+                               N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE,
+                               owner=SegmentReader, activity_group=activity_journal.activity_group). \
         from_(activity_journal=activity_journal, with_timespan_id=True).by_name(). \
         rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
         copy({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
         copy({N.HEART_RATE_BPM: N.MED_HEART_RATE_BPM}, median=MED_WINDOW). \
         copy({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW).df
 
-    stats = Query(s).for_(N.ELEVATION, N.GRADE,
-                          owner=ElevationCalculator, activity_group=activity_journal.activity_group). \
+    stats = Statistics(s).for_(N.ELEVATION, N.GRADE,
+                               owner=ElevationCalculator, activity_group=activity_journal.activity_group). \
         from_(activity_journal=activity_journal).by_name(). \
         rename_all_with_units().into(stats, tolerance='1s')
 
     hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
-    stats = Query(s).for_(N.HR_ZONE, hr_impulse_10,
-                          owner=ImpulseCalculator, activity_group=activity_journal.activity_group). \
+    stats = Statistics(s).for_(N.HR_ZONE, hr_impulse_10,
+                               owner=ImpulseCalculator, activity_group=activity_journal.activity_group). \
         from_(activity_journal=activity_journal).by_name().drop_prefix(N.DEFAULT + '_'). \
         into(stats, tolerance='10s', interpolate=True)
 
-    stats = Query(s).for_(N.POWER_ESTIMATE,
-                          owner=PowerCalculator, activity_group=activity_journal.activity_group). \
+    stats = Statistics(s).for_(N.POWER_ESTIMATE,
+                               owner=PowerCalculator, activity_group=activity_journal.activity_group). \
         from_(activity_journal=activity_journal).by_name(). \
         rename_all_with_units(). \
         copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
@@ -398,6 +399,9 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 
 
 if __name__ == '__main__':
+
+    from ..pipeline import ActivityCalculator
+
     s = session('-v5')
 
     # df = std_activity_statistics(s, '2020-05-15')
@@ -410,7 +414,7 @@ if __name__ == '__main__':
     # print(df.describe())
     # print(df.columns)
 
-    df = Query(s).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator, activity_group='road'). \
+    df = Statistics(s).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator, activity_group='road'). \
         like(N.CLIMB_ANY, owner=ActivityCalculator, activity_group='road'). \
         from_(activity_journal='2020-05-15', activity_group='road'). \
         by_name().rename_all_with_units().df

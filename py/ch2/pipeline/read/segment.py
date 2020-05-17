@@ -6,7 +6,6 @@ from math import sqrt, ceil
 from pygeotile.point import Point
 
 from .activity import ActivityReader
-from .waypoint import filter_none
 from ...lib.date import to_time, format_time
 from ...lib.utils import sign
 from ...rtree import MatchType
@@ -282,3 +281,8 @@ class SegmentReader(ActivityReader):
         if not segments:
             log.warning('No segments defined in database for %s' % agroup)
         return segments
+
+
+def filter_none(names, waypoints):
+    names = list(names)
+    return [w for w in waypoints if all(n in w._fields and getattr(w, n) is not None for n in names)]

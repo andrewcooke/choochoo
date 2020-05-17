@@ -5,7 +5,7 @@ from re import search
 from sqlalchemy import or_, distinct, asc, desc
 from sqlalchemy.orm.exc import NoResultFound
 
-from ..display import Displayer, ActivityJournalDelegate
+from ..utils import Displayer, ActivityJournalDelegate
 from ...calculate.activity import ActivityCalculator
 from ...calculate.power import PowerCalculator
 from ....data.climb import climbs_for_activity

@@ -5,7 +5,7 @@ from .model import text, value
 from ..lib import to_date
 from ..lib.date import YMD
 from ..pipeline.calculate.summary import SummaryCalculator
-from ..pipeline.display.display import Displayer
+from ..pipeline.display.utils import Displayer
 from ..sql import StatisticJournal, Pipeline, PipelineType
 
 log = getLogger(__name__)

@@ -7,7 +7,7 @@ from re import split
 import numpy as np
 import pandas as pd
 
-from .calculate import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
+from .utils import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ..loader import StatisticJournalLoader
 from ...data import activity_statistics, present, linear_resample_time
 from ...data.frame import median_dt
