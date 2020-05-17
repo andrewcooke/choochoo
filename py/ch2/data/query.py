@@ -71,7 +71,8 @@ class Statistics:
         self.__start = None
         self.__finish = None
         self.__activity_journal = None
-        self.__with_timespan_id = False
+        self.__with_timespan = False
+        self.__with_source = False
 
     def __with_default(self, activity_group):
         if not activity_group:
@@ -84,11 +85,11 @@ class Statistics:
         if not (statistic_names or activity_group or owner):
             raise Exception('Provide at least one constraint')
         if not owner: log.warning('Querying without owner')
-        return f'{", ".join(statistic_names)}; {activity_group}; {owner}'
 
     def for_(self, *statistic_names, activity_group=None, owner=None):
         activity_group = self.__with_default(activity_group)
-        msg = self.__check(statistic_names, activity_group, owner)
+        log.debug(f'For {", ".join(statistic_names)}; {activity_group}; {owner}')
+        self.__check(statistic_names, activity_group, owner)
         q = self.__session.query(StatisticName)
         if statistic_names:
             q = q.filter(StatisticName.name.in_(statistic_names))
@@ -122,7 +123,8 @@ class Statistics:
 
     def like(self, *statistic_names, activity_group=None, owner=None):
         activity_group = self.__with_default(activity_group)
-        msg = self.__check(statistic_names, activity_group, owner)
+        log.debug(f'Like {", ".join(statistic_names)}; {activity_group}; {owner}')
+        self.__check(statistic_names, activity_group, owner)
         q = self.__session.query(StatisticName)
         if statistic_names:
             q = q.filter(or_(*[StatisticName.name.ilike(statistic_name) for statistic_name in statistic_names]))
@@ -137,7 +139,7 @@ class Statistics:
         if found:
             log.debug(f'Appending {len(found)} statistics names ({len(statistic_names)} patterns)')
         else:
-            log.warning(f'Appending no statistic names ({msg})')
+            log.warning(f'Appending no statistic names ({", ".join(statistic_names)}; {activity_group}; {owner})')
         found_names = set(statistic_name.name for statistic_name in found)
         missing = [statistic_name for statistic_name in statistic_names if not like(statistic_name, found_names)]
         self.__dump_matches(missing)
@@ -150,7 +152,7 @@ class Statistics:
         return bool(self.__statistic_names)
 
     def from_(self, start=None, finish=None, activity_journal=None, activity_group=None,
-              with_timespan_id=False):
+              with_timespan=False, with_source=False):
         activity_group = self.__with_default(activity_group)
         self.__start = start
         self.__finish = finish
@@ -158,9 +160,10 @@ class Statistics:
             if not isinstance(activity_journal, ActivityJournal):
                 activity_journal = ActivityJournal.at(self.__session, activity_journal, activity_group=activity_group)
             self.__activity_journal = activity_journal
-        if with_timespan_id:
-            if not self.__activity_journal: raise Exception('Timespan ID only available with activity journal')
-        self.__with_timespan_id = with_timespan_id
+        if with_timespan:
+            if not self.__activity_journal: raise Exception('Timespan only available with activity journal')
+        self.__with_timespan = with_timespan
+        self.__with_source = with_source
         return self
 
     def by_name(self, outer=False):
@@ -191,7 +194,7 @@ class Statistics:
             query = self.__build_query_outer(T, J, template)
         else:
             query = self.__build_query_time(T, J, template)
-        return QueryData(self.__session, query, self.__statistic_names)
+        return Data(self.__session, query, self.__statistic_names)
 
     def __build_query_outer(self, T, J, template):
         '''
@@ -223,8 +226,6 @@ class Statistics:
     def __build_query_time(self, T, J, template):
         '''
         build the query by joining on time for each statistic.
-
-        incomplete
         '''
 
         time_select = select([distinct(T.sj.c.time).label('time')]).select_from(T.sj). \
@@ -236,7 +237,9 @@ class Statistics:
 
         def statistic_select(statistic_name):
             statistic_journal = J[statistic_name.statistic_journal_type]
-            query = select([statistic_journal.c.value, T.sj.c.time]). \
+            selects = [statistic_journal.c.value, T.sj.c.time]
+            if self.__with_source: selects += [T.sj.c.source_id]
+            query = select(selects). \
                 select_from(T.sj.join(statistic_journal)). \
                 where(T.sj.c.statistic_name_id == statistic_name.id)
             # order_by doesn't affect plan but seems to speed up query
@@ -244,13 +247,15 @@ class Statistics:
             label = template.format(statistic_name=statistic_name)
             return query, label
 
-        all_selects = [time_select.c.time.label(N.INDEX)]
         statistic_selects = [statistic_select(statistic_name) for statistic_name in self.__statistic_names]
-        all_selects += [query.c.value.label(label) for query, label in statistic_selects]
+        all_selects = [time_select.c.time.label(N.INDEX)] + \
+                      [query.c.value.label(label) for query, label in statistic_selects]
+        if self.__with_source:
+            all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_selects]
         source = time_select
         for query, _ in statistic_selects:
             source = source.outerjoin(query, time_select.c.time == query.c.time)
-        if self.__with_timespan_id:
+        if self.__with_timespan:
             all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
             source = source.outerjoin(T.at,
                                       and_(T.at.c.start <= time_select.c.time,
@@ -262,12 +267,13 @@ class Statistics:
         return query
 
 
-class QueryData:
+class Data:
 
     def __init__(self, session, query, statistic_names):
         with timing('query'):
             self.df = pd.read_sql_query(sql=query, con=session.connection(), index_col=N.INDEX)
         self.__statistic_names = {statistic_name.name: statistic_name for statistic_name in statistic_names}
+        log.debug(f'Columns: {", ".join(self.df.columns)}')
 
     def __bool__(self):
         return not self.df.dropna(how='all').empty
@@ -340,10 +346,27 @@ class QueryData:
         set_times_from_index(self.df)
         return self
 
+    def coallesce(self, *names, delete=False):
+        if not names:
+            names = set(column.split(':')[0] for column in self.df.columns if ':' in column)
+        log.debug(f'Coallescing {names}')
+        for name in names:
+            if name in self.df.columns:
+                raise Exception(f'{name} already exists')
+            columns = like(name + ':%', self.df.columns)
+            log.debug(f'Coallescing {columns} for {name}')
+            df = self.df[columns].copy()
+            df.fillna(method='ffill', inplace=True)
+            df.fillna(method='bfill', inplace=True)
+            self.df.loc[:, name] = df.iloc[:, [0]]
+            if delete:
+                self.df.drop(columns=columns, inplace=True)
+        return self
+
 
 def set_times_from_index(df):
-    df[N.TIME] = pd.to_datetime(df.index)
-    df[N.LOCAL_TIME] = df[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
+    df.loc[:, N.TIME] = pd.to_datetime(df.index)
+    df.loc[:, N.LOCAL_TIME] = df[N.TIME].apply(lambda x: time_to_local_time(x.to_pydatetime(), YMD))
 
 
 def std_health_statistics(s, freq='1h'):
@@ -389,7 +412,7 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
     stats = Statistics(s).for_(N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
                                N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE,
                                owner=SegmentReader, activity_group=activity_journal.activity_group). \
-        from_(activity_journal=activity_journal, with_timespan_id=True).by_name(). \
+        from_(activity_journal=activity_journal, with_timespan=True).by_name(). \
         rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
         copy({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
         copy({N.HEART_RATE_BPM: N.MED_HEART_RATE_BPM}, median=MED_WINDOW). \

@@ -192,6 +192,7 @@ class Sort(TypeDecorator):
 
 def simple_name(name, none=True, strip=True):
     # allows % and ? for LIKE and templates
+    # also allows ':' so that we don't mess up composites
     from ch2.names import POW_2, POW_M1
     if name is None and none:
         return None
@@ -201,7 +202,7 @@ def simple_name(name, none=True, strip=True):
     if strip: name = name.strip()
     name = name.lower()
     name = sub(r'\s+', '_', name)
-    name = sub(r'[^a-z0-9%?]', '_', name)
+    name = sub(r'[^a-z0-9%?:]', '_', name)
     name = sub(r'^(\d)', r'_\1', name)
     name = sub(r'_+', '_', name)
     return name

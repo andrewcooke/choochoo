@@ -28,7 +28,6 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
     def _startup(self, s):
         self.impulse_constant = Constant.get(s, self.impulse_constant_name)
         self.impulse = HRImpulse(**loads(self.impulse_constant.at(s).value))
-        self.all = ActivityGroup.from_name(s, ActivityGroup.ALL)
         log.debug('%s: %s' % (self.impulse_constant, self.impulse))
 
     def _read_dataframe(self, s, ajournal):
@@ -62,12 +61,7 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
                 loader.add(Titles.HR_ZONE, None, None, ajournal.activity_group, ajournal, row[Names.HR_ZONE], time,
                            StatisticJournalFloat, description=hr_description)
             if not np.isnan(row[Names.HR_IMPULSE_10]):
-                # load a copy to the activity group as well as to all so that we can extract / display
-                # easily in, for example, std_activity_statistics
                 loader.add(name_group, None, None, ajournal.activity_group, ajournal, row[Names.HR_IMPULSE_10], time,
-                           StatisticJournalFloat, description=impulse_description, title=title)
-                # copy for global FF statistics
-                loader.add(name_all, None, None, self.all, ajournal, row[Names.HR_IMPULSE_10], time,
                            StatisticJournalFloat, description=impulse_description, title=title)
         # if there are no values, add a single null so we don't re-process
         if not loader:

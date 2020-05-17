@@ -81,26 +81,25 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
             return {N.MEAN_POWER_ESTIMATE: 0}
 
     def _copy_results(self, s, ajournal, loader, data):
-        all = ActivityGroup.from_name(s, ActivityGroup.ALL)
         df, stats, climbs = data
         self.__copy(ajournal, loader, stats, T.START, None,
-                    None, ajournal.start, type=StatisticJournalTimestamp, extra_group=all)
+                    None, ajournal.start, type=StatisticJournalTimestamp)
         self.__copy(ajournal, loader, stats, T.FINISH, None,
-                    None, ajournal.start, type=StatisticJournalTimestamp, extra_group=all)
+                    None, ajournal.start, type=StatisticJournalTimestamp)
         self.__copy(ajournal, loader, stats, T.TIME, Units.S,
-                    S.join(S.MAX, S.SUM, S.MSR), ajournal.start, extra_group=all)
+                    S.join(S.MAX, S.SUM, S.MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, T.ACTIVE_DISTANCE, Units.KM,
-                    S.join(S.MAX, S.CNT, S.SUM, S.MSR), ajournal.start, extra_group=all)
+                    S.join(S.MAX, S.CNT, S.SUM, S.MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, T.ACTIVE_TIME, Units.S,
-                    S.join(S.MAX, S.SUM, S.MSR), ajournal.start, extra_group=all)
+                    S.join(S.MAX, S.SUM, S.MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, T.ACTIVE_SPEED, Units.KMH,
                     S.join(S.MAX, S.AVG, S.MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, T.MEAN_POWER_ESTIMATE,Units. W,
                     S.join(S.MAX, S.AVG, S.MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, T.DIRECTION, Units.DEG,
-                    None, ajournal.start, extra_group=all)
+                    None, ajournal.start)
         self.__copy(ajournal, loader, stats, T.ASPECT_RATIO, None,
-                    None, ajournal.start, extra_group=all)
+                    None, ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.MIN_KM_TIME_ANY, Units.S,
                         S.join(S.MIN, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.MED_KM_TIME_ANY, Units.S,
@@ -114,19 +113,19 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
         self.__copy_all(ajournal, loader, stats, T.MAX_MEAN_PE_M_ANY, Units.W,
                         S.join(S.MAX, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T._delta(T.DEFAULT_ANY), Units.FF,
-                        S.join(S.MAX, S.MSR), ajournal.start, extra_group=all)
+                        S.join(S.MAX, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T._delta(T.DEFAULT_ANY), Units.FF,
-                        S.join(S.MAX, S.MSR), ajournal.start, extra_group=all)
+                        S.join(S.MAX, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.EARNED_D_ANY, Units.S,
-                        S.join(S.MAX, S.MSR), ajournal.start, extra_group=all)
+                        S.join(S.MAX, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.RECOVERY_D_ANY, Units.S,
-                        S.join(S.MAX, S.MSR), ajournal.start, extra_group=all)
+                        S.join(S.MAX, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.PLATEAU_D_ANY, Units.FF,
-                        None, ajournal.start, extra_group=all)
+                        None, ajournal.start)
         if climbs:
             loader.add(T.TOTAL_CLIMB, Units.M, S.join(S.MAX, S.MSR), ajournal.activity_group, ajournal,
                        sum(climb[N.CLIMB_ELEVATION] for climb in climbs), ajournal.start, StatisticJournalFloat,
-                       description=DESCRIPTIONS[T.TOTAL_CLIMB], extra_group=all)
+                       description=DESCRIPTIONS[T.TOTAL_CLIMB])
             for climb in sorted(climbs, key=lambda climb: climb[N.TIME]):
                 self.__copy(ajournal, loader, climb, T.CLIMB_ELEVATION, Units.M,
                             S.join(S.MAX, S.SUM, S.MSR), climb[N.TIME])
@@ -144,27 +143,22 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
         if stats:
             log.warning(f'Unsaved statistics: {list(stats.keys())}')
 
-    def __copy_all(self, ajournal, loader, stats, pattern, units, summary, time, type=StatisticJournalFloat,
-                   extra_group=None):
+    def __copy_all(self, ajournal, loader, stats, pattern, units, summary, time, type=StatisticJournalFloat):
         description = DESCRIPTIONS[pattern]
         for title in list(titles_for_names(pattern, stats)):  # list to avoid reading after modification
-            self.__copy(ajournal, loader, stats, title, units, summary, time, type=type,
-                        extra_group=extra_group, description=description)
+            self.__copy(ajournal, loader, stats, title, units, summary, time, type=type, description=description)
 
     def __copy(self, ajournal, loader, stats, title, units, summary, time, type=StatisticJournalFloat,
-               extra_group=None, description=None):
+               description=None):
         if not description: description = DESCRIPTIONS[title]
         name = simple_name(title)
         if name in stats:
-            groups = [ajournal.activity_group]
-            if extra_group: groups += [extra_group]
-            for group in groups:
-                try:
-                    loader.add(title, units, summary, group, ajournal, stats[name], time, type,
-                               description=description)
-                except:
-                    log.warning(f'Failed to load {title}')
-                    log_current_exception(traceback=False)
+            try:
+                loader.add(title, units, summary, ajournal.activity_group, ajournal, stats[name], time, type,
+                           description=description)
+            except:
+                log.warning(f'Failed to load {title}')
+                log_current_exception(traceback=False)
             del stats[name]
         else:
             log.warning(f'Did not calculate {title} '

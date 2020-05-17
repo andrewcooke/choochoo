@@ -144,7 +144,7 @@ class Config:
             add_impulse(s, c, activity_group)
             # we need a value here for various UI reasons.  might as well use my own value...
             add_constant(s, Titles.FTHR, default_fthr,
-                                        description=f'''
+                         description=f'''
 Heart rate (in bpm) at functional threshold for activities in the {activity_group.name} group.
 
 Your FTHR is the highest sustained heart rate you can maintain for long periods (an hour).
