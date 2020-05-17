@@ -129,7 +129,7 @@ def _activity_statistics(s, *statistics, owners=None, start=None, finish=None,
         time_select = time_select.where(t.sj.c.time >= start)
     if finish:
         time_select = time_select.where(t.sj.c.time <= finish)
-    time_select = time_select.order_by("time").copy("sub_time")  # order here avoids extra index
+    time_select = time_select.order_by("time").alias("sub_time")  # order here avoids extra index
     sub_selects = [select([table.c.value, t.sj.c.time]).
                        select_from(t.sj.join(table)).
                        where(and_(t.sj.c.statistic_name_id == name.id,
@@ -212,7 +212,7 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
         time_select = time_select.where(t.sj.c.time >= start)
     if finish:
         time_select = time_select.where(t.sj.c.time <= finish)
-    time_select = time_select.order_by("time").copy("sub_time")  # order here avoids extra index
+    time_select = time_select.order_by("time").alias("sub_time")  # order here avoids extra index
 
     def sub_select(name, table):
         selects = [table.c.value, t.sj.c.time]
@@ -224,7 +224,7 @@ def statistics(s, *statistics, start=None, finish=None, local_start=None, local_
         if sources:
             q = q.where(t.sj.c.source_id.in_(source.id for source in sources))
         # order_by doesn't affect plan but seems to speed up query
-        return q.order_by(t.sj.c.time).copy(f'sub_{name.name}_{name.activity_group}')
+        return q.order_by(t.sj.c.time).alias(f'sub_{name.name}_{name.activity_group}')
 
     sub_selects = [sub_select(name, table) for name, table in zip(names, tables)]
     # don't call this TIME because even though it's moved to index it somehow blocks the later addition

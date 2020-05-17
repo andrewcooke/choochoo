@@ -4,7 +4,8 @@ from bokeh.io import output_file
 from ch2.data import *
 from ch2.data.plot.calendar import *
 from ch2.lib import *
-from ch2.names import Names as N
+from ch2.names import N
+from ch2.pipeline import *
 from ch2.jupyter.decorator import template
 
 
@@ -30,9 +31,9 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df = statistics(s, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB)
-    df = coallesce(df, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB)
-    df[N.DISTANCE_KM] = df[N.ACTIVE_DISTANCE] / 1000
+    df = Statistics(s, ActivityGroup.ALL). \
+        for_(N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, owner=ActivityCalculator). \
+        by_name().copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).with_times().df
     df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
     if present(df, N.TOTAL_CLIMB):
         df.loc[df[N.TOTAL_CLIMB].isna(), [N.TOTAL_CLIMB]] = 0

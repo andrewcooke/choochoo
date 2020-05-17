@@ -98,9 +98,9 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
         self.__copy(ajournal, loader, stats, T.MEAN_POWER_ESTIMATE,Units. W,
                     S.join(S.MAX, S.AVG, S.MSR), ajournal.start)
         self.__copy(ajournal, loader, stats, T.DIRECTION, Units.DEG,
-                    None, ajournal.start)
+                    None, ajournal.start, extra_group=all)
         self.__copy(ajournal, loader, stats, T.ASPECT_RATIO, None,
-                    None, ajournal.start)
+                    None, ajournal.start, extra_group=all)
         self.__copy_all(ajournal, loader, stats, T.MIN_KM_TIME_ANY, Units.S,
                         S.join(S.MIN, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.MED_KM_TIME_ANY, Units.S,
@@ -126,7 +126,7 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
         if climbs:
             loader.add(T.TOTAL_CLIMB, Units.M, S.join(S.MAX, S.MSR), ajournal.activity_group, ajournal,
                        sum(climb[N.CLIMB_ELEVATION] for climb in climbs), ajournal.start, StatisticJournalFloat,
-                       description=DESCRIPTIONS[T.TOTAL_CLIMB])
+                       description=DESCRIPTIONS[T.TOTAL_CLIMB], extra_group=all)
             for climb in sorted(climbs, key=lambda climb: climb[N.TIME]):
                 self.__copy(ajournal, loader, climb, T.CLIMB_ELEVATION, Units.M,
                             S.join(S.MAX, S.SUM, S.MSR), climb[N.TIME])

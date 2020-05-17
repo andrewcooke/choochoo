@@ -3,8 +3,7 @@ from bokeh.plotting import output_notebook, show
 
 from ch2.data import *
 from ch2.lib import *
-from ch2.pipeline.calculate.activity import ActivityCalculator
-from ch2.pipeline.read.segment import SegmentReader
+from ch2.pipeline import *
 from ch2.sql import *
 from ch2.jupyter.decorator import template
 

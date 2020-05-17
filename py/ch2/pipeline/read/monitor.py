@@ -217,7 +217,7 @@ class MonitorReader(MultiProcFitReader):
         qs = select([t.sj.c.time.label("time"), t.sji.c.value.label("steps")]). \
             select_from(t.sj.join(t.sn).join(t.sji)). \
             where(and_(t.sn.c.name == Names.STEPS, t.sn.c.activity_group_id == activity_group_id,
-                       t.sn.c.owner == self.owner_out)).copy("steps")
+                       t.sn.c.owner == self.owner_out)).alias("steps")
         q = select([t.sj.c.time.label(Names.TIME), t.sj.c.source_id.label(Names.SOURCE),
                     t.sji.c.value.label(Names.CUMULATIVE_STEPS),
                     qs.c.steps.label(Names.STEPS)]). \

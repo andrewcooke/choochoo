@@ -3,6 +3,7 @@ from logging import getLogger
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import func
 
+from .args import FIX
 from ..lib import time_to_local_time
 from ..lib.log import Record
 from ..sql import ActivityTopicJournal, FileHash, FileScan, StatisticJournal, ActivityTopic, ActivityTopicField, \
@@ -20,17 +21,17 @@ def check(args, system, db):
 This is still in development.
     '''
     record = Record(log)
-    check_all(record, db)
+    check_all(record, db, fix=args[FIX])
 
 
-def check_all(record, db):
-    check_activity_diary(record, db)
+def check_all(record, db, fix=False):
+    check_activity_diary(record, db, fix=fix)
 
 
-def check_activity_diary(record, db):
+def check_activity_diary(record, db, fix=False):
     check_activity_diary_missing_files(record, db)
     check_inconsistent_groups_activity_journal_v_topic(record, db)
-    check_inconsistent_groups_activity_journal_v_topic_statistics(record, db)
+    check_inconsistent_groups_activity_journal_v_topic_statistics(record, db, fix=fix)
     check_activity_topic_multiple_groups(record, db)
 
 
@@ -46,9 +47,15 @@ def check_activity_diary_missing_files(record, db):
                 bad = True
                 record.warning(f'{ActivityTopicJournal.__table__} with file hash '
                                f'{topic_journal.file_hash.hash[:6]} has associated entries but no activity')
-                for statistic in s.query(StatisticJournal). \
-                        filter(StatisticJournal.source == topic_journal).all():
-                    record.info(f"{statistic.statistic_name.name}: {statistic.value}")
+                q = s.query(StatisticJournal). \
+                        filter(StatisticJournal.source == topic_journal)
+                group_ids = set()
+                for statistic in q.all():
+                    record.info(f"{statistic.statistic_name.qualified_name}: {statistic.value}")
+                    if statistic.statistic_name.activity_group.name != ActivityGroup.ALL:
+                        group_ids.add(statistic.statistic_name.activity_group_id)
+                if len(group_ids) > 1:
+                    record.warning('and journal entries are for conflicting activity groups')
             if bad:
                 record.info(f'Manual fix: try to infer missing activity from entries and upload file')
             else:
@@ -85,7 +92,7 @@ def check_inconsistent_groups_activity_journal_v_topic(record, db):
                 record.info('No inconsistent groups for activity topics')
 
 
-def check_inconsistent_groups_activity_journal_v_topic_statistics(record, db):
+def check_inconsistent_groups_activity_journal_v_topic_statistics(record, db, fix=False):
     with record.record_exceptions(catch=True):
         with db.session_context() as s:
             q = s.query(StatisticName, ActivityJournal, StatisticJournal). \
@@ -111,6 +118,9 @@ def check_inconsistent_groups_activity_journal_v_topic_statistics(record, db):
                                    f'is associated with journal statistic {name.name} '
                                    f'for group {name.activity_group.name} '
                                    f'with value {journal.value} and correct alternative {alternate.value}')
+                    if fix:
+                        record.warning(f'(FIX) Removing journal entry in favour of alternate')
+                        s.delete(journal)
                 else:
                     record.warning(f'Activity on {time_to_local_time(activity.start)} '
                                    f'for group {activity.activity_group.name} '

@@ -10,7 +10,7 @@ from ch2.data import *
 from ch2.jupyter.decorator import template
 from ch2.lib import *
 from ch2.names import N, like
-from ch2.pipeline.calculate.activity import ActivityCalculator
+from ch2.pipeline import *
 
 
 @template

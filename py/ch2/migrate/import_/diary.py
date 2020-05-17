@@ -46,7 +46,6 @@ def copy_diary_topic_fields(record, old_s, old, old_diary_topic, new):
                     record.warning('Renaming Notes to Leg Notes')
                     old_statistic_name = clone_with(old_statistic_name, name='Leg Notes')
             with new.session_context() as new_s:
-                # here we're ignoring constraint (now activity_group) which may cause errors with duplicates
                 try:
                     new_statistic_name = match_statistic_name(record, old_statistic_name, new_s, DiaryTopic, None)
                     copy_diary_topic_journal_entries(record, old_s, old, old_statistic_name, new_s, new_statistic_name)

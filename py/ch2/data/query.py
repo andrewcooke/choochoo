@@ -99,8 +99,26 @@ class Statistics:
                 q = q.join(ActivityGroup).filter(ActivityGroup.name == activity_group)
         if owner:
             q = q.filter(StatisticName.owner == owner)
-        log.debug(q)
-        return self.append(q.all(), expected_count=len(statistic_names), msg=msg)
+        found = q.all()
+        found_names = set(statistic_name.name for statistic_name in found)
+        requested_names = set(statistic_names)
+        if found_names == requested_names:
+            log.debug(f'Appending {len(found)} names ({len(found_names)} distinct) for '
+                      f'{len(statistic_names)} requested')
+        else:
+            log.warning(f'Did not match all names ({len(found)} found for {len(requested_names)} requests)')
+            self.__dump_matches(requested_names.difference(found_names))
+        self.__statistic_names += found
+        return self
+
+    def __dump_matches(self, missing):
+        for name in missing:
+            log.debug(f'Request {name}:')
+            q = self.__session.query(StatisticName).filter(StatisticName.name.like(name))
+            for statistic_name in q.all():
+                log.debug(f'  {statistic_name.name}:{statistic_name.activity_group} owner {statistic_name.owner}')
+            if not q.count():
+                log.debug(f'  does not match')
 
     def like(self, *statistic_names, activity_group=None, owner=None):
         activity_group = self.__with_default(activity_group)
@@ -115,16 +133,14 @@ class Statistics:
                 q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(activity_group))
         if owner:
             q = q.filter(StatisticName.owner.ilike(owner))
-        return self.append(q.all(), msg=msg)
-
-    def append(self, statistic_names, expected_count=None, msg='no diagnostics'):
-        if not statistic_names:
+        found = q.all()
+        if found:
+            log.debug(f'Appending {len(found)} statistics names ({len(statistic_names)} patterns)')
+        else:
             log.warning(f'Appending no statistic names ({msg})')
-        elif expected_count is not None and len(statistic_names) != expected_count:
-            log.info(f'Unexpected number of statistic names ({len(statistic_names)} v {expected_count})')
-        log.debug(', '.join(f'{statistic_name.qualified_name} ({statistic_name.id})'
-                            for statistic_name in statistic_names))
-        self.__statistic_names += statistic_names
+        found_names = set(statistic_name.name for statistic_name in found)
+        missing = [statistic_name for statistic_name in statistic_names if not like(statistic_name, found_names)]
+        self.__dump_matches(missing)
         return self
 
     def __iter__(self):
@@ -185,10 +201,10 @@ class Statistics:
         incomplete
         '''
 
-        sj = T.sj.copy()
+        sj = T.sj.alias()
         selects, aliases = [sj.c.time.label(N.INDEX)], []
         for statistic_name in self.__statistic_names:
-            alias = J[statistic_name.statistic_journal_type].copy()
+            alias = J[statistic_name.statistic_journal_type].alias()
             aliases.append(alias)
             selects.append(func.sum(alias.c.value).label(template.format(statistic_name=statistic_name)))
 
@@ -320,6 +336,10 @@ class QueryData:
         else:
             return df
 
+    def with_times(self):
+        set_times_from_index(self.df)
+        return self
+
 
 def set_times_from_index(df):
     df[N.TIME] = pd.to_datetime(df.index)
@@ -373,7 +393,8 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
         rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
         copy({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
         copy({N.HEART_RATE_BPM: N.MED_HEART_RATE_BPM}, median=MED_WINDOW). \
-        copy({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW).df
+        copy({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW). \
+        with_times().df
 
     stats = Statistics(s).for_(N.ELEVATION, N.GRADE,
                                owner=ElevationCalculator, activity_group=activity_journal.activity_group). \
@@ -393,31 +414,23 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
         copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
         into(stats, tolerance='1s')
 
-    set_times_from_index(stats)
-
     return stats
 
 
 if __name__ == '__main__':
 
-    from ..pipeline import ActivityCalculator
+    from ch2.pipeline import ActivityCalculator
+    from ch2.lib.date import format_seconds
 
     s = session('-v5')
 
-    # df = std_activity_statistics(s, '2020-05-15')
-    # print(df)
-    # print(df.describe())
-    # print(df.columns)
-    #
-    # df = std_health_statistics(s)
-    # print(df)
-    # print(df.describe())
-    # print(df.columns)
+    df = Statistics(s, ActivityGroup.ALL). \
+        for_(N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, owner=ActivityCalculator). \
+        by_name().copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).with_times().df
+    df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
+    if present(df, N.TOTAL_CLIMB):
+        df.loc[df[N.TOTAL_CLIMB].isna(), [N.TOTAL_CLIMB]] = 0
 
-    df = Statistics(s).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator, activity_group='road'). \
-        like(N.CLIMB_ANY, owner=ActivityCalculator, activity_group='road'). \
-        from_(activity_journal='2020-05-15', activity_group='road'). \
-        by_name().rename_all_with_units().df
     print(df)
     print(df.describe())
     print(df.columns)
