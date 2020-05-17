@@ -118,7 +118,7 @@ class Statistics:
             for statistic_name in q.all():
                 log.debug(f'  {statistic_name.name}:{statistic_name.activity_group} owner {statistic_name.owner}')
             if not q.count():
-                log.debug(f'  does not match')
+                log.debug(f'  does not match and owner or activity group')
 
     def like(self, *statistic_names, activity_group=None, owner=None):
         activity_group = self.__with_default(activity_group)

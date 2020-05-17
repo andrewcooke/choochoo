@@ -135,7 +135,7 @@ def _activity_statistics(s, *statistics, owners=None, start=None, finish=None,
                        where(and_(t.sj.c.statistic_name_id == name.id,
                                   t.sj.c.source_id == activity_journal.id)).
                        order_by(t.sj.c.time).  # this doesn't affect plan but seems to speed up query
-                       copy(f'sub_{name.name}_{name.activity_group}_{name.owner}')
+                       alias(f'sub_{name.name}_{name.activity_group}_{name.owner}')
                    for name, table in zip(names, tables)]
     # don't call this TIME because even though it's moved to index it somehow blocks the later addition
     # of a TIME column (eg when plotting health statistics)
