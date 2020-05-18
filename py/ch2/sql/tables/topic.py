@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 
-from .source import SourceType, Source, Interval, UngroupedSource
+from .source import SourceType, Source, Interval, UngroupedSource, GroupedSource
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from .system import SystemConstant
 from ..support import Base
@@ -69,11 +69,15 @@ class DiaryTopic(Base, Topic):
 
 
 class ActivityTopic(Base, Topic):
+
     __tablename__ = 'activity_topic'
 
     parent_id = Column(Integer, ForeignKey('activity_topic.id'), nullable=True)
     activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=True)
     activity_group = relationship('ActivityGroup')
+
+    ROOT = 'Root'
+    ROOT_DESCRIPTION = 'The root topic for all activities (should not be displayed).'
 
     @declared_attr
     def children(cls):
@@ -85,6 +89,7 @@ class ActivityTopic(Base, Topic):
 
 
 class TopicField:
+
     id = Column(Integer, primary_key=True)
     sort = Column(Sort, nullable=False, server_default='0')
     model = Column(Json, nullable=False, server_default=dumps({}))
@@ -100,6 +105,7 @@ class TopicField:
 
 
 class DiaryTopicField(Base, TopicField):
+
     # diary topic fields are associated with statistics whose constraints are the diary topic.
     # this lets us use the same name under different 'headings'.
 
@@ -118,6 +124,7 @@ class DiaryTopicField(Base, TopicField):
 
 
 class ActivityTopicField(Base, TopicField):
+
     # activity topic fields are associated with statistics whose constraints are the activity group.
     # this correlates to some extent with the activity topic, which is also specific to an activity group
     # (so you will never see a field for group X if it has parent activity for group Y).
@@ -127,11 +134,7 @@ class ActivityTopicField(Base, TopicField):
 
     __tablename__ = 'activity_topic_field'
 
-    # unlike diary topic fields, this can have a null parent.  that means that it is a child to the
-    # 'top' of the activity.
-    # the 'Name' field with a null parent is the activity title,
-    # this is loaded with a default (based on file name) when data are read from FIT files.
-    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id', ondelete='cascade'), nullable=True)
+    activity_topic_id = Column(Integer, ForeignKey('activity_topic.id', ondelete='cascade'), nullable=False)
     activity_topic = relationship('ActivityTopic',
                                   backref=backref('fields', cascade='all, delete-orphan',
                                                   passive_deletes=True,
@@ -139,7 +142,8 @@ class ActivityTopicField(Base, TopicField):
     UniqueConstraint('statistic_name_id')
 
     def __str__(self):
-        return 'ActivityTopicField "%s"/"%s"' % (self.activity_topic.name, self.statistic_name.name)
+        name = self.activity_topic.name if self.activity_topic else None
+        return f'ActivityTopicField {name} / {self.statistic_name.name}'
 
 
 class Cache:
@@ -151,13 +155,15 @@ class Cache:
         self.__cache = {field_id: statistic for field_id, statistic in query.all()}
 
     def __getitem__(self, field):
-        if field.id in self.__cache:
-            return self.__cache[field.id]
-        else:
+        log.debug(f'Cache contains ids {", ".join(str(key) for key in self.__cache.keys())}')
+        if field.id not in self.__cache:
+            log.debug(f'Creating {field}')
             name = field.statistic_name
-            return add(self.__session,
-                       STATISTIC_JOURNAL_CLASSES[name.statistic_journal_type](
-                           statistic_name=name, source=self.__source, time=self.__time))
+            self.__cache[field.id] = add(self.__session,
+                                         STATISTIC_JOURNAL_CLASSES[name.statistic_journal_type](
+                                             statistic_name=name, source=self.__source, time=self.__time))
+        log.debug(f'Returning {field}')
+        return self.__cache[field.id]
 
     def __len__(self):
         return len(self.__cache)
@@ -214,7 +220,8 @@ class DiaryTopicJournal(UngroupedSource):
         return start, start + dt.timedelta(days=1)
 
 
-class ActivityTopicJournal(Source):
+class ActivityTopicJournal(GroupedSource):
+
     __tablename__ = 'activity_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)

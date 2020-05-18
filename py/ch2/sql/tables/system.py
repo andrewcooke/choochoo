@@ -4,7 +4,7 @@ from os import getpid
 from time import time, sleep
 
 import psutil as ps
-from sqlalchemy import Column, Text, Integer, Float, UniqueConstraint
+from sqlalchemy import Column, Text, Integer
 
 from ..support import SystemBase
 from ..types import Time, ShortCls

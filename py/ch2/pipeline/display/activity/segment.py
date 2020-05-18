@@ -34,6 +34,7 @@ class SegmentDelegate(ActivityJournalDelegate):
 
     @staticmethod
     def __field(s, date, sjournal, name):
+        # TODO - this cannot work!  sjournal.segment is not an activity group!!
         return StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.segment, source_id=sjournal.id)
 
     @optional_text('Segments')

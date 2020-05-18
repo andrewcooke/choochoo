@@ -154,12 +154,12 @@ def add_constant(s, title, value, description=None, units=None, name=None,
     '''
     if name is None: name = simple_name(title)
     log.debug(f'Adding constant {name}')
-    statistic_name = add(s, StatisticName(name=name, title=title, owner=Constant,
-                                          activity_group=ActivityGroup.from_name(s, activity_group),
-                                          units=units, description=description,
-                                          statistic_journal_type=statistic_journal_type))
-    constant = add(s, Constant(statistic_name=statistic_name, name=statistic_name.qualified_name,
-                               single=single, validate_cls=validate_cls,
+    statistic_name = StatisticName.add_if_missing(s, name, statistic_journal_type, units, None, Constant,
+                                                  title=title, description=description)
+    activity_group=ActivityGroup.from_name(s, activity_group)
+    constant = add(s, Constant(statistic_name=statistic_name,
+                               name=statistic_name.qualified_name(s, activity_group),
+                               activity_group=activity_group, single=single, validate_cls=validate_cls,
                                validate_args=validate_args, validate_kargs=validate_kargs))
     if value:
         constant.add_value(s, value, time=time)
@@ -233,7 +233,7 @@ def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, un
                                    statistic_name=statistic_name))
 
 
-def add_activity_topic(s, name, sort, description=None):
+def add_activity_topic(s, name, sort, description=None, activity_group=None):
     '''
     Add a root topic.
 
@@ -244,7 +244,8 @@ def add_activity_topic(s, name, sort, description=None):
     A root topic is usually used as a header to group related children.
     For example, 'DailyDiary' to group diary entries (notes, weight, sleep etc), or 'Plan' to group training plans.
     '''
-    return add(s, ActivityTopic(name=name, sort=sort, description=description))
+    return add(s, ActivityTopic(name=name, sort=sort, description=description,
+                                activity_group=ActivityGroup.from_name(s, activity_group)))
 
 
 def add_child_activity_topic(s, parent, name, sort, description=None):
@@ -275,7 +276,7 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group
         s.flush()
     # cannot simply add as this is also called during loading
     statistic_name = StatisticName.add_if_missing(s, name, type, units, summary, ActivityTopic,
-                                                  activity_group=activity_group, description=description)
+                                                  description=description)
     if model is None: model = {}
     return add(s, ActivityTopicField(activity_topic=activity_topic, sort=sort, model=model,
                                      statistic_name=statistic_name))

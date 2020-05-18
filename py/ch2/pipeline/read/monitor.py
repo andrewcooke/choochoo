@@ -92,6 +92,8 @@ STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 class MonitorReader(MultiProcFitReader):
 
+    # todo - steps disabled
+
     def __init__(self, *args, sport_to_activity=None, **kargs):
         from ...commands.upload import MONITOR
         self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
@@ -188,23 +190,23 @@ class MonitorReader(MultiProcFitReader):
                 loader.add(Titles.HEART_RATE, Units.BPM, None, ActivityGroup.ALL, mjournal,
                            record.data[HEART_RATE_ATTR][0][0], record.timestamp, StatisticJournalInteger,
                            description='''The instantaneous heart rate.''')
-            if STEPS_ATTR in record.data:
-                for (sport, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
-                    try:
-                        loader.add(Titles.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
-                                   self.sport_to_activity_group[sport], mjournal, steps,
-                                   record.timestamp, StatisticJournalInteger,
-                                   description='''The number of steps in a day to this point in time.''')
-                    except KeyError:
-                        raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
+            # if STEPS_ATTR in record.data:
+            #     for (sport, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
+            #         try:
+            #             loader.add(Titles.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
+            #                        self.sport_to_activity_group[sport], mjournal, steps,
+            #                        record.timestamp, StatisticJournalInteger,
+            #                        description='''The number of steps in a day to this point in time.''')
+            #         except KeyError:
+            #             raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
 
-    def _shutdown(self, s):
-        super()._shutdown(s)
-        if not self.worker:
-            for activity_group_id in self._step_activity_group_ids(s):
-                df = self._read_diff(s, activity_group_id)
-                df = self._calculate_diff(df)
-                self._write_diff(s, df, activity_group_id)
+    # def _shutdown(self, s):
+    #     super()._shutdown(s)
+    #     if not self.worker:
+    #         for activity_group_id in self._step_activity_group_ids(s):
+    #             df = self._read_diff(s, activity_group_id)
+    #             df = self._calculate_diff(df)
+    #             self._write_diff(s, df, activity_group_id)
 
     def _step_activity_group_ids(self, s):
         return [row[0] for row in s.query(distinct(ActivityGroup.id)).

@@ -217,8 +217,7 @@ def expand(s, text, before, vars=None, default_owner=None, default_activity_grou
         else:
             owner, statistic, activity_group = StatisticName.parse(name, default_owner=default_owner,
                                                                    default_activity_group=default_activity_group)
-            value = StatisticJournal.before_not_null(s, before, statistic, owner,
-                                                     ActivityGroup.from_name(s, activity_group))
+            value = StatisticJournal.before_not_null(s, before, statistic, owner, activity_group)
         if value is None:
             raise Exception(f'No value defined for {name} ({owner}:{statistic}:{activity_group}) before {before}')
         elif left == '' and right == '':

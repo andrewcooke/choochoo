@@ -38,7 +38,7 @@ def read_pipeline(session, date, schedule=None):
     for pipeline in Pipeline.all(session, PipelineType.DISPLAY):
         log.info(f'Building {pipeline.cls} ({pipeline.args}, {pipeline.kargs})')
         instance = pipeline.cls(*pipeline.args, **pipeline.kargs)
-        if isinstance(instance, Displayer):
+        if isinstance(instance, Displayer):  # why is this needed?
             data = list(instance.read(session, date, schedule=schedule))
             if data:
                 yield data

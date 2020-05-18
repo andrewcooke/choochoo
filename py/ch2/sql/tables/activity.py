@@ -45,13 +45,11 @@ class ActivityJournal(GroupedSource):
     __tablename__ = 'activity_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=False)
-    activity_group = relationship('ActivityGroup')
     file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
     file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
-    UniqueConstraint(activity_group_id, start)
+    UniqueConstraint(start)
     UniqueConstraint(file_hash_id)
 
     __mapper_args__ = {

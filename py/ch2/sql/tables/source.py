@@ -39,7 +39,7 @@ class Source(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False, index=True)  # index needed for fast deletes of subtypes
-    activity_group = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=True)
+    activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=True)
     activity_group = relationship('ActivityGroup')
 
     __mapper_args__ = {

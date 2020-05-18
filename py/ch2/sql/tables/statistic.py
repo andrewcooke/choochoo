@@ -47,6 +47,14 @@ class StatisticName(Base):
         else:
             return []
 
+    def qualified_name(self, s, activity_group):
+        from . import ActivityGroup
+        activity_group = ActivityGroup.from_name(s, activity_group)
+        if activity_group:
+            return f'{self.name}:{activity_group.name}'
+        else:
+            return self.name
+
     @classmethod
     def add_if_missing(cls, s, name, type, units, summary, owner, description=None, title=None):
         from .activity import ActivityGroup
@@ -213,87 +221,95 @@ class StatisticJournal(Base):
 
     @classmethod
     def at_date(cls, s, date, name, owner, activity_group, source_id=None):
+        from . import ActivityGroup, Source
         start = local_date_to_time(date)
         finish = start + dt.timedelta(days=1)
-        q = s.query(StatisticJournal).join(StatisticName). \
+        q = s.query(StatisticJournal).join(StatisticName, Source). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= start,
                    StatisticJournal.time < finish,
                    StatisticName.owner == owner,
-                   StatisticName.activity_group == activity_group)
+                   Source.activity_group == ActivityGroup.from_name(s, activity_group))
         if source_id is not None:
             q = q.filter(StatisticJournal.source_id == source_id)
         return q.one_or_none()
 
     @classmethod
     def at(cls, s, time, name, owner, activity_group):
-        return s.query(StatisticJournal).join(StatisticName). \
+        from . import ActivityGroup, Source
+        return s.query(StatisticJournal).join(StatisticName, Source). \
             filter(StatisticName.name == name,
                    StatisticJournal.time == time,
                    StatisticName.owner == owner,
-                   StatisticName.activity_group == activity_group).one_or_none()
+                   Source.activity_group == ActivityGroup.from_name(s, activity_group)).one_or_none()
 
     @classmethod
     def at_like(cls, s, time, name, owner, activity_group):
-        return s.query(StatisticJournal).join(StatisticName). \
+        from . import ActivityGroup, Source
+        return s.query(StatisticJournal).join(StatisticName, Source). \
             filter(StatisticName.name.like(name),
                    StatisticJournal.time == time,
                    StatisticName.owner == owner,
-                   StatisticName.activity_group == activity_group).all()
+                   Source.activity_group == ActivityGroup.from_name(s, activity_group)).all()
 
     @classmethod
     def before(cls, s, time, name, owner, activity_group):
-        return s.query(StatisticJournal).join(StatisticName). \
+        from . import ActivityGroup, Source
+        return s.query(StatisticJournal).join(StatisticName, Source). \
             filter(StatisticName.name == name,
                    StatisticJournal.time <= time,
                    StatisticName.owner == owner,
-                   StatisticName.activity_group == activity_group). \
+                   Source.activity_group == ActivityGroup.from_name(s, activity_group)). \
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
     def before_not_null(cls, s, time, name, owner, activity_group):
+        # this is complex because we need the concrete statistic type to get the value
+        from . import ActivityGroup, Source
         try:
             statistic_name = s.query(StatisticName). \
                 filter(StatisticName.name == name,
-                       StatisticName.owner == owner,
-                       StatisticName.activity_group == activity_group).one()
+                       StatisticName.owner == owner).one()
         except NoResultFound:
-            raise Exception(f'The statistic name "{name}" (owner {owner}, activity_group {activity_group}) '
-                            'is undefined in the database')
+            raise Exception(f'The statistic name {owner}.{name} is undefined in the database')
         journal = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
-        return s.query(journal). \
+        return s.query(journal).join(Source). \
             filter(journal.statistic_name == statistic_name,
                    journal.time <= time,
+                   Source.activity_group == ActivityGroup.from_name(s, activity_group),
                    journal.value != None). \
             order_by(desc(journal.time)).limit(1).one_or_none()
 
     @classmethod
     def after(cls, s, time, name, owner, activity_group):
-        return s.query(StatisticJournal).join(StatisticName). \
+        from . import ActivityGroup, Source
+        return s.query(StatisticJournal).join(StatisticName, Source). \
             filter(StatisticName.name == name,
                    StatisticJournal.time >= time,
                    StatisticName.owner == owner,
-                   StatisticName.activity_group == activity_group). \
+                   Source.activity_group == ActivityGroup.from_name(s, activity_group)). \
             order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def at_interval(cls, s, start, schedule, statistic_owner, statistic_group, interval_owner):
-        return s.query(StatisticJournal).join(StatisticName, Interval). \
+    def at_interval(cls, s, start, schedule, statistic_owner, activity_group, interval_owner):
+        from . import ActivityGroup, Source
+        return s.query(StatisticJournal).join(StatisticName, Interval, Source). \
                     filter(StatisticJournal.statistic_name_id == StatisticName.id,
                            Interval.schedule == schedule,
                            Interval.start == start,
                            Interval.owner == interval_owner,
                            StatisticName.owner == statistic_owner,
-                           StatisticName.activity_group == statistic_group). \
-                    order_by(StatisticName.activity_group_id,  # order places summary stats from same source together
+                           Source.activity_group == ActivityGroup.from_name(s, activity_group)). \
+                    order_by(Source.activity_group_id,  # order places summary stats from same source together
                              StatisticName.name).all()
 
     @classmethod
     def for_source(cls, s, source_id, name, owner, activity_group):
-        return s.query(StatisticJournal).join(StatisticName). \
+        from . import ActivityGroup, Source
+        return s.query(StatisticJournal).join(StatisticName, Source). \
             filter(StatisticName.name == name,
                    StatisticName.owner == owner,
-                   StatisticName.activity_group == activity_group,
+                   Source.activity_group == ActivityGroup.from_name(s, activity_group),
                    StatisticJournal.source_id == source_id).one_or_none()
 
 

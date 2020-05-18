@@ -139,7 +139,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         return s.query(StatisticJournal.time). \
             filter(StatisticJournal.time > 1.0). \
             order_by(StatisticJournal.time.asc()). \
-            limit(1).scalar()
+            limit(1).one()[0]  # scalar can return None
 
     def _run_one(self, s, missed):
         data = self.__read_data(s)

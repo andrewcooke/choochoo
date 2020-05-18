@@ -22,7 +22,7 @@ from ...lib import time_to_local_time
 from ...lib.log import log_current_exception
 from ...names import Names as N, Titles as T, Summaries as S, Units, titles_for_names
 from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, ActivityGroup, StatisticJournalTimestamp, \
-    ActivityJournal
+    ActivityJournal, StatisticJournal
 from ...sql.types import simple_name
 
 log = getLogger(__name__)
@@ -84,8 +84,8 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
 
     def __average_power(self, s, ajournal, active_time):
         # this doesn't fit nicely anywhere...
-        energy = StatisticJournalFloat.at(s, ajournal.start, N.ENERGY_ESTIMATE, PowerCalculator,
-                                          ajournal.activity_group)
+        energy = StatisticJournal.at(s, ajournal.start, N.ENERGY_ESTIMATE, PowerCalculator,
+                                     ajournal.activity_group)
         if energy and active_time:
             return {N.MEAN_POWER_ESTIMATE: 1000 * energy.value / active_time}
         else:

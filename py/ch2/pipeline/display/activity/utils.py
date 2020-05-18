@@ -87,9 +87,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         cache = tjournal.cache(s)
         # special case parentless fields
         for field in s.query(ActivityTopicField). \
-                join(StatisticName). \
-                filter(ActivityTopicField.activity_topic == None,
-                       StatisticName.activity_group == ajournal.activity_group). \
+                filter(ActivityTopicField.activity_topic == None). \
                 order_by(ActivityTopicField.sort).all():
             yield from_field(field, cache[field])
         for topic in s.query(ActivityTopic). \
@@ -130,8 +128,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         percent_times = s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticJournal.time == ajournal.start,
                    StatisticName.name.like(N.PERCENT_IN_Z_ANY),
-                   StatisticName.owner == ActivityCalculator,
-                   StatisticName.activity_group == ajournal.activity_group) \
+                   StatisticName.owner == ActivityCalculator) \
             .order_by(StatisticName.name).all()
         if percent_times:
             for zone, percent_time in reversed(list(enumerate((time.value for time in percent_times), start=1))):
@@ -185,8 +182,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         sjournals = s.query(StatisticJournal).join(StatisticName). \
             filter(StatisticJournal.time == ajournal.start,
                    StatisticName.name.like(template),
-                   StatisticName.owner == ActivityCalculator,
-                   StatisticName.activity_group == ajournal.activity_group).order_by(StatisticName.name).all()
+                   StatisticName.owner == ActivityCalculator).order_by(StatisticName.name).all()
         for sjournal in self.__sort_journals(sjournals):
             if sjournal.value > 0:  # avoid zero power and anything else with silly value
                 yield value(search(re, sjournal.statistic_name.title).group(1), sjournal.value,
@@ -220,36 +216,34 @@ class ActivityDelegate(ActivityJournalDelegate):
                 yield [text(group.name)] + fields
 
     @staticmethod
-    def __names(s, group, *names):
+    def __names(s, *names):
         for name in names:
             try:
                 yield s.query(StatisticName). \
                     filter(StatisticName.name == name,
-                           StatisticName.owner == ActivityCalculator,
-                           StatisticName.activity_group == group).one()
+                           StatisticName.owner == ActivityCalculator).one()
             except NoResultFound:
                 log.warning(f'Missing "{name}" in database')
 
     @staticmethod
-    def __names_like(s, group, name):
+    def __names_like(s, name):
         return s.query(StatisticName). \
             filter(StatisticName.name.like(name),
-                   StatisticName.owner == ActivityCalculator,
-                   StatisticName.activity_group == group).all()
+                   StatisticName.owner == ActivityCalculator).all()
 
     def __read_schedule_fields(self, s, start, schedule, group):
-        for name in self.__names(s, group, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.ACTIVE_SPEED,
+        for name in self.__names(s, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.ACTIVE_SPEED,
                                  N.TOTAL_CLIMB, N.CLIMB_ELEVATION, N.CLIMB_DISTANCE,
                                  N.CLIMB_GRADIENT, N.CLIMB_TIME):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
-        for name in self.__sort_names(self.__names_like(s, group, N.MIN_KM_TIME_ANY)):
+        for name in self.__sort_names(self.__names_like(s, N.MIN_KM_TIME_ANY)):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
-        for name in self.__sort_names(self.__names_like(s, group, N.MED_KM_TIME_ANY)):
+        for name in self.__sort_names(self.__names_like(s, N.MED_KM_TIME_ANY)):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
-        for name in self.__sort_names(self.__names_like(s, group, N.MAX_MED_HR_M_ANY)):
+        for name in self.__sort_names(self.__names_like(s, N.MAX_MED_HR_M_ANY)):
             column = list(summary_column(s, schedule, start, name))
             if column: yield column
 

@@ -4,7 +4,7 @@ from logging import getLogger
 from .climb import add_climb, CLIMB_CNAME
 from .database import add_loader_support, add_activity_group, add_activities, Counter, add_statistics, add_displayer, \
     add_monitor, add_constant, add_diary_topic, add_diary_topic_field, \
-    add_activity_topic_field, add_activity_displayer_delegate
+    add_activity_topic_field, add_activity_displayer_delegate, add_activity_topic
 from .impulse import add_responses, add_impulse
 from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
@@ -31,7 +31,8 @@ from ..pipeline.display.monitor import MonitorDisplayer
 from ..pipeline.display.response import ResponseDisplayer
 from ..pipeline.read.monitor import MonitorReader
 from ..pipeline.read.segment import SegmentReader
-from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant, ActivityGroup
+from ..sql import DiaryTopicJournal, StatisticJournalType, ActivityTopicField, SystemConstant, ActivityGroup, \
+    ActivityTopic
 from ..sql.types import short_cls
 from ..srtm.file import SRTM1_DIR_CNAME
 
@@ -127,22 +128,18 @@ class Config:
         return ((42, 1, 1, Titles.FITNESS_D % 42, 'fitness'),
                 (7, 1, 5, Titles.FATIGUE_D % 7, 'fatigue'))
 
-    def _impulse_groups(self):
-        # activity groups that should have impulses calculated (ie that will contribute to FF statistics)
-        return self._all_groups_but_all()
-
     def _load_power_statistics(self, s, c):
         # after elevation and before ff etc
         # defaults is none because configuration is complex
         pass
 
     def _load_ff_statistics(self, s, c, default_fthr=154):
-        for activity_group in self._impulse_groups():
+        for activity_group in self._activity_groups.values():
             add_impulse(s, c, activity_group)
             # we need a value here for various UI reasons.  might as well use my own value...
             add_constant(s, Titles.FTHR, default_fthr,
                          description=f'''
-Heart rate (in bpm) at functional threshold for activities in the {activity_group.name} group.
+Heart rate (in bpm) at functional threshold.
 
 Your FTHR is the highest sustained heart rate you can maintain for long periods (an hour).
 It is used to calculate how hard you are working (the Impulse) and, from that, 
@@ -249,15 +246,17 @@ so do not use an important password that applies to many accounts.
         # the fields in the diary that are displayed for each activity
         for activity_group in self._activity_groups.values():
             c = Counter()
-            add_activity_topic_field(s, None, ActivityTopicField.NAME, c, StatisticJournalType.TEXT,
+            root = add_activity_topic(s, ActivityTopic.ROOT, description=ActivityTopic.ROOT_DESCRIPTION,
+                                      activity_group=activity_group)
+            add_activity_topic_field(s, root, ActivityTopicField.NAME, c, StatisticJournalType.TEXT,
                                      activity_group, model={TYPE: EDIT},
                                      description=ActivityTopicField.NAME_DESCRIPTION)
             # note that these have empty toic parents because they are children of the entry itself
             if activity_group.name != SWIM:
-                add_activity_topic_field(s, None, 'Route', c, StatisticJournalType.TEXT,
+                add_activity_topic_field(s, root, 'Route', c, StatisticJournalType.TEXT,
                                          activity_group, model={TYPE: EDIT},
                                          description='Route recorded by user in diary.')
-            add_activity_topic_field(s, None, NOTES, c, StatisticJournalType.TEXT,
+            add_activity_topic_field(s, root, NOTES, c, StatisticJournalType.TEXT,
                                      activity_group, model={TYPE: EDIT},
                                      description='Activity notes recorded by user in diary.')
 
