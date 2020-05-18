@@ -142,10 +142,10 @@ def add_activities(s, cls, sort, **kargs):
 
 
 def add_constant(s, title, value, description=None, units=None, name=None,
-                 statistic_journal_type=StatisticJournalType.INTEGER, activity_group=ActivityGroup.ALL,
+                 statistic_journal_type=StatisticJournalType.INTEGER, activity_group=None,
                  time=0.0, single=False, validate_cls=None, validate_args=None, validate_kargs=None):
     '''
-    Add a constant (not associated with an activity group).
+    Add a constant.
 
     Configuring a constant allows the user to supply a value later, using the `ch2 constant` command.
     This can be useful for values that don't vary often, and so aren't worth adding to the diary.
@@ -169,7 +169,7 @@ def add_constant(s, title, value, description=None, units=None, name=None,
 
 
 def add_enum_constant(s, title, enum, value, description=None, units=None, single=False, name=None,
-                      activity_group=ActivityGroup.ALL, time=0.0):
+                      activity_group=None, time=0.0):
     '''
     Add a constant that is a JSON encoded enum.  This is validated before saving.
     '''
@@ -227,8 +227,7 @@ def add_diary_topic_field(s, diary_topic, name, sort, type, description=None, un
     if diary_topic.id is None:
         s.flush()
     statistic_name = add(s, StatisticName(name=name, owner=DiaryTopic, statistic_journal_type=type,
-                                          description=description, units=units, summary=summary,
-                                          activity_group=ActivityGroup.from_name(s, ActivityGroup.ALL)))
+                                          description=description, units=units, summary=summary))
     if model is None: model = {}
     field = add(s, DiaryTopicField(diary_topic=diary_topic, sort=sort, model=model, schedule=schedule,
                                    statistic_name=statistic_name))
@@ -319,5 +318,4 @@ def add_loader_support(s):
     log.debug('Adding dummy source')
     dummy_source = add(s, Dummy())
     dummy_name = add(s, StatisticName(name=Dummy.DUMMY, owner=dummy_source,
-                                      activity_group=ActivityGroup.from_name(s, ActivityGroup.ALL),
                                       statistic_journal_type=StatisticJournalType.STATISTIC))

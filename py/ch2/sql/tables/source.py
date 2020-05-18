@@ -39,6 +39,8 @@ class Source(Base):
 
     id = Column(Integer, primary_key=True)
     type = Column(Integer, nullable=False, index=True)  # index needed for fast deletes of subtypes
+    activity_group = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=True)
+    activity_group = relationship('ActivityGroup')
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.SOURCE,
@@ -91,6 +93,24 @@ class Source(Base):
 @listens_for(Session, 'before_flush')
 def before_flush(session, context, instances):
     Source.before_flush(session)
+
+
+class GroupedSource(Source):
+
+    __abstract__ = True
+
+    def __init__(self, **kargs):
+        if 'activity_group' not in kargs: raise f'{self.__class__.__name__} requires activity group'
+        super().__init__(**kargs)
+
+
+class UngroupedSource(Source):
+
+    __abstract__ = True
+
+    def __init__(self, **kargs):
+        if 'activity_group' in kargs: raise f'{self.__class__.__name__} has no activity group'
+        super().__init__(**kargs)
 
 
 class NoStatistics(Exception):
@@ -194,7 +214,7 @@ class Interval(Source):
             s.delete(interval)
 
 
-class Dummy(Source):
+class Dummy(UngroupedSource):
 
     __tablename__ = 'dummy_source'
 

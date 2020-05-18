@@ -103,7 +103,7 @@ def reftuple(name, *args, **kargs):
 
         from ..sql import ActivityGroup
 
-        def expand(self, s, time, default_owner=None, default_activity_group=ActivityGroup.ALL):
+        def expand(self, s, time, default_owner=None, default_activity_group=None):
             instance = self
             for name in self._fields:
                 value = getattr(instance, name)
@@ -204,7 +204,6 @@ def expand(s, text, before, vars=None, default_owner=None, default_activity_grou
 
     from ..sql import StatisticName, StatisticJournal, ActivityGroup
 
-    if default_activity_group is None: default_activity_group = ActivityGroup.ALL
     if vars is None: vars = {}
     pattern = compile(r'(.*)\${([^}]+)}(.*)')
 

@@ -112,7 +112,7 @@ def short_cls(cls):
     return cls
 
 
-class NullStr(TypeDecorator):
+class NullText(TypeDecorator):
     '''
     None (NULL) values are converted to 'None'.
 

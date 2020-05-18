@@ -31,7 +31,7 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df = Statistics(s, ActivityGroup.ALL). \
+    df = Statistics(s). \
         for_(N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, owner=ActivityCalculator). \
         by_name().copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).with_times().df
     df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)

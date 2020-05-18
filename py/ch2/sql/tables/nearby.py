@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, ForeignKey, Float, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 
 from ..support import Base
-from ..types import NullStr
+from ..types import NullText
 
 
 class ActivitySimilarity(Base):
@@ -11,7 +11,7 @@ class ActivitySimilarity(Base):
     __tablename__ = 'activity_similarity'
 
     id = Column(Integer, primary_key=True)
-    constraint = Column(NullStr, index=True)
+    constraint = Column(NullText, index=True)
     activity_journal_lo_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), index=True)
     activity_journal_lo = relationship('ActivityJournal', foreign_keys=[activity_journal_lo_id])
     activity_journal_hi_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'), index=True)
@@ -25,7 +25,7 @@ class ActivityNearby(Base):
     __tablename__ = 'activity_nearby'
 
     id = Column(Integer, primary_key=True)
-    constraint = Column(NullStr, index=True)
+    constraint = Column(NullText, index=True)
     group = Column(Integer, nullable=False, index=True)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'))
     activity_journal = relationship('ActivityJournal',

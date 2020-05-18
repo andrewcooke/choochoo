@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship, backref
 
-from .source import SourceType, Source, Interval
+from .source import SourceType, Source, Interval, UngroupedSource
 from .statistic import StatisticJournal, STATISTIC_JOURNAL_CLASSES
 from .system import SystemConstant
 from ..support import Base
@@ -163,7 +163,8 @@ class Cache:
         return len(self.__cache)
 
 
-class DiaryTopicJournal(Source):
+class DiaryTopicJournal(UngroupedSource):
+
     __tablename__ = 'diary_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)

@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, ForeignKey, desc, or_
 from sqlalchemy.orm import relationship, aliased, backref
 from sqlalchemy.orm.exc import NoResultFound
 
-from .source import Source, SourceType, Composite, CompositeComponent
+from .source import Source, SourceType, Composite, CompositeComponent, UngroupedSource
 from .statistic import StatisticJournal, StatisticName, StatisticJournalTimestamp
 from ..support import Base
 from ..types import Name
@@ -264,7 +264,7 @@ class KitGroup(ModelMixin, Base):
         return f'KitGroup "{self.name}"'
 
 
-class KitItem(ModelMixin, StatisticsMixin, Source):
+class KitItem(ModelMixin, StatisticsMixin, UngroupedSource):
     '''
     an individual kit item (a particular bike, a particular shoe, etc)
     '''
@@ -431,7 +431,7 @@ class KitComponent(ModelMixin, Base):
         return f'KitComponent "{self.name}"'
 
 
-class KitModel(ModelMixin, StatisticsMixin, Source):
+class KitModel(ModelMixin, StatisticsMixin, UngroupedSource):
     '''
     a particular piece of a kit item (a particular bike wheel, a particular set of laces, etc).
     '''

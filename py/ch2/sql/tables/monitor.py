@@ -2,12 +2,12 @@
 from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 
-from .source import Source, SourceType
+from .source import Source, SourceType, UngroupedSource
 from ..types import Time
 from ...lib.date import format_time
 
 
-class MonitorJournal(Source):
+class MonitorJournal(UngroupedSource):
 
     __tablename__ = 'monitor_journal'
 

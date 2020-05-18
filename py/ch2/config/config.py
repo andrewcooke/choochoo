@@ -61,7 +61,6 @@ class Config:
     def load(self, s):
         # hopefully you won't need to over-ride this, but instead one of the more specific methods
         self._pre(s)
-        self._load_activity_group(s, ActivityGroup.ALL, 'All activities')  # a widely used default
         add_loader_support(s)  # required by standard statistics calculations
         self._load_specific_activity_groups(s)
         self._load_activities_pipeline(s, Counter())
@@ -93,7 +92,8 @@ class Config:
 
     def _load_activity_group(self, s, name, description):
         log.debug(f'Loading activity group {name}')
-        self._activity_groups[name] = add_activity_group(s, name, len(self._activity_groups), description=description)
+        self._activity_groups[name] = \
+            add_activity_group(s, name, len(self._activity_groups), description=description)
 
     def _sport_to_activity(self):
         # sport_to_activity maps from the FIT sport field to the activity defined above.
@@ -104,9 +104,6 @@ class Config:
                 Sports.SPORT_RUNNING: RUN,
                 Sports.SPORT_SWIMMING: SWIM,
                 Sports.SPORT_WALKING: WALK}
-
-    def _all_groups_but_all(self):
-        return [group for group in self._activity_groups.values() if group.name != ActivityGroup.ALL]
 
     def _record_to_db(self):
         # the mapping from FIT fields to database entries
@@ -250,7 +247,7 @@ so do not use an important password that applies to many accounts.
 
     def _load_activity_topics(self, s, c):
         # the fields in the diary that are displayed for each activity
-        for activity_group in self._all_groups_but_all():
+        for activity_group in self._activity_groups.values():
             c = Counter()
             add_activity_topic_field(s, None, ActivityTopicField.NAME, c, StatisticJournalType.TEXT,
                                      activity_group, model={TYPE: EDIT},

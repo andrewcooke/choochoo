@@ -2,13 +2,13 @@
 from sqlalchemy import Column, Integer, ForeignKey, Float, Text, UniqueConstraint, or_
 from sqlalchemy.orm import relationship
 
-from .source import SourceType, Source
+from .source import SourceType, Source, GroupedSource
 from ..support import Base
 from ..types import Time
 from ...lib.date import format_time
 
 
-class SegmentJournal(Source):
+class SegmentJournal(GroupedSource):
 
     __tablename__ = 'segment_journal'
 

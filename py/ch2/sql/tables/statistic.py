@@ -31,32 +31,14 @@ class StatisticName(Base):
     units = Column(Text)
     summary = Column(Text)  # max, min, etc - comma separated list
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
-    activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=False)
-    activity_group = relationship('ActivityGroup')
     statistic_journal_type = Column(Integer, nullable=False)  # StatisticJournalType
-    UniqueConstraint(name, owner, activity_group_id)
+    UniqueConstraint(name, owner)
 
     def __init__(self, **kargs):
         super().__init__(**name_and_title(kargs))
 
     def __str__(self):
-        return '%s : %s (%s)' % (self.name, self.activity_group.name if self.activity_group else None, self.owner)
-
-    @property
-    def qualified_name(self):
-        from .. import ActivityGroup
-        if self.activity_group.name != ActivityGroup.ALL:
-            return self.name + ':' + self.activity_group.name
-        else:
-            return self.name
-
-    @property
-    def qualified_title(self):
-        from .. import ActivityGroup
-        if self.activity_group.name != ActivityGroup.ALL:
-            return self.title + ' : ' + self.activity_group.title
-        else:
-            return self.title
+        return '%s.%s' % (self.owner, self.name)
 
     @property
     def summaries(self):
@@ -66,21 +48,17 @@ class StatisticName(Base):
             return []
 
     @classmethod
-    def add_if_missing(cls, s, name, type, units, summary, owner,
-                       activity_group=None, description=None, title=None):
+    def add_if_missing(cls, s, name, type, units, summary, owner, description=None, title=None):
         from .activity import ActivityGroup
-        if activity_group is None: activity_group = ActivityGroup.ALL
-        activity_group = ActivityGroup.from_name(s, activity_group)
         s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
-                   StatisticName.activity_group == activity_group)  # allows instances
+                   StatisticName.owner == owner)
         statistic_name = q.one_or_none()
         if not statistic_name:
             statistic_name = add(s, StatisticName(name=name, units=units, summary=summary, owner=owner,
-                                                  activity_group=activity_group, statistic_journal_type=type,
-                                                  description=description, title=title))
+                                                  statistic_journal_type=type, description=description,
+                                                  title=title))
             try:
                 s.flush()
             except IntegrityError as e:  # worker may have created in parallel, so read
@@ -108,17 +86,14 @@ class StatisticName(Base):
         return statistic_name
 
     @classmethod
-    def from_name(cls, s, name, owner, activity_group=None):
-        from .activity import ActivityGroup
-        if activity_group is None: activity_group = ActivityGroup.ALL
+    def from_name(cls, s, name, owner):
         return s.query(StatisticName). \
             filter(StatisticName.name == name,
-                   StatisticName.owner == owner,
-                   StatisticName.activity_group == ActivityGroup.from_name(s, activity_group)).one()
+                   StatisticName.owner == owner).one()
 
     @classmethod
     def parse(cls, name, default_owner=None, default_activity_group=None):
-        # TODO - no longer have None
+        # todo - owner.name:group
         '''
         This parses the standard, extended format for naming statistics.  It is one to three fields, separated by ':'.
         These are one of 'name', 'owner:name', or 'owner:name:activity_group'.

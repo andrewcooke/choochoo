@@ -5,9 +5,9 @@ from logging import getLogger
 from sqlalchemy import Column, Text, Integer, ForeignKey, UniqueConstraint, desc
 from sqlalchemy.orm import relationship, backref
 
-from .source import Source, SourceType
+from .source import Source, SourceType, GroupedSource
 from ..support import Base
-from ..types import Time, Sort, ShortCls, NullStr, Name, name_and_title, simple_name
+from ..types import Time, Sort, ShortCls, NullText, Name, name_and_title, simple_name
 from ...lib.date import format_time, local_date_to_time, local_time_to_time
 from ...names import Titles
 
@@ -17,8 +17,6 @@ log = getLogger(__name__)
 class ActivityGroup(Base):
 
     __tablename__ = 'activity_group'
-
-    ALL = simple_name(Titles.ALL)
 
     id = Column(Integer, primary_key=True)
     name = Column(Name, nullable=False, index=True)
@@ -35,14 +33,14 @@ class ActivityGroup(Base):
     @classmethod
     def from_name(cls, s, name):
         if not name:
-            raise Exception('Missing activity group (None)')
-        if isinstance(name, ActivityGroup):
+            return None
+        elif isinstance(name, ActivityGroup):
             return name  # allow callers to already have an instance
         else:
             return s.query(ActivityGroup).filter(ActivityGroup.name.ilike(name)).one()
 
 
-class ActivityJournal(Source):
+class ActivityJournal(GroupedSource):
 
     __tablename__ = 'activity_journal'
 
@@ -178,7 +176,7 @@ class ActivityBookmark(Base):
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
     owner = Column(ShortCls, nullable=False, index=True)  # index for deletion
-    constraint = Column(NullStr, index=True)
+    constraint = Column(NullText, index=True)
     UniqueConstraint(activity_journal_id, start, finish, owner, constraint)
 
     def __str__(self):
