@@ -171,7 +171,7 @@ class Calendar:
         self.show()
 
     def std_distance_fitness_direction(self):
-        fitness = sorted(like(N._delta(N.FITNESS_D_ANY), self._df.columns))[0]
+        fitness = sorted(like(N._delta(N.FITNESS_ANY), self._df.columns))[0]
         self.background('circle', fill_alpha=0, line_alpha=1, color='lightgrey')
         self.set_size(N.ACTIVE_DISTANCE, min=0.2, max=1.1)
         self.set_palette(fitness, B2R, gamma=0.7)

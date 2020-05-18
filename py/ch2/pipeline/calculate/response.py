@@ -174,38 +174,6 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
                                description=f'The SHRIMP response for a decay of {response.tau_days} days')
                 loader.load()
 
-    def __read_coverage(self, s):
-        names = s.query(StatisticName).filter(StatisticName.name == N._cov(N.HEART_RATE)).all()
-        coverages = statistics(s, *names, owners=(SegmentReader,), check=False)
-        coverages = coverages.loc[:].replace(0, np.nan)
-        # extends the coverage across columns in both directions, so all columns are the same
-        # (MTB contains entries from MTB, Road and Walk, for example)
-        coverages.fillna(axis='columns', method='bfill', inplace=True)
-        coverages.fillna(axis='columns', method='ffill', inplace=True)
-        if not coverages.empty:
-            # since all are the same, just take one
-            coverages = coverages.iloc[:, [0]].rename(columns={coverages.columns[0]: N.COVERAGE})
-        return coverages
-
-    def __read_hr10(self, s):
-        statistic_name = self.prefix + '_' + N.HR_IMPULSE_10
-        df = statistics(s, statistic_name, with_sources=True, check=False, activity_group=ActivityGroup.ALL)
-        df.rename(columns={statistic_name: N.HR_IMPULSE_10,
-                           N._src(statistic_name): N._src(N.HR_IMPULSE_10)}, inplace=True)
-        return df
-
-    def __read_data_old(self, s):
-        hr10 = self.__read_hr10(s)
-        coverage = self.__read_coverage(s)
-        # reindex and expand the coverage so we have a value at each impulse measurement
-        coverage = coverage.reindex(index=hr10.index, method='nearest')
-        data = hr10.join(coverage, how='left')
-        if N.HR_IMPULSE_10 in data.columns and N.COVERAGE in data.columns:
-            data.loc[:, [N.HR_IMPULSE_10]] = data.loc[:, [N.HR_IMPULSE_10]].fillna(0.0,)
-            data.loc[:, [N.COVERAGE]] = data.loc[:, [N.COVERAGE]].fillna(axis='index', method='ffill')
-            data.loc[:, [N.COVERAGE]] = data.loc[:, [N.COVERAGE]].fillna(axis='index', method='bfill')
-        return data
-
     def __read_data(self, s):
         from .. import ImpulseCalculator
         name = self.prefix + '_' + N.HR_IMPULSE_10

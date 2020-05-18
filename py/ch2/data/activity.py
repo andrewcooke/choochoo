@@ -98,7 +98,7 @@ def max_med_stats(df, params=((Names.HEART_RATE, Names.MAX_MED_HR_M),), mins=Non
     try:
         ldf_all = linear_resample_time(df, dt=delta, with_timespan=False, add_time=False)
         ldf_all.interpolate('nearest')
-        ldf_tstamp = ldf_all.loc[ldf_all[Names.TIMESPAN_ID].isin(df[Names.TIMESPAN_ID].unique())].alias()
+        ldf_tstamp = ldf_all.loc[ldf_all[Names.TIMESPAN_ID].isin(df[Names.TIMESPAN_ID].unique())].copy()
         ldf_tstamp.loc[:, 'gap'] = ldf_tstamp.index.astype(np.int64) / 1e9
         ldf_tstamp.loc[:, 'gap'] = ldf_tstamp['gap'].diff()
         log.debug(f'Largest gap is {ldf_tstamp["gap"].max()}s')

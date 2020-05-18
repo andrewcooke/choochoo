@@ -145,7 +145,7 @@ class ActivityDelegate(ActivityJournalDelegate):
                 yield value(sjournal.statistic_name.title, sjournal.value,
                             units=sjournal.statistic_name.units,
                             measures=sjournal.measures_as_model(date))
-        for name in (N._delta(N.FITNESS_D_ANY), N._delta(N.FATIGUE_D_ANY),
+        for name in (N._delta(N.FITNESS_ANY), N._delta(N.FATIGUE_ANY),
                      N.EARNED_D_ANY, N.RECOVERY_D_ANY):
             for sjournal in StatisticJournal.at_like(s, ajournal.start, name, ActivityCalculator,
                                                      ajournal.activity_group):
@@ -206,7 +206,8 @@ class ActivityDelegate(ActivityJournalDelegate):
 
     @optional_text('Activities', tag='activity')
     def read_schedule(self, s, date, schedule):
-        start, finish = local_date_to_time(schedule.start_of_frame(date)), local_date_to_time(schedule.next_frame(date))
+        start = local_date_to_time(schedule.start_of_frame(date))
+        finish = local_date_to_time(schedule.next_frame(date))
         for group in s.query(ActivityGroup). \
                 join(ActivityJournal, ActivityJournal.activity_group_id == ActivityGroup.id). \
                 join(StatisticJournal, StatisticJournal.source_id == ActivityJournal.id). \

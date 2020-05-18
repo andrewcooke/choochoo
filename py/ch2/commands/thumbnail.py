@@ -4,16 +4,13 @@ from os.path import exists
 
 from matplotlib import use
 from matplotlib.pyplot import show, figure
-from pygeotile.point import Point
 
 from .args import ACTIVITY, base_system_path, THUMBNAIL, BASE
-from ..data import activity_statistics
 from ..data.query import Statistics
 from ..lib import local_time_to_time
-from ..pipeline.read.segment import SegmentReader
-from ..sql import ActivityJournal, ActivityGroup
 from ..names import Names
-
+from ..pipeline.read.segment import SegmentReader
+from ..sql import ActivityJournal
 
 log = getLogger(__name__)
 

@@ -262,9 +262,7 @@ class Statistics:
                                            T.at.c.finish > time_select.c.time,
                                            T.at.c.activity_journal_id == self.__activity_journal.id))
 
-        query = select(all_selects).select_from(source)
-
-        return query
+        return select(all_selects).select_from(source)
 
 
 class Data:

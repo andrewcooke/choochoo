@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 from scipy import optimize
 
 from .lib import decay_params, inplace_decay
-from ..names import Titles, like
+from ..names import Titles, like, N
 
 log = getLogger(__name__)
 
@@ -158,18 +158,18 @@ def response_stats(df, prev_secs):
     from math import log
     digits = re.compile(r'(\d+)')
     stats = {}
-    for pattern in Titles.FITNESS_D_ANY, Titles.FATIGUE_D_ANY:
+    for pattern, title in [(N.FITNESS_ANY, Titles.FITNESS), (N.FATIGUE_ANY, Titles.FATIGUE)]:
         for name in like(pattern, df.columns):
+            days = int(digits.search(name).group(1))
             lower, higher = df[name][0], df[name][-1]
             delta = higher - lower
-            stats[Titles._delta(name)] = delta
-            days = int(digits.search(name).group(1))
+            stats[Titles._delta(title + ' %dd' % days)] = delta
             tau = days * 24 * 60 * 60
             # this is the time needed for the value to return to where it was before the activity
             # so for fitness it's kinda the time 'bought' within which you're not getting worse and
             # for fatigue it's the recovery time.
             revert = tau * log(1 + delta / lower)
-            if Titles.FITNESS in name:
+            if N.FITNESS in name:
                 stats[Titles.EARNED_D % days] = revert
                 if prev_secs:
                     # this was an experiment.  if you exercise regularly at the same intensity then you

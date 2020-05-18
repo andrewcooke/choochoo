@@ -42,7 +42,7 @@ class AchievementCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, MultiP
         self._append_like(table, s, 'longest', 10, T.ACTIVE_TIME, self.owner_in)
         self._append_like(table, s, 'fastest', 10, T.ACTIVE_SPEED, self.owner_in)
         self._append_like(table, s, 'highest', 3, T.MAX_MEAN_PE_M_ANY, self.owner_in)
-        self._append_like(table, s, 'highest', 10, T._delta(T.FITNESS_D_ANY), self.owner_in)
+        self._append_like(table, s, 'highest', 10, T._delta(T.FITNESS_ANY), self.owner_in)
         self._append_like(table, s, 'highest', 10, T.TOTAL_CLIMB, self.owner_in)
         self._append_like(table, s, 'highest', 5, T.CLIMB_ELEVATION, self.owner_in)
         self._append_like(table, s, 'highest', 5, T.CLIMB_DISTANCE, self.owner_in)

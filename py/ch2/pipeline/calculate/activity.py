@@ -12,6 +12,7 @@ from .impulse import ImpulseCalculator
 from .power import PowerCalculator
 from ..pipeline import OwnerInMixin
 from ..read.segment import SegmentReader
+from ...data import Statistics
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times
 from ...data.climb import find_climbs, Climb, add_climb_stats
@@ -29,20 +30,29 @@ log = getLogger(__name__)
 
 class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
-    def __init__(self, *args, climb=None, **kargs):
+    def __init__(self, *args, climb=None, response_prefix=None, **kargs):
         self.climb_ref = climb
+        self.response_prefix = response_prefix
         super().__init__(*args, **kargs)
 
     def _read_dataframe(self, s, ajournal):
         try:
-            adf = activity_statistics(s, N.DISTANCE, N.ELEVATION, N.HEART_RATE, N.HR_ZONE,
-                                      N.POWER_ESTIMATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
-                                      owners=(SegmentReader, ElevationCalculator, ImpulseCalculator,
-                                              PowerCalculator),
-                                      activity_journal=ajournal, with_timespan=True, check=False)
-            start, finish = ajournal.start - dt.timedelta(hours=1), ajournal.finish + dt.timedelta(hours=1)
-            sdf = statistics(s, N.FATIGUE_D_ANY, N.FITNESS_D_ANY, start=start, finish=finish,
-                             owners=(self.owner_in,), check=False)
+            adf = Statistics(s, activity_group=ajournal.activity_group). \
+                for_(N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y, owner=SegmentReader). \
+                for_(N.ELEVATION, owner=ElevationCalculator). \
+                for_(N.HR_ZONE, owner=ImpulseCalculator). \
+                for_(N.POWER_ESTIMATE, owner=PowerCalculator). \
+                from_(activity_journal=ajournal, with_timespan=True).by_name().df
+            if self.response_prefix:
+                start, finish = ajournal.start - dt.timedelta(hours=1), ajournal.finish + dt.timedelta(hours=1)
+                fitness = self.response_prefix + '_' + N.FITNESS_ANY
+                fatigue = self.response_prefix + '_' + N.FATIGUE_ANY
+                sdf = Statistics(s, activity_group=ActivityGroup.ALL). \
+                    like(fitness, fatigue, owner=self.owner_in). \
+                    from_(start=start, finish=finish).by_name(). \
+                    drop_prefix(self.response_prefix).df
+            else:
+                sdf = None
             prev = s.query(ActivityJournal). \
                 filter(ActivityJournal.start < ajournal.start). \
                 order_by(desc(ActivityJournal.start)). \
@@ -64,7 +74,8 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
         stats.update(max_med_stats(adf))
         stats.update(max_mean_stats(adf))
         stats.update(direction_stats(adf))
-        stats.update(response_stats(sdf, delta))
+        if sdf is not None:
+            stats.update(response_stats(sdf, delta))
         if present(adf, N.ELEVATION):
             params = Climb(**loads(Constant.get(s, self.climb_ref).at(s).value))
             climbs = list(find_climbs(adf, params=params))
@@ -181,8 +192,8 @@ DESCRIPTIONS = defaultdict(lambda: None, {
     T.TIME_IN_Z_ANY: '''The total time in the given HR zone.''',
     T.MAX_MED_HR_M_ANY: '''The highest median HR in the given interval.''',
     T.MAX_MEAN_PE_M_ANY: '''The highest average power estimate in the given interval.''',
-    T._delta(T.FATIGUE_D_ANY): '''The change (over the activity) in the SHRIMP Fatigue parameter.''',
-    T._delta(T.FITNESS_D_ANY): '''The change (over the activity) in the SHRIMP Fitness parameter.''',
+    T._delta(T.FATIGUE_ANY): '''The change (over the activity) in the SHRIMP Fatigue parameter.''',
+    T._delta(T.FITNESS_ANY): '''The change (over the activity) in the SHRIMP Fitness parameter.''',
     T.EARNED_D_ANY: '''The time before Fitness returns to the value before the activity.''',
     T.RECOVERY_D_ANY: '''The time before Fatigue returns to the value before the activity.''',
     T.PLATEAU_D_ANY: '''The maximum Fitness achieved if this activity was repeated (with the same time gap to the previous).''',

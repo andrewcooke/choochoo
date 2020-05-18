@@ -7,6 +7,7 @@ import numpy as np
 
 from .utils import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin
+from ...data import Statistics
 from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10
 from ...names import Names, Titles
@@ -32,9 +33,11 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
 
     def _read_dataframe(self, s, ajournal):
         try:
-            heart_rate_df = activity_statistics(s, Names.HEART_RATE, activity_journal=ajournal,
-                                                owners=(self.owner_in,))
-            fthr_df = statistics(s, Names.FTHR, activity_group=ajournal.activity_group)
+            heart_rate_df = Statistics(s, activity_group=ajournal.activity_group). \
+                for_(Names.HEART_RATE, owner=self.owner_in). \
+                from_(activity_journal=ajournal).by_name().df
+            fthr_df = Statistics(s, activity_group=ajournal.activity_group). \
+                for_(Names.FTHR, owner=Constant).by_name().df
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
             raise

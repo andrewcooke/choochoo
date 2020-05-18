@@ -5,7 +5,7 @@ import pandas as pd
 
 from .args import SUB_COMMAND, START, FINISH, NAMES, OWNER, SOURCE_ID, PRINT, FORMAT, \
     CSV, DESCRIBE, MAX_COLUMNS, MAX_ROWS, WIDTH, MAX_COLWIDTH, TABLE, NAME, STATISTICS, GROUP
-from ..data import df, statistics
+from ..data import df, statistics, Statistics
 from ..sql import *
 from ..sql.support import Base
 
@@ -53,9 +53,11 @@ Will print HR-related statistics from the start of 2018 for the given activity g
             else:
                 raise Exception('%s does not exist' % name)
         elif args[SUB_COMMAND] == STATISTICS:
-            frame = statistics(s, *args[NAMES], start=args[START], finish=args[FINISH],
-                               owner=args[OWNER], activity_group=args[GROUP],
-                               sources=[Source.from_id(s, int(id)) for id in args[SOURCE_ID]])
+            # todo - sources?
+            frame = Statistics(s, activity_group=args[GROUP]). \
+                for_(*args[NAMES], owner=args[OWNER]). \
+                from_(start=args[START], finish=args[FINISH]). \
+                by_qualified().df
         else:
             raise Exception('Unexpected %s: %s' % (SUB_COMMAND, args[SUB_COMMAND]))
 

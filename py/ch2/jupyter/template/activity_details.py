@@ -120,7 +120,7 @@ def activity_details(local_time, activity_group):
     ## Health and Fitness
     '''
 
-    fitness, fatigue = like(N.FITNESS_D_ANY, health.columns), like(N.FATIGUE_D_ANY, health.columns)
+    fitness, fatigue = like(N.FITNESS_ANY, health.columns), like(N.FATIGUE_ANY, health.columns)
     colours = ['black'] * len(fitness) + ['red'] * len(fatigue)
     alphas = [1.0] * len(fitness) + [0.5] * len(fatigue)
     ff = multi_line_plot(900, 300, N.TIME, fitness + fatigue, health, colours, alphas=alphas)

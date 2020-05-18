@@ -23,8 +23,8 @@ def std_distance_time_plot(nx, ny, source, x_range=None, output_backend=DEFAULT_
     distance_y_range = make_range(source[N.ACTIVE_DISTANCE_KM])
     colours = list(evenly_spaced_hues(len(groups)))
     tooltip_names = [N.ACTIVE_TIME_H, N.ACTIVE_DISTANCE_KM, N.ACTIVITY_GROUP, N.LOCAL_TIME]
-    tooltip_names += [name for name in like(N._delta(N.FITNESS_D_ANY), source.columns) if ':' not in name]
-    tooltip_names += [name for name in like(N._delta(N.FATIGUE_D_ANY), source.columns) if ':' not in name]
+    tooltip_names += [name for name in like(N._delta(N.FITNESS_ANY), source.columns) if ':' not in name]
+    tooltip_names += [name for name in like(N._delta(N.FATIGUE_ANY), source.columns) if ':' not in name]
     tools = [PanTool(dimensions='width'),
              ZoomInTool(dimensions='width'), ZoomOutTool(dimensions='width'),
              ResetTool(),

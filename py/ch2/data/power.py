@@ -7,7 +7,7 @@ import numpy as _np
 import scipy as _sp
 from math import pi
 
-from .frame import median_dt, session, activity_statistics, bookmarks
+from .frame import median_dt
 from .lib import fit, inplace_decay
 from ..lib.data import tmp_name
 from ..names import Names as N

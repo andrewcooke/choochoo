@@ -49,12 +49,12 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df1 = statistics(s, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N._delta(N.FITNESS_D_ANY))
-    if present(df1, N._delta(N.FITNESS_D_ANY), pattern=True):
+    df1 = statistics(s, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N._delta(N.FITNESS_ANY))
+    if present(df1, N._delta(N.FITNESS_ANY), pattern=True):
         df1 = coallesce(df1, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB)
         if present(df, N.TOTAL_CLIMB):
             df1.loc[df1[N.TOTAL_CLIMB].isna(), [N.TOTAL_CLIMB]] = 0  # before interpolation
-        df2 = statistics(s, N.FATIGUE_D_ANY, N.FITNESS_D_ANY)
+        df2 = statistics(s, N.FATIGUE_ANY, N.FITNESS_ANY)
         df2 = coallesce_like(df2, N.FATIGUE, N.FITNESS, N.ACTIVE_DISTANCE, N.ACTIVE_TIME)
         df = left_interpolate(df1, df2)
         df[N.DISTANCE_KM] = df[N.ACTIVE_DISTANCE] / 1000
@@ -104,8 +104,8 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    df = statistics(s, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N.DIRECTION, N.ASPECT_RATIO, N._delta(N.FITNESS_D_ANY))
-    if present(df, N._delta(N.FITNESS_D_ANY), pattern=True):
+    df = statistics(s, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N.DIRECTION, N.ASPECT_RATIO, N._delta(N.FITNESS_ANY))
+    if present(df, N._delta(N.FITNESS_ANY), pattern=True):
         df = coallesce_like(df, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N.DIRECTION, N.ASPECT_RATIO, N.FITNESS)
         df[N.DISTANCE_KM] = df[N.ACTIVE_DISTANCE] / 1000
         df['duration'] = df[N.ACTIVE_TIME].map(format_seconds)
@@ -126,8 +126,8 @@ def calendar():
     '''
 
     # avoid throwing an exception if missing; plot skipped on next line
-    df = statistics(s, N.FITNESS_D_ANY, N.FATIGUE_D_ANY, check=False)
-    if present(df, N.FITNESS_D_ANY, pattern=True):
+    df = statistics(s, N.FITNESS_ANY, N.FATIGUE_ANY, check=False)
+    if present(df, N.FITNESS_ANY, pattern=True):
         df = df.resample('1D').mean()
         # take shortest period values when multiple definitions
         fitness = sorted_numeric_labels(df.columns, N.FITNESS)[0]

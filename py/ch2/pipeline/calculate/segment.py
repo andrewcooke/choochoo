@@ -3,8 +3,8 @@ from logging import getLogger
 
 from .utils import MultiProcCalculator, SegmentJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin
+from ...data import present, linear_resample_time, Statistics
 from ...names import Names, Titles, Summaries as S, Units
-from ...data import activity_statistics, present, linear_resample_time
 from ...sql import SegmentJournal, StatisticJournalFloat
 
 log = getLogger(__name__)
@@ -19,8 +19,10 @@ class SegmentCalculator(OwnerInMixin, SegmentJournalCalculatorMixin, DataFrameCa
         SegmentJournal.clean(s)
 
     def _read_dataframe(self, s, sjournal):
-        return activity_statistics(s, Names.HEART_RATE, activity_journal=sjournal.activity_journal,
-                                   owners=(self.owner_in,))
+        from .. import SegmentReader
+        return Statistics(s, activity_group=sjournal.activity_journal.activity_group). \
+            for_(Names.HEART_RATE, owner=SegmentReader). \
+            from_(activity_journal=sjournal.activity_journal).by_name().df
 
     def _calculate_stats(self, s, sjournal, df):
         stats = {Titles.SJOURNAL: sjournal,

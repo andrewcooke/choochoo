@@ -157,7 +157,8 @@ your FF-model parameters (fitness and fatigue).
         add_responses(s, c, self._ff_parameters(), prefix=Names.DEFAULT)
 
     def _load_standard_statistics(self, s, c):
-        add_statistics(s, ActivityCalculator, c, owner_in=short_cls(ResponseCalculator), climb=CLIMB_CNAME)
+        add_statistics(s, ActivityCalculator, c, owner_in=short_cls(ResponseCalculator),
+                       climb=CLIMB_CNAME, response_prefix=Names.DEFAULT)
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_statistics(s, RestHRCalculator, c, owner_in=short_cls(MonitorReader))
