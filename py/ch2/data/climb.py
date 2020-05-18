@@ -9,7 +9,7 @@ import numpy as np
 from .frame import linear_resample, present
 from ..lib.data import nearest_index, get_index_loc
 from ..names import Names as N
-from ..sql import StatisticName, StatisticJournal
+from ..sql import StatisticName, StatisticJournal, Source
 
 log = getLogger(__name__)
 
@@ -153,19 +153,19 @@ def search(df, params=Climb()):
 
 def climbs_for_activity(s, ajournal):
 
-    from ..pipeline.calculate.activity import ActivityCalculator
+    from ..pipeline import ActivityCalculator
 
-    total = s.query(StatisticJournal).join(StatisticName). \
+    total = s.query(StatisticJournal).join(StatisticName, Source). \
         filter(StatisticName.name == N.TOTAL_CLIMB,
                StatisticJournal.time == ajournal.start,
                StatisticName.owner == ActivityCalculator,
-               StatisticName.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).one_or_none()
-    statistics = s.query(StatisticJournal).join(StatisticName). \
+               Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).one_or_none()
+    statistics = s.query(StatisticJournal).join(StatisticName, Source). \
         filter(StatisticName.name.like(N.CLIMB_ANY),
                StatisticJournal.time >= ajournal.start,
                StatisticJournal.time <= ajournal.finish,
                StatisticName.owner == ActivityCalculator,
-               StatisticName.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).all()
+               Source.activity_group == ajournal.activity_group).order_by(StatisticJournal.time).all()
     return total, sorted((dict((statistic.statistic_name.name, statistic) for statistic in climb_statistics)
                           for _, climb_statistics in groupby(statistics, key=lambda statistic: statistic.time)),
                          key=lambda climb: climb[N.CLIMB_ELEVATION].value, reverse=True)

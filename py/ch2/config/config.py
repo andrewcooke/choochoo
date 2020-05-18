@@ -246,7 +246,7 @@ so do not use an important password that applies to many accounts.
         # the fields in the diary that are displayed for each activity
         for activity_group in self._activity_groups.values():
             c = Counter()
-            root = add_activity_topic(s, ActivityTopic.ROOT, description=ActivityTopic.ROOT_DESCRIPTION,
+            root = add_activity_topic(s, ActivityTopic.ROOT, c, description=ActivityTopic.ROOT_DESCRIPTION,
                                       activity_group=activity_group)
             add_activity_topic_field(s, root, ActivityTopicField.NAME, c, StatisticJournalType.TEXT,
                                      activity_group, model={TYPE: EDIT},

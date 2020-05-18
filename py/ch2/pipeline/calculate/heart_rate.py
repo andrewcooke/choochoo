@@ -42,7 +42,7 @@ class RestHRCalculator(OwnerInMixin, IntervalCalculatorMixin, MultiProcCalculato
             if measurements > len(df) * 0.01:
                 log.debug(f'Rest HR is {rest_hr} with {measurements} values')
                 # conversion to int as value above is numpy int64
-                loader.add(Titles.REST_HR, Units.BPM, S.join(S.MIN, S.MSR), ActivityGroup.ALL, interval,
+                loader.add(Titles.REST_HR, Units.BPM, S.join(S.MIN, S.MSR), interval,
                            int(rest_hr), local_date_to_time(interval.start), StatisticJournalInteger,
                            'The rest heart rate')
                 return

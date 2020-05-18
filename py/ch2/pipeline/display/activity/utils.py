@@ -83,7 +83,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         yield from self.__read_activity_topics(s, ajournal, date)
 
     def __read_activity_topics(self, s, ajournal, date):
-        tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash)
+        tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash, ajournal.activity_group)
         cache = tjournal.cache(s)
         # special case parentless fields
         for field in s.query(ActivityTopicField). \
@@ -102,8 +102,7 @@ class ActivityDelegate(ActivityJournalDelegate):
         if topic.description: yield text(topic.description)
         log.debug(f'topic id {topic.id}; fields {topic.fields}')
         for field in topic.fields:
-            if field.statistic_name.activity_group == topic.activity_group:
-                yield from_field(field, cache[field])
+            yield from_field(field, cache[field])
         for child in topic.children:
             if child.activity_group == topic.activity_group and child.schedule.at_location(date):
                 content = list(self.__read_activity_topic(s, date, cache, child))

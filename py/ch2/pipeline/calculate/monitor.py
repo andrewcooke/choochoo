@@ -126,7 +126,7 @@ class MonitorCalculator(OwnerInMixin, LoaderMixin, MultiProcCalculator):
     def _calculate_results(self, s, source, data, loader, start):
         rest_heart_rate, daily_steps = data
         loader.add(Titles.DAILY_STEPS, Units.STEPS_UNITS, S.join(S.SUM, S.AVG, S.CNT, S.MAX, S.MSR),
-                   ActivityGroup.ALL, source, daily_steps, start, StatisticJournalInteger,
+                   source, daily_steps, start, StatisticJournalInteger,
                    description='''The number of steps in a day.''')
 
     def _args(self, missing, start, finish):

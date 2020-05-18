@@ -134,7 +134,7 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
         self.__copy_all(ajournal, loader, stats, T.PLATEAU_D_ANY, Units.FF,
                         None, ajournal.start)
         if climbs:
-            loader.add(T.TOTAL_CLIMB, Units.M, S.join(S.MAX, S.MSR), ajournal.activity_group, ajournal,
+            loader.add(T.TOTAL_CLIMB, Units.M, S.join(S.MAX, S.MSR), ajournal,
                        sum(climb[N.CLIMB_ELEVATION] for climb in climbs), ajournal.start, StatisticJournalFloat,
                        description=DESCRIPTIONS[T.TOTAL_CLIMB])
             for climb in sorted(climbs, key=lambda climb: climb[N.TIME]):
@@ -165,8 +165,7 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
         name = simple_name(title)
         if name in stats:
             try:
-                loader.add(title, units, summary, ajournal.activity_group, ajournal, stats[name], time, type,
-                           description=description)
+                loader.add(title, units, summary, ajournal, stats[name], time, type, description=description)
             except:
                 log.warning(f'Failed to load {title}')
                 log_current_exception(traceback=False)

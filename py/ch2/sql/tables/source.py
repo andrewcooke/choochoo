@@ -100,7 +100,7 @@ class GroupedSource(Source):
     __abstract__ = True
 
     def __init__(self, **kargs):
-        if 'activity_group' not in kargs: raise f'{self.__class__.__name__} requires activity group'
+        if 'activity_group' not in kargs: raise Exception(f'{self.__class__.__name__} requires activity group')
         super().__init__(**kargs)
 
 
@@ -109,7 +109,7 @@ class UngroupedSource(Source):
     __abstract__ = True
 
     def __init__(self, **kargs):
-        if 'activity_group' in kargs: raise f'{self.__class__.__name__} has no activity group'
+        if 'activity_group' in kargs: raise Exception(f'{self.__class__.__name__} has no activity group')
         super().__init__(**kargs)
 
 

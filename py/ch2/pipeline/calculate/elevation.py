@@ -2,6 +2,7 @@
 from logging import getLogger
 
 from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
+from ...data import Statistics
 from ...data.elevation import smooth_elevation
 from ...data.frame import activity_statistics, present
 from ...names import Names, Titles, Units
@@ -17,10 +18,11 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
         super().__init__(*args, **kargs)
 
     def _read_dataframe(self, s, ajournal):
+        from .. import SegmentReader
         try:
-            df = activity_statistics(s, Names.DISTANCE, Names.RAW_ELEVATION, Names.ELEVATION, Names.ALTITUDE,
-                                     activity_journal=ajournal, with_timespan=True)
-            return df
+            return Statistics(s). \
+                for_(Names.DISTANCE, Names.RAW_ELEVATION, Names.ELEVATION, Names.ALTITUDE, owner=SegmentReader). \
+                from_(activity_journal=ajournal, with_timespan=True).by_name().df
         except Exception as e:
             log.warning(f'Failed to generate statistics for elevation: {e}')
             raise
@@ -39,10 +41,10 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
     def _copy_results(self, s, ajournal, loader, df):
         for time, row in df.iterrows():
             if Names.ELEVATION in row:
-                loader.add(Titles.ELEVATION, Units.M, None, ajournal.activity_group, ajournal, row[Names.ELEVATION],
+                loader.add(Titles.ELEVATION, Units.M, None, ajournal, row[Names.ELEVATION],
                            time, StatisticJournalFloat,
                            description='An estimate of elevation (may come from various sources).')
             if Names.GRADE in row:
-                loader.add(Titles.GRADE, Units.PC, None, ajournal.activity_group, ajournal, row[Names.GRADE],
+                loader.add(Titles.GRADE, Units.PC, None, ajournal, row[Names.GRADE],
                            time, StatisticJournalFloat,
                            description='The gradient of the smoothed SRTM1 elevation.')

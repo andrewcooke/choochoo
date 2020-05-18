@@ -58,7 +58,7 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
                         new_type = StatisticJournalFloat
                     else:
                         new_type = StatisticJournalInteger
-                    loader.add(title, units, None, statistic_name.activity_group, interval, value, start, new_type,
+                    loader.add(title, units, None, interval, value, start, new_type,
                                description=self._describe(statistic_name, summary, interval))
         # add and commit these here - what else can we do?
         log.debug(f'Adding {len(measures)} measures')

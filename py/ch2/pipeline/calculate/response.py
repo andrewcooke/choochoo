@@ -169,7 +169,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
                         skipped += 1
                         if skipped > 1:
                             log.warning(f'Skipping multiple sources at {time}')
-                    loader.add(name, None, None, ActivityGroup.ALL, source, value, time,
+                    loader.add(name, None, None, source, value, time,
                                StatisticJournalFloat, title=response.title,
                                description=f'The SHRIMP response for a decay of {response.tau_days} days')
                 loader.load()

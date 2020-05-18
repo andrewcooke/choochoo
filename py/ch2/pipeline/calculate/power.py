@@ -91,7 +91,7 @@ class BasicPowerCalculator(PowerCalculator):
             for title, units, summary in fields:
                 name = simple_name(title)
                 if not pd.isnull(row[name]):
-                    loader.add(name, units, summary, ajournal.activity_group, ajournal, row[name], time,
+                    loader.add(name, units, summary, ajournal, row[name], time,
                                StatisticJournalFloat, description='The estimated power.')
 
     def __add_total_energy(self, s, ajournal, loader, ldf):
@@ -99,9 +99,9 @@ class BasicPowerCalculator(PowerCalculator):
             ldf['tmp'] = ldf[Names.POWER_ESTIMATE]
             ldf.loc[ldf['tmp'].isna(), ['tmp']] = 0
             energy = np.trapz(y=ldf['tmp'], x=ldf.index.astype(np.int64) / 1e12)
-            loader.add(Titles.ENERGY_ESTIMATE, Units.KJ, Summaries.MAX, ajournal.activity_group, ajournal, energy, ajournal.start,
+            loader.add(Titles.ENERGY_ESTIMATE, Units.KJ, Summaries.MAX, ajournal, energy, ajournal.start,
                        StatisticJournalFloat, 'The estimated total energy expended.')
-            loader.add(Titles.CALORIE_ESTIMATE, Units.KCAL, Summaries.MAX, ajournal.activity_group, ajournal,
+            loader.add(Titles.CALORIE_ESTIMATE, Units.KCAL, Summaries.MAX, ajournal,
                        energy * 0.239006 / self.caloric_eff, ajournal.start, StatisticJournalFloat,
                        'The estimated calories burnt.')
             ldf.drop(columns=['tmp'], inplace=True)
@@ -179,16 +179,16 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             # slope is BPM / W; 1/slope is W/BPM = W/PM = WM = 60Ws
             vary = self.__varying()
             if 'slope' in vary:
-                loader.add(Titles.POWER_HR, Units.J, Summaries.AVG, ajournal.activity_group, ajournal,
+                loader.add(Titles.POWER_HR, Units.J, Summaries.AVG, ajournal,
                            60 / model.slope, ajournal.start, StatisticJournalFloat)
             if 'delay' in vary:
-                loader.add(Titles.POWER_HR_LAG, Units.S, Summaries.AVG, ajournal.activity_group, ajournal, model.delay,
+                loader.add(Titles.POWER_HR_LAG, Units.S, Summaries.AVG, ajournal, model.delay,
                            ajournal.start, StatisticJournalFloat)
             if 'wind_speed' in vary:
-                loader.add(Titles.WIND_SPEED, Units.MS, Summaries.AVG, ajournal.activity_group, ajournal, model.wind_speed,
+                loader.add(Titles.WIND_SPEED, Units.MS, Summaries.AVG, ajournal, model.wind_speed,
                            ajournal.start, StatisticJournalFloat)
             if 'wind_heading' in vary:
-                loader.add(Titles.WIND_HEADING, Units.DEG, Summaries.AVG, ajournal.activity_group, ajournal, model.wind_heading,
+                loader.add(Titles.WIND_HEADING, Units.DEG, Summaries.AVG, ajournal, model.wind_heading,
                            ajournal.start, StatisticJournalFloat)
             fields = fields + ((Titles.PREDICTED_HEART_RATE, Units.BPM, None),
                                (Titles.DETRENDED_HEART_RATE, Units.BPM, None))

@@ -189,7 +189,7 @@ class ActivityReader(MultiProcFitReader):
                 description = 'Kit used in activity.'
             else:
                 description = 'Attribute defined on reading activity.'
-            StatisticJournalText.add(s, name, None, None, self.owner_out, ajournal.activity_group,
+            StatisticJournalText.add(s, name, None, None, self.owner_out,
                                      ajournal, value, ajournal.start, description=description)
 
     @staticmethod
@@ -198,13 +198,18 @@ class ActivityReader(MultiProcFitReader):
         log.debug('Saving name')
         # first, do we have the 'Name' field defined?
         # this should be triggered at most once per group if it was not already defined
+        root = s.query(ActivityTopic). \
+            filter(ActivityTopic.name == ActivityTopic.ROOT,
+                   ActivityTopic.activity_group == ajournal.activity_group).one_or_none()
+        if not root:
+            root = add(s, ActivityTopic(name=ActivityTopic.ROOT, description=ActivityTopic.ROOT_DESCRIPTION,
+                                        activity_group=ajournal.activity_group))
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
                 filter(StatisticName.name == ActivityTopicField.NAME,
-                       StatisticName.activity_group == ajournal.activity_group,
                        StatisticName.owner == ActivityTopic,
-                       ActivityTopicField.activity_topic_id == None).one_or_none():
-           add_activity_topic_field(s, None, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
+                       ActivityTopicField.activity_topic == root).one_or_none():
+           add_activity_topic_field(s, root, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
                                      ajournal.activity_group, model={TYPE: EDIT},
                                      description=ActivityTopicField.NAME_DESCRIPTION)
         # second, do we already have a journal for this file, or do we need to add one?
@@ -212,17 +217,17 @@ class ActivityReader(MultiProcFitReader):
             filter(ActivityTopicJournal.file_hash_id == file_scan.file_hash_id). \
             one_or_none()
         if not source:
-            source = add(s, ActivityTopicJournal(file_hash_id=file_scan.file_hash_id))
+            source = add(s, ActivityTopicJournal(file_hash_id=file_scan.file_hash_id,
+                                                 activity_group=ajournal.activity_group))
         # and third, does that journal contain a name?
         if not s.query(StatisticJournal). \
                 join(StatisticName). \
                 filter(StatisticJournal.source == source,
                        StatisticName.owner == ActivityTopic,
-                       StatisticName.activity_group == ajournal.activity_group,
                        StatisticName.name == ActivityTopicField.NAME).one_or_none():
             value = splitext(basename(file_scan.path))[0]
             StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic,
-                                     ajournal.activity_group, source, value, ajournal.start)
+                                     source, value, ajournal.start)
 
     def _check_overlap(self, s, start, finish, ajournal):
         overlap = s.query(ActivityJournal). \
@@ -286,7 +291,7 @@ class ActivityReader(MultiProcFitReader):
                             value = value[0][0]
                             if units == Units.KM:  # internally everything uses M
                                 value /= 1000
-                            loader.add(title, units, None, activity_group, ajournal, value, timestamp, type,
+                            loader.add(title, units, None, ajournal, value, timestamp, type,
                                        description=f'The value of field {field} in the FIT record.')
                             if title == T.LATITUDE:
                                 lat = value
@@ -296,14 +301,14 @@ class ActivityReader(MultiProcFitReader):
                     # values derived from lat/lon
                     if lat is not None and lon is not None:
                         x, y = Point.from_latitude_longitude(lat, lon).meters
-                        loader.add(T.SPHERICAL_MERCATOR_X, Units.M, None, activity_group, ajournal, x, timestamp,
+                        loader.add(T.SPHERICAL_MERCATOR_X, Units.M, None, ajournal, x, timestamp,
                                    StatisticJournalFloat, description='The WGS84 X coordinate')
-                        loader.add(T.SPHERICAL_MERCATOR_Y, Units.M, None, activity_group, ajournal, y, timestamp,
+                        loader.add(T.SPHERICAL_MERCATOR_Y, Units.M, None, ajournal, y, timestamp,
                                    StatisticJournalFloat, description='The WGS84 Y coordinate')
                         if self.add_elevation:
                             elevation = self.__oracle.elevation(lat, lon)
                             if elevation:
-                                loader.add(T.RAW_ELEVATION, Units.M, None, activity_group, ajournal, elevation,
+                                loader.add(T.RAW_ELEVATION, Units.M, None, ajournal, elevation,
                                            timestamp, StatisticJournalFloat,
                                            description='The elevation from SRTM1 at this location')
                 else:
@@ -327,8 +332,8 @@ class ActivityReader(MultiProcFitReader):
 
     def _read(self, s, path):
         loader = super()._read(s, path)
-        for (title, activity_group), percent in loader.coverage_percentages():
+        for title, percent in loader.coverage_percentages():
             StatisticJournalFloat.add(s, T._cov(title), Units.PC, S.join(S.MIN, S.AVG), self.owner_out,
-                                      activity_group, self.__ajournal, percent, self.__ajournal.start,
+                                      self.__ajournal, percent, self.__ajournal.start,
                                       description=f'Coverage (% of FIT records with data) for {title}.')
         s.commit()

@@ -254,10 +254,10 @@ class ActivityTopicJournal(GroupedSource):
         return q.all()
 
     @classmethod
-    def get_or_add(cls, s, file_hash):
+    def get_or_add(cls, s, file_hash, activity_group):
         instance = s.query(ActivityTopicJournal).filter(ActivityTopicJournal.file_hash == file_hash).one_or_none()
         if not instance:
-            instance = add(s, ActivityTopicJournal(file_hash=file_hash))
+            instance = add(s, ActivityTopicJournal(file_hash=file_hash, activity_group=activity_group))
         return instance
 
     def cache(self, s):

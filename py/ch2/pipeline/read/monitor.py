@@ -187,14 +187,14 @@ class MonitorReader(MultiProcFitReader):
         first_timestamp, last_timestamp, mjournal, records = data
         for record in records:
             if HEART_RATE_ATTR in record.data and record.data[HEART_RATE_ATTR][0][0]:
-                loader.add(Titles.HEART_RATE, Units.BPM, None, ActivityGroup.ALL, mjournal,
+                loader.add(Titles.HEART_RATE, Units.BPM, None, mjournal,
                            record.data[HEART_RATE_ATTR][0][0], record.timestamp, StatisticJournalInteger,
                            description='''The instantaneous heart rate.''')
             # if STEPS_ATTR in record.data:
             #     for (sport, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
             #         try:
             #             loader.add(Titles.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
-            #                        self.sport_to_activity_group[sport], mjournal, steps,
+            #                        mjournal, steps,
             #                        record.timestamp, StatisticJournalInteger,
             #                        description='''The number of steps in a day to this point in time.''')
             #         except KeyError:
@@ -252,6 +252,6 @@ class MonitorReader(MultiProcFitReader):
                        StatisticJournal.statistic_name == steps).delete(synchronize_session=False)
         loader = StatisticJournalLoader(s, owner=self.owner_out)
         for time, row in df.loc[(df[NEW_STEPS] != df[Names.STEPS]) & ~df[NEW_STEPS].isna()].iterrows():
-            loader.add(Titles.STEPS, Units.STEPS_UNITS, None, activity_group, row[Names.SOURCE], int(row[NEW_STEPS]),
+            loader.add(Titles.STEPS, Units.STEPS_UNITS, None, row[Names.SOURCE], int(row[NEW_STEPS]),
                        time, StatisticJournalInteger, description=STEPS_DESCRIPTION)
         loader.load()

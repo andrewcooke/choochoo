@@ -61,12 +61,12 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
         name_all = self.prefix + '_' + Names.HR_IMPULSE_10
         for time, row in stats.iterrows():
             if not np.isnan(row[Names.HR_ZONE]):
-                loader.add(Titles.HR_ZONE, None, None, ajournal.activity_group, ajournal, row[Names.HR_ZONE], time,
+                loader.add(Titles.HR_ZONE, None, None, ajournal, row[Names.HR_ZONE], time,
                            StatisticJournalFloat, description=hr_description)
             if not np.isnan(row[Names.HR_IMPULSE_10]):
-                loader.add(name_group, None, None, ajournal.activity_group, ajournal, row[Names.HR_IMPULSE_10], time,
+                loader.add(name_group, None, None, ajournal, row[Names.HR_IMPULSE_10], time,
                            StatisticJournalFloat, description=impulse_description, title=title)
         # if there are no values, add a single null so we don't re-process
         if not loader:
-            loader.add(Titles.HR_ZONE, None, None, ajournal.activity_group, ajournal, None, ajournal.start,
+            loader.add(Titles.HR_ZONE, None, None, ajournal, None, ajournal.start,
                        StatisticJournalFloat, description=hr_description)

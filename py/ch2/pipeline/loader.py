@@ -127,8 +127,7 @@ class StatisticJournalLoader:
                    StatisticJournal.statistic_name == dummy_name).delete()
         s.commit()
 
-    def add(self, name, units, summary, activity_group, source, value, time, cls,
-            description=None, title=None):
+    def add(self, name, units, summary, source, value, time, cls, description=None, title=None):
 
         # note that name is used as title if title is None, and name is reduced to a simple name.
         # so legacy code works correctly
@@ -145,30 +144,29 @@ class StatisticJournalLoader:
         self.__start = min(self.__start, time) if self.__start else time
         self.__finish = max(self.__finish, time) if self.__finish else time
 
-        key = (name, activity_group)
-        if key not in self.__statistic_name_cache:
+        if name not in self.__statistic_name_cache:
             if not description: log.warning(f'No description for {name} ({self._owner})')
-            self.__statistic_name_cache[key] = \
+            self.__statistic_name_cache[name] = \
                 StatisticName.add_if_missing(self._s, name, STATISTIC_JOURNAL_TYPES[cls],
-                                             units, summary, self._owner, activity_group=activity_group,
+                                             units, summary, self._owner, 
                                              description=description, title=title)
 
         try:
             source = source.id
         except AttributeError:
             pass  # literal id
-        statistic_name = self.__statistic_name_cache[key]
+        statistic_name = self.__statistic_name_cache[name]
         journal_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
         if cls != journal_class:
             raise Exception(f'Inconsistent class for {name}: {cls}/{journal_class}')
         instance = journal_class(statistic_name_id=statistic_name.id, source_id=source, value=value,
                                  time=time, serial=self.__serial)
-        if key in self.__latest:
-            prev = self.__latest[key]
+        if name in self.__latest:
+            prev = self.__latest[name]
             if instance.time > prev.time:
-                self.__latest[key] = instance
+                self.__latest[name] = instance
                 self.__staging[journal_class].append(instance)
-                self.__counts[key] += 1
+                self.__counts[name] += 1
             elif instance.time == prev.time:
                 if instance.value == prev.value:
                     log.debug(f'Skipping duplicate for {name}')
@@ -176,11 +174,11 @@ class StatisticJournalLoader:
                     self._resolve_duplicate(name, instance, prev)
             else:
                 self.__staging[journal_class].append(instance)
-                self.__counts[key] += 1
+                self.__counts[name] += 1
         else:
-            self.__latest[key] = instance
+            self.__latest[name] = instance
             self.__staging[journal_class].append(instance)
-            self.__counts[key] += 1
+            self.__counts[name] += 1
 
     def _resolve_duplicate(self, name, instance, prev):
         raise Exception(f'Duplicate time ({prev.time}) for {name} ({instance.value}/{prev.value})')
@@ -203,8 +201,8 @@ class StatisticJournalLoader:
 
     def coverage_percentages(self):
         total = max(self.__counts.values())
-        for key, count in self.__counts.items():
-            yield key, 100 * count / total
+        for name, count in self.__counts.items():
+            yield name, 100 * count / total
 
 
 def make_waypoint(names, extra=None):
