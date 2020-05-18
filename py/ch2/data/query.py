@@ -7,7 +7,7 @@ try to have a 'fluent interface' that allows progressive refinement through the 
 * retrieving the dataframe
 * modifying the dataframe
 '''
-
+from collections import Counter
 from logging import getLogger
 
 import pandas as pd
@@ -265,12 +265,31 @@ class Statistics:
         return select(all_selects).select_from(source)
 
 
+class Names:
+
+    def __init__(self, statistic_names):
+        self.__by_qualified_name = {statistic_name.qualified_name: statistic_name
+                                    for statistic_name in statistic_names}
+        counts = Counter(statistic_name.name for statistic_name in statistic_names)
+        self.__by_name = {statistic_name.name: statistic_name
+                          for statistic_name in statistic_names
+                          if counts[statistic_name.name] == 1}
+
+    def __getitem__(self, name):
+        if ':' in name:
+            return self.__by_qualified_name[name]
+        elif name in self.__by_name:
+            return self.__by_name[name]
+        else:
+            raise Exception(f'{name} is not unique (coallesce after adding units)')
+
+
 class Data:
 
     def __init__(self, session, query, statistic_names):
         with timing('query'):
             self.df = pd.read_sql_query(sql=query, con=session.connection(), index_col=N.INDEX)
-        self.__statistic_names = {statistic_name.name: statistic_name for statistic_name in statistic_names}
+        self.__statistic_names = Names(statistic_names)
         log.debug(f'Columns: {", ".join(self.df.columns)}')
 
     def __bool__(self):
@@ -314,7 +333,11 @@ class Data:
     def __with_names_units(self, op, names):
         for name in names:
             statistic_name = self.__statistic_names[simple_name(name)]
-            new_name = N._slash(name, statistic_name.units)
+            if ':' in name:
+                a, b = name.split(':', 1)
+                new_name = N._slash(a, statistic_name.units) + ':' + b
+            else:
+                new_name = N._slash(name, statistic_name.units)
             if name == statistic_name.name: new_name = simple_name(new_name)
             op(name, new_name)
         return self
@@ -323,7 +346,7 @@ class Data:
         return self.__with_names_units(self.__rename, names)
 
     def rename_all_with_units(self):
-        return self.__with_names_units(self.__rename, self.__statistic_names.keys())
+        return self.__with_names_units(self.__rename, self.df.columns)
 
     def copy_with_units(self, *names):
         return self.__with_names_units(self.__copy, names)
@@ -379,16 +402,20 @@ def std_health_statistics(s, freq='1h'):
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq=freq))
     set_times_from_index(stats)
 
-    stats = Statistics(s).like(N.DEFAULT_ANY, owner=ResponseCalculator).by_name().drop_prefix(N.DEFAULT + '_'). \
+    stats = Statistics(s, activity_group=ActivityGroup.ALL). \
+        like(N.DEFAULT_ANY, owner=ResponseCalculator).by_name(). \
+        drop_prefix(N.DEFAULT + '_'). \
         into(stats, tolerance='30m')
 
-    stats = Statistics(s).for_(N.REST_HR, owner=RestHRCalculator).by_name(). \
-        rename_all_with_units().into(stats, tolerance='30m')
+    stats = Statistics(s, activity_group=ActivityGroup.ALL). \
+        for_(N.REST_HR, owner=RestHRCalculator). \
+        like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator). \
+        by_name().rename_all_with_units().into(stats, tolerance='30m')
 
-    stats = Statistics(s).for_(N.DAILY_STEPS, owner=MonitorCalculator). \
-        for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
-        like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator).by_qualified(). \
-        rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
+    stats = Statistics(s).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
+        by_qualified(). \
+        rename_all_with_units(). \
+        coallesce(). \
         copy({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1 / 3600). \
         into(stats, tolerance='30m')
 
@@ -440,17 +467,9 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 
 if __name__ == '__main__':
 
-    from ch2.pipeline import ActivityCalculator
-    from ch2.lib.date import format_seconds
-
     s = session('-v5')
 
-    df = Statistics(s, ActivityGroup.ALL). \
-        for_(N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, owner=ActivityCalculator). \
-        by_name().copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).with_times().df
-    df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
-    if present(df, N.TOTAL_CLIMB):
-        df.loc[df[N.TOTAL_CLIMB].isna(), [N.TOTAL_CLIMB]] = 0
+    df = std_health_statistics(s)
 
     print(df)
     print(df.describe())
