@@ -33,10 +33,10 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
 
     def _read_dataframe(self, s, ajournal):
         try:
-            heart_rate_df = Statistics(s, activity_group=ajournal.activity_group). \
+            heart_rate_df = Statistics(s). \
                 for_(Names.HEART_RATE, owner=self.owner_in). \
                 from_(activity_journal=ajournal).by_name().df
-            fthr_df = Statistics(s, activity_group=ajournal.activity_group). \
+            fthr_df = Statistics(s). \
                 for_(Names.FTHR, owner=Constant).by_name().df
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')

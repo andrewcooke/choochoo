@@ -12,11 +12,9 @@ from .utils import UniProcCalculator
 from ..pipeline import LoaderMixin, OwnerInMixin
 from ..read.segment import SegmentReader
 from ...data import Statistics
-from ...data.frame import statistics
 from ...data.response import sum_to_hour, calc_response
 from ...lib.date import round_hour, to_time, local_date_to_time, now
 from ...names import Names as N
-from ...sql import ActivityGroup
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...sql.utils import add
@@ -178,11 +176,11 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         from .. import ImpulseCalculator
         name = self.prefix + '_' + N.HR_IMPULSE_10
         df = Statistics(s).for_(name, owner=ImpulseCalculator).from_(with_source=True). \
-            by_qualified().coallesce(delete=True). \
+            by_name(). \
             rename({name: N.HR_IMPULSE_10, N._src(name): N._src(N.HR_IMPULSE_10)}).df
         name = N._cov(N.HEART_RATE)
         df = Statistics(s).for_(name, owner=SegmentReader). \
-            by_qualified().coallesce(delete=True).rename({name: N.COVERAGE}).into(df, tolerance='10s')
+            by_name().rename({name: N.COVERAGE}).into(df, tolerance='10s')
         df[N.COVERAGE].fillna(axis='index', method='ffill')
         df[N.COVERAGE].fillna(100, axis='index')
         return df
