@@ -63,7 +63,8 @@ class Constant(Source):
             time = dt.datetime.now(tz=dt.timezone.utc)
         return s.query(StatisticJournal). \
             filter(StatisticJournal.statistic_name == self.statistic_name,
-                   StatisticJournal.time <= time). \
+                   StatisticJournal.time <= time,
+                   StatisticJournal.source == self). \
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod

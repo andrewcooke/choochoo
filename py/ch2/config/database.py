@@ -156,7 +156,7 @@ def add_constant(s, title, value, description=None, units=None, name=None,
     log.debug(f'Adding constant {name}')
     statistic_name = StatisticName.add_if_missing(s, name, statistic_journal_type, units, None, Constant,
                                                   title=title, description=description)
-    activity_group=ActivityGroup.from_name(s, activity_group)
+    activity_group = ActivityGroup.from_name(s, activity_group)
     constant = add(s, Constant(statistic_name=statistic_name,
                                name=statistic_name.qualified_name(s, activity_group),
                                activity_group=activity_group, single=single, validate_cls=validate_cls,

@@ -9,7 +9,7 @@ import pandas as pd
 
 from .utils import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ..loader import StatisticJournalLoader
-from ...data import activity_statistics, present, linear_resample_time
+from ...data import activity_statistics, present, linear_resample_time, Statistics
 from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate, PowerException, \
@@ -43,7 +43,7 @@ class BasicPowerCalculator(PowerCalculator):
     Currently the 'bike' attribute of 'power' is defined as '${Constant:Power.${SegmentReader:kit}}'.
     '''
 
-    def __init__(self, *args, power=None, caloric_eff=0.25, activity_group=None, **kargs):
+    def __init__(self, *args, power=None, caloric_eff=0.25, **kargs):
         self.power_ref = power
         self.caloric_eff = caloric_eff
         super().__init__(*args, **kargs)
@@ -51,16 +51,18 @@ class BasicPowerCalculator(PowerCalculator):
     def _set_power(self, s, ajournal):
         power = Power(**loads(Constant.get(s, self.power_ref).at(s).value))
         # default owner is constant since that's what users can tweak
-        self.power = power.expand(s, ajournal.start, default_owner=Constant,
-                                  default_activity_group=ajournal.activity_group.name)
+        self.power = power.expand(s, ajournal.start, default_owner=Constant)
         log.debug(f'Power: {self.power_ref}: {self.power}')
 
     def _read_dataframe(self, s, ajournal):
+        from .. import SegmentReader, ElevationCalculator
         try:
             self._set_power(s, ajournal)
-            df = activity_statistics(s, Names.DISTANCE, Names.ELEVATION, Names.SPEED, Names.CADENCE,
-                                     Names.LATITUDE, Names.LONGITUDE, Names.HEART_RATE,
-                                     activity_journal=ajournal, with_timespan=True)
+            df = Statistics(s). \
+                for_(Names.DISTANCE, Names.SPEED, Names.CADENCE, Names.LATITUDE, Names.LONGITUDE,
+                     Names.HEART_RATE, owner=SegmentReader). \
+                for_(Names.ELEVATION, owner=ElevationCalculator). \
+                from_(activity_journal=ajournal, with_timespan=True).by_name().df
             ldf = linear_resample_time(df)
             ldf = add_differentials(ldf, max_gap=1.1 * median_dt(df))
             return df, ldf
@@ -70,7 +72,7 @@ class BasicPowerCalculator(PowerCalculator):
             log.warning(f'Power configuration incorrect ({e})')
         except Exception as e:
             log.warning(f'Failed to generate statistics for power ({ajournal.activity_group.name}): {e}')
-            log_current_exception(traceback=False)
+            log_current_exception(traceback=True)
 
     def _calculate_stats(self, s, ajournal, dfs):
         df, ldf = dfs
@@ -92,7 +94,7 @@ class BasicPowerCalculator(PowerCalculator):
                 name = simple_name(title)
                 if not pd.isnull(row[name]):
                     loader.add(name, units, summary, ajournal, row[name], time,
-                               StatisticJournalFloat, description='The estimated power.')
+                               StatisticJournalFloat, title=title, description='The estimated power.')
 
     def __add_total_energy(self, s, ajournal, loader, ldf):
         if present(ldf, Names.POWER_ESTIMATE):
@@ -132,15 +134,16 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
         with Timestamp(owner=self.owner_out, source=source).on_success(s):
             try:
                 data = self._read_dataframe(s, source)
-                loader = StatisticJournalLoader(s, self.owner_out)
-                try:
-                    stats = self._calculate_stats(s, source, data)
-                except PowerException as e:
-                    log.debug(f'Cannot use detailed power model; adding basic values only ({e})')
+                if data:
                     loader = StatisticJournalLoader(s, self.owner_out)
-                    stats = None, super()._calculate_stats(s, source, data)
-                self._copy_results(s, source, loader, stats)
-                loader.load()
+                    try:
+                        stats = self._calculate_stats(s, source, data)
+                    except PowerException as e:
+                        log.debug(f'Cannot use detailed power model; adding basic values only ({e})')
+                        loader = StatisticJournalLoader(s, self.owner_out)
+                        stats = None, super()._calculate_stats(s, source, data)
+                    self._copy_results(s, source, loader, stats)
+                    loader.load()
             except Exception as e:
                 log.error(f'No statistics on {time_or_date}')
                 log_current_exception()

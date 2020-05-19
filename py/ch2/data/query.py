@@ -64,9 +64,8 @@ class Statistics:
     The code is full of examples that provide better documentation than I could write here.
     '''
 
-    def __init__(self, s, activity_group=None):
+    def __init__(self, s):
         self.__session = s
-        self.__default_activity_group = activity_group
         self.__statistic_names = []
         self.__start = None
         self.__finish = None
@@ -74,30 +73,17 @@ class Statistics:
         self.__with_timespan = False
         self.__with_source = False
 
-    def __with_default(self, activity_group):
-        if not activity_group:
-            activity_group = self.__default_activity_group
-        elif self.__default_activity_group and activity_group != self.__default_activity_group:
-            log.warning(f'Changing activity group {self.__default_activity_group} -> {activity_group}')
-        return activity_group
-
-    def __check(self, statistic_names, activity_group, owner):
-        if not (statistic_names or activity_group or owner):
+    def __check(self, statistic_names, owner):
+        if not (statistic_names or owner):
             raise Exception('Provide at least one constraint')
         if not owner: log.warning('Querying without owner')
 
-    def for_(self, *statistic_names, activity_group=None, owner=None):
-        activity_group = self.__with_default(activity_group)
-        log.debug(f'For {", ".join(statistic_names)}; {activity_group}; {owner}')
-        self.__check(statistic_names, activity_group, owner)
+    def for_(self, *statistic_names, owner=None):
+        log.debug(f'For {", ".join(statistic_names)}; {owner}')
+        self.__check(statistic_names, owner)
         q = self.__session.query(StatisticName)
         if statistic_names:
             q = q.filter(StatisticName.name.in_(statistic_names))
-        if activity_group:
-            if isinstance(activity_group, ActivityGroup):
-                q = q.join(ActivityGroup).filter(ActivityGroup.id == activity_group.id)
-            else:
-                q = q.join(ActivityGroup).filter(ActivityGroup.name == activity_group)
         if owner:
             q = q.filter(StatisticName.owner == owner)
         found = q.all()
@@ -117,29 +103,23 @@ class Statistics:
             log.debug(f'Request {name}:')
             q = self.__session.query(StatisticName).filter(StatisticName.name.like(name))
             for statistic_name in q.all():
-                log.debug(f'  {statistic_name.name}:{statistic_name.activity_group} owner {statistic_name.owner}')
+                log.debug(f'  {statistic_name.name} owner {statistic_name.owner}')
             if not q.count():
                 log.debug(f'  does not match and owner or activity group')
 
-    def like(self, *statistic_names, activity_group=None, owner=None):
-        activity_group = self.__with_default(activity_group)
-        log.debug(f'Like {", ".join(statistic_names)}; {activity_group}; {owner}')
-        self.__check(statistic_names, activity_group, owner)
+    def like(self, *statistic_names, owner=None):
+        log.debug(f'Like {", ".join(statistic_names)}; {owner}')
+        self.__check(statistic_names, owner)
         q = self.__session.query(StatisticName)
         if statistic_names:
             q = q.filter(or_(*[StatisticName.name.ilike(statistic_name) for statistic_name in statistic_names]))
-        if activity_group:
-            if isinstance(activity_group, ActivityGroup):
-                q = q.join(ActivityGroup).filter(ActivityGroup.id == activity_group.id)
-            else:
-                q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(activity_group))
         if owner:
             q = q.filter(StatisticName.owner.ilike(owner))
         found = q.all()
         if found:
             log.debug(f'Appending {len(found)} statistics names ({len(statistic_names)} patterns)')
         else:
-            log.warning(f'Appending no statistic names ({", ".join(statistic_names)}; {activity_group}; {owner})')
+            log.warning(f'Appending no statistic names ({", ".join(statistic_names)}; {owner})')
         found_names = set(statistic_name.name for statistic_name in found)
         missing = [statistic_name for statistic_name in statistic_names if not like(statistic_name, found_names)]
         self.__dump_matches(missing)
@@ -153,7 +133,6 @@ class Statistics:
 
     def from_(self, start=None, finish=None, activity_journal=None, activity_group=None,
               with_timespan=False, with_source=False):
-        activity_group = self.__with_default(activity_group)
         self.__start = start
         self.__finish = finish
         if activity_journal:
@@ -166,67 +145,11 @@ class Statistics:
         self.__with_source = with_source
         return self
 
-    def by_name(self, outer=False):
-        return self.by('{statistic_name.name}', outer=outer)
+    def by_name(self):
 
-    def by_name_group(self, outer=False):
-        return self.by('{statistic_name.name}:{statistic_name.activity_group}', outer=outer)
-
-    def by_qualified(self, outer=False):
-        return self.by(_Qualified(), outer=outer)
-
-    def by(self, template, outer=False):
-        return self.__build_query(template, outer=outer)
-
-    def __check_names(self, template):
-        names = set()
-        for statistic_name in self.__statistic_names:
-            name = template.format(statistic_name=statistic_name)
-            if name in names:
-                raise Exception(f'Duplicate name {name}')
-            names.add(name)
-
-    def __build_query(self, template, outer=False):
-        self.__check_names(template)
+        template = '{statistic_name.name}'
         T = _tables()
         J = _type_to_journal(T)
-        if outer:
-            query = self.__build_query_outer(T, J, template)
-        else:
-            query = self.__build_query_time(T, J, template)
-        return Data(self.__session, query, self.__statistic_names)
-
-    def __build_query_outer(self, T, J, template):
-        '''
-        build the query using an outer join on journal id for each statistic, then group by time
-        and discard nulls.
-
-        incomplete
-        '''
-
-        sj = T.sj.alias()
-        selects, aliases = [sj.c.time.label(N.INDEX)], []
-        for statistic_name in self.__statistic_names:
-            alias = J[statistic_name.statistic_journal_type].alias()
-            aliases.append(alias)
-            selects.append(func.sum(alias.c.value).label(template.format(statistic_name=statistic_name)))
-
-        source = sj
-        for alias, statistic_name in zip(aliases, self.__statistic_names):
-            source = source.join(alias,
-                                 and_(sj.c.id == alias.c.id, sj.c.statistic_name_id == statistic_name.id),
-                                 isouter=True)
-        query = select(selects).select_from(source).group_by(sj.c.time).order_by(sj.c.time)
-        if self.__start: query = query.where(sj.c.time >= self.__start)
-        if self.__finish: query = query.where(sj.c.time < self.__finish)
-        if self.__activity_journal: query = query.where(sj.c.source_id == self.__activity_journal.id)
-
-        return query
-
-    def __build_query_time(self, T, J, template):
-        '''
-        build the query by joining on time for each statistic.
-        '''
 
         time_select = select([distinct(T.sj.c.time).label('time')]).select_from(T.sj). \
             where(T.sj.c.statistic_name_id.in_([statistic_name.id for statistic_name in self.__statistic_names]))
@@ -262,7 +185,7 @@ class Statistics:
                                            T.at.c.finish > time_select.c.time,
                                            T.at.c.activity_journal_id == self.__activity_journal.id))
 
-        return select(all_selects).select_from(source)
+        return Data(self.__session, select(all_selects).select_from(source), self.__statistic_names)
 
 
 class Names:

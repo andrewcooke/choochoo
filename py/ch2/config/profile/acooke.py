@@ -83,11 +83,12 @@ class ACooke(Config):
     def _load_power_statistics(self, s, c):
         # add power estimates for the two bikes
         # (note that this comes after standard stats, but before summary, achievements, etc).
-        for name in (MTB, ROAD):
-            add_power_estimate(s, c, self._activity_groups[name], vary='')
-        for (name, value) in (('Power.cotic', {'cda': 0.42, 'crr': 0.0055, 'weight': 12}),
-                              ('Power.bowman', {'cda': 0.42, 'crr': 0.0055, 'weight': 8})):
-            add_enum_constant(s, name, Bike, value, single=True, description='''
+        for (name, activity_group, value) in (('power_cotic', MTB, {'cda': 0.42, 'crr': 0.0055, 'weight': 12}),
+                                              ('power_bowman', ROAD, {'cda': 0.42, 'crr': 0.0055, 'weight': 8})):
+            activity_group = self._activity_groups[activity_group]
+            add_power_estimate(s, c, activity_group, vary='')
+            add_enum_constant(s, name, Bike, value, activity_group=activity_group,
+                              single=True, description='''
 Parameters to calculate power when using this bike.
 
 The parameter name must match the kit name (see the PowerEstimate constants). 

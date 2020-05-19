@@ -101,14 +101,13 @@ def reftuple(name, *args, **kargs):
 
     class klass(namedtuple(name, *args, **kargs)):
 
-        from ..sql import ActivityGroup
-
         def expand(self, s, time, default_owner=None, default_activity_group=None):
             instance = self
             for name in self._fields:
                 value = getattr(instance, name)
                 log.debug(f'Expanding {name}: {value} at {time}')
-                value = expand(s, value, time, default_owner=default_owner, default_activity_group=default_activity_group)
+                value = expand(s, value, time, default_owner=default_owner,
+                               default_activity_group=default_activity_group)
                 log.debug(f'Setting {name} = {value}')
                 instance = instance._replace(**{name: value})
             return instance
