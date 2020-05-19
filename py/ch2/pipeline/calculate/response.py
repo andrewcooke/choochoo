@@ -181,8 +181,8 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
         name = N._cov(N.HEART_RATE)
         df = Statistics(s).for_(name, owner=SegmentReader). \
             by_name().rename({name: N.COVERAGE}).into(df, tolerance='10s')
-        df[N.COVERAGE].fillna(axis='index', method='ffill')
-        df[N.COVERAGE].fillna(100, axis='index')
+        df[N.COVERAGE].fillna(axis='index', method='ffill', inplace=True)
+        df[N.COVERAGE].fillna(100, axis='index', inplace=True)
         return df
 
     def __make_sources(self, s, data):

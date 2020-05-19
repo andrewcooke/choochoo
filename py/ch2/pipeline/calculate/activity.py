@@ -37,7 +37,7 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
 
     def _read_dataframe(self, s, ajournal):
         try:
-            adf = Statistics(s, activity_group=ajournal.activity_group). \
+            adf = Statistics(s). \
                 for_(N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y, owner=SegmentReader). \
                 for_(N.ELEVATION, owner=ElevationCalculator). \
                 for_(N.HR_ZONE, owner=ImpulseCalculator). \
@@ -47,7 +47,7 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
                 start, finish = ajournal.start - dt.timedelta(hours=1), ajournal.finish + dt.timedelta(hours=1)
                 fitness = self.response_prefix + '_' + N.FITNESS_ANY
                 fatigue = self.response_prefix + '_' + N.FATIGUE_ANY
-                sdf = Statistics(s, activity_group=ActivityGroup.ALL). \
+                sdf = Statistics(s). \
                     like(fitness, fatigue, owner=self.owner_in). \
                     from_(start=start, finish=finish).by_name(). \
                     drop_prefix(self.response_prefix).df

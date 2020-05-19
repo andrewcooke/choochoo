@@ -6,10 +6,10 @@ from scipy.signal import find_peaks
 
 from .utils import MultiProcCalculator, IntervalCalculatorMixin
 from ..pipeline import OwnerInMixin
-from ...data import statistics, Statistics
-from ...lib import format_date, local_date_to_time, local_time_to_time
+from ...data import Statistics
+from ...lib import format_date, local_date_to_time
 from ...names import Titles, Summaries as S, Units, Names
-from ...sql import StatisticJournalInteger, ActivityGroup
+from ...sql import StatisticJournalInteger
 
 log = getLogger(__name__)
 
@@ -28,9 +28,9 @@ class RestHRCalculator(OwnerInMixin, IntervalCalculatorMixin, MultiProcCalculato
         super().__init__(*args, schedule=schedule, **kargs)
 
     def _read_data(self, s, interval):
-        return Statistics(s, activity_group=ActivityGroup.ALL). \
+        return Statistics(s). \
             for_(Names.HEART_RATE, owner=self.owner_in). \
-            from_(start=local_time_to_time(interval.start), finish=local_time_to_time(interval.finish)). \
+            from_(start=local_date_to_time(interval.start), finish=local_date_to_time(interval.finish)). \
             by_name().df
 
     def _calculate_results(self, s, interval, df, loader):
