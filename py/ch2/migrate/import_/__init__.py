@@ -31,16 +31,12 @@ def journal_imported(record, new, cls, name, allow_time_zero=False):
     return False
 
 
-def match_statistic_name(record, old_statistic_name, new_s, owner, activity_group):
-    extract = re.compile('ActivityGroup "(.*)"')  # old style constraint
-    if activity_group and extract.match(activity_group): activity_group = extract.match(activity_group).group(1)
-    if not activity_group: activity_group = ActivityGroup.ALL
+def match_statistic_name(record, old_statistic_name, new_s, owner):
     try:
         log.debug(f'Trying to find new statistic_name for {old_statistic_name} ({owner})')
         new_statistic_name = new_s.query(StatisticName). \
             filter(StatisticName.name == old_statistic_name.name,
                    StatisticName.owner == owner,
-                   StatisticName.activity_group == ActivityGroup.from_name(new_s, activity_group),
                    StatisticName.statistic_journal_type == old_statistic_name.statistic_journal_type).one()
         log.debug(f'Found new statistic_name {new_statistic_name}')
         return new_statistic_name
@@ -60,10 +56,19 @@ def copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic
     old_value = old_s.query(old_journal).filter(old_journal.c.id == old_statistic_journal.id).one()
     log.debug(f'Resolved old statistic_journal {old_value}')
     new_journal = STATISTIC_JOURNAL_CLASSES[StatisticJournalType(new_statistic_name.statistic_journal_type)]
-    if new_s.query(new_journal). \
-            filter(new_journal.time == old_statistic_journal.time,
-                   new_journal.statistic_name == new_statistic_name).count():
-        log.warning(f'Value already exists for {name}')
+    previous = new_s.query(new_journal). \
+        filter(new_journal.time == old_statistic_journal.time,
+               new_journal.statistic_name == new_statistic_name).one_or_none()
+    # drop ugly auto-titles if nicer ones available (bug fix 0-322 to 0-33)
+    if previous and new_statistic_name.name == 'name' and \
+            new_statistic_name.statistic_journal_type == StatisticJournalType.TEXT and \
+            previous.value.startswith('20'):
+        record.warning(f'Dropping previous ({previous}) for {name}')
+        new_s.delete(previous)
+        new_s.commit()
+        previous = None
+    if previous:
+        record.warning(f'Value already exists for {name} ({previous})')
     else:
         new_value = add(new_s,
                         new_journal(value=old_value.value, time=old_statistic_journal.time,

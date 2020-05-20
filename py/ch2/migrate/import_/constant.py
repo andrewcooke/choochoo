@@ -43,12 +43,13 @@ def copy_constants(record, old_s, old, new):
             with new.session_context() as new_s:
                 old_name = old_constant.name.lower()
                 new_constant = new_s.query(Constant).filter(Constant.name == old_name).one_or_none()
-                if not new_constant:
-                    idx = old_name.rfind('.')
-                    if idx != -1:
-                        old_name = old_name[:idx] + ':' + old_name[idx+1:]
-                        log.debug(f'Retrying with {old_name}')
-                        new_constant = new_s.query(Constant).filter(Constant.name == old_name).one_or_none()
+                for joint in (':', '_'):
+                    if not new_constant:
+                        idx = old_name.rfind('.')
+                        if idx != -1:
+                            alternative = old_name[:idx] + joint + old_name[idx+1:]
+                            log.debug(f'Retrying with {alternative}')
+                            new_constant = new_s.query(Constant).filter(Constant.name == alternative).one_or_none()
                 if new_constant:
                     copy_constant(record, old_s, old, old_constant, old_statistic_name, new_s, new_constant)
                 else:

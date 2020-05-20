@@ -17,11 +17,11 @@ log = getLogger(__name__)
 class RestHRCalculator(OwnerInMixin, IntervalCalculatorMixin, MultiProcCalculator):
 
     '''
-    used to calculate rest HR from quartiles, but it was never clear we had *the* rest value rather
+    Used to calculate rest HR from quartiles, but it was never clear we had *the* rest value rather
     than some general lower value.
 
-    this way - by looking for the first peak that's not noise - we are finding something that perhaps
-    is more meaningful.  it's a low heart rate that you spent a fair amount of time at.
+    This way - by looking for the first peak that's not noise - we are finding something that perhaps
+    is more meaningful.  It's a low heart rate that you spent a fair amount of time at.
     '''
 
     def __init__(self, *args, schedule='d', **kargs):

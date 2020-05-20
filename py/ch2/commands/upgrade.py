@@ -16,9 +16,9 @@ log = getLogger(__name__)
 
 def upgrade(args, sys, db):
     '''
-## import
+## upgrade
 
-    > ch2 import 0-30
+    > ch2 upgrade 0-30
 
 Import diary entries from a previous version.
     '''

@@ -3,7 +3,8 @@ from logging import getLogger
 
 from . import journal_imported, match_statistic_name, copy_statistic_journal, any_attr
 from ...lib.log import log_current_exception
-from ...sql import ActivityTopicJournal, FileHash, ActivityTopic
+from ...sql import ActivityTopicJournal, FileHash, ActivityTopic, ActivityGroup
+from ...sql.types import simple_name
 
 log = getLogger(__name__)
 
@@ -42,8 +43,7 @@ def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
             except AttributeError:
                 old_activity_group = old_statistic_name.constraint
             with new.session_context() as new_s:
-                new_statistic_name = match_statistic_name(record, old_statistic_name, new_s, ActivityTopic,
-                                                          old_activity_group)
+                new_statistic_name = match_statistic_name(record, old_statistic_name, new_s, ActivityTopic)
                 copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, new_s, new_statistic_name)
         except:
             log_current_exception()
@@ -66,12 +66,13 @@ def copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, 
         old_activity_topic_journal = old_s.query(activity_topic_journal). \
             filter(activity_topic_journal.c.id == old_statistic_journal.source_id).one()
         log.debug(f'Found old activity_topic_journal {old_activity_topic_journal}')
-        new_activity_topic_journal = create_activity_topic_journal(record, old_s, old, old_activity_topic_journal, new_s)
+        new_activity_topic_journal = create_activity_topic_journal(record, old_s, old, old_activity_topic_journal,
+                                                                   old_statistic_name, new_s)
         copy_statistic_journal(record, old_s, old, old_statistic_name, old_statistic_journal,
                                new_s, new_statistic_name, new_activity_topic_journal)
 
 
-def create_activity_topic_journal(record, old_s, old, old_activity_topic_journal, new_s):
+def create_activity_topic_journal(record, old_s, old, old_activity_topic_journal, old_statistic_name, new_s):
     log.debug(f'Trying to create activity_topic_journal')
     file_hash = old.meta.tables['file_hash']
     old_file_hash = old_s.query(file_hash). \
@@ -80,6 +81,19 @@ def create_activity_topic_journal(record, old_s, old, old_activity_topic_journal
     # column name change 0-29 - 0-30 ?
     new_file_hash = FileHash.get_or_add(new_s, any_attr(old_file_hash, 'hash', 'md5'))
     log.debug(f'Found new file_hash {new_file_hash}')
-    new_activity_topic_journal = ActivityTopicJournal.get_or_add(new_s, new_file_hash)
+    activity_group = old.meta.tables['activity_group']
+    try:
+        # old style, group associated with statistics
+        old_activity_group = old_s.query(activity_group). \
+            filter(activity_group.c.id == old_statistic_name.activity_group_id).one()
+    except:
+        # new style (0-33), group associated with source
+        old_activity_group = old_s.query(activity_group). \
+            filter(activity_group.c.id == old_activity_topic_journal.activity_group_id).one()
+    log.debug(f'Found old activity_group {old_activity_group}')
+    new_activity_group = new_s.query(ActivityGroup). \
+        filter(ActivityGroup.name == simple_name(old_activity_group.name)).one()
+    log.debug(f'Found new activity_group {new_activity_group}')
+    new_activity_topic_journal = ActivityTopicJournal.get_or_add(new_s, new_file_hash, new_activity_group)
     log.debug(f'Found new activity_topic_journal {new_activity_topic_journal}')
     return new_activity_topic_journal
