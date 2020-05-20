@@ -41,7 +41,7 @@ def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
                 old_activity_group = old_s.query(activity_group). \
                     filter(activity_group.c.id == old_statistic_name.activity_group_id).one().name
             except AttributeError:
-                old_activity_group = old_statistic_name.constraint
+                old_activity_group = old_statistic_name.all_any_time
             with new.session_context() as new_s:
                 new_statistic_name = match_statistic_name(record, old_statistic_name, new_s, ActivityTopic)
                 copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, new_s, new_statistic_name)

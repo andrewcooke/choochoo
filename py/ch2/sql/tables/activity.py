@@ -144,6 +144,13 @@ class ActivityJournal(GroupedSource):
     def number_of_activities(cls, s):
         return s.query(ActivityJournal).count()
 
+    def __lt__(self, other):
+        # allows sorting in displays
+        if isinstance(other, ActivityJournal):
+            return self.start < other.start
+        else:
+            return False
+
 
 class ActivityTimespan(Base):
 
