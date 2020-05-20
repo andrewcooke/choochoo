@@ -298,8 +298,8 @@ def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=
 A region over which activities are candidates to be 'near' each other.  
 This does not mean that all activities in this area are near to each other - 
 only that activities outside will not be considered as candidates.
-* Constraint is the name of the region.
-* Activity_group identifies which activities are considered.
+* Constraint is the name of the region (must be unique for a given activity).
+* Activity_group identifies which activity is considered.
 * Border is the radius (m) around GPS points for them to 'overlap' ('nearby' routes have a large number of 'ovelapping' points).
 * Start and finish are dates between which the region is used.
 * Latitude and longitude define the centre of the region (degrees).

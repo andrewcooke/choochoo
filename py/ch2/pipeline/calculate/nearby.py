@@ -17,7 +17,7 @@ from ...lib.date import to_time, local_date_to_time
 from ...lib.dbscan import DBSCAN
 from ...lib.optimizn import expand_max
 from ...sql import ActivityJournal, ActivityGroup, Constant, ActivitySimilarity, ActivityNearby, StatisticName, \
-    StatisticJournal, StatisticJournalFloat, Timestamp
+    StatisticJournal, StatisticJournalFloat, Timestamp, Source
 
 log = getLogger(__name__)
 Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish, '
@@ -125,25 +125,31 @@ class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
 
     def _aj_lon_lat(self, s, new=True):
 
+        from .. import SegmentReader
+
         start = to_time(self.nearby.start)
         finish = to_time(self.nearby.finish)
 
         agroup = ActivityGroup.from_name(s, self.nearby.activity_group)
         lat = s.query(StatisticName.id). \
-            filter(StatisticName.name == Names.LATITUDE, StatisticName.activity_group == agroup).scalar()
+            filter(StatisticName.name == Names.LATITUDE,
+                   StatisticName.owner == SegmentReader).scalar()
         lon = s.query(StatisticName.id). \
-            filter(StatisticName.name == Names.LONGITUDE, StatisticName.activity_group == agroup).scalar()
+            filter(StatisticName.name == Names.LONGITUDE,
+                   StatisticName.owner == SegmentReader).scalar()
         
         if not lat or not lon:
             log.warning(f'No {Names.LATITUDE} or {Names.LONGITUDE} in database for {agroup}')
             return
 
+        # todo - use tables() instead
         sj_lat = inspect(StatisticJournal).local_table
         sj_lon = alias(inspect(StatisticJournal).local_table)
         sjf_lat = inspect(StatisticJournalFloat).local_table
         sjf_lon = alias(inspect(StatisticJournalFloat).local_table)
         aj = inspect(ActivityJournal).local_table
         ns = inspect(ActivitySimilarity).local_table
+        src = inspect(Source).local_table
 
         existing_lo = select([ns.c.activity_journal_lo_id]). \
             where(ns.c.constraint == self.nearby.constraint)
@@ -151,12 +157,15 @@ class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
             where(ns.c.constraint == self.nearby.constraint)
         existing = existing_lo.union(existing_hi).cte()
 
+        # todo - has not been tuned for latest schema
         stmt = select([sj_lat.c.source_id, sjf_lon.c.value, sjf_lat.c.value]). \
-            select_from(sj_lat).select_from(sj_lon).select_from(sjf_lat).select_from(sjf_lat).select_from(aj). \
+            select_from(sj_lat).select_from(sj_lon).select_from(sjf_lat).select_from(sjf_lat). \
+            select_from(aj).select_from(src). \
             where(and_(sj_lat.c.source_id == sj_lon.c.source_id,  # same source
                        sj_lat.c.time == sj_lon.c.time,            # same time
                        sj_lat.c.source_id == aj.c.id,             # and associated with an activity
-                       aj.c.activity_group_id == agroup.id,       # of the right group
+                       sj_lat.c.source_id == src.c.id,            # activity is also a source
+                       src.c.activity_group_id == agroup.id,      # of the right group
                        sj_lat.c.id == sjf_lat.c.id,               # lat sub-class
                        sj_lon.c.id == sjf_lon.c.id,               # lon sub-class
                        sj_lat.c.statistic_name_id == lat,         # lat name

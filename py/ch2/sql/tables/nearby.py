@@ -8,6 +8,8 @@ from ..types import NullText
 
 class ActivitySimilarity(Base):
 
+    # a triangular table of distances
+
     __tablename__ = 'activity_similarity'
 
     id = Column(Integer, primary_key=True)
@@ -26,7 +28,7 @@ class ActivityNearby(Base):
 
     id = Column(Integer, primary_key=True)
     constraint = Column(NullText, index=True)
-    group = Column(Integer, nullable=False, index=True)
+    group = Column(Integer, nullable=False, index=True)  # not activity group!
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'))
     activity_journal = relationship('ActivityJournal',
                                     backref=backref('nearby', cascade='all, delete-orphan',
