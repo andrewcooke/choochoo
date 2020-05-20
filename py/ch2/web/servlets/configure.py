@@ -14,6 +14,7 @@ from ...migrate.import_.activity import activity_imported
 from ...migrate.import_.constant import constant_imported
 from ...migrate.import_.diary import diary_imported
 from ...migrate.import_.kit import kit_imported
+from ...migrate.import_.segment import segment_imported
 from ...sql import SystemConstant, Constant, StatisticJournal
 
 log = getLogger(__name__)
@@ -30,6 +31,7 @@ KIT = 'kit'
 NAME = 'name'
 PROFILE = 'profile'
 PROFILES = 'profiles'
+SEGMENT = 'segment'
 SINGLE = 'single'
 STATISTIC = 'statistic'
 TIME = 'time'
@@ -76,7 +78,8 @@ class Configure:
         return {IMPORTED: {DIARY: diary_imported(record, self.__db),
                            ACTIVITY: activity_imported(record, self.__db),
                            KIT: kit_imported(record, self.__db),
-                           CONSTANT: constant_imported(record, self.__db)},
+                           CONSTANT: constant_imported(record, self.__db),
+                           SEGMENT: segment_imported(record, self.__db)},
                 VERSIONS: available_versions(self.__base)}
 
     def write_upgrade(self, request, s):

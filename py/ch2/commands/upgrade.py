@@ -9,6 +9,7 @@ from ..migrate.import_.activity import upgrade_activity
 from ..migrate.import_.constant import upgrade_constant
 from ..migrate.import_.diary import upgrade_diary
 from ..migrate.import_.kit import upgrade_kit
+from ..migrate.import_.segment import upgrade_segment
 from ..sql.database import ReflectedDatabase
 
 log = getLogger(__name__)
@@ -35,6 +36,7 @@ def upgrade_path(record, base, source, new):
     upgrade_activity(record, old, new)
     upgrade_kit(record, old, new)
     upgrade_constant(record, old, new)
+    upgrade_segment(record, old, new)
 
 
 def build_source_path(record, base, source):
