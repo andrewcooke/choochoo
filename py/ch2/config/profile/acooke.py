@@ -1,13 +1,13 @@
 
 from ..config import Config, WALK, SWIM, RUN, BIKE
-from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_nearby, \
-    add_enum_constant, add_constant
+from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_enum_constant, \
+    add_constant
 from ..power import add_power_estimate
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
-from ...names import Sports
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
 from ...msil2a.download import MSIL2A_DIR_CNAME
+from ...names import Sports
 from ...pipeline.calculate.power import Bike
 from ...pipeline.read.activity import ActivityReader
 from ...sql import StatisticJournalType, StatisticName, DiaryTopic, DiaryTopicJournal
@@ -24,7 +24,6 @@ This extends the default configuration with:
 * Diary entries that I need
 * Additional activity groups selected on the kit used
 * Power estimates
-* An area around Santiago, Chile, for registering nearby activities
 
 Unlikely to be useful to others, but works as an example of how you can extend the code yourself.
     '''
@@ -96,12 +95,6 @@ The parameter name must match the kit name (see the PowerEstimate constants).
 * Crr is the coefficient of rolling resistance.
 * Weight is the bike weight (kg).
 ''')
-
-    def _load_statistics_pipeline(self, s, c):
-        super()._load_statistics_pipeline(s, c)
-        # define spatial regions for nearby routes etc
-        for name in (MTB, ROAD, WALK):
-            add_nearby(s, c, self._activity_groups[name], 'Santiago', -33.4, -70.4, fraction=0.1, border=150)
 
     def _load_constants(self, s):
         super()._load_constants(s)

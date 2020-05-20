@@ -17,6 +17,7 @@ from ..pipeline.calculate.elevation import ElevationCalculator
 from ..pipeline.calculate.heart_rate import RestHRCalculator
 from ..pipeline.calculate.kit import KitCalculator
 from ..pipeline.calculate.monitor import MonitorCalculator
+from ..pipeline.calculate.nearby import SimilarityCalculator, NearbyCalculator
 from ..pipeline.calculate.response import ResponseCalculator
 from ..pipeline.calculate.segment import SegmentCalculator
 from ..pipeline.calculate.summary import SummaryCalculator
@@ -157,6 +158,8 @@ your FF-model parameters (fitness and fatigue).
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_statistics(s, RestHRCalculator, c, owner_in=short_cls(MonitorReader))
         add_statistics(s, KitCalculator, c, owner_in=short_cls(SegmentReader))
+        add_statistics(s, SimilarityCalculator, c, owner_in=short_cls(ActivityCalculator))
+        add_statistics(s, NearbyCalculator, c, owner_in=short_cls(SimilarityCalculator))
 
     def _load_summary_statistics(self, s, c):
         # need to call normalize here because schedule isn't a schedule type column,

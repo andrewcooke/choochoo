@@ -282,36 +282,6 @@ def add_activity_topic_field(s, activity_topic, name, sort, type, activity_group
                                      statistic_name=statistic_name))
 
 
-def add_nearby(s, sort, activity_group, constraint, latitude, longitude, border=5,
-               start='1970', finish='2999', height=10, width=10, fraction=1, constant=NEARBY_CNAME):
-    '''
-    Add a pipeline task (and related constant) to find nearby activities in a given geographic
-    region (specified by latitude, longitude, width and height, all in degrees).
-    '''
-    log.debug(f'Adding nearby statistics for {constraint} / {activity_group.name}')
-    constant = add_enum_constant(s, constant, Nearby,
-                      {'constraint': constraint, 'activity_group': activity_group.name,
-                       'border': border, 'start': start, 'finish': finish,
-                       'latitude': latitude, 'longitude': longitude,
-                       'height': height, 'width': width, 'fraction': fraction},
-                      single=True, activity_group=activity_group, description='''
-A region over which activities are candidates to be 'near' each other.  
-This does not mean that all activities in this area are near to each other - 
-only that activities outside will not be considered as candidates.
-* Constraint is the name of the region (must be unique for a given activity).
-* Activity_group identifies which activity is considered.
-* Border is the radius (m) around GPS points for them to 'overlap' ('nearby' routes have a large number of 'ovelapping' points).
-* Start and finish are dates between which the region is used.
-* Latitude and longitude define the centre of the region (degrees).
-* Height and width define the size of the region (degrees).
-* Fraction reduces the number of points used to match two activities (increasing processing speed).
-''')
-    add_statistics(s, SimilarityCalculator, sort, nearby=constant.name,
-                   owner_in=short_cls(ActivityCalculator), owner_out=short_cls(SimilarityCalculator))
-    add_statistics(s, NearbyCalculator, sort, constraint=constraint, activity_group=activity_group.name,
-                   owner_in=short_cls(SimilarityCalculator), owner_out=short_cls(NearbyCalculator))
-
-
 def add_loader_support(s):
     '''
     Add 'dummy' value used by loader.
