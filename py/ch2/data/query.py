@@ -7,12 +7,12 @@ try to have a 'fluent interface' that allows progressive refinement through the 
 * retrieving the dataframe
 * modifying the dataframe
 '''
+
 from collections import Counter, defaultdict
 from logging import getLogger
 
 import pandas as pd
-from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct, tuple_
-from sqlalchemy.sql import func
+from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct
 
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
@@ -27,6 +27,7 @@ from ..sql.types import simple_name
 
 log = getLogger(__name__)
 
+# todo - isn't this defined elsewhere?
 
 def _tables():
     return kargs_to_attr(sj=inspect(StatisticJournal).local_table,
@@ -36,6 +37,7 @@ def _tables():
                          sjt=inspect(StatisticJournalText).local_table,
                          inv=inspect(Interval).local_table,
                          at=inspect(ActivityTimespan).local_table,
+                         ag=inspect(ActivityGroup).local_table,
                          aj=inspect(ActivityJournal).local_table,
                          cmp=inspect(Composite).local_table,
                          cc=inspect(CompositeComponent).local_table,
@@ -146,7 +148,7 @@ class Statistics:
         self.__with_source = with_source
         return self
 
-    def __build_core_select(self, T, columns):
+    def __build_core_query(self, T, columns):
         core_select = select(columns).select_from(T.sj). \
             where(T.sj.c.statistic_name_id.in_([statistic_name.id for statistic_name in self.__statistic_names]))
         if self.__start: core_select = core_select.where(T.sj.c.time >= self.__start)
@@ -154,97 +156,130 @@ class Statistics:
         if self.__activity_journal: core_select = core_select.where(T.sj.c.source_id == self.__activity_journal.id)
         return core_select
 
+    def __build_statistic_query(self, T, J, statistic_name, label):
+        statistic_journal_type = J[statistic_name.statistic_journal_type]
+        selects = [statistic_journal_type.c.value, T.sj.c.time]
+        if self.__with_source: selects += [T.sj.c.source_id]
+        query = select(selects). \
+            select_from(T.sj.join(statistic_journal_type)). \
+            where(T.sj.c.statistic_name_id == statistic_name.id)
+        # order_by doesn't affect plan but seems to speed up query
+        query = query.order_by(T.sj.c.time).alias('sub_' + label)
+        return query, label
+
     def by_name(self):
         T = _tables()
         J = _type_to_journal(T)
-        time_select = self.__build_core_select(T, [distinct(T.sj.c.time).label('time')]). \
+
+        time_query = self.__build_core_query(T, [distinct(T.sj.c.time).label('time')]). \
             order_by(T.sj.c.time).alias('sub_time')
+        statistic_queries = [self.__build_statistic_query(T, J, statistic_name, statistic_name.name)
+                             for statistic_name in self.__statistic_names]
 
-        def statistic_select(statistic_name):
-            statistic_journal_type = J[statistic_name.statistic_journal_type]
-            selects = [statistic_journal_type.c.value, T.sj.c.time]
-            if self.__with_source: selects += [T.sj.c.source_id]
-            query = select(selects). \
-                select_from(T.sj.join(statistic_journal_type)). \
-                where(T.sj.c.statistic_name_id == statistic_name.id)
-            # order_by doesn't affect plan but seems to speed up query
-            query = query.order_by(T.sj.c.time).alias('sub_' + statistic_name.name)
-            return query, statistic_name.name
-
-        statistic_selects = [statistic_select(statistic_name) for statistic_name in self.__statistic_names]
-        all_selects = [time_select.c.time.label(N.INDEX)] + \
-                      [query.c.value.label(label) for query, label in statistic_selects]
+        all_selects = [time_query.c.time.label(N.INDEX)] + \
+                      [query.c.value.label(label) for query, label in statistic_queries]
         if self.__with_source:
-            all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_selects]
-        source = time_select
-        for query, _ in statistic_selects:
-            source = source.outerjoin(query, time_select.c.time == query.c.time)
+            all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_queries]
+
+        all_froms = time_query
+        for query, _ in statistic_queries:
+            all_froms = all_froms.outerjoin(query, time_query.c.time == query.c.time)
         if self.__with_timespan:
             all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
-            source = source.outerjoin(T.at,
-                                      and_(T.at.c.start <= time_select.c.time,
-                                           T.at.c.finish > time_select.c.time,
-                                           T.at.c.activity_journal_id == self.__activity_journal.id))
+            all_froms = all_froms.outerjoin(T.at,
+                                            and_(T.at.c.start <= time_query.c.time,
+                                                 T.at.c.finish > time_query.c.time,
+                                                 T.at.c.activity_journal_id == self.__activity_journal.id))
 
-        return Data(self.__session, select(all_selects).select_from(source), self.__statistic_names)
+        return Data(self.__session, select(all_selects).select_from(all_froms), self.__statistic_names)
+
+    def __build_group_select(self, T, J, activity_group_id, grouped_names, id_select):
+
+        log.debug(f'Processing group {activity_group_id}')
+
+        time_query = select([distinct(id_select.c.time).label('time')]). \
+            select_from(id_select). \
+            where(id_select.c.activity_group_id == activity_group_id). \
+            alias('sub_time')
+        statistic_queries = [self.__build_statistic_query(T, J, statistic_name,
+                                                          statistic_name.name + ':' + activity_group_name)
+                             for statistic_name, activity_group_name in grouped_names[activity_group_id]]
+
+        all_selects = [time_query.c.time.label(N.INDEX)] + \
+                      [query.c.value.label(label) for query, label in statistic_queries]
+        if self.__with_source:
+            all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_queries]
+
+        all_froms = time_query
+        for query, _ in statistic_queries:
+            all_froms = all_froms.outerjoin(query, time_query.c.time == query.c.time)
+        if self.__with_timespan:
+            all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
+        all_froms = all_froms.outerjoin(T.at,
+                                        and_(T.at.c.start <= time_query.c.time,
+                                             T.at.c.finish > time_query.c.time,
+                                             T.at.c.activity_journal_id == self.__activity_journal.id))
+
+        group_query = select(all_selects).select_from(all_froms)
+        return group_query, [label for _, label in statistic_queries]
+
+    def __get_grouped_names(self, T):
+        names_by_id = {statistic_name.id: statistic_name for statistic_name in self.__statistic_names}
+        group_select = self.__build_core_query(T, [T.sj.c.statistic_name_id, T.ag.c.id, T.ag.c.name]). \
+            distinct(). \
+            select_from(T.src).where(T.sj.c.source_id == T.src.c.id). \
+            select_from(T.ag).where(T.src.c.activity_group_id == T.ag.c.id)
+        grouped_names = defaultdict(list)
+        for row in s.execute(group_select):
+            grouped_names[row[1]].append((names_by_id[row[0]], row[2]))
+        log.debug(f'Grouped names: {grouped_names}')
+        return grouped_names
 
     def by_group(self):
         T = _tables()
         J = _type_to_journal(T)
-        id_select = self.__build_core_select(T, [T.sj.c.id])
-        names_by_id = {statistic_name.id: statistic_name for statistic_name in self.__statistic_names}
+        grouped_names = self.__get_grouped_names(T)
 
-        # activity_group_id -> statistic_names
-        grouped_names = defaultdict(list)
-        for sn_id, ag_id in s.execute(id_select):
-            grouped_names[ag_id].append(names_by_id[sn_id])
+        id_select = self.__build_core_query(T, [T.sj.c.time, T.sj.c.id, T.src.c.activity_group_id]). \
+            select_from(T.src).where(T.sj.c.source_id == T.src.c.id).cte()
 
-        time_select = self.__build_core_select(T, [distinct(T.sj.c.time).label('time')])
+        group_selects_and_labels = [self.__build_group_select(T, J, activity_group_id, grouped_names, id_select)
+                                    for activity_group_id in grouped_names]
+
+
+
         for activity_group_id in grouped_names.keys():
-            pass
 
-        # statistic_name, activity_group_id, activity_group_name
-        columns = [(names_by_id[sn_id], ag_id,
-                    s.query(ActivityGroup).filter(ActivityGroup.id == ag_id).one().name if ag_id else None)
-                   for sn_id, ag_id in s.execute(id_select)]
+            log.debug(f'Processing group {activity_group_id}')
 
-        time_select = select([distinct(T.sj.c.time).label('time')]).select_from(T.sj). \
-            where(T.sj.c.statistic_name_id.in_([statistic_name.id for statistic_name in self.__statistic_names]))
-        if self.__start: time_select = time_select.where(T.sj.c.time >= self.__start)
-        if self.__finish: time_select = time_select.where(T.sj.c.time < self.__finish)
-        if self.__activity_journal: time_select = time_select.where(T.sj.c.source_id == self.__activity_journal.id)
-        time_select = time_select.order_by(T.sj.c.time).alias('sub_time')  # order here avoids extra index
+            time_select = select([distinct(id_select.c.time).label('time')]). \
+                select_from(id_select). \
+                where(id_select.c.activity_group_id == activity_group_id). \
+                alias('sub_time')
 
-        def statistic_select(statistic_name, activity_group_id, activity_group_name):
-            statistic_journal_type = J[statistic_name.statistic_journal_type]
-            selects = [statistic_journal_type.c.value, T.sj.c.time]
-            if self.__with_source: selects += [T.sj.c.source_id]
-            query = select(selects). \
-                select_from(T.sj.join(statistic_journal_type)). \
-                where(T.sj.c.statistic_name_id == statistic_name.id). \
-                select_from(T.src). \
-                where(T.src.c.activity_group_id == activity_group_id)
-            # order_by doesn't affect plan but seems to speed up query
-            query = query.order_by(T.sj.c.time).alias('sub_' + statistic_name.name + '_' + activity_group_name)
-            return query, statistic_name.name + ':' + activity_group_name
+            statistic_selects = [self.__build_statistic_query(T, J, statistic_name,
+                                                              statistic_name.name + ':' + activity_group_name)
+                                 for statistic_name, activity_group_name in grouped_names[activity_group_id]]
+            all_selects = [time_select.c.time.label(N.INDEX)] + \
+                          [query.c.value.label(label) for query, label in statistic_selects]
 
-        # statistic_selects = [statistic_select(statistic_name) for statistic_name in self.__statistic_names]
-        statistic_selects = [statistic_select(*column) for column in columns]
-        all_selects = [time_select.c.time.label(N.INDEX)] + \
-                      [query.c.value.label(label) for query, label in statistic_selects]
-        if self.__with_source:
-            all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_selects]
-        source = time_select
-        for query, _ in statistic_selects:
-            source = source.outerjoin(query, time_select.c.time == query.c.time)
-        if self.__with_timespan:
-            all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
-            source = source.outerjoin(T.at,
-                                      and_(T.at.c.start <= time_select.c.time,
-                                           T.at.c.finish > time_select.c.time,
-                                           T.at.c.activity_journal_id == self.__activity_journal.id))
+            if self.__with_source:
+                all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_selects]
+            source = time_select
+            for query, _ in statistic_selects:
+                source = source.outerjoin(query, time_select.c.time == query.c.time)
+            if self.__with_timespan:
+                all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
+                source = source.outerjoin(T.at,
+                                          and_(T.at.c.start <= time_select.c.time,
+                                               T.at.c.finish > time_select.c.time,
+                                               T.at.c.activity_journal_id == self.__activity_journal.id))
+            full_select = select(all_selects).select_from(source)
+            print(full_select)
+            df = pd.read_sql_query(sql=full_select, con=self.__session.connection(), index_col=N.INDEX)
+            print(df)
 
-        return Data(self.__session, select(all_selects).select_from(source), self.__statistic_names)
+            exit()
 
 
 class Names:
@@ -374,7 +409,7 @@ def set_times_from_index(df):
 
 def std_health_statistics(s, freq='1h'):
 
-    from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator, MonitorCalculator
+    from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator
 
     start = s.query(StatisticJournal.time). \
         filter(StatisticJournal.time > local_date_to_time(to_date('1970-01-03'))). \
@@ -451,8 +486,10 @@ if __name__ == '__main__':
 
     # df = std_health_statistics(s)
     with timing('select'):
-        df = std_activity_statistics(s, '2020-05-15', 'road')
-    # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
+        # df = std_activity_statistics(s, '2020-05-15', 'road')
+        # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
+        df = Statistics(s).for_(N.ACTIVE_DISTANCE, owner=ActivityCalculator).by_group()
+
     print(df)
     print(df.describe())
     print(df.columns)
