@@ -152,12 +152,13 @@ class Statistics:
         if self.__start: core_select = core_select.where(T.sj.c.time >= self.__start)
         if self.__finish: core_select = core_select.where(T.sj.c.time < self.__finish)
         if self.__activity_journal: core_select = core_select.where(T.sj.c.source_id == self.__activity_journal.id)
-        return core_select.order_by(T.sj.c.time).alias('sub_time')  # order here avoids extra index
+        return core_select
 
     def by_name(self):
         T = _tables()
         J = _type_to_journal(T)
-        time_select = self.__build_core_select(T, [distinct(T.sj.c.time).label('time')])
+        time_select = self.__build_core_select(T, [distinct(T.sj.c.time).label('time')]). \
+            order_by(T.sj.c.time).alias('sub_time')
 
         def statistic_select(statistic_name):
             statistic_journal_type = J[statistic_name.statistic_journal_type]
@@ -197,6 +198,10 @@ class Statistics:
         grouped_names = defaultdict(list)
         for sn_id, ag_id in s.execute(id_select):
             grouped_names[ag_id].append(names_by_id[sn_id])
+
+        time_select = self.__build_core_select(T, [distinct(T.sj.c.time).label('time')])
+        for activity_group_id in grouped_names.keys():
+            pass
 
         # statistic_name, activity_group_id, activity_group_name
         columns = [(names_by_id[sn_id], ag_id,
@@ -445,7 +450,8 @@ if __name__ == '__main__':
     s = session('-v5')
 
     # df = std_health_statistics(s)
-    df = std_activity_statistics(s, '2020-05-15', 'road')
+    with timing('select'):
+        df = std_activity_statistics(s, '2020-05-15', 'road')
     # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
     print(df)
     print(df.describe())
