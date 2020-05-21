@@ -153,7 +153,7 @@ def search(df, params=Climb()):
 
 def climbs_for_activity(s, ajournal):
 
-    from ..pipeline import ActivityCalculator
+    from ..pipeline.owners import ActivityCalculator
 
     total = s.query(StatisticJournal).join(StatisticName, Source). \
         filter(StatisticName.name == N.TOTAL_CLIMB,

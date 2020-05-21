@@ -123,6 +123,7 @@ class Statistics:
         found_names = set(statistic_name.name for statistic_name in found)
         missing = [statistic_name for statistic_name in statistic_names if not like(statistic_name, found_names)]
         self.__dump_matches(missing)
+        self.__statistic_names += found
         return self
 
     def __iter__(self):
@@ -275,7 +276,7 @@ class Data:
         return self.__with_names_units(self.__copy, names)
 
     def copy_all_with_units(self):
-        return self.__with_names_units(self.__copy, self.__statistic_names.keys())
+        return self.__with_names_units(self.__copy, self.df.columns)
 
     def into(self, df, tolerance, interpolate=False):
         if self:
@@ -315,7 +316,7 @@ def set_times_from_index(df):
 
 def std_health_statistics(s, freq='1h'):
 
-    from ..pipeline import RestHRCalculator, ResponseCalculator, ActivityCalculator, MonitorCalculator
+    from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator, MonitorCalculator
 
     start = s.query(StatisticJournal.time). \
         filter(StatisticJournal.time > local_date_to_time(to_date('1970-01-03'))). \
@@ -325,20 +326,19 @@ def std_health_statistics(s, freq='1h'):
     stats = pd.DataFrame(index=pd.date_range(start=start, end=finish, freq=freq))
     set_times_from_index(stats)
 
-    stats = Statistics(s, activity_group=ActivityGroup.ALL). \
+    stats = Statistics(s). \
         like(N.DEFAULT_ANY, owner=ResponseCalculator).by_name(). \
         drop_prefix(N.DEFAULT + '_'). \
         into(stats, tolerance='30m')
 
-    stats = Statistics(s, activity_group=ActivityGroup.ALL). \
+    stats = Statistics(s,). \
         for_(N.REST_HR, owner=RestHRCalculator). \
         like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator). \
         by_name().rename_all_with_units().into(stats, tolerance='30m')
 
     stats = Statistics(s).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
-        by_qualified(). \
+        by_name(). \
         rename_all_with_units(). \
-        coallesce(). \
         copy({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1 / 3600). \
         into(stats, tolerance='30m')
 
@@ -359,7 +359,7 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 
     stats = Statistics(s).for_(N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
                                N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE,
-                               owner=SegmentReader, activity_group=activity_journal.activity_group). \
+                               owner=SegmentReader). \
         from_(activity_journal=activity_journal, with_timespan=True).by_name(). \
         rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
         copy({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
@@ -367,19 +367,16 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
         copy({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW). \
         with_times().df
 
-    stats = Statistics(s).for_(N.ELEVATION, N.GRADE,
-                               owner=ElevationCalculator, activity_group=activity_journal.activity_group). \
+    stats = Statistics(s).for_(N.ELEVATION, N.GRADE, owner=ElevationCalculator). \
         from_(activity_journal=activity_journal).by_name(). \
         rename_all_with_units().into(stats, tolerance='1s')
 
     hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
-    stats = Statistics(s).for_(N.HR_ZONE, hr_impulse_10,
-                               owner=ImpulseCalculator, activity_group=activity_journal.activity_group). \
+    stats = Statistics(s).for_(N.HR_ZONE, hr_impulse_10, owner=ImpulseCalculator). \
         from_(activity_journal=activity_journal).by_name().drop_prefix(N.DEFAULT + '_'). \
         into(stats, tolerance='10s', interpolate=True)
 
-    stats = Statistics(s).for_(N.POWER_ESTIMATE,
-                               owner=PowerCalculator, activity_group=activity_journal.activity_group). \
+    stats = Statistics(s).for_(N.POWER_ESTIMATE, owner=PowerCalculator). \
         from_(activity_journal=activity_journal).by_name(). \
         rename_all_with_units(). \
         copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
@@ -390,10 +387,13 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 
 if __name__ == '__main__':
 
+    from ..pipeline.owners import ActivityCalculator
+
     s = session('-v5')
 
-    df = std_health_statistics(s)
-
+    # df = std_health_statistics(s)
+    # df = std_activity_statistics(s, '2020-05-15', 'road')
+    df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_name().df
     print(df)
     print(df.describe())
     print(df.columns)

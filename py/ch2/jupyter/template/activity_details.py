@@ -10,7 +10,7 @@ from ch2.data import *
 from ch2.jupyter.decorator import template
 from ch2.lib import *
 from ch2.names import N, like
-from ch2.pipeline import *
+from ch2.pipeline.owners import *
 
 
 @template
@@ -35,9 +35,9 @@ def activity_details(local_time, activity_group):
     activity = std_activity_statistics(s, activity_journal=local_time, activity_group=activity_group)
     health = std_health_statistics(s)
     hr_zones = hr_zones_from_database(s, local_time, activity_group)
-    climbs = Statistics(s, activity_group).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
+    climbs = Statistics(s).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
         like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal=local_time). \
-        by_name().rename_all_with_units().df
+        by_name().copy_all_with_units().df
 
     f'''
     ## Activity Plots

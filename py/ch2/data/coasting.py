@@ -32,7 +32,7 @@ class CoastingBookmark:
 
     def __find(self, s, kit, min_time, max_cadence, min_speed, group):
 
-        from ..pipeline import ActivityReader, SegmentReader
+        from ..pipeline.owners import ActivityReader, SegmentReader
 
         group = ActivityGroup.from_name(s, group)
         cadence_statistic = StatisticName.from_name(s, 'Cadence', SegmentReader, group)
