@@ -1,13 +1,4 @@
 
-'''
-new interface for reading from the database.
-
-try to have a 'fluent interface' that allows progressive refinement through the following stages:
-* specifying the statistics to retrieve
-* retrieving the dataframe
-* modifying the dataframe
-'''
-
 from logging import getLogger
 
 import numpy as np
@@ -32,6 +23,13 @@ class Statistics:
 
     def __init__(self, s, start=None, finish=None, sources=None, with_timespan=False, with_source=False,
                  activity_journal=None, activity_group=None, warn_over=1):
+        '''
+        Specify any general constraints when constructing the object, then request particular statistics
+        using by_name and by_group.
+
+        The final dataframe can be retrieved directly via df or, via with_, additional processing can
+        be made to rename columns, add statistics, etc.
+        '''
         self.__s = s
         self.__start = start
         self.__finish = finish
@@ -234,6 +232,9 @@ class Data:
         return self
 
     def coallesce(self, *names, delete=False):
+        '''
+        Merge columns named with groups.
+        '''
         if not names:
             names = set(column.split(':')[0] for column in self.df.columns if ':' in column)
         log.debug(f'Coallescing {names}')

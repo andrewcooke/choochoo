@@ -85,13 +85,17 @@ class ActivityDelegate(ActivityJournalDelegate):
     def __read_activity_topics(self, s, ajournal, date):
         tjournal = ActivityTopicJournal.get_or_add(s, ajournal.file_hash, ajournal.activity_group)
         cache = tjournal.cache(s)
-        # special case parentless fields
+        # special case root
         for field in s.query(ActivityTopicField). \
-                filter(ActivityTopicField.activity_topic == None). \
+                join(ActivityTopic). \
+                filter(ActivityTopic.name == ActivityTopic.ROOT,
+                       or_(ActivityTopic.activity_group_id == None,
+                           ActivityTopic.activity_group_id == ajournal.activity_group.id)). \
                 order_by(ActivityTopicField.sort).all():
             yield from_field(field, cache[field])
         for topic in s.query(ActivityTopic). \
                 filter(ActivityTopic.parent == None,
+                       ActivityTopic.name != ActivityTopic.ROOT,
                        or_(ActivityTopic.activity_group_id == None,
                            ActivityTopic.activity_group_id == ajournal.activity_group.id)). \
                 order_by(ActivityTopic.sort).all():
