@@ -4,19 +4,19 @@ from logging import getLogger
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import desc, and_, or_, distinct, func, select
+from sqlalchemy import desc, and_, or_, func, select
 from sqlalchemy.sql.functions import count
 
 from .utils import AbortImport, AbortImportButMarkScanned, MultiProcFitReader
 from ..loader import StatisticJournalLoader
 from ... import FatalException
-from ...commands.args import MONITOR, mm, FORCE, DEFAULT
+from ...commands.args import MONITOR, mm, FORCE
 from ...data.frame import _tables
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
 from ...lib.date import time_to_local_date, format_time
 from ...names import Names, Titles, Units
-from ...sql.database import StatisticJournalType, ActivityGroup
+from ...sql.database import StatisticJournalType
 from ...sql.tables.monitor import MonitorJournal
 from ...sql.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
 from ...sql.utils import add
@@ -92,29 +92,6 @@ STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 class MonitorReader(MultiProcFitReader):
 
-    # todo - steps disabled
-
-    def __init__(self, *args, sport_to_activity=None, **kargs):
-        from ...commands.upload import MONITOR
-        self.sport_to_activity = self._assert('sport_to_activity', sport_to_activity)
-        super().__init__(*args, sub_dir=MONITOR, **kargs)
-
-    def _startup(self, s):
-        self.sport_to_activity_group = {label: group for label, group in self._expand_activity_groups(s)}
-        super()._startup(s)
-
-    def _expand_activity_groups(self, s):
-        # extract default values from config that supports more complex activity loading
-        for key, value in self.sport_to_activity.items():
-            while value and not isinstance(value, str):
-                try:
-                    value = value[DEFAULT]
-                except KeyError:
-                    log.warning(f'Missing default in sport_to_activity for {key}')
-                    value = None
-            if value:
-                yield key, ActivityGroup.from_name(s, value)
-
     def _get_loader(self, s, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
@@ -179,7 +156,8 @@ class MonitorReader(MultiProcFitReader):
         log.info(f'Importing monitor data from {file_scan} '
                  f'for {format_time(first_timestamp)} - {format_time(last_timestamp)}')
         self._delete_previous(s, first_timestamp, last_timestamp, file_scan)
-        mjournal = add(s, MonitorJournal(start=first_timestamp, file_hash=file_scan.file_hash, finish=last_timestamp))
+        mjournal = add(s, MonitorJournal(start=first_timestamp, file_hash=file_scan.file_hash,
+                                         finish=last_timestamp))
 
         return mjournal, (first_timestamp, last_timestamp, mjournal, records)
 
@@ -190,41 +168,36 @@ class MonitorReader(MultiProcFitReader):
                 loader.add(Titles.HEART_RATE, Units.BPM, None, mjournal,
                            record.data[HEART_RATE_ATTR][0][0], record.timestamp, StatisticJournalInteger,
                            description='''The instantaneous heart rate.''')
-            # if STEPS_ATTR in record.data:
-            #     for (sport, steps) in zip(record.data[ACTIVITY_TYPE_ATTR][0], record.data[STEPS_ATTR][0]):
-            #         try:
-            #             loader.add(Titles.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
-            #                        mjournal, steps,
-            #                        record.timestamp, StatisticJournalInteger,
-            #                        description='''The number of steps in a day to this point in time.''')
-            #         except KeyError:
-            #             raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
+            if STEPS_ATTR in record.data:
+                # we ignore activity type here (used to store it when activity group and statistic name
+                # were mixed together, but never used it anywhere)
+                for steps in record.data[STEPS_ATTR][0]:
+                    try:
+                        loader.add(Titles.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
+                                   mjournal, steps,
+                                   record.timestamp, StatisticJournalInteger,
+                                   description='''The number of steps in a day to this point in time.''')
+                    except KeyError:
+                        raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
 
-    # def _shutdown(self, s):
-    #     super()._shutdown(s)
-    #     if not self.worker:
-    #         for activity_group_id in self._step_activity_group_ids(s):
-    #             df = self._read_diff(s, activity_group_id)
-    #             df = self._calculate_diff(df)
-    #             self._write_diff(s, df, activity_group_id)
+    def _shutdown(self, s):
+        super()._shutdown(s)
+        if not self.worker:
+            df = self._read_diff(s)
+            df = self._calculate_diff(df)
+            self._write_diff(s, df)
 
-    def _step_activity_group_ids(self, s):
-        return [row[0] for row in s.query(distinct(ActivityGroup.id)).
-            join(StatisticName).
-            filter(StatisticName.name == Names.CUMULATIVE_STEPS,
-                   StatisticName.owner == self.owner_out).all()]
-
-    def _read_diff(self, s, activity_group_id):
+    def _read_diff(self, s):
         t = _tables()
         qs = select([t.sj.c.time.label("time"), t.sji.c.value.label("steps")]). \
             select_from(t.sj.join(t.sn).join(t.sji)). \
-            where(and_(t.sn.c.name == Names.STEPS, t.sn.c.activity_group_id == activity_group_id,
+            where(and_(t.sn.c.name == Names.STEPS,
                        t.sn.c.owner == self.owner_out)).alias("steps")
         q = select([t.sj.c.time.label(Names.TIME), t.sj.c.source_id.label(Names.SOURCE),
                     t.sji.c.value.label(Names.CUMULATIVE_STEPS),
                     qs.c.steps.label(Names.STEPS)]). \
             select_from(t.sj.join(t.sn).join(t.sji).outerjoin(qs, t.sj.c.time == qs.c.time)). \
-            where(and_(t.sn.c.name == Names.CUMULATIVE_STEPS, t.sn.c.activity_group_id == activity_group_id,
+            where(and_(t.sn.c.name == Names.CUMULATIVE_STEPS,
                        t.sn.c.owner == self.owner_out)). \
             order_by(t.sj.c.time)
         # log.debug(q)
@@ -237,16 +210,15 @@ class MonitorReader(MultiProcFitReader):
         df.loc[df[NEW_STEPS].isna(), NEW_STEPS] = df[Names.CUMULATIVE_STEPS]
         return df
 
-    def _write_diff(self, s, df, activity_group_id):
-        activity_group = s.query(ActivityGroup).filter(ActivityGroup.id == activity_group_id).one()
-        steps = StatisticName.add_if_missing(s, Titles.STEPS, StatisticJournalType.INTEGER, Units.STEPS_UNITS, None,
-                                             self.owner_out, activity_group, description=STEPS_DESCRIPTION)
+    def _write_diff(self, s, df):
+        steps = StatisticName.add_if_missing(s, Titles.STEPS, StatisticJournalType.INTEGER, Units.STEPS_UNITS,
+                                             None, self.owner_out, description=STEPS_DESCRIPTION)
         times = df.loc[(df[NEW_STEPS] != df[Names.STEPS]) & ~df[Names.STEPS].isna()].index.astype(np.int64) / 1e9
         if len(times):
             n = s.query(func.count(StatisticJournal.id)). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).scalar()
-            log.warning(f'Deleting {n} {Names.STEPS}/{activity_group} entries')
+            log.warning(f'Deleting {n} {Names.STEPS} entries')
             s.query(StatisticJournal.id). \
                 filter(StatisticJournal.time.in_(times),
                        StatisticJournal.statistic_name == steps).delete(synchronize_session=False)

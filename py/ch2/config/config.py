@@ -100,8 +100,6 @@ class Config:
     def _sport_to_activity(self):
         # sport_to_activity maps from the FIT sport field to the activity defined above.
         # more complex mapping is supported using kits (see acooke configuration),
-        # but the top level must be a FIT field value for it to be recognized for monitor data
-        # (which uses defaults only).
         return {Sports.SPORT_CYCLING: BIKE,
                 Sports.SPORT_RUNNING: RUN,
                 Sports.SPORT_SWIMMING: SWIM,
@@ -194,8 +192,7 @@ your FF-model parameters (fitness and fatigue).
         return [AchievementDelegate, ActivityDelegate, SegmentDelegate, NearbyDelegate, JupyterDelegate]
 
     def _load_monitor_pipeline(self, s, c):
-        sport_to_activity = self._sport_to_activity()
-        add_monitor(s, MonitorReader, c, sport_to_activity=sport_to_activity)
+        add_monitor(s, MonitorReader, c)
 
     def _load_constants(self, s):
         add_constant(s, SRTM1_DIR_CNAME,

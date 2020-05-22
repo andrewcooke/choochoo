@@ -191,7 +191,7 @@ class Sort(TypeDecorator):
 
 
 def simple_name(name, none=True, strip=True):
-    # allows % and ? for LIKE and templates
+    # allows % and ? for LIKE and templates (although sqlite uses _ instead of ?)
     # also allows ':' so that we don't mess up composites
     from ch2.names import POW_2, POW_M1
     if name is None and none:

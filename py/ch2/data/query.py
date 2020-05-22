@@ -6,7 +6,6 @@ import pandas as pd
 from sqlalchemy import asc, desc, distinct
 from sqlalchemy.orm import aliased
 
-from ch2.sql.types import short_cls
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
 from ..lib.date import YMD
@@ -15,6 +14,7 @@ from ..lib.utils import timing
 from ..names import Names as N, like, MED_WINDOW
 from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
+from ..sql.types import short_cls
 
 log = getLogger(__name__)
 
@@ -53,20 +53,23 @@ class Statistics:
 
     def __name_and_type(self, name, owner, like):
         try:
+            owner_name = short_cls(owner) if not isinstance(owner, str) else owner
             q = self.__s.query(StatisticName).filter(StatisticName.owner == owner)
             if like:
                 statistic_names = q.filter(StatisticName.name.ilike(name)).all()
             else:
                 statistic_names = [q.filter(StatisticName.name == name).one()]
+            found = 0
             for statistic_name in statistic_names:
                 self.__save_name(statistic_name)
                 type_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+                found += 1
                 yield statistic_name, type_class
+            if not found:
+                log.warning(f'Did not match {owner_name}.{name} (like={like})')
         except Exception:
             log_current_exception(traceback=False)
-            if not isinstance(owner, str):
-                owner = short_cls(owner)
-            log.warning(f'Could not match {owner}.{name} (like={like})')
+            log.warning(f'Could not match {owner_name}.{name} (like={like})')
 
     def __columns(self, type_class, label):
         columns = [type_class.time.label(N.INDEX), type_class.value.label(label)]
@@ -259,7 +262,7 @@ def set_times_from_index(df):
 
 def std_health_statistics(s, freq='1h'):
 
-    from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator
+    from ..pipeline.owners import RestHRCalculator, ResponseCalculator, ActivityCalculator, MonitorCalculator
 
     start = s.query(StatisticJournal.time). \
         filter(StatisticJournal.time > local_date_to_time(to_date('1970-01-03'))). \
@@ -275,8 +278,9 @@ def std_health_statistics(s, freq='1h'):
 
     stats = Statistics(s). \
         by_name(RestHRCalculator, N.REST_HR). \
-        by_name(ActivityCalculator, N._delta(N.DEFAULT_ANY)).with_. \
-        rename_with_units().into(stats, tolerance='30m')
+        by_name(MonitorCalculator, N.DAILY_STEPS). \
+        by_name(ActivityCalculator, N._delta(N.DEFAULT_ANY), like=True).with_. \
+        rename_with_units(N.REST_HR).into(stats, tolerance='30m')
 
     stats = Statistics(s).\
         by_group(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE).with_. \
@@ -329,9 +333,9 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 
 if __name__ == '__main__':
 
-    from ..pipeline.owners import ActivityCalculator, SegmentReader
+    from ..pipeline.owners import ActivityCalculator, SegmentReader, MonitorCalculator
 
-    s = session('-v4')
+    s = session('-v5')
 
     with timing('select'):
         df = std_health_statistics(s)
@@ -347,5 +351,4 @@ if __name__ == '__main__':
     print(df)
     print(df.describe())
     print(df.columns)
-    print(df[N.ACTIVE_DISTANCE_KM].describe())
-    print(df[N.ACTIVE_DISTANCE + ':mtb'].describe())
+    print(df[N.DAILY_STEPS].describe())
