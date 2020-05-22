@@ -8,307 +8,145 @@ try to have a 'fluent interface' that allows progressive refinement through the 
 * modifying the dataframe
 '''
 
-from collections import Counter, defaultdict
 from logging import getLogger
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct
+from sqlalchemy import asc, desc, distinct
 
-from ch2.sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
+from ch2.sql.types import short_cls
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
-from ..lib.data import kargs_to_attr
 from ..lib.date import YMD
+from ..lib.log import log_current_exception
 from ..lib.utils import timing
 from ..names import Names as N, like, MED_WINDOW
-from ..sql import StatisticName, ActivityGroup, StatisticJournal, StatisticJournalInteger, StatisticJournalFloat, \
-    StatisticJournalText, Interval, ActivityTimespan, ActivityJournal, Composite, CompositeComponent, Source, \
-    StatisticJournalType
-from ..sql.types import simple_name
+from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source
+from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 
 log = getLogger(__name__)
-
-# todo - isn't this defined elsewhere?
-
-def _tables():
-    return kargs_to_attr(sj=inspect(StatisticJournal).local_table,
-                         sn=inspect(StatisticName).local_table,
-                         sji=inspect(StatisticJournalInteger).local_table,
-                         sjf=inspect(StatisticJournalFloat).local_table,
-                         sjt=inspect(StatisticJournalText).local_table,
-                         inv=inspect(Interval).local_table,
-                         at=inspect(ActivityTimespan).local_table,
-                         ag=inspect(ActivityGroup).local_table,
-                         aj=inspect(ActivityJournal).local_table,
-                         cmp=inspect(Composite).local_table,
-                         cc=inspect(CompositeComponent).local_table,
-                         src=inspect(Source).local_table)
-
-
-def _type_to_journal(t):
-    return {StatisticJournalType.INTEGER: t.sji,
-            StatisticJournalType.FLOAT: t.sjf,
-            StatisticJournalType.TEXT: t.sjt}
-
-
-class _Qualified:
-
-    def format(self, statistic_name):
-        if statistic_name.activity_group.name == ActivityGroup.ALL:
-            return statistic_name.name
-        else:
-            return statistic_name.name + ':' + statistic_name.activity_group.name
 
 
 class Statistics:
 
-    '''
-    This is the main interface for retrieving statistics from the database.
-    The code is full of examples that provide better documentation than I could write here.
-    '''
-
-    def __init__(self, s):
-        self.__session = s
-        self.__statistic_names = []
-        self.__start = None
-        self.__finish = None
-        self.__activity_journal = None
-        self.__with_timespan = False
-        self.__with_source = False
-
-    def __check(self, statistic_names, owner):
-        if not (statistic_names or owner):
-            raise Exception('Provide at least one constraint')
-        if not owner: log.warning('Querying without owner')
-
-    def for_(self, *statistic_names, owner=None):
-        log.debug(f'For {", ".join(statistic_names)}; {owner}')
-        self.__check(statistic_names, owner)
-        q = self.__session.query(StatisticName)
-        if statistic_names:
-            q = q.filter(StatisticName.name.in_(statistic_names))
-        if owner:
-            q = q.filter(StatisticName.owner == owner)
-        found = q.all()
-        found_names = set(statistic_name.name for statistic_name in found)
-        requested_names = set(statistic_names)
-        if found_names == requested_names:
-            log.debug(f'Appending {len(found)} names ({len(found_names)} distinct) for '
-                      f'{len(statistic_names)} requested')
-        else:
-            log.warning(f'Did not match all names ({len(found)} found for {len(requested_names)} requests)')
-            self.__dump_matches(requested_names.difference(found_names))
-        self.__statistic_names += found
-        return self
-
-    def __dump_matches(self, missing):
-        for name in missing:
-            log.debug(f'Request {name}:')
-            q = self.__session.query(StatisticName).filter(StatisticName.name.like(name))
-            for statistic_name in q.all():
-                log.debug(f'  {statistic_name.name} owner {statistic_name.owner}')
-            if not q.count():
-                log.debug(f'  does not match and owner or activity group')
-
-    def like(self, *statistic_names, owner=None):
-        log.debug(f'Like {", ".join(statistic_names)}; {owner}')
-        self.__check(statistic_names, owner)
-        q = self.__session.query(StatisticName)
-        if statistic_names:
-            q = q.filter(or_(*[StatisticName.name.ilike(statistic_name) for statistic_name in statistic_names]))
-        if owner:
-            q = q.filter(StatisticName.owner.ilike(owner))
-        found = q.all()
-        if found:
-            log.debug(f'Appending {len(found)} statistics names ({len(statistic_names)} patterns)')
-        else:
-            log.warning(f'Appending no statistic names ({", ".join(statistic_names)}; {owner})')
-        found_names = set(statistic_name.name for statistic_name in found)
-        missing = [statistic_name for statistic_name in statistic_names if not like(statistic_name, found_names)]
-        self.__dump_matches(missing)
-        self.__statistic_names += found
-        return self
-
-    def __iter__(self):
-        return iter(self.__statistic_names)
-
-    def __bool__(self):
-        return bool(self.__statistic_names)
-
-    def from_(self, start=None, finish=None, activity_journal=None, activity_group=None,
-              with_timespan=False, with_source=False):
+    def __init__(self, s, start=None, finish=None, sources=None, with_timespan=False, with_source=False,
+                 warn_over=1):
+        self.__s = s
         self.__start = start
         self.__finish = finish
-        if activity_journal:
-            if not isinstance(activity_journal, ActivityJournal):
-                activity_journal = ActivityJournal.at(self.__session, activity_journal, activity_group=activity_group)
-            self.__activity_journal = activity_journal
-        if with_timespan:
-            if not self.__activity_journal: raise Exception('Timespan only available with activity journal')
+        self.__sources = sources if sources else []
         self.__with_timespan = with_timespan
         self.__with_source = with_source
+        self.__warn_over = warn_over
+        self.__statistic_names = {}
+        self.__df = None
+
+    def __save_name(self, statistic_name):
+        if statistic_name.name in self.__statistic_names:
+            if statistic_name != self.__statistic_names[statistic_name.name]:
+                raise Exception(f'Ambiguous name {statistic_name.name}')
+        self.__statistic_names[statistic_name.name] = statistic_name
+
+    def __name_and_type(self, name, owner, like):
+        try:
+            q = self.__s.query(StatisticName).filter(StatisticName.owner == owner)
+            if like:
+                statistic_names = q.filter(StatisticName.name.ilike(name)).all()
+            else:
+                statistic_names = [q.filter(StatisticName.name == name).one()]
+            for statistic_name in statistic_names:
+                self.__save_name(statistic_name)
+                type_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+                yield statistic_name, type_class
+        except Exception:
+            log_current_exception(traceback=False)
+            if not isinstance(owner, str):
+                owner = short_cls(owner)
+            log.warning(f'Could not match {owner}.{name} (like={like})')
+
+    def __columns(self, type_class, label):
+        columns = [type_class.time.label(N.INDEX), type_class.value.label(label)]
+        if self.__with_source:
+            columns += [type_class.source_id.label(N._src(label))]
+        return columns
+
+    def by_name(self, owner, *names, like=False):
+        for name in names:
+            for statistic_name, type_class in self.__name_and_type(name, owner, like):
+                label = statistic_name.name
+                log.info(f'Retrieving {label}')
+                q = self.__s.query(*self.__columns(type_class, label)). \
+                    filter(type_class.statistic_name_id == statistic_name.id)
+                q = self.__constrain_journal(q)
+                with timing(f'{label}\n{q}', self.__warn_over):
+                    df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
+                self.__merge(df)
         return self
 
-    def __build_core_query(self, T, columns):
-        core_select = select(columns).select_from(T.sj). \
-            where(T.sj.c.statistic_name_id.in_([statistic_name.id for statistic_name in self.__statistic_names]))
-        if self.__start: core_select = core_select.where(T.sj.c.time >= self.__start)
-        if self.__finish: core_select = core_select.where(T.sj.c.time < self.__finish)
-        if self.__activity_journal: core_select = core_select.where(T.sj.c.source_id == self.__activity_journal.id)
-        return core_select
+    def by_group(self, owner, *names, like=False):
+        for name in names:
+            for statistic_name, type_class in self.__name_and_type(name, owner, like):
+                q_group_ids = self.__s.query(distinct(Source.activity_group_id)). \
+                    join(StatisticJournal, StatisticJournal.source_id == Source.id). \
+                    filter(StatisticJournal.statistic_name_id == statistic_name.id)
+                q_group_ids = self.__constrain_journal(q_group_ids)
+                with timing(f'group idss\n{q_group_ids}', self.__warn_over):
+                    activity_group_ids = q_group_ids.all()
+                for activity_group_id in activity_group_ids:
+                    if activity_group_id:
+                        activity_group = self.__s.query(ActivityGroup). \
+                            filter(ActivityGroup.id == activity_group_id).one()
+                        label = statistic_name.name + ':' + activity_group.name
+                    else:
+                        label = statistic_name.name
+                    log.info(f'Retrieving {label}')
+                    q = self.__s.query(*self.__columns(type_class, label)). \
+                        filter(type_class.statistic_name_id == statistic_name.id). \
+                        join(Source, type_class.source_id == Source.id). \
+                        filter(Source.activity_group_id == activity_group_id)
+                    q = self.__constrain_journal(q)
+                    with timing(f'{label}\n{q}', self.__warn_over):
+                        df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
+                    self.__merge(df)
+        return self
 
-    def __build_statistic_query(self, T, J, statistic_name, label):
-        statistic_journal_type = J[statistic_name.statistic_journal_type]
-        selects = [statistic_journal_type.c.value, T.sj.c.time]
-        if self.__with_source: selects += [T.sj.c.source_id]
-        query = select(selects). \
-            select_from(T.sj.join(statistic_journal_type)). \
-            where(T.sj.c.statistic_name_id == statistic_name.id)
-        # order_by doesn't affect plan but seems to speed up query
-        query = query.order_by(T.sj.c.time).alias('sub_' + label)
-        return query, label
+    def __constrain_journal(self, q):
+        if self.__start: q = q.filter(StatisticJournal.time >= self.__start)
+        if self.__finish: q = q.filter(StatisticJournal.time < self.__finish)
+        for source in self.__sources: q = q.filter(StatisticJournal.source == source)
+        return q
 
-    def by_name(self):
-        T = _tables()
-        J = _type_to_journal(T)
-
-        time_query = self.__build_core_query(T, [distinct(T.sj.c.time).label('time')]). \
-            order_by(T.sj.c.time).alias('sub_time')
-        statistic_queries = [self.__build_statistic_query(T, J, statistic_name, statistic_name.name)
-                             for statistic_name in self.__statistic_names]
-
-        all_selects = [time_query.c.time.label(N.INDEX)] + \
-                      [query.c.value.label(label) for query, label in statistic_queries]
-        if self.__with_source:
-            all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_queries]
-
-        all_froms = time_query
-        for query, _ in statistic_queries:
-            all_froms = all_froms.outerjoin(query, time_query.c.time == query.c.time)
-        if self.__with_timespan:
-            all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
-            all_froms = all_froms.outerjoin(T.at,
-                                            and_(T.at.c.start <= time_query.c.time,
-                                                 T.at.c.finish > time_query.c.time,
-                                                 T.at.c.activity_journal_id == self.__activity_journal.id))
-
-        return Data(self.__session, select(all_selects).select_from(all_froms), self.__statistic_names)
-
-    def __build_group_select(self, T, J, activity_group_id, grouped_names, id_select):
-
-        log.debug(f'Processing group {activity_group_id}')
-
-        time_query = select([distinct(id_select.c.time).label('time')]). \
-            select_from(id_select). \
-            where(id_select.c.activity_group_id == activity_group_id). \
-            alias('sub_time')
-        statistic_queries = [self.__build_statistic_query(T, J, statistic_name,
-                                                          statistic_name.name + ':' + activity_group_name)
-                             for statistic_name, activity_group_name in grouped_names[activity_group_id]]
-
-        all_selects = [time_query.c.time.label(N.INDEX)] + \
-                      [query.c.value.label(label) for query, label in statistic_queries]
-        if self.__with_source:
-            all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_queries]
-
-        all_froms = time_query
-        for query, _ in statistic_queries:
-            all_froms = all_froms.outerjoin(query, time_query.c.time == query.c.time)
-        if self.__with_timespan:
-            all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
-        all_froms = all_froms.outerjoin(T.at,
-                                        and_(T.at.c.start <= time_query.c.time,
-                                             T.at.c.finish > time_query.c.time,
-                                             T.at.c.activity_journal_id == self.__activity_journal.id))
-
-        group_query = select(all_selects).select_from(all_froms)
-        return group_query, [label for _, label in statistic_queries]
-
-    def __get_grouped_names(self, T):
-        names_by_id = {statistic_name.id: statistic_name for statistic_name in self.__statistic_names}
-        group_select = self.__build_core_query(T, [T.sj.c.statistic_name_id, T.ag.c.id, T.ag.c.name]). \
-            distinct(). \
-            select_from(T.src).where(T.sj.c.source_id == T.src.c.id). \
-            select_from(T.ag).where(T.src.c.activity_group_id == T.ag.c.id)
-        grouped_names = defaultdict(list)
-        for row in s.execute(group_select):
-            grouped_names[row[1]].append((names_by_id[row[0]], row[2]))
-        log.debug(f'Grouped names: {grouped_names}')
-        return grouped_names
-
-    def by_group(self):
-        T = _tables()
-        J = _type_to_journal(T)
-        grouped_names = self.__get_grouped_names(T)
-
-        id_select = self.__build_core_query(T, [T.sj.c.time, T.sj.c.id, T.src.c.activity_group_id]). \
-            select_from(T.src).where(T.sj.c.source_id == T.src.c.id).cte()
-
-        group_selects_and_labels = [self.__build_group_select(T, J, activity_group_id, grouped_names, id_select)
-                                    for activity_group_id in grouped_names]
-
-
-
-        for activity_group_id in grouped_names.keys():
-
-            log.debug(f'Processing group {activity_group_id}')
-
-            time_select = select([distinct(id_select.c.time).label('time')]). \
-                select_from(id_select). \
-                where(id_select.c.activity_group_id == activity_group_id). \
-                alias('sub_time')
-
-            statistic_selects = [self.__build_statistic_query(T, J, statistic_name,
-                                                              statistic_name.name + ':' + activity_group_name)
-                                 for statistic_name, activity_group_name in grouped_names[activity_group_id]]
-            all_selects = [time_select.c.time.label(N.INDEX)] + \
-                          [query.c.value.label(label) for query, label in statistic_selects]
-
-            if self.__with_source:
-                all_selects += [query.c.source_id.label(N._src(label)) for query, label in statistic_selects]
-            source = time_select
-            for query, _ in statistic_selects:
-                source = source.outerjoin(query, time_select.c.time == query.c.time)
-            if self.__with_timespan:
-                all_selects += [T.at.c.id.label(N.TIMESPAN_ID)]
-                source = source.outerjoin(T.at,
-                                          and_(T.at.c.start <= time_select.c.time,
-                                               T.at.c.finish > time_select.c.time,
-                                               T.at.c.activity_journal_id == self.__activity_journal.id))
-            full_select = select(all_selects).select_from(source)
-            print(full_select)
-            df = pd.read_sql_query(sql=full_select, con=self.__session.connection(), index_col=N.INDEX)
-            print(df)
-
-            exit()
-
-
-class Names:
-
-    def __init__(self, statistic_names):
-        self.__by_qualified_name = {statistic_name.qualified_name: statistic_name
-                                    for statistic_name in statistic_names}
-        counts = Counter(statistic_name.name for statistic_name in statistic_names)
-        self.__by_name = {statistic_name.name: statistic_name
-                          for statistic_name in statistic_names
-                          if counts[statistic_name.name] == 1}
-
-    def __getitem__(self, name):
-        if ':' in name:
-            return self.__by_qualified_name[name]
-        elif name in self.__by_name:
-            return self.__by_name[name]
+    def __merge(self, df):
+        if self.__df is None:
+            self.__df = df
         else:
-            raise Exception(f'{name} is not unique (coallesce after adding units)')
+            with timing(f'merge {df.columns}', self.__warn_over):
+                self.__df = self.__df.join(df, how='outer')
+
+    def __add_timespan(self):
+        self.__df[N.TIMESPAN_ID] = np.nan
+        for id, start, finish in self.__s.query(ActivityTimespan.id,
+                                                ActivityTimespan.start, ActivityTimespan.finish). \
+                filter(ActivityTimespan.activity_journal_id.in_([source.id for source in self.__sources])):
+            self.__df.loc[start:finish, [N.TIMESPAN_ID]] = id
+
+    @property
+    def df(self):
+        if self.__with_timespan:
+            self.__add_timespan()
+            self.__with_timespan = False
+        return self.__df
+
+    @property
+    def with_(self):
+        return Data(self.df, self.__statistic_names)
 
 
 class Data:
 
-    def __init__(self, session, query, statistic_names):
-        with timing('query'):
-            self.df = pd.read_sql_query(sql=query, con=session.connection(), index_col=N.INDEX)
-        self.__statistic_names = Names(statistic_names)
+    def __init__(self, df, statistic_names):
+        self.df = df
+        self.__statistic_names = statistic_names
         log.debug(f'Columns: {", ".join(self.df.columns)}')
 
     def __bool__(self):
@@ -351,27 +189,45 @@ class Data:
 
     def __with_names_units(self, op, names):
         for name in names:
-            statistic_name = self.__statistic_names[simple_name(name)]
-            if ':' in name:
-                a, b = name.split(':', 1)
-                new_name = N._slash(a, statistic_name.units) + ':' + b
-            else:
-                new_name = N._slash(name, statistic_name.units)
-            if name == statistic_name.name: new_name = simple_name(new_name)
-            op(name, new_name)
+            statistic_name = self.__statistic_names[name]
+            for column in self.__columns_named(name):
+                if ':' in column:
+                    a, b = column.split(':', 1)
+                    new_name = N._slash(a, statistic_name.units) + ':' + b
+                else:
+                    new_name = N._slash(name, statistic_name.units)
+                op(name, new_name)
         return self
+
+    def __columns_named(self, name):
+        for column in self.df.columns:
+            if ':' in column:
+                if name == column.split(':')[0]:
+                    yield column
+            else:
+                if name == column:
+                    yield column
+
+    def __all_names(self):
+        names = set()
+        for column in self.df.columns:
+            if ':' in column:
+                names.add(column.split(':')[0])
+            else:
+                names.add(column)
+        return names
 
     def rename_with_units(self, *names):
         return self.__with_names_units(self.__rename, names)
 
     def rename_all_with_units(self):
-        return self.__with_names_units(self.__rename, self.df.columns)
+        return self.__with_names_units(self.__rename, self.__all_names())
 
     def copy_with_units(self, *names):
         return self.__with_names_units(self.__copy, names)
 
     def copy_all_with_units(self):
-        return self.__with_names_units(self.__copy, self.df.columns)
+        return self.__with_names_units(self.__copy, self.__all_names())
 
     def into(self, df, tolerance, interpolate=False):
         if self:
@@ -382,7 +238,7 @@ class Data:
         else:
             return df
 
-    def with_times(self):
+    def add_times(self):
         set_times_from_index(self.df)
         return self
 
@@ -422,18 +278,17 @@ def std_health_statistics(s, freq='1h'):
     set_times_from_index(stats)
 
     stats = Statistics(s). \
-        like(N.DEFAULT_ANY, owner=ResponseCalculator).by_name(). \
-        drop_prefix(N.DEFAULT + '_'). \
-        into(stats, tolerance='30m')
+        by_name(ResponseCalculator, N.DEFAULT_ANY, like=True). \
+        with_.drop_prefix(N.DEFAULT + '_').into(stats, tolerance='30m')
 
-    stats = Statistics(s,). \
-        for_(N.REST_HR, owner=RestHRCalculator). \
-        like(N._delta(N.DEFAULT_ANY), owner=ActivityCalculator). \
-        by_name().rename_all_with_units().into(stats, tolerance='30m')
+    stats = Statistics(s). \
+        by_name(RestHRCalculator, N.REST_HR). \
+        by_name(ActivityCalculator, N._delta(N.DEFAULT_ANY)). \
+        with_.rename_all_with_units().into(stats, tolerance='30m')
 
-    stats = Statistics(s).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
-        by_name(). \
-        rename_all_with_units(). \
+    stats = Statistics(s).\
+        by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
+        with_.rename_all_with_units(). \
         copy({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1 / 3600). \
         into(stats, tolerance='30m')
 
@@ -452,27 +307,26 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
     if not isinstance(activity_journal, ActivityJournal):
         activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
 
-    stats = Statistics(s).for_(N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
-                               N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE,
-                               owner=SegmentReader). \
-        from_(activity_journal=activity_journal, with_timespan=True).by_name(). \
+    stats = Statistics(s, sources=[activity_journal], with_timespan=True). \
+        by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
+                N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE).with_. \
         rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
         copy({N.SPEED_MS: N.MED_SPEED_KMH}, scale=3.6, median=MED_WINDOW). \
         copy({N.HEART_RATE_BPM: N.MED_HEART_RATE_BPM}, median=MED_WINDOW). \
         copy({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW). \
-        with_times().df
+        add_times().df
 
-    stats = Statistics(s).for_(N.ELEVATION, N.GRADE, owner=ElevationCalculator). \
-        from_(activity_journal=activity_journal).by_name(). \
+    stats = Statistics(s, sources=[activity_journal]). \
+        by_name(ElevationCalculator, N.ELEVATION, N.GRADE).with_. \
         rename_all_with_units().into(stats, tolerance='1s')
 
     hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
-    stats = Statistics(s).for_(N.HR_ZONE, hr_impulse_10, owner=ImpulseCalculator). \
-        from_(activity_journal=activity_journal).by_name().drop_prefix(N.DEFAULT + '_'). \
-        into(stats, tolerance='10s', interpolate=True)
+    stats = Statistics(s, sources=[activity_journal]). \
+        by_name(ImpulseCalculator, N.HR_ZONE, hr_impulse_10).with_. \
+        drop_prefix(N.DEFAULT + '_').into(stats, tolerance='10s', interpolate=True)
 
-    stats = Statistics(s).for_(N.POWER_ESTIMATE, owner=PowerCalculator). \
-        from_(activity_journal=activity_journal).by_name(). \
+    stats = Statistics(s, sources=[activity_journal]). \
+        by_name(PowerCalculator, N.POWER_ESTIMATE).with_. \
         rename_all_with_units(). \
         copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
         into(stats, tolerance='1s')
@@ -480,106 +334,22 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
     return stats
 
 
-class Accumulator:
-
-    def __init__(self, s, start=None, finish=None, sources=None, with_timespan=False, with_source=False,
-                 warn_over=1):
-        self.__s = s
-        self.__start = start
-        self.__finish = finish
-        self.__sources = sources if sources else []
-        self.__with_timespan = with_timespan
-        self.__with_source = with_source
-        self.__warn_over = warn_over
-        self.__df = None
-
-    def __name_and_type(self, name, owner):
-        statistic_name = StatisticName.from_name(self.__s, name, owner)
-        type_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
-        return statistic_name, type_class
-
-    def __columns(self, type_class, label):
-        columns = [type_class.time.label(N.INDEX), type_class.value.label(label)]
-        if self.__with_source:
-            columns += [type_class.source_id.label(N._src(label))]
-        return columns
-
-    def by_name(self, owner, *names):
-        for name in names:
-            statistic_name, type_class = self.__name_and_type(name, owner)
-            label = statistic_name.name
-            q = self.__s.query(*self.__columns(type_class, label)). \
-                filter(type_class.statistic_name_id == statistic_name.id)
-            q = self.__constrain_journal(q)
-            with timing(f'{label}\n{q}', self.__warn_over):
-                df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
-            self.__merge(df)
-
-    def by_group(self, owner, *names):
-        for name in names:
-            statistic_name, type_class = self.__name_and_type(name, owner)
-            q_groups = self.__s.query(ActivityGroup).distinct(). \
-                join(Source, Source.activity_group_id == ActivityGroup.id). \
-                join(StatisticJournal, StatisticJournal.source_id == Source.id). \
-                filter(StatisticJournal.statistic_name_id == statistic_name.id)
-            q_groups = self.__constrain_journal(q_groups)
-            with timing(f'groups\n{q_groups}', self.__warn_over):
-                activity_groups = q_groups.all()
-            for activity_group in activity_groups:
-                label = statistic_name.name + ':' + activity_group.name
-                q = self.__s.query(*self.__columns(type_class, label)). \
-                    filter(type_class.statistic_name_id == statistic_name.id). \
-                    join(Source, type_class.source_id == Source.id). \
-                    filter(Source.activity_group_id == activity_group.id)
-                q = self.__constrain_journal(q)
-                with timing(f'{label}\n{q}', self.__warn_over):
-                    df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
-                self.__merge(df)
-
-    def __constrain_journal(self, q):
-        if self.__start: q = q.filter(StatisticJournal.time >= self.__start)
-        if self.__finish: q = q.filter(StatisticJournal.time < self.__finish)
-        for source in self.__sources: q = q.filter(StatisticJournal.source == source)
-        return q
-
-    def __merge(self, df):
-        if self.__df is None:
-            self.__df = df
-        else:
-            with timing(f'merge {df.columns}', self.__warn_over):
-                self.__df = self.__df.join(df, how='outer')
-
-    def __add_timespan(self):
-        self.__df[N.TIMESPAN_ID] = np.nan
-        for id, start, finish in self.__s.query(ActivityTimespan.id,
-                                                ActivityTimespan.start, ActivityTimespan.finish). \
-                filter(ActivityTimespan.activity_journal_id.in_([source.id for source in self.__sources])):
-            self.__df.loc[start:finish, [N.TIMESPAN_ID]] = id
-
-    @property
-    def df(self):
-        if self.__with_timespan:
-            self.__add_timespan()
-            self.__with_timespan = False
-        return self.__df
-
-
 if __name__ == '__main__':
 
     from ..pipeline.owners import ActivityCalculator, SegmentReader
 
-    s = session('-v5')
+    s = session('-v4')
 
-    # df = std_health_statistics(s)
     with timing('select'):
-        # df = std_activity_statistics(s, '2020-05-15', 'road')
+        # df = std_health_statistics(s)
+        df = std_activity_statistics(s, '2020-05-15', 'road')
         # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
         # df = Statistics(s).for_(N.ACTIVE_DISTANCE, owner=ActivityCalculator).by_group()
         # acc = Accumulator(s, sources=[ActivityJournal.at(s, '2020-05-15')])
         # acc = Accumulator(s, with_timespan=True, sources=[ActivityJournal.at(s, '2020-05-15')])
-        acc = Accumulator(s, with_source=True)
-        acc.by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE)
-        df = acc.df
+        # acc = Accumulator(s, with_source=True)
+        # acc.by_name(ActivityCalculator, N.CLIMB_ANY, like=True)
+        # df = acc.df
 
     print(df)
     print(df.describe())
