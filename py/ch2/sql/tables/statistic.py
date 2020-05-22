@@ -95,9 +95,12 @@ class StatisticName(Base):
 
     @classmethod
     def from_name(cls, s, name, owner):
-        return s.query(StatisticName). \
-            filter(StatisticName.name == name,
-                   StatisticName.owner == owner).one()
+        try:
+            return s.query(StatisticName). \
+                filter(StatisticName.name == name,
+                       StatisticName.owner == owner).one()
+        except NoResultFound:
+            raise Exception(f'Statistic name {name} for owner {owner} was not found')
 
     @classmethod
     def parse(cls, name, default_owner=None, default_activity_group=None):

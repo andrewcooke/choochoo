@@ -224,11 +224,14 @@ def parse_bool(text, default=False):
 
 
 @contextmanager
-def timing(label):
+def timing(label, warn_over=None):
     start = now()
     yield
     seconds = (now() - start).total_seconds()
-    log.debug(f'Time for {label}: {seconds:.1f}s')
+    if warn_over and seconds > warn_over:
+        log.warning(f'{seconds:.1f}s > {warn_over:.1f}s {label}')
+    else:
+        log.debug(f'{seconds:.1f}s {label}')
 
 
 def clean(token, none=False):

@@ -11,9 +11,11 @@ try to have a 'fluent interface' that allows progressive refinement through the 
 from collections import Counter, defaultdict
 from logging import getLogger
 
+import numpy as np
 import pandas as pd
 from sqlalchemy import or_, inspect, select, and_, asc, desc, distinct
 
+from ch2.sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
 from ..lib.data import kargs_to_attr
@@ -478,9 +480,93 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
     return stats
 
 
+class Accumulator:
+
+    def __init__(self, s, start=None, finish=None, sources=None, with_timespan=False, with_source=False,
+                 warn_over=1):
+        self.__s = s
+        self.__start = start
+        self.__finish = finish
+        self.__sources = sources if sources else []
+        self.__with_timespan = with_timespan
+        self.__with_source = with_source
+        self.__warn_over = warn_over
+        self.__df = None
+
+    def __name_and_type(self, name, owner):
+        statistic_name = StatisticName.from_name(self.__s, name, owner)
+        type_class = STATISTIC_JOURNAL_CLASSES[statistic_name.statistic_journal_type]
+        return statistic_name, type_class
+
+    def __columns(self, type_class, label):
+        columns = [type_class.time.label(N.INDEX), type_class.value.label(label)]
+        if self.__with_source:
+            columns += [type_class.source_id.label(N._src(label))]
+        return columns
+
+    def by_name(self, owner, *names):
+        for name in names:
+            statistic_name, type_class = self.__name_and_type(name, owner)
+            label = statistic_name.name
+            q = self.__s.query(*self.__columns(type_class, label)). \
+                filter(type_class.statistic_name_id == statistic_name.id)
+            q = self.__constrain_journal(q)
+            with timing(f'{label}\n{q}', self.__warn_over):
+                df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
+            self.__merge(df)
+
+    def by_group(self, owner, *names):
+        for name in names:
+            statistic_name, type_class = self.__name_and_type(name, owner)
+            q_groups = self.__s.query(ActivityGroup).distinct(). \
+                join(Source, Source.activity_group_id == ActivityGroup.id). \
+                join(StatisticJournal, StatisticJournal.source_id == Source.id). \
+                filter(StatisticJournal.statistic_name_id == statistic_name.id)
+            q_groups = self.__constrain_journal(q_groups)
+            with timing(f'groups\n{q_groups}', self.__warn_over):
+                activity_groups = q_groups.all()
+            for activity_group in activity_groups:
+                label = statistic_name.name + ':' + activity_group.name
+                q = self.__s.query(*self.__columns(type_class, label)). \
+                    filter(type_class.statistic_name_id == statistic_name.id). \
+                    join(Source, type_class.source_id == Source.id). \
+                    filter(Source.activity_group_id == activity_group.id)
+                q = self.__constrain_journal(q)
+                with timing(f'{label}\n{q}', self.__warn_over):
+                    df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
+                self.__merge(df)
+
+    def __constrain_journal(self, q):
+        if self.__start: q = q.filter(StatisticJournal.time >= self.__start)
+        if self.__finish: q = q.filter(StatisticJournal.time < self.__finish)
+        for source in self.__sources: q = q.filter(StatisticJournal.source == source)
+        return q
+
+    def __merge(self, df):
+        if self.__df is None:
+            self.__df = df
+        else:
+            with timing(f'merge {df.columns}', self.__warn_over):
+                self.__df = self.__df.join(df, how='outer')
+
+    def __add_timespan(self):
+        self.__df[N.TIMESPAN_ID] = np.nan
+        for id, start, finish in self.__s.query(ActivityTimespan.id,
+                                                ActivityTimespan.start, ActivityTimespan.finish). \
+                filter(ActivityTimespan.activity_journal_id.in_([source.id for source in self.__sources])):
+            self.__df.loc[start:finish, [N.TIMESPAN_ID]] = id
+
+    @property
+    def df(self):
+        if self.__with_timespan:
+            self.__add_timespan()
+            self.__with_timespan = False
+        return self.__df
+
+
 if __name__ == '__main__':
 
-    from ..pipeline.owners import ActivityCalculator
+    from ..pipeline.owners import ActivityCalculator, SegmentReader
 
     s = session('-v5')
 
@@ -488,7 +574,12 @@ if __name__ == '__main__':
     with timing('select'):
         # df = std_activity_statistics(s, '2020-05-15', 'road')
         # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
-        df = Statistics(s).for_(N.ACTIVE_DISTANCE, owner=ActivityCalculator).by_group()
+        # df = Statistics(s).for_(N.ACTIVE_DISTANCE, owner=ActivityCalculator).by_group()
+        # acc = Accumulator(s, sources=[ActivityJournal.at(s, '2020-05-15')])
+        # acc = Accumulator(s, with_timespan=True, sources=[ActivityJournal.at(s, '2020-05-15')])
+        acc = Accumulator(s, with_source=True)
+        acc.by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE)
+        df = acc.df
 
     print(df)
     print(df.describe())
