@@ -34,22 +34,14 @@ def parse_activity(s, text):
     try:
         return int(text)
     except ValueError:
-        try:
-            time = local_time_to_time(text)
-            log.debug(f'{time}')
-            return s.query(ActivityJournal). \
-                filter(ActivityJournal.start <= time,
-                       ActivityJournal.finish >= time).one().id
-        except ValueError:
-            raise Exception(f'Could not find {text} as an activity date or parse as an ID')
+        return ActivityJournal.at(s, text).id
 
 
 def read_activity(s, activity_id, decimate=10):
     try:
         activity_journal = s.query(ActivityJournal).filter(ActivityJournal.id == activity_id).one()
-        df = Statistics(s).for_(Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y,
-                                activity_group=activity_journal.activity_group, owner=SegmentReader). \
-            from_(activity_journal=activity_journal).by_name().df
+        df = Statistics(s, activity_journal=activity_journal). \
+            by_name(SegmentReader, Names.SPHERICAL_MERCATOR_X, Names.SPHERICAL_MERCATOR_Y).df
         return df.iloc[::decimate, :]
     except:
         raise Exception(f'{activity_id} is not a valid activity ID')

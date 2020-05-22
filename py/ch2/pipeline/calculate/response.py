@@ -173,14 +173,13 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
                 loader.load()
 
     def __read_data(self, s):
-        from .. import ImpulseCalculator
+        from ..owners import ImpulseCalculator
         name = self.prefix + '_' + N.HR_IMPULSE_10
-        df = Statistics(s).for_(name, owner=ImpulseCalculator).from_(with_source=True). \
-            by_name(). \
+        df = Statistics(s, with_source=True).by_name(ImpulseCalculator, name).with_. \
             rename({name: N.HR_IMPULSE_10, N._src(name): N._src(N.HR_IMPULSE_10)}).df
         name = N._cov(N.HEART_RATE)
-        df = Statistics(s).for_(name, owner=SegmentReader). \
-            by_name().rename({name: N.COVERAGE}).into(df, tolerance='10s')
+        df = Statistics(s).by_name(SegmentReader, name).with_. \
+            rename({name: N.COVERAGE}).into(df, tolerance='10s')
         df[N.COVERAGE].fillna(axis='index', method='ffill', inplace=True)
         df[N.COVERAGE].fillna(100, axis='index', inplace=True)
         return df

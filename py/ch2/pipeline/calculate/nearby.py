@@ -112,7 +112,7 @@ class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
                 yield lon_lat
 
     def _aj_lon_lat(self, s, new=True):
-        from .. import SegmentReader
+        from ..owners import SegmentReader
         lat = s.query(StatisticName.id). \
             filter(StatisticName.name == Names.LATITUDE,
                    StatisticName.owner == SegmentReader).scalar()

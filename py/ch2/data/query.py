@@ -13,6 +13,7 @@ from logging import getLogger
 import numpy as np
 import pandas as pd
 from sqlalchemy import asc, desc, distinct
+from sqlalchemy.orm import aliased
 
 from ch2.sql.types import short_cls
 from ..data import session, present
@@ -30,11 +31,16 @@ log = getLogger(__name__)
 class Statistics:
 
     def __init__(self, s, start=None, finish=None, sources=None, with_timespan=False, with_source=False,
-                 warn_over=1):
+                 activity_journal=None, activity_group=None, warn_over=1):
         self.__s = s
         self.__start = start
         self.__finish = finish
         self.__sources = sources if sources else []
+        if activity_journal:
+            if not isinstance(activity_journal, Source):
+                activity_journal = ActivityJournal.at(s, activity_journal)
+            self.__sources.append(activity_journal)
+        self.__activity_group = ActivityGroup.from_name(s, activity_group)
         self.__with_timespan = with_timespan
         self.__with_source = with_source
         self.__warn_over = warn_over
@@ -90,9 +96,10 @@ class Statistics:
                     join(StatisticJournal, StatisticJournal.source_id == Source.id). \
                     filter(StatisticJournal.statistic_name_id == statistic_name.id)
                 q_group_ids = self.__constrain_journal(q_group_ids)
-                with timing(f'group idss\n{q_group_ids}', self.__warn_over):
+                with timing(f'group ids\n{q_group_ids}', self.__warn_over):
                     activity_group_ids = q_group_ids.all()
-                for activity_group_id in activity_group_ids:
+                for row in activity_group_ids:
+                    activity_group_id = row[0]
                     if activity_group_id:
                         activity_group = self.__s.query(ActivityGroup). \
                             filter(ActivityGroup.id == activity_group_id).one()
@@ -114,6 +121,10 @@ class Statistics:
         if self.__start: q = q.filter(StatisticJournal.time >= self.__start)
         if self.__finish: q = q.filter(StatisticJournal.time < self.__finish)
         for source in self.__sources: q = q.filter(StatisticJournal.source == source)
+        if self.__activity_group:
+            source = aliased(Source)
+            q = q.join(source, source.id == StatisticJournal.source_id). \
+                filter(source.activity_group_id == self.__activity_group.id)
         return q
 
     def __merge(self, df):
@@ -196,7 +207,7 @@ class Data:
                     new_name = N._slash(a, statistic_name.units) + ':' + b
                 else:
                     new_name = N._slash(name, statistic_name.units)
-                op(name, new_name)
+                op(column, new_name)
         return self
 
     def __columns_named(self, name):
@@ -278,17 +289,18 @@ def std_health_statistics(s, freq='1h'):
     set_times_from_index(stats)
 
     stats = Statistics(s). \
-        by_name(ResponseCalculator, N.DEFAULT_ANY, like=True). \
-        with_.drop_prefix(N.DEFAULT + '_').into(stats, tolerance='30m')
+        by_name(ResponseCalculator, N.DEFAULT_ANY, like=True).with_. \
+        drop_prefix(N.DEFAULT + '_').into(stats, tolerance='30m')
 
     stats = Statistics(s). \
         by_name(RestHRCalculator, N.REST_HR). \
-        by_name(ActivityCalculator, N._delta(N.DEFAULT_ANY)). \
-        with_.rename_all_with_units().into(stats, tolerance='30m')
+        by_name(ActivityCalculator, N._delta(N.DEFAULT_ANY)).with_. \
+        rename_all_with_units().into(stats, tolerance='30m')
 
     stats = Statistics(s).\
-        by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
-        with_.rename_all_with_units(). \
+        by_group(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE).with_. \
+        coallesce(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
+        rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
         copy({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1 / 3600). \
         into(stats, tolerance='30m')
 
@@ -307,7 +319,7 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
     if not isinstance(activity_journal, ActivityJournal):
         activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
 
-    stats = Statistics(s, sources=[activity_journal], with_timespan=True). \
+    stats = Statistics(s, activity_journal=activity_journal, with_timespan=True). \
         by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y,
                 N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE).with_. \
         rename_with_units(N.LATITUDE, N.LONGITUDE, N.DISTANCE, N.SPEED, N.CADENCE, N.ALTITUDE, N.HEART_RATE). \
@@ -316,16 +328,16 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
         copy({N.CADENCE_RPM: N.MED_CADENCE_RPM}, median=MED_WINDOW). \
         add_times().df
 
-    stats = Statistics(s, sources=[activity_journal]). \
+    stats = Statistics(s, activity_journal=activity_journal). \
         by_name(ElevationCalculator, N.ELEVATION, N.GRADE).with_. \
         rename_all_with_units().into(stats, tolerance='1s')
 
     hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
-    stats = Statistics(s, sources=[activity_journal]). \
+    stats = Statistics(s, activity_journal=activity_journal). \
         by_name(ImpulseCalculator, N.HR_ZONE, hr_impulse_10).with_. \
         drop_prefix(N.DEFAULT + '_').into(stats, tolerance='10s', interpolate=True)
 
-    stats = Statistics(s, sources=[activity_journal]). \
+    stats = Statistics(s, activity_journal=activity_journal). \
         by_name(PowerCalculator, N.POWER_ESTIMATE).with_. \
         rename_all_with_units(). \
         copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
@@ -341,8 +353,8 @@ if __name__ == '__main__':
     s = session('-v4')
 
     with timing('select'):
-        # df = std_health_statistics(s)
-        df = std_activity_statistics(s, '2020-05-15', 'road')
+        df = std_health_statistics(s)
+        # df = std_activity_statistics(s, '2020-05-15', 'road')
         # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
         # df = Statistics(s).for_(N.ACTIVE_DISTANCE, owner=ActivityCalculator).by_group()
         # acc = Accumulator(s, sources=[ActivityJournal.at(s, '2020-05-15')])

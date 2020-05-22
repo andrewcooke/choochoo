@@ -8,10 +8,9 @@ import numpy as np
 from .utils import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ...data import Statistics
-from ...data.frame import activity_statistics, statistics
 from ...data.impulse import hr_zone, impulse_10
-from ...names import Names, Titles
-from ...sql import Constant, StatisticJournalFloat, ActivityGroup
+from ...names import N, Titles
+from ...sql import Constant, StatisticJournalFloat
 
 log = getLogger(__name__)
 
@@ -33,16 +32,14 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
 
     def _read_dataframe(self, s, ajournal):
         try:
-            heart_rate_df = Statistics(s). \
-                for_(Names.HEART_RATE, owner=self.owner_in). \
-                from_(activity_journal=ajournal).by_name().df
-            fthr_df = Statistics(s). \
-                for_(Names.FTHR, owner=Constant).by_name().df
+            heart_rate_df = Statistics(s, activity_journal=ajournal). \
+                by_name(self.owner_in, N.HEART_RATE).df
+            fthr_df = Statistics(s).by_name(Constant, N.FTHR).df
         except Exception as e:
             log.warning(f'Failed to generate statistics for activity: {e}')
             raise
         if fthr_df.empty:
-            raise Exception(f'No {Names.FTHR} defined for {ajournal.activity_group}')
+            raise Exception(f'No {N.FTHR} defined for {ajournal.activity_group}')
         return heart_rate_df, fthr_df
 
     def _calculate_stats(self, s, ajournal, data):
@@ -58,13 +55,14 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
         impulse_description = 'The SHRIMP HR impulse over 10 seconds.'
         title = self.impulse.title
         name_group = self.prefix + '_' + self.impulse_constant.short_name  # drop activity group as present elsewhere
-        name_all = self.prefix + '_' + Names.HR_IMPULSE_10
+        # todo???
+        name_all = self.prefix + '_' + N.HR_IMPULSE_10
         for time, row in stats.iterrows():
-            if not np.isnan(row[Names.HR_ZONE]):
-                loader.add(Titles.HR_ZONE, None, None, ajournal, row[Names.HR_ZONE], time,
+            if not np.isnan(row[N.HR_ZONE]):
+                loader.add(Titles.HR_ZONE, None, None, ajournal, row[N.HR_ZONE], time,
                            StatisticJournalFloat, description=hr_description)
-            if not np.isnan(row[Names.HR_IMPULSE_10]):
-                loader.add(name_group, None, None, ajournal, row[Names.HR_IMPULSE_10], time,
+            if not np.isnan(row[N.HR_IMPULSE_10]):
+                loader.add(name_group, None, None, ajournal, row[N.HR_IMPULSE_10], time,
                            StatisticJournalFloat, description=impulse_description, title=title)
         # if there are no values, add a single null so we don't re-process
         if not loader:

@@ -37,19 +37,17 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
 
     def _read_dataframe(self, s, ajournal):
         try:
-            adf = Statistics(s). \
-                for_(N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y, owner=SegmentReader). \
-                for_(N.ELEVATION, owner=ElevationCalculator). \
-                for_(N.HR_ZONE, owner=ImpulseCalculator). \
-                for_(N.POWER_ESTIMATE, owner=PowerCalculator). \
-                from_(activity_journal=ajournal, with_timespan=True).by_name().df
+            adf = Statistics(s, activity_journal=ajournal, with_timespan=True). \
+                by_name(SegmentReader, N.DISTANCE, N.HEART_RATE, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y). \
+                by_name(ElevationCalculator, N.ELEVATION). \
+                by_name(ImpulseCalculator, N.HR_ZONE). \
+                by_name(PowerCalculator, N.POWER_ESTIMATE).df
             if self.response_prefix:
                 start, finish = ajournal.start - dt.timedelta(hours=1), ajournal.finish + dt.timedelta(hours=1)
                 fitness = self.response_prefix + '_' + N.FITNESS_ANY
                 fatigue = self.response_prefix + '_' + N.FATIGUE_ANY
-                sdf = Statistics(s). \
-                    like(fitness, fatigue, owner=self.owner_in). \
-                    from_(start=start, finish=finish).by_name(). \
+                sdf = Statistics(s, start=start, finish=finish). \
+                    by_name(self.owner_in, fitness, fatigue, like=True).with_. \
                     drop_prefix(self.response_prefix).df
             else:
                 sdf = None

@@ -61,7 +61,6 @@ class DiaryDisplayer(Displayer):
                 content = list(self.__read_schedule_topic(s, schedule, start, finish, child))
                 if content: yield content
 
-
     def __summary_column(self, s, schedule, start, name):
         journals = StatisticJournal.at_interval(s, start, schedule, SummaryCalculator, name, SummaryCalculator)
         for named, journal in enumerate(journal for journal in journals if journal.value != 0):

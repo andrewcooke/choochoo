@@ -5,7 +5,7 @@ from ch2.data import *
 from ch2.data.plot.calendar import *
 from ch2.lib import *
 from ch2.names import N
-from ch2.pipeline import *
+from ch2.pipeline.owners import *
 from ch2.jupyter.decorator import template
 
 
@@ -32,8 +32,8 @@ def calendar():
     '''
 
     df = Statistics(s). \
-        for_(N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, owner=ActivityCalculator). \
-        by_name().copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).add_times().df
+        by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB).with_. \
+        copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).add_times().df
     df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
     if present(df, N.TOTAL_CLIMB):
         df.loc[df[N.TOTAL_CLIMB].isna(), [N.TOTAL_CLIMB]] = 0

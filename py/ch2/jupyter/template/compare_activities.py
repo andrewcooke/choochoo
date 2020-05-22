@@ -8,6 +8,7 @@ from bokeh.plotting import show
 
 from ch2.data import *
 from ch2.lib import *
+from ch2.pipeline.owners import *
 from ch2.jupyter.decorator import template
 
 
@@ -34,9 +35,10 @@ def compare_activities(local_time, compare_time, activity_group):
     compare = std_activity_statistics(s, activity_journal=compare_time, activity_group=activity_group)
     health = std_health_statistics(s)
     hr_zones = hr_zones_from_database(s, local_time, activity_group)
-    climbs = Statistics(s, activity_group).for_(N.ACTIVE_TIME, N.ACTIVE_DISTANCE, owner=ActivityCalculator). \
-        like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal=local_time). \
-        by_name().rename_all_with_units().df
+    climbs = Statistics(s, activity_journal=local_time). \
+        by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
+        by_name(ActivityCalculator, N.CLIMB_ANY, like=True).with_. \
+        rename_all_with_units().df
 
     f'''
     ## Activity Plots

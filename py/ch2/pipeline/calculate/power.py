@@ -55,14 +55,13 @@ class BasicPowerCalculator(PowerCalculator):
         log.debug(f'Power: {self.power_ref}: {self.power}')
 
     def _read_dataframe(self, s, ajournal):
-        from .. import SegmentReader, ElevationCalculator
+        from ..owners import SegmentReader, ElevationCalculator
         try:
             self._set_power(s, ajournal)
-            df = Statistics(s). \
-                for_(Names.DISTANCE, Names.SPEED, Names.CADENCE, Names.LATITUDE, Names.LONGITUDE,
-                     Names.HEART_RATE, owner=SegmentReader). \
-                for_(Names.ELEVATION, owner=ElevationCalculator). \
-                from_(activity_journal=ajournal, with_timespan=True).by_name().df
+            df = Statistics(s, activity_journal=ajournal, with_timespan=True). \
+                by_name(SegmentReader, Names.DISTANCE, Names.SPEED, Names.CADENCE, Names.LATITUDE,
+                        Names.LONGITUDE, Names.HEART_RATE). \
+                by_name(ElevationCalculator, Names.ELEVATION).df
             ldf = linear_resample_time(df)
             ldf = add_differentials(ldf, max_gap=1.1 * median_dt(df))
             return df, ldf

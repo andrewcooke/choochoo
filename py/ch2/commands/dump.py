@@ -53,11 +53,9 @@ Will print HR-related statistics from the start of 2018 for the given activity g
             else:
                 raise Exception('%s does not exist' % name)
         elif args[SUB_COMMAND] == STATISTICS:
-            # todo - sources?
-            frame = Statistics(s, activity_group=args[GROUP]). \
-                for_(*args[NAMES], owner=args[OWNER]). \
-                from_(start=args[START], finish=args[FINISH]). \
-                by_qualified().df
+            # todo - sources
+            frame = Statistics(s, start=args[START], finish=args[FINISH], activity_group=args[GROUP]). \
+                by_name(args[OWNER], *args[NAMES]).df
         else:
             raise Exception('Unexpected %s: %s' % (SUB_COMMAND, args[SUB_COMMAND]))
 

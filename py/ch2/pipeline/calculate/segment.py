@@ -19,10 +19,9 @@ class SegmentCalculator(OwnerInMixin, SegmentJournalCalculatorMixin, DataFrameCa
         SegmentJournal.clean(s)
 
     def _read_dataframe(self, s, sjournal):
-        from .. import SegmentReader
-        return Statistics(s, activity_group=sjournal.activity_journal.activity_group). \
-            for_(Names.HEART_RATE, owner=SegmentReader). \
-            from_(activity_journal=sjournal.activity_journal).by_name().df
+        from ..owners import SegmentReader
+        return Statistics(s, activity_journal=sjournal.activity_journal). \
+            by_name(SegmentReader, Names.HEART_RATE).df
 
     def _calculate_stats(self, s, sjournal, df):
         stats = {Titles.SJOURNAL: sjournal,

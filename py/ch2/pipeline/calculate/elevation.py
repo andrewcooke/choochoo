@@ -4,7 +4,7 @@ from logging import getLogger
 from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ...data import Statistics
 from ...data.elevation import smooth_elevation
-from ...data.frame import activity_statistics, present
+from ...data.frame import present
 from ...names import Names, Titles, Units
 from ...sql import StatisticJournalFloat
 
@@ -18,11 +18,10 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
         super().__init__(*args, **kargs)
 
     def _read_dataframe(self, s, ajournal):
-        from .. import SegmentReader
+        from ..owners import SegmentReader
         try:
-            return Statistics(s). \
-                for_(Names.DISTANCE, Names.RAW_ELEVATION, Names.ELEVATION, Names.ALTITUDE, owner=SegmentReader). \
-                from_(activity_journal=ajournal, with_timespan=True).by_name().df
+            return Statistics(s, activity_journal=ajournal, with_timespan=True). \
+                by_name(SegmentReader, Names.DISTANCE, Names.RAW_ELEVATION, Names.ELEVATION, Names.ALTITUDE).df
         except Exception as e:
             log.warning(f'Failed to generate statistics for elevation: {e}')
             raise

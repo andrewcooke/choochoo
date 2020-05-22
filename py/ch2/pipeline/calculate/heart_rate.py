@@ -28,10 +28,9 @@ class RestHRCalculator(OwnerInMixin, IntervalCalculatorMixin, MultiProcCalculato
         super().__init__(*args, schedule=schedule, **kargs)
 
     def _read_data(self, s, interval):
-        return Statistics(s). \
-            for_(Names.HEART_RATE, owner=self.owner_in). \
-            from_(start=local_date_to_time(interval.start), finish=local_date_to_time(interval.finish)). \
-            by_name().df
+        return Statistics(s, start=local_date_to_time(interval.start),
+                          finish=local_date_to_time(interval.finish)). \
+            by_name(self.owner_in, Names.HEART_RATE).df
 
     def _calculate_results(self, s, interval, df, loader):
         hist = pd.cut(df[Names.HEART_RATE], np.arange(30, 90), right=False).value_counts(sort=False)
