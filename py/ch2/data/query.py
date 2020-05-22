@@ -198,47 +198,27 @@ class Data:
     def copy(self, map, scale=1.0, median=None):
         return self.__with_names_values(self.__copy, map, scale=scale, median=median)
 
-    def __with_names_units(self, op, names):
-        for name in names:
+    def __with_names_units(self, op, columns):
+        for column in columns:
+            if ':' in column:
+                name, group = column.split(':', 1)
+            else:
+                name, group = column, None
             statistic_name = self.__statistic_names[name]
-            for column in self.__columns_named(name):
-                if ':' in column:
-                    a, b = column.split(':', 1)
-                    new_name = N._slash(a, statistic_name.units) + ':' + b
-                else:
-                    new_name = N._slash(name, statistic_name.units)
-                op(column, new_name)
+            if group:
+                new_name = N._slash(name, statistic_name.units) + ':' + group
+            else:
+                new_name = N._slash(name, statistic_name.units)
+            op(column, new_name)
         return self
 
-    def __columns_named(self, name):
-        for column in self.df.columns:
-            if ':' in column:
-                if name == column.split(':')[0]:
-                    yield column
-            else:
-                if name == column:
-                    yield column
+    def rename_with_units(self, *columns):
+        if not columns: columns = self.df.columns
+        return self.__with_names_units(self.__rename, columns)
 
-    def __all_names(self):
-        names = set()
-        for column in self.df.columns:
-            if ':' in column:
-                names.add(column.split(':')[0])
-            else:
-                names.add(column)
-        return names
-
-    def rename_with_units(self, *names):
-        return self.__with_names_units(self.__rename, names)
-
-    def rename_all_with_units(self):
-        return self.__with_names_units(self.__rename, self.__all_names())
-
-    def copy_with_units(self, *names):
-        return self.__with_names_units(self.__copy, names)
-
-    def copy_all_with_units(self):
-        return self.__with_names_units(self.__copy, self.__all_names())
+    def copy_with_units(self, *columns):
+        if not columns: columns = self.df.columns
+        return self.__with_names_units(self.__copy, columns)
 
     def into(self, df, tolerance, interpolate=False):
         if self:
@@ -263,8 +243,8 @@ class Data:
             columns = like(name + ':%', self.df.columns)
             log.debug(f'Coallescing {columns} for {name}')
             df = self.df[columns].copy()
-            df.fillna(method='ffill', inplace=True)
-            df.fillna(method='bfill', inplace=True)
+            df.fillna(method='ffill', axis='columns', inplace=True)
+            df.fillna(method='bfill', axis='columns', inplace=True)
             self.df.loc[:, name] = df.iloc[:, [0]]
             if delete:
                 self.df.drop(columns=columns, inplace=True)
@@ -295,7 +275,7 @@ def std_health_statistics(s, freq='1h'):
     stats = Statistics(s). \
         by_name(RestHRCalculator, N.REST_HR). \
         by_name(ActivityCalculator, N._delta(N.DEFAULT_ANY)).with_. \
-        rename_all_with_units().into(stats, tolerance='30m')
+        rename_with_units().into(stats, tolerance='30m')
 
     stats = Statistics(s).\
         by_group(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE).with_. \
@@ -330,7 +310,7 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 
     stats = Statistics(s, activity_journal=activity_journal). \
         by_name(ElevationCalculator, N.ELEVATION, N.GRADE).with_. \
-        rename_all_with_units().into(stats, tolerance='1s')
+        rename_with_units().into(stats, tolerance='1s')
 
     hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
     stats = Statistics(s, activity_journal=activity_journal). \
@@ -339,7 +319,7 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
 
     stats = Statistics(s, activity_journal=activity_journal). \
         by_name(PowerCalculator, N.POWER_ESTIMATE).with_. \
-        rename_all_with_units(). \
+        rename_with_units(). \
         copy({N.POWER_ESTIMATE_W: N.MED_POWER_ESTIMATE_W}, median=MED_WINDOW). \
         into(stats, tolerance='1s')
 
@@ -366,3 +346,5 @@ if __name__ == '__main__':
     print(df)
     print(df.describe())
     print(df.columns)
+    print(df[N.ACTIVE_DISTANCE_KM].describe())
+    print(df[N.ACTIVE_DISTANCE + ':mtb'].describe())

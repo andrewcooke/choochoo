@@ -38,7 +38,7 @@ def activity_details(local_time, activity_group):
     climbs = Statistics(s, activity_journal=local_time). \
         by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
         by_name(ActivityCalculator, N.CLIMB_ANY, like=True).with_. \
-        copy_all_with_units().df
+        copy_with_units().df
 
     f'''
     ## Activity Plots

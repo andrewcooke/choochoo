@@ -38,7 +38,7 @@ def compare_activities(local_time, compare_time, activity_group):
     climbs = Statistics(s, activity_journal=local_time). \
         by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
         by_name(ActivityCalculator, N.CLIMB_ANY, like=True).with_. \
-        rename_all_with_units().df
+        rename_with_units().df
 
     f'''
     ## Activity Plots
