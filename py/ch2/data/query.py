@@ -351,4 +351,4 @@ if __name__ == '__main__':
     print(df)
     print(df.describe())
     print(df.columns)
-    print(df[N.DAILY_STEPS].describe())
+    print(df[N.REST_HR_BPM].describe())
