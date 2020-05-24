@@ -6,17 +6,18 @@ from sqlalchemy import or_, distinct, asc, desc
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..utils import Displayer, ActivityJournalDelegate
+from ...calculate import SummaryCalculator
 from ...calculate.activity import ActivityCalculator
 from ...calculate.power import PowerCalculator
 from ....data.climb import climbs_for_activity
-from ....diary.database import summary_column
+from ....diary.database import summary_column, interval_column
 from ....diary.model import optional_text, text, from_field, value
 from ....lib import local_date_to_time, time_to_local_time, to_time, to_date, time_to_local_date, \
     log_current_exception
 from ....lib.date import YMD_HM, HM, format_minutes, add_date, MONTH, YMD, YEAR, YM, DAY
 from ....names import Names as N
 from ....sql import ActivityGroup, ActivityJournal, ActivityTopicJournal, ActivityTopicField, StatisticName, \
-    ActivityTopic, StatisticJournal, Pipeline, PipelineType
+    ActivityTopic, StatisticJournal, Pipeline, PipelineType, Interval
 
 log = getLogger(__name__)
 
@@ -60,13 +61,18 @@ class ActivityDisplayer(Displayer):
 
     @optional_text('Activities')
     def _read_schedule(self, s, date, schedule):
+        intervals = s.query(Interval).join(ActivityGroup). \
+            filter(Interval.schedule == schedule,
+                   Interval.start == date).all()
+        intervals = sorted(intervals, key=lambda i: i.activity_group.name if i.activity_group else '')
         for pipeline in Pipeline.all_instances(s, PipelineType.DISPLAY_ACTIVITY):
-            try:
-                entry = list(pipeline.read_schedule(s, date, schedule))
-                if entry: yield entry
-            except Exception as e:
-                log.warning(f'Error calling {pipeline}')
-                log_current_exception(traceback=True)
+            for interval in intervals:
+                try:
+                    entry = list(pipeline.read_interval(s, interval))
+                    if entry: yield [text(interval.activity_group.name)] + entry
+                except Exception as e:
+                    log.warning(f'Error calling {pipeline} with {interval}')
+                    log_current_exception(traceback=True)
 
 
 class ActivityDelegate(ActivityJournalDelegate):
@@ -198,57 +204,28 @@ class ActivityDelegate(ActivityJournalDelegate):
                       key=lambda sjournal: int(search(r'(\d+)', sjournal.statistic_name.title).group(1)))
 
     @staticmethod
-    def __sort_names(statistic_names):
-        return sorted(statistic_names,
-                      # order by integer embedded in name
-                      key=lambda statistic_name: int(search(r'(\d+)', statistic_name.title).group(1)))
+    def __sort_names(names):
+        # order by integer embedded in name
+        return sorted(names, key=lambda name: int(search(r'(\d+)', name).group(1)))
+
 
     @optional_text('Activities', tag='activity')
-    def read_schedule(self, s, date, schedule):
-        start = local_date_to_time(schedule.start_of_frame(date))
-        finish = local_date_to_time(schedule.next_frame(date))
-        for group in s.query(ActivityGroup). \
-                join(ActivityJournal, ActivityJournal.activity_group_id == ActivityGroup.id). \
-                join(StatisticJournal, StatisticJournal.source_id == ActivityJournal.id). \
-                join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-                filter(StatisticName.name == N.ACTIVE_TIME,
-                       StatisticJournal.time >= start,
-                       StatisticJournal.time < finish).all():
-            fields = list(self.__read_schedule_fields(s, date, schedule, group))
-            if fields:
-                yield [text(group.name)] + fields
-
-    @staticmethod
-    def __names(s, *names):
-        for name in names:
-            try:
-                yield s.query(StatisticName). \
-                    filter(StatisticName.name == name,
-                           StatisticName.owner == ActivityCalculator).one()
-            except NoResultFound:
-                log.warning(f'Missing "{name}" in database')
+    def read_interval(self, s, interval):
+        for name in (N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.ACTIVE_SPEED, N.TOTAL_CLIMB, N.CLIMB_ELEVATION,
+                     N.CLIMB_DISTANCE, N.CLIMB_GRADIENT, N.CLIMB_TIME):
+            column = list(interval_column(s, interval, name, SummaryCalculator))
+            if column: yield column
+        for template in (N.MIN_KM_TIME_ANY, N.MED_KM_TIME_ANY, N.MAX_MED_HR_M_ANY):
+            for name in self.__sort_names(self.__names_like(s, template)):
+                column = list(interval_column(s, interval, name, SummaryCalculator))
+                if column: yield column
 
     @staticmethod
     def __names_like(s, name):
-        return s.query(StatisticName). \
-            filter(StatisticName.name.like(name),
-                   StatisticName.owner == ActivityCalculator).all()
-
-    def __read_schedule_fields(self, s, start, schedule, group):
-        for name in self.__names(s, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.ACTIVE_SPEED,
-                                 N.TOTAL_CLIMB, N.CLIMB_ELEVATION, N.CLIMB_DISTANCE,
-                                 N.CLIMB_GRADIENT, N.CLIMB_TIME):
-            column = list(summary_column(s, schedule, start, name))
-            if column: yield column
-        for name in self.__sort_names(self.__names_like(s, N.MIN_KM_TIME_ANY)):
-            column = list(summary_column(s, schedule, start, name))
-            if column: yield column
-        for name in self.__sort_names(self.__names_like(s, N.MED_KM_TIME_ANY)):
-            column = list(summary_column(s, schedule, start, name))
-            if column: yield column
-        for name in self.__sort_names(self.__names_like(s, N.MAX_MED_HR_M_ANY)):
-            column = list(summary_column(s, schedule, start, name))
-            if column: yield column
+        return [statistic_name.name
+                for statistic_name in s.query(StatisticName).
+                    filter(StatisticName.name.like(name),
+                           StatisticName.owner == ActivityCalculator).all()]
 
 
 def active_dates(s, start, range, fmt):

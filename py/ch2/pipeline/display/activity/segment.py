@@ -24,7 +24,7 @@ class SegmentDelegate(ActivityJournalDelegate):
         for sjournal in s.query(SegmentJournal).join(Segment). \
                 filter(SegmentJournal.activity_journal_id == ajournal.id). \
                 order_by(SegmentJournal.start).all():
-            stats = [value(sub('^Segment ', '', field.statistic_name.name), field.value,
+            stats = [value(sub('^segment ', '', field.statistic_name.name), field.value,
                            units=field.statistic_name.units, measures=field.measures_as_model(date))
                      for field in (self.__field(s, date, sjournal, name)
                                    for name in (Names.SEGMENT_TIME, Names.SEGMENT_HEART_RATE))
@@ -55,4 +55,8 @@ class SegmentDelegate(ActivityJournalDelegate):
             if sname:
                 yield sname
 
+    def read_interval(self, s, interval):
+        # todo?
+        return
+        yield
 

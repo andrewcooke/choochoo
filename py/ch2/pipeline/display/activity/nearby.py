@@ -17,9 +17,6 @@ def fmt_nearby(aj, nb):
 
 class NearbyDelegate(ActivityJournalDelegate):
 
-    def read_schedule(self, s, date, schedule):
-        yield from []
-
     @optional_text('Nearby', tag='nearby')
     def read_journal_date(self, s, ajournal, date):
         yield from self.__read_nearby(s, ajournal)
@@ -30,6 +27,10 @@ class NearbyDelegate(ActivityJournalDelegate):
                      for (aj, nb) in callback(s, ajournal)]
             if links:
                 yield [text(title, tag=NEARBY_LINKS)] + links
+
+    def read_interval(self, s, interval):
+        return
+        yield
 
 
 def nearby_earlier(s, ajournal, threshold=0.3):

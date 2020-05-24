@@ -6,7 +6,7 @@ from ..lib import to_date
 from ..lib.date import YMD
 from ..pipeline.calculate.summary import SummaryCalculator
 from ..pipeline.display.utils import Displayer
-from ..sql import StatisticJournal, Pipeline, PipelineType
+from ..sql import StatisticJournal, Pipeline, PipelineType, StatisticName
 
 log = getLogger(__name__)
 
@@ -42,3 +42,18 @@ def read_pipeline(session, date, schedule=None):
             data = list(instance.read(session, date, schedule=schedule))
             if data:
                 yield data
+
+
+def interval_column(s, interval, name, owner):
+    statistic_journals = s.query(StatisticJournal). \
+        join(StatisticName). \
+        filter(StatisticJournal.source == interval,
+               StatisticName.owner == owner,
+               StatisticName.name.like('%' + name)).all()
+    for named, statistic_journal in enumerate(statistic_journal
+                                              for statistic_journal in statistic_journals
+                                              if statistic_journal.value != 0):
+        summary, period, name = SummaryCalculator.parse_title(statistic_journal.statistic_name.title)
+        if not named:
+            yield text(name)
+        yield value(summary, statistic_journal.value, units=statistic_journal.statistic_name.units)

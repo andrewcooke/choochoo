@@ -18,6 +18,6 @@ class JupyterDelegate(ActivityJournalDelegate):
         yield link('All Similar', db=(time_to_local_time(ajournal.start), ajournal.activity_group.name))
 
     @optional_text('Jupyter', tag='jupyter-activity')
-    def read_schedule(self, s, date, schedule):
-        finish = schedule.next_frame(date)
-        yield link('All Activities', db=(format_date(date), format_date(finish)))
+    def read_interval(self, s, interval):
+        yield link('All Activities', db=(format_date(interval.start), format_date(interval.finish)))
+

@@ -65,7 +65,7 @@ def search(s, query, advanced):
 
 
 def expand_activity(s, activity_journal):
-    
+
     topic_journal = activity_journal.get_activity_topic_journal(s)
 
     def format(statistic):

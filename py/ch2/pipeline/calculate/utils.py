@@ -150,7 +150,7 @@ class DataFrameCalculatorMixin(LoaderMixin):
                     raise Exception('No stats')
             except Exception as e:
                 log.error(f'No statistics on {time_or_date}: {e}')
-                log_current_exception()
+                log_current_exception(traceback=True)
 
     @abstractmethod
     def _get_source(self, s, time_or_date):

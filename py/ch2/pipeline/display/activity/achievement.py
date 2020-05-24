@@ -24,7 +24,7 @@ class AchievementDelegate(ActivityJournalDelegate):
                 order_by(desc(Achievement.sort)).limit(5).all():   # limit 5 for compact display
             yield text(achievement.text)
 
-    def read_schedule(self, s, date, schedule):
+    def read_interval(self, s, interval):
         # todo?
         return
         yield
