@@ -3,7 +3,7 @@ from abc import abstractmethod
 from enum import IntEnum
 from logging import getLogger
 
-from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, Boolean
+from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, Boolean, Index
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql.functions import count
@@ -89,6 +89,9 @@ class Source(Base):
     def from_id(cls, s, id):
         return s.query(Source).filter(Source.id == id).one()
 
+    def long_str(self):
+        return str(self)
+
 
 @listens_for(Session, 'before_flush')
 def before_flush(session, context, instances):
@@ -102,6 +105,9 @@ class GroupedSource(Source):
     def __init__(self, **kargs):
         if 'activity_group' not in kargs: raise Exception(f'{self.__class__.__name__} requires activity group')
         super().__init__(**kargs)
+
+    def long_str(self):
+        return super().long_str() + f' ({self.activity_group.name})'
 
 
 class UngroupedSource(Source):
@@ -119,7 +125,7 @@ class NoStatistics(Exception):
 
 class Interval(Source):
 
-    __tablename__ = 'interval'   # would be nice to rename this interval_source at some point
+    __tablename__ = 'interval'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False, index=True)
@@ -128,8 +134,10 @@ class Interval(Source):
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
-    dirty = Column(Boolean, nullable=False, default=False)
-    UniqueConstraint(schedule, owner, start)
+    dirty = Column(Boolean, nullable=False, default=False)  # todo - should this have an index?
+
+    # todo - is this used?
+    Index('ungrouped_interval', schedule, owner, start, unique=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL
@@ -157,18 +165,18 @@ class Interval(Source):
         else:
             raise NoStatistics('No statistics are currently defined')
 
-    @classmethod
-    def at(cls, s, schedule, interval_owner, start):
-        '''
-        The existing interval for a given start, owner, schedule.
-        '''
-        return s.query(Interval). \
-            filter(Interval.start == start,
-                   Interval.schedule == schedule,
-                   Interval.owner == interval_owner).one_or_none()
+    # @classmethod
+    # def at(cls, s, schedule, interval_owner, start):
+    #     '''
+    #     The existing interval for a given start, owner, schedule.
+    #     '''
+    #     return s.query(Interval). \
+    #         filter(Interval.start == start,
+    #                Interval.schedule == schedule,
+    #                Interval.owner == interval_owner).one_or_none()
 
     @classmethod
-    def missing_dates(cls, s, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
+    def missing_dates(cls, s, expected, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
         '''
         Previous approach was way too complicated and not thread-safe.  Instead, just enumerate intervals and test.
         '''
@@ -180,7 +188,11 @@ class Interval(Source):
         finish = finish if finish else schedule.next_frame(stats_finish)
         while start < finish:
             next = schedule.next_frame(start)
-            if not cls.at(s, schedule, interval_owner, start):
+            existing = s.query(Interval). \
+                filter(Interval.start == start,
+                       Interval.schedule == schedule,
+                       Interval.owner == interval_owner).count()
+            if existing != expected:
                 yield start, next
             start = next
 
@@ -309,3 +321,11 @@ class Composite(Source):
             add(s, CompositeComponent(input_source=source, output_source=composite))
             composite.n_components += 1
         return composite
+
+    def long_str(self):
+        interesting = [component for component in self.components if not isinstance(component, Composite)]
+        msg = f'Composite (id {self.id}, {self.n_components} comp)'
+        if self.activity_group: msg += f' ({self.activity_group.name})'
+        if interesting:
+            msg += ' [' + ', '.join(source.long_str() for source in interesting) + ']'
+        return msg

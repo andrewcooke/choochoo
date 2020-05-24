@@ -8,18 +8,18 @@ from pygeotile.point import Point
 from .activity import ActivityReader
 from ...lib.date import to_time, format_time
 from ...lib.utils import sign
+from ...names import N
 from ...rtree import MatchType
 from ...rtree.spherical import LocalTangent, SQRTree, Global
 from ...sql.database import Timestamp
-from ...sql.tables.activity import ActivityGroup
 from ...sql.tables.segment import Segment, SegmentJournal
 from ...sql.utils import add
 
 log = getLogger(__name__)
 
-NAMES = {'Latitude': 'lat',
-         'Longitude': 'lon',
-         'Distance': 'distance'}
+NAMES = {N.LATITUDE: 'lat',
+         N.LONGITUDE: 'lon',
+         N.DISTANCE: 'distance'}
 
 
 class CalcFailed(Exception): pass
@@ -35,9 +35,7 @@ class SegmentReader(ActivityReader):
     def _startup(self, s):
         SegmentJournal.clean(s)
         super()._startup(s)
-        self.__segments = {}
-        for agroup in s.query(ActivityGroup).all():
-            self.__segments[agroup.id] = self._read_segments(s, agroup)
+        self.__segments = self._read_segments(s)
 
     def _shutdown(self, s):
         SegmentJournal.clean(s)
@@ -49,7 +47,13 @@ class SegmentReader(ActivityReader):
         self._find_segments(s, ajournal, filter_none(NAMES.values(), loader.as_waypoints(NAMES)))
 
     def _find_segments(self, s, ajournal, waypoints):
-        matches = sorted(self._initial_matches(s, ajournal.activity_group_id, waypoints), key=lambda m: m[2].name)
+        if not waypoints:
+            log.warning('No waypoints')
+            return
+        matches = sorted(self._initial_matches(s, waypoints), key=lambda m: m[2].name)
+        if not matches:
+            log.info('No segment matches')
+            return
         for segment, segment_matches in groupby(matches, key=lambda m: m[2]):
             log.debug(f'Considering {segment.name}')
             ordered = sorted(segment_matches, key=lambda m: m[0])
@@ -75,11 +79,12 @@ class SegmentReader(ActivityReader):
             d = waypoints[self._mid(finishes)].distance - waypoints[self._mid(starts)].distance
             if abs(d - segment.distance) / segment.distance > 0.2:
                 raise CalcFailed('Distance between start and finish (%.1fkm) doesn\'t match segment (%.1fkm)' %
-                                 (d / 1000, segment.distance / 1000))
+                                 (d, segment.distance))
             start_time = self._end_point(starts, waypoints, segment.start, self.inner_bound, True)
             finish_time = self._end_point(finishes, waypoints, segment.finish, self.inner_bound, False)
             sjournal = add(s, SegmentJournal(segment_id=segment.id, activity_journal=ajournal,
-                                             start=start_time, finish=finish_time))
+                                             start=start_time, finish=finish_time,
+                                             activity_group=ajournal.activity_group))
             log.info('Added %s for %s - %s' %
                      (segment.name, format_time(start_time), format_time(finish_time)))
             s.commit()  # needed to get id on sjournal (and let other workers in)
@@ -255,13 +260,13 @@ class SegmentReader(ActivityReader):
             prev = match
         yield (first, prev[0]), prev[1], prev[2]
 
-    def _initial_matches(self, s, agroup_id, waypoints):
+    def _initial_matches(self, s, waypoints):
         '''
         Check each waypoint against the r-tree and return all matches.
         '''
         found = set()
         for i, waypoint in enumerate(waypoints):
-            for start, segment in self.__segments[agroup_id][[(waypoint.lon, waypoint.lat)]]:
+            for start, segment in self.__segments[[(waypoint.lon, waypoint.lat)]]:
                 if segment not in found:
                     log.info(f'Candidate segment "{segment.name}" at ({segment.start_lon}, {segment.start_lat}) - '
                              f'({segment.finish_lon}, {segment.finish_lat})')
@@ -270,7 +275,7 @@ class SegmentReader(ActivityReader):
                           f'for {segment.name} {"start" if start else "finish"}')
                 yield i, start, segment
 
-    def _read_segments(self, s, agroup):
+    def _read_segments(self, s):
         '''
         Read segment endpoints into a global R-tree so we can detect when waypoints pass nearby.
         '''
@@ -279,7 +284,7 @@ class SegmentReader(ActivityReader):
             segments[[segment.start]] = (True, segment)
             segments[[segment.finish]] = (False, segment)
         if not segments:
-            log.warning('No segments defined in database for %s' % agroup)
+            log.warning('No segments defined in database')
         return segments
 
 

@@ -39,6 +39,7 @@ PACKAGE_FIT_PROFILE = 'package-fit-profile'
 SEARCH = 'search'
 STATISTICS = 'statistics'
 TEST_SCHEDULE = 'test-schedule'
+TEXT = 'text'
 THUMBNAIL = 'thumbnail'
 UNLOCK = 'unlock'
 UPGRADE = 'upgrade'
@@ -171,6 +172,7 @@ SHOW = 'show'
 SINGLE = 'single'
 SLICES = 'slices'
 SOURCE = 'source'
+SOURCES = 'sources'
 SOURCE_ID = 'source-id'
 START = 'start'
 STATISTIC_NAMES = 'statistic-names'
@@ -306,27 +308,22 @@ def make_parser(with_noop=False):
     upload.add_argument(mm(DELETE), action='store_true',
                         help='delete source on success')
 
-    # replaced by web interface(?)
-    # diary = subparsers.add_parser(DIARY, help='daily diary and summary')
-    # diary.add_argument(DATE, metavar='DATE', nargs='?',
-    #                    help='an optional date to display (default is today)')
-    # diary.add_argument(mm(FAST), action='store_true',
-    #                    help='skip update of statistics on exit')
-    # diary_summary = diary.add_mutually_exclusive_group()
-    # diary_summary.add_argument(m(M), mm(MONTH), action='store_const', dest=SCHEDULE, const='m',
-    #                            help='show monthly summary')
-    # diary_summary.add_argument(m(Y), mm(YEAR), action='store_const', dest=SCHEDULE, const='y',
-    #                            help='show yearly summary')
-    # diary_summary.add_argument(mm(SCHEDULE), metavar='SCHEDULE',
-    #                            help='show summary for given schedule')
+    def add_search_query(cmd):
+        cmd.add_argument(QUERY, metavar='QUERY', default=[], nargs='+',
+                         help='search terms (similar to SQL)')
+        cmd.add_argument(mm(SHOW), metavar='NAME', default=[], nargs='+',
+                         help='show value from matching entries')
+        cmd.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching entries')
 
-    search = subparsers.add_parser(SEARCH, help='search activities')
-    search.add_argument(QUERY, metavar='QUERY', help='search terms')
-    search.add_argument(m(A), mm(ADVANCED), action='store_true',
-                        help='advanced search (similar to SQL)')
-    search.add_argument(mm(SHOW), metavar='NAME', action='append', default=[], nargs='+',
-                        help='show value from matching activities')
-    search.add_argument(mm(SET), metavar='NAME=VALUE', help='update matching activities')
+    search = subparsers.add_parser(SEARCH, help='search the database')
+    search_cmds = search.add_subparsers(title='search target', dest=SUB_COMMAND, required=True)
+    search_text = search_cmds.add_parser(TEXT, help='search for text in activities')
+    search_text.add_argument(QUERY, metavar='QUERY', default=[], nargs='+',
+                             help='words to search for')
+    search_sources = search_cmds.add_parser(SOURCES, help='search for sources')
+    add_search_query(search_sources)
+    search_activities = search_cmds.add_parser(ACTIVITIES, help='search for activities')
+    add_search_query(search_activities)
 
     # low-level commands used often
 
@@ -473,30 +470,6 @@ def make_parser(with_noop=False):
                             help='keyword argument to be passed to the pipelines (can be repeated)')
     statistics.add_argument(mm(WORKER), metavar='ID', type=int,
                             help='internal use only (identifies sub-process workers)')
-
-    dump = subparsers.add_parser(DUMP, help='display database contents')  # todo - this one needs tests!
-    dump_format = dump.add_mutually_exclusive_group()
-    dump_format.add_argument(mm(PRINT), action='store_const', dest=FORMAT, const=PRINT, help='default format')
-    dump_format.add_argument(mm(CSV), action='store_const', dest=FORMAT, const=CSV, help='CVS format')
-    dump_format.add_argument(mm(DESCRIBE), action='store_const', dest=FORMAT, const=DESCRIBE, help='summary format')
-    dump.add_argument(mm(MAX_COLUMNS), metavar='N', type=int, help='pandas max_columns attribute')
-    dump.add_argument(mm(MAX_COLWIDTH), metavar='N', type=int, help='pandas max_colwidth attribute')
-    dump.add_argument(mm(MAX_ROWS), metavar='N', type=int, help='pandas max_rows attribute')
-    dump.add_argument(mm(WIDTH), metavar='N', type=int, help='pandas width attribute')
-    dump_sub = dump.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)
-    dump_statistics = dump_sub.add_parser(STATISTICS)
-    dump_statistics.add_argument(NAMES, nargs='*', metavar='NAME', help='statistic names')
-    dump_statistics.add_argument(mm(START), metavar='TIME', help='start time')
-    dump_statistics.add_argument(mm(FINISH), metavar='TIME', help='finish time')
-    dump_statistics.add_argument(mm(OWNER), metavar='OWNER',
-                                 help='typically the class that created the data')
-    dump_statistics.add_argument(mm(GROUP), metavar='GROUP',
-                                 help='activity group')
-    dump_statistics.add_argument(mm(SOURCE_ID), action='append', metavar='ID', type=int,
-                                 help='the source ID for the statistic (can be repeated)')
-    dump_table = dump_sub.add_parser(TABLE)
-    dump_table.add_argument(NAME, metavar='NAME', help='table name')
-    dump.set_defaults(format=PRINT)
 
     fit = subparsers.add_parser(FIT, help='display contents of fit file')
     fit_cmds = fit.add_subparsers(title='sub-commands', dest=SUB_COMMAND, required=True)

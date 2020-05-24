@@ -25,7 +25,7 @@ Nearby = namedtuple('Nearby', 'constraint, activity_group, border, start, finish
 
 class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
 
-    def __init__(self, *args, fraction=0.1, border=150, **kargs):
+    def __init__(self, *args, fraction=0.01, border=150, **kargs):
         self.fraction = fraction
         self.border = border
         super().__init__(*args, **kargs)
@@ -174,8 +174,9 @@ class SimilarityCalculator(OwnerInMixin, UniProcCalculator):
                             # both new and ordered lo-hi, or hi new and last
                             n_max = n_points[lo]
                             d_factor = d_lo / d_hi if d_lo < d_hi else 1
+                            similarity = (n_overlaps[lo][hi] / n_max) * d_factor if n_max else 0
                         s.add(ActivitySimilarity(activity_journal_lo_id=lo, activity_journal_hi_id=hi,
-                                                 similarity=(n_overlaps[lo][hi] / n_max) * d_factor))
+                                                 similarity=similarity))
                         n += 1
                         if n % delta == 0:
                             log.info(f'Saved {n}')

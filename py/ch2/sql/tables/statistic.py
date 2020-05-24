@@ -57,7 +57,6 @@ class StatisticName(Base):
 
     @classmethod
     def add_if_missing(cls, s, name, type, units, summary, owner, description=None, title=None):
-        from .activity import ActivityGroup
         s.commit()  # start new transaction here in case rollback
         q = s.query(StatisticName). \
             filter(StatisticName.name == name,
@@ -151,7 +150,7 @@ class StatisticJournal(Base):
     # record, so all imported values share the same serial.  but that's not true for the corrected elevation,
     # for example.
     serial = Column(Integer)
-    # relax this for kit support (add source_id)
+
     UniqueConstraint(statistic_name_id, time, source_id)
     UniqueConstraint(serial, source_id, statistic_name_id)
     Index('from_activity_timespan', source_id, statistic_name_id, time)  # time last since inequality
@@ -294,16 +293,15 @@ class StatisticJournal(Base):
             order_by(asc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def at_interval(cls, s, start, schedule, statistic_owner, activity_group, interval_owner):
-        from . import ActivityGroup, Source
-        return s.query(StatisticJournal).join(StatisticName, Interval, Source). \
+    def at_interval(cls, s, start, schedule, statistic_owner, statistic_name, interval_owner):
+        return s.query(StatisticJournal).join(StatisticName, Interval). \
                     filter(StatisticJournal.statistic_name_id == StatisticName.id,
                            Interval.schedule == schedule,
                            Interval.start == start,
                            Interval.owner == interval_owner,
                            StatisticName.owner == statistic_owner,
-                           Source.activity_group == ActivityGroup.from_name(s, activity_group)). \
-                    order_by(Source.activity_group_id,  # order places summary stats from same source together
+                           StatisticName.id == statistic_name.id). \
+                    order_by(Interval.activity_group_id,  # order places summary stats from same source together
                              StatisticName.name).all()
 
     @classmethod

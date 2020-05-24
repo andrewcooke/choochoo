@@ -198,13 +198,15 @@ class DirectCalculatorMixin(LoaderMixin):
 
 class IntervalCalculatorMixin(LoaderMixin):
 
-    def __init__(self, *args, schedule='m', **kargs):
+    def __init__(self, *args, schedule='m', grouped=False, **kargs):
         self.schedule = Schedule(self._assert('schedule', schedule))
+        self.grouped = grouped
         super().__init__(*args, **kargs)
 
     def _missing(self, s):
         start, finish = self._start_finish(type=to_date)
-        return list(Interval.missing_dates(s, self.schedule, self.owner_out, start=start, finish=finish))
+        expected = s.query(ActivityGroup).count() + 1 if self.grouped else 1
+        return list(Interval.missing_dates(s, expected, self.schedule, self.owner_out, start=start, finish=finish))
 
     def _args(self, missing, start, finish):
         s, f = format_date(missing[start][0]), format_date(missing[finish][1])
@@ -238,22 +240,26 @@ class IntervalCalculatorMixin(LoaderMixin):
         s.commit()
 
     def _run_one(self, s, missing):
-        if s.query(Interval). \
-                filter(Interval.schedule == self.schedule,
-                       Interval.owner == self.owner_out,
-                       Interval.start == missing[0]).one_or_none():
-            raise Exception('Interval already exists')
-        interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
-                                   start=missing[0], finish=missing[1]))
-        s.commit()
-        try:
-            data = self._read_data(s, interval)
-            loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
-            self._calculate_results(s, interval, data, loader)
-            loader.load()
-        except Exception as e:
-            log.error(f'No statistics for {missing} due to error ({e})')
-            log_current_exception()
+        activity_groups = [None] + (list(s.query(ActivityGroup).all()) if self.grouped else [])
+        for activity_group in activity_groups:
+            log.debug(f'Activity group: {activity_group}')
+            if s.query(Interval). \
+                    filter(Interval.schedule == self.schedule,
+                           Interval.owner == self.owner_out,
+                           Interval.start == missing[0],
+                           Interval.activity_group == activity_group).one_or_none():
+                raise Exception('Interval already exists')
+            interval = add(s, Interval(schedule=self.schedule, owner=self.owner_out,
+                                       start=missing[0], finish=missing[1], activity_group=activity_group))
+            s.commit()
+            try:
+                data = self._read_data(s, interval)
+                loader = self._get_loader(s, add_serial=False, clear_timestamp=False)
+                self._calculate_results(s, interval, data, loader)
+                loader.load()
+            except Exception as e:
+                log.error(f'No statistics for {missing} due to error ({e})')
+                log_current_exception()
 
     @abstractmethod
     def _read_data(self, s, interval):

@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import coalesce
 from .utils import MultiProcCalculator, IntervalCalculatorMixin
 from ...names import Summaries as S
 from ...lib.date import local_date_to_time
-from ...sql.tables.source import Interval
+from ...sql.tables.source import Interval, Source
 from ...sql.tables.statistic import StatisticJournal, StatisticName, StatisticMeasure, StatisticJournalInteger, \
     StatisticJournalFloat, StatisticJournalText, TYPE_TO_JOURNAL_CLASS
 
@@ -25,6 +25,9 @@ def fuzz(n, q):
 
 
 class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
+
+    def __init__(self, *args, grouped=True, **kargs):
+        super().__init__(*args, grouped=grouped, **kargs)
 
     def _startup(self, s):
         Interval.clean(s)
@@ -72,9 +75,11 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
         sji = inspect(StatisticJournalInteger).local_table
         sjf = inspect(StatisticJournalFloat).local_table
         sjt = inspect(StatisticJournalText).local_table
+        src = inspect(Source).local_table
 
         units = statistic_name.units
         values = coalesce(sjf.c.value, sji.c.value, sjt.c.value)
+        activity_group_id = interval.activity_group.id if interval.activity_group else None
 
         if summary == S.MAX:
             result = func.max(values)
@@ -94,10 +99,11 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
             raise Exception('Bad summary: %s' % summary)
 
         stmt = select([result]). \
-            select_from(sj.outerjoin(sjf).outerjoin(sji).outerjoin(sjt)). \
+            select_from(sj.join(src).outerjoin(sjf).outerjoin(sji).outerjoin(sjt)). \
             where(and_(sj.c.statistic_name_id == statistic_name.id,
                        sj.c.time >= start_time,
-                       sj.c.time < finish_time))
+                       sj.c.time < finish_time,
+                       src.c.activity_group_id == activity_group_id))
 
         return next(s.connection().execute(stmt))[0], units
 
@@ -113,9 +119,11 @@ class SummaryCalculator(IntervalCalculatorMixin, MultiProcCalculator):
     def _calculate_measures(self, s, statistic_name, order_asc, start_time, finish_time, interval, measures):
         data = sorted([x for x in
                        s.query(StatisticJournal).
-                           filter(StatisticJournal.statistic_name == statistic_name,
-                                 StatisticJournal.time >= start_time,
-                                 StatisticJournal.time < finish_time).all()
+                      join(Source).
+                      filter(StatisticJournal.statistic_name == statistic_name,
+                             StatisticJournal.time >= start_time,
+                             StatisticJournal.time < finish_time,
+                             Source.activity_group == interval.activity_group).all()
                        if x is not None and x.value is not None],
                       key=lambda x: x.value, reverse=not order_asc)
         n, local_measures = len(data), []

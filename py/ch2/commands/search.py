@@ -2,16 +2,16 @@ from logging import getLogger
 
 from sqlalchemy import intersect, or_
 
-from .args import QUERY, SHOW, SET, ADVANCED
+from .args import QUERY, SUB_COMMAND, ACTIVITIES, SHOW, SET
 from ..config.config import NOTES
-from ..data import constrained_activities
-from ..data.constraint import constraint, check_constraint
-from ..diary.model import DB, VALUE, UNITS
+from ..data.constraint import constraint, check_constraint, activity_conversion, constrained_sources, sort_groups, \
+    group_by_type
+from ..diary.model import DB, VALUE, UNITS, TEXT
 from ..lib import time_to_local_time
-from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, ActivityTopic, \
-    StatisticJournalText, StatisticName
-from ..pipeline.calculate.activity import ActivityCalculator
 from ..names import Names
+from ..pipeline.calculate.activity import ActivityCalculator
+from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, \
+    ActivityTopic, StatisticJournalText, StatisticName
 
 log = getLogger(__name__)
 
@@ -22,39 +22,69 @@ def search(args, system, db):
 
     > ch2 search [-a|--advanced] QUERY [--show NAME ...] [--set NAME=VALUE]
 
-This searches for activities.
-Once a matching activity is found additional statistics can be displayed (--show)
+This searches for sources.
+Sources are typically activities, but also include monitor data, diary journal entries, etc.
+The search finds sources that match all the conditions (each source, individually).
+So testing for activity distance and activity time is reasonable - both are associated with an activity
+and some activities may meet both conditions.
+But comparing steps walked - monitor data - with distance cycled - activity data - will always fail to match
+because no source contains both monitor and activity data.
+
+Once a source activity is found additional statistics from that source be displayed (--show)
 and a single value modified (--set).
 
 Simple searches (without --advanced) look for matches of all given words in the
 name and notes fields for the activity.
 
 The advanced syntax is similar to SQL, but element names are statistic names.
-The name can include the activity group (start:bike) and SQL wildcards (%fitness%).
-A name of the form "name:" matches any activity group;
-"name" matches the activity group of the matched activity
-(usually what is needed - the main exception is some statistics defined for group All).
+A name has the format "Owner.name:group" where the owner and group are optional.
+The name can also include SQL wildcards (eg "%fitness%").
+
+A source is associated with a single activity group, so any group qualification will restrict the results
+to sources with that activity group (and giving two different groups will fail to match any source).
+If no owner or group is given then all possible values are considered.
+
+The owner of a name is the process that calculated the value.
+It works as a kind of "namespace" - the database could contain multiple statistics called "active_distance"
+but only one will have been calculated by ActivityCalculator.
 
 For advanced searches string values must be quoted, negation and NULL values are not supported,
 and comparison must be between a name and a value (not two names).
 
-### Example
+### Examples
 
-    > ch2 search --advanced 'name="Wrong Name"' --set 'name="Right Name"'
+    > ch2 search text bournmouth
 
+Find any activities where the text mentions Bournmouth.
+
+    > ch2 search sources 'name="Wrong Name"' --set 'name="Right Name"'
+
+Modify the name variable.
+
+    > ch2 search activities 'ActivityCalculator.active_distance:mtb > 10 and active_time < 3600'
+
+Find mtb activities that cover over 10km in under an hour.
     '''
-    query, show, set, advanced = args[QUERY], args[SHOW], args[SET], args[ADVANCED]
-    if not show and not set: show = [Names.ACTIVE_TIME, Names.ACTIVE_DISTANCE]
+    cmd, query = args[SUB_COMMAND], ' '.join(args[QUERY])
     with db.session_context() as s:
-        activities = unified_search(s, query, advanced=advanced)
-        process_activities(s, activities, show, set)
+        if cmd == TEXT:
+            process_results(text_search(s, query))
+        else:
+            conversion = activity_conversion if cmd == ACTIVITIES else None
+            process_results(constrained_sources(s, query, conversion=conversion),
+                            show=args[SHOW], set=args[SET])
 
 
-def unified_search(s, query, advanced=True):
-    if advanced:
-        return constrained_activities(s, query)
-    else:
-        return simple_activity_search(s, query)
+def text_search(s, query):
+    pass
+
+
+def process_results(sources, show=None, set=None):
+    groups = sort_groups(group_by_type(sources))
+    for type in groups:
+        print(type.__name__, ':')
+        for source in groups[type]:
+            print('  ', source.long_str())
 
 
 def expand_activities(s, activities):

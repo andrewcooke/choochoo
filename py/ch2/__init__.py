@@ -2,9 +2,8 @@
 from glob import glob
 from logging import getLogger, NullHandler
 from os.path import abspath, dirname, join
-from sys import version_info
-
 from sqlite3 import enable_callback_tracebacks
+from sys import version_info
 
 getLogger('bokeh').addHandler(NullHandler())
 getLogger('tornado').addHandler(NullHandler())
@@ -26,9 +25,7 @@ from .commands.args import COMMAND, make_parser, NamespaceWithVariables, PROGNAM
     UNLOCK, DUMP, FIX_FIT, CH2_VERSION, JUPYTER, KIT, WEB, UPLOAD, UPGRADE, THUMBNAIL, CHECK, SEARCH
 from .commands.constants import constants
 from .commands.check import check
-from .commands.dump import dump
 from .commands.configure import configure
-from .commands.diary import diary
 from .commands.fit import fit
 from .commands.fix_fit import fix_fit
 from .commands.garmin import garmin
@@ -68,8 +65,6 @@ COMMANDS = {ACTIVITIES: activities,
             CHECK: check,
             CONSTANTS: constants,
             CONFIGURE: configure,
-            # DIARY: diary,
-            DUMP: dump,
             FIT: fit,
             FIX_FIT: fix_fit,
             GARMIN: garmin,

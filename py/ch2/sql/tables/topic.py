@@ -233,10 +233,12 @@ class ActivityTopicJournal(GroupedSource):
         'polymorphic_identity': SourceType.ACTIVITY_TOPIC
     }
 
-    def get_named(self, s, qname, owner=None):
+    def get_named(self, s, qname, default_owner=None, default_group=None):
         from ...sql import StatisticJournal, StatisticName, ActivityGroup, FileHash, ActivityJournal
-        from ...data.constraint import parse_qname
-        name, group = parse_qname(qname)
+        from ...data.constraint import parse_qualified_name
+        owner, name, group = parse_qualified_name(qname)
+        owner = owner or default_owner
+        group = group or default_group
         q = s.query(StatisticJournal). \
             join(ActivityTopicJournal). \
             join(StatisticName). \
@@ -245,7 +247,7 @@ class ActivityTopicJournal(GroupedSource):
         if owner:
             q = q.filter(StatisticName.owner == owner)
         if group:
-            q = q.join(FileHash).join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+            q = q.join(FileHash).join(ActivityGroup).filter(ActivityGroup.name == group)
         elif group is None:
             q = q.join(ActivityGroup). \
                 join(FileHash). \

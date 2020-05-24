@@ -1,5 +1,6 @@
 
 import datetime as dt
+from collections import defaultdict
 from logging import getLogger
 from re import escape
 
@@ -9,7 +10,7 @@ from ..lib import local_time_to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
 from ..lib.utils import timing
 from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal, \
-    ActivityTopicJournal, Source
+    ActivityTopicJournal, Source, FileHash
 from ..sql.tables.source import SourceType
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 
@@ -49,7 +50,8 @@ def flip(l):
 
 
 AND, OR = 'and', 'or'
-name = pat(r'(\w(?:\s*\w)*(?::(?:\w(?:\s*\w)*)?)?)')
+# no wildcards in group (no use case)
+name = pat(r'((?:[A-Z%][A-Za-z0-9_%]*\.)?[a-z%][a-z0-9_%]*(?::[a-z][a-z0-9_]*)?)')
 # important that the different value types are exclusive to avoid ambiguities
 number = choice(pat(r'(-?\d+)', lambda x: [int(i) for i in x]),
                 pat(r'(-?\d*\.\d+)', lambda x: [float(i) for i in x]),
@@ -78,7 +80,7 @@ term.calls(choice(comparison, parens))
 constraint = single(exhaustive(choice(or_comparison, parens)))
 
 
-def constrained_activities(s, query):
+def constrained_sources(s, query, conversion=None):
     with timing('parse AST'):
         ast = constraint(query)[0]
     log.debug(f'AST: {ast}')
@@ -86,7 +88,7 @@ def constrained_activities(s, query):
         check_constraints(s, ast)
     log.debug('Checked constraints')
     with timing('build SQL'):
-        q = build_activity_query(s, ast)
+        q = build_source_query(s, ast, conversion=conversion)
     log.debug(f'Query: {q}')
     with timing('execute SQL'):
         return q.all()
@@ -109,36 +111,30 @@ def infer_types(value):
 
 def check_constraint(s, ast):
     qname, op, value = ast
-    name, group = parse_qname(qname)
+    owner, name, group = parse_qualified_name(qname)
     q = s.query(StatisticName.id). \
-        filter(StatisticName.name.ilike(name),
+        filter(StatisticName.name.like(name),
                StatisticName.statistic_journal_type.in_(infer_types(value)))
-    if group:
-        q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+    if owner: q = q.filter(StatisticName.owner.like(owner))
     if not q.count():
-        raise Exception(f'No match for statistic {qname} with type {value.__class__.__name__}')
-    if not s.query(StatisticJournal). \
-            join(Source). \
-            filter(StatisticJournal.statistic_name_id.in_(q),
-                   Source.type.in_([SourceType.ACTIVITY, SourceType.ACTIVITY_TOPIC])).count():
-        raise Exception(f'Statistic {qname} exists but is not associated with any activity data')
+        raise Exception(f'No match for statistic {qname} for type {value.__class__.__name__}')
 
 
-def build_activity_query(s, ast):
-    constraints = build_constraints(s, ast).cte()
-    return s.query(ActivityJournal). \
-        filter(ActivityJournal.id.in_(constraints)). \
-        order_by(ActivityJournal.start)
+def build_source_query(s, ast, conversion=None):
+    constraints = build_constraints(s, ast, conversion=conversion).cte()
+    return s.query(Source).filter(Source.id.in_(constraints))
 
 
-def build_constraints(s, ast):
+def build_constraints(s, ast, conversion=None):
     l, op, r = ast
     if op in (AND, OR):
-        lcte = build_constraints(s, l)
-        rcte = build_constraints(s, r)
+        lcte = build_constraints(s, l, conversion=conversion)
+        rcte = build_constraints(s, r, conversion=conversion)
         return build_join(op, lcte, rcte)
     else:
-        return build_comparisons(s, ast)
+        constraint = build_comparisons(s, ast)
+        if conversion: constraint = conversion(s, constraint)
+        return constraint
 
 
 def build_join(op, lcte, rcte):
@@ -150,65 +146,79 @@ def build_join(op, lcte, rcte):
 
 def build_comparisons(s, ast):
     qname, op, value = ast
-    name, group = parse_qname(qname)
+    owner, name, group = parse_qualified_name(qname)
     if isinstance(value, str):
-        return get_activity_journal_ids(s, name, op, value, group,
-                                        StatisticJournalType.TEXT, {'=': 'ilike', '!=': 'nlike'})
+        return get_source_ids(s, owner, name, op, value, group,
+                              StatisticJournalType.TEXT, {'=': 'ilike', '!=': 'nlike'})
     elif isinstance(value, dt.datetime):
-        return get_activity_journal_ids(s, name, op, value, group, StatisticJournalType.TIMESTAMP)
+        return get_source_ids(s, owner, name, op, value, group, StatisticJournalType.TIMESTAMP)
     else:
-        qint = get_activity_journal_ids(s, name, op, value, group, StatisticJournalType.INTEGER)
-        qfloat = get_activity_journal_ids(s, name, op, value, group, StatisticJournalType.FLOAT)
+        qint = get_source_ids(s, owner, name, op, value, group, StatisticJournalType.INTEGER)
+        qfloat = get_source_ids(s, owner, name, op, value, group, StatisticJournalType.FLOAT)
         return union(qint, qfloat).select()
 
 
-def get_activity_journal_ids(s, name, op, value, group, type, update_attrs=None):
-    statistic_journals = \
-        get_statistic_journals(s, name, op, value, group, type, update_attrs=update_attrs).cte()
-    via_activity_journal = s.query(ActivityJournal.id). \
-        join(statistic_journals, ActivityJournal.id == statistic_journals.c.source_id)
-    if group is None:
-        via_activity_journal = \
-            via_activity_journal.filter(ActivityJournal.activity_group_id == statistic_journals.c.activity_group_id)
-    via_topic_journal = s.query(ActivityJournal.id). \
-        join(ActivityTopicJournal, ActivityTopicJournal.file_hash_id == ActivityJournal.file_hash_id). \
-        join(statistic_journals, ActivityTopicJournal.id == statistic_journals.c.source_id)
-    if group is None:
-        via_topic_journal = \
-            via_topic_journal.filter(ActivityJournal.activity_group_id == statistic_journals.c.activity_group_id)
-    return union(via_activity_journal, via_topic_journal).select()
-
-
-def get_statistic_journals(s, name, op, value, group, type, update_attrs=None):
+def get_source_ids(s, owner, name, op, value, group, type, update_attrs=None):
     attrs = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}
     if update_attrs:
         attrs.update(update_attrs)
     attr = attrs[op]
     statistic_journal = STATISTIC_JOURNAL_CLASSES[type]
-    q = s.query(statistic_journal.source_id, StatisticName.activity_group_id). \
+    q = s.query(Source.id). \
+        join(statistic_journal). \
         join(StatisticName). \
-        filter(StatisticName.name.ilike(name))
+        filter(StatisticName.name.like(name))
+    if owner:
+        q = q.filter(StatisticName.owner.like(owner))
+    if group:
+        q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
     if attr == 'nlike':  # no way to negate like in a single attribute
         q = q.filter(not_(statistic_journal.value.ilike(value)))
     else:
         q = q.filter(getattr(statistic_journal.value, attr)(value))
-    if group:
-        q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
     return q
 
 
-def parse_qname(qname):
-    '''
-    A qualified name (for a statistic) has the form NAME:GROUP with optional spaces where:
-
-    NAME (with no qualifier) means 'match the group of the current activity' - returned as None
-    NAME: (colon but no value) means 'match any constraint' - returned as ''
-    NAME:GROUP means 'match the given group' - returned as the name
-    '''
+def parse_qualified_name(qname):
     if ':' in qname:
-        name, group = qname.split(':')
-        name, group = name.strip(), group.strip()
+        left, group = qname.rsplit(':', 1)
     else:
-        name, group = qname.strip(), None
-    log.debug(f'Parsed {qname} as {name}:{group}')
-    return name, group
+        left, group = qname, None
+    if '.' in left:
+        owner, name = left.split('.', 1)
+    else:
+        owner, name = None, left
+    log.debug(f'Parsed {qname} as {owner}.{name}:{group}')
+    return owner, name, group
+
+
+def activity_conversion(s, source_ids):
+    # convert the query that gives any source id and select either those that are activities directly,
+    # or activities associated with a topic (eg user entered activity notes)
+    source_ids = source_ids.cte()
+    q_direct = s.query(ActivityJournal.id). \
+        filter(ActivityJournal.id.in_(source_ids))
+    q_via_topic = s.query(ActivityJournal.id). \
+        join(FileHash). \
+        join(ActivityTopicJournal). \
+        filter(ActivityTopicJournal.id.in_(source_ids))
+    return union(q_direct, q_via_topic).select()
+
+
+def group_by_type(sources):
+    groups = defaultdict(list)
+    for source in sources:
+        groups[type(source)].append(source)
+    return groups
+
+
+def sort_sources(sources):
+    def key(source):
+        for attr in 'start', 'time', 'id':
+            if hasattr(source, attr):
+                return getattr(source, attr)
+    return sorted(sources, key=key)
+
+
+def sort_groups(groups):
+    return {key: sort_sources(values) for key, values in groups.items()}

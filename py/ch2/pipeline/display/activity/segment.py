@@ -34,24 +34,23 @@ class SegmentDelegate(ActivityJournalDelegate):
 
     @staticmethod
     def __field(s, date, sjournal, name):
-        # TODO - this cannot work!  sjournal.segment is not an activity group!!
-        return StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.segment, source_id=sjournal.id)
+        return StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.activity_group,
+                                        source_id=sjournal.id)
 
     @optional_text('Segments')
     def read_schedule(self, s, date, schedule):
         for segment in s.query(Segment).all():
             segment_rows = [list(summary_column(s, schedule, date, name))
-                            for name in self.__names(s, segment, Names.SEGMENT_TIME, Names.SEGMENT_HEART_RATE)]
+                            for name in self.__names(s, Names.SEGMENT_TIME, Names.SEGMENT_HEART_RATE)]
             segment_rows = list(filter(bool, segment_rows))
             if segment_rows:
                 yield [text(segment.name)] + segment_rows
 
     @staticmethod
-    def __names(s, segment, *names):
+    def __names(s, *names):
         for name in names:
             sname = s.query(StatisticName). \
                 filter(StatisticName.name == name,
-                       StatisticName.activity_group == segment,
                        StatisticName.owner == SegmentCalculator).one_or_none()
             if sname:
                 yield sname

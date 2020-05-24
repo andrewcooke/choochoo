@@ -63,23 +63,26 @@ class ActivityJournal(GroupedSource):
     def time_range(self, s):
         return self.start, self.finish
 
-    def get_named(self, s, qname, owner=None):
+    def get_named(self, s, qname, default_owner=None, default_group=None):
         from .. import StatisticJournal, StatisticName
-        from ...data.constraint import parse_qname
-        name, group = parse_qname(qname)
+        from ...data.constraint import parse_qualified_name
+        owner, name, group = parse_qualified_name(qname)
+        owner = owner or default_owner
+        group = group or default_group
         q = s.query(StatisticJournal). \
             join(ActivityJournal). \
             join(StatisticName). \
             filter(StatisticName.name.ilike(name),
                    StatisticJournal.source_id == self.id)
         if owner: q = q.filter(StatisticName.owner == owner)
-        if group: q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
-        elif group is None: q = q.join(ActivityGroup).filter(ActivityGroup.id == ActivityJournal.activity_group_id)
+        # todo - we could just short-circuit and return none if it doesn't match?
+        if group: q = q.join(ActivityGroup).filter(ActivityGroup.name == group)
         return q.all()
 
-    def get_all_named(self, s, qname, owner=None):
-        return self.get_named(s, qname, owner=owner) + \
-               self.get_activity_topic_journal(s).get_named(s, qname, owner=owner)
+    def get_all_named(self, s, qname, default_owner=None, default_group=None):
+        return self.get_named(s, qname, default_owner=default_owner, default_group=default_group) + \
+               self.get_activity_topic_journal(s).get_named(s, qname, default_owner=default_owner,
+                                                            default_group=default_group)
 
     def get_activity_topic_journal(self, s):
         from .. import ActivityTopicJournal, FileHash

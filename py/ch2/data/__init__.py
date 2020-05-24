@@ -1,5 +1,5 @@
 
-from .constraint import constrained_activities
+from .constraint import constrained_sources
 from .frame import df, session, statistics, activity_statistics, \
     nearby_activities, bookmarks, statistic_names, statistics, present, linear_resample_time, \
     groups_by_time, coallesce, transform, drop_empty, coallesce_like
