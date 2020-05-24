@@ -41,11 +41,6 @@ class ActivityJournalDelegate(BasePipeline):
         raise NotImplementedError(self.__class__.__name__)
         yield
 
-    # @abstractmethod
-    # def read_schedule(self, s, date, schedule):
-    #     raise NotImplementedError(self.__class__.__name__)
-    #     yield
-
     @abstractmethod
     def read_interval(self, s, interval):
         raise NotImplementedError(self.__class__.__name__)
