@@ -20,7 +20,7 @@ from ...data.frame import activity_statistics, present, statistics
 from ...data.response import response_stats
 from ...lib import time_to_local_time
 from ...lib.log import log_current_exception
-from ...names import Names as N, Titles as T, Summaries as S, Units, titles_for_names
+from ...names import Names as N, Titles as T, Summaries as S, Units, titles_for_names, SPACE
 from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, ActivityGroup, StatisticJournalTimestamp, \
     ActivityJournal, StatisticJournal
 from ...sql.types import simple_name
@@ -44,8 +44,8 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
                 by_name(PowerCalculator, N.POWER_ESTIMATE).df
             if self.response_prefix:
                 start, finish = ajournal.start - dt.timedelta(hours=1), ajournal.finish + dt.timedelta(hours=1)
-                fitness = self.response_prefix + '_' + N.FITNESS_ANY
-                fatigue = self.response_prefix + '_' + N.FATIGUE_ANY
+                fitness = self.response_prefix + SPACE + N.FITNESS_ANY
+                fatigue = self.response_prefix + SPACE + N.FATIGUE_ANY
                 sdf = Statistics(s, start=start, finish=finish). \
                     by_name(self.owner_in, fitness, fatigue, like=True).with_. \
                     drop_prefix(self.response_prefix).df

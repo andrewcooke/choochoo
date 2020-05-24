@@ -14,7 +14,7 @@ from ..read.segment import SegmentReader
 from ...data import Statistics
 from ...data.response import sum_to_hour, calc_response
 from ...lib.date import round_hour, to_time, local_date_to_time, now
-from ...names import Names as N
+from ...names import Names as N, SPACE
 from ...sql import StatisticJournal, Composite, StatisticName, Source, Constant, CompositeComponent, \
     StatisticJournalFloat
 from ...sql.utils import add
@@ -95,7 +95,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
     def __missing_recent(self, s, constant, now):
         finish = s.query(StatisticJournal.time). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-            filter(StatisticName.name == self.prefix + '_' + constant,
+            filter(StatisticName.name == self.prefix + SPACE + constant,
                    StatisticName.owner == self.owner_out). \
             order_by(StatisticJournal.time.desc()).limit(1).one_or_none()
         if finish is None:
@@ -114,7 +114,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
             filter(StatisticJournal.statistic_name_id.in_(response_ids))
         unused = s.query(count(distinct(StatisticJournal.source_id))). \
             join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-            filter(StatisticName.name == self.prefix + '_' + N.HR_IMPULSE_10,
+            filter(StatisticName.name == self.prefix + SPACE + N.HR_IMPULSE_10,
                    StatisticName.owner == self.owner_in,
                    ~StatisticJournal.source_id.in_(inputs))
         missing = unused.scalar()
@@ -125,7 +125,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
                 unused = s.query(Source). \
                     join(StatisticJournal). \
                     join(StatisticName, StatisticJournal.statistic_name_id == StatisticName.id). \
-                    filter(StatisticName.name == self.prefix + '_' + N.HR_IMPULSE_10,
+                    filter(StatisticName.name == self.prefix + SPACE + N.HR_IMPULSE_10,
                            StatisticName.owner == self.owner_in,
                            ~StatisticJournal.source_id.in_(inputs))
                 for source in unused.all():
@@ -150,7 +150,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
             data[SCALED] = data[N.HR_IMPULSE_10] * 100 / data[N.COVERAGE]
             all_sources = list(self.__make_sources(s, data))
             for constant, response in zip(self.response_constants, self.responses):
-                name = self.prefix + '_' + constant.short_name
+                name = self.prefix + SPACE + constant.short_name
                 log.info(f'Creating values for {response.title} ({name})')
                 hr3600 = sum_to_hour(data, SCALED)
                 params = (log10(response.tau_days * 24),
@@ -174,7 +174,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
 
     def __read_data(self, s):
         from ..owners import ImpulseCalculator
-        name = self.prefix + '_' + N.HR_IMPULSE_10
+        name = self.prefix + SPACE + N.HR_IMPULSE_10
         df = Statistics(s, with_source=True).by_name(ImpulseCalculator, name).with_. \
             rename({name: N.HR_IMPULSE_10, N._src(name): N._src(N.HR_IMPULSE_10)}).df
         name = N._cov(N.HEART_RATE)

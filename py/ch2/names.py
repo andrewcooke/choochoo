@@ -2,6 +2,7 @@ import re
 
 from ch2.sql.types import simple_name
 
+SPACE = '-'  # we don't use _ because sqlite uses that as a wildcard in 'like'
 POW_M1 = '\u207b\u00b9'
 POW_2 = '\u00b2'
 MED_WINDOW = '60s'
@@ -242,11 +243,13 @@ class Summaries:
 def like(pattern, names):
     return list(_like(pattern, names))
 
+
 def _like(pattern, names, test=True):
     matcher = re.compile(pattern.replace('%', '.+'))
     for name in names:
         if bool(matcher.match(name)) == test:
             yield name
+
 
 def unlike(pattern, names):
     return list(_like(pattern, names, test=False))

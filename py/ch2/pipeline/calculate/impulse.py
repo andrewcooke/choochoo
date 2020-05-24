@@ -9,7 +9,7 @@ from .utils import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameC
 from ..pipeline import OwnerInMixin
 from ...data import Statistics
 from ...data.impulse import hr_zone, impulse_10
-from ...names import N, Titles
+from ...names import N, Titles, SPACE
 from ...sql import Constant, StatisticJournalFloat
 
 log = getLogger(__name__)
@@ -54,9 +54,9 @@ class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCal
         hr_description = 'The SHRIMP HR zone.'
         impulse_description = 'The SHRIMP HR impulse over 10 seconds.'
         title = self.impulse.title
-        name_group = self.prefix + '_' + self.impulse_constant.short_name  # drop activity group as present elsewhere
+        name_group = self.prefix + SPACE + self.impulse_constant.short_name  # drop activity group as present elsewhere
         # todo???
-        name_all = self.prefix + '_' + N.HR_IMPULSE_10
+        name_all = self.prefix + SPACE + N.HR_IMPULSE_10
         for time, row in stats.iterrows():
             if not np.isnan(row[N.HR_ZONE]):
                 loader.add(Titles.HR_ZONE, None, None, ajournal, row[N.HR_ZONE], time,

@@ -43,7 +43,7 @@ def copy_constants(record, old_s, old, new):
             with new.session_context() as new_s:
                 old_name = old_constant.name.lower()
                 new_constant = new_s.query(Constant).filter(Constant.name == old_name).one_or_none()
-                for joint in (':', '_'):
+                for joint in (':', '_', '-'):
                     if not new_constant:
                         idx = old_name.rfind('.')
                         if idx != -1:

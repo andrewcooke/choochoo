@@ -11,7 +11,7 @@ from ..lib import local_date_to_time, to_date, time_to_local_time
 from ..lib.date import YMD
 from ..lib.log import log_current_exception
 from ..lib.utils import timing
-from ..names import Names as N, like, MED_WINDOW
+from ..names import Names as N, like, MED_WINDOW, SPACE
 from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.types import short_cls
@@ -274,7 +274,7 @@ def std_health_statistics(s, freq='1h'):
 
     stats = Statistics(s). \
         by_name(ResponseCalculator, N.DEFAULT_ANY, like=True).with_. \
-        drop_prefix(N.DEFAULT + '_').into(stats, tolerance='30m')
+        drop_prefix(N.DEFAULT + SPACE).into(stats, tolerance='30m')
 
     stats = Statistics(s). \
         by_name(RestHRCalculator, N.REST_HR). \
@@ -317,10 +317,10 @@ def std_activity_statistics(s, activity_journal, activity_group=None):
         by_name(ElevationCalculator, N.ELEVATION, N.GRADE).with_. \
         rename_with_units().into(stats, tolerance='1s')
 
-    hr_impulse_10 = N.DEFAULT + '_' + N.HR_IMPULSE_10
+    hr_impulse_10 = N.DEFAULT + SPACE + N.HR_IMPULSE_10
     stats = Statistics(s, activity_journal=activity_journal). \
         by_name(ImpulseCalculator, N.HR_ZONE, hr_impulse_10).with_. \
-        drop_prefix(N.DEFAULT + '_').into(stats, tolerance='10s', interpolate=True)
+        drop_prefix(N.DEFAULT + SPACE).into(stats, tolerance='10s', interpolate=True)
 
     stats = Statistics(s, activity_journal=activity_journal). \
         by_name(PowerCalculator, N.POWER_ESTIMATE).with_. \
