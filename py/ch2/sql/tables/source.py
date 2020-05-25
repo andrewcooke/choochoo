@@ -129,15 +129,14 @@ class Interval(Source):
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     schedule = Column(OpenSched, nullable=False, index=True)
-    # disambiguate creator so each can wipe only its own data on force
     owner = Column(ShortCls, nullable=False)
     # these are for the schedule - finish is redundant (start is not because of timezone issues)
     start = Column(Date, nullable=False, index=True)
     finish = Column(Date, nullable=False, index=True)
-    dirty = Column(Boolean, nullable=False, default=False)  # todo - should this have an index?
+    dirty = Column(Boolean, nullable=False, default=False, index=True)
 
-    # todo - is this used?
-    Index('ungrouped_interval', schedule, owner, start, unique=False)
+    # todo - is this needed?
+    # Index('ungrouped_interval', schedule, owner, start, unique=False)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.INTERVAL
@@ -164,16 +163,6 @@ class Interval(Source):
             return start, finish
         else:
             raise NoStatistics('No statistics are currently defined')
-
-    # @classmethod
-    # def at(cls, s, schedule, interval_owner, start):
-    #     '''
-    #     The existing interval for a given start, owner, schedule.
-    #     '''
-    #     return s.query(Interval). \
-    #         filter(Interval.start == start,
-    #                Interval.schedule == schedule,
-    #                Interval.owner == interval_owner).one_or_none()
 
     @classmethod
     def missing_dates(cls, s, expected, schedule, interval_owner, statistic_owner=None, start=None, finish=None):
@@ -254,9 +243,11 @@ class CompositeComponent(Base):
     __tablename__ = 'composite_component'
 
     id = Column(Integer, primary_key=True)
-    input_source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), nullable=False)
+    input_source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'),
+                             nullable=False, index=True)
     input_source = relationship('Source', foreign_keys=[input_source_id])
-    output_source_id = Column(Integer, ForeignKey('composite_source.id', ondelete='cascade'), nullable=False)
+    output_source_id = Column(Integer, ForeignKey('composite_source.id', ondelete='cascade'),
+                              nullable=False)  # no need for index - see unique below
     output_source = relationship('Composite', foreign_keys=[output_source_id])
     UniqueConstraint(output_source_id, input_source_id)  # ordered so output is a useful index
 

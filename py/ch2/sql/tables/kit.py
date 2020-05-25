@@ -352,7 +352,7 @@ class KitComponent(ModelMixin, Base):
     SIMPLE_NAME = 'component'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Name, nullable=False, index=True)
+    name = Column(Name, nullable=False, index=True, unique=True)
 
     @classmethod
     def get(cls, s, name, require=True):
@@ -440,11 +440,13 @@ class KitModel(ModelMixin, StatisticsMixin, UngroupedSource):
     SIMPLE_NAME = 'model'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    item_id = Column(Integer, ForeignKey('kit_item.id', ondelete='cascade'), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey('kit_item.id', ondelete='cascade'),
+                     nullable=False, index=True)
     item = relationship('KitItem', foreign_keys=[item_id], backref=backref('models', passive_deletes=True))
-    component_id = Column(Integer, ForeignKey('kit_component.id', ondelete='cascade'), nullable=False, index=True)
+    component_id = Column(Integer, ForeignKey('kit_component.id', ondelete='cascade'),
+                          nullable=False, index=True)
     component = relationship('KitComponent', backref=backref('models', passive_deletes=True))
-    name = Column(Name, nullable=False, index=True)
+    name = Column(Name, nullable=False, index=True, unique=True)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.MODEL

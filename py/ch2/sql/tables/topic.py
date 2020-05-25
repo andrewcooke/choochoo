@@ -225,9 +225,9 @@ class ActivityTopicJournal(GroupedSource):
     __tablename__ = 'activity_topic_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
+    file_hash_id = Column(Integer, ForeignKey('file_hash.id'),
+                          nullable=False, index=True, unique=True)
     file_hash = relationship('FileHash', backref=backref('activity_topic_journal', uselist=False))
-    UniqueConstraint(file_hash_id)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY_TOPIC

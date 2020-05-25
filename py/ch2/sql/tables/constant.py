@@ -22,7 +22,7 @@ class Constant(Source):
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
     # this could be the statistic_name or it could contain more info related to constraint
-    name = Column(QualifiedName, nullable=False, index=True)
+    name = Column(QualifiedName, nullable=False, index=True, unique=True)
     # todo - this ondelete cascade could cause problems with orphaned sources
     # don't think it's needed anyway, since statistic_name entries are not deleted?
     statistic_name_id = Column(Integer, ForeignKey('statistic_name.id', ondelete='cascade'), nullable=False)

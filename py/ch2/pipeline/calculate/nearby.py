@@ -255,5 +255,4 @@ class NearbyCalculator(OwnerInMixin, UniProcCalculator):
         for i, group in enumerate(groups):
             log.info(f'Group {i} has {len(group)} members ({activity_group.name})')
             for activity_journal_id in group:
-                s.add(ActivityNearby(activity_group=activity_group, group=i,
-                                     activity_journal_id=activity_journal_id))
+                s.add(ActivityNearby(group=i, activity_journal_id=activity_journal_id))

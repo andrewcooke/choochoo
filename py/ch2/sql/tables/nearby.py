@@ -25,8 +25,6 @@ class ActivityNearby(Base):
     __tablename__ = 'activity_nearby'
 
     id = Column(Integer, primary_key=True)
-    activity_group_id = Column(Integer, ForeignKey('activity_group.id', ondelete='cascade'), nullable=False)
-    activity_group = relationship('ActivityGroup')
     group = Column(Integer, nullable=False, index=True)
     activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='cascade'))
     activity_journal = relationship('ActivityJournal',

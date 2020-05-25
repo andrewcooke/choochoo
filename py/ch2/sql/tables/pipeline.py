@@ -25,7 +25,7 @@ class Pipeline(Base):
     __tablename__ = 'pipeline'
 
     id = Column(Integer, primary_key=True)
-    type = Column(Integer, nullable=False)
+    type = Column(Integer, nullable=False, index=True)
     cls = Column(Cls, nullable=False)
     args = Column(Json, nullable=False, server_default=dumps(()))
     kargs = Column(Json, nullable=False, server_default=dumps({}))

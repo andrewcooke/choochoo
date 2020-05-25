@@ -35,7 +35,7 @@ class Timestamp(Base):
 
     id = Column(Integer, primary_key=True)
     time = Column(Time, nullable=False, default=time)
-    owner = Column(ShortCls, nullable=False)
+    owner = Column(ShortCls, nullable=False)  # index via unique
     constraint = Column(NullText)
     source_id = Column(Integer, ForeignKey('source.id', ondelete='cascade'))
     source = relationship('Source', foreign_keys=[source_id])

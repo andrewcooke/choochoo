@@ -19,7 +19,8 @@ class SegmentJournal(GroupedSource):
     segment = relationship('Segment')
     # do not use on delete cascade here since it leaves source entries without children
     # instead, to guarantee consistency, call clean()
-    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='set null'), index=True)
+    activity_journal_id = Column(Integer, ForeignKey('activity_journal.id', ondelete='set null'),
+                                 nullable=False, index=True)
     activity_journal = relationship('ActivityJournal', foreign_keys=[activity_journal_id])
     start = Column(Time, nullable=False)
     finish = Column(Time, nullable=False)
@@ -55,9 +56,8 @@ class Segment(Base):
     finish_lat = Column(Float, nullable=False)
     finish_lon = Column(Float, nullable=False)
     distance = Column(Float, nullable=False)
-    name = Column(Text, nullable=False, index=True)
+    name = Column(Text, nullable=False, index=True, unique=True)
     description = Column(Text)
-    UniqueConstraint(name)
     UniqueConstraint(start_lat, start_lon, finish_lat, finish_lon)
 
     @property

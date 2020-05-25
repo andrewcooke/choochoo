@@ -19,7 +19,7 @@ class ActivityGroup(Base):
     __tablename__ = 'activity_group'
 
     id = Column(Integer, primary_key=True)
-    name = Column(Name, nullable=False, index=True)
+    name = Column(Name, nullable=False, index=True, unique=True)
     title = Column(Text, nullable=False)
     description = Column(Text, nullable=False, server_default='')
     sort = Column(Sort, nullable=False)
@@ -45,12 +45,10 @@ class ActivityJournal(GroupedSource):
     __tablename__ = 'activity_journal'
 
     id = Column(Integer, ForeignKey('source.id', ondelete='cascade'), primary_key=True)
-    file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False)
+    file_hash_id = Column(Integer, ForeignKey('file_hash.id'), nullable=False, index=True, unique=True)
     file_hash = relationship('FileHash', backref=backref('activity_journal', uselist=False))
-    start = Column(Time, nullable=False)
+    start = Column(Time, nullable=False, index=True, unique=True)
     finish = Column(Time, nullable=False)
-    UniqueConstraint(start)
-    UniqueConstraint(file_hash_id)
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.ACTIVITY

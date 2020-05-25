@@ -319,7 +319,7 @@ class StatisticJournalInteger(StatisticJournal):
     __tablename__ = 'statistic_journal_integer'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = Column(Integer)
+    value = Column(Integer, nullable=False)
 
     __mapper_args__ = {
         'polymorphic_identity': StatisticJournalType.INTEGER
@@ -339,7 +339,7 @@ class StatisticJournalFloat(StatisticJournal):
     __tablename__ = 'statistic_journal_float'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = Column(Float)
+    value = Column(Float, nullable=False)
 
     def set(self, value):
         self.value = value if value is None else float(value)
@@ -388,7 +388,7 @@ class StatisticJournalText(StatisticJournal):
     __tablename__ = 'statistic_journal_text'
 
     id = Column(Integer, ForeignKey('statistic_journal.id', ondelete='cascade'), primary_key=True)
-    value = Column(Text)
+    value = Column(Text, nullable=False)
 
     def set(self, value):
         self.value = value if value is None else str(value)
