@@ -110,7 +110,7 @@ def calendar():
         by_name(ActivityTopic, N.NAME). \
         by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N.DIRECTION,
                 N.ASPECT_RATIO). \
-        by_name(ActivityCalculator, N._delta(N.ANY_FITNESS_ANY), like=True).df
+        by_name(ActivityCalculator, N._delta(N.FITNESS_ANY), like=True).df
     df[N.DISTANCE_KM] = df[N.ACTIVE_DISTANCE]
     df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
     df.loc[df[N.TOTAL_CLIMB].isna(), N.TOTAL_CLIMB] = 0
@@ -155,12 +155,14 @@ def calendar():
     Place the cursor over the symbol for more information.
     '''
 
-    dfa = statistics(s, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N.DIRECTION, N.ASPECT_RATIO)
-    dfa = coallesce(dfa, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N.DIRECTION, N.ASPECT_RATIO)
-    dfa[N.DISTANCE_KM] = dfa[N.ACTIVE_DISTANCE] / 1000
-    dfa['Duration'] = dfa[N.ACTIVE_TIME].map(format_seconds)
-    if present(dfa, N.TOTAL_CLIMB):
-        dfa.loc[dfa[N.TOTAL_CLIMB].isna(), N.TOTAL_CLIMB] = 0
+    dfa = Statistics(s). \
+        by_name(ActivityTopic, N.NAME). \
+        by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB, N.DIRECTION,
+                N.ASPECT_RATIO). \
+        by_name(ActivityCalculator, N._delta(N.FITNESS_ANY), like=True).df
+    dfa[N.DISTANCE_KM] = df[N.ACTIVE_DISTANCE]
+    dfa['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
+    dfa.loc[dfa[N.TOTAL_CLIMB].isna(), N.TOTAL_CLIMB] = 0
     dfb = groups_by_time(s)
     if present(dfb, N.GROUP):
         dfb.loc[dfb[N.GROUP].isna(), N.GROUP] = -1
