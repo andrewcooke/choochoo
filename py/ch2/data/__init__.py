@@ -1,8 +1,7 @@
 
 from .constraint import constrained_sources
-from .frame import df, session, statistics, \
-    nearby_activities, bookmarks, statistic_names, statistics, present, linear_resample_time, \
-    groups_by_time, coallesce, transform, drop_empty, coallesce_like
+from .frame import session, nearby_activities, bookmarks, present, linear_resample_time, \
+    groups_by_time, transform, drop_empty, read_query
 from .heart_rate import *
 from .lib import chisq, fit, inplace_decay
 from .plot import col_to_boxstats, box_plot, line_plotter, dot_plotter, bar_plotter, add_climbs, multi_plot, \

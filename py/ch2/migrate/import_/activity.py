@@ -27,7 +27,6 @@ def activity_imported(record, new):
 def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
     log.debug(f'Trying to copy activity_topic_fields for activity_topic {old_activity_topic}')
     activity_topic_field = old.meta.tables['activity_topic_field']
-    activity_group = old.meta.tables['activity_group']
     for old_activity_topic_field in old_s.query(activity_topic_field). \
             filter(activity_topic_field.c.activity_topic_id ==
                    (old_activity_topic.id if old_activity_topic else None)).all():
@@ -37,14 +36,10 @@ def copy_activity_topic_fields(record, old_s, old, old_activity_topic, new):
             old_statistic_name = old_s.query(statistic_name). \
                 filter(statistic_name.c.id == old_activity_topic_field.statistic_name_id).one()
             log.debug(f'Found old statistic_name {old_statistic_name}')
-            try:
-                old_activity_group = old_s.query(activity_group). \
-                    filter(activity_group.c.id == old_statistic_name.activity_group_id).one().name
-            except AttributeError:
-                old_activity_group = old_statistic_name.all_any_time
             with new.session_context() as new_s:
                 new_statistic_name = match_statistic_name(record, old_statistic_name, new_s, ActivityTopic)
-                copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, new_s, new_statistic_name)
+                copy_activity_topic_journal_entries(record, old_s, old, old_statistic_name, new_s,
+                                                    new_statistic_name)
         except:
             log_current_exception()
     if old_activity_topic:

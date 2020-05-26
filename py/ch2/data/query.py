@@ -53,8 +53,8 @@ class Statistics:
         self.__statistic_names[statistic_name.name] = statistic_name
 
     def __name_and_type(self, name, owner, like):
+        owner_name = short_cls(owner) if not isinstance(owner, str) else owner
         try:
-            owner_name = short_cls(owner) if not isinstance(owner, str) else owner
             q = self.__s.query(StatisticName).filter(StatisticName.owner == owner)
             if like:
                 statistic_names = q.filter(StatisticName.name.ilike(name)).all()

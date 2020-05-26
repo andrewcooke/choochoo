@@ -23,7 +23,8 @@ def heart_rate(start, finish):
     bin_width = 1
 
     s = session('-v2')
-    df = statistics(s, N.HEART_RATE, owners=(MonitorReader,), local_start=start, local_finish=finish)
+    # df = statistics(s, N.HEART_RATE, owners=(MonitorReader,), local_start=start, local_finish=finish)
+    df = Statistics(s).by_name(MonitorReader, N.HEART_RATE).df
     data = sorted(df[N.HEART_RATE])
     # take care here to get a fixed number of (integer) heart rates in each bin
     # this avoids aliasing effects.

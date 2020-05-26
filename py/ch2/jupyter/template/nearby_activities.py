@@ -11,10 +11,10 @@ from ch2.sql import *
 
 
 @template
-def nearby_activities(constraint):
+def nearby_activities():
 
     f'''
-    # Nearby Activities: {constraint}
+    # Nearby Activities
     '''
 
     '''
@@ -25,8 +25,8 @@ def nearby_activities(constraint):
     ## Load Group
     '''
     s = session('-v2')
-    groups = df(s.query(ActivityNearby).filter(ActivityNearby.constraint == constraint))
-    n_groups = len(groups.all_any_time.unique())
+    groups = read_query(s.query(ActivityNearby))
+    n_groups = len(groups.group.unique())
 
     '''
     ## Load and Plot Route Data
@@ -43,7 +43,7 @@ def nearby_activities(constraint):
     f.add_tile(STAMEN_TERRAIN, alpha=0.5)
 
     for i in range(n_groups):
-        source_ids = groups.loc[groups.all_any_time == i].activity_journal_id
+        source_ids = groups.loc[groups.group == i].activity_journal_id
         n_source_ids = len(source_ids)
         a = 2 * pi * i / n_groups
         dxa, dya = offset_a * sin(a), offset_a * cos(a)
@@ -64,7 +64,7 @@ def nearby_activities(constraint):
     if not labels:
         labels = [f'{constraint} {g}' for g in range(n_groups)]
     for i in range(n_groups):
-        source_ids = groups.loc[groups.all_any_time == i].activity_journal_id
+        source_ids = groups.loc[groups.group == i].activity_journal_id
         n_source_ids = len(source_ids)
         f.line(x=[x_max, x_max * 1.001], y=[y_max, y_max], color=palette[i], line_width=5, line_dash='solid',
                legend_label='%s (%d)' % (labels[i], n_source_ids))
