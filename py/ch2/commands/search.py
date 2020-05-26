@@ -8,7 +8,7 @@ from ..data.constraint import constraint, check_constraint, activity_conversion,
     group_by_type
 from ..diary.model import DB, VALUE, UNITS, TEXT
 from ..lib import time_to_local_time
-from ..names import Names
+from ..names import N
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..sql import ActivityTopicJournal, FileHash, ActivityJournal, StatisticJournal, ActivityTopicField, \
     ActivityTopic, StatisticJournalText, StatisticName
@@ -109,14 +109,14 @@ def expand_activity(s, activity_journal):
             return None
 
     return {DB: activity_journal.id,
-            'name': {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, ActivityTopicField.NAME,
+            'name': {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, N.NAME,
                                                             ActivityTopic, activity_journal.activity_group)),
                    UNITS: None},
             'group': {VALUE: activity_journal.activity_group.name, UNITS: None},
             'start': {VALUE: time_to_local_time(activity_journal.start), UNITS: 'date'},
-            'time': format(StatisticJournal.for_source(s, activity_journal.id, Names.ACTIVE_TIME,
+            'time': format(StatisticJournal.for_source(s, activity_journal.id, N.ACTIVE_TIME,
                                                        ActivityCalculator, activity_journal.activity_group)),
-            'distance': format(StatisticJournal.for_source(s, activity_journal.id, Names.ACTIVE_DISTANCE,
+            'distance': format(StatisticJournal.for_source(s, activity_journal.id, N.ACTIVE_DISTANCE,
                                                            ActivityCalculator, activity_journal.activity_group))}
 
 
@@ -140,9 +140,9 @@ def process_activities(s, activities, show, set):
     if set:
         name, value = parse_set(s, set)
     for activity in activities:
-        print(f'{display(activity.get_named(s, Names.START, owner=ActivityCalculator))}  '
+        print(f'{display(activity.get_named(s, N.START, owner=ActivityCalculator))}  '
               f'{activity.activity_group.name}  '
-              f'{display(activity.get_all_named(s, ActivityTopicField.NAME, owner=ActivityTopic))}')
+              f'{display(activity.get_all_named(s, N.NAME, owner=ActivityTopic))}')
         for qname in show:
             for result in activity.get_all_named(s, qname):
                 print(f'  {result.statistic_name.name} = {result.formatted()}')
@@ -189,7 +189,7 @@ def simple_activity_search(s, query):
     log.debug(f'Parsed {query} as {words}')
     words_query = None
     ids = [id[0] for id in s.query(StatisticName.id).
-        filter(StatisticName.name.in_([NOTES, ActivityTopicField.NAME]),
+        filter(StatisticName.name.in_([NOTES, N.NAME]),
                StatisticName.owner == ActivityTopic).all()]
     for word in words:
         if words_query is not None:

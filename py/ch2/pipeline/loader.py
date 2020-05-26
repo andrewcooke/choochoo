@@ -3,6 +3,7 @@ from collections import defaultdict, namedtuple
 from logging import getLogger
 from time import sleep
 
+import numpy as np
 from sqlalchemy.exc import IntegrityError
 
 from ..commands.args import UNLOCK
@@ -128,6 +129,11 @@ class StatisticJournalLoader:
         s.commit()
 
     def add(self, name, units, summary, source, value, time, cls, description=None, title=None):
+
+        if value is None:
+            raise Exception(f'Trying to save null value for {name}')
+        if value != value:
+            raise Exception(f'Trying to save nan value for {name}')
 
         # note that name is used as title if title is None, and name is reduced to a simple name.
         # so legacy code works correctly

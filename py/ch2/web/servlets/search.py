@@ -81,7 +81,7 @@ def expand_activity(s, activity_journal):
             return None
 
     return {DB: activity_journal.id,
-            'name': {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, ActivityTopicField.NAME,
+            'name': {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, N.NAME,
                                                               ActivityTopic, activity_journal.activity_group)),
                      UNITS: None},
             'group': {VALUE: activity_journal.activity_group.name, UNITS: None},

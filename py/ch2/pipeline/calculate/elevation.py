@@ -5,7 +5,7 @@ from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFram
 from ...data import Statistics
 from ...data.elevation import smooth_elevation
 from ...data.frame import present
-from ...names import Names, Titles, Units
+from ...names import N, Titles, Units
 from ...sql import StatisticJournalFloat
 
 log = getLogger(__name__)
@@ -21,29 +21,33 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
         from ..owners import SegmentReader
         try:
             return Statistics(s, activity_journal=ajournal, with_timespan=True). \
-                by_name(SegmentReader, Names.DISTANCE, Names.RAW_ELEVATION, Names.ELEVATION, Names.ALTITUDE).df
+                by_name(SegmentReader, N.DISTANCE, N.RAW_ELEVATION, N.ELEVATION, N.ALTITUDE).df
         except Exception as e:
             log.warning(f'Failed to generate statistics for elevation: {e}')
             raise
 
     def _calculate_stats(self, s, ajournal, df):
-        if not present(df, Names.ELEVATION):
-            if present(df, Names.RAW_ELEVATION):
+        if not present(df, N.ELEVATION):
+            if present(df, N.RAW_ELEVATION):
                 df = smooth_elevation(df, smooth=self.smooth)
-            elif present(df, Names.ALTITUDE):
-                log.warning(f'Using {Names.ALTITUDE} as {Names.ELEVATION}')
-                df[Names.ELEVATION] = df[Names.ALTITUDE]
+            elif present(df, N.ALTITUDE):
+                log.warning(f'Using {N.ALTITUDE} as {N.ELEVATION}')
+                df[N.ELEVATION] = df[N.ALTITUDE]
             return df
         else:
             return None
 
     def _copy_results(self, s, ajournal, loader, df):
+        
+        def ok(value):
+            return value is not None and value == value
+        
         for time, row in df.iterrows():
-            if Names.ELEVATION in row:
-                loader.add(Titles.ELEVATION, Units.M, None, ajournal, row[Names.ELEVATION],
+            if N.ELEVATION in row and ok(row[N.ELEVATION]):
+                loader.add(Titles.ELEVATION, Units.M, None, ajournal, row[N.ELEVATION],
                            time, StatisticJournalFloat,
                            description='An estimate of elevation (may come from various sources).')
-            if Names.GRADE in row:
-                loader.add(Titles.GRADE, Units.PC, None, ajournal, row[Names.GRADE],
+            if N.GRADE in row and ok(row[N.GRADE]):
+                loader.add(Titles.GRADE, Units.PC, None, ajournal, row[N.GRADE],
                            time, StatisticJournalFloat,
                            description='The gradient of the smoothed SRTM1 elevation.')

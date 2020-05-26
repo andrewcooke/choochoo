@@ -6,7 +6,8 @@ import pandas as pd
 from ch2 import activities
 from ch2.commands.args import bootstrap_dir, mm, DEV, V, m
 from ch2.config.profile.default import default
-from ch2.data import activity_statistics, Names as N
+from ch2.data import activity_statistics, Names as N, Statistics
+from ch2.pipeline.read import SegmentReader
 from tests import LogTestCase
 
 log = getLogger(__name__)
@@ -25,11 +26,9 @@ class TestPower(LogTestCase):
             activities(args, sys, db)
 
             with db.session_context() as s:
-                stats = activity_statistics(s, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
-                                            N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION, N.SPEED,
-                                            N.CADENCE, N.HEART_RATE,
-                                            local_time='2018-03-04 07:16:33', activity_group='Bike',
-                                            with_timespan=True)
+                stats = Statistics(s, activity_journal='2018-03-04 07:16:33', with_timespan=True). \
+                    by_name(SegmentReader, N.LATITUDE, N.LONGITUDE, N.SPHERICAL_MERCATOR_X,
+                            N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION, N.SPEED, N.CADENCE, N.HEART_RATE).df
                 stats.describe()
 
                 sepn = pd.Series(stats.index).diff().median()  # 7 secs

@@ -22,7 +22,7 @@ log = getLogger(__name__)
 class Statistics:
 
     def __init__(self, s, start=None, finish=None, sources=None, with_timespan=False, with_source=False,
-                 activity_journal=None, activity_group=None, warn_over=1):
+                 activity_journal=None, activity_group=None, bookmarks=None, warn_over=1):
         '''
         Specify any general constraints when constructing the object, then request particular statistics
         using by_name and by_group.
@@ -44,6 +44,7 @@ class Statistics:
         self.__warn_over = warn_over
         self.__statistic_names = {}
         self.__df = None
+        if bookmarks: raise Exception('TODO')
 
     def __save_name(self, statistic_name):
         if statistic_name.name in self.__statistic_names:
@@ -85,7 +86,7 @@ class Statistics:
                 q = self.__s.query(*self.__columns(type_class, label)). \
                     filter(type_class.statistic_name_id == statistic_name.id)
                 q = self.__constrain_journal(q)
-                with timing(f'{label}\n{q}', self.__warn_over):
+                with timing(f'Slow query for {label}?\n{q}', self.__warn_over):
                     df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
                 self.__merge(df)
         return self
@@ -97,7 +98,7 @@ class Statistics:
                     join(StatisticJournal, StatisticJournal.source_id == Source.id). \
                     filter(StatisticJournal.statistic_name_id == statistic_name.id)
                 q_group_ids = self.__constrain_journal(q_group_ids)
-                with timing(f'group ids\n{q_group_ids}', self.__warn_over):
+                with timing(f'Slow query for group ids\n{q_group_ids}?', self.__warn_over):
                     activity_group_ids = q_group_ids.all()
                 for row in activity_group_ids:
                     activity_group_id = row[0]
@@ -113,7 +114,7 @@ class Statistics:
                         join(Source, type_class.source_id == Source.id). \
                         filter(Source.activity_group_id == activity_group_id)
                     q = self.__constrain_journal(q)
-                    with timing(f'{label}\n{q}', self.__warn_over):
+                    with timing(f'Slow query for {label}?\n{q}', self.__warn_over):
                         df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
                     self.__merge(df)
         return self
@@ -132,7 +133,7 @@ class Statistics:
         if self.__df is None:
             self.__df = df
         else:
-            with timing(f'merge {df.columns}', self.__warn_over):
+            with timing(f'Slow merge of {df.columns}?', self.__warn_over):
                 self.__df = self.__df.join(df, how='outer')
 
     def __add_timespan(self):
@@ -164,9 +165,14 @@ class Data:
     def __bool__(self):
         return not self.df.dropna(how='all').empty
 
-    def drop_prefix(self, prefix):
+    def drop_prefix(self, prefix, spaces=True):
         for column in like(prefix + '%', self.df.columns):
-            self.df.rename(columns={column: column.replace(prefix, '')}, inplace=True)
+            new_column = column.replace(prefix, '')
+            if spaces:
+                while new_column.startswith(SPACE) or new_column.startswith(' '):
+                    new_column = new_column[1:]
+            log.debug(f'Rename {column} -> {new_column}')
+            self.df.rename(columns={column: new_column}, inplace=True)
         return self
     
     def transform(self, name, scale=1.0, median=None):
@@ -234,24 +240,40 @@ class Data:
         set_times_from_index(self.df)
         return self
 
-    def coallesce(self, *names, delete=False):
+    def __coallesce(self, columns, name, delete=False):
+        log.debug(f'Coallescing {columns} for {name}')
+        df = self.df[columns].copy()
+        df.fillna(method='ffill', axis='columns', inplace=True)
+        df.fillna(method='bfill', axis='columns', inplace=True)
+        self.df.loc[:, name] = df.iloc[:, [0]]
+        if delete:
+            self.df.drop(columns=columns, inplace=True)
+
+    def coallesce_groups(self, *names, delete=False):
         '''
         Merge columns named with groups.
         '''
         if not names:
             names = set(column.split(':')[0] for column in self.df.columns if ':' in column)
-        log.debug(f'Coallescing {names}')
+        log.debug(f'Coallescing groups for {names}')
         for name in names:
             if name in self.df.columns:
                 raise Exception(f'{name} already exists')
             columns = like(name + ':%', self.df.columns)
-            log.debug(f'Coallescing {columns} for {name}')
-            df = self.df[columns].copy()
-            df.fillna(method='ffill', axis='columns', inplace=True)
-            df.fillna(method='bfill', axis='columns', inplace=True)
-            self.df.loc[:, name] = df.iloc[:, [0]]
-            if delete:
-                self.df.drop(columns=columns, inplace=True)
+            self.__coallesce(columns, name, delete=delete)
+        return self
+
+    def coallesce_like(self, map, delete=False):
+        '''
+        Merge columns that match.  map is {pattern: result}
+        '''
+        log.debug(f'Coallescing {map}')
+        for pattern in map:
+            name = map[pattern]
+            if name in self.df.columns:
+                raise Exception(f'{name} already exists')
+            columns = like(pattern, self.df.columns)
+            self.__coallesce(columns, name, delete=delete)
         return self
 
 
@@ -284,7 +306,7 @@ def std_health_statistics(s, freq='1h'):
 
     stats = Statistics(s).\
         by_group(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE).with_. \
-        coallesce(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
+        coallesce_groups(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
         rename_with_units(N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
         copy({N.ACTIVE_TIME_S: N.ACTIVE_TIME_H}, scale=1 / 3600). \
         into(stats, tolerance='30m')

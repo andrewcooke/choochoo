@@ -10,7 +10,7 @@ from ..commands.args import base_system_path, DB_VERSION, PERMANENT
 from ..commands.garmin import GARMIN_USER, GARMIN_PASSWORD
 from ..diary.model import TYPE, EDIT, FLOAT, LO, HI, DP, SCORE
 from ..lib.schedule import Schedule
-from ..names import Names, Titles, Sports, Units, Summaries as S
+from ..names import N, Titles, Sports, Units, Summaries as S
 from ..pipeline.calculate.achievement import AchievementCalculator
 from ..pipeline.calculate.activity import ActivityCalculator
 from ..pipeline.calculate.elevation import ElevationCalculator
@@ -147,11 +147,11 @@ your FF-model parameters (fitness and fatigue).
                          activity_group=activity_group, units=Units.BPM,
                          statistic_journal_type=StatisticJournalType.INTEGER)
         add_climb(s)  # default climb calculator
-        add_responses(s, c, self._ff_parameters(), prefix=Names.DEFAULT)
+        add_responses(s, c, self._ff_parameters(), prefix=N.DEFAULT)
 
     def _load_standard_statistics(self, s, c):
         add_statistics(s, ActivityCalculator, c, owner_in=short_cls(ResponseCalculator),
-                       climb=CLIMB_CNAME, response_prefix=Names.DEFAULT)
+                       climb=CLIMB_CNAME, response_prefix=N.DEFAULT)
         add_statistics(s, SegmentCalculator, c, owner_in=short_cls(SegmentReader))
         add_statistics(s, MonitorCalculator, c, owner_in=short_cls(MonitorReader))
         add_statistics(s, RestHRCalculator, c, owner_in=short_cls(MonitorReader))
@@ -181,7 +181,7 @@ your FF-model parameters (fitness and fatigue).
         add_displayer(s, DiaryDisplayer, c)
         add_displayer(s, MonitorDisplayer, c)
         # prefix ties in to the ff statistics config
-        add_displayer(s, ResponseDisplayer, c, owner_in=short_cls(ResponseCalculator), prefix=Names.DEFAULT)
+        add_displayer(s, ResponseDisplayer, c, owner_in=short_cls(ResponseCalculator), prefix=N.DEFAULT)
         add_displayer(s, ActivityDisplayer, c)
         c2 = Counter()
         for delegate in self._activity_displayer_delegates():
@@ -248,7 +248,7 @@ so do not use an important password that applies to many accounts.
             c = Counter()
             root = add_activity_topic(s, ActivityTopic.ROOT, c, description=ActivityTopic.ROOT_DESCRIPTION,
                                       activity_group=activity_group)
-            add_activity_topic_field(s, root, ActivityTopicField.NAME, c, StatisticJournalType.TEXT,
+            add_activity_topic_field(s, root, N.NAME, c, StatisticJournalType.TEXT,
                                      activity_group, model={TYPE: EDIT},
                                      description=ActivityTopicField.NAME_DESCRIPTION)
             # note that these have empty toic parents because they are children of the entry itself

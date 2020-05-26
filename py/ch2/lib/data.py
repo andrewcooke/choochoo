@@ -167,7 +167,7 @@ def linscale(series, lo=0, hi=None, min=0, max=1, gamma=1):
 
 def sorted_numeric_labels(labels, text=None):
     if text:
-        labels = [label for label in labels if text in label]
+        labels = [label for label in labels if label.startswith(text)]
     return sorted(labels, key=lambda label: int(sub(r'\D', '', label)))
 
 

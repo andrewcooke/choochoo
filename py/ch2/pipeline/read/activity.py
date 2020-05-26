@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
 from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no, FILENAME_KIT
-from ...names import Titles as T, Units, Sports, Summaries as S
+from ...names import N, T, Units, Sports, Summaries as S
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -206,10 +206,10 @@ class ActivityReader(MultiProcFitReader):
                                         activity_group=ajournal.activity_group))
         if not s.query(ActivityTopicField). \
                 join(StatisticName). \
-                filter(StatisticName.name == ActivityTopicField.NAME,
+                filter(StatisticName.name == N.NAME,
                        StatisticName.owner == ActivityTopic,
                        ActivityTopicField.activity_topic == root).one_or_none():
-           add_activity_topic_field(s, root, ActivityTopicField.NAME, -10, StatisticJournalType.TEXT,
+           add_activity_topic_field(s, root, N.NAME, -10, StatisticJournalType.TEXT,
                                      ajournal.activity_group, model={TYPE: EDIT},
                                      description=ActivityTopicField.NAME_DESCRIPTION)
         # second, do we already have a journal for this file, or do we need to add one?
@@ -224,9 +224,9 @@ class ActivityReader(MultiProcFitReader):
                 join(StatisticName). \
                 filter(StatisticJournal.source == source,
                        StatisticName.owner == ActivityTopic,
-                       StatisticName.name == ActivityTopicField.NAME).one_or_none():
+                       StatisticName.name == N.NAME).one_or_none():
             value = splitext(basename(file_scan.path))[0]
-            StatisticJournalText.add(s, ActivityTopicField.NAME, None, None, ActivityTopic,
+            StatisticJournalText.add(s, N.NAME, None, None, ActivityTopic,
                                      source, value, ajournal.start)
 
     def _check_overlap(self, s, start, finish, ajournal):

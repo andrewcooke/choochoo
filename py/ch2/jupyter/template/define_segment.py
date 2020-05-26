@@ -6,6 +6,8 @@ from bokeh.models import PreText, Slider
 from bokeh.plotting import show, figure
 
 from ch2.data import *
+from ch2.names import N
+from ch2.pipeline.owners import *
 from ch2.sql import Segment
 from ch2.jupyter.decorator import template
 
@@ -27,8 +29,9 @@ def define_segment(local_time):
     Open a connection to the database and load the data for a ride containing the segment.
     '''
     s = session('-v2')
-    df = activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y, DISTANCE, ELEVATION,
-                             LATITUDE, LONGITUDE, local_time=local_time)
+    df = Statistics(s, activity_journal=local_time). \
+        by_name(SegmentReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y, N.DISTANCE, N.ELEVATION,
+                N.LATITUDE, N.LONGITUDE).df
     df.dropna(inplace=True)
     df.describe()
 
@@ -55,9 +58,9 @@ def define_segment(local_time):
         map = figure(plot_width=width, plot_height=height, x_axis_type='mercator', y_axis_type='mercator',
                      match_aspect=True)
         map.add_tile(TILE)
-        map.circle(x=SPHERICAL_MERCATOR_X, y=SPHERICAL_MERCATOR_Y, source=df, name='map')
+        map.circle(x=N.SPHERICAL_MERCATOR_X, y=N.SPHERICAL_MERCATOR_Y, source=df, name='map')
         elevation = figure(plot_width=width, plot_height=height//10)
-        elevation.line(x=DISTANCE, y=ELEVATION, source=df, name='elevation')
+        elevation.line(x=N.DISTANCE, y=N.ELEVATION, source=df, name='elevation')
         c = column(row(s1, s2), row(t1, t2, t3), map, elevation)
 
         def mkplot(l1, l2):

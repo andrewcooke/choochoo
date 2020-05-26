@@ -129,7 +129,6 @@ class ActivityTopicField(Base, TopicField):
     # this correlates to some extent with the activity topic, which is also specific to an activity group
     # (so you will never see a field for group X if it has parent activity for group Y).
 
-    NAME = 'Name'
     NAME_DESCRIPTION = 'The title for the activity.'
 
     __tablename__ = 'activity_topic_field'
@@ -155,7 +154,6 @@ class Cache:
         self.__cache = {field_id: statistic for field_id, statistic in query.all()}
 
     def __getitem__(self, field):
-        log.debug(f'Cache contains ids {", ".join(str(key) for key in self.__cache.keys())}')
         if field.id not in self.__cache:
             log.debug(f'Creating {field}')
             name = field.statistic_name
@@ -267,3 +265,8 @@ class ActivityTopicJournal(GroupedSource):
                      s.query(ActivityTopicField.id, StatisticJournal).
                      filter(ActivityTopicField.statistic_name_id == StatisticJournal.statistic_name_id,
                             StatisticJournal.source_id == self.id))
+
+    def time_range(self, s):
+        return None, None
+
+

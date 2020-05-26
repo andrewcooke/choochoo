@@ -9,7 +9,7 @@ import pandas as pd
 
 from .utils import MultiProcCalculator, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin
 from ..loader import StatisticJournalLoader
-from ...data import activity_statistics, present, linear_resample_time, Statistics
+from ...data import present, linear_resample_time, Statistics
 from ...data.frame import median_dt
 from ...data.lib import interpolate_to_index
 from ...data.power import add_differentials, add_energy_budget, add_loss_estimate, add_power_estimate, PowerException, \

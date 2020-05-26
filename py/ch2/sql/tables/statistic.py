@@ -25,6 +25,10 @@ class StatisticName(Base):
     __tablename__ = 'statistic_name'
 
     id = Column(Integer, primary_key=True)
+    # having name and title is worryingly redundant.  the justification is that name is the thing exposed
+    # at the command line, so should be easy to type and parse.  the title is for the GUI.  unfortunately,
+    # currently, names are used in search in the GUI.  also, arguably, this should not affect the schema,
+    # however the mapping from title to name is not reversible.
     name = Column(Name, nullable=False)  # no need for index - can use unique(name, owner)
     title = Column(Text, nullable=False)
     description = Column(Text)
@@ -165,6 +169,19 @@ class StatisticJournal(Base):
             return 'StatisticJournal "%s"' % self.value
         except AttributeError:
             return 'StatisticJournal base'
+
+    @classmethod
+    def before_flush(cls, s):
+        cls.__delete_null_values(s)
+
+    @classmethod
+    def __delete_null_values(cls, s):
+        # drop null values.  these are instances that were created when reading missing values from the diary
+        # for display.  the actual values written are done in a separate thread (and have non-null values).
+        # (it's difficult to do this by discarding after reading because of auto-flush)
+        for instance in s.new:
+            if isinstance(instance, StatisticJournal) and hasattr(instance, 'value') and instance.value is None:
+                s.expunge(instance)
 
     @classmethod
     def add(cls, s, name, units, summary, owner, source, value, time, serial, type,

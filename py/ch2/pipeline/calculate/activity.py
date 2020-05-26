@@ -6,22 +6,22 @@ from logging import getLogger
 
 from sqlalchemy import desc
 
-from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from .elevation import ElevationCalculator
 from .impulse import ImpulseCalculator
 from .power import PowerCalculator
+from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ..pipeline import OwnerInMixin
 from ..read.segment import SegmentReader
 from ...data import Statistics
 from ...data.activity import active_stats, times_for_distance, hrz_stats, max_med_stats, max_mean_stats, \
     direction_stats, copy_times
 from ...data.climb import find_climbs, Climb, add_climb_stats
-from ...data.frame import activity_statistics, present, statistics
+from ...data.frame import present
 from ...data.response import response_stats
 from ...lib import time_to_local_time
 from ...lib.log import log_current_exception
-from ...names import Names as N, Titles as T, Summaries as S, Units, titles_for_names, SPACE
-from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, ActivityGroup, StatisticJournalTimestamp, \
+from ...names import N, T, Summaries as S, Units, titles_for_names, SPACE
+from ...sql import StatisticJournalFloat, Constant, StatisticJournalText, StatisticJournalTimestamp, \
     ActivityJournal, StatisticJournal
 from ...sql.types import simple_name
 
@@ -121,9 +121,9 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
                         S.join(S.MAX, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.MAX_MEAN_PE_M_ANY, Units.W,
                         S.join(S.MAX, S.MSR), ajournal.start)
-        self.__copy_all(ajournal, loader, stats, T._delta(T.DEFAULT_ANY), Units.FF,
+        self.__copy_all(ajournal, loader, stats, T._delta(T.FITNESS_ANY), Units.FF,
                         S.join(S.MAX, S.MSR), ajournal.start)
-        self.__copy_all(ajournal, loader, stats, T._delta(T.DEFAULT_ANY), Units.FF,
+        self.__copy_all(ajournal, loader, stats, T._delta(T.FATIGUE_ANY), Units.FF,
                         S.join(S.MAX, S.MSR), ajournal.start)
         self.__copy_all(ajournal, loader, stats, T.EARNED_D_ANY, Units.S,
                         S.join(S.MAX, S.MSR), ajournal.start)

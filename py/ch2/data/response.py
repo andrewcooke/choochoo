@@ -9,7 +9,7 @@ from pandas import DataFrame, Series
 from scipy import optimize
 
 from .lib import decay_params, inplace_decay
-from ..names import Titles, like, N
+from ..names import Titles, like, N, SPACE
 
 log = getLogger(__name__)
 
@@ -158,26 +158,26 @@ def response_stats(df, prev_secs):
     from math import log
     digits = re.compile(r'(\d+)')
     stats = {}
-    for pattern, title in [(N.FITNESS_ANY, Titles.FITNESS), (N.FATIGUE_ANY, Titles.FATIGUE)]:
+    for pattern in (N.FITNESS_ANY, N.FATIGUE_ANY):
         for name in like(pattern, df.columns):
             days = int(digits.search(name).group(1))
             lower, higher = df[name][0], df[name][-1]
             delta = higher - lower
-            stats[Titles._delta(title + ' %dd' % days)] = delta
+            stats[N._delta(name)] = delta
             tau = days * 24 * 60 * 60
             # this is the time needed for the value to return to where it was before the activity
             # so for fitness it's kinda the time 'bought' within which you're not getting worse and
             # for fatigue it's the recovery time.
             revert = tau * log(1 + delta / lower)
             if N.FITNESS in name:
-                stats[Titles.EARNED_D % days] = revert
+                stats[N.EARNED_D % days] = revert
                 if prev_secs:
                     # this was an experiment.  if you exercise regularly at the same intensity then you
                     # will tend to a certain fitness level.  this is an estimate of that level, assuming
                     # that activities repeat at the same interval as the time from the previous activity.
                     # it was a cute idea, but turns out to be way too noisy to be useful.
                     plateau = delta / (exp(prev_secs / tau) - 1)
-                    stats[Titles.PLATEAU_D % days] = plateau
+                    stats[N.PLATEAU_D % days] = plateau
             else:
-                stats[Titles.RECOVERY_D % days] = revert
+                stats[N.RECOVERY_D % days] = revert
     return stats

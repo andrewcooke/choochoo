@@ -3,6 +3,8 @@ from bokeh.io import output_notebook, show
 from math import pi, sin, cos
 
 from ch2.data import *
+from ch2.pipeline.owners import *
+from ch2.names import N
 from ch2.data.plot import *
 from ch2.jupyter.decorator import template
 from ch2.sql import *
@@ -49,14 +51,15 @@ def nearby_activities(constraint):
             b = 2 * pi * j / n_source_ids
             dxb, dyb = offset_b * sin(b), offset_b * cos(b)
             activity_journal = s.query(ActivityJournal).filter(ActivityJournal.id == source_id).one()
-            stats = activity_statistics(s, SPHERICAL_MERCATOR_X, SPHERICAL_MERCATOR_Y,
-                                        activity_journal=activity_journal)
-            f.line(x=stats[SPHERICAL_MERCATOR_X] + dxa + dxb, y=stats[SPHERICAL_MERCATOR_Y] + dya + dyb,
+            stats = Statistics(s, activity_journal=activity_journal). \
+                            by_name(SegmentReader, N.SPHERICAL_MERCATOR_X, N.SPHERICAL_MERCATOR_Y).df
+            f.line(x=stats[N.SPHERICAL_MERCATOR_X] + dxa + dxb, y=stats[N.SPHERICAL_MERCATOR_Y] + dya + dyb,
                    color=palette[i], line_width=1.5, line_dash='dotted')
             if x_max is None:
-                x_max, y_max = max(stats[SPHERICAL_MERCATOR_X]), max(stats[SPHERICAL_MERCATOR_Y])
+                x_max, y_max = max(stats[N.SPHERICAL_MERCATOR_X]), max(stats[N.SPHERICAL_MERCATOR_Y])
             else:
-                x_max, y_max = max(x_max, max(stats[SPHERICAL_MERCATOR_X])), max(y_max, max(stats[SPHERICAL_MERCATOR_Y]))
+                x_max, y_max = max(x_max, max(stats[N.SPHERICAL_MERCATOR_X])), \
+                               max(y_max, max(stats[N.SPHERICAL_MERCATOR_Y]))
 
     if not labels:
         labels = [f'{constraint} {g}' for g in range(n_groups)]
