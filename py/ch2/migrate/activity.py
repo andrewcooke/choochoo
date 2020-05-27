@@ -2,14 +2,14 @@
 from logging import getLogger
 
 from . import journal_imported, match_statistic_name, copy_statistic_journal, any_attr
-from ...lib.log import log_current_exception
-from ...sql import ActivityTopicJournal, FileHash, ActivityTopic, ActivityGroup
-from ...sql.types import simple_name
+from ..lib.log import log_current_exception
+from ..sql import ActivityTopicJournal, FileHash, ActivityTopic, ActivityGroup
+from ..sql.types import simple_name
 
 log = getLogger(__name__)
 
 
-def upgrade_activity(record, old, new):
+def import_activity(record, old, new):
     if not activity_imported(record, new):
         log.debug(f'Trying to copy activity topic data from {old} to {new}')
         with old.session_context() as old_s:

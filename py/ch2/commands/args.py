@@ -30,6 +30,7 @@ FIT = 'fit'
 FIX_FIT = 'fix-fit'
 GARMIN = 'garmin'
 H, HELP = 'h', 'help'
+IMPORT = 'import'
 JUPYTER = 'jupyter'
 KIT = 'kit'
 LOAD = 'load'
@@ -42,7 +43,6 @@ TEST_SCHEDULE = 'test-schedule'
 TEXT = 'text'
 THUMBNAIL = 'thumbnail'
 UNLOCK = 'unlock'
-UPGRADE = 'upgrade'
 UPLOAD = 'upload'
 WEB = 'web'
 
@@ -424,7 +424,7 @@ def make_parser(with_noop=False):
     configure_delete = configure_cmds.add_parser(DELETE, help='delete current data')
     configure_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
 
-    upgrade = subparsers.add_parser(UPGRADE, help='copy diary entries from a previous version')
+    upgrade = subparsers.add_parser(IMPORT, help='copy diary entries from a previous version')
     upgrade.add_argument(SOURCE, help='version or path to import')
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')

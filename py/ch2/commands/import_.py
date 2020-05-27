@@ -5,38 +5,38 @@ from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, BASE
 from .upload import DATA
 from ..lib.utils import clean_path
 from ..lib.log import Record
-from ..migrate.import_.activity import upgrade_activity
-from ..migrate.import_.constant import upgrade_constant
-from ..migrate.import_.diary import upgrade_diary
-from ..migrate.import_.kit import upgrade_kit
-from ..migrate.import_.segment import upgrade_segment
+from ..migrate.activity import import_activity
+from ..migrate.constant import import_constant
+from ..migrate.diary import import_diary
+from ..migrate.kit import import_kit
+from ..migrate.segment import import_segment
 from ..sql.database import ReflectedDatabase
 
 log = getLogger(__name__)
 
 
-def upgrade(args, sys, db):
+def import_(args, sys, db):
     '''
-## upgrade
+## import
 
-    > ch2 upgrade 0-30
+    > ch2 import 0-30
 
 Import diary entries from a previous version.
     '''
-    upgrade_path(Record(log), args[BASE], args[SOURCE], db)
+    import_path(Record(log), args[BASE], args[SOURCE], db)
 
 
-def upgrade_path(record, base, source, new):
+def import_path(record, base, source, new):
     path = build_source_path(record, base, source)
     old = ReflectedDatabase(path, read_only=True)
     if not old.meta.tables:
         record.raise_(f'No tables found in {path}')
     log.info(f'Importing data from {path}')
-    upgrade_diary(record, old, new)
-    upgrade_activity(record, old, new)
-    upgrade_kit(record, old, new)
-    upgrade_constant(record, old, new)
-    upgrade_segment(record, old, new)
+    import_diary(record, old, new)
+    import_activity(record, old, new)
+    import_kit(record, old, new)
+    import_constant(record, old, new)
+    import_segment(record, old, new)
 
 
 def build_source_path(record, base, source):

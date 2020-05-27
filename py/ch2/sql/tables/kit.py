@@ -448,7 +448,7 @@ class KitModel(ModelMixin, StatisticsMixin, UngroupedSource):
     component_id = Column(Integer, ForeignKey('kit_component.id', ondelete='cascade'),
                           nullable=False, index=True)
     component = relationship('KitComponent', backref=backref('models', passive_deletes=True))
-    name = Column(Name, nullable=False, index=True, unique=True)
+    name = Column(Name, nullable=False, index=True)   # not unique!!
 
     __mapper_args__ = {
         'polymorphic_identity': SourceType.MODEL

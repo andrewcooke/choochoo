@@ -4,17 +4,17 @@ from logging import getLogger
 from ...commands.args import base_system_path
 from ...commands.configure import load, delete
 from ...commands.help import HTML, filter, parse, P, LI, PRE
-from ...commands.upgrade import upgrade_path
-from ...lib.log import Record
+from ...commands.import_ import import_path
 from ...config.utils import profiles
 from ...lib import time_to_local_time, local_time_to_time
+from ...lib.log import Record
 from ...lib.utils import restart_self
-from ...migrate.import_ import available_versions
-from ...migrate.import_.activity import activity_imported
-from ...migrate.import_.constant import constant_imported
-from ...migrate.import_.diary import diary_imported
-from ...migrate.import_.kit import kit_imported
-from ...migrate.import_.segment import segment_imported
+from ...migrate import available_versions
+from ...migrate.activity import activity_imported
+from ...migrate.constant import constant_imported
+from ...migrate.diary import diary_imported
+from ...migrate.kit import kit_imported
+from ...migrate.segment import segment_imported
 from ...sql import SystemConstant, Constant, StatisticJournal
 
 log = getLogger(__name__)
@@ -73,7 +73,7 @@ class Configure:
         # now we need to restart because the database connections exist
         restart_self()
 
-    def read_upgrade(self, request, s):
+    def read_import(self, request, s):
         record = Record(log)
         return {IMPORTED: {DIARY: diary_imported(record, self.__db),
                            ACTIVITY: activity_imported(record, self.__db),
@@ -82,10 +82,10 @@ class Configure:
                            SEGMENT: segment_imported(record, self.__db)},
                 VERSIONS: available_versions(self.__base)}
 
-    def write_upgrade(self, request, s):
+    def write_import(self, request, s):
         data = request.json
         record = Record(log)
-        upgrade_path(record, self.__base, data[VERSION], self.__db)
+        import_path(record, self.__base, data[VERSION], self.__db)
         return record.json()
 
     def read_constants(self, request, s):

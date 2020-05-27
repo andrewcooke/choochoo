@@ -1,17 +1,16 @@
 
 from logging import getLogger
-from types import SimpleNamespace
 
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import MultipleResultsFound
 
 from . import journal_imported, match_statistic_name, copy_statistic_journal, clone_with
-from ...sql import DiaryTopic, DiaryTopicJournal
-from ...lib.log import log_current_exception
+from ..lib.log import log_current_exception
+from ..sql import DiaryTopic, DiaryTopicJournal
 
 log = getLogger(__name__)
 
 
-def upgrade_diary(record, old, new):
+def import_diary(record, old, new):
     if not diary_imported(record, new):
         log.debug(f'Trying to copy diary topic data from {old} to {new}')
         with old.session_context() as old_s:

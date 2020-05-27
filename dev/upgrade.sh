@@ -41,8 +41,8 @@ fi
 echo -e "\ninstalling"
 dev/ch2 --dev --color DARK configure load acooke || { echo -e "\ninstall failed"; exit 2; }
 
-echo -e "\nupgrading old data"
-dev/ch2 --dev upgrade $OLD_VERSION || { echo -e "\nupgrade failed"; exit 3; }
+echo -e "\nimporting old data"
+dev/ch2 --dev import $OLD_VERSION || { echo -e "\nupgrade failed"; exit 3; }
 
 if [ -e dev/set-constants.sh ]; then
     dev/set-constants.sh

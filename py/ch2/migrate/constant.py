@@ -1,14 +1,13 @@
 from logging import getLogger
-import re
 
 from . import copy_statistic_journal
-from ...lib.log import log_current_exception
-from ...sql import StatisticName, Constant, StatisticJournal
+from ..lib.log import log_current_exception
+from ..sql import StatisticName, Constant, StatisticJournal
 
 log = getLogger(__name__)
 
 
-def upgrade_constant(record, old, new):
+def import_constant(record, old, new):
     if not constant_imported(record, new):
         with old.session_context() as old_s:
             copy_constants(record, old_s, old, new)

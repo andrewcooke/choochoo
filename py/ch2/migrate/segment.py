@@ -1,10 +1,10 @@
 
-from ...lib import log_current_exception
-from ...config.database import add
-from ...sql import Segment
+from ..lib import log_current_exception
+from ..config.database import add
+from ..sql import Segment
 
 
-def upgrade_segment(record, old, new):
+def import_segment(record, old, new):
     if not segment_imported(record, new):
         try:
             with old.session_context() as old_s:

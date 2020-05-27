@@ -93,7 +93,7 @@ export default function Menu(props) {
             <ListItemExpand label='Configure' isExpanded={configureOpen}
                             onClick={() => {closeAll(); setConfigureOpen(!configureOpen);}}>
                 <ListItemLink primary='Initial' to={'/configure/initial'}/>
-                <ListItemLink primary='Upgrade' to={'/configure/upgrade'}/>
+                <ListItemLink primary='Import' to={'/configure/import'}/>
                 <ListItemLink primary='Constants' to={'/configure/constants'}/>
             </ListItemExpand>
         </List>);

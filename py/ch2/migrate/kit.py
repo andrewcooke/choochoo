@@ -1,17 +1,17 @@
 
 from logging import getLogger
 
-from ...lib import format_date, time_to_local_date, to_time
-from ...lib.log import log_current_exception
-from ...names import Titles
-from ...sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \
+from ..lib import format_date, time_to_local_date, to_time
+from ..lib.log import log_current_exception
+from ..names import Titles
+from ..sql import KitGroup, KitComponent, KitItem, KitModel, StatisticJournalTimestamp, StatisticName, \
     StatisticJournalType
-from ...sql.utils import add
+from ..sql.utils import add
 
 log = getLogger(__name__)
 
 
-def upgrade_kit(record, old, new):
+def import_kit(record, old, new):
     if not kit_imported(record, new):
         try:
             with old.session_context() as old_s:
