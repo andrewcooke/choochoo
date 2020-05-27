@@ -120,7 +120,7 @@ def set_log_color(args, sys):
                                                             'CRITICAL': 'bold_red'}}))
 
 
-def log_current_exception(traceback=True):
+def log_current_exception(traceback=True, warning=True):
     t, e, tb = exc_info()
     try:
         log.debug(f'Exception: {e}')
@@ -128,7 +128,10 @@ def log_current_exception(traceback=True):
         pass
     log.debug(f'Type: {t}')
     if traceback:
-        log.warning('Traceback:\n' + ''.join(format_tb(tb)))
+        if warning:
+            log.warning('Traceback:\n' + ''.join(format_tb(tb)))
+        else:
+            log.debug('Traceback:\n' + ''.join(format_tb(tb)))
 
 
 class Record:

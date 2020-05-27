@@ -51,7 +51,7 @@ def flip(l):
 
 AND, OR = 'and', 'or'
 # no wildcards in group (no use case)
-name = pat(r'((?:[A-Z%][A-Za-z0-9_%]*\.)?[a-z%][a-z0-9_%]*(?::[a-z][a-z0-9_]*)?)')
+name = pat(r'((?:[A-Z%][A-Za-z0-9\-%]*\.)?[a-z%][a-z0-9\-%]*(?::[a-z][a-z0-9\-]*)?)')
 # important that the different value types are exclusive to avoid ambiguities
 number = choice(pat(r'(-?\d+)', lambda x: [int(i) for i in x]),
                 pat(r'(-?\d*\.\d+)', lambda x: [float(i) for i in x]),

@@ -2,6 +2,7 @@
 from abc import abstractmethod
 from enum import IntEnum
 from logging import getLogger
+from operator import or_
 
 from sqlalchemy import ForeignKey, Column, Integer, func, UniqueConstraint, Boolean, Index
 from sqlalchemy.event import listens_for
@@ -13,6 +14,7 @@ from ..types import OpenSched, Date, ShortCls, short_cls
 from ..utils import add
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 from ...lib.utils import timing
+from ...names import UNDEF
 
 log = getLogger(__name__)
 
@@ -91,6 +93,23 @@ class Source(Base):
 
     def long_str(self):
         return str(self)
+
+    def get_qname(self, s, qname, limit=True):
+        from .. import StatisticJournal, StatisticName, ActivityGroup
+        from ...data.constraint import parse_qualified_name
+        owner, name, group = parse_qualified_name(qname)
+        q = s.query(StatisticJournal). \
+            join(StatisticName). \
+            filter(StatisticName.name.ilike(name),
+                   StatisticJournal.source_id == self.id)
+        if owner: q = q.filter(StatisticName.owner == owner)
+        if group: q = q.join(ActivityGroup).filter(ActivityGroup.name == group)  # todo none is a valid value
+        if limit:
+            q = q.filter(or_(StatisticJournal.serial.is_(None), StatisticJournal.serial == 0))
+        log.debug(q)
+        with timing(f'get_qname {self.id} {owner} {name} {group}'):
+            return q.all()
+
 
 
 @listens_for(Session, 'before_flush')
@@ -294,18 +313,6 @@ class Composite(Source):
             s.flush()
             with timing('GC of composite sources'):
                 s.query(Source).filter(Source.id.in_(q_all_nodes)).delete(synchronize_session=False)
-
-    @classmethod
-    def find(cls, s, *sources):
-        from ...data.frame import _tables
-        ids = [source.id if isinstance(source, Source) else source for source in sources]
-        t = _tables()
-        q = s.query(Composite)
-        for id in ids:
-            component = t.cc.alias()
-            q = q.join(component, Composite.id == component.c.output_source_id).\
-                filter(component.c.input_source_id == id)
-        return q.one_or_none()
 
     @classmethod
     def create(cls, s, *sources):

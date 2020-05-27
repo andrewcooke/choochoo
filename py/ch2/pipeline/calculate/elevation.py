@@ -4,7 +4,7 @@ from logging import getLogger
 from .utils import MultiProcCalculator, ActivityJournalCalculatorMixin, DataFrameCalculatorMixin
 from ...data import Statistics
 from ...data.elevation import smooth_elevation
-from ...data.frame import present
+from ...data.frame import present, valid
 from ...names import N, Titles, Units
 from ...sql import StatisticJournalFloat
 
@@ -39,15 +39,12 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
 
     def _copy_results(self, s, ajournal, loader, df):
         
-        def ok(value):
-            return value is not None and value == value
-        
         for time, row in df.iterrows():
-            if N.ELEVATION in row and ok(row[N.ELEVATION]):
+            if N.ELEVATION in row and valid(row[N.ELEVATION]):
                 loader.add(Titles.ELEVATION, Units.M, None, ajournal, row[N.ELEVATION],
                            time, StatisticJournalFloat,
                            description='An estimate of elevation (may come from various sources).')
-            if N.GRADE in row and ok(row[N.GRADE]):
+            if N.GRADE in row and valid(row[N.GRADE]):
                 loader.add(Titles.GRADE, Units.PC, None, ajournal, row[N.GRADE],
                            time, StatisticJournalFloat,
                            description='The gradient of the smoothed SRTM1 elevation.')

@@ -204,9 +204,13 @@ class UniProcPipeline(MultiProcPipeline):
 
 class LoaderMixin:
 
-    def _get_loader(self, s, **kargs):
+    def _get_loader(self, s, add_serial=None, **kargs):
         if 'owner' not in kargs:
             kargs['owner'] = self.owner_out
+        if add_serial is None:
+            raise Exception('Select serial use')
+        else:
+            kargs['add_serial'] = add_serial
         return StatisticJournalLoader(s, **kargs)
 
 

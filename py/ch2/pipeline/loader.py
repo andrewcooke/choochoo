@@ -3,7 +3,6 @@ from collections import defaultdict, namedtuple
 from logging import getLogger
 from time import sleep
 
-import numpy as np
 from sqlalchemy.exc import IntegrityError
 
 from ..commands.args import UNLOCK

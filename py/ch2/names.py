@@ -2,6 +2,8 @@ import re
 
 from ch2.sql.types import simple_name
 
+UNDEF = object()
+
 SPACE = '-'  # we don't use _ because sqlite uses that as a wildcard in 'like'
 POW_M1 = '\u207b\u00b9'
 POW_2 = '\u00b2'

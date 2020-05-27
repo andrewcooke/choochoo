@@ -318,12 +318,11 @@ def make_parser(with_noop=False):
     search = subparsers.add_parser(SEARCH, help='search the database')
     search_cmds = search.add_subparsers(title='search target', dest=SUB_COMMAND, required=True)
     search_text = search_cmds.add_parser(TEXT, help='search for text in activities')
-    search_text.add_argument(QUERY, metavar='QUERY', default=[], nargs='+',
-                             help='words to search for')
-    search_sources = search_cmds.add_parser(SOURCES, help='search for sources')
-    add_search_query(search_sources)
+    add_search_query(search_text)
     search_activities = search_cmds.add_parser(ACTIVITIES, help='search for activities')
     add_search_query(search_activities)
+    search_sources = search_cmds.add_parser(SOURCES, help='search for sources')
+    add_search_query(search_sources)
 
     # low-level commands used often
 

@@ -33,7 +33,7 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
     def __init__(self, *args, climb=None, response_prefix=None, **kargs):
         self.climb_ref = climb
         self.response_prefix = response_prefix
-        super().__init__(*args, **kargs)
+        super().__init__(*args, add_serial=False, **kargs)
 
     def _read_dataframe(self, s, ajournal):
         try:

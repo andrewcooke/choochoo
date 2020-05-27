@@ -68,7 +68,7 @@ class FitReaderMixin(LoaderMixin):
         source, data = self._read_data(s, file_scan)
         s.commit()
         with Timestamp(owner=self.owner_out, source=source).on_success(s):
-            loader = self._get_loader(s)
+            loader = self._get_loader(s, add_serial=True)
             self._load_data(s, loader, data)
             loader.load()
         return loader  # returned so coverage can be accessed

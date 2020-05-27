@@ -48,8 +48,8 @@ if [ -e dev/set-constants.sh ]; then
     dev/set-constants.sh
 fi
 
-echo -e "\nchecking (and fixing)"
-dev/ch2 check --fix
-
 echo -e "\nrebuilding"
 dev/ch2 --dev upload || { echo -e "\nupload failed"; exit 4; }
+
+echo -e "\nchecking (and fixing)"
+dev/ch2 check --fix

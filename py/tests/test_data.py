@@ -26,10 +26,8 @@ class TestData(LogTestCase):
             with db.session_context() as s:
                 source = Source(type=SourceType.SOURCE)
                 s.add(source)
-                all = ActivityGroup(name=ActivityGroup.ALL, sort=0)
-                s.add(all)
-                StatisticJournalText.add(s, 'Bike', None, None, self, all, source, '{"mass": 42}', '1980-01-01')
-                StatisticJournalFloat.add(s, 'Weight', None, None, self, all, source, 13, '1980-01-01')
+                StatisticJournalText.add(s, 'Bike', None, None, self, None, source, '{"mass": 42}', '1980-01-01')
+                StatisticJournalFloat.add(s, 'Weight', None, None, self, None, source, 13, '1980-01-01')
             p = power.expand(s, '1990-01-01', default_owner=self)
             p = p._replace(bike=loads(p.bike))
             self.assertEqual(p.weight, 13)

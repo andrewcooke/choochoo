@@ -42,7 +42,8 @@ def _add_differentials(df, speed, *names, max_gap=None):
         df[N._delta(name)] = df[name].diff()
         df.loc[df[tmp] > max_gap, [N._delta(name)]] = _np.nan
 
-    if N.LATITUDE in names and N.LONGITUDE in names and N.HEADING not in df.columns:
+    if N.LATITUDE in names and N.LONGITUDE in names and N.HEADING not in df.columns and \
+            not df[N._delta(N.LONGITUDE)].dropna().empty and not df[N._delta(N.LATITUDE)].dropna().empty:
         df[N.HEADING] = _np.arctan2(df[N._delta(N.LONGITUDE)], df[N._delta(N.LATITUDE)]) * RAD_TO_DEG
         df.loc[df[tmp] > max_gap, [N.HEADING]] = _np.nan
 

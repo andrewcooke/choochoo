@@ -16,7 +16,7 @@ from ...data.power import add_differentials, add_energy_budget, add_loss_estimat
     evaluate, fit_power, PowerModel, add_air_speed, add_modeled_hr
 from ...lib import log_current_exception
 from ...lib.data import reftuple, MissingReference
-from ...names import Names, Units, Summaries, Titles
+from ...names import N, Units, Summaries, T
 from ...sql import StatisticJournalFloat, Constant, Timestamp
 from ...sql.types import simple_name
 
@@ -59,11 +59,13 @@ class BasicPowerCalculator(PowerCalculator):
         try:
             self._set_power(s, ajournal)
             df = Statistics(s, activity_journal=ajournal, with_timespan=True). \
-                by_name(SegmentReader, Names.DISTANCE, Names.SPEED, Names.CADENCE, Names.LATITUDE,
-                        Names.LONGITUDE, Names.HEART_RATE). \
-                by_name(ElevationCalculator, Names.ELEVATION).df
+                by_name(SegmentReader, N.DISTANCE, N.SPEED, N.CADENCE, N.LATITUDE,
+                        N.LONGITUDE, N.HEART_RATE). \
+                by_name(ElevationCalculator, N.ELEVATION).df
             ldf = linear_resample_time(df)
             ldf = add_differentials(ldf, max_gap=1.1 * median_dt(df))
+            if N.HEADING not in ldf.columns:
+                raise PowerException('Could not calculate heading')    
             return df, ldf
         except PowerException as e:
             log.warning(e)
@@ -83,26 +85,26 @@ class BasicPowerCalculator(PowerCalculator):
         return df, ldf
 
     def _copy_results(self, s, ajournal, loader, dfs,
-                      fields=((Titles.POWER_ESTIMATE, Units.W, Summaries.AVG),
-                              (Titles.HEADING, Units.DEG, None))):
+                      fields=((T.POWER_ESTIMATE, Units.W, Summaries.AVG, 'The estimated power.'),
+                              (T.HEADING, Units.DEG, None, 'The current heading'))):
         df, ldf = dfs
         self.__add_total_energy(s, ajournal, loader, ldf)
         df = interpolate_to_index(df, ldf, *(simple_name(field[0]) for field in fields))
         for time, row in df.iterrows():
-            for title, units, summary in fields:
+            for title, units, summary, description in fields:
                 name = simple_name(title)
                 if not pd.isnull(row[name]):
                     loader.add(name, units, summary, ajournal, row[name], time,
-                               StatisticJournalFloat, title=title, description='The estimated power.')
+                               StatisticJournalFloat, title=title, description=description)
 
     def __add_total_energy(self, s, ajournal, loader, ldf):
-        if present(ldf, Names.POWER_ESTIMATE):
-            ldf['tmp'] = ldf[Names.POWER_ESTIMATE]
+        if present(ldf, N.POWER_ESTIMATE):
+            ldf['tmp'] = ldf[N.POWER_ESTIMATE]
             ldf.loc[ldf['tmp'].isna(), ['tmp']] = 0
             energy = np.trapz(y=ldf['tmp'], x=ldf.index.astype(np.int64) / 1e12)
-            loader.add(Titles.ENERGY_ESTIMATE, Units.KJ, Summaries.MAX, ajournal, energy, ajournal.start,
+            loader.add(T.ENERGY_ESTIMATE, Units.KJ, Summaries.MAX, ajournal, energy, ajournal.start,
                        StatisticJournalFloat, 'The estimated total energy expended.')
-            loader.add(Titles.CALORIE_ESTIMATE, Units.KCAL, Summaries.MAX, ajournal,
+            loader.add(T.CALORIE_ESTIMATE, Units.KCAL, Summaries.MAX, ajournal,
                        energy * 0.239006 / self.caloric_eff, ajournal.start, StatisticJournalFloat,
                        'The estimated calories burnt.')
             ldf.drop(columns=['tmp'], inplace=True)
@@ -172,8 +174,8 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
 
     def _copy_results(self, s, ajournal, loader, stats):
         model, df = stats
-        fields = ((Titles.POWER_ESTIMATE, Units.W, Summaries.AVG),
-                  (Titles.HEADING, Units.DEG, None))
+        fields = ((T.POWER_ESTIMATE, Units.W, Summaries.AVG, 'The estimated power.'),
+                  (T.HEADING, Units.DEG, None, 'The current heading.'))
         if model:
             # how much energy every heart beat
             # 60W at 60bpm is 60J every second or beat; 60W at 1bpm is 3600J every minute or beat;
@@ -181,18 +183,20 @@ class ExtendedPowerCalculator(BasicPowerCalculator):
             # slope is BPM / W; 1/slope is W/BPM = W/PM = WM = 60Ws
             vary = self.__varying()
             if 'slope' in vary:
-                loader.add(Titles.POWER_HR, Units.J, Summaries.AVG, ajournal,
+                loader.add(T.POWER_HR, Units.J, Summaries.AVG, ajournal,
                            60 / model.slope, ajournal.start, StatisticJournalFloat)
             if 'delay' in vary:
-                loader.add(Titles.POWER_HR_LAG, Units.S, Summaries.AVG, ajournal, model.delay,
+                loader.add(T.POWER_HR_LAG, Units.S, Summaries.AVG, ajournal, model.delay,
                            ajournal.start, StatisticJournalFloat)
             if 'wind_speed' in vary:
-                loader.add(Titles.WIND_SPEED, Units.MS, Summaries.AVG, ajournal, model.wind_speed,
+                loader.add(T.WIND_SPEED, Units.MS, Summaries.AVG, ajournal, model.wind_speed,
                            ajournal.start, StatisticJournalFloat)
             if 'wind_heading' in vary:
-                loader.add(Titles.WIND_HEADING, Units.DEG, Summaries.AVG, ajournal, model.wind_heading,
+                loader.add(T.WIND_HEADING, Units.DEG, Summaries.AVG, ajournal, model.wind_heading,
                            ajournal.start, StatisticJournalFloat)
-            fields = fields + ((Titles.PREDICTED_HEART_RATE, Units.BPM, None),
-                               (Titles.DETRENDED_HEART_RATE, Units.BPM, None))
+            fields = fields + ((T.PREDICTED_HEART_RATE, Units.BPM, None,
+                                'The inferred heart rate from the model.'),
+                               (T.DETRENDED_HEART_RATE, Units.BPM, None,
+                                'The heart rate with drift removed.'))
         # has to come after the above to get times in order
         super()._copy_results(s, ajournal, loader, df, fields=fields)

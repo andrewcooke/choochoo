@@ -53,6 +53,11 @@ unfortunately that pushed some extra complexity into the data model (eg to guara
 
 update: later, decided to force all names to lowercase.  this fits with my own use and makes it easier to match.
 similarly with activity groups. 
+
+KitGroup - groups kit (bikes, shoes, etc.)
+KitItem - a particular item of kit (a bike, pair of shoes, etc)
+KitComponent - the classes of things that go into a KitItem (wheels, tyres, laces, etc)
+KitModel - a particular instance of a component (a particular wheel, a particular tyre, etc) 
 '''
 
 
@@ -101,9 +106,7 @@ class StatisticsMixin:
     '''
 
     def _base_statistic_query(self, s, statistic, *sources, owner=None):
-        from .activity import ActivityGroup
         sources = (self,) + sources
-        all = ActivityGroup.from_name(s, ActivityGroup.ALL)
         subq = s.query(Composite.id.label('composite_id'))
         for source in sources:
             cc = aliased(CompositeComponent)
@@ -112,8 +115,7 @@ class StatisticsMixin:
         q = s.query(StatisticJournal). \
             join(StatisticName). \
             outerjoin(subq, subq.c.composite_id == StatisticJournal.source_id). \
-            filter(StatisticName.name == statistic,
-                   StatisticName.activity_group == all)
+            filter(StatisticName.name == statistic)
         if len(sources) == 1:
             q = q.filter(or_(StatisticJournal.source == self, subq.c.composite_id != None))
         else:

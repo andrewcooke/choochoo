@@ -9,7 +9,8 @@ from .source import Source, SourceType, GroupedSource
 from ..support import Base
 from ..types import Time, Sort, ShortCls, NullText, Name, name_and_title, simple_name
 from ...lib.date import format_time, local_date_to_time, local_time_to_time
-from ...names import Titles
+from ...lib.utils import timing
+from ...names import Titles, UNDEF
 
 log = getLogger(__name__)
 
@@ -61,33 +62,19 @@ class ActivityJournal(GroupedSource):
     def time_range(self, s):
         return self.start, self.finish
 
-    def get_named(self, s, qname, default_owner=None, default_group=None):
-        from .. import StatisticJournal, StatisticName
-        from ...data.constraint import parse_qualified_name
-        owner, name, group = parse_qualified_name(qname)
-        owner = owner or default_owner
-        group = group or default_group
-        q = s.query(StatisticJournal). \
-            join(ActivityJournal). \
-            join(StatisticName). \
-            filter(StatisticName.name.ilike(name),
-                   StatisticJournal.source_id == self.id)
-        if owner: q = q.filter(StatisticName.owner == owner)
-        # todo - we could just short-circuit and return none if it doesn't match?
-        if group: q = q.join(ActivityGroup).filter(ActivityGroup.name == group)
-        return q.all()
-
-    def get_all_named(self, s, qname, default_owner=None, default_group=None):
-        return self.get_named(s, qname, default_owner=default_owner, default_group=default_group) + \
-               self.get_activity_topic_journal(s).get_named(s, qname, default_owner=default_owner,
-                                                            default_group=default_group)
+    def get_all_qname(self, s, qname, limit=True):
+        direct = self.get_qname(s, qname, limit=limit)
+        indirect = self.get_activity_topic_journal(s).get_qname(s, qname, limit=limit)
+        log.debug(f'{len(direct)} {len(indirect)}')
+        return direct + indirect
 
     def get_activity_topic_journal(self, s):
         from .. import ActivityTopicJournal, FileHash
-        return s.query(ActivityTopicJournal). \
-            join(FileHash). \
-            join(ActivityJournal). \
-            filter(ActivityJournal.id == self.id).one()
+        with timing('get_activity_topic_journal'):
+            return s.query(ActivityTopicJournal). \
+                join(FileHash). \
+                join(ActivityJournal). \
+                filter(ActivityJournal.id == self.id).one()
 
     @classmethod
     def at(cls, s, local_time_or_date, activity_group=None):

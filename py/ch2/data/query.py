@@ -6,6 +6,7 @@ import pandas as pd
 from sqlalchemy import asc, desc, distinct
 from sqlalchemy.orm import aliased
 
+from ch2.data import read_query
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
 from ..lib.date import YMD
@@ -87,7 +88,7 @@ class Statistics:
                     filter(type_class.statistic_name_id == statistic_name.id)
                 q = self.__constrain_journal(q)
                 with timing(f'Slow query for {label}?\n{q}', self.__warn_over):
-                    df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
+                    df = read_query(q, index=N.INDEX)
                 self.__merge(df)
         return self
 
@@ -115,7 +116,7 @@ class Statistics:
                         filter(Source.activity_group_id == activity_group_id)
                     q = self.__constrain_journal(q)
                     with timing(f'Slow query for {label}?\n{q}', self.__warn_over):
-                        df = pd.read_sql_query(sql=q.selectable, con=self.__s.connection(), index_col=N.INDEX)
+                        df = read_query(q, index=N.INDEX)
                     self.__merge(df)
         return self
 

@@ -1,38 +1,34 @@
-
-import datetime as dt
 from logging import getLogger
 from re import compile
 
 import numpy as np
 import pandas as pd
 from sqlalchemy import inspect
-from sqlalchemy.orm.exc import NoResultFound
 
 from .coasting import CoastingBookmark
 from ..lib.data import kargs_to_attr
-from ..lib.date import local_time_to_time
 from ..names import Names as N, like
 from ..sql import StatisticName, StatisticJournal, StatisticJournalInteger, ActivityJournal, \
     StatisticJournalFloat, StatisticJournalText, Interval, Source
-from ..sql.database import connect, ActivityTimespan, ActivityGroup, ActivityBookmark, Composite, \
+from ..sql.database import connect, ActivityTimespan, ActivityBookmark, Composite, \
     CompositeComponent, ActivityNearby
 
 log = getLogger(__name__)
 
 
-# in general these functions should (or are being written to) take both ORM objects and parameters
-# to retrieve those objects if missing.  so, for example, activity_statistics can be called with
-# StatisticName and ActivityJournal instances, or it can be called with more low-level parameters.
-# the low-level parameters are often useful interactively but make simplifying assumptions; the ORM
-# instances give complete control.
 
-
-def read_query(query):
-    # https://stackoverflow.com/questions/29525808/sqlalchemy-orm-conversion-to-pandas-dataframe
-    return pd.read_sql(query.statement, query.session.bind)
+def read_query(query, index=None):
+    '''
+    Convert s.query(OrmClass) to a dataframe
+    https://stackoverflow.com/questions/29525808/sqlalchemy-orm-conversion-to-pandas-dataframe
+    '''
+    return pd.read_sql(query.statement, query.session.bind, index_col=index)
 
 
 def session(*args):
+    '''
+    Create a database session (used in Jupyter templates)
+    '''
     ns, db = connect(args)
     return db.session()
 
@@ -51,43 +47,9 @@ def _tables():
                          src=inspect(Source).local_table)
 
 
-def activity_journal(s, activity_journal=None, local_time=None, time=None, activity_group=None):
-    if activity_journal:
-        if local_time or time or activity_group:
-            raise Exception('Activity Journal given, so extra activity-related parameters are unused')
-    else:
-        if local_time:
-            time = local_time_to_time(local_time)
-        if not time:
-            raise Exception('Specify activity_journal or time')
-        try:
-            # first, if an activity includes that time
-            q = s.query(ActivityJournal). \
-                filter(ActivityJournal.start <= time,
-                       ActivityJournal.finish >= time)
-            if activity_group:
-                q = q.filter(ActivityJournal.activity_group == ActivityGroup.from_name(s, activity_group))
-            activity_journal = q.one()
-        except NoResultFound:
-            # second, if anything in the following 24 hours (eg if just date given)
-            q = s.query(ActivityJournal). \
-                filter(ActivityJournal.start > time,
-                       ActivityJournal.finish < time + dt.timedelta(days=1))
-            if activity_group:
-                q = q.filter(ActivityJournal.activity_group == ActivityGroup.from_name(s, activity_group))
-            activity_journal = q.one()
-        log.info(f'Using Activity Journal {activity_journal}')
-    return activity_journal
-
-
-def _add_bookmark(bookmark, df):
-    df[N.BOOKMARK] = bookmark.id
-    return df
-
-
-def nearby_activities(s, local_time=None, time=None, activity_group=None):
+def nearby_activities(s, local_time=None, activity_group=None):
     from ..pipeline.display.activity.nearby import nearby_any_time
-    journal = activity_journal(s, local_time=local_time, time=time, activity_group=activity_group)
+    journal = ActivityJournal.at_local_time(s, local_time, activity_group=activity_group)
     return nearby_any_time(s, journal)
 
 
@@ -169,7 +131,7 @@ def groups_by_time(s, start=None, finish=None):
         q = q.filter(ActivityJournal.start >= start)
     if finish:
         q = q.filter(ActivityJournal.start < finish)
-    return pd.read_sql_query(sql=q.statement, con=s.connection(), index_col=N.INDEX)
+    return read_query(q, index=N.INDEX)
 
 
 def related_statistics(df, statistic, unpack=r'({statistic})\s*:\s*([^:]+)'):
@@ -189,3 +151,7 @@ def drop_empty(df):
         if df[column].dropna().empty:
             df = df.drop(columns=[column])
     return df
+
+
+def valid(value):
+    return value == value and value is not None

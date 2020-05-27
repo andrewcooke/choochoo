@@ -135,6 +135,10 @@ class SegmentJournalCalculatorMixin(JournalCalculatorMixin):
 
 class DataFrameCalculatorMixin(LoaderMixin):
 
+    def __init__(self, *args, add_serial=True, **kargs):
+        self.__add_serial = add_serial
+        super().__init__(*args, **kargs)
+
     def _run_one(self, s, time_or_date):
         source = self._get_source(s, time_or_date)
         with Timestamp(owner=self.owner_out, source=source).on_success(s):
@@ -143,7 +147,7 @@ class DataFrameCalculatorMixin(LoaderMixin):
                 data = self._read_dataframe(s, source)
                 stats = self._calculate_stats(s, source, data)
                 if stats is not None:
-                    loader = self._get_loader(s)
+                    loader = self._get_loader(s, add_serial=self.__add_serial)
                     self._copy_results(s, source, loader, stats)
                     loader.load()
                 else:
@@ -166,33 +170,6 @@ class DataFrameCalculatorMixin(LoaderMixin):
 
     @abstractmethod
     def _copy_results(self, s, source, loader, stats):
-        raise NotImplementedError()
-
-
-class DirectCalculatorMixin(LoaderMixin):
-
-    def _run_one(self, s, time_or_date):
-        source = self._get_source(s, time_or_date)
-        with Timestamp(owner=self.owner_out, source=source).on_success(s):
-            try:
-                data = self._read_data(s, source)
-                loader = self._get_loader(s)
-                self._calculate_results(s, source, data, loader)
-                loader.load()
-            except Exception as e:
-                log.error(f'No statistics on {time_or_date}: {e}')
-                log_current_exception()
-
-    @abstractmethod
-    def _get_source(self, s, time_or_date):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _read_data(self, s, source):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _calculate_results(self, s, source, data, loader):
         raise NotImplementedError()
 
 

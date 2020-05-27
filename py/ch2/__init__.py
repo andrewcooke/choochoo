@@ -115,7 +115,7 @@ def main():
         exit(1)
     except Exception as e:
         log.critical(e)
-        log_current_exception()
+        log_current_exception(warning=False)
         log.info('See `%s %s` for available commands.' % (PROGNAME, HELP))
         log.info('Docs at http://andrewcooke.github.io/choochoo')
         if not args or args[DEV]:
