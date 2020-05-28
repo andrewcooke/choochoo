@@ -1,9 +1,11 @@
+import datetime as dt
 from logging import getLogger
 
 from .args import QUERY, SUB_COMMAND, ACTIVITIES, SHOW, SET, mm, SOURCES
 from ..data.constraint import activity_conversion, constrained_sources, sort_groups, \
     group_by_type
 from ..diary.model import TEXT
+from ..lib import to_time, to_date
 
 log = getLogger(__name__)
 
@@ -119,5 +121,31 @@ def show_results(s, sources, show, activity):
                     print(f'{i:03d}  {warning}{owner}.{name}:{group} {journal.value}')
 
 
-def set_results(sources, set, activity):
-    pass
+def set_results(s, sources, set, activity):
+    name, value = set.split('=')
+    name = name.strip()
+    value = value.strip()
+    for source in sources:
+        if name.startswith('.'):
+            instance, attr = source, name[1:]
+        else:
+            if activity:
+                instance, attr = source.get_all_qname(s, name), 'value'
+            else:
+                instance, attr = source.get_qname(s, name), 'value'
+            if not instance: raise Exception(f'{name} not found')
+            if len(instance) > 1: raise Exception(f'{name} ambiguous')
+            instance = instance[0]
+        print(f'{instance}.{attr} <- {value}')
+        current = getattr(instance, attr)
+        if isinstance(current, int): value = int(value)
+        elif isinstance(current, float): value = float(value)
+        else: value = drop_quotes(value)
+        # don't convert times - let the type handle conversion
+        setattr(instance, attr, value)
+
+
+def drop_quotes(value):
+    if len(value) > 1 and value[0] == '"' and value[-1] == '"': value = value[1:-1]
+    elif len(value) > 1 and value[0] == "'" and value[-1] == "'": value = value[1:-1]
+    return value
