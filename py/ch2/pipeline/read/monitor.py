@@ -8,13 +8,12 @@ from sqlalchemy.sql.functions import count
 
 from .utils import AbortImport, AbortImportButMarkScanned, MultiProcFitReader
 from ..loader import StatisticJournalLoader
-from ... import FatalException
 from ...commands.args import MONITOR, mm, FORCE
 from ...data.frame import read_query
 from ...fit.format.records import fix_degrees, unpack_single_bytes, merge_duplicates
 from ...fit.profile.profile import read_fit
 from ...lib.date import time_to_local_date, format_time
-from ...names import N, T, Units
+from ...names import N, T, Units, UNDEF
 from ...sql.database import StatisticJournalType
 from ...sql.tables.monitor import MonitorJournal
 from ...sql.tables.statistic import StatisticJournalInteger, StatisticName, StatisticJournal
@@ -90,6 +89,10 @@ STEPS_DESCRIPTION = '''The increment in steps read from the FIT file.'''
 
 
 class MonitorReader(MultiProcFitReader):
+
+    def __init__(self, *args, sub_dir=UNDEF, **kargs):
+        from ...commands.upload import MONITOR as MONITOR_DIR
+        super().__init__(*args, sub_dir=MONITOR_DIR if sub_dir is UNDEF else sub_dir, **kargs)
 
     def _get_loader(self, s, **kargs):
         if 'owner' not in kargs:
@@ -171,13 +174,10 @@ class MonitorReader(MultiProcFitReader):
                 # we ignore activity type here (used to store it when activity group and statistic name
                 # were mixed together, but never used it anywhere)
                 for steps in record.data[STEPS_ATTR][0]:
-                    try:
-                        loader.add(T.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
-                                   mjournal, steps,
-                                   record.timestamp, StatisticJournalInteger,
-                                   description='''The number of steps in a day to this point in time.''')
-                    except KeyError:
-                        raise FatalException(f'There is no group configured for {sport} entries in the FIT file.')
+                    loader.add(T.CUMULATIVE_STEPS, Units.STEPS_UNITS, None,
+                               mjournal, steps,
+                               record.timestamp, StatisticJournalInteger,
+                               description='''The number of steps in a day to this point in time.''')
 
     def _shutdown(self, s):
         super()._shutdown(s)

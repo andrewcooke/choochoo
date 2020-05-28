@@ -7,7 +7,7 @@ from sqlalchemy.sql.functions import count
 from .utils import AbortImportButMarkScanned, MultiProcFitReader
 from ... import FatalException
 from ...commands.args import ACTIVITIES, mm, FORCE, DEFAULT, KIT, DEFINE, no, FILENAME_KIT
-from ...names import N, T, Units, Sports, Summaries as S
+from ...names import N, T, Units, Sports, Summaries as S, UNDEF
 from ...diary.model import TYPE, EDIT
 from ...fit.format.records import fix_degrees, merge_duplicates, no_bad_values
 from ...fit.profile.profile import read_fit
@@ -33,7 +33,7 @@ class ActivityReader(MultiProcFitReader):
     KIT = 'kit'
 
     def __init__(self, *args, define=None, sport_to_activity=None, record_to_db=None, filename_kit=True,
-                 **kargs):
+                 sub_dir=UNDEF, **kargs):
         from ...commands.upload import ACTIVITY
         self.define = define if define else {}
         self.filename_kit = filename_kit
@@ -43,7 +43,7 @@ class ActivityReader(MultiProcFitReader):
                              in self._assert('record_to_db', record_to_db).items()]
         self.add_elevation = not any(title == T.ELEVATION for (field, title, units, type) in self.record_to_db)
         self.__ajournal = None  # save for coverage
-        super().__init__(*args, sub_dir=ACTIVITY, **kargs)
+        super().__init__(*args, sub_dir=ACTIVITY if sub_dir is UNDEF else sub_dir, **kargs)
 
     def _base_command(self):
         if self.define:

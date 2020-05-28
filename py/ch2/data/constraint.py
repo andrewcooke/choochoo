@@ -6,13 +6,13 @@ from re import escape
 
 from sqlalchemy import union, intersect, not_
 
-from ..lib import local_time_to_time
+from ..lib import local_time_to_time, to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
 from ..lib.utils import timing
-from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, StatisticJournal, \
-    ActivityTopicJournal, Source, FileHash
-from ..sql.tables.source import SourceType
+from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, ActivityTopicJournal, Source, \
+    FileHash
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
+from ..sql.types import lookup_cls
 
 log = getLogger(__name__)
 
@@ -51,7 +51,7 @@ def flip(l):
 
 AND, OR = 'and', 'or'
 # no wildcards in group (no use case)
-name = pat(r'((?:[A-Z%][A-Za-z0-9\-%]*\.)?[a-z%][a-z0-9\-%]*(?::[a-z][a-z0-9\-]*)?)')
+name = pat(r'((?:(?:[A-Z%][A-Za-z0-9\-%]*)?\.)?[a-z%][a-z0-9\-%]*(?::[a-z][a-z0-9\-]*)?)')
 # important that the different value types are exclusive to avoid ambiguities
 number = choice(pat(r'(-?\d+)', lambda x: [int(i) for i in x]),
                 pat(r'(-?\d*\.\d+)', lambda x: [float(i) for i in x]),
@@ -60,8 +60,9 @@ number = choice(pat(r'(-?\d+)', lambda x: [int(i) for i in x]),
 string = choice(pat(r'"((?:[^"\\]|\\.)*)"'), pat(r"'((?:[^'\\]|\\.)*)'"))
 date = r'\d{4}-\d{2}-\d{2}'
 time = r'\d{2}(?::\d{2}(?::\d{2})?)?'
-datetime = pat('(' + date + '(?:[T ]' + time + ')?)', lambda x: [local_time_to_time(t) for t in x])
-value = choice(number, string, datetime)
+datetime = pat('(' + date + '(?: ' + time + ')?)', lambda x: [local_time_to_time(t) for t in x])
+utc = pat('(' + date + 'T' + time + ')', lambda x: [to_time(t) for t in x])
+value = choice(number, string, datetime, utc)
 
 operator = choice(*[lit(cmp) for cmp in ['=', '!=', '<', '>', '<=', '>=']])
 comparison = choice(join(name, operator, value), transform(join(value, operator, name), flip))
@@ -84,23 +85,24 @@ def constrained_sources(s, query, conversion=None):
     with timing('parse AST'):
         ast = constraint(query)[0]
     log.debug(f'AST: {ast}')
+    attrs = set()
     with timing('check AST'):
-        check_constraints(s, ast)
+        check_constraints(s, ast, attrs)
     log.debug('Checked constraints')
     with timing('build SQL'):
-        q = build_source_query(s, ast, conversion=conversion)
+        q = build_source_query(s, ast, attrs, conversion=conversion)
     log.debug(f'Query: {q}')
     with timing('execute SQL'):
         return q.all()
 
 
-def check_constraints(s, ast):
+def check_constraints(s, ast, attrs):
     l, op, r = ast
     if op in (AND, OR):
-        check_constraints(s, l)
-        check_constraints(s, r)
+        check_constraints(s, l, attrs)
+        check_constraints(s, r, attrs)
     else:
-        check_constraint(s, ast)
+        check_constraint(s, ast, attrs)
 
 
 def infer_types(value):
@@ -109,8 +111,21 @@ def infer_types(value):
     return [StatisticJournalType.FLOAT, StatisticJournalType.INTEGER]
 
 
-def check_constraint(s, ast):
+def check_constraint(s, ast, attrs):
     qname, op, value = ast
+    try:
+        check_statistic_name(s, qname, value)
+    except Exception as e1:
+        try:
+            check_source_property(qname, value)
+            attrs.add(qname)
+        except Exception as e2:
+            log.error(e1)
+            log.error(e2)
+            raise Exception(f'{qname} {op} {value} could not be validated')
+
+
+def check_statistic_name(s, qname, value):
     owner, name, group = parse_qualified_name(qname)
     q = s.query(StatisticName.id). \
         filter(StatisticName.name.like(name),
@@ -120,19 +135,24 @@ def check_constraint(s, ast):
         raise Exception(f'No match for statistic {qname} for type {value.__class__.__name__}')
 
 
-def build_source_query(s, ast, conversion=None):
-    constraints = build_constraints(s, ast, conversion=conversion).cte()
+def check_source_property(qname, value):
+    cls, attr = parse_property(qname)
+    # todo - check value type somehow
+
+
+def build_source_query(s, ast, attrs, conversion=None):
+    constraints = build_constraints(s, ast, attrs, conversion=conversion).cte()
     return s.query(Source).filter(Source.id.in_(constraints))
 
 
-def build_constraints(s, ast, conversion=None):
+def build_constraints(s, ast, attrs, conversion=None):
     l, op, r = ast
     if op in (AND, OR):
-        lcte = build_constraints(s, l, conversion=conversion)
-        rcte = build_constraints(s, r, conversion=conversion)
+        lcte = build_constraints(s, l, attrs, conversion=conversion)
+        rcte = build_constraints(s, r, attrs, conversion=conversion)
         return build_join(op, lcte, rcte)
     else:
-        constraint = build_comparisons(s, ast)
+        constraint = build_constraint(s, ast, attrs)
         if conversion: constraint = conversion(s, constraint)
         return constraint
 
@@ -144,12 +164,31 @@ def build_join(op, lcte, rcte):
         return intersect(lcte, rcte).select()
 
 
+def build_constraint(s, ast, attrs):
+    qname, op, value = ast
+    if qname in attrs:
+        return build_property(s, ast)
+    else:
+        return build_comparisons(s, ast)
+
+
+def build_property(s, ast):
+    qname, op, value = ast
+    cls, attr = parse_property(qname)
+    op_attr = get_op_attr(op, value)
+    q = s.query(cls.id)
+    if attr == 'nlike':
+        q = q.filter(not_(getattr(cls, attr).ilike(value)))
+    else:
+        q = q.filter(getattr(getattr(cls, attr), op_attr)(value))
+    return q
+
+
 def build_comparisons(s, ast):
     qname, op, value = ast
     owner, name, group = parse_qualified_name(qname)
     if isinstance(value, str):
-        return get_source_ids(s, owner, name, op, value, group,
-                              StatisticJournalType.TEXT, {'=': 'ilike', '!=': 'nlike'})
+        return get_source_ids(s, owner, name, op, value, group, StatisticJournalType.TEXT)
     elif isinstance(value, dt.datetime):
         return get_source_ids(s, owner, name, op, value, group, StatisticJournalType.TIMESTAMP)
     else:
@@ -158,11 +197,14 @@ def build_comparisons(s, ast):
         return union(qint, qfloat).select()
 
 
-def get_source_ids(s, owner, name, op, value, group, type, update_attrs=None):
+def get_op_attr(op, value):
     attrs = {'=': '__eq__', '!=': '__ne__', '>': '__gt__', '>=': '__ge__', '<': '__lt__', '<=': '__le__'}
-    if update_attrs:
-        attrs.update(update_attrs)
-    attr = attrs[op]
+    if isinstance(value, str): attrs.update({'=': 'ilike', '!=': 'nlike'})
+    return attrs[op]
+
+
+def get_source_ids(s, owner, name, op, value, group, type, update_attrs=None):
+    op_attr = get_op_attr(op, value)
     statistic_journal = STATISTIC_JOURNAL_CLASSES[type]
     q = s.query(Source.id). \
         join(statistic_journal). \
@@ -172,10 +214,10 @@ def get_source_ids(s, owner, name, op, value, group, type, update_attrs=None):
         q = q.filter(StatisticName.owner.like(owner))
     if group:
         q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
-    if attr == 'nlike':  # no way to negate like in a single attribute
+    if op_attr == 'nlike':  # no way to negate like in a single attribute
         q = q.filter(not_(statistic_journal.value.ilike(value)))
     else:
-        q = q.filter(getattr(statistic_journal.value, attr)(value))
+        q = q.filter(getattr(statistic_journal.value, op_attr)(value))
     return q
 
 
@@ -185,11 +227,29 @@ def parse_qualified_name(qname):
     else:
         left, group = qname, None
     if '.' in left:
-        owner, name = left.split('.', 1)
+        owner, name = left.rsplit('.', 1)
     else:
         owner, name = None, left
     log.debug(f'Parsed {qname} as {owner}.{name}:{group}')
     return owner, name, group
+
+
+def parse_property(qname):
+    if ':' in qname:
+        raise Exception(f'{qname} is not a valid property (contains :)')
+    if '.' in qname:
+        cls, attr = qname.rsplit('.', 1)
+        if not cls: cls = 'Source'
+    else:
+        cls = 'Source'
+        attr = qname
+    try:
+        clz = lookup_cls(cls)
+    except:
+        cls = 'ch2.sql.' + cls
+        clz = lookup_cls(cls)
+    getattr(clz, attr)
+    return clz, attr
 
 
 def activity_conversion(s, source_ids):

@@ -11,7 +11,7 @@ from .garmin import run_garmin
 from .monitor import run_monitor_pipelines
 from .statistics import run_statistic_pipelines
 from ..commands.args import KIT, FAST, UPLOAD, BASE, FORCE, UNSAFE, DELETE, PATH, base_system_path, \
-    PERMANENT
+    PERMANENT, mm
 from ..lib.date import time_to_local_time, Y, YMDTHMS
 from ..lib.io import data_hash, split_fit_path, touch
 from ..lib.log import log_current_exception, Record
@@ -277,17 +277,25 @@ def upload_files_and_update(record, sys, db, base, files=tuple(), nfiles=None, f
         weight = 1 if force else max(1, int(sqrt(n)))
         log.debug(f'Weight statistics as {weight} ({n} entries)')
     progress = ProgressTree(1) if fast else SystemProgressTree(sys, UPLOAD, [1] * 5 + [weight])
+    log.info(f'Uploading files')
     upload_files(record, db, base, files=files, nfiles=nfiles, items=items, progress=progress,
                  unsafe=unsafe, delete=delete)
     # todo - add record to pipelines?
-    if not fast:
+    if fast:
+        log.info(f'{mm(FAST)} so upload finishing')
+    else:
+        log.info('Running activity pipelines')
         run_activity_pipelines(sys, db, base, force=force, progress=progress)
         # run before and after so we know what exists before we update, and import what we read
+        log.info('Running monitor pipelines')
         run_monitor_pipelines(sys, db, base, force=force, progress=progress)
         with db.session_context() as s:
             try:
+                log.info('Running Garmin download')
                 run_garmin(sys, s, base=base, progress=progress)
             except Exception as e:
                 log.warning(f'Could not get data from Garmin: {e}')
+        log.info('Running monitor pipelines (again)')
         run_monitor_pipelines(sys, db, base, force=force, progress=progress)
+        log.info('Running statistics pipelines')
         run_statistic_pipelines(sys, db, base, force=force, progress=progress)

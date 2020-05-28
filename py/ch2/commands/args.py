@@ -424,8 +424,8 @@ def make_parser(with_noop=False):
     configure_delete = configure_cmds.add_parser(DELETE, help='delete current data')
     configure_delete.add_argument(mm(FORCE), action='store_true', help='are you sure?')
 
-    upgrade = subparsers.add_parser(IMPORT, help='copy diary entries from a previous version')
-    upgrade.add_argument(SOURCE, help='version or path to import')
+    import_ = subparsers.add_parser(IMPORT, help='copy diary entries from a previous version')
+    import_.add_argument(SOURCE, help='version or path to import')
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')
