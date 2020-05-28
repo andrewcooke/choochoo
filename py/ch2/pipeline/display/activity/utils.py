@@ -65,14 +65,19 @@ class ActivityDisplayer(Displayer):
             filter(Interval.schedule == schedule,
                    Interval.start == date).all()
         intervals = sorted(intervals, key=lambda i: i.activity_group.name if i.activity_group else '')
+        for interval in intervals:
+            pipelines = list(self._read_pipelines(s, interval))
+            if pipelines:
+                yield [text(interval.activity_group.name, tag='activity-group')] + pipelines
+
+    def _read_pipelines(self, s, interval):
         for pipeline in Pipeline.all_instances(s, PipelineType.DISPLAY_ACTIVITY):
-            for interval in intervals:
-                try:
-                    entry = list(pipeline.read_interval(s, interval))
-                    if entry: yield [text(interval.activity_group.name)] + entry
-                except Exception as e:
-                    log.warning(f'Error calling {pipeline} with {interval}')
-                    log_current_exception(traceback=True)
+            try:
+                 results = list(pipeline.read_interval(s, interval))
+                 if results: yield results
+            except Exception as e:
+                log.warning(f'Error calling {pipeline} with {interval}')
+                log_current_exception(traceback=True)
 
 
 class ActivityDelegate(ActivityJournalDelegate):

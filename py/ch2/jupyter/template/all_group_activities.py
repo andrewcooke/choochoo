@@ -10,10 +10,10 @@ from ch2.sql import *
 
 
 @template
-def all_activities(start, finish):
+def all_group_activities(start, finish, activity_group):
 
     f'''
-    # All Activities: {start.split()[0]} - {finish.split()[0]}
+    # All Activities for {activity_group}: {start.split()[0]} - {finish.split()[0]}
     '''
 
     '''
@@ -33,7 +33,8 @@ def all_activities(start, finish):
                              by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME).df
                          for aj in s.query(ActivityJournal).
                              filter(ActivityJournal.start >= local_date_to_time(start),
-                                    ActivityJournal.start < local_date_to_time(finish)).
+                                    ActivityJournal.start < local_date_to_time(finish),
+                                    ActivityJournal.activity_group_id == ActivityGroup.from_name(s, activity_group)).
                              order_by(ActivityJournal.start.desc()).all())
             if len(data[N.SPHERICAL_MERCATOR_X].dropna()) > 10]
     print(f'Found {len(maps)} activities')

@@ -36,11 +36,10 @@ class SegmentDelegate(ActivityJournalDelegate):
     def __field(s, date, sjournal, name):
         return StatisticJournal.at_date(s, date, name, SegmentCalculator, sjournal.activity_group,
                                         source_id=sjournal.id)
-
     @optional_text('Segments')
-    def read_schedule(self, s, date, schedule):
+    def read_interval(self, s, interval):
         for segment in s.query(Segment).all():
-            segment_rows = [list(summary_column(s, schedule, date, name))
+            segment_rows = [list(summary_column(s, interval.schedule, interval.start, name))
                             for name in self.__names(s, Names.SEGMENT_TIME, Names.SEGMENT_HEART_RATE)]
             segment_rows = list(filter(bool, segment_rows))
             if segment_rows:
