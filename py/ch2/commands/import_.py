@@ -1,7 +1,8 @@
 from logging import getLogger
 from os.path import sep, exists, join, isfile
 
-from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, BASE
+from .args import SOURCE, ACTIVITY, DB_EXTN, base_system_path, BASE, SEGMENTS, CONSTANTS, KIT, ACTIVITIES, DIARY, \
+    ENABLE
 from .upload import DATA
 from ..lib.utils import clean_path
 from ..lib.log import Record
@@ -21,22 +22,37 @@ def import_(args, sys, db):
 
     > ch2 import 0-30
 
-Import diary entries from a previous version.
+Import data from a previous version (after starting a new version).
+Data must be imported before any other changes are made to the database.
+
+### Examples
+
+    > ch2 import --enable --diary 0-30
+
+Import only diary entries.
+
+    > ch2 import --diary 0-30
+
+Import everything but diary entries.
     '''
-    import_path(Record(log), args[BASE], args[SOURCE], db)
+    flags = {name: args[name] for name in (DIARY, ACTIVITIES, KIT, CONSTANTS, SEGMENTS)}
+    if not args[ENABLE]:
+        for name in flags:
+            flags[name] = not flags[name]
+    import_path(Record(log), flags, args[BASE], args[SOURCE], db)
 
 
-def import_path(record, base, source, new):
+def import_path(record, flags, base, source, new):
     path = build_source_path(record, base, source)
     old = ReflectedDatabase(path, read_only=True)
     if not old.meta.tables:
         record.raise_(f'No tables found in {path}')
     log.info(f'Importing data from {path}')
-    import_diary(record, old, new)
-    import_activity(record, old, new)
-    import_kit(record, old, new)
-    import_constant(record, old, new)
-    import_segment(record, old, new)
+    if flags[DIARY]: import_diary(record, old, new)
+    if flags[ACTIVITIES]: import_activity(record, old, new)
+    if flags[KIT]: import_kit(record, old, new)
+    if flags[CONSTANTS]: import_constant(record, old, new)
+    if flags[SEGMENTS]: import_segment(record, old, new)
 
 
 def build_source_path(record, base, source):

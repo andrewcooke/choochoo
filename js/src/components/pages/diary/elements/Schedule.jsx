@@ -54,12 +54,10 @@ function Title(props) {
 function TopLevelPaper(props) {
     const {json, history} = props;
     const [head, ...rest] = json;
-    console.log('tlp', json);
     if (head.tag === 'activities') {
         // splice activity groups into top level
         return rest.map((row, i) => <TopLevelPaper json={row} history={history} key={i}/>);
     } else if (head.tag === 'activity-group') {
-        console.log('rest', rest);
         return (<>
            <Title header={head.value}/>
            {rest.map((row, i) => <TopLevelPaper json={row} history={history} key={i}/>)}

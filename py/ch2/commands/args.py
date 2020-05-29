@@ -89,6 +89,7 @@ DIR = 'dir'
 DISCARD = 'discard'
 DROP = 'drop'
 EMPTY = 'empty'
+ENABLE = 'enable'
 F = 'f'
 FAST = 'fast'
 FIELD = 'field'
@@ -426,6 +427,13 @@ def make_parser(with_noop=False):
 
     import_ = subparsers.add_parser(IMPORT, help='copy diary entries from a previous version')
     import_.add_argument(SOURCE, help='version or path to import')
+    import_.add_argument(mm(ENABLE), action='store_true',
+                         help='other options enable sub-imports (they disable by default)')
+    import_.add_argument(mm(DIARY), action='store_true', help='disable (or enable) import of diary data')
+    import_.add_argument(mm(ACTIVITIES), action='store_true', help='disable (or enable) import of activity data')
+    import_.add_argument(mm(KIT), action='store_true', help='disable (or enable) import of kit data')
+    import_.add_argument(mm(CONSTANTS), action='store_true', help='disable (or enable) import of constant data')
+    import_.add_argument(mm(SEGMENTS), action='store_true', help='disable (or enable) import of segment data')
 
     activities = subparsers.add_parser(ACTIVITIES, help='read activity data')
     activities.add_argument(mm(FORCE), action='store_true', help='re-read file and delete existing data')

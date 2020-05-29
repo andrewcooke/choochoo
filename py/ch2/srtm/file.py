@@ -15,7 +15,7 @@ from ..sql import Constant
 log = getLogger(__name__)
 
 
-SRTM1_DIR_CNAME = 'srtm1_dir'
+SRTM1_DIR_CNAME = 'srtm1-dir'
 SAMPLES = 3601
 # from view-source:http://dwtkns.com/srtm30m/
 BASE_URL = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11/'

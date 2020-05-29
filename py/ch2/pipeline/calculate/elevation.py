@@ -38,7 +38,6 @@ class ElevationCalculator(ActivityJournalCalculatorMixin, DataFrameCalculatorMix
             return None
 
     def _copy_results(self, s, ajournal, loader, df):
-        
         for time, row in df.iterrows():
             if N.ELEVATION in row and valid(row[N.ELEVATION]):
                 loader.add(Titles.ELEVATION, Units.M, None, ajournal, row[N.ELEVATION],

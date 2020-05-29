@@ -1,11 +1,9 @@
-import datetime as dt
 from logging import getLogger
 
-from .args import QUERY, SUB_COMMAND, ACTIVITIES, SHOW, SET, mm, SOURCES
+from .args import QUERY, SUB_COMMAND, ACTIVITIES, SHOW, SET, mm
 from ..data.constraint import activity_conversion, constrained_sources, sort_groups, \
     group_by_type
 from ..diary.model import TEXT
-from ..lib import to_time, to_date
 
 log = getLogger(__name__)
 
@@ -58,6 +56,15 @@ Modify the name variable.
     > ch2 search activities 'ActivityCalculator.active_distance:mtb > 10 and active_time < 3600'
 
 Find mtb activities that cover over 10km in under an hour.
+
+    > ch2 search activities 'name="%"' --show .start name
+
+Find activities that have a defined name and display both the name and the activity start time
+(the 'dot' syntax allows access to an attribute on the found activity).
+
+    >  ch2 search activities 'ActivityJournal.start=2020-04-17T09:27:30' --set name='Corral Quemado'
+
+Set the name on the activity at the given time (again, using the dot syntax).
     '''
     if args[SHOW] and args[SET]:
         raise Exception(f'Give at most one of {mm(SHOW)} and {mm(SET)}')
