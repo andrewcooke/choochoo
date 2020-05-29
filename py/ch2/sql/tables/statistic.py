@@ -106,26 +106,23 @@ class StatisticName(Base):
             raise Exception(f'Statistic name {name} for owner {owner} was not found')
 
     @classmethod
-    def parse(cls, name, default_owner=None, default_activity_group=None):
-        # todo - owner.name:group
+    def parse(cls, qname, default_owner=None, default_activity_group=None):
         '''
         This parses the standard, extended format for naming statistics.  It is one to three fields, separated by ':'.
         These are one of 'name', 'owner:name', or 'owner:name:activity_group'.
         Currently this is used only by reftuple which itself is used only in the power pipeline configuration.
         '''
-        parts, owner, activity_group = name.split(':'), None, None
-        if len(parts) == 1:
-            name = parts[0]
-        elif len(parts) == 2:
-            owner, name = parts
+        if ':' in qname:
+            left, group = qname.rsplit(':', 1)
+            if not group: group = default_activity_group
         else:
-            owner, name, activity_group = parts
-        if not owner: owner = default_owner
-        if not owner:
-            raise Exception(f'Missing owner for {name}')
-        if not activity_group: activity_group = default_activity_group
-        if activity_group == 'None': activity_group = None
-        return owner, name, activity_group
+            left, group = qname, None
+        if '.' in left:
+            owner, name = left.rsplit('.', 1)
+        else:
+            owner, name = default_owner, left
+        log.debug(f'Parsed {qname} as {owner}.{name}:{group}')
+        return owner, name, group
 
 
 class StatisticJournalType(IntEnum):

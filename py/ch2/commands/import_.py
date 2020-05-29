@@ -1,3 +1,4 @@
+from collections import defaultdict
 from logging import getLogger
 from os.path import sep, exists, join, isfile
 
@@ -39,10 +40,11 @@ Import everything but diary entries.
     if not args[ENABLE]:
         for name in flags:
             flags[name] = not flags[name]
-    import_path(Record(log), flags, args[BASE], args[SOURCE], db)
+    import_path(Record(log), args[BASE], args[SOURCE], db, flags=flags)
 
 
-def import_path(record, flags, base, source, new):
+def import_path(record, base, source, new, flags=None):
+    if flags is None: flags = defaultdict(lambda: True)
     path = build_source_path(record, base, source)
     old = ReflectedDatabase(path, read_only=True)
     if not old.meta.tables:

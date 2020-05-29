@@ -1,6 +1,14 @@
 
 ## Latest Changes
 
+### v0.33.0
+
+Big effort to simplify and clean.  Activity group moved to source and
+non-null constraints added to statistics.  Unused code deleted.  Names
+and titles are separate for statistics; naming in general has been
+regularized (eg in search, constants).  Also many small improvements
+and fixes.
+
 ### v0.32.0
 
 Schema for statistic names changed from textual 'constraint' to

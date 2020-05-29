@@ -2,7 +2,7 @@
 from ..config import Config, WALK, SWIM, RUN, BIKE
 from ..database import add_diary_topic, add_child_diary_topic, add_diary_topic_field, add_enum_constant, \
     add_constant
-from ..power import add_simple_power_estimate
+from ..power import add_simple_power_estimate, add_kit_power_estimate, add_kit_power_model
 from ...commands.args import DEFAULT, base_system_path, PERMANENT
 from ...diary.model import TYPE, EDIT
 from ...lib import to_time, time_to_local_date
@@ -78,16 +78,23 @@ class ACooke(Config):
                 Sports.SPORT_SWIMMING: SWIM,
                 Sports.SPORT_WALKING: WALK}
 
-    def _load_power_statistics(self, s, c):
+    def _load_power_statistics(self, s, c, simple=False):
         # add power estimates for the two bikes
         # (note that this comes after standard stats, but before summary, achievements, etc).
-        for activity_group in (MTB, ROAD):
-            activity_group = self._activity_groups[activity_group]
-            add_simple_power_estimate(s, c, activity_group, 0.42, 0.0055, 12, 65)
+        if simple:
+            for activity_group in (MTB, ROAD):
+                activity_group = self._activity_groups[activity_group]
+                add_simple_power_estimate(s, c, activity_group, 0.42, 0.0055, 12, 65)
+        else:
+            add_kit_power_estimate(s, c, (MTB, ROAD))
+            for kit, activity_group, cda, crr, bike_weight in (('cotic', MTB, 0.42, 0.0055, 12),
+                                                               ('bowman', ROAD, 0.42, 0.0055, 8)):
+                add_kit_power_model(s, kit, self._activity_groups[activity_group], cda, crr, bike_weight)
 
     def _load_constants(self, s):
         super()._load_constants(s)
-        add_constant(s, MSIL2A_DIR_CNAME, base_system_path(self._base, version=PERMANENT, subdir='msil2a', create=False),
+        add_constant(s, MSIL2A_DIR_CNAME,
+                     base_system_path(self._base, version=PERMANENT, subdir='msil2a', create=False),
                      description='''
 Directory containing Sentinel 2A imaging data (see https://scihub.copernicus.eu/dhus/#/home)
 

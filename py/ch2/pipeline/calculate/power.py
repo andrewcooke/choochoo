@@ -26,11 +26,12 @@ BikeModel = namedtuple('BikeModel', 'cda, crr, bike_weight')
 class PowerModel(reftuple('Power', 'bike_model, rider_weight')):
 
     def expand(self, s, time, default_owner=None, default_activity_group=None):
-        super().expand(s, time, default_owner=default_owner, default_activity_group=default_activity_group)
-        bike_model = self.bike_model
+        instance = super().expand(s, time, default_owner=default_owner, default_activity_group=default_activity_group)
+        bike_model = instance.bike_model
         if not isinstance(bike_model, BikeModel):
-            self.bike_model = BikeModel(**bike_model)
-        return self
+            return instance._replace(bike_model=BikeModel(**bike_model))
+        else:
+            return instance
 
 
 class PowerCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
@@ -46,7 +47,8 @@ class PowerCalculator(ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, Mu
 
     def _set_power(self, s, ajournal):
         power_model = PowerModel(**loads(Constant.from_name(s, self.power_model_ref).at(s).value))
-        self.power_model = power_model.expand(s, ajournal.start, default_owner=Constant)
+        self.power_model = power_model.expand(s, ajournal.start,
+                                              default_owner=Constant, default_activity_group=self.activity_group)
         log.debug(f'Power: {self.power_model_ref}: {self.power_model}')
 
     def _read_dataframe(self, s, ajournal):

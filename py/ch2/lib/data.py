@@ -201,7 +201,11 @@ def expand(s, text, before, vars=None, default_owner=None, default_activity_grou
     May be too much magic going on here - can return objects, values as well as strings.
     '''
 
-    from ..sql import StatisticName, StatisticJournal, ActivityGroup
+    from ..sql import StatisticName, StatisticJournal
+
+    if not isinstance(text, str):
+        log.debug(f'{text} already expanded (Not string)')
+        return text
 
     if vars is None: vars = {}
     pattern = compile(r'(.*)\${([^}]+)}(.*)')

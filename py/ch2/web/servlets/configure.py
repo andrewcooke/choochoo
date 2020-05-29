@@ -1,4 +1,4 @@
-from json import loads
+from json import loads, dumps
 from logging import getLogger
 
 from ...commands.args import base_system_path
@@ -108,7 +108,7 @@ class Configure:
         data = request.json
         log.debug(data)
         constant = Constant.from_name(s, data[NAME])
-        value = data[VALUES][0][VALUE]
+        value = dumps(data[VALUES][0][VALUE])
         time = data[VALUES][0][TIME]
         statistic_journal_id = data[VALUES][0][STATISTIC]
         if statistic_journal_id:

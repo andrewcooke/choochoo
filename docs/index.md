@@ -23,6 +23,10 @@ want, as long as you change the commands that follow appropriately.
     > python -m venv env
     > source env/bin/activate
 
+Note: the `venv` package is part of standard Python, but it seems that
+on some operating systems it may need to be installed separately (eg
+by installing the package python-venv).
+
 ## Install Choochoo
 
     > pip install choochoo

@@ -126,7 +126,7 @@ def check_constraint(s, ast, attrs):
 
 
 def check_statistic_name(s, qname, value):
-    owner, name, group = parse_qualified_name(qname)
+    owner, name, group = StatisticName.parse(qname)
     q = s.query(StatisticName.id). \
         filter(StatisticName.name.like(name),
                StatisticName.statistic_journal_type.in_(infer_types(value)))
@@ -186,7 +186,7 @@ def build_property(s, ast):
 
 def build_comparisons(s, ast):
     qname, op, value = ast
-    owner, name, group = parse_qualified_name(qname)
+    owner, name, group = StatisticName.parse(qname)
     if isinstance(value, str):
         return get_source_ids(s, owner, name, op, value, group, StatisticJournalType.TEXT)
     elif isinstance(value, dt.datetime):
@@ -219,19 +219,6 @@ def get_source_ids(s, owner, name, op, value, group, type, update_attrs=None):
     else:
         q = q.filter(getattr(statistic_journal.value, op_attr)(value))
     return q
-
-
-def parse_qualified_name(qname):
-    if ':' in qname:
-        left, group = qname.rsplit(':', 1)
-    else:
-        left, group = qname, None
-    if '.' in left:
-        owner, name = left.rsplit('.', 1)
-    else:
-        owner, name = None, left
-    log.debug(f'Parsed {qname} as {owner}.{name}:{group}')
-    return owner, name, group
 
 
 def parse_property(qname):
