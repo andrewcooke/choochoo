@@ -67,7 +67,7 @@ class ElevationSupport:
 
 def elevation_from_constant(s, interp, dir_name=SRTM1_DIR_CNAME):
     try:
-        dir = Constant.get(s, dir_name).at(s).value
+        dir = Constant.from_name(s, dir_name).at(s).value
         if not exists(dir): raise Exception(f'SRTM1 directory {dir} missing')
     except:
         log_current_exception(traceback=False)

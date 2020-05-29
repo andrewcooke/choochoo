@@ -68,7 +68,7 @@ class Constant(Source):
             order_by(desc(StatisticJournal.time)).limit(1).one_or_none()
 
     @classmethod
-    def get(cls, s, name, none=False):
+    def from_name(cls, s, name, none=False):
         constant = s.query(Constant).filter(Constant.name == name).one_or_none()
         if constant is None and not none:
             raise Exception('Could not find Constant for %s' % name)
@@ -77,7 +77,7 @@ class Constant(Source):
     @classmethod
     def get_single(cls, s, name):
         try:
-            constant = Constant.get(s, name)
+            constant = Constant.from_name(s, name)
             if not constant.single:
                 raise Exception(f'Constant {name} is not single')
             value = constant.at(s).value

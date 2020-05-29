@@ -22,12 +22,12 @@ HRImpulse = namedtuple('HRImpulse', 'title, gamma, zero, one, max_secs')
 class ImpulseCalculator(OwnerInMixin, ActivityGroupCalculatorMixin, DataFrameCalculatorMixin, MultiProcCalculator):
 
     def __init__(self, *args, prefix=None, impulse_constant=None, **kargs):
-        self.impulse_constant_name = self._assert('impulse_constant', impulse_constant)
+        self.impulse_constant_ref = self._assert('impulse_constant', impulse_constant)
         self.prefix = self._assert('prefix', prefix)
         super().__init__(*args, **kargs)
 
     def _startup(self, s):
-        self.impulse_constant = Constant.get(s, self.impulse_constant_name)
+        self.impulse_constant = Constant.from_name(s, self.impulse_constant_ref)
         self.impulse = HRImpulse(**loads(self.impulse_constant.at(s).value))
         log.debug('%s: %s' % (self.impulse_constant, self.impulse))
 

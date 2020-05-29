@@ -13,7 +13,7 @@ from ..sql import Constant
 log = getLogger(__name__)
 
 
-MSIL2A_DIR_CNAME = 'msil2a_dir'
+MSIL2A_DIR_CNAME = 'msil2a-dir'
 
 
 def clean_and_group_products(products):
@@ -102,7 +102,7 @@ def cached_download(s, api, products, dir_name=MSIL2A_DIR_CNAME):
     together, and preferably already exist on disk.
     '''
     productss = clean_and_group_products(products)
-    msil2a_dir = Constant.get(s, dir_name).at(s).value
+    msil2a_dir = Constant.from_name(s, dir_name).at(s).value
     hit, miss = score_productss(productss, msil2a_dir)
     if miss:
         download_missing(api, miss, msil2a_dir)

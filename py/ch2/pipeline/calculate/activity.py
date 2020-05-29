@@ -75,7 +75,7 @@ class ActivityCalculator(OwnerInMixin, ActivityJournalCalculatorMixin, DataFrame
         if sdf is not None:
             stats.update(response_stats(sdf, delta))
         if present(adf, N.ELEVATION):
-            params = Climb(**loads(Constant.get(s, self.climb_ref).at(s).value))
+            params = Climb(**loads(Constant.from_name(s, self.climb_ref).at(s).value))
             climbs = list(find_climbs(adf, params=params))
             add_climb_stats(adf, climbs)
         return data, stats, climbs

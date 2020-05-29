@@ -46,7 +46,7 @@ class ResponseCalculator(OwnerInMixin, LoaderMixin, UniProcCalculator):
 
     def _startup(self, s):
         super()._startup(s)
-        self.response_constants = [Constant.get(s, name) for name in self.response_constant_names]
+        self.response_constants = [Constant.from_name(s, name) for name in self.response_constant_names]
         self.responses = [Response(**loads(constant.at(s).value)) for constant in self.response_constants]
 
     def _delete(self, s):

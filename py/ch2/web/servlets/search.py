@@ -40,13 +40,10 @@ class Search:
     def read_activity_terms(request, s):
 
         def format(row):
-            name, description,units,  groups = row
-            groups = ', '.join(sorted(groups.split(',')))
-            return {NAME: name, DESCRIPTION: description, GROUPS: groups, UNITS: units}
+            name, description, units = row
+            return {NAME: name, DESCRIPTION: description, UNITS: units}
 
-        q = s.query(StatisticName.name, StatisticName.description, StatisticName.units,
-                    func.group_concat(ActivityGroup.name.distinct())). \
-            join(ActivityGroup). \
+        q = s.query(StatisticName.name, StatisticName.description, StatisticName.units). \
             join(StatisticJournal). \
             join(Source, Source.id == StatisticJournal.source_id). \
             filter(Source.type.in_([SourceType.ACTIVITY_TOPIC, SourceType.ACTIVITY])). \

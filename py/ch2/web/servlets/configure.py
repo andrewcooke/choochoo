@@ -107,7 +107,7 @@ class Configure:
     def write_constant(self, request, s):
         data = request.json
         log.debug(data)
-        constant = Constant.get(s, data[NAME])
+        constant = Constant.from_name(s, data[NAME])
         value = data[VALUES][0][VALUE]
         time = data[VALUES][0][TIME]
         statistic_journal_id = data[VALUES][0][STATISTIC]

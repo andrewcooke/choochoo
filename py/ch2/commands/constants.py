@@ -3,7 +3,8 @@ from logging import getLogger
 
 from .help import Markdown
 from ..commands.args import DATE, NAME, VALUE, FORCE, mm, COMMAND, CONSTANTS, SET, SUB_COMMAND, ADD, \
-    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, GROUP, UNSET, LIST
+    SHOW, REMOVE, DESCRIPTION, SINGLE, VALIDATE, UNSET, LIST
+from ..sql import ActivityGroup
 from ..sql.tables.constant import Constant, ValidateNamedTuple
 from ..sql.tables.statistic import StatisticJournal, StatisticName, StatisticJournalType
 from ..sql.types import lookup_cls
@@ -55,8 +56,7 @@ In such a case "entry" in the descriptions above may refer to multiple entries.
     name = None if cmd == LIST else args[NAME]
     with db.session_context() as s:
         if cmd == ADD:
-            add_constant(s, name, activity_group=args[GROUP], description=args[DESCRIPTION],
-                         single=args[SINGLE], validate=args[VALIDATE])
+            add_constant(s, name, description=args[DESCRIPTION], single=args[SINGLE], validate=args[VALIDATE])
         else:
             if name:
                 constants = constants_like(s, name)
@@ -94,20 +94,22 @@ def constants_like(s, name):
     return constants
 
 
-def add_constant(s, name, activity_group=None, description=None, single=False, validate=None):
-    if s.query(StatisticName). \
-            filter(StatisticName.name == name,
-                   StatisticName.owner == Constant,
-                   StatisticName.activity_group == activity_group).one_or_none():
-        raise Exception(f'Constant {name} (activity group {activity_group}) already exists')
+def add_constant(s, name, description=None, single=False, validate=None):
+    if Constant.from_name(s, name, none=True):
+        raise Exception(f'Constant {name} already exists')
+    if ':' in name:
+        activity_group = ActivityGroup.from_name(s, name.split(':', 1)[1], none=True)
+        if activity_group:
+            raise Exception(f'Activity group does not exist for {name}')
+    else:
+        activity_group = None
     validate_cls, validate_args, validate_kargs = None, [], {}
     if validate:
         lookup_cls(validate)
         validate_cls, validate_kargs = ValidateNamedTuple, {'tuple_cls': validate}
-    statistic_name = add(s, StatisticName(name=name, owner=Constant, activity_group=activity_group,
-                                          units=None, description=description,
-                                          statistic_journal_type=StatisticJournalType.TEXT))
-    add(s, Constant(statistic_name=statistic_name, name=name, single=single,
+    statistic_name = StatisticName.add_if_missing(s, name, StatisticJournalType.TEXT, None, None,
+                                                  Constant, description=description)
+    add(s, Constant(statistic_name=statistic_name, name=name, single=single, activity_group=activity_group,
                     validate_cls=validate_cls, validate_args=validate_args, validate_kargs=validate_kargs))
     log.info(f'Added {name}')
 
@@ -117,8 +119,7 @@ def set_constants(s, constants, date, value, force):
         log.info('Checking any previous values')
         journals = []
         for constant in constants:
-            journals += s.query(StatisticJournal).join(StatisticName, Constant). \
-                filter(Constant.id == constant.id).all()
+            journals += journal_for_constant(s, constant)
         if journals:
             log.info(f'Need to delete {len(journals)} ConstantJournal entries')
             if not force:
@@ -135,9 +136,7 @@ def delete_constants(s, constants, date):
     if date:
         for constant in constants:
             for repeat in range(2):
-                journal = s.query(StatisticJournal).join(StatisticName, Constant). \
-                    filter(Constant.id == constant.id,
-                           StatisticJournal.time == date).one_or_none()
+                journal = journal_join_constant(s, constant).filter(StatisticJournal.time == date).one_or_none()
                 if repeat:
                     log.info(f'Deleting {constant.name} on {journal.time}')
                     s.delete(journal)
@@ -146,8 +145,7 @@ def delete_constants(s, constants, date):
                         raise Exception(f'No entry for {constant.name} on {date}')
     else:
         for constant in constants:
-            for journal in s.query(StatisticJournal).join(StatisticName, Constant). \
-                    filter(Constant.id == constant.id).order_by(StatisticJournal.time).all():
+            for journal in journal_for_constant(s, constant):
                 log.info(f'Deleting {constant.name} on {journal.time}')
                 s.delete(journal)
 
@@ -167,8 +165,9 @@ def print_constants(s, constants, name, date, names_only=False):
                 Markdown().print(description)
                 if name:  # only print values if we're not listing all
                     found = False
-                    for journal in s.query(StatisticJournal).join(StatisticName, Constant). \
-                            filter(Constant.id == constant.id).order_by(StatisticJournal.time).all():
+                    # need to be epxlicit in joins because there's more than one way all can connect
+                    # (since constant also references statistic name)
+                    for journal in journal_for_constant(s, constant):
                         print(f'{journal.time}: {journal.value}')
                         found = True
                     if not found:
@@ -187,10 +186,22 @@ def remove_constants(s, constants):
         for constant in constants:
             if do:
                 log.warning(f'Deleting {constant.name}')
-                s.query(StatisticName).filter(StatisticName.id == constant.statistic_name_id).delete()
+                # note - we do not remove the statistic name since it could be shared across multiple constants
+                # for different activity groups (but we have ensured no journal entries exist)
                 s.query(Constant).filter(Constant.id == constant.id).delete()
             else:
-                if s.query(StatisticJournal). \
-                        join(StatisticName, Constant). \
-                        filter(Constant.id == constant.id).count():
+                if journal_for_constant(s, constant):
                     raise Exception(f'Values still defined for {constant.name}')
+
+
+def journal_join_constant(s, constant):
+    # need to be explicit in joins because there's more than one way all can connect
+    # (since constant also references statistic name)
+    return s.query(StatisticJournal). \
+            join(StatisticName, StatisticName.id == StatisticJournal.statistic_name_id). \
+            join(Constant, Constant.id == StatisticJournal.source_id). \
+            filter(Constant.id == constant.id)
+
+
+def journal_for_constant(s, constant):
+    return journal_join_constant(s, constant).order_by(StatisticJournal.time).all()

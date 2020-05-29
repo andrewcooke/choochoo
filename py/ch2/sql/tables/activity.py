@@ -32,13 +32,16 @@ class ActivityGroup(Base):
         return self.name
 
     @classmethod
-    def from_name(cls, s, name):
+    def from_name(cls, s, name, none=False):
         if not name:
             return None
         elif isinstance(name, ActivityGroup):
             return name  # allow callers to already have an instance
         else:
-            return s.query(ActivityGroup).filter(ActivityGroup.name.ilike(name)).one()
+            instance = s.query(ActivityGroup).filter(ActivityGroup.name.ilike(name)).one_or_none()
+            if instance is None and not none:
+                raise Exception(f'No activity group defined for {name}')
+            return instance
 
 
 class ActivityJournal(GroupedSource):

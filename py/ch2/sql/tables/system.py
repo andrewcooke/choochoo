@@ -22,7 +22,7 @@ class SystemConstant(SystemBase):
     value = Column(Text, nullable=False)
 
     @classmethod
-    def get(cls, s, name, none=False):
+    def from_name(cls, s, name, none=False):
         instance = s.query(SystemConstant).filter(SystemConstant.name == name).one_or_none()
         if instance is None:
             if not none:
