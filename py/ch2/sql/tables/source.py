@@ -95,8 +95,7 @@ class Source(Base):
 
     def get_qname(self, s, qname, limit=True):
         from .. import StatisticJournal, StatisticName, ActivityGroup
-        from ...data.constraint import parse_qualified_name
-        owner, name, group = parse_qualified_name(qname)
+        owner, name, group = StatisticName.parse(qname)
         q = s.query(StatisticJournal). \
             join(StatisticName). \
             filter(StatisticName.name.ilike(name),

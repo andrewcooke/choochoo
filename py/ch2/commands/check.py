@@ -1,8 +1,10 @@
 from logging import getLogger
 
+from sqlalchemy import join
+
 from .args import FIX
 from ..lib.log import Record
-from ..sql import ActivityTopicJournal, FileHash, FileScan, StatisticJournal
+from ..sql import ActivityTopicJournal, FileHash, FileScan, StatisticJournal, ActivityJournal
 
 log = getLogger(__name__)
 
@@ -20,11 +22,8 @@ This is still in development.
 
 
 def check_all(record, db, fix=False):
-    check_activity_diary(record, db, fix=fix)
-
-
-def check_activity_diary(record, db, fix=False):
     check_activity_diary_missing_files(record, db, fix=fix)
+    check_activity_journal_groups(record, db, fix=fix)
 
 
 def check_activity_diary_missing_files(record, db, fix=False):
@@ -42,10 +41,27 @@ def check_activity_diary_missing_files(record, db, fix=False):
                 if fix:
                     record.warning('Deleting entry')
                     s.delete(topic_journal)
-            if bad:
-                record.info(f'Entries were deleted')
-            else:
+            if not bad:
                 record.info('No missing activities from activity topic data')
+
+
+def check_activity_journal_groups(record, db, fix=False):
+    with record.record_exceptions(catch=True):
+        with db.session_context() as s:
+            bad = False
+            for topic_journal, activity_journal in s.query(ActivityTopicJournal, ActivityJournal). \
+                    select_from(ActivityTopicJournal). \
+                    join(ActivityJournal, ActivityJournal.file_hash_id == ActivityTopicJournal.file_hash_id). \
+                    filter(ActivityJournal.activity_group_id != ActivityTopicJournal.activity_group_id).all():
+                bad = True
+                record.warning(f'{topic_journal.activity_group.name} / {activity_journal.activity_group.name} '
+                               f'for same activity ({activity_journal.start})')
+                if fix:
+                    record.warning('Changing topic to match activity')
+                    topic_journal.activity_group = activity_journal.activity_group
+            if not bad:
+                record.info('No conflicting activity groups for activities')
+
 
 
 

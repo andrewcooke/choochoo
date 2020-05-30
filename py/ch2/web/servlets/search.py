@@ -79,7 +79,7 @@ def expand_activity(s, activity_journal):
 
     return {DB: activity_journal.id,
             'name': {VALUE: value(StatisticJournal.for_source(s, topic_journal.id, N.NAME,
-                                                              ActivityTopic, activity_journal.activity_group)),
+                                                              ActivityTopic, topic_journal.activity_group)),
                      UNITS: None},
             'group': {VALUE: activity_journal.activity_group.name, UNITS: None},
             'start': {VALUE: time_to_local_time(activity_journal.start), UNITS: 'date'},

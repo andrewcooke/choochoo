@@ -7,7 +7,7 @@ import psutil as ps
 from sqlalchemy import Column, Text, Integer
 
 from ..support import SystemBase
-from ..types import Time, ShortCls
+from ..types import Time, ShortCls, Name
 from ..utils import add
 from ...lib import now
 
@@ -18,7 +18,7 @@ class SystemConstant(SystemBase):
 
     __tablename__ = 'system_constant'
 
-    name = Column(Text, primary_key=True)
+    name = Column(Name, primary_key=True)
     value = Column(Text, nullable=False)
 
     @classmethod
@@ -49,10 +49,10 @@ class SystemConstant(SystemBase):
         s.commit()
 
     TIMEZONE = 'timezone'
-    JUPYTER_URL = 'jupyter_url'
-    WEB_URL = 'web_url'
-    LAST_GARMIN = 'last_garmin'
-    DB_VERSION = 'db_version'
+    JUPYTER_URL = 'jupyter-url'
+    WEB_URL = 'web-url'
+    LAST_GARMIN = 'last-garmin'
+    DB_VERSION = 'db-version'
 
 
 class Process(SystemBase):
