@@ -9,6 +9,7 @@ from sqlalchemy import union, intersect, not_
 from ..lib import local_time_to_time, to_time
 from ..lib.peg import transform, choice, pattern, sequence, Recursive, drop, exhaustive, single
 from ..lib.utils import timing
+from ..names import UNDEF
 from ..sql import ActivityJournal, StatisticName, StatisticJournalType, ActivityGroup, ActivityTopicJournal, Source, \
     FileHash, StatisticJournal
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
@@ -128,7 +129,7 @@ def check_constraint(s, ast, attrs):
 
 
 def check_statistic_name(s, qname, value):
-    owner, name, group = StatisticName.parse(qname)
+    owner, name, _ = StatisticName.parse(qname)
     q = s.query(StatisticName.id). \
         filter(StatisticName.name.like(name),
                StatisticName.statistic_journal_type.in_(infer_types(value)))
@@ -188,7 +189,7 @@ def build_property(s, ast):
 
 def build_comparisons(s, ast, with_conversion):
     qname, op, value = ast
-    owner, name, group = StatisticName.parse(qname)
+    owner, name, group = StatisticName.parse(qname, default_activity_group=UNDEF)
     if value is None:
         if op == '=':
             return get_source_ids_for_null(s, owner, name, group, with_conversion), True
@@ -221,8 +222,11 @@ def get_source_ids(s, owner, name, op, value, group, type):
         filter(StatisticName.name.like(name))
     if owner:
         q = q.filter(StatisticName.owner.like(owner))
-    if group:
-        q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+    if group is not UNDEF:
+        if group:
+            q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+        else:
+            q = q.filter(Source.activity_group_id == None)
     if op_attr == 'nlike':  # no way to negate like in a single attribute
         q = q.filter(not_(statistic_journal.value.ilike(value)))
     else:
@@ -236,8 +240,11 @@ def get_source_ids_for_null(s, owner, name, group, with_conversion):
         filter(StatisticName.name.like(name))
     if owner:
         q = q.filter(StatisticName.owner.like(owner))
-    if group:
-        q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+    if group is not UNDEF:
+        if group:
+            q = q.join(ActivityGroup).filter(ActivityGroup.name.ilike(group))
+        else:
+            q = q.join(Source).filter(Source.activity_group_id == None)
     if with_conversion:
         # will invert later (in conversion)
         return q
@@ -260,6 +267,7 @@ def parse_property(qname):
         cls = 'ch2.sql.' + cls
         clz = lookup_cls(cls)
     getattr(clz, attr)
+    log.info(f'Parsed {qname} as {clz}.{attr}')
     return clz, attr
 
 

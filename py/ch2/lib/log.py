@@ -11,7 +11,6 @@ from ..commands.args import COMMAND, LOGS, PROGNAME, VERBOSITY, LOG, COLOR, DARK
 log = getLogger(__name__)
 
 STDERR_HANDLER = None
-LOG_COLOR = 'log-color'
 
 
 def make_log_from_args(args):
@@ -83,12 +82,15 @@ def make_log(path, verbosity=4):
 
 
 def set_log_color(args, sys):
+
+    from ..sql import SystemConstant
+
     color = args[COLOR]
     if color and color == color.upper():
-        sys.set_constant(LOG_COLOR, color.lower(), force=True)
+        sys.set_constant(SystemConstant.LOG_COLOR, color.lower(), force=True)
         color = None
     if color is None:
-        color = sys.get_constant(LOG_COLOR, none=True)
+        color = sys.get_constant(SystemConstant.LOG_COLOR, none=True)
     if STDERR_HANDLER and color:
         if color.lower() == LIGHT:
             STDERR_HANDLER.setFormatter(

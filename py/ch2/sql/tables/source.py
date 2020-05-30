@@ -14,6 +14,7 @@ from ..types import OpenSched, Date, ShortCls, short_cls
 from ..utils import add
 from ...lib.date import to_time, time_to_local_date, max_time, min_time, extend_range
 from ...lib.utils import timing
+from ...names import UNDEF
 
 log = getLogger(__name__)
 
@@ -95,13 +96,15 @@ class Source(Base):
 
     def get_qname(self, s, qname, limit=True):
         from .. import StatisticJournal, StatisticName, ActivityGroup
-        owner, name, group = StatisticName.parse(qname)
+        owner, name, group = StatisticName.parse(qname, default_activity_group=UNDEF)
         q = s.query(StatisticJournal). \
             join(StatisticName). \
             filter(StatisticName.name.ilike(name),
                    StatisticJournal.source_id == self.id)
-        if owner: q = q.filter(StatisticName.owner == owner)
-        if group: q = q.join(ActivityGroup).filter(ActivityGroup.name == group)  # todo none is a valid value
+        if owner:
+            q = q.filter(StatisticName.owner == owner)
+        if group is not UNDEF:
+            q = q.join(ActivityGroup).filter(ActivityGroup.name == group)
         if limit:
             q = q.filter(or_(StatisticJournal.serial.is_(None), StatisticJournal.serial == 0))
         log.debug(q)

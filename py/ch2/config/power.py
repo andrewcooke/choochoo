@@ -36,7 +36,9 @@ def add_kit_power_estimate(s, c, activity_groups):
     The constant doesn't specify the group, so the current group will be used.
     '''
     power_model = add_enum_constant(s, POWER_MODEL_CNAME, PowerModel,
-                                    {'bike_model': '${Constant.power-${SegmentReader.kit:}:}',
+                                    # no activity group is given so the default on expansion will be used
+                                    # which will be taken from the context (in this case the activity)
+                                    {'bike_model': '${Constant.power-${SegmentReader.kit}}',
                                      'rider_weight': '${DiaryTopic.Weight}'},
                                     single=True, description='''
 Parameters used in estimating power (for the given activity group).

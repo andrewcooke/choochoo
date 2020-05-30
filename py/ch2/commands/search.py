@@ -34,14 +34,21 @@ and a single value modified (--set).
 
 The search syntax (for activities and sources) is similar to SQL, but element names are statistic names.
 A name has the format "Owner.name:group" where the owner and group are optional.
+A trailing colon implies a NULL group (used for statistics that are not specific to any activity, like diary entries).
 The name and group also include SQL wildcards (eg "%fitness%").
 
 The owner of a name is the process that calculated the value.
 It works as a kind of "namespace" - the database could contain multiple statistics called "active_distance"
 but only one will have been calculated by ActivityCalculator.
 
+In addition, attributes of the source can be accessed using "Class.attribute" where Class is optional.
+For showing or setting values on the result, Class must be omitted (so .start=... sets the start attribute).
+
 For complex searches, string values must be quoted, negation and NULL values are not supported,
 and comparison must be between a name and a value (not two names).
+
+There is experimental support for null values (actually missing values).
+The form of the query is less general than SQL - a field must always be compared with a value (not another field).
 
 ### Examples
 

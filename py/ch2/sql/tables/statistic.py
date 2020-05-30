@@ -108,15 +108,19 @@ class StatisticName(Base):
     @classmethod
     def parse(cls, qname, default_owner=None, default_activity_group=None):
         '''
-        This parses the standard, extended format for naming statistics.  It is one to three fields, separated by ':'.
-        These are one of 'name', 'owner:name', or 'owner:name:activity_group'.
-        Currently this is used only by reftuple which itself is used only in the power pipeline configuration.
+        This parses the standard, extended format for naming statistics.
+        It has the form Ownwer.name:group where:
+        Owner is the short_cls that created the value and provides a namespace (optional);
+        name is the simple_name that identifies the value (required);
+        group is the activity group name (optional).
+        A null/None group is specified by Owner.name: (ie a trailing colon).
+        If an owner is not specified then 'any' owner is used (risk of ambiguity).
+        If a group is not specified then the meaning depends on the context (any or default).
         '''
         if ':' in qname:
             left, group = qname.rsplit(':', 1)
-            if not group: group = default_activity_group
         else:
-            left, group = qname, None
+            left, group = qname, default_activity_group
         if '.' in left:
             owner, name = left.rsplit('.', 1)
         else:
