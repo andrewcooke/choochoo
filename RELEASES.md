@@ -6,7 +6,8 @@
 Big effort to simplify and clean (10% reduction in LOC).  Activity
 group moved to source and non-null constraints added to statistics.
 Names and titles are separate for statistics; naming in general has
-been regularized (eg in search, constants).  Also many small
+been regularized (eg in search, constants).  API for querying
+statistics improved (simpler and faster).  Also many small
 improvements and fixes.
 
 ### v0.32.0

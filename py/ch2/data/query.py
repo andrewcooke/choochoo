@@ -9,11 +9,12 @@ from sqlalchemy.orm import aliased
 from ch2.data import read_query
 from ..data import session, present
 from ..lib import local_date_to_time, to_date, time_to_local_time
-from ..lib.date import YMD
+from ..lib.date import YMD, format_seconds
 from ..lib.log import log_current_exception
 from ..lib.utils import timing
 from ..names import Names as N, like, MED_WINDOW, SPACE
-from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source
+from ..sql import StatisticName, ActivityGroup, StatisticJournal, ActivityTimespan, ActivityJournal, Source, \
+    ActivityTopic
 from ..sql.tables.statistic import STATISTIC_JOURNAL_CLASSES
 from ..sql.types import short_cls
 
@@ -28,6 +29,8 @@ class Statistics:
         Specify any general constraints when constructing the object, then request particular statistics
         using by_name and by_group.
 
+        The activity_group argument is used only to constrain any activity_journal (which may be given by date).
+
         The final dataframe can be retrieved directly via df or, via with_, additional processing can
         be made to rename columns, add statistics, etc.
         '''
@@ -37,11 +40,11 @@ class Statistics:
         self.__sources = sources if sources else []
         if activity_journal:
             if not isinstance(activity_journal, Source):
-                activity_journal = ActivityJournal.at(s, activity_journal)
+                activity_journal = ActivityJournal.at(s, activity_journal, activity_group=activity_group)
             self.__sources.append(activity_journal)
-        self.__activity_group = ActivityGroup.from_name(s, activity_group)
         self.__with_timespan = with_timespan
         self.__with_source = with_source
+        self.__activity_group = activity_group
         self.__warn_over = warn_over
         self.__statistic_names = {}
         self.__df = None
@@ -123,8 +126,10 @@ class Statistics:
     def __constrain_journal(self, q):
         if self.__start: q = q.filter(StatisticJournal.time >= self.__start)
         if self.__finish: q = q.filter(StatisticJournal.time < self.__finish)
-        for source in self.__sources: q = q.filter(StatisticJournal.source == source)
-        if self.__activity_group:
+        if self.__sources:
+            q = q.filter(StatisticJournal.source_id.in_([source.id for source in self.__sources]))
+        elif self.__activity_group:
+            # only use of sources not specified separately (since those fix groups anyway)
             source = aliased(Source)
             q = q.join(source, source.id == StatisticJournal.source_id). \
                 filter(source.activity_group_id == self.__activity_group.id)
@@ -146,6 +151,9 @@ class Statistics:
 
     @property
     def df(self):
+        if self.__df is None:
+            log.warning('Have no data!')
+            self.__df = pd.DataFrame()  # if everything failed, allow code to continue with no data
         if self.__with_timespan:
             self.__add_timespan()
             self.__with_timespan = False
@@ -361,7 +369,7 @@ if __name__ == '__main__':
     s = session('-v5')
 
     with timing('select'):
-        df = std_health_statistics(s)
+        # df = std_health_statistics(s)
         # df = std_activity_statistics(s, '2020-05-15', 'road')
         # df = Statistics(s).like(N.CLIMB_ANY, owner=ActivityCalculator).from_(activity_journal='2020-05-15').by_group().df
         # df = Statistics(s).for_(N.ACTIVE_DISTANCE, owner=ActivityCalculator).by_group()
@@ -370,6 +378,12 @@ if __name__ == '__main__':
         # acc = Accumulator(s, with_source=True)
         # acc.by_name(ActivityCalculator, N.CLIMB_ANY, like=True)
         # df = acc.df
+        df = Statistics(s). \
+            by_name(ActivityTopic, N.NAME). \
+            by_name(ActivityCalculator, N.ACTIVE_DISTANCE, N.ACTIVE_TIME, N.TOTAL_CLIMB).with_. \
+            copy({N.ACTIVE_DISTANCE: N.ACTIVE_DISTANCE_KM}).add_times().df
+        print(df.describe())
+        df['Duration'] = df[N.ACTIVE_TIME].map(format_seconds)
 
     print(df)
     print(df.describe())

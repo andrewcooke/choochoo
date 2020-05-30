@@ -35,7 +35,7 @@ def activity_details(local_time, activity_group):
     activity = std_activity_statistics(s, activity_journal=local_time, activity_group=activity_group)
     health = std_health_statistics(s)
     hr_zones = hr_zones_from_database(s, local_time, activity_group)
-    climbs = Statistics(s, activity_journal=local_time). \
+    climbs = Statistics(s, activity_journal=local_time, activity_group=activity_group). \
         by_name(ActivityCalculator, N.ACTIVE_TIME, N.ACTIVE_DISTANCE). \
         by_name(ActivityCalculator, N.CLIMB_ANY, like=True).with_. \
         copy_with_units().df

@@ -39,7 +39,7 @@ def add_kit_power_estimate(s, c, activity_groups):
                                     # no activity group is given so the default on expansion will be used
                                     # which will be taken from the context (in this case the activity)
                                     {'bike_model': '${Constant.power-${SegmentReader.kit}}',
-                                     'rider_weight': '${DiaryTopic.Weight}'},
+                                     'rider_weight': '${DiaryTopic.Weight:}'},
                                     single=True, description='''
 Parameters used in estimating power (for the given activity group).
 

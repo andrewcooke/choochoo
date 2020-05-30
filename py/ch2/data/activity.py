@@ -125,7 +125,7 @@ def max_med_stats(df, params=((Names.HEART_RATE, Names.MAX_MED_HR_M),), mins=Non
                             stats[stat_name] = max_med
     except Exception as e:
         log.warning(f'No Max Med stats: {e}')
-        log_current_exception()
+        log_current_exception(traceback=False)
     return stats
 
 

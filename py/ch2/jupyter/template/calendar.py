@@ -20,7 +20,7 @@ def calendar():
     $contents
     '''
 
-    s = session('-v5')
+    s = session('-v2')
     output_file(filename='/dev/null')
 
     '''
