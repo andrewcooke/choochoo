@@ -23,7 +23,7 @@ def segment_imported(record, new):
 def copy_segments(record, old_s, old, new_s):
     segment = old.meta.tables['segment']
     for old_segment in old_s.query(segment).all():
-        add(new_s, Segment(name=old_segment.name, description=old_segment.description,
+        add(new_s, Segment(title=old_segment.name, description=old_segment.description,
                            distance=old_segment.distance,
                            start_lat=old_segment.start_lat, start_lon=old_segment.start_lon,
                            finish_lat=old_segment.finish_lat, finish_lon=old_segment.finish_lon))
